@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+import httpx
 import typer
 
 from velometer.config import (
@@ -36,6 +37,8 @@ app.add_typer(boundaries_app, name="boundaries")
 app.add_typer(osm_app, name="osm")
 external_app = typer.Typer(no_args_is_help=True, help="External comparison figures.")
 app.add_typer(external_app, name="external")
+auth_app = typer.Typer(no_args_is_help=True, help="Geofabrik internal-server login.")
+app.add_typer(auth_app, name="auth")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -708,3 +711,17 @@ def reconcile(
     except (OSError, ValueError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
+
+
+@auth_app.command("check")
+def auth_check(data: Path = DATA_OPT) -> None:
+    """Log in with VELOMETER_OSM_USER/PASSWORD and store the cookie; prints only ok or the error."""
+    from velometer.sources.geofabrik_auth import AuthError, load_or_login, new_auth_client
+
+    try:
+        with new_auth_client() as c:
+            cookie = load_or_login(data, client=c, force=True)
+    except (AuthError, httpx.HTTPError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"ok: cookie valid until {cookie.expires:%Y-%m-%d %H:%M} UTC")

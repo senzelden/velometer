@@ -568,3 +568,19 @@ def test_results_and_reconcile_report_the_config_on_disk_after_an_edit_and_rever
     assert re.search(r"^berlin\s", res.output, re.M), res.output
     rec = runner.invoke(app, ["reconcile", "--city", "berlin", "--report", str(report), *rargs])
     assert "Provenance: run 1 " in rec.output
+
+
+def test_auth_check_reports_failure_without_the_password(tmp_path, monkeypatch):
+    from velometer.sources import geofabrik_auth
+
+    secret = "s3cr3t-pw"
+    monkeypatch.setenv("VELOMETER_OSM_PASSWORD", secret)
+
+    def boom(*args, **kwargs):
+        raise geofabrik_auth.AuthError("osm login (wrong user name or password?)")
+
+    monkeypatch.setattr(geofabrik_auth, "load_or_login", boom)
+    result = CliRunner().invoke(app, ["auth", "check", "--data", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "error:" in result.output
+    assert secret not in result.output

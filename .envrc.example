@@ -1,0 +1,3 @@
+# velometer: OSM account for Geofabrik's internal server (M3). Values live in pass, never here.
+use_pass VELOMETER_OSM_USER velometer/osm-username
+use_pass VELOMETER_OSM_PASSWORD velometer/osm-password
