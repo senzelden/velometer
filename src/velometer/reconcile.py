@@ -11,6 +11,7 @@ from velometer.db import (
     DEFAULT_PARAMETERS,
     RunResults,
     fetch_external_figures,
+    fetch_run,
     fetch_run_results,
     latest_done_run,
 )
@@ -18,6 +19,8 @@ from velometer.models import ExternalFigure
 
 _LIKE_FOR_LIKE_SCOPES = ("whole_network", "bikenetkit_bike_network")
 BEGIN, END = "<!-- reconcile:begin -->", "<!-- reconcile:end -->"
+# Names the run each city's explanations were written against: <!-- explained-against: berlin=6 -->
+EXPLAINED_AGAINST = re.compile(r"<!--\s*explained-against:(?P<body>[^>]*?)-->")
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,7 @@ class Comparison:
     ours: dict | None
     informational: bool
     tags: tuple[str, ...]
+    required: bool = False  # --check fails for a city with a run but no external row for it
 
 
 @dataclass(frozen=True)
@@ -63,6 +67,7 @@ def load_comparisons(path: Path) -> list[Comparison]:
                 ours=c.get("ours"),
                 informational=bool(c.get("informational", False)),
                 tags=tuple(c.get("tags", [])),
+                required=bool(c.get("required", False)),
             )
         )
     return out
@@ -150,6 +155,38 @@ def gaps_for(
     return out
 
 
+@dataclass(frozen=True)
+class CityReport:
+    city_id: str
+    run_id: int
+    provenance: str  # one line: run, OSM time, classifier, config, commit, boundary, sources
+    gaps: list[Gap]
+
+
+def short_commit(sha: str) -> str:
+    """First 7 characters of a run's git_commit, keeping the `-dirty` marker."""
+    return sha[:7] + ("-dirty" if sha.endswith("-dirty") else "")
+
+
+_QECIO_MD5 = re.compile(r"file md5 ([0-9a-f]{32})")
+
+
+def provenance_line(run: dict, figures: list[ExternalFigure]) -> str:
+    sources = []
+    for source in sorted({f.source for f in figures}):
+        figs = [f for f in figures if f.source == source]
+        got = ", ".join(sorted({str(f.retrieved_at) for f in figs}))
+        md5s = sorted({m.group(1) for f in figs for m in [_QECIO_MD5.search(f.note)] if m})
+        sources.append(f"{source} retrieved {got}" + "".join(f", file md5 {m}" for m in md5s))
+    return (
+        f"run {run['id']} · OSM {run['osm_timestamp']} · classifier "
+        f"{run['classifier_version']} `{run['classifier_parameters']}` · config "
+        f"`{(run.get('config_sha256') or 'n/a')[:12]}` · commit `{short_commit(run['git_commit'])}`"
+        f" · boundary {run['boundary_kind']} `{run['boundary_sha256'][:12]}` · sources: "
+        + ("; ".join(sources) or "none")
+    )
+
+
 def reconcile_city(
     conn,
     city_id: str,
@@ -158,21 +195,24 @@ def reconcile_city(
     *,
     classifier_version: str = "v1",
     classifier_parameters: str = DEFAULT_PARAMETERS,
-) -> list[Gap]:
+) -> CityReport | None:
+    """The city's latest done run (for this classifier and parameters) against its figures."""
     cfg = load_config(config_path)
     run_id = latest_done_run(
         conn, city_id, boundary_kind, classifier_version, classifier_parameters
     )
     if run_id is None:
-        return []
-    return gaps_for(
+        return None
+    figures = fetch_external_figures(conn, city_id)
+    gaps = gaps_for(
         fetch_run_results(conn, run_id),
-        fetch_external_figures(conn, city_id),
+        figures,
         load_comparisons(config_path),
         threshold=cfg["threshold"],
         date_gap_days=cfg["date_gap_days"],
         mismatch=cfg.get("boundary_mismatch", {}),
     )
+    return CityReport(city_id, run_id, provenance_line(fetch_run(conn, run_id), figures), gaps)
 
 
 def _fmt(v: float | None, pct: bool = False) -> str:
@@ -181,16 +221,18 @@ def _fmt(v: float | None, pct: bool = False) -> str:
     return f"{v * 100:+.1f}%" if pct else f"{v:,.1f}"
 
 
-def render_block(gaps_by_city: dict[str, list[Gap]]) -> str:
+def render_block(reports: dict[str, CityReport]) -> str:
     lines = [BEGIN, ""]
-    for city, gaps in sorted(gaps_by_city.items()):
+    for city, rep in sorted(reports.items()):
         lines += [
             f"#### {city}",
+            "",
+            f"Provenance: {rep.provenance}",
             "",
             "| key | ours | theirs | gap | flag | tags | source (date) |",
             "|---|---:|---:|---:|---|---|---|",
         ]
-        for g in gaps:
+        for g in rep.gaps:
             flag = "info" if g.informational else ("**>20%**" if g.flagged else "ok")
             lines.append(
                 f"| `{g.key}` | {_fmt(g.ours)} | {_fmt(g.theirs)} | {_fmt(g.gap_pct, True)} "
@@ -201,15 +243,65 @@ def render_block(gaps_by_city: dict[str, list[Gap]]) -> str:
     return "\n".join(lines)
 
 
-def write_report(path: Path, gaps_by_city: dict[str, list[Gap]]) -> None:
+def write_report(path: Path, reports: dict[str, CityReport]) -> None:
     text = path.read_text()
     pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
     if not pattern.search(text):
         raise ValueError(f"{path}: markers {BEGIN} / {END} not found")
-    path.write_text(pattern.sub(lambda m: render_block(gaps_by_city), text, count=1))
+    path.write_text(pattern.sub(lambda m: render_block(reports), text, count=1))
+
+
+def _headings(text: str) -> set[str]:
+    return set(re.findall(r"^### (\S+)\s*$", text, re.M))
 
 
 def missing_explanations(path: Path, gaps: list[Gap]) -> list[str]:
-    text = path.read_text()
-    headings = set(re.findall(r"^### (\S+)\s*$", text, re.M))
+    headings = _headings(path.read_text())
     return [g.key for g in gaps if g.flagged and g.key not in headings]
+
+
+def stale_explanations(path: Path, gaps: list[Gap], cities: set[str]) -> list[str]:
+    """`### city/...` headings of these cities that match no current flagged gap."""
+    flagged = {g.key for g in gaps if g.flagged}
+    return sorted(
+        h for h in _headings(path.read_text()) if h.split("/")[0] in cities and h not in flagged
+    )
+
+
+def explained_against(path: Path) -> dict[str, int]:
+    """City -> run id from the report's explained-against marker ({} if there is none)."""
+    m = EXPLAINED_AGAINST.search(path.read_text())
+    if m is None:
+        return {}
+    out = {}
+    for item in m.group("body").split():
+        city, _, run_id = item.partition("=")
+        if not run_id.isdigit():
+            raise ValueError(f"{path}: bad explained-against entry {item!r}")
+        out[city] = int(run_id)
+    return out
+
+
+def explained_against_marker(reports: dict[str, CityReport]) -> str:
+    body = " ".join(f"{c}={r.run_id}" for c, r in sorted(reports.items()))
+    return f"<!-- explained-against: {body} -->"
+
+
+def unexplained_runs(path: Path, reports: dict[str, CityReport]) -> list[str]:
+    """Cities whose latest run is not the run the explanations were written against."""
+    marker = explained_against(path)
+    return [
+        f"{c}: explanations written against run {marker.get(c, 'none')}, latest is {r.run_id}"
+        for c, r in sorted(reports.items())
+        if marker.get(c) != r.run_id
+    ]
+
+
+def missing_required(reports: dict[str, CityReport], comparisons: list[Comparison]) -> list[str]:
+    """`city/comparison` for each required comparison with no external row for that city."""
+    return [
+        f"{c}/{comp.id}"
+        for c, r in sorted(reports.items())
+        for comp in comparisons
+        if comp.required and not any(g.comparison == comp.id for g in r.gaps)
+    ]

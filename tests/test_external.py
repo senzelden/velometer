@@ -6,6 +6,7 @@ OpenStreetMap data (c) OpenStreetMap contributors, ODbL.
 
 import os
 import zipfile
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -23,29 +24,56 @@ from velometer.sources.download import DownloadError, md5_of
 CFG = default_config_dir()
 CITIES = load_cities(CFG / "cities.yaml")
 FIX = Path(__file__).parent / "fixtures" / "external"
+BERLIN = [c for c in CITIES if c.id == "berlin"]
+CURATED = CFG / "external" / "figures.csv"
+
+
+def _qecio_all_cities(path: Path) -> Path:
+    """The fixture's Berlin row once per pilot city NUTS3 code (one row per configured code)."""
+    head, berlin = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8").splitlines()[:2]
+    rows = [berlin.replace(",DE300,", f",{c.nuts3_code},") for c in CITIES]
+    path.write_text("\n".join([head, *rows]) + "\n", encoding="utf-8")
+    return path
 
 
 def test_curated_figures_all_validate_and_are_cited():
-    figs = X.load_figures_csv(CFG / "external" / "figures.csv")
+    figs = X.load_figures_csv(CURATED)
     assert {f.city_id for f in figs} <= {c.id for c in CITIES}
     for f in figs:
         assert f.source_url or "re-verify" in f.note, f
-    cc = {
-        (f.city_id, f.metric_name, f.network_scope): f.value
-        for f in figs
-        if f.source == "clean_cities_2025"
-    }
-    assert cc[("berlin", "protected_km", "whole_network")] == 925
-    assert cc[("vienna", "protected_share_pct", "incl_traffic_calmed_restricted_access")] == 22.0
+
+
+def test_curated_clean_cities_rows_follow_the_rules():
+    figs = [f for f in X.load_figures_csv(CURATED) if f.source == "clean_cities_2025"]
+    keys = [(f.city_id, f.source, f.metric_name, f.network_scope) for f in figs]
+    assert len(keys) == len(set(keys))  # each (city, source, metric, scope) appears once
+    metrics = {"protected_km", "network_km", "protected_share_pct"}
+    for city in {f.city_id for f in figs}:
+        assert {f.metric_name for f in figs if f.city_id == city} == metrics, city
+    vienna_scopes = {f.network_scope for f in figs if f.city_id == "vienna"}
+    assert vienna_scopes == {"whole_network", "incl_traffic_calmed_restricted_access"}
 
 
 def test_qecio_rows_map_by_nuts3_and_carry_data_date():
-    figs = X.qecio_figures(FIX / "qecio_summary_head.csv", CITIES)
+    figs = X.qecio_figures(FIX / "qecio_summary_head.csv", BERLIN)
     berlin = {f.metric_name: f.value for f in figs if f.city_id == "berlin"}
     assert berlin["main_roads_km"] == pytest.approx(2149.623)
     assert berlin["cycle_tracks_km"] == pytest.approx(679.471)
     assert all(str(f.reference_date) == "2024-01-10" for f in figs if f.city_id == "berlin")
-    assert not [f for f in figs if f.city_id == "paris"]  # not in the 2-row fixture
+
+
+def test_qecio_nuts3_code_matching_no_row_raises():
+    # Paris FR101 is not in the 2-row fixture: a typo or a missing row must not pass silently
+    with pytest.raises(ValueError, match=r"FR101 \(paris\) matched 0"):
+        X.qecio_figures(FIX / "qecio_summary_head.csv", CITIES)
+
+
+def test_qecio_nuts3_code_matching_two_rows_raises(tmp_path):
+    src = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8")
+    dup = tmp_path / "dup.csv"
+    dup.write_text(src.replace(",Berat,AL031,", ",Berlin,DE300,"), encoding="utf-8")
+    with pytest.raises(ValueError, match=r"DE300 \(berlin\) matched 2"):
+        X.qecio_figures(dup, BERLIN)
 
 
 def _write_edges(path: Path, line: LineString, crs: str = "EPSG:4326") -> None:
@@ -91,28 +119,37 @@ def test_bikenetkit_missing_city_in_zip_raises(tmp_path):
         X.bikenetkit_figures(tmp_path, [c for c in CITIES if c.id == "berlin"])
 
 
+def _all_rows(conn) -> list[tuple]:
+    return conn.execute(
+        "SELECT city_id, source, metric_name, value, network_scope FROM external_figures "
+        "ORDER BY city_id, source, metric_name, network_scope, value"
+    ).fetchall()
+
+
 def test_load_all_replaces_per_source_and_is_idempotent(tmp_path):
+    curated = X.load_figures_csv(CURATED)
     with open_db(tmp_path / "v.sqlite") as conn:
         create_schema(conn)
         upsert_cities(conn, CITIES)
         first = X.load_all(conn, tmp_path / "data", CFG, qecio=False, bikenetkit=False)
+        rows = _all_rows(conn)
         second = X.load_all(conn, tmp_path / "data", CFG, qecio=False, bikenetkit=False)
-        assert first == second
-        assert set(first) == {"clean_cities_2025", "official", "changing_cities"}
-        assert first["clean_cities_2025"] == 18
-        assert len(fetch_external_figures(conn, "berlin")) == 3 + 4
+        assert first == second and _all_rows(conn) == rows
+        assert first == dict(Counter(f.source for f in curated))
+        assert len(rows) == len(curated)
 
 
 @pytest.mark.slow
-def test_real_qecio_summary_has_expected_columns_and_berlin_row(tmp_path):
+def test_real_qecio_summary_selects_exactly_one_row_per_pilot_city(tmp_path):
     from velometer.sources.download import fetch
 
     path = fetch(X.QECIO_URL, tmp_path / X.QECIO_LOCAL_NAME)
-    berlin = {
-        f.metric_name: f.value for f in X.qecio_figures(path, CITIES) if f.city_id == "berlin"
-    }
-    assert set(berlin) == set(X.QECIO_COLUMNS)
-    assert berlin["main_roads_km"] == pytest.approx(2149.623)
+    figs = X.qecio_figures(path, CITIES)  # raises unless each nuts3_code matches one row
+    for city in CITIES:
+        got = [f for f in figs if f.city_id == city.id]
+        assert {f.metric_name for f in got} == set(X.QECIO_COLUMNS), city.id
+        assert len(got) == len(X.QECIO_COLUMNS), city.id
+        assert all(f.network_scope == f"nuts3_{city.nuts3_code}" for f in got)
 
 
 def test_qecio_mapping_ignores_the_city_name_column(tmp_path):
@@ -120,7 +157,7 @@ def test_qecio_mapping_ignores_the_city_name_column(tmp_path):
     src = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8")
     renamed = tmp_path / "renamed.csv"
     renamed.write_text(src.replace("DE,Berlin,DE300", "DE,Berlin-Brandenburg-Unit,DE300"))
-    figs = X.qecio_figures(renamed, CITIES)
+    figs = X.qecio_figures(renamed, BERLIN)
     assert {f.city_id for f in figs} == {"berlin"}
     assert "Berlin-Brandenburg-Unit" in figs[0].note
 
@@ -135,7 +172,7 @@ def _qecio_copy(tmp_path: Path, mtime: float | None = None) -> Path:
 
 def test_qecio_retrieved_at_is_file_mtime_utc_date(tmp_path):
     p = _qecio_copy(tmp_path, datetime(2026, 3, 4, 23, 30, tzinfo=UTC).timestamp())
-    figs = X.qecio_figures(p, CITIES)
+    figs = X.qecio_figures(p, BERLIN)
     assert {str(f.retrieved_at) for f in figs} == {"2026-03-04"}
 
 
@@ -152,7 +189,7 @@ def test_bikenetkit_retrieved_at_is_zip_mtime_utc_date(tmp_path):
 
 def test_qecio_notes_carry_file_md5(tmp_path):
     p = _qecio_copy(tmp_path)
-    figs = X.qecio_figures(p, CITIES)
+    figs = X.qecio_figures(p, BERLIN)
     assert figs and all(f"file md5 {md5_of(p)}" in f.note for f in figs)
 
 
@@ -160,7 +197,7 @@ def test_qecio_dk011_note_flags_byen_kobenhavn(tmp_path):
     src = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8")
     p = tmp_path / "dk.csv"
     p.write_text(src.replace("DE,Berlin,DE300", "DK,Byen København,DK011"), encoding="utf-8")
-    figs = X.qecio_figures(p, CITIES)
+    figs = X.qecio_figures(p, [c for c in CITIES if c.id == "copenhagen"])
     assert {f.city_id for f in figs} == {"copenhagen"}
     assert all("Byen København" in f.note and "185 km2" in f.note for f in figs)
 
@@ -183,7 +220,7 @@ def test_refresh_qecio_deletes_cache_before_fetch(tmp_path, monkeypatch):
 
     def fake_fetch(url, dst, **kw):
         seen.append(dst.exists())
-        dst.write_bytes((FIX / "qecio_summary_head.csv").read_bytes())
+        _qecio_all_cities(dst)
         return dst
 
     monkeypatch.setattr(X, "fetch", fake_fetch)
@@ -206,4 +243,5 @@ def test_failed_qecio_fetch_keeps_curated_rows(tmp_path, monkeypatch):
         upsert_cities(conn, CITIES)
         with pytest.raises(DownloadError):
             X.load_all(conn, tmp_path / "data", CFG, qecio=True, bikenetkit=False)
-        assert len(fetch_external_figures(conn, "berlin")) == 7
+        curated = [f for f in X.load_figures_csv(CURATED) if f.city_id == "berlin"]
+        assert len(fetch_external_figures(conn, "berlin")) == len(curated) > 0

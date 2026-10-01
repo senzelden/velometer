@@ -216,7 +216,14 @@ def test_external_load_offline_prints_rows_per_source(tmp_path):
         ["external", "load", "--no-qecio", "--no-bikenetkit", "--db", str(tmp_path / "v.sqlite")],
     )
     assert r.exit_code == 0, r.output
-    assert "clean_cities_2025 18 rows" in r.output and "changing_cities 1 rows" in r.output
+    from collections import Counter
+
+    from velometer.config import default_config_dir
+    from velometer.sources.external import load_figures_csv
+
+    curated = load_figures_csv(default_config_dir() / "external" / "figures.csv")
+    for source, n in Counter(f.source for f in curated).items():
+        assert f"{source} {n} rows" in r.output
 
 
 def test_reconcile_skips_cities_without_run(tmp_path):
@@ -233,26 +240,41 @@ def test_reconcile_skips_cities_without_run(tmp_path):
     assert "no done" in out.output and "skipped" in out.output
 
 
-def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatch):
+def _external(conn, source, metric, value, scope="whole_network"):
+    conn.execute(
+        "INSERT INTO external_figures (city_id, source, metric_name, value, unit, "
+        "reference_date, network_scope, length_basis, source_url, retrieved_at) "
+        "VALUES ('berlin',?,?,?,'km','2026-09-30',?,'unknown','u','2026-10-01')",
+        (source, metric, value, scope),
+    )
 
-    from velometer import run as R
 
-    db = tmp_path / "v.sqlite"
-    runner = CliRunner()
-    assert runner.invoke(app, ["init", "--db", str(db)]).exit_code == 0
-    import tests.test_run as tr
-
-    deps = tr._deps(tmp_path, [])
-    monkeypatch.setattr(R, "RunDeps", lambda: deps)
-    args = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
-    assert runner.invoke(app, args).exit_code == 0
+def _required_rows_matching_ours(db: Path) -> int:
+    """Insert Berlin's required external rows at our own values (no flagged gap); return run id."""
     with connect(db) as conn:
-        conn.execute(
-            "INSERT INTO external_figures (city_id, source, metric_name, value, unit, "
-            "reference_date, network_scope, length_basis, source_url, retrieved_at) "
-            "VALUES ('berlin','clean_cities_2025','network_km',1e9,'km','2026-09-30',"
-            "'whole_network','unknown','u','2026-10-01')"
+        (rid,) = conn.execute("SELECT MAX(id) FROM runs WHERE status='done'").fetchone()
+        one = lambda sql: conn.execute(sql, (rid,)).fetchone()[0]  # noqa: E731
+        cc = one("SELECT value FROM metrics WHERE run_id=? AND preset='clean_cities_2025'")
+        main = one(
+            "SELECT length_km FROM road_lengths WHERE run_id=? "
+            "AND road_class='main_incl_motorway_raw'"
         )
+        bnk = one(
+            "SELECT SUM(length_km) FROM tier_lengths WHERE run_id=? AND tier IN ('A','B','E') "
+            "AND length_basis='per_side'"
+        )
+        _external(conn, "clean_cities_2025", "protected_share_pct", cc)
+        _external(conn, "qecio_v2_10", "main_roads_km", main, "nuts3_DE300")
+        _external(conn, "bikenetkit_v1", "bike_network_km", bnk, "bikenetkit_bike_network")
+        conn.commit()
+    return rid
+
+
+def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    rid = _required_rows_matching_ours(db)
+    with connect(db) as conn:
+        _external(conn, "clean_cities_2025", "network_km", 1e9)
         conn.commit()
     report = tmp_path / "r.md"
     report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n\n## Explanations\n")
@@ -260,14 +282,39 @@ def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatc
     bad = runner.invoke(app, [*rargs, "--write", "--check"])
     assert bad.exit_code == 1
     assert "berlin/cc_network_km" in bad.output
+    assert f"explained-against: berlin={rid}" in bad.output  # the marker to set is printed
     with report.open("a") as f:
         f.write("\n### berlin/cc_network_km\n\nBecause.\n")
-    assert runner.invoke(app, [*rargs, "--check"]).exit_code == 0
+    still = runner.invoke(app, [*rargs, "--check"])
+    assert still.exit_code == 1 and "explanations out of date" in still.output
+    with report.open("a") as f:
+        f.write(f"\n<!-- explained-against: berlin={rid} -->\n")
+    ok = runner.invoke(app, [*rargs, "--check"])
+    assert ok.exit_code == 0, ok.output
+    assert f"Provenance: run {rid} " in report.read_text()
     # other cities have no done run: --check over all cities fails, --city berlin passes
     all_cities = runner.invoke(
         app, ["reconcile", "--db", str(db), "--report", str(report), "--check"]
     )
     assert all_cities.exit_code == 1 and "no done run for paris" in all_cities.output
+
+
+def test_reconcile_check_fails_when_a_required_comparison_has_no_figure(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    rid = _required_rows_matching_ours(db)
+    with connect(db) as conn:
+        conn.execute("DELETE FROM external_figures WHERE source='bikenetkit_v1'")
+        conn.commit()
+    report = tmp_path / "r.md"
+    report.write_text(
+        "<!-- reconcile:begin -->\n<!-- reconcile:end -->\n\n## Explanations\n\n"
+        f"<!-- explained-against: berlin={rid} -->\n\n### berlin/old_gap\n"
+    )
+    rargs = ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report)]
+    out = runner.invoke(app, [*rargs, "--check"])
+    assert out.exit_code == 1
+    assert "required comparison has no external figure: berlin/bnk_network_km" in out.output
+    assert "warning: ### berlin/old_gap matches no flagged gap" in out.output
 
 
 def _berlin_run(tmp_path, monkeypatch):

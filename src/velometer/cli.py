@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from velometer.config import CityConfig, ConfigError, default_config_dir, load_cities
-from velometer.db import SchemaError, create_schema, latest_done_run, open_db, upsert_cities
+from velometer.db import SchemaError, create_schema, open_db, upsert_cities
 
 
 class PlainOneway(StrEnum):
@@ -455,7 +455,12 @@ def reconcile(
     boundary: str = typer.Option("lau", help="Boundary kind."),
     classifier: str = CLASSIFIER_REPORT_OPT,
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
-    check: bool = typer.Option(False, "--check", help="Exit 1 if a flagged gap lacks an entry."),
+    check: bool = typer.Option(
+        False,
+        "--check",
+        help="Exit 1 if a flagged gap lacks an explanation, a required comparison has no figure,"
+        " or the explanations name another run than the latest.",
+    ),
     report: Path = typer.Option(  # noqa: B008
         Path("docs/reconciliation.md"), "--report", help="Report file."
     ),
@@ -467,36 +472,53 @@ def reconcile(
 
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
     version, params = _run_selector(config_dir, classifier)
-    all_by_city: dict[str, list] = {}
+    config_path = config_dir / "reconcile.yaml"
+    all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
     with open_db(db) as conn:
         create_schema(conn)
         for c in _all_cities(config_dir):
-            if latest_done_run(conn, c.id, boundary, version, params) is None:
-                if c.id in wanted:
-                    skipped.append(c.id)
-                    typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
-                continue
-            all_by_city[c.id] = rc.reconcile_city(
+            rep = rc.reconcile_city(
                 conn,
                 c.id,
-                config_dir / "reconcile.yaml",
+                config_path,
                 boundary,
                 classifier_version=version,
                 classifier_parameters=params,
             )
+            if rep is None:
+                if c.id in wanted:
+                    skipped.append(c.id)
+                    typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
+                continue
+            all_by_city[c.id] = rep
     shown = {k: v for k, v in all_by_city.items() if k in wanted}
     typer.echo(rc.render_block(shown))
     try:
         if write:  # every city with a done run, so --city never drops other tables
             rc.write_report(report, all_by_city)
         if check:
-            missing = rc.missing_explanations(report, [g for gs in shown.values() for g in gs])
+            gaps = [g for r in shown.values() for g in r.gaps]
+            missing = rc.missing_explanations(report, gaps)
             for key in missing:
                 typer.echo(f"missing explanation: ### {key}", err=True)
+            required = rc.missing_required(shown, rc.load_comparisons(config_path))
+            for key in required:
+                typer.echo(f"required comparison has no external figure: {key}", err=True)
+            stale_runs = rc.unexplained_runs(report, shown)
+            for line in stale_runs:
+                typer.echo(f"explanations out of date: {line}", err=True)
+            if stale_runs:
+                typer.echo(
+                    "after re-checking the explanations, set: "
+                    + rc.explained_against_marker(all_by_city),
+                    err=True,
+                )
+            for key in rc.stale_explanations(report, gaps, set(shown)):
+                typer.echo(f"warning: ### {key} matches no flagged gap", err=True)
             for cid in skipped:
                 typer.echo(f"no done run for {cid}: cannot check it", err=True)
-            if missing or skipped:
+            if missing or required or stale_runs or skipped:
                 raise typer.Exit(1)
     except (OSError, ValueError) as e:
         typer.echo(f"error: {e}", err=True)

@@ -240,7 +240,9 @@ def test_both_sides_run_does_not_displace_the_default_run(conn, tmp_path):
         " 'clean_cities_2025', 'protected_km', 1, 'km', NULL, 'whole_network', 'unknown', 'u',"
         " '2026-10-01')"
     )
-    (gap,) = reconcile_city(conn, "berlin", CFG_DIR / "reconcile.yaml")
+    report = reconcile_city(conn, "berlin", CFG_DIR / "reconcile.yaml")
+    assert report.run_id == default.run_id
+    (gap,) = report.gaps
     a_b = conn.execute(
         "SELECT SUM(length_km) FROM tier_lengths WHERE run_id=? AND tier IN ('A','B') "
         "AND length_basis='per_side'",

@@ -60,41 +60,46 @@ def load_figures_csv(path: Path) -> list[ExternalFigure]:
 
 
 def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigure]:
+    """QECIO rows of every city with a nuts3_code; each code must select exactly one row."""
     by_nuts = {c.nuts3_code: c for c in cities if c.nuts3_code}
     out = []
     got = retrieved_at(csv_path)
     digest = md5_of(csv_path)
     with csv_path.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            city = by_nuts.get(row["NUTS_ID"])
-            if city is None:
-                continue
-            ref = date.fromisoformat(row["Date"].strip()[:10])
-            for metric, col in QECIO_COLUMNS.items():
-                out.append(
-                    ExternalFigure(
-                        city_id=city.id,
-                        source="qecio_v2_10",
-                        metric_name=metric,
-                        value=float(row[col]),
-                        unit="km",
-                        reference_date=ref,
-                        network_scope=f"nuts3_{row['NUTS_ID']}",
-                        length_basis="unknown",
-                        source_url=QECIO_URL,
-                        retrieved_at=got,
-                        note="; ".join(
-                            p
-                            for p in (
-                                f"NUTS3 {row['NUTS_ID']} ({row['City']})",
-                                "QECIO halves unidirectional infrastructure",
-                                QECIO_CITY_NOTES.get(row["NUTS_ID"]),
-                                f"file md5 {digest}",
-                            )
-                            if p
-                        ),
-                    )
+        rows = [r for r in csv.DictReader(f) if r["NUTS_ID"] in by_nuts]
+    matched = Counter(r["NUTS_ID"] for r in rows)
+    bad = {code: matched[code] for code in by_nuts if matched[code] != 1}
+    if bad:
+        detail = ", ".join(f"{code} ({by_nuts[code].id}) matched {n}" for code, n in bad.items())
+        raise ValueError(f"{csv_path.name}: each nuts3_code must match one row: {detail}")
+    for row in rows:
+        city = by_nuts[row["NUTS_ID"]]
+        ref = date.fromisoformat(row["Date"].strip()[:10])
+        for metric, col in QECIO_COLUMNS.items():
+            out.append(
+                ExternalFigure(
+                    city_id=city.id,
+                    source="qecio_v2_10",
+                    metric_name=metric,
+                    value=float(row[col]),
+                    unit="km",
+                    reference_date=ref,
+                    network_scope=f"nuts3_{row['NUTS_ID']}",
+                    length_basis="unknown",
+                    source_url=QECIO_URL,
+                    retrieved_at=got,
+                    note="; ".join(
+                        p
+                        for p in (
+                            f"NUTS3 {row['NUTS_ID']} ({row['City']})",
+                            "QECIO halves unidirectional infrastructure",
+                            QECIO_CITY_NOTES.get(row["NUTS_ID"]),
+                            f"file md5 {digest}",
+                        )
+                        if p
+                    ),
                 )
+            )
     return out
 
 

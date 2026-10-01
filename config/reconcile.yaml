@@ -1,11 +1,14 @@
 # Comparison map (spec §3). ours: either {preset} (metric value), {road_class} (km),
 # or {tiers, basis, exclude?} (sum of tier km). Gap = (ours - theirs) / theirs.
+# required: true -> `reconcile --check` fails for a city with a run but no external row for it
+# (M2 acceptance: Clean Cities 2025, QECIO and BikeNetKit for every pilot city).
 threshold: 0.20
 date_gap_days: 365
 comparisons:
   - id: cc_ratio
     external: {source: clean_cities_2025, metric_name: protected_share_pct}
     ours: {preset: clean_cities_2025}
+    required: true
   - id: cc_km
     external: {source: clean_cities_2025, metric_name: protected_km}
     ours: {tiers: [A, B], basis: per_side}
@@ -15,6 +18,7 @@ comparisons:
   - id: qecio_main_km
     external: {source: qecio_v2_10, metric_name: main_roads_km}
     ours: {road_class: main_incl_motorway_raw}
+    required: true
   - id: qecio_tracks_km
     external: {source: qecio_v2_10, metric_name: cycle_tracks_km}
     ours: {tiers: [A, B/segregated], basis: qecio_weighted}
@@ -30,8 +34,9 @@ comparisons:
     tags: [definition_mismatch]   # QECIO total also counts limited-access roads
   - id: bnk_network_km
     external: {source: bikenetkit_v1, metric_name: bike_network_km}
-    ours: {tiers: [A, B, E], basis: per_side}
+    ours: {tiers: [A, B, E], basis: per_side}   # R10: BikeNetKit has no lanes (research §7)
     tags: [definition_mismatch, boundary_mismatch]
+    required: true
   - id: official_new_km
     external: {source: [official, changing_cities], metric_name: new_cycle_infra_km}
     informational: true   # new km in a year, not stock: listed, never flagged

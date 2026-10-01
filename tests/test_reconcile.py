@@ -55,6 +55,10 @@ def _fig(source, metric, value, scope="whole_network", ref=date(2025, 5, 14)):
     )
 
 
+def _rep(gaps, run_id=1, city="berlin"):
+    return RC.CityReport(city, run_id, f"run {run_id}", gaps)
+
+
 def test_ours_value_sums_tiers_with_subtype_and_exclude():
     comps = {c.id: c for c in RC.load_comparisons(CFG)}
     r = _results()
@@ -102,7 +106,7 @@ def test_write_report_replaces_only_generated_block_and_check_finds_missing(tmp_
         _fig("clean_cities_2025", "protected_km", 990),  # +1%: ok, needs no explanation
     ]
     gaps = RC.gaps_for(_results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
-    RC.write_report(md, {"berlin": gaps})
+    RC.write_report(md, {"berlin": _rep(gaps)})
     text = md.read_text()
     assert "old" not in text and "intro" in text and "Because." in text
     assert "qecio_tracks_km" in text.split("<!-- reconcile:end -->")[0]
@@ -166,7 +170,7 @@ def test_missing_ours_is_none_not_zero_and_never_flagged():
     # missing preset value / road class stay n/a and are never flagged
     for k in ("cc_ratio", "cc_network_km"):
         assert by[k].ours is None and by[k].gap_pct is None and not by[k].flagged
-    assert "n/a" in RC.render_block({"berlin": gaps})
+    assert "n/a" in RC.render_block({"berlin": _rep(gaps)})
 
 
 def test_loaded_metric_names_exist_in_the_loaders():
@@ -187,7 +191,74 @@ def test_write_report_is_idempotent(tmp_path):
     comps = RC.load_comparisons(CFG)
     figs = [_fig("clean_cities_2025", "protected_km", 925)]
     gaps = RC.gaps_for(_results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
-    RC.write_report(md, {"berlin": gaps})
+    RC.write_report(md, {"berlin": _rep(gaps)})
     once = md.read_text()
-    RC.write_report(md, {"berlin": gaps})
+    RC.write_report(md, {"berlin": _rep(gaps)})
     assert md.read_text() == once
+
+
+RUN = {
+    "id": 6,
+    "osm_timestamp": "2026-09-30T20:22:42Z",
+    "classifier_version": "v1",
+    "classifier_parameters": '{"plain_cycleway_on_oneway":"traffic_side"}',
+    "config_sha256": "ab" * 32,
+    "git_commit": "0123456789abcdef-dirty",
+    "boundary_kind": "lau",
+    "boundary_sha256": "cd" * 32,
+}
+
+
+def test_provenance_line_names_run_inputs_and_source_retrieval():
+    q = _fig("qecio_v2_10", "main_roads_km", 2149.6, "nuts3_DE300")
+    q = q.model_copy(update={"note": "NUTS3 DE300; file md5 " + "e" * 32})
+    line = RC.provenance_line(RUN, [_fig("clean_cities_2025", "protected_km", 925), q])
+    for part in (
+        "run 6",
+        "OSM 2026-09-30T20:22:42Z",
+        "classifier v1",
+        "traffic_side",
+        "abababababab",
+        "0123456-dirty",  # a dirty tree is never shown as a clean commit
+        "lau `cdcdcdcdcdcd`",
+        "clean_cities_2025 retrieved 2026-10-01",
+        "qecio_v2_10 retrieved 2026-10-01, file md5 " + "e" * 32,
+    ):
+        assert part in line, part
+    block = RC.render_block({"berlin": RC.CityReport("berlin", 6, line, [])})
+    assert f"Provenance: {line}" in block
+
+
+def test_explained_against_marker_must_name_the_latest_run(tmp_path):
+    md = tmp_path / "r.md"
+    reports = {"berlin": _rep([], 6), "paris": _rep([], 7, "paris")}
+    md.write_text("## Explanations\n")
+    assert len(RC.unexplained_runs(md, reports)) == 2  # no marker at all
+    md.write_text("## Explanations\n\n" + RC.explained_against_marker(reports) + "\n")
+    assert RC.explained_against(md) == {"berlin": 6, "paris": 7}
+    assert RC.unexplained_runs(md, reports) == []
+    newer = {**reports, "paris": _rep([], 9, "paris")}
+    assert RC.unexplained_runs(md, newer) == [
+        "paris: explanations written against run 7, latest is 9"
+    ]
+
+
+def test_stale_explanation_headings_are_reported_per_checked_city(tmp_path):
+    md = tmp_path / "r.md"
+    md.write_text("### berlin/cc_km\n\nx\n\n### berlin/old_key\n\ny\n\n### paris/cc_km\n")
+    comps = RC.load_comparisons(CFG)
+    figs = [_fig("clean_cities_2025", "protected_km", 500)]  # 1000 vs 500: flagged
+    gaps = RC.gaps_for(_results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
+    assert RC.stale_explanations(md, gaps, {"berlin"}) == ["berlin/old_key"]
+
+
+def test_required_comparisons_without_an_external_row_are_missing():
+    comps = RC.load_comparisons(CFG)
+    required = {c.id for c in comps if c.required}
+    assert required == {"cc_ratio", "qecio_main_km", "bnk_network_km"}
+    figs = [_fig("clean_cities_2025", "protected_share_pct", 17)]
+    gaps = RC.gaps_for(_results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
+    assert RC.missing_required({"berlin": _rep(gaps)}, comps) == [
+        "berlin/qecio_main_km",
+        "berlin/bnk_network_km",
+    ]
