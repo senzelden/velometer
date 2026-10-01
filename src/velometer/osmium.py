@@ -4,7 +4,8 @@ import json
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 
 INSTALL_HINT = "osmium-tool not found; install it with: sudo apt install osmium-tool"
@@ -40,6 +41,59 @@ def extract(src: Path, polygon_geojson: Path, dst: Path, strategy: str = "smart"
         str(src),
     )
     return dst
+
+
+def _part_path(dst: Path) -> Path:
+    """Sibling `<stem>.part<suffixes>` so osmium can still infer the format from the suffix."""
+    name = dst.name
+    stem, dot, rest = name.partition(".")
+    return dst.with_name(f"{stem}.part{dot}{rest}")
+
+
+def _atomic(dst: Path, build: Callable[[Path], None]) -> Path:
+    """Run `build(part)` to write a .part sibling, then replace `dst`; never leave the .part."""
+    part = _part_path(dst)
+    try:
+        build(part)
+        part.replace(dst)
+    finally:
+        part.unlink(missing_ok=True)
+    return dst
+
+
+def merge_history(srcs: list[Path], dst: Path) -> Path:
+    return _atomic(
+        dst,
+        lambda part: _run(
+            "merge", "--with-history", "--overwrite", "-o", str(part), *map(str, srcs)
+        ),
+    )
+
+
+def extract_history(src: Path, polygon_geojson: Path, dst: Path) -> Path:
+    return _atomic(
+        dst,
+        lambda part: _run(
+            "extract",
+            "--with-history",
+            "-p",
+            str(polygon_geojson),
+            "-s",
+            "complete_ways",
+            "--overwrite",
+            "-o",
+            str(part),
+            str(src),
+        ),
+    )
+
+
+def time_filter(src: Path, ts: datetime, dst: Path) -> Path:
+    stamp = ts.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return _atomic(
+        dst,
+        lambda part: _run("time-filter", "--overwrite", "-o", str(part), str(src), stamp),
+    )
 
 
 def fileinfo_timestamp(path: Path) -> datetime | None:

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="handwritten">
+ <node id="11" version="1" timestamp="2017-06-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.398"/>
+ <node id="12" version="1" timestamp="2017-06-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.402"/>
+ <node id="21" version="1" timestamp="2017-01-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.397"/>
+ <node id="21" version="2" timestamp="2020-05-01T00:00:00Z" uid="1" user="u" changeset="2" visible="true" lat="52.52" lon="13.5"/>
+ <node id="22" version="1" timestamp="2017-01-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.403"/>
+ <node id="22" version="2" timestamp="2020-05-01T00:00:00Z" uid="1" user="u" changeset="2" visible="true" lat="52.52" lon="13.51"/>
+ <node id="31" version="1" timestamp="2021-02-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.399"/>
+ <node id="32" version="1" timestamp="2021-02-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.401"/>
+ <node id="41" version="1" timestamp="2018-03-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.5"/>
+ <node id="42" version="1" timestamp="2018-03-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true" lat="52.52" lon="13.51"/>
+ <way id="1" version="1" timestamp="2017-06-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true"><nd ref="11"/><nd ref="12"/><tag k="highway" v="cycleway"/></way>
+ <way id="1" version="2" timestamp="2019-03-01T00:00:00Z" uid="1" user="u" changeset="2" visible="true"><nd ref="11"/><nd ref="12"/><tag k="highway" v="cycleway"/><tag k="segregated" v="yes"/></way>
+ <way id="2" version="1" timestamp="2017-01-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true"><nd ref="21"/><nd ref="22"/><tag k="highway" v="cycleway"/></way>
+ <way id="3" version="1" timestamp="2021-02-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true"><nd ref="31"/><nd ref="32"/><tag k="highway" v="cycleway"/></way>
+ <way id="3" version="2" timestamp="2022-08-01T00:00:00Z" uid="1" user="u" changeset="2" visible="false"></way>
+ <way id="4" version="1" timestamp="2018-03-01T00:00:00Z" uid="1" user="u" changeset="1" visible="true"><nd ref="41"/><nd ref="42"/><tag k="highway" v="cycleway"/></way>
+ <way id="4" version="2" timestamp="2019-06-01T00:00:00Z" uid="1" user="u" changeset="2" visible="true"><nd ref="41"/><nd ref="42"/><tag k="highway" v="cycleway"/><tag k="surface" v="asphalt"/></way>
+</osm>
