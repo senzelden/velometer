@@ -671,3 +671,21 @@ def test_two_history_sets_may_each_hold_a_done_run_for_the_same_year(conn):
         ids.append(rid)
     assert len(set(ids)) == 2
     assert conn.execute("SELECT COUNT(*) FROM runs WHERE status='done'").fetchone()[0] == 2
+
+
+def test_v5_db_with_old_done_key_index_is_repaired(tmp_path):
+    path = tmp_path / "v.sqlite"
+    with open_db(path) as c:
+        create_schema(c)
+        c.execute("DROP INDEX runs_done_key")
+        c.execute(
+            "CREATE UNIQUE INDEX runs_done_key ON runs (city_id, osm_timestamp, boundary_kind, "
+            "boundary_sha256, classifier_version, classifier_parameters, config_sha256, source) "
+            "WHERE status = 'done'"
+        )
+        c.commit()
+    with open_db(path) as c:
+        create_schema(c)
+        sql = c.execute("SELECT sql FROM sqlite_master WHERE name='runs_done_key'").fetchone()[0]
+        assert "region_md5" in sql
+        create_schema(c)  # idempotent

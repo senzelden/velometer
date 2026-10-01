@@ -221,6 +221,14 @@ _MIGRATIONS = {
 }
 
 
+def _repair_done_key_index(conn: sqlite3.Connection) -> None:
+    """A v5 database made before region_md5 joined the key keeps the old index: drop it so the
+    schema script recreates it."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE name='runs_done_key'").fetchone()
+    if row and "region_md5" not in row[0]:
+        conn.execute("DROP INDEX runs_done_key")
+
+
 def create_schema(conn: sqlite3.Connection) -> None:
     current = conn.execute("PRAGMA user_version").fetchone()[0]
     if current > SCHEMA_VERSION:
@@ -231,6 +239,7 @@ def create_schema(conn: sqlite3.Connection) -> None:
         for v in range(max(current, 1), SCHEMA_VERSION):
             if current:  # a fresh database (user_version 0) needs no migration
                 _MIGRATIONS[v](conn)
+        _repair_done_key_index(conn)
         conn.executescript(_SCHEMA)
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 

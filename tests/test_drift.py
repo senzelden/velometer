@@ -65,12 +65,18 @@ def test_way_lengths_are_clipped_km_per_way():
 COORDS = ((13.4, 52.5), (13.4147, 52.5))
 
 
-def synthetic(tags: dict[str, str], tier: str | None, rule_id: str | None):
+def synthetic(
+    tags: dict[str, str],
+    tier: str | None,
+    rule_id: str | None,
+    kind: str = "road_side",
+    attrs: dict | None = None,
+):
     """A measured one-way city whose single classified side is replaced by the given one."""
     way = WayRecord(10, tags, COORDS)
     result = measure([way], CLS, 25833)
-    side = WaySide(10, "right", "road_side", tags, COORDS)
-    classified = [Classified(side, tier, None, rule_id, {})]
+    side = WaySide(10, "right", kind, tags, COORDS)
+    classified = [Classified(side, tier, None, rule_id, attrs or {})]
     return drift_diagnostics(replace(result, classified=classified), [way], ACT)
 
 
@@ -96,3 +102,19 @@ def test_legacy_tagged_side_without_tier_is_not_legacy():
 def test_tier_none_side_without_cycling_tags_is_not_unrecognised():
     d = synthetic(ROAD, None, None)
     assert d == {"legacy_km": 0.0, "unrecognised_cycling_km": 0.0}
+
+
+@pytest.mark.parametrize("highway", ["footway", "path", "track"])
+def test_unmatched_standalone_with_bicycle_yes_is_not_unrecognised(highway):
+    tags = {"highway": highway, "bicycle": "yes"}
+    d = synthetic(tags, None, None, kind="standalone")
+    assert d == {"legacy_km": 0.0, "unrecognised_cycling_km": 0.0}
+
+
+def test_road_side_with_unknown_cycleway_value_is_unrecognised():
+    tags = {**ROAD, "cycleway": "bogus"}
+    d = synthetic(tags, None, None, attrs={"unknown_value": "bogus"})
+    assert d["unrecognised_cycling_km"] > 0
+    # the unknown_value clause alone suffices, whatever the tier
+    d = synthetic(tags, "D", "D_lane", attrs={"unknown_value": "bogus"})
+    assert d["unrecognised_cycling_km"] > 0

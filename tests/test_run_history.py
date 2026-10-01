@@ -6,7 +6,7 @@ import pytest
 from shapely import box
 
 from velometer import run as R
-from velometer.config import default_config_dir, load_cities
+from velometer.config import default_config_dir, load_cities, load_classifier
 from velometer.db import (
     canonical_parameters,
     create_schema,
@@ -18,12 +18,15 @@ from velometer.db import (
     upsert_cities,
 )
 from velometer.models import ActivityYear, Boundary, Population
+from velometer.pipeline.measure import measure
 from velometer.pipeline.read import read_ways
+from velometer.pipeline.tags import parts
 from velometer.sources.boundaries import BoundaryRecord
 from velometer.sources.geofabrik import HistoryFile, IndexSnapshot, history_set_md5
 
 CFG_DIR = default_config_dir()
 CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
+CLS = load_classifier(CFG_DIR / "classifier" / "v1.yaml")
 MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
 SHA = "s" * 64
 INDEX = {
@@ -288,6 +291,43 @@ def test_history_set_provenance_recorded_once(conn, tmp_path):
     json.dumps(hs)
 
 
+def test_keyboard_interrupt_leaves_the_year_failed_not_running_and_reraises(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+
+    def interrupt(hist, ts, data_dir):
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        R.run_history(
+            conn,
+            CITY,
+            range(2019, 2021),
+            data_dir=tmp_path,
+            config_dir=CFG_DIR,
+            deps=fakes.deps(snapshot_at=interrupt),
+        )
+    rows = conn.execute("SELECT status, error FROM runs").fetchall()
+    assert rows == [("failed", "KeyboardInterrupt: ")]
+
+
+def test_activity_failure_is_a_failed_outcome_and_the_year_runs_stay_done(conn, tmp_path):
+    def boom(*args, **kw):
+        raise RuntimeError("activity boom")
+
+    out = R.run_history(
+        conn,
+        CITY,
+        range(2019, 2021),
+        data_dir=tmp_path,
+        config_dir=CFG_DIR,
+        deps=Fakes(tmp_path).deps(activity=boom),
+    )
+    assert [o.status for o in out] == ["done", "done", "failed"]
+    assert out[2].run_id is None and "activity boom" in out[2].error
+    assert [r[1] for r in _runs(conn)] == ["done", "done"]
+    assert fetch_activity(conn, "berlin", "lau", Fakes(tmp_path).set_md5) == []
+
+
 @pytest.mark.slow
 def test_berlin_2018_history_run(tmp_path):
     """Real Geofabrik history (login-only, about 400 MB); data/ in the repo is the cache."""
@@ -313,10 +353,22 @@ def test_berlin_2018_history_run(tmp_path):
         print("SLOWNUMBERS", {"headline": headline[0], **diag})
         snap = next((data / "snapshots").glob("berlin_lau_*_20180101.osm.pbf"))
         ways = read_ways(snap).ways
-        legacy = [
-            w
+        legacy_ids = {
+            w.id
             for w in ways
-            if str(w.tags.get("cycleway", "")).startswith("opposite")
+            if any(p.startswith("opposite") for p in parts(w.tags.get("cycleway")))
             or any(k.startswith("sidewalk:") and k.endswith(":bicycle") for k in w.tags)
-        ]
-        assert legacy
+        }
+        assert legacy_ids
+        result = measure(ways, CLS, CITY.epsg)  # unclipped: every legacy way must get a tier
+        by_way = {}
+        for c in result.classified:
+            by_way.setdefault(c.side.way_id, []).append(c)
+        # a legacy-tagged way's cycling-tagged road sides all classify; none is unrecognised
+        for wid in legacy_ids:
+            for c in by_way.get(wid, []):
+                if c.side.kind == "road_side" and (
+                    "opposite" in c.side.tags.get("cycleway", "")
+                    or any(k.startswith("sidewalk:") for k in c.side.tags)
+                ):
+                    assert c.tier is not None and "unknown_value" not in c.attrs, wid
