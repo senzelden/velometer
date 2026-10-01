@@ -156,7 +156,7 @@ Retries are bounded (3) with back-off.
   - `write_result(run_id, city_id, MeasureResult, metrics)`, in one transaction;
   - `upsert_boundary` and `upsert_external_figures`.
 - Every connection is used as a context manager.
-- **Schema v3 (Ruling R12, final fix dispatch):** an additive migration (`ALTER TABLE ADD COLUMN`) adds `runs.population_value/year/source`, written at run start, and `runs.config_sha256` (sha256 of the classifier YAML bytes followed by `presets.yaml` bytes). `config_sha256` is part of the run key and the done-run unique index; pre-v3 runs keep NULL and are never reused.
+- **Schema v3 (Ruling R12, final fix dispatch):** an additive migration (`ALTER TABLE ADD COLUMN`) adds `runs.population_value/year/source`, written at run start, and `runs.config_sha256` (sha256 over each config file as `name NUL bytes NUL`, classifier YAML then `presets.yaml`; Task 10 changed this recipe from plain concatenation, so runs made before it are not reused). `config_sha256` is part of the run key and the done-run unique index; pre-v3 runs keep NULL and are never reused.
 
 ### `run.py` (orchestration)
 `run_city(city, boundary_kind="lau", classifier="v1", force=False) -> RunOutcome` chains these steps:

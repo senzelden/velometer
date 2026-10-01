@@ -640,6 +640,13 @@ def reconcile(
     """
     from velometer import reconcile as rc
 
+    if write and clean_cities_basis is not None:
+        typer.echo(
+            "error: --write follows presets.yaml; drop --clean-cities-basis "
+            "(or change clean_cities_basis in presets.yaml and re-run)",
+            err=True,
+        )
+        raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
     sel = _run_selector(config_dir, classifier, clean_cities_basis)
     config_path = config_dir / "reconcile.yaml"

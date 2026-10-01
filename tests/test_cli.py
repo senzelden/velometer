@@ -346,6 +346,19 @@ def test_reconcile_write_with_city_keeps_other_cities(tmp_path, monkeypatch):
     assert "#### berlin" in text and "#### paris" in text
 
 
+def test_reconcile_write_refuses_a_basis_override(tmp_path, monkeypatch):
+    # the committed report block follows presets.yaml; an override is for looking, not writing
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    report = tmp_path / "r.md"
+    before = "<!-- reconcile:begin -->\n<!-- reconcile:end -->\n"
+    report.write_text(before)
+    base = ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report)]
+    out = runner.invoke(app, [*base, "--write", "--clean-cities-basis", "qecio_weighted"])
+    assert out.exit_code == 2, out.output
+    assert "--clean-cities-basis" in out.output
+    assert report.read_text() == before
+
+
 def test_reconcile_missing_markers_or_report_exit_1_without_traceback(tmp_path, monkeypatch):
     runner, db = _berlin_run(tmp_path, monkeypatch)
     base = ["reconcile", "--city", "berlin", "--db", str(db)]
@@ -505,9 +518,7 @@ def test_reconcile_switches_the_flagged_basis_and_always_shows_the_other(tmp_pat
     assert "| info |" in _cc_km_gap_line(weighted.output, "berlin/cc_km~per_side")
     # --check follows the selected basis: the weighted reading flags cc_km (and wants a note)
     report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
-    check = runner.invoke(
-        app, [*args, "--clean-cities-basis", "qecio_weighted", "--check", "--write"]
-    )
+    check = runner.invoke(app, [*args, "--clean-cities-basis", "qecio_weighted", "--check"])
     assert check.exit_code == 1 and "missing explanation: ### berlin/cc_km" in check.output
     assert "cc_km~" not in check.output.split("missing explanation")[1]
 
