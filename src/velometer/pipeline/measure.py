@@ -3,6 +3,9 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from shapely.geometry.base import BaseGeometry
+from shapely.prepared import prep
+
 from velometer.config import ClassifierConfig, Preset
 from velometer.models import Completeness, Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify, classify_ways
@@ -11,6 +14,44 @@ from velometer.pipeline.explode import explode
 from velometer.pipeline.geometry import Projector, length_km
 from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, DualPair, DuplicateFlag, WayRecord
+
+COMPLETENESS_KEYS = {
+    "width": ("width", "cycleway:width"),
+    "surface": ("surface", "cycleway:surface"),
+    "segregated": ("segregated", "cycleway:segregated"),
+}
+
+
+def clipped_length_km(line, prepared, boundary: BaseGeometry) -> float:
+    """Length of `line` inside `boundary` (both in the city EPSG); `prepared` is prep(boundary)."""
+    if prepared.contains(line):
+        return length_km(line)
+    if not prepared.intersects(line):
+        return 0.0
+    return length_km(line.intersection(boundary))
+
+
+def _completeness(classified: list[Classified], lengths: dict[int, float]) -> list[Completeness]:
+    totals: dict[str, float] = defaultdict(float)
+    have: dict[tuple[str, str], float] = defaultdict(float)
+    for c in classified:
+        if c.tier not in ("A", "B", "C", "D", "E"):
+            continue
+        length = lengths[c.side.way_id]
+        totals[c.tier] += length
+        for name, keys in COMPLETENESS_KEYS.items():
+            if any(c.side.tags.get(k) for k in keys):
+                have[(c.tier, name)] += length
+    return [
+        Completeness(
+            tier=t,
+            share_with_width=have[(t, "width")] / total,
+            share_with_surface=have[(t, "surface")] / total,
+            share_with_segregated=have[(t, "segregated")] / total,
+        )
+        for t, total in sorted(totals.items())
+        if total > 0
+    ]
 
 
 @dataclass(frozen=True)
@@ -90,9 +131,24 @@ def _plain_oneway_report(
     return PlainOnewayReport(mode, other, n, road_km, {t: v for t, v in sorted(delta.items()) if v})
 
 
-def measure(ways: list[WayRecord], cfg: ClassifierConfig, epsg: int) -> MeasureResult:
+def measure(
+    ways: list[WayRecord],
+    cfg: ClassifierConfig,
+    epsg: int,
+    boundary: BaseGeometry | None = None,
+) -> MeasureResult:
+    """Aggregate lengths. With `boundary` (Polygon/MultiPolygon in `epsg`) lengths are clipped to
+    it; dedupe and dual-carriageway pairing still use the full geometry.
+
+    Completeness shares are length-weighted per tier; `share_with_segregated` is computed for
+    every tier but is meaningful only for B.
+    """
     proj = Projector(epsg)
-    lengths = {w.id: length_km(proj.line(w.coords)) for w in ways}
+    if boundary is None:
+        lengths = {w.id: length_km(proj.line(w.coords)) for w in ways}
+    else:
+        prepared = prep(boundary)
+        lengths = {w.id: clipped_length_km(proj.line(w.coords), prepared, boundary) for w in ways}
     classified = classify_ways(ways, cfg)
 
     km: dict[tuple, float] = defaultdict(float)
@@ -141,6 +197,7 @@ def measure(ways: list[WayRecord], cfg: ClassifierConfig, epsg: int) -> MeasureR
         classified=classified,
         unknown_values=dict(unknown),
         plain_oneway=_plain_oneway_report(ways, classified, cfg, lengths),
+        completeness=_completeness(classified, lengths),
     )
 
 

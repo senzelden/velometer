@@ -1,8 +1,10 @@
 from pathlib import Path
 
 import pytest
+from shapely import MultiPolygon, Polygon
 
 from velometer.config import Preset, default_config_dir, load_classifier, load_presets
+from velometer.pipeline.geometry import Projector
 from velometer.pipeline.measure import compute_metrics, measure, road_length
 from velometer.pipeline.read import read_ways
 from velometer.pipeline.types import WayRecord
@@ -213,3 +215,60 @@ def test_plain_oneway_delta_equals_actual_switch_including_tier_changes():
             got = cur.plain_oneway.delta_per_side_km.get(tier, 0.0)
             assert got == pytest.approx(want, abs=1e-9), (mode, tier)
         assert any(cur.plain_oneway.delta_per_side_km.values())  # not vacuous
+
+
+def _proj_box(lon0, lat0, lon1, lat1, epsg=25833):
+    p = Projector(epsg)
+    ring = p.line(((lon0, lat0), (lon1, lat0), (lon1, lat1), (lon0, lat1), (lon0, lat0)))
+    return Polygon(ring.coords)
+
+
+TRACK = {"highway": "cycleway"}
+
+
+def test_clip_counts_only_inside_part():
+    way = WayRecord(1, TRACK, ((13.40, 52.5), (13.42, 52.5)))
+    full = measure([way], CFG, 25833)
+    half = measure([way], CFG, 25833, boundary=_proj_box(13.39, 52.49, 13.41, 52.51))
+    assert km(half, "A", "per_side") == pytest.approx(km(full, "A", "per_side") / 2, rel=0.01)
+
+
+def test_way_outside_boundary_contributes_zero():
+    road = {"highway": "primary", "cycleway:both": "track"}
+    ways = [WayRecord(1, road, ((13.50, 52.5), (13.52, 52.5)))]
+    res = measure(ways, CFG, 25833, boundary=_proj_box(13.39, 52.49, 13.41, 52.51))
+    assert km(res, "A", "per_side") == 0
+    assert road_length(res, "main_excl_motorway") == 0
+
+
+def test_clip_multipolygon_with_hole():
+    outer = _proj_box(13.39, 52.49, 13.43, 52.51)
+    hole = _proj_box(13.40, 52.495, 13.41, 52.505)
+    other = _proj_box(13.44, 52.49, 13.45, 52.51)
+    mp = MultiPolygon([Polygon(outer.exterior.coords, [hole.exterior.coords]), other])
+    way = WayRecord(1, TRACK, ((13.38, 52.5), (13.46, 52.5)))  # crosses everything
+    full_km = km(measure([way], CFG, 25833), "A", "per_side")
+    res = measure([way], CFG, 25833, boundary=mp)
+    # inside: 13.39-13.40 + 13.41-13.43 + 13.44-13.45 = 0.04 of 0.08 degrees of longitude
+    assert km(res, "A", "per_side") == pytest.approx(full_km * 0.04 / 0.08, rel=0.01)
+
+
+def test_completeness_shares_are_length_weighted():
+    ways = [
+        WayRecord(
+            1,
+            {"highway": "cycleway", "width": "2", "surface": "asphalt"},
+            ((13.40, 52.5), (13.42, 52.5)),
+        ),
+        WayRecord(2, {"highway": "cycleway"}, ((13.40, 52.6), (13.41, 52.6))),
+        WayRecord(
+            3,
+            {"highway": "primary", "cycleway:right": "track", "cycleway:right:width": "1.5"},
+            ((13.40, 52.7), (13.41, 52.7)),
+        ),
+    ]
+    res = measure(ways, CFG, 25833)
+    a = next(c for c in res.completeness if c.tier == "A")
+    # widths: way 1 (2 units) + way 3 (1 unit) of 4 units; surface: way 1 only
+    assert a.share_with_width == pytest.approx(3 / 4, rel=0.02)
+    assert a.share_with_surface == pytest.approx(2 / 4, rel=0.02)
