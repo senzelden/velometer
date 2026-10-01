@@ -90,3 +90,22 @@ def test_sidewalk_bicycle_legacy_side():
 def test_bicycle_road_adds_self_side_plus_side_tags():
     out = sides({"highway": "residential", "bicycle_road": "yes", "cycleway:right": "lane"})
     assert set(out) == {("self", "standalone"), ("right", "road_side")}
+
+
+def test_oneway_value_with_mixed_parts_is_oneway_if_any_part_yes():
+    out = sides({"highway": "tertiary", "oneway": "yes;no", "cycleway": "lane"})
+    assert set(out) == {("right", "road_side")}
+
+
+def test_cycle_street_key_value_with_mixed_parts_creates_self_if_any_part_yes():
+    out = sides(
+        {"highway": "residential", "bicycle_road": "yes;designated", "cycleway:right": "lane"}
+    )
+    assert set(out) == {("self", "standalone"), ("right", "road_side")}
+
+
+def test_plain_cycleway_applies_to_both_sides_on_non_oneway_road():
+    out = sides({"highway": "secondary", "cycleway": "lane"})
+    assert set(out) == {("left", "road_side"), ("right", "road_side")}
+    assert out[("left", "road_side")].tags["cycleway"] == "lane"
+    assert out[("right", "road_side")].tags["cycleway"] == "lane"

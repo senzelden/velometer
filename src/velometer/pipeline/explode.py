@@ -1,5 +1,7 @@
 """Explode OSM ways into way-sides (ADR 0002: classification is per way-side)."""
 
+from collections.abc import Mapping
+
 from velometer.config import RoadClasses
 from velometer.pipeline.types import WayRecord, WaySide
 
@@ -9,7 +11,14 @@ ROAD_CARRY = ("highway", "access", "bicycle", "area", "oneway", "name", "ref", "
 CYCLE_STREET_KEYS = ("bicycle_road", "cyclestreet", "cycle_street")
 
 
-def _side_value(tags, side: str, oneway: bool) -> str | None:
+def _parts(value: str | None) -> set[str]:
+    """Split tag value on `;` and strip, returning non-empty parts."""
+    if value is None:
+        return set()
+    return {p.strip() for p in value.split(";") if p.strip()}
+
+
+def _side_value(tags: Mapping[str, str], side: str, oneway: bool) -> str | None:
     for key in (f"cycleway:{side}", "cycleway:both"):
         if key in tags:
             return tags[key]
@@ -23,7 +32,7 @@ def _side_value(tags, side: str, oneway: bool) -> str | None:
     return plain
 
 
-def _collect_sub(tags, side: str, sub: str) -> str | None:
+def _collect_sub(tags: Mapping[str, str], side: str, sub: str) -> str | None:
     for prefix in (f"cycleway:{side}", "cycleway:both", "cycleway"):
         base = f"{prefix}:{sub}"
         vals = [v for k, v in tags.items() if k == base or k.startswith(base + ":")]
@@ -33,8 +42,8 @@ def _collect_sub(tags, side: str, sub: str) -> str | None:
     return None
 
 
-def _resolve_side(tags, side: str) -> tuple[dict[str, str], bool] | None:
-    oneway = tags.get("oneway") in ONEWAY_YES - {"-1"}
+def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], bool] | None:
+    oneway = any(p in {"yes", "1", "true"} for p in _parts(tags.get("oneway")))
     value = _side_value(tags, side, oneway)
     contraflow = False
     if value == "opposite":
@@ -61,7 +70,7 @@ def explode(way: WayRecord, road_classes: RoadClasses) -> list[WaySide]:
     if highway not in road_classes.carriageway:
         return [WaySide(way.id, "self", "standalone", dict(way.tags), way.coords)]
     result: list[WaySide] = []
-    if any(way.tags.get(k) == "yes" for k in CYCLE_STREET_KEYS):
+    if any(any(p == "yes" for p in _parts(way.tags.get(k))) for k in CYCLE_STREET_KEYS):
         result.append(WaySide(way.id, "self", "standalone", dict(way.tags), way.coords))
     carried = {f"road:{k}": way.tags[k] for k in ROAD_CARRY if k in way.tags}
     for side in ("left", "right"):
