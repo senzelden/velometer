@@ -20,8 +20,8 @@ Classification happens at the **way-side** level. Road ways are split into left 
 | Tier | Meaning | Core tags |
 |---|---|---|
 | A | separated cycle track | `highway=cycleway` with `foot!=designated` or `segregated=yes`; `cycleway:*=track\|opposite_track` |
-| B | shared foot/cycle path | `highway=path\|footway\|pedestrian` + `bicycle=designated`; `highway=cycleway` + `foot=designated` + `segregated!=yes` |
-| C | physically buffered lane | `cycleway:*=lane` with a non-paint `separation`/`buffer` value |
+| B | shared foot/cycle path | `highway=path\|footway\|pedestrian` + `bicycle=designated`; `highway=cycleway` + `foot=designated` + `segregated!=yes`; `cycleway:*=track` + `cycleway:*:segregated=no` (`B_track_shared`) |
+| C | physically buffered lane | `cycleway:*=lane` with a physical separation value on the traffic side of the lane (undirected `separation`, or `separation:left` for a right-side lane / `separation:right` for a left-side lane); `buffer` (a width) is not considered |
 | D | painted lane | `cycleway:*=lane` otherwise; advisory lanes become sub-attribute `advisory` |
 | E | cycle street / shared | `bicycle_road=yes`, `cyclestreet=yes`; `share_busway` becomes sub-attribute `bus` |
 
@@ -43,6 +43,7 @@ The rules are data (`config/classifier/v1.yaml`), not code. Every classification
 ### Deliberate divergences from QECIO
 - `highway=footway|path|pedestrian` + `bicycle=designated` + `segregated=yes` is a QECIO *cycle track*. We put it in **tier B** and keep `segregated=yes` as an attribute. The shared-path inflation in German, Polish and Finnish data then stays visible, and QECIO's "tracks only" figure is still available as A + B[segregated=yes].
 - QECIO doesn't separate buffered from painted lanes (its lanes = our C + D).
+- `highway=path` + `bicycle=designated` + `foot=no` is tier A (cycle-only path); `access=no` and `construction=yes` are excluded.
 - Limited-access roads (QECIO's "extended" indicator) have no tier in v1.
 
 ## Consequences

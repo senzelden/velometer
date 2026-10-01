@@ -23,6 +23,11 @@ rules:
     tier: excluded
     subtype: lifecycle
     match: {highway: [construction, proposed]}
+  - id: X_construction_tag
+    applies_to: standalone
+    tier: excluded
+    subtype: lifecycle
+    match: {construction: "yes"}
   - id: X_area
     applies_to: standalone
     tier: excluded
@@ -37,12 +42,12 @@ rules:
     applies_to: standalone
     tier: excluded
     subtype: private
-    match: {access: private, bicycle: {not_in: [yes, designated, permissive]}}
+    match: {access: [private, "no"], bicycle: {not_in: [yes, designated, permissive]}}
   - id: X_road_private
     applies_to: road_side
     tier: excluded
     subtype: private
-    match: {"road:access": private, "road:bicycle": {not_in: [yes, designated, permissive]}}
+    match: {"road:access": [private, "no"], "road:bicycle": {not_in: [yes, designated, permissive]}}
   - id: X_bicycle_no
     applies_to: standalone
     tier: excluded
@@ -60,6 +65,11 @@ rules:
     match:
       highway: cycleway
       any: [{foot: {not_in: [designated]}}, {segregated: "yes"}]
+  - id: B_track_shared
+    applies_to: road_side
+    tier: B
+    subtype: shared
+    match: {cycleway: track, "cycleway:segregated": "no"}
   - id: A_track_side
     applies_to: road_side
     tier: A
@@ -69,6 +79,10 @@ rules:
     applies_to: standalone
     tier: B
     match: {highway: cycleway, foot: designated}
+  - id: A_path_cycle_only
+    applies_to: standalone
+    tier: A
+    match: {highway: path, bicycle: designated, foot: ["no"]}
   - id: B_path_segregated
     applies_to: standalone
     tier: B
@@ -92,7 +106,7 @@ rules:
   - id: C_lane_physical
     applies_to: road_side
     tier: C
-    match: {cycleway: lane, "cycleway:separation": {in_list: physical_separation}}
+    match: {cycleway: lane, "cycleway:separation:traffic": {in_list: physical_separation}}
   - id: D_lane_advisory
     applies_to: road_side
     tier: D

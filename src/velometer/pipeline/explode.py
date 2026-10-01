@@ -42,6 +42,22 @@ def _collect_sub(tags: Mapping[str, str], side: str, sub: str) -> str | None:
     return None
 
 
+def _collect_traffic_separation(tags: Mapping[str, str], side: str) -> str | None:
+    """Separation on the traffic side of the lane (undirected + `:left` for a right-side lane)."""
+    traffic = "left" if side == "right" else "right"
+    for prefix in (f"cycleway:{side}", "cycleway:both", "cycleway"):
+        base = f"{prefix}:separation"
+        if not any(k == base or k.startswith(base + ":") for k in tags):
+            continue
+        parts = _parts(tags.get(base)) | _parts(tags.get(f"{base}:{traffic}"))
+        return ";".join(sorted(parts)) or None
+    return None
+
+
+def _sidewalk_is_separate(tags: Mapping[str, str], side: str) -> bool:
+    return any(tags.get(k) == "separate" for k in (f"sidewalk:{side}", "sidewalk:both", "sidewalk"))
+
+
 def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], bool] | None:
     oneway = any(p in {"yes", "1", "true"} for p in _parts(tags.get("oneway")))
     value = _side_value(tags, side, oneway)
@@ -57,8 +73,11 @@ def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], b
             joined = _collect_sub(tags, side, sub)
             if joined is not None:
                 out[f"cycleway:{sub}"] = joined
+        traffic_sep = _collect_traffic_separation(tags, side)
+        if traffic_sep is not None:
+            out["cycleway:separation:traffic"] = traffic_sep
     sidewalk = tags.get(f"sidewalk:{side}:bicycle", tags.get("sidewalk:both:bicycle"))
-    if sidewalk is not None:
+    if sidewalk is not None and not _sidewalk_is_separate(tags, side):
         out["sidewalk_bicycle"] = sidewalk
     return (out, contraflow) if out else None
 

@@ -108,3 +108,32 @@ cases:
   road_private:
     sides:
       - {rule: X_road_private, side: right, tier: excluded, way: 10}
+  D_lane_door_zone:
+    sides:
+      - {rule: D_lane, side: right, tier: D, way: 10}
+  D_lane_kerb_curbside:
+    sides:
+      - {rule: D_lane, side: right, tier: D, way: 10}
+  B_track_shared:
+    sides:
+      - {rule: B_track_shared, side: right, tier: B, way: 10}
+  X_road_area:
+    sides:
+      - {rule: X_road_area, side: right, tier: excluded, way: 10}
+  B_share_sidewalk:
+    sides:
+      - {rule: B_share_sidewalk, side: right, tier: B, way: 10}
+  E_cycle_street_key:
+    sides:
+      - {rule: E_cycle_street, side: self, tier: E, way: 10}
+  X_access_no_cycleway:
+    sides:
+      - {rule: X_private, side: self, tier: excluded, way: 10}
+  X_cycleway_under_construction:
+    sides:
+      - {rule: X_construction_tag, side: self, tier: excluded, way: 10}
+  A_path_foot_no:
+    sides:
+      - {rule: A_path_cycle_only, side: self, tier: A, way: 10}
+  sidewalk_separate_designated:
+    sides: []

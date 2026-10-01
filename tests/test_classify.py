@@ -21,10 +21,15 @@ def observed(case: str, cfg: ClassifierConfig = CFG) -> set[tuple]:
     return {(c.side.way_id, c.side.side, c.tier, c.rule_id) for c in run_case(case, cfg)}
 
 
+def observed_outcome(case: str, cfg: ClassifierConfig = CFG) -> set[tuple]:
+    """Outcome without rule_id, so a rule removal cannot pass merely by renaming the rule."""
+    return {(c.side.way_id, c.side.side, c.tier, c.subtype) for c in run_case(case, cfg)}
+
+
 def test_every_case_file_has_an_expectation_and_vice_versa():
     files = {p.stem for p in (FIX / "cases").glob("*.osm")}
     assert files == set(EXPECTED)
-    assert len(files) >= 34
+    assert len(files) >= 44
 
 
 @pytest.mark.parametrize("case", sorted(EXPECTED))
@@ -67,10 +72,13 @@ def _without(rule_id: str) -> ClassifierConfig:
         ("X_private", "X_private_cycleway"),
         ("X_road_private", "road_private"),
         ("B_sidewalk_designated", "legacy_sidewalk_designated"),
+        ("X_road_area", "X_road_area"),
+        ("B_track_shared", "B_track_shared"),
+        ("B_share_sidewalk", "B_share_sidewalk"),
     ],
 )
 def test_rule_is_load_bearing(rule_id, case):
-    assert observed(case, _without(rule_id)) != observed(case)
+    assert observed_outcome(case, _without(rule_id)) != observed_outcome(case)
 
 
 def test_rule_order_matters_track_before_sidewalk():
@@ -82,3 +90,16 @@ def test_rule_order_matters_track_before_sidewalk():
     )
     (c,) = classify_ways([way], CFG)
     assert (c.tier, c.rule_id) == ("A", "A_track_side")
+
+
+def test_is_bidirectional_semantics():
+    from velometer.pipeline.classify import is_bidirectional
+    from velometer.pipeline.types import WaySide
+
+    def side(tags):
+        return WaySide(1, "self", "standalone", tags, ((13.4, 52.5), (13.41, 52.5)))
+
+    assert is_bidirectional(side({"highway": "cycleway"}))
+    assert not is_bidirectional(side({"highway": "cycleway", "oneway": "no;yes"}))
+    assert not is_bidirectional(side({"highway": "cycleway", "oneway:bicycle": "-1"}))
+    assert not is_bidirectional(side({"highway": "cycleway", "oneway:bicycle": "true"}))
