@@ -143,3 +143,56 @@ def test_empty_md5_body_raises_download_error(tmp_path):
 
     with pytest.raises(DownloadError, match="md5"):
         geofabrik.fetch_region("r", tmp_path, client=_client(handler))
+
+
+def test_resolve_dated_retries_a_trailing_slash_redirect():
+    # Geofabrik's mirror intermittently answers 301 -> "<file>.osm.pbf/" (seen 2026-10-01);
+    # that is not a dated file, and appending ".md5" to it gives ".../.md5" (404/502).
+    answers = iter(
+        [
+            httpx.Response(301, headers={"location": "berlin-latest.osm.pbf/"}),
+            httpx.Response(307, headers={"location": "berlin-260930.osm.pbf"}),
+        ]
+    )
+    url = geofabrik.resolve_dated(
+        "europe/germany/berlin", _client(lambda r: next(answers)), backoff_s=0
+    )
+    assert url == "https://download.geofabrik.de/europe/germany/berlin-260930.osm.pbf"
+
+
+def test_resolve_dated_gives_up_on_a_persistent_trailing_slash_redirect():
+    h = {"location": "berlin-latest.osm.pbf/"}
+    with pytest.raises(DownloadError, match="trailing slash"):
+        geofabrik.resolve_dated(
+            "r", _client(lambda r: httpx.Response(301, headers=h)), retries=2, backoff_s=0
+        )
+
+
+def test_resolve_dated_retries_a_transient_5xx():
+    answers = iter(
+        [httpx.Response(502), httpx.Response(307, headers={"location": "b-260930.osm.pbf"})]
+    )
+    url = geofabrik.resolve_dated("r", _client(lambda r: next(answers)), backoff_s=0)
+    assert url.endswith("/b-260930.osm.pbf")
+
+
+def test_fetch_region_retries_a_transient_md5_error(tmp_path, monkeypatch):
+    from datetime import UTC, datetime
+
+    md5_calls = []
+
+    def handler(r):
+        if r.method == "HEAD":
+            return httpx.Response(307, headers={"location": "b-260930.osm.pbf"})
+        if r.url.path.endswith(".md5"):
+            md5_calls.append(1)
+            if len(md5_calls) == 1:
+                return httpx.Response(502)
+            return httpx.Response(200, text=f"{MD5}  b-260930.osm.pbf\n")
+        return httpx.Response(200, content=BODY)
+
+    monkeypatch.setattr(
+        geofabrik, "fileinfo_timestamp", lambda p: datetime(2026, 9, 30, tzinfo=UTC)
+    )
+    rf = geofabrik.fetch_region("r", tmp_path, client=_client(handler), backoff_s=0)
+    assert rf.md5 == MD5 and len(md5_calls) == 2

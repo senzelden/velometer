@@ -31,7 +31,7 @@ def new_client() -> httpx.Client:
     return httpx.Client(headers={"User-Agent": user_agent()}, timeout=120, follow_redirects=True)
 
 
-def _is_transient(e: httpx.HTTPError) -> bool:
+def is_transient(e: httpx.HTTPError) -> bool:
     if isinstance(e, httpx.HTTPStatusError):
         code = e.response.status_code
         return code >= 500 or code in (408, 429)
@@ -76,7 +76,7 @@ def fetch(
                 return dst
             except httpx.HTTPError as e:
                 part.unlink(missing_ok=True)
-                if attempt == retries or not _is_transient(e):
+                if attempt == retries or not is_transient(e):
                     raise DownloadError(f"{url}: {e}") from e
                 time.sleep(backoff_s * attempt)
         raise AssertionError("unreachable")  # pragma: no cover
