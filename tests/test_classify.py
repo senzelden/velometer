@@ -78,6 +78,9 @@ def _without(rule_id: str) -> ClassifierConfig:
         ("X_road_construction", "X_road_construction"),
         ("X_road_construction", "X_road_proposed"),
         ("X_road_construction", "X_road_cycleway_construction"),
+        ("A_path_cycle_only", "A_path_foot_no"),
+        ("X_area", "X_area"),
+        ("X_bicycle_no", "X_bicycle_no"),
     ],
 )
 def test_rule_is_load_bearing(rule_id, case):

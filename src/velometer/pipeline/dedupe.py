@@ -7,6 +7,7 @@ from shapely import STRtree, unary_union
 
 from velometer.pipeline.explode import ONEWAY_YES
 from velometer.pipeline.geometry import Projector
+from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, DualPair, DuplicateFlag, WayRecord
 
 ROAD_TIERS = {"A", "B", "C", "D"}
@@ -56,19 +57,13 @@ def flag_parallel_duplicates(
 LOCAL_SPAN_M = 10.0
 
 
-def _parts(value: str | None) -> set[str]:
-    if not value:
-        return set()
-    return {p.strip() for p in value.split(";") if p.strip()}
-
-
 def _oneway_reversed(tags: dict[str, str]) -> bool:
-    parts = _parts(tags.get("oneway"))
-    return "-1" in parts and not parts & {"yes", "1", "true"}
+    oneway = set(parts(tags.get("oneway")))
+    return "-1" in oneway and not oneway & {"yes", "1", "true"}
 
 
 def _is_oneway(tags: dict[str, str]) -> bool:
-    return bool(_parts(tags.get("oneway")) & ONEWAY_YES)
+    return bool(set(parts(tags.get("oneway"))) & ONEWAY_YES)
 
 
 def _local_bearing(line, dist: float, reverse: bool) -> float | None:
@@ -87,7 +82,7 @@ def _angle(a: float, b: float) -> float:
 
 
 def _group_keys(tags: dict[str, str]) -> list[tuple[str, str]]:
-    return [(k, v.casefold()) for k in ("name", "ref") for v in sorted(_parts(tags.get(k)))]
+    return [(k, v.casefold()) for k in ("name", "ref") for v in sorted(set(parts(tags.get(k))))]
 
 
 def pair_dual_carriageways(
@@ -100,7 +95,7 @@ def pair_dual_carriageways(
 ) -> tuple[dict[int, float], list[DualPair]]:
     factors = {w.id: 1.0 for w in roads}
     for w in roads:
-        if "yes" in _parts(w.tags.get("dual_carriageway")):
+        if "yes" in parts(w.tags.get("dual_carriageway")):
             factors[w.id] = 0.5
     groups: dict[tuple[str, str], list[WayRecord]] = defaultdict(list)
     for w in roads:

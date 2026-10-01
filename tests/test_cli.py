@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -20,8 +21,11 @@ def test_classify_prints_tiers_roads_and_presets():
     fixture = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
     result = CliRunner().invoke(app, ["classify", "--file", str(fixture), "--epsg", "25833"])
     assert result.exit_code == 0, result.output
-    for needle in ("A", "main_excl_motorway", "ours_headline", "skipped ways: 0"):
-        assert needle in result.output
+    out = result.output
+    assert re.search(r"^A\s+-\s+per_side\s+2\.99\d\s+2$", out, re.M), out
+    assert re.search(r"^main_excl_motorway\s+1\.99\d$", out, re.M), out
+    assert re.search(r"^ours_headline\s+200\.0\s", out, re.M), out
+    assert "skipped ways: 0" in out
 
 
 def test_classify_rejects_geographic_epsg():

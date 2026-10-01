@@ -84,11 +84,25 @@ class ClassifierConfig(_Strict):
         return self
 
 
+PRESET_TIERS = ("A", "B", "C", "D", "E")
+
+
 class Preset(_Strict):
+    """`tiers` entries: "X" = every subtype of tier X; "X/sub" = only that subtype (X in A-E)."""
+
     id: str
-    tiers: list[str]
+    tiers: list[str] = Field(min_length=1)
     basis: Basis
     denominator: RoadClass
+
+    @field_validator("tiers")
+    @classmethod
+    def _grammar(cls, v: list[str]) -> list[str]:
+        for entry in v:
+            tier, slash, sub = entry.partition("/")
+            if tier not in PRESET_TIERS or (slash and not sub):
+                raise ValueError(f"tier entry {entry!r} must be one of A-E or '<tier>/<subtype>'")
+        return v
 
 
 def _read(path: Path) -> Any:
@@ -113,5 +127,16 @@ def load_classifier(path: Path) -> ClassifierConfig:
     return _parse(path, ClassifierConfig.model_validate)
 
 
-def load_presets(path: Path) -> list[Preset]:
-    return _parse(path, lambda d: [Preset.model_validate(p) for p in d["presets"]])
+def load_presets(path: Path, classifier: ClassifierConfig) -> list[Preset]:
+    """Load presets; every "X/sub" entry must name a subtype that a tier-X rule produces."""
+    presets = _parse(path, lambda d: [Preset.model_validate(p) for p in d["presets"]])
+    produced = {(r.tier, r.subtype) for r in classifier.rules if r.subtype is not None}
+    for p in presets:
+        for entry in p.tiers:
+            tier, _, sub = entry.partition("/")
+            if sub and (tier, sub) not in produced:
+                raise ConfigError(
+                    f"{path}: preset {p.id!r}: no rule in classifier {classifier.version} "
+                    f"produces tier {tier} subtype {sub!r} (entry {entry!r})"
+                )
+    return presets

@@ -52,7 +52,7 @@ def classify(
         raise typer.Exit(1) from e
     try:
         cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
-        presets = load_presets(config_dir / "presets.yaml")
+        presets = load_presets(config_dir / "presets.yaml", cfg)
     except ConfigError as e:
         typer.echo(f"config error: {e}", err=True)
         raise typer.Exit(1) from e

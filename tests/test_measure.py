@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from velometer.config import default_config_dir, load_classifier, load_presets
+from velometer.config import Preset, default_config_dir, load_classifier, load_presets
 from velometer.pipeline.measure import compute_metrics, measure, road_length
 from velometer.pipeline.read import read_ways
 from velometer.pipeline.types import WayRecord
 
 FIX = Path(__file__).parent / "fixtures" / "measure"
 CFG = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
-PRESETS = load_presets(default_config_dir() / "presets.yaml")
+PRESETS = load_presets(default_config_dir() / "presets.yaml", CFG)
 
 
 @pytest.fixture(scope="module")
@@ -105,3 +105,54 @@ def test_access_no_road_stays_in_denominators_when_bicycle_allowed(bicycle):
     way = WayRecord(1, tags, ((13.4, 52.5), (13.4147, 52.5)))
     r = measure([way], CFG, 25833)
     assert road_length(r, "main_excl_motorway") == pytest.approx(1.0, rel=0.01)
+
+
+def _preset(tiers: list[str]) -> Preset:
+    return Preset(id="p", tiers=tiers, basis="per_side", denominator="main_excl_motorway")
+
+
+SEG = ((13.4, 52.5), (13.4147, 52.5))  # ~1 km
+
+
+@pytest.fixture(scope="module")
+def mixed():
+    ways = [
+        # B/sidewalk on both sides of one main road (1 way, 2 sides) -> denominator 1 km
+        WayRecord(1, {"highway": "primary", "sidewalk:both:bicycle": "designated"}, SEG),
+        # B/segregated standalone
+        WayRecord(2, {"highway": "footway", "bicycle": "designated", "segregated": "yes"}, SEG),
+        # excluded sides (X_no) on another way
+        WayRecord(3, {"highway": "residential", "cycleway:both": "no"}, SEG),
+    ]
+    return measure(ways, CFG, 25833)
+
+
+def test_subtype_entry_selects_only_that_subtype(mixed):
+    (only_sidewalk,) = compute_metrics(mixed, [_preset(["B/sidewalk"])])
+    (only_seg,) = compute_metrics(mixed, [_preset(["B/segregated"])])
+    (all_b,) = compute_metrics(mixed, [_preset(["B"])])
+    assert only_sidewalk.numerator_km == pytest.approx(2.0, rel=0.01)
+    assert only_seg.numerator_km == pytest.approx(1.0, rel=0.01)
+    assert all_b.numerator_km == pytest.approx(3.0, rel=0.01)
+
+
+def test_excluded_sides_are_never_selected(mixed):
+    assert km(mixed, "excluded", "per_side") == pytest.approx(2.0, rel=0.01)
+    (m,) = compute_metrics(mixed, [_preset(["A", "B", "C", "D", "E"])])
+    assert m.numerator_km == pytest.approx(3.0, rel=0.01)
+    # even an entry naming the excluded tier (rejected by load_presets) selects nothing
+    (raw,) = compute_metrics(
+        mixed, [Preset.model_construct(**{**_preset(["A"]).model_dump(), "tiers": ["excluded"]})]
+    )
+    assert raw.numerator_km == 0
+
+
+def test_n_ways_counts_distinct_ways_not_sides(mixed):
+    (t,) = [
+        t
+        for t in mixed.tier_lengths
+        if (t.tier, t.subtype, t.length_basis) == ("B", "sidewalk", "per_side")
+    ]
+    assert t.n_ways == 1
+    (x,) = [t for t in mixed.tier_lengths if (t.tier, t.length_basis) == ("excluded", "per_side")]
+    assert x.n_ways == 1

@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 
 from velometer.config import RoadClasses
+from velometer.pipeline.tags import parts
 from velometer.pipeline.types import WayRecord, WaySide
 
 ONEWAY_YES = frozenset({"yes", "1", "true", "-1"})
@@ -23,25 +24,18 @@ FORWARD = frozenset({"yes", "1", "true"})
 CYCLE_STREET_KEYS = ("bicycle_road", "cyclestreet", "cycle_street")
 
 
-def _parts(value: str | None) -> set[str]:
-    """Split tag value on `;` and strip, returning non-empty parts."""
-    if value is None:
-        return set()
-    return {p.strip() for p in value.split(";") if p.strip()}
-
-
 def plain_cycleway_sides(tags: Mapping[str, str]) -> frozenset[str]:
     """Sides a plain `cycleway=<v>` applies to (Ruling R18, provisional; right-hand traffic).
 
     `oneway=yes|1|true` -> right only; `oneway=-1` -> left only (traffic's right);
     `junction=roundabout` with no oneway tag -> right only; otherwise (incl. `oneway=no`) both.
     """
-    oneway = _parts(tags.get("oneway"))
+    oneway = set(parts(tags.get("oneway")))
     if oneway & FORWARD:
         return frozenset({"right"})
     if "-1" in oneway:
         return frozenset({"left"})
-    if not oneway and "roundabout" in _parts(tags.get("junction")):
+    if not oneway and "roundabout" in parts(tags.get("junction")):
         return frozenset({"right"})
     return frozenset({"left", "right"})
 
@@ -63,8 +57,8 @@ def _collect_sub(tags: Mapping[str, str], side: str, sub: str) -> str | None:
         base = f"{prefix}:{sub}"
         vals = [v for k, v in tags.items() if k == base or k.startswith(base + ":")]
         if vals:
-            parts = {p.strip() for v in vals for p in v.split(";") if p.strip()}
-            return ";".join(sorted(parts))
+            joined = {p for v in vals for p in parts(v)}
+            return ";".join(sorted(joined))
     return None
 
 
@@ -75,14 +69,14 @@ def _collect_traffic_separation(tags: Mapping[str, str], side: str) -> str | Non
         base = f"{prefix}:separation"
         if not any(k == base or k.startswith(base + ":") for k in tags):
             continue
-        parts = _parts(tags.get(base)) | _parts(tags.get(f"{base}:{traffic}"))
-        return ";".join(sorted(parts)) or None
+        found = set(parts(tags.get(base))) | set(parts(tags.get(f"{base}:{traffic}")))
+        return ";".join(sorted(found)) or None
     return None
 
 
 def _sidewalk_is_separate(tags: Mapping[str, str], side: str) -> bool:
     keys = (f"sidewalk:{side}", "sidewalk:both", "sidewalk")
-    return any("separate" in _parts(tags.get(k)) for k in keys)
+    return any("separate" in parts(tags.get(k)) for k in keys)
 
 
 def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], bool] | None:
@@ -115,7 +109,7 @@ def explode(way: WayRecord, road_classes: RoadClasses) -> list[WaySide]:
     if highway not in road_classes.carriageway:
         return [WaySide(way.id, "self", "standalone", dict(way.tags), way.coords)]
     result: list[WaySide] = []
-    if any(any(p == "yes" for p in _parts(way.tags.get(k))) for k in CYCLE_STREET_KEYS):
+    if any("yes" in parts(way.tags.get(k)) for k in CYCLE_STREET_KEYS):
         result.append(WaySide(way.id, "self", "standalone", dict(way.tags), way.coords))
     carried = {f"road:{k}": way.tags[k] for k in ROAD_CARRY if k in way.tags}
     for side in ("left", "right"):

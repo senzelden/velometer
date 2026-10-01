@@ -3,8 +3,9 @@
 from collections.abc import Mapping
 from typing import Any
 
+from velometer.pipeline.tags import parts
+
 _BOOL = {True: "yes", False: "no"}
-_OPERATORS = {"all", "any", "not"}
 
 
 def _norm(value: Any) -> str:
@@ -12,13 +13,6 @@ def _norm(value: Any) -> str:
     if isinstance(value, bool):
         return _BOOL[value]
     return str(value)
-
-
-def _parts(tags: Mapping[str, str], key: str) -> set[str]:
-    raw = tags.get(key)
-    if raw is None:
-        return set()
-    return {p.strip() for p in raw.split(";") if p.strip()}
 
 
 def _check(parts: set[str], cond: Any, lists: Mapping[str, list[str]]) -> bool:
@@ -44,7 +38,7 @@ def matches(expr: dict, tags: Mapping[str, str], lists: Mapping[str, list[str]])
         elif key == "not":
             ok = not matches(cond, tags, lists)
         else:
-            ok = _check(_parts(tags, key), cond, lists)
+            ok = _check(set(parts(tags.get(key))), cond, lists)
         if not ok:
             return False
     return True

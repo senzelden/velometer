@@ -32,7 +32,8 @@ def test_geographic_epsg_is_rejected(tmp_path: Path):
 
 
 def test_presets_reference_known_denominators():
-    presets = load_presets(CFG / "presets.yaml")
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    presets = load_presets(CFG / "presets.yaml", classifier)
     assert {p.id for p in presets} == {"ours_headline", "ecf_qecio", "clean_cities_2025"}
 
 
@@ -109,3 +110,27 @@ def test_validate_expr_rejects_unknown_operator():
 def test_validate_expr_rejects_bad_operator_payload(expr):
     with pytest.raises(ValueError, match="must be"):
         validate_expr(expr, LISTS)
+
+
+def _presets_file(tmp_path: Path, tiers: list[str]) -> Path:
+    p = tmp_path / "presets.yaml"
+    preset = {"id": "p", "tiers": tiers, "basis": "per_side", "denominator": "all_public"}
+    p.write_text(yaml.safe_dump({"presets": [preset]}))
+    return p
+
+
+@pytest.mark.parametrize("tiers", [["A", "B/segregated", "B/sidewalk", "E/bus"], ["C", "D"]])
+def test_preset_tiers_accept_tiers_and_produced_subtypes(tmp_path: Path, tiers):
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    (p,) = load_presets(_presets_file(tmp_path, tiers), classifier)
+    assert p.tiers == tiers
+
+
+@pytest.mark.parametrize(
+    "tiers",
+    [["F"], ["excluded"], ["a"], ["B/"], ["B/segregatd"], ["A/segregated"], ["E/sidewalk"], []],
+)
+def test_preset_tiers_reject_bad_grammar_or_unknown_subtype(tmp_path: Path, tiers):
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    with pytest.raises(ConfigError, match="presets.yaml"):
+        load_presets(_presets_file(tmp_path, tiers), classifier)

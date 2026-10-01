@@ -8,6 +8,7 @@ from velometer.models import Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
 from velometer.pipeline.geometry import Projector, length_km
+from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, DualPair, DuplicateFlag, WayRecord
 
 
@@ -21,18 +22,12 @@ class MeasureResult:
     unknown_values: dict[str, int]
 
 
-def _parts(value: str | None) -> set[str]:
-    if not value:
-        return set()
-    return {p.strip() for p in value.split(";") if p.strip()}
-
-
 def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:
     """access=private always; access=no unless bicycle is allowed (mirrors X_road_private, R22)."""
-    access = _parts(tags.get("access"))
+    access = set(parts(tags.get("access")))
     if "private" in access:
         return True
-    return "no" in access and not _parts(tags.get("bicycle")) & bicycle_allowed
+    return "no" in access and not set(parts(tags.get("bicycle"))) & bicycle_allowed
 
 
 def _public_roads(ways: list[WayRecord], cfg: ClassifierConfig) -> list[WayRecord]:
@@ -44,7 +39,7 @@ def _public_roads(ways: list[WayRecord], cfg: ClassifierConfig) -> list[WayRecor
         for w in ways
         if w.tags.get("highway") in classes
         and not _closed_to_public(w.tags, bicycle_allowed)
-        and "yes" not in _parts(w.tags.get("area"))
+        and "yes" not in parts(w.tags.get("area"))
     ]
 
 

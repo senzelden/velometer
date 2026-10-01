@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from velometer.config import ClassifierConfig
 from velometer.pipeline.explode import ONEWAY_YES, explode
 from velometer.pipeline.match import matches
+from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, WayRecord, WaySide
 
 BIKE_ONEWAY_YES = frozenset({"yes", "1", "true", "-1"})
@@ -13,8 +14,8 @@ BIKE_ONEWAY_YES = frozenset({"yes", "1", "true", "-1"})
 def is_bidirectional(side: WaySide) -> bool:
     """QECIO Methodology Table 3 directionality."""
     if side.kind == "standalone":
-        oneway = {p.strip() for p in side.tags.get("oneway", "no").split(";")}
-        bike_oneway = {p.strip() for p in side.tags.get("oneway:bicycle", "no").split(";")}
+        oneway = set(parts(side.tags.get("oneway")))
+        bike_oneway = set(parts(side.tags.get("oneway:bicycle")))
         return not (oneway & ONEWAY_YES or bike_oneway & BIKE_ONEWAY_YES)
     return side.tags.get("cycleway:oneway") == "no"
 
