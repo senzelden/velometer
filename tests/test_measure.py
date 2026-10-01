@@ -272,3 +272,44 @@ def test_completeness_shares_are_length_weighted():
     # widths: way 1 (2 units) + way 3 (1 unit) of 4 units; surface: way 1 only
     assert a.share_with_width == pytest.approx(3 / 4, rel=0.02)
     assert a.share_with_surface == pytest.approx(2 / 4, rel=0.02)
+
+
+def test_completeness_segregated_share_covers_both_key_forms():
+    ways = [
+        WayRecord(
+            1,
+            {"highway": "path", "bicycle": "designated", "segregated": "yes"},
+            ((13.40, 52.5), (13.42, 52.5)),
+        ),
+        WayRecord(
+            2,
+            {
+                "highway": "primary",
+                "cycleway:right": "track",
+                "cycleway:right:segregated": "no",
+            },
+            ((13.40, 52.6), (13.41, 52.6)),
+        ),
+        WayRecord(
+            3,
+            {"highway": "path", "bicycle": "designated"},
+            ((13.40, 52.7), (13.41, 52.7)),
+        ),
+    ]
+    res = measure(ways, CFG, 25833)
+    b = next(c for c in res.completeness if c.tier == "B")
+    # lengths 2 : 1 : 1 units; segregated tag present on ways 1 and 2
+    assert b.share_with_segregated == pytest.approx(3 / 4, rel=0.02)
+
+
+def test_completeness_weights_use_clipped_lengths():
+    ways = [
+        WayRecord(1, {"highway": "cycleway", "width": "2"}, ((13.40, 52.5), (13.42, 52.5))),
+        WayRecord(2, {"highway": "cycleway"}, ((13.40, 52.6), (13.41, 52.6))),
+    ]
+    # cuts way 1 in half (0.01 of 0.02 degrees inside) and contains way 2 (0.01 degrees)
+    boundary = _proj_box(13.39, 52.49, 13.41, 52.61)
+    res = measure(ways, CFG, 25833, boundary=boundary)
+    a = next(c for c in res.completeness if c.tier == "A")
+    # clipped: 0.01 (width) of 0.02 -> 1/2; unclipped lengths would give 2/3
+    assert a.share_with_width == pytest.approx(1 / 2, rel=0.02)
