@@ -14,6 +14,208 @@ key `<city>/<comparison>@<scope>`, still flag over 20% and still need an explana
 Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 0006).
 
 <!-- reconcile:begin -->
+
+#### berlin
+
+| key | ours | theirs | gap | flag | tags | source (date) |
+|---|---:|---:|---:|---|---|---|
+| `berlin/cc_ratio` | 27.7 | 17.0 | +62.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_km` | 1,557.9 | 925.0 | +68.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_network_km` | 5,624.1 | 5,350.0 | +5.1% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/qecio_main_km` | 2,153.4 | 2,149.6 | +0.2% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_tracks_km` | 673.5 | 679.5 | -0.9% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_lanes_km` | 245.3 | 244.3 | +0.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_shared_km` | 244.9 | 245.1 | -0.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_total_km` | 1,163.6 | 1,255.4 | -7.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/bnk_network_km` | 1,673.1 | 1,793.2 | -6.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `berlin/official_new_km#official:21.2` | n/a | 21.2 | n/a | info |  | official (2025-12-31) |
+| `berlin/official_new_km#official:20.5` | n/a | 20.5 | n/a | info |  | official (2025-12-31) |
+| `berlin/official_new_km@vorrangnetz_ergaenzungsnetz#official:17.3` | n/a | 17.3 | n/a | info | scope_mismatch | official (2025-12-31) |
+| `berlin/official_new_km#changing_cities:25.2` | n/a | 25.2 | n/a | info |  | changing_cities (2025-12-31) |
+
+#### copenhagen
+
+| key | ours | theirs | gap | flag | tags | source (date) |
+|---|---:|---:|---:|---|---|---|
+| `copenhagen/cc_ratio` | 58.6 | 43.0 | +36.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_km` | 582.3 | 397.0 | +46.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_network_km` | 992.9 | 926.0 | +7.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/qecio_main_km` | 346.0 | 474.2 | -27.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_tracks_km` | 284.0 | 385.7 | -26.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_lanes_km` | 18.3 | 25.2 | -27.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_shared_km` | 76.0 | 83.1 | -8.7% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_total_km` | 378.2 | 505.3 | -25.1% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/bnk_network_km` | 588.6 | 558.2 | +5.4% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+
+#### paris
+
+| key | ours | theirs | gap | flag | tags | source (date) |
+|---|---:|---:|---:|---|---|---|
+| `paris/cc_ratio` | 22.9 | 48.0 | -52.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `paris/cc_km` | 356.5 | 822.0 | -56.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `paris/cc_network_km` | 1,555.8 | 1,700.0 | -8.5% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `paris/qecio_main_km` | 682.1 | 706.7 | -3.5% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_tracks_km` | 225.2 | 202.7 | +11.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_lanes_km` | 73.9 | 66.0 | +11.8% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_shared_km` | 18.0 | 24.3 | -26.1% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_total_km` | 317.0 | 358.8 | -11.6% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/bnk_network_km` | 531.2 | 483.4 | +9.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+
+#### vienna
+
+| key | ours | theirs | gap | flag | tags | source (date) |
+|---|---:|---:|---:|---|---|---|
+| `vienna/cc_ratio` | 23.2 | 14.0 | +65.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_ratio@incl_traffic_calmed_restricted_access` | 23.2 | 22.0 | +5.6% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_km` | 679.8 | 384.0 | +77.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_km@incl_traffic_calmed_restricted_access` | 679.8 | 625.1 | +8.8% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_network_km` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_network_km@incl_traffic_calmed_restricted_access` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/qecio_main_km` | 1,075.2 | 1,078.2 | -0.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_tracks_km` | 423.5 | 380.5 | +11.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_lanes_km` | 136.7 | 141.2 | -3.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_shared_km` | 190.1 | 166.1 | +14.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_total_km` | 750.3 | 801.0 | -6.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/bnk_network_km` | 720.9 | 782.6 | -7.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+
+#### wroclaw
+
+| key | ours | theirs | gap | flag | tags | source (date) |
+|---|---:|---:|---:|---|---|---|
+| `wroclaw/cc_ratio` | 29.7 | 20.0 | +48.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `wroclaw/cc_km` | 398.6 | 355.0 | +12.3% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `wroclaw/cc_network_km` | 1,340.5 | 1,769.0 | -24.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `wroclaw/qecio_main_km` | 570.7 | 582.6 | -2.0% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_tracks_km` | 242.2 | 227.2 | +6.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_lanes_km` | 16.2 | 15.6 | +3.8% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_shared_km` | 136.9 | 128.9 | +6.1% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_total_km` | 395.2 | 385.6 | +2.5% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/bnk_network_km` | 399.4 | 638.8 | -37.5% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+
 <!-- reconcile:end -->
 
 ## Explanations
+
+Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 1–5, OSM
+2026-09-30, classifier v1, GISCO LAU 2024), the external rows and their notes, the QECIO v2.10
+Methodology PDF (Table 2) and `docs/research/m2-data-sources-2026-10-01.md`. "Centreline" means
+our `qecio_weighted` basis: a bidirectional way counts once and each one-way side counts half,
+which is how QECIO counts and, judging by Berlin and Wrocław, how the ECF tracker numbers in
+Clean Cities count. Our `cc_km` and the `clean_cities_2025` preset use the `per_side` basis, in
+which every side counts in full. The Clean Cities figures are dated 2025-05-14, 504 days before
+our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
+
+### berlin/cc_ratio
+Cause: **definition** (length basis). Our preset divides per-side A+B km (1,557.9) by all
+public roads (5,624.1 km). On the centreline basis our A+B is 918.3 km, which gives 16.3%
+against our network, or 17.2% against Clean Cities' own 5,350 km, matching their 17%. The
+denominators agree within 5.1% (`berlin/cc_network_km`), so the whole gap is in the numerator's
+basis, not in the classifier or the boundary.
+
+### berlin/cc_km
+Cause: **definition** (length basis). Clean Cities' 925 km is a centreline figure: our A+B on
+the centreline basis is 918.3 km (−0.7%), while per side it is 1,557.9 km (1.70 times as
+much), because most Berlin tracks are one-way tracks on both sides of the road. The date gap
+(504 days) is within the noise of this comparison.
+
+### copenhagen/cc_ratio
+Cause: **definition** (length basis). Per side our A+B is 582.3 km, 1.62 times the
+centreline 359.9 km; on the centreline basis the ratio is 36.3% against our 992.9 km network,
+or 38.9% against Clean Cities' 926 km, against their 43%. The remaining gap of about 4–7
+points follows from `copenhagen/cc_km` (centreline −9.3%) plus a 504-day date gap; the
+networks agree within 7.2% (`copenhagen/cc_network_km`).
+
+### copenhagen/cc_km
+Cause: **definition** (length basis), with a smaller residual. Copenhagen's tracks are almost
+all one-way pairs on both sides (A: 498.4 km per side vs 278.3 km centreline), so per side we
+report 582.3 km against Clean Cities' 397 km. On the centreline basis our A+B is 359.9 km
+(−9.3%), inside the 20% band. Whether the residual is date (504 days) or source cannot be told:
+the research doc could not verify whether Copenhagen's figure was city-submitted or OSM-based.
+
+### copenhagen/qecio_main_km
+Cause: **boundary**. QECIO reports NUTS3 DK011 "Byen København", 185.0 km² and wider than the
+commune (per the research doc it includes Frederiksberg and other municipalities). Our LAU
+DK_101 is 94.9 km², 0.51 of that area. Main roads (0.73), tracks (0.74), lanes (0.73) and
+total (0.75) all scale by the same factor of about 0.73–0.75. A boundary difference does that;
+a classifier or date effect would hit the categories unequally. Already tagged
+`boundary_mismatch` in `config/reconcile.yaml`.
+
+### copenhagen/qecio_tracks_km
+Cause: **boundary** (DK011 Byen København, 185.0 km², vs our LAU 94.9 km²). Ours 284.0 km is
+0.74 of QECIO's 385.7 km, the same factor as main roads (0.73), so track density per main-road
+km is consistent between the two. See `copenhagen/qecio_main_km`.
+
+### copenhagen/qecio_lanes_km
+Cause: **boundary** (DK011 vs Københavns Kommune, see `copenhagen/qecio_main_km`). Ours
+18.3 km is 0.73 of QECIO's 25.2 km, the same ratio as main roads; the absolute gap is 6.9 km.
+
+### copenhagen/qecio_total_km
+Cause: **boundary** first (ours 378.2 km is 0.75 of QECIO's 505.3 km, the same ratio as the
+other categories; see `copenhagen/qecio_main_km`) and **definition** second: QECIO's total also
+counts limited-access roads, which our A–D sum does not (`definition_mismatch`).
+
+### paris/cc_ratio
+Cause: **definition** (source and scope of the Clean Cities numerator). The denominators agree
+(our 1,555.8 km vs 1,700 km, −8.5%), but Clean Cities' 822 km protected cannot be reproduced
+from OSM: see `paris/cc_km`. Our 22.9% would only drop further on the centreline basis
+(243.1 km / 1,555.8 km = 15.6%).
+
+### paris/cc_km
+Cause: **definition** (the figure is not an OSM protected-infrastructure length). Clean Cities'
+822 km is more than everything we map in Paris across all tiers A–E per side (678.3 km,
+including 147.1 km of painted lanes and 174.8 km of bus lanes and cycle streets). It is also
+3.6 times QECIO's OSM-based tracks plus shared paths (202.7 + 24.3 = 227.0 km, 2024) and 3.4
+times our centreline A+B (243.1 km). Even our per-side A+B (356.5 km) is far below it. The
+report's per-city source is unverified (research doc §6: the data PDF is image-only), but a
+figure this far above every OSM measure points to city-submitted data with a wider scope than
+"physically segregated". Not a classifier issue: QECIO's independent tag logic lands near our
+numbers (`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.6%).
+
+### paris/qecio_shared_km
+Cause: **date**. Applying QECIO's own tag definition of cycle and pedestrian tracks (Methodology
+Table 2: footway/path/pedestrian + `bicycle=designated` + `segregated!=yes`, or cycleway +
+`foot=designated` + `segregated!=yes`) to our 2026-09-30 snapshot gives 20.3 km centreline, of
+which v1 classifies 20.2 km as B. So our classifier and QECIO's rule agree on today's data, and
+the gap to QECIO's 24.3 km (−6.3 km on a small base) lies in the data: 994 days of retagging
+since QECIO's 2024-01-10 snapshot. Not verified against a 2024 snapshot.
+
+### vienna/cc_ratio
+Cause: **definition** (superseded narrower figure). This row is the report PDF's 14%, which
+Clean Cities replaced in July 2025 with 22.0% after Vienna submitted its traffic-calmed,
+restricted-access roads. Against that corrected figure we are at +5.6%
+(`vienna/cc_ratio@incl_traffic_calmed_restricted_access`, ok). On the centreline basis our A+B
+ratio is 21.0%. The networks agree (`vienna/cc_network_km` +2.9%).
+
+### vienna/cc_km
+Cause: **definition** (the PDF's 384 km is a narrower count than "protected" in OSM). Our A+B
+is 679.8 km per side and 613.6 km centreline, so this is not a length-basis effect (Vienna's
+A+B is mostly bidirectional: 1.11 per-side km per centreline km). The July 2025 corrected
+625.1 km is within 8.8% of ours (row `@incl_traffic_calmed_restricted_access`, ok). Our
+centreline tier A alone is 411.5 km, close to 384, which suggests the PDF figure left out
+shared foot/cycle paths (our B: 202.1 km centreline). That is an inference: the Annex
+definition includes shared foot/bike paths, and the per-city source is unverified.
+
+### wroclaw/cc_ratio
+Cause: **definition** (network denominator). The numerator is close: our centreline A+B is
+379.0 km vs Clean Cities' 355 km (+6.8%; per side 398.6 km, `wroclaw/cc_km` ok). The gap
+comes from the denominator, which is 24% smaller than theirs (see `wroclaw/cc_network_km`).
+Our centreline numerator over their 1,769 km gives 21.4%, against their 20%.
+
+### wroclaw/cc_network_km
+Cause: **definition** (network scope or source). Our public road network (main, motorway and
+local roads, dual carriageways paired) is 1,340.5 km. QECIO's OSM main plus local roads (2024)
+are 582.7 + 844.5 = 1,427.2 km. Both are well below Clean Cities' 1,769 km. Other cities'
+networks match within 9% (Berlin +5.1%, Paris −8.5%, Vienna +2.9%, Copenhagen +7.2%), so our
+road-class selection is not the cause. Adding all 1,727.8 km of Wrocław `highway=service`
+would overshoot it. The Wrocław figure most likely comes from a city-submitted road register
+with a different scope; per-city sources are unverified (research doc §6).
+
+### wroclaw/bnk_network_km
+Cause: **definition**. BikeNetKit's filter also takes living streets and footways/paths with
+`bicycle=yes|permissive`, which our tiers A+B+E leave out. Applying that filter to our snapshot
+gives 769.1 km centreline, of which 364.5 km get no tier at all from v1. The two groups
+that v1 deliberately leaves out of A/B/E are living streets (167.4 km) and footway/path/pedestrian
+ways with `bicycle=yes|permissive` (113.9 + 3.1 + 77.9 + 8.7 = 203.6 km). BikeNetKit's 638.8 km sits between our 399.4 km and that raw 769.1 km, which
+fits its graph simplification and isolate removal. The boundaries agree (BikeNetKit ≈ 290 km²
+vs our 291.6 km²), so the boundary is not the cause. For the other four cities the same
+comparison stays within 10%.
