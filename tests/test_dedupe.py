@@ -1,3 +1,5 @@
+import math
+from dataclasses import replace
 from pathlib import Path
 
 from velometer.config import default_config_dir, load_classifier
@@ -5,6 +7,7 @@ from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
 from velometer.pipeline.geometry import Projector
 from velometer.pipeline.read import read_ways
+from velometer.pipeline.types import WayRecord
 
 FIX = Path(__file__).parent / "fixtures" / "dedupe"
 CFG = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
@@ -22,7 +25,9 @@ def test_parallel_cycleway_next_to_tagged_track_is_flagged_not_removed():
 
 def test_degenerate_geometry_does_not_crash():
     classified = classify_ways(read_ways(FIX / "parallel.osm").ways, CFG)
-    flag_parallel_duplicates(classified, PROJ)  # way 13 has zero length
+    flags = flag_parallel_duplicates(classified, PROJ)  # way 13 has zero length
+    assert 13 in {c.side.way_id for c in classified}
+    assert all(13 not in (f.standalone_way_id, f.road_way_id) for f in flags)
 
 
 def test_dual_carriageway_by_pairing_and_by_tag():
@@ -38,8 +43,89 @@ def test_dual_carriageway_by_pairing_and_by_tag():
 
 def test_pairing_ignores_non_main_highways():
     roads = [
-        w if w.id != 21 else type(w)(w.id, {**w.tags, "highway": "residential"}, w.coords)
+        w if w.id != 21 else replace(w, tags={**w.tags, "highway": "residential"})
         for w in read_ways(FIX / "dual.osm").ways
     ]
     factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
     assert factors[21] == 1.0
+
+
+LAT0, LON0 = 52.5, 13.4
+M_LAT = 111320.0
+M_LON = 111320.0 * math.cos(math.radians(LAT0))
+
+
+def _ll(east_m: float, north_m: float) -> tuple[float, float]:
+    return (LON0 + east_m / M_LON, LAT0 + north_m / M_LAT)
+
+
+def _arc(radius: float, a0: float, a1: float, step: float = 5.0):
+    n = max(int(abs(a1 - a0) / step), 1)
+    angles = [a0 + (a1 - a0) * i / n for i in range(n + 1)]
+    return tuple(
+        _ll(radius * math.cos(math.radians(a)), radius * math.sin(math.radians(a))) for a in angles
+    )
+
+
+def _way(wid: int, coords, **tags) -> WayRecord:
+    return WayRecord(wid, {"highway": "primary", "oneway": "yes", "name": "X", **tags}, coords)
+
+
+def _line(east0: float, east1: float, north: float):
+    return (_ll(east0, north), _ll(east1, north))
+
+
+def test_curved_dual_carriageway_with_split_opposite_halves_pairs():
+    roads = [
+        _way(1, _arc(300, 0, 150)),
+        _way(2, _arc(325, 75, 0)),
+        _way(3, _arc(325, 150, 75)),
+    ]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 0.5, 2: 0.5, 3: 0.5}
+
+
+def test_long_way_against_three_short_opposite_pieces():
+    roads = [_way(1, _line(0, 900, 0))] + [
+        _way(2 + i, _line(300 * (i + 1), 300 * i, 28)) for i in range(3)
+    ]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert set(factors.values()) == {0.5}
+
+
+def test_oneway_minus_one_drawn_same_direction_is_opposite():
+    roads = [_way(1, _line(0, 900, 0)), _way(2, _line(0, 900, 28), oneway="-1")]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 0.5, 2: 0.5}
+
+
+def test_closed_loop_is_not_halved_without_partner():
+    roads = [_way(1, _arc(100, 0, 360))]
+    factors, pairs = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 1.0} and pairs == []
+
+
+def test_multi_value_ref_pairs_with_single_ref():
+    roads = [
+        _way(1, _line(0, 900, 0), name="", ref="B 1;B 5"),
+        _way(2, _line(900, 0, 28), name="", ref="B 1"),
+    ]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 0.5, 2: 0.5}
+
+
+def test_multi_value_dual_carriageway_tag():
+    roads = [_way(1, _line(0, 900, 0), name="", dual_carriageway="yes;no", oneway="no")]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors[1] == 0.5
+
+
+def test_degenerate_way_next_to_real_pair_does_not_crash():
+    p = _ll(450, 14)
+    roads = [
+        _way(1, _line(0, 900, 0)),
+        _way(2, _line(900, 0, 28)),
+        _way(3, (p, p)),
+    ]
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 0.5, 2: 0.5, 3: 1.0}
