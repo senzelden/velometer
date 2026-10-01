@@ -5,6 +5,12 @@ external figures in the database (`config/external/figures.csv`, QECIO v2.10, Bi
 Gap = (ours − theirs) / theirs. Every gap flagged **>20%** needs an explanation below, under a
 heading `### <key>`; `velometer reconcile --check` enforces this.
 
+Tags: `boundary_mismatch` (different area than ours), `definition_mismatch` (different
+definition of the quantity), `date_gap` (figure and OSM snapshot more than a year apart),
+`scope_mismatch` (the figure covers a different network scope than ours, e.g. Vienna's web
+correction that adds traffic-calmed roads with restricted motor access; such rows get their own
+key `<city>/<comparison>@<scope>`, still flag over 20% and still need an explanation).
+
 Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 0006).
 
 <!-- reconcile:begin -->

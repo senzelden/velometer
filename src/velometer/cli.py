@@ -443,22 +443,33 @@ def reconcile(
     """Compare our latest run per city with external figures (config/reconcile.yaml)."""
     from velometer import reconcile as rc
 
-    gaps_by_city: dict[str, list] = {}
+    wanted = {c.id for c in _select_cities(config_dir, city or None)}
+    all_by_city: dict[str, list] = {}
+    skipped: list[str] = []
     with open_db(db) as conn:
         create_schema(conn)
-        for c in _select_cities(config_dir, city or None):
-            gaps = rc.reconcile_city(conn, c.id, config_dir / "reconcile.yaml", boundary)
-            if not gaps and latest_done_run(conn, c.id, boundary) is None:
-                typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
+        for c in _all_cities(config_dir):
+            if latest_done_run(conn, c.id, boundary) is None:
+                if c.id in wanted:
+                    skipped.append(c.id)
+                    typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
                 continue
-            gaps_by_city[c.id] = gaps
-    typer.echo(rc.render_block(gaps_by_city))
-    if write:
-        rc.write_report(report, gaps_by_city)
-    if check:
-        all_gaps = [g for gs in gaps_by_city.values() for g in gs]
-        missing = rc.missing_explanations(report, all_gaps)
-        for key in missing:
-            typer.echo(f"missing explanation: ### {key}", err=True)
-        if missing:
-            raise typer.Exit(1)
+            all_by_city[c.id] = rc.reconcile_city(
+                conn, c.id, config_dir / "reconcile.yaml", boundary
+            )
+    shown = {k: v for k, v in all_by_city.items() if k in wanted}
+    typer.echo(rc.render_block(shown))
+    try:
+        if write:  # every city with a done run, so --city never drops other tables
+            rc.write_report(report, all_by_city)
+        if check:
+            missing = rc.missing_explanations(report, [g for gs in shown.values() for g in gs])
+            for key in missing:
+                typer.echo(f"missing explanation: ### {key}", err=True)
+            for cid in skipped:
+                typer.echo(f"no done run for {cid}: cannot check it", err=True)
+            if missing or skipped:
+                raise typer.Exit(1)
+    except (OSError, ValueError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e

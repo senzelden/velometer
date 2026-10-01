@@ -263,3 +263,48 @@ def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatc
     with report.open("a") as f:
         f.write("\n### berlin/cc_network_km\n\nBecause.\n")
     assert runner.invoke(app, [*rargs, "--check"]).exit_code == 0
+    # other cities have no done run: --check over all cities fails, --city berlin passes
+    all_cities = runner.invoke(
+        app, ["reconcile", "--db", str(db), "--report", str(report), "--check"]
+    )
+    assert all_cities.exit_code == 1 and "no done run for paris" in all_cities.output
+
+
+def _berlin_run(tmp_path, monkeypatch):
+    from velometer import run as R
+
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db)]).exit_code == 0
+    import tests.test_run as tr
+
+    deps = tr._deps(tmp_path, [])
+    monkeypatch.setattr(R, "RunDeps", lambda: deps)
+    args = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    assert runner.invoke(app, args).exit_code == 0
+    return runner, db
+
+
+def test_reconcile_write_with_city_keeps_other_cities(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    args = ["run", "--cities", "paris", "--db", str(db), "--data", str(tmp_path)]
+    assert runner.invoke(app, args).exit_code == 0
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    out = runner.invoke(
+        app, ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report), "--write"]
+    )
+    assert out.exit_code == 0, out.output
+    text = report.read_text()
+    assert "#### berlin" in text and "#### paris" in text
+
+
+def test_reconcile_missing_markers_or_report_exit_1_without_traceback(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    base = ["reconcile", "--city", "berlin", "--db", str(db)]
+    bad = tmp_path / "nomarkers.md"
+    bad.write_text("# no markers\n")
+    out = runner.invoke(app, [*base, "--report", str(bad), "--write"])
+    assert out.exit_code == 1 and "error:" in out.output and out.exception.__class__ is SystemExit
+    out = runner.invoke(app, [*base, "--report", str(tmp_path / "gone.md"), "--check"])
+    assert out.exit_code == 1 and "error:" in out.output and out.exception.__class__ is SystemExit

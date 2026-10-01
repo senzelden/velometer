@@ -159,7 +159,13 @@ def test_missing_ours_is_none_not_zero_and_never_flagged():
     ]
     gaps = RC.gaps_for(r, figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
     assert len(gaps) == 3
-    assert all(g.ours is None and g.gap_pct is None and not g.flagged for g in gaps)
+    by = {g.comparison: g for g in gaps}
+    # a done run with no tier rows is a real 0 km: flagged at -100%, not n/a
+    assert by["cc_km"].ours == 0.0 and by["cc_km"].flagged
+    assert by["cc_km"].gap_pct == pytest.approx(-1.0)
+    # missing preset value / road class stay n/a and are never flagged
+    for k in ("cc_ratio", "cc_network_km"):
+        assert by[k].ours is None and by[k].gap_pct is None and not by[k].flagged
     assert "n/a" in RC.render_block({"berlin": gaps})
 
 
@@ -173,3 +179,15 @@ def test_loaded_metric_names_exist_in_the_loaders():
     for c in comps:
         if "clean_cities_2025" in c.sources or "official" in c.sources:
             assert f",{c.metric_name}," in csv
+
+
+def test_write_report_is_idempotent(tmp_path):
+    md = tmp_path / "r.md"
+    md.write_text("# R\n\n<!-- reconcile:begin -->\nold\n<!-- reconcile:end -->\n\n## E\n")
+    comps = RC.load_comparisons(CFG)
+    figs = [_fig("clean_cities_2025", "protected_km", 925)]
+    gaps = RC.gaps_for(_results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch={})
+    RC.write_report(md, {"berlin": gaps})
+    once = md.read_text()
+    RC.write_report(md, {"berlin": gaps})
+    assert md.read_text() == once

@@ -194,6 +194,7 @@ A completed run with the same key is skipped unless `force`. A failure marks the
 - `gap_pct = (ours − theirs) / theirs`.
 - `flag = |gap_pct| > 0.20` and the comparison is not `informational`.
 - Mismatch tags (`boundary_mismatch`, `definition_mismatch`, `date_gap`) come from the map and the data dates.
+- `scope_mismatch` is added by the code when an external row's `network_scope` is not like-for-like (e.g. Vienna's `incl_traffic_calmed_restricted_access` web correction); that row keeps its own key `<city>/<id>@<scope>` and is still flagged and explained like any other.
 
 ### `docs/reconciliation.md`
 - Generated tables sit between `<!-- reconcile:begin -->` / `<!-- reconcile:end -->`.
