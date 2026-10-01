@@ -142,7 +142,7 @@ def test_empty_md5_body_raises_download_error(tmp_path):
         return httpx.Response(200, text="\n")
 
     with pytest.raises(DownloadError, match="md5"):
-        geofabrik.fetch_region("r", tmp_path, client=_client(handler))
+        geofabrik.fetch_region("r", tmp_path, client=_client(handler), backoff_s=0)
 
 
 def test_resolve_dated_retries_a_trailing_slash_redirect():
@@ -196,3 +196,31 @@ def test_fetch_region_retries_a_transient_md5_error(tmp_path, monkeypatch):
     )
     rf = geofabrik.fetch_region("r", tmp_path, client=_client(handler), backoff_s=0)
     assert rf.md5 == MD5 and len(md5_calls) == 2
+
+
+def test_html_md5_body_is_retried_then_rejected(tmp_path, monkeypatch):
+    from datetime import UTC, datetime
+
+    html = "<html><body>Service temporarily unavailable</body></html>"
+    answers = iter([html, f"{MD5}  b-260930.osm.pbf\n"])
+
+    def handler(r):
+        if r.method == "HEAD":
+            return httpx.Response(307, headers={"location": "b-260930.osm.pbf"})
+        if r.url.path.endswith(".md5"):
+            return httpx.Response(200, text=next(answers))
+        return httpx.Response(200, content=BODY)
+
+    monkeypatch.setattr(
+        geofabrik, "fileinfo_timestamp", lambda p: datetime(2026, 9, 30, tzinfo=UTC)
+    )
+    rf = geofabrik.fetch_region("r", tmp_path, client=_client(handler), backoff_s=0)
+    assert rf.md5 == MD5
+
+    def always_html(r):
+        if r.method == "HEAD":
+            return httpx.Response(307, headers={"location": "b-260930.osm.pbf"})
+        return httpx.Response(200, text=html)
+
+    with pytest.raises(DownloadError, match="not an md5 file"):
+        geofabrik.fetch_region("r", tmp_path, client=_client(always_html), backoff_s=0)

@@ -1,5 +1,7 @@
 """velometer command-line interface."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from enum import StrEnum
 from pathlib import Path
 
@@ -27,6 +29,18 @@ DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
 CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config directory.")
 
 
+@contextmanager
+def _open_schema(db: Path) -> Iterator:
+    """open_db + create_schema; a schema that cannot be used is exit 1, not a traceback."""
+    with open_db(db) as conn:
+        try:
+            create_schema(conn)
+        except SchemaError as e:
+            typer.echo(f"database error: {e}", err=True)
+            raise typer.Exit(1) from e
+        yield conn
+
+
 @app.callback()
 def main() -> None:
     """velometer: reproducible OSM cycling-infrastructure measurement."""
@@ -43,13 +57,8 @@ def init(
     except ConfigError as e:
         typer.echo(f"config error: {e}", err=True)
         raise typer.Exit(1) from e
-    try:
-        with open_db(db) as conn:
-            create_schema(conn)
-            n = upsert_cities(conn, cities)
-    except SchemaError as e:
-        typer.echo(f"database error: {e}", err=True)
-        raise typer.Exit(1) from e
+    with _open_schema(db) as conn:
+        n = upsert_cities(conn, cities)
     typer.echo(f"{db}: schema ready, {n} cities loaded")
 
 
@@ -121,8 +130,7 @@ def _run_cities(
     deps = run_mod.RunDeps()
     all_cities = _all_cities(config_dir)
     outcomes = []
-    with open_db(db) as conn:
-        create_schema(conn)
+    with _open_schema(db) as conn:
         upsert_cities(conn, all_cities)
         for city in selected:
             out = run_mod.run_city(
@@ -286,8 +294,7 @@ def boundaries_fetch(
         raise typer.Exit(2)
     selected = _select_cities(config_dir, [city] if city else None)
     failed = False
-    with open_db(db) as conn:
-        create_schema(conn)
+    with _open_schema(db) as conn:
         upsert_cities(conn, _all_cities(config_dir))
         for c in selected:
             region_path = None
@@ -330,6 +337,10 @@ def external_load(
     data: Path = DATA_OPT,
 ) -> None:
     """Load curated, QECIO and BikeNetKit figures into external_figures."""
+    import zipfile
+
+    from pyogrio.errors import DataSourceError
+
     from velometer.sources import external
     from velometer.sources.download import DownloadError
 
@@ -347,7 +358,15 @@ def external_load(
                 figures_csv=figures,
                 refresh_qecio=refresh_qecio,
             )
-    except (DownloadError, SchemaError, ValueError, KeyError, OSError) as e:
+    except (
+        DownloadError,
+        SchemaError,
+        ValueError,
+        KeyError,
+        OSError,
+        zipfile.BadZipFile,
+        DataSourceError,
+    ) as e:
         typer.echo(f"external load failed: {type(e).__name__}: {e}", err=True)
         raise typer.Exit(1) from e
     for source, n in counts.items():
@@ -408,8 +427,7 @@ def results(
         return "n/a" if v is None else f"{v:.1f}"
 
     rows = []
-    with open_db(db) as conn:
-        create_schema(conn)
+    with _open_schema(db) as conn:
         for c in fetch_cities(conn):
             run_id = latest_done_run(conn, c.id, boundary, version, params)
             if run_id is None:
@@ -475,8 +493,7 @@ def reconcile(
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
-    with open_db(db) as conn:
-        create_schema(conn)
+    with _open_schema(db) as conn:
         for c in _all_cities(config_dir):
             rep = rc.reconcile_city(
                 conn,

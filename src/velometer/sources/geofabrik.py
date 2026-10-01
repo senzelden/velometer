@@ -1,5 +1,6 @@
 """Geofabrik public extracts: resolve the dated file behind -latest, fetch it, read its time."""
 
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -80,12 +81,13 @@ def fetch_region(
         def get_md5() -> str:
             resp = client.get(url + ".md5")
             resp.raise_for_status()
-            return resp.text
+            words = resp.text.split()
+            # an error page served with 200 is no md5: retry rather than report a mismatch
+            if not words or not re.fullmatch(r"[0-9a-f]{32}", words[0]):
+                raise _Glitch(f"not an md5 file: {resp.text[:60]!r}")
+            return words[0]
 
-        words = _with_retries(url + ".md5", get_md5, retries, backoff_s).split()
-        if not words:
-            raise DownloadError(f"{url}.md5: empty md5 file")
-        md5 = words[0]
+        md5 = _with_retries(url + ".md5", get_md5, retries, backoff_s)
         dst = data_dir / "raw" / PurePosixPath(urlparse(url).path).name
         fetch(url, dst, md5=md5, client=client)
     finally:

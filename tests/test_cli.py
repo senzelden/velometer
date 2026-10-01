@@ -355,3 +355,41 @@ def test_reconcile_missing_markers_or_report_exit_1_without_traceback(tmp_path, 
     assert out.exit_code == 1 and "error:" in out.output and out.exception.__class__ is SystemExit
     out = runner.invoke(app, [*base, "--report", str(tmp_path / "gone.md"), "--check"])
     assert out.exit_code == 1 and "error:" in out.output and out.exception.__class__ is SystemExit
+
+
+def test_commands_on_a_newer_schema_exit_1_without_traceback(tmp_path):
+    from velometer.db import SCHEMA_VERSION
+
+    db = tmp_path / "v.sqlite"
+    with sqlite3.connect(db) as c:
+        c.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    for args in (
+        ["run", "--cities", "berlin", "--data", str(tmp_path)],
+        ["boundaries", "fetch", "--city", "berlin", "--data", str(tmp_path)],
+        ["results"],
+        ["reconcile", "--report", str(report)],
+    ):
+        out = CliRunner().invoke(app, [*args, "--db", str(db)])
+        assert out.exit_code == 1, (args, out.output)
+        assert out.exception.__class__ is SystemExit, args
+        assert "database error" in out.output and "newer" in out.output, args
+
+
+def test_external_load_bad_zip_or_gpkg_exits_1_without_traceback(tmp_path, monkeypatch):
+    import zipfile
+
+    from pyogrio.errors import DataSourceError
+
+    from velometer.sources import external
+
+    for exc in (zipfile.BadZipFile("not a zip"), DataSourceError("not a gpkg")):
+
+        def boom(*a, exc=exc, **kw):
+            raise exc
+
+        monkeypatch.setattr(external, "load_all", boom)
+        out = CliRunner().invoke(app, ["external", "load", "--db", str(tmp_path / "v.sqlite")])
+        assert out.exit_code == 1 and out.exception.__class__ is SystemExit, out.output
+        assert "external load failed" in out.output
