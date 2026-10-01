@@ -115,3 +115,23 @@ def test_activity_config_rejects_unknown_keys(tmp_path: Path):
     p.write_text(yaml.safe_dump(data))
     with pytest.raises(ConfigError, match="activity.yaml"):
         load_activity(p)
+
+
+def test_window_end_is_exclusive():
+    rows = _rows("window_edges.osh", range(2023, 2025))
+    # way 20 v1 is at exactly 2023-01-01T00:00:00Z: it belongs to 2024's window, not 2023's
+    assert rows[2023].n_edits == 0
+    assert rows[2024].n_edits == 6
+
+
+def test_deleted_version_with_leftover_tags_counts_as_deletion():
+    r = _rows("window_edges.osh", range(2024, 2025))[2024]
+    # way 21 v2 is visible=false but still carries highway=cycleway: a deletion regardless.
+    # Deletions: way 21 v2, way 22 v2 -> 2.
+    assert r.n_ways_deleted_cycling == 2
+
+
+def test_delete_then_recreate_counts_created_again():
+    r = _rows("window_edges.osh", range(2024, 2025))[2024]
+    # created: way 20 v1, way 21 v1, way 22 v1, way 22 v3 (recreation) -> 4
+    assert r.n_ways_created_cycling == 4

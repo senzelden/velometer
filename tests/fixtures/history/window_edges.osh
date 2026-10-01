@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="handwritten">
+ <way id="20" version="1" timestamp="2023-01-01T00:00:00Z" uid="7" user="" changeset="20" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+ <way id="21" version="1" timestamp="2023-05-01T00:00:00Z" uid="7" user="" changeset="21" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+ <way id="21" version="2" timestamp="2023-06-01T00:00:00Z" uid="7" user="" changeset="22" visible="false"><tag k="highway" v="cycleway"/></way>
+ <way id="22" version="1" timestamp="2023-03-01T00:00:00Z" uid="7" user="" changeset="23" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+ <way id="22" version="2" timestamp="2023-04-01T00:00:00Z" uid="7" user="" changeset="24" visible="false"></way>
+ <way id="22" version="3" timestamp="2023-05-01T00:00:00Z" uid="7" user="" changeset="25" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+</osm>
