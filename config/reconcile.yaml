@@ -1,5 +1,7 @@
 # Comparison map (spec §3). ours: either {preset} (metric value), {road_class} (km),
 # or {tiers, basis, exclude?} (sum of tier km). Gap = (ours - theirs) / theirs.
+# A basis of {parameter: name} (and a preset that has one) follows the presets.yaml parameter;
+# the same gap on the other basis is listed as an informational `<key>~<basis>` row.
 # required: true -> `reconcile --check` fails for a city with a run but no external row for it
 # (M2 acceptance: Clean Cities 2025, QECIO and BikeNetKit for every pilot city).
 threshold: 0.20
@@ -11,7 +13,7 @@ comparisons:
     required: true
   - id: cc_km
     external: {source: clean_cities_2025, metric_name: protected_km}
-    ours: {tiers: [A, B], basis: per_side}
+    ours: {tiers: [A, B], basis: {parameter: clean_cities_basis}}
   - id: cc_network_km
     external: {source: clean_cities_2025, metric_name: network_km}
     ours: {road_class: all_public}

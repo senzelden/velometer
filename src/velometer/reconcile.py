@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from velometer.config import BASES, BasisRef, PresetParameters, PresetsConfig
 from velometer.db import (
     DEFAULT_PARAMETERS,
     RunResults,
@@ -16,6 +17,7 @@ from velometer.db import (
     latest_done_run,
 )
 from velometer.models import ExternalFigure
+from velometer.pipeline.measure import select_metric
 
 _LIKE_FOR_LIKE_SCOPES = ("whole_network", "bikenetkit_bike_network")
 BEGIN, END = "<!-- reconcile:begin -->", "<!-- reconcile:end -->"
@@ -81,16 +83,25 @@ def _matches(t, entries) -> bool:
     return False
 
 
-def ours_value(r: RunResults, spec: dict | None) -> float | None:
+def _spec_basis(spec: dict, presets: PresetsConfig) -> str:
+    """The literal basis of a tier spec, or the value of the parameter it names."""
+    basis = spec["basis"]
+    if isinstance(basis, dict):
+        basis = BasisRef.model_validate(basis)
+    return presets.parameters.resolve(basis)
+
+
+def ours_value(r: RunResults, spec: dict | None, presets: PresetsConfig) -> float | None:
     if spec is None:
         return None
     if "preset" in spec:
-        return next((m.value for m in r.metrics if m.preset == spec["preset"]), None)
+        metric = select_metric(r.metrics, spec["preset"], presets)
+        return None if metric is None else metric.value
     if "road_class" in spec:
         return next(
             (x.length_km for x in r.road_lengths if x.road_class == spec["road_class"]), None
         )
-    on_basis = [t for t in r.tier_lengths if t.length_basis == spec["basis"]]
+    on_basis = [t for t in r.tier_lengths if t.length_basis == _spec_basis(spec, presets)]
     # measure() writes no row for a tier with no length inside the boundary, so no rows on a
     # done run's basis is a real 0 km, not n/a.
     return sum(
@@ -102,23 +113,52 @@ def ours_value(r: RunResults, spec: dict | None) -> float | None:
     )
 
 
+def _parameter_names(spec: dict | None, presets: PresetsConfig) -> list[str]:
+    """Presets parameters the comparison's `ours` depends on (a parameterised preset or basis)."""
+    if spec is None:
+        return []
+    if "preset" in spec:
+        basis = presets.preset(spec["preset"]).basis
+    else:
+        basis = spec.get("basis")
+        basis = BasisRef.model_validate(basis) if isinstance(basis, dict) else basis
+    return [basis.parameter] if isinstance(basis, BasisRef) else []
+
+
+def _variants(comp: Comparison, presets: PresetsConfig) -> list[tuple[str, PresetsConfig]]:
+    """(key suffix, presets): the selected reading, then each other basis as `~<basis>`."""
+    out = [("", presets)]
+    for name in _parameter_names(comp.ours, presets):
+        for basis in BASES:
+            if basis != getattr(presets.parameters, name):
+                out.append((f"~{basis}", presets.with_parameters(**{name: basis})))
+    return out
+
+
 def gaps_for(
     r: RunResults,
     figures: list[ExternalFigure],
     comparisons: list[Comparison],
     *,
+    presets: PresetsConfig,
     threshold: float,
     date_gap_days: int,
     mismatch: dict,
 ) -> list[Gap]:
+    """Gaps per comparison and figure, on the selected presets parameters.
+
+    A comparison that depends on a parameter also gets one informational gap per other basis
+    (key suffix `~<basis>`): shown, never flagged, never part of `--check`.
+    """
     ours_date = datetime.fromisoformat(r.osm_timestamp.replace("Z", "+00:00")).date()
     out = []
     for comp in comparisons:
         figs = [
             f for f in figures if f.source in comp.sources and f.metric_name == comp.metric_name
         ]
-        for f in figs:
-            ours = None if comp.informational else ours_value(r, comp.ours)
+        for f, (suffix, variant) in ((f, v) for f in figs for v in _variants(comp, presets)):
+            informational = comp.informational or bool(suffix)
+            ours = None if comp.informational else ours_value(r, comp.ours, variant)
             gap = (ours - f.value) / f.value if ours is not None and f.value else None
             tags = list(comp.tags)
             if f.reference_date and abs((ours_date - f.reference_date).days) > date_gap_days:
@@ -135,6 +175,7 @@ def gaps_for(
                 tags.append("scope_mismatch")
             if len(comp.sources) > 1:
                 key += f"#{f.source}:{f.value:g}"
+            key += suffix
             out.append(
                 Gap(
                     city_id=r.city_id,
@@ -144,8 +185,8 @@ def gaps_for(
                     theirs=f.value,
                     unit=f.unit,
                     gap_pct=gap,
-                    flagged=(not comp.informational and gap is not None and abs(gap) > threshold),
-                    informational=comp.informational,
+                    flagged=(not informational and gap is not None and abs(gap) > threshold),
+                    informational=informational,
                     tags=tuple(dict.fromkeys(tags)),
                     source=f.source,
                     reference_date=f.reference_date,
@@ -171,7 +212,15 @@ def short_commit(sha: str) -> str:
 _QECIO_MD5 = re.compile(r"file md5 ([0-9a-f]{32})")
 
 
-def provenance_line(run: dict, figures: list[ExternalFigure]) -> str:
+def _parameters_text(parameters: PresetParameters | None) -> str:
+    if parameters is None:
+        return ""
+    return " (" + ", ".join(f"{k}={v}" for k, v in parameters.model_dump().items()) + ")"
+
+
+def provenance_line(
+    run: dict, figures: list[ExternalFigure], parameters: PresetParameters | None = None
+) -> str:
     sources = []
     for source in sorted({f.source for f in figures}):
         figs = [f for f in figures if f.source == source]
@@ -181,7 +230,8 @@ def provenance_line(run: dict, figures: list[ExternalFigure]) -> str:
     return (
         f"run {run['id']} · OSM {run['osm_timestamp']} · classifier "
         f"{run['classifier_version']} `{run['classifier_parameters']}` · config "
-        f"`{(run.get('config_sha256') or 'n/a')[:12]}` · commit `{short_commit(run['git_commit'])}`"
+        f"`{(run.get('config_sha256') or 'n/a')[:12]}`{_parameters_text(parameters)} · commit "
+        f"`{short_commit(run['git_commit'])}`"
         f" · boundary {run['boundary_kind']} `{run['boundary_sha256'][:12]}` · sources: "
         + ("; ".join(sources) or "none")
     )
@@ -195,11 +245,13 @@ def reconcile_city(
     *,
     classifier_version: str = "v1",
     classifier_parameters: str = DEFAULT_PARAMETERS,
+    config_sha256: str | None = None,
+    presets: PresetsConfig,
 ) -> CityReport | None:
-    """The city's latest done run (for this classifier and parameters) against its figures."""
+    """The city's latest done run (for this classifier, parameters and config) vs its figures."""
     cfg = load_config(config_path)
     run_id = latest_done_run(
-        conn, city_id, boundary_kind, classifier_version, classifier_parameters
+        conn, city_id, boundary_kind, classifier_version, classifier_parameters, config_sha256
     )
     if run_id is None:
         return None
@@ -208,11 +260,13 @@ def reconcile_city(
         fetch_run_results(conn, run_id),
         figures,
         load_comparisons(config_path),
+        presets=presets,
         threshold=cfg["threshold"],
         date_gap_days=cfg["date_gap_days"],
         mismatch=cfg.get("boundary_mismatch", {}),
     )
-    return CityReport(city_id, run_id, provenance_line(fetch_run(conn, run_id), figures), gaps)
+    provenance = provenance_line(fetch_run(conn, run_id), figures, presets.parameters)
+    return CityReport(city_id, run_id, provenance, gaps)
 
 
 def _fmt(v: float | None, pct: bool = False) -> str:

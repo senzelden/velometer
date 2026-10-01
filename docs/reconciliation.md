@@ -13,6 +13,21 @@ key `<city>/<comparison>@<scope>`, still flag over 20% and still need an explana
 
 Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 0006).
 
+Clean Cities basis: the Clean Cities comparisons (`cc_ratio`, `cc_km`) follow the
+`clean_cities_basis` parameter in `config/presets.yaml` (default `per_side`, ADR 0003), or
+`--clean-cities-basis` for one command. Both bases are stored for every run, so switching needs
+no rerun. A comparison that depends on the parameter also gets an informational row on the
+other basis, keyed `<city>/<comparison>~<basis>` (for example `berlin/cc_km~qecio_weighted`);
+it is never flagged and never needs an explanation. Flags and `--check` use the selected basis
+only, and each city's provenance line states `clean_cities_basis=<value>`.
+
+Explained-against marker: the Explanations section carries
+`<!-- explained-against: city=run_id ... -->`, naming the run each city's explanations were
+written against. When a city's latest run (of the config on disk) is another run, `--check`
+exits 1 and prints the corrected marker line; after re-checking the explanations against the
+new run, paste that line over the old one. `--check` also exits 1, naming the city, when a city
+has no done run of the current config.
+
 <!-- reconcile:begin -->
 
 #### berlin

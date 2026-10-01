@@ -1,4 +1,8 @@
 # Presets (ADR 0003). tiers: "X" = all subtypes of tier X; "X/sub" = only that subtype.
+# parameters: report-time choices. A preset whose basis is {parameter: name} is computed on
+# every basis and stored once per basis; the parameter only picks which row is reported.
+parameters:
+  clean_cities_basis: per_side   # per_side | qecio_weighted; ADR 0003 + Task 10
 presets:
   - id: ours_headline
     tiers: [A, B]
@@ -10,5 +14,5 @@ presets:
     denominator: main_incl_motorway_raw
   - id: clean_cities_2025
     tiers: [A, B]
-    basis: per_side
+    basis: {parameter: clean_cities_basis}
     denominator: all_public

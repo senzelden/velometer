@@ -40,3 +40,10 @@ Detected pairs are logged as diagnostics for review. The `ecf_qecio` preset uses
 - `ours_headline`: A+B (per_side) / `main_excl_motorway`
 - `ecf_qecio`: A+B+C+D (qecio_weighted) / `main_incl_motorway_raw`
 - `clean_cities_2025`: A+B (per_side) / `all_public`. This reproduces Clean Cities' *OSM fallback method*, not their published numbers, which were mostly city-submitted.
+
+## Notes (Task 10: Clean Cities basis parameter)
+
+- **Evidence.** The M2 reconciliation (`docs/reconciliation.md`, `berlin/cc_km`) shows that Clean Cities' km match our `qecio_weighted` basis, not `per_side`: Berlin 918.3 km on `qecio_weighted` against their 925 km, 1,557.9 km on `per_side`. The `clean_cities_2025` preset is therefore a faithful reproduction of Clean Cities' *OSM fallback method* only on the `per_side` reading recorded above, and the published numbers follow the centreline-like reading.
+- **Parameter.** `parameters.clean_cities_basis` in `config/presets.yaml` (`per_side` or `qecio_weighted`) selects which reading `clean_cities_2025` and the `cc_km` reconcile comparison report. `--clean-cities-basis` overrides it for one `classify`, `results` or `reconcile` command.
+- **Default kept.** The default stays `per_side`, as decided above. The parameter exists so that either reading can be reported.
+- **Both always stored.** A preset whose basis is a parameter is computed on every basis and stored once per basis (schema v4), so switching never needs a rerun. Reports print the basis they used and the value on the other one, and reconcile lists the other basis as an informational `~<basis>` row.

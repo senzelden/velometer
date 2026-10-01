@@ -5,13 +5,15 @@ from shapely import MultiPolygon, Polygon
 
 from velometer.config import Preset, default_config_dir, load_classifier, load_presets
 from velometer.pipeline.geometry import Projector
-from velometer.pipeline.measure import compute_metrics, measure, road_length
+from velometer.pipeline.measure import compute_metrics, measure, road_length, select_metric
 from velometer.pipeline.read import read_ways
 from velometer.pipeline.types import WayRecord
 
 FIX = Path(__file__).parent / "fixtures" / "measure"
 CFG = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
-PRESETS = load_presets(default_config_dir() / "presets.yaml", CFG)
+PRESETS_CONFIG = load_presets(default_config_dir() / "presets.yaml", CFG)
+PRESETS = PRESETS_CONFIG.presets
+PRESETS_BY_ID = {p.id: p for p in PRESETS}
 
 
 @pytest.fixture(scope="module")
@@ -42,10 +44,35 @@ def test_road_classes_exclude_private_and_split_motorways(result):
 
 
 def test_preset_metrics(result):
-    m = {x.preset: x.value for x in compute_metrics(result, PRESETS)}
+    metrics = compute_metrics(result, PRESETS)
+    m = {p.id: select_metric(metrics, p.id, PRESETS_CONFIG).value for p in PRESETS}
     assert m["ours_headline"] == pytest.approx(200, rel=0.01)
     assert m["ecf_qecio"] == pytest.approx(100, rel=0.01)
     assert m["clean_cities_2025"] == pytest.approx(100, rel=0.01)
+
+
+def test_parameterised_preset_is_computed_on_every_basis_and_fixed_ones_on_one(result):
+    metrics = compute_metrics(result, PRESETS)
+    bases = {p: sorted(m.length_basis for m in metrics if m.preset == p) for p in PRESETS_BY_ID}
+    assert bases == {
+        "ours_headline": ["per_side"],
+        "ecf_qecio": ["qecio_weighted"],
+        "clean_cities_2025": ["per_side", "qecio_weighted"],
+    }
+    by_basis = {m.length_basis: m for m in metrics if m.preset == "clean_cities_2025"}
+    # the fixture has tracks on both sides of a road, so the two bases differ
+    assert by_basis["per_side"].numerator_km != by_basis["qecio_weighted"].numerator_km
+    assert by_basis["per_side"].denominator_km == by_basis["qecio_weighted"].denominator_km
+
+
+def test_select_metric_follows_the_parameter_and_leaves_fixed_presets_alone(result):
+    metrics = compute_metrics(result, PRESETS)
+    for basis in ("per_side", "qecio_weighted"):
+        config = PRESETS_CONFIG.with_parameters(clean_cities_basis=basis)
+        assert select_metric(metrics, "clean_cities_2025", config).length_basis == basis
+        assert select_metric(metrics, "ours_headline", config).length_basis == "per_side"
+        assert select_metric(metrics, "ecf_qecio", config).length_basis == "qecio_weighted"
+    assert select_metric([], "clean_cities_2025", PRESETS_CONFIG) is None
 
 
 def test_empty_denominator_gives_none_not_error():

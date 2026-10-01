@@ -203,6 +203,7 @@ A completed run with the same key is skipped unless `force`. A failure marks the
 - `velometer reconcile --write` rewrites only the generated block.
 - `velometer reconcile --check` exits 1 when a flagged gap has no explanation heading.
 - Final fix dispatch (R13, I7): each city's generated block starts with a provenance line (run, OSM timestamp, classifier and parameters, config sha, commit, boundary sha, `retrieved_at` per source). The explanations carry `<!-- explained-against: city=run_id ... -->`, and `--check` also exits 1 when a city's latest run differs from it, or when a comparison marked `required` in `config/reconcile.yaml` (`cc_ratio`, `qecio_main_km`, `bnk_network_km`) has no external row for a city with a run. It warns about headings that match no flagged gap.
+- Task 10 (Clean Cities basis): `config/presets.yaml` has a `parameters.clean_cities_basis` (default `per_side`, ADR 0003); a preset with `basis: {parameter: clean_cities_basis}` is computed on both bases (schema v4: `metrics` is keyed by `(run_id, city_id, preset, length_basis)`), `reconcile.yaml`'s `cc_km` uses the same parameter, and `results`, `reconcile` and `classify` take `--clean-cities-basis` for reporting only. Comparisons that depend on it also emit an informational `<city>/<id>~<other basis>` gap, never flagged and never part of `--check`. Reports cover the runs of the config on disk (`config_sha256`).
 
 ### CLI additions
 ```

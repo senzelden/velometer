@@ -12,6 +12,7 @@ from velometer.pipeline.match import validate_expr
 
 Tier = Literal["A", "B", "C", "D", "E", "excluded"]
 Basis = Literal["per_side", "qecio_weighted"]
+BASES: tuple[Basis, ...] = ("per_side", "qecio_weighted")
 RoadClass = Literal[
     "main_excl_motorway", "main_incl_motorway", "main_incl_motorway_raw", "all_public"
 ]
@@ -106,12 +107,47 @@ class ClassifierConfig(_Strict):
 PRESET_TIERS = ("A", "B", "C", "D", "E")
 
 
+class BasisRef(_Strict):
+    """`{parameter: <name>}`: the length basis is read from the presets `parameters` block."""
+
+    parameter: str
+
+
+class PresetParameters(_Strict):
+    """Report-time interpretation choices of the presets; every basis is computed and stored."""
+
+    # Which length basis the Clean Cities figures are reported on. `per_side` counts each side
+    # of a road once (ADR 0003, the recorded reading of Clean Cities' method). `qecio_weighted`
+    # counts a road with infrastructure on both sides once (centreline-like), which is what
+    # Clean Cities' published km match (docs/reconciliation.md, berlin/cc_km).
+    clean_cities_basis: Basis = "per_side"
+
+    def resolve(self, basis: "Basis | BasisRef") -> Basis:
+        """The literal basis, or the value of the parameter it names."""
+        if isinstance(basis, BasisRef):
+            return getattr(self, basis.parameter)
+        return basis
+
+    def with_values(self, **overrides: str) -> "PresetParameters":
+        return PresetParameters.model_validate({**self.model_dump(), **overrides})
+
+
+def check_parameter_ref(basis: "Basis | BasisRef") -> None:
+    """Raise ValueError when `{parameter: x}` names a parameter that does not exist."""
+    if isinstance(basis, BasisRef) and basis.parameter not in PresetParameters.model_fields:
+        known = ", ".join(PresetParameters.model_fields)
+        raise ValueError(f"unknown parameter {basis.parameter!r} (known: {known})")
+
+
 class Preset(_Strict):
-    """`tiers` entries: "X" = every subtype of tier X; "X/sub" = only that subtype (X in A-E)."""
+    """`tiers` entries: "X" = every subtype of tier X; "X/sub" = only that subtype (X in A-E).
+
+    A `basis` of `{parameter: name}` is computed on every basis and chosen at report time.
+    """
 
     id: str
     tiers: list[str] = Field(min_length=1)
-    basis: Basis
+    basis: Basis | BasisRef
     denominator: RoadClass
 
     @field_validator("tiers")
@@ -122,6 +158,30 @@ class Preset(_Strict):
             if tier not in PRESET_TIERS or (slash and not sub):
                 raise ValueError(f"tier entry {entry!r} must be one of A-E or '<tier>/<subtype>'")
         return v
+
+    @field_validator("basis")
+    @classmethod
+    def _known_parameter(cls, v: "Basis | BasisRef") -> "Basis | BasisRef":
+        check_parameter_ref(v)
+        return v
+
+    @property
+    def parameterised(self) -> bool:
+        return isinstance(self.basis, BasisRef)
+
+
+class PresetsConfig(_Strict):
+    parameters: PresetParameters = PresetParameters()
+    presets: list[Preset]
+
+    def with_parameters(self, **overrides: str) -> "PresetsConfig":
+        return self.model_copy(update={"parameters": self.parameters.with_values(**overrides)})
+
+    def preset(self, preset_id: str) -> Preset:
+        for p in self.presets:
+            if p.id == preset_id:
+                return p
+        raise KeyError(f"no preset {preset_id!r}")
 
 
 def _read(path: Path) -> Any:
@@ -146,11 +206,11 @@ def load_classifier(path: Path) -> ClassifierConfig:
     return _parse(path, ClassifierConfig.model_validate)
 
 
-def load_presets(path: Path, classifier: ClassifierConfig) -> list[Preset]:
-    """Load presets; every "X/sub" entry must name a subtype that a tier-X rule produces."""
-    presets = _parse(path, lambda d: [Preset.model_validate(p) for p in d["presets"]])
+def load_presets(path: Path, classifier: ClassifierConfig) -> PresetsConfig:
+    """Load presets and their parameters; every "X/sub" entry must name a produced subtype."""
+    config = _parse(path, PresetsConfig.model_validate)
     produced = {(r.tier, r.subtype) for r in classifier.rules if r.subtype is not None}
-    for p in presets:
+    for p in config.presets:
         for entry in p.tiers:
             tier, _, sub = entry.partition("/")
             if sub and (tier, sub) not in produced:
@@ -158,4 +218,4 @@ def load_presets(path: Path, classifier: ClassifierConfig) -> list[Preset]:
                     f"{path}: preset {p.id!r}: no rule in classifier {classifier.version} "
                     f"produces tier {tier} subtype {sub!r} (entry {entry!r})"
                 )
-    return presets
+    return config

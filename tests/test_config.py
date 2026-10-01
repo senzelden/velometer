@@ -33,7 +33,7 @@ def test_geographic_epsg_is_rejected(tmp_path: Path):
 
 def test_presets_reference_known_denominators():
     classifier = load_classifier(CFG / "classifier" / "v1.yaml")
-    presets = load_presets(CFG / "presets.yaml", classifier)
+    presets = load_presets(CFG / "presets.yaml", classifier).presets
     assert {p.id for p in presets} == {"ours_headline", "ecf_qecio", "clean_cities_2025"}
 
 
@@ -122,7 +122,7 @@ def _presets_file(tmp_path: Path, tiers: list[str]) -> Path:
 @pytest.mark.parametrize("tiers", [["A", "B/segregated", "B/sidewalk", "E/bus"], ["C", "D"]])
 def test_preset_tiers_accept_tiers_and_produced_subtypes(tmp_path: Path, tiers):
     classifier = load_classifier(CFG / "classifier" / "v1.yaml")
-    (p,) = load_presets(_presets_file(tmp_path, tiers), classifier)
+    (p,) = load_presets(_presets_file(tmp_path, tiers), classifier).presets
     assert p.tiers == tiers
 
 
@@ -145,3 +145,42 @@ def test_plain_cycleway_on_oneway_parameter_defaults_and_validates(tmp_path):
     bad.write_text(yaml.safe_dump(raw))
     with pytest.raises(ConfigError, match="plain_cycleway_on_oneway"):
         load_classifier(bad)
+
+
+def _basis_presets(tmp_path: Path, basis, parameters=None) -> Path:
+    preset = {"id": "p", "tiers": ["A"], "basis": basis, "denominator": "all_public"}
+    doc = {"presets": [preset]}
+    if parameters is not None:
+        doc["parameters"] = parameters
+    p = tmp_path / "presets.yaml"
+    p.write_text(yaml.safe_dump(doc))
+    return p
+
+
+def test_shipped_presets_parameterise_only_clean_cities_and_default_to_per_side():
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    config = load_presets(CFG / "presets.yaml", classifier)
+    assert config.parameters.clean_cities_basis == "per_side"  # ADR 0003 default
+    assert {p.id for p in config.presets if p.parameterised} == {"clean_cities_2025"}
+    cc = config.preset("clean_cities_2025")
+    assert config.parameters.resolve(cc.basis) == "per_side"
+    switched = config.with_parameters(clean_cities_basis="qecio_weighted")
+    assert switched.parameters.resolve(cc.basis) == "qecio_weighted"
+
+
+def test_basis_parameter_reference_must_name_a_known_parameter(tmp_path: Path):
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    ok = _basis_presets(tmp_path, {"parameter": "clean_cities_basis"})
+    assert load_presets(ok, classifier).presets[0].parameterised
+    bad = _basis_presets(tmp_path, {"parameter": "no_such_parameter"})
+    with pytest.raises(ConfigError, match=r"(?s)presets\.yaml.*no_such_parameter"):
+        load_presets(bad, classifier)
+
+
+def test_basis_parameter_value_must_be_a_valid_basis(tmp_path: Path):
+    classifier = load_classifier(CFG / "classifier" / "v1.yaml")
+    bad = _basis_presets(tmp_path, {"parameter": "clean_cities_basis"}, {"clean_cities_basis": "x"})
+    with pytest.raises(ConfigError, match="clean_cities_basis"):
+        load_presets(bad, classifier)
+    with pytest.raises(ConfigError, match="presets.yaml"):
+        load_presets(_basis_presets(tmp_path, "sideways"), classifier)

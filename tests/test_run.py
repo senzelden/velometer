@@ -240,9 +240,14 @@ def test_both_sides_run_does_not_displace_the_default_run(conn, tmp_path):
         " 'clean_cities_2025', 'protected_km', 1, 'km', NULL, 'whole_network', 'unknown', 'u',"
         " '2026-10-01')"
     )
-    report = reconcile_city(conn, "berlin", CFG_DIR / "reconcile.yaml")
+    from velometer.config import load_classifier, load_presets
+
+    presets = load_presets(
+        CFG_DIR / "presets.yaml", load_classifier(CFG_DIR / "classifier" / "v1.yaml")
+    )
+    report = reconcile_city(conn, "berlin", CFG_DIR / "reconcile.yaml", presets=presets)
     assert report.run_id == default.run_id
-    (gap,) = report.gaps
+    (gap,) = (g for g in report.gaps if "~" not in g.key)
     a_b = conn.execute(
         "SELECT SUM(length_km) FROM tier_lengths WHERE run_id=? AND tier IN ('A','B') "
         "AND length_basis='per_side'",
@@ -320,3 +325,36 @@ def test_berlin_end_to_end(tmp_path):
         assert tiers and all(km >= 0 for (km,) in tiers)
         again = R.run_city(conn, CITY, data_dir=data, config_dir=CFG_DIR)
         assert again.status == "skipped" and again.run_id == out.run_id
+
+
+def test_config_sha_separates_the_two_files(tmp_path):
+    """Moving a byte from one file's end to the other's start must change the hash."""
+    a1, b1 = tmp_path / "a.yaml", tmp_path / "b.yaml"
+    a1.write_text("xx")
+    b1.write_text("yy")
+    first = R.config_sha256(a1, b1)
+    a1.write_text("xxy")
+    b1.write_text("y")
+    assert R.config_sha256(a1, b1) != first
+    a1.write_text("xx")
+    b1.write_text("yy")
+    assert R.config_sha256(a1, b1) == first  # still a pure function of the file contents
+
+
+def test_gitattributes_pins_config_to_lf():
+    text = (Path(__file__).resolve().parent.parent / ".gitattributes").read_text()
+    assert "config/** text eol=lf" in text.splitlines()
+
+
+def test_both_bases_of_clean_cities_are_stored_by_a_run(conn, tmp_path):
+    out = _run(conn, tmp_path, _deps(tmp_path, []))
+    rows = conn.execute(
+        "SELECT preset, length_basis FROM metrics WHERE run_id=? ORDER BY preset, length_basis",
+        (out.run_id,),
+    ).fetchall()
+    assert rows == [
+        ("clean_cities_2025", "per_side"),
+        ("clean_cities_2025", "qecio_weighted"),
+        ("ecf_qecio", "qecio_weighted"),
+        ("ours_headline", "per_side"),
+    ]

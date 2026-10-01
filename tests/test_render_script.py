@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from velometer.config import default_config_dir, load_classifier, load_presets
 from velometer.models import Boundary, Metric
 
 _PATH = Path(__file__).resolve().parent.parent / "scripts" / "render_m2_results.py"
@@ -59,6 +60,11 @@ def _row(**run_kw) -> dict:
         "city": city,
         "run": _run(**run_kw),
         "metrics": {"ours_headline": m},
+        "all_metrics": [m],
+        "presets": load_presets(
+            default_config_dir() / "presets.yaml",
+            load_classifier(default_config_dir() / "classifier" / "v1.yaml"),
+        ),
         "roads": {},
         "tier_km": {(b, t): 0.0 for b in ("per_side", "qecio_weighted") for t in render.TIERS},
         "completeness": [],
@@ -85,3 +91,25 @@ def test_chart_title_comes_from_the_run_rows():
     title = render.chart_title([_row()])
     assert "OSM 2026-10-02" in title and "classifier v1" in title and "LAU 2024" in title
     assert "1 pilot cities" in title
+
+
+def test_clean_cities_bar_label_names_the_basis_and_the_table_lists_both_bases():
+    def cc(basis, value):
+        return Metric(
+            preset="clean_cities_2025",
+            length_basis=basis,
+            value=value,
+            numerator_km=value,
+            denominator_km=100.0,
+        )
+
+    row = _row()
+    both = [cc("per_side", 30.0), cc("qecio_weighted", 18.0)]
+    row["all_metrics"] = [*row["all_metrics"], *both]
+    row["metrics"] = {**row["metrics"], "clean_cities_2025": both[1]}
+    row["presets"] = row["presets"].with_parameters(clean_cities_basis="qecio_weighted")
+    assert "A+B on qecio_weighted" in render.preset_label("clean_cities_2025", [row])
+    md = render.markdown([row])
+    assert "clean_cities % (qecio_weighted)" in md  # the table header names the selected basis
+    assert "| `clean_cities_2025` | per_side |  | 30.0 |" in md
+    assert "| `clean_cities_2025` | qecio_weighted | yes | 18.0 |" in md

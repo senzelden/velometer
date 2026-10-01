@@ -2,18 +2,31 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
 import typer
 
-from velometer.config import CityConfig, ConfigError, default_config_dir, load_cities
+from velometer.config import (
+    BASES,
+    CityConfig,
+    ConfigError,
+    PresetsConfig,
+    default_config_dir,
+    load_cities,
+)
 from velometer.db import SchemaError, create_schema, open_db, upsert_cities
 
 
 class PlainOneway(StrEnum):
     traffic_side = "traffic_side"
     both_sides = "both_sides"
+
+
+class CleanCitiesBasis(StrEnum):
+    per_side = "per_side"
+    qecio_weighted = "qecio_weighted"
 
 
 app = typer.Typer(no_args_is_help=True, help="Protected cycling infrastructure from OSM.")
@@ -27,6 +40,13 @@ app.add_typer(external_app, name="external")
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
 CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config directory.")
+CC_BASIS_OPT = typer.Option(
+    None,
+    "--clean-cities-basis",
+    help="Report Clean Cities figures on this length basis instead of the presets.yaml value "
+    "(reporting only: every basis is stored, so no rerun is needed).",
+)
+SWITCH_HINT = "(switch with --clean-cities-basis)"
 
 
 @contextmanager
@@ -67,6 +87,41 @@ def _params_line(cfg) -> str:
     return f"classifier {cfg.version} ({params})"
 
 
+def _presets_line(config: PresetsConfig) -> str:
+    params = " ".join(f"{k}={v}" for k, v in config.parameters.model_dump().items())
+    return f"presets ({params})"
+
+
+def _with_basis(config: PresetsConfig, basis: CleanCitiesBasis | None) -> PresetsConfig:
+    return config if basis is None else config.with_parameters(clean_cities_basis=basis.value)
+
+
+def _fmt_value(v: float | None) -> str:
+    return "n/a" if v is None else f"{v:.1f}%"
+
+
+def _other_basis_lines(rows: dict[str, list], config: PresetsConfig) -> list[str]:
+    """`<preset> on <other basis>: <values> (switch ...)` for each parameterised preset.
+
+    `rows` maps a label ("" for a single run) to that run's metrics.
+    """
+    from velometer.pipeline.measure import select_metric
+
+    lines = []
+    for p in config.presets:
+        if not p.parameterised:
+            continue
+        selected = config.parameters.resolve(p.basis)
+        for basis in (b for b in BASES if b != selected):
+            alt = config.with_parameters(**{p.basis.parameter: basis})
+            values = []
+            for label, metrics in rows.items():
+                m = select_metric(metrics, p.id, alt)
+                values.append(f"{label} {_fmt_value(m and m.value)}".strip())
+            lines.append(f"{p.id} on {basis}: {', '.join(values)} {SWITCH_HINT}")
+    return lines
+
+
 def _config_error(e: ConfigError):
     typer.echo(f"config error: {e}", err=True)
     return typer.Exit(1)
@@ -93,16 +148,56 @@ def _select_cities(config_dir: Path, wanted: list[str] | None) -> list[CityConfi
     return [by_id[w] for w in wanted]
 
 
-def _run_selector(config_dir: Path, classifier: str) -> tuple[str, str]:
-    """(version, canonical default parameters) of a classifier: which done runs to report."""
-    from velometer.config import load_classifier
-    from velometer.db import canonical_parameters
+@dataclass(frozen=True)
+class Selector:
+    """Which done runs a report covers: classifier, its parameters, the config on disk."""
 
+    version: str
+    parameters: str  # canonical JSON
+    config_sha256: str
+    presets: PresetsConfig
+
+    def latest(self, conn, city_id: str, boundary: str) -> int | None:
+        from velometer.db import latest_done_run
+
+        return latest_done_run(
+            conn, city_id, boundary, self.version, self.parameters, self.config_sha256
+        )
+
+    def stale(self, conn, city_id: str, boundary: str) -> bool:
+        """True when the city has done runs of this classifier, but none of the current config."""
+        from velometer.db import latest_done_run
+
+        return (
+            self.latest(conn, city_id, boundary) is None
+            and latest_done_run(conn, city_id, boundary, self.version, self.parameters) is not None
+        )
+
+    @property
+    def short_sha(self) -> str:
+        return self.config_sha256[:12]
+
+
+def _run_selector(
+    config_dir: Path, classifier: str, basis: CleanCitiesBasis | None = None
+) -> Selector:
+    """The classifier, parameters and config sha of the config on disk: which runs to report."""
+    from velometer.config import load_classifier, load_presets
+    from velometer.db import canonical_parameters
+    from velometer.run import config_sha256
+
+    classifier_path = config_dir / "classifier" / f"{classifier}.yaml"
     try:
-        cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
+        cfg = load_classifier(classifier_path)
+        presets = _with_basis(load_presets(config_dir / "presets.yaml", cfg), basis)
     except ConfigError as e:
         raise _config_error(e) from e
-    return cfg.version, canonical_parameters(cfg.parameters.model_dump())
+    return Selector(
+        cfg.version,
+        canonical_parameters(cfg.parameters.model_dump()),
+        config_sha256(classifier_path, config_dir / "presets.yaml"),
+        presets,
+    )
 
 
 def _run_cities(
@@ -168,6 +263,7 @@ def classify(
         help="Override the classifier parameter: plain cycleway=* on a oneway road counts on "
         "the traffic side only, or on both sides.",
     ),
+    clean_cities_basis: CleanCitiesBasis | None = CC_BASIS_OPT,
 ) -> None:
     """Classify one OSM file (--file/--epsg) or run one city into the database (--city)."""
     if file is not None and city is not None:
@@ -184,21 +280,47 @@ def classify(
             force=force,
             plain=plain_cycleway_on_oneway,
         )
+        _print_city_metrics(
+            outcomes, db, boundary, _run_selector(config_dir, classifier, clean_cities_basis)
+        )
         if outcomes[0].status == "failed":
             raise typer.Exit(1)
         return
     if file is None or epsg is None:
         typer.echo("error: give --file with --epsg, or --city", err=True)
         raise typer.Exit(2)
-    _classify_file(file, epsg, classifier, config_dir, plain_cycleway_on_oneway)
+    _classify_file(file, epsg, classifier, config_dir, plain_cycleway_on_oneway, clean_cities_basis)
+
+
+def _print_city_metrics(outcomes: list, db: Path, boundary: str, sel: Selector) -> None:
+    """The preset values of each run the command made or found (done and skipped), if any."""
+    from velometer.db import fetch_run_results
+    from velometer.pipeline.measure import select_metric
+
+    with _open_schema(db) as conn:
+        for out in outcomes:
+            if out.run_id is None or out.status == "failed":
+                continue
+            metrics = fetch_run_results(conn, out.run_id).metrics
+            typer.echo(_presets_line(sel.presets))
+            for p in sel.presets.presets:
+                m = select_metric(metrics, p.id, sel.presets)
+                typer.echo(f"{out.city_id} {p.id}: {_fmt_value(m and m.value)}")
+            for line in _other_basis_lines({out.city_id: metrics}, sel.presets):
+                typer.echo(line)
 
 
 def _classify_file(
-    file: Path, epsg: int, classifier: str, config_dir: Path, plain: PlainOneway | None
+    file: Path,
+    epsg: int,
+    classifier: str,
+    config_dir: Path,
+    plain: PlainOneway | None,
+    basis: CleanCitiesBasis | None,
 ) -> None:
     from velometer.config import load_classifier, load_presets
     from velometer.pipeline.geometry import require_projected
-    from velometer.pipeline.measure import compute_metrics, measure
+    from velometer.pipeline.measure import compute_metrics, measure, select_metric
     from velometer.pipeline.read import read_ways
 
     try:
@@ -208,7 +330,7 @@ def _classify_file(
         raise typer.Exit(1) from e
     try:
         cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
-        presets = load_presets(config_dir / "presets.yaml", cfg)
+        presets = _with_basis(load_presets(config_dir / "presets.yaml", cfg), basis)
     except ConfigError as e:
         raise _config_error(e) from e
     if plain is not None:
@@ -216,6 +338,7 @@ def _classify_file(
     read = read_ways(file)
     result = measure(read.ways, cfg, epsg)
     typer.echo(_params_line(cfg))
+    typer.echo(_presets_line(presets))
     typer.echo(f"ways: {len(read.ways)}  skipped ways: {len(read.skipped)}")
     typer.echo("\ntier  subtype            basis            km       ways")
     for t in result.tier_lengths:
@@ -227,9 +350,15 @@ def _classify_file(
     for r in result.road_lengths:
         typer.echo(f"{r.road_class:<24} {r.length_km:>8.3f}")
     typer.echo("\npreset               value     num km   den km")
-    for m in compute_metrics(result, presets):
+    metrics = compute_metrics(result, presets.presets)
+    for p in presets.presets:
+        m = select_metric(metrics, p.id, presets)
+        if m is None:
+            continue
         value = "n/a" if m.value is None else f"{m.value:.1f}"
         typer.echo(f"{m.preset:<20} {value:>7} {m.numerator_km:>9.3f} {m.denominator_km:>8.3f}")
+    for line in _other_basis_lines({"": metrics}, presets):
+        typer.echo(line)
     typer.echo(
         f"\nparallel duplicates flagged: {len(result.duplicates)}  "
         f"dual-carriageway ways: {len(result.dual_pairs)}"
@@ -417,23 +546,36 @@ def results(
     classifier: str = CLASSIFIER_REPORT_OPT,
     config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
+    clean_cities_basis: CleanCitiesBasis | None = CC_BASIS_OPT,
 ) -> None:
-    """One row per city: the latest done run's headline metrics and per-side tier km."""
-    from velometer.db import fetch_cities, fetch_run_results, latest_done_run
+    """One row per city: the latest done run's headline metrics and per-side tier km.
 
-    version, params = _run_selector(config_dir, classifier)
+    Reports runs of the config on disk (classifier and presets YAML), not older ones.
+    """
+    from velometer.db import fetch_cities, fetch_run_results
+    from velometer.pipeline.measure import select_metric
+
+    sel = _run_selector(config_dir, classifier, clean_cities_basis)
 
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
 
     rows = []
+    metrics_by_city: dict[str, list] = {}
+    stale: list[str] = []
     with _open_schema(db) as conn:
         for c in fetch_cities(conn):
-            run_id = latest_done_run(conn, c.id, boundary, version, params)
+            run_id = sel.latest(conn, c.id, boundary)
             if run_id is None:
+                if sel.stale(conn, c.id, boundary):
+                    stale.append(c.id)
                 continue
             r = fetch_run_results(conn, run_id)
-            m = {x.preset: x for x in r.metrics}
+            metrics_by_city[c.id] = r.metrics
+            head, ecf, clean = (
+                select_metric(r.metrics, p, sel.presets)
+                for p in ("ours_headline", "ecf_qecio", "clean_cities_2025")
+            )
             tier_km = dict.fromkeys("ABCDE", 0.0)
             for t in r.tier_lengths:
                 if t.length_basis == "per_side" and t.tier in tier_km:
@@ -441,9 +583,6 @@ def results(
             main = next(
                 (x.length_km for x in r.road_lengths if x.road_class == "main_excl_motorway"),
                 None,
-            )
-            head, ecf, clean = (
-                m.get(p) for p in ("ours_headline", "ecf_qecio", "clean_cities_2025")
             )
             rows.append(
                 [
@@ -456,13 +595,20 @@ def results(
                 + [fmt(tier_km[t]) for t in "ABCDE"]
                 + [fmt(main), fmt(head and head.per_100k)]
             )
+    for cid in stale:
+        typer.echo(
+            f"note: {cid} has no done {boundary!r} run of the current config {sel.short_sha}"
+        )
     if not rows:
-        typer.echo(f"no done runs for boundary {boundary!r}")
+        typer.echo(f"no done runs for boundary {boundary!r} of the current config {sel.short_sha}")
         return
+    typer.echo(_presets_line(sel.presets))
     widths = [max(len(h), *(len(r[i]) for r in rows)) for i, h in enumerate(RESULT_COLUMNS)]
     typer.echo("  ".join(h.ljust(w) for h, w in zip(RESULT_COLUMNS, widths, strict=True)).rstrip())
     for r in rows:
         typer.echo("  ".join(v.ljust(w) for v, w in zip(r, widths, strict=True)).rstrip())
+    for line in _other_basis_lines(metrics_by_city, sel.presets):
+        typer.echo(line)
 
 
 @app.command()
@@ -484,12 +630,18 @@ def reconcile(
     ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
+    clean_cities_basis: CleanCitiesBasis | None = CC_BASIS_OPT,
 ) -> None:
-    """Compare our latest run per city with external figures (config/reconcile.yaml)."""
+    """Compare our latest run per city (of the config on disk) with external figures.
+
+    Gaps use the Clean Cities basis selected by presets.yaml or --clean-cities-basis; the
+    other basis is listed as informational `~<basis>` rows. Flags and --check use the selected
+    one only.
+    """
     from velometer import reconcile as rc
 
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
-    version, params = _run_selector(config_dir, classifier)
+    sel = _run_selector(config_dir, classifier, clean_cities_basis)
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
@@ -500,16 +652,22 @@ def reconcile(
                 c.id,
                 config_path,
                 boundary,
-                classifier_version=version,
-                classifier_parameters=params,
+                classifier_version=sel.version,
+                classifier_parameters=sel.parameters,
+                config_sha256=sel.config_sha256,
+                presets=sel.presets,
             )
             if rep is None:
                 if c.id in wanted:
                     skipped.append(c.id)
-                    typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
+                    typer.echo(
+                        f"note: {c.id} has no done {boundary!r} run of the current config "
+                        f"{sel.short_sha}, skipped"
+                    )
                 continue
             all_by_city[c.id] = rep
     shown = {k: v for k, v in all_by_city.items() if k in wanted}
+    typer.echo(_presets_line(sel.presets))
     typer.echo(rc.render_block(shown))
     try:
         if write:  # every city with a done run, so --city never drops other tables
@@ -534,7 +692,10 @@ def reconcile(
             for key in rc.stale_explanations(report, gaps, set(shown)):
                 typer.echo(f"warning: ### {key} matches no flagged gap", err=True)
             for cid in skipped:
-                typer.echo(f"no done run for {cid}: cannot check it", err=True)
+                typer.echo(
+                    f"no done run for {cid} of the current config {sel.short_sha}: cannot check it",
+                    err=True,
+                )
             if missing or required or stale_runs or skipped:
                 raise typer.Exit(1)
     except (OSError, ValueError) as e:

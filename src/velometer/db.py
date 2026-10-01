@@ -20,13 +20,22 @@ from velometer.models import (
     TierLength,
 )
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 _RESULT_TABLES = ("duplicates", "completeness", "metrics", "road_lengths", "tier_lengths", "runs")
 
 
 class SchemaError(Exception):
     """The database schema cannot be used or migrated safely."""
 
+
+# v4: one row per (run, city, preset, basis); a preset with a parameterised basis has one per basis.
+_METRICS_COLUMNS = """
+  run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
+  preset TEXT NOT NULL,
+  length_basis TEXT NOT NULL CHECK (length_basis IN ('per_side','qecio_weighted')),
+  value REAL, numerator_km REAL NOT NULL, denominator_km REAL NOT NULL, per_100k REAL,
+  PRIMARY KEY (run_id, city_id, preset, length_basis)
+"""
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cities (
@@ -69,13 +78,7 @@ CREATE TABLE IF NOT EXISTS road_lengths (
     ('main_excl_motorway','main_incl_motorway','main_incl_motorway_raw','all_public')),
   length_km REAL NOT NULL, PRIMARY KEY (run_id, city_id, road_class)
 );
-CREATE TABLE IF NOT EXISTS metrics (
-  run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
-  preset TEXT NOT NULL,
-  length_basis TEXT NOT NULL CHECK (length_basis IN ('per_side','qecio_weighted')),
-  value REAL, numerator_km REAL NOT NULL, denominator_km REAL NOT NULL, per_100k REAL,
-  PRIMARY KEY (run_id, city_id, preset)
-);
+CREATE TABLE IF NOT EXISTS metrics (@METRICS@);
 CREATE TABLE IF NOT EXISTS completeness (
   run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
   tier TEXT NOT NULL, share_with_width REAL NOT NULL, share_with_surface REAL NOT NULL,
@@ -97,6 +100,7 @@ CREATE TABLE IF NOT EXISTS duplicates (
   PRIMARY KEY (run_id, kind, way_id_separate, way_id_road, side)
 );
 """
+_SCHEMA = _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS)
 
 
 @contextmanager
@@ -152,7 +156,24 @@ def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
     conn.execute("DROP INDEX IF EXISTS runs_done_key")  # recreated with config_sha256
 
 
-_MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
+def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
+    """Rebuild metrics with the basis in the primary key; existing rows are copied unchanged."""
+    if "metrics" not in _tables(conn):
+        return
+    if not conn.in_transaction:  # DDL does not open one: make the rebuild atomic
+        conn.execute("BEGIN")
+    conn.execute("DROP TABLE IF EXISTS metrics_v4")
+    conn.execute(f"CREATE TABLE metrics_v4 ({_METRICS_COLUMNS})")
+    conn.execute(
+        "INSERT INTO metrics_v4 (run_id, city_id, preset, length_basis, value, numerator_km, "
+        "denominator_km, per_100k) SELECT run_id, city_id, preset, length_basis, value, "
+        "numerator_km, denominator_km, per_100k FROM metrics"
+    )
+    conn.execute("DROP TABLE metrics")
+    conn.execute("ALTER TABLE metrics_v4 RENAME TO metrics")
+
+
+_MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
@@ -177,7 +198,7 @@ class RunKey:
     boundary_sha256: str
     classifier_version: str
     classifier_parameters: str  # canonical JSON: json.dumps(params, sort_keys=True)
-    config_sha256: str  # sha256 of the classifier YAML bytes followed by presets.yaml bytes
+    config_sha256: str  # run.config_sha256: classifier and presets YAML (names and bytes)
 
 
 @dataclass(frozen=True)
@@ -229,6 +250,8 @@ def start_run(
     population: Population | None = None,
 ) -> int:
     """Insert a `running` row; the population used for per-100k is recorded on it."""
+    if not key.config_sha256:
+        raise ValueError("a run needs a config_sha256 (a run without one can never be reused)")
     with conn:
         cur = conn.execute(
             "INSERT INTO runs (city_id, started_at, classifier_version, classifier_parameters, "
@@ -359,18 +382,23 @@ def latest_done_run(
     boundary_kind: str,
     classifier_version: str = "v1",
     classifier_parameters: str = DEFAULT_PARAMETERS,
+    config_sha256: str | None = None,
 ) -> int | None:
     """Newest done run for this classifier version and parameters (canonical JSON).
 
     Runs with other parameters (a `both_sides` sensitivity run) or another classifier version
-    never displace it.
+    never displace it. With `config_sha256`, only runs of that config count, so a report names
+    the runs of the config on disk even after an edit and revert (A, B, A).
     """
-    row = conn.execute(
+    sql = (
         "SELECT id FROM runs WHERE status='done' AND city_id=? AND boundary_kind=? "
         "AND classifier_version=? AND classifier_parameters=? "
-        "ORDER BY osm_timestamp DESC, id DESC LIMIT 1",
-        (city_id, boundary_kind, classifier_version, classifier_parameters),
-    ).fetchone()
+    )
+    args: tuple = (city_id, boundary_kind, classifier_version, classifier_parameters)
+    if config_sha256 is not None:
+        sql += "AND config_sha256=? "
+        args += (config_sha256,)
+    row = conn.execute(sql + "ORDER BY osm_timestamp DESC, id DESC LIMIT 1", args).fetchone()
     return row[0] if row else None
 
 

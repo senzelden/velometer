@@ -402,3 +402,85 @@ def test_v2_db_with_done_runs_migrates_additively_and_old_runs_are_not_reused(tm
         new = _done(c, KEY)  # same key otherwise: the rebuilt unique index lets it complete
         assert latest_done_run(c, "berlin", "lau") == new
         assert c.execute("SELECT status FROM runs WHERE id=1").fetchone()[0] == "done"
+
+
+def test_start_run_rejects_a_missing_or_empty_config_sha(conn):
+    for bad in ("", None):
+        with pytest.raises(ValueError, match="config_sha256"):
+            start_run(conn, _key(config_sha256=bad), git_commit="g", region_md5="m")
+    assert conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+
+
+def test_latest_done_run_with_a_config_sha_survives_an_edit_and_revert(conn):
+    """A, then B, then A again: the A run is skipped as done, but B is newer by id."""
+    a = _done(conn, _key(config_sha256="A"))
+    b = _done(conn, _key(config_sha256="B"))
+    assert find_done_run(conn, _key(config_sha256="A")) == a  # the revert reuses run a
+    assert latest_done_run(conn, "berlin", "lau") == b  # unfiltered: the newest, stale one
+    assert latest_done_run(conn, "berlin", "lau", config_sha256="A") == a
+    assert latest_done_run(conn, "berlin", "lau", config_sha256="B") == b
+    assert latest_done_run(conn, "berlin", "lau", config_sha256="C") is None
+
+
+_V3_METRICS = (
+    "CREATE TABLE metrics (run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL "
+    "REFERENCES cities(id), preset TEXT NOT NULL, length_basis TEXT NOT NULL CHECK "
+    "(length_basis IN ('per_side','qecio_weighted')), value REAL, numerator_km REAL NOT NULL, "
+    "denominator_km REAL NOT NULL, per_100k REAL, PRIMARY KEY (run_id, city_id, preset));"
+)
+
+
+def test_v3_db_with_metric_rows_migrates_to_v4_and_keeps_them(tmp_path, cities):
+    path = tmp_path / "v.sqlite"
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, cities)
+        rid = _done(c, KEY)
+        c.execute("DROP TABLE metrics")
+        c.executescript(_V3_METRICS)
+        c.execute(
+            "INSERT INTO metrics VALUES (?, 'berlin', 'clean_cities_2025', 'per_side', "
+            "17.5, 1000.0, 5000.0, 12.5)",
+            (rid,),
+        )
+        c.execute("PRAGMA user_version = 3")
+        c.commit()
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 4
+        assert c.execute("SELECT * FROM metrics").fetchall() == [
+            (rid, "berlin", "clean_cities_2025", "per_side", 17.5, 1000.0, 5000.0, 12.5)
+        ]
+        assert not any(t.startswith("metrics_") for t in _tables(c))
+        # the v3 key (run, city, preset) is gone: the same preset may now sit on two bases
+        c.execute(
+            "INSERT INTO metrics VALUES (?, 'berlin', 'clean_cities_2025', 'qecio_weighted', "
+            "9.0, 600.0, 5000.0, NULL)",
+            (rid,),
+        )
+        with pytest.raises(sqlite3.IntegrityError):
+            c.execute(
+                "INSERT INTO metrics VALUES (?, 'berlin', 'clean_cities_2025', 'per_side', "
+                "1, 1, 1, NULL)",
+                (rid,),
+            )
+
+
+def test_two_bases_of_one_preset_are_stored_and_fetched(conn):
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m")
+    both = [
+        Metric(
+            preset="clean_cities_2025",
+            length_basis=b,
+            value=v,
+            numerator_km=v,
+            denominator_km=100.0,
+        )
+        for b, v in (("per_side", 30.0), ("qecio_weighted", 18.0))
+    ]
+    complete_run(conn, rid, "berlin", _result(), both)
+    got = fetch_run_results(conn, rid).metrics
+    assert {(m.preset, m.length_basis, m.value) for m in got} == {
+        ("clean_cities_2025", "per_side", 30.0),
+        ("clean_cities_2025", "qecio_weighted", 18.0),
+    }

@@ -393,3 +393,167 @@ def test_external_load_bad_zip_or_gpkg_exits_1_without_traceback(tmp_path, monke
         out = CliRunner().invoke(app, ["external", "load", "--db", str(tmp_path / "v.sqlite")])
         assert out.exit_code == 1 and out.exception.__class__ is SystemExit, out.output
         assert "external load failed" in out.output
+
+
+MINI_CITY = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
+
+
+def _cc(output: str, preset_line: str = "clean_cities_2025") -> str:
+    """The value column of the selected `clean_cities_2025` row of `classify --file`."""
+    (m,) = re.findall(rf"^{preset_line}\s+([\d.]+)\s", output, re.M)
+    return m
+
+
+def test_classify_file_prints_the_cc_basis_and_the_other_basis_line():
+    base = ["classify", "--file", str(MINI_CITY), "--epsg", "25833"]
+    default = CliRunner().invoke(app, base)
+    assert default.exit_code == 0, default.output
+    assert "presets (clean_cities_basis=per_side)" in default.output
+    assert _cc(default.output) == "100.1"
+    assert (
+        "clean_cities_2025 on qecio_weighted: 62.5% (switch with --clean-cities-basis)"
+        in default.output
+    )
+    weighted = CliRunner().invoke(app, [*base, "--clean-cities-basis", "qecio_weighted"])
+    assert weighted.exit_code == 0, weighted.output
+    assert "presets (clean_cities_basis=qecio_weighted)" in weighted.output
+    assert _cc(weighted.output) == "62.5"
+    assert "clean_cities_2025 on per_side: 100.1% (switch" in weighted.output
+    # fixed-basis presets do not move
+    assert re.search(r"^ours_headline\s+200\.0\s", weighted.output, re.M)
+    assert CliRunner().invoke(app, [*base, "--clean-cities-basis", "bogus"]).exit_code != 0
+
+
+def test_results_prints_the_selected_basis_and_the_other_one(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    per_side = runner.invoke(app, ["results", "--db", str(db)])
+    assert per_side.exit_code == 0, per_side.output
+    assert "presets (clean_cities_basis=per_side)" in per_side.output
+    assert re.search(
+        r"^clean_cities_2025 on qecio_weighted: berlin \S+% \(switch", per_side.output, re.M
+    )
+    weighted = runner.invoke(
+        app, ["results", "--db", str(db), "--clean-cities-basis", "qecio_weighted"]
+    )
+    assert "presets (clean_cities_basis=qecio_weighted)" in weighted.output
+    assert re.search(r"^clean_cities_2025 on per_side: berlin \S+% \(switch", weighted.output, re.M)
+
+    def cc_column(out: str) -> str:
+        header, row = (
+            next(
+                (ln for ln in out.splitlines() if ln.startswith("city")),
+                "",
+            ),
+            next(ln for ln in out.splitlines() if ln.startswith("berlin")),
+        )
+        return row.split()[header.split().index("clean_cities")]
+
+    assert cc_column(per_side.output) != cc_column(weighted.output)
+    with connect(db) as conn:
+        rows = dict(
+            conn.execute(
+                "SELECT length_basis, value FROM metrics WHERE preset='clean_cities_2025'"
+            ).fetchall()
+        )
+    assert cc_column(per_side.output) == f"{rows['per_side']:.1f}"
+    assert cc_column(weighted.output) == f"{rows['qecio_weighted']:.1f}"
+
+
+def test_classify_city_prints_the_selected_cc_value_and_basis(tmp_path, monkeypatch):
+    _patched(monkeypatch, tmp_path)
+    db = tmp_path / "v.sqlite"
+    args = ["classify", "--city", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    out = CliRunner().invoke(app, args)
+    assert out.exit_code == 0, out.output
+    assert "presets (clean_cities_basis=per_side)" in out.output
+    assert re.search(r"^berlin clean_cities_2025: 100\.1%", out.output, re.M), out.output
+    assert "clean_cities_2025 on qecio_weighted:" in out.output
+    again = CliRunner().invoke(
+        app, [*args, "--clean-cities-basis", "qecio_weighted"]
+    )  # skipped run
+    assert re.search(r"^berlin clean_cities_2025: 62\.5%", again.output, re.M), again.output
+    assert "clean_cities_2025 on per_side:" in again.output
+
+
+def _cc_km_gap_line(output: str, key: str) -> str:
+    (line,) = [ln for ln in output.splitlines() if ln.startswith(f"| `{key}`")]
+    return line
+
+
+def test_reconcile_switches_the_flagged_basis_and_always_shows_the_other(tmp_path, monkeypatch):
+    runner, db = _berlin_run(tmp_path, monkeypatch)
+    with connect(db) as conn:
+        (per_side,) = conn.execute(
+            "SELECT numerator_km FROM metrics WHERE preset='clean_cities_2025' "
+            "AND length_basis='per_side'"
+        ).fetchone()
+        _external(conn, "clean_cities_2025", "protected_km", per_side)  # per_side matches exactly
+        conn.commit()
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    args = ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report)]
+    default = runner.invoke(app, args)
+    assert default.exit_code == 0, default.output
+    assert "presets (clean_cities_basis=per_side)" in default.output
+    assert "clean_cities_basis=per_side" in default.output.split("Provenance:")[1].splitlines()[0]
+    assert "| ok |" in _cc_km_gap_line(default.output, "berlin/cc_km")
+    info = _cc_km_gap_line(default.output, "berlin/cc_km~qecio_weighted")
+    assert "| info |" in info
+    weighted = runner.invoke(app, [*args, "--clean-cities-basis", "qecio_weighted"])
+    assert "clean_cities_basis=qecio_weighted" in weighted.output.split("Provenance:")[1]
+    assert "**>20%**" in _cc_km_gap_line(weighted.output, "berlin/cc_km")
+    assert "| info |" in _cc_km_gap_line(weighted.output, "berlin/cc_km~per_side")
+    # --check follows the selected basis: the weighted reading flags cc_km (and wants a note)
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    check = runner.invoke(
+        app, [*args, "--clean-cities-basis", "qecio_weighted", "--check", "--write"]
+    )
+    assert check.exit_code == 1 and "missing explanation: ### berlin/cc_km" in check.output
+    assert "cc_km~" not in check.output.split("missing explanation")[1]
+
+
+def _stale_setup(tmp_path, monkeypatch):
+    import shutil
+
+    from velometer.config import default_config_dir
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(default_config_dir(), cfg)
+    runner, db = None, tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db), "--config-dir", str(cfg)]).exit_code == 0
+    _patched(monkeypatch, tmp_path)
+    run = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    run += ["--config-dir", str(cfg)]
+    return runner, db, cfg, run
+
+
+def test_results_and_reconcile_report_the_config_on_disk_after_an_edit_and_revert(
+    tmp_path, monkeypatch
+):
+    runner, db, cfg, run = _stale_setup(tmp_path, monkeypatch)
+    presets = cfg / "presets.yaml"
+    original = presets.read_text()
+    first = runner.invoke(app, run)
+    assert first.exit_code == 0 and "berlin done run=1" in first.output
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    rargs = ["--db", str(db), "--config-dir", str(cfg)]
+    # B: edit the config. Nothing has been run on it yet: both commands say so.
+    presets.write_text(original + "# edit\n")
+    res = runner.invoke(app, ["results", *rargs])
+    assert "no done runs" in res.output and "current config" in res.output
+    assert "berlin has no done" in res.output  # runs exist, but of another config
+    rec = runner.invoke(
+        app, ["reconcile", "--city", "berlin", "--report", str(report), "--check", *rargs]
+    )
+    assert rec.exit_code == 1 and "no done run for berlin of the current config" in rec.output
+    second = runner.invoke(app, run)
+    assert "berlin done run=2" in second.output
+    # A again: the A run is reused (skipped) and is what the reports name, not the newer B run
+    presets.write_text(original)
+    assert "berlin skipped run=1" in runner.invoke(app, run).output
+    res = runner.invoke(app, ["results", *rargs])
+    assert re.search(r"^berlin\s", res.output, re.M), res.output
+    rec = runner.invoke(app, ["reconcile", "--city", "berlin", "--report", str(report), *rargs])
+    assert "Provenance: run 1 " in rec.output

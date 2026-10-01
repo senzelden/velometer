@@ -1,7 +1,7 @@
 """Orchestrate one persisted city run: region -> boundary -> snapshot -> measure -> SQLite.
 
 A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters,
-config sha256 of the classifier and presets YAML);
+config sha256 of the classifier and presets YAML (see config_sha256));
 a done run with the same key is skipped. `force` supersedes the existing done run: it is marked
 `failed` with the error `superseded by run N`, inside the same transaction that completes the new
 run, so a failed forced re-run leaves the old run done.
@@ -80,8 +80,14 @@ def with_per_100k(metrics: list[Metric], population_value: int | None) -> list[M
 
 
 def config_sha256(classifier_path: Path, presets_path: Path) -> str:
-    """sha256 of the classifier YAML bytes followed by the presets YAML bytes."""
-    return hashlib.sha256(classifier_path.read_bytes() + presets_path.read_bytes()).hexdigest()
+    """sha256 over both YAML files, each as `<file name> NUL <bytes> NUL`.
+
+    The separators keep a byte moved from one file's tail to the other's head from colliding.
+    """
+    digest = hashlib.sha256()
+    for path in (classifier_path, presets_path):
+        digest.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
+    return digest.hexdigest()
 
 
 def _describe(e: BaseException) -> str:
@@ -106,7 +112,7 @@ def run_city(
     cfg = load_classifier(classifier_path)
     if parameters:
         cfg = cfg.with_parameters(**parameters)
-    presets = load_presets(presets_path, cfg)
+    presets = load_presets(presets_path, cfg).presets
     try:
         region = deps.fetch_region(city.geofabrik_region, data_dir)
         rec, pop = deps.city_boundary(city, boundary_kind, data_dir, region_path=region.path)

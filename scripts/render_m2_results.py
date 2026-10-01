@@ -1,6 +1,8 @@
 """Render the M2 results review: docs/review/m2_results.md and docs/review/m2_results.png.
 
-Reads velometer.sqlite (latest done LAU run per city). Run after `velometer run --cities all`:
+Reads velometer.sqlite: the latest done LAU run per city of the config on disk. Clean Cities
+figures are on the basis presets.yaml selects; the presets table lists both. Run after
+`velometer run --cities all`:
 
     uv run python scripts/render_m2_results.py
 """
@@ -12,6 +14,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from velometer.config import (  # noqa: E402
+    PresetsConfig,
+    default_config_dir,
+    load_classifier,
+    load_presets,
+)
 from velometer.db import (  # noqa: E402
     DEFAULT_PARAMETERS,
     fetch_boundary,
@@ -21,7 +29,9 @@ from velometer.db import (  # noqa: E402
     latest_done_run,
     open_db,
 )
+from velometer.pipeline.measure import select_metric  # noqa: E402
 from velometer.reconcile import short_commit  # noqa: E402
+from velometer.run import config_sha256  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "velometer.sqlite"
@@ -33,7 +43,6 @@ PRESETS = ["ours_headline", "ecf_qecio", "clean_cities_2025"]
 PRESET_LABEL = {
     "ours_headline": "ours_headline: A+B per side / main roads excl. motorways",
     "ecf_qecio": "ecf_qecio: A–D QECIO-weighted / main roads incl. motorways (raw)",
-    "clean_cities_2025": "clean_cities_2025: A+B per side / all public roads",
 }
 TIER_LABEL = {
     "A": "A separated track",
@@ -48,11 +57,29 @@ INK, INK_2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 ATTRIBUTION = "© OpenStreetMap contributors, ODbL 1.0"
 
 
-def load(db: Path) -> list[dict]:
+def preset_label(preset: str, rows: list[dict]) -> str:
+    """Legend text; the Clean Cities label names the basis the bar is on."""
+    if preset == "clean_cities_2025":
+        basis = rows[0]["metrics"][preset].length_basis
+        return f"clean_cities_2025: A+B on {basis} / all public roads"
+    return PRESET_LABEL[preset]
+
+
+def load_config() -> tuple[str, PresetsConfig]:
+    """sha256 of the config on disk and its presets: the runs the report is about."""
+    config_dir = default_config_dir()
+    classifier = config_dir / "classifier" / f"{CLASSIFIER}.yaml"
+    presets_path = config_dir / "presets.yaml"
+    return config_sha256(classifier, presets_path), load_presets(
+        presets_path, load_classifier(classifier)
+    )
+
+
+def load(db: Path, sha: str, presets: PresetsConfig) -> list[dict]:
     rows = []
     with open_db(db) as conn:
         for c in fetch_cities(conn):
-            run_id = latest_done_run(conn, c.id, BOUNDARY, CLASSIFIER, DEFAULT_PARAMETERS)
+            run_id = latest_done_run(conn, c.id, BOUNDARY, CLASSIFIER, DEFAULT_PARAMETERS, sha)
             if run_id is None:
                 continue
             r = fetch_run_results(conn, run_id)
@@ -67,7 +94,13 @@ def load(db: Path) -> list[dict]:
                 {
                     "city": c,
                     "run": run,
-                    "metrics": {m.preset: m for m in r.metrics},
+                    "metrics": {
+                        p.id: m
+                        for p in presets.presets
+                        if (m := select_metric(r.metrics, p.id, presets)) is not None
+                    },
+                    "all_metrics": r.metrics,
+                    "presets": presets,
                     "roads": {x.road_class: x.length_km for x in r.road_lengths},
                     "tier_km": tier_km,
                     "completeness": r.completeness,
@@ -109,7 +142,8 @@ def fmt(v: float | None, nd: int = 1) -> str:
 
 
 def results_table(rows: list[dict]) -> list[str]:
-    head = ["city", "osm_date", "headline %", "ecf_qecio %", "clean_cities %"]
+    basis = rows[0]["presets"].parameters.clean_cities_basis if rows else "per_side"
+    head = ["city", "osm_date", "headline %", "ecf_qecio %", f"clean_cities % ({basis})"]
     head += [f"{t} km" for t in TIERS] + ["main km", "headline km/100k"]
     out = ["| " + " | ".join(head) + " |", "|---|---|" + "---:|" * (len(head) - 2)]
     for r in rows:
@@ -147,18 +181,22 @@ def markdown(rows: list[dict]) -> str:
         "",
         "## Presets",
         "",
-        "| city | preset | basis | value % | numerator km | denominator km |",
-        "|---|---|---|---:|---:|---:|",
+        "Every basis is stored; a preset with a parameterised basis (`clean_cities_2025`, "
+        "parameter `clean_cities_basis` in `config/presets.yaml`) lists one row per basis, the "
+        "selected one marked.",
+        "",
+        "| city | preset | basis | selected | value % | numerator km | denominator km |",
+        "|---|---|---|---|---:|---:|---:|",
     ]
     for r in rows:
         for p in PRESETS:
-            m = r["metrics"].get(p)
-            if m is None:
-                continue
-            lines.append(
-                f"| {r['city'].id} | `{p}` | {m.length_basis} | {fmt(m.value)} | "
-                f"{fmt(m.numerator_km)} | {fmt(m.denominator_km)} |"
-            )
+            for m in (m for m in r["all_metrics"] if m.preset == p):
+                chosen = r["metrics"].get(p)
+                mark = "yes" if chosen is not None and chosen.length_basis == m.length_basis else ""
+                lines.append(
+                    f"| {r['city'].id} | `{p}` | {m.length_basis} | {mark} | {fmt(m.value)} | "
+                    f"{fmt(m.numerator_km)} | {fmt(m.denominator_km)} |"
+                )
     lines += [
         "",
         "## Provenance",
@@ -302,7 +340,7 @@ def chart(rows: list[dict], path: Path) -> None:
             color=SERIES[i],
             edgecolor=SURFACE,
             linewidth=1.5,
-            label=PRESET_LABEL[p],
+            label=preset_label(p, rows),
         )
         for px, v in zip(pos, vals, strict=True):
             ax.annotate(
@@ -319,7 +357,12 @@ def chart(rows: list[dict], path: Path) -> None:
     ax.set_xticks(list(x), names, color=INK)
     ax.set_ylabel("%", color=INK_2)
     ax.legend(frameon=False, fontsize=9, labelcolor=INK, loc="upper right")
-    ax.set_title("(c) The three presets per city (%)", loc="left", color=INK, fontsize=11)
+    ax.set_title(
+        "(c) The three presets per city (%), Clean Cities basis as labelled",
+        loc="left",
+        color=INK,
+        fontsize=11,
+    )
 
     fig.text(
         0.09,
@@ -333,9 +376,10 @@ def chart(rows: list[dict], path: Path) -> None:
 
 
 def main() -> None:
-    rows = load(DB)
+    sha, presets = load_config()
+    rows = load(DB, sha, presets)
     if not rows:
-        raise SystemExit(f"no done {BOUNDARY!r} runs in {DB}")
+        raise SystemExit(f"no done {BOUNDARY!r} runs of the current config {sha[:12]} in {DB}")
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "m2_results.md").write_text(markdown(rows))
     chart(rows, OUT / "m2_results.png")

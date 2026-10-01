@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from shapely.geometry.base import BaseGeometry
 from shapely.prepared import prep
 
-from velometer.config import ClassifierConfig, Preset
+from velometer.config import BASES, ClassifierConfig, Preset, PresetsConfig
 from velometer.models import Completeness, Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify, classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
@@ -218,21 +218,29 @@ def _selected(t: TierLength, entries: list[str]) -> bool:
 
 
 def compute_metrics(result: MeasureResult, presets: list[Preset]) -> list[Metric]:
+    """One metric per preset; a preset with a parameterised basis gets one per basis in BASES."""
     out = []
     for p in presets:
-        num = sum(
-            t.length_km
-            for t in result.tier_lengths
-            if t.length_basis == p.basis and _selected(t, p.tiers)
-        )
-        den = road_length(result, p.denominator)
-        out.append(
-            Metric(
-                preset=p.id,
-                length_basis=p.basis,
-                value=(100 * num / den) if den else None,
-                numerator_km=num,
-                denominator_km=den,
+        for basis in BASES if p.parameterised else (p.basis,):
+            num = sum(
+                t.length_km
+                for t in result.tier_lengths
+                if t.length_basis == basis and _selected(t, p.tiers)
             )
-        )
+            den = road_length(result, p.denominator)
+            out.append(
+                Metric(
+                    preset=p.id,
+                    length_basis=basis,
+                    value=(100 * num / den) if den else None,
+                    numerator_km=num,
+                    denominator_km=den,
+                )
+            )
     return out
+
+
+def select_metric(metrics: list[Metric], preset_id: str, config: PresetsConfig) -> Metric | None:
+    """The preset's row on the basis the presets parameters select (its only basis if fixed)."""
+    basis = config.parameters.resolve(config.preset(preset_id).basis)
+    return next((m for m in metrics if m.preset == preset_id and m.length_basis == basis), None)
