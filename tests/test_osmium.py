@@ -73,6 +73,7 @@ def test_snapshot_is_cached_by_region_and_boundary(tmp_path):
     mtime = a.stat().st_mtime_ns
     b = snapshot(src, "md5aaaaaaaa", ts, "berlin", "lau", poly, "sha1111111", tmp_path)
     assert a == b and b.stat().st_mtime_ns == mtime
+    assert [w.id for w in read_ways(a).ways] == [1]
     c = snapshot(src, "md5aaaaaaaa", ts, "berlin", "lau", poly, "sha2222222", tmp_path)
     assert c != a
     assert not list((tmp_path / "snapshots").glob("*.part*"))
@@ -104,3 +105,33 @@ def test_relation_polygon_writes_only_areas(tmp_path):
     out = relation_polygon(path, 30, tmp_path / "rel.geojson")
     feats = json.loads(out.read_text())["features"]
     assert feats and {f["geometry"]["type"] for f in feats} <= {"Polygon", "MultiPolygon"}
+
+
+@needs_osmium
+def test_fileinfo_timestamp_none_without_header_option(tmp_path):
+    path = tmp_path / "plain.osm.pbf"
+    with pyosmium.SimpleWriter(str(path)) as w:
+        w.add_node(pyosmium.osm.mutable.Node(id=1, location=(13.4, 52.5), version=1))
+    assert fileinfo_timestamp(path) is None
+
+
+@needs_osmium
+def test_relation_polygon_failure_leaves_no_stray_files(tmp_path):
+    path = tmp_path / "open.osm.pbf"
+    with pyosmium.SimpleWriter(str(path)) as w:
+        for nid, lon, lat in [(10, 13.39, 52.49), (11, 13.42, 52.49), (12, 13.42, 52.51)]:
+            w.add_node(pyosmium.osm.mutable.Node(id=nid, location=(lon, lat), version=1))
+        w.add_way(pyosmium.osm.mutable.Way(id=20, nodes=[10, 11, 12], version=1))
+        w.add_relation(
+            pyosmium.osm.mutable.Relation(
+                id=30,
+                members=[("w", 20, "outer")],
+                tags={"type": "boundary", "boundary": "administrative"},
+                version=1,
+            )
+        )
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    with pytest.raises(OsmiumError, match="did not assemble"):
+        relation_polygon(path, 30, out_dir / "rel.geojson")
+    assert list(out_dir.iterdir()) == []

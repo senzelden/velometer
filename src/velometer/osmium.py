@@ -3,6 +3,7 @@
 import json
 import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -47,18 +48,19 @@ def fileinfo_timestamp(path: Path) -> datetime | None:
 
 
 def relation_polygon(src: Path, relation_id: int, dst_geojson: Path) -> Path:
-    rel = dst_geojson.with_name(dst_geojson.stem + ".rel.osm.pbf")
-    _run("getid", "-r", "--overwrite", "-o", str(rel), str(src), f"r{relation_id}")
-    raw = dst_geojson.with_name(dst_geojson.stem + ".all.geojson")
-    _run("export", "--overwrite", "-f", "geojson", "-o", str(raw), str(rel))
-    feats = [
-        f
-        for f in json.loads(raw.read_text())["features"]
-        if f["geometry"]["type"] in ("Polygon", "MultiPolygon")
-    ]
-    if not feats:
-        raise OsmiumError(f"relation {relation_id} did not assemble into an area")
-    dst_geojson.write_text(json.dumps({"type": "FeatureCollection", "features": feats}))
-    rel.unlink()
-    raw.unlink()
+    with tempfile.TemporaryDirectory(dir=dst_geojson.parent) as tmp:
+        rel = Path(tmp) / "rel.osm.pbf"
+        raw = Path(tmp) / "all.geojson"
+        _run("getid", "-r", "--overwrite", "-o", str(rel), str(src), f"r{relation_id}")
+        _run("export", "--overwrite", "-f", "geojson", "-o", str(raw), str(rel))
+        feats = [
+            f
+            for f in json.loads(raw.read_text())["features"]
+            if f["geometry"]["type"] in ("Polygon", "MultiPolygon")
+        ]
+        if not feats:
+            raise OsmiumError(f"relation {relation_id} did not assemble into an area")
+        part = Path(tmp) / "out.part.geojson"
+        part.write_text(json.dumps({"type": "FeatureCollection", "features": feats}))
+        part.replace(dst_geojson)
     return dst_geojson
