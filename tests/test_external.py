@@ -245,3 +245,10 @@ def test_failed_qecio_fetch_keeps_curated_rows(tmp_path, monkeypatch):
             X.load_all(conn, tmp_path / "data", CFG, qecio=True, bikenetkit=False)
         curated = [f for f in X.load_figures_csv(CURATED) if f.city_id == "berlin"]
         assert len(fetch_external_figures(conn, "berlin")) == len(curated) > 0
+
+
+def test_vienna_web_correction_is_dated_after_the_report():
+    figs = [f for f in X.load_figures_csv(CURATED) if f.city_id == "vienna"]
+    pdf = {f.reference_date for f in figs if f.network_scope == "whole_network"}
+    web = {f.reference_date for f in figs if f.network_scope != "whole_network"}
+    assert len(pdf) == len(web) == 1 and min(web) > max(pdf)
