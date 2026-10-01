@@ -313,3 +313,13 @@ def test_completeness_weights_use_clipped_lengths():
     a = next(c for c in res.completeness if c.tier == "A")
     # clipped: 0.01 (width) of 0.02 -> 1/2; unclipped lengths would give 2/3
     assert a.share_with_width == pytest.approx(1 / 2, rel=0.02)
+
+
+def test_way_outside_boundary_is_not_counted_in_n_ways():
+    inside = WayRecord(1, TRACK, ((13.395, 52.5), (13.405, 52.5)))
+    outside = WayRecord(2, TRACK, ((13.50, 52.5), (13.52, 52.5)))
+    res = measure([inside, outside], CFG, 25833, boundary=_proj_box(13.39, 52.49, 13.41, 52.51))
+    rows = [t for t in res.tier_lengths if t.tier == "A"]
+    assert rows and all(t.n_ways == 1 for t in rows)
+    only_out = measure([outside], CFG, 25833, boundary=_proj_box(13.39, 52.49, 13.41, 52.51))
+    assert only_out.tier_lengths == []  # an all-outside tier gets no row, not 0 km with ways

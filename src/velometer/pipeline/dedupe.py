@@ -104,21 +104,33 @@ def pair_dual_carriageways(
         for key in _group_keys(w.tags):
             groups[key].append(w)
     pairable_ids = {x.id for g in groups.values() for x in g}
+    lines: dict[int, object] = {}
+
+    def line(w: WayRecord):
+        if w.id not in lines:
+            lines[w.id] = proj.line(w.coords)
+        return lines[w.id]
+
     pairs: list[DualPair] = []
     for w in roads:
         if w.id not in pairable_ids:  # never halve two-way or non-main roads by pairing
             continue
-        geom = proj.line(w.coords)
+        geom = line(w)
         if geom.length == 0:
             continue
         w_rev = _oneway_reversed(w.tags)
-        partners: dict[int, WayRecord] = {}
+        partners: dict[int, tuple[object, float]] = {}  # id -> (line, distance to w)
         for key in _group_keys(w.tags):
             for o in groups.get(key, []):
                 if o.id == w.id or o.id in partners:
                     continue
-                og = proj.line(o.coords)
+                og = line(o)
                 if og.length == 0:
+                    continue
+                # a candidate farther than max_dist_m adds nothing to the share within
+                # max_dist_m, so dropping it never changes the halving decision
+                dist = og.distance(geom)
+                if dist > max_dist_m:
                     continue
                 m = og.interpolate(0.5, normalized=True)
                 bw = _local_bearing(geom, geom.project(m), w_rev)
@@ -126,12 +138,21 @@ def pair_dual_carriageways(
                 if bw is None or bo is None:
                     continue
                 if _angle(bw, bo) >= min_angle_deg:
-                    partners[o.id] = o
+                    partners[o.id] = (og, dist)
         if not partners:
             continue
-        union = unary_union([proj.line(o.coords) for o in partners.values()])
+        union = unary_union([og for og, _ in partners.values()])
         share = _share_within(geom, union, max_dist_m)
         if share >= min_share:
             factors[w.id] = 0.5
-            pairs.append(DualPair(w.id, tuple(sorted(partners)), round(share, 4)))
+            ids = tuple(sorted(partners))
+            pairs.append(
+                DualPair(
+                    w.id,
+                    ids,
+                    round(share, 4),
+                    tuple(round(_share_within(geom, partners[i][0], max_dist_m), 4) for i in ids),
+                    tuple(round(partners[i][1], 2) for i in ids),
+                )
+            )
     return factors, pairs

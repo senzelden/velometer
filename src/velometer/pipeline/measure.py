@@ -160,6 +160,8 @@ def measure(
                 unknown[str(c.attrs["unknown_value"])] += 1
             continue
         length = lengths[c.side.way_id]
+        if boundary is not None and length == 0:
+            continue  # wholly outside the boundary: neither km nor n_ways
         weight = 1.0 if c.attrs["bidirectional"] else 0.5
         for basis, value in (("per_side", length), ("qecio_weighted", length * weight)):
             key = (c.tier, c.subtype, basis)

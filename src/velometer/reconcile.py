@@ -80,7 +80,8 @@ def ours_value(r: RunResults, spec: dict | None) -> float | None:
             (x.length_km for x in r.road_lengths if x.road_class == spec["road_class"]), None
         )
     on_basis = [t for t in r.tier_lengths if t.length_basis == spec["basis"]]
-    # measure() omits zero-length tiers: no rows on a done run's basis is a real 0 km, not n/a.
+    # measure() writes no row for a tier with no length inside the boundary, so no rows on a
+    # done run's basis is a real 0 km, not n/a.
     return sum(
         t.length_km
         for t in on_basis

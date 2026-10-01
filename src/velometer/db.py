@@ -236,7 +236,8 @@ def complete_run(
     With `supersedes`, that done run is retired (status failed) in the same transaction, so a
     failure leaves it done and untouched.
 
-    Dual-carriageway rows store distance_m = 0.0 because DualPair carries no distance.
+    Dual-carriageway rows hold one row per (way, partner) pair: overlap_share is the share of the
+    way within the pairing distance of that partner, distance_m their minimum distance.
     """
     with conn:  # one transaction: commit on success, rollback on any exception
         if supersedes is not None:
@@ -298,9 +299,11 @@ def complete_run(
             for d in result.duplicates
         ]
         rows += [
-            (run_id, "dual_carriageway", p.way_id, partner, "", p.overlap_share, 0.0)
+            (run_id, "dual_carriageway", p.way_id, partner, "", share, dist)
             for p in result.dual_pairs
-            for partner in p.partner_ids
+            for partner, share, dist in zip(
+                p.partner_ids, p.partner_shares, p.partner_distances_m, strict=True
+            )
         ]
         conn.executemany(
             "INSERT OR IGNORE INTO duplicates (run_id, kind, way_id_separate, way_id_road, side, "

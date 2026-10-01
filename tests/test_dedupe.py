@@ -2,6 +2,8 @@ import math
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 from velometer.config import default_config_dir, load_classifier
 from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
@@ -129,3 +131,98 @@ def test_degenerate_way_next_to_real_pair_does_not_crash():
     ]
     factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
     assert factors == {1: 0.5, 2: 0.5, 3: 1.0}
+
+
+def test_same_named_opposite_oneway_far_away_is_not_a_partner():
+    roads = [
+        _way(1, _line(0, 900, 0)),
+        _way(2, _line(900, 0, 28)),
+        _way(3, _line(900, 0, 2000)),  # same name, opposite bearing, 2 km north
+    ]
+    factors, pairs = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == {1: 0.5, 2: 0.5, 3: 1.0}
+    by_way = {p.way_id: p for p in pairs}
+    assert by_way[1].partner_ids == (2,) and by_way[2].partner_ids == (1,)
+    assert 3 not in by_way
+
+
+def test_dual_pair_carries_per_partner_share_and_distance():
+    # way 1 runs along two opposite halves; each partner covers about half of it
+    roads = [
+        _way(1, _line(0, 900, 0)),
+        _way(2, _line(450, 0, 28)),
+        _way(3, _line(900, 450, 28)),
+    ]
+    _, pairs = pair_dual_carriageways(roads, MAIN, PROJ)
+    p1 = next(p for p in pairs if p.way_id == 1)
+    assert p1.partner_ids == (2, 3)
+    assert p1.overlap_share == pytest.approx(1.0, abs=0.01)
+    assert all(s == pytest.approx(0.5, abs=0.07) for s in p1.partner_shares)
+    assert all(d == pytest.approx(28, abs=1) for d in p1.partner_distances_m)
+
+
+def _unfiltered_factors(roads, pairable, proj, max_dist_m=50.0, min_share=0.7, min_angle=150.0):
+    """The pre-I8 pairing (no distance filter on candidates): the oracle for halving factors."""
+    from collections import defaultdict
+
+    from shapely import unary_union
+
+    from velometer.pipeline import dedupe as D
+
+    factors = {w.id: 1.0 for w in roads}
+    for w in roads:
+        if "yes" in D.parts(w.tags.get("dual_carriageway")):
+            factors[w.id] = 0.5
+    groups = defaultdict(list)
+    for w in roads:
+        if w.tags.get("highway") in pairable and D._is_oneway(w.tags):
+            for key in D._group_keys(w.tags):
+                groups[key].append(w)
+    pairable_ids = {x.id for g in groups.values() for x in g}
+    for w in roads:
+        geom = proj.line(w.coords)
+        if w.id not in pairable_ids or geom.length == 0:
+            continue
+        partners = {}
+        for key in D._group_keys(w.tags):
+            for o in groups.get(key, []):
+                og = proj.line(o.coords)
+                if o.id == w.id or o.id in partners or og.length == 0:
+                    continue
+                m = og.interpolate(0.5, normalized=True)
+                bw = D._local_bearing(geom, geom.project(m), D._oneway_reversed(w.tags))
+                bo = D._local_bearing(og, og.project(m), D._oneway_reversed(o.tags))
+                if bw is not None and bo is not None and D._angle(bw, bo) >= min_angle:
+                    partners[o.id] = og
+        if partners:
+            union = unary_union(list(partners.values()))
+            if D._share_within(geom, union, max_dist_m) >= min_share:
+                factors[w.id] = 0.5
+    return factors
+
+
+GOLDEN = Path(__file__).parent / "fixtures" / "berlin_golden.osm"
+MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
+
+
+@pytest.mark.parametrize("fixture", [FIX / "dual.osm", MINI, GOLDEN], ids=lambda p: p.name)
+def test_distance_filter_leaves_halving_factors_unchanged(fixture):
+    roads = read_ways(fixture).ways
+    factors, _ = pair_dual_carriageways(roads, MAIN, PROJ)
+    assert factors == _unfiltered_factors(roads, MAIN, PROJ)
+
+
+def test_distance_filter_leaves_synthetic_halving_factors_unchanged():
+    p = _ll(450, 14)
+    cases = [
+        [_way(1, _arc(300, 0, 150)), _way(2, _arc(325, 75, 0)), _way(3, _arc(325, 150, 75))],
+        [_way(1, _line(0, 900, 0))]
+        + [_way(2 + i, _line(300 * (i + 1), 300 * i, 28)) for i in range(3)],
+        [_way(1, _line(0, 900, 0)), _way(2, _line(0, 900, 28), oneway="-1")],
+        [_way(1, _line(0, 900, 0)), _way(2, _line(900, 0, 28)), _way(3, (p, p))],
+        [_way(1, _line(0, 900, 0)), _way(2, _line(900, 0, 28)), _way(3, _line(900, 0, 2000))],
+    ]
+    for roads in cases:
+        assert pair_dual_carriageways(roads, MAIN, PROJ)[0] == _unfiltered_factors(
+            roads, MAIN, PROJ
+        )

@@ -115,7 +115,7 @@ def _result():
             )
         ],
         duplicates=[DuplicateFlag(1, 2, "right", 0.9, 4.0)],
-        dual_pairs=[DualPair(5, (6,), 0.8)],
+        dual_pairs=[DualPair(5, (6, 7), 0.8, (0.6, 0.3), (12.5, 30.0))],
         classified=[],
         unknown_values={},
         plain_oneway=PlainOnewayReport("traffic_side", "both_sides", 0, 0.0, {}),
@@ -205,7 +205,12 @@ def test_run_lifecycle_and_results_roundtrip(conn):
     assert res.tier_lengths[0].length_km == 2.0
     assert res.completeness[0].share_with_width == 0.5
     kinds = sorted(r[0] for r in conn.execute("SELECT kind FROM duplicates"))
-    assert kinds == ["dual_carriageway", "parallel"]
+    assert kinds == ["dual_carriageway", "dual_carriageway", "parallel"]
+    dual = conn.execute(
+        "SELECT way_id_separate, way_id_road, overlap_share, distance_m FROM duplicates "
+        "WHERE kind='dual_carriageway' ORDER BY way_id_road"
+    ).fetchall()
+    assert dual == [(5, 6, 0.6, 12.5), (5, 7, 0.3, 30.0)]  # per pair, not the way's share
 
 
 def test_failed_run_is_not_done_and_writes_no_results(conn):

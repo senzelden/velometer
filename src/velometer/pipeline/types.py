@@ -47,8 +47,10 @@ class DuplicateFlag:
 @dataclass(frozen=True)
 class DualPair:
     way_id: int
-    partner_ids: tuple[int, ...]
-    overlap_share: float
+    partner_ids: tuple[int, ...]  # opposite oneways within max_dist_m, sorted
+    overlap_share: float  # share of the way within max_dist_m of all partners together
+    partner_shares: tuple[float, ...]  # per partner (same order): share of the way near it
+    partner_distances_m: tuple[float, ...]  # per partner: minimum distance to the way
 
 
 @dataclass(frozen=True)
