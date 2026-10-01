@@ -18,6 +18,7 @@ from velometer.db import (
     fetch_cities,
     fetch_diagnostics,
     fetch_external_figures,
+    fetch_history_set,
     fetch_run_results,
     find_done_run,
     history_runs,
@@ -29,6 +30,7 @@ from velometer.db import (
     start_run,
     upsert_boundary,
     upsert_cities,
+    upsert_history_set,
 )
 from velometer.models import (
     ActivityYear,
@@ -513,6 +515,7 @@ def test_migration_4_to_5_keeps_runs_and_marks_them_current(tmp_path, cities):
         )
         c.execute("DROP TABLE activity")
         c.execute("DROP TABLE diagnostics")
+        c.execute("DROP TABLE history_sets")
         c.execute("PRAGMA user_version = 4")
         c.commit()
         assert "source" not in {r[1] for r in c.execute("PRAGMA table_info(runs)")}
@@ -522,7 +525,10 @@ def test_migration_4_to_5_keeps_runs_and_marks_them_current(tmp_path, cities):
         assert c.execute("SELECT id, source, status FROM runs").fetchall() == [
             (rid, "current", "done")
         ]
-        assert {"activity", "diagnostics"} <= _tables(c)
+        assert {"activity", "diagnostics", "history_sets"} <= _tables(c)
+        upsert_history_set(
+            c, "h", [], index_path="i", index_sha256="s", uncovered_km2=0.0
+        )  # the migrated table is usable
         assert find_done_run(c, KEY) == rid
         assert find_done_run(c, replace(KEY, source="history")) is None
         assert _done(c, replace(KEY, source="history")) != rid  # the rebuilt index has source
@@ -637,3 +643,31 @@ def test_diagnostics_written_with_the_run_and_rolled_back_with_it(conn):
         )
     assert fetch_diagnostics(conn, other) == {}
     assert conn.execute("SELECT COUNT(*) FROM diagnostics").fetchone()[0] == 1
+
+
+def test_history_set_upsert_keeps_first_row_and_roundtrips(conn):
+    regions = [{"region": "a", "md5": "m", "md5_source": "computed", "fetched_at": "2026-10-01"}]
+    upsert_history_set(
+        conn, "h", regions, index_path="p/index.json", index_sha256="x", uncovered_km2=0.25
+    )
+    upsert_history_set(conn, "h", [], index_path="other", index_sha256="y", uncovered_km2=9.0)
+    got = fetch_history_set(conn, "h")
+    assert got["regions"] == regions
+    assert (got["index_path"], got["index_sha256"], got["uncovered_km2"]) == (
+        "p/index.json",
+        "x",
+        0.25,
+    )
+    assert got["recorded_at"]
+    assert fetch_history_set(conn, "missing") is None
+
+
+def test_two_history_sets_may_each_hold_a_done_run_for_the_same_year(conn):
+    k = _key(osm_timestamp="2020-01-01T00:00:00Z", source="history")
+    ids = []
+    for md5 in ("old", "new"):
+        rid = start_run(conn, k, git_commit="g", region_md5=md5)
+        complete_run(conn, rid, "berlin", _result(), [])
+        ids.append(rid)
+    assert len(set(ids)) == 2
+    assert conn.execute("SELECT COUNT(*) FROM runs WHERE status='done'").fetchone()[0] == 2

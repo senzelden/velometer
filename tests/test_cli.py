@@ -588,3 +588,75 @@ def test_auth_check_reports_failure_without_the_password(tmp_path, monkeypatch):
     assert result.exit_code == 1
     assert "osm login" in result.output
     assert SECRET not in result.output
+
+
+def test_cli_years_parse_and_reject(tmp_path, monkeypatch):
+    from velometer import run as run_mod
+
+    calls = []
+
+    def fake_run_history(conn, city, years, **kw):
+        calls.append((city.id, years, kw["boundary_kind"]))
+        return [run_mod.RunOutcome(city.id, "done", 1, year=y) for y in years]
+
+    monkeypatch.setattr(run_mod, "run_history", fake_run_history)
+    db = str(tmp_path / "v.sqlite")
+    base = ["run", "--cities", "berlin", "--db", db, "--data", str(tmp_path)]
+    ok = CliRunner().invoke(app, [*base, "--years", "2018-2026"])
+    assert ok.exit_code == 0, ok.output
+    assert calls == [("berlin", range(2018, 2027), "lau")]
+    assert "berlin 2018 done run=1" in ok.output and "berlin 2026 done" in ok.output
+    calls.clear()
+    for bad in ("2026-2018", "x", "2018", "2018-", "2018-20x6"):
+        r = CliRunner().invoke(app, [*base, "--years", bad])
+        assert r.exit_code == 2, (bad, r.output)
+    assert calls == []
+    one = CliRunner().invoke(app, [*base, "--years", "2020-2020"])
+    assert one.exit_code == 0 and calls == [("berlin", range(2020, 2021), "lau")]
+
+
+def test_cli_years_failed_outcome_exits_1(tmp_path, monkeypatch):
+    from velometer import run as run_mod
+
+    monkeypatch.setattr(
+        run_mod,
+        "run_history",
+        lambda conn, city, years, **kw: [run_mod.RunOutcome(city.id, "failed", None, "boom")],
+    )
+    r = CliRunner().invoke(
+        app,
+        ["run", "--cities", "berlin", "--years", "2018-2019", "--db", str(tmp_path / "v.sqlite")],
+    )
+    assert r.exit_code == 1 and "boom" in r.output
+
+
+def test_osm_fetch_history_prints_only_non_secret_fields(tmp_path, monkeypatch):
+    from datetime import date
+
+    from velometer import run as run_mod
+    from velometer.sources.geofabrik import HistoryFile
+
+    f = tmp_path / "h.osh.pbf"
+    f.write_bytes(b"x" * 7)
+    seen = []
+
+    def fetch_history(region, data_dir, index, **kw):
+        seen.append(region)
+        return HistoryFile(region, f, "a" * 32, "published", date(2026, 10, 1))
+
+    deps = run_mod.HistoryDeps(
+        fetch_index=lambda d: type("S", (), {"path": tmp_path})(),
+        load_index=lambda p: {"r/x": {"history": "http://h"}},
+        fetch_history=fetch_history,
+    )
+    monkeypatch.setattr(run_mod, "HistoryDeps", lambda: deps)
+    r = CliRunner().invoke(
+        app, ["osm", "fetch-history", "--region", "r/x", "--data", str(tmp_path)]
+    )
+    assert r.exit_code == 0, r.output
+    assert r.output.strip() == (f"region=r/x path={f} md5={'a' * 32} md5_source=published size=7")
+    assert seen == ["r/x"]
+    missing = CliRunner().invoke(app, ["osm", "fetch-history", "--region", "nope"])
+    assert missing.exit_code == 2
+    neither = CliRunner().invoke(app, ["osm", "fetch-history"])
+    assert neither.exit_code == 2

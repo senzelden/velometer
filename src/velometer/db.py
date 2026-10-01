@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS runs (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS runs_done_key ON runs (
   city_id, osm_timestamp, boundary_kind, boundary_sha256, classifier_version,
-  classifier_parameters, config_sha256, source) WHERE status = 'done';
+  classifier_parameters, config_sha256, source, region_md5) WHERE status = 'done';
 CREATE TABLE IF NOT EXISTS tier_lengths (
   run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
   tier TEXT NOT NULL CHECK (tier IN ('A','B','C','D','E','excluded')),
@@ -109,6 +109,10 @@ CREATE TABLE IF NOT EXISTS activity (
   top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
   n_ways_deleted_cycling INTEGER NOT NULL,
   PRIMARY KEY (city_id, boundary_kind, year, history_set_md5)
+);
+CREATE TABLE IF NOT EXISTS history_sets (
+  set_md5 TEXT PRIMARY KEY, regions_json TEXT NOT NULL, index_path TEXT NOT NULL,
+  index_sha256 TEXT NOT NULL, uncovered_km2 REAL NOT NULL, recorded_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS diagnostics (
   run_id INTEGER NOT NULL REFERENCES runs(id), key TEXT NOT NULL, value REAL NOT NULL,
@@ -480,6 +484,46 @@ def history_runs(
         ),
     ).fetchall()
     return dict(rows)
+
+
+def upsert_history_set(
+    conn: sqlite3.Connection,
+    set_md5: str,
+    regions: list[dict],
+    *,
+    index_path: str,
+    index_sha256: str,
+    uncovered_km2: float,
+) -> None:
+    """Record which region files (and which index) make up a history set; once per set.
+
+    `regions` is a list of {region, md5, md5_source, fetched_at}. A repeat call for the same
+    set keeps the first row (the set md5 already pins the files).
+    """
+    with conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO history_sets (set_md5, regions_json, index_path, index_sha256, "
+            "uncovered_km2, recorded_at) VALUES (?,?,?,?,?,?)",
+            (set_md5, json.dumps(regions), index_path, index_sha256, uncovered_km2, _now()),
+        )
+
+
+def fetch_history_set(conn: sqlite3.Connection, set_md5: str) -> dict | None:
+    row = conn.execute(
+        "SELECT regions_json, index_path, index_sha256, uncovered_km2, recorded_at "
+        "FROM history_sets WHERE set_md5=?",
+        (set_md5,),
+    ).fetchone()
+    if row is None:
+        return None
+    return {
+        "set_md5": set_md5,
+        "regions": json.loads(row[0]),
+        "index_path": row[1],
+        "index_sha256": row[2],
+        "uncovered_km2": row[3],
+        "recorded_at": row[4],
+    }
 
 
 def fetch_diagnostics(conn: sqlite3.Connection, run_id: int) -> dict[str, float]:

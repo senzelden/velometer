@@ -1,0 +1,322 @@
+import json
+from datetime import UTC, date, datetime
+from pathlib import Path
+
+import pytest
+from shapely import box
+
+from velometer import run as R
+from velometer.config import default_config_dir, load_cities
+from velometer.db import (
+    canonical_parameters,
+    create_schema,
+    fetch_activity,
+    fetch_diagnostics,
+    fetch_history_set,
+    history_runs,
+    open_db,
+    upsert_cities,
+)
+from velometer.models import ActivityYear, Boundary, Population
+from velometer.pipeline.read import read_ways
+from velometer.sources.boundaries import BoundaryRecord
+from velometer.sources.geofabrik import HistoryFile, IndexSnapshot, history_set_md5
+
+CFG_DIR = default_config_dir()
+CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
+MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
+SHA = "s" * 64
+INDEX = {
+    "berlin": {"geometry": box(13.0, 52.0, 14.0, 53.0), "parent": None, "history": "http://x/h"}
+}
+
+
+class Fakes:
+    def __init__(self, tmp_path, md5="m1", fail_year=None):
+        self.tmp_path = tmp_path
+        self.md5 = md5
+        self.set_md5 = history_set_md5([self._file()])
+        self.fail_year = fail_year
+        self.calls: list[str] = []
+        self.activity_args: list[tuple] = []
+
+    def _file(self):
+        return HistoryFile("berlin", MINI, self.md5, "published", date(2026, 10, 1))
+
+    def deps(self, **override):
+        def fetch_index(data_dir):
+            return IndexSnapshot(self.tmp_path / "index.json", "i" * 64)
+
+        def fetch_history(region, data_dir, index):
+            self.calls.append("fetch_history")
+            return self._file()
+
+        def city_boundary(city, kind, data_dir, region_path=None):
+            b = Boundary(
+                city_id=city.id,
+                kind=kind,
+                source="t",
+                source_version="t",
+                area_km2=1e3,
+                path=str(self.tmp_path / "b.geojson"),
+                sha256=SHA,
+            )
+            pop = Population(value=100_000, year=2024, source="t")
+            poly = box(380_000, 5_810_000, 410_000, 5_840_000)  # EPSG:25833, around Berlin
+            return BoundaryRecord(b, self.tmp_path / "b.geojson", poly), pop
+
+        def city_history(*args):
+            return self.tmp_path / "city.osh.pbf"
+
+        def snapshot_at(hist, ts, data_dir):
+            if ts.year == self.fail_year:
+                raise RuntimeError("snapshot boom")
+            self.calls.append(f"snapshot_{ts.year}")
+            assert ts.tzinfo is not None
+            return MINI
+
+        def activity(hist, years, cfg, *, city_id, boundary_kind, history_set_md5):
+            self.activity_args.append((list(years), history_set_md5))
+            return [
+                ActivityYear(
+                    city_id=city_id,
+                    boundary_kind=boundary_kind,
+                    year=y,
+                    history_set_md5=history_set_md5,
+                    n_edits=1,
+                    n_changesets=1,
+                    n_mappers=1,
+                    top_mapper_share=1.0,
+                    n_ways_created_cycling=0,
+                    n_ways_deleted_cycling=0,
+                )
+                for y in years
+            ]
+
+        d = dict(
+            fetch_index=fetch_index,
+            load_index=lambda path: INDEX,
+            fetch_history=fetch_history,
+            city_boundary=city_boundary,
+            city_history=city_history,
+            snapshot_at=snapshot_at,
+            read_ways=read_ways,
+            activity=activity,
+        )
+        return R.HistoryDeps(**{**d, **override})
+
+
+@pytest.fixture
+def conn(tmp_path):
+    with open_db(tmp_path / "v.sqlite") as c:
+        create_schema(c)
+        upsert_cities(c, load_cities(CFG_DIR / "cities.yaml"))
+        yield c
+
+
+def _history(conn, tmp_path, fakes, years=range(2019, 2022), **kw):
+    return R.run_history(
+        conn,
+        CITY,
+        years,
+        data_dir=tmp_path,
+        config_dir=CFG_DIR,
+        deps=fakes.deps(),
+        **kw,
+    )
+
+
+def _runs(conn, source="history"):
+    return conn.execute(
+        "SELECT id, status, osm_timestamp, region_md5, population_year FROM runs "
+        "WHERE source=? ORDER BY osm_timestamp, id",
+        (source,),
+    ).fetchall()
+
+
+def test_run_history_makes_one_history_run_per_year(conn, tmp_path):
+    out = _history(conn, tmp_path, Fakes(tmp_path))
+    assert [o.status for o in out] == ["done"] * 3
+    assert [o.year for o in out] == [2019, 2020, 2021]
+    rows = _runs(conn)
+    assert [r[2] for r in rows] == [f"{y}-01-01T00:00:00Z" for y in (2019, 2020, 2021)]
+    assert {r[3] for r in rows} == {Fakes(tmp_path).set_md5}
+    assert {r[4] for r in rows} == {2024}  # population held constant
+    for o in out:
+        d = fetch_diagnostics(conn, o.run_id)
+        assert {"legacy_km", "unrecognised_cycling_km", "uncovered_km2"} <= set(d)
+        assert d["uncovered_km2"] == pytest.approx(0, abs=1)
+
+
+def test_rerun_skips_done_years(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+    first = _history(conn, tmp_path, fakes)
+    again = _history(conn, tmp_path, fakes)
+    assert [o.status for o in again] == ["skipped"] * 3
+    assert [o.run_id for o in again] == [o.run_id for o in first]
+    assert fakes.calls.count("snapshot_2020") == 1
+
+
+def test_new_history_set_makes_new_runs_and_series_uses_one_set(conn, tmp_path):
+    old = _history(conn, tmp_path, Fakes(tmp_path, md5="old"))
+    new = _history(conn, tmp_path, Fakes(tmp_path, md5="new"))
+    assert [o.status for o in new] == ["done"] * 3
+    from velometer.config import load_classifier
+    from velometer.run import config_sha256
+
+    cfg = load_classifier(CFG_DIR / "classifier" / "v1.yaml")
+    kw = dict(
+        classifier_version=cfg.version,
+        classifier_parameters=canonical_parameters(cfg.parameters.model_dump()),
+        config_sha256=config_sha256(CFG_DIR / "classifier" / "v1.yaml", CFG_DIR / "presets.yaml"),
+    )
+    got_old = history_runs(
+        conn, "berlin", "lau", history_set_md5=Fakes(tmp_path, md5="old").set_md5, **kw
+    )
+    got_new = history_runs(
+        conn, "berlin", "lau", history_set_md5=Fakes(tmp_path, md5="new").set_md5, **kw
+    )
+    assert set(got_old.values()) == {o.run_id for o in old}
+    assert set(got_new.values()) == {o.run_id for o in new}
+    assert set(got_old.values()).isdisjoint(got_new.values())
+
+
+def test_one_failing_year_does_not_stop_the_others(conn, tmp_path):
+    out = _history(conn, tmp_path, Fakes(tmp_path, fail_year=2020))
+    assert [o.status for o in out] == ["done", "failed", "done"]
+    assert out[1].run_id is not None and "snapshot boom" in out[1].error
+    assert [r[1] for r in _runs(conn)] == ["done", "failed", "done"]
+    healed = _history(conn, tmp_path, Fakes(tmp_path))  # a re-run retries only the failed year
+    assert [o.status for o in healed] == ["skipped", "done", "skipped"]
+
+
+def test_pre_run_failure_returns_one_failed_outcome_and_no_run_row(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+
+    def boom(region, data_dir, index):
+        raise RuntimeError("auth refused")
+
+    out = R.run_history(
+        conn,
+        CITY,
+        range(2019, 2022),
+        data_dir=tmp_path,
+        config_dir=CFG_DIR,
+        deps=fakes.deps(fetch_history=boom),
+    )
+    assert len(out) == 1
+    assert (out[0].status, out[0].run_id) == ("failed", None)
+    assert "auth refused" in out[0].error
+    assert _runs(conn) == []
+    assert fakes.activity_args == []
+
+
+def test_activity_written_once_per_city_kind_set(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+    _history(conn, tmp_path, fakes)
+    assert fakes.activity_args == [([2019, 2020, 2021], fakes.set_md5)]
+    assert [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)] == [
+        2019,
+        2020,
+        2021,
+    ]
+    _history(conn, tmp_path, fakes)  # everything reused: rows already match, no recompute
+    assert len(fakes.activity_args) == 1
+    _history(conn, tmp_path, fakes, force=True)  # forced: replaced, never duplicated
+    assert len(fakes.activity_args) == 2
+    assert len(fetch_activity(conn, "berlin", "lau", fakes.set_md5)) == 3
+
+
+def test_activity_covers_the_current_point_when_a_current_run_exists(conn, tmp_path):
+    run = R.run_city(
+        conn,
+        CITY,
+        data_dir=tmp_path,
+        config_dir=CFG_DIR,
+        deps=_current_deps(tmp_path),
+    )
+    assert run.status == "done"
+    fakes = Fakes(tmp_path)
+    _history(conn, tmp_path, fakes)
+    assert fakes.activity_args == [([2019, 2020, 2021, 2022], fakes.set_md5)]
+    assert [r[2] for r in _runs(conn)][-1] == "2021-01-01T00:00:00Z"  # but no extra run
+
+
+def _current_deps(tmp_path):
+    from velometer.sources.geofabrik import RegionFile
+
+    h = Fakes(tmp_path).deps()
+    return R.RunDeps(
+        fetch_region=lambda region, d: RegionFile(
+            region, MINI, "u", "md5", datetime(2026, 9, 30, tzinfo=UTC)
+        ),
+        city_boundary=h.city_boundary,
+        snapshot=lambda *a, **k: MINI,
+        read_ways=read_ways,
+    )
+
+
+def test_current_run_unaffected_by_history_runs(conn, tmp_path):
+    deps = _current_deps(tmp_path)
+    cur = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=deps)
+    _history(conn, tmp_path, Fakes(tmp_path), years=range(2026, 2027))
+    again = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=deps)
+    assert again.status == "skipped" and again.run_id == cur.run_id
+    from velometer.db import latest_done_run
+
+    assert latest_done_run(conn, "berlin", "lau") == cur.run_id
+
+
+def test_history_set_provenance_recorded_once(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+    _history(conn, tmp_path, fakes)
+    _history(conn, tmp_path, fakes, force=True)
+    assert conn.execute("SELECT COUNT(*) FROM history_sets").fetchone()[0] == 1
+    hs = fetch_history_set(conn, fakes.set_md5)
+    assert hs["regions"] == [
+        {
+            "region": "berlin",
+            "md5": "m1",
+            "md5_source": "published",
+            "fetched_at": "2026-10-01",
+        }
+    ]
+    assert hs["index_sha256"] == "i" * 64
+    assert hs["index_path"] == str(tmp_path / "index.json")
+    assert hs["uncovered_km2"] == pytest.approx(0, abs=1)
+    assert fetch_history_set(conn, "nope") is None
+    json.dumps(hs)
+
+
+@pytest.mark.slow
+def test_berlin_2018_history_run(tmp_path):
+    """Real Geofabrik history (login-only, about 400 MB); data/ in the repo is the cache."""
+    data = Path(__file__).parent.parent / "data"
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        out = R.run_history(conn, CITY, range(2018, 2019), data_dir=data, config_dir=CFG_DIR)
+        assert [o.status for o in out] == ["done"], out
+        run_id = out[0].run_id
+        row = conn.execute("SELECT osm_timestamp FROM runs WHERE id=?", (run_id,)).fetchone()
+        assert row[0] == "2018-01-01T00:00:00Z"
+        headline = conn.execute(
+            "SELECT value FROM metrics WHERE run_id=? AND preset='ours_headline'", (run_id,)
+        ).fetchone()
+        assert headline is not None and headline[0] is not None
+        tiers = conn.execute(
+            "SELECT length_km FROM tier_lengths WHERE run_id=?", (run_id,)
+        ).fetchall()
+        assert tiers and all(km >= 0 for (km,) in tiers)
+        diag = fetch_diagnostics(conn, run_id)
+        assert diag["legacy_km"] > 0  # pitfall 7: opposite_* / sidewalk:*:bicycle ways classify
+        print("SLOWNUMBERS", {"headline": headline[0], **diag})
+        snap = next((data / "snapshots").glob("berlin_lau_*_20180101.osm.pbf"))
+        ways = read_ways(snap).ways
+        legacy = [
+            w
+            for w in ways
+            if str(w.tags.get("cycleway", "")).startswith("opposite")
+            or any(k.startswith("sidewalk:") and k.endswith(":bicycle") for k in w.tags)
+        ]
+        assert legacy

@@ -1,5 +1,6 @@
 """velometer command-line interface."""
 
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -376,6 +377,54 @@ def _classify_file(
         typer.echo(f"unknown cycleway values: {result.unknown_values}")
 
 
+def _parse_years(value: str | None) -> range | None:
+    """`A-B` (inclusive) -> range(A, B + 1); anything else, or B < A, is exit 2."""
+    if value is None:
+        return None
+    m = re.fullmatch(r"\s*(\d{4})\s*-\s*(\d{4})\s*", value)
+    if m is None or int(m[2]) < int(m[1]):
+        typer.echo(f"error: --years {value!r}: expected A-B with A <= B, e.g. 2018-2026", err=True)
+        raise typer.Exit(2)
+    return range(int(m[1]), int(m[2]) + 1)
+
+
+def _run_history_cities(
+    selected: list[CityConfig],
+    years: range,
+    *,
+    db: Path,
+    data: Path,
+    config_dir: Path,
+    boundary: str,
+    classifier: str,
+    force: bool,
+) -> list:
+    from velometer import run as run_mod
+
+    deps = run_mod.HistoryDeps()
+    outcomes = []
+    with _open_schema(db) as conn:
+        upsert_cities(conn, _all_cities(config_dir))
+        for city in selected:
+            for out in run_mod.run_history(
+                conn,
+                city,
+                years,
+                data_dir=data,
+                config_dir=config_dir,
+                boundary_kind=boundary,
+                classifier=classifier,
+                deps=deps,
+                force=force,
+            ):
+                run = out.run_id if out.run_id is not None else "-"
+                year = out.year if out.year is not None else "-"
+                line = f"{city.id} {year} {out.status} run={run}"
+                typer.echo(f"{line} {out.error}" if out.error else line)
+                outcomes.append(out)
+    return outcomes
+
+
 @app.command()
 def run(
     cities: str = typer.Option("all", help="'all' or comma-separated city ids."),
@@ -390,9 +439,33 @@ def run(
         help="Override the classifier parameter: plain cycleway=* on a oneway road counts on "
         "the traffic side only, or on both sides.",
     ),
+    years: str | None = typer.Option(
+        None,
+        "--years",
+        help="History run: one snapshot per year A-B inclusive (e.g. 2018-2026), at Y-01-01, "
+        "from Geofabrik full history (needs VELOMETER_OSM_USER/PASSWORD).",
+    ),
 ) -> None:
     """Run cities end to end (region, boundary, clip, classify, persist); done runs are skipped."""
+    year_range = _parse_years(years)
     wanted = None if cities == "all" else [c.strip() for c in cities.split(",") if c.strip()]
+    if year_range is not None:
+        if plain_cycleway_on_oneway is not None:
+            typer.echo("error: --plain-cycleway-on-oneway does not apply to --years", err=True)
+            raise typer.Exit(2)
+        history = _run_history_cities(
+            _select_cities(config_dir, wanted),
+            year_range,
+            db=db,
+            data=data,
+            config_dir=config_dir,
+            boundary=boundary,
+            classifier=classifier,
+            force=force,
+        )
+        if any(o.status == "failed" for o in history):
+            raise typer.Exit(1)
+        return
     outcomes = _run_cities(
         _select_cities(config_dir, wanted),
         db=db,
@@ -503,6 +576,46 @@ def external_load(
         raise typer.Exit(1) from e
     for source, n in counts.items():
         typer.echo(f"{source} {n} rows")
+
+
+@osm_app.command("fetch-history")
+def osm_fetch_history(
+    region: str | None = typer.Option(
+        None, help="Geofabrik region id, e.g. europe/germany/berlin."
+    ),
+    city: str | None = typer.Option(None, help="City id: fetch the regions covering its boundary."),
+    boundary: str = typer.Option("lau", help="Boundary kind (with --city)."),
+    config_dir: Path = CONFIG_OPT,
+    data: Path = DATA_OPT,
+) -> None:
+    """Download full-history PBFs (login via VELOMETER_OSM_USER/PASSWORD); prints no secrets."""
+    from velometer import run as run_mod
+
+    if (region is None) == (city is None):
+        typer.echo("error: give exactly one of --region and --city", err=True)
+        raise typer.Exit(2)
+    deps = run_mod.HistoryDeps()
+    try:
+        if city is not None:
+            (c,) = _select_cities(config_dir, [city])
+            rec, _ = deps.city_boundary(c, boundary, data)
+            files = run_mod.resolve_history_set(rec.polygon, c.epsg, data, deps).files
+        else:
+            index = deps.load_index(deps.fetch_index(data).path)
+            if region not in index or not index[region]["history"]:
+                typer.echo(f"error: no history file for region {region!r}", err=True)
+                raise typer.Exit(2)
+            files = [deps.fetch_history(region, data, index)]
+    except typer.Exit:
+        raise
+    except Exception as e:  # noqa: BLE001 - one readable line, never a traceback with headers
+        typer.echo(f"error: {type(e).__name__}: {e}", err=True)
+        raise typer.Exit(1) from e
+    for f in files:
+        typer.echo(
+            f"region={f.region} path={f.path} md5={f.md5} md5_source={f.md5_source} "
+            f"size={f.path.stat().st_size}"
+        )
 
 
 @osm_app.command("fetch")
