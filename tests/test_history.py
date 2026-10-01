@@ -134,3 +134,12 @@ def test_merge_runs_only_for_multiple_files(tmp_path, monkeypatch):
     hf2 = HistoryFile("u", FIX / "mini.osh", "1" * 32, "computed", date(2026, 1, 1))
     city_history("t", "lau", [HF, hf2], "two", POLY, "b" * 64, tmp_path)
     assert "merge" in calls
+
+
+def test_time_filter_converts_offset_to_utc(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(osmium, "_run", lambda *a: calls.append(a) or "")
+    monkeypatch.setattr(Path, "replace", lambda self, t: t)
+    ts = datetime.fromisoformat("2018-01-01T01:00:00+02:00")
+    time_filter(tmp_path / "s.osh.pbf", ts, tmp_path / "a.osm.pbf")
+    assert calls[0][-1] == "2017-12-31T23:00:00Z"
