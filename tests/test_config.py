@@ -95,3 +95,17 @@ def test_match_semantics(expr, tags, expected):
 def test_validate_expr_rejects_unknown_operator():
     with pytest.raises(ValueError, match="unknown condition"):
         validate_expr({"a": {"regex": "x"}}, LISTS)
+
+
+@pytest.mark.parametrize(
+    "expr",
+    [
+        {"a": {"not_in": "designated"}},
+        {"a": {"not_in": []}},
+        {"a": {"absent": "no"}},
+        {"a": {"in_list": ["phys"]}},
+    ],
+)
+def test_validate_expr_rejects_bad_operator_payload(expr):
+    with pytest.raises(ValueError, match="must be"):
+        validate_expr(expr, LISTS)

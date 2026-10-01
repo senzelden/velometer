@@ -65,7 +65,16 @@ def validate_expr(expr: dict, lists: Mapping[str, list[str]]) -> None:
         elif isinstance(cond, dict):
             if set(cond) not in ({"absent"}, {"not_in"}, {"in_list"}):
                 raise ValueError(f"unknown condition {cond!r} for key {key!r}")
-            if "in_list" in cond and cond["in_list"] not in lists:
-                raise ValueError(f"unknown value list {cond['in_list']!r}")
+            if "absent" in cond and not isinstance(cond["absent"], bool):
+                raise ValueError(f"absent must be a bool for key {key!r}, got {cond['absent']!r}")
+            if "not_in" in cond and (not isinstance(cond["not_in"], list) or not cond["not_in"]):
+                raise ValueError(
+                    f"not_in must be a non-empty list for key {key!r}, got {cond['not_in']!r}"
+                )
+            if "in_list" in cond:
+                if not isinstance(cond["in_list"], str):
+                    raise ValueError(f"in_list must be a str for key {key!r}")
+                if cond["in_list"] not in lists:
+                    raise ValueError(f"unknown value list {cond['in_list']!r}")
         elif not isinstance(cond, (str, bool, int, float, list)):
             raise ValueError(f"unsupported condition {cond!r} for key {key!r}")
