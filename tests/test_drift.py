@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from velometer.pipeline.drift import drift_diagnostics
 from velometer.pipeline.geometry import Projector
 from velometer.pipeline.measure import measure
 from velometer.pipeline.read import read_ways
+from velometer.pipeline.types import Classified, WayRecord, WaySide
 
 CASES = Path(__file__).parent / "fixtures" / "cases"
 CLS = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
@@ -58,3 +60,39 @@ def test_km_outside_boundary_contribute_nothing():
 def test_way_lengths_are_clipped_km_per_way():
     _, full = run("legacy_opposite_track")
     assert full.way_lengths[10] == pytest.approx(1.0, rel=0.02)
+
+
+COORDS = ((13.4, 52.5), (13.4147, 52.5))
+
+
+def synthetic(tags: dict[str, str], tier: str | None, rule_id: str | None):
+    """A measured one-way city whose single classified side is replaced by the given one."""
+    way = WayRecord(10, tags, COORDS)
+    result = measure([way], CLS, 25833)
+    side = WaySide(10, "right", "road_side", tags, COORDS)
+    classified = [Classified(side, tier, None, rule_id, {})]
+    return drift_diagnostics(replace(result, classified=classified), [way], ACT)
+
+
+ROAD = {"highway": "residential"}
+
+
+def test_legacy_prefix_is_matched_per_semicolon_part():
+    d = synthetic({**ROAD, "cycleway": "lane;opposite_lane"}, "D", "D_lane")
+    assert d["legacy_km"] > 0
+
+
+def test_legacy_prefix_must_start_the_value():
+    d = synthetic({**ROAD, "cycleway": "no_opposite"}, "D", "D_lane")
+    assert d["legacy_km"] == 0
+
+
+def test_legacy_tagged_side_without_tier_is_not_legacy():
+    d = synthetic({**ROAD, "cycleway": "opposite_track"}, None, None)
+    assert d["legacy_km"] == 0
+    assert d["unrecognised_cycling_km"] > 0
+
+
+def test_tier_none_side_without_cycling_tags_is_not_unrecognised():
+    d = synthetic(ROAD, None, None)
+    assert d == {"legacy_km": 0.0, "unrecognised_cycling_km": 0.0}

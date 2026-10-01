@@ -4,6 +4,7 @@ rule recognised. Both are per_side km, clipped to the run's boundary (from `way_
 from velometer.config import ActivityConfig
 from velometer.pipeline.activity import cycling_tags
 from velometer.pipeline.measure import MeasureResult
+from velometer.pipeline.tags import parts
 from velometer.pipeline.types import WayRecord
 
 
@@ -24,7 +25,9 @@ def drift_diagnostics(
             if cycling_tags(tags, cfg):
                 unrecognised += length
         elif c.rule_id in legacy_rules or any(
-            tags.get(k, "").startswith(prefix) for k, prefix in legacy_prefixes.items()
+            part.startswith(prefix)
+            for k, prefix in legacy_prefixes.items()
+            for part in parts(tags.get(k))
         ):
             legacy += length
     return {"legacy_km": legacy, "unrecognised_cycling_km": unrecognised}
