@@ -1,4 +1,5 @@
 import sqlite3
+from dataclasses import replace
 
 import pytest
 
@@ -12,13 +13,17 @@ from velometer.db import (
     connect,
     create_schema,
     fail_run,
+    fetch_activity,
     fetch_boundary,
     fetch_cities,
+    fetch_diagnostics,
     fetch_external_figures,
     fetch_run_results,
     find_done_run,
+    history_runs,
     latest_done_run,
     open_db,
+    replace_activity,
     replace_external_figures,
     set_population,
     start_run,
@@ -26,6 +31,7 @@ from velometer.db import (
     upsert_cities,
 )
 from velometer.models import (
+    ActivityYear,
     Boundary,
     Completeness,
     ExternalFigure,
@@ -47,6 +53,8 @@ TABLES = {
     "completeness",
     "external_figures",
     "duplicates",
+    "activity",
+    "diagnostics",
 }
 
 
@@ -447,7 +455,7 @@ def test_v3_db_with_metric_rows_migrates_to_v4_and_keeps_them(tmp_path, cities):
         c.commit()
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 4
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 5
         assert c.execute("SELECT * FROM metrics").fetchall() == [
             (rid, "berlin", "clean_cities_2025", "per_side", 17.5, 1000.0, 5000.0, 12.5)
         ]
@@ -484,3 +492,148 @@ def test_two_bases_of_one_preset_are_stored_and_fetched(conn):
         ("clean_cities_2025", "per_side", 30.0),
         ("clean_cities_2025", "qecio_weighted", 18.0),
     }
+
+
+SHA = "cfg"
+
+
+def test_migration_4_to_5_keeps_runs_and_marks_them_current(tmp_path, cities):
+    path = tmp_path / "v.sqlite"
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, cities)
+        rid = _done(c, KEY)
+        # rewind to v4: no source column, the v4 key index, no activity/diagnostics tables
+        c.execute("DROP INDEX runs_done_key")
+        c.execute("ALTER TABLE runs DROP COLUMN source")
+        c.execute(
+            "CREATE UNIQUE INDEX runs_done_key ON runs (city_id, osm_timestamp, boundary_kind, "
+            "boundary_sha256, classifier_version, classifier_parameters, config_sha256) "
+            "WHERE status = 'done'"
+        )
+        c.execute("DROP TABLE activity")
+        c.execute("DROP TABLE diagnostics")
+        c.execute("PRAGMA user_version = 4")
+        c.commit()
+        assert "source" not in {r[1] for r in c.execute("PRAGMA table_info(runs)")}
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 5
+        assert c.execute("SELECT id, source, status FROM runs").fetchall() == [
+            (rid, "current", "done")
+        ]
+        assert {"activity", "diagnostics"} <= _tables(c)
+        assert find_done_run(c, KEY) == rid
+        assert find_done_run(c, replace(KEY, source="history")) is None
+        assert _done(c, replace(KEY, source="history")) != rid  # the rebuilt index has source
+
+
+def test_history_and_current_runs_with_same_key_fields_are_distinct(conn):
+    k_cur = _key(osm_timestamp="2026-01-01T00:00:00Z")
+    k_his = replace(k_cur, source="history")
+    a = start_run(conn, k_cur, git_commit="g", region_md5="m")
+    complete_run(conn, a, "berlin", _result(), [])
+    assert find_done_run(conn, k_his) is None
+    b = start_run(conn, k_his, git_commit="g", region_md5="m")
+    complete_run(conn, b, "berlin", _result(), [])  # the unique index allows both
+    assert find_done_run(conn, k_his) == b
+    assert find_done_run(conn, k_cur) == a
+
+
+def test_run_source_rejects_unknown_values(conn):
+    with pytest.raises(sqlite3.IntegrityError):
+        start_run(conn, _key(source="bogus"), git_commit="g", region_md5="m")
+
+
+def test_latest_done_run_ignores_history_runs(conn):
+    current_id = _done(conn, _key(osm_timestamp="2026-01-01T00:00:00Z"))
+    _done(conn, _key(osm_timestamp="2026-06-01T00:00:00Z", source="history"))  # later data
+    assert latest_done_run(conn, "berlin", "lau", config_sha256=SHA) == current_id
+    assert latest_done_run(conn, "berlin", "lau") == current_id
+
+
+def test_history_runs_maps_timestamps_of_matching_done_history_runs(conn):
+    def hist(ts, md5="h", **kw):
+        rid = start_run(
+            conn, _key(osm_timestamp=ts, source="history", **kw), git_commit="g", region_md5=md5
+        )
+        complete_run(conn, rid, "berlin", _result(), [])
+        return rid
+
+    a, b = hist("2019-01-01T00:00:00Z"), hist("2020-01-01T00:00:00Z")
+    hist("2021-01-01T00:00:00Z", md5="other")  # another history set
+    hist("2022-01-01T00:00:00Z", config_sha256="x")  # another config
+    failed = start_run(
+        conn,
+        _key(osm_timestamp="2023-01-01T00:00:00Z", source="history"),
+        git_commit="g",
+        region_md5="h",
+    )
+    fail_run(conn, failed, "boom")
+    _done(conn, _key(osm_timestamp="2024-01-01T00:00:00Z"))  # a current run
+    got = history_runs(
+        conn,
+        "berlin",
+        "lau",
+        classifier_version="v1",
+        classifier_parameters=DEFAULT_PARAMETERS,
+        config_sha256=SHA,
+        history_set_md5="h",
+    )
+    assert got == {"2019-01-01T00:00:00Z": a, "2020-01-01T00:00:00Z": b}
+
+
+def _activity_row(year=2019, **kw):
+    return ActivityYear(
+        **{
+            **dict(
+                city_id="berlin",
+                boundary_kind="lau",
+                year=year,
+                history_set_md5="h",
+                n_edits=3,
+                n_changesets=2,
+                n_mappers=2,
+                top_mapper_share=0.67,
+                n_ways_created_cycling=1,
+                n_ways_deleted_cycling=0,
+            ),
+            **kw,
+        }
+    )
+
+
+def test_replace_activity_is_atomic_and_round_trips(conn):
+    rows = [_activity_row(2019), _activity_row(2020, n_edits=9)]
+    replace_activity(conn, "berlin", "lau", "h", rows)
+    replace_activity(conn, "berlin", "lau", "h", rows)  # replace, not duplicate
+    assert fetch_activity(conn, "berlin", "lau", "h") == rows
+    other = [_activity_row(2019, history_set_md5="g")]
+    replace_activity(conn, "berlin", "lau", "g", other)  # another set is left alone
+    assert fetch_activity(conn, "berlin", "lau", "h") == rows
+    assert fetch_activity(conn, "berlin", "lau", "g") == other
+    # atomic: a failing replace (duplicate year) keeps the previous rows
+    with pytest.raises(sqlite3.IntegrityError):
+        replace_activity(conn, "berlin", "lau", "h", [_activity_row(2021), _activity_row(2021)])
+    assert fetch_activity(conn, "berlin", "lau", "h") == rows
+
+
+def test_activity_table_has_no_user_columns(conn):
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(activity)")}
+    assert not cols & {"uid", "user", "user_id", "username", "mapper"}
+
+
+def test_diagnostics_written_with_the_run_and_rolled_back_with_it(conn):
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m")
+    complete_run(conn, rid, "berlin", _result(), _metrics(), diagnostics={"legacy_km": 1.5})
+    assert fetch_diagnostics(conn, rid) == {"legacy_km": 1.5}
+    other = start_run(
+        conn, _key(osm_timestamp="2026-01-01T00:00:00Z"), git_commit="g", region_md5="m"
+    )
+    assert fetch_diagnostics(conn, other) == {}
+    with pytest.raises(sqlite3.IntegrityError):  # duplicate metric rows
+        complete_run(
+            conn, other, "berlin", _result(), _metrics() + _metrics(), diagnostics={"x": 2.0}
+        )
+    assert fetch_diagnostics(conn, other) == {}
+    assert conn.execute("SELECT COUNT(*) FROM diagnostics").fetchone()[0] == 1

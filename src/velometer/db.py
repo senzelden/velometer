@@ -10,6 +10,7 @@ from pathlib import Path
 
 from velometer.config import CityConfig, ClassifierParameters
 from velometer.models import (
+    ActivityYear,
     Boundary,
     City,
     Completeness,
@@ -20,8 +21,17 @@ from velometer.models import (
     TierLength,
 )
 
-SCHEMA_VERSION = 4
-_RESULT_TABLES = ("duplicates", "completeness", "metrics", "road_lengths", "tier_lengths", "runs")
+SCHEMA_VERSION = 5
+_RESULT_TABLES = (
+    "duplicates",
+    "completeness",
+    "metrics",
+    "road_lengths",
+    "tier_lengths",
+    "activity",
+    "diagnostics",
+    "runs",
+)
 
 
 class SchemaError(Exception):
@@ -59,11 +69,12 @@ CREATE TABLE IF NOT EXISTS runs (
   boundary_sha256 TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('running','done','failed')), error TEXT,
   population_value INTEGER, population_year INTEGER, population_source TEXT,
-  config_sha256 TEXT
+  config_sha256 TEXT,
+  source TEXT NOT NULL DEFAULT 'current' CHECK (source IN ('current','history'))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS runs_done_key ON runs (
   city_id, osm_timestamp, boundary_kind, boundary_sha256, classifier_version,
-  classifier_parameters, config_sha256) WHERE status = 'done';
+  classifier_parameters, config_sha256, source) WHERE status = 'done';
 CREATE TABLE IF NOT EXISTS tier_lengths (
   run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
   tier TEXT NOT NULL CHECK (tier IN ('A','B','C','D','E','excluded')),
@@ -90,6 +101,18 @@ CREATE TABLE IF NOT EXISTS external_figures (
   network_scope TEXT NOT NULL,
   length_basis TEXT NOT NULL CHECK (length_basis IN ('streckenlaenge','reallaenge','unknown')),
   source_url TEXT NOT NULL, retrieved_at TEXT NOT NULL, note TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS activity (
+  city_id TEXT NOT NULL REFERENCES cities(id), boundary_kind TEXT NOT NULL,
+  year INTEGER NOT NULL, history_set_md5 TEXT NOT NULL,
+  n_edits INTEGER NOT NULL, n_changesets INTEGER NOT NULL, n_mappers INTEGER NOT NULL,
+  top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
+  n_ways_deleted_cycling INTEGER NOT NULL,
+  PRIMARY KEY (city_id, boundary_kind, year, history_set_md5)
+);
+CREATE TABLE IF NOT EXISTS diagnostics (
+  run_id INTEGER NOT NULL REFERENCES runs(id), key TEXT NOT NULL, value REAL NOT NULL,
+  PRIMARY KEY (run_id, key)
 );
 CREATE TABLE IF NOT EXISTS duplicates (
   run_id INTEGER NOT NULL REFERENCES runs(id),
@@ -173,7 +196,25 @@ def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
     conn.execute("ALTER TABLE metrics_v4 RENAME TO metrics")
 
 
-_MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
+def _migrate_4_to_5(conn: sqlite3.Connection) -> None:
+    """Additive: existing runs become source='current'; the key index is rebuilt with source."""
+    if "runs" not in _tables(conn):
+        return
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(runs)")}
+    if "source" not in cols:
+        conn.execute(
+            "ALTER TABLE runs ADD COLUMN source TEXT NOT NULL DEFAULT 'current' "
+            "CHECK (source IN ('current','history'))"
+        )
+    conn.execute("DROP INDEX IF EXISTS runs_done_key")  # recreated with source
+
+
+_MIGRATIONS = {
+    1: _migrate_1_to_2,
+    2: _migrate_2_to_3,
+    3: _migrate_3_to_4,
+    4: _migrate_4_to_5,
+}
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
@@ -199,6 +240,7 @@ class RunKey:
     classifier_version: str
     classifier_parameters: str  # canonical JSON: json.dumps(params, sort_keys=True)
     config_sha256: str  # run.config_sha256: classifier and presets YAML (names and bytes)
+    source: str = "current"  # 'history' for a yearly history run (M3)
 
 
 @dataclass(frozen=True)
@@ -227,7 +269,7 @@ def find_done_run(conn, key: RunKey) -> int | None:
     row = conn.execute(
         "SELECT id FROM runs WHERE status='done' AND city_id=? AND osm_timestamp=? AND "
         "boundary_kind=? AND boundary_sha256=? AND classifier_version=? AND "
-        "classifier_parameters=? AND config_sha256=?",
+        "classifier_parameters=? AND config_sha256=? AND source=?",
         (
             key.city_id,
             key.osm_timestamp,
@@ -236,6 +278,7 @@ def find_done_run(conn, key: RunKey) -> int | None:
             key.classifier_version,
             key.classifier_parameters,
             key.config_sha256,
+            key.source,
         ),
     ).fetchone()
     return row[0] if row else None
@@ -256,8 +299,8 @@ def start_run(
         cur = conn.execute(
             "INSERT INTO runs (city_id, started_at, classifier_version, classifier_parameters, "
             "git_commit, osm_timestamp, region_md5, boundary_kind, boundary_sha256, status, "
-            "population_value, population_year, population_source, config_sha256) "
-            "VALUES (?,?,?,?,?,?,?,?,?,'running',?,?,?,?)",
+            "population_value, population_year, population_source, config_sha256, source) "
+            "VALUES (?,?,?,?,?,?,?,?,?,'running',?,?,?,?,?)",
             (
                 key.city_id,
                 _now(),
@@ -272,6 +315,7 @@ def start_run(
                 population.year if population else None,
                 population.source if population else None,
                 key.config_sha256,
+                key.source,
             ),
         )
     return cur.lastrowid
@@ -293,6 +337,7 @@ def complete_run(
     metrics: list[Metric],
     *,
     supersedes: int | None = None,
+    diagnostics: dict[str, float] | None = None,
 ) -> None:
     """Write every result row and mark the run done, atomically.
 
@@ -301,6 +346,7 @@ def complete_run(
 
     Dual-carriageway rows hold one row per (way, partner) pair: overlap_share is the share of the
     way within the pairing distance of that partner, distance_m their minimum distance.
+    `diagnostics` (key -> value) lands in the diagnostics table in the same transaction.
     """
     with conn:  # one transaction: commit on success, rollback on any exception
         if supersedes is not None:
@@ -318,6 +364,10 @@ def complete_run(
         conn.executemany(
             "INSERT INTO road_lengths VALUES (?,?,?,?)",
             [(run_id, city_id, r.road_class, r.length_km) for r in result.road_lengths],
+        )
+        conn.executemany(
+            "INSERT INTO diagnostics (run_id, key, value) VALUES (?,?,?)",
+            [(run_id, k, v) for k, v in (diagnostics or {}).items()],
         )
         conn.executemany(
             "INSERT INTO metrics VALUES (?,?,?,?,?,?,?,?)",
@@ -391,8 +441,8 @@ def latest_done_run(
     the runs of the config on disk even after an edit and revert (A, B, A).
     """
     sql = (
-        "SELECT id FROM runs WHERE status='done' AND city_id=? AND boundary_kind=? "
-        "AND classifier_version=? AND classifier_parameters=? "
+        "SELECT id FROM runs WHERE status='done' AND source='current' AND city_id=? "
+        "AND boundary_kind=? AND classifier_version=? AND classifier_parameters=? "
     )
     args: tuple = (city_id, boundary_kind, classifier_version, classifier_parameters)
     if config_sha256 is not None:
@@ -400,6 +450,80 @@ def latest_done_run(
         args += (config_sha256,)
     row = conn.execute(sql + "ORDER BY osm_timestamp DESC, id DESC LIMIT 1", args).fetchone()
     return row[0] if row else None
+
+
+def history_runs(
+    conn: sqlite3.Connection,
+    city_id: str,
+    boundary_kind: str,
+    *,
+    classifier_version: str,
+    classifier_parameters: str,
+    config_sha256: str,
+    history_set_md5: str,
+) -> dict[str, int]:
+    """Done history runs of this config, as osm_timestamp -> run_id.
+
+    A history run records its history set's md5 in `region_md5`.
+    """
+    rows = conn.execute(
+        "SELECT osm_timestamp, id FROM runs WHERE status='done' AND source='history' "
+        "AND city_id=? AND boundary_kind=? AND classifier_version=? AND classifier_parameters=? "
+        "AND config_sha256=? AND region_md5=?",
+        (
+            city_id,
+            boundary_kind,
+            classifier_version,
+            classifier_parameters,
+            config_sha256,
+            history_set_md5,
+        ),
+    ).fetchall()
+    return dict(rows)
+
+
+def fetch_diagnostics(conn: sqlite3.Connection, run_id: int) -> dict[str, float]:
+    rows = conn.execute("SELECT key, value FROM diagnostics WHERE run_id=?", (run_id,))
+    return dict(rows.fetchall())
+
+
+_ACTIVITY_COLUMNS = (
+    "city_id, boundary_kind, year, history_set_md5, n_edits, n_changesets, n_mappers, "
+    "top_mapper_share, n_ways_created_cycling, n_ways_deleted_cycling"
+)
+
+
+def replace_activity(
+    conn: sqlite3.Connection,
+    city_id: str,
+    boundary_kind: str,
+    history_set_md5: str,
+    rows: list[ActivityYear],
+) -> None:
+    """Replace this (city, boundary, history set)'s yearly aggregates, atomically."""
+    with conn:
+        conn.execute(
+            "DELETE FROM activity WHERE city_id=? AND boundary_kind=? AND history_set_md5=?",
+            (city_id, boundary_kind, history_set_md5),
+        )
+        conn.executemany(
+            f"INSERT INTO activity ({_ACTIVITY_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            [tuple(r.model_dump()[c.strip()] for c in _ACTIVITY_COLUMNS.split(",")) for r in rows],
+        )
+
+
+def fetch_activity(
+    conn: sqlite3.Connection, city_id: str, boundary_kind: str, history_set_md5: str
+) -> list[ActivityYear]:
+    return [
+        ActivityYear(**r)
+        for r in _rows(
+            conn,
+            f"SELECT {_ACTIVITY_COLUMNS} FROM activity WHERE city_id=? AND boundary_kind=? "
+            "AND history_set_md5=? ORDER BY year",
+            (city_id, boundary_kind, history_set_md5),
+        )
+    ]
 
 
 def fetch_run(conn: sqlite3.Connection, run_id: int) -> dict:

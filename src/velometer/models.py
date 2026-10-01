@@ -117,3 +117,18 @@ class Duplicate(_Model):
     overlap_share: float
     distance_m: float
     resolved: bool = False
+
+
+class ActivityYear(_Model):
+    """One year of OSM editing activity inside a city boundary. Aggregates only: no mapper ids."""
+
+    city_id: str
+    boundary_kind: str
+    year: int
+    history_set_md5: str
+    n_edits: int
+    n_changesets: int
+    n_mappers: int
+    top_mapper_share: float
+    n_ways_created_cycling: int
+    n_ways_deleted_cycling: int
