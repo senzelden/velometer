@@ -92,3 +92,45 @@ def test_failed_osmium_leaves_no_part_file(tmp_path):
     with pytest.raises(OsmiumError):
         merge_history([tmp_path / "missing.osh"], tmp_path / "y.osh.pbf")
     assert list(tmp_path.iterdir()) == []
+
+
+def test_naive_datetime_is_rejected(tmp_path):
+    naive = datetime(2018, 1, 1)
+    with pytest.raises(ValueError):
+        time_filter(FIX / "mini.osh", naive, tmp_path / "a.osm.pbf")
+    hist = city_history("t", "lau", [HF], "set", POLY, "b" * 64, tmp_path)
+    with pytest.raises(ValueError):
+        snapshot_at(hist, naive, tmp_path)
+
+
+def test_snapshot_uses_utc_date_and_filter_stamp(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(osmium, "_run", lambda *a: calls.append(a) or "")
+    monkeypatch.setattr(Path, "replace", lambda self, t: t)
+    ts = datetime.fromisoformat("2018-01-01T01:00:00+02:00")
+    hist = tmp_path / "t_lau_set_bbbbbbbb.osh.pbf"
+    snap = snapshot_at(hist, ts, tmp_path)
+    assert snap.name == "t_lau_set_bbbbbbbb_20171231.osm.pbf"
+    assert calls[0][0] == "time-filter" and "2017-12-31T23:00:00Z" in calls[0]
+
+
+def test_cache_key_depends_on_boundary_sha_and_set_md5(tmp_path, monkeypatch):
+    base = city_history("t", "lau", [HF], "aaaaaaaa", POLY, "b" * 64, tmp_path)
+    calls = []
+    real = osmium._run
+    monkeypatch.setattr(osmium, "_run", lambda *a: calls.append(a[0]) or real(*a))
+    other_b = city_history("t", "lau", [HF], "aaaaaaaa", POLY, "c" * 64, tmp_path)
+    other_s = city_history("t", "lau", [HF], "dddddddd", POLY, "b" * 64, tmp_path)
+    assert len({base, other_b, other_s}) == 3
+    assert calls.count("extract") == 2
+
+
+def test_merge_runs_only_for_multiple_files(tmp_path, monkeypatch):
+    calls = []
+    real = osmium._run
+    monkeypatch.setattr(osmium, "_run", lambda *a: calls.append(a[0]) or real(*a))
+    city_history("t", "lau", [HF], "one", POLY, "b" * 64, tmp_path)
+    assert "merge" not in calls
+    hf2 = HistoryFile("u", FIX / "mini.osh", "1" * 32, "computed", date(2026, 1, 1))
+    city_history("t", "lau", [HF, hf2], "two", POLY, "b" * 64, tmp_path)
+    assert "merge" in calls

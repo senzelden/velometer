@@ -36,6 +36,9 @@ def city_history(
 
 
 def snapshot_at(city_history: Path, ts: datetime, data_dir: Path) -> Path:
+    if ts.tzinfo is None:
+        raise ValueError("timestamp must be timezone-aware")
+    ts = ts.astimezone(UTC)
     out_dir = data_dir / "snapshots"
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = city_history.name.removesuffix(".osh.pbf")

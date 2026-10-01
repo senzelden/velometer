@@ -88,8 +88,14 @@ def extract_history(src: Path, polygon_geojson: Path, dst: Path) -> Path:
     )
 
 
+def _utc_stamp(ts: datetime) -> str:
+    if ts.tzinfo is None:
+        raise ValueError("timestamp must be timezone-aware")
+    return ts.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def time_filter(src: Path, ts: datetime, dst: Path) -> Path:
-    stamp = ts.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    stamp = _utc_stamp(ts)
     return _atomic(
         dst,
         lambda part: _run("time-filter", "--overwrite", "-o", str(part), str(src), stamp),
