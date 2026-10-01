@@ -5,7 +5,6 @@ Reads velometer.sqlite (latest done LAU run per city). Run after `velometer run 
     uv run python scripts/render_m2_results.py
 """
 
-import sqlite3
 from pathlib import Path
 
 import matplotlib
@@ -17,10 +16,12 @@ from velometer.db import (  # noqa: E402
     DEFAULT_PARAMETERS,
     fetch_boundary,
     fetch_cities,
+    fetch_run,
     fetch_run_results,
     latest_done_run,
     open_db,
 )
+from velometer.reconcile import short_commit  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "velometer.sqlite"
@@ -55,7 +56,9 @@ def load(db: Path) -> list[dict]:
             if run_id is None:
                 continue
             r = fetch_run_results(conn, run_id)
-            run = _run_row(conn, run_id)
+            run = fetch_run(conn, run_id)
+            boundary = fetch_boundary(conn, c.id, BOUNDARY)
+            check_boundary(c.id, run, boundary)
             tier_km = {(b, t): 0.0 for b in ("per_side", "qecio_weighted") for t in TIERS}
             for t in r.tier_lengths:
                 if t.tier in TIERS:
@@ -68,20 +71,37 @@ def load(db: Path) -> list[dict]:
                     "roads": {x.road_class: x.length_km for x in r.road_lengths},
                     "tier_km": tier_km,
                     "completeness": r.completeness,
-                    "boundary": fetch_boundary(conn, c.id, BOUNDARY),
+                    "boundary": boundary,
                 }
             )
     return rows
 
 
-def _run_row(conn: sqlite3.Connection, run_id: int) -> dict:
-    cur = conn.execute(
-        "SELECT id, osm_timestamp, classifier_version, classifier_parameters, git_commit, "
-        "region_md5, finished_at FROM runs WHERE id=?",
-        (run_id,),
+def check_boundary(city_id: str, run: dict, boundary) -> None:
+    """The stored boundary row is mutable: refuse to describe a run with another boundary."""
+    if boundary is None or boundary.sha256 != run["boundary_sha256"]:
+        got = boundary.sha256[:12] if boundary else "none"
+        raise SystemExit(
+            f"{city_id}: run {run['id']} used boundary {run['boundary_sha256'][:12]}, the "
+            f"stored {BOUNDARY} boundary is {got}; re-run the city or fetch its boundary"
+        )
+
+
+def population_cells(run: dict) -> tuple[str, str]:
+    """Population as recorded on the run row (what its per-100k used), not the cities row."""
+    if run.get("population_value") is None:
+        return "n/a", "n/a"
+    return f"{run['population_value']:,} ({run['population_year']})", run["population_source"]
+
+
+def chart_title(rows: list[dict]) -> str:
+    dates = sorted({r["run"]["osm_timestamp"][:10] for r in rows})
+    versions = sorted({r["run"]["classifier_version"] for r in rows})
+    sources = sorted({f"{r['boundary'].source_version}" for r in rows})
+    return (
+        f"velometer M2: {len(rows)} pilot cities ({', '.join(sources)}, "
+        f"OSM {', '.join(dates)}, classifier {', '.join(versions)})"
     )
-    names = [d[0] for d in cur.description]
-    return dict(zip(names, cur.fetchone(), strict=True))
 
 
 def fmt(v: float | None, nd: int = 1) -> str:
@@ -147,17 +167,17 @@ def markdown(rows: list[dict]) -> str:
         + "; ".join(f"`{v}` with parameters `{p}`" for v, p in sorted(runs))
         + " (`config/classifier/`).",
         "",
-        "| city | run | OSM timestamp | Geofabrik md5 | git commit | boundary | area km² "
-        "| population | population source |",
-        "|---|---:|---|---|---|---|---:|---:|---|",
+        "| city | run | OSM timestamp | Geofabrik md5 | git commit | config sha | boundary "
+        "| boundary sha | area km² | population | population source |",
+        "|---|---:|---|---|---|---|---|---|---:|---:|---|",
     ]
     for r in rows:
         c, run, b = r["city"], r["run"], r["boundary"]
-        pop = f"{c.population.value:,} ({c.population.year})" if c.population else "n/a"
-        src = c.population.source if c.population else "n/a"
+        pop, src = population_cells(run)
         lines.append(
             f"| {c.id} | {run['id']} | {run['osm_timestamp']} | `{run['region_md5'][:8]}` | "
-            f"`{run['git_commit'][:7]}` | {b.source}, {b.source_version} | "
+            f"`{short_commit(run['git_commit'])}` | `{(run['config_sha256'] or 'n/a')[:12]}` | "
+            f"{b.source}, {b.source_version} | `{run['boundary_sha256'][:12]}` | "
             f"{fmt(b.area_km2)} | {pop} | {src} |"
         )
     lines += [
@@ -204,7 +224,7 @@ def chart(rows: list[dict], path: Path) -> None:
     fig, axes = plt.subplots(3, 1, figsize=(10, 12), facecolor=SURFACE)
     fig.subplots_adjust(hspace=0.38, top=0.925, bottom=0.07, left=0.09, right=0.97)
     fig.suptitle(
-        "velometer M2: five pilot cities (GISCO LAU 2024, OSM 2026-09-30, classifier v1)",
+        chart_title(rows),
         color=INK,
         fontsize=13,
         fontweight="bold",
