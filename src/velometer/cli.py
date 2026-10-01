@@ -18,7 +18,9 @@ app = typer.Typer(no_args_is_help=True, help="Protected cycling infrastructure f
 boundaries_app = typer.Typer(no_args_is_help=True, help="City boundaries.")
 osm_app = typer.Typer(no_args_is_help=True, help="OSM region extracts.")
 app.add_typer(boundaries_app, name="boundaries")
+external_app = typer.Typer(no_args_is_help=True, help="External comparison figures.")
 app.add_typer(osm_app, name="osm")
+app.add_typer(external_app, name="external")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -297,6 +299,38 @@ def boundaries_fetch(
                 typer.echo(f"{c.id} {k} area_km2={rec.boundary.area_km2:.1f}{popmsg}")
     if failed:
         raise typer.Exit(1)
+
+
+@external_app.command("load")
+def external_load(
+    figures: Path | None = typer.Option(  # noqa: B008
+        None, "--figures", exists=True, dir_okay=False, help="Curated CSV (default: config)."
+    ),
+    qecio: bool = typer.Option(True, "--qecio/--no-qecio", help="Fetch and load QECIO v2.10."),
+    bikenetkit: bool = typer.Option(
+        True, "--bikenetkit/--no-bikenetkit", help="Fetch and load BikeNetKit."
+    ),
+    config_dir: Path = CONFIG_OPT,
+    db: Path = DB_OPT,
+    data: Path = DATA_OPT,
+) -> None:
+    """Load curated, QECIO and BikeNetKit figures into external_figures."""
+    from velometer.sources import external
+    from velometer.sources.download import DownloadError
+
+    cities = _all_cities(config_dir)
+    try:
+        with open_db(db) as conn:
+            create_schema(conn)
+            upsert_cities(conn, cities)
+            counts = external.load_all(
+                conn, data, config_dir, qecio=qecio, bikenetkit=bikenetkit, figures_csv=figures
+            )
+    except (DownloadError, SchemaError, ValueError, KeyError, OSError) as e:
+        typer.echo(f"external load failed: {type(e).__name__}: {e}", err=True)
+        raise typer.Exit(1) from e
+    for source, n in counts.items():
+        typer.echo(f"{source} {n} rows")
 
 
 @osm_app.command("fetch")

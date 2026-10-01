@@ -208,3 +208,12 @@ def test_run_prints_dash_for_pre_run_failure(tmp_path, monkeypatch):
         ["run", "--cities", "berlin", "--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
     )
     assert out.exit_code == 1 and "berlin failed run=- ValueError" in out.output
+
+
+def test_external_load_offline_prints_rows_per_source(tmp_path):
+    r = CliRunner().invoke(
+        app,
+        ["external", "load", "--no-qecio", "--no-bikenetkit", "--db", str(tmp_path / "v.sqlite")],
+    )
+    assert r.exit_code == 0, r.output
+    assert "clean_cities_2025 18 rows" in r.output and "changing_cities 1 rows" in r.output
