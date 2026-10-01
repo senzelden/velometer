@@ -85,6 +85,8 @@
     - `single_mapper` = `km_jump` and `top_mapper_share` ≥ 0.5.
     - `tag_drift`: legacy-only km (sides classified through legacy rules: `cycleway=opposite_*`, `sidewalk:*:bicycle`) or unrecognised cycling-tag km change by ≥ 50% year on year.
     - Any flag makes the city-year **flagged**. A flagged year needs an explanation.
+    - 2018 is the first point, so it has no `km_jump` and cannot be flagged by the km rules; only `tag_drift` (against nothing) is skipped too.
+    - The current point is compared with the 2026-01-01 snapshot. Its activity window is [2026-01-01, current `osm_timestamp`). Its thresholds are scaled by the window's share of a year.
 14. **Tag-drift diagnostic.** `measure` already records `rule_id` per side. M3 adds two per-run aggregates:
     - `legacy_km`: the sum of sides whose rule is in a configured legacy-rule list;
     - `unrecognised_cycling_km`: road sides with a cycling-relevant key whose classification is `excluded/unknown`, or untiered.
