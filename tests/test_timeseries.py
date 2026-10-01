@@ -279,11 +279,23 @@ def test_cli_write_fills_the_block_and_marks_flags(db, tmp_path):
     assert report.read_text() == text
 
 
-def test_committed_report_has_markers_and_no_flags_to_explain():
+def test_committed_report_markers_and_headings_are_well_formed():
+    # The DB is not in the repo: check the report's shape, not today's flags (`--check` does).
+    from velometer.config import load_cities
+    from velometer.reconcile import headings
+
     p = Path(__file__).parent.parent / "docs" / "review" / "m3_timeseries.md"
     text = p.read_text()
     assert T.BEGIN in text and T.END in text and "## Explanations" in text
-    assert T.explained_against(p) == {}
+    cities = {c.id for c in load_cities(CFG_DIR / "cities.yaml")}
+    marker = T.explained_against(p)
+    for key, set_md5 in marker.items():
+        city, kind = key.split("/")
+        assert city in cities and kind in ("lau", "fua") and len(set_md5) == 8
+    for h in headings(text.split("## Explanations", 1)[1]):
+        city, kind, label = h.split("/")
+        assert f"{city}/{kind}" in marker, h  # every explanation names a marked set
+        assert label == T.CURRENT or (label.isdigit() and len(label) == 4), h
 
 
 def _selector():

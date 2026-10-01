@@ -14,9 +14,371 @@ Explained-against marker: the Explanations section carries one HTML comment nami
 `city/kind`, the first 8 characters of the history set the explanations were written against.
 When the current history set differs, `--check` exits 1 and prints the corrected marker line.
 
+![M3 time series](m3_timeseries.png)
+
+The chart is drawn by `scripts/render_m3_timeseries.py` from the same series and flags. FUA
+series have no current ("now") point: the current-run path (`velometer run` without `--years`)
+reads the city's single Geofabrik extract, which does not cover the Berlin or Paris FUA, so no
+current FUA run was made (see the M3 Task 9 report).
+
 <!-- timeseries:begin -->
+
+#### berlin/fua
+
+Provenance: history runs 2018=61, 2019=62, 2020=63, 2021=64, 2022=65, 2023=66, 2024=67, 2025=68, 2026=69 · no current run · history set `1308e2c9` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population None held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 70.6 | 3,750.8 | 2,336.0 | 1,414.9 | 0.0 | 502.8 | 92.8 | 25,269 | 609 | 0.23 | 29.3 | 29.3 |  |
+| 2019 | 70.6 | 3,752.8 | 2,293.5 | 1,459.3 | 0.0 | 526.7 | 114.3 | 20,765 | 631 | 0.10 | 43.4 | 30.1 |  |
+| 2020 | 71.1 | 3,790.4 | 2,267.5 | 1,523.0 | 0.0 | 559.4 | 119.0 | 20,737 | 611 | 0.14 | 51.3 | 35.0 |  |
+| 2021 | 71.7 | 3,817.6 | 2,043.4 | 1,774.1 | 0.0 | 599.5 | 160.1 | 38,956 | 780 | 0.24 | 48.1 | 42.6 |  |
+| 2022 | 64.8 | 3,469.5 | 1,560.8 | 1,908.7 | 18.8 | 598.6 | 187.4 | 77,158 | 982 | 0.50 | 73.0 | 16.5 | tag_drift |
+| 2023 | 64.2 | 3,456.1 | 1,473.7 | 1,982.4 | 20.4 | 617.9 | 186.8 | 95,861 | 988 | 0.30 | 90.1 | 17.0 |  |
+| 2024 | 63.2 | 3,393.7 | 1,399.5 | 1,994.1 | 38.2 | 631.1 | 218.7 | 105,709 | 887 | 0.16 | 88.1 | 12.3 |  |
+| 2025 | 64.0 | 3,436.0 | 1,404.8 | 2,031.2 | 36.1 | 655.0 | 222.5 | 67,350 | 875 | 0.21 | 70.7 | 10.1 |  |
+| 2026 | 65.4 | 3,520.4 | 1,380.9 | 2,139.4 | 37.0 | 656.5 | 252.5 | 114,033 | 925 | 0.13 | 46.3 | 17.0 | tag_drift |
+
+#### berlin/lau
+
+Provenance: history runs 2018=16, 2019=17, 2020=18, 2021=19, 2022=20, 2023=21, 2024=22, 2025=23, 2026=24 · current run 11 (OSM 2026-09-30T20:22:42Z) · history set `c3335f42` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population 2024 held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 113.9 | 1,643.1 | 1,357.9 | 285.3 | 0.0 | 403.2 | 53.4 | 19,539 | 405 | 0.30 | 13.8 | 7.8 |  |
+| 2019 | 112.7 | 1,615.0 | 1,335.7 | 279.3 | 0.0 | 410.4 | 58.0 | 15,715 | 411 | 0.13 | 24.7 | 8.7 | tag_drift |
+| 2020 | 114.1 | 1,637.2 | 1,338.0 | 299.3 | 0.0 | 432.9 | 60.2 | 13,589 | 400 | 0.20 | 33.8 | 7.5 |  |
+| 2021 | 117.2 | 1,680.7 | 1,243.3 | 437.4 | 0.0 | 456.4 | 72.1 | 23,420 | 511 | 0.27 | 29.2 | 12.3 | tag_drift |
+| 2022 | 104.4 | 1,496.8 | 1,132.7 | 364.1 | 18.8 | 438.3 | 83.4 | 50,701 | 617 | 0.51 | 32.8 | 0.6 | km_jump, single_mapper, tag_drift |
+| 2023 | 105.4 | 1,512.2 | 1,125.1 | 387.1 | 20.4 | 441.6 | 87.2 | 69,249 | 631 | 0.27 | 30.3 | 6.7 | tag_drift |
+| 2024 | 104.9 | 1,493.7 | 1,129.2 | 364.5 | 33.1 | 455.8 | 97.1 | 84,863 | 592 | 0.20 | 26.5 | 3.2 | tag_drift |
+| 2025 | 106.4 | 1,510.4 | 1,156.3 | 354.1 | 31.0 | 466.0 | 99.8 | 48,315 | 539 | 0.29 | 18.9 | 2.2 |  |
+| 2026 | 108.2 | 1,539.3 | 1,144.0 | 395.3 | 31.8 | 461.1 | 111.9 | 93,469 | 605 | 0.14 | 3.9 | 9.7 | tag_drift |
+| current | 109.6 | 1,557.9 | 1,151.2 | 406.7 | 28.9 | 461.6 | 115.2 | 22,645 | 460 | 0.12 | n/a | n/a |  |
+
+#### copenhagen/lau
+
+Provenance: history runs 2018=25, 2019=26, 2020=27, 2021=28, 2022=29, 2023=30, 2024=31, 2025=32, 2026=33 · current run 14 (OSM 2026-09-30T20:22:42Z) · history set `be41de5b` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population 2024 held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 213.9 | 529.8 | 488.9 | 40.9 | 0.0 | 40.2 | 0.6 | 3,276 | 93 | 0.34 | 1.2 | 0.2 |  |
+| 2019 | 207.7 | 522.8 | 481.4 | 41.4 | 0.0 | 49.8 | 0.6 | 2,776 | 81 | 0.18 | 1.2 | 0.1 | tag_drift |
+| 2020 | 212.8 | 534.1 | 488.1 | 45.9 | 0.0 | 51.9 | 0.6 | 2,084 | 87 | 0.13 | 1.0 | 0.1 | tag_drift |
+| 2021 | 214.1 | 535.8 | 460.8 | 75.0 | 0.0 | 51.0 | 0.6 | 2,866 | 70 | 0.28 | 1.0 | 0.1 |  |
+| 2022 | 221.4 | 550.2 | 473.4 | 76.8 | 0.0 | 47.7 | 0.6 | 4,225 | 165 | 0.10 | 0.5 | 0.0 | tag_drift |
+| 2023 | 232.5 | 566.4 | 484.8 | 81.6 | 0.0 | 38.7 | 1.9 | 5,093 | 151 | 0.26 | 0.4 | 0.2 | tag_drift |
+| 2024 | 234.7 | 569.5 | 486.4 | 83.2 | 0.0 | 37.8 | 2.1 | 4,618 | 129 | 0.18 | 0.4 | 1.6 | tag_drift |
+| 2025 | 227.9 | 556.2 | 482.5 | 73.7 | 0.0 | 37.4 | 3.6 | 5,573 | 131 | 0.26 | 0.4 | 4.6 | tag_drift |
+| 2026 | 234.4 | 572.5 | 489.2 | 83.3 | 0.0 | 38.3 | 3.4 | 4,868 | 124 | 0.27 | 0.1 | 4.0 | tag_drift |
+| current | 238.8 | 582.3 | 498.4 | 83.9 | 0.0 | 36.5 | 6.3 | 3,540 | 113 | 0.15 | n/a | n/a |  |
+
+#### paris/fua
+
+Provenance: history runs 2018=70, 2019=71, 2020=72, 2021=73, 2022=74, 2023=75, 2024=76, 2025=77, 2026=78 · no current run · history set `df7be7ff` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population None held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 12.0 | 2,332.9 | 1,791.3 | 541.6 | 0.0 | 1,033.8 | 186.4 | 26,070 | 650 | 0.11 | 141.3 | 2.4 |  |
+| 2019 | 13.2 | 2,576.7 | 1,889.2 | 687.5 | 0.0 | 1,132.9 | 197.8 | 38,570 | 798 | 0.10 | 165.7 | 2.3 | km_jump |
+| 2020 | 14.0 | 2,738.7 | 1,943.8 | 794.9 | 0.0 | 1,172.6 | 207.8 | 42,515 | 907 | 0.05 | 116.2 | 0.9 | tag_drift |
+| 2021 | 15.3 | 2,997.5 | 2,097.6 | 899.9 | 0.0 | 1,357.4 | 206.7 | 58,254 | 980 | 0.15 | 96.8 | 9.2 | tag_drift |
+| 2022 | 15.7 | 3,087.8 | 2,039.0 | 1,048.8 | 0.0 | 1,394.3 | 221.2 | 65,830 | 1,180 | 0.05 | 76.5 | 12.3 |  |
+| 2023 | 16.3 | 3,193.8 | 1,978.9 | 1,214.9 | 0.0 | 1,453.9 | 238.6 | 70,989 | 1,191 | 0.05 | 66.3 | 12.1 |  |
+| 2024 | 16.7 | 3,279.3 | 1,947.1 | 1,332.1 | 0.0 | 1,505.9 | 252.8 | 130,960 | 1,055 | 0.21 | 65.3 | 18.9 | tag_drift |
+| 2025 | 17.7 | 3,471.2 | 2,094.5 | 1,376.7 | 0.0 | 1,561.9 | 269.9 | 87,159 | 1,061 | 0.12 | 59.6 | 28.8 | tag_drift |
+| 2026 | 18.5 | 3,627.5 | 2,152.3 | 1,475.2 | 0.0 | 1,602.4 | 270.2 | 84,399 | 1,138 | 0.04 | 40.0 | 36.2 |  |
+
+#### paris/lau
+
+Provenance: history runs 2018=43, 2019=44, 2020=45, 2021=46, 2022=47, 2023=48, 2024=49, 2025=50, 2026=51 · current run 12 (OSM 2026-09-30T20:22:42Z) · history set `7db1f306` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population 2024 held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 34.8 | 208.6 | 196.9 | 11.7 | 0.0 | 127.4 | 151.0 | 3,887 | 172 | 0.17 | 49.1 | 0.0 |  |
+| 2019 | 37.5 | 223.9 | 211.2 | 12.7 | 0.0 | 126.6 | 160.2 | 8,218 | 203 | 0.29 | 49.5 | 0.1 |  |
+| 2020 | 43.3 | 257.3 | 241.1 | 16.2 | 0.0 | 122.4 | 168.5 | 8,422 | 237 | 0.22 | 8.2 | 0.2 | km_jump, tag_drift |
+| 2021 | 51.9 | 305.6 | 286.4 | 19.1 | 0.0 | 129.9 | 160.7 | 9,206 | 223 | 0.31 | 3.4 | 1.4 | km_jump, tag_drift |
+| 2022 | 52.5 | 309.1 | 282.0 | 27.1 | 0.0 | 131.0 | 158.5 | 8,421 | 322 | 0.21 | 3.3 | 0.5 | tag_drift |
+| 2023 | 51.9 | 304.2 | 278.7 | 25.5 | 0.0 | 135.2 | 164.4 | 13,816 | 332 | 0.14 | 3.3 | 1.1 | tag_drift |
+| 2024 | 54.5 | 318.6 | 294.6 | 24.0 | 0.0 | 134.7 | 163.9 | 70,335 | 330 | 0.39 | 4.7 | 1.1 | activity_spike |
+| 2025 | 60.0 | 345.7 | 324.6 | 21.2 | 0.0 | 143.3 | 177.9 | 20,590 | 351 | 0.15 | 3.7 | 1.3 | activity_spike |
+| 2026 | 62.8 | 355.2 | 334.1 | 21.1 | 0.0 | 145.5 | 172.5 | 16,317 | 316 | 0.19 | 2.2 | 0.9 |  |
+| current | 63.1 | 356.5 | 335.1 | 21.4 | 0.0 | 147.1 | 174.8 | 7,114 | 253 | 0.17 | n/a | n/a |  |
+
+#### vienna/lau
+
+Provenance: history runs 2018=52, 2019=53, 2020=54, 2021=55, 2022=56, 2023=57, 2024=58, 2025=59, 2026=60 · current run 13 (OSM 2026-09-30T20:22:42Z) · history set `1254c077` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population 2024 held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 74.6 | 558.5 | 495.2 | 63.3 | 0.0 | 251.5 | 18.3 | 7,790 | 199 | 0.33 | 97.1 | 1.4 |  |
+| 2019 | 74.2 | 558.2 | 483.1 | 75.1 | 0.0 | 266.4 | 18.4 | 6,476 | 198 | 0.20 | 95.4 | 1.4 |  |
+| 2020 | 75.2 | 562.8 | 454.6 | 108.2 | 0.0 | 276.1 | 21.5 | 6,493 | 183 | 0.19 | 96.0 | 1.4 |  |
+| 2021 | 77.7 | 583.0 | 436.8 | 146.2 | 0.0 | 282.2 | 23.5 | 6,816 | 205 | 0.19 | 93.3 | 1.4 |  |
+| 2022 | 79.0 | 592.1 | 433.5 | 158.6 | 0.0 | 284.7 | 23.4 | 11,001 | 280 | 0.10 | 67.4 | 0.2 | tag_drift |
+| 2023 | 79.5 | 595.9 | 426.7 | 169.1 | 0.0 | 275.1 | 25.1 | 9,912 | 284 | 0.11 | 35.0 | 0.1 | tag_drift |
+| 2024 | 81.3 | 608.1 | 427.5 | 180.6 | 0.0 | 280.9 | 30.9 | 19,190 | 293 | 0.18 | 23.1 | 0.1 |  |
+| 2025 | 84.7 | 632.9 | 440.4 | 192.5 | 0.0 | 283.5 | 34.5 | 11,908 | 314 | 0.06 | 10.3 | 0.1 | tag_drift |
+| 2026 | 89.1 | 667.4 | 465.8 | 201.6 | 0.0 | 275.8 | 40.0 | 17,709 | 329 | 0.30 | 8.0 | 0.3 | tag_drift |
+| current | 91.0 | 679.8 | 474.7 | 205.1 | 0.0 | 273.2 | 41.1 | 10,872 | 276 | 0.19 | n/a | n/a |  |
+
+#### wroclaw/lau
+
+Provenance: history runs 2018=34, 2019=35, 2020=36, 2021=37, 2022=38, 2023=39, 2024=40, 2025=41, 2026=42 · current run 15 (OSM 2026-09-30T20:22:42Z) · history set `fda036ca` · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` · population 2024 held constant
+
+| year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 2018 | 62.0 | 261.5 | 167.7 | 93.8 | 0.0 | 22.3 | 0.0 | 22,113 | 81 | 0.89 | 4.1 | 0.0 | activity_spike |
+| 2019 | 63.9 | 272.7 | 132.0 | 140.7 | 0.0 | 26.1 | 0.0 | 9,634 | 68 | 0.89 | 4.0 | 0.0 |  |
+| 2020 | 67.2 | 288.5 | 133.5 | 154.9 | 0.0 | 27.7 | 0.0 | 5,642 | 76 | 0.60 | 3.5 | 0.0 |  |
+| 2021 | 71.2 | 306.0 | 138.0 | 168.0 | 0.0 | 29.7 | 0.2 | 6,466 | 73 | 0.41 | 2.9 | 0.0 |  |
+| 2022 | 77.9 | 333.6 | 143.2 | 190.4 | 0.0 | 31.0 | 0.2 | 8,599 | 148 | 0.46 | 2.0 | 0.0 | tag_drift |
+| 2023 | 83.6 | 348.1 | 132.2 | 215.9 | 0.0 | 31.8 | 0.7 | 14,168 | 126 | 0.65 | 1.9 | 0.0 |  |
+| 2024 | 83.7 | 362.3 | 135.2 | 227.1 | 0.0 | 31.2 | 0.7 | 8,262 | 126 | 0.59 | 2.1 | 0.0 |  |
+| 2025 | 91.0 | 386.3 | 151.0 | 235.3 | 0.1 | 31.9 | 0.7 | 7,437 | 148 | 0.28 | 0.0 | 1.4 | tag_drift |
+| 2026 | 93.3 | 390.6 | 148.8 | 241.9 | 0.1 | 31.5 | 0.8 | 8,419 | 128 | 0.29 | 0.0 | 0.0 | tag_drift |
+| current | 95.3 | 398.6 | 148.7 | 250.0 | 0.1 | 32.3 | 0.8 | 6,763 | 106 | 0.41 | n/a | n/a |  |
+
 <!-- timeseries:end -->
 
 ## Explanations
 
-<!-- explained-against:  -->
+How to read `tag_drift` here: the rule fires on a 50% change of `legacy_km` or
+`unrecognised_km` with no km floor, so on cities where both diagnostics are a few km (or less
+than one) every routine retag fires it. Unless an entry says otherwise, a `tag_drift` flag below
+moved less than 5 km of per-side length, none of it in the headline tiers. Way ids are OSM way
+ids; tag changes are quoted before -> after.
+
+<!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca -->
+
+### berlin/lau/2019
+
+Cause: **tag drift**. `legacy_km` rose 13.8 -> 24.7 because mappers added the older
+`sidewalk:*:bicycle=yes` scheme to main roads (rule `X_sidewalk_bicycle_permitted`, 4.3 ->
+15.9 km), e.g. way 144884824 and way 31099696 (secondary roads that gained
+`sidewalk:both:bicycle=yes`, 2.5 and 2.2 km). Those sides are excluded from the tiers, so the
+headline is unaffected (A+B 1,643 -> 1,615 km, below the jump threshold).
+
+### berlin/lau/2021
+
+Cause: **tag drift**, partly a **classifier gap**. `unrecognised_km` rose 7.5 -> 12.3 as
+`cycleway=track` on roads was split per side with `cycleway:left|right=use_sidepath` on the
+other side (e.g. way 231449335: `cycleway=track` -> `cycleway:left=use_sidepath` +
+`cycleway:right=track`); v1 has no rule for the value `use_sidepath`. Legacy km fell 33.8 ->
+29.2 as `cycleway=opposite_track` became `cycleway:left=opposite_track` (way 31969210).
+
+### berlin/lau/2022
+
+Cause: **campaign** (re-mapping of sidepaths and of "sidewalk, bicycles permitted" ways), not a
+loss of built infrastructure. A+B fell 1,680.7 -> 1,496.8 km: 191 km of road sides went from
+`cycleway=track` to `cycleway=separate` (e.g. way 155594970, way 193875622), with only part of
+the separate ways drawn by 1 January 2022 (+121 km of new `highway=cycleway`); and 127 km of
+tier B left because `highway=path` + `bicycle=designated` became `highway=footway` +
+`bicycle=yes` (e.g. way 354012617, way 699975735), which v1 correctly does not count. The
+year's 50,701 edits (2.2x 2021) are led by `highway=footway` creation, `cycleway:both=no` and
+`cycleway:right=track -> separate`; one mapper made 51% of them (`single_mapper`). The
+`unrecognised_km` fall 12.3 -> 0.6 is the same campaign clearing `use_sidepath` values.
+
+### berlin/lau/2023
+
+Cause: **tag drift**, partly a **classifier gap**. `unrecognised_km` 0.6 -> 6.7: main-road
+sides got multi-value and `use_sidepath` values, e.g. way 30962289 `cycleway:right=track` ->
+`share_busway,track` (1.3 km). v1 has no rule for a comma-separated multi-value like
+`share_busway,track` or for `use_sidepath`.
+
+### berlin/lau/2024
+
+Cause: **tag drift**. `unrecognised_km` 6.7 -> 3.2 as the multi-values were cleaned up (way
+30962287 and way 30962289 `share_busway,track` -> `track`), while `legacy_km` moved between
+schemes (`sidewalk:*:bicycle` 26.1 -> 11.2 km, e.g. way 58534542 -> `cycleway:both=separate`;
+`cycleway=opposite` 4.1 -> 15.1 km). Headline km barely moved (A+B 1,512 -> 1,494).
+
+### berlin/lau/2026
+
+Cause: **tag drift** (legacy clean-up). `legacy_km` 18.9 -> 3.9: `cycleway=opposite` on tiered
+sides was removed during 2025 (9.0 -> 0.0 km, e.g. way 4787341 on a
+`bicycle_road`), and `sidewalk:*:bicycle=yes` fell 9.9 -> 3.1 km (way 111283473 ->
+`cycleway:both=no`). `unrecognised_km` 2.2 -> 9.7 comes from the new `cycleway:*=crossing`
+value on road sides (e.g. way 1133761372 `cycleway:right=lane` -> `crossing`), a **classifier
+gap**. Headline km rose normally (A+B 1,510 -> 1,539).
+
+### berlin/fua/2022
+
+Cause: **campaign**, the same sidepath re-mapping as berlin/lau/2022 extended into Brandenburg.
+`legacy_km` 48.1 -> 73.0 because `sidewalk:both:bicycle=yes` on rural main roads grew 41.1 ->
+67.6 km; `unrecognised_km` fell 42.6 -> 16.5 as `cycleway=right`/`use_sidepath` became
+`cycleway:right=separate` (way 206903446, 3.8 km; way 449341004). A+B fell 3,817.6 -> 3,469.5
+km (-9.1%, below the 10% jump threshold) with 77,158 edits and a top-mapper share of 0.50.
+
+### berlin/fua/2026
+
+Cause: **tag drift**, partly a **classifier gap**. `unrecognised_km` 10.1 -> 17.0 from the new
+`cycleway:*=crossing` value (way 1133761372) and `cycleway:both=yes` (way 25631691, 0.6 km);
+`legacy_km` 70.7 -> 46.3 as `cycleway=opposite` disappeared (12.4 -> 0 km, e.g. way 222940881).
+Headline km rose (A+B 3,436 -> 3,520).
+
+### paris/lau/2020
+
+Cause: **construction**, with **tag drift** in the legacy diagnostic. A+B rose 223.9 -> 257.3
+km, almost all from 357 new `highway=cycleway` ways (+40.8 km, e.g. way 744744226, way
+701119869) and 53 new roads with `cycleway=track` (+5.6 km) drawn during 2019, the Plan Vélo
+build-out; activity was normal (8,422 edits, top mapper 0.22). `legacy_km` 49.5 -> 8.2 is
+contraflow retagging: `cycleway=opposite_lane` 44.3 -> 6.4 km (way 25599714 ->
+`cycleway:left=opposite`).
+
+### paris/lau/2021
+
+Cause: **construction** (the 2020 temporary "coronapistes"). A+B rose 257.3 -> 305.6 km: +29.3
+km of new `highway=cycleway` ways (way 840939982) and roads gaining `cycleway=track` with
+`cycleway:temporary=yes` (way 31823633, way 41872851 `share_busway` -> `track`, way 31956307
+`lane` -> `track`). `legacy_km` 8.2 -> 3.4 is the end of the `opposite_lane` retagging (way
+24709554).
+
+### paris/lau/2022
+
+Cause: **tag drift**. `unrecognised_km` 1.35 -> 0.49: `cycleway:right=yes` was removed from way
+668249960 (0.74 km); `yes` carries no type, so v1 does not tier it (**classifier gap**, see
+list). No headline effect.
+
+### paris/lau/2023
+
+Cause: **tag drift**. `unrecognised_km` 0.49 -> 1.09 from `cycleway=crossing`/`sidewalk` on
+service roads with `bicycle=designated` (0.08 -> 0.99 km), partly offset by way 34566164
+leaving the group (`cycleway:right=track` -> `separate`). Sub-km noise of the diagnostic.
+
+### paris/lau/2024
+
+Cause: **campaign** (pedestrian network, not cycling). 70,335 counted edits in 2023 against a
+median of 9,206: 60,239 of them create `highway=footway` ways (e.g. way 4527565), 34,099 in July
+2023 alone, spread over 3,910 changesets (top changeset 1.2%), top-mapper share 0.39. Footways
+count as cycling-relevant edits in `config/activity.yaml` but carry no tier, so A+B moved
+normally (+14.4 km).
+
+### paris/lau/2025
+
+Cause: **campaign**, the tail of the 2023 footway mapping. 20,590 edits in 2024 (limit 18,412):
+8,307 `highway=footway` creations plus 2,675 new `highway=cycleway` ways (e.g. way 4039351) and
+1,504 `cycleway:both=no` additions; top-mapper share 0.15, so no single-mapper effect. A+B
+rose 318.6 -> 345.7 km (+8.5%, below the jump threshold), consistent with real build-out.
+
+### paris/fua/2019
+
+Cause: **construction** with ordinary catch-up mapping, not a campaign or import. A+B rose
+2,332.9 -> 2,576.7 km (+10.5%): 1,336 new `highway=cycleway` ways (+236 km, e.g. way
+597170301), +71 km of new `highway=path` + `bicycle=designated`, and 51 km of tier B from
+`bicycle=yes` -> `designated` (way 107496601); partly offset by 65 km of `cycleway=track`
+removed from roads (way 188144495) and 59 km of deleted cycleways. The 38,570 edits are spread
+over 10,445 changesets (top changeset 1.4%, top-mapper share 0.10) and are not a spike.
+
+### paris/fua/2020
+
+Cause: **tag drift**. `unrecognised_km` 2.3 -> 0.9: `cycleway:right=yes` removed (way
+19754658) and `cycleway=use_sidepath` -> `bicycle=use_sidepath` (way 35280574). `legacy_km`
+fell 165.7 -> 116.2 with the same `opposite_lane` -> `cycleway:left=opposite_lane` retagging as
+paris/lau/2020 (way 34869382).
+
+### paris/fua/2021
+
+Cause: **tag drift** and a **classifier gap**. `unrecognised_km` 0.9 -> 9.2: a primary road went
+`cycleway:right=lane` -> `shoulder` (way 386916860, 1.7 km; 4.9 km in total) and roads gained
+`cycleway:both=yes` (way 26118764, way 739092660). v1 has no rule for `shoulder` or `yes`.
+
+### paris/fua/2024
+
+Cause: **tag drift**, a **classifier gap**. `unrecognised_km` 12.1 -> 18.9: way 344210320 (5.2
+km of primary road) went `cycleway=lane` + `cycleway:lane=advisory` -> `cycleway=shoulder` +
+`cycleway:shoulder=advisory`. Legacy km was flat (66.3 -> 65.3).
+
+### paris/fua/2025
+
+Cause: **tag drift**, a **classifier gap**. `unrecognised_km` 18.9 -> 28.8, mostly new
+`cycleway:right=shoulder` on primary roads (4.4 -> 14.2 km, e.g. way 897177795) plus
+`cycleway:both=yes` (way 27896988). Headline km rose normally (A+B 3,279 -> 3,471).
+
+### vienna/lau/2022
+
+Cause: **tag drift**. `unrecognised_km` 1.4 -> 0.2 as untyped `cycleway=yes` was replaced
+(way 25521677 -> `cycleway:both=no`; way 27494981 -> `cycleway:both=lane`). `legacy_km` fell
+93.3 -> 67.4 as `cycleway=opposite_lane` became `cycleway:left=lane` +
+`cycleway:left:lane=advisory` (way 26120768).
+
+### vienna/lau/2023
+
+Cause: **tag drift**. The `opposite_lane` -> `cycleway:left=lane` retagging continued (legacy
+67.4 -> 35.0 km, e.g. way 8030107); `unrecognised_km` 0.19 -> 0.05 (way 31264853
+`cycleway=yes` -> `cycleway:right=lane`). Headline unaffected (A+B 592 -> 596 km).
+
+### vienna/lau/2025
+
+Cause: **tag drift**. `legacy_km` 23.1 -> 10.3 as `cycleway=opposite_lane` fell 21.8 -> 9.4 km
+(way 206839268 -> `oneway:bicycle=no`; way 8043778 -> `cycleway:left=opposite`). The
+retagging touches tier D only; A+B rose 608 -> 633 km.
+
+### vienna/lau/2026
+
+Cause: **tag drift**, sub-km. `unrecognised_km` 0.05 -> 0.27 from way 8664081 gaining
+`cycleway=both` (a value, not a key; a mapping error v1 rightly leaves untiered). `legacy_km`
+10.3 -> 8.0 continues the `opposite_lane` retagging (way 8664268).
+
+### copenhagen/lau/2019
+
+Cause: **tag drift**, sub-km noise. `unrecognised_km` 0.23 -> 0.07: the junk value
+`cycleway:right=c` on way 497262589 was replaced by `cycleway:right=track`.
+
+### copenhagen/lau/2020
+
+Cause: **tag drift**, sub-km noise. `unrecognised_km` 0.07 -> 0.12: `cycleway=track` split into
+`cycleway:left=use_sidepath` + `cycleway:right=track` (way 263406772, way 86421515). Legacy
+`opposite_lane` 0.97 -> 0.70 km (way 27225983).
+
+### copenhagen/lau/2022
+
+Cause: **tag drift**, sub-km noise. `unrecognised_km` 0.12 -> 0.04 because way 263406772 and
+way 86421515 (the `use_sidepath` sides of 2020) no longer exist on 1 January 2022; legacy 0.97 -> 0.51
+km (way 4290651 `opposite_lane` -> `cycleway:both=no`).
+
+### copenhagen/lau/2023
+
+Cause: **tag drift**, sub-km noise. `unrecognised_km` 0.04 -> 0.20 from the typo
+`cycleway=np` on way 679005632 (0.16 km), fixed to `no` the next year.
+
+### copenhagen/lau/2024
+
+Cause: **tag drift**, a **classifier gap**. `unrecognised_km` 0.20 -> 1.61 as residential
+streets were tagged `cycleway:*=shoulder` (way 26163645 0.7 km, way 1881249, way 24430418).
+Headline unaffected (A+B 566 -> 570 km).
+
+### copenhagen/lau/2025
+
+Cause: **tag drift**, a **classifier gap**. `unrecognised_km` 1.61 -> 4.55, nearly all
+`cycleway:both=shoulder` on residential streets (0.4 -> 2.9 km, e.g. way 8122896, 0.8 km).
+A+B fell 569.5 -> 556.2 km, below the jump threshold.
+
+### copenhagen/lau/2026
+
+Cause: **tag drift**, sub-km noise. `legacy_km` 0.39 -> 0.11 as `cycleway=opposite_lane` became
+`cycleway:left=lane` (way 1880944).
+
+### wroclaw/lau/2018
+
+Cause: **campaign** by one mapper (pedestrian network). 22,113 counted edits in 2017 against a
+median of 8,419: 14,617 create `highway=footway` (e.g. way 24964920) and 15,708 of all counted edits fall in
+June–August 2017, with a top-mapper share of 0.89 across 2,783 changesets. 2018 is the first
+point, so no km change can be attributed; A+B grew steadily afterwards (261.5 -> 272.7 km).
+
+### wroclaw/lau/2022
+
+Cause: **tag drift**, noise. `unrecognised_km` 0.02 -> 0.00: `cycleway:right=yes` became
+`lane` on way 323042539. Legacy `opposite_lane` 2.9 -> 2.0 km (way 17912527).
+
+### wroclaw/lau/2025
+
+Cause: **tag drift**. `legacy_km` 2.1 -> 0.0: the last `cycleway=opposite_lane` was retagged
+(way 17787687 -> `cycleway:left=opposite_lane`). `unrecognised_km` 0 -> 1.4 is the typo
+`cycleway:both=seperate` on way 505470023 (0.6 km).
+
+### wroclaw/lau/2026
+
+Cause: **tag drift**. `unrecognised_km` 1.4 -> 0.0: the typo on way 505470023 was fixed
+(`seperate` -> `separate`).
