@@ -219,3 +219,32 @@ def load_presets(path: Path, classifier: ClassifierConfig) -> PresetsConfig:
                     f"produces tier {tier} subtype {sub!r} (entry {entry!r})"
                 )
     return config
+
+
+class CyclingKeys(_Strict):
+    exact: list[str]
+    prefixes: list[str]
+    highway_values: list[str]
+
+
+class LegacyConfig(_Strict):
+    rules: list[str]
+    value_prefixes: dict[str, str]
+
+
+class FlagThresholds(_Strict):
+    km_jump_pct: float
+    km_jump_min_km: float
+    activity_spike_factor: float
+    single_mapper_share: float
+    tag_drift_pct: float
+
+
+class ActivityConfig(_Strict):
+    cycling_keys: CyclingKeys
+    legacy: LegacyConfig
+    flags: FlagThresholds
+
+
+def load_activity(path: Path) -> ActivityConfig:
+    return _parse(path, ActivityConfig.model_validate)

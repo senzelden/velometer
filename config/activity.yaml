@@ -1,0 +1,15 @@
+# Mapping-activity diagnostics and flag rules (M3 spec §2.12–2.14). Thresholds are data.
+cycling_keys:
+  exact: [segregated, bicycle_road, cyclestreet, oneway:bicycle]
+  prefixes: ["cycleway", "bicycle", "sidewalk:left:bicycle", "sidewalk:right:bicycle",
+             "sidewalk:both:bicycle", "sidewalk:bicycle"]
+  highway_values: [cycleway, path, footway, pedestrian, living_street]
+legacy:
+  rules: [B_sidewalk_designated, X_sidewalk_bicycle_permitted]
+  value_prefixes: {cycleway: opposite}
+flags:
+  km_jump_pct: 10
+  km_jump_min_km: 25
+  activity_spike_factor: 2.0
+  single_mapper_share: 0.5
+  tag_drift_pct: 50
