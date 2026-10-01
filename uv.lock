@@ -1197,6 +1197,7 @@ name = "velometer"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "osmium" },
     { name = "pydantic" },
     { name = "pyproj" },
@@ -1207,7 +1208,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "matplotlib" },
     { name = "pytest" },
     { name = "ruff" },
@@ -1215,6 +1215,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
     { name = "osmium", specifier = ">=4.0" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pyproj", specifier = ">=3.6" },
@@ -1225,7 +1226,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.27" },
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.6" },
