@@ -364,3 +364,9 @@ def test_provenance_line_states_the_clean_cities_basis():
     line = RC.provenance_line(RUN, [], PresetParameters(clean_cities_basis="qecio_weighted"))
     assert "clean_cities_basis=qecio_weighted" in line
     assert "clean_cities_basis" not in RC.provenance_line(RUN, [])
+
+
+def test_the_shipped_report_has_exactly_one_parseable_explained_against_marker():
+    report = Path(__file__).resolve().parents[1] / "docs" / "reconciliation.md"
+    assert len(RC.EXPLAINED_AGAINST.findall(report.read_text())) == 1  # prose must not mimic it
+    assert RC.explained_against(report)  # parses, and names at least one city
