@@ -21,15 +21,41 @@ TIER_COLOUR = {
     "C": "#1f78b4",
     "D": "#ff7f00",
     "E": "#6a3d9a",
-    "none": "#999999",
+    "excluded": "#e31a1c",
+    "none": "#bdbdbd",
 }
-TIER_RANK = ["A", "B", "C", "D", "E"]
-TAG_PREFIXES = ("cycleway", "bicycle", "foot", "segregated", "sidewalk", "oneway")
+TIER_STYLE = {"none": ":"}  # no classifier output: dotted, so it never reads as a tier
+TIER_RANK = ["A", "B", "C", "D", "E", "excluded"]
+TAG_PREFIXES = (
+    "cycleway",
+    "bicycle",
+    "foot",
+    "segregated",
+    "sidewalk",
+    "oneway",
+    "access",
+    "area",
+    "construction",
+    "proposed",
+    "junction",
+    "dual_carriageway",
+    "traffic_mode",
+)
 
 
 def best_tier(proposed: list[dict]) -> str:
+    """Best tier A-E, else "excluded" if any side is excluded, else "none" (no output)."""
     tiers = {p["tier"] for p in proposed}
     return next((t for t in TIER_RANK if t in tiers), "none")
+
+
+def proposed_cell(proposed: list[dict]) -> str:
+    def one(p: dict) -> str:
+        sub = f"/{p['subtype']}" if p.get("subtype") else ""
+        direction = {True: ", bidirectional", False: ", oneway"}.get(p.get("bidirectional"), "")
+        return f"{p['side']}:{p['tier']}{sub} ({p['rule']}{direction})"
+
+    return "<br>".join(one(p) for p in proposed) or "- (no output)"
 
 
 def key_tags(tags: dict[str, str]) -> str:
@@ -43,9 +69,17 @@ def write_markdown(golden: dict, tags_by_id: dict[int, dict[str, str]]) -> None:
         "",
         f"Source: {golden['source']}. Classifier: {golden['classifier_version']}.",
         "",
-        "For each way, check the proposed `side:tier (rule)` against the tags and the OSM link, "
-        "then set `confirmed: true` (and fix `proposed`) per way in "
-        "`tests/fixtures/berlin_golden.yaml`. Map: `berlin_golden.png`.",
+        "Tier definitions: [ADR 0002 tier table](../adr/0002-tiered-classifier-from-qecio.md#tiers)"
+        "; which tiers each headline sums: [`config/presets.yaml`](../../config/presets.yaml). "
+        "Each proposed entry reads `side:tier/subtype (rule, bidirectional|oneway)`; "
+        "`bidirectional` drives the `qecio_weighted` length (oneway counts half). "
+        "Map: `berlin_golden.png` (red = excluded, dotted grey = no classifier output).",
+        "",
+        "**How to sign off:** compare each way's proposal with its tags and the OSM link. "
+        "If it is right, set `confirmed: true` for that way in "
+        "`tests/fixtures/berlin_golden.yaml`. If it is wrong, edit that way's `proposed` list "
+        "to the correct `side`/`tier`/`rule` and then set `confirmed: true`; the test then "
+        "fails until the classifier agrees. Unconfirmed ways are skipped and counted.",
         "",
     ]
     groups: dict[str, list[dict]] = {}
@@ -56,9 +90,9 @@ def write_markdown(golden: dict, tags_by_id: dict[int, dict[str, str]]) -> None:
         lines += ["| way | name | highway | key cycling tags | proposed |", "|---|---|---|---|---|"]
         for w in ways:
             link = f"[{w['way_id']}](https://www.openstreetmap.org/way/{w['way_id']})"
-            prop = "<br>".join(f"{p['side']}:{p['tier']} ({p['rule']})" for p in w["proposed"])
+            prop = proposed_cell(w["proposed"])
             tags = key_tags(tags_by_id.get(w["way_id"], {}))
-            lines.append(f"| {link} | {w['name']} | {w['highway']} | {tags} | {prop or '-'} |")
+            lines.append(f"| {link} | {w['name']} | {w['highway']} | {tags} | {prop} |")
         lines.append("")
     (OUT / "berlin_golden.md").write_text("\n".join(lines), encoding="utf-8")
 
@@ -68,20 +102,26 @@ def write_png(golden: dict, coords_by_id: dict[int, tuple]) -> None:
     groups: dict[str, list[dict]] = {}
     for w in golden["ways"]:
         groups.setdefault(w["group"], []).append(w)
-    fig, axes = plt.subplots(3, 4, figsize=(20, 14))
+    ncols = 4
+    nrows = -(-len(groups) // ncols)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(20, 4.7 * nrows), squeeze=False)
     for ax, (group, ways) in zip(axes.flat, groups.items(), strict=False):
         for w in ways:
             x, y = proj.line(coords_by_id[w["way_id"]]).xy
-            ax.plot(x, y, color=TIER_COLOUR[best_tier(w["proposed"])], lw=2.5)
+            tier = best_tier(w["proposed"])
+            ax.plot(x, y, color=TIER_COLOUR[tier], ls=TIER_STYLE.get(tier, "-"), lw=2.5)
         ax.set_title(f"{group} ({len(ways)})")
         ax.set_aspect("equal", adjustable="datalim")
         ax.tick_params(labelsize=6)
     for ax in list(axes.flat)[len(groups) :]:
         ax.axis("off")
-    handles = [Line2D([0], [0], color=c, lw=3, label=t) for t, c in TIER_COLOUR.items()]
-    fig.legend(handles=handles, loc="lower right", ncol=6, title="best proposed tier")
+    handles = [
+        Line2D([0], [0], color=c, ls=TIER_STYLE.get(t, "-"), lw=3, label=t)
+        for t, c in TIER_COLOUR.items()
+    ]
+    fig.legend(handles=handles, loc="lower center", ncol=len(handles), title="best proposed tier")
     fig.suptitle("Berlin golden set (EPSG:25833, metres) - " + golden["source"], fontsize=10)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.05, 1, 0.97))
     fig.savefig(OUT / "berlin_golden.png", dpi=110)
 
 

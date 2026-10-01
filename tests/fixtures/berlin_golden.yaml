@@ -11,10 +11,12 @@ ways:
     tier: D
     rule: D_lane_advisory
     subtype: advisory
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane_advisory
     subtype: advisory
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4396321
@@ -26,10 +28,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane_advisory
     subtype: advisory
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 28658322
@@ -41,10 +45,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 28658323
@@ -56,10 +62,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 28658327
@@ -71,10 +79,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 32909622
@@ -86,10 +96,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 32909623
@@ -101,10 +113,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 32909627
@@ -116,10 +130,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 23125889
@@ -131,10 +147,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: E
     rule: E_bus
     subtype: bus
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 37304507
@@ -146,10 +164,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 39965120
@@ -161,10 +181,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 39965422
@@ -176,10 +198,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane_advisory
     subtype: advisory
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 39965423
@@ -191,10 +215,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 39965424
@@ -206,10 +232,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4484276
@@ -221,6 +249,7 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4484277
@@ -232,10 +261,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4484278
@@ -247,10 +278,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4484279
@@ -262,10 +295,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 7744347
@@ -277,10 +312,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 14851818
@@ -292,10 +329,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4615614
@@ -307,10 +346,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4615777
@@ -322,10 +363,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4782480
@@ -337,10 +380,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 28133482
@@ -359,10 +404,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 29183328
@@ -381,14 +428,17 @@ ways:
     tier: E
     rule: E_cycle_street
     subtype: cycle_street
+    bidirectional: true
   - side: left
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4395584
@@ -400,6 +450,7 @@ ways:
     tier: E
     rule: E_cycle_street
     subtype: cycle_street
+    bidirectional: true
   confirmed: false
   note: ''
 - way_id: 4492002
@@ -411,14 +462,17 @@ ways:
     tier: E
     rule: E_cycle_street
     subtype: cycle_street
+    bidirectional: false
   - side: left
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4492007
@@ -430,14 +484,17 @@ ways:
     tier: E
     rule: E_cycle_street
     subtype: cycle_street
+    bidirectional: false
   - side: left
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 106652853
@@ -449,6 +506,7 @@ ways:
     tier: B
     rule: B_path
     subtype: null
+    bidirectional: true
   confirmed: false
   note: ''
 - way_id: 233227500
@@ -460,6 +518,7 @@ ways:
     tier: B
     rule: B_path
     subtype: null
+    bidirectional: true
   confirmed: false
   note: ''
 - way_id: 403679183
@@ -471,6 +530,7 @@ ways:
     tier: B
     rule: B_path_segregated
     subtype: segregated
+    bidirectional: true
   confirmed: false
   note: ''
 - way_id: 479700952
@@ -482,6 +542,7 @@ ways:
     tier: B
     rule: B_path_segregated
     subtype: segregated
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 1083897477
@@ -493,6 +554,7 @@ ways:
     tier: A
     rule: A_cycleway
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 1164113868
@@ -504,6 +566,7 @@ ways:
     tier: A
     rule: A_cycleway
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 25778031
@@ -515,10 +578,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: D
     rule: D_lane_advisory
     subtype: advisory
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 71282500
@@ -530,10 +595,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: C
     rule: C_lane_physical
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 71401494
@@ -545,10 +612,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: C
     rule: C_lane_physical
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 110450330
@@ -560,10 +629,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: C
     rule: C_lane_physical
     subtype: null
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4377785
@@ -575,10 +646,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: E
     rule: E_bus
     subtype: bus
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4389412
@@ -590,10 +663,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: E
     rule: E_bus
     subtype: bus
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4395698
@@ -605,10 +680,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: E
     rule: E_bus
     subtype: bus
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4395950
@@ -620,10 +697,12 @@ ways:
     tier: excluded
     rule: X_no
     subtype: 'no'
+    bidirectional: false
   - side: right
     tier: E
     rule: E_bus
     subtype: bus
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4067883
@@ -635,10 +714,12 @@ ways:
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4068188
@@ -650,10 +731,12 @@ ways:
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4071972
@@ -665,10 +748,12 @@ ways:
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
 - way_id: 4316780
@@ -680,9 +765,11 @@ ways:
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   - side: right
     tier: excluded
     rule: X_separate
     subtype: separate
+    bidirectional: false
   confirmed: false
   note: ''
