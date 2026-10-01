@@ -1,4 +1,3 @@
-# tests/test_geofabrik_auth.py
 import json
 import os
 import stat
@@ -35,6 +34,7 @@ def _transport(
         if url == A.OSM_HOST + "/login" and req.method == "POST":
             body = req.content.decode()
             assert "tok123" in body
+            assert f"password={SECRET}" in body
             return httpx.Response(login_status, headers={"location": A.OSM_HOST + "/"})
         if url.startswith(A.OSM_HOST + "/oauth2/authorize"):
             loc = {"location": A.CONSUMER_URL + "?code=c&state=st"}
@@ -130,3 +130,58 @@ def test_parse_cookie_handles_the_real_server_body_with_flag_attributes():
     assert c == A.Cookie(
         "gf_download_oauth", "abc.def", datetime(2026, 10, 3, 19, 57, 5, tzinfo=UTC)
     )
+
+
+def test_cookie_repr_does_not_contain_the_value():
+    c = A.Cookie("gf_download_oauth", "abc.def", datetime(2030, 1, 1, tzinfo=UTC))
+    assert "abc.def" not in repr(c)
+
+
+def test_stale_loose_part_file_does_not_loosen_the_final_mode(tmp_path):
+    p = A.cookie_path(tmp_path)
+    p.parent.mkdir(parents=True)
+    part = p.with_suffix(".part")
+    part.write_text("stale")
+    part.chmod(0o644)
+    A.save_cookie(A.Cookie("n", "v", datetime(2030, 1, 1, tzinfo=UTC)), tmp_path)
+    assert stat.S_IMODE(os.stat(p).st_mode) == 0o600
+    assert not part.exists()
+
+
+def test_write_error_leaves_no_part_file(tmp_path, monkeypatch):
+    def boom(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(A.json, "dump", boom)
+    with pytest.raises(OSError, match="disk full"):
+        A.save_cookie(A.Cookie("n", "v", datetime(2030, 1, 1, tzinfo=UTC)), tmp_path)
+    assert not A.cookie_path(tmp_path).with_suffix(".part").exists()
+
+
+@pytest.mark.parametrize(("minutes", "reused"), [(9, False), (11, True)])
+def test_ten_minute_expiry_margin(tmp_path, minutes, reused):
+    now = datetime(2026, 10, 1, tzinfo=UTC)
+    A.save_cookie(A.Cookie("n", "v", now + timedelta(minutes=minutes)), tmp_path)
+    assert (A.load_cookie(tmp_path, now=now) is not None) is reused
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "not json",
+        "{}",
+        '{"name": "n", "value": "v", "expires": "garbage"}',
+        '{"name": "n", "value": "v", "expires": "2030-01-01T00:00:00"}',
+    ],
+)
+def test_corrupt_cookie_file_is_a_miss(tmp_path, content):
+    p = A.cookie_path(tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text(content)
+    assert A.load_cookie(tmp_path, now=datetime(2026, 10, 1, tzinfo=UTC)) is None
+
+
+def test_malformed_expires_falls_back_to_24h():
+    now = datetime(2026, 10, 1, tzinfo=UTC)
+    c = A._parse_cookie("gf_download_oauth=abc; expires=not a date; Path=/", now)
+    assert c.expires == now + timedelta(hours=24)

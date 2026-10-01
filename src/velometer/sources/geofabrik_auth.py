@@ -1,4 +1,3 @@
-# src/velometer/sources/geofabrik_auth.py
 """Log in to Geofabrik's internal download server with an OSM account (OAuth cookie flow).
 
 Mirrors Geofabrik's oauth_cookie_client.py, re-implemented with httpx. Credentials come only from
@@ -9,7 +8,8 @@ written, logged or put into exception messages.
 import json
 import os
 import re
-from dataclasses import dataclass
+from contextlib import suppress
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -34,7 +34,7 @@ class AuthError(RuntimeError):
 @dataclass(frozen=True)
 class Cookie:
     name: str
-    value: str
+    value: str = field(repr=False)
     expires: datetime
 
     def header(self) -> str:
@@ -67,7 +67,8 @@ def _parse_cookie(text: str, now: datetime) -> Cookie:
     for p in parts[1:]:
         k, _, v = p.partition("=")
         if k.lower() == "expires" and v:
-            expires = parsedate_to_datetime(v).astimezone(UTC)
+            with suppress(TypeError, ValueError):  # malformed date: keep the 24 h default
+                expires = parsedate_to_datetime(v).astimezone(UTC)
     return Cookie(name, value.strip('"'), expires)
 
 
@@ -130,19 +131,27 @@ def save_cookie(c: Cookie, data_dir: Path) -> None:
     p = cookie_path(data_dir)
     p.parent.mkdir(parents=True, exist_ok=True)
     part = p.with_suffix(".part")
-    fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump({"name": c.name, "value": c.value, "expires": c.expires.isoformat()}, f)
-    part.replace(p)
+    part.unlink(missing_ok=True)  # a stale file would keep its old mode through O_TRUNC
+    try:
+        fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w") as f:
+            json.dump({"name": c.name, "value": c.value, "expires": c.expires.isoformat()}, f)
+        part.replace(p)
+    except BaseException:
+        part.unlink(missing_ok=True)
+        raise
 
 
 def load_cookie(data_dir: Path, *, now: datetime) -> Cookie | None:
     p = cookie_path(data_dir)
     if not p.exists():
         return None
-    d = json.loads(p.read_text())
-    c = Cookie(d["name"], d["value"], datetime.fromisoformat(d["expires"]))
-    return c if c.expires - timedelta(minutes=10) > now else None
+    try:
+        d = json.loads(p.read_text())
+        c = Cookie(d["name"], d["value"], datetime.fromisoformat(d["expires"]))
+        return c if c.expires - timedelta(minutes=10) > now else None
+    except (ValueError, KeyError, TypeError):
+        return None  # corrupt or hand-edited file: treat as a miss and log in afresh
 
 
 def credentials_from_env() -> tuple[str, str]:

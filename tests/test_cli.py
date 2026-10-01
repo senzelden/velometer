@@ -571,16 +571,20 @@ def test_results_and_reconcile_report_the_config_on_disk_after_an_edit_and_rever
 
 
 def test_auth_check_reports_failure_without_the_password(tmp_path, monkeypatch):
+    import httpx
+
+    from tests.test_geofabrik_auth import SECRET, _transport
     from velometer.sources import geofabrik_auth
 
-    secret = "s3cr3t-pw"
-    monkeypatch.setenv("VELOMETER_OSM_PASSWORD", secret)
-
-    def boom(*args, **kwargs):
-        raise geofabrik_auth.AuthError("osm login (wrong user name or password?)")
-
-    monkeypatch.setattr(geofabrik_auth, "load_or_login", boom)
+    monkeypatch.setenv("VELOMETER_OSM_USER", "me")
+    monkeypatch.setenv("VELOMETER_OSM_PASSWORD", SECRET)
+    # the real login flow runs against a server that rejects the login (200 instead of 302)
+    monkeypatch.setattr(
+        geofabrik_auth,
+        "new_auth_client",
+        lambda: httpx.Client(transport=_transport([], login_status=200)),
+    )
     result = CliRunner().invoke(app, ["auth", "check", "--data", str(tmp_path)])
     assert result.exit_code == 1
-    assert "error:" in result.output
-    assert secret not in result.output
+    assert "osm login" in result.output
+    assert SECRET not in result.output
