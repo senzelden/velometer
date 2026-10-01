@@ -66,7 +66,7 @@ Every pipeline stage is a pure function over plain data. Only `read.py` touches 
 **Road ways** (`highway` in a road class) yield 0–2 sides:
 - **Value precedence:** `cycleway:<side>` > `cycleway:both` > `cycleway`.
 - **Sub-keys:** `cycleway:<side>:X` > `cycleway:both:X` > `cycleway:X`. They are resolved into a normalised side tag dict with keys `cycleway`, `cycleway:separation`, `cycleway:buffer`, `cycleway:lane`, `cycleway:oneway`, etc. Side-specific separation keys (`:separation:left`, etc.) are collapsed into the same `separation` key.
-- **Plain `cycleway=<value>`** applies to both sides. Exception: `opposite_track|opposite_lane|opposite_share_busway` applies to the **left** side only (contraflow, right-hand traffic), with `contraflow=True` and the value normalised to `track|lane|share_busway`.
+- **Plain `cycleway=<value>`** applies to both sides (on oneway roads now a tunable parameter, see §9 R25). Exception: `opposite_track|opposite_lane|opposite_share_busway` applies to the **left** side only (contraflow, right-hand traffic), with `contraflow=True` and the value normalised to `track|lane|share_busway`.
 - **`cycleway=opposite`** (contraflow with no infrastructure) yields no side.
 - **Legacy `sidewalk:<side|both>:bicycle=<v>`** yields a side whose normalised tag is `sidewalk_bicycle=<v>`, when no `cycleway` value exists for that side.
 - **Carried attributes:** the road's own `access`, `bicycle`, `area`, `highway`, `oneway`, `construction` and `proposed` are copied into every side's tags under `road:` prefixes, so rules can test them.

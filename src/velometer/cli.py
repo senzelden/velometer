@@ -96,7 +96,7 @@ def classify(
     line = f"plain cycleway on oneway roads: {po.n_ways} ways, {po.length_km:.3f} km road"
     if po.n_ways:
         shifts = ", ".join(f"{t} {v:+.3f} km" for t, v in po.delta_per_side_km.items()) or "none"
-        line += f"; switching to {po.other_mode} changes per_side: {shifts}"
+        line += f"; switching to {po.other_mode} changes per_side (non-excluded tiers): {shifts}"
     typer.echo(line)
     if result.unknown_values:
         typer.echo(f"unknown cycleway values: {result.unknown_values}")

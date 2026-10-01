@@ -183,3 +183,33 @@ def test_plain_oneway_report_is_empty_when_no_way_is_affected():
     tags = {"highway": "tertiary", "cycleway": "track"}
     res = measure([WayRecord(1, tags, ((13.4, 52.5), (13.41, 52.5)))], CFG, 25833)
     assert res.plain_oneway.n_ways == 0 and res.plain_oneway.delta_per_side_km == {}
+
+
+def test_plain_oneway_delta_equals_actual_switch_including_tier_changes():
+    line = ((13.4, 52.5), (13.41, 52.5))
+    ways = [
+        # left side becomes D (lane) instead of B (designated sidewalk) when switched
+        WayRecord(
+            1,
+            {
+                "highway": "tertiary",
+                "oneway": "yes",
+                "cycleway": "lane",
+                "sidewalk:left:bicycle": "designated",
+            },
+            line,
+        ),
+        WayRecord(2, {"highway": "residential", "oneway": "-1", "cycleway": "track"}, line),
+        WayRecord(3, {"highway": "primary", "junction": "roundabout", "cycleway": "lane"}, line),
+        WayRecord(4, {"highway": "secondary", "cycleway": "track"}, line),  # two-way: unaffected
+        WayRecord(5, {"highway": "tertiary", "oneway": "yes", "cycleway:right": "lane"}, line),
+    ]
+    for mode, other in (("traffic_side", "both_sides"), ("both_sides", "traffic_side")):
+        cur = measure(ways, CFG.with_parameters(plain_cycleway_on_oneway=mode), 25833)
+        alt = measure(ways, CFG.with_parameters(plain_cycleway_on_oneway=other), 25833)
+        assert cur.plain_oneway.n_ways == 3
+        for tier in "ABCDE":
+            want = km(alt, tier, "per_side") - km(cur, tier, "per_side")
+            got = cur.plain_oneway.delta_per_side_km.get(tier, 0.0)
+            assert got == pytest.approx(want, abs=1e-9), (mode, tier)
+        assert any(cur.plain_oneway.delta_per_side_km.values())  # not vacuous
