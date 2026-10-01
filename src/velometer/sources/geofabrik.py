@@ -154,7 +154,13 @@ def regions_for(polygon_wgs84: BaseGeometry, index: dict[str, dict], *, buffer_m
     ]
     if not chosen or not unary_union([index[r]["geometry"] for r in chosen]).contains(target):
         raise ValueError(f"the index leaf regions with history do not cover the polygon: {chosen}")
-    chosen.sort(key=lambda r: index[r]["geometry"].intersection(target).area)
+    # ties (an aggregate like "dach" covers the polygon as fully as "berlin") drop the larger region
+    chosen.sort(
+        key=lambda r: (
+            round(index[r]["geometry"].intersection(target).area / target.area, 6),
+            -index[r]["geometry"].area,
+        )
+    )
     for r in list(chosen):
         rest = [index[o]["geometry"] for o in chosen if o != r]
         if rest and unary_union(rest).contains(target):

@@ -61,6 +61,12 @@ def test_regions_for_drops_leaves_made_redundant_by_an_overlapping_one():
     assert regions_for(box(0.5, 0.2, 1.1, 0.4), idx, buffer_m=0) == ["e"]
 
 
+def test_regions_for_prefers_the_smaller_region_when_both_cover_equally():
+    idx = load_index(FIX / "index_small.json")
+    idx["big"] = {"geometry": box(-5, -5, 5, 5), "parent": "world", "history": "https://h/big"}
+    assert regions_for(box(0.2, 0.2, 0.4, 0.4), idx, buffer_m=0) == ["a"]
+
+
 def test_regions_for_buffer_pulls_in_a_neighbour():
     idx = load_index(FIX / "index_small.json")
     poly = box(0.2, 0.2, 0.999, 0.4)  # inside a, ~100 m from b's border
