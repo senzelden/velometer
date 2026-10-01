@@ -1,0 +1,19 @@
+# `yes`/`no` are quoted: PyYAML (YAML 1.1) would otherwise read them as booleans.
+version: v1
+road_classes:
+  # highways whose cycleway side tags are exploded into left/right sides
+  carriageway: [motorway, motorway_link, trunk, trunk_link, primary, primary_link, secondary,
+                secondary_link, tertiary, tertiary_link, unclassified, residential, living_street,
+                service, road, busway]
+  # denominators (ADR 0003)
+  main: [trunk, trunk_link, primary, primary_link, secondary, secondary_link, tertiary,
+         tertiary_link]
+  motorway: [motorway, motorway_link]
+  local: [unclassified, residential, living_street, pedestrian]
+value_lists:
+  physical_separation: [kerb, separation_kerb, bollard, flex_post, vertical_panel, planter,
+                        parking_lane, fence, guard_rail, jersey_barrier, grass_verge, tree_row,
+                        bump, studs, barrier, hedge, ditch, wall, railing]
+  paint_separation: [solid_line, dashed_line, double_solid_line, "no", none]
+  bicycle_allowed: ["yes", designated, permissive]
+rules: []

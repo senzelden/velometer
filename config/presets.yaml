@@ -1,0 +1,14 @@
+# Presets (ADR 0003). tiers: "X" = all subtypes of tier X; "X/sub" = only that subtype.
+presets:
+  - id: ours_headline
+    tiers: [A, B]
+    basis: per_side
+    denominator: main_excl_motorway
+  - id: ecf_qecio
+    tiers: [A, B, C, D]
+    basis: qecio_weighted
+    denominator: main_incl_motorway_raw
+  - id: clean_cities_2025
+    tiers: [A, B]
+    basis: per_side
+    denominator: all_public
