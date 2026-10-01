@@ -826,6 +826,110 @@ def reconcile(
         raise typer.Exit(1) from e
 
 
+@app.command()
+def timeseries(
+    city: list[str] = typer.Option(  # noqa: B008
+        None, "--city", help="City id (repeatable); default all."
+    ),
+    boundary: str = typer.Option(
+        None, "--boundary", help="lau or fua; default both (only lau is required by --check)."
+    ),
+    classifier: str = CLASSIFIER_REPORT_OPT,
+    write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
+    check: bool = typer.Option(
+        False,
+        "--check",
+        help="Exit 1 if a flagged city-year lacks an explanation, the explanations name another"
+        " history set than the current one, or a city has no history runs.",
+    ),
+    report: Path = typer.Option(  # noqa: B008
+        Path("docs/review/m3_timeseries.md"), "--report", help="Report file."
+    ),
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Yearly series (history runs plus the current run) per city and boundary, with flags.
+
+    Uses each city's most recently recorded history set that has done runs of the config on disk.
+    """
+    from velometer import timeseries as ts
+    from velometer.config import load_activity
+
+    if boundary not in (None, "lau", "fua"):
+        typer.echo("error: --boundary must be lau or fua", err=True)
+        raise typer.Exit(2)
+    wanted = {c.id for c in _select_cities(config_dir, city or None)}
+    kinds = (boundary,) if boundary else ("lau", "fua")
+    required_kinds = (boundary,) if boundary else ("lau",)
+    sel = _run_selector(config_dir, classifier)
+    try:
+        cfg = load_activity(config_dir / "activity.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    built: dict[tuple[str, str], ts.CitySeries] = {}
+    with _open_schema(db) as conn:
+        for c in _all_cities(config_dir):
+            for kind in ("lau", "fua"):  # every kind, so --write never drops other tables
+                cs = ts.build_city(conn, c.id, kind, sel)
+                if cs is not None:
+                    built[(c.id, kind)] = cs
+    shown = {k: v for k, v in built.items() if k[0] in wanted and k[1] in kinds}
+    all_flags = {k: ts.city_flags(v, cfg) for k, v in built.items()}
+    shown_flags = [f for k, fl in all_flags.items() if k in shown for f in fl]
+    for cs in shown.values():
+        for note in cs.notes:
+            typer.echo(f"note: {note}")
+    typer.echo(_presets_line(sel.presets))
+    block_args = (
+        {k: v.points for k, v in shown.items()},
+        shown_flags,
+        {k: v.provenance for k, v in shown.items()},
+    )
+    typer.echo(ts.render_block(*block_args))
+    try:
+        if write:
+            ts.write_report(
+                report,
+                ts.render_block(
+                    {k: v.points for k, v in built.items()},
+                    [f for fl in all_flags.values() for f in fl],
+                    {k: v.provenance for k, v in built.items()},
+                ),
+            )
+        if check:
+            problems = False
+            for cid in sorted(wanted):
+                for kind in required_kinds:
+                    if (cid, kind) not in built:
+                        problems = True
+                        typer.echo(
+                            f"no history runs for {cid}/{kind} of the current config "
+                            f"{sel.short_sha}: cannot check it",
+                            err=True,
+                        )
+            for key in ts.missing_explanations(report, shown_flags):
+                problems = True
+                typer.echo(f"missing explanation: ### {key}", err=True)
+            sets = {k: v.set_md5 for k, v in shown.items()}
+            stale = ts.unexplained_sets(report, sets)
+            for line in stale:
+                typer.echo(f"explanations out of date: {line}", err=True)
+            if stale:
+                problems = True
+                typer.echo(
+                    "after re-checking the explanations, set: "
+                    + ts.explained_against_marker({k: v.set_md5 for k, v in built.items()}),
+                    err=True,
+                )
+            for key in ts.stale_explanations(report, shown_flags, wanted):
+                typer.echo(f"warning: ### {key} matches no flag", err=True)
+            if problems:
+                raise typer.Exit(1)
+    except (OSError, ValueError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+
+
 @auth_app.command("check")
 def auth_check(data: Path = DATA_OPT) -> None:
     """Log in with VELOMETER_OSM_USER/PASSWORD and store the cookie; prints only ok or the error."""

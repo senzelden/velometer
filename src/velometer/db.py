@@ -495,6 +495,27 @@ def history_runs(
     return dict(rows)
 
 
+def latest_history_set(
+    conn: sqlite3.Connection,
+    city_id: str,
+    boundary_kind: str,
+    *,
+    classifier_version: str,
+    classifier_parameters: str,
+    config_sha256: str,
+) -> str | None:
+    """md5 of the most recently recorded history set that has done history runs of this config."""
+    row = conn.execute(
+        "SELECT h.set_md5 FROM history_sets h WHERE EXISTS ("
+        "SELECT 1 FROM runs r WHERE r.region_md5=h.set_md5 AND r.status='done' "
+        "AND r.source='history' AND r.city_id=? AND r.boundary_kind=? "
+        "AND r.classifier_version=? AND r.classifier_parameters=? AND r.config_sha256=?) "
+        "ORDER BY h.recorded_at DESC, h.rowid DESC LIMIT 1",
+        (city_id, boundary_kind, classifier_version, classifier_parameters, config_sha256),
+    ).fetchone()
+    return row[0] if row else None
+
+
 def upsert_history_set(
     conn: sqlite3.Connection,
     set_md5: str,
