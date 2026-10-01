@@ -5,9 +5,10 @@ from pathlib import Path
 
 import httpx
 import pytest
-from shapely.geometry import box
+from shapely.geometry import MultiPolygon, box
 from shapely.ops import unary_union
 
+from velometer.sources import geofabrik_auth
 from velometer.sources.download import DownloadError
 from velometer.sources.geofabrik import (
     INDEX_URL,
@@ -101,10 +102,22 @@ def test_regions_for_buffer_pulls_in_a_neighbour():
     assert "b" in regions_for(poly, idx, buffer_m=5000).regions
 
 
+def test_regions_for_handles_a_multipolygon_boundary():
+    idx = load_index(FIX / "index_small.json")
+    poly = MultiPolygon([box(0.1, 0.1, 0.3, 0.3), box(1.1, 0.1, 1.3, 0.3)])
+    assert regions_for(poly, idx).regions == ["a", "b"]
+
+
+def test_regions_for_never_returns_an_empty_selection():
+    idx = load_index(FIX / "index_small.json")
+    with pytest.raises(ValueError, match="intersects"):
+        regions_for(box(5, 5, 5.001, 5.001), idx)  # far below the tolerance, still no leaf
+
+
 def test_regions_for_raises_when_index_cannot_cover():
     idx = load_index(FIX / "index_small.json")
     with pytest.raises(ValueError, match="cover"):
-        regions_for(box(5, 5, 6, 6), idx)
+        regions_for(box(1.5, 1.5, 2.5, 2.5), idx)  # half outside every leaf
 
 
 def test_load_index_maps_history_and_parent():
@@ -121,10 +134,12 @@ def test_fetch_index_writes_dated_snapshot_and_trusts_it(tmp_path):
         return httpx.Response(200, content=b'{"features": []}')
 
     c = _client(handler)
-    p = fetch_index(tmp_path, client=c, today=TODAY)
+    snap = fetch_index(tmp_path, client=c, today=TODAY)
+    p = snap.path
+    assert snap.sha256 == hashlib.sha256(b'{"features": []}').hexdigest()
     assert p == tmp_path / "external" / "geofabrik" / "index-v1-20261001.json"
     assert json.loads(p.read_text()) == {"features": []}
-    assert fetch_index(tmp_path, client=c, today=TODAY) == p
+    assert fetch_index(tmp_path, client=c, today=TODAY) == snap
     assert calls == [INDEX_URL]
 
 
@@ -279,3 +294,129 @@ def test_history_set_md5_is_order_independent():
     assert history_set_md5([a, b]) == history_set_md5([b, a]) == want
     c = HistoryFile("b", Path("b"), "3" * 32, "computed", TODAY)
     assert history_set_md5([a, c]) != want
+
+
+def _real_loader_env(monkeypatch):
+    monkeypatch.setenv("VELOMETER_OSM_USER", "fake-user")
+    monkeypatch.setenv("VELOMETER_OSM_PASSWORD", "fake-pw")
+    logins = []
+
+    def fake_login(user, password, *, client):
+        logins.append(user)
+        return _cookie(f"login{len(logins)}")
+
+    monkeypatch.setattr(geofabrik_auth, "login", fake_login)
+    return logins
+
+
+def test_fetch_history_default_loader_logs_in_once(tmp_path, monkeypatch):
+    logins = _real_loader_env(monkeypatch)
+    seen = []
+    c = _client(_history_handler(seen))
+    hf = fetch_history("a", tmp_path, IDX, client=c, today=TODAY)
+    assert hf.path.exists() and len(logins) == 1
+    assert all(ck == "gf_download_oauth=login1" for _, ck in seen)
+
+
+def test_fetch_history_default_loader_relogs_in_exactly_once_on_403(tmp_path, monkeypatch):
+    logins = _real_loader_env(monkeypatch)
+    seen = []
+    c = _client(_history_handler(seen, statuses=[403, 200]))
+    hf = fetch_history("a", tmp_path, IDX, client=c, today=TODAY)
+    assert hf.path.exists() and len(logins) == 2
+    assert seen[-1][1] == "gf_download_oauth=login2"
+
+
+def test_fetch_history_rejects_a_body_that_does_not_match_the_published_md5(tmp_path):
+    wrong = "0" * 32
+    c = _client(_history_handler([], md5_body=f"{wrong}  a-internal.osh.pbf\n"))
+    with pytest.raises(DownloadError, match="md5"):
+        fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert list((tmp_path / "history").iterdir()) == []
+
+
+def test_fetch_history_gives_up_after_second_403_on_the_md5_request(tmp_path):
+    forced = []
+
+    def loader(force=False):
+        forced.append(force)
+        return _cookie()
+
+    c = _client(lambda r: httpx.Response(403))
+    with pytest.raises(DownloadError):
+        fetch_history("a", tmp_path, IDX, client=c, cookie_loader=loader, today=TODAY)
+    assert forced == [False, True]
+
+
+def _redirecting_client(seen):
+    def handler(r):
+        seen.append((str(r.url), r.headers.get("cookie")))
+        if r.url.path.endswith(".md5"):
+            return httpx.Response(404)
+        if r.url.host == "osm-internal.download.geofabrik.de" and r.url.path.startswith("/a-"):
+            return httpx.Response(302, headers={"location": "/moved/a.osh.pbf"})
+        if r.url.path == "/moved/a.osh.pbf":
+            return httpx.Response(302, headers={"location": "https://elsewhere.example/a.pbf"})
+        return httpx.Response(200, content=BODY)
+
+    return httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=True)
+
+
+def test_fetch_history_cookie_survives_same_host_redirect_but_not_cross_host(tmp_path):
+    seen = []
+    fetch_history(
+        "a",
+        tmp_path,
+        IDX,
+        client=_redirecting_client(seen),
+        cookie_loader=lambda force=False: _cookie(),
+        today=TODAY,
+    )
+    by_url = dict(seen)
+    assert by_url[URL] == "gf_download_oauth=v1"
+    assert by_url["https://osm-internal.download.geofabrik.de/moved/a.osh.pbf"] == (
+        "gf_download_oauth=v1"
+    )
+    assert by_url["https://elsewhere.example/a.pbf"] is None
+
+
+def test_fetch_history_leaves_no_cookie_in_the_client_jar(tmp_path):
+    c = _client(_history_handler([]))
+    fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert len(c.cookies.jar) == 0
+
+
+def test_fetch_history_reuses_todays_file_when_no_md5_is_published(tmp_path):
+    dst = tmp_path / "history" / f"a_20261001_{MD5[:8]}.osh.pbf"
+    dst.parent.mkdir(parents=True)
+    dst.write_bytes(BODY)
+
+    def handler(r):
+        if str(r.url).endswith(".md5"):
+            return httpx.Response(404)
+        pytest.fail("history downloaded again")
+
+    hf = fetch_history(
+        "a",
+        tmp_path,
+        IDX,
+        client=_client(handler),
+        cookie_loader=lambda force=False: _cookie(),
+        today=TODAY,
+    )
+    assert (hf.path, hf.md5, hf.md5_source) == (dst, MD5, "computed")
+
+
+def test_fetch_history_does_not_reuse_a_file_that_mismatches_the_published_md5(tmp_path):
+    dst = tmp_path / "history" / f"a_20261001_{MD5[:8]}.osh.pbf"
+    dst.parent.mkdir(parents=True)
+    dst.write_bytes(b"corrupt")
+    c = _client(_history_handler([], md5_body=f"{MD5}  x\n"))
+    hf = fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert hf.path == dst and dst.read_bytes() == BODY

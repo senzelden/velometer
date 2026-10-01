@@ -6,6 +6,7 @@ import json
 import re
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path, PurePosixPath
@@ -109,13 +110,23 @@ def fetch_region(
     return RegionFile(region, dst, url, md5, ts)
 
 
+@dataclass(frozen=True)
+class IndexSnapshot:
+    path: Path
+    sha256: str
+
+
 def fetch_index(
     data_dir: Path, *, client: httpx.Client | None = None, today: date | None = None
-) -> Path:
-    """Snapshot Geofabrik's public region index under a dated name; an existing snapshot is kept."""
+) -> IndexSnapshot:
+    """Snapshot Geofabrik's public region index under a dated name; an existing one is kept.
+
+    The sha256 of the snapshot file is returned for provenance.
+    """
     today = today or date.today()
     dst = data_dir / "external" / "geofabrik" / f"index-v1-{today:%Y%m%d}.json"
-    return fetch(INDEX_URL, dst, client=client)
+    path = fetch(INDEX_URL, dst, client=client)
+    return IndexSnapshot(path, hashlib.sha256(path.read_bytes()).hexdigest())
 
 
 def load_index(path: Path) -> dict[str, dict]:
@@ -177,6 +188,8 @@ def regions_for(
     def selection(ids: list[str]) -> RegionSelection:
         return RegionSelection(sorted(ids), uncovered(ids) / 1e6)
 
+    if not leaves:
+        raise ValueError("no index leaf region with history intersects the polygon")
     singles = [r for r in leaves if uncovered([r]) <= tol_m2]
     if singles:
         return selection([min(singles, key=lambda r: leaves[r].area)])
@@ -210,9 +223,9 @@ def _auth_refused(e: DownloadError) -> bool:
     return isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code in (401, 403)
 
 
-def _published_md5(url: str, client: httpx.Client, headers: dict[str, str]) -> str | None:
+def _published_md5(url: str, client: httpx.Client) -> str | None:
     def get() -> str | None:
-        resp = client.get(url + ".md5", headers=headers)
+        resp = client.get(url + ".md5")
         if resp.status_code == 404:
             return None
         resp.raise_for_status()
@@ -233,12 +246,18 @@ def fetch_history(
 ) -> HistoryFile:
     """Download a region's full-history PBF from Geofabrik's login-only server.
 
-    cookie_loader(force=False) yields the auth cookie; a 401/403 asks it once for a fresh one
-    (force=True) and retries once. The file is renamed to carry the first 8 hex of its md5.
+    cookie_loader is called with the keyword `force` (cookie_loader(force=False) first); a
+    401/403 asks it once for a fresh cookie (force=True) and retries once. None means
+    load_or_login on data_dir. The cookie travels in the client's cookie jar, scoped to the
+    history host, so same-host redirects keep it and foreign hosts never see it. A file already
+    present for today (final name, md5 matching the published one if any) is reused. The file
+    is renamed to carry the first 8 hex of its md5.
     """
     today = today or date.today()
     url = index[region]["history"]
+    host = urlparse(url).hostname
     slug = region.replace("/", "-")
+    stem = f"{slug}_{today:%Y%m%d}"
     own_client = client is None
     client = client or new_client()
     auth_client = None
@@ -246,29 +265,39 @@ def fetch_history(
         auth_client = new_auth_client()
         cookie_loader = functools.partial(load_or_login, data_dir, client=auth_client)
     hist = data_dir / "history"
+    cookie_name = None
     try:
-        cookie = cookie_loader(False)
+        cookie = cookie_loader(force=False)
         for relogin_left in (True, False):
-            headers = {"Cookie": cookie.header()}
+            cookie_name = cookie.name
+            client.cookies.set(cookie.name, cookie.value, domain=host)
             try:
-                published = _published_md5(url, client, headers)
+                published = _published_md5(url, client)
                 if published:
-                    known = hist / f"{slug}_{today:%Y%m%d}_{published[:8]}.osh.pbf"
+                    known = hist / f"{stem}_{published[:8]}.osh.pbf"
                     if known.exists() and md5_of(known) == published:
                         return HistoryFile(region, known, published, "published", today)
-                interim = hist / f"{slug}_{today:%Y%m%d}.osh.pbf"
-                fetch(url, interim, md5=published, client=client, headers=headers)
+                else:
+                    for known in sorted(hist.glob(f"{stem}_{'?' * 8}.osh.pbf")):
+                        md5 = md5_of(known)
+                        if known.name == f"{stem}_{md5[:8]}.osh.pbf":
+                            return HistoryFile(region, known, md5, "computed", today)
+                interim = hist / f"{stem}.osh.pbf"
+                fetch(url, interim, md5=published, client=client)
                 break
             except DownloadError as e:
                 if not (relogin_left and _auth_refused(e)):
                     raise
-                cookie = cookie_loader(True)
+                cookie = cookie_loader(force=True)
     finally:
+        if cookie_name:
+            with suppress(KeyError):
+                client.cookies.delete(cookie_name, domain=host)
         if own_client:
             client.close()
         if auth_client is not None:
             auth_client.close()
     md5 = published or md5_of(interim)
-    final = interim.with_name(f"{slug}_{today:%Y%m%d}_{md5[:8]}.osh.pbf")
+    final = interim.with_name(f"{stem}_{md5[:8]}.osh.pbf")
     interim.replace(final)
     return HistoryFile(region, final, md5, "published" if published else "computed", today)
