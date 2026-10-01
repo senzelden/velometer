@@ -109,3 +109,102 @@ def test_run_exits_1_when_a_city_fails(tmp_path, monkeypatch):
         ["run", "--cities", "berlin", "--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
     )
     assert out.exit_code == 1 and "berlin failed" in out.output
+
+
+def _patched(monkeypatch, tmp_path, **kw):
+    import tests.test_run as tr
+    from velometer import run as R
+
+    deps = tr._deps(tmp_path, [], **kw)
+    monkeypatch.setattr(R, "RunDeps", lambda: deps)
+    return deps
+
+
+def test_osm_fetch_prints_region_path_and_md5(tmp_path, monkeypatch):
+    _patched(monkeypatch, tmp_path)
+    out = CliRunner().invoke(app, ["osm", "fetch", "--city", "berlin", "--data", str(tmp_path)])
+    assert out.exit_code == 0, out.output
+    assert "berlin" in out.output and "md5=md5" in out.output and "mini_city.osm" in out.output
+
+
+def test_boundaries_fetch_all_skips_missing_code_and_stores_rest(tmp_path, monkeypatch):
+    import shutil
+
+    from velometer.config import default_config_dir
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(default_config_dir(), cfg)
+    text = (cfg / "cities.yaml").read_text().replace("    fua_code: DE001F\n", "")
+    assert "DE001F" not in text
+    (cfg / "cities.yaml").write_text(text)
+    _patched(monkeypatch, tmp_path)
+    db = tmp_path / "v.sqlite"
+    out = CliRunner().invoke(
+        app,
+        [
+            "boundaries",
+            "fetch",
+            "--city",
+            "berlin",
+            "--config-dir",
+            str(cfg),
+            "--db",
+            str(db),
+            "--data",
+            str(tmp_path),
+        ],
+    )
+    assert out.exit_code == 0, out.output
+    assert "berlin fua skipped" in out.output
+    assert "berlin lau area_km2=" in out.output and "berlin osm_admin area_km2=" in out.output
+    kinds = {r[0] for r in sqlite3.connect(db).execute("SELECT kind FROM boundaries")}
+    assert kinds == {"lau", "osm_admin"}
+
+
+def test_boundaries_fetch_unknown_kind_exits_2(tmp_path, monkeypatch):
+    _patched(monkeypatch, tmp_path)
+    out = CliRunner().invoke(
+        app, ["boundaries", "fetch", "--kind", "bogus", "--db", str(tmp_path / "v.sqlite")]
+    )
+    assert out.exit_code == 2
+
+
+def test_failing_fetch_exits_1_and_continues_with_next_city(tmp_path, monkeypatch):
+    from velometer import run as R
+
+    deps = _patched(monkeypatch, tmp_path)
+    calls = []
+
+    def flaky(region, data_dir):
+        calls.append(region)
+        if len(calls) == 1:
+            raise RuntimeError("net down")
+        return deps.fetch_region(region, data_dir)
+
+    import dataclasses
+
+    patched = dataclasses.replace(deps, fetch_region=flaky)
+    monkeypatch.setattr(R, "RunDeps", lambda: patched)
+    out = CliRunner().invoke(app, ["osm", "fetch", "--data", str(tmp_path)])
+    assert out.exit_code == 1
+    assert len(calls) == 5 and "failed RuntimeError: net down" in out.output
+    assert "md5=md5" in out.output
+
+
+def test_run_prints_dash_for_pre_run_failure(tmp_path, monkeypatch):
+    import dataclasses
+
+    from velometer import run as R
+
+    deps = _patched(monkeypatch, tmp_path)
+
+    def bad(*a, **kw):
+        raise ValueError("no population")
+
+    patched = dataclasses.replace(deps, city_boundary=bad)
+    monkeypatch.setattr(R, "RunDeps", lambda: patched)
+    out = CliRunner().invoke(
+        app,
+        ["run", "--cities", "berlin", "--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
+    )
+    assert out.exit_code == 1 and "berlin failed run=- ValueError" in out.output

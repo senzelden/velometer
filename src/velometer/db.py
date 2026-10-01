@@ -222,12 +222,28 @@ def fail_run(conn, run_id: int, error: str) -> None:
         )
 
 
-def complete_run(conn, run_id: int, city_id: str, result, metrics: list[Metric]) -> None:
+def complete_run(
+    conn,
+    run_id: int,
+    city_id: str,
+    result,
+    metrics: list[Metric],
+    *,
+    supersedes: int | None = None,
+) -> None:
     """Write every result row and mark the run done, atomically.
+
+    With `supersedes`, that done run is retired (status failed) in the same transaction, so a
+    failure leaves it done and untouched.
 
     Dual-carriageway rows store distance_m = 0.0 because DualPair carries no distance.
     """
     with conn:  # one transaction: commit on success, rollback on any exception
+        if supersedes is not None:
+            conn.execute(
+                "UPDATE runs SET status='failed', error=? WHERE id=?",
+                (f"superseded by run {run_id}", supersedes),
+            )
         conn.executemany(
             "INSERT INTO tier_lengths VALUES (?,?,?,?,?,?,?)",
             [

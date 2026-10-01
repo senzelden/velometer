@@ -2,8 +2,8 @@
 
 A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters);
 a done run with the same key is skipped. `force` supersedes the existing done run: it is marked
-`failed` with the error `superseded by --force`, so its result rows stay but it is no longer
-"latest". If the forced re-run itself fails, the old run is restored to `done`.
+`failed` with the error `superseded by run N`, inside the same transaction that completes the new
+run, so a failed forced re-run leaves the old run done.
 """
 
 import subprocess
@@ -48,7 +48,14 @@ class RunOutcome:
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
+    # run in the source tree so the recorded commit never depends on the process cwd
+    return subprocess.run(
+        ["git", *args],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=Path(__file__).resolve().parent,
+    ).stdout
 
 
 def git_commit() -> str:
@@ -111,7 +118,6 @@ def run_city(
     if done is not None and not force:
         return RunOutcome(city.id, "skipped", done)
     run_id = start_run(conn, key, git_commit=git_commit(), region_md5=region.md5)
-    retired = False
     try:
         snap = deps.snapshot(
             region.path,
@@ -126,18 +132,8 @@ def run_city(
         ways = deps.read_ways(snap).ways
         result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
         metrics = with_per_100k(compute_metrics(result, presets), pop.value if pop else None)
-        if done is not None:  # the unique index admits one done run per key
-            with conn:
-                conn.execute(
-                    "UPDATE runs SET status='failed', error='superseded by --force' WHERE id=?",
-                    (done,),
-                )
-            retired = True
-        complete_run(conn, run_id, city.id, result, metrics)
+        complete_run(conn, run_id, city.id, result, metrics, supersedes=done)
     except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next city runs
-        if retired:
-            with conn:
-                conn.execute("UPDATE runs SET status='done', error=NULL WHERE id=?", (done,))
         fail_run(conn, run_id, _describe(e))
         return RunOutcome(city.id, "failed", run_id, _describe(e))
     return RunOutcome(city.id, "done", run_id)

@@ -122,7 +122,7 @@ def _run_cities(
                 force=force,
                 deps=deps,
             )
-            line = f"{city.id} {out.status} run={out.run_id}"
+            line = f"{city.id} {out.status} run={out.run_id if out.run_id is not None else '-'}"
             typer.echo(f"{line} {out.error}" if out.error else line)
             outcomes.append(out)
     return outcomes
@@ -262,10 +262,10 @@ def boundaries_fetch(
     data: Path = DATA_OPT,
 ) -> None:
     """Fetch and store city boundaries (and the LAU population)."""
+    from velometer import run as run_mod
     from velometer.db import set_population, upsert_boundary
-    from velometer.sources.boundaries import city_boundary
-    from velometer.sources.geofabrik import fetch_region
 
+    deps = run_mod.RunDeps()
     kinds = ("lau", "fua", "osm_admin") if kind == "all" else (kind,)
     if any(k not in ("lau", "fua", "osm_admin") for k in kinds):
         typer.echo(f"error: unknown --kind {kind!r}", err=True)
@@ -284,8 +284,8 @@ def boundaries_fetch(
                     continue
                 try:
                     if k == "osm_admin" and region_path is None:
-                        region_path = fetch_region(c.geofabrik_region, data).path
-                    rec, pop = city_boundary(c, k, data, region_path=region_path)
+                        region_path = deps.fetch_region(c.geofabrik_region, data).path
+                    rec, pop = deps.city_boundary(c, k, data, region_path=region_path)
                     upsert_boundary(conn, rec.boundary)
                     if pop is not None:
                         set_population(conn, c.id, pop)
@@ -306,12 +306,13 @@ def osm_fetch(
     data: Path = DATA_OPT,
 ) -> None:
     """Download each city's Geofabrik region extract (md5-verified)."""
-    from velometer.sources.geofabrik import fetch_region
+    from velometer import run as run_mod
 
+    deps = run_mod.RunDeps()
     failed = False
     for c in _select_cities(config_dir, [city] if city else None):
         try:
-            rf = fetch_region(c.geofabrik_region, data)
+            rf = deps.fetch_region(c.geofabrik_region, data)
         except Exception as e:  # noqa: BLE001 - report per city, keep going
             typer.echo(f"{c.id} failed {type(e).__name__}: {e}", err=True)
             failed = True

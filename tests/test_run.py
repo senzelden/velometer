@@ -1,3 +1,4 @@
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -93,21 +94,73 @@ def test_run_key_includes_parameters(conn, tmp_path):
     assert again.status == "skipped" and again.run_id == b.run_id
 
 
-def test_force_reruns(conn, tmp_path):
+def _count(conn, table):
+    return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
+def _status(conn, run_id):
+    return conn.execute("SELECT status FROM runs WHERE id=?", (run_id,)).fetchone()[0]
+
+
+def test_force_reruns_and_leaves_exactly_one_done_row(conn, tmp_path):
     a = _run(conn, tmp_path, _deps(tmp_path, []))
     b = _run(conn, tmp_path, _deps(tmp_path, []), force=True)
     assert b.status == "done" and b.run_id != a.run_id
+    done = [r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'")]
+    assert done == [b.run_id]
+    assert _status(conn, a.run_id) == "failed"
 
 
-def test_failed_run_leaves_no_rows_and_is_retried(conn, tmp_path):
-    def boom(path):
-        raise RuntimeError("disk on fire")
+def test_forced_run_failing_inside_complete_run_keeps_old_run_done(conn, tmp_path, monkeypatch):
+    a = _run(conn, tmp_path, _deps(tmp_path, []))
+    tiers_before = _count(conn, "tier_lengths")
+    # duplicate metric rows violate the primary key mid-transaction, after earlier inserts
+    monkeypatch.setattr(R, "with_per_100k", lambda metrics, pop: metrics + metrics)
+    b = _run(conn, tmp_path, _deps(tmp_path, []), force=True)
+    assert b.status == "failed" and b.run_id != a.run_id
+    assert _status(conn, a.run_id) == "done"
+    assert _status(conn, b.run_id) == "failed"
+    assert _count(conn, "tier_lengths") == tiers_before  # new run's rows rolled back
+    assert (
+        conn.execute("SELECT COUNT(*) FROM metrics WHERE run_id=?", (b.run_id,)).fetchone()[0] == 0
+    )
 
-    failed = _run(conn, tmp_path, _deps(tmp_path, [], read=boom))
-    assert failed.status == "failed" and "disk on fire" in failed.error
-    assert conn.execute("SELECT COUNT(*) FROM tier_lengths").fetchone()[0] == 0
-    retried = _run(conn, tmp_path, _deps(tmp_path, []))
-    assert retried.status == "done"
+
+def test_failed_run_rolls_back_every_result_table_and_is_retried(conn, tmp_path, monkeypatch):
+    monkeypatch.setattr(R, "with_per_100k", lambda metrics, pop: metrics + metrics)
+    failed = _run(conn, tmp_path, _deps(tmp_path, []))
+    assert failed.status == "failed" and failed.run_id is not None
+    assert _status(conn, failed.run_id) == "failed"
+    for table in ("tier_lengths", "road_lengths", "metrics", "completeness", "duplicates"):
+        assert _count(conn, table) == 0, table
+    monkeypatch.undo()
+    assert _run(conn, tmp_path, _deps(tmp_path, [])).status == "done"
+
+
+def test_boundary_clips_stored_lengths(conn, tmp_path):
+    from pyproj import Transformer
+
+    _, y = Transformer.from_crs(4326, CITY.epsg, always_xy=True).transform(13.41, 52.535)
+    full = _run(conn, tmp_path, _deps(tmp_path, []))
+    small = box(-1e9, -1e9, 1e9, y)  # south of the fixture's northern ways
+
+    deps = _deps(tmp_path, [])
+
+    def city_boundary(city, kind, data_dir, region_path=None):
+        rec, pop = deps.city_boundary(city, kind, data_dir, region_path)
+        b = rec.boundary.model_copy(update={"sha256": "c" * 64})
+        return BoundaryRecord(b, rec.geojson_path, small), pop
+
+    clipped = _run(conn, tmp_path, R.RunDeps(**{**deps.__dict__, "city_boundary": city_boundary}))
+    assert clipped.status == "done" and clipped.run_id != full.run_id
+
+    def all_public(run_id):
+        return conn.execute(
+            "SELECT length_km FROM road_lengths WHERE run_id=? AND road_class='all_public'",
+            (run_id,),
+        ).fetchone()[0]
+
+    assert 0 < all_public(clipped.run_id) < all_public(full.run_id)
 
 
 def test_failure_before_the_run_starts_is_reported_not_raised(conn, tmp_path):
@@ -134,6 +187,32 @@ def test_with_per_100k_none_and_scaling():
     )
     assert R.with_per_100k([m], None)[0].per_100k is None
     assert R.with_per_100k([m], 200_000)[0].per_100k == pytest.approx(25.0)
+
+
+def test_git_commit_clean_sha(monkeypatch):
+    outputs = {("rev-parse", "HEAD"): "abc123\n", ("status", "--porcelain"): ""}
+    monkeypatch.setattr(R, "_git", lambda *a: outputs[a])
+    assert R.git_commit() == "abc123"
+
+
+def test_git_commit_unknown_when_git_fails(monkeypatch):
+    def fail(*a):
+        raise subprocess.CalledProcessError(128, "git")
+
+    monkeypatch.setattr(R, "_git", fail)
+    assert R.git_commit() == "unknown"
+
+
+def test_git_runs_in_the_source_tree_not_the_process_cwd(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen.update(kw)
+        return subprocess.CompletedProcess(cmd, 0, stdout="x\n")
+
+    monkeypatch.setattr(R.subprocess, "run", fake_run)
+    R._git("rev-parse", "HEAD")
+    assert Path(seen["cwd"]) == Path(R.__file__).resolve().parent
 
 
 def test_git_commit_marks_dirty_tree(monkeypatch):
