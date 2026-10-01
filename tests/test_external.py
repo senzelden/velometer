@@ -4,7 +4,9 @@ The QECIO fixture rows are copied from the ECF QECIO v2.10 Summary-all.csv, whic
 OpenStreetMap data (c) OpenStreetMap contributors, ODbL.
 """
 
+import os
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +18,7 @@ from shapely import LineString
 from velometer.config import default_config_dir, load_cities
 from velometer.db import create_schema, fetch_external_figures, open_db, upsert_cities
 from velometer.sources import external as X
+from velometer.sources.download import DownloadError, md5_of
 
 CFG = default_config_dir()
 CITIES = load_cities(CFG / "cities.yaml")
@@ -120,3 +123,87 @@ def test_qecio_mapping_ignores_the_city_name_column(tmp_path):
     figs = X.qecio_figures(renamed, CITIES)
     assert {f.city_id for f in figs} == {"berlin"}
     assert "Berlin-Brandenburg-Unit" in figs[0].note
+
+
+def _qecio_copy(tmp_path: Path, mtime: float | None = None) -> Path:
+    p = tmp_path / "q.csv"
+    p.write_bytes((FIX / "qecio_summary_head.csv").read_bytes())
+    if mtime is not None:
+        os.utime(p, (mtime, mtime))
+    return p
+
+
+def test_qecio_retrieved_at_is_file_mtime_utc_date(tmp_path):
+    p = _qecio_copy(tmp_path, datetime(2026, 3, 4, 23, 30, tzinfo=UTC).timestamp())
+    figs = X.qecio_figures(p, CITIES)
+    assert {str(f.retrieved_at) for f in figs} == {"2026-03-04"}
+
+
+def test_bikenetkit_retrieved_at_is_zip_mtime_utc_date(tmp_path):
+    gpkg = tmp_path / "berlin_de.gpkg"
+    _write_edges(gpkg, LineString([(13.4, 52.5), (13.4147, 52.5)]))
+    _zip_gpkg(tmp_path, gpkg)
+    ts = datetime(2026, 8, 9, 1, 0, tzinfo=UTC).timestamp()
+    os.utime(tmp_path / "bike_networks.zip", (ts, ts))
+    (f,) = X.bikenetkit_figures(tmp_path, [c for c in CITIES if c.id == "berlin"])
+    assert str(f.retrieved_at) == "2026-08-09"
+    assert "compare against tiers A+B+E" in f.note
+
+
+def test_qecio_notes_carry_file_md5(tmp_path):
+    p = _qecio_copy(tmp_path)
+    figs = X.qecio_figures(p, CITIES)
+    assert figs and all(f"file md5 {md5_of(p)}" in f.note for f in figs)
+
+
+def test_qecio_dk011_note_flags_byen_kobenhavn(tmp_path):
+    src = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8")
+    p = tmp_path / "dk.csv"
+    p.write_text(src.replace("DE,Berlin,DE300", "DK,Byen København,DK011"), encoding="utf-8")
+    figs = X.qecio_figures(p, CITIES)
+    assert {f.city_id for f in figs} == {"copenhagen"}
+    assert all("Byen København" in f.note and "185 km2" in f.note for f in figs)
+
+
+def test_vienna_rows_point_at_each_other():
+    figs = X.load_figures_csv(CFG / "external" / "figures.csv")
+    vie = [f for f in figs if f.city_id == "vienna" and f.metric_name == "protected_km"]
+    by_scope = {f.network_scope: f.note for f in vie}
+    assert "superseded" in by_scope["whole_network"]
+    assert (
+        "date of web correction not published" in by_scope["incl_traffic_calmed_restricted_access"]
+    )
+
+
+def test_refresh_qecio_deletes_cache_before_fetch(tmp_path, monkeypatch):
+    cached = tmp_path / "data" / "external" / "qecio" / X.QECIO_LOCAL_NAME
+    cached.parent.mkdir(parents=True)
+    cached.write_text("stale")
+    seen = []
+
+    def fake_fetch(url, dst, **kw):
+        seen.append(dst.exists())
+        dst.write_bytes((FIX / "qecio_summary_head.csv").read_bytes())
+        return dst
+
+    monkeypatch.setattr(X, "fetch", fake_fetch)
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        upsert_cities(conn, CITIES)
+        X.load_all(conn, tmp_path / "data", CFG, qecio=True, bikenetkit=False, refresh_qecio=True)
+        assert seen == [False]
+        X.load_all(conn, tmp_path / "data", CFG, qecio=True, bikenetkit=False)
+        assert seen == [False, True]  # without the flag the cache is kept
+
+
+def test_failed_qecio_fetch_keeps_curated_rows(tmp_path, monkeypatch):
+    def boom(*a, **k):
+        raise DownloadError("offline")
+
+    monkeypatch.setattr(X, "fetch", boom)
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        upsert_cities(conn, CITIES)
+        with pytest.raises(DownloadError):
+            X.load_all(conn, tmp_path / "data", CFG, qecio=True, bikenetkit=False)
+        assert len(fetch_external_figures(conn, "berlin")) == 7

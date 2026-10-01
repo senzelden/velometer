@@ -4,7 +4,7 @@ import csv
 import sqlite3
 import zipfile
 from collections import Counter
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pyogrio
@@ -14,7 +14,7 @@ from velometer.config import CityConfig, load_cities
 from velometer.db import replace_external_figures
 from velometer.models import ExternalFigure
 from velometer.pipeline.geometry import Projector, length_km
-from velometer.sources.download import fetch
+from velometer.sources.download import fetch, md5_of
 
 QECIO_URL = "https://european-cyclists-federation.github.io/Download/Summary/Summary-all.csv"
 # The CSV has no published md5, so the local name carries the version (fetch trusts existing files).
@@ -38,7 +38,16 @@ BIKENETKIT_IDS = {
     "copenhagen": "copenhagen_dk",
     "wroclaw": "wroclaw_pl",
 }
-RETRIEVED = date(2026, 10, 1)
+# Per-city caveats appended to the QECIO row notes (research doc section 5, "Gotcha").
+QECIO_CITY_NOTES = {
+    "DK011": "DK011 is Byen København (area about 185 km2), not Københavns Kommune "
+    "(about 92-104 km2); not comparable to commune-bounded runs",
+}
+
+
+def retrieved_at(path: Path) -> date:
+    """UTC date a downloaded file was last written (its retrieval date)."""
+    return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).date()
 
 
 def load_figures_csv(path: Path) -> list[ExternalFigure]:
@@ -53,6 +62,8 @@ def load_figures_csv(path: Path) -> list[ExternalFigure]:
 def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigure]:
     by_nuts = {c.nuts3_code: c for c in cities if c.nuts3_code}
     out = []
+    got = retrieved_at(csv_path)
+    digest = md5_of(csv_path)
     with csv_path.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             city = by_nuts.get(row["NUTS_ID"])
@@ -71,9 +82,12 @@ def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigu
                         network_scope=f"nuts3_{row['NUTS_ID']}",
                         length_basis="unknown",
                         source_url=QECIO_URL,
-                        retrieved_at=RETRIEVED,
+                        retrieved_at=got,
                         note=f"NUTS3 {row['NUTS_ID']} ({row['City']}); QECIO halves "
-                        "unidirectional infrastructure",
+                        "unidirectional infrastructure; "
+                        + (QECIO_CITY_NOTES.get(row["NUTS_ID"], "") + "; ")
+                        * (row["NUTS_ID"] in QECIO_CITY_NOTES)
+                        + f"file md5 {digest}",
                     )
                 )
     return out
@@ -81,6 +95,7 @@ def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigu
 
 def bikenetkit_figures(zip_dir: Path, cities: list[CityConfig]) -> list[ExternalFigure]:
     out = []
+    got = retrieved_at(zip_dir / "bike_networks.zip")
     with zipfile.ZipFile(zip_dir / "bike_networks.zip") as z:
         for city in cities:
             cid = BIKENETKIT_IDS.get(city.id)
@@ -109,10 +124,11 @@ def bikenetkit_figures(zip_dir: Path, cities: list[CityConfig]) -> list[External
                     network_scope="bikenetkit_bike_network",
                     length_basis="unknown",
                     source_url="https://doi.org/10.5281/zenodo.22271229",
-                    retrieved_at=RETRIEVED,
+                    retrieved_at=got,
                     note="OSM/Nominatim city boundary; includes cycleway, designated paths, "
                     "living streets, cycle streets and side tracks (no lanes); undirected "
-                    "edges counted once; snapshot 'summer 2026' (unverified)",
+                    "edges counted once; snapshot 'summer 2026' (unverified); not a "
+                    "protected-infrastructure figure; compare against tiers A+B+E",
                 )
             )
     return out
@@ -126,6 +142,7 @@ def load_all(
     qecio: bool,
     bikenetkit: bool,
     figures_csv: Path | None = None,
+    refresh_qecio: bool = False,
 ) -> dict[str, int]:
     """Replace each source's rows; return rows per source. Curated CSV sources always load."""
     cities = load_cities(config_dir / "cities.yaml")
@@ -134,7 +151,10 @@ def load_all(
     for source in counts:
         replace_external_figures(conn, source, [f for f in curated if f.source == source])
     if qecio:
-        dst = fetch(QECIO_URL, data_dir / "external" / "qecio" / QECIO_LOCAL_NAME)
+        dst = data_dir / "external" / "qecio" / QECIO_LOCAL_NAME
+        if refresh_qecio:
+            dst.unlink(missing_ok=True)
+        fetch(QECIO_URL, dst)
         figs = qecio_figures(dst, cities)
         replace_external_figures(conn, "qecio_v2_10", figs)
         counts["qecio_v2_10"] = len(figs)

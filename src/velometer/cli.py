@@ -18,8 +18,8 @@ app = typer.Typer(no_args_is_help=True, help="Protected cycling infrastructure f
 boundaries_app = typer.Typer(no_args_is_help=True, help="City boundaries.")
 osm_app = typer.Typer(no_args_is_help=True, help="OSM region extracts.")
 app.add_typer(boundaries_app, name="boundaries")
-external_app = typer.Typer(no_args_is_help=True, help="External comparison figures.")
 app.add_typer(osm_app, name="osm")
+external_app = typer.Typer(no_args_is_help=True, help="External comparison figures.")
 app.add_typer(external_app, name="external")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
@@ -310,6 +310,9 @@ def external_load(
     bikenetkit: bool = typer.Option(
         True, "--bikenetkit/--no-bikenetkit", help="Fetch and load BikeNetKit."
     ),
+    refresh_qecio: bool = typer.Option(
+        False, "--refresh-qecio", help="Delete the cached QECIO file and download it again."
+    ),
     config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
     data: Path = DATA_OPT,
@@ -324,7 +327,13 @@ def external_load(
             create_schema(conn)
             upsert_cities(conn, cities)
             counts = external.load_all(
-                conn, data, config_dir, qecio=qecio, bikenetkit=bikenetkit, figures_csv=figures
+                conn,
+                data,
+                config_dir,
+                qecio=qecio,
+                bikenetkit=bikenetkit,
+                figures_csv=figures,
+                refresh_qecio=refresh_qecio,
             )
     except (DownloadError, SchemaError, ValueError, KeyError, OSError) as e:
         typer.echo(f"external load failed: {type(e).__name__}: {e}", err=True)
