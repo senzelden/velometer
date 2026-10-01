@@ -83,11 +83,16 @@ def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigu
                         length_basis="unknown",
                         source_url=QECIO_URL,
                         retrieved_at=got,
-                        note=f"NUTS3 {row['NUTS_ID']} ({row['City']}); QECIO halves "
-                        "unidirectional infrastructure; "
-                        + (QECIO_CITY_NOTES.get(row["NUTS_ID"], "") + "; ")
-                        * (row["NUTS_ID"] in QECIO_CITY_NOTES)
-                        + f"file md5 {digest}",
+                        note="; ".join(
+                            p
+                            for p in (
+                                f"NUTS3 {row['NUTS_ID']} ({row['City']})",
+                                "QECIO halves unidirectional infrastructure",
+                                QECIO_CITY_NOTES.get(row["NUTS_ID"]),
+                                f"file md5 {digest}",
+                            )
+                            if p
+                        ),
                     )
                 )
     return out
