@@ -1218,7 +1218,7 @@ Assisted-by: Claude:<model-id>"
   - `BoundaryRecord(boundary: Boundary, geojson_path: Path, polygon: BaseGeometry)`, where the polygon is in the city EPSG.
   - `select_feature(gpkg: Path, field: str, code: str) -> tuple[BaseGeometry, dict]` (source CRS 3035; raises unless exactly one match).
   - `write_boundary(city, kind, geom_3035, source, data_dir) -> BoundaryRecord`.
-  - `city_boundary(city, kind, data_dir, region_path=None) -> BoundaryRecord`.
+  - `city_boundary(city, kind, data_dir, region_path=None) -> tuple[BoundaryRecord, Population | None]` (population only for `lau`).
   - `load_boundary_polygon(geojson_path, epsg) -> BaseGeometry`.
   - `population(city, lau_props, fetch_json=...) -> Population | None`.
 
@@ -1962,7 +1962,8 @@ Assisted-by: Claude:<model-id>"
   - `Gap` (frozen dataclass: `city_id, comparison, key, ours: float | None, theirs: float, unit, gap_pct: float | None, flagged: bool, informational: bool, tags: tuple[str, ...], source: str, reference_date: date | None, note: str`).
   - `load_comparisons(path) -> list[Comparison]`.
   - `ours_value(results, spec) -> float | None`.
-  - `reconcile_city(conn, city_id, comparisons, threshold=0.20) -> list[Gap]`.
+  - `gaps_for(results, figures, comparisons, *, threshold, date_gap_days, mismatch) -> list[Gap]`.
+  - `reconcile_city(conn, city_id, config_path, boundary_kind="lau") -> list[Gap]`.
   - `render_block(gaps_by_city) -> str`.
   - `write_report(path, gaps_by_city)`: replaces only the text between the markers.
   - `missing_explanations(path, gaps) -> list[str]`.
