@@ -66,3 +66,46 @@ def test_classify_reports_plain_oneway_mode_and_override(tmp_path):
     assert re.search(r"^A\s+-\s+per_side\s+1\.99\d\s+1$", both.output, re.M), both.output
     bad = CliRunner().invoke(app, [*base, "--plain-cycleway-on-oneway", "sometimes"])
     assert bad.exit_code != 0
+
+
+def test_results_command_prints_table_from_db(tmp_path, monkeypatch):
+    from velometer import run as R
+
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db)]).exit_code == 0
+    import tests.test_run as tr
+
+    deps = tr._deps(tmp_path, [])  # built before the patch: _deps itself calls R.RunDeps
+    monkeypatch.setattr(R, "RunDeps", lambda: deps)
+    out = runner.invoke(
+        app, ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    )
+    assert out.exit_code == 0, out.output
+    assert "berlin" in out.output and "done" in out.output
+    table = runner.invoke(app, ["results", "--db", str(db)])
+    assert table.exit_code == 0
+    assert re.search(r"^berlin\s+2026-09-30\s+\d+\.\d", table.output, re.M), table.output
+
+
+def test_classify_rejects_file_and_city_together(tmp_path):
+    f = tmp_path / "x.osm"
+    f.write_text("<osm/>")
+    out = CliRunner().invoke(app, ["classify", "--file", str(f), "--city", "berlin"])
+    assert out.exit_code == 2 and "mutually exclusive" in out.output
+
+
+def test_run_exits_1_when_a_city_fails(tmp_path, monkeypatch):
+    import tests.test_run as tr
+    from velometer import run as R
+
+    def boom(path):
+        raise RuntimeError("disk on fire")
+
+    deps = tr._deps(tmp_path, [], read=boom)
+    monkeypatch.setattr(R, "RunDeps", lambda: deps)
+    out = CliRunner().invoke(
+        app,
+        ["run", "--cities", "berlin", "--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
+    )
+    assert out.exit_code == 1 and "berlin failed" in out.output
