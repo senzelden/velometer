@@ -7,7 +7,13 @@ from pathlib import Path
 
 import yaml
 
-from velometer.db import RunResults, fetch_external_figures, fetch_run_results, latest_done_run
+from velometer.db import (
+    DEFAULT_PARAMETERS,
+    RunResults,
+    fetch_external_figures,
+    fetch_run_results,
+    latest_done_run,
+)
 from velometer.models import ExternalFigure
 
 _LIKE_FOR_LIKE_SCOPES = ("whole_network", "bikenetkit_bike_network")
@@ -144,9 +150,19 @@ def gaps_for(
     return out
 
 
-def reconcile_city(conn, city_id: str, config_path: Path, boundary_kind: str = "lau") -> list[Gap]:
+def reconcile_city(
+    conn,
+    city_id: str,
+    config_path: Path,
+    boundary_kind: str = "lau",
+    *,
+    classifier_version: str = "v1",
+    classifier_parameters: str = DEFAULT_PARAMETERS,
+) -> list[Gap]:
     cfg = load_config(config_path)
-    run_id = latest_done_run(conn, city_id, boundary_kind)
+    run_id = latest_done_run(
+        conn, city_id, boundary_kind, classifier_version, classifier_parameters
+    )
     if run_id is None:
         return []
     return gaps_for(

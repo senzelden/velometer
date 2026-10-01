@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from velometer.config import CityConfig
+from velometer.config import CityConfig, ClassifierParameters
 from velometer.models import (
     Boundary,
     City,
@@ -20,7 +20,7 @@ from velometer.models import (
     TierLength,
 )
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 _RESULT_TABLES = ("duplicates", "completeness", "metrics", "road_lengths", "tier_lengths", "runs")
 
 
@@ -48,11 +48,13 @@ CREATE TABLE IF NOT EXISTS runs (
   git_commit TEXT NOT NULL, osm_timestamp TEXT NOT NULL, region_md5 TEXT NOT NULL,
   boundary_kind TEXT NOT NULL CHECK (boundary_kind IN ('lau','fua','osm_admin','none')),
   boundary_sha256 TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('running','done','failed')), error TEXT
+  status TEXT NOT NULL CHECK (status IN ('running','done','failed')), error TEXT,
+  population_value INTEGER, population_year INTEGER, population_source TEXT,
+  config_sha256 TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS runs_done_key ON runs (
   city_id, osm_timestamp, boundary_kind, boundary_sha256, classifier_version,
-  classifier_parameters) WHERE status = 'done';
+  classifier_parameters, config_sha256) WHERE status = 'done';
 CREATE TABLE IF NOT EXISTS tier_lengths (
   run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL REFERENCES cities(id),
   tier TEXT NOT NULL CHECK (tier IN ('A','B','C','D','E','excluded')),
@@ -130,7 +132,27 @@ def _migrate_1_to_2(conn: sqlite3.Connection) -> None:
             conn.execute("ALTER TABLE cities ADD COLUMN nuts3_code TEXT")
 
 
-_MIGRATIONS = {1: _migrate_1_to_2}
+# v3 columns of runs: the population a run used, and the sha256 of its classifier + presets YAML.
+_RUNS_V3_COLUMNS = {
+    "population_value": "INTEGER",
+    "population_year": "INTEGER",
+    "population_source": "TEXT",
+    "config_sha256": "TEXT",
+}
+
+
+def _migrate_2_to_3(conn: sqlite3.Connection) -> None:
+    """Additive: existing runs keep NULL population and config_sha256, so no new run reuses them."""
+    if "runs" not in _tables(conn):
+        return
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(runs)")}
+    for name, sql_type in _RUNS_V3_COLUMNS.items():
+        if name not in cols:
+            conn.execute(f"ALTER TABLE runs ADD COLUMN {name} {sql_type}")
+    conn.execute("DROP INDEX IF EXISTS runs_done_key")  # recreated with config_sha256
+
+
+_MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
@@ -155,6 +177,7 @@ class RunKey:
     boundary_sha256: str
     classifier_version: str
     classifier_parameters: str  # canonical JSON: json.dumps(params, sort_keys=True)
+    config_sha256: str  # sha256 of the classifier YAML bytes followed by presets.yaml bytes
 
 
 @dataclass(frozen=True)
@@ -176,11 +199,14 @@ def canonical_parameters(params: dict) -> str:
     return json.dumps(params, sort_keys=True, separators=(",", ":"))
 
 
+DEFAULT_PARAMETERS = canonical_parameters(ClassifierParameters().model_dump())
+
+
 def find_done_run(conn, key: RunKey) -> int | None:
     row = conn.execute(
         "SELECT id FROM runs WHERE status='done' AND city_id=? AND osm_timestamp=? AND "
         "boundary_kind=? AND boundary_sha256=? AND classifier_version=? AND "
-        "classifier_parameters=?",
+        "classifier_parameters=? AND config_sha256=?",
         (
             key.city_id,
             key.osm_timestamp,
@@ -188,17 +214,27 @@ def find_done_run(conn, key: RunKey) -> int | None:
             key.boundary_sha256,
             key.classifier_version,
             key.classifier_parameters,
+            key.config_sha256,
         ),
     ).fetchone()
     return row[0] if row else None
 
 
-def start_run(conn, key: RunKey, *, git_commit: str, region_md5: str) -> int:
+def start_run(
+    conn,
+    key: RunKey,
+    *,
+    git_commit: str,
+    region_md5: str,
+    population: Population | None = None,
+) -> int:
+    """Insert a `running` row; the population used for per-100k is recorded on it."""
     with conn:
         cur = conn.execute(
             "INSERT INTO runs (city_id, started_at, classifier_version, classifier_parameters, "
-            "git_commit, osm_timestamp, region_md5, boundary_kind, boundary_sha256, status) "
-            "VALUES (?,?,?,?,?,?,?,?,?,'running')",
+            "git_commit, osm_timestamp, region_md5, boundary_kind, boundary_sha256, status, "
+            "population_value, population_year, population_source, config_sha256) "
+            "VALUES (?,?,?,?,?,?,?,?,?,'running',?,?,?,?)",
             (
                 key.city_id,
                 _now(),
@@ -209,6 +245,10 @@ def start_run(conn, key: RunKey, *, git_commit: str, region_md5: str) -> int:
                 region_md5,
                 key.boundary_kind,
                 key.boundary_sha256,
+                population.value if population else None,
+                population.year if population else None,
+                population.source if population else None,
+                key.config_sha256,
             ),
         )
     return cur.lastrowid
@@ -313,13 +353,33 @@ def complete_run(
         conn.execute("UPDATE runs SET status='done', finished_at=? WHERE id=?", (_now(), run_id))
 
 
-def latest_done_run(conn: sqlite3.Connection, city_id: str, boundary_kind: str) -> int | None:
+def latest_done_run(
+    conn: sqlite3.Connection,
+    city_id: str,
+    boundary_kind: str,
+    classifier_version: str = "v1",
+    classifier_parameters: str = DEFAULT_PARAMETERS,
+) -> int | None:
+    """Newest done run for this classifier version and parameters (canonical JSON).
+
+    Runs with other parameters (a `both_sides` sensitivity run) or another classifier version
+    never displace it.
+    """
     row = conn.execute(
         "SELECT id FROM runs WHERE status='done' AND city_id=? AND boundary_kind=? "
+        "AND classifier_version=? AND classifier_parameters=? "
         "ORDER BY osm_timestamp DESC, id DESC LIMIT 1",
-        (city_id, boundary_kind),
+        (city_id, boundary_kind, classifier_version, classifier_parameters),
     ).fetchone()
     return row[0] if row else None
+
+
+def fetch_run(conn: sqlite3.Connection, run_id: int) -> dict:
+    """The run row as a dict (provenance: commit, OSM timestamp, boundary sha, population)."""
+    rows = _rows(conn, "SELECT * FROM runs WHERE id=?", (run_id,))
+    if not rows:
+        raise KeyError(f"no run {run_id}")
+    return rows[0]
 
 
 def _rows(conn: sqlite3.Connection, sql: str, args: tuple) -> list[dict]:

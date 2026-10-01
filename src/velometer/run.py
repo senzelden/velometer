@@ -1,11 +1,13 @@
 """Orchestrate one persisted city run: region -> boundary -> snapshot -> measure -> SQLite.
 
-A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters);
+A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters,
+config sha256 of the classifier and presets YAML);
 a done run with the same key is skipped. `force` supersedes the existing done run: it is marked
 `failed` with the error `superseded by run N`, inside the same transaction that completes the new
 run, so a failed forced re-run leaves the old run done.
 """
 
+import hashlib
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -77,7 +79,12 @@ def with_per_100k(metrics: list[Metric], population_value: int | None) -> list[M
     ]
 
 
-def _describe(e: Exception) -> str:
+def config_sha256(classifier_path: Path, presets_path: Path) -> str:
+    """sha256 of the classifier YAML bytes followed by the presets YAML bytes."""
+    return hashlib.sha256(classifier_path.read_bytes() + presets_path.read_bytes()).hexdigest()
+
+
+def _describe(e: BaseException) -> str:
     return f"{type(e).__name__}: {e}"
 
 
@@ -94,10 +101,12 @@ def run_city(
     deps: RunDeps | None = None,
 ) -> RunOutcome:
     deps = deps or RunDeps()
-    cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
+    classifier_path = config_dir / "classifier" / f"{classifier}.yaml"
+    presets_path = config_dir / "presets.yaml"
+    cfg = load_classifier(classifier_path)
     if parameters:
         cfg = cfg.with_parameters(**parameters)
-    presets = load_presets(config_dir / "presets.yaml", cfg)
+    presets = load_presets(presets_path, cfg)
     try:
         region = deps.fetch_region(city.geofabrik_region, data_dir)
         rec, pop = deps.city_boundary(city, boundary_kind, data_dir, region_path=region.path)
@@ -113,11 +122,12 @@ def run_city(
         boundary_sha256=rec.boundary.sha256,
         classifier_version=cfg.version,
         classifier_parameters=canonical_parameters(cfg.parameters.model_dump()),
+        config_sha256=config_sha256(classifier_path, presets_path),
     )
     done = find_done_run(conn, key)
     if done is not None and not force:
         return RunOutcome(city.id, "skipped", done)
-    run_id = start_run(conn, key, git_commit=git_commit(), region_md5=region.md5)
+    run_id = start_run(conn, key, git_commit=git_commit(), region_md5=region.md5, population=pop)
     try:
         snap = deps.snapshot(
             region.path,
@@ -136,4 +146,7 @@ def run_city(
     except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next city runs
         fail_run(conn, run_id, _describe(e))
         return RunOutcome(city.id, "failed", run_id, _describe(e))
+    except BaseException as e:  # Ctrl-C / SystemExit: never leave the row `running`
+        fail_run(conn, run_id, _describe(e))
+        raise
     return RunOutcome(city.id, "done", run_id)

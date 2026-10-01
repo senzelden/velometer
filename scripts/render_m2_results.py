@@ -14,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from velometer.db import (  # noqa: E402
+    DEFAULT_PARAMETERS,
     fetch_boundary,
     fetch_cities,
     fetch_run_results,
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "velometer.sqlite"
 OUT = ROOT / "docs" / "review"
 BOUNDARY = "lau"
+CLASSIFIER = "v1"  # with its default parameters: sensitivity runs never replace the chart
 TIERS = "ABCDE"
 PRESETS = ["ours_headline", "ecf_qecio", "clean_cities_2025"]
 PRESET_LABEL = {
@@ -49,7 +51,7 @@ def load(db: Path) -> list[dict]:
     rows = []
     with open_db(db) as conn:
         for c in fetch_cities(conn):
-            run_id = latest_done_run(conn, c.id, BOUNDARY)
+            run_id = latest_done_run(conn, c.id, BOUNDARY, CLASSIFIER, DEFAULT_PARAMETERS)
             if run_id is None:
                 continue
             r = fetch_run_results(conn, run_id)

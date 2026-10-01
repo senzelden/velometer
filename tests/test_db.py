@@ -4,6 +4,7 @@ import pytest
 
 from velometer.config import default_config_dir, load_cities
 from velometer.db import (
+    DEFAULT_PARAMETERS,
     SCHEMA_VERSION,
     RunKey,
     SchemaError,
@@ -97,7 +98,7 @@ def test_tier_lengths_reject_unknown_basis(tmp_path):
         )
 
 
-KEY = RunKey("berlin", "2026-09-30T20:22:42Z", "lau", "abc", "v1", '{"p":"x"}')
+KEY = RunKey("berlin", "2026-09-30T20:22:42Z", "lau", "abc", "v1", DEFAULT_PARAMETERS, "cfg")
 
 
 def _result():
@@ -305,3 +306,99 @@ def test_fetch_run_results_maps_empty_subtype_to_none(conn):
     assert conn.execute("SELECT subtype FROM tier_lengths WHERE tier='A'").fetchone()[0] == ""
     subtypes = {t.tier: t.subtype for t in fetch_run_results(conn, rid).tier_lengths}
     assert subtypes == {"A": None, "B": "lane"}
+
+
+def _key(**kw) -> RunKey:
+    return RunKey(**{**KEY.__dict__, **kw})
+
+
+def _done(conn, key: RunKey) -> int:
+    rid = start_run(conn, key, git_commit="g", region_md5="m")
+    complete_run(conn, rid, key.city_id, _result(), _metrics())
+    return rid
+
+
+def test_latest_done_run_ignores_other_parameters_and_classifier_versions(conn):
+    default = _done(conn, KEY)
+    both = '{"plain_cycleway_on_oneway":"both_sides"}'
+    sensitivity = _done(conn, _key(classifier_parameters=both))
+    other_version = _done(conn, _key(classifier_version="v2"))
+    assert default < sensitivity < other_version
+    assert latest_done_run(conn, "berlin", "lau") == default
+    assert latest_done_run(conn, "berlin", "lau", "v1", both) == sensitivity
+    assert latest_done_run(conn, "berlin", "lau", "v2") == other_version
+
+
+def test_default_parameters_are_the_classifier_defaults_in_canonical_form():
+    from velometer.config import load_classifier
+    from velometer.db import canonical_parameters
+
+    cfg = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
+    assert canonical_parameters(cfg.parameters.model_dump()) == DEFAULT_PARAMETERS
+
+
+def test_config_sha_is_part_of_the_run_key(conn):
+    rid = _done(conn, KEY)
+    assert find_done_run(conn, KEY) == rid
+    assert find_done_run(conn, _key(config_sha256="other")) is None
+    assert _done(conn, _key(config_sha256="other")) != rid  # coexists: unique index includes it
+
+
+def test_start_run_records_the_population_it_used(conn):
+    pop = Population(value=3782202, year=2024, source="GISCO LAU 2024 POP_2024")
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m", population=pop)
+    row = conn.execute(
+        "SELECT population_value, population_year, population_source, config_sha256 "
+        "FROM runs WHERE id=?",
+        (rid,),
+    ).fetchone()
+    assert row == (3782202, 2024, "GISCO LAU 2024 POP_2024", "cfg")
+    # a later boundaries fetch overwrites cities.population, never the run row
+    set_population(conn, "berlin", Population(value=1, year=2025, source="x"))
+    assert conn.execute("SELECT population_value FROM runs WHERE id=?", (rid,)).fetchone()[0] == (
+        3782202
+    )
+
+
+_V2_RUNS = (
+    "CREATE TABLE runs (id INTEGER PRIMARY KEY, city_id TEXT NOT NULL REFERENCES cities(id), "
+    "started_at TEXT NOT NULL, finished_at TEXT, classifier_version TEXT NOT NULL, "
+    "classifier_parameters TEXT NOT NULL, git_commit TEXT NOT NULL, osm_timestamp TEXT NOT NULL, "
+    "region_md5 TEXT NOT NULL, boundary_kind TEXT NOT NULL CHECK (boundary_kind IN "
+    "('lau','fua','osm_admin','none')), boundary_sha256 TEXT NOT NULL, status TEXT NOT NULL "
+    "CHECK (status IN ('running','done','failed')), error TEXT);"
+    "CREATE UNIQUE INDEX runs_done_key ON runs (city_id, osm_timestamp, boundary_kind, "
+    "boundary_sha256, classifier_version, classifier_parameters) WHERE status = 'done';"
+)
+
+
+def test_v2_db_with_done_runs_migrates_additively_and_old_runs_are_not_reused(tmp_path, cities):
+    path = tmp_path / "v.sqlite"
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, cities)
+        c.execute("DROP TABLE duplicates")
+        c.execute("DROP TABLE completeness")
+        c.execute("DROP TABLE metrics")
+        c.execute("DROP TABLE road_lengths")
+        c.execute("DROP TABLE tier_lengths")
+        c.execute("DROP TABLE runs")
+        c.executescript(_V2_RUNS)
+        c.execute(
+            "INSERT INTO runs (id, city_id, started_at, classifier_version, classifier_parameters,"
+            " git_commit, osm_timestamp, region_md5, boundary_kind, boundary_sha256, status) "
+            "VALUES (1, 'berlin', 't', ?, ?, 'g', ?, 'm', 'lau', 'abc', 'done')",
+            (KEY.classifier_version, KEY.classifier_parameters, KEY.osm_timestamp),
+        )
+        c.execute("PRAGMA user_version = 2")
+        c.commit()
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+        assert c.execute("SELECT id, status, config_sha256 FROM runs").fetchall() == [
+            (1, "done", None)
+        ]
+        assert find_done_run(c, KEY) is None  # NULL config sha never matches
+        new = _done(c, KEY)  # same key otherwise: the rebuilt unique index lets it complete
+        assert latest_done_run(c, "berlin", "lau") == new
+        assert c.execute("SELECT status FROM runs WHERE id=1").fetchone()[0] == "done"

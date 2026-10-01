@@ -219,3 +219,73 @@ def test_git_commit_marks_dirty_tree(monkeypatch):
     outputs = {("rev-parse", "HEAD"): "abc123\n", ("status", "--porcelain"): " M x\n"}
     monkeypatch.setattr(R, "_git", lambda *a: outputs[a])
     assert R.git_commit() == "abc123-dirty"
+
+
+def test_both_sides_run_does_not_displace_the_default_run(conn, tmp_path):
+    from velometer.db import latest_done_run
+    from velometer.reconcile import reconcile_city
+
+    default = _run(conn, tmp_path, _deps(tmp_path, []))
+    both = _run(
+        conn,
+        tmp_path,
+        _deps(tmp_path, []),
+        parameters={"plain_cycleway_on_oneway": "both_sides"},
+    )
+    assert both.status == "done" and both.run_id > default.run_id
+    assert latest_done_run(conn, "berlin", "lau") == default.run_id
+    conn.execute(
+        "INSERT INTO external_figures (city_id, source, metric_name, value, unit, reference_date,"
+        " network_scope, length_basis, source_url, retrieved_at) VALUES ('berlin',"
+        " 'clean_cities_2025', 'protected_km', 1, 'km', NULL, 'whole_network', 'unknown', 'u',"
+        " '2026-10-01')"
+    )
+    (gap,) = reconcile_city(conn, "berlin", CFG_DIR / "reconcile.yaml")
+    a_b = conn.execute(
+        "SELECT SUM(length_km) FROM tier_lengths WHERE run_id=? AND tier IN ('A','B') "
+        "AND length_basis='per_side'",
+        (default.run_id,),
+    ).fetchone()[0]
+    assert gap.ours == pytest.approx(a_b)
+
+
+def _config_copy(tmp_path) -> Path:
+    import shutil
+
+    dst = tmp_path / "config"
+    shutil.copytree(CFG_DIR, dst)
+    return dst
+
+
+def test_changed_presets_yaml_does_not_reuse_the_done_run(conn, tmp_path):
+    cfg = _config_copy(tmp_path)
+    first = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=cfg, deps=_deps(tmp_path, []))
+    same = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=cfg, deps=_deps(tmp_path, []))
+    assert same.status == "skipped" and same.run_id == first.run_id
+    presets = cfg / "presets.yaml"
+    presets.write_text(
+        presets.read_text().replace("denominator: all_public", "denominator: main_excl_motorway")
+    )
+    again = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=cfg, deps=_deps(tmp_path, []))
+    assert again.status == "done" and again.run_id != first.run_id
+
+
+def test_run_row_records_population_and_config_sha(conn, tmp_path):
+    out = _run(conn, tmp_path, _deps(tmp_path, [], population=123_456))
+    row = conn.execute(
+        "SELECT population_value, population_year, population_source, config_sha256 FROM runs "
+        "WHERE id=?",
+        (out.run_id,),
+    ).fetchone()
+    expected_sha = R.config_sha256(CFG_DIR / "classifier" / "v1.yaml", CFG_DIR / "presets.yaml")
+    assert row == (123_456, 2024, "t", expected_sha)
+
+
+def test_interrupted_run_is_marked_failed_not_left_running(conn, tmp_path):
+    def interrupted(path):
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        _run(conn, tmp_path, _deps(tmp_path, [], read=interrupted))
+    rows = conn.execute("SELECT status, error FROM runs").fetchall()
+    assert rows == [("failed", "KeyboardInterrupt: ")]

@@ -84,6 +84,18 @@ def _select_cities(config_dir: Path, wanted: list[str] | None) -> list[CityConfi
     return [by_id[w] for w in wanted]
 
 
+def _run_selector(config_dir: Path, classifier: str) -> tuple[str, str]:
+    """(version, canonical default parameters) of a classifier: which done runs to report."""
+    from velometer.config import load_classifier
+    from velometer.db import canonical_parameters
+
+    try:
+        cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    return cfg.version, canonical_parameters(cfg.parameters.model_dump())
+
+
 def _run_cities(
     selected: list[CityConfig],
     *,
@@ -375,13 +387,22 @@ RESULT_COLUMNS = (
 )
 
 
+CLASSIFIER_REPORT_OPT = typer.Option(
+    "v1", "--classifier", help="Report runs of this classifier with its default parameters."
+)
+
+
 @app.command()
 def results(
     boundary: str = typer.Option("lau", help="Boundary kind."),
+    classifier: str = CLASSIFIER_REPORT_OPT,
+    config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
 ) -> None:
     """One row per city: the latest done run's headline metrics and per-side tier km."""
     from velometer.db import fetch_cities, fetch_run_results, latest_done_run
+
+    version, params = _run_selector(config_dir, classifier)
 
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
@@ -390,7 +411,7 @@ def results(
     with open_db(db) as conn:
         create_schema(conn)
         for c in fetch_cities(conn):
-            run_id = latest_done_run(conn, c.id, boundary)
+            run_id = latest_done_run(conn, c.id, boundary, version, params)
             if run_id is None:
                 continue
             r = fetch_run_results(conn, run_id)
@@ -432,6 +453,7 @@ def reconcile(
         None, "--city", help="City id (repeatable); default all."
     ),
     boundary: str = typer.Option("lau", help="Boundary kind."),
+    classifier: str = CLASSIFIER_REPORT_OPT,
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
     check: bool = typer.Option(False, "--check", help="Exit 1 if a flagged gap lacks an entry."),
     report: Path = typer.Option(  # noqa: B008
@@ -444,18 +466,24 @@ def reconcile(
     from velometer import reconcile as rc
 
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
+    version, params = _run_selector(config_dir, classifier)
     all_by_city: dict[str, list] = {}
     skipped: list[str] = []
     with open_db(db) as conn:
         create_schema(conn)
         for c in _all_cities(config_dir):
-            if latest_done_run(conn, c.id, boundary) is None:
+            if latest_done_run(conn, c.id, boundary, version, params) is None:
                 if c.id in wanted:
                     skipped.append(c.id)
                     typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
                 continue
             all_by_city[c.id] = rc.reconcile_city(
-                conn, c.id, config_dir / "reconcile.yaml", boundary
+                conn,
+                c.id,
+                config_dir / "reconcile.yaml",
+                boundary,
+                classifier_version=version,
+                classifier_parameters=params,
             )
     shown = {k: v for k, v in all_by_city.items() if k in wanted}
     typer.echo(rc.render_block(shown))
