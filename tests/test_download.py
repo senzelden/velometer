@@ -224,3 +224,14 @@ def test_html_md5_body_is_retried_then_rejected(tmp_path, monkeypatch):
 
     with pytest.raises(DownloadError, match="not an md5 file"):
         geofabrik.fetch_region("r", tmp_path, client=_client(always_html), backoff_s=0)
+
+
+def test_fetch_sends_given_headers(tmp_path):
+    seen = {}
+
+    def handler(r):
+        seen["cookie"] = r.headers.get("cookie")
+        return httpx.Response(200, content=BODY)
+
+    fetch("https://h/f.pbf", tmp_path / "f.pbf", client=_client(handler), headers={"Cookie": "k=v"})
+    assert seen["cookie"] == "k=v"

@@ -1,0 +1,199 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "world",
+    "name": "world",
+    "urls": {
+     "pbf": "https://download.geofabrik.de/world-latest.osm.pbf",
+     "history": "https://osm-internal.download.geofabrik.de/world-internal.osh.pbf"
+    }
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       0,
+       2
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "a",
+    "name": "a",
+    "urls": {
+     "pbf": "https://download.geofabrik.de/a-latest.osm.pbf",
+     "history": "https://osm-internal.download.geofabrik.de/a-internal.osh.pbf"
+    },
+    "parent": "world"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "b",
+    "name": "b",
+    "urls": {
+     "pbf": "https://download.geofabrik.de/b-latest.osm.pbf",
+     "history": "https://osm-internal.download.geofabrik.de/b-internal.osh.pbf"
+    },
+    "parent": "world"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1,
+       0
+      ],
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "c",
+    "name": "c",
+    "urls": {
+     "pbf": "https://download.geofabrik.de/c-latest.osm.pbf",
+     "history": "https://osm-internal.download.geofabrik.de/c-internal.osh.pbf"
+    },
+    "parent": "world"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       0,
+       2
+      ],
+      [
+       0,
+       1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "d",
+    "name": "d",
+    "urls": {
+     "pbf": "https://download.geofabrik.de/d-latest.osm.pbf",
+     "history": "https://osm-internal.download.geofabrik.de/d-internal.osh.pbf"
+    },
+    "parent": "world"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

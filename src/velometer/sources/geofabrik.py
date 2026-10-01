@@ -1,19 +1,30 @@
 """Geofabrik public extracts: resolve the dated file behind -latest, fetch it, read its time."""
 
+import functools
+import hashlib
+import json
 import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path, PurePosixPath
+from typing import Literal
 from urllib.parse import urljoin, urlparse
 
 import httpx
+import shapely
+from pyproj import Transformer
+from shapely.geometry import shape
+from shapely.geometry.base import BaseGeometry
+from shapely.ops import transform, unary_union
 
 from velometer.osmium import fileinfo_timestamp
-from velometer.sources.download import DownloadError, fetch, is_transient, new_client
+from velometer.sources.download import DownloadError, fetch, is_transient, md5_of, new_client
+from velometer.sources.geofabrik_auth import Cookie, load_or_login, new_auth_client
 
 BASE = "https://download.geofabrik.de"
+INDEX_URL = "https://download.geofabrik.de/index-v1.json"
 
 
 @dataclass(frozen=True)
@@ -97,3 +108,137 @@ def fetch_region(
     if ts is None:
         raise RuntimeError(f"{dst}: no osmosis_replication_timestamp in the PBF header")
     return RegionFile(region, dst, url, md5, ts)
+
+
+def fetch_index(
+    data_dir: Path, *, client: httpx.Client | None = None, today: date | None = None
+) -> Path:
+    """Snapshot Geofabrik's public region index under a dated name; an existing snapshot is kept."""
+    today = today or date.today()
+    dst = data_dir / "external" / "geofabrik" / f"index-v1-{today:%Y%m%d}.json"
+    return fetch(INDEX_URL, dst, client=client)
+
+
+def load_index(path: Path) -> dict[str, dict]:
+    """Map region id to {"geometry": WGS84 geom, "parent": id or None, "history": url or None}."""
+    out: dict[str, dict] = {}
+    for f in json.loads(path.read_text())["features"]:
+        p = f["properties"]
+        out[p["id"]] = {
+            "geometry": shape(f["geometry"]),
+            "parent": p.get("parent"),
+            "history": (p.get("urls") or {}).get("history"),
+        }
+    return out
+
+
+def _project(geom: BaseGeometry, src: int, dst: int) -> BaseGeometry:
+    tf = Transformer.from_crs(src, dst, always_xy=True)
+    return transform(tf.transform, geom)
+
+
+def regions_for(polygon_wgs84: BaseGeometry, index: dict[str, dict], *, buffer_m: float = 1000):
+    """Ids of the fewest-ish leaf regions with history that cover polygon buffered by buffer_m.
+
+    Leaves are regions no other region names as parent. Candidates intersecting the buffered
+    polygon are dropped greedily, smallest intersection first, while the rest still cover it.
+    Raises ValueError when the leaves cannot cover the buffered polygon at all.
+    """
+    target = _project(_project(polygon_wgs84, 4326, 3035).buffer(buffer_m), 3035, 4326)
+    target = shapely.make_valid(target) if not target.is_valid else target
+    parents = {v["parent"] for v in index.values()}
+    chosen = [
+        r
+        for r, v in index.items()
+        if r not in parents and v["history"] and v["geometry"].intersects(target)
+    ]
+    if not chosen or not unary_union([index[r]["geometry"] for r in chosen]).contains(target):
+        raise ValueError(f"the index leaf regions with history do not cover the polygon: {chosen}")
+    chosen.sort(key=lambda r: index[r]["geometry"].intersection(target).area)
+    for r in list(chosen):
+        rest = [index[o]["geometry"] for o in chosen if o != r]
+        if rest and unary_union(rest).contains(target):
+            chosen.remove(r)
+    return sorted(chosen)
+
+
+@dataclass(frozen=True)
+class HistoryFile:
+    region: str
+    path: Path
+    md5: str
+    md5_source: Literal["published", "computed"]
+    fetched_at: date
+
+
+def history_set_md5(files: list[HistoryFile]) -> str:
+    return hashlib.md5("\n".join(sorted(f"{f.region}:{f.md5}" for f in files)).encode()).hexdigest()
+
+
+def _auth_refused(e: DownloadError) -> bool:
+    cause = e.__cause__
+    return isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code in (401, 403)
+
+
+def _published_md5(url: str, client: httpx.Client, headers: dict[str, str]) -> str | None:
+    def get() -> str | None:
+        resp = client.get(url + ".md5", headers=headers)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        words = resp.text.split()
+        return words[0] if words and re.fullmatch(r"[0-9a-f]{32}", words[0]) else None
+
+    return _with_retries(url + ".md5", get, 3, 5.0)
+
+
+def fetch_history(
+    region: str,
+    data_dir: Path,
+    index: dict[str, dict],
+    *,
+    client: httpx.Client | None = None,
+    cookie_loader: Callable[..., Cookie] | None = None,
+    today: date | None = None,
+) -> HistoryFile:
+    """Download a region's full-history PBF from Geofabrik's login-only server.
+
+    cookie_loader(force=False) yields the auth cookie; a 401/403 asks it once for a fresh one
+    (force=True) and retries once. The file is renamed to carry the first 8 hex of its md5.
+    """
+    today = today or date.today()
+    url = index[region]["history"]
+    slug = region.replace("/", "-")
+    own_client = client is None
+    client = client or new_client()
+    auth_client = None
+    if cookie_loader is None:
+        auth_client = new_auth_client()
+        cookie_loader = functools.partial(load_or_login, data_dir, client=auth_client)
+    hist = data_dir / "history"
+    try:
+        cookie = cookie_loader(False)
+        for relogin_left in (True, False):
+            headers = {"Cookie": cookie.header()}
+            try:
+                published = _published_md5(url, client, headers)
+                if published:
+                    known = hist / f"{slug}_{today:%Y%m%d}_{published[:8]}.osh.pbf"
+                    if known.exists() and md5_of(known) == published:
+                        return HistoryFile(region, known, published, "published", today)
+                interim = hist / f"{slug}_{today:%Y%m%d}.osh.pbf"
+                fetch(url, interim, md5=published, client=client, headers=headers)
+                break
+            except DownloadError as e:
+                if not (relogin_left and _auth_refused(e)):
+                    raise
+                cookie = cookie_loader(True)
+    finally:
+        if own_client:
+            client.close()
+        if auth_client is not None:
+            auth_client.close()
+    md5 = published or md5_of(interim)
+    final = interim.with_name(f"{slug}_{today:%Y%m%d}_{md5[:8]}.osh.pbf")
+    interim.replace(final)
+    return HistoryFile(region, final, md5, "published" if published else "computed", today)
