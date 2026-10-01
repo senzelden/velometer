@@ -217,3 +217,49 @@ def test_external_load_offline_prints_rows_per_source(tmp_path):
     )
     assert r.exit_code == 0, r.output
     assert "clean_cities_2025 18 rows" in r.output and "changing_cities 1 rows" in r.output
+
+
+def test_reconcile_skips_cities_without_run(tmp_path):
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db)]).exit_code == 0
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    out = runner.invoke(
+        app,
+        ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report), "--write"],
+    )
+    assert out.exit_code == 0, out.output
+    assert "no done" in out.output and "skipped" in out.output
+
+
+def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatch):
+
+    from velometer import run as R
+
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db)]).exit_code == 0
+    import tests.test_run as tr
+
+    deps = tr._deps(tmp_path, [])
+    monkeypatch.setattr(R, "RunDeps", lambda: deps)
+    args = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    assert runner.invoke(app, args).exit_code == 0
+    with connect(db) as conn:
+        conn.execute(
+            "INSERT INTO external_figures (city_id, source, metric_name, value, unit, "
+            "reference_date, network_scope, length_basis, source_url, retrieved_at) "
+            "VALUES ('berlin','clean_cities_2025','network_km',1e9,'km','2026-09-30',"
+            "'whole_network','unknown','u','2026-10-01')"
+        )
+        conn.commit()
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n\n## Explanations\n")
+    rargs = ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report)]
+    bad = runner.invoke(app, [*rargs, "--write", "--check"])
+    assert bad.exit_code == 1
+    assert "berlin/cc_network_km" in bad.output
+    with report.open("a") as f:
+        f.write("\n### berlin/cc_network_km\n\nBecause.\n")
+    assert runner.invoke(app, [*rargs, "--check"]).exit_code == 0

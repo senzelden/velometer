@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from velometer.config import CityConfig, ConfigError, default_config_dir, load_cities
-from velometer.db import SchemaError, create_schema, open_db, upsert_cities
+from velometer.db import SchemaError, create_schema, latest_done_run, open_db, upsert_cities
 
 
 class PlainOneway(StrEnum):
@@ -424,3 +424,41 @@ def results(
     typer.echo("  ".join(h.ljust(w) for h, w in zip(RESULT_COLUMNS, widths, strict=True)).rstrip())
     for r in rows:
         typer.echo("  ".join(v.ljust(w) for v, w in zip(r, widths, strict=True)).rstrip())
+
+
+@app.command()
+def reconcile(
+    city: list[str] = typer.Option(  # noqa: B008
+        None, "--city", help="City id (repeatable); default all."
+    ),
+    boundary: str = typer.Option("lau", help="Boundary kind."),
+    write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
+    check: bool = typer.Option(False, "--check", help="Exit 1 if a flagged gap lacks an entry."),
+    report: Path = typer.Option(  # noqa: B008
+        Path("docs/reconciliation.md"), "--report", help="Report file."
+    ),
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Compare our latest run per city with external figures (config/reconcile.yaml)."""
+    from velometer import reconcile as rc
+
+    gaps_by_city: dict[str, list] = {}
+    with open_db(db) as conn:
+        create_schema(conn)
+        for c in _select_cities(config_dir, city or None):
+            gaps = rc.reconcile_city(conn, c.id, config_dir / "reconcile.yaml", boundary)
+            if not gaps and latest_done_run(conn, c.id, boundary) is None:
+                typer.echo(f"note: {c.id} has no done {boundary!r} run, skipped")
+                continue
+            gaps_by_city[c.id] = gaps
+    typer.echo(rc.render_block(gaps_by_city))
+    if write:
+        rc.write_report(report, gaps_by_city)
+    if check:
+        all_gaps = [g for gs in gaps_by_city.values() for g in gs]
+        missing = rc.missing_explanations(report, all_gaps)
+        for key in missing:
+            typer.echo(f"missing explanation: ### {key}", err=True)
+        if missing:
+            raise typer.Exit(1)

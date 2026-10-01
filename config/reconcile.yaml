@@ -1,0 +1,39 @@
+# Comparison map (spec §3). ours: either {preset} (metric value), {road_class} (km),
+# or {tiers, basis, exclude?} (sum of tier km). Gap = (ours - theirs) / theirs.
+threshold: 0.20
+date_gap_days: 365
+comparisons:
+  - id: cc_ratio
+    external: {source: clean_cities_2025, metric_name: protected_share_pct}
+    ours: {preset: clean_cities_2025}
+  - id: cc_km
+    external: {source: clean_cities_2025, metric_name: protected_km}
+    ours: {tiers: [A, B], basis: per_side}
+  - id: cc_network_km
+    external: {source: clean_cities_2025, metric_name: network_km}
+    ours: {road_class: all_public}
+  - id: qecio_main_km
+    external: {source: qecio_v2_10, metric_name: main_roads_km}
+    ours: {road_class: main_incl_motorway_raw}
+  - id: qecio_tracks_km
+    external: {source: qecio_v2_10, metric_name: cycle_tracks_km}
+    ours: {tiers: [A, B/segregated], basis: qecio_weighted}
+  - id: qecio_lanes_km
+    external: {source: qecio_v2_10, metric_name: cycle_lanes_km}
+    ours: {tiers: [C, D], basis: qecio_weighted}
+  - id: qecio_shared_km
+    external: {source: qecio_v2_10, metric_name: shared_pedestrians_km}
+    ours: {tiers: [B], exclude: [B/segregated], basis: qecio_weighted}
+  - id: qecio_total_km
+    external: {source: qecio_v2_10, metric_name: total_cycle_infra_km}
+    ours: {tiers: [A, B, C, D], basis: qecio_weighted}
+    tags: [definition_mismatch]   # QECIO total also counts limited-access roads
+  - id: bnk_network_km
+    external: {source: bikenetkit_v1, metric_name: bike_network_km}
+    ours: {tiers: [A, B, E], basis: per_side}
+    tags: [definition_mismatch, boundary_mismatch]
+  - id: official_new_km
+    external: {source: [official, changing_cities], metric_name: new_cycle_infra_km}
+    informational: true   # new km in a year, not stock: listed, never flagged
+boundary_mismatch:
+  qecio_v2_10: [copenhagen]   # DK011 Byen København != Københavns Kommune
