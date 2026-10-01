@@ -79,6 +79,7 @@ class MeasureResult:
     unknown_values: dict[str, int]
     plain_oneway: PlainOnewayReport
     completeness: list[Completeness] = field(default_factory=list)
+    way_lengths: dict[int, float] = field(default_factory=dict)  # clipped km per way id
 
 
 def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:
@@ -200,6 +201,7 @@ def measure(
         unknown_values=dict(unknown),
         plain_oneway=_plain_oneway_report(ways, classified, cfg, lengths),
         completeness=_completeness(classified, lengths),
+        way_lengths=lengths,
     )
 
 
