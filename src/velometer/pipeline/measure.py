@@ -5,11 +5,27 @@ from dataclasses import dataclass
 
 from velometer.config import ClassifierConfig, Preset
 from velometer.models import Metric, RoadLength, TierLength
-from velometer.pipeline.classify import classify_ways
+from velometer.pipeline.classify import classify, classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
+from velometer.pipeline.explode import explode
 from velometer.pipeline.geometry import Projector, length_km
 from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, DualPair, DuplicateFlag, WayRecord
+
+
+@dataclass(frozen=True)
+class PlainOnewayReport:
+    """Transparency for the `plain_cycleway_on_oneway` parameter.
+
+    `delta_per_side_km`: per tier, the per_side km that switching to the other mode would add
+    (positive) or remove (negative). Excluded sides are not listed.
+    """
+
+    mode: str
+    other_mode: str
+    n_ways: int
+    length_km: float
+    delta_per_side_km: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -20,6 +36,7 @@ class MeasureResult:
     dual_pairs: list[DualPair]
     classified: list[Classified]
     unknown_values: dict[str, int]
+    plain_oneway: PlainOnewayReport
 
 
 def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:
@@ -41,6 +58,35 @@ def _public_roads(ways: list[WayRecord], cfg: ClassifierConfig) -> list[WayRecor
         and not _closed_to_public(w.tags, bicycle_allowed)
         and "yes" not in parts(w.tags.get("area"))
     ]
+
+
+def _plain_oneway_report(
+    ways: list[WayRecord],
+    classified: list[Classified],
+    cfg: ClassifierConfig,
+    lengths: dict[int, float],
+) -> PlainOnewayReport:
+    mode = cfg.parameters.plain_cycleway_on_oneway
+    other = "both_sides" if mode == "traffic_side" else "traffic_side"
+    current: dict[int, Counter[tuple[str, str | None]]] = defaultdict(Counter)
+    for c in classified:
+        current[c.side.way_id][(c.side.side, c.tier)] += 1
+    n, road_km = 0, 0.0
+    delta: dict[str, float] = defaultdict(float)
+    for w in ways:
+        if "cycleway" not in w.tags or w.tags.get("highway") not in cfg.road_classes.carriageway:
+            continue
+        alt = Counter((s.side, classify(s, cfg).tier) for s in explode(w, cfg.road_classes, other))
+        if alt == current[w.id]:
+            continue
+        n += 1
+        road_km += lengths[w.id]
+        diff = Counter(alt)
+        diff.subtract(current[w.id])
+        for (_, tier), count in diff.items():
+            if tier is not None and tier != "excluded" and count:
+                delta[tier] += count * lengths[w.id]
+    return PlainOnewayReport(mode, other, n, road_km, {t: v for t, v in sorted(delta.items()) if v})
 
 
 def measure(ways: list[WayRecord], cfg: ClassifierConfig, epsg: int) -> MeasureResult:
@@ -93,6 +139,7 @@ def measure(ways: list[WayRecord], cfg: ClassifierConfig, epsg: int) -> MeasureR
         dual_pairs=pairs,
         classified=classified,
         unknown_values=dict(unknown),
+        plain_oneway=_plain_oneway_report(ways, classified, cfg, lengths),
     )
 
 

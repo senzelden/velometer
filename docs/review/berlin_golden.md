@@ -2,6 +2,8 @@
 
 Source: Overpass API, fetched 2026-10-01T13:55:17Z; © OpenStreetMap contributors, ODbL 1.0. Classifier: v1.
 
+Classifier parameters used for the proposals: `plain_cycleway_on_oneway=traffic_side`. Plain `cycleway=*` on a oneway road is tunable (`plain_cycleway_on_oneway`, ADR 0002): if you disagree with a proposal only because of that reading, note it rather than editing the tier.
+
 Tier definitions: [ADR 0002 tier table](../adr/0002-tiered-classifier-from-qecio.md#tiers); which tiers each headline sums: [`config/presets.yaml`](../../config/presets.yaml). Each proposed entry reads `side:tier/subtype (rule, bidirectional|oneway)`; `bidirectional` drives the `qecio_weighted` length (oneway counts half). Map: `berlin_golden.png` (red = excluded, dotted grey = no classifier output).
 
 **How to sign off:** compare each way's proposal with its tags and the OSM link. If it is right, set `confirmed: true` for that way in `tests/fixtures/berlin_golden.yaml`. If it is wrong, edit that way's `proposed` list to the correct `side`/`tier`/`rule` and then set `confirmed: true`; the test then fails until the classifier agrees. Unconfirmed ways are skipped and counted.

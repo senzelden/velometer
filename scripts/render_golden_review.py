@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import yaml  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 
+from velometer.config import default_config_dir, load_classifier  # noqa: E402
 from velometer.pipeline.geometry import Projector  # noqa: E402
 from velometer.pipeline.read import read_ways  # noqa: E402
 
@@ -63,11 +64,22 @@ def key_tags(tags: dict[str, str]) -> str:
     return "<br>".join(f"`{k}={v}`" for k, v in items)
 
 
+def _parameters(golden: dict) -> str:
+    path = default_config_dir() / "classifier" / f"{golden['classifier_version']}.yaml"
+    params = load_classifier(path).parameters.model_dump()
+    return ", ".join(f"`{k}={v}`" for k, v in params.items())
+
+
 def write_markdown(golden: dict, tags_by_id: dict[int, dict[str, str]]) -> None:
     lines = [
         "# Berlin golden set: review sheet",
         "",
         f"Source: {golden['source']}. Classifier: {golden['classifier_version']}.",
+        "",
+        f"Classifier parameters used for the proposals: {_parameters(golden)}. "
+        "Plain `cycleway=*` on a oneway road is tunable (`plain_cycleway_on_oneway`, ADR 0002): "
+        "if you disagree with a proposal only because of that reading, note it rather than "
+        "editing the tier.",
         "",
         "Tier definitions: [ADR 0002 tier table](../adr/0002-tiered-classifier-from-qecio.md#tiers)"
         "; which tiers each headline sums: [`config/presets.yaml`](../../config/presets.yaml). "

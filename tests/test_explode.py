@@ -198,3 +198,24 @@ def test_both_level_opposite_track_applies_to_both_sides_with_contraflow():
 def test_separate_sidewalk_detected_by_any_part(key):
     out = sides({"highway": "primary", key: "no;separate", "sidewalk:right:bicycle": "designated"})
     assert out == {}
+
+
+ONEWAY_PLAIN = {"highway": "tertiary", "oneway": "yes", "cycleway": "track"}
+
+
+@pytest.mark.parametrize(
+    ("mode", "want"), [("traffic_side", {"right"}), ("both_sides", {"left", "right"})]
+)
+def test_plain_cycleway_on_oneway_mode_is_a_parameter(mode, want):
+    out = explode(WayRecord(1, ONEWAY_PLAIN, LINE), RC, plain_cycleway_on_oneway=mode)
+    assert {s.side for s in out} == want
+
+
+def test_plain_cycleway_mode_leaves_side_tags_and_two_way_roads_alone():
+    for tags in (
+        {"highway": "tertiary", "oneway": "yes", "cycleway:right": "track"},
+        {"highway": "tertiary", "cycleway": "track"},
+    ):
+        a = {s.side for s in explode(WayRecord(1, tags, LINE), RC)}
+        b = {s.side for s in explode(WayRecord(1, tags, LINE), RC, "both_sides")}
+        assert a == b

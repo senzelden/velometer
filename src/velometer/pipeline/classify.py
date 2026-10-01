@@ -44,4 +44,5 @@ def classify(side: WaySide, cfg: ClassifierConfig) -> Classified:
 
 
 def classify_ways(ways: Iterable[WayRecord], cfg: ClassifierConfig) -> list[Classified]:
-    return [classify(s, cfg) for w in ways for s in explode(w, cfg.road_classes)]
+    mode = cfg.parameters.plain_cycleway_on_oneway
+    return [classify(s, cfg) for w in ways for s in explode(w, cfg.road_classes, mode)]

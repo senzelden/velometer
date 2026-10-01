@@ -25,7 +25,7 @@ CYCLE_STREET_KEYS = ("bicycle_road", "cyclestreet", "cycle_street")
 
 
 def plain_cycleway_sides(tags: Mapping[str, str]) -> frozenset[str]:
-    """Sides a plain `cycleway=<v>` applies to (Ruling R18, provisional; right-hand traffic).
+    """Sides a plain `cycleway=<v>` applies to in `traffic_side` mode (right-hand traffic).
 
     `oneway=yes|1|true` -> right only; `oneway=-1` -> left only (traffic's right);
     `junction=roundabout` with no oneway tag -> right only; otherwise (incl. `oneway=no`) both.
@@ -40,7 +40,7 @@ def plain_cycleway_sides(tags: Mapping[str, str]) -> frozenset[str]:
     return frozenset({"left", "right"})
 
 
-def _side_value(tags: Mapping[str, str], side: str) -> str | None:
+def _side_value(tags: Mapping[str, str], side: str, plain_oneway: str) -> str | None:
     for key in (f"cycleway:{side}", "cycleway:both"):
         if key in tags:
             return tags[key]
@@ -49,6 +49,8 @@ def _side_value(tags: Mapping[str, str], side: str) -> str | None:
         return None
     if plain.startswith("opposite"):
         return plain if side == "left" else None
+    if plain_oneway == "both_sides":
+        return plain
     return plain if side in plain_cycleway_sides(tags) else None
 
 
@@ -79,8 +81,10 @@ def _sidewalk_is_separate(tags: Mapping[str, str], side: str) -> bool:
     return any("separate" in parts(tags.get(k)) for k in keys)
 
 
-def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], bool] | None:
-    value = _side_value(tags, side)
+def _resolve_side(
+    tags: Mapping[str, str], side: str, plain_oneway: str
+) -> tuple[dict[str, str], bool] | None:
+    value = _side_value(tags, side, plain_oneway)
     contraflow = False
     if value == "opposite":
         value = None
@@ -102,7 +106,10 @@ def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], b
     return (out, contraflow) if out else None
 
 
-def explode(way: WayRecord, road_classes: RoadClasses) -> list[WaySide]:
+def explode(
+    way: WayRecord, road_classes: RoadClasses, plain_cycleway_on_oneway: str = "traffic_side"
+) -> list[WaySide]:
+    """`plain_cycleway_on_oneway`: classifier parameter (ADR 0002); see plain_cycleway_sides."""
     highway = way.tags.get("highway")
     if highway is None:
         return []
@@ -113,7 +120,7 @@ def explode(way: WayRecord, road_classes: RoadClasses) -> list[WaySide]:
         result.append(WaySide(way.id, "self", "standalone", dict(way.tags), way.coords))
     carried = {f"road:{k}": way.tags[k] for k in ROAD_CARRY if k in way.tags}
     for side in ("left", "right"):
-        resolved = _resolve_side(way.tags, side)
+        resolved = _resolve_side(way.tags, side, plain_cycleway_on_oneway)
         if resolved is None:
             continue
         tags, contraflow = resolved

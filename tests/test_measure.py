@@ -156,3 +156,30 @@ def test_n_ways_counts_distinct_ways_not_sides(mixed):
     assert t.n_ways == 1
     (x,) = [t for t in mixed.tier_lengths if (t.tier, t.length_basis) == ("excluded", "per_side")]
     assert x.n_ways == 1
+
+
+def _oneway_track_road():
+    # ~1 km tertiary oneway road with a plain cycleway=track
+    tags = {"highway": "tertiary", "oneway": "yes", "cycleway": "track"}
+    return WayRecord(1, tags, ((13.4, 52.5), (13.4147, 52.5)))
+
+
+@pytest.mark.parametrize(
+    ("mode", "sides", "delta_sign"), [("traffic_side", 1, 1), ("both_sides", 2, -1)]
+)
+def test_plain_oneway_mode_and_its_sensitivity_are_reported(mode, sides, delta_sign):
+    cfg = CFG.with_parameters(plain_cycleway_on_oneway=mode)
+    res = measure([_oneway_track_road()], cfg, 25833)
+    length = res.plain_oneway.length_km
+    assert length == pytest.approx(1.0, abs=0.01)
+    assert res.plain_oneway.mode == mode
+    assert res.plain_oneway.n_ways == 1
+    assert km(res, "A", "per_side") == pytest.approx(sides * length, rel=1e-6)
+    # switching mode would add (traffic_side) or remove (both_sides) exactly one side of tier A
+    assert res.plain_oneway.delta_per_side_km == {"A": pytest.approx(delta_sign * length)}
+
+
+def test_plain_oneway_report_is_empty_when_no_way_is_affected():
+    tags = {"highway": "tertiary", "cycleway": "track"}
+    res = measure([WayRecord(1, tags, ((13.4, 52.5), (13.41, 52.5)))], CFG, 25833)
+    assert res.plain_oneway.n_ways == 0 and res.plain_oneway.delta_per_side_km == {}

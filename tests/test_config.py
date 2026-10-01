@@ -134,3 +134,14 @@ def test_preset_tiers_reject_bad_grammar_or_unknown_subtype(tmp_path: Path, tier
     classifier = load_classifier(CFG / "classifier" / "v1.yaml")
     with pytest.raises(ConfigError, match="presets.yaml"):
         load_presets(_presets_file(tmp_path, tiers), classifier)
+
+
+def test_plain_cycleway_on_oneway_parameter_defaults_and_validates(tmp_path):
+    cfg = load_classifier(CFG / "classifier" / "v1.yaml")
+    assert cfg.parameters.plain_cycleway_on_oneway == "traffic_side"
+    raw = yaml.safe_load((CFG / "classifier" / "v1.yaml").read_text())
+    raw["parameters"]["plain_cycleway_on_oneway"] = "sometimes"
+    bad = tmp_path / "v1.yaml"
+    bad.write_text(yaml.safe_dump(raw))
+    with pytest.raises(ConfigError, match="plain_cycleway_on_oneway"):
+        load_classifier(bad)

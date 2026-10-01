@@ -1,5 +1,12 @@
 # `yes`/`no` are quoted: PyYAML (YAML 1.1) would otherwise read them as booleans.
 version: v1
+parameters:
+  # Plain `cycleway=<v>` on a oneway road (oneway=yes|-1, roundabouts):
+  #   traffic_side: only the side traffic flows on (right; left for oneway=-1)
+  #   both_sides:   both sides, the literal reading of `cycleway=*`
+  # Every `velometer classify` run prints the mode and the km a switch would move.
+  # Override per run with --plain-cycleway-on-oneway.
+  plain_cycleway_on_oneway: traffic_side
 road_classes:
   # highways whose cycleway side tags are exploded into left/right sides
   carriageway: [motorway, motorway_link, trunk, trunk_link, primary, primary_link, secondary,

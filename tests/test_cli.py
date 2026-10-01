@@ -34,3 +34,24 @@ def test_classify_rejects_geographic_epsg():
     assert result.exit_code == 1
     assert "EPSG:4326 is not a projected CRS" in result.output
     assert "ours_headline" not in result.output
+
+
+def test_classify_reports_plain_oneway_mode_and_override(tmp_path):
+    osm = tmp_path / "oneway.osm"
+    osm.write_text(
+        '<?xml version="1.0"?><osm version="0.6">'
+        '<node id="1" lat="52.5" lon="13.4"/><node id="2" lat="52.5" lon="13.4147"/>'
+        '<way id="1"><nd ref="1"/><nd ref="2"/><tag k="highway" v="tertiary"/>'
+        '<tag k="oneway" v="yes"/><tag k="cycleway" v="track"/></way></osm>'
+    )
+    base = ["classify", "--file", str(osm), "--epsg", "25833"]
+    default = CliRunner().invoke(app, base)
+    assert default.exit_code == 0, default.output
+    assert "plain_cycleway_on_oneway=traffic_side" in default.output
+    assert re.search(r"1 ways.*both_sides.*A \+0\.99\d km", default.output), default.output
+    both = CliRunner().invoke(app, [*base, "--plain-cycleway-on-oneway", "both_sides"])
+    assert both.exit_code == 0, both.output
+    assert "plain_cycleway_on_oneway=both_sides" in both.output
+    assert re.search(r"^A\s+-\s+per_side\s+1\.99\d\s+1$", both.output, re.M), both.output
+    bad = CliRunner().invoke(app, [*base, "--plain-cycleway-on-oneway", "sometimes"])
+    assert bad.exit_code != 0

@@ -64,11 +64,27 @@ class Rule(_Strict):
     attrs: dict[str, bool | str] = {}
 
 
+PLAIN_ONEWAY_MODES = ("traffic_side", "both_sides")
+
+
+class ClassifierParameters(_Strict):
+    """Tunable interpretation choices; every run reports the values it used."""
+
+    # plain `cycleway=<v>` on a oneway road: the side where traffic flows (traffic_side,
+    # usual OSM reading) or both sides (both_sides, literal "cycleway=* = both sides")
+    plain_cycleway_on_oneway: Literal["traffic_side", "both_sides"] = "traffic_side"
+
+
 class ClassifierConfig(_Strict):
     version: str
+    parameters: ClassifierParameters = ClassifierParameters()
     road_classes: RoadClasses
     value_lists: dict[str, list[str]]
     rules: list[Rule]
+
+    def with_parameters(self, **overrides: str) -> "ClassifierConfig":
+        params = ClassifierParameters.model_validate({**self.parameters.model_dump(), **overrides})
+        return self.model_copy(update={"parameters": params})
 
     @model_validator(mode="after")
     def _check_rules(self) -> "ClassifierConfig":

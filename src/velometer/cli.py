@@ -1,11 +1,18 @@
 """velometer command-line interface."""
 
+from enum import StrEnum
 from pathlib import Path
 
 import typer
 
 from velometer.config import ConfigError, default_config_dir, load_cities
 from velometer.db import connect, create_schema, upsert_cities
+
+
+class PlainOneway(StrEnum):
+    traffic_side = "traffic_side"
+    both_sides = "both_sides"
+
 
 app = typer.Typer(no_args_is_help=True, help="Protected cycling infrastructure from OSM.")
 
@@ -38,6 +45,11 @@ def classify(
     epsg: int = typer.Option(..., help="Projected CRS for lengths (city EPSG)."),
     classifier: str = typer.Option("v1", help="Classifier version (config/classifier/<v>.yaml)."),
     config_dir: Path = typer.Option(default_config_dir(), help="Config directory."),  # noqa: B008
+    plain_cycleway_on_oneway: PlainOneway | None = typer.Option(  # noqa: B008
+        None,
+        help="Override the classifier parameter: plain cycleway=* on a oneway road counts on "
+        "the traffic side only, or on both sides.",
+    ),
 ) -> None:
     """Classify one OSM file and print tier lengths, road lengths and preset metrics."""
     from velometer.config import load_classifier, load_presets
@@ -56,11 +68,13 @@ def classify(
     except ConfigError as e:
         typer.echo(f"config error: {e}", err=True)
         raise typer.Exit(1) from e
+    if plain_cycleway_on_oneway is not None:
+        cfg = cfg.with_parameters(plain_cycleway_on_oneway=plain_cycleway_on_oneway.value)
     read = read_ways(file)
     result = measure(read.ways, cfg, epsg)
-    typer.echo(
-        f"classifier {cfg.version}  ways: {len(read.ways)}  skipped ways: {len(read.skipped)}"
-    )
+    params = " ".join(f"{k}={v}" for k, v in cfg.parameters.model_dump().items())
+    typer.echo(f"classifier {cfg.version} ({params})")
+    typer.echo(f"ways: {len(read.ways)}  skipped ways: {len(read.skipped)}")
     typer.echo("\ntier  subtype            basis            km       ways")
     for t in result.tier_lengths:
         typer.echo(
@@ -78,5 +92,11 @@ def classify(
         f"\nparallel duplicates flagged: {len(result.duplicates)}  "
         f"dual-carriageway ways: {len(result.dual_pairs)}"
     )
+    po = result.plain_oneway
+    line = f"plain cycleway on oneway roads: {po.n_ways} ways, {po.length_km:.3f} km road"
+    if po.n_ways:
+        shifts = ", ".join(f"{t} {v:+.3f} km" for t, v in po.delta_per_side_km.items()) or "none"
+        line += f"; switching to {po.other_mode} changes per_side: {shifts}"
+    typer.echo(line)
     if result.unknown_values:
         typer.echo(f"unknown cycleway values: {result.unknown_values}")
