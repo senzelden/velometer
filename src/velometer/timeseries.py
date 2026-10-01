@@ -35,8 +35,8 @@ class YearPoint:
     ab_km: float  # tiers A+B, per_side km
     tiers_km: dict[str, float]
     activity: ActivityYear | None
-    legacy_km: float
-    unrecognised_km: float
+    legacy_km: float | None  # None: the run recorded no drift diagnostics (current/M2 runs)
+    unrecognised_km: float | None
 
 
 @dataclass(frozen=True)
@@ -87,8 +87,8 @@ def _point(conn, run_id: int, label: str, selector, activity: ActivityYear | Non
         ab_km=ours_value(r, _AB, selector.presets) or 0.0,
         tiers_km=tiers,
         activity=activity,
-        legacy_km=diag.get("legacy_km", 0.0),
-        unrecognised_km=diag.get("unrecognised_cycling_km", 0.0),
+        legacy_km=diag.get("legacy_km"),
+        unrecognised_km=diag.get("unrecognised_cycling_km"),
     )
 
 
@@ -118,7 +118,10 @@ def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> lis
     return points
 
 
-def _drift(prev: float, cur: float, pct: float) -> bool:
+def _drift(prev: float | None, cur: float | None, pct: float) -> bool:
+    """An unknown side (no diagnostics recorded) is never drift: unknown is not 0 km."""
+    if prev is None or cur is None:
+        return False
     return prev > 0 and abs(cur - prev) / prev * 100 >= pct
 
 

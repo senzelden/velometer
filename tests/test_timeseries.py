@@ -118,6 +118,33 @@ def test_tag_drift_at_threshold_and_ignores_zero_previous():
     assert rules([pt("2018", 5, legacy=0), pt("2019", 5, legacy=500, unrec=500)]) == {}
 
 
+def test_missing_drift_diagnostics_never_flag_tag_drift():
+    # Current (M2) runs record no drift diagnostics: unknown is not 0 km, so no tag_drift.
+    known, unknown = dict(legacy=100, unrec=100), dict(legacy=None, unrec=None)
+    assert rules([pt("2026", 5, **known), pt("current", 5, **unknown)]) == {}
+    assert rules([pt("2025", 5, **unknown), pt("2026", 5, **known)]) == {}
+
+
+def test_point_without_diagnostics_reads_none_and_renders_na(tmp_path):
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        from velometer.config import load_cities
+
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=_current_deps(tmp_path))
+        fakes = Fakes(tmp_path)
+        R.run_history(
+            conn, CITY, range(2019, 2021), data_dir=tmp_path, config_dir=CFG_DIR,
+            deps=fakes.deps(),
+        )  # fmt: skip
+        pts = T.series(conn, "berlin", "lau", _selector(), fakes.set_md5)
+    assert pts[-1].label == "current"
+    assert pts[-1].legacy_km is None and pts[-1].unrecognised_km is None
+    assert pts[0].legacy_km is not None and pts[0].unrecognised_km is not None
+    row = T.render_block({("berlin", "lau"): pts}, []).splitlines()
+    assert [r for r in row if r.startswith("| current ")][0].count("| n/a ") >= 2
+
+
 def test_current_fraction_clamped_and_leap_aware():
     assert T.current_fraction("2026-07-02T12:00:00Z") == pytest.approx(182.5 / 365)
     assert T.current_fraction("2024-07-02T00:00:00Z") == pytest.approx(183 / 366)
