@@ -39,45 +39,72 @@ def _client(handler):
 def test_regions_for_covers_polygon_with_no_redundant_region():
     idx = load_index(FIX / "index_small.json")
     poly = box(0.5, 0.5, 1.5, 0.9)  # spans leaves a and b
-    got = regions_for(poly, idx, buffer_m=0)
-    assert got == ["a", "b"]
-    union = unary_union([idx[r]["geometry"] for r in got])
+    got = regions_for(poly, idx)
+    assert got.regions == ["a", "b"]
+    assert got.uncovered_km2 < 1e-6
+    union = unary_union([idx[r]["geometry"] for r in got.regions])
     assert union.contains(poly)
-    for r in got:  # rule: dropping any chosen region uncovers the polygon
-        rest = unary_union([idx[o]["geometry"] for o in got if o != r])
+    for r in got.regions:  # rule: dropping any chosen region uncovers the polygon
+        rest = unary_union([idx[o]["geometry"] for o in got.regions if o != r])
         assert not rest.contains(poly)
 
 
 def test_regions_for_never_returns_a_parent_region():
     idx = load_index(FIX / "index_small.json")
     assert idx["a"]["parent"] == "world"
-    assert regions_for(box(0.2, 0.2, 0.4, 0.4), idx, buffer_m=0) == ["a"]
-    assert "world" not in regions_for(box(0.2, 0.2, 1.8, 1.8), idx, buffer_m=0)
+    assert regions_for(box(0.2, 0.2, 0.4, 0.4), idx).regions == ["a"]
+    assert "world" not in regions_for(box(0.2, 0.2, 1.8, 1.8), idx).regions
 
 
-def test_regions_for_drops_leaves_made_redundant_by_an_overlapping_one():
+def test_regions_for_sliver_below_tolerance_pulls_in_no_neighbour():
+    idx = load_index(FIX / "index_small.json")
+    got = regions_for(box(0.5, 0.5, 1.0003, 0.9), idx)  # ~1.5 km2 sticks into b
+    assert got.regions == ["a"]
+    assert 0.5 < got.uncovered_km2 < 2.4
+
+
+def test_regions_for_overlap_above_tolerance_pulls_in_the_neighbour():
+    idx = load_index(FIX / "index_small.json")
+    got = regions_for(box(0.5, 0.5, 1.05, 0.9), idx)  # ~240 km2 in b
+    assert got.regions == ["a", "b"]
+
+
+def test_regions_for_tolerance_is_adjustable():
+    idx = load_index(FIX / "index_small.json")
+    poly = box(0.5, 0.5, 1.0003, 0.9)
+    assert regions_for(poly, idx, tolerance_km2=0.1, tolerance_frac=0).regions == ["a", "b"]
+
+
+def test_regions_for_single_containing_leaf_beats_a_two_leaf_set():
     idx = load_index(FIX / "index_small.json")
     idx["e"] = {"geometry": box(0, 0, 1.2, 1), "parent": "world", "history": "https://h/e"}
-    assert regions_for(box(0.5, 0.2, 1.1, 0.4), idx, buffer_m=0) == ["e"]
+    assert regions_for(box(0.5, 0.2, 1.1, 0.4), idx).regions == ["e"]
 
 
-def test_regions_for_prefers_the_smaller_region_when_both_cover_equally():
+def test_regions_for_single_covering_leaf_with_smallest_area_wins():
     idx = load_index(FIX / "index_small.json")
     idx["big"] = {"geometry": box(-5, -5, 5, 5), "parent": "world", "history": "https://h/big"}
-    assert regions_for(box(0.2, 0.2, 0.4, 0.4), idx, buffer_m=0) == ["a"]
+    assert regions_for(box(0.2, 0.2, 0.4, 0.4), idx).regions == ["a"]
+
+
+def test_regions_for_specific_leaves_beat_an_overlapping_aggregate():
+    idx = load_index(FIX / "index_small.json")
+    idx["agg"] = {"geometry": box(0, 0, 2, 1.2), "parent": "europe", "history": "https://h/agg"}
+    got = regions_for(box(0.5, 0.5, 1.5, 1.5), idx)  # needs all four squares; agg is redundant
+    assert got.regions == ["a", "b", "c", "d"]
 
 
 def test_regions_for_buffer_pulls_in_a_neighbour():
     idx = load_index(FIX / "index_small.json")
     poly = box(0.2, 0.2, 0.999, 0.4)  # inside a, ~100 m from b's border
-    assert regions_for(poly, idx, buffer_m=0) == ["a"]
-    assert "b" in regions_for(poly, idx, buffer_m=5000)
+    assert regions_for(poly, idx).regions == ["a"]
+    assert "b" in regions_for(poly, idx, buffer_m=5000).regions
 
 
 def test_regions_for_raises_when_index_cannot_cover():
     idx = load_index(FIX / "index_small.json")
     with pytest.raises(ValueError, match="cover"):
-        regions_for(box(5, 5, 6, 6), idx, buffer_m=0)
+        regions_for(box(5, 5, 6, 6), idx)
 
 
 def test_load_index_maps_history_and_parent():

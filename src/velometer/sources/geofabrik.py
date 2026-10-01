@@ -13,7 +13,6 @@ from typing import Literal
 from urllib.parse import urljoin, urlparse
 
 import httpx
-import shapely
 from pyproj import Transformer
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -137,35 +136,60 @@ def _project(geom: BaseGeometry, src: int, dst: int) -> BaseGeometry:
     return transform(tf.transform, geom)
 
 
-def regions_for(polygon_wgs84: BaseGeometry, index: dict[str, dict], *, buffer_m: float = 1000):
-    """Ids of the fewest-ish leaf regions with history that cover polygon buffered by buffer_m.
+@dataclass(frozen=True)
+class RegionSelection:
+    regions: list[str]
+    uncovered_km2: float
 
-    Leaves are regions no other region names as parent. Candidates intersecting the buffered
-    polygon are dropped greedily, smallest intersection first, while the rest still cover it.
-    Raises ValueError when the leaves cannot cover the buffered polygon at all.
+
+def regions_for(
+    polygon_wgs84: BaseGeometry,
+    index: dict[str, dict],
+    *,
+    buffer_m: float = 0,
+    tolerance_frac: float = 0.001,
+    tolerance_km2: float = 1.0,
+) -> RegionSelection:
+    """Leaf regions with history that cover polygon (buffered by buffer_m), within tolerance.
+
+    Covered means the uncovered area is at most max(tolerance_frac * polygon area, tolerance_km2),
+    measured in EPSG:3035. Leaves are regions no other region names as parent. A single leaf that
+    covers is preferred (smallest area wins). Otherwise the intersecting leaves are dropped
+    greedily, largest first, while the rest still cover, so specific regions beat aggregates.
+    Raises ValueError when the leaves cannot cover the polygon within tolerance.
     """
-    target = _project(_project(polygon_wgs84, 4326, 3035).buffer(buffer_m), 3035, 4326)
-    target = shapely.make_valid(target) if not target.is_valid else target
+    to_3035 = Transformer.from_crs(4326, 3035, always_xy=True).transform
+    target = transform(to_3035, polygon_wgs84)
+    if buffer_m:
+        target = target.buffer(buffer_m)
+    near = transform(Transformer.from_crs(3035, 4326, always_xy=True).transform, target)
+    tol_m2 = max(tolerance_frac * target.area, tolerance_km2 * 1e6)
     parents = {v["parent"] for v in index.values()}
-    chosen = [
-        r
+    leaves = {
+        r: transform(to_3035, v["geometry"])
         for r, v in index.items()
-        if r not in parents and v["history"] and v["geometry"].intersects(target)
-    ]
-    if not chosen or not unary_union([index[r]["geometry"] for r in chosen]).contains(target):
-        raise ValueError(f"the index leaf regions with history do not cover the polygon: {chosen}")
-    # ties (an aggregate like "dach" covers the polygon as fully as "berlin") drop the larger region
-    chosen.sort(
-        key=lambda r: (
-            round(index[r]["geometry"].intersection(target).area / target.area, 6),
-            -index[r]["geometry"].area,
+        if r not in parents and v["history"] and v["geometry"].intersects(near)
+    }
+
+    def uncovered(ids: list[str]) -> float:
+        return target.difference(unary_union([leaves[r] for r in ids])).area if ids else target.area
+
+    def selection(ids: list[str]) -> RegionSelection:
+        return RegionSelection(sorted(ids), uncovered(ids) / 1e6)
+
+    singles = [r for r in leaves if uncovered([r]) <= tol_m2]
+    if singles:
+        return selection([min(singles, key=lambda r: leaves[r].area)])
+    chosen = [r for r in leaves if leaves[r].intersects(target)]
+    if uncovered(chosen) > tol_m2:
+        raise ValueError(
+            f"the index leaf regions with history do not cover the polygon: {sorted(chosen)}"
         )
-    )
-    for r in list(chosen):
-        rest = [index[o]["geometry"] for o in chosen if o != r]
-        if rest and unary_union(rest).contains(target):
-            chosen.remove(r)
-    return sorted(chosen)
+    for r in sorted(chosen, key=lambda r: -leaves[r].area):
+        rest = [o for o in chosen if o != r]
+        if rest and uncovered(rest) <= tol_m2:
+            chosen = rest
+    return selection(chosen)
 
 
 @dataclass(frozen=True)
