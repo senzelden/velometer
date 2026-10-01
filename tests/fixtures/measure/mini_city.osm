@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+  <node id="1" lat="52.5" lon="13.4000"/>
+  <node id="2" lat="52.5" lon="13.4147"/>
+  <node id="3" lat="52.51" lon="13.4000"/>
+  <node id="4" lat="52.51" lon="13.4147"/>
+  <node id="5" lat="52.52" lon="13.4000"/>
+  <node id="6" lat="52.52" lon="13.4147"/>
+  <node id="7" lat="52.53" lon="13.4000"/>
+  <node id="8" lat="52.53" lon="13.4147"/>
+  <node id="9" lat="52.54" lon="13.4000"/>
+  <node id="10" lat="52.54" lon="13.4147"/>
+  <node id="11" lat="52.55" lon="13.4000"/>
+  <node id="12" lat="52.55" lon="13.4147"/>
+  <node id="13" lat="52.56" lon="13.4000"/>
+  <node id="14" lat="52.56" lon="13.4147"/>
+  <way id="1"><nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="primary"/>
+    <tag k="cycleway:both" v="track"/>
+  </way>
+  <way id="2"><nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="3"><nd ref="5"/><nd ref="6"/>
+    <tag k="highway" v="footway"/>
+    <tag k="bicycle" v="designated"/>
+  </way>
+  <way id="4"><nd ref="7"/><nd ref="8"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="cycleway:right" v="lane"/>
+  </way>
+  <way id="5"><nd ref="9"/><nd ref="10"/>
+    <tag k="highway" v="motorway"/>
+  </way>
+  <way id="6"><nd ref="11"/><nd ref="12"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="7"><nd ref="13"/><nd ref="14"/>
+    <tag k="highway" v="service"/>
+    <tag k="access" v="private"/>
+  </way>
+</osm>
