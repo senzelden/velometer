@@ -16,4 +16,119 @@ value_lists:
                         bump, studs, barrier, hedge, ditch, wall, railing]
   paint_separation: [solid_line, dashed_line, double_solid_line, "no", none]
   bicycle_allowed: ["yes", designated, permissive]
-rules: []
+rules:
+  # --- invalidating exclusions ---
+  - id: X_lifecycle
+    applies_to: standalone
+    tier: excluded
+    subtype: lifecycle
+    match: {highway: [construction, proposed]}
+  - id: X_area
+    applies_to: standalone
+    tier: excluded
+    subtype: area
+    match: {area: "yes"}
+  - id: X_road_area
+    applies_to: road_side
+    tier: excluded
+    subtype: area
+    match: {"road:area": "yes"}
+  - id: X_private
+    applies_to: standalone
+    tier: excluded
+    subtype: private
+    match: {access: private, bicycle: {not_in: [yes, designated, permissive]}}
+  - id: X_road_private
+    applies_to: road_side
+    tier: excluded
+    subtype: private
+    match: {"road:access": private, "road:bicycle": {not_in: [yes, designated, permissive]}}
+  - id: X_bicycle_no
+    applies_to: standalone
+    tier: excluded
+    subtype: bicycle_no
+    match: {bicycle: ["no", dismount]}
+  - id: X_separate
+    applies_to: road_side
+    tier: excluded
+    subtype: separate
+    match: {cycleway: separate}
+  # --- tier A: separated cycle track ---
+  - id: A_cycleway
+    applies_to: standalone
+    tier: A
+    match:
+      highway: cycleway
+      any: [{foot: {not_in: [designated]}}, {segregated: "yes"}]
+  - id: A_track_side
+    applies_to: road_side
+    tier: A
+    match: {cycleway: track}
+  # --- tier B: shared foot/cycle path ---
+  - id: B_cycleway_foot
+    applies_to: standalone
+    tier: B
+    match: {highway: cycleway, foot: designated}
+  - id: B_path_segregated
+    applies_to: standalone
+    tier: B
+    subtype: segregated
+    match: {highway: [path, footway, pedestrian], bicycle: designated, segregated: "yes"}
+  - id: B_path
+    applies_to: standalone
+    tier: B
+    match: {highway: [path, footway, pedestrian], bicycle: designated}
+  - id: B_sidewalk_designated
+    applies_to: road_side
+    tier: B
+    subtype: sidewalk
+    match: {sidewalk_bicycle: designated, cycleway: {not_in: [lane, share_busway]}}
+  - id: B_share_sidewalk
+    applies_to: road_side
+    tier: B
+    subtype: sidewalk
+    match: {cycleway: share_sidewalk}
+  # --- tier C/D: lanes ---
+  - id: C_lane_physical
+    applies_to: road_side
+    tier: C
+    match: {cycleway: lane, "cycleway:separation": {in_list: physical_separation}}
+  - id: D_lane_advisory
+    applies_to: road_side
+    tier: D
+    subtype: advisory
+    attrs: {advisory: true}
+    match: {cycleway: lane, "cycleway:lane": [advisory, pictogram]}
+  - id: D_lane
+    applies_to: road_side
+    tier: D
+    match: {cycleway: lane}
+  # --- tier E: cycle streets, bus lanes ---
+  - id: E_cycle_street
+    applies_to: standalone
+    tier: E
+    subtype: cycle_street
+    match: {any: [{bicycle_road: "yes"}, {cyclestreet: "yes"}, {cycle_street: "yes"}]}
+  - id: E_bus
+    applies_to: road_side
+    tier: E
+    subtype: bus
+    attrs: {bus: true}
+    match: {cycleway: share_busway}
+  # --- no infrastructure (diagnostic only) ---
+  - id: X_no
+    applies_to: road_side
+    tier: excluded
+    subtype: "no"
+    match: {cycleway: ["no", none]}
+  - id: X_shared_lane
+    applies_to: road_side
+    tier: excluded
+    subtype: shared_lane
+    attrs: {shared_lane: true}
+    match: {cycleway: [shared_lane, shared]}
+  - id: X_sidewalk_bicycle_permitted
+    applies_to: road_side
+    tier: excluded
+    subtype: sidewalk_permitted
+    match: {sidewalk_bicycle: ["yes", permissive]}

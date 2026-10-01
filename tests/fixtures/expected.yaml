@@ -1,0 +1,110 @@
+cases:
+  A_cycleway_basic:
+    sides:
+      - {attrs: {bidirectional: true}, rule: A_cycleway, side: self, tier: A, way: 10}
+  A_cycleway_oneway:
+    sides:
+      - {attrs: {bidirectional: false}, rule: A_cycleway, side: self, tier: A, way: 10}
+  A_cycleway_foot_segregated:
+    sides:
+      - {attrs: {segregated: 'yes'}, rule: A_cycleway, side: self, tier: A, way: 10}
+  B_cycleway_foot_shared:
+    sides:
+      - {attrs: {segregated: 'no'}, rule: B_cycleway_foot, side: self, tier: B, way: 10}
+  B_cycleway_foot_untagged:
+    sides:
+      - {rule: B_cycleway_foot, side: self, tier: B, way: 10}
+  B_footway_segregated:
+    sides:
+      - {rule: B_path_segregated, side: self, tier: B, way: 10}
+  B_path_shared:
+    sides:
+      - {rule: B_path, side: self, tier: B, way: 10}
+  B_pedestrian_designated:
+    sides:
+      - {rule: B_path, side: self, tier: B, way: 10}
+  footway_bicycle_yes:
+    sides:
+      - {rule: null, side: self, tier: null, way: 10}
+  A_track_both:
+    sides:
+      - {attrs: {bidirectional: false}, rule: A_track_side, side: left, tier: A, way: 10}
+      - {attrs: {bidirectional: false}, rule: A_track_side, side: right, tier: A, way: 10}
+  A_track_right_twoway:
+    sides:
+      - {attrs: {bidirectional: true}, rule: A_track_side, side: right, tier: A, way: 10}
+  side_precedence:
+    sides:
+      - {rule: X_no, side: left, tier: excluded, way: 10}
+      - {rule: D_lane, side: right, tier: D, way: 10}
+  C_lane_kerb:
+    sides:
+      - {rule: C_lane_physical, side: right, tier: C, way: 10}
+  C_lane_multi_value:
+    sides:
+      - {rule: C_lane_physical, side: right, tier: C, way: 10}
+  C_lane_parking:
+    sides:
+      - {rule: C_lane_physical, side: left, tier: C, way: 10}
+      - {rule: C_lane_physical, side: right, tier: C, way: 10}
+  D_lane_paint:
+    sides:
+      - {rule: D_lane, side: right, tier: D, way: 10}
+  D_lane_advisory:
+    sides:
+      - {attrs: {advisory: true}, rule: D_lane_advisory, side: left, tier: D, way: 10}
+      - {attrs: {advisory: true}, rule: D_lane_advisory, side: right, tier: D, way: 10}
+  E_bus:
+    sides:
+      - {attrs: {bus: true}, rule: E_bus, side: right, tier: E, way: 10}
+  E_bicycle_road:
+    sides:
+      - {rule: E_cycle_street, side: self, tier: E, way: 10}
+  E_cyclestreet:
+    sides:
+      - {rule: E_cycle_street, side: self, tier: E, way: 10}
+  X_separate:
+    sides:
+      - {rule: X_separate, side: left, tier: excluded, way: 10}
+      - {rule: X_separate, side: right, tier: excluded, way: 10}
+  X_shared_lane:
+    sides:
+      - {attrs: {shared_lane: true}, rule: X_shared_lane, side: left, tier: excluded, way: 10}
+      - {attrs: {shared_lane: true}, rule: X_shared_lane, side: right, tier: excluded, way: 10}
+  X_private_cycleway:
+    sides:
+      - {rule: X_private, side: self, tier: excluded, way: 10}
+  private_but_bicycle_yes:
+    sides:
+      - {rule: A_cycleway, side: self, tier: A, way: 10}
+  X_bicycle_no:
+    sides:
+      - {rule: X_bicycle_no, side: self, tier: excluded, way: 10}
+  X_area:
+    sides:
+      - {rule: X_area, side: self, tier: excluded, way: 10}
+  X_construction:
+    sides:
+      - {rule: X_lifecycle, side: self, tier: excluded, way: 10}
+  legacy_opposite_track:
+    sides:
+      - {attrs: {contraflow: true}, rule: A_track_side, side: left, tier: A, way: 10}
+  legacy_opposite_lane:
+    sides:
+      - {attrs: {contraflow: true}, rule: D_lane, side: left, tier: D, way: 10}
+  legacy_sidewalk_designated:
+    sides:
+      - {rule: B_sidewalk_designated, side: right, tier: B, way: 10}
+  legacy_sidewalk_yes:
+    sides:
+      - {rule: X_sidewalk_bicycle_permitted, side: left, tier: excluded, way: 10}
+      - {rule: X_sidewalk_bicycle_permitted, side: right, tier: excluded, way: 10}
+  oneway_plain_lane:
+    sides:
+      - {rule: D_lane, side: right, tier: D, way: 10}
+  unknown_value:
+    sides:
+      - {attrs: {unknown_value: crossing}, rule: null, side: right, tier: null, way: 10}
+  road_private:
+    sides:
+      - {rule: X_road_private, side: right, tier: excluded, way: 10}
