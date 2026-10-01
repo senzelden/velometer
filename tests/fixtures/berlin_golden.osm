@@ -1,0 +1,2224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Overpass API, fetched 2026-10-01T13:55:17Z; (c) OpenStreetMap contributors, ODbL 1.0 -->
+<osm version="0.6" generator="Overpass API 0.7.62.11 87bfad18">
+<note>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</note>
+<meta osm_base="2026-10-01T14:04:31Z"/>
+
+  <node id="530247" lat="52.5735144" lon="13.3314876" version="13" timestamp="2024-03-24T13:35:20Z" changeset="149089197" uid="9508237" user="momabebra"/>
+  <node id="530256" lat="52.5692466" lon="13.3299953" version="11" timestamp="2023-03-24T20:29:15Z" changeset="134083650" uid="9508237" user="momabebra"/>
+  <node id="16541480" lat="52.5067636" lon="13.2633591" version="3" timestamp="2011-03-27T14:20:42Z" changeset="7686397" uid="6669" user="Elwood"/>
+  <node id="16541481" lat="52.5057781" lon="13.2644532" version="4" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="20246276" lat="52.5067252" lon="13.3024311" version="10" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra">
+    <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+    <tag k="TMC:cid_58:tabcd_1:Direction" v="positive"/>
+    <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+    <tag k="TMC:cid_58:tabcd_1:LocationCode" v="27215"/>
+    <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="27216"/>
+    <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="32998"/>
+  </node>
+  <node id="21432802" lat="52.5218939" lon="13.4165351" version="18" timestamp="2022-08-02T13:40:03Z" changeset="124393012" uid="418040" user="Supaplex030"/>
+  <node id="21677325" lat="52.5225475" lon="13.3441286" version="7" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="26190921" lat="52.4350336" lon="13.1978137" version="4" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="26190992" lat="52.4350013" lon="13.1973957" version="4" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="26682475" lat="52.5067696" lon="13.2950389" version="8" timestamp="2018-08-21T06:14:20Z" changeset="61843622" uid="1497225" user="kartonage">
+    <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+    <tag k="TMC:cid_58:tabcd_1:Direction" v="positive"/>
+    <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+    <tag k="TMC:cid_58:tabcd_1:LocationCode" v="31129"/>
+    <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="31130"/>
+    <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="26689"/>
+  </node>
+  <node id="26704048" lat="52.5118234" lon="13.3224951" version="13" timestamp="2026-06-02T12:14:32Z" changeset="183543904" uid="9426363" user="dmho">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="26736160" lat="52.5067289" lon="13.3022252" version="9" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra">
+    <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+    <tag k="TMC:cid_58:tabcd_1:Direction" v="positive"/>
+    <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+    <tag k="TMC:cid_58:tabcd_1:LocationCode" v="26690"/>
+    <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="26691"/>
+    <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="31130"/>
+  </node>
+  <node id="26761208" lat="52.4987727" lon="13.3269484" version="6" timestamp="2025-08-26T07:32:09Z" changeset="171012140" uid="23035092" user="fmc_9"/>
+  <node id="26761209" lat="52.4987051" lon="13.3273302" version="7" timestamp="2023-04-25T13:11:44Z" changeset="135343218" uid="8970395" user="!MRGBoss"/>
+  <node id="26761210" lat="52.4987579" lon="13.3271683" version="3" timestamp="2015-11-24T14:32:25Z" changeset="35551717" uid="881429" user="atpl_pilot"/>
+  <node id="26906164" lat="52.4456344" lon="13.2934111" version="7" timestamp="2024-10-19T20:48:19Z" changeset="158107003" uid="17304" user="kartograph"/>
+  <node id="26906165" lat="52.4455650" lon="13.2934806" version="8" timestamp="2024-10-19T20:48:19Z" changeset="158107003" uid="17304" user="kartograph"/>
+  <node id="26906166" lat="52.4458219" lon="13.2939280" version="7" timestamp="2024-10-19T20:48:19Z" changeset="158107003" uid="17304" user="kartograph"/>
+  <node id="26906167" lat="52.4457546" lon="13.2939948" version="8" timestamp="2024-10-19T20:48:19Z" changeset="158107003" uid="17304" user="kartograph"/>
+  <node id="26906445" lat="52.4503826" lon="13.3070309" version="6" timestamp="2024-01-01T05:58:57Z" changeset="145752655" uid="10961311" user="StefanHRT"/>
+  <node id="26906448" lat="52.4514886" lon="13.3100212" version="4" timestamp="2011-01-10T14:23:47Z" changeset="6926690" uid="6669" user="Elwood"/>
+  <node id="26991882" lat="52.5224887" lon="13.3447501" version="9" timestamp="2024-02-19T10:04:39Z" changeset="147642684" uid="9508237" user="momabebra"/>
+  <node id="27785319" lat="52.4828668" lon="13.3497051" version="6" timestamp="2018-01-12T08:47:37Z" changeset="55373807" uid="4179530" user="RoterEmil"/>
+  <node id="27785365" lat="52.4868623" lon="13.3571409" version="10" timestamp="2023-04-24T21:13:00Z" changeset="135319198" uid="17304" user="kartograph">
+    <tag k="TMC:cid_58:tabcd_1:Class" v="Point"/>
+    <tag k="TMC:cid_58:tabcd_1:Direction" v="positive"/>
+    <tag k="TMC:cid_58:tabcd_1:LCLversion" v="9.00"/>
+    <tag k="TMC:cid_58:tabcd_1:LocationCode" v="20247"/>
+    <tag k="TMC:cid_58:tabcd_1:NextLocationCode" v="20248"/>
+    <tag k="TMC:cid_58:tabcd_1:PrevLocationCode" v="20246"/>
+  </node>
+  <node id="27785428" lat="52.4865266" lon="13.3568684" version="6" timestamp="2014-03-24T11:32:24Z" changeset="21282925" uid="884156" user="DieBuche"/>
+  <node id="27785430" lat="52.4863127" lon="13.3566589" version="6" timestamp="2014-03-24T11:32:24Z" changeset="21282925" uid="884156" user="DieBuche"/>
+  <node id="27786128" lat="52.4884504" lon="13.3586008" version="16" timestamp="2023-05-29T20:50:36Z" changeset="136717437" uid="2414126" user="Weasel-Wiesel">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="29030445" lat="52.5073243" lon="13.2623294" version="6" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="29030447" lat="52.5077092" lon="13.2615167" version="3" timestamp="2010-06-12T07:16:58Z" changeset="4968027" uid="6669" user="Elwood"/>
+  <node id="29030449" lat="52.5075724" lon="13.2617881" version="4" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="29030450" lat="52.5070168" lon="13.2629466" version="4" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="29030451" lat="52.5063484" lon="13.2639078" version="3" timestamp="2011-03-27T14:20:42Z" changeset="7686397" uid="6669" user="Elwood"/>
+  <node id="29030453" lat="52.5053399" lon="13.2647492" version="5" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="29271390" lat="52.5172042" lon="13.4407720" version="18" timestamp="2023-04-18T19:36:38Z" changeset="135074429" uid="17304" user="kartograph"/>
+  <node id="29271391" lat="52.5172243" lon="13.4405874" version="15" timestamp="2023-04-18T19:36:38Z" changeset="135074429" uid="17304" user="kartograph"/>
+  <node id="29690656" lat="52.5679539" lon="13.3295349" version="9" timestamp="2019-03-03T10:30:43Z" changeset="67733223" uid="881429" user="atpl_pilot"/>
+  <node id="29690662" lat="52.5755407" lon="13.3320342" version="8" timestamp="2024-03-22T20:56:46Z" changeset="149030644" uid="9508237" user="momabebra"/>
+  <node id="29691249" lat="52.5754115" lon="13.3319968" version="5" timestamp="2018-07-05T04:24:01Z" changeset="60423469" uid="1497225" user="kartonage"/>
+  <node id="30205987" lat="52.4350239" lon="13.1974721" version="4" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="30968457" lat="52.4969431" lon="13.2901579" version="15" timestamp="2023-03-26T18:56:13Z" changeset="134148341" uid="17304" user="kartograph">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="mapillary" v="338926224235980"/>
+    <tag k="survey:date" v="2019-04-06"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+    <tag k="wheelchair" v="yes"/>
+  </node>
+  <node id="92893494" lat="52.5746271" lon="13.3691163" version="5" timestamp="2025-02-16T19:08:24Z" changeset="162583177" uid="44217" user="kjon"/>
+  <node id="124344709" lat="52.5699796" lon="13.3300810" version="7" timestamp="2023-03-24T20:29:15Z" changeset="134083650" uid="9508237" user="momabebra"/>
+  <node id="249798537" lat="52.4450270" lon="13.2922617" version="7" timestamp="2024-10-20T22:02:56Z" changeset="158147257" uid="17304" user="kartograph"/>
+  <node id="252476819" lat="52.5717496" lon="13.3307139" version="5" timestamp="2016-10-21T07:35:15Z" changeset="43052458" uid="1879543" user="glibbertorsten"/>
+  <node id="261600197" lat="52.5220508" lon="13.4189822" version="4" timestamp="2019-12-16T12:40:48Z" changeset="78473854" uid="175760" user="famosm"/>
+  <node id="261701558" lat="52.4496181" lon="13.3049255" version="4" timestamp="2020-05-24T14:10:09Z" changeset="85683827" uid="44217" user="kjon"/>
+  <node id="267492915" lat="52.5166448" lon="13.4449151" version="17" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="268483192" lat="52.5546220" lon="13.3802494" version="4" timestamp="2022-07-31T09:52:59Z" changeset="124295007" uid="44217" user="kjon"/>
+  <node id="274791024" lat="52.5686699" lon="13.3297863" version="5" timestamp="2019-03-03T10:30:44Z" changeset="67733223" uid="881429" user="atpl_pilot"/>
+  <node id="292909446" lat="52.4987145" lon="13.3272978" version="3" timestamp="2015-11-24T14:32:25Z" changeset="35551717" uid="881429" user="atpl_pilot"/>
+  <node id="308994485" lat="52.5169867" lon="13.4509859" version="7" timestamp="2021-12-23T11:28:57Z" changeset="115294117" uid="175760" user="famosm"/>
+  <node id="308994488" lat="52.5168477" lon="13.4524481" version="4" timestamp="2021-12-23T11:28:57Z" changeset="115294117" uid="175760" user="famosm"/>
+  <node id="313153835" lat="52.5067806" lon="13.2957488" version="5" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="313154028" lat="52.5067410" lon="13.3006295" version="4" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="318547834" lat="52.5160727" lon="13.4506474" version="7" timestamp="2014-12-12T11:12:20Z" changeset="27418890" uid="881429" user="atpl_pilot"/>
+  <node id="320932750" lat="52.5221629" lon="13.4194744" version="7" timestamp="2024-11-26T20:18:51Z" changeset="159633159" uid="44217" user="kjon"/>
+  <node id="354984274" lat="52.5225556" lon="13.3428065" version="8" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="413562833" lat="52.5225594" lon="13.3439691" version="8" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="444606380" lat="52.4969262" lon="13.2900837" version="4" timestamp="2018-10-09T19:52:04Z" changeset="63358519" uid="44217" user="kjon">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="480064723" lat="52.5667621" lon="13.3289365" version="3" timestamp="2025-12-30T17:07:55Z" changeset="176638684" uid="22898413" user="fmc_5"/>
+  <node id="480076365" lat="52.5670897" lon="13.3292092" version="4" timestamp="2023-03-17T10:20:44Z" changeset="133782207" uid="9508237" user="momabebra"/>
+  <node id="480076368" lat="52.5687611" lon="13.3298219" version="4" timestamp="2019-03-27T15:52:05Z" changeset="68591618" uid="1260280" user="jacobbraeutigam"/>
+  <node id="504333875" lat="52.5537317" lon="13.4159863" version="10" timestamp="2025-07-28T16:10:13Z" changeset="169623179" uid="22898403" user="fmc_4">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:kerb_extension" v="both"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="542002955" lat="52.4827233" lon="13.3494953" version="2" timestamp="2023-04-24T19:07:35Z" changeset="135315462" uid="17304" user="kartograph"/>
+  <node id="565582057" lat="52.4429633" lon="13.2864197" version="2" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="585467954" lat="52.5162279" lon="13.4490362" version="11" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="mapillary" v="925068824983901"/>
+    <tag k="survey:date" v="2017-12-07"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="no"/>
+    <tag k="traffic_signals:vibration" v="no"/>
+    <tag k="wheelchair" v="yes"/>
+  </node>
+  <node id="637820931" lat="52.4477924" lon="13.4398343" version="3" timestamp="2026-09-18T11:59:00Z" changeset="189205242" uid="418040" user="Supaplex030"/>
+  <node id="654381287" lat="52.5113876" lon="13.3229548" version="5" timestamp="2024-11-26T23:45:51Z" changeset="159638285" uid="418040" user="Supaplex030"/>
+  <node id="656933156" lat="52.5158870" lon="13.4524641" version="6" timestamp="2022-08-03T16:22:34Z" changeset="124444114" uid="418040" user="Supaplex030"/>
+  <node id="677188160" lat="52.5221113" lon="13.4190330" version="2" timestamp="2024-11-26T20:18:51Z" changeset="159633159" uid="44217" user="kjon"/>
+  <node id="751779784" lat="52.5746738" lon="13.3702655" version="8" timestamp="2023-05-09T04:04:55Z" changeset="135875869" uid="18208051" user="MappiViewer">
+    <tag k="crossing" v="marked"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="crossing_ref" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="784382396" lat="52.4350437" lon="13.1977256" version="3" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="831468222" lat="52.5160962" lon="13.4504164" version="6" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="888819529" lat="52.5059973" lon="13.3179142" version="6" timestamp="2023-07-27T14:40:51Z" changeset="139091318" uid="17304" user="kartograph"/>
+  <node id="888819538" lat="52.5063830" lon="13.3110679" version="1" timestamp="2010-08-30T15:20:03Z" changeset="5637001" uid="6669" user="Elwood"/>
+  <node id="888819542" lat="52.5066679" lon="13.3079616" version="1" timestamp="2010-08-30T15:20:03Z" changeset="5637001" uid="6669" user="Elwood"/>
+  <node id="888819559" lat="52.5061719" lon="13.3171386" version="5" timestamp="2016-11-25T09:17:29Z" changeset="43939850" uid="4179530" user="RoterEmil"/>
+  <node id="924240046" lat="52.4867241" lon="13.3570080" version="6" timestamp="2024-01-01T19:48:24Z" changeset="145773873" uid="17304" user="kartograph">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="1023689289" lat="52.5116344" lon="13.3226788" version="11" timestamp="2026-01-09T20:12:27Z" changeset="177040132" uid="2149159" user="bergaufsee">
+    <tag k="bench" v="yes"/>
+    <tag k="bin" v="yes"/>
+    <tag k="bus" v="yes"/>
+    <tag k="highway" v="bus_stop"/>
+    <tag k="lit" v="yes"/>
+    <tag k="name" v="U Ernst-Reuter-Platz"/>
+    <tag k="public_transport" v="stop_position"/>
+    <tag k="ref:BVG" v="100842"/>
+    <tag k="shelter" v="yes"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="website" v="https://qr.bvg.de/h100842"/>
+    <tag k="wheelchair" v="no"/>
+  </node>
+  <node id="1221501657" lat="52.5060722" lon="13.2641966" version="2" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="1221501671" lat="52.5055471" lon="13.2646188" version="2" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="1221501673" lat="52.5071832" lon="13.2626279" version="2" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="1221501676" lat="52.5065613" lon="13.2636426" version="1" timestamp="2011-03-27T14:20:40Z" changeset="7686397" uid="6669" user="Elwood"/>
+  <node id="1226833881" lat="52.5152746" lon="13.2996192" version="3" timestamp="2022-05-24T13:31:14Z" changeset="121424840" uid="1497225" user="kartonage"/>
+  <node id="1270773092" lat="52.5169656" lon="13.4431027" version="7" timestamp="2015-03-21T20:33:05Z" changeset="29643675" uid="43566" user="anbr"/>
+  <node id="1329845589" lat="52.4825960" lon="13.3493187" version="4" timestamp="2023-04-24T19:07:35Z" changeset="135315462" uid="17304" user="kartograph"/>
+  <node id="1459876677" lat="52.5755825" lon="13.3320460" version="1" timestamp="2011-10-09T12:18:59Z" changeset="9511448" uid="10549" user="SaPoX"/>
+  <node id="1503705770" lat="52.5167883" lon="13.4449555" version="12" timestamp="2023-04-18T19:54:45Z" changeset="135075128" uid="17304" user="kartograph">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="1560791808" lat="52.5052151" lon="13.3332115" version="6" timestamp="2022-09-18T10:05:06Z" changeset="126324825" uid="44217" user="kjon"/>
+  <node id="1560791814" lat="52.5052051" lon="13.3334213" version="6" timestamp="2022-09-18T10:05:06Z" changeset="126324825" uid="44217" user="kjon"/>
+  <node id="1560792361" lat="52.5117221" lon="13.3225902" version="4" timestamp="2024-11-26T23:45:51Z" changeset="159638285" uid="418040" user="Supaplex030"/>
+  <node id="1625168372" lat="52.4262671" lon="13.2154914" version="3" timestamp="2020-09-23T09:37:06Z" changeset="91354991" uid="881429" user="atpl_pilot"/>
+  <node id="2020514544" lat="52.5058029" lon="13.3683580" version="4" timestamp="2024-12-29T12:35:39Z" changeset="160748243" uid="48581" user="Seat Ibiza"/>
+  <node id="2210561962" lat="52.4879686" lon="13.3581615" version="7" timestamp="2025-01-03T09:18:05Z" changeset="160939415" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="2432801017" lat="52.5721893" lon="13.3308662" version="2" timestamp="2019-03-03T10:30:45Z" changeset="67733223" uid="881429" user="atpl_pilot"/>
+  <node id="2485233895" lat="52.4445894" lon="13.2910349" version="4" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="2628438421" lat="52.5712225" lon="13.3305250" version="2" timestamp="2016-10-21T07:35:15Z" changeset="43052458" uid="1879543" user="glibbertorsten"/>
+  <node id="2992788266" lat="52.5160235" lon="13.4511048" version="1" timestamp="2014-08-02T19:11:24Z" changeset="24503499" uid="43566" user="anbr"/>
+  <node id="2992788278" lat="52.5164912" lon="13.4464021" version="3" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="2992788287" lat="52.5166383" lon="13.4464414" version="5" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="2992789015" lat="52.5168258" lon="13.4431190" version="7" timestamp="2025-09-18T06:07:42Z" changeset="172094603" uid="3790985" user="ofr1tz">
+    <tag k="bicycle" v="yes"/>
+    <tag k="check_date:crossing" v="2021-10-25"/>
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="crossing:signals" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="2992789023" lat="52.5169614" lon="13.4431586" version="8" timestamp="2025-09-18T06:08:02Z" changeset="172094603" uid="3790985" user="ofr1tz">
+    <tag k="bicycle" v="yes"/>
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="crossing:signals" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="2992870267" lat="52.5652677" lon="13.5401897" version="9" timestamp="2025-09-30T18:07:10Z" changeset="172673197" uid="22898413" user="fmc_5">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="dashes"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="kerb" v="lowered"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="2992870268" lat="52.5659160" lon="13.5413242" version="2" timestamp="2016-04-20T18:21:21Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="2992870269" lat="52.5661348" lon="13.5426083" version="2" timestamp="2016-04-20T18:21:21Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="2992870270" lat="52.5668674" lon="13.5445675" version="2" timestamp="2016-04-20T18:21:21Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="3155751072" lat="52.5218354" lon="13.4167276" version="11" timestamp="2023-06-11T22:16:33Z" changeset="137221382" uid="17304" user="kartograph">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="kerb" v="lowered"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="3174254564" lat="52.4830891" lon="13.3500068" version="2" timestamp="2018-01-12T08:47:38Z" changeset="55373807" uid="4179530" user="RoterEmil"/>
+  <node id="3342452758" lat="52.5067380" lon="13.3011234" version="3" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="3411532525" lat="52.5162401" lon="13.4489159" version="2" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="3423187987" lat="52.5671995" lon="13.3292515" version="3" timestamp="2023-03-24T20:29:15Z" changeset="134083650" uid="9508237" user="momabebra"/>
+  <node id="3514726913" lat="52.5671406" lon="13.5449460" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="3514726914" lat="52.5676717" lon="13.5455686" version="2" timestamp="2022-12-31T05:33:44Z" changeset="130709511" uid="18010197" user="the_emigrant"/>
+  <node id="3598126583" lat="52.5660205" lon="13.5422078" version="2" timestamp="2016-04-20T18:21:22Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="3699776826" lat="52.4468362" lon="13.2964476" version="2" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="3703526458" lat="52.5702709" lon="13.3301870" version="3" timestamp="2023-03-24T20:29:15Z" changeset="134083650" uid="9508237" user="momabebra"/>
+  <node id="3791060853" lat="52.5225252" lon="13.3425612" version="3" timestamp="2026-01-26T19:24:34Z" changeset="177734150" uid="22897978" user="fmc_Mlvln"/>
+  <node id="3828179971" lat="52.5218263" lon="13.4167568" version="3" timestamp="2022-08-02T13:40:03Z" changeset="124393012" uid="418040" user="Supaplex030"/>
+  <node id="3856654119" lat="52.4987710" lon="13.3270742" version="3" timestamp="2023-10-30T18:34:51Z" changeset="143380839" uid="2897845" user="questmarker">
+    <tag k="direction" v="forward"/>
+    <tag k="highway" v="give_way"/>
+  </node>
+  <node id="3888616765" lat="52.5165996" lon="13.4793921" version="3" timestamp="2026-03-07T14:18:51Z" changeset="179494670" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="3935369918" lat="52.5168717" lon="13.4426646" version="8" timestamp="2026-04-06T17:31:05Z" changeset="180960996" uid="2149159" user="bergaufsee">
+    <tag k="bench" v="yes"/>
+    <tag k="bin" v="yes"/>
+    <tag k="bus" v="yes"/>
+    <tag k="highway" v="bus_stop"/>
+    <tag k="lit" v="yes"/>
+    <tag k="name" v="U Weberwiese"/>
+    <tag k="public_transport" v="stop_position"/>
+    <tag k="ref:BVG" v="106745"/>
+    <tag k="shelter" v="yes"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="website" v="https://qr.bvg.de/h106745"/>
+    <tag k="wheelchair" v="yes"/>
+  </node>
+  <node id="3951898315" lat="52.5067803" lon="13.2958041" version="10" timestamp="2025-08-28T17:24:20Z" changeset="171147098" uid="2149159" user="bergaufsee">
+    <tag k="bench" v="yes"/>
+    <tag k="bin" v="yes"/>
+    <tag k="bus" v="yes"/>
+    <tag k="highway" v="bus_stop"/>
+    <tag k="lit" v="yes"/>
+    <tag k="name" v="Amtsgerichtsplatz"/>
+    <tag k="public_transport" v="stop_position"/>
+    <tag k="ref:BVG" v="102529"/>
+    <tag k="shelter" v="yes"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="website" v="https://qr.bvg.de/h102529"/>
+  </node>
+  <node id="3982039173" lat="52.5685340" lon="13.3297369" version="6" timestamp="2025-11-08T21:39:09Z" changeset="174395544" uid="2149159" user="bergaufsee">
+    <tag k="bench" v="yes"/>
+    <tag k="bin" v="yes"/>
+    <tag k="bus" v="yes"/>
+    <tag k="check_date:shelter" v="2023-03-24"/>
+    <tag k="highway" v="bus_stop"/>
+    <tag k="lit" v="yes"/>
+    <tag k="name" v="Auguste-Viktoria-Allee/Humboldtstraße"/>
+    <tag k="public_transport" v="stop_position"/>
+    <tag k="ref:BVG" v="103798"/>
+    <tag k="shelter" v="yes"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="website" v="https://qr.bvg.de/h103798"/>
+    <tag k="wheelchair" v="yes"/>
+  </node>
+  <node id="3998797193" lat="52.4823297" lon="13.3489187" version="1" timestamp="2016-02-10T09:48:52Z" changeset="37120557" uid="881429" user="atpl_pilot"/>
+  <node id="4060146308" lat="52.5659886" lon="13.5423743" version="2" timestamp="2016-04-20T18:21:23Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4060146309" lat="52.5660510" lon="13.5425356" version="2" timestamp="2016-04-20T18:21:23Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4078679984" lat="52.4264018" lon="13.2154050" version="3" timestamp="2020-09-23T09:37:06Z" changeset="91354991" uid="881429" user="atpl_pilot"/>
+  <node id="4136557781" lat="52.5638121" lon="13.5385447" version="3" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568201" lat="52.5634789" lon="13.5381309" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568205" lat="52.5635738" lon="13.5381737" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568212" lat="52.5637634" lon="13.5384150" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568339" lat="52.5649111" lon="13.5399507" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568352" lat="52.5651028" lon="13.5399897" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568373" lat="52.5654143" lon="13.5403763" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568378" lat="52.5654938" lon="13.5406843" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568395" lat="52.5657679" lon="13.5410316" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568411" lat="52.5658605" lon="13.5411849" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="4136568420" lat="52.5659598" lon="13.5415038" version="1" timestamp="2016-04-20T18:20:33Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4136568422" lat="52.5659960" lon="13.5418175" version="1" timestamp="2016-04-20T18:20:33Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4136568423" lat="52.5660009" lon="13.5424879" version="1" timestamp="2016-04-20T18:20:33Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4136568440" lat="52.5663808" lon="13.5434441" version="1" timestamp="2016-04-20T18:20:34Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4136568442" lat="52.5665217" lon="13.5438855" version="1" timestamp="2016-04-20T18:20:34Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4136568447" lat="52.5666352" lon="13.5441699" version="2" timestamp="2018-06-30T12:46:52Z" changeset="60301867" uid="6560931" user="Pitartal"/>
+  <node id="4136568453" lat="52.5667476" lon="13.5444077" version="1" timestamp="2016-04-20T18:20:34Z" changeset="38735803" uid="43566" user="anbr"/>
+  <node id="4182868861" lat="52.5058693" lon="13.3683950" version="3" timestamp="2018-12-30T11:29:07Z" changeset="65885079" uid="44217" user="kjon"/>
+  <node id="4347778100" lat="52.4477272" lon="13.4400165" version="2" timestamp="2017-03-10T11:16:58Z" changeset="46735637" uid="192046" user="Apolemus"/>
+  <node id="4347778102" lat="52.4478582" lon="13.4396695" version="5" timestamp="2026-09-18T11:59:00Z" changeset="189205242" uid="418040" user="Supaplex030"/>
+  <node id="4520362255" lat="52.5061613" lon="13.3173479" version="10" timestamp="2023-11-24T21:58:42Z" changeset="144422906" uid="20621767" user="AllyV">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:arrow" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="4581832011" lat="52.4968549" lon="13.2897787" version="1" timestamp="2016-12-30T20:48:06Z" changeset="44794612" uid="360562" user="haytigran"/>
+  <node id="4727591050" lat="52.4476505" lon="13.4401961" version="1" timestamp="2017-03-10T11:16:55Z" changeset="46735637" uid="192046" user="Apolemus"/>
+  <node id="4972059472" lat="52.5063918" lon="13.3109173" version="1" timestamp="2017-07-15T11:54:33Z" changeset="50304489" uid="74224" user="gkai"/>
+  <node id="5149390835" lat="52.5746778" lon="13.3703811" version="2" timestamp="2023-03-05T22:02:06Z" changeset="133342143" uid="17304" user="kartograph"/>
+  <node id="5149390850" lat="52.5747032" lon="13.3711896" version="2" timestamp="2023-03-05T22:02:06Z" changeset="133342143" uid="17304" user="kartograph"/>
+  <node id="5149390851" lat="52.5746935" lon="13.3708974" version="2" timestamp="2023-03-05T22:02:06Z" changeset="133342143" uid="17304" user="kartograph"/>
+  <node id="5220259742" lat="52.5066508" lon="13.3082835" version="2" timestamp="2017-11-29T23:18:11Z" changeset="54191682" uid="114161" user="Polarbear"/>
+  <node id="5696509368" lat="52.5067402" lon="13.3007688" version="3" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="5731346061" lat="52.4883669" lon="13.3585253" version="4" timestamp="2023-05-19T10:30:22Z" changeset="136293120" uid="17304" user="kartograph">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="5731346062" lat="52.4884039" lon="13.3585586" version="9" timestamp="2023-05-19T11:46:22Z" changeset="136296097" uid="17304" user="kartograph">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="5740275077" lat="52.5756748" lon="13.3320730" version="1" timestamp="2018-07-05T04:24:01Z" changeset="60423469" uid="1497225" user="kartonage">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="5740275079" lat="52.5756346" lon="13.3320618" version="7" timestamp="2024-03-22T20:56:46Z" changeset="149030644" uid="9508237" user="momabebra">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="5740283280" lat="52.5690868" lon="13.3299389" version="9" timestamp="2023-08-16T07:39:21Z" changeset="139948126" uid="9508237" user="momabebra">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="crossing:markings" v="dashes"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="traffic_signals:sound" v="no"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="5772401543" lat="52.4267490" lon="13.2151899" version="3" timestamp="2020-09-23T09:37:06Z" changeset="91354991" uid="881429" user="atpl_pilot"/>
+  <node id="5801853698" lat="52.5733619" lon="13.3314336" version="4" timestamp="2024-03-24T13:35:20Z" changeset="149089197" uid="9508237" user="momabebra">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+  </node>
+  <node id="5824828776" lat="52.5225749" lon="13.3431866" version="3" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="5824829444" lat="52.5225683" lon="13.3429998" version="2" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="5824829445" lat="52.5225765" lon="13.3436495" version="1" timestamp="2018-08-11T06:55:35Z" changeset="61558980" uid="4445038" user="sandrow75"/>
+  <node id="5824832305" lat="52.5225222" lon="13.3444134" version="3" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="5845531086" lat="52.5067807" lon="13.2953093" version="6" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="5845551786" lat="52.5058910" lon="13.3198534" version="1" timestamp="2018-08-21T06:27:36Z" changeset="61843897" uid="1497225" user="kartonage">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="5857125942" lat="52.4867571" lon="13.3570397" version="7" timestamp="2023-04-24T21:13:00Z" changeset="135319198" uid="17304" user="kartograph">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="6019010077" lat="52.5705857" lon="13.3302997" version="1" timestamp="2018-10-28T09:17:46Z" changeset="63944839" uid="4179530" user="RoterEmil"/>
+  <node id="6019010080" lat="52.5722507" lon="13.3308849" version="2" timestamp="2019-03-03T10:30:54Z" changeset="67733223" uid="881429" user="atpl_pilot"/>
+  <node id="6141033868" lat="52.5677699" lon="13.5456034" version="3" timestamp="2021-01-03T11:21:51Z" changeset="96841560" uid="10961311" user="StefanHRT"/>
+  <node id="6141033869" lat="52.5675686" lon="13.5454262" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="6141033870" lat="52.5674906" lon="13.5453990" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="6225148089" lat="52.5115496" lon="13.3227678" version="2" timestamp="2024-11-26T23:45:51Z" changeset="159638285" uid="418040" user="Supaplex030"/>
+  <node id="6300506718" lat="52.5733982" lon="13.3314464" version="7" timestamp="2024-03-24T13:35:20Z" changeset="149089197" uid="9508237" user="momabebra">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="traffic_signals:sound" v="no"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="6300506721" lat="52.5736038" lon="13.3315194" version="7" timestamp="2024-03-24T13:35:20Z" changeset="149089197" uid="9508237" user="momabebra">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+    <tag k="traffic_signals:sound" v="no"/>
+    <tag k="traffic_signals:vibration" v="no"/>
+  </node>
+  <node id="6418024109" lat="52.4927048" lon="13.3330575" version="1" timestamp="2019-04-20T15:16:03Z" changeset="69404856" uid="4179530" user="RoterEmil"/>
+  <node id="7549512017" lat="52.5067419" lon="13.3004871" version="2" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="7692836678" lat="52.5067765" lon="13.2960171" version="2" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="7692857985" lat="52.5062007" lon="13.3166738" version="1" timestamp="2020-07-07T20:01:47Z" changeset="87672558" uid="418040" user="Supaplex030"/>
+  <node id="7692857988" lat="52.5052502" lon="13.3326572" version="2" timestamp="2022-09-18T10:05:06Z" changeset="126324825" uid="44217" user="kjon"/>
+  <node id="7915562129" lat="52.4424228" lon="13.2848064" version="2" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="7976982467" lat="52.4502576" lon="13.3066833" version="2" timestamp="2024-01-01T05:58:57Z" changeset="145752655" uid="10961311" user="StefanHRT"/>
+  <node id="8110559016" lat="52.4479185" lon="13.4394942" version="3" timestamp="2026-09-18T11:59:00Z" changeset="189205242" uid="418040" user="Supaplex030"/>
+  <node id="8265536350" lat="52.5068941" lon="13.2631578" version="1" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="8265536351" lat="52.5076400" lon="13.2616452" version="1" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="8265536356" lat="52.5062115" lon="13.2640581" version="1" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="8265536357" lat="52.5059120" lon="13.2643433" version="1" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="8265536358" lat="52.5056638" lon="13.2645429" version="1" timestamp="2020-12-28T02:02:13Z" changeset="96503915" uid="17304" user="kartograph"/>
+  <node id="8285680341" lat="52.5653206" lon="13.5402545" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="8285680343" lat="52.5652034" lon="13.5401035" version="3" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="8325139727" lat="52.5654294" lon="13.5404283" version="2" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="8573756593" lat="52.4479478" lon="13.4393648" version="2" timestamp="2026-09-18T11:59:00Z" changeset="189205242" uid="418040" user="Supaplex030"/>
+  <node id="8573756594" lat="52.4479786" lon="13.4392175" version="1" timestamp="2021-03-30T05:53:29Z" changeset="101955665" uid="10961311" user="StefanHRT"/>
+  <node id="8573756595" lat="52.4480371" lon="13.4390050" version="2" timestamp="2026-09-18T11:59:00Z" changeset="189205242" uid="418040" user="Supaplex030"/>
+  <node id="8573756596" lat="52.4480752" lon="13.4388817" version="1" timestamp="2021-03-30T05:53:29Z" changeset="101955665" uid="10961311" user="StefanHRT"/>
+  <node id="8620571233" lat="52.5711605" lon="13.3305031" version="1" timestamp="2021-04-12T05:52:15Z" changeset="102772882" uid="10457692" user="pravallg"/>
+  <node id="8905867389" lat="52.5558994" lon="13.3811985" version="1" timestamp="2021-07-09T02:35:02Z" changeset="107667165" uid="10961311" user="StefanHRT"/>
+  <node id="8905921147" lat="52.5666731" lon="13.3289072" version="6" timestamp="2023-09-23T19:25:39Z" changeset="141658502" uid="44217" user="kjon">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="8935085627" lat="52.4467267" lon="13.2961198" version="3" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="8973373775" lat="52.4465320" lon="13.2956030" version="4" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="9360503691" lat="52.5169724" lon="13.4511368" version="1" timestamp="2021-12-23T11:28:57Z" changeset="115294117" uid="175760" user="famosm"/>
+  <node id="9530372100" lat="52.5218703" lon="13.4166127" version="3" timestamp="2022-08-02T13:40:03Z" changeset="124393012" uid="418040" user="Supaplex030"/>
+  <node id="9546066327" lat="52.4418756" lon="13.2830393" version="10" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="yes"/>
+  </node>
+  <node id="9671917708" lat="52.5709782" lon="13.3304386" version="5" timestamp="2023-09-03T19:36:09Z" changeset="140774240" uid="44217" user="kjon">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="incorrect"/>
+  </node>
+  <node id="9671917716" lat="52.5678308" lon="13.3294928" version="6" timestamp="2025-08-12T14:49:50Z" changeset="170346324" uid="22858967" user="stellarrrr">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="9893557722" lat="52.4830140" lon="13.3499032" version="2" timestamp="2023-07-02T09:36:20Z" changeset="138016306" uid="2414126" user="Weasel-Wiesel"/>
+  <node id="9922083107" lat="52.5545395" lon="13.3801091" version="1" timestamp="2022-07-31T09:52:59Z" changeset="124295007" uid="44217" user="kjon"/>
+  <node id="9922083109" lat="52.5545757" lon="13.3801403" version="1" timestamp="2022-07-31T09:52:59Z" changeset="124295007" uid="44217" user="kjon"/>
+  <node id="9922083110" lat="52.5546439" lon="13.3802867" version="1" timestamp="2022-07-31T09:52:59Z" changeset="124295007" uid="44217" user="kjon"/>
+  <node id="9922083111" lat="52.5546050" lon="13.3801921" version="1" timestamp="2022-07-31T09:52:59Z" changeset="124295007" uid="44217" user="kjon"/>
+  <node id="9929351145" lat="52.5166518" lon="13.4448427" version="2" timestamp="2023-04-18T20:14:46Z" changeset="135075812" uid="17304" user="kartograph">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="9929351146" lat="52.5167812" lon="13.4450261" version="2" timestamp="2023-04-18T19:54:45Z" changeset="135075128" uid="17304" user="kartograph">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="9929925535" lat="52.5159037" lon="13.4522413" version="1" timestamp="2022-08-03T16:22:34Z" changeset="124444114" uid="418040" user="Supaplex030"/>
+  <node id="9932726598" lat="52.5156165" lon="13.4785239" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726599" lat="52.5149456" lon="13.4780797" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726600" lat="52.5149101" lon="13.4780260" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726610" lat="52.5158529" lon="13.4787098" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726611" lat="52.5161364" lon="13.4790390" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726612" lat="52.5161015" lon="13.4789934" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726613" lat="52.5160245" lon="13.4789329" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726614" lat="52.5159192" lon="13.4788490" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726615" lat="52.5158256" lon="13.4786837" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932726616" lat="52.5154712" lon="13.4784113" version="1" timestamp="2022-08-04T23:46:50Z" changeset="124500388" uid="125718" user="Fabi2"/>
+  <node id="9932750417" lat="52.5152442" lon="13.4782311" version="2" timestamp="2022-08-05T02:57:59Z" changeset="124502403" uid="10961311" user="StefanHRT"/>
+  <node id="9932750418" lat="52.5151513" lon="13.4782320" version="3" timestamp="2022-08-05T02:57:59Z" changeset="124502403" uid="10961311" user="StefanHRT"/>
+  <node id="9932896151" lat="52.5162758" lon="13.4791449" version="1" timestamp="2022-08-05T02:57:59Z" changeset="124502403" uid="10961311" user="StefanHRT"/>
+  <node id="9932896166" lat="52.5147416" lon="13.4778904" version="1" timestamp="2022-08-05T02:57:59Z" changeset="124502403" uid="10961311" user="StefanHRT"/>
+  <node id="9932928024" lat="52.5162469" lon="13.4791229" version="1" timestamp="2022-08-05T03:55:57Z" changeset="124502654" uid="125718" user="Fabi2"/>
+  <node id="10005862526" lat="52.5149653" lon="13.2991879" version="1" timestamp="2022-09-07T06:59:19Z" changeset="125886177" uid="44217" user="kjon"/>
+  <node id="10048463962" lat="52.5659954" lon="13.5424373" version="1" timestamp="2022-09-24T02:40:29Z" changeset="126567784" uid="10961311" user="StefanHRT"/>
+  <node id="10074491356" lat="52.5066066" lon="13.3090678" version="1" timestamp="2022-10-04T07:38:03Z" changeset="126976101" uid="9508237" user="momabebra"/>
+  <node id="10074503655" lat="52.5064733" lon="13.3095039" version="1" timestamp="2022-10-04T07:38:10Z" changeset="126976101" uid="9508237" user="momabebra"/>
+  <node id="10076922695" lat="52.5060050" lon="13.3177728" version="1" timestamp="2022-10-05T12:54:58Z" changeset="127043709" uid="9508237" user="momabebra"/>
+  <node id="10083540296" lat="52.4987719" lon="13.3270201" version="3" timestamp="2024-07-24T17:42:00Z" changeset="154361866" uid="21727746" user="Traffikant">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="10186412010" lat="52.5169626" lon="13.4417376" version="2" timestamp="2023-04-18T20:37:26Z" changeset="135076505" uid="17304" user="kartograph"/>
+  <node id="10296344481" lat="52.5621474" lon="13.5364327" version="1" timestamp="2022-12-31T05:31:44Z" changeset="130709495" uid="18010197" user="the_emigrant"/>
+  <node id="10561678196" lat="52.5159648" lon="13.4788853" version="1" timestamp="2023-01-17T09:12:05Z" changeset="131369081" uid="18208051" user="MappiViewer"/>
+  <node id="10561678198" lat="52.5146871" lon="13.4778766" version="1" timestamp="2023-01-17T09:12:05Z" changeset="131369081" uid="18208051" user="MappiViewer">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+  </node>
+  <node id="10561678199" lat="52.5162970" lon="13.4791610" version="1" timestamp="2023-01-17T09:12:05Z" changeset="131369081" uid="18208051" user="MappiViewer">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+  </node>
+  <node id="10570139743" lat="52.5218114" lon="13.4168059" version="1" timestamp="2023-01-20T09:27:55Z" changeset="131498045" uid="9508237" user="momabebra"/>
+  <node id="10780193868" lat="52.4463353" lon="13.2950684" version="3" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="10781387474" lat="52.5067418" lon="13.3005019" version="5" timestamp="2023-07-28T08:32:58Z" changeset="139123850" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="kerb" v="lowered"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="10781387477" lat="52.5067400" lon="13.3007915" version="5" timestamp="2023-07-28T08:32:58Z" changeset="139123850" uid="17304" user="kartograph">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="kerb" v="lowered"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="10781424121" lat="52.5067836" lon="13.2954928" version="1" timestamp="2023-04-03T09:41:07Z" changeset="134446350" uid="9508237" user="momabebra"/>
+  <node id="10822786392" lat="52.5163767" lon="13.4490292" version="1" timestamp="2023-04-18T20:37:26Z" changeset="135076505" uid="17304" user="kartograph"/>
+  <node id="10826751318" lat="52.5150611" lon="13.4781716" version="1" timestamp="2023-04-20T09:47:25Z" changeset="135141196" uid="17304" user="kartograph"/>
+  <node id="10826751319" lat="52.5149767" lon="13.4781037" version="1" timestamp="2023-04-20T09:47:25Z" changeset="135141196" uid="17304" user="kartograph"/>
+  <node id="10834267836" lat="52.4893054" lon="13.3451498" version="3" timestamp="2023-07-08T19:40:34Z" changeset="138275428" uid="17304" user="kartograph"/>
+  <node id="10834268404" lat="52.4902072" lon="13.3451851" version="3" timestamp="2023-07-08T20:26:45Z" changeset="138276768" uid="17304" user="kartograph"/>
+  <node id="10837831768" lat="52.4825823" lon="13.3492997" version="1" timestamp="2023-04-24T19:07:35Z" changeset="135315462" uid="17304" user="kartograph"/>
+  <node id="10837831773" lat="52.4827353" lon="13.3495121" version="2" timestamp="2023-12-28T19:15:08Z" changeset="145633780" uid="17304" user="kartograph"/>
+  <node id="10858156993" lat="52.5534731" lon="13.4182912" version="1" timestamp="2023-04-30T16:13:17Z" changeset="135543675" uid="1762277" user="pgtiips"/>
+  <node id="10858156994" lat="52.5537418" lon="13.4158988" version="1" timestamp="2023-04-30T16:13:17Z" changeset="135543675" uid="1762277" user="pgtiips"/>
+  <node id="10923353660" lat="52.5691552" lon="13.3299630" version="3" timestamp="2026-02-04T11:11:29Z" changeset="178089720" uid="4974073" user="thom_bike_bln">
+    <tag k="button_operated" v="no"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="11010796177" lat="52.4831161" lon="13.3500436" version="1" timestamp="2023-06-27T17:56:17Z" changeset="137846633" uid="17349563" user="Kataklothes"/>
+  <node id="11168795559" lat="52.5746847" lon="13.3706095" version="1" timestamp="2023-09-05T05:41:17Z" changeset="140831923" uid="19550286" user="BerlinMapBoi"/>
+  <node id="11242107520" lat="52.4350345" lon="13.1975226" version="1" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="11242107521" lat="52.4350433" lon="13.1975901" version="1" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="11242107522" lat="52.4350448" lon="13.1976274" version="1" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="11242107523" lat="52.4350451" lon="13.1976767" version="1" timestamp="2023-10-05T19:54:45Z" changeset="142204929" uid="9508237" user="momabebra"/>
+  <node id="11299990709" lat="52.4999903" lon="13.3270251" version="3" timestamp="2026-01-27T11:30:21Z" changeset="177758819" uid="22897978" user="fmc_Mlvln"/>
+  <node id="11524213466" lat="52.5168733" lon="13.4521792" version="1" timestamp="2024-01-17T07:39:58Z" changeset="146350797" uid="4021261" user="McKai"/>
+  <node id="11640477452" lat="52.5225698" lon="13.3438127" version="1" timestamp="2024-02-19T09:56:36Z" changeset="147642349" uid="9508237" user="momabebra"/>
+  <node id="11673702478" lat="52.5616607" lon="13.5357811" version="1" timestamp="2024-02-28T20:34:22Z" changeset="148028045" uid="9508237" user="momabebra"/>
+  <node id="11681422719" lat="52.5558424" lon="13.3811571" version="6" timestamp="2026-03-16T08:56:07Z" changeset="179935540" uid="23452404" user="Schildkröte GmbH">
+    <tag k="barrier" v="cycle_barrier"/>
+    <tag k="cycle_barrier" v="single"/>
+    <tag k="cycle_barrier:installation" v="removable"/>
+    <tag k="maxwidth:physical" v="3"/>
+  </node>
+  <node id="11985834283" lat="52.4480911" lon="13.4388449" version="1" timestamp="2024-06-16T17:32:03Z" changeset="152770554" uid="44217" user="kjon"/>
+  <node id="12269775537" lat="52.4466888" lon="13.2960165" version="2" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="12272050103" lat="52.4446941" lon="13.2913432" version="2" timestamp="2025-07-23T10:25:41Z" changeset="169335653" uid="6313393" user="DrVaust"/>
+  <node id="12272050105" lat="52.4450022" lon="13.2921945" version="1" timestamp="2024-10-20T22:02:56Z" changeset="158147257" uid="17304" user="kartograph"/>
+  <node id="12329193492" lat="52.4899551" lon="13.3451752" version="1" timestamp="2024-11-10T18:58:20Z" changeset="158981561" uid="2414126" user="Weasel-Wiesel"/>
+  <node id="12377387981" lat="52.5114682" lon="13.3228579" version="1" timestamp="2024-11-26T23:45:51Z" changeset="159638285" uid="418040" user="Supaplex030"/>
+  <node id="12590174636" lat="52.5724288" lon="13.3309485" version="1" timestamp="2025-02-15T14:16:57Z" changeset="162537663" uid="44217" user="kjon">
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="12735205454" lat="52.5225783" lon="13.3434666" version="1" timestamp="2025-04-06T20:13:29Z" changeset="164607634" uid="39381" user="DD1GJ"/>
+  <node id="12754664411" lat="52.5225166" lon="13.3444692" version="1" timestamp="2025-04-14T16:00:28Z" changeset="164946181" uid="5340634" user="Amul"/>
+  <node id="12754673077" lat="52.5225707" lon="13.3437898" version="1" timestamp="2025-04-14T16:01:18Z" changeset="164946222" uid="5340634" user="Amul"/>
+  <node id="12849353337" lat="52.5680883" lon="13.3295817" version="1" timestamp="2025-05-19T17:14:10Z" changeset="166488082" uid="3199517" user="Fumasu"/>
+  <node id="13131257320" lat="52.4496112" lon="13.3048647" version="1" timestamp="2025-09-09T15:33:22Z" changeset="171692778" uid="22897978" user="fmc_Mlvln"/>
+  <node id="13131257331" lat="52.4432032" lon="13.2870680" version="2" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="13144861546" lat="52.4259671" lon="13.2156782" version="1" timestamp="2025-09-15T15:49:24Z" changeset="171973347" uid="22897978" user="fmc_Mlvln"/>
+  <node id="13147002255" lat="52.4349442" lon="13.1972566" version="1" timestamp="2025-09-16T11:34:40Z" changeset="172009878" uid="22897978" user="fmc_Mlvln"/>
+  <node id="13381262899" lat="52.5747171" lon="13.3716275" version="1" timestamp="2025-12-16T13:32:26Z" changeset="176006257" uid="22898413" user="fmc_5"/>
+  <node id="13415966702" lat="52.5696786" lon="13.3299762" version="1" timestamp="2025-12-29T15:25:44Z" changeset="176583560" uid="22898413" user="fmc_5"/>
+  <node id="13415966703" lat="52.5724846" lon="13.3309684" version="1" timestamp="2025-12-29T15:25:44Z" changeset="176583560" uid="22898413" user="fmc_5"/>
+  <node id="13416296977" lat="52.5736334" lon="13.3315298" version="1" timestamp="2025-12-29T17:56:19Z" changeset="176590356" uid="22898413" user="fmc_5"/>
+  <node id="13416296980" lat="52.5733203" lon="13.3314189" version="1" timestamp="2025-12-29T17:56:19Z" changeset="176590356" uid="22898413" user="fmc_5"/>
+  <node id="13464237987" lat="52.5067448" lon="13.2999319" version="1" timestamp="2026-01-18T15:39:56Z" changeset="177379476" uid="22898403" user="fmc_4"/>
+  <node id="13468455638" lat="52.5063645" lon="13.3113847" version="1" timestamp="2026-01-19T15:17:45Z" changeset="177434392" uid="22898403" user="fmc_4"/>
+  <node id="13503864508" lat="52.4997438" lon="13.3270021" version="1" timestamp="2026-01-27T11:30:21Z" changeset="177758819" uid="22897978" user="fmc_Mlvln"/>
+  <node id="13512947168" lat="52.4923807" lon="13.3330532" version="1" timestamp="2026-01-30T19:53:27Z" changeset="177904329" uid="22898403" user="fmc_4"/>
+  <node id="13577321555" lat="52.4875314" lon="13.3577628" version="1" timestamp="2026-02-18T17:02:10Z" changeset="178734830" uid="22897978" user="fmc_Mlvln"/>
+  <node id="13674551619" lat="52.5169881" lon="13.4414853" version="1" timestamp="2026-03-24T12:58:54Z" changeset="180353101" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="13718223829" lat="52.4428070" lon="13.2859915" version="1" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030"/>
+  <node id="13718223830" lat="52.4426811" lon="13.2856278" version="1" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030"/>
+  <way id="4067883" version="22" timestamp="2023-03-04T19:02:30Z" changeset="133302849" uid="17348397" user="mapimir">
+    <nd ref="29030447"/>
+    <nd ref="8265536351"/>
+    <nd ref="29030449"/>
+    <nd ref="29030445"/>
+    <nd ref="1221501673"/>
+    <nd ref="29030450"/>
+    <nd ref="8265536350"/>
+    <nd ref="16541480"/>
+    <nd ref="1221501676"/>
+    <nd ref="29030451"/>
+    <nd ref="8265536356"/>
+    <nd ref="1221501657"/>
+    <nd ref="8265536357"/>
+    <nd ref="16541481"/>
+    <nd ref="8265536358"/>
+    <nd ref="1221501671"/>
+    <nd ref="29030453"/>
+    <tag k="cycleway:both" v="separate"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="4"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Jafféstraße"/>
+    <tag k="name:etymology:wikidata" v="Q817940"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="14052"/>
+    <tag k="sidewalk:left" v="separate"/>
+    <tag k="sidewalk:right" v="no"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q22287975"/>
+  </way>
+  <way id="4068188" version="28" timestamp="2025-09-15T15:49:24Z" changeset="171973347" uid="22897978" user="fmc_Mlvln">
+    <nd ref="13144861546"/>
+    <nd ref="1625168372"/>
+    <nd ref="4078679984"/>
+    <nd ref="5772401543"/>
+    <tag k="cycleway:both" v="separate"/>
+    <tag k="highway" v="residential"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Wasgensteig"/>
+    <tag k="name:etymology:wikidata" v="Q187843"/>
+    <tag k="name:etymology:wikipedia" v="de:Vogesen"/>
+    <tag k="parking:left" v="street_side"/>
+    <tag k="parking:left:fee" v="no"/>
+    <tag k="parking:left:orientation" v="parallel"/>
+    <tag k="parking:right" v="no"/>
+    <tag k="parking:right:restriction" v="no_parking"/>
+    <tag k="postal_code" v="14129"/>
+    <tag k="sidewalk" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="4071972" version="38" timestamp="2025-12-16T13:32:26Z" changeset="176006257" uid="22898413" user="fmc_5">
+    <nd ref="92893494"/>
+    <nd ref="751779784"/>
+    <nd ref="5149390835"/>
+    <nd ref="11168795559"/>
+    <nd ref="5149390851"/>
+    <nd ref="5149390850"/>
+    <nd ref="13381262899"/>
+    <tag k="bicycle" v="optional_sidepath"/>
+    <tag k="cycleway:both" v="separate"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="maxspeed:conditional" v="30 @ (22:00-06:00)"/>
+    <tag k="name" v="Klemkestraße"/>
+    <tag k="name:etymology:wikidata" v="Q91558817"/>
+    <tag k="parking:left" v="street_side"/>
+    <tag k="parking:left:access" v="yes"/>
+    <tag k="parking:left:fee" v="no"/>
+    <tag k="parking:left:orientation" v="diagonal"/>
+    <tag k="parking:right" v="separate"/>
+    <tag k="postal_code" v="13409"/>
+    <tag k="sidewalk:both" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q91911578"/>
+  </way>
+  <way id="4083461" version="39" timestamp="2026-03-23T16:34:48Z" changeset="180314235" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="3791060853"/>
+    <nd ref="354984274"/>
+    <nd ref="5824829444"/>
+    <nd ref="5824828776"/>
+    <nd ref="12735205454"/>
+    <nd ref="5824829445"/>
+    <nd ref="12754673077"/>
+    <nd ref="11640477452"/>
+    <nd ref="413562833"/>
+    <nd ref="21677325"/>
+    <nd ref="5824832305"/>
+    <nd ref="12754664411"/>
+    <nd ref="26991882"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="bicycle_road" v="yes"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="highway" v="unclassified"/>
+    <tag k="lane_markings" v="no"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Holsteiner Ufer"/>
+    <tag k="name:etymology:wikidata" v="Q111224"/>
+    <tag k="oneway" v="no"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:left:restriction" v="no_stopping"/>
+    <tag k="parking:right" v="street_side"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Fr 00:00-09:00,20:00-24:00; Sa 00:00-09:00,18:00-24:00; Su)"/>
+    <tag k="parking:right:markings" v="yes"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="71"/>
+    <tag k="postal_code" v="10557"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="sidewalk:right:surface" v="paving_stones"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="source:width" v="ARCore"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="traffic_sign" v="DE:244.1,1020-30"/>
+    <tag k="vehicle" v="destination"/>
+    <tag k="width" v="3"/>
+    <tag k="wikidata" v="Q58821383"/>
+  </way>
+  <way id="4316780" version="29" timestamp="2025-09-16T11:34:40Z" changeset="172009878" uid="22897978" user="fmc_Mlvln">
+    <nd ref="13147002255"/>
+    <nd ref="26190992"/>
+    <nd ref="30205987"/>
+    <nd ref="11242107520"/>
+    <nd ref="11242107521"/>
+    <nd ref="11242107522"/>
+    <nd ref="11242107523"/>
+    <nd ref="784382396"/>
+    <nd ref="26190921"/>
+    <tag k="bicycle" v="optional_sidepath"/>
+    <tag k="cycleway:both" v="separate"/>
+    <tag k="description" v="Benannt anlässlich der Rückkehr der Legion Condor aus dem Spanischen Bürgerkrieg."/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Spanische Allee"/>
+    <tag k="name:etymology:wikidata" v="Q153324"/>
+    <tag k="name:etymology:wikipedia" v="de:Legion Condor"/>
+    <tag k="parking:left" v="half_on_kerb"/>
+    <tag k="parking:left:fee" v="no"/>
+    <tag k="parking:left:orientation" v="parallel"/>
+    <tag k="parking:right" v="no"/>
+    <tag k="postal_code" v="14129"/>
+    <tag k="sidewalk:both" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q23810847"/>
+  </way>
+  <way id="4377785" version="53" timestamp="2025-10-13T12:09:46Z" changeset="173224393" uid="21727746" user="Traffikant">
+    <nd ref="654381287"/>
+    <nd ref="12377387981"/>
+    <nd ref="6225148089"/>
+    <nd ref="1023689289"/>
+    <nd ref="1560792361"/>
+    <nd ref="26704048"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:245,1022-10,Zusatzzeichen"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="4"/>
+    <tag k="lanes:psv" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Hardenbergstraße"/>
+    <tag k="name:etymology:wikidata" v="Q213645"/>
+    <tag k="name:etymology:wikipedia" v="de:Karl August von Hardenberg"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:left:reason" v="dual_carriage"/>
+    <tag k="parking:right:reason" v="bus_lane"/>
+    <tag k="placement" v="right_of:2"/>
+    <tag k="postal_code" v="10623"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="turn:lanes" v="through|through|through;right|none"/>
+    <tag k="wikidata" v="Q212275"/>
+    <tag k="wikipedia" v="de:Hardenbergstraße"/>
+  </way>
+  <way id="4389412" version="62" timestamp="2026-02-23T13:25:26Z" changeset="178943526" uid="22897978" user="fmc_Mlvln">
+    <nd ref="4581832011"/>
+    <nd ref="444606380"/>
+    <nd ref="30968457"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation:left" v="no"/>
+    <tag k="cycleway:right:surface:colour" v="no"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:245,Zusatzzeichen"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Kurfürstendamm"/>
+    <tag k="name:el" v="Κούρφιρστενταμ"/>
+    <tag k="name:etymology:wikidata" v="Q22722"/>
+    <tag k="name:etymology:wikipedia" v="de:Kurfürst"/>
+    <tag k="name:he" v="קורפירסטנדאם"/>
+    <tag k="name:ja" v="クアフュルステンダム"/>
+    <tag k="name:ru" v="Курфюрстендамм"/>
+    <tag k="name:sr" v="Курфирстендам"/>
+    <tag k="name:uk" v="Курфюрстендамм"/>
+    <tag k="name:zh" v="选帝侯大街"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:restriction" v="no_stopping"/>
+    <tag k="parking:right:restriction:conditional" v="loading_only @ (Mo-Fr 09:00-14:00)"/>
+    <tag k="postal_code" v="10711"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q160272"/>
+    <tag k="wikipedia" v="de:Kurfürstendamm"/>
+  </way>
+  <way id="4395584" version="46" timestamp="2026-03-17T22:27:15Z" changeset="180030789" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="6418024109"/>
+    <nd ref="13512947168"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="bicycle_road" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="residential"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Prinzregentenstraße"/>
+    <tag k="name:etymology:wikidata" v="Q729924"/>
+    <tag k="parking:both" v="lane"/>
+    <tag k="parking:both:fee" v="yes"/>
+    <tag k="parking:both:fee:conditional" v="no @ (Mo-Fr 00:00-09:00,22:00-24:00; Sa 00:00-09:00,18:00-24:00; Su)"/>
+    <tag k="parking:both:orientation" v="parallel"/>
+    <tag k="parking:both:zone" v="120"/>
+    <tag k="sidewalk" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:width" v="Luftbild 2024"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="traffic_sign" v="DE:244.1,1020-30"/>
+    <tag k="vehicle" v="destination"/>
+    <tag k="width" v="4.5"/>
+    <tag k="wikidata" v="Q105357055"/>
+  </way>
+  <way id="4395698" version="31" timestamp="2025-11-02T12:46:29Z" changeset="174100980" uid="21727746" user="Traffikant">
+    <nd ref="2020514544"/>
+    <nd ref="4182868861"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:245,1022-10,1026-30,1024-14"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Potsdamer Straße"/>
+    <tag k="name:etymology:wikidata" v="Q1711"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10785"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="4395950" version="51" timestamp="2026-03-14T18:14:15Z" changeset="179870624" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="10834267836"/>
+    <nd ref="12329193492"/>
+    <nd ref="10834268404"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:245,1022-10,Zusatzzeichen"/>
+    <tag k="cycleway:right:width" v="3.2"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lanes:psv" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Martin-Luther-Straße"/>
+    <tag k="name:etymology:wikidata" v="Q9554"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Fr 00:00-09:00,22:00-24:00; Sa 00:00-09:00,18:00-24:00; Su)"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="84"/>
+    <tag k="postal_code" v="10779"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2024"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1903256"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="4396016" version="42" timestamp="2026-09-25T15:14:47Z" changeset="189550064" uid="4974073" user="thom_bike_bln">
+    <nd ref="1560791814"/>
+    <nd ref="1560791808"/>
+    <nd ref="7692857988"/>
+    <tag k="cycleway:both" v="lane"/>
+    <tag k="cycleway:both:buffer:left" v="no"/>
+    <tag k="cycleway:both:buffer:right" v="0.6"/>
+    <tag k="cycleway:both:lane" v="advisory"/>
+    <tag k="cycleway:both:marking:both" v="dashed_line"/>
+    <tag k="cycleway:both:oneway" v="yes"/>
+    <tag k="cycleway:both:separation:left" v="no"/>
+    <tag k="cycleway:both:surface" v="asphalt"/>
+    <tag k="cycleway:both:surface:colour" v="none"/>
+    <tag k="cycleway:both:traffic_mode:right" v="parking"/>
+    <tag k="cycleway:both:traffic_sign" v="none"/>
+    <tag k="cycleway:left:mapillary" v="4810484855717531"/>
+    <tag k="cycleway:left:width" v="1.4"/>
+    <tag k="cycleway:right:mapillary" v="1673163466359852"/>
+    <tag k="cycleway:right:width" v="1.5"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lanes:backward" v="2"/>
+    <tag k="lanes:forward" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="parking:both" v="separate"/>
+    <tag k="postal_code" v="10623"/>
+    <tag k="sidewalk:both" v="separate"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="source:cycleway:both:width" v="Messung aus Punktwolke (Infra3DViewer)"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="vehicle" v="no"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="4396321" version="34" timestamp="2025-11-08T11:48:48Z" changeset="174371705" uid="21727746" user="Traffikant">
+    <nd ref="26682475"/>
+    <nd ref="5845531086"/>
+    <nd ref="10781424121"/>
+    <nd ref="313153835"/>
+    <nd ref="3951898315"/>
+    <nd ref="7692836678"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="no"/>
+    <tag k="cycleway:right:buffer:right" v="yes"/>
+    <tag k="cycleway:right:lane" v="advisory"/>
+    <tag k="cycleway:right:marking:left" v="dashed_line"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation:both" v="none"/>
+    <tag k="cycleway:right:traffic_mode:right" v="psv"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10627"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="4484276" version="25" timestamp="2025-09-09T15:33:22Z" changeset="171692778" uid="22897978" user="fmc_Mlvln">
+    <nd ref="2485233895"/>
+    <nd ref="12272050103"/>
+    <nd ref="12272050105"/>
+    <nd ref="249798537"/>
+    <tag k="cycleway" v="no"/>
+    <tag k="foot" v="no"/>
+    <tag k="highway" v="primary_link"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="postal_code" v="12205"/>
+    <tag k="sidewalk" v="no"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q2497110"/>
+  </way>
+  <way id="4484277" version="40" timestamp="2026-04-09T10:38:38Z" changeset="181090013" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="9546066327"/>
+    <nd ref="7915562129"/>
+    <nd ref="13718223830"/>
+    <nd ref="13718223829"/>
+    <nd ref="565582057"/>
+    <nd ref="13131257331"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:markings" v="yes"/>
+    <tag k="parking:right:orientation" v="diagonal"/>
+    <tag k="postal_code" v="12205"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q2497110"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="4484278" version="24" timestamp="2025-09-09T15:33:22Z" changeset="171692778" uid="22897978" user="fmc_Mlvln">
+    <nd ref="26906165"/>
+    <nd ref="26906167"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="layer" v="-1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxheight" v="4.0"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="motorroad" v="yes"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="shoulder" v="no"/>
+    <tag k="sidewalk" v="no"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="tunnel" v="yes"/>
+    <tag k="wikidata" v="Q2497110"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="4484279" version="24" timestamp="2025-09-09T15:33:22Z" changeset="171692778" uid="22897978" user="fmc_Mlvln">
+    <nd ref="26906166"/>
+    <nd ref="26906164"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="layer" v="-1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxheight" v="4.0"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="motorroad" v="yes"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="shoulder" v="no"/>
+    <tag k="sidewalk" v="no"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="tunnel" v="yes"/>
+    <tag k="wikidata" v="Q2497110"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="4492002" version="34" timestamp="2026-01-23T19:22:31Z" changeset="177623051" uid="22897978" user="fmc_Mlvln">
+    <nd ref="26761209"/>
+    <nd ref="292909446"/>
+    <nd ref="26761210"/>
+    <nd ref="3856654119"/>
+    <nd ref="10083540296"/>
+    <nd ref="26761208"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="bicycle_road" v="yes"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="residential"/>
+    <tag k="image" v="https://commons.wikimedia.org/wiki/File:WilmersdorfFasanenplatz1.JPG"/>
+    <tag k="lane_markings" v="no"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="maxspeed:type" v="DE:bicycle_road"/>
+    <tag k="motor_vehicle" v="destination"/>
+    <tag k="name" v="Fasanenplatz"/>
+    <tag k="name:etymology:wikidata" v="Q1397298"/>
+    <tag k="name:etymology:wikipedia" v="de:Fasanerie"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="oneway:bicycle" v="no"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:both:restriction" v="no_stopping"/>
+    <tag k="postal_code" v="10719"/>
+    <tag k="sett:length" v="0.1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:width" v="Luftbild"/>
+    <tag k="surface" v="sett"/>
+    <tag k="traffic_sign" v="DE:244.1,1020-30"/>
+    <tag k="traffic_sign:backward" v="DE:267,1022-10"/>
+    <tag k="width" v="6.5"/>
+    <tag k="wikidata" v="Q1397273"/>
+    <tag k="wikimedia_commons" v="Category:Fasanenplatz (Berlin-Wilmersdorf)"/>
+    <tag k="wikipedia" v="de:Fasanenplatz"/>
+  </way>
+  <way id="4492007" version="25" timestamp="2026-03-20T21:42:37Z" changeset="180179239" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="11299990709"/>
+    <nd ref="13503864508"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="bicycle_road" v="yes"/>
+    <tag k="buffer:both" v="0.9"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="residential"/>
+    <tag k="lane_markings" v="no"/>
+    <tag k="lit" v="yes"/>
+    <tag k="mapillary" v="1807418036869230"/>
+    <tag k="marking:left" v="dashed_line"/>
+    <tag k="marking:right" v="dashed_line"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="maxspeed:type" v="DE:bicycle_road"/>
+    <tag k="motor_vehicle" v="destination"/>
+    <tag k="name" v="Fasanenstraße"/>
+    <tag k="name:etymology:wikidata" v="Q1397298"/>
+    <tag k="name:etymology:wikipedia" v="de:Fasanerie"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="oneway:bicycle" v="no"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Sa 00:00-09:00,22:00-24:00; Su)"/>
+    <tag k="parking:right:markings" v="yes"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="8"/>
+    <tag k="postal_code" v="10719"/>
+    <tag k="sidewalk" v="separate"/>
+    <tag k="source:width" v="Luftbild 2024"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="traffic_sign" v="DE:244.1,1020-30"/>
+    <tag k="traffic_sign:backward" v="DE:244.1,267,1022-10"/>
+    <tag k="width" v="6.7"/>
+    <tag k="width:effective" v="4.8"/>
+    <tag k="wikidata" v="Q319646"/>
+    <tag k="wikipedia" v="de:Fasanenstraße (Berlin)"/>
+  </way>
+  <way id="4615614" version="43" timestamp="2026-09-07T18:04:59Z" changeset="188685131" uid="2773628" user="KlausKleber">
+    <nd ref="29271390"/>
+    <nd ref="29271391"/>
+    <tag k="bicycle" v="use_sidepath"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="4"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="name:etymology:wikidata" v="Q9061"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:both:reason" v="junction"/>
+    <tag k="ref" v="B 1;B 5"/>
+    <tag k="shoulder" v="no"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="turn:lanes" v="left|through|none|none"/>
+    <tag k="wikidata" v="Q683226"/>
+    <tag k="wikipedia" v="de:Karl-Marx-Allee"/>
+  </way>
+  <way id="4615777" version="67" timestamp="2026-08-30T07:35:21Z" changeset="188230740" uid="21789185" user="mle-86">
+    <nd ref="13674551619"/>
+    <nd ref="10186412010"/>
+    <nd ref="3935369918"/>
+    <nd ref="2992789015"/>
+    <nd ref="9929351145"/>
+    <nd ref="267492915"/>
+    <nd ref="2992788278"/>
+    <nd ref="3411532525"/>
+    <nd ref="585467954"/>
+    <nd ref="831468222"/>
+    <nd ref="318547834"/>
+    <nd ref="2992788266"/>
+    <nd ref="9929925535"/>
+    <nd ref="656933156"/>
+    <tag k="bicycle" v="use_sidepath"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="name:etymology:wikidata" v="Q9061"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:left:reason" v="dual_carriage"/>
+    <tag k="parking:right:restriction:conditional" v="no_parking @ (Mo-Fr 08:00-14:00); no_stopping @ (Mo-Fr 14:00-18:00)"/>
+    <tag k="ref" v="B 1;B 5"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="intermediate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q683226"/>
+    <tag k="wikipedia" v="de:Karl-Marx-Allee"/>
+  </way>
+  <way id="4782480" version="50" timestamp="2025-09-16T12:42:13Z" changeset="172013215" uid="418040" user="Supaplex030">
+    <nd ref="10822786392"/>
+    <nd ref="2992788287"/>
+    <nd ref="9929351146"/>
+    <nd ref="1503705770"/>
+    <nd ref="2992789023"/>
+    <nd ref="1270773092"/>
+    <tag k="bicycle" v="use_sidepath"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="name:etymology:wikidata" v="Q9061"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="separate"/>
+    <tag k="ref" v="B 1;B 5"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q683226"/>
+    <tag k="wikipedia" v="de:Karl-Marx-Allee"/>
+  </way>
+  <way id="7744347" version="29" timestamp="2026-09-06T14:48:01Z" changeset="188622668" uid="11660973" user="u1l">
+    <nd ref="13131257320"/>
+    <nd ref="261701558"/>
+    <nd ref="7976982467"/>
+    <nd ref="26906445"/>
+    <nd ref="26906448"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="residential"/>
+    <tag k="lane_markings" v="no"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="postal_code" v="12203"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="intermediate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q2497110"/>
+  </way>
+  <way id="14851818" version="27" timestamp="2025-10-28T10:44:17Z" changeset="173877032" uid="21727746" user="Traffikant">
+    <nd ref="3699776826"/>
+    <nd ref="8935085627"/>
+    <nd ref="12269775537"/>
+    <nd ref="8973373775"/>
+    <nd ref="10780193868"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary_link"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Unter den Eichen"/>
+    <tag k="name:etymology:wikidata" v="Q12004"/>
+    <tag k="name:etymology:wikipedia" v="de:Eichen"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="postal_code" v="12203"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q2497110"/>
+  </way>
+  <way id="23125889" version="37" timestamp="2026-01-02T22:40:03Z" changeset="176763847" uid="23268127" user="fmc_10">
+    <nd ref="480064723"/>
+    <nd ref="8905921147"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="cycleway:right:conditional" v="share_busway @ (Mo-Fr 06:00-09:00)"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:width" v="2.8"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="marking:left" v="dashed_line"/>
+    <tag k="marking:right" v="no"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:left:reason" v="dual_carriage"/>
+    <tag k="parking:right" v="no"/>
+    <tag k="parking:right:restriction" v="no_stopping"/>
+    <tag k="postal_code" v="13403"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2024"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="traffic_sign" v="DE:245,1022-10"/>
+    <tag k="turn:lanes" v="left|none|none"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="25778031" version="48" timestamp="2023-09-06T11:03:17Z" changeset="140889633" uid="11963177" user="JeroenvanderGun">
+    <nd ref="10858156993"/>
+    <nd ref="504333875"/>
+    <nd ref="10858156994"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="advisory"/>
+    <tag k="cycleway:right:separation" v="dashed_line"/>
+    <tag k="cycleway:right:surface:colour" v="green"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lane_markings" v="yes"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="maxspeed:conditional" v="30 @ (22:00-06:00)"/>
+    <tag k="name" v="Wisbyer Straße"/>
+    <tag k="name:etymology:wikidata" v="Q54757"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="separate"/>
+    <tag k="postal_code" v="10439"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q2586036"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="28133482" version="23" timestamp="2026-08-20T17:04:06Z" changeset="187755658" uid="21789185" user="mle-86">
+    <nd ref="308994488"/>
+    <nd ref="11524213466"/>
+    <nd ref="9360503691"/>
+    <nd ref="308994485"/>
+    <tag k="highway" v="living_street"/>
+    <tag k="lit" v="yes"/>
+    <tag k="motor_vehicle" v="destination"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="name:etymology:wikidata" v="Q9061"/>
+    <tag k="operator:type" v="private"/>
+    <tag k="parking:both:access" v="private"/>
+    <tag k="parking:left" v="street_side"/>
+    <tag k="parking:left:orientation" v="perpendicular"/>
+    <tag k="parking:right" v="on_kerb"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="28658322" version="29" timestamp="2025-11-08T11:48:48Z" changeset="174371705" uid="21727746" user="Traffikant">
+    <nd ref="26736160"/>
+    <nd ref="20246276"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:both" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:both" v="dashed_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation:both" v="no"/>
+    <tag k="cycleway:right:surface:colour" v="red"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2.5"/>
+    <tag k="description:covid19" v="Pop-up-Radweg"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10627"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="28658323" version="40" timestamp="2026-03-22T10:21:26Z" changeset="180242003" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="10074491356"/>
+    <nd ref="5220259742"/>
+    <nd ref="888819542"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:left" v="solid_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation:right" v="parking_lane"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2.2"/>
+    <tag k="description:covid19" v="Pop-up-Radweg"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Sa 00:00-09:00,20:00-24:00; Su)"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="4"/>
+    <tag k="postal_code" v="10627"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="28658327" version="30" timestamp="2026-01-18T15:39:56Z" changeset="177379476" uid="22898403" user="fmc_4">
+    <nd ref="13464237987"/>
+    <nd ref="7549512017"/>
+    <nd ref="10781387474"/>
+    <nd ref="313154028"/>
+    <nd ref="5696509368"/>
+    <nd ref="10781387477"/>
+    <nd ref="3342452758"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="no"/>
+    <tag k="cycleway:right:buffer:right" v="yes"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:left" v="solid_line"/>
+    <tag k="cycleway:right:marking:right" v="dashed_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation:both" v="none"/>
+    <tag k="cycleway:right:traffic_mode:right" v="parking"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="separate"/>
+    <tag k="parking:right:orientation" v="perpendicular"/>
+    <tag k="postal_code" v="10627"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="29177662" version="62" timestamp="2026-01-17T20:11:00Z" changeset="177350798" uid="418040" user="Supaplex030">
+    <nd ref="21432802"/>
+    <nd ref="9530372100"/>
+    <nd ref="3155751072"/>
+    <nd ref="3828179971"/>
+    <nd ref="10570139743"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="2.5"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:left" v="barred_area"/>
+    <tag k="cycleway:right:separation:left" v="no"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="red"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2.3"/>
+    <tag k="destination" v="Lichtenberg;Friedrichshain"/>
+    <tag k="destination:ref" v="B 1;B 5"/>
+    <tag k="destination:ref:to" v="A 10"/>
+    <tag k="destination:symbol:to" v="motorway"/>
+    <tag k="destination:to" v="Frankfurt (Oder)"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="name:etymology:wikidata" v="Q9061"/>
+    <tag k="old_name" v="Große Frankfurter Straße;Stalinallee"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:both:reason" v="junction"/>
+    <tag k="priority_road" v="designated"/>
+    <tag k="ref" v="B 1;B 5"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="source:maxspeed" v="DE:urban"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q683226"/>
+    <tag k="wikipedia" v="de:Karl-Marx-Allee"/>
+  </way>
+  <way id="29183328" version="6" timestamp="2026-06-28T16:42:07Z" changeset="184750221" uid="4974073" user="thom_bike_bln">
+    <nd ref="261600197"/>
+    <nd ref="677188160"/>
+    <nd ref="320932750"/>
+    <tag k="highway" v="service"/>
+    <tag k="name" v="Karl-Marx-Allee"/>
+    <tag k="postal_code" v="10178"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="concrete"/>
+    <tag k="traffic_sign" v="DE:250"/>
+    <tag k="vehicle" v="no"/>
+  </way>
+  <way id="32909622" version="43" timestamp="2026-03-22T10:21:26Z" changeset="180242003" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="10076922695"/>
+    <nd ref="888819529"/>
+    <nd ref="5845551786"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="1"/>
+    <tag k="cycleway:right:buffer:right" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:mapillary" v="770197652601018"/>
+    <tag k="cycleway:right:marking:left" v="solid_line"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:temporary" v="yes"/>
+    <tag k="cycleway:right:traffic_mode:left" v="parking"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="description:covid19" v="Pop-up-Radweg"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Sa 00:00-09:00,22:00-24:00; Su)"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="5"/>
+    <tag k="postal_code" v="10623"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:traffic_sign:mapillary" v="1499089037789451"/>
+    <tag k="source:cycleway:right:width" v="infra3D"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="32909623" version="25" timestamp="2025-09-27T10:04:46Z" changeset="172518513" uid="23034332" user="fmc_8">
+    <nd ref="4520362255"/>
+    <nd ref="888819559"/>
+    <nd ref="7692857985"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="1"/>
+    <tag k="cycleway:right:buffer:right" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:mapillary" v="1119661527022341"/>
+    <tag k="cycleway:right:marking:left" v="solid_line"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:temporary" v="yes"/>
+    <tag k="cycleway:right:traffic_mode:left" v="parking"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="description:covid19" v="Pop-up-Radweg"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10625"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:traffic_sign:mapillary" v="1826580871281595"/>
+    <tag k="source:cycleway:right:width" v="infra3D"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="32909627" version="30" timestamp="2026-03-22T10:21:26Z" changeset="180242003" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="10074503655"/>
+    <nd ref="4972059472"/>
+    <nd ref="888819538"/>
+    <nd ref="13468455638"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:bicycle" v="designated"/>
+    <tag k="cycleway:right:buffer:left" v="1"/>
+    <tag k="cycleway:right:buffer:right" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:mapillary" v="1514931503284233"/>
+    <tag k="cycleway:right:marking:left" v="solid_line"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:temporary" v="yes"/>
+    <tag k="cycleway:right:traffic_mode:left" v="parking"/>
+    <tag k="cycleway:right:traffic_sign" v="DE:237"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="description:covid19" v="Pop-up-Radweg"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Kantstraße"/>
+    <tag k="name:etymology:wikidata" v="Q9312"/>
+    <tag k="name:etymology:wikipedia" v="de:Immanuel Kant"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:fee" v="yes"/>
+    <tag k="parking:right:fee:conditional" v="no @ (Mo-Sa 00:00-09:00,20:00-24:00; Su)"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="parking:right:zone" v="4"/>
+    <tag k="postal_code" v="10625"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:traffic_sign:mapillary" v="740207692347354"/>
+    <tag k="source:cycleway:right:width" v="infra3D"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1458068"/>
+    <tag k="wikipedia" v="de:Kantstraße (Berlin)"/>
+  </way>
+  <way id="37304507" version="27" timestamp="2025-11-27T12:38:39Z" changeset="175196518" uid="22902669" user="FMC-Henri">
+    <nd ref="5740275077"/>
+    <nd ref="5740275079"/>
+    <nd ref="1459876677"/>
+    <nd ref="29690662"/>
+    <nd ref="29691249"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:buffer:both" v="no"/>
+    <tag k="cycleway:right:lane" v="crossing"/>
+    <tag k="cycleway:right:marking:both" v="dashed_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="1.5"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="13403"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="39965120" version="30" timestamp="2025-12-29T15:25:44Z" changeset="176583560" uid="22898413" user="fmc_5">
+    <nd ref="13415966703"/>
+    <nd ref="12590174636"/>
+    <nd ref="6019010080"/>
+    <nd ref="2432801017"/>
+    <nd ref="252476819"/>
+    <nd ref="2628438421"/>
+    <nd ref="8620571233"/>
+    <nd ref="9671917708"/>
+    <nd ref="6019010077"/>
+    <nd ref="3703526458"/>
+    <nd ref="124344709"/>
+    <nd ref="13415966702"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:buffer:both" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:both" v="solid_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:left:reason" v="dual_carriage"/>
+    <tag k="parking:right" v="lane"/>
+    <tag k="parking:right:access" v="yes"/>
+    <tag k="parking:right:fee" v="no"/>
+    <tag k="parking:right:orientation" v="parallel"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="39965422" version="25" timestamp="2025-12-30T17:07:55Z" changeset="176638684" uid="22898413" user="fmc_5">
+    <nd ref="480076365"/>
+    <nd ref="3423187987"/>
+    <nd ref="9671917716"/>
+    <nd ref="29690656"/>
+    <nd ref="12849353337"/>
+    <nd ref="3982039173"/>
+    <nd ref="274791024"/>
+    <nd ref="480076368"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="advisory"/>
+    <tag k="cycleway:right:marking:left" v="dashed_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="1.5"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="parking:left:reason" v="dual_carriage"/>
+    <tag k="postal_code" v="13403"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="39965423" version="24" timestamp="2025-07-28T20:45:30Z" changeset="169634530" uid="6811035" user="SteMue">
+    <nd ref="5740283280"/>
+    <nd ref="10923353660"/>
+    <nd ref="530256"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="separate"/>
+    <tag k="cycleway:right:lane" v="advisory"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="13403"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="39965424" version="25" timestamp="2025-12-29T17:56:19Z" changeset="176590356" uid="22898413" user="fmc_5">
+    <nd ref="13416296980"/>
+    <nd ref="5801853698"/>
+    <nd ref="6300506718"/>
+    <nd ref="530247"/>
+    <nd ref="6300506721"/>
+    <nd ref="13416296977"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:buffer:both" v="no"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:both" v="solid_line"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:surface:colour" v="none"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="2"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ollenhauerstraße"/>
+    <tag k="name:etymology:wikidata" v="Q62185"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:left" v="no"/>
+    <tag k="parking:right" v="no"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q66711886"/>
+  </way>
+  <way id="71282500" version="35" timestamp="2026-03-14T18:14:15Z" changeset="179870624" uid="23761190" user="fmc_Supaplex030">
+    <nd ref="13577321555"/>
+    <nd ref="2210561962"/>
+    <nd ref="5731346061"/>
+    <nd ref="5731346062"/>
+    <nd ref="27786128"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation" v="flex_post"/>
+    <tag k="cycleway:right:separation:left" v="dashed_line"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="2.6"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lanes:psv" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Hauptstraße"/>
+    <tag k="name:etymology:wikidata" v="Q1006835"/>
+    <tag k="name:etymology:wikipedia" v="de:Hauptstraße (allgemein)"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10827"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1589690"/>
+    <tag k="wikipedia" v="de:Hauptstraße (Berlin-Schöneberg)"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="71401494" version="32" timestamp="2025-11-11T06:46:13Z" changeset="174495267" uid="23034323" user="fmc_6">
+    <nd ref="27785430"/>
+    <nd ref="27785428"/>
+    <nd ref="924240046"/>
+    <nd ref="5857125942"/>
+    <nd ref="27785365"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation" v="flex_post"/>
+    <tag k="cycleway:right:separation:left" v="dashed_line"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="2.6"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lanes:psv" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Hauptstraße"/>
+    <tag k="name:etymology:wikidata" v="Q1006835"/>
+    <tag k="name:etymology:wikipedia" v="de:Hauptstraße (allgemein)"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10827"/>
+    <tag k="psv:lanes" v="yes|yes|designated|yes"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="turn:lanes" v="through|through|none|right"/>
+    <tag k="wikidata" v="Q1589690"/>
+    <tag k="wikipedia" v="de:Hauptstraße (Berlin-Schöneberg)"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="106652853" version="11" timestamp="2025-11-01T22:36:15Z" changeset="174082586" uid="23034323" user="fmc_6">
+    <nd ref="10005862526"/>
+    <nd ref="1226833881"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="foot" v="designated"/>
+    <tag k="footway" v="sidewalk"/>
+    <tag k="highway" v="footway"/>
+    <tag k="is_sidepath" v="no"/>
+    <tag k="oneway" v="no"/>
+    <tag k="segregated" v="no"/>
+    <tag k="source:width" v="Luftbild 2025"/>
+    <tag k="surface" v="sett"/>
+    <tag k="traffic_sign" v="DE:240"/>
+    <tag k="width" v="2.3"/>
+  </way>
+  <way id="110450330" version="46" timestamp="2025-11-11T06:46:13Z" changeset="174495267" uid="23034323" user="fmc_6">
+    <nd ref="11010796177"/>
+    <nd ref="3174254564"/>
+    <nd ref="9893557722"/>
+    <nd ref="27785319"/>
+    <nd ref="10837831773"/>
+    <nd ref="542002955"/>
+    <nd ref="1329845589"/>
+    <nd ref="10837831768"/>
+    <nd ref="3998797193"/>
+    <tag k="cycleway:left" v="no"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="cycleway:right:marking:right" v="no"/>
+    <tag k="cycleway:right:oneway" v="yes"/>
+    <tag k="cycleway:right:separation" v="flex_post"/>
+    <tag k="cycleway:right:separation:left" v="dashed_line"/>
+    <tag k="cycleway:right:surface" v="asphalt"/>
+    <tag k="cycleway:right:traffic_sign" v="none"/>
+    <tag k="cycleway:right:width" v="2.6"/>
+    <tag k="dual_carriageway" v="yes"/>
+    <tag k="foot" v="use_sidepath"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lanes:psv" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="30"/>
+    <tag k="name" v="Hauptstraße"/>
+    <tag k="name:etymology:wikidata" v="Q1006835"/>
+    <tag k="name:etymology:wikipedia" v="de:Hauptstraße (allgemein)"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="parking:both" v="no"/>
+    <tag k="postal_code" v="10827"/>
+    <tag k="ref" v="B 1"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:right:width" v="Luftbild 2025"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="wikidata" v="Q1589690"/>
+    <tag k="wikipedia" v="de:Hauptstraße (Berlin-Schöneberg)"/>
+    <tag k="zone:traffic" v="DE:urban"/>
+  </way>
+  <way id="233227500" version="14" timestamp="2025-11-07T00:04:17Z" changeset="174311739" uid="23268127" user="fmc_10">
+    <nd ref="9922083107"/>
+    <nd ref="9922083109"/>
+    <nd ref="9922083111"/>
+    <nd ref="268483192"/>
+    <nd ref="9922083110"/>
+    <nd ref="11681422719"/>
+    <nd ref="8905867389"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="foot" v="designated"/>
+    <tag k="footway" v="sidewalk"/>
+    <tag k="highway" v="footway"/>
+    <tag k="is_sidepath" v="no"/>
+    <tag k="lit" v="no"/>
+    <tag k="name" v="Walter-Nicklitz-Promenade"/>
+    <tag k="name:etymology:wikidata" v="Q1230223"/>
+    <tag k="name:etymology:wikipedia" v="de:Walter Nicklitz"/>
+    <tag k="note" v="Tulpenschild plus explizite erlaubnis für radfahrende darunter erlaubt das radfahren"/>
+    <tag k="oneway" v="no"/>
+    <tag k="segregated" v="no"/>
+    <tag k="smoothness" v="intermediate"/>
+    <tag k="source:width" v="Luftbild 2025"/>
+    <tag k="surface" v="compacted"/>
+    <tag k="traffic_sign" v="none"/>
+    <tag k="width" v="2.5"/>
+  </way>
+  <way id="403679183" version="24" timestamp="2025-11-07T10:42:30Z" changeset="174327378" uid="23034332" user="fmc_8">
+    <nd ref="11673702478"/>
+    <nd ref="10296344481"/>
+    <nd ref="4136568201"/>
+    <nd ref="4136568205"/>
+    <nd ref="4136568212"/>
+    <nd ref="4136557781"/>
+    <nd ref="4136568339"/>
+    <nd ref="4136568352"/>
+    <nd ref="8285680343"/>
+    <nd ref="2992870267"/>
+    <nd ref="8285680341"/>
+    <nd ref="4136568373"/>
+    <nd ref="8325139727"/>
+    <nd ref="4136568378"/>
+    <nd ref="4136568395"/>
+    <nd ref="4136568411"/>
+    <nd ref="2992870268"/>
+    <nd ref="4136568420"/>
+    <nd ref="4136568422"/>
+    <nd ref="3598126583"/>
+    <nd ref="4060146308"/>
+    <nd ref="10048463962"/>
+    <nd ref="4136568423"/>
+    <nd ref="4060146309"/>
+    <nd ref="2992870269"/>
+    <nd ref="4136568440"/>
+    <nd ref="4136568442"/>
+    <nd ref="4136568447"/>
+    <nd ref="4136568453"/>
+    <nd ref="2992870270"/>
+    <nd ref="3514726913"/>
+    <nd ref="6141033870"/>
+    <nd ref="6141033869"/>
+    <nd ref="3514726914"/>
+    <nd ref="6141033868"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="cycleway:lanes" v="2"/>
+    <tag k="cycleway:surface" v="asphalt"/>
+    <tag k="cycleway:surface:colour" v="none"/>
+    <tag k="cycleway:width" v="3"/>
+    <tag k="footway" v="sidewalk"/>
+    <tag k="footway:surface" v="paving_stones"/>
+    <tag k="highway" v="footway"/>
+    <tag k="is_sidepath" v="yes"/>
+    <tag k="is_sidepath:of" v="tertiary"/>
+    <tag k="is_sidepath:of:name" v="Hohenschönhauser Straße"/>
+    <tag k="lit" v="yes"/>
+    <tag k="oneway" v="no"/>
+    <tag k="segregated" v="yes"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="source:cycleway:width" v="infra3D"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="traffic_sign" v="DE:1022-10"/>
+  </way>
+  <way id="479700952" version="11" timestamp="2025-07-31T18:36:13Z" changeset="169785189" uid="23034327" user="fmc_7">
+    <nd ref="11985834283"/>
+    <nd ref="8573756596"/>
+    <nd ref="8573756595"/>
+    <nd ref="8573756594"/>
+    <nd ref="8573756593"/>
+    <nd ref="8110559016"/>
+    <nd ref="4347778102"/>
+    <nd ref="637820931"/>
+    <nd ref="4347778100"/>
+    <nd ref="4727591050"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="check_date:cycleway:width" v="2025-07-31"/>
+    <tag k="cycle_network" v="DE:BE"/>
+    <tag k="cycleway:surface" v="asphalt"/>
+    <tag k="cycleway:surface:colour" v="none"/>
+    <tag k="cycleway:width" v="1.4"/>
+    <tag k="foot" v="designated"/>
+    <tag k="footway" v="sidewalk"/>
+    <tag k="footway:surface" v="sett"/>
+    <tag k="highway" v="footway"/>
+    <tag k="is_sidepath" v="yes"/>
+    <tag k="is_sidepath:of" v="tertiary"/>
+    <tag k="is_sidepath:of:name" v="Fulhamer Allee"/>
+    <tag k="lit" v="no"/>
+    <tag k="note" v="Breite unter dem RVN-Standard (2,5m)"/>
+    <tag k="oneway:bicycle" v="yes"/>
+    <tag k="segregated" v="yes"/>
+    <tag k="separation:left" v="kerb"/>
+    <tag k="separation:right" v="no"/>
+    <tag k="smoothness" v="good"/>
+    <tag k="source:cycleway:width" v="ARCore"/>
+    <tag k="surface" v="paved"/>
+    <tag k="traffic_sign" v="DE:237"/>
+    <tag k="winter_service" v="priority"/>
+  </way>
+  <way id="1083897477" version="10" timestamp="2025-09-25T09:34:15Z" changeset="172430428" uid="23035092" user="fmc_9">
+    <nd ref="3888616765"/>
+    <nd ref="10561678199"/>
+    <nd ref="9932896151"/>
+    <nd ref="9932928024"/>
+    <nd ref="9932726611"/>
+    <nd ref="9932726612"/>
+    <nd ref="9932726613"/>
+    <nd ref="10561678196"/>
+    <nd ref="9932726614"/>
+    <nd ref="9932726610"/>
+    <nd ref="9932726615"/>
+    <nd ref="9932726598"/>
+    <nd ref="9932726616"/>
+    <nd ref="9932750417"/>
+    <nd ref="9932750418"/>
+    <nd ref="10826751318"/>
+    <tag k="cycleway" v="sidewalk"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="is_sidepath" v="yes"/>
+    <tag k="is_sidepath:of" v="secondary"/>
+    <tag k="is_sidepath:of:name" v="Möllendorffstraße"/>
+    <tag k="lit" v="yes"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="smoothness" v="intermediate"/>
+    <tag k="source:width" v="Messung aus Punktwolke (Infra3DViewer)"/>
+    <tag k="surface" v="paving_stones"/>
+    <tag k="surface:colour" v="red"/>
+    <tag k="traffic_mode:right" v="foot"/>
+    <tag k="traffic_sign" v="none"/>
+    <tag k="width" v="1.5"/>
+  </way>
+  <way id="1164113868" version="4" timestamp="2025-09-25T09:34:15Z" changeset="172430428" uid="23035092" user="fmc_9">
+    <nd ref="10826751319"/>
+    <nd ref="9932726599"/>
+    <nd ref="9932726600"/>
+    <nd ref="9932896166"/>
+    <nd ref="10561678198"/>
+    <tag k="cycleway" v="sidewalk"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="is_sidepath" v="yes"/>
+    <tag k="is_sidepath:of" v="secondary"/>
+    <tag k="is_sidepath:of:name" v="Möllendorffstraße"/>
+    <tag k="lit" v="yes"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="smoothness" v="intermediate"/>
+    <tag k="source:width" v="Messung aus Punktwolke (Infra3DViewer)"/>
+    <tag k="surface" v="paving_stones"/>
+    <tag k="surface:colour" v="red"/>
+    <tag k="traffic_mode:right" v="foot"/>
+    <tag k="traffic_sign" v="none"/>
+    <tag k="width" v="1.1"/>
+  </way>
+
+</osm>
