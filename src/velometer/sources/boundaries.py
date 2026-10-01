@@ -57,17 +57,20 @@ def _to(geom: BaseGeometry, src: int, dst: int) -> BaseGeometry:
     return transform(tf.transform, geom)
 
 
+def _polygons(geom: BaseGeometry) -> list[BaseGeometry]:
+    """Every non-empty Polygon in `geom`, unpacking multi-part types and nested collections."""
+    if geom.geom_type == "Polygon":
+        return [] if geom.is_empty else [geom]
+    if geom.geom_type in ("MultiPolygon", "GeometryCollection"):
+        return [p for part in shapely.get_parts(geom) for p in _polygons(part)]
+    return []
+
+
 def _valid_polygonal(geom: BaseGeometry) -> BaseGeometry:
-    """Repair an invalid geometry, keeping only its polygonal parts."""
-    if geom.is_valid:
+    """Repair an invalid geometry, keeping all of its polygonal parts (islands included)."""
+    if geom.is_valid and geom.geom_type in ("Polygon", "MultiPolygon"):
         return geom
-    parts = []
-    for part in shapely.get_parts(shapely.make_valid(geom)):
-        if part.geom_type == "GeometryCollection":
-            parts.extend(shapely.get_parts(part))
-        else:
-            parts.append(part)
-    parts = [p for p in parts if p.geom_type == "Polygon" and not p.is_empty]
+    parts = _polygons(shapely.make_valid(geom))
     if not parts:
         raise ValueError(f"geometry has no polygonal part after make_valid: {geom.wkt[:80]}")
     return parts[0] if len(parts) == 1 else shapely.MultiPolygon(parts)
@@ -116,10 +119,13 @@ def population(
     raw = lau_props.get("POP_2024")
     if raw is not None and not math.isnan(raw) and raw > 0:
         return Population(value=int(raw), year=2024, source="GISCO LAU 2024 POP_2024")
-    if not city.nuts3_code:
+    # Only a NUTS3 unit identical to the commune may stand in (spec section 2.7); nuts3_code is
+    # for QECIO matching and can be larger (Copenhagen DK011).
+    nuts3 = city.population_nuts3
+    if not nuts3:
         return None
-    dataset = f"demo_r_pjangrp3 {city.nuts3_code}"
-    data = (fetch_json or _get_json)(EUROSTAT_POP.format(nuts3=city.nuts3_code))
+    dataset = f"demo_r_pjangrp3 {nuts3}"
+    data = (fetch_json or _get_json)(EUROSTAT_POP.format(nuts3=nuts3))
     values = list((data.get("value") or {}).values())
     if not values or not values[0] or values[0] <= 0:
         raise ValueError(f"Eurostat {dataset} 2024: no positive population in response")

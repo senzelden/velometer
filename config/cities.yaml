@@ -2,6 +2,8 @@
 # query: https://nominatim.openstreetmap.org/search?city=<name>&country=<country>&format=jsonv2
 # lau_code = GISCO LAU 2024 GISCO_ID; fua_code = URAU 2024 FUA code; nuts3_code = NUTS 2024
 # (see docs/research/m2-data-sources-2026-10-01.md). EPSG = ETRS89 / UTM zone of the city.
+# population_nuts3 = NUTS3 unit identical to the commune, used only when LAU has no population;
+# set only where that holds (Paris FR101 = Ville de Paris). nuts3_code is for QECIO matching.
 # Lookups: berlin 62422 (city=Berlin&country=Germany); paris 71525 (city=Paris&country=France,
 # city commune; 7444 and 1641193 are suburb/district hits); vienna 109166 (city=Wien&country=Austria);
 # wroclaw 451516 (city=Wrocław&country=Poland); copenhagen: the city= query returns only a place
@@ -25,6 +27,7 @@ cities:
     lau_code: FR_75056
     fua_code: FR001F
     nuts3_code: FR101
+    population_nuts3: FR101
   - id: vienna
     name: Wien
     country_iso2: AT

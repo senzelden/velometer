@@ -24,7 +24,7 @@ class City(_Model):
     country_iso2: str
     lau_code: str | None = None
     fua_code: str | None = None
-    nuts3_code: str | None = None  # NUTS3 unit, used for QECIO matching and population fallback
+    nuts3_code: str | None = None  # NUTS3 unit used for QECIO matching
     osm_relation_id: int
     epsg: int
     geofabrik_region: str

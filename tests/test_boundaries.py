@@ -109,10 +109,40 @@ def test_bowtie_boundary_is_made_valid_on_write_and_load(tmp_path):
     assert b.load_boundary_polygon(raw, CITY.epsg).is_valid
 
 
+def _spiked(x, y, d=10.0):
+    """A square with a zero-width spike: invalid, make_valid splits off a LineString."""
+    return Polygon(
+        [(x, y), (x + d, y), (x + d, y + d), (x + d, y + 1.5 * d), (x + d, y + d), (x, y + d)]
+    )
+
+
+def test_invalid_multipolygon_keeps_every_part_after_repair():
+    # make_valid -> GeometryCollection(MultiPolygon, LineString)
+    mp = MultiPolygon([_spiked(0, 0), _sq(20, 0, 10)])
+    assert not mp.is_valid
+    fixed = b._valid_polygonal(mp)
+    assert fixed.is_valid and fixed.geom_type == "MultiPolygon"
+    assert fixed.area == pytest.approx(shapely.make_valid(mp).area)
+
+
+def test_collection_with_nested_multipolygon_keeps_the_islands():
+    # make_valid -> GeometryCollection(GeometryCollection(Polygon, LineString), MultiPolygon)
+    gc = shapely.GeometryCollection([_spiked(0, 0), MultiPolygon([_sq(20, 0, 10), _sq(40, 0, 1)])])
+    assert not gc.is_valid
+    fixed = b._valid_polygonal(gc)
+    assert fixed.is_valid and fixed.geom_type == "MultiPolygon"
+    assert fixed.area == pytest.approx(shapely.make_valid(gc).area)
+
+
+FALLBACK = CITY.model_copy(update={"population_nuts3": "DE300"})
+
+
 def test_population_uses_lau_value_else_nuts3_fallback():
     pop = b.population(CITY, {"POP_2024": 3782202}, fetch_json=lambda url: pytest.fail("net"))
     assert (pop.value, pop.year, pop.source) == (3782202, 2024, "GISCO LAU 2024 POP_2024")
-    paris = CITY.model_copy(update={"id": "paris", "nuts3_code": "FR101"})
+    paris = CITY.model_copy(
+        update={"id": "paris", "nuts3_code": "FR101", "population_nuts3": "FR101"}
+    )
     payload = {"value": {"0": 2084894}}
     pop = b.population(paris, {"POP_2024": 0}, fetch_json=lambda url: payload)
     assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source and pop.year == 2024
@@ -121,16 +151,25 @@ def test_population_uses_lau_value_else_nuts3_fallback():
 def test_population_nan_or_nonpositive_lau_falls_back_to_nuts3():
     payload = {"value": {"0": 2084894}}
     for bad in (float("nan"), 0.0, -5, None):
-        pop = b.population(CITY, {"POP_2024": bad}, fetch_json=lambda url: payload)
+        pop = b.population(FALLBACK, {"POP_2024": bad}, fetch_json=lambda url: payload)
         assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source
 
 
 def test_population_eurostat_anomaly_fails_loudly_and_missing_nuts3_is_none():
     for payload in ({"value": {}}, {"value": {"0": 0}}, {}):
         with pytest.raises(ValueError, match=r"demo_r_pjangrp3.*DE300"):
-            b.population(CITY, {"POP_2024": 0}, fetch_json=lambda url, p=payload: p)
+            b.population(FALLBACK, {"POP_2024": 0}, fetch_json=lambda url, p=payload: p)
     no_nuts = CITY.model_copy(update={"nuts3_code": None})
     assert b.population(no_nuts, {"POP_2024": 0}, fetch_json=lambda url: pytest.fail("net")) is None
+
+
+def test_population_fallback_ignores_the_qecio_nuts3_code():
+    # nuts3_code serves QECIO matching; a NUTS3 unit that is not the commune (Copenhagen's
+    # DK011) must never stand in for the commune's population (spec section 2.7).
+    copenhagen = CITY.model_copy(update={"id": "copenhagen", "nuts3_code": "DK011"})
+    assert copenhagen.population_nuts3 is None
+    got = b.population(copenhagen, {"POP_2024": 0}, fetch_json=lambda url: pytest.fail("net"))
+    assert got is None
 
 
 def test_population_model_rejects_nonpositive():

@@ -41,7 +41,9 @@ class CityConfig(_Strict):
     osm_relation_id: int = Field(gt=0)
     lau_code: str | None = None
     fua_code: str | None = None
-    nuts3_code: str | None = None
+    nuts3_code: str | None = None  # NUTS3 unit for QECIO matching (may be larger than the city)
+    # NUTS3 unit identical to the commune: the population fallback when LAU has none
+    population_nuts3: str | None = None
 
     @field_validator("epsg")
     @classmethod
