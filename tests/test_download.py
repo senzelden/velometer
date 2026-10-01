@@ -82,3 +82,64 @@ def test_fetch_region_reads_md5_and_header_timestamp(tmp_path, monkeypatch):
     rf = geofabrik.fetch_region("europe/germany/berlin", tmp_path, client=_client(handler))
     assert rf.md5 == MD5 and rf.osm_timestamp == ts
     assert rf.path == tmp_path / "raw" / "berlin-260930.osm.pbf"
+
+
+def test_non_transient_4xx_is_not_retried(tmp_path):
+    calls = []
+
+    def handler(r):
+        calls.append(1)
+        return httpx.Response(404)
+
+    with pytest.raises(DownloadError):
+        fetch("https://h/f.pbf", tmp_path / "f.pbf", client=_client(handler), backoff_s=0)
+    assert len(calls) == 1
+
+
+def test_429_is_retried(tmp_path):
+    calls = []
+
+    def handler(r):
+        calls.append(1)
+        return httpx.Response(429) if len(calls) < 2 else httpx.Response(200, content=BODY)
+
+    fetch("https://h/f.pbf", tmp_path / "f.pbf", client=_client(handler), backoff_s=0)
+    assert len(calls) == 2
+
+
+def test_midstream_oserror_propagates_and_leaves_no_part(tmp_path):
+    class Boom(httpx.SyncByteStream):
+        def __iter__(self):
+            yield b"abc"
+            raise OSError("disk gone")
+
+    c = _client(lambda r: httpx.Response(200, stream=Boom()))
+    with pytest.raises(OSError, match="disk gone"):
+        fetch("https://h/f.pbf", tmp_path / "f.pbf", client=c, backoff_s=0)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_retries_must_be_positive(tmp_path):
+    with pytest.raises(ValueError):
+        fetch("https://h/f.pbf", tmp_path / "f.pbf", retries=0)
+
+
+def test_redirect_without_location_raises_download_error():
+    with pytest.raises(DownloadError, match="location"):
+        geofabrik.resolve_dated("r", _client(lambda r: httpx.Response(307)))
+
+
+def test_resolve_dated_accepts_absolute_location():
+    h = {"location": "https://other.example/x/berlin-260930.osm.pbf"}
+    url = geofabrik.resolve_dated("r", _client(lambda r: httpx.Response(302, headers=h)))
+    assert url == "https://other.example/x/berlin-260930.osm.pbf"
+
+
+def test_empty_md5_body_raises_download_error(tmp_path):
+    def handler(r):
+        if r.method == "HEAD":
+            return httpx.Response(307, headers={"location": "b-1.osm.pbf"})
+        return httpx.Response(200, text="\n")
+
+    with pytest.raises(DownloadError, match="md5"):
+        geofabrik.fetch_region("r", tmp_path, client=_client(handler))

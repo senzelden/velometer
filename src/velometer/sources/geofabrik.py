@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 
 from velometer.osmium import fileinfo_timestamp
-from velometer.sources.download import fetch, new_client
+from velometer.sources.download import DownloadError, fetch, new_client
 
 BASE = "https://download.geofabrik.de"
 
@@ -26,7 +26,10 @@ def resolve_dated(region: str, client: httpx.Client) -> str:
     latest = f"{BASE}/{region}-latest.osm.pbf"
     resp = client.head(latest, follow_redirects=False)
     if resp.status_code in (301, 302, 307, 308):
-        return urljoin(latest, resp.headers["location"])
+        location = resp.headers.get("location")
+        if not location:
+            raise DownloadError(f"{latest}: redirect {resp.status_code} without a location header")
+        return urljoin(latest, location)
     resp.raise_for_status()
     return latest
 
@@ -38,7 +41,10 @@ def fetch_region(region: str, data_dir: Path, client: httpx.Client | None = None
         url = resolve_dated(region, client)
         md5_resp = client.get(url + ".md5")
         md5_resp.raise_for_status()
-        md5 = md5_resp.text.split()[0]
+        words = md5_resp.text.split()
+        if not words:
+            raise DownloadError(f"{url}.md5: empty md5 file")
+        md5 = words[0]
         dst = data_dir / "raw" / PurePosixPath(urlparse(url).path).name
         fetch(url, dst, md5=md5, client=client)
     finally:
