@@ -7,7 +7,19 @@ from velometer.pipeline.types import WayRecord, WaySide
 
 ONEWAY_YES = frozenset({"yes", "1", "true", "-1"})
 SUBKEYS = ("lane", "oneway", "separation", "buffer", "segregated", "surface", "width")
-ROAD_CARRY = ("highway", "access", "bicycle", "area", "oneway", "name", "ref", "dual_carriageway")
+ROAD_CARRY = (
+    "highway",
+    "access",
+    "bicycle",
+    "area",
+    "oneway",
+    "name",
+    "ref",
+    "dual_carriageway",
+    "construction",
+    "proposed",
+)
+FORWARD = frozenset({"yes", "1", "true"})
 CYCLE_STREET_KEYS = ("bicycle_road", "cyclestreet", "cycle_street")
 
 
@@ -18,7 +30,23 @@ def _parts(value: str | None) -> set[str]:
     return {p.strip() for p in value.split(";") if p.strip()}
 
 
-def _side_value(tags: Mapping[str, str], side: str, oneway: bool) -> str | None:
+def plain_cycleway_sides(tags: Mapping[str, str]) -> frozenset[str]:
+    """Sides a plain `cycleway=<v>` applies to (Ruling R18, provisional; right-hand traffic).
+
+    `oneway=yes|1|true` -> right only; `oneway=-1` -> left only (traffic's right);
+    `junction=roundabout` with no oneway tag -> right only; otherwise (incl. `oneway=no`) both.
+    """
+    oneway = _parts(tags.get("oneway"))
+    if oneway & FORWARD:
+        return frozenset({"right"})
+    if "-1" in oneway:
+        return frozenset({"left"})
+    if not oneway and "roundabout" in _parts(tags.get("junction")):
+        return frozenset({"right"})
+    return frozenset({"left", "right"})
+
+
+def _side_value(tags: Mapping[str, str], side: str) -> str | None:
     for key in (f"cycleway:{side}", "cycleway:both"):
         if key in tags:
             return tags[key]
@@ -27,9 +55,7 @@ def _side_value(tags: Mapping[str, str], side: str, oneway: bool) -> str | None:
         return None
     if plain.startswith("opposite"):
         return plain if side == "left" else None
-    if oneway and side == "left":
-        return None
-    return plain
+    return plain if side in plain_cycleway_sides(tags) else None
 
 
 def _collect_sub(tags: Mapping[str, str], side: str, sub: str) -> str | None:
@@ -55,12 +81,12 @@ def _collect_traffic_separation(tags: Mapping[str, str], side: str) -> str | Non
 
 
 def _sidewalk_is_separate(tags: Mapping[str, str], side: str) -> bool:
-    return any(tags.get(k) == "separate" for k in (f"sidewalk:{side}", "sidewalk:both", "sidewalk"))
+    keys = (f"sidewalk:{side}", "sidewalk:both", "sidewalk")
+    return any("separate" in _parts(tags.get(k)) for k in keys)
 
 
 def _resolve_side(tags: Mapping[str, str], side: str) -> tuple[dict[str, str], bool] | None:
-    oneway = any(p in {"yes", "1", "true"} for p in _parts(tags.get("oneway")))
-    value = _side_value(tags, side, oneway)
+    value = _side_value(tags, side)
     contraflow = False
     if value == "opposite":
         value = None

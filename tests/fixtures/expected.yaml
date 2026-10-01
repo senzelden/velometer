@@ -137,3 +137,14 @@ cases:
       - {rule: A_path_cycle_only, side: self, tier: A, way: 10}
   sidewalk_separate_designated:
     sides: []
+  X_road_construction:
+    sides:
+      - {rule: X_road_construction, side: left, tier: excluded, way: 10}
+      - {rule: X_road_construction, side: right, tier: excluded, way: 10}
+  X_road_proposed:
+    sides:
+      - {rule: X_road_construction, side: right, tier: excluded, way: 10}
+  X_road_cycleway_construction:
+    sides:
+      - {rule: X_road_construction, side: right, tier: excluded, way: 10}
+      - {rule: D_lane, side: left, tier: D, way: 10}

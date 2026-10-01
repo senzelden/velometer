@@ -27,7 +27,7 @@ def test_geographic_epsg_is_rejected(tmp_path: Path):
         "cities:\n  - {id: x, name: X, country_iso2: DE, epsg: 4326,"
         " geofabrik_region: europe/x, osm_relation_id: 1}\n"
     )
-    with pytest.raises(ConfigError, match="cities.yaml"):
+    with pytest.raises(ConfigError, match=r"(?s)cities\.yaml.*EPSG:4326 is not a projected CRS"):
         load_cities(bad)
 
 

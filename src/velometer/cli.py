@@ -41,9 +41,15 @@ def classify(
 ) -> None:
     """Classify one OSM file and print tier lengths, road lengths and preset metrics."""
     from velometer.config import load_classifier, load_presets
+    from velometer.pipeline.geometry import require_projected
     from velometer.pipeline.measure import compute_metrics, measure
     from velometer.pipeline.read import read_ways
 
+    try:
+        require_projected(epsg)
+    except ValueError as e:
+        typer.echo(f"error: --epsg {epsg}: {e}", err=True)
+        raise typer.Exit(1) from e
     try:
         cfg = load_classifier(config_dir / "classifier" / f"{classifier}.yaml")
         presets = load_presets(config_dir / "presets.yaml")

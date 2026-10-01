@@ -27,14 +27,23 @@ def _parts(value: str | None) -> set[str]:
     return {p.strip() for p in value.split(";") if p.strip()}
 
 
+def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:
+    """access=private always; access=no unless bicycle is allowed (mirrors X_road_private, R22)."""
+    access = _parts(tags.get("access"))
+    if "private" in access:
+        return True
+    return "no" in access and not _parts(tags.get("bicycle")) & bicycle_allowed
+
+
 def _public_roads(ways: list[WayRecord], cfg: ClassifierConfig) -> list[WayRecord]:
     rc = cfg.road_classes
     classes = set(rc.main) | set(rc.motorway) | set(rc.local)
+    bicycle_allowed = set(cfg.value_lists["bicycle_allowed"])
     return [
         w
         for w in ways
         if w.tags.get("highway") in classes
-        and "private" not in _parts(w.tags.get("access"))
+        and not _closed_to_public(w.tags, bicycle_allowed)
         and "yes" not in _parts(w.tags.get("area"))
     ]
 

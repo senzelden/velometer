@@ -85,6 +85,9 @@ def test_dual_carriageway_halves_denominator_but_not_raw():
     [
         {"access": "private"},
         {"access": "yes;private"},
+        {"access": "no"},
+        {"access": "destination;no"},
+        {"access": "no", "bicycle": "no"},
         {"area": "yes"},
         {"area": "no;yes"},
     ],
@@ -94,3 +97,11 @@ def test_private_or_area_roads_are_excluded_from_denominators_by_any_part(tags):
     r = measure([way], CFG, 25833)
     assert road_length(r, "main_excl_motorway") == 0
     assert road_length(r, "all_public") == 0
+
+
+@pytest.mark.parametrize("bicycle", ["yes", "designated", "permissive", "no;yes"])
+def test_access_no_road_stays_in_denominators_when_bicycle_allowed(bicycle):
+    tags = {"highway": "primary", "access": "no", "bicycle": bicycle}
+    way = WayRecord(1, tags, ((13.4, 52.5), (13.4147, 52.5)))
+    r = measure([way], CFG, 25833)
+    assert road_length(r, "main_excl_motorway") == pytest.approx(1.0, rel=0.01)

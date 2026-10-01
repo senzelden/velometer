@@ -75,6 +75,9 @@ def _without(rule_id: str) -> ClassifierConfig:
         ("X_road_area", "X_road_area"),
         ("B_track_shared", "B_track_shared"),
         ("B_share_sidewalk", "B_share_sidewalk"),
+        ("X_road_construction", "X_road_construction"),
+        ("X_road_construction", "X_road_proposed"),
+        ("X_road_construction", "X_road_cycleway_construction"),
     ],
 )
 def test_rule_is_load_bearing(rule_id, case):
@@ -103,3 +106,9 @@ def test_is_bidirectional_semantics():
     assert not is_bidirectional(side({"highway": "cycleway", "oneway": "no;yes"}))
     assert not is_bidirectional(side({"highway": "cycleway", "oneway:bicycle": "-1"}))
     assert not is_bidirectional(side({"highway": "cycleway", "oneway:bicycle": "true"}))
+
+
+def test_standalone_proposed_tag_is_excluded_as_lifecycle():
+    way = WayRecord(10, {"highway": "cycleway", "proposed": "yes"}, ((13.4, 52.5), (13.41, 52.5)))
+    (c,) = classify_ways([way], CFG)
+    assert (c.tier, c.subtype) == ("excluded", "lifecycle")

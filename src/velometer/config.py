@@ -4,10 +4,10 @@ import os
 from pathlib import Path
 from typing import Any, Literal
 
-import pyproj
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from velometer.pipeline.geometry import require_projected
 from velometer.pipeline.match import validate_expr
 
 Tier = Literal["A", "B", "C", "D", "E", "excluded"]
@@ -45,9 +45,7 @@ class CityConfig(_Strict):
     @field_validator("epsg")
     @classmethod
     def _projected(cls, v: int) -> int:
-        if not pyproj.CRS.from_epsg(v).is_projected:
-            raise ValueError(f"EPSG:{v} is not a projected CRS")
-        return v
+        return require_projected(v)
 
 
 class RoadClasses(_Strict):

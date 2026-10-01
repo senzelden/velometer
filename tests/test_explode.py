@@ -154,3 +154,47 @@ def test_separately_mapped_sidewalk_does_not_emit_sidewalk_bicycle():
         }
     )
     assert out == {}
+
+
+@pytest.mark.parametrize(
+    ("tags", "want"),
+    [
+        ({"oneway": "-1"}, {"left"}),
+        ({"oneway": "-1;no"}, {"left"}),
+        ({"oneway": "yes;-1"}, {"right"}),
+        ({"junction": "roundabout"}, {"right"}),
+        ({"junction": "roundabout", "oneway": "no"}, {"left", "right"}),
+        ({"junction": "roundabout", "oneway": "-1"}, {"left"}),
+        ({"oneway": "no"}, {"left", "right"}),
+    ],
+)
+def test_plain_cycleway_sides_follow_oneway_direction(tags, want):
+    out = sides({"highway": "primary", "cycleway": "lane", **tags})
+    assert {side for side, _ in out} == want
+
+
+def test_road_construction_and_proposed_are_carried():
+    out = sides(
+        {"highway": "primary", "cycleway:both": "track", "construction": "yes", "proposed": "x"}
+    )
+    tags = out[("right", "road_side")].tags
+    assert tags["road:construction"] == "yes" and tags["road:proposed"] == "x"
+
+
+def test_side_level_opposite_lane_is_contraflow_on_that_side():
+    out = sides({"highway": "residential", "oneway": "yes", "cycleway:left": "opposite_lane"})
+    assert set(out) == {("left", "road_side")}
+    left = out[("left", "road_side")]
+    assert left.contraflow is True and left.tags["cycleway"] == "lane"
+
+
+def test_both_level_opposite_track_applies_to_both_sides_with_contraflow():
+    out = sides({"highway": "residential", "oneway": "yes", "cycleway:both": "opposite_track"})
+    assert set(out) == {("left", "road_side"), ("right", "road_side")}
+    assert all(s.contraflow and s.tags["cycleway"] == "track" for s in out.values())
+
+
+@pytest.mark.parametrize("key", ["sidewalk:right", "sidewalk:both", "sidewalk"])
+def test_separate_sidewalk_detected_by_any_part(key):
+    out = sides({"highway": "primary", key: "no;separate", "sidewalk:right:bicycle": "designated"})
+    assert out == {}

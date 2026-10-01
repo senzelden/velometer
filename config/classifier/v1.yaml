@@ -27,7 +27,7 @@ rules:
     applies_to: standalone
     tier: excluded
     subtype: lifecycle
-    match: {construction: "yes"}
+    match: {any: [{construction: "yes"}, {proposed: {absent: false}}]}
   - id: X_area
     applies_to: standalone
     tier: excluded
@@ -48,6 +48,15 @@ rules:
     tier: excluded
     subtype: private
     match: {"road:access": [private, "no"], "road:bicycle": {not_in: [yes, designated, permissive]}}
+  - id: X_road_construction
+    applies_to: road_side
+    tier: excluded
+    subtype: lifecycle
+    match:
+      any:
+        - {"road:construction": "yes"}
+        - {"road:proposed": {absent: false}}
+        - {cycleway: [construction, proposed]}  # lifecycle value on the side itself
   - id: X_bicycle_no
     applies_to: standalone
     tier: excluded

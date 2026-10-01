@@ -22,3 +22,11 @@ def test_classify_prints_tiers_roads_and_presets():
     assert result.exit_code == 0, result.output
     for needle in ("A", "main_excl_motorway", "ours_headline", "skipped ways: 0"):
         assert needle in result.output
+
+
+def test_classify_rejects_geographic_epsg():
+    fixture = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
+    result = CliRunner().invoke(app, ["classify", "--file", str(fixture), "--epsg", "4326"])
+    assert result.exit_code == 1
+    assert "EPSG:4326 is not a projected CRS" in result.output
+    assert "ours_headline" not in result.output
