@@ -11,6 +11,7 @@ from velometer.db import (
     connect,
     create_schema,
     fail_run,
+    fetch_boundary,
     fetch_cities,
     fetch_external_figures,
     fetch_run_results,
@@ -18,10 +19,20 @@ from velometer.db import (
     latest_done_run,
     open_db,
     replace_external_figures,
+    set_population,
     start_run,
+    upsert_boundary,
     upsert_cities,
 )
-from velometer.models import Completeness, ExternalFigure, Metric, RoadLength, TierLength
+from velometer.models import (
+    Boundary,
+    Completeness,
+    ExternalFigure,
+    Metric,
+    Population,
+    RoadLength,
+    TierLength,
+)
 from velometer.pipeline.measure import MeasureResult, PlainOnewayReport
 from velometer.pipeline.types import DualPair, DuplicateFlag
 
@@ -139,8 +150,6 @@ def conn(tmp_path, cities):
 
 @pytest.fixture
 def cities():
-    from velometer.config import default_config_dir, load_cities
-
     return load_cities(default_config_dir() / "cities.yaml")
 
 
@@ -232,3 +241,62 @@ def test_replace_external_figures_is_idempotent(conn):
     for _ in range(2):
         replace_external_figures(conn, "clean_cities_2025", [fig])
     assert len(fetch_external_figures(conn, "berlin")) == 1
+
+
+def test_v1_db_with_external_figures_refuses_to_migrate(tmp_path):
+    path = tmp_path / "v.sqlite"
+    c = sqlite3.connect(path)
+    c.executescript(
+        "CREATE TABLE external_figures (id INTEGER PRIMARY KEY, source TEXT);"
+        "INSERT INTO external_figures VALUES (1, 'x'); PRAGMA user_version = 1;"
+    )
+    c.close()
+    with open_db(path) as c, pytest.raises(SchemaError, match="external_figures"):
+        create_schema(c)
+
+
+def test_boundary_roundtrip_and_upsert(conn):
+    b = Boundary(
+        city_id="berlin",
+        kind="lau",
+        source="gisco",
+        source_version="2024",
+        area_km2=891.8,
+        path="data/b.gpkg",
+        sha256="aa",
+    )
+    assert fetch_boundary(conn, "berlin", "lau") is None
+    upsert_boundary(conn, b)
+    assert fetch_boundary(conn, "berlin", "lau") == b
+    upsert_boundary(conn, b.model_copy(update={"sha256": "bb"}))
+    assert fetch_boundary(conn, "berlin", "lau").sha256 == "bb"
+
+
+def test_set_population_and_nuts3_roundtrip(conn):
+    set_population(conn, "berlin", Population(value=3782202, year=2024, source="gisco_lau"))
+    berlin = next(c for c in fetch_cities(conn) if c.id == "berlin")
+    assert berlin.population == Population(value=3782202, year=2024, source="gisco_lau")
+    assert berlin.nuts3_code == "DE300"
+
+
+def test_latest_done_run_picks_newest_osm_timestamp(conn):
+    old = KEY.__class__(**{**KEY.__dict__, "osm_timestamp": "2026-01-01T00:00:00Z"})
+    new = KEY.__class__(**{**KEY.__dict__, "osm_timestamp": "2026-09-30T00:00:00Z"})
+    new_id = start_run(conn, new, git_commit="g", region_md5="m")
+    complete_run(conn, new_id, "berlin", _result(), _metrics())
+    old_id = start_run(conn, old, git_commit="g", region_md5="m")  # started later, older data
+    complete_run(conn, old_id, "berlin", _result(), _metrics())
+    assert old_id > new_id
+    assert latest_done_run(conn, "berlin", "lau") == new_id
+
+
+def test_fetch_run_results_maps_empty_subtype_to_none(conn):
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m")
+    result = _result()
+    result.tier_lengths.append(
+        TierLength(tier="B", subtype="lane", length_basis="per_side", length_km=1.0, n_ways=1)
+    )
+    complete_run(conn, rid, "berlin", result, _metrics())
+    assert conn.execute("SELECT subtype FROM tier_lengths WHERE tier='A'").fetchone()[0] == ""
+    subtypes = {t.tier: t.subtype for t in fetch_run_results(conn, rid).tier_lengths}
+    assert subtypes == {"A": None, "B": "lane"}

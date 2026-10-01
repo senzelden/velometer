@@ -1,4 +1,5 @@
 import re
+import sqlite3
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -15,6 +16,16 @@ def test_init_creates_db_with_cities_and_is_idempotent(tmp_path):
         assert result.exit_code == 0, result.output
     assert len(fetch_cities(connect(db))) == 5
     assert "5 cities" in result.output
+
+
+def test_init_refuses_newer_schema(tmp_path):
+    db = tmp_path / "v.sqlite"
+    c = sqlite3.connect(db)
+    c.execute("PRAGMA user_version = 99")
+    c.close()
+    result = CliRunner().invoke(app, ["init", "--db", str(db)])
+    assert result.exit_code == 1
+    assert "newer" in result.output
 
 
 def test_classify_prints_tiers_roads_and_presets():

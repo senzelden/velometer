@@ -119,7 +119,7 @@ def _tables(conn) -> set[str]:
 
 def _migrate_1_to_2(conn: sqlite3.Connection) -> None:
     present = _tables(conn)
-    for t in _RESULT_TABLES:
+    for t in (*_RESULT_TABLES, "external_figures"):
         if t in present and conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]:
             raise SchemaError(f"v1 database has results in {t!r}; refusing to migrate")
     for t in (*_RESULT_TABLES, "external_figures"):
