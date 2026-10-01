@@ -832,7 +832,9 @@ def timeseries(
         None, "--city", help="City id (repeatable); default all."
     ),
     boundary: str = typer.Option(
-        None, "--boundary", help="lau or fua; default both (only lau is required by --check)."
+        None,
+        "--boundary",
+        help="lau or fua; default both (--check requires the kinds in config/history.yaml).",
     ),
     classifier: str = CLASSIFIER_REPORT_OPT,
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
@@ -853,17 +855,17 @@ def timeseries(
     Uses each city's most recently recorded history set that has done runs of the config on disk.
     """
     from velometer import timeseries as ts
-    from velometer.config import load_activity
+    from velometer.config import load_activity, load_history
 
     if boundary not in (None, "lau", "fua"):
         typer.echo("error: --boundary must be lau or fua", err=True)
         raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
     kinds = (boundary,) if boundary else ("lau", "fua")
-    required_kinds = (boundary,) if boundary else ("lau",)
     sel = _run_selector(config_dir, classifier)
     try:
         cfg = load_activity(config_dir / "activity.yaml")
+        history_cfg = load_history(config_dir / "history.yaml")
     except ConfigError as e:
         raise _config_error(e) from e
     built: dict[tuple[str, str], ts.CitySeries] = {}
@@ -898,8 +900,9 @@ def timeseries(
             )
         if check:
             problems = False
+            ts.check_markers(report)
             for cid in sorted(wanted):
-                for kind in required_kinds:
+                for kind in (boundary,) if boundary else history_cfg.required(cid):
                     if (cid, kind) not in built:
                         problems = True
                         typer.echo(

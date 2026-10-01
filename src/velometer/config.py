@@ -248,3 +248,23 @@ class ActivityConfig(_Strict):
 
 def load_activity(path: Path) -> ActivityConfig:
     return _parse(path, ActivityConfig.model_validate)
+
+
+class HistoryConfig(_Strict):
+    """Which yearly history series exist and which boundary kinds each city must have."""
+
+    years: str = Field(pattern=r"^\d{4}-\d{4}$")
+    required_kinds: dict[str, list[str]]
+
+    @model_validator(mode="after")
+    def _has_default(self):
+        if "default" not in self.required_kinds:
+            raise ValueError("required_kinds needs a 'default' entry")
+        return self
+
+    def required(self, city_id: str) -> list[str]:
+        return self.required_kinds.get(city_id, self.required_kinds["default"])
+
+
+def load_history(path: Path) -> HistoryConfig:
+    return _parse(path, HistoryConfig.model_validate)

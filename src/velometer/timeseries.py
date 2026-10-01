@@ -18,7 +18,7 @@ from velometer.db import (
 )
 from velometer.models import ActivityYear
 from velometer.pipeline.measure import select_metric
-from velometer.reconcile import EXPLAINED_AGAINST, _headings, ours_value
+from velometer.reconcile import EXPLAINED_AGAINST, headings, ours_value
 
 BEGIN, END = "<!-- timeseries:begin -->", "<!-- timeseries:end -->"
 CURRENT = "current"
@@ -74,12 +74,8 @@ def current_fraction(osm_timestamp: str) -> float:
 def _point(conn, run_id: int, label: str, selector, activity: ActivityYear | None) -> YearPoint:
     r = fetch_run_results(conn, run_id)
     metric = select_metric(r.metrics, "ours_headline", selector.presets)
-    tiers = {
-        t: sum(
-            x.length_km
-            for x in r.tier_lengths
-            if x.tier == t and x.length_basis == "per_side" and x.tier != "excluded"
-        )
+    tiers: dict[str, float] = {
+        t: sum(x.length_km for x in r.tier_lengths if x.tier == t and x.length_basis == "per_side")
         for t in TIERS
     }
     diag = fetch_diagnostics(conn, run_id)
@@ -157,7 +153,7 @@ def flags(
                 if _drift(a, b, t.tag_drift_pct):
                     rules.setdefault("tag_drift", f"{name} {a:.1f} -> {b:.1f}")
         spike = False
-        if p.activity is not None and median is not None:
+        if p.activity is not None and median:  # no median or 0: nothing to spike against
             limit = t.activity_spike_factor * median * scale
             spike = p.activity.n_edits >= limit
             if spike:
@@ -214,9 +210,7 @@ def render_block(
     return "\n".join(lines)
 
 
-def provenance_line(
-    conn, selector, set_md5: str, points: list[YearPoint], city_id: str, kind: str
-) -> str:
+def provenance_line(conn, selector, set_md5: str, points: list[YearPoint]) -> str:
     years = [p for p in points if p.label != CURRENT]
     cur = next((p for p in points if p.label == CURRENT), None)
     pop = fetch_run(conn, years[0].run_id).get("population_year") if years else None
@@ -255,7 +249,7 @@ def build_city(conn, city_id: str, kind: str, selector) -> CitySeries | None:
         set_md5,
         points,
         fraction,
-        provenance_line(conn, selector, set_md5, points, city_id, kind),
+        provenance_line(conn, selector, set_md5, points),
         notes,
     )
 
@@ -266,17 +260,24 @@ def city_flags(cs: CitySeries, cfg: ActivityConfig) -> list[Flag]:
     )
 
 
+def check_markers(path: Path) -> None:
+    """Raise ValueError (OSError if unreadable) unless the generated-block markers are present."""
+    text = path.read_text()
+    if BEGIN not in text or END not in text:
+        raise ValueError(f"{path}: markers {BEGIN} / {END} not found")
+
+
 def write_report(path: Path, block: str) -> None:
     text = path.read_text()
     pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
     if not pattern.search(text):
         raise ValueError(f"{path}: markers {BEGIN} / {END} not found")
-    path.write_text(pattern.sub(lambda m: block, text, count=1))
+    path.write_text(pattern.sub(lambda _: block, text, count=1))
 
 
 def missing_explanations(path: Path, flag_list: list[Flag]) -> list[str]:
-    headings = _headings(path.read_text())
-    return [f.key for f in flag_list if f.key not in headings]
+    found = headings(path.read_text())
+    return [f.key for f in flag_list if f.key not in found]
 
 
 def stale_explanations(
@@ -286,7 +287,7 @@ def stale_explanations(
     current = {f.key for f in flag_list}
     return sorted(
         h
-        for h in _headings(path.read_text())
+        for h in headings(path.read_text())
         if h.count("/") == 2 and (cities is None or h.split("/")[0] in cities) and h not in current
     )
 

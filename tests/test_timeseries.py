@@ -309,3 +309,77 @@ def test_latest_history_set_is_the_most_recently_recorded_with_done_runs(tmp_pat
         assert latest_history_set(conn, "berlin", "lau", **kw) == Fakes(tmp_path, "new").set_md5
         assert latest_history_set(conn, "berlin", "fua", **kw) is None
         assert latest_history_set(conn, "paris", "lau", **kw) is None
+
+
+def test_zero_median_means_no_spike():
+    pts = [pt("2018", 5, 0), pt("2019", 5, 0), pt("2020", 5, 7)]
+    assert rules(pts) == {}
+
+
+def test_ab_km_is_tiers_a_and_b_on_per_side_and_headline_is_the_preset_metric(db):
+    path, set_md5 = db
+    with open_db(path) as conn:
+        run_id = min(T.series(conn, "berlin", "lau", _selector(), set_md5), key=lambda p: p.run_id)
+        run_id = run_id.run_id
+        conn.execute("DELETE FROM tier_lengths WHERE run_id=?", (run_id,))
+        for tier, basis, km in [
+            ("A", "per_side", 10.0),
+            ("B", "per_side", 20.0),
+            ("C", "per_side", 40.0),
+            ("A", "qecio_weighted", 5.0),
+            ("B", "qecio_weighted", 100.0),
+        ]:
+            conn.execute(
+                "INSERT INTO tier_lengths (run_id, city_id, tier, subtype, length_basis, "
+                "length_km, n_ways) VALUES (?, 'berlin', ?, '', ?, ?, 1)",
+                (run_id, tier, basis, km),
+            )
+        conn.execute(
+            "UPDATE metrics SET value=7.5 WHERE run_id=? AND preset='ours_headline' "
+            "AND length_basis='per_side'",
+            (run_id,),
+        )
+        conn.commit()
+        p = next(x for x in T.series(conn, "berlin", "lau", _selector(), set_md5))
+        assert p.run_id == run_id
+        assert p.ab_km == pytest.approx(30.0)
+        assert p.tiers_km["C"] == pytest.approx(40.0) and p.tiers_km["A"] == pytest.approx(10.0)
+        assert p.headline == pytest.approx(7.5)
+
+
+def test_cli_check_fails_when_generated_block_markers_are_missing(db, tmp_path):
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    report.write_text(report.read_text().replace(T.BEGIN, "").replace(T.END, ""))
+    res = _ts(db, report, "--check")
+    assert res.exit_code == 1 and "markers" in res.output
+
+
+def _no_boundary(db, report, *cities):
+    args = ["timeseries", "--db", str(db[0]), "--report", str(report), "--check"]
+    for c in cities:
+        args += ["--city", c]
+    return CliRunner().invoke(app, args)
+
+
+def test_cli_check_requires_fua_for_berlin_but_not_vienna(db, tmp_path):
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    res = _no_boundary(db, report, "berlin")
+    assert res.exit_code == 1 and "no history runs for berlin/fua" in res.output
+    # vienna has no history at all: lau is required, fua is not
+    res = _no_boundary(db, report, "vienna")
+    assert "no history runs for vienna/lau" in res.output
+    assert "vienna/fua" not in res.output
+
+
+def test_history_config_is_strict_and_has_a_default(tmp_path):
+    from velometer.config import ConfigError, load_history
+
+    h = load_history(CFG_DIR / "history.yaml")
+    assert h.required("berlin") == ["lau", "fua"] and h.required("vienna") == ["lau"]
+    bad = tmp_path / "h.yaml"
+    bad.write_text('years: "2018-2026"\nrequired_kinds: {berlin: [lau]}\n')
+    with pytest.raises(ConfigError):
+        load_history(bad)
+    bad.write_text('years: "2018-2026"\nrequired_kinds: {default: [lau]}\nextra: 1\n')
+    with pytest.raises(ConfigError):
+        load_history(bad)

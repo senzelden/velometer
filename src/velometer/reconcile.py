@@ -305,20 +305,20 @@ def write_report(path: Path, reports: dict[str, CityReport]) -> None:
     path.write_text(pattern.sub(lambda m: render_block(reports), text, count=1))
 
 
-def _headings(text: str) -> set[str]:
+def headings(text: str) -> set[str]:
     return set(re.findall(r"^### (\S+)\s*$", text, re.M))
 
 
 def missing_explanations(path: Path, gaps: list[Gap]) -> list[str]:
-    headings = _headings(path.read_text())
-    return [g.key for g in gaps if g.flagged and g.key not in headings]
+    found = headings(path.read_text())
+    return [g.key for g in gaps if g.flagged and g.key not in found]
 
 
 def stale_explanations(path: Path, gaps: list[Gap], cities: set[str]) -> list[str]:
     """`### city/...` headings of these cities that match no current flagged gap."""
     flagged = {g.key for g in gaps if g.flagged}
     return sorted(
-        h for h in _headings(path.read_text()) if h.split("/")[0] in cities and h not in flagged
+        h for h in headings(path.read_text()) if h.split("/")[0] in cities and h not in flagged
     )
 
 
