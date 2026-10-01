@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from velometer.config import Basis, RoadClass
 
@@ -13,7 +13,7 @@ class _Model(BaseModel):
 
 
 class Population(_Model):
-    value: int
+    value: int = Field(gt=0)
     year: int
     source: str
 

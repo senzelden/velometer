@@ -118,6 +118,100 @@ def test_population_uses_lau_value_else_nuts3_fallback():
     assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source and pop.year == 2024
 
 
+def test_population_nan_or_nonpositive_lau_falls_back_to_nuts3():
+    payload = {"value": {"0": 2084894}}
+    for bad in (float("nan"), 0.0, -5, None):
+        pop = b.population(CITY, {"POP_2024": bad}, fetch_json=lambda url: payload)
+        assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source
+
+
+def test_population_eurostat_anomaly_fails_loudly_and_missing_nuts3_is_none():
+    for payload in ({"value": {}}, {"value": {"0": 0}}, {}):
+        with pytest.raises(ValueError, match=r"demo_r_pjangrp3.*DE300"):
+            b.population(CITY, {"POP_2024": 0}, fetch_json=lambda url, p=payload: p)
+    no_nuts = CITY.model_copy(update={"nuts3_code": None})
+    assert b.population(no_nuts, {"POP_2024": 0}, fetch_json=lambda url: pytest.fail("net")) is None
+
+
+def test_population_model_rejects_nonpositive():
+    from pydantic import ValidationError
+
+    from velometer.models import Population
+
+    with pytest.raises(ValidationError):
+        Population(value=0, year=2024, source="x")
+
+
+def test_load_boundary_polygon_keeps_multipolygon_parts(tmp_path):
+    mp = MultiPolygon([_sq(4.5e6, 3.27e6), _sq(4.51e6, 3.27e6)])
+    rec = b.write_boundary(CITY, "lau", mp, "GISCO", tmp_path)
+    loaded = b.load_boundary_polygon(rec.geojson_path, CITY.epsg)
+    assert loaded.geom_type == "MultiPolygon" and len(loaded.geoms) == 2
+    assert loaded.area == pytest.approx(rec.polygon.area, rel=1e-6)
+
+
+def _stub_gisco(monkeypatch, tmp_path, lau_code="DE_11000000", pop=5):
+    lau = _gpkg(tmp_path / "lau.gpkg", [(lau_code, MultiPolygon([_sq(4.5e6, 3.27e6)]), pop)])
+    fua = tmp_path / "fua.gpkg"
+    geoms = np.array([shapely.to_wkb(MultiPolygon([_sq(4.5e6, 3.27e6, 3000)]))], dtype=object)
+    pyogrio.raw.write(
+        str(fua),
+        geoms,
+        [np.array(["DE001F"], dtype=object)],
+        [b.FUA_FIELD],
+        geometry_type="MultiPolygon",
+        crs="EPSG:3035",
+        driver="GPKG",
+    )
+    monkeypatch.setattr(b, "fetch_gisco", lambda d: (lau, fua))
+
+
+def test_city_boundary_lau_and_fua(tmp_path, monkeypatch):
+    _stub_gisco(monkeypatch, tmp_path)
+    data = tmp_path / "fresh"
+    rec, pop = b.city_boundary(CITY, "lau", data)
+    assert rec.boundary.kind == "lau" and pop.value == 5
+    rec, pop = b.city_boundary(CITY, "fua", data)
+    assert rec.boundary.kind == "fua" and pop is None
+    assert rec.boundary.area_km2 == pytest.approx(9.0, rel=0.02)
+
+
+def test_city_boundary_missing_code_fails_before_download(tmp_path, monkeypatch):
+    monkeypatch.setattr(b, "fetch_gisco", lambda d: pytest.fail("download"))
+    no_fua = CITY.model_copy(update={"fua_code": None})
+    with pytest.raises(ValueError, match="fua_code"):
+        b.city_boundary(no_fua, "fua", tmp_path)
+
+
+def test_city_boundary_osm_admin_on_fresh_data_dir(tmp_path, monkeypatch):
+    def fake_relation_polygon(src, relation_id, dst):
+        assert dst.parent.is_dir(), "boundaries dir must exist before relation_polygon"
+        wgs = b._to(_sq(4.5e6, 3.27e6), 3035, 4326)
+        dst.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": json.loads(shapely.to_geojson(wgs)),
+                        }
+                    ],
+                }
+            )
+        )
+        return dst
+
+    monkeypatch.setattr(b, "relation_polygon", fake_relation_polygon)
+    rec, pop = b.city_boundary(
+        CITY, "osm_admin", tmp_path / "fresh", region_path=tmp_path / "r.pbf"
+    )
+    assert pop is None and rec.boundary.kind == "osm_admin"
+    assert rec.boundary.area_km2 == pytest.approx(1.0, rel=0.02)
+    assert not (tmp_path / "fresh" / "boundaries" / "berlin_osm_admin.raw.geojson").exists()
+
+
 @pytest.mark.slow
 def test_every_pilot_city_code_selects_exactly_one_feature(tmp_path_factory):
     """Network: download GISCO once; assert the rule that each configured code is unique."""

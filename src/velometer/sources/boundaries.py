@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -60,13 +61,13 @@ def _valid_polygonal(geom: BaseGeometry) -> BaseGeometry:
     """Repair an invalid geometry, keeping only its polygonal parts."""
     if geom.is_valid:
         return geom
-    fixed = shapely.make_valid(geom)
-    parts = [
-        p
-        for g in getattr(fixed, "geoms", [fixed])
-        for p in (getattr(g, "geoms", [g]))
-        if p.geom_type == "Polygon" and not p.is_empty
-    ]
+    parts = []
+    for part in shapely.get_parts(shapely.make_valid(geom)):
+        if part.geom_type == "GeometryCollection":
+            parts.extend(shapely.get_parts(part))
+        else:
+            parts.append(part)
+    parts = [p for p in parts if p.geom_type == "Polygon" and not p.is_empty]
     if not parts:
         raise ValueError(f"geometry has no polygonal part after make_valid: {geom.wkt[:80]}")
     return parts[0] if len(parts) == 1 else shapely.MultiPolygon(parts)
@@ -112,18 +113,17 @@ def load_boundary_polygon(geojson_path: Path, epsg: int) -> BaseGeometry:
 def population(
     city: CityConfig, lau_props: dict, fetch_json: Callable[[str], dict] | None = None
 ) -> Population | None:
-    value = int(lau_props.get("POP_2024") or 0)
-    if value > 0:
-        return Population(value=value, year=2024, source="GISCO LAU 2024 POP_2024")
+    raw = lau_props.get("POP_2024")
+    if raw is not None and not math.isnan(raw) and raw > 0:
+        return Population(value=int(raw), year=2024, source="GISCO LAU 2024 POP_2024")
     if not city.nuts3_code:
         return None
-    url = EUROSTAT_POP.format(nuts3=city.nuts3_code)
-    data = (fetch_json or _get_json)(url)
-    return Population(
-        value=int(next(iter(data["value"].values()))),
-        year=2024,
-        source=f"Eurostat demo_r_pjangrp3 {city.nuts3_code} 2024",
-    )
+    dataset = f"demo_r_pjangrp3 {city.nuts3_code}"
+    data = (fetch_json or _get_json)(EUROSTAT_POP.format(nuts3=city.nuts3_code))
+    values = list((data.get("value") or {}).values())
+    if not values or not values[0] or values[0] <= 0:
+        raise ValueError(f"Eurostat {dataset} 2024: no positive population in response")
+    return Population(value=int(values[0]), year=2024, source=f"Eurostat {dataset} 2024")
 
 
 def _get_json(url: str) -> dict:
@@ -137,17 +137,17 @@ def city_boundary(
     city: CityConfig, kind: str, data_dir: Path, region_path: Path | None = None
 ) -> tuple[BoundaryRecord, Population | None]:
     if kind in ("lau", "fua"):
-        lau, fua = fetch_gisco(data_dir)
-        gpkg, field, code = (
-            (lau, "GISCO_ID", city.lau_code) if kind == "lau" else (fua, FUA_FIELD, city.fua_code)
-        )
+        code = city.lau_code if kind == "lau" else city.fua_code
         if not code:
             raise ValueError(f"{city.id}: no {kind}_code configured")
+        lau, fua = fetch_gisco(data_dir)
+        gpkg, field = (lau, "GISCO_ID") if kind == "lau" else (fua, FUA_FIELD)
         geom, props = select_feature(gpkg, field, code)
         rec = write_boundary(city, kind, geom, "Eurostat GISCO", data_dir)
         return rec, (population(city, props) if kind == "lau" else None)
     if region_path is None:
         raise ValueError("osm_admin boundaries need the city's Geofabrik region file")
+    (data_dir / "boundaries").mkdir(parents=True, exist_ok=True)
     gj = relation_polygon(
         region_path,
         city.osm_relation_id,
