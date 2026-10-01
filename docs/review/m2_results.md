@@ -40,13 +40,13 @@ Headline and preset values are percentages (numerator km / denominator km × 100
 
 Classifier: `v1` with parameters `{"plain_cycleway_on_oneway":"traffic_side"}` (`config/classifier/`).
 
-| city | run | OSM timestamp | Geofabrik md5 | git commit | boundary | area km² | population | population source |
-|---|---:|---|---|---|---|---:|---:|---|
-| berlin | 1 | 2026-09-30T20:22:42Z | `d9f43a4a` | `2e90435` | Eurostat GISCO, LAU 2024 (1:1M) | 892.3 | 3,782,202 (2024) | GISCO LAU 2024 POP_2024 |
-| copenhagen | 4 | 2026-09-30T20:22:42Z | `ba5b1ed1` | `2e90435` | Eurostat GISCO, LAU 2024 (1:1M) | 94.9 | 659,350 (2024) | GISCO LAU 2024 POP_2024 |
-| paris | 2 | 2026-09-30T20:22:42Z | `cf264dbe` | `2e90435` | Eurostat GISCO, LAU 2024 (1:1M) | 105.3 | 2,084,894 (2024) | Eurostat demo_r_pjangrp3 FR101 2024 |
-| vienna | 3 | 2026-09-30T20:22:42Z | `74212346` | `2e90435` | Eurostat GISCO, LAU 2024 (1:1M) | 413.9 | 2,005,760 (2024) | GISCO LAU 2024 POP_2024 |
-| wroclaw | 5 | 2026-09-30T20:22:42Z | `0ab5acc3` | `2e90435` | Eurostat GISCO, LAU 2024 (1:1M) | 291.6 | 673,743 (2024) | GISCO LAU 2024 POP_2024 |
+| city | run | OSM timestamp | Geofabrik md5 | git commit | config sha | boundary | boundary sha | area km² | population | population source |
+|---|---:|---|---|---|---|---|---|---:|---:|---|
+| berlin | 6 | 2026-09-30T20:22:42Z | `d9f43a4a` | `4e3b2c3` | `0fac7cd5d1c8` | Eurostat GISCO, LAU 2024 (1:1M) | `760d04d86a75` | 892.3 | 3,782,202 (2024) | GISCO LAU 2024 POP_2024 |
+| copenhagen | 9 | 2026-09-30T20:22:42Z | `ba5b1ed1` | `4e3b2c3` | `0fac7cd5d1c8` | Eurostat GISCO, LAU 2024 (1:1M) | `e7afb8eb0bb0` | 94.9 | 659,350 (2024) | GISCO LAU 2024 POP_2024 |
+| paris | 7 | 2026-09-30T20:22:42Z | `cf264dbe` | `4e3b2c3` | `0fac7cd5d1c8` | Eurostat GISCO, LAU 2024 (1:1M) | `87ba05899604` | 105.3 | 2,084,894 (2024) | Eurostat demo_r_pjangrp3 FR101 2024 |
+| vienna | 8 | 2026-09-30T20:22:42Z | `74212346` | `4e3b2c3` | `0fac7cd5d1c8` | Eurostat GISCO, LAU 2024 (1:1M) | `e9f660e9d87a` | 413.9 | 2,005,760 (2024) | GISCO LAU 2024 POP_2024 |
+| wroclaw | 10 | 2026-09-30T20:22:42Z | `0ab5acc3` | `4e3b2c3` | `0fac7cd5d1c8` | Eurostat GISCO, LAU 2024 (1:1M) | `6e5e44174776` | 291.6 | 673,743 (2024) | GISCO LAU 2024 POP_2024 |
 
 ## Completeness (share of tier km with the tag)
 

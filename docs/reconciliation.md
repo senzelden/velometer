@@ -17,6 +17,8 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 
 #### berlin
 
+Provenance: run 6 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0fac7cd5d1c8` · commit `4e3b2c3` · boundary lau `760d04d86a75` · sources: bikenetkit_v1 retrieved 2026-10-01; changing_cities retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `berlin/cc_ratio` | 27.7 | 17.0 | +62.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
@@ -35,6 +37,8 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 
 #### copenhagen
 
+Provenance: run 9 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0fac7cd5d1c8` · commit `4e3b2c3` · boundary lau `e7afb8eb0bb0` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `copenhagen/cc_ratio` | 58.6 | 43.0 | +36.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
@@ -48,6 +52,8 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 | `copenhagen/bnk_network_km` | 588.6 | 558.2 | +5.4% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### paris
+
+Provenance: run 7 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0fac7cd5d1c8` · commit `4e3b2c3` · boundary lau `87ba05899604` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -63,14 +69,16 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 
 #### vienna
 
+Provenance: run 8 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0fac7cd5d1c8` · commit `4e3b2c3` · boundary lau `e9f660e9d87a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `vienna/cc_ratio` | 23.2 | 14.0 | +65.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_ratio@incl_traffic_calmed_restricted_access` | 23.2 | 22.0 | +5.6% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_ratio@incl_traffic_calmed_restricted_access` | 23.2 | 22.0 | +5.6% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
 | `vienna/cc_km` | 679.8 | 384.0 | +77.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_km@incl_traffic_calmed_restricted_access` | 679.8 | 625.1 | +8.8% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_km@incl_traffic_calmed_restricted_access` | 679.8 | 625.1 | +8.8% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
 | `vienna/cc_network_km` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_network_km@incl_traffic_calmed_restricted_access` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_network_km@incl_traffic_calmed_restricted_access` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
 | `vienna/qecio_main_km` | 1,075.2 | 1,078.2 | -0.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `vienna/qecio_tracks_km` | 423.5 | 380.5 | +11.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `vienna/qecio_lanes_km` | 136.7 | 141.2 | -3.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
@@ -79,6 +87,8 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 | `vienna/bnk_network_km` | 720.9 | 782.6 | -7.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### wroclaw
+
+Provenance: run 10 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0fac7cd5d1c8` · commit `4e3b2c3` · boundary lau `6e5e44174776` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -96,8 +106,11 @@ Comparison map: `config/reconcile.yaml`. Our numbers are OSM *mapped* km (ADR 00
 
 ## Explanations
 
-Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 1–5, OSM
-2026-09-30, classifier v1, GISCO LAU 2024), the external rows and their notes, the QECIO v2.10
+<!-- explained-against: berlin=6 copenhagen=9 paris=7 vienna=8 wroclaw=10 -->
+
+Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 6–10, OSM
+2026-09-30, classifier v1, GISCO LAU 2024; their tier and road km are identical to the
+superseded runs 1–5), the external rows and their notes, the QECIO v2.10
 Methodology PDF (Table 2) and `docs/research/m2-data-sources-2026-10-01.md`. "Centreline" means
 our `qecio_weighted` basis: a bidirectional way counts once and each one-way side counts half,
 which is how QECIO counts and, judging by Berlin and Wrocław, how the ECF tracker numbers in
@@ -174,9 +187,10 @@ numbers (`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.6%).
 ### paris/qecio_shared_km
 Cause: **date**. Applying QECIO's own tag definition of cycle and pedestrian tracks (Methodology
 Table 2: footway/path/pedestrian + `bicycle=designated` + `segregated!=yes`, or cycleway +
-`foot=designated` + `segregated!=yes`) to our 2026-09-30 snapshot gives 20.3 km centreline, of
-which v1 classifies 20.2 km as B. So our classifier and QECIO's rule agree on today's data, and
-the gap to QECIO's 24.3 km (−6.3 km on a small base) lies in the data: 994 days of retagging
+`foot=designated` + `segregated!=yes`) to our 2026-09-30 snapshot selects 20.3 km of ways, which
+v1 classifies as B in full: 18.0 km centreline (20.2 km per side), the same 18.0 km as our
+`qecio_shared_km` value. So our classifier and QECIO's rule agree on today's data, and the gap to
+QECIO's 24.3 km (−6.3 km centreline on a small base) lies in the data: 994 days of retagging
 since QECIO's 2024-01-10 snapshot. Not verified against a 2024 snapshot.
 
 ### vienna/cc_ratio
@@ -213,9 +227,11 @@ with a different scope; per-city sources are unverified (research doc §6).
 ### wroclaw/bnk_network_km
 Cause: **definition**. BikeNetKit's filter also takes living streets and footways/paths with
 `bicycle=yes|permissive`, which our tiers A+B+E leave out. Applying that filter to our snapshot
-gives 769.1 km centreline, of which 364.5 km get no tier at all from v1. The two groups
-that v1 deliberately leaves out of A/B/E are living streets (167.4 km) and footway/path/pedestrian
-ways with `bicycle=yes|permissive` (113.9 + 3.1 + 77.9 + 8.7 = 203.6 km). BikeNetKit's 638.8 km sits between our 399.4 km and that raw 769.1 km, which
+gives 769.1 km of ways (each way once), of which 370.7 km get no tier A–E from v1. Almost all of
+that is the two groups v1 deliberately leaves out of A/B/E: living streets (166.8 of their
+167.4 km; the other 0.7 km carry a painted lane) and footway/path/pedestrian ways with
+`bicycle=yes|permissive` (footway 113.9 + 3.1, path 77.9 + 0.04, pedestrian 8.7 = 203.7 km, all
+untiered); the remaining 0.2 km are other ways. BikeNetKit's 638.8 km sits between our 399.4 km and that raw 769.1 km, which
 fits its graph simplification and isolate removal. The boundaries agree (BikeNetKit ≈ 290 km²
 vs our 291.6 km²), so the boundary is not the cause. For the other four cities the same
 comparison stays within 10%.

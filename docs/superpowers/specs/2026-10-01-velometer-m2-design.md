@@ -76,10 +76,10 @@
     | Copenhagen | 397 | 926 | 43% |
     | Wrocław | 355 | 1,769 | 20% |
     | Berlin | 925 | 5,350 | 17% |
-    | Vienna | 384 | — | 14% |
+    | Vienna | 384 | 2,844 | 14% |
 
-    Vienna also has a July 2025 web correction: 625.1 km of 2,844 km (22.0%), which adds traffic-calmed streets and so is not like-for-like. Both rows are stored, with notes. Whether each city's figure is city-submitted or OSM is not stated per city, so the note field says so.
-11. **BikeNetKit's "bike network"** includes living streets and cycle streets, so it is wider than "protected". It is compared against our `A+B+C+D+E` sum, not the headline. Its boundaries are OSM/Nominatim polygons, which differ from LAU. The snapshot date is "summer 2026" (unverified), and the row carries that note.
+    Vienna also has a July 2025 web correction: 625.1 km of 2,844 km (22.0%), which adds traffic-calmed streets and so is not like-for-like. Its rows carry `reference_date` 2025-07-17 (the page's modified date; the correction's own date is not published). Both rows are stored, with notes. Whether each city's figure is city-submitted or OSM is not stated per city, so the note field says so.
+11. **BikeNetKit's "bike network"** includes living streets and cycle streets, so it is wider than "protected". It is compared against our `A+B+E` sum (BikeNetKit has no lanes; research §7, Ruling R10, amended in the final fix dispatch), not the headline. Its boundaries are OSM/Nominatim polygons, which differ from LAU. The snapshot date is "summer 2026" (unverified), and the row carries that note.
 12. **Scale engine.** shapely with STRtree stays the engine. DuckDB is introduced only if a full Berlin `classify` takes more than 10 minutes or more than 8 GB RSS on this machine. The measurement is recorded in ADR 0007 either way.
 
 ## 3. Units and interfaces
@@ -156,6 +156,7 @@ Retries are bounded (3) with back-off.
   - `write_result(run_id, city_id, MeasureResult, metrics)`, in one transaction;
   - `upsert_boundary` and `upsert_external_figures`.
 - Every connection is used as a context manager.
+- **Schema v3 (Ruling R12, final fix dispatch):** an additive migration (`ALTER TABLE ADD COLUMN`) adds `runs.population_value/year/source`, written at run start, and `runs.config_sha256` (sha256 of the classifier YAML bytes followed by `presets.yaml` bytes). `config_sha256` is part of the run key and the done-run unique index; pre-v3 runs keep NULL and are never reused.
 
 ### `run.py` (orchestration)
 `run_city(city, boundary_kind="lau", classifier="v1", force=False) -> RunOutcome` chains these steps:
@@ -188,7 +189,7 @@ A completed run with the same key is skipped unless `force`. A failure marks the
 | `qecio_tracks_km` | QECIO tracks km | A + B[segregated=yes], qecio_weighted |
 | `qecio_lanes_km` | QECIO lanes km | C + D, qecio_weighted |
 | `qecio_total_km` | QECIO total cycle infrastructure | A+B+C+D, qecio_weighted |
-| `bnk_network_km` | BikeNetKit network km | A–E, per_side |
+| `bnk_network_km` | BikeNetKit network km | A+B+E, per_side (BikeNetKit has no lanes, R10) |
 | `official_*` | Berlin official figures | listed, never flagged: they measure new km per year, not stock |
 
 - `gap_pct = (ours − theirs) / theirs`.
@@ -201,6 +202,7 @@ A completed run with the same key is skipped unless `force`. A failure marks the
 - Hand-written explanations sit under `### <city>/<comparison id>` headings.
 - `velometer reconcile --write` rewrites only the generated block.
 - `velometer reconcile --check` exits 1 when a flagged gap has no explanation heading.
+- Final fix dispatch (R13, I7): each city's generated block starts with a provenance line (run, OSM timestamp, classifier and parameters, config sha, commit, boundary sha, `retrieved_at` per source). The explanations carry `<!-- explained-against: city=run_id ... -->`, and `--check` also exits 1 when a city's latest run differs from it, or when a comparison marked `required` in `config/reconcile.yaml` (`cc_ratio`, `qecio_main_km`, `bnk_network_km`) has no external row for a city with a run. It warns about headings that match no flagged gap.
 
 ### CLI additions
 ```

@@ -1,7 +1,7 @@
 # velometer
 
 Read `HANDOVER.md` (project brief) and `docs/adr/` (locked decisions) before changing behaviour.
-Current scope: `docs/superpowers/specs/2026-10-01-velometer-m0-m1-design.md`.
+Current scope: `docs/superpowers/specs/2026-10-01-velometer-m2-design.md`.
 
 - Gate: `uv run ruff format --check . && uv run ruff check . && uv run pytest`
 - Network tests are `@pytest.mark.slow` and deselected by default.
