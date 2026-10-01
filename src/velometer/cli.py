@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from velometer.config import ConfigError, default_config_dir, load_cities
-from velometer.db import connect, create_schema, upsert_cities
+from velometer.db import SchemaError, create_schema, open_db, upsert_cities
 
 
 class PlainOneway(StrEnum):
@@ -33,9 +33,13 @@ def init(
     except ConfigError as e:
         typer.echo(f"config error: {e}", err=True)
         raise typer.Exit(1) from e
-    conn = connect(db)
-    create_schema(conn)
-    n = upsert_cities(conn, cities)
+    try:
+        with open_db(db) as conn:
+            create_schema(conn)
+            n = upsert_cities(conn, cities)
+    except SchemaError as e:
+        typer.echo(f"database error: {e}", err=True)
+        raise typer.Exit(1) from e
     typer.echo(f"{db}: schema ready, {n} cities loaded")
 
 

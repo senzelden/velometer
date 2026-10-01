@@ -1,10 +1,10 @@
 """Aggregate classified way-sides into tier lengths, road lengths and preset metrics."""
 
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from velometer.config import ClassifierConfig, Preset
-from velometer.models import Metric, RoadLength, TierLength
+from velometer.models import Completeness, Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify, classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
 from velometer.pipeline.explode import explode
@@ -37,6 +37,7 @@ class MeasureResult:
     classified: list[Classified]
     unknown_values: dict[str, int]
     plain_oneway: PlainOnewayReport
+    completeness: list[Completeness] = field(default_factory=list)
 
 
 def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:

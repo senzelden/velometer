@@ -24,6 +24,7 @@ class City(_Model):
     country_iso2: str
     lau_code: str | None = None
     fua_code: str | None = None
+    nuts3_code: str | None = None  # NUTS3 unit, used for QECIO matching and population fallback
     osm_relation_id: int
     epsg: int
     geofabrik_region: str
@@ -42,12 +43,18 @@ class Boundary(_Model):
 
 class Run(_Model):
     id: int | None = None
+    city_id: str
     started_at: datetime
+    finished_at: datetime | None = None
     classifier_version: str
+    classifier_parameters: str  # canonical JSON (sorted keys)
     git_commit: str
     osm_timestamp: str
+    region_md5: str
     boundary_kind: Literal["lau", "fua", "osm_admin", "none"]
+    boundary_sha256: str
     status: Literal["running", "done", "failed"]
+    error: str | None = None
 
 
 class TierLength(_Model):
@@ -75,11 +82,12 @@ class Metric(_Model):
     value: float | None
     numerator_km: float
     denominator_km: float
+    per_100k: float | None = None  # preset numerator km per 100k residents
 
 
 class Completeness(_Model):
-    run_id: int
-    city_id: str
+    run_id: int | None = None
+    city_id: str | None = None
     tier: str
     share_with_width: float
     share_with_surface: float

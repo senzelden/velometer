@@ -41,6 +41,7 @@ class CityConfig(_Strict):
     osm_relation_id: int = Field(gt=0)
     lau_code: str | None = None
     fua_code: str | None = None
+    nuts3_code: str | None = None
 
     @field_validator("epsg")
     @classmethod
