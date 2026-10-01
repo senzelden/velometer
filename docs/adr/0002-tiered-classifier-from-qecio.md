@@ -25,9 +25,13 @@ Classification happens at the **way-side** level. Road ways are split into left 
 | D | painted lane | `cycleway:*=lane` otherwise; advisory lanes become sub-attribute `advisory` |
 | E | cycle street / shared | `bicycle_road=yes`, `cyclestreet=yes`; `share_busway` becomes sub-attribute `bus` |
 
-**Excluded:**
-- `cycleway=no|separate|shared_lane`. `shared_lane` is kept as an attribute only.
-- `access=private`, `bicycle=no`, `area=yes`, and construction or proposed ways.
+**Excluded** (counted under `excluded` for diagnostics, never in a preset):
+- `cycleway=no|none|separate|shared_lane|shared`. `shared_lane` is kept as an attribute only.
+- `sidewalk:<side|both>:bicycle=yes|permissive` (cycling merely permitted on the footway).
+- `access=private|no` unless `bicycle=yes|designated|permissive`; on a road side this tests the road's `access`/`bicycle`.
+- `bicycle=no|dismount`.
+- `area=yes` (also the road's own `area=yes` for a road side).
+- Construction and proposed ways: `highway=construction|proposed`, `construction=yes` or any `proposed=*` on a standalone way; on a road side, the road's `construction=yes` or any `proposed=*`, and a side value `cycleway:<side>=construction|proposed`.
 
 The rules are data (`config/classifier/v1.yaml`), not code. Every classification records the `rule_id` that produced it.
 
@@ -37,7 +41,7 @@ The rules are data (`config/classifier/v1.yaml`), not code. Every classification
 - **`per_side`** (headline): each road side counts its geometry length once. A separately mapped way counts its geometry length once, whether one-way or two-way. This measures **facility length per side of the road**, not route length and not lane length. A main road with cycle tracks on both sides contributes twice its length, so coverage ratios can exceed 100. The two tagging styles (side tags vs separately mapped sidewalk tracks) produce the same numbers.
 - **`qecio_weighted`**: QECIO's rule. Unidirectional infrastructure counts half.
   - A way-side from a side tag is bidirectional only if `cycleway:<side>:oneway=no`.
-  - A standalone way is bidirectional if `oneway!=yes` and `oneway:bicycle!=yes`.
+  - A standalone way is bidirectional unless any `;`-separated part of `oneway` or of `oneway:bicycle` is `yes`, `1`, `true` or `-1`.
   - The `ecf_qecio` preset uses this basis.
 
 ### Deliberate divergences from QECIO
@@ -45,6 +49,10 @@ The rules are data (`config/classifier/v1.yaml`), not code. Every classification
 - QECIO doesn't separate buffered from painted lanes (its lanes = our C + D).
 - `highway=path` + `bicycle=designated` + `foot=no` is tier A (cycle-only path); `access=no` and `construction=yes` are excluded.
 - Limited-access roads (QECIO's "extended" indicator) have no tier in v1.
+
+### Notes on side assignment and edge cases
+- **Plain `cycleway=<value>` on a oneway road** (Ruling R18, provisional, awaiting the user's decision; the spec §4 says both sides): on `oneway=yes|1|true` it applies to the right side only; on `oneway=-1` to the left side only; `junction=roundabout` without an `oneway` tag counts as `oneway=yes`; an explicit `oneway=no` (or no oneway) applies it to both sides. Legacy `cycleway=opposite_*` always applies to the left side with `contraflow`.
+- **`highway=footway` + `footway=crossing` + `bicycle=designated`** is counted as tier B (`B_path`), as QECIO does.
 
 ## Consequences
 

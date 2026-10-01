@@ -201,3 +201,18 @@ The function orchestrates read → explode → classify → dedupe for one file.
 ## 8. Out of scope
 
 Boundaries, Geofabrik downloads, history snapshots, DuckDB, external figures, reconcile, reports and the app.
+
+## 9. As built (2026-10-01)
+
+Recorded after the final whole-branch review; §1–§8 above are left as designed. Rulings refer to the SDD ledger.
+
+- **Open question (R18, awaits the user's decision):** §4 says plain `cycleway=<value>` applies to both sides. The code applies it to the right side only on a oneway road (`oneway=yes|1|true`), to the left side only on `oneway=-1`, treats `junction=roundabout` without an `oneway` tag as oneway, and applies it to both sides otherwise (incl. explicit `oneway=no`). This follows common OSM practice; if the user prefers §4, it is a one-function change in `explode.plain_cycleway_sides`.
+- **`sidewalk_bicycle` is always carried (R20).** §4 says it is emitted only when no `cycleway` value exists for the side. The code always carries it and the conflict is resolved by rule order (tracks and lanes come before `B_sidewalk_designated`), pinned by `test_rule_order_matters_track_before_sidewalk`. It is dropped when the sidewalk is mapped separately (`sidewalk:<side>|both|sidewalk` has a `separate` part).
+- **Carried road tags** also include `name`, `ref` and `dual_carriageway`; `construction` and `proposed` are carried as §4 requires and tested by `X_road_construction` (R19).
+- **Excluded diagnostics** are keyed by `subtype`, not `rule_id`, so `X_lifecycle`, `X_construction_tag` and `X_road_construction` all report under `lifecycle`. `Classified` has a `subtype` field that §4 does not list.
+- **`pair_dual_carriageways(roads, pairable_highways, proj, ...)`** takes the pairable highway set and a `Projector` and returns `(factors, pairs)`, not the §4 signature.
+- **`cities.yaml` has no `population` key**; `CityConfig` forbids extra keys. Population arrives with the M2+ external figures.
+- **`expected.yaml`** lists sides, tiers, rules and key attrs only. The §6 `per_side_km`, `qecio_km`, factor and duplicate expectations live in `test_measure.py` and `test_dedupe.py` instead.
+- **No `tests/conftest.py`**; each test module loads its own config.
+- **Projected CRS:** `Projector` and `CityConfig` share `geometry.require_projected`, and `velometer classify --epsg` rejects geographic or unknown codes (R16).
+- **Presets:** `load_presets(path, classifier)` checks that every `X/sub` entry names a subtype that a tier-X rule produces.

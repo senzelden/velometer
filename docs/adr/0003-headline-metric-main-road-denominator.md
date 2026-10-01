@@ -24,7 +24,7 @@ Protection matters most where traffic is fast and heavy. That is ECF's Sustainab
 | `main_incl_motorway_raw` | same as `main_incl_motorway` | **not** deduped (QECIO-faithful) |
 | `all_public` | main incl. motorway, plus unclassified, residential, living_street, pedestrian | deduped |
 
-All classes leave out `access=private` and `area=yes`. `service` is excluded from `all_public` because driveways and parking aisles would swamp it. The lists live in YAML.
+All classes leave out `access=private`, `access=no` (unless `bicycle=yes|designated|permissive`, mirroring the classifier's exclusion; Ruling R22) and `area=yes`, each tested on any `;`-separated part. `service` is excluded from `all_public` because driveways and parking aisles would swamp it. The lists live in YAML.
 
 **Motorways** are excluded from the headline because cyclists can't use them. Including them penalises cities with urban motorways. The variants that include them are still computed, and the `ecf_qecio` preset uses them.
 
