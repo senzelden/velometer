@@ -291,3 +291,32 @@ def test_interrupted_run_is_marked_failed_not_left_running(conn, tmp_path):
         _run(conn, tmp_path, _deps(tmp_path, [], read=interrupted))
     rows = conn.execute("SELECT status, error FROM runs").fetchall()
     assert rows == [("failed", "KeyboardInterrupt: ")]
+
+
+@pytest.mark.slow
+def test_berlin_end_to_end(tmp_path):
+    """Spec section 4: one real Berlin run from an empty data dir (network, about 200 MB)."""
+    from velometer.sources.download import md5_of
+
+    data = tmp_path / "data"
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        out = R.run_city(conn, CITY, data_dir=data, config_dir=CFG_DIR)
+        assert out.status == "done", out.error
+        run = conn.execute(
+            "SELECT region_md5, osm_timestamp FROM runs WHERE id=?", (out.run_id,)
+        ).fetchone()
+        (region,) = (data / "raw").glob("berlin-*.osm.pbf")
+        assert run[0] == md5_of(region)
+        assert run[1] is not None
+        headline = conn.execute(
+            "SELECT value FROM metrics WHERE run_id=? AND preset='ours_headline'", (out.run_id,)
+        ).fetchone()
+        assert headline is not None and headline[0] is not None
+        tiers = conn.execute(
+            "SELECT length_km FROM tier_lengths WHERE run_id=?", (out.run_id,)
+        ).fetchall()
+        assert tiers and all(km >= 0 for (km,) in tiers)
+        again = R.run_city(conn, CITY, data_dir=data, config_dir=CFG_DIR)
+        assert again.status == "skipped" and again.run_id == out.run_id
