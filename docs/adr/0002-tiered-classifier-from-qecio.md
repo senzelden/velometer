@@ -31,7 +31,7 @@ Classification happens at the **way-side** level. Road ways are split into left 
 - `access=private|no` unless `bicycle=yes|designated|permissive`; on a road side this tests the road's `access`/`bicycle`.
 - `bicycle=no|dismount`.
 - `area=yes` (also the road's own `area=yes` for a road side).
-- Construction and proposed ways: `highway=construction|proposed`, `construction=yes` or any `proposed=*` on a standalone way; on a road side, the road's `construction=yes` or any `proposed=*`, and a side value `cycleway:<side>=construction|proposed`.
+- Construction and proposed ways: `highway=construction|proposed`, `construction=yes` on a standalone way; on a road side, the road's `construction=yes` and a side value `cycleway:<side>=construction|proposed`. A `proposed=*` tag on a built way marks a planned change and does not exclude it.
 
 The rules are data (`config/classifier/v1.yaml`), not code. Every classification records the `rule_id` that produced it.
 

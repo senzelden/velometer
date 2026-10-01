@@ -76,7 +76,6 @@ def _without(rule_id: str) -> ClassifierConfig:
         ("B_track_shared", "B_track_shared"),
         ("B_share_sidewalk", "B_share_sidewalk"),
         ("X_road_construction", "X_road_construction"),
-        ("X_road_construction", "X_road_proposed"),
         ("X_road_construction", "X_road_cycleway_construction"),
         ("A_path_cycle_only", "A_path_foot_no"),
         ("X_area", "X_area"),
@@ -111,7 +110,13 @@ def test_is_bidirectional_semantics():
     assert not is_bidirectional(side({"highway": "cycleway", "oneway:bicycle": "true"}))
 
 
-def test_standalone_proposed_tag_is_excluded_as_lifecycle():
-    way = WayRecord(10, {"highway": "cycleway", "proposed": "yes"}, ((13.4, 52.5), (13.41, 52.5)))
-    (c,) = classify_ways([way], CFG)
-    assert (c.tier, c.subtype) == ("excluded", "lifecycle")
+def test_proposed_tag_on_existing_way_is_not_lifecycle():
+    # `proposed=*` on a built way is a planned change, not a lifecycle state (R24)
+    path = WayRecord(10, {"highway": "cycleway", "proposed": "yes"}, ((13.4, 52.5), (13.41, 52.5)))
+    road = WayRecord(
+        11,
+        {"highway": "secondary", "proposed": "primary", "cycleway:right": "lane"},
+        ((13.4, 52.5), (13.41, 52.5)),
+    )
+    got = {(c.side.way_id, c.tier) for c in classify_ways([path, road], CFG)}
+    assert got == {(10, "A"), (11, "D")}

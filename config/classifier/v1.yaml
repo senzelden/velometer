@@ -27,7 +27,7 @@ rules:
     applies_to: standalone
     tier: excluded
     subtype: lifecycle
-    match: {any: [{construction: "yes"}, {proposed: {absent: false}}]}
+    match: {construction: "yes"}  # proposed=* on a built way is a planned change (R24)
   - id: X_area
     applies_to: standalone
     tier: excluded
@@ -55,7 +55,6 @@ rules:
     match:
       any:
         - {"road:construction": "yes"}
-        - {"road:proposed": {absent: false}}
         - {cycleway: [construction, proposed]}  # lifecycle value on the side itself
   - id: X_bicycle_no
     applies_to: standalone

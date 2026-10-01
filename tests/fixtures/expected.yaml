@@ -141,9 +141,9 @@ cases:
     sides:
       - {rule: X_road_construction, side: left, tier: excluded, way: 10}
       - {rule: X_road_construction, side: right, tier: excluded, way: 10}
-  X_road_proposed:
+  road_proposed_upgrade_kept:
     sides:
-      - {rule: X_road_construction, side: right, tier: excluded, way: 10}
+      - {rule: D_lane, side: right, tier: D, way: 10}
   X_road_cycleway_construction:
     sides:
       - {rule: X_road_construction, side: right, tier: excluded, way: 10}
