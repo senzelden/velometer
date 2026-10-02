@@ -1,0 +1,282 @@
+{
+  "config": {
+    "view": {
+      "continuousWidth": 300,
+      "continuousHeight": 300,
+      "stroke": null
+    },
+    "axis": {
+      "domainColor": "#e4e3df",
+      "gridColor": "#e4e3df",
+      "labelColor": "#52514e",
+      "titleColor": "#52514e"
+    },
+    "legend": {
+      "labelColor": "#0b0b0b",
+      "labelLimit": 260,
+      "titleColor": "#52514e"
+    },
+    "title": {
+      "color": "#0b0b0b",
+      "subtitleColor": "#52514e",
+      "subtitleFontSize": 11
+    }
+  },
+  "data": {
+    "values": [
+      {
+        "source": "Ours: headline",
+        "city": "K\u00f8benhavn",
+        "rank": 1,
+        "value": 238.764
+      },
+      {
+        "source": "Ours: headline",
+        "city": "Berlin",
+        "rank": 2,
+        "value": 109.637
+      },
+      {
+        "source": "Ours: headline",
+        "city": "Wroc\u0142aw",
+        "rank": 3,
+        "value": 95.254
+      },
+      {
+        "source": "Ours: headline",
+        "city": "Wien",
+        "rank": 4,
+        "value": 90.955
+      },
+      {
+        "source": "Ours: headline",
+        "city": "Paris",
+        "rank": 5,
+        "value": 63.066
+      },
+      {
+        "source": "Ours: QECIO method",
+        "city": "K\u00f8benhavn",
+        "rank": 1,
+        "value": 109.325
+      },
+      {
+        "source": "Ours: QECIO method",
+        "city": "Wien",
+        "rank": 2,
+        "value": 69.783
+      },
+      {
+        "source": "Ours: QECIO method",
+        "city": "Wroc\u0142aw",
+        "rank": 3,
+        "value": 69.251
+      },
+      {
+        "source": "Ours: QECIO method",
+        "city": "Berlin",
+        "rank": 4,
+        "value": 54.041
+      },
+      {
+        "source": "Ours: QECIO method",
+        "city": "Paris",
+        "rank": 5,
+        "value": 46.471
+      },
+      {
+        "source": "Ours: Clean Cities method",
+        "city": "K\u00f8benhavn",
+        "rank": 1,
+        "value": 58.646
+      },
+      {
+        "source": "Ours: Clean Cities method",
+        "city": "Wroc\u0142aw",
+        "rank": 2,
+        "value": 29.739
+      },
+      {
+        "source": "Ours: Clean Cities method",
+        "city": "Berlin",
+        "rank": 3,
+        "value": 27.702
+      },
+      {
+        "source": "Ours: Clean Cities method",
+        "city": "Wien",
+        "rank": 4,
+        "value": 23.228
+      },
+      {
+        "source": "Ours: Clean Cities method",
+        "city": "Paris",
+        "rank": 5,
+        "value": 22.913
+      },
+      {
+        "source": "Clean Cities 2025 (published)",
+        "city": "Paris",
+        "rank": 1,
+        "value": 48.0
+      },
+      {
+        "source": "Clean Cities 2025 (published)",
+        "city": "K\u00f8benhavn",
+        "rank": 2,
+        "value": 43.0
+      },
+      {
+        "source": "Clean Cities 2025 (published)",
+        "city": "Wroc\u0142aw",
+        "rank": 3,
+        "value": 20.0
+      },
+      {
+        "source": "Clean Cities 2025 (published)",
+        "city": "Berlin",
+        "rank": 4,
+        "value": 17.0
+      },
+      {
+        "source": "Clean Cities 2025 (published)",
+        "city": "Wien",
+        "rank": 5,
+        "value": 14.0
+      },
+      {
+        "source": "QECIO v2.10 (published)",
+        "city": "K\u00f8benhavn",
+        "rank": 1,
+        "value": 104.177
+      },
+      {
+        "source": "QECIO v2.10 (published)",
+        "city": "Wroc\u0142aw",
+        "rank": 2,
+        "value": 63.808
+      },
+      {
+        "source": "QECIO v2.10 (published)",
+        "city": "Wien",
+        "rank": 3,
+        "value": 63.79
+      },
+      {
+        "source": "QECIO v2.10 (published)",
+        "city": "Berlin",
+        "rank": 4,
+        "value": 54.376
+      },
+      {
+        "source": "QECIO v2.10 (published)",
+        "city": "Paris",
+        "rank": 5,
+        "value": 41.467
+      }
+    ]
+  },
+  "mark": {
+    "type": "line",
+    "point": {
+      "filled": true,
+      "size": 90
+    },
+    "strokeWidth": 2.5
+  },
+  "encoding": {
+    "color": {
+      "field": "city",
+      "scale": {
+        "domain": [
+          "Berlin",
+          "K\u00f8benhavn",
+          "Paris",
+          "Wien",
+          "Wroc\u0142aw"
+        ],
+        "range": [
+          "#2a78d6",
+          "#eb6834",
+          "#1baf7a",
+          "#eda100",
+          "#e87ba4"
+        ]
+      },
+      "title": "City",
+      "type": "nominal"
+    },
+    "tooltip": [
+      {
+        "field": "source",
+        "type": "nominal"
+      },
+      {
+        "field": "city",
+        "type": "nominal"
+      },
+      {
+        "field": "rank",
+        "type": "quantitative"
+      },
+      {
+        "field": "value",
+        "format": ".2f",
+        "title": "protected share, %",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "labelAngle": -25,
+        "labelLimit": 220
+      },
+      "field": "source",
+      "sort": [
+        "Ours: headline",
+        "Ours: QECIO method",
+        "Ours: Clean Cities method",
+        "Clean Cities 2025 (published)",
+        "QECIO v2.10 (published)"
+      ],
+      "title": null,
+      "type": "ordinal"
+    },
+    "y": {
+      "axis": {
+        "format": "d",
+        "values": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "field": "rank",
+      "scale": {
+        "domain": [
+          1,
+          5
+        ],
+        "nice": false,
+        "reverse": true
+      },
+      "title": "Rank (1 = highest)",
+      "type": "quantitative"
+    }
+  },
+  "height": 320,
+  "title": {
+    "text": "City rankings by source",
+    "anchor": "start",
+    "fontSize": 16,
+    "subtitle": [
+      "Map data \u00a9 OpenStreetMap contributors, ODbL 1.0 \u00b7 OSM mapped km, not built km (ADR 0006)",
+      "Clean Cities 2025 (published): city network as published; Vienna whole-network value",
+      "QECIO v2.10 (published): NUTS3 region (Berlin DE300, Paris FR101, Vienna AT130, Copenhagen DK011, Wroclaw PL514)"
+    ]
+  },
+  "width": 560,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json"
+}

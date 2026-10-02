@@ -32,21 +32,21 @@ has no done run of the current config.
 
 #### berlin
 
-Provenance: run 11 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` (clean_cities_basis=per_side) · commit `f544455` · boundary lau `760d04d86a75` · sources: bikenetkit_v1 retrieved 2026-10-01; changing_cities retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 147 · OSM 2026-09-30T20:22:42Z · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` (clean_cities_basis=per_side) · commit `5f32d8e` · boundary lau `760d04d86a75` · sources: bikenetkit_v1 retrieved 2026-10-01; changing_cities retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `berlin/cc_ratio` | 27.7 | 17.0 | +62.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_ratio` | 27.7 | 17.0 | +63.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
 | `berlin/cc_ratio~qecio_weighted` | 16.3 | 17.0 | -3.9% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `berlin/cc_km` | 1,557.9 | 925.0 | +68.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `berlin/cc_km~qecio_weighted` | 918.3 | 925.0 | -0.7% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_km` | 1,558.0 | 925.0 | +68.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_km~qecio_weighted` | 918.4 | 925.0 | -0.7% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `berlin/cc_network_km` | 5,624.1 | 5,350.0 | +5.1% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `berlin/qecio_main_km` | 2,153.4 | 2,149.6 | +0.2% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `berlin/qecio_tracks_km` | 673.5 | 679.5 | -0.9% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `berlin/qecio_lanes_km` | 245.3 | 244.3 | +0.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `berlin/qecio_shared_km` | 244.9 | 245.1 | -0.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/qecio_total_km` | 1,163.6 | 1,255.4 | -7.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/bnk_network_km` | 1,673.1 | 1,793.2 | -6.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `berlin/qecio_total_km` | 1,163.7 | 1,255.4 | -7.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/bnk_network_km` | 1,673.2 | 1,793.2 | -6.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 | `berlin/official_new_km#official:21.2` | n/a | 21.2 | n/a | info |  | official (2025-12-31) |
 | `berlin/official_new_km#official:20.5` | n/a | 20.5 | n/a | info |  | official (2025-12-31) |
 | `berlin/official_new_km@vorrangnetz_ergaenzungsnetz#official:17.3` | n/a | 17.3 | n/a | info | scope_mismatch | official (2025-12-31) |
@@ -54,7 +54,7 @@ Provenance: run 11 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cyclewa
 
 #### copenhagen
 
-Provenance: run 14 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` (clean_cities_basis=per_side) · commit `f544455` · boundary lau `e7afb8eb0bb0` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 150 · OSM 2026-09-30T20:22:42Z · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` (clean_cities_basis=per_side) · commit `5f32d8e` · boundary lau `e7afb8eb0bb0` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -72,7 +72,7 @@ Provenance: run 14 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cyclewa
 
 #### paris
 
-Provenance: run 12 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` (clean_cities_basis=per_side) · commit `f544455` · boundary lau `87ba05899604` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 148 · OSM 2026-09-30T20:22:42Z · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` (clean_cities_basis=per_side) · commit `5f32d8e` · boundary lau `87ba05899604` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -90,7 +90,7 @@ Provenance: run 12 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cyclewa
 
 #### vienna
 
-Provenance: run 13 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` (clean_cities_basis=per_side) · commit `f544455` · boundary lau `e9f660e9d87a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 149 · OSM 2026-09-30T20:22:42Z · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` (clean_cities_basis=per_side) · commit `5f32d8e` · boundary lau `e9f660e9d87a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -113,7 +113,7 @@ Provenance: run 13 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cyclewa
 
 #### wroclaw
 
-Provenance: run 15 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `68162f5aebe8` (clean_cities_basis=per_side) · commit `f544455` · boundary lau `6e5e44174776` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 151 · OSM 2026-09-30T20:22:42Z · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` (clean_cities_basis=per_side) · commit `5f32d8e` · boundary lau `6e5e44174776` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -133,12 +133,18 @@ Provenance: run 15 · OSM 2026-09-30T20:22:42Z · classifier v1 `{"plain_cyclewa
 
 ## Explanations
 
-<!-- explained-against: berlin=11 copenhagen=14 paris=12 vienna=13 wroclaw=15 -->
+<!-- explained-against: berlin=147 copenhagen=150 paris=148 vienna=149 wroclaw=151 -->
 
-Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 11–15, OSM
-2026-09-30, classifier v1, GISCO LAU 2024; their tier and road km, headline and ECF figures
-and `per_side` Clean Cities figures are bit-identical to the superseded runs 6–10, which in turn
-matched runs 1–5), the external rows and their notes, the QECIO v2.10
+Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 147–151, OSM
+2026-09-30, classifier v2, GISCO LAU 2024). These explanations were first written against the
+v1 runs 11–15 on the same snapshot. Against those, the v2 runs have identical road km and
+identical tier A–E km in every city except Berlin, where the `,` value separator adds 0.08 km
+to tier A per side (A+B 1,557.87 -> 1,557.96 km; centreline 918.34 -> 918.39 km); v2's other
+additions (`use_sidepath`, `shoulder`, `crossing`, untyped `yes`) are excluded and move only
+excluded and unrecognised km. On the Paris and Wrocław snapshots, v1 and v2 give every
+road side and way the same tier A–E (compared side by side on 2026-10-02), so the way-level
+analyses in `paris/qecio_shared_km` and `wroclaw/bnk_network_km`, first made with v1, hold
+for v2. Further evidence: the external rows and their notes, the QECIO v2.10
 Methodology PDF (Table 2) and `docs/research/m2-data-sources-2026-10-01.md`. "Centreline" means
 our `qecio_weighted` basis: a bidirectional way counts once and each one-way side counts half,
 which is how QECIO counts and, judging by Berlin and Wrocław, how the ECF tracker numbers in
@@ -147,15 +153,15 @@ which every side counts in full. The Clean Cities figures are dated 2025-05-14, 
 our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
 
 ### berlin/cc_ratio
-Cause: **definition** (length basis). Our preset divides per-side A+B km (1,557.9) by all
-public roads (5,624.1 km). On the centreline basis our A+B is 918.3 km, which gives 16.3%
+Cause: **definition** (length basis). Our preset divides per-side A+B km (1,558.0) by all
+public roads (5,624.1 km). On the centreline basis our A+B is 918.4 km, which gives 16.3%
 against our network, or 17.2% against Clean Cities' own 5,350 km, matching their 17%. The
 denominators agree within 5.1% (`berlin/cc_network_km`), so the whole gap is in the numerator's
 basis, not in the classifier or the boundary.
 
 ### berlin/cc_km
 Cause: **definition** (length basis). Clean Cities' 925 km is a centreline figure: our A+B on
-the centreline basis is 918.3 km (−0.7%), while per side it is 1,557.9 km (1.70 times as
+the centreline basis is 918.4 km (−0.7%), while per side it is 1,558.0 km (1.70 times as
 much), because most Berlin tracks are one-way tracks on both sides of the road. The date gap
 (504 days) is within the noise of this comparison.
 
@@ -216,7 +222,7 @@ numbers (`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.6%).
 Cause: **date**. Applying QECIO's own tag definition of cycle and pedestrian tracks (Methodology
 Table 2: footway/path/pedestrian + `bicycle=designated` + `segregated!=yes`, or cycleway +
 `foot=designated` + `segregated!=yes`) to our 2026-09-30 snapshot selects 20.3 km of ways, which
-v1 classifies as B in full: 18.0 km centreline (20.2 km per side), the same 18.0 km as our
+the classifier puts in tier B in full: 18.0 km centreline (20.2 km per side), the same 18.0 km as our
 `qecio_shared_km` value. So our classifier and QECIO's rule agree on today's data, and the gap to
 QECIO's 24.3 km (−6.3 km centreline on a small base) lies in the data: 994 days of retagging
 since QECIO's 2024-01-10 snapshot. Not verified against a 2024 snapshot.
@@ -255,8 +261,8 @@ with a different scope; per-city sources are unverified (research doc §6).
 ### wroclaw/bnk_network_km
 Cause: **definition**. BikeNetKit's filter also takes living streets and footways/paths with
 `bicycle=yes|permissive`, which our tiers A+B+E leave out. Applying that filter to our snapshot
-gives 769.1 km of ways (each way once), of which 370.7 km get no tier A–E from v1. Almost all of
-that is the two groups v1 deliberately leaves out of A/B/E: living streets (166.8 of their
+gives 769.1 km of ways (each way once), of which 370.7 km get no tier A–E. Almost all of
+that is the two groups the classifier deliberately leaves out of A/B/E: living streets (166.8 of their
 167.4 km; the other 0.7 km carry a painted lane) and footway/path/pedestrian ways with
 `bicycle=yes|permissive` (footway 113.9 + 3.1, path 77.9 + 0.04, pedestrian 8.7 = 203.7 km, all
 untiered); the remaining 0.2 km are other ways. BikeNetKit's 638.8 km sits between our 399.4 km and that raw 769.1 km, which

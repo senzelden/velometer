@@ -1,0 +1,1088 @@
+{
+  "config": {
+    "view": {
+      "continuousWidth": 300,
+      "continuousHeight": 300,
+      "stroke": null
+    },
+    "axis": {
+      "domainColor": "#e4e3df",
+      "gridColor": "#e4e3df",
+      "labelColor": "#52514e",
+      "titleColor": "#52514e"
+    },
+    "legend": {
+      "labelColor": "#0b0b0b",
+      "labelLimit": 260,
+      "titleColor": "#52514e"
+    },
+    "title": {
+      "color": "#0b0b0b",
+      "subtitleColor": "#52514e",
+      "subtitleFontSize": 11
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "line",
+        "point": true,
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "color": {
+          "field": "city",
+          "legend": {},
+          "scale": {
+            "domain": [
+              "Berlin",
+              "K\u00f8benhavn",
+              "Paris",
+              "Wien",
+              "Wroc\u0142aw"
+            ],
+            "range": [
+              "#2a78d6",
+              "#eb6834",
+              "#1baf7a",
+              "#eda100",
+              "#e87ba4"
+            ]
+          },
+          "title": "City",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "kind",
+            "type": "nominal"
+          },
+          {
+            "field": "label",
+            "type": "nominal"
+          },
+          {
+            "field": "headline",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "ab_km",
+            "format": ".1f",
+            "type": "quantitative"
+          },
+          {
+            "field": "flags",
+            "type": "nominal"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0
+          },
+          "field": "label",
+          "sort": [
+            "2018",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+            "2025",
+            "2026",
+            "now"
+          ],
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "headline",
+          "scale": {
+            "zero": true
+          },
+          "title": "Protected share of main roads, %",
+          "type": "quantitative"
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.kind === 'lau')"
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "line",
+        "opacity": 0.8,
+        "strokeWidth": 1.5
+      },
+      "encoding": {
+        "color": {
+          "field": "city",
+          "legend": {},
+          "scale": {
+            "domain": [
+              "Berlin",
+              "K\u00f8benhavn",
+              "Paris",
+              "Wien",
+              "Wroc\u0142aw"
+            ],
+            "range": [
+              "#2a78d6",
+              "#eb6834",
+              "#1baf7a",
+              "#eda100",
+              "#e87ba4"
+            ]
+          },
+          "title": "City",
+          "type": "nominal"
+        },
+        "strokeDash": {
+          "field": "kind",
+          "scale": {
+            "domain": [
+              "lau",
+              "fua"
+            ],
+            "range": [
+              [
+                1,
+                0
+              ],
+              [
+                5,
+                4
+              ]
+            ]
+          },
+          "title": "Boundary",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "kind",
+            "type": "nominal"
+          },
+          {
+            "field": "label",
+            "type": "nominal"
+          },
+          {
+            "field": "headline",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "ab_km",
+            "format": ".1f",
+            "type": "quantitative"
+          },
+          {
+            "field": "flags",
+            "type": "nominal"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0
+          },
+          "field": "label",
+          "sort": [
+            "2018",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+            "2025",
+            "2026",
+            "now"
+          ],
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "headline",
+          "scale": {
+            "zero": true
+          },
+          "title": "Protected share of main roads, %",
+          "type": "quantitative"
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.kind === 'fua')"
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "point",
+        "filled": false,
+        "shape": "circle",
+        "size": 260,
+        "stroke": "#0b0b0b",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "tooltip": [
+          {
+            "field": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "kind",
+            "type": "nominal"
+          },
+          {
+            "field": "label",
+            "type": "nominal"
+          },
+          {
+            "field": "headline",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "ab_km",
+            "format": ".1f",
+            "type": "quantitative"
+          },
+          {
+            "field": "flags",
+            "type": "nominal"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0
+          },
+          "field": "label",
+          "sort": [
+            "2018",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+            "2025",
+            "2026",
+            "now"
+          ],
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "headline",
+          "scale": {
+            "zero": true
+          },
+          "title": "Protected share of main roads, %",
+          "type": "quantitative"
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.flagged === true)"
+        }
+      ]
+    }
+  ],
+  "data": {
+    "values": [
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2018",
+        "headline": 113.93444190836891,
+        "ab_km": 1643.141,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2019",
+        "headline": 112.69220072125478,
+        "ab_km": 1614.977,
+        "flagged": true,
+        "flags": "tag_drift"
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2020",
+        "headline": 114.13604661209955,
+        "ab_km": 1637.232,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2021",
+        "headline": 117.2368978113068,
+        "ab_km": 1680.687,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2022",
+        "headline": 104.44572354020961,
+        "ab_km": 1496.795,
+        "flagged": true,
+        "flags": "km_jump, single_mapper"
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2023",
+        "headline": 105.84645245162714,
+        "ab_km": 1517.905,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2024",
+        "headline": 104.910795928588,
+        "ab_km": 1493.826,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2025",
+        "headline": 106.37224571980175,
+        "ab_km": 1510.525,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "2026",
+        "headline": 108.25059328510596,
+        "ab_km": 1539.356,
+        "flagged": true,
+        "flags": "tag_drift"
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "lau",
+        "series": "Berlin (LAU)",
+        "label": "now",
+        "headline": 109.63683459493491,
+        "ab_km": 1557.958,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2018",
+        "headline": 70.58184280793881,
+        "ab_km": 3750.847,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2019",
+        "headline": 70.58523971273472,
+        "ab_km": 3752.833,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2020",
+        "headline": 71.09963624386734,
+        "ab_km": 3790.44,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2021",
+        "headline": 71.65229957455735,
+        "ab_km": 3817.557,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2022",
+        "headline": 64.83860831827165,
+        "ab_km": 3469.615,
+        "flagged": true,
+        "flags": "tag_drift"
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2023",
+        "headline": 64.32697806034052,
+        "ab_km": 3461.966,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2024",
+        "headline": 63.16869789323862,
+        "ab_km": 3393.842,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2025",
+        "headline": 63.98953033530975,
+        "ab_km": 3436.13,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "2026",
+        "headline": 65.37043475157358,
+        "ab_km": 3520.44,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Berlin",
+        "city_id": "berlin",
+        "kind": "fua",
+        "series": "Berlin (FUA)",
+        "label": "now",
+        "headline": 65.43680784417086,
+        "ab_km": 3523.346,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2018",
+        "headline": 213.8561677442714,
+        "ab_km": 529.814,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2019",
+        "headline": 207.665038078044,
+        "ab_km": 522.779,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2020",
+        "headline": 212.8136763845308,
+        "ab_km": 534.07,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2021",
+        "headline": 214.07427468988806,
+        "ab_km": 535.819,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2022",
+        "headline": 221.4139063945881,
+        "ab_km": 550.163,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2023",
+        "headline": 232.48882530994598,
+        "ab_km": 566.421,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2024",
+        "headline": 234.72582945995748,
+        "ab_km": 569.547,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2025",
+        "headline": 227.9255280450643,
+        "ab_km": 556.198,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "2026",
+        "headline": 234.42627724067043,
+        "ab_km": 572.467,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "kind": "lau",
+        "series": "K\u00f8benhavn (LAU)",
+        "label": "now",
+        "headline": 238.76418079557226,
+        "ab_km": 582.31,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2018",
+        "headline": 34.846823660970735,
+        "ab_km": 208.567,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2019",
+        "headline": 37.466778293407216,
+        "ab_km": 223.925,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2020",
+        "headline": 43.29306755950579,
+        "ab_km": 257.287,
+        "flagged": true,
+        "flags": "km_jump, tag_drift"
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2021",
+        "headline": 51.85685611414053,
+        "ab_km": 305.562,
+        "flagged": true,
+        "flags": "km_jump"
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2022",
+        "headline": 52.53647755457202,
+        "ab_km": 309.083,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2023",
+        "headline": 51.90062767579347,
+        "ab_km": 304.192,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2024",
+        "headline": 54.48955386151643,
+        "ab_km": 318.588,
+        "flagged": true,
+        "flags": "activity_spike"
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2025",
+        "headline": 60.00588092497822,
+        "ab_km": 345.738,
+        "flagged": true,
+        "flags": "activity_spike"
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "2026",
+        "headline": 62.77684557971291,
+        "ab_km": 355.222,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "lau",
+        "series": "Paris (LAU)",
+        "label": "now",
+        "headline": 63.06578492520817,
+        "ab_km": 356.485,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2018",
+        "headline": 12.024009468107279,
+        "ab_km": 2332.902,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2019",
+        "headline": 13.160050931017604,
+        "ab_km": 2576.705,
+        "flagged": true,
+        "flags": "km_jump"
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2020",
+        "headline": 13.970233221594237,
+        "ab_km": 2738.692,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2021",
+        "headline": 15.30977525064483,
+        "ab_km": 2997.509,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2022",
+        "headline": 15.746978127626518,
+        "ab_km": 3087.793,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2023",
+        "headline": 16.291120846590815,
+        "ab_km": 3193.837,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2024",
+        "headline": 16.69615750573338,
+        "ab_km": 3279.269,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2025",
+        "headline": 17.676859312976013,
+        "ab_km": 3471.208,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "2026",
+        "headline": 18.537685731417636,
+        "ab_km": 3627.513,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Paris",
+        "city_id": "paris",
+        "kind": "fua",
+        "series": "Paris (FUA)",
+        "label": "now",
+        "headline": 19.169761328154006,
+        "ab_km": 3751.15,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2018",
+        "headline": 74.61342562086985,
+        "ab_km": 558.491,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2019",
+        "headline": 74.24408890541875,
+        "ab_km": 558.229,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2020",
+        "headline": 75.18209187564436,
+        "ab_km": 562.815,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2021",
+        "headline": 77.7115299816457,
+        "ab_km": 583.019,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2022",
+        "headline": 79.03012085929846,
+        "ab_km": 592.123,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2023",
+        "headline": 79.4590124221384,
+        "ab_km": 595.858,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2024",
+        "headline": 81.26622740695771,
+        "ab_km": 608.082,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2025",
+        "headline": 84.69449839531649,
+        "ab_km": 632.923,
+        "flagged": true,
+        "flags": "tag_drift"
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "2026",
+        "headline": 89.10816773519389,
+        "ab_km": 667.406,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wien",
+        "city_id": "vienna",
+        "kind": "lau",
+        "series": "Wien (LAU)",
+        "label": "now",
+        "headline": 90.95460167644428,
+        "ab_km": 679.83,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2018",
+        "headline": 62.037525300403395,
+        "ab_km": 261.476,
+        "flagged": true,
+        "flags": "activity_spike"
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2019",
+        "headline": 63.86128709071091,
+        "ab_km": 272.7,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2020",
+        "headline": 67.2374005673994,
+        "ab_km": 288.486,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2021",
+        "headline": 71.23923489780526,
+        "ab_km": 305.981,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2022",
+        "headline": 77.91758832743844,
+        "ab_km": 333.561,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2023",
+        "headline": 83.63672950180444,
+        "ab_km": 348.114,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2024",
+        "headline": 83.70376968986561,
+        "ab_km": 362.325,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2025",
+        "headline": 90.99117406110076,
+        "ab_km": 386.349,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "2026",
+        "headline": 93.33296686136553,
+        "ab_km": 390.634,
+        "flagged": false,
+        "flags": ""
+      },
+      {
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "kind": "lau",
+        "series": "Wroc\u0142aw (LAU)",
+        "label": "now",
+        "headline": 95.25441791997807,
+        "ab_km": 398.641,
+        "flagged": false,
+        "flags": ""
+      }
+    ]
+  },
+  "height": 320,
+  "title": {
+    "text": "Protected cycling infrastructure over time",
+    "anchor": "start",
+    "fontSize": 16,
+    "subtitle": "Map data \u00a9 OpenStreetMap contributors, ODbL 1.0 \u00b7 OSM mapped km, not built km (ADR 0006)"
+  },
+  "width": 560,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json"
+}

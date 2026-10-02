@@ -6,7 +6,7 @@ FUA boundaries carry no population, so FUA series have no per-100k figure. Our n
 *mapped* km (ADR 0006). The block between the markers is replaced on every
 `--write`; everything outside it is hand-written.
 
-Classifier: the series reports `report_classifier` from `config/history.yaml`, currently
+Classifier: the series reports `report_classifier` from `config/report.yaml`, currently
 **v2** (v1 plus recognised `use_sidepath`, `shoulder`, `crossing`, untyped `yes`, and `,` as a
 value separator). The v1 runs stay in the database; `--classifier v1` shows them.
 
@@ -16,24 +16,27 @@ explanation under a heading `### <city>/<kind>/<year>` (the current point is `cu
 Explanations section below; `velometer timeseries --check` enforces this.
 
 Explained-against marker: the Explanations section carries one HTML comment naming, per
-`city/kind`, the first 8 characters of the history set the explanations were written against,
-and as `activity=` the first 12 characters of the sha256 of `config/activity.yaml` they were
-read with. When either differs, `--check` exits 1 and prints the corrected marker line. A
-series must hold every year of `config/history.yaml` for each required kind; a missing year
-fails `--check`, and no change rule compares across it.
+`city/kind`, the first 8 characters of the history set the explanations were written against.
+When one differs, `--check` exits 1 and prints the corrected marker line. Since schema v6,
+`config/activity.yaml` is part of the run identity (its sha256 is in `config_sha256` and keys
+the activity rows), so a changed `activity.yaml` finds no runs and `--check` fails with "no
+history runs"; the marker no longer names it. A series must hold every year of
+`config/history.yaml` for each required kind; a missing year fails `--check`, and no change
+rule compares across it.
 
 ![M3 time series](m3_timeseries.png)
 
-The chart is drawn by `scripts/render_m3_timeseries.py` from the same series and flags. FUA
-series have no current ("now") point: the current-run path (`velometer run` without `--years`)
-reads the city's single Geofabrik extract, which does not cover the Berlin or Paris FUA, so no
-current FUA run was made (see the M3 Task 9 report).
+The chart is drawn by `scripts/render_m3_timeseries.py` from the same series and flags. Since
+M4 the FUA series also have a current ("now") point: the current run merges the public Geofabrik
+extracts that cover the boundary (Berlin FUA: `brandenburg`; Paris FUA: `bourgogne`, `centre`,
+`champagne-ardenne`, `haute-normandie`, `ile-de-france`, `picardie`), and its OSM timestamp is
+the oldest of theirs (M4 spec section 3.2).
 
 <!-- timeseries:begin -->
 
 #### berlin/fua
 
-Provenance: history runs 2018=129, 2019=130, 2020=131, 2021=132, 2022=133, 2023=134, 2024=135, 2025=136, 2026=137 · no current run · history set `1308e2c9` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · no population (per-100k n/a)
+Provenance: history runs 2018=199, 2019=200, 2020=201, 2021=202, 2022=203, 2023=204, 2024=205, 2025=206, 2026=207 · current run 152 (OSM 2026-09-30T20:22:42Z) · history set `1308e2c9` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · no population (per-100k n/a)
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -46,10 +49,11 @@ Provenance: history runs 2018=129, 2019=130, 2020=131, 2021=132, 2022=133, 2023=
 | 2024 | 63.2 | 3,393.8 | 1,399.7 | 1,994.1 | 38.2 | 631.1 | 218.7 | 105,709 | 887 | 0.16 | 88.9 | 6.7 |  |
 | 2025 | 64.0 | 3,436.1 | 1,404.9 | 2,031.2 | 36.1 | 655.0 | 222.5 | 67,350 | 875 | 0.21 | 71.1 | 6.8 |  |
 | 2026 | 65.4 | 3,520.4 | 1,381.0 | 2,139.4 | 37.0 | 656.5 | 252.5 | 114,033 | 925 | 0.13 | 46.3 | 5.2 |  |
+| current | 65.4 | 3,523.3 | 1,372.4 | 2,151.0 | 34.0 | 657.4 | 258.1 | 31,183 | 728 | 0.09 | n/a | n/a |  |
 
 #### berlin/lau
 
-Provenance: history runs 2018=84, 2019=85, 2020=86, 2021=87, 2022=88, 2023=89, 2024=90, 2025=91, 2026=92 · current run 79 (OSM 2026-09-30T20:22:42Z) · history set `c3335f42` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · population 2024 held constant
+Provenance: history runs 2018=154, 2019=155, 2020=156, 2021=157, 2022=158, 2023=159, 2024=160, 2025=161, 2026=162 · current run 147 (OSM 2026-09-30T20:22:42Z) · history set `c3335f42` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · population 2024 held constant
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -66,7 +70,7 @@ Provenance: history runs 2018=84, 2019=85, 2020=86, 2021=87, 2022=88, 2023=89, 2
 
 #### copenhagen/lau
 
-Provenance: history runs 2018=111, 2019=112, 2020=113, 2021=114, 2022=115, 2023=116, 2024=117, 2025=118, 2026=119 · current run 82 (OSM 2026-09-30T20:22:42Z) · history set `be41de5b` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · population 2024 held constant
+Provenance: history runs 2018=181, 2019=182, 2020=183, 2021=184, 2022=185, 2023=186, 2024=187, 2025=188, 2026=189 · current run 150 (OSM 2026-09-30T20:22:42Z) · history set `be41de5b` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · population 2024 held constant
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -83,7 +87,7 @@ Provenance: history runs 2018=111, 2019=112, 2020=113, 2021=114, 2022=115, 2023=
 
 #### paris/fua
 
-Provenance: history runs 2018=138, 2019=139, 2020=140, 2021=141, 2022=142, 2023=143, 2024=144, 2025=145, 2026=146 · no current run · history set `df7be7ff` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · no population (per-100k n/a)
+Provenance: history runs 2018=208, 2019=209, 2020=210, 2021=211, 2022=212, 2023=213, 2024=214, 2025=215, 2026=216 · current run 153 (OSM 2026-09-30T20:22:42Z) · history set `df7be7ff` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · no population (per-100k n/a)
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -96,10 +100,11 @@ Provenance: history runs 2018=138, 2019=139, 2020=140, 2021=141, 2022=142, 2023=
 | 2024 | 16.7 | 3,279.3 | 1,947.1 | 1,332.1 | 0.0 | 1,505.9 | 252.8 | 130,960 | 1,055 | 0.21 | 65.3 | 3.3 |  |
 | 2025 | 17.7 | 3,471.2 | 2,094.5 | 1,376.7 | 0.0 | 1,561.9 | 269.9 | 87,159 | 1,061 | 0.12 | 59.6 | 2.8 |  |
 | 2026 | 18.5 | 3,627.5 | 2,152.3 | 1,475.2 | 0.0 | 1,602.4 | 270.2 | 84,399 | 1,138 | 0.04 | 40.0 | 3.1 |  |
+| current | 19.2 | 3,751.1 | 2,135.4 | 1,615.7 | 0.0 | 1,679.0 | 288.0 | 81,747 | 1,020 | 0.11 | n/a | n/a |  |
 
 #### paris/lau
 
-Provenance: history runs 2018=93, 2019=94, 2020=95, 2021=96, 2022=97, 2023=98, 2024=99, 2025=100, 2026=101 · current run 80 (OSM 2026-09-30T20:22:42Z) · history set `7db1f306` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · population 2024 held constant
+Provenance: history runs 2018=163, 2019=164, 2020=165, 2021=166, 2022=167, 2023=168, 2024=169, 2025=170, 2026=171 · current run 148 (OSM 2026-09-30T20:22:42Z) · history set `7db1f306` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · population 2024 held constant
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -116,7 +121,7 @@ Provenance: history runs 2018=93, 2019=94, 2020=95, 2021=96, 2022=97, 2023=98, 2
 
 #### vienna/lau
 
-Provenance: history runs 2018=102, 2019=103, 2020=104, 2021=105, 2022=106, 2023=107, 2024=108, 2025=109, 2026=110 · current run 81 (OSM 2026-09-30T20:22:42Z) · history set `1254c077` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · population 2024 held constant
+Provenance: history runs 2018=172, 2019=173, 2020=174, 2021=175, 2022=176, 2023=177, 2024=178, 2025=179, 2026=180 · current run 149 (OSM 2026-09-30T20:22:42Z) · history set `1254c077` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · population 2024 held constant
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -133,7 +138,7 @@ Provenance: history runs 2018=102, 2019=103, 2020=104, 2021=105, 2022=106, 2023=
 
 #### wroclaw/lau
 
-Provenance: history runs 2018=120, 2019=121, 2020=122, 2021=123, 2022=124, 2023=125, 2024=126, 2025=127, 2026=128 · current run 83 (OSM 2026-09-30T20:22:42Z) · history set `fda036ca` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `c743ad1d67fc` · population 2024 held constant
+Provenance: history runs 2018=190, 2019=191, 2020=192, 2021=193, 2022=194, 2023=195, 2024=196, 2025=197, 2026=198 · current run 151 (OSM 2026-09-30T20:22:42Z) · history set `fda036ca` · classifier v2 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `7416d3c8c103` · population 2024 held constant
 
 | year | headline % | A+B km | A | B | C | D | E | edits | mappers | top mapper | legacy km | unrecognised km | flags |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
@@ -158,7 +163,7 @@ floor was added on 2026-10-02: without it, 18 further city-years were flagged fo
 km or less, down to 0.1 -> 0.2 km. Way ids are OSM way ids; tag changes are quoted
 before -> after.
 
-<!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca activity=de066a28e74c -->
+<!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca -->
 
 ### berlin/lau/2019
 
