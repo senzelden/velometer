@@ -1,6 +1,7 @@
 """velometer command-line interface."""
 
 import re
+import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -40,6 +41,9 @@ external_app = typer.Typer(no_args_is_help=True, help="External comparison figur
 app.add_typer(external_app, name="external")
 auth_app = typer.Typer(no_args_is_help=True, help="Geofabrik internal-server login.")
 app.add_typer(auth_app, name="auth")
+
+report_app = typer.Typer(no_args_is_help=True, help="Report surfaces (read-only).")
+app.add_typer(report_app, name="report")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -1020,3 +1024,44 @@ def auth_check(data: Path = DATA_OPT) -> None:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     typer.echo(f"ok: cookie valid until {cookie.expires:%Y-%m-%d %H:%M} UTC")
+
+
+@report_app.command("csv")
+def report_csv(
+    city: str | None = typer.Option(None, "--city", help="City id; default all cities."),
+    out: Path | None = typer.Option(None, "--out", help="Write here instead of stdout."),  # noqa: B008
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """One CSV row per city, boundary kind and year or `current`, with ODbL attribution."""
+    from datetime import UTC, datetime
+
+    from velometer.reconcile import short_commit
+    from velometer.report.csvexport import to_csv
+    from velometer.report.data import ReportData, open_readonly
+    from velometer.run import git_commit
+
+    try:
+        conn = open_readonly(db)
+    except FileNotFoundError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        data = ReportData(conn, config_dir)
+        if city is not None and city not in {c.id for c in data.cities()}:
+            typer.echo(f"error: unknown city {city!r}", err=True)
+            raise typer.Exit(1)
+        text = to_csv(
+            data.csv_rows(city),
+            short_commit(git_commit()),
+            datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+    except sqlite3.Error as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    if out is None:
+        typer.echo(text, nl=False)
+    else:
+        out.write_text(text)
