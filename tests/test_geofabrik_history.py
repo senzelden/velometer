@@ -287,6 +287,46 @@ def test_fetch_history_skips_download_when_file_with_published_md5_exists(tmp_pa
     assert hf.path == dst
 
 
+def test_fetch_history_reuses_a_file_of_another_day_with_the_published_md5(tmp_path):
+    hist = tmp_path / "history"
+    hist.mkdir()
+    old = hist / f"a_20260930_{MD5[:8]}.osh.pbf"  # fetched the day before TODAY
+    old.write_bytes(BODY)
+    (hist / f"a_20260929_{MD5[:8]}.osh.pbf").write_bytes(b"corrupt")  # right name, wrong md5
+    seen = []
+
+    def handler(r):
+        seen.append(str(r.url))
+        if str(r.url).endswith(".md5"):
+            return httpx.Response(200, text=f"{MD5}  x\n")
+        pytest.fail("history downloaded again")
+
+    hf = fetch_history(
+        "a",
+        tmp_path,
+        IDX,
+        client=_client(handler),
+        cookie_loader=lambda force=False: _cookie(),
+        today=TODAY,
+    )
+    assert hf.path == old and hf.md5 == MD5 and hf.md5_source == "published"
+    assert hf.fetched_at == date(2026, 9, 30)
+    assert seen == [URL + ".md5"]
+
+
+def test_fetch_history_downloads_when_only_a_wrong_md5_file_is_cached(tmp_path):
+    hist = tmp_path / "history"
+    hist.mkdir()
+    (hist / f"a_20260929_{MD5[:8]}.osh.pbf").write_bytes(b"corrupt")
+    seen = []
+    c = _client(_history_handler(seen, md5_body=f"{MD5}  x\n"))
+    hf = fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert hf.path.name == f"a_20261001_{MD5[:8]}.osh.pbf" and hf.fetched_at == TODAY
+    assert [u for u, _ in seen] == [URL + ".md5", URL]
+
+
 def test_history_set_md5_is_order_independent():
     a = HistoryFile("a", Path("a"), "1" * 32, "published", TODAY)
     b = HistoryFile("b", Path("b"), "2" * 32, "computed", TODAY)

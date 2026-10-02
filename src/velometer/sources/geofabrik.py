@@ -235,6 +235,19 @@ def _published_md5(url: str, client: httpx.Client) -> str | None:
     return _with_retries(url + ".md5", get, 3, 5.0)
 
 
+def _cached_history(hist: Path, slug: str, published: str) -> tuple[Path, date] | None:
+    """A cached file of the region whose md5 is the published one, whatever day it was fetched.
+
+    Newest first; the date in its name is when it was fetched.
+    """
+    pattern = f"{slug}_{'[0-9]' * 8}_{published[:8]}.osh.pbf"
+    for known in sorted(hist.glob(pattern), reverse=True):
+        if md5_of(known) == published:
+            day = known.name.removeprefix(f"{slug}_")[:8]
+            return known, datetime.strptime(day, "%Y%m%d").date()
+    return None
+
+
 def fetch_history(
     region: str,
     data_dir: Path,
@@ -249,9 +262,10 @@ def fetch_history(
     cookie_loader is called with the keyword `force` (cookie_loader(force=False) first); a
     401/403 asks it once for a fresh cookie (force=True) and retries once. None means
     load_or_login on data_dir. The cookie travels in the client's cookie jar, scoped to the
-    history host, so same-host redirects keep it and foreign hosts never see it. A file already
-    present for today (final name, md5 matching the published one if any) is reused. The file
-    is renamed to carry the first 8 hex of its md5.
+    history host, so same-host redirects keep it and foreign hosts never see it. With a published
+    md5, a cached file of the region with that md5 is reused whatever day it was fetched (its
+    fetched_at is that day); without one, only today's file is reused. The file is renamed to
+    carry the first 8 hex of its md5.
     """
     today = today or date.today()
     url = index[region]["history"]
@@ -274,9 +288,10 @@ def fetch_history(
             try:
                 published = _published_md5(url, client)
                 if published:
-                    known = hist / f"{stem}_{published[:8]}.osh.pbf"
-                    if known.exists() and md5_of(known) == published:
-                        return HistoryFile(region, known, published, "published", today)
+                    cached = _cached_history(hist, slug, published)
+                    if cached is not None:
+                        path, fetched_at = cached
+                        return HistoryFile(region, path, published, "published", fetched_at)
                 else:
                     for known in sorted(hist.glob(f"{stem}_{'?' * 8}.osh.pbf")):
                         md5 = md5_of(known)
