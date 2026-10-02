@@ -1018,3 +1018,29 @@ def report_csv(
         typer.echo(text, nl=False)
     else:
         out.write_text(text)
+
+
+@report_app.command("charts")
+def report_charts(
+    out: Path = typer.Option(Path("docs/review"), "--out", help="Directory for the PNGs."),  # noqa: B008
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Write m4_headline.png, m4_tiers.png and m4_rankings.png (plus .vl.json specs)."""
+    from velometer.report.charts import write_pngs
+    from velometer.report.data import ReportData, open_readonly
+
+    try:
+        conn = open_readonly(db)
+    except FileNotFoundError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        paths = write_pngs(ReportData(conn, config_dir), out)
+    except sqlite3.Error as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    for p in paths:
+        typer.echo(str(p))
