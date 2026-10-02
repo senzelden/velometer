@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict
 
 from velometer import reconcile as rc
 from velometer import timeseries as ts
-from velometer.cli import report_selector
 from velometer.config import (
     ExternalRanking,
     ExternalRatioRanking,
@@ -29,6 +28,7 @@ from velometer.db import (
 )
 from velometer.models import City
 from velometer.pipeline.measure import select_metric
+from velometer.selection import report_selector
 
 KINDS = ("lau", "fua")
 CSV_PRESETS = ("ours_headline", "ecf_qecio", "clean_cities_2025")

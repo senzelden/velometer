@@ -2,19 +2,14 @@ import sqlite3
 
 import pytest
 
-from tests.report_fixture import SPIKE_YEAR, build_report_fixture, external_figures
+from tests.report_fixture import (
+    SPIKE_YEAR,
+    external_figures,
+)
 from velometer.cli import report_selector
 from velometer.db import fetch_run, fetch_run_results
 from velometer.pipeline.measure import select_metric
-from velometer.report.data import ReportData, open_readonly, rank_values
-
-
-@pytest.fixture
-def fixture_db(tmp_path):
-    db_path, cfg = build_report_fixture(tmp_path)
-    conn = open_readonly(db_path)
-    yield db_path, cfg, conn, ReportData(conn, cfg)
-    conn.close()
+from velometer.report.data import open_readonly, rank_values
 
 
 def _rank(pairs):
@@ -128,3 +123,14 @@ def test_open_readonly_missing_file(tmp_path):
     with pytest.raises(FileNotFoundError):
         open_readonly(tmp_path / "nope.sqlite")
     assert not (tmp_path / "nope.sqlite").exists()  # and it did not create one
+
+
+def test_importing_the_data_layer_does_not_import_the_cli():
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, velometer.report.data; "
+        "assert 'velometer.cli' not in sys.modules and 'typer' not in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)

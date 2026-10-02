@@ -1,26 +1,18 @@
 import csv
 import io
 
-import pytest
 from typer.testing import CliRunner
 
-from tests.report_fixture import SPIKE_YEAR, build_report_fixture
+from tests.report_fixture import (
+    SPIKE_YEAR,
+)
 from velometer.cli import app
 from velometer.db import fetch_run_results
 from velometer.pipeline.measure import select_metric
 from velometer.report.csvexport import CSV_COLUMNS, to_csv
-from velometer.report.data import ReportData, open_readonly
 from velometer.timeseries import Flag
 
 STAMP = "2026-10-02T00:00:00Z"
-
-
-@pytest.fixture
-def fixture_db(tmp_path):
-    db_path, cfg = build_report_fixture(tmp_path)
-    conn = open_readonly(db_path)
-    yield db_path, cfg, conn, ReportData(conn, cfg)
-    conn.close()
 
 
 def _parse(text):
