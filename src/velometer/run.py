@@ -146,7 +146,8 @@ def _covering_region(
         ) from e
     files = [deps.fetch_region(_region_path(index, r), data_dir) for r in selection.regions]
     fetched_at = datetime.now(UTC).date().isoformat()  # RegionFile carries no fetch date
-    md5 = set_md5([(f.region, f.md5) for f in files])
+    ids = selection.regions  # index ids, as history sets record them (not download paths)
+    md5 = set_md5([(rid, f.md5) for rid, f in zip(ids, files, strict=True)])
     if len(files) == 1:
         path = files[0].path
     else:
@@ -158,8 +159,8 @@ def _covering_region(
         conn,
         md5,
         [
-            {"region": f.region, "md5": f.md5, "md5_source": "published", "fetched_at": fetched_at}
-            for f in files
+            {"region": rid, "md5": f.md5, "md5_source": "published", "fetched_at": fetched_at}
+            for rid, f in zip(ids, files, strict=True)
         ],
         index_path=str(snap.path),
         index_sha256=snap.sha256,

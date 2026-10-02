@@ -553,10 +553,11 @@ def test_current_fua_run_merges_covering_regions(conn, tmp_path):
     assert out.status == "done", out.error
     source, region_md5, _, _ = _fua_row(conn, out.run_id)
     assert source == "current"
-    assert region_md5 == set_md5([("europe/r1", "a" * 32), ("europe/r2", "b" * 32)])
+    assert region_md5 == set_md5([("r1", "a" * 32), ("r2", "b" * 32)])
     hs = fetch_history_set(conn, region_md5)
     regions = hs["regions"]
-    assert [r["region"] for r in regions] == ["europe/r1", "europe/r2"]
+    assert [r["region"] for r in regions] == ["r1", "r2"]
+    assert fua.fetched[1:] == ["europe/r1", "europe/r2"]  # paths only to fetch, ids are recorded
     assert {r["md5_source"] for r in regions} == {"published"}
     assert regions[0]["fetched_at"] == datetime.now(UTC).date().isoformat()
     assert hs["index_sha256"] == "i" * 64 and hs["uncovered_km2"] == 0.25
@@ -574,7 +575,7 @@ def test_current_fua_single_covering_region_needs_no_merge(conn, tmp_path):
     out = _run(conn, tmp_path, fua.deps(), boundary_kind="fua")
     assert out.status == "done", out.error
     assert fua.merge_calls == []
-    assert _fua_row(conn, out.run_id)[1] == set_md5([("europe/r1", "a" * 32)])
+    assert _fua_row(conn, out.run_id)[1] == set_md5([("r1", "a" * 32)])
     assert not (tmp_path / "raw" / "merged").exists()
 
 
