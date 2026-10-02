@@ -42,3 +42,11 @@ Decisions made while building M4, each with why and what it costs if wrong. The 
 - The 68 runs that already existed on v2 came out bit-identical to their pre-migration counterparts. Only run ids, the config sha and the commit changed.
 - No timeseries flag was added or removed. Reconciliation moved from v1 to v2, and only Berlin's figures changed (+0.1 km).
 - DB backup before migration: `data/velometer-pre-v6.sqlite`.
+
+## Decided after M4 (user, 2026-10-02)
+
+- **Interactive tier map with public OSM tiles.**
+  - The city page gets a zoomable Leaflet map of the current run's tiered sides, with a LAU/FUA switch, tier toggles and a popup per side (way id linked to openstreetmap.org, tier, rule, km, tags).
+  - Its background tiles come from `tile.openstreetmap.org`. This lifts the M4 rule that the app makes no external request, for map tiles only. Scripts, styles and data still come from the local app, and Leaflet is vendored.
+  - Light private use with the visible attribution follows the OSM tile usage policy.
+  - The static PNG maps stay as a download and print version.
