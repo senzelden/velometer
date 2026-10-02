@@ -125,7 +125,9 @@ def test_rankings_tie_shares_rank(fixture_data, monkeypatch):
 def test_every_spec_carries_the_attribution(fixture_data):
     assert "OpenStreetMap" in ATTRIBUTION and "ADR 0006" in ATTRIBUTION
     for spec in _all_specs(fixture_data):
-        assert spec["title"]["subtitle"] == ATTRIBUTION
+        subtitle = spec["title"]["subtitle"]
+        lines = subtitle if isinstance(subtitle, list) else [subtitle]
+        assert lines[0] == ATTRIBUTION
 
 
 def test_no_spec_has_a_url_key(fixture_data):
@@ -165,3 +167,13 @@ def test_tier_small_multiples_give_every_panel_its_own_x_axis(fixture_data):
     # cities in three columns, Paris's year labels landed under the empty sixth cell
     spec = tiers_small_multiples(fixture_data)
     assert spec["resolve"]["axis"]["x"] == "independent"
+
+
+def test_rankings_footnote_states_each_published_columns_scope(fixture_data):
+    # M4 spec 4.2: each ranking column's footnote states its scope (config/report.yaml `note`)
+    notes = [(r.label, getattr(r, "note", None)) for r in fixture_data.report_config.rankings]
+    notes = [(label, note) for label, note in notes if note]
+    assert notes, "the fixture config must carry ranking notes for this test to bite"
+    subtitle = rankings_flip(fixture_data)["title"]["subtitle"]
+    for label, note in notes:
+        assert f"{label}: {note}" in subtitle

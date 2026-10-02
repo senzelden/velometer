@@ -37,8 +37,10 @@ def _label(label: str) -> str:
     return NOW if label == ts.CURRENT else label
 
 
-def _title(text: str) -> alt.TitleParams:
-    return alt.TitleParams(text, subtitle=ATTRIBUTION, anchor="start", fontSize=16)
+def _title(text: str, notes: list[str] | None = None) -> alt.TitleParams:
+    """Title with the attribution as subtitle; `notes` become further subtitle lines."""
+    subtitle = [ATTRIBUTION, *notes] if notes else ATTRIBUTION
+    return alt.TitleParams(text, subtitle=subtitle, anchor="start", fontSize=16)
 
 
 def _config(chart):
@@ -243,7 +245,19 @@ def rankings_flip(data: ReportData) -> dict:
                 alt.Tooltip("value:Q", format=".2f", title="protected share, %"),
             ],
         )
-        .properties(width=560, height=320, title=_title("City rankings by source"))
+        .properties(
+            width=560,
+            height=320,
+            # each column's scope (M4 spec 4.2), from the `note` of its config/report.yaml entry
+            title=_title(
+                "City rankings by source",
+                [
+                    f"{r.label}: {n}"
+                    for r in data.report_config.rankings
+                    if (n := getattr(r, "note", None))
+                ],
+            ),
+        )
     )
     return _config(chart).to_dict()
 
