@@ -1,5 +1,6 @@
 """Yearly time series per city and boundary, rule-based flags and the explained-against check."""
 
+import hashlib
 import re
 import statistics
 from dataclasses import dataclass, field
@@ -61,6 +62,7 @@ class CitySeries:
     current_fraction: float
     provenance: str
     notes: list[str] = field(default_factory=list)
+    missing_years: tuple[int, ...] = ()  # series years (config/history.yaml) without a done run
 
 
 def current_fraction(osm_timestamp: str) -> float:
@@ -92,8 +94,16 @@ def _point(conn, run_id: int, label: str, selector, activity: ActivityYear | Non
     )
 
 
+def _year(osm_timestamp: str) -> int:
+    return int(osm_timestamp[:4])
+
+
 def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> list[YearPoint]:
-    """Year points of one history set in label order, then the matching current run if any."""
+    """Year points of one history set in label order, then the matching current run if any.
+
+    The current point follows only a last history year that is its own year (the 1 January
+    before it); it carries the activity of year last + 1, whose window ends at the history file.
+    """
     runs = history_runs(
         conn,
         city_id,
@@ -111,7 +121,11 @@ def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> lis
     current = latest_done_run(
         conn, city_id, kind, selector.version, selector.parameters, selector.config_sha256
     )
-    if points and current is not None:
+    if (
+        points
+        and current is not None
+        and _year(fetch_run(conn, current)["osm_timestamp"]) == int(points[-1].label)
+    ):
         points.append(
             _point(conn, current, CURRENT, selector, activity.get(int(points[-1].label) + 1))
         )
@@ -125,6 +139,15 @@ def _drift(prev: float | None, cur: float | None, pct: float) -> bool:
     return prev > 0 and abs(cur - prev) / prev * 100 >= pct
 
 
+def _consecutive(prev: YearPoint, p: YearPoint) -> bool:
+    """Adjacent years, or the current point after the 1 January of its own year."""
+    if prev.label == CURRENT:
+        return False
+    if p.label == CURRENT:
+        return int(prev.label) == _year(p.osm_timestamp)
+    return int(p.label) == int(prev.label) + 1
+
+
 def flags(
     points: list[YearPoint],
     cfg: ActivityConfig,
@@ -133,7 +156,10 @@ def flags(
     city_id: str = "",
     kind: str = "",
 ) -> list[Flag]:
-    """Spec §2.13. Only min_km and the spike threshold scale for the current point."""
+    """Spec §2.13. Only min_km and the spike threshold scale for the current point.
+
+    Change rules (km_jump, tag_drift) compare consecutive points only: never across a gap.
+    """
     t = cfg.flags
     edits = [p.activity.n_edits for p in points if p.label != CURRENT and p.activity is not None]
     median = statistics.median(edits) if edits else None
@@ -142,7 +168,7 @@ def flags(
         scale = current_fraction if p.label == CURRENT else 1.0
         rules: dict[str, str] = {}
         jump = False
-        if i > 0:
+        if i > 0 and _consecutive(points[i - 1], p):
             prev = points[i - 1]
             delta = p.ab_km - prev.ab_km
             need = max(t.km_jump_pct / 100 * prev.ab_km, t.km_jump_min_km * scale)
@@ -217,18 +243,27 @@ def provenance_line(conn, selector, set_md5: str, points: list[YearPoint]) -> st
     years = [p for p in points if p.label != CURRENT]
     cur = next((p for p in points if p.label == CURRENT), None)
     pop = fetch_run(conn, years[0].run_id).get("population_year") if years else None
+    population = (
+        "no population (per-100k n/a)" if pop is None else f"population {pop} held constant"
+    )
     runs = ", ".join(f"{p.label}={p.run_id}" for p in years)
     return (
         f"history runs {runs}"
         + (f" · current run {cur.run_id} (OSM {cur.osm_timestamp})" if cur else " · no current run")
         + f" · history set `{set_md5[:8]}` · classifier {selector.version} "
         f"`{selector.parameters}` · config `{selector.config_sha256[:12]}`"
-        f" · population {pop} held constant"
+        f" · {population}"
     )
 
 
-def build_city(conn, city_id: str, kind: str, selector) -> CitySeries | None:
-    """The city's series for the latest history set of this config, or None without history."""
+def build_city(
+    conn, city_id: str, kind: str, selector, years: range | None = None
+) -> CitySeries | None:
+    """The city's series for the latest history set of this config, or None without history.
+
+    `years` (config/history.yaml) are the years the series must hold; each one without a done
+    run is listed in missing_years and noted.
+    """
     set_md5 = latest_history_set(
         conn,
         city_id,
@@ -241,11 +276,29 @@ def build_city(conn, city_id: str, kind: str, selector) -> CitySeries | None:
         return None
     points = series(conn, city_id, kind, selector, set_md5)
     notes = []
+    labels = {p.label for p in points}
+    missing = tuple(y for y in (years or ()) if str(y) not in labels)
+    for y in missing:
+        notes.append(
+            f"{city_id}/{kind}/{y} has no done history run: no point, and no change rule "
+            "compares across the gap"
+        )
     fraction = 1.0
     if points and points[-1].label == CURRENT:
         fraction = current_fraction(points[-1].osm_timestamp)
     else:
-        notes.append(f"{city_id}/{kind} has no current run of this config: no current point")
+        current = latest_done_run(
+            conn, city_id, kind, selector.version, selector.parameters, selector.config_sha256
+        )
+        if current is None:
+            notes.append(f"{city_id}/{kind} has no current run of this config: no current point")
+        else:
+            ts = fetch_run(conn, current)["osm_timestamp"]
+            last = next((p.label for p in reversed(points)), "none")
+            notes.append(
+                f"{city_id}/{kind} current run {current} (OSM {ts}) does not follow the last "
+                f"history year {last}: no current point"
+            )
     return CitySeries(
         city_id,
         kind,
@@ -254,6 +307,7 @@ def build_city(conn, city_id: str, kind: str, selector) -> CitySeries | None:
         fraction,
         provenance_line(conn, selector, set_md5, points),
         notes,
+        missing,
     )
 
 
@@ -284,34 +338,67 @@ def missing_explanations(path: Path, flag_list: list[Flag]) -> list[str]:
 
 
 def stale_explanations(
-    path: Path, flag_list: list[Flag], cities: set[str] | None = None
+    path: Path, flag_list: list[Flag], shown: set[tuple[str, str]] | None = None
 ) -> list[str]:
-    """`### city/kind/label` headings (of these cities) that match no current flag."""
+    """`### city/kind/label` headings (of these (city, kind) pairs) that match no current flag."""
     current = {f.key for f in flag_list}
     return sorted(
         h
         for h in headings(path.read_text())
-        if h.count("/") == 2 and (cities is None or h.split("/")[0] in cities) and h not in current
+        if h.count("/") == 2
+        and (shown is None or tuple(h.rsplit("/", 1)[0].split("/")) in shown)
+        and h not in current
     )
 
 
-def explained_against(path: Path) -> dict[str, str]:
-    """`city/kind` -> history_set_md5[:8] from the marker ({} if there is none)."""
+ACTIVITY_KEY = "activity"
+
+
+def activity_sha(path: Path) -> str:
+    """First 12 hex of the sha256 of config/activity.yaml: what the explanations were read with."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+
+
+def _marker_items(path: Path) -> dict[str, str]:
     m = EXPLAINED_AGAINST.search(path.read_text())
     if m is None:
         return {}
     out = {}
     for item in m.group("body").split():
-        key, _, md5 = item.partition("=")
-        if not md5 or "/" not in key:
+        key, _, value = item.partition("=")
+        if not value or ("/" not in key and key != ACTIVITY_KEY):
             raise ValueError(f"{path}: bad explained-against entry {item!r}")
-        out[key] = md5
+        out[key] = value
     return out
 
 
-def explained_against_marker(sets: dict[tuple[str, str], str]) -> str:
+def explained_against(path: Path) -> dict[str, str]:
+    """`city/kind` -> history_set_md5[:8] from the marker ({} if there is none)."""
+    return {k: v for k, v in _marker_items(path).items() if k != ACTIVITY_KEY}
+
+
+def explained_activity(path: Path) -> str | None:
+    """The marker's `activity=` entry: activity_sha of the activity.yaml the flags were read by."""
+    return _marker_items(path).get(ACTIVITY_KEY)
+
+
+def explained_against_marker(sets: dict[tuple[str, str], str], activity: str | None = None) -> str:
     body = " ".join(f"{c}/{k}={md5[:8]}" for (c, k), md5 in sorted(sets.items()))
+    if activity is not None:
+        body += f" {ACTIVITY_KEY}={activity}"
     return f"<!-- explained-against: {body} -->"
+
+
+def unexplained_activity(path: Path, sha: str) -> str | None:
+    """Why the explanations do not match this activity.yaml, or None when they do."""
+    marked = explained_activity(path)
+    if marked == sha:
+        return None
+    return (
+        f"explanations written against activity.yaml {marked or 'none'}, current is {sha}: "
+        "if cycling_keys or legacy changed, rerun `run --years ... --force` so diagnostics and "
+        "activity use them; then re-check the flags"
+    )
 
 
 def unexplained_sets(path: Path, sets: dict[tuple[str, str], str]) -> list[str]:

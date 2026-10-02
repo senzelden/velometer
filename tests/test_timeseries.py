@@ -1,3 +1,5 @@
+import re
+import shutil
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,18 @@ from velometer.db import (
 from velometer.models import ActivityYear
 
 CFG = load_activity(CFG_DIR / "activity.yaml")  # pct 10, min 25 km, factor 2, share 0.5, drift 50
+ACTIVITY_SHA = T.activity_sha(CFG_DIR / "activity.yaml")
+CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
+
+
+def config_dir(tmp_path, years="2019-2021") -> Path:
+    """A copy of config/ whose history.yaml series is `years` (same classifier/presets sha)."""
+    d = tmp_path / "config"
+    if not d.exists():
+        shutil.copytree(CFG_DIR, d)
+    text = (CFG_DIR / "history.yaml").read_text()
+    (d / "history.yaml").write_text(re.sub(r'years: "[^"]*"', f'years: "{years}"', text))
+    return d
 
 
 def pt(label, ab_km, edits=None, share=0.1, legacy=0.0, unrec=0.0):
@@ -36,8 +50,9 @@ def pt(label, ab_km, edits=None, share=0.1, legacy=0.0, unrec=0.0):
             n_ways_created_cycling=0,
             n_ways_deleted_cycling=0,
         )
+    ts = CURRENT_TS if label == "current" else f"{label}-01-01T00:00:00Z"
     return T.YearPoint(
-        label, 1, f"{label}-01-01T00:00:00Z", 1.0, ab_km, dict.fromkeys("ABCDE", 0.0), act,
+        label, 1, ts, 1.0, ab_km, dict.fromkeys("ABCDE", 0.0), act,
         legacy, unrec,
     )  # fmt: skip
 
@@ -134,7 +149,7 @@ def test_point_without_diagnostics_reads_none_and_renders_na(tmp_path):
         R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=_current_deps(tmp_path))
         fakes = Fakes(tmp_path)
         R.run_history(
-            conn, CITY, range(2019, 2021), data_dir=tmp_path, config_dir=CFG_DIR,
+            conn, CITY, range(2025, 2027), data_dir=tmp_path, config_dir=CFG_DIR,
             deps=fakes.deps(),
         )  # fmt: skip
         pts = T.series(conn, "berlin", "lau", _selector(), fakes.set_md5)
@@ -156,8 +171,9 @@ def _flag(label="2020"):
     return T.Flag("berlin", "lau", label, ("km_jump",), "")
 
 
-def _report(tmp_path, body="", marker="berlin/lau=abcd1234"):
+def _report(tmp_path, body="", marker="berlin/lau=abcd1234", activity=ACTIVITY_SHA):
     p = tmp_path / "r.md"
+    marker += f" activity={activity}" if activity else ""
     p.write_text(
         f"pre\n{T.BEGIN}\nold\n{T.END}\n\n## Explanations\n\n"
         f"<!-- explained-against: {marker} -->\n\n{body}"
@@ -170,12 +186,21 @@ def test_check_requires_explanation_per_flag_and_fresh_marker(tmp_path):
     assert T.missing_explanations(p, [_flag("2020")]) == []
     assert T.missing_explanations(p, [_flag("2020"), _flag("2021")]) == ["berlin/lau/2021"]
     assert T.stale_explanations(p, [_flag("2020")]) == ["berlin/lau/2019"]
-    assert T.stale_explanations(p, [_flag("2020")], {"paris"}) == []
+    assert T.stale_explanations(p, [_flag("2020")], {("paris", "lau")}) == []
+    assert T.stale_explanations(p, [_flag("2020")], {("berlin", "fua")}) == []
+    assert T.stale_explanations(p, [_flag("2020")], {("berlin", "lau")}) == ["berlin/lau/2019"]
     sets = {("berlin", "lau"): "abcd1234" + "0" * 24}
     assert T.unexplained_sets(p, sets) == []
     assert len(T.unexplained_sets(p, {("berlin", "lau"): "ffff0000" + "0" * 24})) == 1
     assert len(T.unexplained_sets(p, {("paris", "fua"): "ffff0000" + "0" * 24})) == 1
     assert T.explained_against_marker(sets) == "<!-- explained-against: berlin/lau=abcd1234 -->"
+    assert T.explained_against(p) == {"berlin/lau": "abcd1234"}
+    assert T.explained_activity(p) == ACTIVITY_SHA
+    assert T.unexplained_activity(p, ACTIVITY_SHA) is None
+    assert "ffffffffffff" in T.unexplained_activity(p, "ffffffffffff")
+    assert T.explained_against_marker(sets, "a" * 12) == (
+        f"<!-- explained-against: berlin/lau=abcd1234 activity={'a' * 12} -->"
+    )
 
 
 def test_write_keeps_text_outside_markers_and_is_idempotent(tmp_path):
@@ -196,21 +221,22 @@ def test_write_keeps_text_outside_markers_and_is_idempotent(tmp_path):
 
 @pytest.fixture
 def db(tmp_path):
+    """berlin/lau 2019-2021, every year of a config whose history.yaml series is 2019-2021."""
     path = tmp_path / "v.sqlite"
     fakes = Fakes(tmp_path)
+    cfg = config_dir(tmp_path)
     with open_db(path) as conn:
         create_schema(conn)
         from velometer.config import load_cities
 
         upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
         R.run_history(
-            conn, CITY, range(2019, 2022), data_dir=tmp_path, config_dir=CFG_DIR,
-            deps=fakes.deps(),
-        )  # fmt: skip
-    return path, fakes.set_md5
+            conn, CITY, range(2019, 2022), data_dir=tmp_path, config_dir=cfg, deps=fakes.deps()
+        )
+    return path, fakes.set_md5, cfg
 
 
-def _spike(path, set_md5, year=2020):
+def _spike(path, set_md5, cfg=None, year=2020):
     with open_db(path) as conn:
         rows = fetch_activity(conn, "berlin", "lau", set_md5)
         rows = [r.model_copy(update={"n_edits": 50}) if r.year == year else r for r in rows]
@@ -221,7 +247,7 @@ def _ts(db, report, *args):
     return CliRunner().invoke(
         app,
         ["timeseries", "--db", str(db[0]), "--city", "berlin", "--boundary", "lau",
-         "--report", str(report), *args],
+         "--report", str(report), "--config-dir", str(db[2]), *args],
     )  # fmt: skip
 
 
@@ -247,14 +273,15 @@ def test_cli_check_fails_on_unexplained_flag_then_passes(db, tmp_path):
 def test_cli_check_fails_on_stale_marker_and_prints_the_fix(db, tmp_path):
     res = _ts(db, _report(tmp_path, marker="berlin/lau=deadbeef"), "--check")
     assert res.exit_code == 1
-    assert f"<!-- explained-against: berlin/lau={db[1][:8]} -->" in res.output
+    want = f"<!-- explained-against: berlin/lau={db[1][:8]} activity={ACTIVITY_SHA} -->"
+    assert want in res.output
 
 
 def test_cli_check_fails_without_history_runs_or_report(db, tmp_path):
     res = CliRunner().invoke(
         app,
         ["timeseries", "--db", str(db[0]), "--city", "paris", "--boundary", "lau",
-         "--report", str(_report(tmp_path)), "--check"],
+         "--report", str(_report(tmp_path)), "--config-dir", str(db[2]), "--check"],
     )  # fmt: skip
     assert res.exit_code == 1 and "no history runs for paris/lau" in res.output
     res = _ts(db, tmp_path / "nope.md", "--check")
@@ -313,17 +340,17 @@ def test_series_adds_current_point_with_next_year_activity(tmp_path):
         R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=_current_deps(tmp_path))
         fakes = Fakes(tmp_path)
         R.run_history(
-            conn, CITY, range(2019, 2022), data_dir=tmp_path, config_dir=CFG_DIR,
+            conn, CITY, range(2024, 2027), data_dir=tmp_path, config_dir=CFG_DIR,
             deps=fakes.deps(),
         )  # fmt: skip
         pts = T.series(conn, "berlin", "lau", _selector(), fakes.set_md5)
-        assert [p.label for p in pts] == ["2019", "2020", "2021", "current"]
-        assert pts[-1].activity is not None and pts[-1].activity.year == 2022
-        assert pts[0].activity.year == 2019
+        assert [p.label for p in pts] == ["2024", "2025", "2026", "current"]
+        assert pts[-1].activity is not None and pts[-1].activity.year == 2027
+        assert pts[0].activity.year == 2024
         assert pts[0].headline is not None and pts[0].ab_km >= 0
-        cs = T.build_city(conn, "berlin", "lau", _selector())
+        cs = T.build_city(conn, "berlin", "lau", _selector(), range(2024, 2027))
         assert cs.current_fraction == pytest.approx(T.current_fraction(pts[-1].osm_timestamp))
-        assert "current run" in cs.provenance and not cs.notes
+        assert "current run" in cs.provenance and not cs.notes and cs.missing_years == ()
 
 
 def test_latest_history_set_is_the_most_recently_recorded_with_done_runs(tmp_path):
@@ -356,7 +383,7 @@ def test_zero_median_means_no_spike():
 
 
 def test_ab_km_is_tiers_a_and_b_on_per_side_and_headline_is_the_preset_metric(db):
-    path, set_md5 = db
+    path, set_md5, _ = db
     with open_db(path) as conn:
         run_id = min(T.series(conn, "berlin", "lau", _selector(), set_md5), key=lambda p: p.run_id)
         run_id = run_id.run_id
@@ -395,6 +422,7 @@ def test_cli_check_fails_when_generated_block_markers_are_missing(db, tmp_path):
 
 def _no_boundary(db, report, *cities):
     args = ["timeseries", "--db", str(db[0]), "--report", str(report), "--check"]
+    args += ["--config-dir", str(db[2])]
     for c in cities:
         args += ["--city", c]
     return CliRunner().invoke(app, args)
@@ -426,3 +454,130 @@ def test_history_config_is_strict_and_has_a_default(tmp_path):
     bad.write_text('years: "2018-2026"\nrequired_kinds: {default: [lau]}\nextra: 1\n')
     with pytest.raises(ConfigError):
         load_history(bad)
+
+
+# --- R19: complete year ranges, activity.yaml in the marker, --boundary, population -------------
+
+
+def test_change_rules_never_compare_across_a_gap():
+    assert rules([pt("2019", 100), pt("2021", 200)]) == {}
+    assert rules([pt("2019", 5, legacy=100), pt("2021", 5, legacy=500)]) == {}
+    assert rules([pt("2019", 100), pt("2020", 200)]) == {"2020": {"km_jump"}}  # control
+    # a current point compares only with the 1 January of its own year (CURRENT_TS is 2026)
+    assert rules([pt("2025", 100), pt("current", 200)], 0.5) == {}
+    assert rules([pt("2026", 100), pt("current", 200)], 0.5) == {"current": {"km_jump"}}
+
+
+def _bump_ab(path, label, km=1000.0):
+    with open_db(path) as conn:
+        conn.execute(
+            "UPDATE tier_lengths SET length_km = length_km + ? WHERE tier='A' AND "
+            "length_basis='per_side' AND run_id IN (SELECT id FROM runs WHERE status='done' "
+            "AND source='history' AND osm_timestamp=?)",
+            (km, f"{label}-01-01T00:00:00Z"),
+        )
+        conn.commit()
+
+
+def test_cli_check_fails_on_a_missing_year_and_flags_no_jump_across_it(tmp_path):
+    path = tmp_path / "v.sqlite"
+    fakes = Fakes(tmp_path, fail_year=2020)
+    cfg = config_dir(tmp_path)
+    with open_db(path) as conn:
+        create_schema(conn)
+        from velometer.config import load_cities
+
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        R.run_history(
+            conn, CITY, range(2019, 2022), data_dir=tmp_path, config_dir=cfg, deps=fakes.deps()
+        )
+    _bump_ab(path, "2021")  # 2019 -> 2021 would be a km_jump if compared
+    db = (path, fakes.set_md5, cfg)
+    report = _report(tmp_path, marker=f"berlin/lau={fakes.set_md5[:8]}")
+    res = _ts(db, report, "--check")
+    assert res.exit_code == 1, res.output
+    assert "missing history year berlin/lau/2020" in res.output
+    assert "km_jump" not in res.output
+    assert "berlin/lau/2020 has no done history run" in res.output  # the note
+
+
+def test_series_without_the_current_year_has_no_current_point_and_a_note(tmp_path):
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        from velometer.config import load_cities
+
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=_current_deps(tmp_path))
+        fakes = Fakes(tmp_path)
+        R.run_history(
+            conn, CITY, range(2022, 2025), data_dir=tmp_path, config_dir=CFG_DIR,
+            deps=fakes.deps(),
+        )  # fmt: skip
+        cs = T.build_city(conn, "berlin", "lau", _selector(), range(2022, 2025))
+    assert [p.label for p in cs.points] == ["2022", "2023", "2024"]
+    assert any("does not follow the last history year 2024" in n for n in cs.notes), cs.notes
+    assert "no current run" in cs.provenance
+
+
+def test_cli_check_fails_when_activity_yaml_differs_from_the_marker(db, tmp_path):
+    for activity in ("ffffffffffff", None):
+        report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}", activity=activity)
+        res = _ts(db, report, "--check")
+        assert res.exit_code == 1, res.output
+        assert "activity.yaml" in res.output and f"activity={ACTIVITY_SHA}" in res.output
+    (db[2] / "activity.yaml").write_text((db[2] / "activity.yaml").read_text() + "\n# edited\n")
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")  # marked with the old sha
+    assert _ts(db, report, "--check").exit_code == 1
+
+
+def test_cli_check_boundary_fua_applies_only_to_cities_requiring_fua(tmp_path):
+    path = tmp_path / "v.sqlite"
+    fakes = Fakes(tmp_path)
+    cfg = config_dir(tmp_path)
+    with open_db(path) as conn:
+        create_schema(conn)
+        from velometer.config import load_cities
+
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        for kind in ("lau", "fua"):
+            R.run_history(
+                conn, CITY, range(2019, 2022), data_dir=tmp_path, config_dir=cfg,
+                boundary_kind=kind, deps=fakes.deps(),
+            )  # fmt: skip
+    marker = f"berlin/fua={fakes.set_md5[:8]} berlin/lau={fakes.set_md5[:8]}"
+    report = _report(tmp_path, "### berlin/lau/2020\nx\n", marker=marker)
+    args = ["timeseries", "--db", str(path), "--report", str(report), "--config-dir", str(cfg)]
+    args += ["--check", "--boundary", "fua", "--city", "berlin", "--city", "vienna"]
+    res = CliRunner().invoke(app, args)
+    assert res.exit_code == 0, res.output  # vienna needs lau only
+    assert "vienna/fua" not in res.output
+    assert "berlin/lau/2020" not in res.output  # a LAU heading is not checked under --boundary fua
+
+
+def test_provenance_without_population_says_so(tmp_path):
+    fakes = Fakes(tmp_path)
+    base = fakes.deps()
+
+    def no_population(city, kind, data_dir, region_path=None):
+        rec, _ = base.city_boundary(city, kind, data_dir, region_path)
+        return rec, None
+
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        from velometer.config import load_cities
+
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        R.run_history(
+            conn, CITY, range(2019, 2021), data_dir=tmp_path, config_dir=CFG_DIR,
+            boundary_kind="fua", deps=fakes.deps(city_boundary=no_population),
+        )  # fmt: skip
+        cs = T.build_city(conn, "berlin", "fua", _selector())
+    assert "no population (per-100k n/a)" in cs.provenance
+    assert "None" not in cs.provenance
+
+
+def test_bumped_ab_km_without_a_gap_is_a_km_jump(db, tmp_path):
+    # control for the gap test: the same bump between consecutive years is flagged
+    _bump_ab(db[0], "2021")
+    res = _ts(db, _report(tmp_path, marker=f"berlin/lau={db[1][:8]}"))
+    assert res.exit_code == 0 and "km_jump" in res.output

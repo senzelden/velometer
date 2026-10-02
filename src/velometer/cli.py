@@ -842,7 +842,8 @@ def timeseries(
         False,
         "--check",
         help="Exit 1 if a flagged city-year lacks an explanation, the explanations name another"
-        " history set than the current one, or a city has no history runs.",
+        " history set or activity.yaml than the current one, or a required city/kind lacks a"
+        " year of config/history.yaml.",
     ),
     report: Path = typer.Option(  # noqa: B008
         Path("docs/review/m3_timeseries.md"), "--report", help="Report file."
@@ -872,7 +873,7 @@ def timeseries(
     with _open_schema(db) as conn:
         for c in _all_cities(config_dir):
             for kind in ("lau", "fua"):  # every kind, so --write never drops other tables
-                cs = ts.build_city(conn, c.id, kind, sel)
+                cs = ts.build_city(conn, c.id, kind, sel, history_cfg.year_range())
                 if cs is not None:
                     built[(c.id, kind)] = cs
     shown = {k: v for k, v in built.items() if k[0] in wanted and k[1] in kinds}
@@ -902,7 +903,9 @@ def timeseries(
             problems = False
             ts.check_markers(report)
             for cid in sorted(wanted):
-                for kind in (boundary,) if boundary else history_cfg.required(cid):
+                for kind in history_cfg.required(cid):
+                    if boundary not in (None, kind):
+                        continue
                     if (cid, kind) not in built:
                         problems = True
                         typer.echo(
@@ -910,21 +913,35 @@ def timeseries(
                             f"{sel.short_sha}: cannot check it",
                             err=True,
                         )
+                        continue
+                    for year in built[(cid, kind)].missing_years:
+                        problems = True
+                        typer.echo(
+                            f"missing history year {cid}/{kind}/{year} (config/history.yaml "
+                            f"years {history_cfg.years}): rerun `run --years`",
+                            err=True,
+                        )
             for key in ts.missing_explanations(report, shown_flags):
                 problems = True
                 typer.echo(f"missing explanation: ### {key}", err=True)
             sets = {k: v.set_md5 for k, v in shown.items()}
             stale = ts.unexplained_sets(report, sets)
+            activity_now = ts.activity_sha(config_dir / "activity.yaml")
+            activity_stale = ts.unexplained_activity(report, activity_now)
+            if activity_stale:
+                stale.append(activity_stale)
             for line in stale:
                 typer.echo(f"explanations out of date: {line}", err=True)
             if stale:
                 problems = True
                 typer.echo(
                     "after re-checking the explanations, set: "
-                    + ts.explained_against_marker({k: v.set_md5 for k, v in built.items()}),
+                    + ts.explained_against_marker(
+                        {k: v.set_md5 for k, v in built.items()}, activity_now
+                    ),
                     err=True,
                 )
-            for key in ts.stale_explanations(report, shown_flags, wanted):
+            for key in ts.stale_explanations(report, shown_flags, set(shown)):
                 typer.echo(f"warning: ### {key} matches no flag", err=True)
             if problems:
                 raise typer.Exit(1)
