@@ -1,0 +1,8 @@
+# package  altair-constant  resolved
+# Versions are altair 6.3.0's VEGA_VERSION, VEGALITE_VERSION and VEGAEMBED_VERSION. Each bundle was
+# fetched once on 2026-10-02 from https://cdn.jsdelivr.net/npm/<package>@<constant>/build/<package>.min.js
+# (LICENSE from .../npm/<package>@<constant>/LICENSE); jsdelivr resolved the constant to the release
+# in the last column. All three are BSD-3-Clause (University of Washington Interactive Data Lab).
+vega 6 6.4.0
+vega-lite 6.4.1 6.4.1
+vega-embed 7 7.3.0

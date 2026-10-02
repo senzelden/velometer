@@ -1127,3 +1127,35 @@ def report_maps(
         raise typer.Exit(1) from e
     finally:
         conn.close()
+
+
+LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost")
+
+
+@app.command()
+def serve(
+    host: str = typer.Option(
+        "127.0.0.1", "--host", help="Loopback only: 127.0.0.1, ::1, localhost."
+    ),
+    port: int = typer.Option(8000, "--port", help="TCP port."),
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+    maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
+    docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
+) -> None:
+    """The private, read-only web app on a loopback address (never exposed to the network)."""
+    if host not in LOOPBACK_HOSTS:
+        typer.echo(
+            f"error: --host {host!r} is not a loopback address; the app is private, use one of "
+            + ", ".join(LOOPBACK_HOSTS),
+            err=True,
+        )
+        raise typer.Exit(2)
+    if not db.is_file():
+        typer.echo(f"error: database not found: {db}", err=True)
+        raise typer.Exit(1)
+    import uvicorn
+
+    from velometer.app.main import create_app
+
+    uvicorn.run(create_app(db, config_dir, maps, docs), host=host, port=port)

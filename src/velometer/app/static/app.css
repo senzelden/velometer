@@ -1,0 +1,65 @@
+/* velometer: one plain stylesheet. System fonts, the M3 chart palette, no framework. */
+:root {
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --grid: #e4e3df;
+  --paper: #fcfcfa;
+  --panel: #f4f3ef;
+  --accent: #2a78d6;  /* tier A / first city */
+  --flag: #eb6834;    /* tier B / second city: flagged rows */
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-wrap: anywhere;
+}
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.9em; }
+pre { overflow-x: auto; background: var(--panel); padding: 0.75rem; }
+
+header.site, main, footer { max-width: 64rem; margin: 0 auto; padding: 0 16px; }
+header.site {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: baseline;
+  padding-top: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--grid);
+}
+header.site .brand { font-weight: 700; color: var(--ink); text-decoration: none; }
+header.site nav a { margin-right: 1rem; }
+
+h1 { font-size: 1.75rem; line-height: 1.2; margin: 1.25rem 0 0.5rem; }
+h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--grid); }
+h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: var(--ink-2); }
+h4 { font-size: 0.95rem; margin: 0 0 0.25rem; }
+.lede, .meta, .crumbs, figcaption { color: var(--ink-2); }
+.meta { font-size: 0.9rem; }
+.note { color: var(--ink-2); font-style: italic; }
+
+.scroll { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--flag); }
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem 2rem; }
+.chart { max-width: 100%; overflow-x: auto; margin: 0.5rem 0 1rem; }
+figure { margin: 0; }
+img { max-width: 100%; height: auto; border: 1px solid var(--grid); }
+
+.flag { border-left: 3px solid var(--flag); padding: 0.25rem 0 0.25rem 0.75rem; margin: 0 0 1rem; }
+.explanation p { margin: 0.5rem 0; }
+.provenance { padding-left: 1.25rem; font-size: 0.9rem; }
+.provenance p { display: inline; margin: 0; }
+.prose { max-width: 48rem; }
+.prose table { font-size: 0.9rem; display: block; overflow-x: auto; }
+
+footer {
+  margin-top: 3rem; padding-top: 0.75rem; padding-bottom: 2rem;
+  border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 0.85rem;
+}
+footer p { margin: 0.25rem 0; }

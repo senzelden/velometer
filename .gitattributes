@@ -1,1 +1,2 @@
 config/** text eol=lf
+src/velometer/app/static/vendor/*.js -diff linguist-vendored

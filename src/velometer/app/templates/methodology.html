@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block lang %}{{ lang }}{% endblock %}
+{% block title %}velometer · {% if lang == "de" %}Methodik{% else %}methodology{% endif %}{% endblock %}
+{% block content %}
+<p class="crumbs">{% if lang == "de" %}<a href="/methodology">English</a> · Deutsch{% else %}English · <a href="/methodology/de">Deutsch</a>{% endif %}</p>
+<article class="prose">
+{% if body %}{{ body }}{% else %}<p class="note">methodology not generated (<code>velometer report methodology</code> writes <code>docs/{{ file }}</code>)</p>{% endif %}
+</article>
+{% endblock %}

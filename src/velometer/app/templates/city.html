@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% from "macros.html" import chart %}
+{% block title %}velometer · {{ city.name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/">Cities</a> / {{ city.name }} · <a href="/data/{{ city.id }}.csv">CSV</a></p>
+<h1>{{ city.name }}</h1>
+
+<section>
+<h2>Headline and presets</h2>
+<div class="pair">
+{% for k in kinds %}
+<div>
+<h3>{{ k.kind | upper }}</h3>
+{% if k.point %}
+<div class="scroll">
+<table>
+<thead><tr><th>Preset</th><th class="num">Share, %</th><th class="num">km per 100k</th></tr></thead>
+<tbody>
+{% for p in k.point.presets %}
+<tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td class="num">{{ p.per_100k | num }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p class="meta">A+B km {{ k.point.ab_km | num }} · OSM {{ k.point.osm_timestamp }}
+· population {% if k.point.population_value %}{{ k.point.population_value | num(",d") }} ({{ k.point.population_year }}){% else %}n/a{% endif %}</p>
+{% else %}
+<p class="note">no run ({{ k.kind | upper }} current)</p>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section>
+<h2>Tier composition</h2>
+{% for k in kinds %}
+{% if k.tiers %}{{ chart("c" ~ loop.index, k.tiers) }}{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
+{% endfor %}
+</section>
+
+<section>
+<h2>LAU vs FUA</h2>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>Boundary</th><th class="num">Headline, %</th><th class="num">A+B km</th>
+  {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for k in kinds %}
+<tr>
+  <td>{{ k.kind | upper }}</td>
+  {% if k.point %}
+  <td class="num">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
+  <td class="num">{{ k.point.ab_km | num }}</td>
+  {% for t in tiers %}<td class="num">{{ k.point.tiers_km[t] | num }}</td>{% endfor %}
+  {% else %}
+  <td class="note" colspan="{{ tiers | length + 2 }}">no run ({{ k.kind | upper }} current)</td>
+  {% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2>Flagged years</h2>
+{% for k in kinds %}
+<h3>{{ k.kind | upper }}</h3>
+{% if k.series is none %}
+<p class="note">no run ({{ k.kind | upper }} history)</p>
+{% elif not k.flags %}
+<p class="note">no flagged years</p>
+{% else %}
+{% for f in k.flags %}
+<article class="flag">
+<h4><code>{{ f.flag.key }}</code> · {{ f.flag.rules | join(", ") }}</h4>
+<p class="meta">{{ f.flag.detail }}</p>
+{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>
+{% else %}<p class="note">no explanation in <code>docs/review/m3_timeseries.md</code></p>{% endif %}
+</article>
+{% endfor %}
+{% endif %}
+{% endfor %}
+</section>
+
+<section>
+<h2>Comparison with published figures</h2>
+{% if reconcile is none %}
+<p class="note">no run (LAU current) to compare</p>
+{% elif not reconcile.gaps %}
+<p class="note">no published figures for {{ city.name }}</p>
+{% else %}
+<div class="scroll">
+<table>
+<thead><tr><th>Comparison</th><th class="num">Ours</th><th class="num">Theirs</th><th class="num">Gap</th><th>Flagged</th><th>Source (date)</th></tr></thead>
+<tbody>
+{% for g in reconcile.gaps %}
+<tr{% if g.flagged %} class="flagged"{% endif %}>
+  <td><code>{{ g.key.split("/", 1)[1] }}</code></td>
+  <td class="num">{{ g.ours | num }}</td>
+  <td class="num">{{ g.theirs | num }}</td>
+  <td class="num">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
+  <td>{% if g.informational %}info{% elif g.flagged %}yes{% else %}no{% endif %}</td>
+  <td>{{ g.source }} ({{ g.reference_date or "?" }})</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+</section>
+
+<section>
+<h2>Tier map</h2>
+<div class="pair">
+{% for k in kinds %}
+<figure>
+{% if k.map %}<img src="/maps/{{ k.map }}" alt="Tier map, {{ city.name }} ({{ k.kind | upper }})" loading="lazy">
+{% elif k.point is none %}<p class="note">no run ({{ k.kind | upper }} current)</p>
+{% else %}<p class="note">map not generated (<code>velometer report maps</code>)</p>{% endif %}
+<figcaption>{{ k.kind | upper }}</figcaption>
+</figure>
+{% endfor %}
+</div>
+</section>
+
+<section>
+<h2>Provenance</h2>
+<ul class="provenance">
+{% for k in kinds %}
+<li><strong>{{ k.kind | upper }} current:</strong>
+{% if k.point %}run {{ k.point.run_id }} · OSM {{ k.point.osm_timestamp }} · classifier {{ k.point.classifier_version }} · config <code>{{ k.point.config_sha256[:12] }}</code>{% else %}no run{% endif %}</li>
+<li><strong>{{ k.kind | upper }} history:</strong>
+{% if k.series %}{{ k.series.provenance | md }}{% else %}no run{% endif %}</li>
+{% endfor %}
+{% if reconcile %}<li><strong>Comparison:</strong> {{ reconcile.provenance | md }}</li>{% endif %}
+</ul>
+</section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "macros.html" import chart %}
+{% block title %}velometer · cities{% endblock %}
+{% block content %}
+<h1>Protected cycling infrastructure</h1>
+<p class="lede">Current LAU run per city, on the report classifier. Shares are percent of main
+roads; km are OSM mapped km per side.</p>
+
+<section>
+<h2>Cities</h2>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>City</th>
+  {% for p in preset_ids %}<th class="num">{{ preset_label[p] }}, %</th>{% endfor %}
+  <th class="num">A+B km</th>
+  <th class="num">Flagged years</th>
+</tr></thead>
+<tbody>
+{% for r in rows %}
+<tr>
+  <td><a href="/city/{{ r.city.id }}">{{ r.city.name }}</a></td>
+  {% if r.point %}
+  {% for p in preset_ids %}<td class="num">{{ r.presets.get(p) | num }}</td>{% endfor %}
+  <td class="num">{{ r.point.ab_km | num }}</td>
+  {% else %}
+  <td class="note" colspan="{{ preset_ids | length + 1 }}">no run (LAU current)</td>
+  {% endif %}
+  <td class="num">{{ r.flags }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2>Over time</h2>
+{{ chart("c1", headline) }}
+</section>
+
+<section>
+<h2>Rankings by source</h2>
+{% if rankings %}{{ chart("c2", rankings) }}{% else %}<p class="note">no run or figures to rank</p>{% endif %}
+</section>
+{% endblock %}

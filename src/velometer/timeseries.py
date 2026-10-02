@@ -355,6 +355,28 @@ def stale_explanations(
     )
 
 
+_HEADING = re.compile(r"^#{1,3} ", re.M)
+
+
+def explanation(path: Path, key: str) -> str | None:
+    """The text under the `### city/kind/label` heading `key`, up to the next `#`-`###` heading.
+
+    None when the file is unreadable, the heading is absent (as `headings` parses them) or it has
+    no text under it.
+    """
+    try:
+        text = Path(path).read_text()
+    except OSError:
+        return None
+    if key not in headings(text):
+        return None
+    m = re.search(rf"^### {re.escape(key)}\s*$", text, re.M)
+    body = text[m.end() :]
+    nxt = _HEADING.search(body)
+    body = (body if nxt is None else body[: nxt.start()]).strip()
+    return body or None
+
+
 # Markers written before schema v6 carry an `activity=<sha>` item; activity.yaml is part of the run
 # identity now, so it is ignored.
 IGNORED_MARKER_KEYS = ("activity",)

@@ -631,3 +631,54 @@ def test_cli_timeseries_defaults_to_the_report_classifier(db, tmp_path):
     rep.write_text(rep.read_text().replace("report_classifier: v1", "report_classifier: v2"))
     assert "no history runs for berlin/lau" in _ts(db, report, "--check").output
     assert "no history runs" not in _ts(db, report, "--classifier", "v1").output
+
+
+# --- explanation text (the app's flagged-years section) ------------------------------------
+
+EXPLAINED = """# M3 time series
+
+<!-- timeseries:begin -->
+#### berlin/lau
+
+| year | ... |
+<!-- timeseries:end -->
+
+## Explanations
+
+<!-- explained-against: berlin/lau=c3335f42 -->
+
+### berlin/lau/2019
+
+Cause: **tag drift**, first paragraph.
+
+Second paragraph.
+
+### berlin/lau/2022
+
+Cause: campaign.
+
+## Afterword
+
+Not part of any explanation.
+
+### berlin/lau/2026
+"""
+
+
+def test_explanation_is_the_text_under_its_heading(tmp_path):
+    p = tmp_path / "m3_timeseries.md"
+    p.write_text(EXPLAINED)
+    assert T.explanation(p, "berlin/lau/2019") == (
+        "Cause: **tag drift**, first paragraph.\n\nSecond paragraph."
+    )
+    assert T.explanation(p, "berlin/lau/2022") == "Cause: campaign."  # stops at `## `
+
+
+def test_explanation_none_when_absent_empty_or_unreadable(tmp_path):
+    p = tmp_path / "m3_timeseries.md"
+    p.write_text(EXPLAINED)
+    assert T.explanation(p, "berlin/lau/2020") is None
+    assert T.explanation(p, "berlin/lau/201") is None  # no prefix match
+    assert T.explanation(p, "berlin/lau") is None  # the generated block's #### heading
+    assert T.explanation(p, "berlin/lau/2026") is None  # heading without text
+    assert T.explanation(tmp_path / "missing.md", "berlin/lau/2019") is None
