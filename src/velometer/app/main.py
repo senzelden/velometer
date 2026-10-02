@@ -3,7 +3,9 @@
 Read-only: every request opens its own `mode=ro` connection (`open_readonly`) and closes it.
 Missing data is a note on the page ("no run ...", "map not generated ..."), never a 500; an
 unknown city is a 404. Charts are Vega-Lite specs with inline data, drawn by the vendored
-vega / vega-lite / vega-embed bundles under /static, so a page makes no external request.
+vega / vega-lite / vega-embed bundles under /static. The city page's tier map is the vendored
+Leaflet over the run's GeoJSON (`velometer report maps`); its background tiles come from the
+public OSM tile server, the one external host a page loads from (the user's decision, 2026-10-02).
 """
 
 import re
@@ -15,6 +17,7 @@ from typing import Annotated
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -37,6 +40,13 @@ METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
 # The Host headers the app answers: the loopback names `velometer serve` binds to. Any other
 # Host (a DNS-rebinding page pointing its own name at 127.0.0.1) gets a 400.
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
+GZIP_MIN_BYTES = 1024  # below this a gzip frame saves too little to be worth it
+# The tier map's background and the links its attribution and popups point at.
+OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+OSM_LINKS = {
+    "copyright": "https://www.openstreetmap.org/copyright",
+    "way": "https://www.openstreetmap.org/way/",
+}
 
 
 def _num(v: float | int | None, spec: str = ",.1f") -> str:
@@ -57,7 +67,8 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir = Path(maps_dir), Path(docs_dir)
     app = FastAPI(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+    app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)  # outermost
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.filters["num"] = _num
@@ -120,7 +131,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     async def city(request: Request, city_id: str, data: Data):
         c = known(data, city_id)
         explanations = docs_dir / EXPLANATIONS
-        kinds = []
+        kinds, map_kinds = [], []
         for kind in KINDS:
             series = data.series(city_id, kind)
             flags = [
@@ -128,6 +139,9 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                 for f in data.flags(city_id, kind)
             ]
             map_name = f"{city_id}_{kind}.png"
+            geojson = f"{city_id}_{kind}.geojson"
+            if (maps_dir / geojson).is_file():
+                map_kinds.append({"kind": kind, "label": kind.upper(), "url": f"/maps/{geojson}"})
             kinds.append(
                 {
                     "kind": kind,
@@ -138,8 +152,18 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                     else charts.tier_composition(data, city_id, kind),
                     "flags": flags,
                     "map": map_name if (maps_dir / map_name).is_file() else None,
+                    "geojson": (maps_dir / geojson).is_file(),
                 }
             )
+        colours = dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
+        tiermap = {
+            "tiles": OSM_TILES,
+            "links": OSM_LINKS,
+            "colours": colours,
+            "labels": charts.TIER_LABEL,
+            "outline": charts.OUTLINE,
+            "kinds": map_kinds,
+        }
         return page(
             request,
             "city.html",
@@ -150,6 +174,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             preset_unit=data.preset_units(),
             headline_unit=HEADLINE_UNIT,
             tiers=ts.TIERS,
+            tiermap=tiermap if map_kinds else None,
         )
 
     def methodology(request: Request, lang: str) -> HTMLResponse:
@@ -174,6 +199,13 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         if not MAP_NAME.fullmatch(name) or not path.is_file():
             raise HTTPException(404, "map not found")
         return FileResponse(path, media_type="image/png")
+
+    @app.get("/maps/{name}.geojson")
+    async def map_geojson(name: str):
+        path = maps_dir / f"{name}.geojson"
+        if not MAP_NAME.fullmatch(name) or not path.is_file():
+            raise HTTPException(404, "map not found")
+        return FileResponse(path, media_type="application/geo+json")
 
     def csv_response(data: ReportData, city_id: str | None) -> Response:
         try:

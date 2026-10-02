@@ -6,3 +6,8 @@
 vega 6 6.4.0
 vega-lite 6.4.1 6.4.1
 vega-embed 7 7.3.0
+# leaflet is not an altair constant: the requested range is "1.9" (latest 1.9.x). leaflet.js and
+# leaflet.css were fetched once on 2026-10-02 from https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/
+# (LICENSE from .../npm/leaflet@1.9/LICENSE, BSD-2-Clause). The images/ the CSS references (layers
+# control, default marker) are not vendored: the tier map uses neither.
+leaflet 1.9 1.9.4

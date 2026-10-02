@@ -1,11 +1,14 @@
 """The private read-only web app (`velometer serve`), on the shared report fixture DB."""
 
+import gzip
 import hashlib
 import importlib.resources
+import json
 import re
 import shutil
 import sqlite3
 from pathlib import Path
+from urllib.parse import urlparse
 
 import altair as alt
 import pytest
@@ -14,12 +17,30 @@ from typer.testing import CliRunner
 
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
+from velometer.report import charts
 
 VENDOR = Path(__file__).parents[1] / "src" / "velometer" / "app" / "static" / "vendor"
 EXPLANATION = "Fixture cause: a spike of 50 edits in the fixture activity rows."
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
+
+
+# a tier-map GeoJSON as `velometer report maps` writes it; big enough to be worth compressing
+def _side(i: int) -> dict:
+    props = {"way_id": 1000 + i, "side": "right", "tier": "ABCDE"[i % 5], "subtype": None}
+    props |= {"rule_id": "R1", "km": 0.5, "tags": {"highway": "primary"}}
+    line = {"type": "LineString", "coordinates": [[13.4, 52.5 + i / 1e4], [13.41, 52.5]]}
+    return {"type": "Feature", "geometry": line, "properties": props}
+
+
+RUN = {"run_id": 1, "osm_timestamp": "2026-09-30T00:00:00+00:00", "classifier": "v2"}
+GEOJSON = json.dumps(
+    {"type": "FeatureCollection", "properties": RUN, "boundary": None,
+     "features": [_side(i) for i in range(40)]}
+).encode()  # fmt: skip
 ROUTES = ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]
-ROUTES += ["/data/all.csv", "/data/berlin.csv", "/maps/berlin_lau.png"]
+ROUTES += ["/data/all.csv", "/data/berlin.csv", "/maps/berlin_lau.png", "/maps/berlin_lau.geojson"]
+OSM_TILES = "tile.openstreetmap.org"
+URL = re.compile(r"https?://[^\s\"'<>\\)]+")
 
 
 # The app answers loopback Host headers only (DNS rebinding, see ALLOWED_HOSTS), so tests talk
@@ -53,9 +74,12 @@ def setup(fixture_db, tmp_path):
     maps = tmp_path / "maps"
     maps.mkdir()
     (maps / "berlin_lau.png").write_bytes(PNG)  # berlin_fua.png is deliberately missing
-    for name in ["Berlin_lau.png", "berlin_xyz.png"]:  # present, but not valid map names
-        (maps / name).write_bytes(PNG)
+    (maps / "berlin_lau.geojson").write_bytes(GEOJSON)  # and so is berlin_fua.geojson
+    for name in ["Berlin_lau", "berlin_xyz"]:  # present, but not valid map names
+        (maps / f"{name}.png").write_bytes(PNG)
+        (maps / f"{name}.geojson").write_bytes(GEOJSON)
     (tmp_path / "secret.png").write_bytes(PNG)
+    (tmp_path / "secret_lau.geojson").write_bytes(GEOJSON)
     docs = _docs(tmp_path)
     return db_path, cfg, maps, docs
 
@@ -185,22 +209,111 @@ def test_map_route_serves_png(client):
     assert r.content == PNG
 
 
-def test_city_page_map_image_or_note(client):
+def _map_section(html: str) -> str:
+    return html[html.index("<h2>Tier map</h2>") : html.index("<h2>Provenance</h2>")]
+
+
+def _map_config(html: str) -> dict | None:
+    m = re.search(r'<script type="application/json" id="tiermap-config">(.*?)</script>', html, re.S)
+    return None if m is None else json.loads(m.group(1))
+
+
+def test_city_page_interactive_map_with_png_link_and_hint(client):
     html = client.get("/city/berlin").text
-    assert '<img src="/maps/berlin_lau.png"' in html
-    assert '<img src="/maps/berlin_fua.png"' not in html
-    assert "map not generated (<code>velometer report maps</code>)" in html
+    section = _map_section(html)
+    assert '<div id="tiermap"' in section
+    scripts = re.findall(r'<script[^>]+src="([^"]+)"', section)
+    assert scripts == ["/static/vendor/leaflet.js", "/static/map.js"]
+    assert '<link rel="stylesheet" href="/static/vendor/leaflet.css">' in html.split("</head>")[0]
+    for s in scripts + ["/static/vendor/leaflet.css"]:
+        assert client.get(s).status_code == 200
+    cfg = _map_config(section)
+    assert cfg["kinds"] == [{"kind": "lau", "label": "LAU", "url": "/maps/berlin_lau.geojson"}]
+    assert cfg["colours"] == dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
+    assert cfg["labels"] == charts.TIER_LABEL
+    for t, colour in zip("ABCDE", charts.TIER_COLOURS, strict=True):  # the tier checkboxes
+        box = re.search(
+            rf'<input type="checkbox" name="tier" value="{t}"[^>]*>'
+            rf'\s*<span class="swatch" style="background: ([^"]+)">',
+            section,
+        )
+        assert box and box.group(1) == colour, t
+    assert re.findall(r'<input type="radio" name="kind" value="(\w+)"', section) == ["lau"]
+    assert re.search(r'<a href="/maps/berlin_lau.png">[^<]*static image', section)
+    assert '<a href="/maps/berlin_fua.png"' not in section  # no PNG either
+    assert "<img" not in section
+    # FUA has a current run but no GeoJSON: the existing hint
+    assert "map not generated (<code>velometer report maps</code>)" in section
 
 
-def test_pages_reference_only_local_scripts(client):
-    for path in ["/", "/city/berlin", "/city/paris", "/methodology"]:
+def test_city_page_without_any_geojson_loads_no_map(setup):
+    db_path, cfg, maps, docs = setup
+    (maps / "berlin_lau.geojson").unlink()
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        section = _map_section(c.get("/city/berlin").text)
+    assert '<div id="tiermap"' not in section and "<script" not in section
+    assert section.count("map not generated (<code>velometer report maps</code>)") == 2
+    assert '<a href="/maps/berlin_lau.png">' in section  # the static image is still there
+
+
+def _loaded_hosts(html: str) -> set[str]:
+    """Hosts the page loads from: every absolute URL except anchors' hrefs and the map config's
+    `links` (way pages and the copyright note are links a reader follows, not loads)."""
+    html = re.sub(r'<a\s[^>]*href="[^"]*"', "<a", html)
+    cfg = _map_config(html)
+    if cfg is not None:
+        cfg.pop("links")
+        html = re.sub(r'(id="tiermap-config">).*?(</script>)', lambda m: m.group(1) +
+                      json.dumps(cfg) + m.group(2), html, flags=re.S)  # fmt: skip
+    return {urlparse(u).hostname for u in URL.findall(html)}
+
+
+def test_pages_load_only_static_assets_and_osm_tiles(client):
+    """The one external host a page loads from is the OSM tile server; scripts and CSS are ours."""
+    for path in ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]:
         html = client.get(path).text
-        assert re.findall(r'<script[^>]+src="([^"]+)"', html)
-        assert all(s.startswith("/static/") for s in re.findall(r'<script[^>]+src="([^"]+)"', html))
-        assert "http://" not in html.split("<footer")[0]
-        assert "https://" not in html.split("<footer")[0]
+        scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
+        assert scripts and all(s.startswith("/static/") for s in scripts), path
         css = re.findall(r'<link[^>]+href="([^"]+)"', html)
-        assert css == ["/static/app.css"]
+        assert css and all(c.startswith("/static/") for c in css), path
+        assert all(i.startswith("/") and not i.startswith("//")
+                   for i in re.findall(r'<img[^>]+src="([^"]+)"', html)), path  # fmt: skip
+        assert _loaded_hosts(html) <= {OSM_TILES}, path
+    city = client.get("/city/berlin").text
+    assert _loaded_hosts(city) == {OSM_TILES}
+    cfg = _map_config(city)
+    assert urlparse(cfg["tiles"]).hostname == OSM_TILES
+    assert {urlparse(u).hostname for u in cfg["links"].values()} == {"www.openstreetmap.org"}
+    # map.js takes every URL from that config: it names no host of its own
+    assert not URL.findall(client.get("/static/map.js").text)
+
+
+def test_geojson_route_serves_geo_json(client):
+    r = client.get("/maps/berlin_lau.geojson")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/geo+json"
+    assert r.content == GEOJSON
+
+
+def test_geojson_route_blocks_bad_names_and_missing(client):
+    for name in [
+        "berlin_fua",
+        "Berlin_lau",
+        "berlin_xyz",
+        "..%2Fsecret_lau",
+        "..%2F..%2Fsecret_lau",
+    ]:
+        assert client.get(f"/maps/{name}.geojson").status_code == 404, name
+
+
+def test_responses_are_gzipped_when_the_client_accepts_it(client):
+    r = client.get("/maps/berlin_lau.geojson", headers={"Accept-Encoding": "gzip"})
+    assert r.headers["content-encoding"] == "gzip"
+    assert r.content == GEOJSON  # httpx decodes it
+    assert int(r.headers["content-length"]) < len(GEOJSON)
+    plain = client.get("/maps/berlin_lau.geojson", headers={"Accept-Encoding": "identity"})
+    assert "content-encoding" not in plain.headers and plain.content == GEOJSON
+    assert gzip.decompress(gzip.compress(GEOJSON)) == GEOJSON
 
 
 def test_scripts_load_vega_then_lite_then_embed(client):
@@ -294,9 +407,34 @@ def test_templates_and_static_ship_in_the_package():
     for name in ["base.html", "index.html", "city.html", "methodology.html"]:
         assert (root / "templates" / name).is_file()
     assert (root / "static" / "app.css").is_file()
+    assert (root / "static" / "map.js").is_file()
     for pkg in ["vega", "vega-lite", "vega-embed"]:
         assert (root / "static" / "vendor" / f"{pkg}.min.js").is_file()
         assert (root / "static" / "vendor" / f"{pkg}.LICENSE").is_file()
+    for name in ["leaflet.js", "leaflet.css", "leaflet.LICENSE"]:
+        assert (root / "static" / "vendor" / name).is_file()
+
+
+def _versions() -> dict[str, list[str]]:
+    rows = [
+        line.split()
+        for line in (VENDOR / "VERSIONS").read_text().splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
+    return {r[0]: r for r in rows}
+
+
+def test_vendor_leaflet_is_the_recorded_1_9_release():
+    _pkg, constant, resolved = _versions()["leaflet"]
+    assert constant == "1.9" and resolved.startswith("1.9.")
+    js = (VENDOR / "leaflet.js").read_text()
+    assert f"Leaflet {resolved}," in js and f'version="{resolved}"' in js
+    assert (
+        f"Leaflet {resolved}" in (VENDOR / "leaflet.css").read_text()
+        or ".leaflet-pane" in (VENDOR / "leaflet.css").read_text()
+    )
+    assert "BSD 2-Clause" in (VENDOR / "leaflet.LICENSE").read_text()
+    assert "cdn.jsdelivr" not in js and "unpkg.com" not in js
 
 
 def test_vendor_versions_match_altair():
@@ -305,11 +443,7 @@ def test_vendor_versions_match_altair():
         "vega-lite": alt.VEGALITE_VERSION,
         "vega-embed": alt.VEGAEMBED_VERSION,
     }
-    rows = [
-        line.split()
-        for line in (VENDOR / "VERSIONS").read_text().splitlines()
-        if line.strip() and not line.startswith("#")
-    ]
+    rows = [r for pkg, r in _versions().items() if pkg != "leaflet"]  # leaflet is not altair's
     assert {r[0]: r[1] for r in rows} == expected
     for pkg, _constant, resolved in rows:
         assert resolved.split(".")[0] == expected[pkg].split(".")[0]

@@ -68,3 +68,18 @@ footer {
   border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 0.85rem;
 }
 footer p { margin: 0.25rem 0; }
+
+/* Tier map (Leaflet). The tier colours come from charts.TIER_COLOURS via the template. */
+.tiermap-controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0 0 0.5rem; }
+.tiermap-controls fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: center; }
+.tiermap-controls legend { float: left; margin-right: 0.5rem; color: var(--ink-2); font-weight: 600; font-size: 0.9rem; }
+.tiermap-controls label { white-space: nowrap; font-size: 0.9rem; }
+.swatch { display: inline-block; width: 1.4em; height: 0.35em; vertical-align: middle; border-radius: 2px; }
+.tiermap { height: min(70vh, 40rem); width: 100%; border: 1px solid var(--grid); background: var(--panel); }
+.tiermap-note { margin: 0.25rem 0 0.5rem; }
+.tiermap-files { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; }
+.tiermap-popup dl { display: grid; grid-template-columns: auto 1fr; gap: 0 0.75rem; margin: 0.25rem 0; }
+.tiermap-popup dt { color: var(--ink-2); }
+.tiermap-popup dd { margin: 0; }
+.tiermap-popup table { font-size: 0.8rem; margin-top: 0.25rem; }
+.tiermap-popup td { padding: 0.1rem 0.4rem; }

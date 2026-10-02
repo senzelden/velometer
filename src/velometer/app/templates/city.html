@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros.html" import chart %}
 {% block title %}velometer · {{ city.name }}{% endblock %}
+{% block head %}{% if tiermap %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
 {% block content %}
 <p class="crumbs"><a href="/">Cities</a> / {{ city.name }} · <a href="/data/{{ city.id }}.csv">CSV</a></p>
 <h1>{{ city.name }}</h1>
@@ -116,16 +117,29 @@
 
 <section>
 <h2>Tier map</h2>
-<div class="pair">
-{% for k in kinds %}
-<figure>
-{% if k.map %}<img src="/maps/{{ k.map }}" alt="Tier map, {{ city.name }} ({{ k.kind | upper }})" loading="lazy">
-{% elif k.point is none %}<p class="note">no run ({{ k.kind | upper }} current)</p>
-{% else %}<p class="note">map not generated (<code>velometer report maps</code>)</p>{% endif %}
-<figcaption>{{ k.kind | upper }}</figcaption>
-</figure>
-{% endfor %}
+{% if tiermap %}
+<div class="tiermap-controls">
+<fieldset class="kinds"><legend>Boundary</legend>
+{% for m in tiermap.kinds %}<label><input type="radio" name="kind" value="{{ m.kind }}"{% if loop.first %} checked{% endif %}> {{ m.label }}</label>
+{% endfor %}</fieldset>
+<fieldset class="tiers"><legend>Tiers</legend>
+{% for t, colour in tiermap.colours.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <span class="swatch" style="background: {{ colour }}"></span> {{ tiermap.labels[t] }}</label>
+{% endfor %}</fieldset>
 </div>
+<div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
+<p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
+<script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/map.js"></script>
+{% endif %}
+<ul class="tiermap-files">
+{% for k in kinds %}
+<li><strong>{{ k.kind | upper }}:</strong>
+{% if k.point is none %}<span class="note">no run ({{ k.kind | upper }} current)</span>
+{% elif not k.geojson %}<span class="note">map not generated (<code>velometer report maps</code>)</span>{% endif %}
+{% if k.map %}<a href="/maps/{{ k.map }}">{{ k.kind | upper }} static image</a> (PNG){% endif %}</li>
+{% endfor %}
+</ul>
 </section>
 
 <section>
