@@ -11,7 +11,7 @@ from velometer.db import create_schema, open_db, upsert_cities
 from velometer.models import Boundary, Metric, Population
 from velometer.pipeline.read import read_ways
 from velometer.sources.boundaries import BoundaryRecord
-from velometer.sources.geofabrik import RegionFile
+from velometer.sources.geofabrik import IndexSnapshot, RegionFile
 
 CFG_DIR = default_config_dir()
 CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
@@ -207,6 +207,9 @@ def _guarded(tmp_path, region_25833):
             "region_uncovered_km2": lambda region, poly, epsg, data_dir: R.region_uncovered_km2(
                 region, poly, epsg, index
             ),
+            # an uncovered boundary now looks for a covering set: serve the same fake index
+            "fetch_index": lambda data_dir: IndexSnapshot(tmp_path / "idx.json", "i" * 64),
+            "load_index": lambda path: index,
         }
     )
 
@@ -465,3 +468,143 @@ def test_both_bases_of_clean_cities_are_stored_by_a_run(conn, tmp_path):
         ("ecf_qecio", "qecio_weighted"),
         ("ours_headline", "per_side"),
     ]
+
+
+# --- FUA current runs: the boundary reaches past the city's extract (merged covering regions) ---
+
+
+class _Fua:
+    """Deps whose own region does not cover the boundary, plus a fake index and region set."""
+
+    def __init__(self, tmp_path, regions, selection=None):
+        from velometer.sources.geofabrik import BASE, RegionSelection
+
+        self.tmp_path = tmp_path
+        self.regions = regions  # id -> (md5, osm_timestamp)
+        self.merge_calls: list[list[Path]] = []
+        self.polygons = []
+        self.fetched: list[str] = []
+        self.index = {
+            rid: {
+                "geometry": box(0, 0, 1, 1),
+                "parent": None,
+                "history": "h",
+                "pbf": f"{BASE}/europe/{rid}-latest.osm.pbf",
+            }
+            for rid in regions
+        }
+        self.selection = RegionSelection(sorted(selection or regions), 0.25)
+
+    def deps(self, **override):
+        base = _deps(self.tmp_path, [])
+
+        def city_boundary(city, kind, data_dir, region_path=None):
+            rec, pop = base.city_boundary(city, kind, data_dir, region_path)
+            return BoundaryRecord(rec.boundary, rec.geojson_path, BERLIN_BOX), pop
+
+        def fetch_region(region, data_dir):
+            self.fetched.append(region)
+            rid = region.rsplit("/", 1)[-1]
+            md5, ts = self.regions.get(rid, ("c" * 32, datetime(2026, 9, 30, tzinfo=UTC)))
+            path = self.tmp_path / f"{rid}.osm"
+            path.write_bytes(MINI.read_bytes())
+            return RegionFile(region, path, "u", md5, ts)
+
+        def regions_for(polygon_wgs84, index):
+            self.polygons.append(polygon_wgs84)
+            if isinstance(self.selection, Exception):
+                raise self.selection
+            return self.selection
+
+        def merge(srcs, dst):
+            self.merge_calls.append(list(srcs))
+            dst.write_bytes(srcs[0].read_bytes())
+            return dst
+
+        fields = {
+            **base.__dict__,
+            "city_boundary": city_boundary,
+            "fetch_region": fetch_region,
+            "region_uncovered_km2": lambda *a: (50.0, 1.0),
+            "fetch_index": lambda data_dir: IndexSnapshot(self.tmp_path / "idx.json", "i" * 64),
+            "load_index": lambda path: self.index,
+            "regions_for": regions_for,
+            "merge": merge,
+        }
+        return R.RunDeps(**{**fields, **override})
+
+
+T1, T2 = datetime(2026, 9, 29, tzinfo=UTC), datetime(2026, 9, 30, tzinfo=UTC)
+R1, R2 = ("a" * 32, T2), ("b" * 32, T1)
+
+
+def _fua_row(conn, run_id):
+    return conn.execute(
+        "SELECT source, region_md5, osm_timestamp, status FROM runs WHERE id=?", (run_id,)
+    ).fetchone()
+
+
+def test_current_fua_run_merges_covering_regions(conn, tmp_path):
+    from velometer.db import fetch_history_set
+    from velometer.sources.geofabrik import set_md5
+
+    fua = _Fua(tmp_path, {"r1": R1, "r2": R2})
+    out = _run(conn, tmp_path, fua.deps(), boundary_kind="fua")
+    assert out.status == "done", out.error
+    source, region_md5, _, _ = _fua_row(conn, out.run_id)
+    assert source == "current"
+    assert region_md5 == set_md5([("europe/r1", "a" * 32), ("europe/r2", "b" * 32)])
+    hs = fetch_history_set(conn, region_md5)
+    regions = hs["regions"]
+    assert [r["region"] for r in regions] == ["europe/r1", "europe/r2"]
+    assert {r["md5_source"] for r in regions} == {"published"}
+    assert regions[0]["fetched_at"] == datetime.now(UTC).date().isoformat()
+    assert hs["index_sha256"] == "i" * 64 and hs["uncovered_km2"] == 0.25
+    assert len(fua.merge_calls) == 1 and len(fua.merge_calls[0]) == 2
+    merged = tmp_path / "raw" / "merged" / f"berlin_fua_{region_md5[:8]}.osm.pbf"
+    assert merged.exists()
+    lon, lat = fua.polygons[0].centroid.x, fua.polygons[0].centroid.y
+    assert 12 < lon < 15 and 52 < lat < 53  # selection is asked in WGS84, not the city's EPSG
+
+
+def test_current_fua_single_covering_region_needs_no_merge(conn, tmp_path):
+    from velometer.sources.geofabrik import set_md5
+
+    fua = _Fua(tmp_path, {"r1": R1})
+    out = _run(conn, tmp_path, fua.deps(), boundary_kind="fua")
+    assert out.status == "done", out.error
+    assert fua.merge_calls == []
+    assert _fua_row(conn, out.run_id)[1] == set_md5([("europe/r1", "a" * 32)])
+    assert not (tmp_path / "raw" / "merged").exists()
+
+
+def test_current_fua_timestamp_is_the_oldest_region(conn, tmp_path):
+    fua = _Fua(tmp_path, {"r1": R1, "r2": R2})  # r1 is newer (T2), r2 older (T1)
+    out = _run(conn, tmp_path, fua.deps(), boundary_kind="fua")
+    assert _fua_row(conn, out.run_id)[2] == "2026-09-29T00:00:00Z"
+
+
+def test_current_run_without_any_covering_set_still_fails_before_a_run_row(conn, tmp_path):
+    fua = _Fua(tmp_path, {"r1": R1})
+    fua.selection = ValueError("the index leaf regions with history do not cover the polygon")
+    out = _run(conn, tmp_path, fua.deps(), boundary_kind="fua")
+    assert out.status == "failed" and out.run_id is None
+    assert "uncovered" in out.error and "berlin/fua" in out.error
+    assert "do not cover the polygon" in out.error  # the original message is carried
+    assert _count(conn, "runs") == 0 and _count(conn, "history_sets") == 0
+
+
+def test_merged_file_is_reused(conn, tmp_path):
+    fua = _Fua(tmp_path, {"r1": R1, "r2": R2})
+    assert _run(conn, tmp_path, fua.deps(), boundary_kind="fua").status == "done"
+    assert _run(conn, tmp_path, fua.deps(), boundary_kind="fua", force=True).status == "done"
+    assert len(fua.merge_calls) == 1
+
+
+def test_covered_city_run_never_touches_the_index(conn, tmp_path):
+    def boom(*a, **k):
+        raise AssertionError("index used for a covered boundary")
+
+    deps = R.RunDeps(**{**_deps(tmp_path, []).__dict__, "fetch_index": boom, "regions_for": boom})
+    assert _run(conn, tmp_path, deps).status == "done"
+    assert _count(conn, "history_sets") == 0

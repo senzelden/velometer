@@ -18,6 +18,7 @@ from velometer.sources.geofabrik import (
     history_set_md5,
     load_index,
     regions_for,
+    set_md5,
 )
 from velometer.sources.geofabrik_auth import Cookie
 
@@ -460,3 +461,14 @@ def test_fetch_history_does_not_reuse_a_file_that_mismatches_the_published_md5(t
         "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
     )
     assert hf.path == dst and dst.read_bytes() == BODY
+
+
+def test_set_md5_pins_the_known_value_and_history_set_md5_delegates():
+    pairs = [("a", "1" * 32), ("b", "2" * 32)]
+    files = [HistoryFile(r, Path(r), m, "published", TODAY) for r, m in pairs]
+    assert (
+        history_set_md5(files)
+        == set_md5(pairs)
+        == set_md5(pairs[::-1])
+        == "613ee8749a17536bccb292a12e04f6bb"
+    )

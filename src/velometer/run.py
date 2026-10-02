@@ -4,10 +4,11 @@ A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version 
 config sha256 of the classifier, presets and activity YAML (see config_sha256), source `current` or
 `history`) (see RunKey); a done run with the same key is skipped. A history run is reused only
 within its history set: its region_md5 holds the md5 of the set (history_set_md5), where a current
-run's holds its extract's md5, and the database's done-key index includes region_md5. `force`
-supersedes the existing done run: it is marked `failed` with the error `superseded by run N`,
-inside the same transaction that completes the new run, so a failed forced re-run leaves the old
-run done.
+run's holds its extract's md5 (for a boundary past the city's extract, the md5 of the merged
+region set, which is also recorded in history_sets), and the database's done-key index
+includes region_md5. `force` supersedes the existing done run: it is marked `failed` with the
+error `superseded by run N`, inside the same transaction that completes the new run, so a failed
+forced re-run leaves the old run done.
 """
 
 import hashlib
@@ -43,6 +44,7 @@ from velometer.db import (
     upsert_history_set,
 )
 from velometer.models import Metric
+from velometer.osmium import merge as _merge
 from velometer.pipeline.activity import activity as _activity
 from velometer.pipeline.drift import drift_diagnostics
 from velometer.pipeline.extract import snapshot as _snapshot
@@ -52,17 +54,20 @@ from velometer.pipeline.history import snapshot_at as _snapshot_at
 from velometer.pipeline.measure import compute_metrics, measure
 from velometer.pipeline.read import read_ways as _read_ways
 from velometer.sources.boundaries import city_boundary as _city_boundary
-from velometer.sources.geofabrik import fetch_history as _fetch_history
-from velometer.sources.geofabrik import fetch_index as _fetch_index
-from velometer.sources.geofabrik import fetch_region as _fetch_region
 from velometer.sources.geofabrik import (
+    BASE,
+    RegionFile,
     history_set_md5,
     region_geometry,
     regions_for,
+    set_md5,
     to_3035,
     tolerance_m2,
     uncovered_m2,
 )
+from velometer.sources.geofabrik import fetch_history as _fetch_history
+from velometer.sources.geofabrik import fetch_index as _fetch_index
+from velometer.sources.geofabrik import fetch_region as _fetch_region
 from velometer.sources.geofabrik import load_index as _load_index
 
 
@@ -94,6 +99,74 @@ class RunDeps:
     snapshot: Callable = _snapshot
     read_ways: Callable = _read_ways
     region_uncovered_km2: Callable = _region_uncovered_km2
+    fetch_index: Callable = _fetch_index
+    load_index: Callable = _load_index
+    regions_for: Callable = regions_for
+    merge: Callable = _merge
+
+
+def _select_regions(polygon_city_epsg, epsg: int, data_dir: Path, deps, select=None):
+    """Index snapshot, the index, and the regions covering the polygon (shared by both run kinds).
+
+    `select` defaults to the module's regions_for, looked up at call time.
+    """
+    snap = deps.fetch_index(data_dir)
+    index = deps.load_index(snap.path)
+    to_wgs84 = Transformer.from_crs(epsg, 4326, always_xy=True).transform
+    selection = (select or regions_for)(transform(to_wgs84, polygon_city_epsg), index)
+    return snap, index, selection
+
+
+def _region_path(index: dict[str, dict], region_id: str) -> str:
+    """Download path (`europe/germany/berlin`) of an index region id, from its pbf URL."""
+    url = index[region_id].get("pbf")
+    prefix, suffix = f"{BASE}/", "-latest.osm.pbf"
+    if not url or not (url.startswith(prefix) and url.endswith(suffix)):
+        raise ValueError(f"region {region_id} has no current extract in the Geofabrik index")
+    return url.removeprefix(prefix).removesuffix(suffix)
+
+
+def _covering_region(
+    conn, city: CityConfig, kind: str, polygon, data_dir: Path, deps: RunDeps, uncovered: float
+) -> RegionFile:
+    """The current extract of the regions covering a boundary the city's own region does not.
+
+    One region is used as it is; several are merged into data/raw/merged (reused when present).
+    The returned RegionFile carries the set md5 and the oldest region timestamp, and the set is
+    recorded in history_sets (current sets and history sets never share an md5: the files differ).
+    """
+    try:
+        snap, index, selection = _select_regions(
+            polygon, city.epsg, data_dir, deps, deps.regions_for
+        )
+    except ValueError as e:  # R18: no covering set either
+        raise ValueError(
+            f"{city.id}/{kind}: region {city.geofabrik_region} leaves {uncovered:.1f} km² of the "
+            f"boundary uncovered and no set of regions covers it: {e}"
+        ) from e
+    files = [deps.fetch_region(_region_path(index, r), data_dir) for r in selection.regions]
+    fetched_at = datetime.now(UTC).date().isoformat()  # RegionFile carries no fetch date
+    md5 = set_md5([(f.region, f.md5) for f in files])
+    if len(files) == 1:
+        path = files[0].path
+    else:
+        path = data_dir / "raw" / "merged" / f"{city.id}_{kind}_{md5[:8]}.osm.pbf"
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            deps.merge([f.path for f in files], path)
+    upsert_history_set(
+        conn,
+        md5,
+        [
+            {"region": f.region, "md5": f.md5, "md5_source": "published", "fetched_at": fetched_at}
+            for f in files
+        ],
+        index_path=str(snap.path),
+        index_sha256=snap.sha256,
+        uncovered_km2=selection.uncovered_km2,
+    )
+    oldest = min(f.osm_timestamp for f in files)
+    return RegionFile(city.geofabrik_region, path, "", md5, oldest)
 
 
 @dataclass(frozen=True)
@@ -181,9 +254,8 @@ def run_city(
             city.geofabrik_region, rec.polygon, city.epsg, data_dir
         )
         if uncovered > tolerance:  # e.g. a FUA reaching past the city's own extract (R18)
-            raise ValueError(
-                f"{city.id}/{boundary_kind}: region {city.geofabrik_region} leaves "
-                f"{uncovered:.1f} km² of the boundary uncovered; use run --years for this boundary"
+            region = _covering_region(
+                conn, city, boundary_kind, rec.polygon, data_dir, deps, uncovered
             )
         upsert_boundary(conn, rec.boundary)
         if pop is not None:
@@ -252,10 +324,7 @@ def resolve_history_set(
     polygon_city_epsg, epsg: int, data_dir: Path, deps: HistoryDeps
 ) -> HistorySet:
     """Index snapshot, the regions covering the polygon, and their history files."""
-    snap = deps.fetch_index(data_dir)
-    index = deps.load_index(snap.path)
-    to_wgs84 = Transformer.from_crs(epsg, 4326, always_xy=True).transform
-    selection = regions_for(transform(to_wgs84, polygon_city_epsg), index)
+    snap, index, selection = _select_regions(polygon_city_epsg, epsg, data_dir, deps)
     files = [deps.fetch_history(r, data_dir, index) for r in selection.regions]
     return HistorySet(
         files, history_set_md5(files), selection.uncovered_km2, snap.path, snap.sha256

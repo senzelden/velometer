@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import osmium as pyosmium
 import pytest
 
-from velometer.osmium import OsmiumError, extract, fileinfo_timestamp, relation_polygon
+from velometer.osmium import OsmiumError, extract, fileinfo_timestamp, merge, relation_polygon
 from velometer.pipeline.extract import snapshot
 from velometer.pipeline.read import read_ways
 
@@ -135,3 +135,44 @@ def test_relation_polygon_failure_leaves_no_stray_files(tmp_path):
     with pytest.raises(OsmiumError, match="did not assemble"):
         relation_polygon(path, 30, out_dir / "rel.geojson")
     assert list(out_dir.iterdir()) == []
+
+
+def _pbf_ways(path, node_lons, ways):
+    header = pyosmium.io.Header()
+    header.set("osmosis_replication_timestamp", TS)
+    with pyosmium.SimpleWriter(str(path), header=header) as w:
+        for nid, lon in node_lons:
+            w.add_node(pyosmium.osm.mutable.Node(id=nid, location=(lon, 52.5), version=1))
+        for wid, nodes in ways:
+            w.add_way(
+                pyosmium.osm.mutable.Way(
+                    id=wid, nodes=nodes, tags={"highway": "cycleway"}, version=1
+                )
+            )
+    return path
+
+
+@needs_osmium
+def test_osmium_merge_writes_atomically(tmp_path):
+    a = _pbf_ways(tmp_path / "a.osm.pbf", [(1, 13.40), (2, 13.41)], [(1, [1, 2])])
+    b = _pbf_ways(tmp_path / "b.osm.pbf", [(3, 13.50), (4, 13.51)], [(2, [3, 4])])
+    dst = tmp_path / "merged" / "m.osm.pbf"
+    dst.parent.mkdir()
+    assert merge([a, b], dst) == dst
+    assert sorted(w.id for w in read_ways(dst).ways) == [1, 2]
+    assert not list(dst.parent.glob("*.part*"))
+    # a failing merge leaves neither a .part nor a half-written destination
+    bad = tmp_path / "merged" / "x.osm.pbf"
+    with pytest.raises(OsmiumError):
+        merge([tmp_path / "missing.osm.pbf"], bad)
+    assert not list(bad.parent.glob("x*"))
+
+
+def test_merge_is_not_a_history_merge(tmp_path, monkeypatch):
+    from velometer import osmium as O
+
+    seen = []
+    monkeypatch.setattr(O, "_run", lambda *args: seen.append(args) or "")
+    monkeypatch.setattr(O, "_atomic", lambda dst, build: build(dst) or dst)
+    O.merge([tmp_path / "a.osm.pbf", tmp_path / "b.osm.pbf"], tmp_path / "m.osm.pbf")
+    assert seen[0][0] == "merge" and "--with-history" not in seen[0]

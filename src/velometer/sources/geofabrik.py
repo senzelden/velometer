@@ -243,8 +243,13 @@ class HistoryFile:
     fetched_at: date
 
 
+def set_md5(pairs: list[tuple[str, str]]) -> str:
+    """md5 over the sorted `region:md5` lines of a region set (order independent)."""
+    return hashlib.md5("\n".join(sorted(f"{r}:{m}" for r, m in pairs)).encode()).hexdigest()
+
+
 def history_set_md5(files: list[HistoryFile]) -> str:
-    return hashlib.md5("\n".join(sorted(f"{f.region}:{f.md5}" for f in files)).encode()).hexdigest()
+    return set_md5([(f.region, f.md5) for f in files])
 
 
 def _auth_refused(e: DownloadError) -> bool:

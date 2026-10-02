@@ -61,6 +61,14 @@ def _atomic(dst: Path, build: Callable[[Path], None]) -> Path:
     return dst
 
 
+def merge(srcs: list[Path], dst: Path) -> Path:
+    """Merge current-state extracts (no history) into one file, atomically."""
+    return _atomic(
+        dst,
+        lambda part: _run("merge", "--overwrite", "-o", str(part), *map(str, srcs)),
+    )
+
+
 def merge_history(srcs: list[Path], dst: Path) -> Path:
     return _atomic(
         dst,
