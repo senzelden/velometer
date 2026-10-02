@@ -222,7 +222,7 @@
       {
         "field": "value",
         "format": ".2f",
-        "title": "protected share, %",
+        "title": "value",
         "type": "quantitative"
       }
     ],

@@ -68,6 +68,7 @@
           {
             "field": "headline",
             "format": ".2f",
+            "title": "A+B km per 100 km main roads",
             "type": "quantitative"
           },
           {
@@ -105,7 +106,7 @@
           "scale": {
             "zero": true
           },
-          "title": "Protected share of main roads, %",
+          "title": "A+B km per 100 km of main roads (excl. motorways)",
           "type": "quantitative"
         }
       },
@@ -181,6 +182,7 @@
           {
             "field": "headline",
             "format": ".2f",
+            "title": "A+B km per 100 km main roads",
             "type": "quantitative"
           },
           {
@@ -218,7 +220,7 @@
           "scale": {
             "zero": true
           },
-          "title": "Protected share of main roads, %",
+          "title": "A+B km per 100 km of main roads (excl. motorways)",
           "type": "quantitative"
         }
       },
@@ -254,6 +256,7 @@
           {
             "field": "headline",
             "format": ".2f",
+            "title": "A+B km per 100 km main roads",
             "type": "quantitative"
           },
           {
@@ -291,7 +294,7 @@
           "scale": {
             "zero": true
           },
-          "title": "Protected share of main roads, %",
+          "title": "A+B km per 100 km of main roads (excl. motorways)",
           "type": "quantitative"
         }
       },
