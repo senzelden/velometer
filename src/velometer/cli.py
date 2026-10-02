@@ -1083,3 +1083,47 @@ def report_methodology(
         return
     for p in mt.write(docs, facts):
         typer.echo(str(p))
+
+
+@report_app.command("maps")
+def report_maps(
+    city: str | None = typer.Option(None, "--city", help="City id; default all cities."),
+    kind: str | None = typer.Option(None, "--kind", help="Boundary kind (lau, fua); default both."),
+    data_dir: Path = DATA_OPT,
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """One tier map per city and boundary kind with a current run, in <data>/maps/."""
+    from velometer.report import maps as mp
+    from velometer.report.data import ReportData, open_readonly
+
+    kinds = [kind] if kind else ["lau", "fua"]
+    try:
+        conn = open_readonly(db)
+    except FileNotFoundError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    maps_dir = data_dir / "maps"
+    try:
+        data = ReportData(conn, config_dir)
+        ids = [c.id for c in data.cities()]
+        if city is not None and city not in ids:
+            typer.echo(f"error: unknown city {city!r}", err=True)
+            raise typer.Exit(1)
+        for cid in [city] if city else ids:
+            for k in kinds:
+                point = data.current(cid, k)
+                if point is not None and mp.up_to_date(maps_dir, cid, k, point.run_id):
+                    typer.echo(f"unchanged: {maps_dir / f'{cid}_{k}.png'}")
+                    continue
+                path = mp.build_map(data, cid, k, data_dir, maps_dir)
+                if path is None:
+                    why = "no run" if point is None else "no snapshot"
+                    typer.echo(f"skipped: {cid} {k} ({why})")
+                else:
+                    typer.echo(f"written: {path}")
+    except (sqlite3.Error, ConfigError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()

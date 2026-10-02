@@ -6,6 +6,13 @@ from pathlib import Path
 from velometer.osmium import extract
 
 
+def snapshot_name(
+    city_id: str, kind: str, osm_timestamp: datetime, region_md5: str, boundary_sha256: str
+) -> str:
+    """The cached snapshot's file name: the one definition, shared with report.maps."""
+    return f"{city_id}_{kind}_{osm_timestamp:%Y%m%d}_{region_md5[:8]}_{boundary_sha256[:8]}.osm.pbf"
+
+
 def snapshot(
     region_path: Path,
     region_md5: str,
@@ -18,7 +25,7 @@ def snapshot(
 ) -> Path:
     out_dir = data_dir / "snapshots"
     out_dir.mkdir(parents=True, exist_ok=True)
-    name = f"{city_id}_{kind}_{osm_timestamp:%Y%m%d}_{region_md5[:8]}_{boundary_sha256[:8]}.osm.pbf"
+    name = snapshot_name(city_id, kind, osm_timestamp, region_md5, boundary_sha256)
     dst = out_dir / name
     if dst.exists():
         return dst
