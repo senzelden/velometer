@@ -682,3 +682,23 @@ def test_explanation_none_when_absent_empty_or_unreadable(tmp_path):
     assert T.explanation(p, "berlin/lau") is None  # the generated block's #### heading
     assert T.explanation(p, "berlin/lau/2026") is None  # heading without text
     assert T.explanation(tmp_path / "missing.md", "berlin/lau/2019") is None
+
+
+def test_explanation_reads_utf8_under_a_non_utf8_locale(tmp_path):
+    """m3_timeseries.md carries non-ASCII ("Plan Vélo", "June–August"); a C locale with UTF-8
+    mode off must still read it (it used to raise UnicodeDecodeError, a 500 on the city page)."""
+    import os
+    import subprocess
+    import sys
+
+    p = tmp_path / "m3_timeseries.md"
+    p.write_text("### paris/lau/2021\n\nPlan Vélo, June–August.\n", encoding="utf-8")
+    code = (
+        "import locale, sys; from velometer import timeseries as T; "
+        "assert locale.getencoding().lower() != 'utf-8', locale.getencoding(); "
+        f"sys.stdout.buffer.write(T.explanation({str(p)!r}, 'paris/lau/2021').encode('utf-8'))"
+    )
+    env = {**os.environ, "LC_ALL": "C", "LANG": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
+    r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, check=False)
+    assert r.returncode == 0, r.stderr.decode()
+    assert r.stdout.decode("utf-8") == "Plan Vélo, June–August."

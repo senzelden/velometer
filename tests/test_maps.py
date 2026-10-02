@@ -197,3 +197,20 @@ def test_outline_draws_interior_rings(tmp_path, monkeypatch):
     (fig,) = figs
     drawn = [set(zip(*line.get_data(), strict=True)) for line in fig.axes[0].get_lines()]
     assert any({(float(x), float(y)) for x, y in hole} <= d for d in drawn)
+
+
+def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
+    """Every chart, the tier map included, says OSM mapped km, not built km (ADR 0006)."""
+    conn, data, data_dir, maps_dir = placed
+    snap = maps.snapshot_path(_row(conn, data), data_dir)
+    snap.parent.mkdir(parents=True)
+    snap.write_bytes(b"")  # never read: tier_sides is stubbed
+    monkeypatch.setattr(maps, "tier_sides", lambda *a, **k: {})
+    drawn = []
+    monkeypatch.setattr(
+        maps, "_draw", lambda sides, outline, title, footer, out: drawn.append(footer)
+    )
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    assert len(drawn) == 1
+    assert "© OpenStreetMap contributors, ODbL 1.0" in drawn[0]
+    assert "OSM mapped km, not built km" in drawn[0]

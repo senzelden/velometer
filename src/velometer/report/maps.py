@@ -31,6 +31,7 @@ TIERS = "ABCDE"
 DPI = 150
 OUTLINE = "#9a9994"
 ODBL = "Map data © OpenStreetMap contributors, ODbL 1.0"
+MAPPED_KM = "OSM mapped km, not built km"  # ADR 0006
 
 
 def snapshot_path(run_row: dict, data_dir: Path) -> Path:
@@ -126,7 +127,9 @@ def build_map(
     outline = None
     if boundary is not None and Path(boundary.path).is_file():
         outline = load_boundary_polygon(Path(boundary.path), epsg)
-    footer = f"{ODBL}\nOSM {point.osm_timestamp}, classifier {point.classifier_version}"
+    footer = (
+        f"{ODBL} · {MAPPED_KM}\nOSM {point.osm_timestamp}, classifier {point.classifier_version}"
+    )
     maps_dir.mkdir(parents=True, exist_ok=True)
     _draw(
         sides, outline, f"{point.city_name} ({kind.upper()}): protected cycling tiers", footer, png

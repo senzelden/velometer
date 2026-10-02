@@ -365,7 +365,7 @@ def explanation(path: Path, key: str) -> str | None:
     no text under it.
     """
     try:
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
     except OSError:
         return None
     if key not in headings(text):
