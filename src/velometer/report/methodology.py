@@ -169,10 +169,11 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
 
 
 def _number(v: float | int | None, lang: Lang) -> str:
-    """Thousands and decimal separators of the language; whole numbers without decimals."""
+    """Thousands and decimal separators of the language. At most two decimals (config
+    thresholds such as 0.5 or 0.25), trailing zeros and a bare decimal point dropped."""
     if v is None:
         return ""
-    text = f"{v:,.0f}" if float(v).is_integer() else f"{v:,.2f}".rstrip("0")
+    text = f"{v:,.2f}".rstrip("0").rstrip(".")
     if lang == "de":
         text = text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
     return text
@@ -204,7 +205,7 @@ def write(docs_dir: Path, facts: MethodologyFacts) -> list[Path]:
     paths = []
     for lang in LANGS:
         path = docs_dir / FILES[lang]
-        path.write_text(render(facts, lang))
+        path.write_text(render(facts, lang), encoding="utf-8", newline="\n")
         paths.append(path)
     return paths
 
@@ -231,7 +232,7 @@ def check(docs_dir: Path, facts: MethodologyFacts) -> list[str]:
                 f"{FILES[lang]}: missing at {path} (run `velometer report methodology`)"
             )
             continue
-        expected, actual = render(facts, lang), path.read_text()
+        expected, actual = render(facts, lang), path.read_text(encoding="utf-8")
         if actual != expected:
             line = _first_difference(actual, expected)
             problems.append(

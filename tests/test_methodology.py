@@ -12,6 +12,7 @@ from velometer.report.data import ReportData
 from velometer.report.methodology import (
     FILES,
     Limitation,
+    _number,
     check,
     load_limitations,
     methodology_facts,
@@ -60,7 +61,9 @@ def test_both_languages_list_classifier_version_and_every_city_timestamp(facts):
             assert c.name in text
             for k in c.kinds:
                 row = next(
-                    line for line in text.splitlines() if line.startswith(f"| {c.name} | {k.kind}")
+                    line
+                    for line in text.splitlines()
+                    if line.startswith(f"| {c.name} | `{k.kind}` |")
                 )
                 for ts in [k.current_osm_timestamp, *k.history_osm_timestamps]:
                     if ts:
@@ -154,7 +157,7 @@ def test_rules_table_lists_every_rule_of_the_report_classifier(facts, fixture_db
     for lang in LANGS:
         text = render(facts, lang)
         for r in rules:
-            assert re.search(rf"^\| `{r.id}` \| {r.tier} \|", text, re.M), (lang, r.id)
+            assert re.search(rf"^\| `{r.id}` \| `{r.tier}` \|", text, re.M), (lang, r.id)
 
 
 def test_rules_follow_report_yaml(fixture_db):
@@ -237,3 +240,35 @@ def test_write_writes_each_language_render(facts, tmp_path):
     write(tmp_path / "new", facts)  # creates the directory
     assert Path(tmp_path / "new" / "methodology.md").read_text() == render(facts, "en")
     assert Path(tmp_path / "new" / "methodology.de.md").read_text() == render(facts, "de")
+
+
+@pytest.mark.parametrize(
+    ("value", "lang", "expected"),
+    [
+        (1.001, "en", "1"),  # rounds to 1.00: no bare "1." left behind
+        (1.001, "de", "1"),
+        (10.0, "en", "10"),
+        (0.5, "de", "0,5"),
+        (0.25, "en", "0.25"),
+        (100000, "en", "100,000"),
+        (1234.5, "de", "1.234,5"),
+        (None, "en", ""),
+    ],
+)
+def test_number_has_no_trailing_decimal_point(value, lang, expected):
+    assert _number(value, lang) == expected
+
+
+def test_files_are_utf8_with_unix_newlines(facts, tmp_path):
+    write(tmp_path, facts)
+    raw = (tmp_path / "methodology.de.md").read_bytes()
+    assert b"\r\n" not in raw
+    text = raw.decode("utf-8")  # umlauts and sharp s survive as UTF-8
+    assert "Straßen" in text and "Prüfhinweise" in text
+
+
+def test_german_tier_b_names_both_footway_kinds(facts):
+    de = render(facts, "de")
+    assert "| B | Geh- und Radweg (gemeinsam oder getrennt) |" in de
+    assert "(getrennter Geh- und Radweg) hier als Stufe B" in de
+    assert "gemeinsamer Geh- und Radweg" not in de  # Zeichen 240 is the unsegregated kind
