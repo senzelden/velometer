@@ -53,6 +53,17 @@ Decisions made while building M3, each with why and what it costs if wrong. The 
 - Classifier v2 (`config/classifier/v2.yaml`) recognises the M3 gaps without counting them:
   `use_sidepath`, `shoulder`, `crossing`, untyped `yes` (all excluded under their own subtype),
   and splits values on `,` as well as `;`. v1 is unchanged; published M3 numbers stay on v1.
+- v2 was run on 2026-10-02 next to v1 on the same OSM data: 68 runs (5 current LAU, 45 LAU and
+  18 FUA history runs), all done. Effect against v1:
+  - The headline moves only through the comma rule. Berlin 2023-01-01 had about 13 road
+    sides tagged `cycleway:right=share_busway,track` (e.g. way 11406344), so tier A gains
+    5.7 km on LAU and 5.9 km on FUA (+0.4 pp headline). Every other city-year moves by
+    0.2 km or less.
+  - Unrecognised km falls sharply (e.g. Paris FUA 2026 36.2 -> 3.1 km; Berlin LAU 2026
+    9.7 -> 0.1 km). Most of it is now `crossing` and `shoulder` (Berlin current: 9.1 km
+    crossing; Copenhagen current: 3.6 km shoulder).
+  - Six tag_drift flags lapse under v2 (Berlin LAU 2022 and 2023, Berlin FUA 2026, Paris FUA
+    2021, 2024 and 2025). No flag is added.
 
 ## Parked
 - The Geofabrik cookie jar also matches subdomains.
