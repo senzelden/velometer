@@ -76,7 +76,7 @@ Jede Stadt wird auf zwei Gebietsgrenzen berechnet [ADR 0004]:
 - **LAU** ist die Stadtgrenze: die lokale Verwaltungseinheit von Eurostat GISCO, Stand 2024. Sie ist der Standard. Fehlt ein sauberes LAU-Polygon, tritt die administrative OSM-Relation an seine Stelle.
 - **FUA** ist der funktionale Stadtraum (Functional Urban Area), also die Stadt mit ihrem Pendlereinzugsgebiet. Er dient als Robustheitsprüfung.
 
-Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit. Für alle Stichjahre gilt derselbe Einwohnerwert von 2024 [ADR 0004; M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
+Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]. Für alle Stichjahre gilt derselbe Einwohnerwert von 2024 [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
 
 Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten Läufe, den Verlaufsdatensatz und die Einwohnerzahl.
 
@@ -85,7 +85,7 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 |---|---|---|---|---|---|
 {% for c in f.cities %}
 {% for k in c.kinds %}
-| {{ c.name }} | `{{ k.kind }}` | {{ k.current_osm_timestamp or "kein aktueller Lauf" }} | {% if k.history_set %}`{{ k.history_set[:12] }}`{% else %}keiner{% endif %} | {{ k.history_osm_timestamps | join(", ") if k.history_osm_timestamps else "keine Verlaufs-Läufe" }} | {% if k.population_value %}{{ k.population_value | num }} ({{ k.population_year }}){% else %}keine, kein Wert je 100.000 Einwohner{% endif %} |
+| {{ c.name }} | `{{ k.kind }}` | {{ k.current_osm_timestamp or "kein aktueller Lauf" }} | {% if k.history_set %}`{{ k.history_set[:12] }}`{% else %}keiner{% endif %} | {{ k.history_osm_timestamps | join(", ") if k.history_osm_timestamps else "keine historischen Läufe" }} | {% if k.population_value %}{{ k.population_value | num }} ({{ k.population_year }}){% else %}keine, kein Wert je 100.000 Einwohner{% endif %} |
 {% endfor %}
 {% endfor %}
 <!-- /generated:cities -->

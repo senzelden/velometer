@@ -14,21 +14,22 @@ limitations:
   - id: population_2024
     en: >-
       The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it
-      is the figure of the identical NUTS3 unit. The same value is used for every snapshot year,
-      so per-100k values do not follow population change [ADR 0004; M3 spec, decision 2].
+      is the figure of the identical NUTS3 unit [ADR 0004]. The same value is used for every
+      snapshot year, so per-100k values do not follow population change [M3 spec, decision 2].
     de: >-
       Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt
-      der Wert der deckungsgleichen NUTS-3-Einheit. Derselbe Wert gilt für jedes Stichjahr.
-      Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab [ADR 0004;
-      M3-Spezifikation, Entscheidung 2].
+      der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004]. Derselbe Wert gilt für jedes
+      Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab
+      [M3-Spezifikation, Entscheidung 2].
   - id: fua_no_per_100k
     en: >-
-      FUA runs carry no population, so the FUA has no per-100k figure. The FUA serves as a
-      robustness check of the ratios, not as a second ranking [ADR 0004; M4 spec §4.4].
+      FUA runs carry no population, so the FUA has no per-100k figure [M4 spec §4.4;
+      `city_boundary` in `sources/boundaries.py` returns a population only for the LAU]. The FUA
+      serves as a robustness check [ADR 0004].
     de: >-
       FUA-Läufe führen keine Einwohnerzahl. Für die FUA gibt es daher keinen Wert je 100.000
-      Einwohner. Die FUA dient als Robustheitsprüfung der Quoten, nicht als zweite Rangliste
-      [ADR 0004; M4-Spezifikation §4.4].
+      Einwohner [M4-Spezifikation §4.4; `city_boundary` in `sources/boundaries.py` liefert eine
+      Einwohnerzahl nur für die LAU]. Die FUA dient als Robustheitsprüfung [ADR 0004].
   - id: no_width_surface
     en: >-
       The tiers do not consider width or surface. A narrow or rough cycle track counts like any
@@ -71,7 +72,7 @@ limitations:
     de: >-
       Jeder Lauf speichert den Git-Commit, mit dem er erstellt wurde. Gab es dabei
       nicht committete Änderungen im Arbeitsverzeichnis, trägt der Commit die Endung `-dirty`
-      und legt den Code nicht genau fest. Die Verlaufs-Läufe aus M3 tragen diese Endung, weil
+      und legt den Code nicht genau fest. Die historischen Läufe aus M3 tragen diese Endung, weil
       Dokumentation und Skripte während der Läufe nicht committet waren [M3 R19].
   - id: history_vs_current_date
     en: >-
