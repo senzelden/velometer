@@ -182,7 +182,7 @@ class Selector:
         return self.config_sha256[:12]
 
 
-def _run_selector(
+def run_selector(
     config_dir: Path, classifier: str, basis: CleanCitiesBasis | None = None
 ) -> Selector:
     """The classifier, parameters and config sha of the config on disk: which runs to report."""
@@ -285,7 +285,7 @@ def classify(
             plain=plain_cycleway_on_oneway,
         )
         _print_city_metrics(
-            outcomes, db, boundary, _run_selector(config_dir, classifier, clean_cities_basis)
+            outcomes, db, boundary, run_selector(config_dir, classifier, clean_cities_basis)
         )
         if outcomes[0].status == "failed":
             raise typer.Exit(1)
@@ -671,7 +671,7 @@ def results(
     from velometer.db import fetch_cities, fetch_run_results
     from velometer.pipeline.measure import select_metric
 
-    sel = _run_selector(config_dir, classifier, clean_cities_basis)
+    sel = run_selector(config_dir, classifier, clean_cities_basis)
 
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
@@ -764,7 +764,7 @@ def reconcile(
         )
         raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
-    sel = _run_selector(config_dir, classifier, clean_cities_basis)
+    sel = run_selector(config_dir, classifier, clean_cities_basis)
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
@@ -863,7 +863,7 @@ def timeseries(
         raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
     kinds = (boundary,) if boundary else ("lau", "fua")
-    sel = _run_selector(config_dir, classifier)
+    sel = run_selector(config_dir, classifier)
     try:
         cfg = load_activity(config_dir / "activity.yaml")
         history_cfg = load_history(config_dir / "history.yaml")

@@ -326,9 +326,9 @@ def test_committed_report_markers_and_headings_are_well_formed():
 
 
 def _selector():
-    from velometer.cli import _run_selector
+    from velometer.cli import run_selector
 
-    return _run_selector(CFG_DIR, "v1")
+    return run_selector(CFG_DIR, "v1")
 
 
 def test_series_adds_current_point_with_next_year_activity(tmp_path):

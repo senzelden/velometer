@@ -14,15 +14,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from velometer.cli import Selector  # noqa: E402
-from velometer.config import (  # noqa: E402
-    default_config_dir,
-    load_activity,
-    load_classifier,
-    load_presets,
-)
-from velometer.db import canonical_parameters, fetch_run, open_db  # noqa: E402
-from velometer.run import config_sha256  # noqa: E402
+from velometer.cli import Selector, run_selector  # noqa: E402
+from velometer.config import default_config_dir, load_activity, load_history  # noqa: E402
+from velometer.db import fetch_run, open_db  # noqa: E402
 from velometer.timeseries import CURRENT, TIERS, build_city, city_flags  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,29 +38,25 @@ INK, INK_2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 ATTRIBUTION = "© OpenStreetMap contributors, ODbL 1.0"
 
 
-def selector() -> Selector:
-    config_dir = default_config_dir()
-    classifier = config_dir / "classifier" / f"{CLASSIFIER}.yaml"
-    presets_path = config_dir / "presets.yaml"
-    cfg = load_classifier(classifier)
-    return Selector(
-        cfg.version,
-        canonical_parameters(cfg.parameters.model_dump()),
-        config_sha256(classifier, presets_path),
-        load_presets(presets_path, cfg),
-    )
+def series_years() -> range:
+    return load_history(default_config_dir() / "history.yaml").year_range()
+
+
+def x_of(label: str, years: range) -> int:
+    """x position of a point: its year's slot on the shared axis, `current` one past the last."""
+    return len(years) if label == CURRENT else int(label) - years.start
 
 
 def load(db: Path) -> tuple[dict, dict, dict, Selector]:
     """(city, kind) -> CitySeries, (city, kind) -> {label: Flag}, run_id -> run row."""
-    sel = selector()
+    sel = run_selector(default_config_dir(), CLASSIFIER)  # the runs `velometer timeseries` shows
     activity = load_activity(default_config_dir() / "activity.yaml")
     built, flagged, runs = {}, {}, {}
     with open_db(db) as conn:
         cities = [r[0] for r in conn.execute("SELECT id FROM cities ORDER BY id")]
         for c in cities:
             for kind in ("lau", "fua"):
-                cs = build_city(conn, c, kind, sel)
+                cs = build_city(conn, c, kind, sel, series_years())
                 if cs is None or not cs.points:
                     continue
                 built[(c, kind)] = cs
@@ -78,6 +68,15 @@ def load(db: Path) -> tuple[dict, dict, dict, Selector]:
 
 def tick_label(p) -> str:
     return f"now\n{p.osm_timestamp[:7]}" if p.label == CURRENT else p.label
+
+
+def _slots(series_points: list[list], years: range) -> list[tuple[int, str]]:
+    """(x, tick label) for every year, plus `now` when any series has a current point."""
+    slots = [(x_of(str(y), years), str(y)) for y in years]
+    current = next((p for pts in series_points for p in pts if p.label == CURRENT), None)
+    if current is not None:
+        slots.append((x_of(CURRENT, years), tick_label(current)))
+    return slots
 
 
 def chart_title(built: dict, runs: dict, sel: Selector) -> str:
@@ -105,20 +104,22 @@ def _style(ax) -> None:
     ax.set_axisbelow(True)
 
 
-def _xticks(ax, points) -> None:
-    ax.set_xticks(range(len(points)), [tick_label(p) for p in points], color=INK_2)
+def _xticks(ax, slots: list[tuple[int, str]]) -> None:
+    ax.set_xticks([x for x, _ in slots], [t for _, t in slots], color=INK_2)
 
 
-def _headline_lines(ax, series: list[tuple[str, list, dict, str, str]]) -> None:
-    """(label, points, flags-by-label, color, linestyle); flagged points get a ring. End labels
-    are nudged apart vertically so close lines stay readable."""
+def _headline_lines(ax, series: list[tuple[str, list, dict, str, str]], years: range) -> None:
+    """(label, points, flags-by-label, color, linestyle); points sit at their year's x, so a
+    gap stays a gap; flagged points get a ring. End labels are nudged apart vertically so close
+    lines stay readable."""
     ends = []
     for label, points, flags, color, ls in series:
-        xs = [i for i, p in enumerate(points) if p.headline is not None]
-        ys = [p.headline for p in points if p.headline is not None]
+        shown = [p for p in points if p.headline is not None]
+        xs = [x_of(p.label, years) for p in shown]
+        ys = [p.headline for p in shown]
         ax.plot(xs, ys, color=color, linewidth=2, linestyle=ls, marker="o", markersize=4)
-        fx = [i for i, p in enumerate(points) if p.label in flags and p.headline is not None]
-        fy = [points[i].headline for i in fx]
+        fx = [x_of(p.label, years) for p in shown if p.label in flags]
+        fy = [p.headline for p in shown if p.label in flags]
         ax.scatter(fx, fy, s=110, facecolors="none", edgecolors=color, linewidths=1.6, zorder=3)
         if xs:
             ends.append([ys[-1], xs[-1], label, color])
@@ -144,7 +145,7 @@ def _spread_labels(ax, n_points: int) -> None:
     ax.set_xlim(-0.4, n_points - 1 + 1.6)  # room for end-of-line labels
 
 
-def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> None:
+def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path, years: range) -> None:
     lau = {c: cs for (c, k), cs in built.items() if k == "lau"}
     cities = sorted(lau)
     color = {c: SERIES[i % len(SERIES)] for i, c in enumerate(cities)}
@@ -158,13 +159,14 @@ def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> 
     # (a) headline % per city on LAU, flagged points ringed
     ax = fig.add_subplot(grid[0, :])
     _style(ax)
-    longest = max(lau.values(), key=lambda cs: len(cs.points)).points
+    slots = _slots([cs.points for cs in lau.values()], years)
     _headline_lines(
         ax,
         [(c.capitalize(), lau[c].points, flagged[(c, "lau")], color[c], "-") for c in cities],
+        years,
     )
-    _xticks(ax, longest)
-    _spread_labels(ax, len(longest))
+    _xticks(ax, slots)
+    _spread_labels(ax, len(slots))
     ax.set_ylim(0, None)
     ax.set_ylabel("% of main-road km", color=INK_2)
     ax.set_title(
@@ -181,11 +183,12 @@ def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> 
         ax = fig.add_subplot(grid[1, j])
         _style(ax)
         points = lau[c].points
+        xs = [x_of(p.label, years) for p in points]
         bottom = [0.0] * len(points)
         for i, t in enumerate(TIERS):
             km = [p.tiers_km[t] for p in points]
             ax.bar(
-                range(len(points)),
+                xs,
                 km,
                 width=0.7,
                 bottom=bottom,
@@ -196,7 +199,7 @@ def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> 
             )
             bottom = [b + k for b, k in zip(bottom, km, strict=True)]
         ax.set_xticks(
-            range(len(points)),
+            xs,
             [
                 "now" if p.label == CURRENT else (p.label if p.label in SPARSE else "")
                 for p in points
@@ -238,17 +241,18 @@ def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> 
         ax = fig.add_subplot(spec)
         _style(ax)
         pts = {kind: built[(c, kind)].points for kind in ("lau", "fua")}
-        longest = max(pts.values(), key=len)
+        slots = _slots(list(pts.values()), years)
         _headline_lines(
             ax,
             [
                 ("LAU (city)", pts["lau"], flagged[(c, "lau")], color[c], "-"),
                 ("FUA (metro)", pts["fua"], flagged[(c, "fua")], INK_2, "--"),
             ],
+            years,
         )
-        _xticks(ax, longest)
+        _xticks(ax, slots)
         ax.tick_params(axis="x", labelsize=7)
-        _spread_labels(ax, len(longest) + 1)
+        _spread_labels(ax, len(slots) + 1)
         ax.set_ylim(0, None)
         ax.set_title(c.capitalize(), color=INK, fontsize=10, loc="left")
         if k == 0:
@@ -268,8 +272,9 @@ def chart(built: dict, flagged: dict, runs: dict, sel: Selector, path: Path) -> 
     fig.text(
         0.06,
         0.015,
-        f"Map data {ATTRIBUTION}. OSM mapped km, not built km (ADR 0006); population 2024 held "
-        "constant.\nSnapshots at 1 January 00:00 UTC from Geofabrik full history (ADR 0005); "
+        f"Map data {ATTRIBUTION}. OSM mapped km, not built km (ADR 0006); LAU population 2024 "
+        "held constant (FUA: no population, no per-100k).\nSnapshots at 1 January 00:00 UTC "
+        "from Geofabrik full history (ADR 0005); "
         "'now' is the current run.",
         color=INK_2,
         fontsize=9,
@@ -283,7 +288,7 @@ def main() -> None:
     if not any(k == "lau" for _, k in built):
         raise SystemExit(f"no LAU history runs of the current config {sel.short_sha} in {DB}")
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    chart(built, flagged, runs, sel, OUT)
+    chart(built, flagged, runs, sel, OUT, series_years())
     print(f"wrote {OUT} ({len(built)} series, {len(runs)} runs)")
 
 
