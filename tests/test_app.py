@@ -40,7 +40,12 @@ GEOJSON = json.dumps(
 ROUTES = ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]
 ROUTES += ["/data/all.csv", "/data/berlin.csv", "/maps/berlin_lau.png", "/maps/berlin_lau.geojson"]
 OSM_TILES = "tile.openstreetmap.org"
-URL = re.compile(r"https?://[^\s\"'<>\\)]+")
+# absolute (http/https) or protocol-relative (`//host`, after a quote, `(`, `=` or space) URLs
+URL = re.compile(r"""(?:https?:|(?<=["'(=\s]))//[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+[^\s"'<>\\)]*""")
+STATIC = VENDOR.parent
+# Absolute URLs the vendored Leaflet names that are not loads: the attribution prefix's link
+# (leafletjs.com) and the SVG namespace identifier (www.w3.org/2000/svg).
+LEAFLET_NON_LOAD_HOSTS = {"leafletjs.com", "www.w3.org"}
 
 
 # The app answers loopback Host headers only (DNS rebinding, see ALLOWED_HOSTS), so tests talk
@@ -286,6 +291,49 @@ def test_pages_load_only_static_assets_and_osm_tiles(client):
     assert {urlparse(u).hostname for u in cfg["links"].values()} == {"www.openstreetmap.org"}
     # map.js takes every URL from that config: it names no host of its own
     assert not URL.findall(client.get("/static/map.js").text)
+
+
+def test_static_files_load_nothing_external():
+    """The network rule covers our own and the vendored static files, not only the HTML."""
+    for css in [*STATIC.glob("*.css"), *VENDOR.glob("*.css")]:
+        text = css.read_text()
+        refs = re.findall(r"url\(\s*['\"]?([^'\")]+)", text)
+        refs += re.findall(r"@import\s+(?:url\()?\s*['\"]?([^'\");\s]+)", text)
+        for ref in refs:
+            ok = ref.startswith(("#", "data:")) or not (
+                urlparse(ref).scheme or ref.startswith("//")
+            )
+            assert ok, (css.name, ref)
+    leaflet = {urlparse(u).hostname for u in URL.findall((VENDOR / "leaflet.js").read_text())}
+    assert leaflet == LEAFLET_NON_LOAD_HOSTS
+    assert "www.w3.org/2000/svg" in (VENDOR / "leaflet.js").read_text()
+    assert not URL.findall((STATIC / "map.js").read_text())
+
+
+def test_protocol_relative_urls_count_as_loads():
+    assert _loaded_hosts('<div style="background:url(//evil.example.com/x.png)"></div>') == {
+        "evil.example.com"
+    }
+    assert _loaded_hosts('<a href="//www.openstreetmap.org/copyright">x</a>') == set()
+
+
+def test_osm_tiles_are_muted_and_tier_lines_readable(client):
+    """Standard OSM draws main roads orange/red, clashing with tiers B and D: the tile layer
+    (only it, not the vector canvas) is greyed and faded; the tier lines stay ~3 px."""
+    cfg = _map_config(client.get("/city/berlin").text)
+    cls = cfg["tile_class"]
+    assert cls and cls != "leaflet-tile-pane"
+    rules = _css_rules((STATIC / "app.css").read_text())
+    decls = [d for sels, d in rules if f".{cls}" in sels]
+    assert decls, cls
+    rule = {k: v for d in decls for k, v in d.items()}
+    assert "grayscale(1)" in rule["filter"]
+    assert float(rule.get("opacity", "1")) <= 0.8 or "contrast(" in rule["filter"]
+    assert not any(".leaflet-overlay-pane" in s or "canvas" in s for sels, d in rules
+                   if "filter" in d for s in sels)  # fmt: skip
+    assert 2.5 <= cfg["weight"] <= 4
+    js = (STATIC / "map.js").read_text()
+    assert "className: cfg.tile_class" in js and "weight: cfg.weight" in js
 
 
 def test_geojson_route_serves_geo_json(client):

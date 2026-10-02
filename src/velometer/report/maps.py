@@ -73,11 +73,16 @@ def snapshot_path(run_row: dict, data_dir: Path) -> Path:
 def tiered(
     snapshot: Path, config_dir: Path, classifier: str
 ) -> tuple[list[Classified], dict[int, Mapping[str, str]]]:
-    """The snapshot's sides classified once: those in tiers A-E, and each way's OSM tags."""
+    """The snapshot's sides classified once: those in tiers A-E, and the `keep_tag` subset of
+    their ways' OSM tags. Only tiered ways' tags are kept: a FUA snapshot has many times more
+    ways than tiered sides, and its full way list is dropped as soon as it is classified."""
     cfg = load_classifier(Path(config_dir) / "classifier" / f"{classifier}.yaml")
     ways = read_ways(snapshot).ways
     sides = [c for c in classify_ways(ways, cfg) if c.tier in TIER_SET]
-    return sides, {w.id: w.tags for w in ways}
+    ids = {c.side.way_id for c in sides}
+    tags = {w.id: {k: v for k, v in w.tags.items() if keep_tag(k)} for w in ways if w.id in ids}
+    del ways  # the snapshot's way list: the largest object here, not needed past this point
+    return sides, tags
 
 
 def _by_tier(sides: list[Classified], proj: Projector) -> dict[str, list[LineString]]:

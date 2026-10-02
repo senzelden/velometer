@@ -323,6 +323,9 @@ def test_geojson_matches_the_run_measure_on_mini_city(placed, tmp_path):
         "SELECT path FROM boundaries WHERE city_id='berlin' AND kind='lau'"
     ).fetchone()[0]
     outline = load_boundary_polygon(Path(boundary_path), 25833)
+    text = (maps_dir / "berlin_lau.geojson").read_text()
+    for key in ("user", "uid", "changeset", "timestamp", "version"):  # no OSM editor metadata
+        assert f'"{key}":' not in text, key
     ways = read_ways(snap).ways
     lengths = measure(ways, cfg, 25833, boundary=outline).way_lengths
     tags = {w.id: w.tags for w in ways}
@@ -383,3 +386,22 @@ def test_write_atomic_keeps_the_old_file_when_the_write_fails(tmp_path, monkeypa
     monkeypatch.undo()
     maps.write_atomic(path, b"new")
     assert path.read_text() == "new"
+
+
+def test_tiered_keeps_tags_of_tiered_ways_only(monkeypatch):
+    # memory: a FUA snapshot has ~10x more ways than tiered sides; their tags must not be kept
+    from types import SimpleNamespace
+
+    from velometer.pipeline.types import WayRecord
+
+    coords = ((13.40, 52.50), (13.41, 52.50))
+    ways = [WayRecord(i, {"highway": "primary", "name": f"w{i}"}, coords) for i in (1, 2, 3)]
+    tiers = {1: "A", 2: "excluded", 3: None}
+    monkeypatch.setattr(maps, "load_classifier", lambda p: None)
+    monkeypatch.setattr(maps, "read_ways", lambda p: SimpleNamespace(ways=ways))
+    monkeypatch.setattr(
+        maps, "classify_ways", lambda ws, cfg: [_side(w.id, tiers[w.id]) for w in ws]
+    )
+    sides, tags = maps.tiered(Path("x"), Path("cfg"), "v2")
+    assert [c.side.way_id for c in sides] == [1]
+    assert tags == {1: {"highway": "primary"}}  # only the kept subset of the tiered way

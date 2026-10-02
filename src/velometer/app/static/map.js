@@ -13,11 +13,13 @@
   var TIERS = Object.keys(cfg.colours); // A..E
   var cache = {}; // kind -> FeatureCollection
   var current = null; // {tiers: {A: layer, ...}, boundary: layer}
+  var selected = null; // the kind the reader picked last
 
   var map = L.map(mapEl, { preferCanvas: true });
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,
+    className: cfg.tile_class, // muted in app.css; the vector canvas is not
     attribution:
       '© <a href="' + cfg.links.copyright + '">OpenStreetMap contributors</a>',
   }).addTo(map);
@@ -92,7 +94,7 @@
       tiers[t] = L.geoJSON(data, {
         renderer: renderer,
         filter: function (f) { return f.properties.tier === t; },
-        style: { color: cfg.colours[t], weight: 2.5, opacity: 0.9 },
+        style: { color: cfg.colours[t], weight: cfg.weight, opacity: 0.9 },
         onEachFeature: function (f, layer) {
           layer.bindPopup(function () { return popup(f.properties); }, { maxWidth: 360 });
         },
@@ -115,6 +117,7 @@
   function load(kind) {
     var entry = cfg.kinds.filter(function (k) { return k.kind === kind; })[0];
     if (!entry) return;
+    selected = kind;
     if (cache[kind]) return show(kind, cache[kind]);
     say("Loading " + entry.label + " map …");
     fetch(entry.url)
@@ -124,9 +127,11 @@
       })
       .then(function (data) {
         cache[kind] = data;
-        show(kind, data);
+        if (selected === kind) show(kind, data); // else a late answer for a kind left
       })
-      .catch(function (e) { say("Could not load the " + entry.label + " map: " + e.message); });
+      .catch(function (e) {
+        if (selected === kind) say("Could not load the " + entry.label + " map: " + e.message);
+      });
   }
 
   document.querySelectorAll('input[name="tier"]').forEach(function (box) {

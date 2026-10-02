@@ -41,6 +41,10 @@ METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
 # Host (a DNS-rebinding page pointing its own name at 127.0.0.1) gets a 400.
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
 GZIP_MIN_BYTES = 1024  # below this a gzip frame saves too little to be worth it
+GZIP_LEVEL = 5  # ~3x less CPU than 9 on the 15-20 MB FUA GeoJSON, ~5 % more bytes
+# The tile layer's class (app.css mutes it: OSM's orange/red roads clash with tiers B and D)
+TILE_CLASS = "tiermap-tiles"
+LINE_WEIGHT = 3  # px: tier lines stay readable over the tiles at zoom 16
 # The tier map's background and the links its attribution and popups point at.
 OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 OSM_LINKS = {
@@ -67,7 +71,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir = Path(maps_dir), Path(docs_dir)
     app = FastAPI(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
-    app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES)
+    app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=GZIP_LEVEL)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)  # outermost
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
@@ -158,6 +162,8 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         colours = dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
         tiermap = {
             "tiles": OSM_TILES,
+            "tile_class": TILE_CLASS,
+            "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
             "colours": colours,
             "labels": charts.TIER_LABEL,
