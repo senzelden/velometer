@@ -415,7 +415,11 @@ def test_history_config_is_strict_and_has_a_default(tmp_path):
 
     h = load_history(CFG_DIR / "history.yaml")
     assert h.required("berlin") == ["lau", "fua"] and h.required("vienna") == ["lau"]
+    assert h.year_range() == range(2018, 2027)
     bad = tmp_path / "h.yaml"
+    bad.write_text('years: "2026-2018"\nrequired_kinds: {default: [lau]}\n')
+    with pytest.raises(ConfigError):
+        load_history(bad)
     bad.write_text('years: "2018-2026"\nrequired_kinds: {berlin: [lau]}\n')
     with pytest.raises(ConfigError):
         load_history(bad)

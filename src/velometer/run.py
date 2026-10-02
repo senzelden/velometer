@@ -1,10 +1,13 @@
 """Orchestrate one persisted city run: region -> boundary -> snapshot -> measure -> SQLite.
 
 A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters,
-config sha256 of the classifier and presets YAML (see config_sha256));
-a done run with the same key is skipped. `force` supersedes the existing done run: it is marked
-`failed` with the error `superseded by run N`, inside the same transaction that completes the new
-run, so a failed forced re-run leaves the old run done.
+config sha256 of the classifier and presets YAML (see config_sha256), source `current` or
+`history`) (see RunKey); a done run with the same key is skipped. A history run is reused only
+within its history set: its region_md5 holds the md5 of the set (history_set_md5), where a current
+run's holds its extract's md5, and the database's done-key index includes region_md5. `force`
+supersedes the existing done run: it is marked `failed` with the error `superseded by run N`,
+inside the same transaction that completes the new run, so a failed forced re-run leaves the old
+run done.
 """
 
 import hashlib
@@ -18,7 +21,13 @@ from typing import Literal
 from pyproj import Transformer
 from shapely.ops import transform
 
-from velometer.config import CityConfig, load_activity, load_classifier, load_presets
+from velometer.config import (
+    CityConfig,
+    load_activity,
+    load_classifier,
+    load_history,
+    load_presets,
+)
 from velometer.db import (
     RunKey,
     canonical_parameters,
@@ -27,7 +36,6 @@ from velometer.db import (
     fetch_activity,
     find_done_run,
     history_runs,
-    latest_done_run,
     replace_activity,
     set_population,
     start_run,
@@ -38,6 +46,7 @@ from velometer.models import Metric
 from velometer.pipeline.activity import activity as _activity
 from velometer.pipeline.drift import drift_diagnostics
 from velometer.pipeline.extract import snapshot as _snapshot
+from velometer.pipeline.history import SNAPSHOT_DATES
 from velometer.pipeline.history import city_history as _city_history
 from velometer.pipeline.history import snapshot_at as _snapshot_at
 from velometer.pipeline.measure import compute_metrics, measure
@@ -269,7 +278,9 @@ def run_history(
     A done history run is reused when its (city, year, boundary, classifier, config) key and its
     history set match; a new history set (new download) makes every year run again. The
     population of the boundary is held constant across years. Yearly mapping activity is written
-    once per (city, boundary, history set). Failures before the first year (boundary, index,
+    once per (city, boundary, history set) and always covers the config/history.yaml years plus
+    the year after the last (the current point's window), whatever `years` this call runs.
+    Failures before the first year (boundary, index,
     download, history extract) return one failed outcome and write no run row; a failing year
     records a failed run and the next year runs.
     """
@@ -279,6 +290,8 @@ def run_history(
     cfg = load_classifier(classifier_path)
     presets = load_presets(presets_path, cfg).presets
     activity_cfg = load_activity(config_dir / "activity.yaml")
+    series_years = load_history(config_dir / "history.yaml").year_range()
+    activity_years = range(series_years.start, series_years.stop + 1)
     try:
         rec, pop = deps.city_boundary(city, boundary_kind, data_dir)
         upsert_boundary(conn, rec.boundary)
@@ -324,8 +337,8 @@ def run_history(
         history_set_md5=hs.set_md5,
     )
     outcomes = []
-    for year in years:
-        ts = datetime(year, 1, 1, tzinfo=UTC)
+    for ts in SNAPSHOT_DATES(years):
+        year = ts.year
         key = RunKey(
             city_id=city.id,
             osm_timestamp=_iso_z(ts),
@@ -363,28 +376,28 @@ def run_history(
         outcomes.append(RunOutcome(city.id, "done", run_id, year=year))
     if years:
         _write_activity(
-            conn, city, boundary_kind, cfg, years, hist, hs.set_md5, activity_cfg, deps, outcomes
+            conn,
+            city,
+            boundary_kind,
+            activity_years,
+            hist,
+            hs.set_md5,
+            activity_cfg,
+            deps,
+            outcomes,
         )
     return outcomes
 
 
 def _write_activity(
-    conn, city, boundary_kind, cfg, years, hist, set_md5, activity_cfg, deps, outcomes
+    conn, city, boundary_kind, wanted, hist, set_md5, activity_cfg, deps, outcomes
 ) -> None:
-    """Replace the set's activity rows; with a current run, add the window of year last + 1.
+    """Replace the set's activity rows with `wanted` (the series years plus last + 1).
 
     The standard window rule makes year last + 1 cover [last-01-01, end of the history file),
-    which is the current point. Rows are kept when every year was reused and the stored years
-    already match.
+    which is the current point's window; the series shows it only with a current point. Rows are
+    kept when every year was reused and the stored years already match.
     """
-    has_current = latest_done_run(
-        conn,
-        city.id,
-        boundary_kind,
-        cfg.version,
-        canonical_parameters(cfg.parameters.model_dump()),
-    )
-    wanted = range(years.start, years.stop + (1 if has_current is not None else 0))
     if all(o.status == "skipped" for o in outcomes):
         have = [a.year for a in fetch_activity(conn, city.id, boundary_kind, set_md5)]
         if have == list(wanted):

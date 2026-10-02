@@ -262,8 +262,20 @@ class HistoryConfig(_Strict):
             raise ValueError("required_kinds needs a 'default' entry")
         return self
 
+    @model_validator(mode="after")
+    def _years_ordered(self):
+        first, last = self.years.split("-")
+        if int(last) < int(first):
+            raise ValueError(f"years {self.years!r}: the last year is before the first")
+        return self
+
     def required(self, city_id: str) -> list[str]:
         return self.required_kinds.get(city_id, self.required_kinds["default"])
+
+    def year_range(self) -> range:
+        """The series years, inclusive: "2018-2026" -> range(2018, 2027)."""
+        first, last = self.years.split("-")
+        return range(int(first), int(last) + 1)
 
 
 def load_history(path: Path) -> HistoryConfig:

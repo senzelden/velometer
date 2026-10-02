@@ -6,7 +6,7 @@ import pytest
 from shapely import box
 
 from velometer import run as R
-from velometer.config import default_config_dir, load_cities, load_classifier
+from velometer.config import default_config_dir, load_cities, load_classifier, load_history
 from velometer.db import (
     canonical_parameters,
     create_schema,
@@ -29,6 +29,8 @@ CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
 CLS = load_classifier(CFG_DIR / "classifier" / "v1.yaml")
 MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
 SHA = "s" * 64
+SERIES = load_history(CFG_DIR / "history.yaml").year_range()
+ACTIVITY_YEARS = list(range(SERIES.start, SERIES.stop + 1))  # the series years plus last + 1
 INDEX = {
     "berlin": {"geometry": box(13.0, 52.0, 14.0, 53.0), "parent": None, "history": "http://x/h"}
 }
@@ -217,32 +219,44 @@ def test_pre_run_failure_returns_one_failed_outcome_and_no_run_row(conn, tmp_pat
 def test_activity_written_once_per_city_kind_set(conn, tmp_path):
     fakes = Fakes(tmp_path)
     _history(conn, tmp_path, fakes)
-    assert fakes.activity_args == [([2019, 2020, 2021], fakes.set_md5)]
-    assert [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)] == [
-        2019,
-        2020,
-        2021,
-    ]
+    assert fakes.activity_args == [(ACTIVITY_YEARS, fakes.set_md5)]
+    stored = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    assert stored == ACTIVITY_YEARS
     _history(conn, tmp_path, fakes)  # everything reused: rows already match, no recompute
     assert len(fakes.activity_args) == 1
     _history(conn, tmp_path, fakes, force=True)  # forced: replaced, never duplicated
     assert len(fakes.activity_args) == 2
-    assert len(fetch_activity(conn, "berlin", "lau", fakes.set_md5)) == 3
+    assert len(fetch_activity(conn, "berlin", "lau", fakes.set_md5)) == len(ACTIVITY_YEARS)
 
 
-def test_activity_covers_the_current_point_when_a_current_run_exists(conn, tmp_path):
+def test_activity_covers_the_current_window_without_a_current_run(conn, tmp_path):
+    fakes = Fakes(tmp_path)
+    _history(conn, tmp_path, fakes)
+    assert _runs(conn, "current") == []
+    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    assert years[-1] == SERIES.stop  # last + 1: the current point's window
+    assert [r[2] for r in _runs(conn)][-1] == "2021-01-01T00:00:00Z"  # but no extra run
+
+
+def test_activity_is_the_same_with_or_without_a_current_run(conn, tmp_path):
     run = R.run_city(
-        conn,
-        CITY,
-        data_dir=tmp_path,
-        config_dir=CFG_DIR,
-        deps=_current_deps(tmp_path),
+        conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR, deps=_current_deps(tmp_path)
     )
     assert run.status == "done"
     fakes = Fakes(tmp_path)
     _history(conn, tmp_path, fakes)
-    assert fakes.activity_args == [([2019, 2020, 2021, 2022], fakes.set_md5)]
-    assert [r[2] for r in _runs(conn)][-1] == "2021-01-01T00:00:00Z"  # but no extra run
+    assert fakes.activity_args == [(ACTIVITY_YEARS, fakes.set_md5)]
+
+
+def test_retrying_some_years_keeps_the_activity_of_every_year(conn, tmp_path):
+    fakes = Fakes(tmp_path, fail_year=2020)
+    _history(conn, tmp_path, fakes, years=range(2018, 2023))
+    retry = Fakes(tmp_path)
+    out = _history(conn, tmp_path, retry, years=range(2020, 2021))  # retry the failed year only
+    assert [o.status for o in out] == ["done"]
+    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    assert set(range(2018, 2023)) <= set(years)
+    assert years == ACTIVITY_YEARS
 
 
 def _current_deps(tmp_path):
