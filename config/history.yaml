@@ -1,8 +1,6 @@
 # Yearly history series (M3 spec section 2.1, ruling R15). `timeseries --check` requires history
 # runs for every kind listed for a city; `default` applies to cities without their own entry.
 years: "2018-2026"
-# classifier the published series reports (user decision 2026-10-02: v2)
-report_classifier: v2
 required_kinds:
   default: [lau]
   berlin: [lau, fua]

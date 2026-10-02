@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
@@ -258,9 +258,16 @@ class HistoryConfig(_Strict):
     """Which yearly history series exist and which boundary kinds each city must have."""
 
     years: str = Field(pattern=r"^\d{4}-\d{4}$")
-    # classifier version whose runs the published time series reports (`timeseries` default)
-    report_classifier: str = Field(pattern=r"^v\d+$")
     required_kinds: dict[str, list[str]]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _report_classifier_moved(cls, data):
+        if isinstance(data, dict) and "report_classifier" in data:
+            raise ValueError(
+                "report_classifier moved to config/report.yaml; remove it from history.yaml"
+            )
+        return data
 
     @model_validator(mode="after")
     def _has_default(self):
@@ -286,3 +293,71 @@ class HistoryConfig(_Strict):
 
 def load_history(path: Path) -> HistoryConfig:
     return _parse(path, HistoryConfig.model_validate)
+
+
+class PresetRanking(_Strict):
+    """A ranking row computed by us: a preset of config/presets.yaml."""
+
+    kind: Literal["preset"]
+    id: str
+    label: str
+    preset: str
+
+
+class ExternalRanking(_Strict):
+    """A ranking row read from one stored external figure per city."""
+
+    kind: Literal["external"]
+    id: str
+    label: str
+    source: str
+    metric: str
+    scope: str
+    note: str | None = None
+
+
+class ExternalRatioRanking(_Strict):
+    """A ranking row that is a ratio of two stored external metrics of one source."""
+
+    kind: Literal["external_ratio"]
+    id: str
+    label: str
+    source: str
+    numerator: list[str] = Field(min_length=1)
+    denominator: str
+    note: str | None = None
+
+
+RankingSource = Annotated[
+    PresetRanking | ExternalRanking | ExternalRatioRanking, Field(discriminator="kind")
+]
+
+
+class ReportConfig(_Strict):
+    """Which classifier every report surface shows, and which ranking sources it lists."""
+
+    report_classifier: str = Field(pattern=r"^v\d+$")
+    rankings: list[RankingSource]
+
+    @model_validator(mode="after")
+    def _unique_ids(self):
+        ids = [r.id for r in self.rankings]
+        dup = sorted({i for i in ids if ids.count(i) > 1})
+        if dup:
+            raise ValueError(f"duplicate ranking ids: {dup}")
+        return self
+
+
+def load_report(path: Path, presets_path: Path | None = None) -> ReportConfig:
+    """Load report.yaml; every preset ranking must name a preset of presets.yaml (default: the
+    one beside it)."""
+    config = _parse(path, ReportConfig.model_validate)
+    presets_path = presets_path or path.parent / "presets.yaml"
+    known = {p.id for p in _parse(presets_path, PresetsConfig.model_validate).presets}
+    for r in config.rankings:
+        if isinstance(r, PresetRanking) and r.preset not in known:
+            raise ConfigError(
+                f"{path}: ranking {r.id!r}: preset {r.preset!r} is not in {presets_path.name} "
+                f"(known: {sorted(known)})"
+            )
+    return config

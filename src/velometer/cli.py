@@ -230,6 +230,31 @@ def run_selector(
     )
 
 
+def report_selector(config_dir: Path) -> Selector:
+    """The runs every report surface shows: the classifier named in config/report.yaml."""
+    from velometer.config import load_report
+
+    try:
+        report = load_report(config_dir / "report.yaml", config_dir / "presets.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    return run_selector(config_dir, report.report_classifier)
+
+
+def _report_classifier(config_dir: Path, classifier: str | None) -> str:
+    """The explicit --classifier, else the report classifier of config/report.yaml."""
+    from velometer.config import load_report
+
+    if classifier is not None:
+        return classifier
+    try:
+        return load_report(
+            config_dir / "report.yaml", config_dir / "presets.yaml"
+        ).report_classifier
+    except ConfigError as e:
+        raise _config_error(e) from e
+
+
 def _run_cities(
     selected: list[CityConfig],
     *,
@@ -456,7 +481,11 @@ def run(
     cities: str = typer.Option("all", help="'all' or comma-separated city ids."),
     boundary: str = typer.Option("lau", help="Boundary kind."),
     force: bool = typer.Option(False, "--force", help="Re-run even if a done run exists."),
-    classifier: str = typer.Option("v1", help="Classifier version."),
+    classifier: str | None = typer.Option(
+        None,
+        "--classifier",
+        help="Classifier version (default: report_classifier in config/report.yaml).",
+    ),
     config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
     data: Path = DATA_OPT,
@@ -473,6 +502,7 @@ def run(
     ),
 ) -> None:
     """Run cities end to end (region, boundary, clip, classify, persist); done runs are skipped."""
+    classifier = _report_classifier(config_dir, classifier)
     year_range = _parse_years(years)
     wanted = None if cities == "all" else [c.strip() for c in cities.split(",") if c.strip()]
     if year_range is not None:
@@ -678,14 +708,17 @@ RESULT_COLUMNS = (
 
 
 CLASSIFIER_REPORT_OPT = typer.Option(
-    "v1", "--classifier", help="Report runs of this classifier with its default parameters."
+    None,
+    "--classifier",
+    help="Report runs of this classifier with its default parameters"
+    " (default: report_classifier in config/report.yaml).",
 )
 
 
 @app.command()
 def results(
     boundary: str = typer.Option("lau", help="Boundary kind."),
-    classifier: str = CLASSIFIER_REPORT_OPT,
+    classifier: str | None = CLASSIFIER_REPORT_OPT,
     config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
     clean_cities_basis: CleanCitiesBasis | None = CC_BASIS_OPT,
@@ -697,7 +730,7 @@ def results(
     from velometer.db import fetch_cities, fetch_run_results
     from velometer.pipeline.measure import select_metric
 
-    sel = run_selector(config_dir, classifier, clean_cities_basis)
+    sel = run_selector(config_dir, _report_classifier(config_dir, classifier), clean_cities_basis)
 
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
@@ -759,7 +792,7 @@ def reconcile(
         None, "--city", help="City id (repeatable); default all."
     ),
     boundary: str = typer.Option("lau", help="Boundary kind."),
-    classifier: str = CLASSIFIER_REPORT_OPT,
+    classifier: str | None = CLASSIFIER_REPORT_OPT,
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
     check: bool = typer.Option(
         False,
@@ -790,7 +823,7 @@ def reconcile(
         )
         raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
-    sel = run_selector(config_dir, classifier, clean_cities_basis)
+    sel = run_selector(config_dir, _report_classifier(config_dir, classifier), clean_cities_basis)
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
@@ -866,7 +899,7 @@ def timeseries(
         None,
         "--classifier",
         help="Report runs of this classifier with its default parameters"
-        " (default: report_classifier in config/history.yaml).",
+        " (default: report_classifier in config/report.yaml).",
     ),
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
     check: bool = typer.Option(
@@ -899,7 +932,7 @@ def timeseries(
         history_cfg = load_history(config_dir / "history.yaml")
     except ConfigError as e:
         raise _config_error(e) from e
-    sel = run_selector(config_dir, classifier or history_cfg.report_classifier)
+    sel = run_selector(config_dir, _report_classifier(config_dir, classifier))
     built: dict[tuple[str, str], ts.CitySeries] = {}
     with _open_schema(db) as conn:
         for c in _all_cities(config_dir):

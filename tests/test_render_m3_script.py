@@ -22,8 +22,8 @@ def _p(label, headline=1.0):
     return T.YearPoint(label, 1, ts, headline, 0.0, dict.fromkeys("ABCDE", 0.0), None, None, None)
 
 
-def test_chart_selects_runs_with_the_cli_selector():
-    assert render.run_selector is cli.run_selector
+def test_chart_selects_runs_with_the_report_selector():
+    assert render.report_selector is cli.report_selector
 
 
 def test_points_sit_at_their_year_so_a_gap_stays_a_gap():

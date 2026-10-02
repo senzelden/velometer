@@ -14,7 +14,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from velometer.cli import Selector, run_selector  # noqa: E402
+from velometer.cli import Selector, report_selector  # noqa: E402
 from velometer.config import default_config_dir, load_activity, load_history  # noqa: E402
 from velometer.db import fetch_run, open_db  # noqa: E402
 from velometer.timeseries import CURRENT, TIERS, build_city, city_flags  # noqa: E402
@@ -48,9 +48,8 @@ def x_of(label: str, years: range) -> int:
 
 def load(db: Path) -> tuple[dict, dict, dict, Selector]:
     """(city, kind) -> CitySeries, (city, kind) -> {label: Flag}, run_id -> run row."""
-    history = load_history(default_config_dir() / "history.yaml")
     # the runs `velometer timeseries` shows: its default classifier, default parameters
-    sel = run_selector(default_config_dir(), history.report_classifier)
+    sel = report_selector(default_config_dir())
     activity = load_activity(default_config_dir() / "activity.yaml")
     built, flagged, runs = {}, {}, {}
     with open_db(db) as conn:

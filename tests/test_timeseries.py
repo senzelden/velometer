@@ -28,15 +28,17 @@ CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2
 
 
 def config_dir(tmp_path, years="2019-2021", report_classifier="v1") -> Path:
-    """A copy of config/ whose history.yaml series is `years` and whose report classifier is
+    """A copy of config/ whose history.yaml series is `years` and whose report.yaml classifier is
     the one the fake runs use (run_history's default, v1); classifier/presets sha unchanged."""
     d = tmp_path / "config"
     if not d.exists():
         shutil.copytree(CFG_DIR, d)
     text = (CFG_DIR / "history.yaml").read_text()
     text = re.sub(r'years: "[^"]*"', f'years: "{years}"', text)
-    text = re.sub(r"report_classifier: \S+", f"report_classifier: {report_classifier}", text)
     (d / "history.yaml").write_text(text)
+    rep = (CFG_DIR / "report.yaml").read_text()
+    rep = re.sub(r"report_classifier: \S+", f"report_classifier: {report_classifier}", rep)
+    (d / "report.yaml").write_text(rep)
     return d
 
 
@@ -616,16 +618,16 @@ def test_adr_0005_note_counts_history_runs_as_series_times_years():
 
 
 def test_report_classifier_is_v2_in_the_shipped_config():
-    from velometer.config import load_history
+    from velometer.config import load_report
 
-    assert load_history(CFG_DIR / "history.yaml").report_classifier == "v2"
+    assert load_report(CFG_DIR / "report.yaml").report_classifier == "v2"
 
 
 def test_cli_timeseries_defaults_to_the_report_classifier(db, tmp_path):
     # db holds v1 history runs only: v1 as report classifier finds them, v2 does not
     report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
     assert "no history runs" not in _ts(db, report).output
-    hist = db[2] / "history.yaml"
-    hist.write_text(hist.read_text().replace("report_classifier: v1", "report_classifier: v2"))
+    rep = db[2] / "report.yaml"
+    rep.write_text(rep.read_text().replace("report_classifier: v1", "report_classifier: v2"))
     assert "no history runs for berlin/lau" in _ts(db, report, "--check").output
     assert "no history runs" not in _ts(db, report, "--classifier", "v1").output

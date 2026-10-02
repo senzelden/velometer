@@ -8,7 +8,9 @@ from velometer.config import (
     default_config_dir,
     load_cities,
     load_classifier,
+    load_history,
     load_presets,
+    load_report,
 )
 from velometer.pipeline.match import matches, validate_expr
 
@@ -184,3 +186,61 @@ def test_basis_parameter_value_must_be_a_valid_basis(tmp_path: Path):
         load_presets(bad, classifier)
     with pytest.raises(ConfigError, match="presets.yaml"):
         load_presets(_basis_presets(tmp_path, "sideways"), classifier)
+
+
+def _report(tmp_path: Path, text: str) -> Path:
+    (tmp_path / "presets.yaml").write_text((CFG / "presets.yaml").read_text())
+    path = tmp_path / "report.yaml"
+    path.write_text(text)
+    return path
+
+
+def test_load_report_accepts_the_shipped_file():
+    report = load_report(CFG / "report.yaml")
+    assert report.report_classifier == "v2"
+    assert {r.kind for r in report.rankings} == {"preset", "external", "external_ratio"}
+    presets = {
+        p.id
+        for p in load_presets(
+            CFG / "presets.yaml", load_classifier(CFG / "classifier" / "v2.yaml")
+        ).presets
+    }
+    assert {r.preset for r in report.rankings if r.kind == "preset"} <= presets
+
+
+def test_load_report_rejects_an_unknown_key(tmp_path: Path):
+    path = _report(tmp_path, "report_classifier: v2\nrankings: []\nextra: 1\n")
+    with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*extra"):
+        load_report(path)
+
+
+def test_load_report_rejects_an_unknown_kind(tmp_path: Path):
+    path = _report(
+        tmp_path, "report_classifier: v2\nrankings:\n  - {id: x, label: X, kind: magic}\n"
+    )
+    with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*magic"):
+        load_report(path)
+
+
+def test_load_report_rejects_a_preset_not_in_presets_yaml(tmp_path: Path):
+    path = _report(
+        tmp_path,
+        "report_classifier: v2\nrankings:\n"
+        "  - {id: x, label: X, kind: preset, preset: no_such_preset}\n",
+    )
+    with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*no_such_preset.*presets\.yaml"):
+        load_report(path)
+
+
+def test_load_report_rejects_duplicate_ranking_ids(tmp_path: Path):
+    row = "  - {id: x, label: X, kind: preset, preset: ours_headline}\n"
+    path = _report(tmp_path, "report_classifier: v2\nrankings:\n" + row + row)
+    with pytest.raises(ConfigError, match="duplicate ranking ids"):
+        load_report(path)
+
+
+def test_history_yaml_with_report_classifier_points_to_report_yaml(tmp_path: Path):
+    path = tmp_path / "history.yaml"
+    path.write_text((CFG / "history.yaml").read_text() + "report_classifier: v2\n")
+    with pytest.raises(ConfigError, match=r"(?s)history\.yaml.*config/report\.yaml"):
+        load_history(path)

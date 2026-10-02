@@ -2,6 +2,7 @@ import re
 import sqlite3
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from velometer.cli import app
@@ -701,3 +702,73 @@ def test_migrate_rejects_a_malformed_sha(tmp_path):
         out = CliRunner().invoke(app, ["migrate", "--activity-sha", bad, "--db", str(db)])
         assert out.exit_code == 2, (bad, out.output)
     assert not db.exists()
+
+
+def _report_cfg(tmp_path, classifier):
+    """A config copy whose report.yaml names `classifier`."""
+    import shutil
+
+    from velometer.config import default_config_dir
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(default_config_dir(), cfg)
+    rep = cfg / "report.yaml"
+    rep.write_text(
+        re.sub(r"report_classifier: \S+", f"report_classifier: {classifier}", rep.read_text())
+    )
+    return cfg
+
+
+def _run_versions(db):
+    with connect(db) as conn:
+        return {r[0] for r in conn.execute("SELECT classifier_version FROM runs")}
+
+
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_run_defaults_to_the_report_classifier(tmp_path, monkeypatch, version):
+    cfg = _report_cfg(tmp_path, version)
+    _patched(monkeypatch, tmp_path)
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db), "--config-dir", str(cfg)]).exit_code == 0
+    args = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    out = runner.invoke(app, [*args, "--config-dir", str(cfg)])
+    assert out.exit_code == 0, out.output
+    assert _run_versions(db) == {version}
+    other = "v2" if version == "v1" else "v1"
+    out = runner.invoke(app, [*args, "--config-dir", str(cfg), "--classifier", other])
+    assert out.exit_code == 0, out.output
+    assert _run_versions(db) == {version, other}  # the explicit override still wins
+
+
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_results_and_reconcile_default_to_the_report_classifier(tmp_path, monkeypatch, version):
+    other = "v2" if version == "v1" else "v1"
+    cfg = _report_cfg(tmp_path, version)
+    _patched(monkeypatch, tmp_path)
+    db = tmp_path / "v.sqlite"
+    runner = CliRunner()
+    assert runner.invoke(app, ["init", "--db", str(db), "--config-dir", str(cfg)]).exit_code == 0
+    run = ["run", "--cities", "berlin", "--db", str(db), "--data", str(tmp_path)]
+    run += ["--config-dir", str(cfg), "--classifier", version]
+    assert runner.invoke(app, run).exit_code == 0
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    rargs = ["--db", str(db), "--config-dir", str(cfg)]
+    rec = ["reconcile", "--city", "berlin", "--report", str(report), *rargs]
+    res = runner.invoke(app, ["results", *rargs])
+    assert re.search(r"^berlin\s", res.output, re.M), res.output
+    assert "Provenance: run 1 " in runner.invoke(app, rec).output
+    # report.yaml naming the other classifier: no run of it exists
+    (cfg / "report.yaml").write_text(
+        (cfg / "report.yaml")
+        .read_text()
+        .replace(f"report_classifier: {version}", f"report_classifier: {other}")
+    )
+    res = runner.invoke(app, ["results", *rargs])
+    assert not re.search(r"^berlin\s", res.output, re.M), res.output
+    assert "Provenance: run 1 " not in runner.invoke(app, rec).output
+    # the explicit override still wins
+    res = runner.invoke(app, ["results", *rargs, "--classifier", version])
+    assert re.search(r"^berlin\s", res.output, re.M), res.output
+    assert "Provenance: run 1 " in runner.invoke(app, [*rec, "--classifier", version]).output
