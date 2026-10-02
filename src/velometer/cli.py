@@ -996,7 +996,7 @@ def report_csv(
 
     try:
         conn = open_readonly(db)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, SchemaError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     try:
@@ -1009,6 +1009,8 @@ def report_csv(
             short_commit(git_commit()),
             datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
+    except ConfigError as e:
+        raise _config_error(e) from e
     except sqlite3.Error as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
@@ -1032,11 +1034,13 @@ def report_charts(
 
     try:
         conn = open_readonly(db)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, SchemaError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     try:
         paths = write_pngs(ReportData(conn, config_dir), out)
+    except ConfigError as e:
+        raise _config_error(e) from e
     except sqlite3.Error as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
@@ -1061,7 +1065,7 @@ def report_methodology(
 
     try:
         conn = open_readonly(db)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, SchemaError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     try:
@@ -1100,7 +1104,7 @@ def report_maps(
     kinds = [kind] if kind else ["lau", "fua"]
     try:
         conn = open_readonly(db)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, SchemaError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     maps_dir = data_dir / "maps"

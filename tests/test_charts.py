@@ -177,3 +177,27 @@ def test_rankings_footnote_states_each_published_columns_scope(fixture_data):
     subtitle = rankings_flip(fixture_data)["title"]["subtitle"]
     for label, note in notes:
         assert f"{label}: {note}" in subtitle
+
+
+def _titles(spec) -> list[str]:
+    """Every axis and tooltip title in a spec (nested layers and encodings included)."""
+    out = []
+    if isinstance(spec, dict):
+        for k, v in spec.items():
+            if k == "title" and isinstance(v, str):
+                out.append(v)
+            out += _titles(v)
+    elif isinstance(spec, list):
+        for v in spec:
+            out += _titles(v)
+    return out
+
+
+def test_headline_axis_is_km_per_100_km_main_roads_not_a_share(fixture_data):
+    """ADR 0003: the headline is A+B km per 100 km of main roads (excl. motorways), which can
+    exceed 100; it is not a share or a percent."""
+    headline = headline_over_time(fixture_data)
+    assert "A+B km per 100 km of main roads (excl. motorways)" in _titles(headline)
+    for spec in (headline, rankings_flip(fixture_data)):
+        for t in _titles(spec):
+            assert "share" not in t.lower() and "%" not in t, t

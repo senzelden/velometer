@@ -14,10 +14,10 @@
 {% if k.point %}
 <div class="scroll">
 <table>
-<thead><tr><th>Preset</th><th class="num">Share, %</th><th class="num">km per 100k</th></tr></thead>
+<thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}
-<tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td class="num">{{ p.per_100k | num }}</td></tr>
+<tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td>{{ preset_unit.get(p.preset, "") }}</td><td class="num">{{ p.per_100k | num }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
@@ -41,10 +41,11 @@
 
 <section>
 <h2>LAU vs FUA</h2>
+<p class="meta">Headline: {{ headline_unit }}.</p>
 <div class="scroll">
 <table>
 <thead><tr>
-  <th>Boundary</th><th class="num">Headline, %</th><th class="num">A+B km</th>
+  <th>Boundary</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A+B km</th>
   {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
 </tr></thead>
 <tbody>

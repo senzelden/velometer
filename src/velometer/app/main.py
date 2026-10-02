@@ -15,16 +15,18 @@ from typing import Annotated
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from velometer import timeseries as ts
+from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report import charts
 from velometer.report.csvexport import to_csv
-from velometer.report.data import KINDS, ReportData, open_readonly
+from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, open_readonly
 from velometer.run import git_commit
 from velometer.selection import report_selector
 
@@ -32,11 +34,9 @@ HERE = Path(__file__).parent
 MAP_NAME = re.compile(r"^[a-z0-9_]+_(lau|fua)$")
 EXPLANATIONS = Path("review") / "m3_timeseries.md"
 METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
-PRESET_LABEL = {
-    "ours_headline": "Headline (ours)",
-    "ecf_qecio": "ECF QECIO",
-    "clean_cities_2025": "Clean Cities 2025",
-}
+# The Host headers the app answers: the loopback names `velometer serve` binds to. Any other
+# Host (a DNS-rebinding page pointing its own name at 127.0.0.1) gets a 400.
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
 
 
 def _num(v: float | int | None, spec: str = ",.1f") -> str:
@@ -57,6 +57,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir = Path(maps_dir), Path(docs_dir)
     app = FastAPI(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.filters["num"] = _num
@@ -70,6 +71,8 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             conn = open_readonly(db_path)
         except FileNotFoundError as e:
             raise HTTPException(503, f"database not found: {db_path}") from e
+        except SchemaError as e:
+            raise HTTPException(503, str(e)) from e
         try:
             yield ReportData(conn, config_dir)
         finally:
@@ -99,15 +102,16 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                     "city": c,
                     "point": point,
                     "presets": presets,
-                    "flags": sum(len(data.flags(c.id, k)) for k in KINDS),
+                    "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
                 }
             )
         return page(
             request,
             "index.html",
             rows=rows,
-            preset_ids=list(PRESET_LABEL),
-            preset_label=PRESET_LABEL,
+            preset_label=data.preset_labels(),
+            preset_unit=data.preset_units(),
+            headline_unit=HEADLINE_UNIT,
             headline=charts.headline_over_time(data),
             rankings=charts.rankings_flip(data) if data.ranks() else None,
         )
@@ -142,7 +146,9 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             city=c,
             kinds=kinds,
             reconcile=data.reconcile(city_id),
-            preset_label=PRESET_LABEL,
+            preset_label=data.preset_labels(),
+            preset_unit=data.preset_units(),
+            headline_unit=HEADLINE_UNIT,
             tiers=ts.TIERS,
         )
 

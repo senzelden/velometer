@@ -3,6 +3,8 @@
 import hashlib
 import importlib.resources
 import re
+import shutil
+import sqlite3
 from pathlib import Path
 
 import altair as alt
@@ -18,6 +20,15 @@ EXPLANATION = "Fixture cause: a spike of 50 edits in the fixture activity rows."
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
 ROUTES = ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]
 ROUTES += ["/data/all.csv", "/data/berlin.csv", "/maps/berlin_lau.png"]
+
+
+# The app answers loopback Host headers only (DNS rebinding, see ALLOWED_HOSTS), so tests talk
+# to it as a browser on the served address does, instead of TestClient's default `testserver`.
+BASE_URL = "http://127.0.0.1"
+
+
+def _client(app) -> TestClient:
+    return TestClient(app, base_url=BASE_URL)
 
 
 def _docs(tmp_path: Path) -> Path:
@@ -52,7 +63,7 @@ def setup(fixture_db, tmp_path):
 @pytest.fixture
 def client(setup):
     db_path, cfg, maps, docs = setup
-    with TestClient(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
         yield c
 
 
@@ -119,7 +130,9 @@ def test_city_page_shows_current_numbers(client, fixture_db):
     text = _text(client.get("/city/berlin").text)
     section = text[text.find("Headline and presets") : text.find("Tier composition")]
     headline = next(p for p in point.presets if p.preset == "ours_headline")
-    assert f"Headline (ours) {headline.value:,.1f} {headline.per_100k:,.1f}" in section
+    label = data.preset_labels()["ours_headline"]
+    unit = data.preset_units()["ours_headline"]
+    assert f"{label} {headline.value:,.1f} {unit} {headline.per_100k:,.1f}" in section
     assert f"A+B km {point.ab_km:,.1f}" in section
     assert point.osm_timestamp in section
     provenance = text[text.find("Provenance") :]
@@ -139,7 +152,7 @@ def test_flag_explanation_text_on_city_page(client):
 def test_flag_without_explanation_says_so(setup):
     db_path, cfg, maps, docs = setup
     (docs / "review" / "m3_timeseries.md").write_text("# empty\n")
-    with TestClient(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
         r = c.get("/city/berlin")
     assert r.status_code == 200
     assert "no explanation" in _text(r.text)
@@ -226,7 +239,7 @@ def test_methodology_rendered_with_tables_and_language_links(client):
 def test_missing_methodology_is_a_note_not_an_error(setup):
     db_path, cfg, maps, docs = setup
     (docs / "methodology.md").unlink()
-    with TestClient(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
         r = c.get("/methodology")
     assert r.status_code == 200
     assert "methodology not generated" in _text(r.text)
@@ -234,7 +247,7 @@ def test_missing_methodology_is_a_note_not_an_error(setup):
 
 def test_missing_db_at_request_time_is_503_not_500(setup):
     db_path, cfg, maps, docs = setup
-    with TestClient(create_app(db_path.with_name("gone.sqlite"), cfg, maps, docs)) as c:
+    with _client(create_app(db_path.with_name("gone.sqlite"), cfg, maps, docs)) as c:
         assert c.get("/").status_code == 503
         assert c.get("/city/berlin").status_code == 503
 
@@ -337,7 +350,7 @@ def test_serve_runs_uvicorn_on_loopback(setup, monkeypatch, host):
     assert len(calls) == 1
     app, kw = calls[0]
     assert kw == {"host": host, "port": 8123}
-    with TestClient(app) as c:
+    with _client(app) as c:
         assert c.get("/city/berlin").status_code == 200
 
 
@@ -348,3 +361,146 @@ def test_serve_missing_db_exits_1(tmp_path, monkeypatch):
     result = CliRunner().invoke(cli_app, ["serve", "--db", str(tmp_path / "none.sqlite")])
     assert result.exit_code == 1
     assert "not found" in result.output
+
+
+def _headers(html: str) -> list[str]:
+    return [_text(h).strip() for h in re.findall(r"<th[^>]*>(.*?)</th>", html, re.S)]
+
+
+def test_index_preset_columns_are_labelled_ours(client, fixture_db):
+    """Our preset values never sit under a publisher's name or a "%"/"share" heading."""
+    _db, _cfg, _conn, data = fixture_db
+    headers = _headers(client.get("/").text)
+    for preset in ("ecf_qecio", "clean_cities_2025"):
+        label = data.preset_labels()[preset]
+        assert label.startswith("Ours") and label in headers
+    assert all(h.startswith("Ours") for h in headers if "QECIO" in h or "Clean Cities" in h)
+    for path in ["/", "/city/berlin"]:
+        for h in _headers(client.get(path).text):
+            assert "%" not in h and "share" not in h.lower(), (path, h)
+
+
+def test_index_lede_names_the_headline_unit_and_own_denominators(client):
+    text = _text(client.get("/").text)
+    assert "A+B km per 100 km of main roads (excl. motorways)" in text
+    assert "own denominator" in text
+    assert "percent of main roads" not in text
+    assert "A+B km per 100 km of all public roads" in text  # clean_cities_2025's denominator
+
+
+def test_preset_labels_follow_report_yaml(setup):
+    db_path, cfg, maps, docs = setup
+    path = cfg / "report.yaml"
+    path.write_text(path.read_text().replace("Ours: QECIO method", "Ours: QECIO test label"))
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        assert "Ours: QECIO test label" in _headers(c.get("/").text)
+        assert "Ours: QECIO test label" in _text(c.get("/city/berlin").text)
+
+
+def test_app_follows_report_classifier_of_the_config(setup):
+    """Spec section 5: the app defaults to config/report.yaml, red-proofed in a copied config."""
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        before = c.get("/city/berlin").text
+    assert "Classifier v2" in _text(before)
+    assert "no run (LAU current)" not in _text(before)
+    path = cfg / "report.yaml"
+    path.write_text(path.read_text().replace("report_classifier: v2", "report_classifier: v1"))
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        after = _text(c.get("/city/berlin").text)
+    assert "Classifier v1" in after and "Classifier v2" not in after
+    assert "no run (LAU current)" in after  # the fixture's runs are on v2 only
+
+
+@pytest.mark.parametrize("host", ["attacker.example", "192.168.1.10", "127.0.0.1.nip.io"])
+def test_foreign_host_header_is_refused(client, host):
+    """DNS rebinding: a page that points its own name at 127.0.0.1 gets no data."""
+    for path in ["/", "/data/all.csv", "/city/berlin"]:
+        r = client.get(path, headers={"Host": host})
+        assert r.status_code == 400, (path, host)
+        assert "berlin" not in r.text
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1:8766", "localhost:8000", "[::1]:8000", "localhost"])
+def test_loopback_host_headers_are_served(client, host):
+    assert client.get("/data/all.csv", headers={"Host": host}).status_code == 200
+
+
+def test_db_on_another_schema_version_is_503(setup, tmp_path):
+    db_path, cfg, maps, docs = setup
+    old = tmp_path / "v5.sqlite"
+    shutil.copy(db_path, old)
+    with sqlite3.connect(old) as c:
+        c.execute("PRAGMA user_version = 5")
+    with _client(create_app(old, cfg, maps, docs)) as c:
+        for path in ["/", "/city/berlin", "/data/all.csv"]:
+            r = c.get(path)
+            assert r.status_code == 503, path
+            assert "velometer migrate" in r.text
+
+
+def test_index_flagged_years_count_lau_only(client, monkeypatch):
+    from velometer.report.data import ReportData
+
+    real = ReportData.flags
+    monkeypatch.setattr(
+        ReportData,
+        "flags",
+        lambda self, city_id, kind: (
+            # seven FUA flags (copies of the real LAU one; only the count matters here)
+            real(self, city_id, "lau") * 7 if kind == "fua" else real(self, city_id, kind)
+        ),
+    )
+    html = client.get("/").text
+    assert "Flagged years (LAU)" in _headers(html)
+    row = re.search(r'<tr[^>]*>\s*<td[^>]*><a href="/city/berlin">.*?</tr>', html, re.S).group(0)
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+    assert cells[-1].strip() == "1"  # the fixture's one LAU flag (2025); FUA's 7 not counted
+
+
+def test_city_with_current_run_but_no_history(setup):
+    """Review Focus 2, reverse case: berlin/fua keeps its current run, its history fails."""
+    db_path, cfg, maps, docs = setup
+    with sqlite3.connect(db_path) as c:
+        c.execute(
+            "UPDATE runs SET status='failed' WHERE city_id='berlin' AND boundary_kind='fua' "
+            "AND source='history'"
+        )
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        r = c.get("/city/berlin")
+        assert r.status_code == 200
+        text = _text(r.text)
+        assert "no run (FUA history)" in text
+        assert "no run (FUA current)" not in text
+        csv = c.get("/data/berlin.csv").text.splitlines()
+    assert any(line.startswith("berlin,fua,current,") for line in csv)
+    assert not any(line.startswith("berlin,fua,20") for line in csv)
+
+
+def _css_rules(css: str) -> list[tuple[list[str], dict[str, str]]]:
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    rules = []
+    for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+        decls = dict(
+            (k.strip(), v.strip())
+            for k, _, v in (d.partition(":") for d in body.split(";") if ":" in d)
+        )
+        rules.append(([s.strip() for s in sel.split(",")], decls))
+    return rules
+
+
+def test_table_cells_never_break_inside_words():
+    """A table must overflow into its .scroll box, not shrink letter by letter: no inherited
+    `overflow-wrap: anywhere` reaches a cell, headers do not wrap, and code in cells stays whole."""
+    rules = _css_rules((VENDOR.parent / "app.css").read_text())
+
+    def decl(selector, prop):
+        found = [d[prop] for sels, d in rules if selector in sels and prop in d]
+        return found[-1] if found else None
+
+    for ancestor in ["html", "body", "*", "main", "table", "tr", "thead", "tbody"]:
+        assert decl(ancestor, "overflow-wrap") in (None, "normal"), ancestor
+    for cell in ["th", "td", "th *", "td *"]:
+        assert decl(cell, "overflow-wrap") == "normal", cell
+    assert decl("th", "white-space") == "nowrap"
+    assert decl("td code", "white-space") == "nowrap"

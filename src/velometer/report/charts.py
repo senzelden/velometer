@@ -12,7 +12,7 @@ import altair as alt
 import vl_convert as vlc
 
 from velometer import timeseries as ts
-from velometer.report.data import ReportData
+from velometer.report.data import HEADLINE_UNIT, ReportData
 
 ATTRIBUTION = (
     "Map data © OpenStreetMap contributors, ODbL 1.0 · OSM mapped km, not built km (ADR 0006)"
@@ -99,7 +99,7 @@ def headline_over_time(data: ReportData) -> dict:
     rows = _headline_rows(data)
     names, colours = _city_domain(data)
     x = alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0))
-    y = alt.Y("headline:Q", title="Protected share of main roads, %", scale=alt.Scale(zero=True))
+    y = alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True))
     colour = alt.Color(
         "city:N", scale=alt.Scale(domain=names, range=colours), title="City", legend=alt.Legend()
     )
@@ -107,7 +107,7 @@ def headline_over_time(data: ReportData) -> dict:
         alt.Tooltip("city:N"),
         alt.Tooltip("kind:N"),
         alt.Tooltip("label:N"),
-        alt.Tooltip("headline:Q", format=".2f"),
+        alt.Tooltip("headline:Q", format=".2f", title="A+B km per 100 km main roads"),
         alt.Tooltip("ab_km:Q", format=".1f"),
         alt.Tooltip("flags:N"),
     ]
@@ -242,7 +242,8 @@ def rankings_flip(data: ReportData) -> dict:
                 alt.Tooltip("source:N"),
                 alt.Tooltip("city:N"),
                 alt.Tooltip("rank:Q"),
-                alt.Tooltip("value:Q", format=".2f", title="protected share, %"),
+                # each source has its own unit and denominator (report.yaml notes, methodology)
+                alt.Tooltip("value:Q", format=".2f", title="value"),
             ],
         )
         .properties(

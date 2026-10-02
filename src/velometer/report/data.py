@@ -21,6 +21,8 @@ from velometer.config import (
     load_report,
 )
 from velometer.db import (
+    SCHEMA_VERSION,
+    SchemaError,
     fetch_cities,
     fetch_external_figures,
     fetch_run,
@@ -32,6 +34,14 @@ from velometer.selection import report_selector
 
 KINDS = ("lau", "fua")
 CSV_PRESETS = ("ours_headline", "ecf_qecio", "clean_cities_2025")
+# What each road class (a preset's denominator) is, in words for the report surfaces.
+ROAD_CLASS_TEXT = {
+    "main_excl_motorway": "main roads (excl. motorways)",
+    "main_incl_motorway": "main roads (incl. motorways)",
+    "main_incl_motorway_raw": "main roads (incl. motorways, per carriageway)",
+    "all_public": "all public roads",
+}
+HEADLINE_UNIT = f"A+B km per 100 km of {ROAD_CLASS_TEXT['main_excl_motorway']}"
 
 
 class _Frozen(BaseModel):
@@ -68,12 +78,33 @@ class RankEntry(_Frozen):
 
 
 def open_readonly(db_path: Path) -> sqlite3.Connection:
-    """The database opened read-only (`mode=ro`); FileNotFoundError when it does not exist."""
+    """The database opened read-only (`mode=ro`).
+
+    FileNotFoundError when it does not exist; SchemaError when its schema is not this
+    velometer's (`SCHEMA_VERSION`): an older one needs `velometer migrate`, which this read-only
+    path never runs.
+    """
     db_path = Path(db_path)
     if not db_path.is_file():
         raise FileNotFoundError(f"database not found: {db_path}")
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
+    try:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+    except sqlite3.Error:
+        conn.close()
+        raise
+    if version != SCHEMA_VERSION:
+        conn.close()
+        hint = (
+            "run `velometer migrate`"
+            if version < SCHEMA_VERSION
+            else "upgrade velometer to read it"
+        )
+        raise SchemaError(
+            f"database {db_path} has schema v{version}, this velometer reads "
+            f"v{SCHEMA_VERSION}: {hint}"
+        )
     return conn
 
 
@@ -110,6 +141,22 @@ class ReportData:
         self.years = load_history(self.config_dir / "history.yaml").year_range()
         self._cities: list[City] | None = None
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
+
+    def preset_labels(self) -> dict[str, str]:
+        """Each preset's label, from its `kind: preset` ranking in report.yaml ("Ours: ..."):
+        these are our values on a publisher's method, never the published figure. A preset
+        without a ranking falls back to "Ours: <id>"."""
+        labels = {
+            r.preset: r.label for r in self.report_config.rankings if isinstance(r, PresetRanking)
+        }
+        return {p.id: labels.get(p.id, f"Ours: {p.id}") for p in self.selector.presets.presets}
+
+    def preset_units(self) -> dict[str, str]:
+        """What each preset's value measures: its tiers' km per 100 km of its own denominator."""
+        return {
+            p.id: f"{'+'.join(p.tiers)} km per 100 km of {ROAD_CLASS_TEXT[p.denominator]}"
+            for p in self.selector.presets.presets
+        }
 
     def cities(self) -> list[City]:
         if self._cities is None:

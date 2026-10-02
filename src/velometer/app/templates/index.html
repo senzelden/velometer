@@ -3,8 +3,10 @@
 {% block title %}velometer · cities{% endblock %}
 {% block content %}
 <h1>Protected cycling infrastructure</h1>
-<p class="lede">Current LAU run per city, on the report classifier. Shares are percent of main
-roads; km are OSM mapped km per side.</p>
+<p class="lede">Current LAU run per city, on the report classifier. The headline is
+{{ headline_unit }}. Each preset divides by its own denominator (see the
+<a href="/methodology">methodology</a>); all values are ours, computed on each publisher's method,
+not the published figures. km are OSM mapped km per side.</p>
 
 <section>
 <h2>Cities</h2>
@@ -12,19 +14,19 @@ roads; km are OSM mapped km per side.</p>
 <table>
 <thead><tr>
   <th>City</th>
-  {% for p in preset_ids %}<th class="num">{{ preset_label[p] }}, %</th>{% endfor %}
+  {% for p in preset_label %}<th class="num" title="{{ preset_unit[p] }}">{{ preset_label[p] }}</th>{% endfor %}
   <th class="num">A+B km</th>
-  <th class="num">Flagged years</th>
+  <th class="num">Flagged years (LAU)</th>
 </tr></thead>
 <tbody>
 {% for r in rows %}
 <tr>
   <td><a href="/city/{{ r.city.id }}">{{ r.city.name }}</a></td>
   {% if r.point %}
-  {% for p in preset_ids %}<td class="num">{{ r.presets.get(p) | num }}</td>{% endfor %}
+  {% for p in preset_label %}<td class="num">{{ r.presets.get(p) | num }}</td>{% endfor %}
   <td class="num">{{ r.point.ab_km | num }}</td>
   {% else %}
-  <td class="note" colspan="{{ preset_ids | length + 1 }}">no run (LAU current)</td>
+  <td class="note" colspan="{{ preset_label | length + 1 }}">no run (LAU current)</td>
   {% endif %}
   <td class="num">{{ r.flags }}</td>
 </tr>
@@ -32,6 +34,9 @@ roads; km are OSM mapped km per side.</p>
 </tbody>
 </table>
 </div>
+<ul class="meta units">
+{% for p in preset_label %}<li><strong>{{ preset_label[p] }}:</strong> {{ preset_unit[p] }}</li>
+{% endfor %}</ul>
 </section>
 
 <section>

@@ -1,6 +1,9 @@
 import csv
 import io
+import shutil
+import sqlite3
 
+import pytest
 from typer.testing import CliRunner
 
 from tests.report_fixture import (
@@ -104,3 +107,40 @@ def test_cli_report_csv_errors(fixture_db, tmp_path):
         ["report", "csv", "--db", str(db_path), "--config-dir", str(cfg), "--city", "nowhere"],
     )
     assert res.exit_code == 1 and "unknown city" in res.output
+
+
+REPORT_COMMANDS = [["csv"], ["charts"], ["methodology", "--check"], ["maps"]]
+
+
+def _report_args(command, db_path, cfg, tmp_path):
+    args = ["report", *command, "--db", str(db_path), "--config-dir", str(cfg)]
+    if command[0] == "charts":
+        args += ["--out", str(tmp_path / "charts")]
+    if command[0] == "methodology":
+        args += ["--docs", str(tmp_path / "docs")]
+    if command[0] == "maps":
+        args += ["--data", str(tmp_path / "data")]
+    return args
+
+
+@pytest.mark.parametrize("command", REPORT_COMMANDS, ids=lambda c: c[0])
+def test_report_commands_exit_1_on_a_bad_config(fixture_db, tmp_path, command):
+    db_path, cfg, _, _ = fixture_db
+    (cfg / "report.yaml").write_text("report_classifier: v2\nrankings: [{kind: nope}]\n")
+    res = CliRunner().invoke(app, _report_args(command, db_path, cfg, tmp_path))
+    assert res.exit_code == 1, res.output
+    assert "report.yaml" in res.output  # names the bad file
+    assert isinstance(res.exception, SystemExit)  # a message, not a traceback
+
+
+@pytest.mark.parametrize("command", REPORT_COMMANDS, ids=lambda c: c[0])
+def test_report_commands_exit_1_on_an_unmigrated_db(fixture_db, tmp_path, command):
+    db_path, cfg, _, _ = fixture_db
+    old = tmp_path / "v5.sqlite"
+    shutil.copy(db_path, old)
+    with sqlite3.connect(old) as c:
+        c.execute("PRAGMA user_version = 5")
+    res = CliRunner().invoke(app, _report_args(command, old, cfg, tmp_path))
+    assert res.exit_code == 1, res.output
+    assert "velometer migrate" in res.output
+    assert isinstance(res.exception, SystemExit)
