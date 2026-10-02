@@ -258,6 +258,8 @@ class HistoryConfig(_Strict):
     """Which yearly history series exist and which boundary kinds each city must have."""
 
     years: str = Field(pattern=r"^\d{4}-\d{4}$")
+    # classifier version whose runs the published time series reports (`timeseries` default)
+    report_classifier: str = Field(pattern=r"^v\d+$")
     required_kinds: dict[str, list[str]]
 
     @model_validator(mode="after")

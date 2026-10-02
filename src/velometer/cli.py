@@ -836,7 +836,12 @@ def timeseries(
         "--boundary",
         help="lau or fua; default both (--check requires the kinds in config/history.yaml).",
     ),
-    classifier: str = CLASSIFIER_REPORT_OPT,
+    classifier: str | None = typer.Option(
+        None,
+        "--classifier",
+        help="Report runs of this classifier with its default parameters"
+        " (default: report_classifier in config/history.yaml).",
+    ),
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
     check: bool = typer.Option(
         False,
@@ -863,12 +868,12 @@ def timeseries(
         raise typer.Exit(2)
     wanted = {c.id for c in _select_cities(config_dir, city or None)}
     kinds = (boundary,) if boundary else ("lau", "fua")
-    sel = run_selector(config_dir, classifier)
     try:
         cfg = load_activity(config_dir / "activity.yaml")
         history_cfg = load_history(config_dir / "history.yaml")
     except ConfigError as e:
         raise _config_error(e) from e
+    sel = run_selector(config_dir, classifier or history_cfg.report_classifier)
     built: dict[tuple[str, str], ts.CitySeries] = {}
     with _open_schema(db) as conn:
         for c in _all_cities(config_dir):

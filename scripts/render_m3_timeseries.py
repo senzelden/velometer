@@ -22,7 +22,6 @@ from velometer.timeseries import CURRENT, TIERS, build_city, city_flags  # noqa:
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "velometer.sqlite"
 OUT = ROOT / "docs" / "review" / "m3_timeseries.png"
-CLASSIFIER = "v1"  # with its default parameters, as `velometer timeseries`
 FUA_CITIES = ("berlin", "paris")
 SPARSE = ("2018", "2022")  # year ticks shown on the small multiples
 TIER_LABEL = {
@@ -49,7 +48,9 @@ def x_of(label: str, years: range) -> int:
 
 def load(db: Path) -> tuple[dict, dict, dict, Selector]:
     """(city, kind) -> CitySeries, (city, kind) -> {label: Flag}, run_id -> run row."""
-    sel = run_selector(default_config_dir(), CLASSIFIER)  # the runs `velometer timeseries` shows
+    history = load_history(default_config_dir() / "history.yaml")
+    # the runs `velometer timeseries` shows: its default classifier, default parameters
+    sel = run_selector(default_config_dir(), history.report_classifier)
     activity = load_activity(default_config_dir() / "activity.yaml")
     built, flagged, runs = {}, {}, {}
     with open_db(db) as conn:

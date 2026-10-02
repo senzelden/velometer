@@ -27,13 +27,16 @@ ACTIVITY_SHA = T.activity_sha(CFG_DIR / "activity.yaml")
 CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
 
 
-def config_dir(tmp_path, years="2019-2021") -> Path:
-    """A copy of config/ whose history.yaml series is `years` (same classifier/presets sha)."""
+def config_dir(tmp_path, years="2019-2021", report_classifier="v1") -> Path:
+    """A copy of config/ whose history.yaml series is `years` and whose report classifier is
+    the one the fake runs use (run_history's default, v1); classifier/presets sha unchanged."""
     d = tmp_path / "config"
     if not d.exists():
         shutil.copytree(CFG_DIR, d)
     text = (CFG_DIR / "history.yaml").read_text()
-    (d / "history.yaml").write_text(re.sub(r'years: "[^"]*"', f'years: "{years}"', text))
+    text = re.sub(r'years: "[^"]*"', f'years: "{years}"', text)
+    text = re.sub(r"report_classifier: \S+", f"report_classifier: {report_classifier}", text)
+    (d / "history.yaml").write_text(text)
     return d
 
 
@@ -616,3 +619,19 @@ def test_adr_0005_note_counts_history_runs_as_series_times_years():
     m = re.search(r"(\d+) history runs \((\d+) city/boundary series × (\d+) years", text)
     assert m is not None
     assert int(m[1]) == int(m[2]) * int(m[3])
+
+
+def test_report_classifier_is_v2_in_the_shipped_config():
+    from velometer.config import load_history
+
+    assert load_history(CFG_DIR / "history.yaml").report_classifier == "v2"
+
+
+def test_cli_timeseries_defaults_to_the_report_classifier(db, tmp_path):
+    # db holds v1 history runs only: v1 as report classifier finds them, v2 does not
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    assert "no history runs" not in _ts(db, report).output
+    hist = db[2] / "history.yaml"
+    hist.write_text(hist.read_text().replace("report_classifier: v1", "report_classifier: v2"))
+    assert "no history runs for berlin/lau" in _ts(db, report, "--check").output
+    assert "no history runs" not in _ts(db, report, "--classifier", "v1").output
