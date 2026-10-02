@@ -197,6 +197,9 @@ def tiers_small_multiples(data: ReportData) -> dict:
         base.facet(facet=alt.Facet("city:N", title=None), columns=3)
         .properties(title=_title("Tier composition per city (LAU)"))
         .resolve_scale(y="independent")
+        # one x axis per panel: a wrapped facet otherwise draws a column's axis under its last
+        # row, which for a short last row is an empty cell
+        .resolve_axis(x="independent")
     )
     return _config(chart).to_dict()
 

@@ -158,3 +158,10 @@ def test_report_charts_cli_writes_into_out_dir(fixture_db, tmp_path):
     assert (out / "m4_rankings.png").stat().st_size > 1000
     missing = CliRunner().invoke(app, ["report", "charts", "--db", str(tmp_path / "no.sqlite")])
     assert missing.exit_code == 1
+
+
+def test_tier_small_multiples_give_every_panel_its_own_x_axis(fixture_data):
+    # wrapped facets share one x axis per column, drawn under the column's last row: with five
+    # cities in three columns, Paris's year labels landed under the empty sixth cell
+    spec = tiers_small_multiples(fixture_data)
+    assert spec["resolve"]["axis"]["x"] == "independent"
