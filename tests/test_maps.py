@@ -163,3 +163,22 @@ def test_tier_sides_omits_excluded_and_untiered(fixture_db, monkeypatch):
         maps, "classify_ways", lambda ways, cfg: [classified(t) for t in ("A", "excluded", None)]
     )
     assert {t: len(v) for t, v in maps.tier_sides(Path("x"), cfg, "v2", 25833).items()} == {"A": 1}
+
+
+def test_legend_and_footer_stay_inside_the_figure(tmp_path, monkeypatch):
+    # the legend sat right of the axes and its longest label ran off the PNG's right edge
+    from shapely.geometry import LineString
+
+    figs = []
+    monkeypatch.setattr(maps.plt, "close", figs.append)
+    sides = {t: [LineString([(0, 0), (1000, 1000)])] for t in maps.TIERS}
+    maps._draw(sides, None, "Berlin (LAU): protected cycling tiers", "footer", tmp_path / "m.png")
+    (fig,) = figs
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    box = fig.bbox
+    legend = fig.axes[0].get_legend().get_window_extent(renderer)
+    assert box.x0 <= legend.x0 and legend.x1 <= box.x1 and legend.y1 <= box.y1
+    for text in fig.texts:
+        ext = text.get_window_extent(renderer)
+        assert box.x0 <= ext.x0 and ext.x1 <= box.x1

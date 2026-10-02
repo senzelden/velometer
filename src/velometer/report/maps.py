@@ -88,7 +88,8 @@ def _draw(sides, outline, title: str, footer: str, out: Path) -> None:
     ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False,
               fontsize=9)  # fmt: skip
     fig.text(0.02, 0.015, footer, fontsize=8, color=INK_2, va="bottom")
-    fig.subplots_adjust(left=0.02, right=0.78, top=0.94, bottom=0.07)
+    # the legend sits right of the axes: leave room for its longest label inside the figure
+    fig.subplots_adjust(left=0.02, right=0.74, top=0.94, bottom=0.07)
     plt.savefig(out, dpi=DPI)
     plt.close(fig)
 
