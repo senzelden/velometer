@@ -256,6 +256,7 @@ def _current_deps(tmp_path):
         city_boundary=h.city_boundary,
         snapshot=lambda *a, **k: MINI,
         read_ways=read_ways,
+        region_uncovered_km2=lambda *a: (0.0, 1.0),
     )
 
 

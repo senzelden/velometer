@@ -130,21 +130,51 @@ def fetch_index(
 
 
 def load_index(path: Path) -> dict[str, dict]:
-    """Map region id to {"geometry": WGS84 geom, "parent": id or None, "history": url or None}."""
+    """Map region id to {"geometry": WGS84 geom, "parent": id or None, "history": url or None,
+    "pbf": url or None}."""
     out: dict[str, dict] = {}
     for f in json.loads(path.read_text())["features"]:
         p = f["properties"]
+        urls = p.get("urls") or {}
         out[p["id"]] = {
             "geometry": shape(f["geometry"]),
             "parent": p.get("parent"),
-            "history": (p.get("urls") or {}).get("history"),
+            "history": urls.get("history"),
+            "pbf": urls.get("pbf"),
         }
     return out
+
+
+def region_geometry(index: dict[str, dict], region: str) -> BaseGeometry:
+    """WGS84 geometry of a download path such as `europe/germany/berlin`, found by its pbf URL."""
+    url = f"{BASE}/{region}-latest.osm.pbf"
+    for v in index.values():
+        if v.get("pbf") == url:
+            return v["geometry"]
+    raise ValueError(f"region {region} is not in the Geofabrik index")
 
 
 def _project(geom: BaseGeometry, src: int, dst: int) -> BaseGeometry:
     tf = Transformer.from_crs(src, dst, always_xy=True)
     return transform(tf.transform, geom)
+
+
+def to_3035(geom_wgs84: BaseGeometry) -> BaseGeometry:
+    return _project(geom_wgs84, 4326, 3035)
+
+
+def tolerance_m2(
+    target_3035: BaseGeometry, *, tolerance_frac: float = 0.001, tolerance_km2: float = 1.0
+) -> float:
+    """Uncovered area accepted as covered: max(tolerance_frac of the target, tolerance_km2)."""
+    return max(tolerance_frac * target_3035.area, tolerance_km2 * 1e6)
+
+
+def uncovered_m2(target_3035: BaseGeometry, geoms_3035: list[BaseGeometry]) -> float:
+    """Area of the target outside the union of geoms (all EPSG:3035)."""
+    if not geoms_3035:
+        return target_3035.area
+    return target_3035.difference(unary_union(geoms_3035)).area
 
 
 @dataclass(frozen=True)
@@ -169,21 +199,20 @@ def regions_for(
     greedily, largest first, while the rest still cover, so specific regions beat aggregates.
     Raises ValueError when the leaves cannot cover the polygon within tolerance.
     """
-    to_3035 = Transformer.from_crs(4326, 3035, always_xy=True).transform
-    target = transform(to_3035, polygon_wgs84)
+    target = to_3035(polygon_wgs84)
     if buffer_m:
         target = target.buffer(buffer_m)
-    near = transform(Transformer.from_crs(3035, 4326, always_xy=True).transform, target)
-    tol_m2 = max(tolerance_frac * target.area, tolerance_km2 * 1e6)
+    near = _project(target, 3035, 4326)
+    tol_m2 = tolerance_m2(target, tolerance_frac=tolerance_frac, tolerance_km2=tolerance_km2)
     parents = {v["parent"] for v in index.values()}
     leaves = {
-        r: transform(to_3035, v["geometry"])
+        r: to_3035(v["geometry"])
         for r, v in index.items()
         if r not in parents and v["history"] and v["geometry"].intersects(near)
     }
 
     def uncovered(ids: list[str]) -> float:
-        return target.difference(unary_union([leaves[r] for r in ids])).area if ids else target.area
+        return uncovered_m2(target, [leaves[r] for r in ids])
 
     def selection(ids: list[str]) -> RegionSelection:
         return RegionSelection(sorted(ids), uncovered(ids) / 1e6)

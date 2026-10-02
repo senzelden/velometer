@@ -46,8 +46,36 @@ from velometer.sources.boundaries import city_boundary as _city_boundary
 from velometer.sources.geofabrik import fetch_history as _fetch_history
 from velometer.sources.geofabrik import fetch_index as _fetch_index
 from velometer.sources.geofabrik import fetch_region as _fetch_region
-from velometer.sources.geofabrik import history_set_md5, regions_for
+from velometer.sources.geofabrik import (
+    history_set_md5,
+    region_geometry,
+    regions_for,
+    to_3035,
+    tolerance_m2,
+    uncovered_m2,
+)
 from velometer.sources.geofabrik import load_index as _load_index
+
+
+def region_uncovered_km2(
+    region: str, polygon_city_epsg, epsg: int, index: dict[str, dict]
+) -> tuple[float, float]:
+    """(km² of the polygon outside the region's extract, km² accepted as covered).
+
+    Measured in EPSG:3035 with the regions_for tolerance, so a current run and a history run
+    call the same boundary covered.
+    """
+    to_wgs84 = Transformer.from_crs(epsg, 4326, always_xy=True).transform
+    target = to_3035(transform(to_wgs84, polygon_city_epsg))
+    region_3035 = to_3035(region_geometry(index, region))
+    return uncovered_m2(target, [region_3035]) / 1e6, tolerance_m2(target) / 1e6
+
+
+def _region_uncovered_km2(
+    region: str, polygon_city_epsg, epsg: int, data_dir: Path
+) -> tuple[float, float]:
+    index = _load_index(_fetch_index(data_dir).path)
+    return region_uncovered_km2(region, polygon_city_epsg, epsg, index)
 
 
 @dataclass(frozen=True)
@@ -56,6 +84,7 @@ class RunDeps:
     city_boundary: Callable = _city_boundary
     snapshot: Callable = _snapshot
     read_ways: Callable = _read_ways
+    region_uncovered_km2: Callable = _region_uncovered_km2
 
 
 @dataclass(frozen=True)
@@ -134,6 +163,14 @@ def run_city(
     try:
         region = deps.fetch_region(city.geofabrik_region, data_dir)
         rec, pop = deps.city_boundary(city, boundary_kind, data_dir, region_path=region.path)
+        uncovered, tolerance = deps.region_uncovered_km2(
+            city.geofabrik_region, rec.polygon, city.epsg, data_dir
+        )
+        if uncovered > tolerance:  # e.g. a FUA reaching past the city's own extract (R18)
+            raise ValueError(
+                f"{city.id}/{boundary_kind}: region {city.geofabrik_region} leaves "
+                f"{uncovered:.1f} km² of the boundary uncovered; use run --years for this boundary"
+            )
         upsert_boundary(conn, rec.boundary)
         if pop is not None:
             set_population(conn, city.id, pop)

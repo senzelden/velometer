@@ -45,6 +45,7 @@ def _deps(tmp_path, calls, read=None, population=100_000):
         city_boundary=city_boundary,
         snapshot=snapshot,
         read_ways=read or read_ways,
+        region_uncovered_km2=lambda *a: (0.0, 1.0),  # coverage has its own tests
     )
 
 
@@ -172,6 +173,88 @@ def test_failure_before_the_run_starts_is_reported_not_raised(conn, tmp_path):
     out = _run(conn, tmp_path, R.RunDeps(**{**deps.__dict__, "city_boundary": bad_boundary}))
     assert out.status == "failed" and out.run_id is None and "Eurostat" in out.error
     assert conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+
+
+BERLIN_BOX = box(380_000, 5_810_000, 410_000, 5_840_000)  # EPSG:25833, 900 km², holds MINI
+
+
+def _guarded(tmp_path, region_25833):
+    """Deps with a realistic boundary and a fake index whose Berlin extract is region_25833."""
+    from pyproj import Transformer
+    from shapely.ops import transform
+
+    from velometer.sources.geofabrik import BASE
+
+    to_wgs84 = Transformer.from_crs(CITY.epsg, 4326, always_xy=True).transform
+    index = {
+        "berlin": {
+            "geometry": transform(to_wgs84, region_25833),
+            "parent": "germany",
+            "history": None,
+            "pbf": f"{BASE}/{CITY.geofabrik_region}-latest.osm.pbf",
+        }
+    }
+    deps = _deps(tmp_path, [])
+
+    def city_boundary(city, kind, data_dir, region_path=None):
+        rec, pop = deps.city_boundary(city, kind, data_dir, region_path)
+        return BoundaryRecord(rec.boundary, rec.geojson_path, BERLIN_BOX), pop
+
+    return R.RunDeps(
+        **{
+            **deps.__dict__,
+            "city_boundary": city_boundary,
+            "region_uncovered_km2": lambda region, poly, epsg, data_dir: R.region_uncovered_km2(
+                region, poly, epsg, index
+            ),
+        }
+    )
+
+
+def test_boundary_the_region_does_not_cover_fails_before_any_run_row(conn, tmp_path):
+    inside = box(390_000, 5_820_000, 400_000, 5_830_000)  # extract smaller than the boundary
+    out = _run(conn, tmp_path, _guarded(tmp_path, inside), boundary_kind="fua")
+    assert out.status == "failed" and out.run_id is None
+    assert "uncovered" in out.error and "berlin/fua" in out.error
+    assert conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+
+
+def test_boundary_inside_the_region_runs(conn, tmp_path):
+    out = _run(conn, tmp_path, _guarded(tmp_path, BERLIN_BOX.buffer(5_000)))
+    assert out.status == "done", out.error
+
+
+def test_uncovered_sliver_within_tolerance_runs_and_above_it_fails(conn, tmp_path):
+    # tolerance is max(0.1% of 900 km², 1 km²) = 1 km²; a 30 km long strip of width w is left out
+    def short_by(w):
+        return box(380_000 + w, 5_809_000, 411_000, 5_841_000)
+
+    assert _run(conn, tmp_path, _guarded(tmp_path, short_by(20))).status == "done"  # 0.6 km²
+    out = _run(conn, tmp_path, _guarded(tmp_path, short_by(50)), boundary_kind="fua")  # 1.5 km²
+    assert out.status == "failed" and "uncovered" in out.error
+
+
+def test_region_uncovered_km2_matches_the_regions_for_rule():
+    from pyproj import Transformer
+    from shapely.ops import transform
+
+    from velometer.sources.geofabrik import BASE
+
+    to_wgs84 = Transformer.from_crs(CITY.epsg, 4326, always_xy=True).transform
+    region = box(390_000, 5_810_000, 410_000, 5_840_000)  # leaves 300 km² of BERLIN_BOX out
+    index = {
+        "x": {
+            "geometry": transform(to_wgs84, region),
+            "pbf": f"{BASE}/{CITY.geofabrik_region}-latest.osm.pbf",
+        }
+    }
+    uncovered, tolerance = R.region_uncovered_km2(
+        CITY.geofabrik_region, BERLIN_BOX, CITY.epsg, index
+    )
+    assert uncovered == pytest.approx(300, rel=0.01)
+    assert tolerance == pytest.approx(1.0)
+    with pytest.raises(ValueError, match="not in the Geofabrik index"):
+        R.region_uncovered_km2("europe/nowhere", BERLIN_BOX, CITY.epsg, index)
 
 
 def test_missing_population_leaves_per_100k_null(conn, tmp_path):
