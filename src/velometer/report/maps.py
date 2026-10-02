@@ -73,7 +73,9 @@ def _draw(sides, outline, title: str, footer: str, out: Path) -> None:
     fig, ax = plt.subplots(figsize=(9, 9))
     if outline is not None:
         for poly in getattr(outline, "geoms", [outline]):
-            ax.plot(*poly.exterior.xy, color=OUTLINE, linewidth=0.8, zorder=1)
+            # interior rings too: an enclave (Frederiksberg in København) is not city area
+            for ring in (poly.exterior, *poly.interiors):
+                ax.plot(*ring.xy, color=OUTLINE, linewidth=0.8, zorder=1)
     for i, tier in enumerate(TIERS):  # A drawn last: on top where sides overlap
         for line in sides.get(tier, []):
             ax.plot(*line.xy, color=TIER_COLOURS[i], linewidth=1.1, zorder=10 - i,

@@ -182,3 +182,18 @@ def test_legend_and_footer_stay_inside_the_figure(tmp_path, monkeypatch):
     for text in fig.texts:
         ext = text.get_window_extent(renderer)
         assert box.x0 <= ext.x0 and ext.x1 <= box.x1
+
+
+def test_outline_draws_interior_rings(tmp_path, monkeypatch):
+    # a city boundary with an enclave (København around Frederiksberg) must show the hole's
+    # edge, or the enclave reads as part of the city with no infrastructure in it
+    from shapely.geometry import Polygon
+
+    figs = []
+    monkeypatch.setattr(maps.plt, "close", figs.append)
+    hole = [(4, 4), (6, 4), (6, 6), (4, 6)]
+    outline = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)], [hole])
+    maps._draw({}, outline, "title", "footer", tmp_path / "m.png")
+    (fig,) = figs
+    drawn = [set(zip(*line.get_data(), strict=True)) for line in fig.axes[0].get_lines()]
+    assert any({(float(x), float(y)) for x, y in hole} <= d for d in drawn)
