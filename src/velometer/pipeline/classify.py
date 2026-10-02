@@ -36,7 +36,7 @@ def classify(side: WaySide, cfg: ClassifierConfig) -> Classified:
     for rule in cfg.rules:
         if rule.applies_to not in ("any", side.kind):
             continue
-        if matches(rule.match, side.tags, cfg.value_lists):
+        if matches(rule.match, side.tags, cfg.value_lists, cfg.value_separators):
             return Classified(side, rule.tier, rule.subtype, rule.id, {**attrs, **rule.attrs})
     if side.kind == "road_side" and "cycleway" in side.tags:
         attrs["unknown_value"] = side.tags["cycleway"]

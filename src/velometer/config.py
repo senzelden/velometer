@@ -84,6 +84,9 @@ class ClassifierConfig(_Strict):
     parameters: ClassifierParameters = ClassifierParameters()
     road_classes: RoadClasses
     value_lists: dict[str, list[str]]
+    # separators between multiple values of one tag; v1 splits on `;` only (OSM convention),
+    # v2 also on `,` (common mistagging such as `share_busway,track`)
+    value_separators: list[str] = Field(default_factory=lambda: [";"], min_length=1)
     rules: list[Rule]
 
     def with_parameters(self, **overrides: str) -> "ClassifierConfig":

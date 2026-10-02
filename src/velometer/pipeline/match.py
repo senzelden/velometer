@@ -1,6 +1,6 @@
 """Evaluator for classifier rule match expressions (spec §4, classify.py grammar)."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from velometer.pipeline.tags import parts
@@ -28,17 +28,23 @@ def _check(parts: set[str], cond: Any, lists: Mapping[str, list[str]]) -> bool:
     return bool(parts & allowed)
 
 
-def matches(expr: dict, tags: Mapping[str, str], lists: Mapping[str, list[str]]) -> bool:
-    """True if every entry of `expr` holds. Keys are `all`/`any`/`not` or tag keys."""
+def matches(
+    expr: dict,
+    tags: Mapping[str, str],
+    lists: Mapping[str, list[str]],
+    separators: Sequence[str] = (";",),
+) -> bool:
+    """True if every entry of `expr` holds. Keys are `all`/`any`/`not` or tag keys.
+    Tag values are split into parts on `separators` (the classifier's `value_separators`)."""
     for key, cond in expr.items():
         if key == "all":
-            ok = all(matches(e, tags, lists) for e in cond)
+            ok = all(matches(e, tags, lists, separators) for e in cond)
         elif key == "any":
-            ok = any(matches(e, tags, lists) for e in cond)
+            ok = any(matches(e, tags, lists, separators) for e in cond)
         elif key == "not":
-            ok = not matches(cond, tags, lists)
+            ok = not matches(cond, tags, lists, separators)
         else:
-            ok = _check(set(parts(tags.get(key))), cond, lists)
+            ok = _check(set(parts(tags.get(key), separators)), cond, lists)
         if not ok:
             return False
     return True

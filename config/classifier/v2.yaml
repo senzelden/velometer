@@ -1,0 +1,191 @@
+# `yes`/`no` are quoted: PyYAML (YAML 1.1) would otherwise read them as booleans.
+version: v2
+# v2 = v1 plus the gaps found on real 2018-2026 data in M3 (docs/superpowers/rulings-m3.md),
+# decided by the user on 2026-10-02: use_sidepath, shoulder, crossing and untyped `yes` are
+# recognised but not counted, and `,` separates multiple values like `;`. Every rule and value
+# v1 recognised classifies the same.
+parameters:
+  # Plain `cycleway=<v>` on a oneway road (oneway=yes|-1, roundabouts):
+  #   traffic_side: only the side traffic flows on (right; left for oneway=-1)
+  #   both_sides:   both sides, the literal reading of `cycleway=*`
+  # Every `velometer classify` run prints the mode and the km a switch would move.
+  # Override per run with --plain-cycleway-on-oneway.
+  plain_cycleway_on_oneway: traffic_side
+road_classes:
+  # highways whose cycleway side tags are exploded into left/right sides
+  carriageway: [motorway, motorway_link, trunk, trunk_link, primary, primary_link, secondary,
+                secondary_link, tertiary, tertiary_link, unclassified, residential, living_street,
+                service, road, busway]
+  # denominators (ADR 0003)
+  main: [trunk, trunk_link, primary, primary_link, secondary, secondary_link, tertiary,
+         tertiary_link]
+  motorway: [motorway, motorway_link]
+  local: [unclassified, residential, living_street, pedestrian]
+value_lists:
+  physical_separation: [kerb, separation_kerb, bollard, flex_post, vertical_panel, planter,
+                        parking_lane, fence, guard_rail, jersey_barrier, grass_verge, tree_row,
+                        bump, studs, barrier, hedge, ditch, wall, railing]
+  paint_separation: [solid_line, dashed_line, double_solid_line, "no", none]
+  bicycle_allowed: ["yes", designated, permissive]
+value_separators: [";", ","]
+rules:
+  # --- invalidating exclusions ---
+  - id: X_lifecycle
+    applies_to: standalone
+    tier: excluded
+    subtype: lifecycle
+    match: {highway: [construction, proposed]}
+  - id: X_construction_tag
+    applies_to: standalone
+    tier: excluded
+    subtype: lifecycle
+    match: {construction: "yes"}  # proposed=* on a built way is a planned change (R24)
+  - id: X_area
+    applies_to: standalone
+    tier: excluded
+    subtype: area
+    match: {area: "yes"}
+  - id: X_road_area
+    applies_to: road_side
+    tier: excluded
+    subtype: area
+    match: {"road:area": "yes"}
+  - id: X_private
+    applies_to: standalone
+    tier: excluded
+    subtype: private
+    match: {access: [private, "no"], bicycle: {not_in: [yes, designated, permissive]}}
+  - id: X_road_private
+    applies_to: road_side
+    tier: excluded
+    subtype: private
+    match: {"road:access": [private, "no"], "road:bicycle": {not_in: [yes, designated, permissive]}}
+  - id: X_road_construction
+    applies_to: road_side
+    tier: excluded
+    subtype: lifecycle
+    match:
+      any:
+        - {"road:construction": "yes"}
+        - {cycleway: [construction, proposed]}  # lifecycle value on the side itself
+  - id: X_bicycle_no
+    applies_to: standalone
+    tier: excluded
+    subtype: bicycle_no
+    match: {bicycle: ["no", dismount]}
+  - id: X_separate
+    applies_to: road_side
+    tier: excluded
+    subtype: separate
+    match: {cycleway: separate}
+  # --- tier A: separated cycle track ---
+  - id: A_cycleway
+    applies_to: standalone
+    tier: A
+    match:
+      highway: cycleway
+      any: [{foot: {not_in: [designated]}}, {segregated: "yes"}]
+  - id: B_track_shared
+    applies_to: road_side
+    tier: B
+    subtype: shared
+    match: {cycleway: track, "cycleway:segregated": "no"}
+  - id: A_track_side
+    applies_to: road_side
+    tier: A
+    match: {cycleway: track}
+  # --- tier B: shared foot/cycle path ---
+  - id: B_cycleway_foot
+    applies_to: standalone
+    tier: B
+    match: {highway: cycleway, foot: designated}
+  - id: A_path_cycle_only
+    applies_to: standalone
+    tier: A
+    match: {highway: path, bicycle: designated, foot: ["no"]}
+  - id: B_path_segregated
+    applies_to: standalone
+    tier: B
+    subtype: segregated
+    match: {highway: [path, footway, pedestrian], bicycle: designated, segregated: "yes"}
+  - id: B_path
+    applies_to: standalone
+    tier: B
+    match: {highway: [path, footway, pedestrian], bicycle: designated}
+  - id: B_sidewalk_designated
+    applies_to: road_side
+    tier: B
+    subtype: sidewalk
+    match: {sidewalk_bicycle: designated, cycleway: {not_in: [lane, share_busway]}}
+  - id: B_share_sidewalk
+    applies_to: road_side
+    tier: B
+    subtype: sidewalk
+    match: {cycleway: share_sidewalk}
+  # --- tier C/D: lanes ---
+  - id: C_lane_physical
+    applies_to: road_side
+    tier: C
+    match: {cycleway: lane, "cycleway:separation:traffic": {in_list: physical_separation}}
+  - id: D_lane_advisory
+    applies_to: road_side
+    tier: D
+    subtype: advisory
+    attrs: {advisory: true}
+    match: {cycleway: lane, "cycleway:lane": [advisory, pictogram]}
+  - id: D_lane
+    applies_to: road_side
+    tier: D
+    match: {cycleway: lane}
+  # --- tier E: cycle streets, bus lanes ---
+  - id: E_cycle_street
+    applies_to: standalone
+    tier: E
+    subtype: cycle_street
+    match: {any: [{bicycle_road: "yes"}, {cyclestreet: "yes"}, {cycle_street: "yes"}]}
+  - id: E_bus
+    applies_to: road_side
+    tier: E
+    subtype: bus
+    attrs: {bus: true}
+    match: {cycleway: share_busway}
+  # --- no infrastructure (diagnostic only) ---
+  - id: X_no
+    applies_to: road_side
+    tier: excluded
+    subtype: "no"
+    match: {cycleway: ["no", none]}
+  - id: X_shared_lane
+    applies_to: road_side
+    tier: excluded
+    subtype: shared_lane
+    attrs: {shared_lane: true}
+    match: {cycleway: [shared_lane, shared]}
+  - id: X_sidewalk_bicycle_permitted
+    applies_to: road_side
+    tier: excluded
+    subtype: sidewalk_permitted
+    match: {sidewalk_bicycle: ["yes", permissive]}
+  # --- v2: recognised, not counted (km stay visible per subtype) ---
+  - id: X_use_sidepath
+    applies_to: road_side
+    tier: excluded
+    subtype: use_sidepath
+    # cyclists must use a path mapped as its own way, which is counted there
+    match: {cycleway: use_sidepath}
+  - id: X_shoulder
+    applies_to: road_side
+    tier: excluded
+    subtype: shoulder
+    match: {cycleway: shoulder}
+  - id: X_crossing
+    applies_to: road_side
+    tier: excluded
+    subtype: crossing
+    match: {cycleway: crossing}
+  - id: X_untyped
+    applies_to: road_side
+    tier: excluded
+    subtype: untyped
+    # `cycleway=yes`: some cycling provision of unknown type; never assumed to be a lane
+    match: {cycleway: "yes"}
