@@ -259,6 +259,40 @@ def test_retrying_some_years_keeps_the_activity_of_every_year(conn, tmp_path):
     assert years == ACTIVITY_YEARS
 
 
+PRIVACY_OSH = Path(__file__).parent / "fixtures" / "history" / "privacy.osh"
+PRIVACY_UID, PRIVACY_USER = 987654321, "zz_mapper_name"  # the fixture's only mapper
+
+
+def _cells(conn):
+    """(table, column, value) of every cell of every table in the database."""
+    tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+    for t in tables:
+        cur = conn.execute(f'SELECT * FROM "{t}"')
+        cols = [d[0] for d in cur.description]
+        for row in cur:
+            yield from ((t, c, v) for c, v in zip(cols, row, strict=True))
+
+
+def test_no_mapper_id_or_name_reaches_the_database(conn, tmp_path):
+    """Spec §4: after a run with real activity over a history naming one mapper, no cell of any
+    table holds that mapper's uid or user name."""
+    fakes = Fakes(tmp_path)
+    deps = fakes.deps(city_history=lambda *a: PRIVACY_OSH, activity=R.HistoryDeps().activity)
+    out = R.run_history(
+        conn, CITY, range(2019, 2021), data_dir=tmp_path, config_dir=CFG_DIR, deps=deps
+    )
+    assert {o.status for o in out} == {"done"}
+    act = {a.year: a for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)}
+    assert act[2020].n_edits == 3 and act[2020].top_mapper_share == 1.0  # the fixture was read
+    leaks = [
+        (t, c, v)
+        for t, c, v in _cells(conn)
+        if (isinstance(v, int | float) and v == PRIVACY_UID)
+        or (isinstance(v, str) and (str(PRIVACY_UID) in v or PRIVACY_USER in v))
+    ]
+    assert leaks == []
+
+
 def _current_deps(tmp_path):
     from velometer.sources.geofabrik import RegionFile
 

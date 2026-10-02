@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="handwritten">
+ <way id="30" version="1" timestamp="2019-02-01T00:00:00Z" uid="987654321" user="zz_mapper_name" changeset="30" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+ <way id="30" version="2" timestamp="2019-03-01T00:00:00Z" uid="987654321" user="zz_mapper_name" changeset="31" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/><tag k="segregated" v="yes"/></way>
+ <way id="31" version="1" timestamp="2019-04-01T00:00:00Z" uid="987654321" user="zz_mapper_name" changeset="32" visible="true"><nd ref="1"/><nd ref="2"/><tag k="highway" v="cycleway"/></way>
+</osm>
