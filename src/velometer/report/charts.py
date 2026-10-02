@@ -26,6 +26,7 @@ TIER_LABEL = {
     "D": "D painted lane",
     "E": "E cycle street / bus lane",
 }
+OUTLINE = "#9a9994"  # the boundary outline on the tier maps (PNG and interactive)
 CITY_COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#7a5bd1", "#52514e"]
 NOW = "now"
 INK, INK_2, GRID = "#0b0b0b", "#52514e", "#e4e3df"

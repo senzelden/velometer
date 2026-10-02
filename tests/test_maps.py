@@ -204,8 +204,8 @@ def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
     conn, data, data_dir, maps_dir = placed
     snap = maps.snapshot_path(_row(conn, data), data_dir)
     snap.parent.mkdir(parents=True)
-    snap.write_bytes(b"")  # never read: tier_sides is stubbed
-    monkeypatch.setattr(maps, "tier_sides", lambda *a, **k: {})
+    snap.write_bytes(b"")  # never read: the classification is stubbed
+    monkeypatch.setattr(maps, "tiered", lambda *a, **k: ([], {}))
     drawn = []
     monkeypatch.setattr(
         maps, "_draw", lambda sides, outline, title, footer, out: drawn.append(footer)
@@ -214,3 +214,172 @@ def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
     assert len(drawn) == 1
     assert "© OpenStreetMap contributors, ODbL 1.0" in drawn[0]
     assert "OSM mapped km, not built km" in drawn[0]
+
+
+# --- GeoJSON for the interactive map -----------------------------------------------------------
+
+
+def _side(way_id, tier, side="right", coords=((13.123456789, 52.5), (13.13, 52.5000049))):
+    from velometer.pipeline.types import Classified, WaySide
+
+    ws = WaySide(way_id, side, "road_side", {"cycleway:right": "track"}, coords)
+    return Classified(ws, tier, "sub" if tier else None, f"R{way_id}" if tier else None, {})
+
+
+WAY_TAGS = {
+    "highway": "primary",
+    "cycleway": "track",
+    "cycleway:right": "track",
+    "cycleway:left:width": "2",
+    "sidewalk:bicycle": "yes",
+    "sidewalk:left:bicycle": "designated",
+    "bicycle": "use_sidepath",
+    "foot": "yes",
+    "segregated": "yes",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "bicycle_road": "yes",
+    "cyclestreet": "yes",
+    # not in the subset
+    "name": "Unter den Linden",
+    "surface": "asphalt",
+    "maxspeed": "50",
+    "sidewalk": "both",
+    "sidewalk:left:surface": "paving_stones",
+    "road:highway": "primary",
+}
+KEPT = set(WAY_TAGS) - {
+    "name", "surface", "maxspeed", "sidewalk", "sidewalk:left:surface", "road:highway",
+}  # fmt: skip
+
+
+def test_side_features_only_tiers_rounded_with_listed_properties():
+    from velometer.pipeline.geometry import Projector
+
+    classified = [_side(1, t) for t in ("A", "B", "C", "D", "E")]
+    classified += [_side(2, "excluded"), _side(3, None)]
+    feats = maps.side_features(classified, {1: WAY_TAGS}, Projector(25833), None)
+    assert [f["properties"]["tier"] for f in feats] == list("ABCDE")
+    f = feats[0]
+    assert f["type"] == "Feature" and f["geometry"]["type"] == "LineString"
+    assert f["geometry"]["coordinates"] == [[13.12346, 52.5], [13.13, 52.5]]
+    assert set(f["properties"]) == {"way_id", "side", "tier", "subtype", "rule_id", "km", "tags"}
+    assert f["properties"]["way_id"] == 1 and f["properties"]["side"] == "right"
+    assert f["properties"]["subtype"] == "sub" and f["properties"]["rule_id"] == "R1"
+    assert set(f["properties"]["tags"]) == KEPT
+
+
+def test_side_features_km_is_projected_and_clipped_like_measure():
+    from shapely.geometry import box
+    from shapely.prepared import prep
+
+    from velometer.pipeline.geometry import Projector, length_km
+    from velometer.pipeline.measure import clipped_length_km
+
+    proj = Projector(25833)
+    coords = ((13.40, 52.50), (13.43, 52.52))
+    line = proj.line(coords)
+    whole = maps.side_features([_side(1, "A", coords=coords)], {}, proj, None)
+    assert whole[0]["properties"]["km"] == round(length_km(line), 3)
+    x0, y0, x1, y1 = line.bounds
+    half = box(x0 - 10, y0 - 10, (x0 + x1) / 2, y1 + 10)
+    clipped = maps.side_features([_side(1, "A", coords=coords)], {}, proj, half)
+    expected = round(clipped_length_km(line, prep(half), half), 3)
+    assert clipped[0]["properties"]["km"] == expected
+    assert 0 < expected < whole[0]["properties"]["km"]
+
+
+def _decimals(x: float) -> int:
+    s = repr(x)
+    return len(s.split(".")[1]) if "." in s else 0
+
+
+@needs_osmium
+def test_geojson_matches_the_run_measure_on_mini_city(placed, tmp_path):
+    from velometer.config import load_classifier
+    from velometer.pipeline.measure import measure
+    from velometer.pipeline.read import read_ways
+    from velometer.sources.boundaries import load_boundary_polygon
+
+    conn, data, data_dir, maps_dir = placed
+    snap = _place_snapshot(conn, data, data_dir, tmp_path)
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    fc = json.loads((maps_dir / "berlin_lau.geojson").read_text())
+    point = data.current("berlin", "lau")
+    assert fc["type"] == "FeatureCollection"
+    assert fc["properties"] == {
+        "run_id": point.run_id,
+        "osm_timestamp": point.osm_timestamp,
+        "classifier": point.classifier_version,
+    }
+    assert fc["boundary"]["type"] == "Feature"
+    assert fc["boundary"]["geometry"]["type"] in ("Polygon", "MultiPolygon")
+    feats = fc["features"]
+    assert feats and {f["properties"]["tier"] for f in feats} <= set("ABCDE")
+    for f in feats:
+        assert all(_decimals(v) <= 5 for xy in f["geometry"]["coordinates"] for v in xy)
+    cfg = load_classifier(data.config_dir / "classifier" / f"{point.classifier_version}.yaml")
+    boundary_path = conn.execute(
+        "SELECT path FROM boundaries WHERE city_id='berlin' AND kind='lau'"
+    ).fetchone()[0]
+    outline = load_boundary_polygon(Path(boundary_path), 25833)
+    ways = read_ways(snap).ways
+    lengths = measure(ways, cfg, 25833, boundary=outline).way_lengths
+    tags = {w.id: w.tags for w in ways}
+    for f in feats:
+        p = f["properties"]
+        assert p["km"] == round(lengths[p["way_id"]], 3)
+        assert p["tags"] == {k: v for k, v in tags[p["way_id"]].items() if maps.keep_tag(k)}
+
+
+@needs_osmium
+def test_build_map_classifies_once_for_png_and_geojson(placed, tmp_path, monkeypatch):
+    conn, data, data_dir, maps_dir = placed
+    _place_snapshot(conn, data, data_dir, tmp_path)
+    calls = []
+    real = maps.classify_ways
+    monkeypatch.setattr(maps, "classify_ways", lambda *a, **k: calls.append(1) or real(*a, **k))
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    assert calls == [1]
+    assert (maps_dir / "berlin_lau.png").is_file() and (maps_dir / "berlin_lau.geojson").is_file()
+
+
+@needs_osmium
+def test_missing_geojson_with_matching_marker_rebuilds(placed, tmp_path):
+    conn, data, data_dir, maps_dir = placed
+    _place_snapshot(conn, data, data_dir, tmp_path)
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    run_id = data.current("berlin", "lau").run_id
+    assert maps.up_to_date(maps_dir, "berlin", "lau", run_id)
+    (maps_dir / "berlin_lau.geojson").unlink()
+    assert not maps.up_to_date(maps_dir, "berlin", "lau", run_id)
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    assert json.loads((maps_dir / "berlin_lau.geojson").read_text())["features"]
+
+
+@needs_osmium
+def test_matching_marker_leaves_geojson_alone(placed, tmp_path, monkeypatch):
+    conn, data, data_dir, maps_dir = placed
+    _place_snapshot(conn, data, data_dir, tmp_path)
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    writes = []
+    monkeypatch.setattr(maps, "write_atomic", lambda *a: writes.append(a))
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    assert writes == []
+
+
+def test_write_atomic_keeps_the_old_file_when_the_write_fails(tmp_path, monkeypatch):
+    path = tmp_path / "berlin_lau.geojson"
+    path.write_text("old")
+
+    def fail(*a, **k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(maps.os, "replace", fail)
+    with pytest.raises(OSError):
+        maps.write_atomic(path, b"new")
+    assert path.read_text() == "old"
+    assert [p.name for p in tmp_path.iterdir()] == ["berlin_lau.geojson"]
+    monkeypatch.undo()
+    maps.write_atomic(path, b"new")
+    assert path.read_text() == "new"
