@@ -581,3 +581,16 @@ def test_bumped_ab_km_without_a_gap_is_a_km_jump(db, tmp_path):
     _bump_ab(db[0], "2021")
     res = _ts(db, _report(tmp_path, marker=f"berlin/lau={db[1][:8]}"))
     assert res.exit_code == 0 and "km_jump" in res.output
+
+
+def test_adr_0005_note_counts_history_runs_as_series_times_years():
+    adr = (
+        Path(__file__).parent.parent
+        / "docs"
+        / "adr"
+        / "0005-annual-snapshots-versioned-classifier.md"
+    )
+    text = " ".join(adr.read_text().split())
+    m = re.search(r"(\d+) history runs \((\d+) city/boundary series × (\d+) years", text)
+    assert m is not None
+    assert int(m[1]) == int(m[2]) * int(m[3])

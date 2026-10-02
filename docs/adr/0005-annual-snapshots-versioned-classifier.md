@@ -19,8 +19,9 @@
 ## Notes (M3 as run)
 
 Run on 2026-10-01 (local evening, UTC+2), classifier `v1`, config `68162f5aebe8`, one machine,
-Geofabrik internal-server history files dated 2026-10-01. 68 history runs (7 city/boundary
-series × 9 years, 2018–2026), all `done`, none failed or retried.
+Geofabrik internal-server history files dated 2026-10-01. 63 history runs (7 city/boundary
+series × 9 years, 2018–2026) plus the 5 M2 current runs (LAU only) make the 68 runs of the
+chart; all `done`, none failed or retried.
 
 Region sets per boundary (`regions_for`, ruling R5) and `uncovered_km2` per history set:
 
