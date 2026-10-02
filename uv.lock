@@ -1470,6 +1470,7 @@ source = { editable = "." }
 dependencies = [
     { name = "altair" },
     { name = "httpx" },
+    { name = "jinja2" },
     { name = "matplotlib" },
     { name = "osmium" },
     { name = "pydantic" },
@@ -1491,6 +1492,7 @@ dev = [
 requires-dist = [
     { name = "altair", specifier = ">=6.3.0" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "osmium", specifier = ">=4.0" },
     { name = "pydantic", specifier = ">=2.7" },

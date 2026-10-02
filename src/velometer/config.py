@@ -361,3 +361,40 @@ def load_report(path: Path, presets_path: Path | None = None) -> ReportConfig:
                 f"(known: {sorted(known)})"
             )
     return config
+
+
+class Limitation(BaseModel):
+    """A known limitation; both languages are required and non-blank."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str = Field(pattern=r"^[a-z0-9_]+$")
+    en: str
+    de: str
+
+    @field_validator("en", "de")
+    @classmethod
+    def _not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must not be empty")
+        return v.strip()
+
+
+class _LimitationsFile(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    limitations: list[Limitation] = Field(min_length=1)
+
+    @field_validator("limitations")
+    @classmethod
+    def _unique(cls, v: list[Limitation]) -> list[Limitation]:
+        ids = [x.id for x in v]
+        dup = sorted({i for i in ids if ids.count(i) > 1})
+        if dup:
+            raise ValueError(f"duplicate limitation ids: {dup}")
+        return v
+
+
+def load_limitations(path: Path) -> list[Limitation]:
+    """config/limitations.yaml; ConfigError (naming the file) when a language is missing."""
+    return _parse(path, lambda d: _LimitationsFile.model_validate(d).limitations)

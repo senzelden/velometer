@@ -1044,3 +1044,42 @@ def report_charts(
         conn.close()
     for p in paths:
         typer.echo(str(p))
+
+
+@report_app.command("methodology")
+def report_methodology(
+    check: bool = typer.Option(
+        False, "--check", help="Fail (exit 1) when either file differs from a fresh render."
+    ),
+    docs: Path = typer.Option(Path("docs"), "--docs", help="Directory of the methodology files."),  # noqa: B008
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Write docs/methodology.md (English) and docs/methodology.de.md (German)."""
+    from velometer.report import methodology as mt
+    from velometer.report.data import ReportData, open_readonly
+
+    try:
+        conn = open_readonly(db)
+    except FileNotFoundError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        facts = mt.methodology_facts(ReportData(conn, config_dir))
+    except ConfigError as e:
+        raise _config_error(e) from e
+    except sqlite3.Error as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    if check:
+        problems = mt.check(docs, facts)
+        for p in problems:
+            typer.echo(f"stale: {p}", err=True)
+        if problems:
+            raise typer.Exit(1)
+        typer.echo(f"ok: {docs / mt.FILES['en']} and {docs / mt.FILES['de']} are current")
+        return
+    for p in mt.write(docs, facts):
+        typer.echo(str(p))

@@ -1,0 +1,139 @@
+{% set t = f.flag_thresholds %}
+> Erzeugt mit `velometer report methodology` aus der Konfiguration und der Datenbank. Nicht von Hand bearbeiten; `velometer report methodology --check` schlägt fehl, wenn diese Datei veraltet ist. English version: [{{ files.en }}]({{ files.en }}).
+
+# Methodik
+
+velometer misst geschützte Radverkehrsanlagen in europäischen Städten anhand von OpenStreetMap (OSM). Gemessen wird für jährliche Stände und für einen aktuellen Stand. Die Ergebnisse werden veröffentlichten Ranglisten und amtlichen Zahlen gegenübergestellt. Die eigene Auswertung ist die Hauptquelle jeder Zahl. Externe Zahlen dienen nur dem Vergleich und werden nie mit den eigenen Zahlen vermischt [ADR 0001].
+
+Alle OSM-Längen sind **kartierte Kilometer**, keine gebauten Kilometer. Sie zeigen, was in OSM erfasst ist, nicht, was gebaut wurde [ADR 0006].
+
+## Was gemessen wird
+
+Klassifiziert wird jede **Seite** eines Wegs, nicht der Weg als Ganzes. Jede Straße wird in eine linke und eine rechte Seite zerlegt. Grundlage sind die Tags `cycleway`, `cycleway:both`, `cycleway:left` und `cycleway:right` sowie die älteren Tags `cycleway=opposite*` und `sidewalk:*:bicycle`. Eigenständig erfasste Wege, etwa ein `highway=cycleway`, werden als solche klassifiziert [ADR 0002].
+
+Jede Seite erhält eine Stufe oder wird ausgeschlossen:
+
+| Stufe | Bedeutung |
+|---|---|
+| A | baulich getrennter Radweg |
+| B | gemeinsamer Geh- und Radweg |
+| C | Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr |
+| D | markierter Radfahrstreifen, einschließlich Schutzstreifen |
+| E | Fahrradstraße sowie für den Radverkehr freigegebene Busspur |
+| ausgeschlossen | für die Diagnose erfasst, in keiner Voreinstellung gezählt |
+
+Die Stufen leiten sich aus der Tag-Logik der ECF-Methode QECIO ab, mit dokumentierten Abweichungen. So gilt ein gemeinsamer Weg mit `segregated=yes` hier als Stufe B, während QECIO ihn als Radweg zählt [ADR 0002].
+
+Für jede Seite werden zwei Längen gespeichert. Auf der Basis **`per_side`** zählt jede Straßenseite mit ihrer vollen Länge; eine Straße mit Radwegen auf beiden Seiten zählt also doppelt. Auf der Basis **`qecio_weighted`** zählen Anlagen für nur eine Fahrtrichtung zur Hälfte, wie bei QECIO [ADR 0002]. Längen werden im projizierten Koordinatensystem der jeweiligen Stadt berechnet, nie in Grad.
+
+Die Regeln sind Daten, kein Code. Jede Regeländerung ergibt eine neue Klassifikatorversion, und jeder Lauf speichert die verwendete Version [ADR 0005].
+
+<!-- generated:classifier -->
+- Klassifikator der Auswertung: **{{ f.classifier_version }}** (`config/classifier/{{ f.classifier_version }}.yaml`)
+{% for name, value in f.classifier_parameters.items() %}
+- Parameter `{{ name }}`: `{{ value }}`
+{% endfor %}
+- Trennzeichen zwischen Werten: {% for s in f.value_separators %}`{{ s }}`{{ ", " if not loop.last }}{% endfor %}
+
+<!-- /generated:classifier -->
+
+### Klassifikationsregeln
+
+Die Regeln gelten in der aufgeführten Reihenfolge; die erste passende Regel entscheidet. Regeln für `road_side` gelten für Straßenseiten, Regeln für `standalone` für eigenständig erfasste Wege, Regeln für `any` für beide. Auf einer Straßenseite sind `cycleway` und `cycleway:*` die Tags der Seite selbst, `sidewalk_bicycle` ist ihr Wert für `sidewalk:*:bicycle`, und `road:*` sind Tags der Straße. Namen in spitzen Klammern sind Wertelisten der Klassifikatordatei.
+
+<!-- generated:rules -->
+| Regel | Stufe | Untertyp | Gilt für | Bedingung |
+|---|---|---|---|---|
+{% for r in f.rules %}
+| `{{ r.id }}` | {{ r.tier }} | {{ r.subtype or "" }} | {{ r.applies_to }} | `{{ r.match }}` |
+{% endfor %}
+<!-- /generated:rules -->
+
+## Hauptkennzahl und Voreinstellungen
+
+Die Hauptkennzahl ist die Länge der Stufen A und B, je Seite gezählt, je 100 km Hauptverkehrsstraßen ohne Autobahnen [ADR 0003]. Hauptverkehrsstraßen sind Straßen der Klassen trunk, primary, secondary und tertiary samt ihren Anschlussstücken. Autobahnen bleiben außen vor, weil sie für den Radverkehr nicht nutzbar sind. Eine Straße mit getrennten Richtungsfahrbahnen zählt einmal.
+
+„Geschützt“ wird als frei wählbare Summe von Stufen ausgewiesen, als sogenannte Voreinstellung. Jede Voreinstellung legt die gezählten Stufen, die Längenbasis und die Straßenklasse als Bezugsgröße fest. So lassen sich die Definitionen anderer Veröffentlichungen mit den eigenen Daten nachbilden [ADR 0002, ADR 0003]:
+
+- `ours_headline` ist die Hauptkennzahl.
+- `ecf_qecio` folgt ECF QECIO v2.10. Sie zählt die Stufen A bis D auf der QECIO-Basis und bezieht sie auf die Hauptverkehrsstraßen einschließlich Autobahnen. Straßen mit getrennten Richtungsfahrbahnen zählen dabei wie bei QECIO je Fahrbahn.
+- `clean_cities_2025` folgt der OSM-Ersatzmethode von Clean Cities 2025. Sie bezieht die Stufen A und B auf alle öffentlichen Straßen.
+
+<!-- generated:presets -->
+| Voreinstellung | Stufen | Längenbasis | Bezugsgröße |
+|---|---|---|---|
+{% for p in f.presets %}
+| `{{ p.id }}` | {{ p.numerator }} | {{ p.basis }}{% if p.basis_parameter %} (Parameter `{{ p.basis_parameter }}`){% endif %} | `{{ p.denominator }}` |
+{% endfor %}
+<!-- /generated:presets -->
+
+Eine Voreinstellung, deren Basis ein Parameter ist, wird auf beiden Basen berechnet und gespeichert. Der Parameter wählt nur die ausgewiesene Basis [ADR 0003; M2 R15]. Neben den Quoten werden absolute Kilometer und Kilometer je 100.000 Einwohner ausgewiesen.
+
+## Gebietsgrenzen und Einwohnerzahl
+
+Jede Stadt wird auf zwei Gebietsgrenzen berechnet [ADR 0004]:
+
+- **LAU** ist die Stadtgrenze: die lokale Verwaltungseinheit von Eurostat GISCO, Stand 2024. Sie ist die Vorgabe. Fehlt ein sauberes LAU-Polygon, tritt die administrative OSM-Relation an seine Stelle.
+- **FUA** ist der funktionale Stadtraum (Functional Urban Area), also die Stadt mit ihrem Pendlereinzugsgebiet. Er dient als Robustheitsprüfung.
+
+Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit. Ein Einwohnerwert gilt für alle Stichjahre. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner.
+
+Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten Läufe, den Verlaufssatz und die Einwohnerzahl.
+
+<!-- generated:cities -->
+| Stadt | Grenzart | Aktueller Lauf (OSM-Zeitstempel) | Verlaufssatz | Jahresstände (OSM-Zeitstempel) | Einwohner (Jahr) |
+|---|---|---|---|---|---|
+{% for c in f.cities %}
+{% for k in c.kinds %}
+| {{ c.name }} | {{ k.kind }} | {{ k.current_osm_timestamp or "kein aktueller Lauf" }} | {% if k.history_set %}`{{ k.history_set[:12] }}`{% else %}keiner{% endif %} | {{ k.history_osm_timestamps | join(", ") if k.history_osm_timestamps else "keine Verlaufsläufe" }} | {% if k.population_value %}{{ k.population_value | num }} ({{ k.population_year }}){% else %}keine, kein Wert je 100.000 Einwohner{% endif %} |
+{% endfor %}
+{% endfor %}
+<!-- /generated:cities -->
+
+## Jahresstände
+
+Die Jahresstände werden jeweils zum 1. Januar, 00:00 Uhr UTC, aus Geofabrik-Dateien mit vollständiger Versionsgeschichte gebildet. `osmium time-filter` schneidet den Stand zu diesem Zeitpunkt heraus, anschließend wird er auf die Gebietsgrenze zugeschnitten [ADR 0005]. Ein Verlaufssatz ist die Gruppe der Regionsdateien, die eine Gebietsgrenze abdecken; seine Prüfsumme bestimmt die Dateien, aus denen eine Reihe entstanden ist [M3 R8]. Jede Stadt hat außerdem einen aktuellen Stand aus dem öffentlichen Geofabrik-Extrakt. Ein aktueller Stand schließt nur dann an eine Reihe an, wenn er im selben Jahr liegt wie der letzte Jahresstand.
+
+<!-- generated:snapshots -->
+Stichtage: {{ f.snapshot_dates | join(", ") }}, dazu ein aktueller Stand je Stadt und Grenzart.
+<!-- /generated:snapshots -->
+
+## Prüfhinweise
+
+Ein Zuwachs an kartierten Kilometern bedeutet nicht unbedingt Bau. Der Kartierungsaufwand wird daher diagnostiziert, nicht herausgerechnet [ADR 0006]. Für jedes Jahr zählt velometer die Bearbeitungen an Radverkehrs-Tags im Jahr vor dem Stichtag, die Zahl der Kartierenden und den Anteil der aktivsten Person. Kennungen oder Namen von Kartierenden werden nicht gespeichert. Außerdem misst velometer die Kilometer mit veralteten Tags und die Kilometer von Straßenseiten mit Radverkehrs-Tags, die keine Regel erkennt.
+
+Regeln über diese Werte markieren ein Jahr zur Prüfung. Ein Prüfhinweis ändert keine Zahl. Änderungsregeln vergleichen nur aufeinanderfolgende Stände, nie über ein fehlendes Jahr hinweg. Für den aktuellen Stand werden die Kilometer-Mindestwerte und die Spitzenschwelle mit dem bereits vergangenen Anteil des Jahres skaliert [M3 R14].
+
+<!-- generated:flags -->
+- `km_jump`: Die Kilometer der Stufen A+B ändern sich um mindestens {{ t.km_jump_pct | num }} % des Vorwerts und um mindestens {{ t.km_jump_min_km | num }} km.
+- `activity_spike`: Die Zahl der Bearbeitungen im Jahr erreicht mindestens das {{ t.activity_spike_factor | num }}-Fache des Medians der Jahre der Reihe.
+- `campaign_suspected`: `km_jump` und `activity_spike` im selben Jahr.
+- `single_mapper`: ein Jahr mit `km_jump`, in dem der Anteil der aktivsten Person an den Bearbeitungen mindestens {{ t.single_mapper_share | num }} beträgt.
+- `tag_drift`: Die Kilometer mit veralteten Tags oder die nicht erkannten Kilometer ändern sich um mindestens {{ t.tag_drift_pct | num }} % und um mindestens {{ t.tag_drift_min_km | num }} km.
+
+| Schwellenwert (`config/activity.yaml`) | Wert |
+|---|---|
+{% for name, value in t.items() %}
+| `{{ name }}` | {{ value | num }} |
+{% endfor %}
+<!-- /generated:flags -->
+
+## Vergleich mit veröffentlichten Zahlen
+
+Die eigenen Zahlen werden Clean Cities 2025, ECF QECIO v2.10, dem Datensatz BikeNetKit und amtlichen Zahlen der Städte gegenübergestellt. Jede externe Zahl wird mit Quelle, Netzumfang, soweit bekannt mit Längenbasis, und Abrufdatum gespeichert [ADR 0001]. Der Vergleich weist Abweichungen aus und erklärt sie; er mittelt sie nicht weg. Clean Cities 2025 hat überwiegend von den Städten gemeldete Zahlen verwendet, und QECIO veröffentlicht Ergebnisse nur je NUTS-3-Region. Die Ranglisten unterscheiden sich daher in Definition, Bezugsgröße und Gebiet, nicht nur in den Daten.
+
+## Herkunft der Zahlen
+
+Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-Commit, die Klassifikatorversion mit ihren Parametern, eine Prüfsumme der Konfiguration von Klassifikator, Voreinstellungen und Aktivitätsregeln, den OSM-Zeitstempel, die Prüfsumme der Gebietsgrenze und die Quelldateien [ADR 0001; ADR 0005]. Eine Auswertung zeigt nur Läufe des Auswertungsklassifikators und der vorliegenden Konfiguration. Eine geänderte Konfiguration erfordert daher neue Läufe, und alte Läufe werden nicht beigemischt.
+
+## Bekannte Einschränkungen
+
+<!-- generated:limitations -->
+{% for lim in f.limitations %}
+- {{ lim.de }}
+{% endfor %}
+<!-- /generated:limitations -->
+
+## Lizenzen
+
+Kartendaten © OpenStreetMap-Mitwirkende. Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der Open Database License (ODbL) 1.0. Der Code steht unter der MIT-Lizenz. Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].

@@ -1,0 +1,88 @@
+# Known limitations, rendered into docs/methodology.md (en) and docs/methodology.de.md (de)
+# by `velometer report methodology` (M4 spec section 4.4). Every entry needs non-empty `en`
+# and `de` text; a missing language fails the load and `report methodology --check`.
+limitations:
+  - id: mapped_km
+    en: >-
+      All OSM lengths are mapped km, not built km. A rise can come from construction, but also
+      from a mapping campaign, an import or a change in tagging practice. No figure here states
+      what a city has built [ADR 0006].
+    de: >-
+      Alle OSM-Längen sind kartierte Kilometer, keine gebauten Kilometer. Ein Zuwachs kann auf
+      Bau zurückgehen, aber auch auf eine Kartierungsaktion, einen Import oder eine geänderte
+      Erfassungspraxis. Keine Zahl hier sagt aus, was eine Stadt gebaut hat [ADR 0006].
+  - id: population_2024
+    en: >-
+      The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it
+      is the figure of the identical NUTS3 unit. The same value is used for every snapshot year,
+      so per-100k values do not follow population change [ADR 0004].
+    de: >-
+      Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt
+      der Wert der deckungsgleichen NUTS-3-Einheit. Derselbe Wert gilt für jedes Stichjahr.
+      Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab [ADR 0004].
+  - id: fua_no_per_100k
+    en: >-
+      FUA runs carry no population, so the FUA has no per-100k figure. The FUA serves as a
+      robustness check of the ratios, not as a second ranking [ADR 0004].
+    de: >-
+      FUA-Läufe führen keine Einwohnerzahl. Für die FUA gibt es daher keinen Wert je 100.000
+      Einwohner. Die FUA dient als Robustheitsprüfung der Quoten, nicht als zweite Rangliste
+      [ADR 0004].
+  - id: no_width_surface
+    en: >-
+      The tiers do not consider width or surface. A narrow or rough cycle track counts like any
+      other way of its tier. The share of lengths tagged with `width`, `surface` and
+      `segregated` is recorded per tier as a diagnostic only [ADR 0002, ADR 0006].
+    de: >-
+      Die Stufen berücksichtigen weder Breite noch Oberfläche. Ein schmaler oder holpriger
+      Radweg zählt wie jeder andere Weg seiner Stufe. Der Längenanteil mit `width`, `surface`
+      und `segregated` wird je Stufe nur als Diagnose erfasst [ADR 0002, ADR 0006].
+  - id: classifier_gaps_excluded
+    en: >-
+      Tagging that the classifier recognises but does not treat as cycling infrastructure, for
+      example `cycleway=shoulder` or an untyped `cycleway=yes`, is classified as excluded and
+      counts in no preset (see the rules table). Road sides with cycling tags that no rule
+      matches are reported as unrecognised km. They are not added to any tier [M3 R11;
+      classifier v2, decided after M3].
+    de: >-
+      Erfassungen, die der Klassifikator erkennt, aber nicht als Radverkehrsanlage wertet, etwa
+      `cycleway=shoulder` oder ein `cycleway=yes` ohne Typ, gelten als ausgeschlossen und
+      zählen in keiner Voreinstellung (siehe Regeltabelle). Straßenseiten mit Radverkehrs-Tags,
+      auf die keine Regel passt, werden als nicht erkannte Kilometer ausgewiesen. Sie fließen
+      in keine Stufe ein [M3 R11; Klassifikator v2, nach M3 entschieden].
+  - id: published_scope
+    en: >-
+      Clean Cities 2025 used city-submitted figures for most cities and OSM only as a fallback.
+      The `clean_cities_2025` preset reproduces that fallback method, not the published
+      numbers [ADR 0001, ADR 0003]. QECIO v2.10 publishes results only per NUTS3 region,
+      frozen in January 2024. A NUTS3 region need not match the city boundary [ADR 0001].
+    de: >-
+      Clean Cities 2025 hat für die meisten Städte von den Städten gemeldete Zahlen verwendet
+      und OSM nur ersatzweise. Die Voreinstellung `clean_cities_2025` bildet diese
+      Ersatzmethode nach, nicht die veröffentlichten Zahlen [ADR 0001, ADR 0003]. QECIO v2.10
+      veröffentlicht Ergebnisse nur je NUTS-3-Region, Stand Januar 2024. Eine NUTS-3-Region
+      muss nicht mit der Stadtgrenze übereinstimmen [ADR 0001].
+  - id: dirty_provenance_m3
+    en: >-
+      A run records the git commit it ran from. When the working tree had uncommitted changes,
+      the commit carries the suffix `-dirty` and does not pin the code exactly. The M3 history
+      runs carry it, because docs and scripts were uncommitted while they ran [M3 R19].
+    de: >-
+      Jeder Lauf speichert den Git-Commit, mit dem er erstellt wurde. Gab es dabei
+      nicht festgeschriebene Änderungen im Arbeitsverzeichnis, trägt der Commit die Endung `-dirty`
+      und legt den Code nicht genau fest. Die M3-Verlaufsläufe tragen diese Endung, weil
+      Dokumentation und Skripte während der Läufe nicht festgeschrieben waren [M3 R19].
+  - id: history_vs_current_date
+    en: >-
+      History snapshots are cut from Geofabrik full-history files, which end on the date they
+      were downloaded. The current run reads the public extract, whose OSM timestamp can be a
+      different date. The mapping activity of the current point ends where the history file
+      ends [M3 R9]. A current run merged from several regions takes the oldest region
+      timestamp [M4 spec §3.2].
+    de: >-
+      Die Jahresstände werden aus Geofabrik-Dateien mit vollständiger Versionsgeschichte
+      geschnitten. Diese enden am Tag ihres Downloads. Der aktuelle Lauf liest den öffentlichen
+      Extrakt, dessen OSM-Zeitstempel ein anderes Datum haben kann. Die Kartierungsaktivität
+      des aktuellen Stands endet dort, wo die Verlaufsdatei endet [M3 R9]. Ein aktueller Lauf
+      aus mehreren zusammengeführten Regionen trägt den ältesten Zeitstempel der Regionen
+      [M4-Spezifikation §3.2].
