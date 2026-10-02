@@ -20,7 +20,9 @@ from velometer.db import (
 )
 from velometer.models import ActivityYear
 
-CFG = load_activity(CFG_DIR / "activity.yaml")  # pct 10, min 25 km, factor 2, share 0.5, drift 50
+CFG = load_activity(
+    CFG_DIR / "activity.yaml"
+)  # pct 10, min 25 km, factor 2, share 0.5, drift 50 % and 5 km
 ACTIVITY_SHA = T.activity_sha(CFG_DIR / "activity.yaml")
 CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
 
@@ -131,6 +133,26 @@ def test_tag_drift_at_threshold_and_ignores_zero_previous():
     assert rules([pt("2018", 5, legacy=100), pt("2019", 5, legacy=149.9)]) == {}
     assert rules([pt("2018", 5, unrec=100), pt("2019", 5, unrec=50)]) == {"2019": {"tag_drift"}}
     assert rules([pt("2018", 5, legacy=0), pt("2019", 5, legacy=500, unrec=500)]) == {}
+
+
+def test_tag_drift_needs_the_km_floor_as_well_as_the_percentage():
+    # +100% but only +4.9 km: below tag_drift_min_km (5)
+    assert rules([pt("2018", 5, unrec=4.9), pt("2019", 5, unrec=9.8)]) == {}
+    # +100% and exactly +5 km: flagged
+    assert rules([pt("2018", 5, unrec=5), pt("2019", 5, unrec=10)]) == {"2019": {"tag_drift"}}
+    # -100% of 4 km: a large share but a small move, not flagged
+    assert rules([pt("2018", 5, legacy=4), pt("2019", 5, legacy=0)]) == {}
+
+
+def test_tag_drift_floor_scales_for_the_current_point():
+    # half a year: the floor is 2.5 km, so +3 km (+100%) flags only at fraction 0.5
+    pts = [pt("2026", 5, unrec=3), pt("current", 5, unrec=6)]
+    assert rules(pts, fraction=0.5) == {"current": {"tag_drift"}}
+    assert rules(pts, fraction=1.0) == {}
+
+
+def test_tag_drift_min_km_is_configured_with_the_recommended_default():
+    assert CFG.flags.tag_drift_min_km == 5
 
 
 def test_missing_drift_diagnostics_never_flag_tag_drift():

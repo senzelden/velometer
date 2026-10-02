@@ -46,15 +46,15 @@ Decisions made while building M3, each with why and what it costs if wrong. The 
   - Accepted, not fixed: history runs record a `-dirty` commit, because docs and scripts were uncommitted while they ran.
 - **DB housekeeping:** the real DB was migrated v4 → v5 by Task 9. The v4 copy is kept at `data/velometer-pre-v5.sqlite`.
 
-## Open for the user
-- `tag_drift` has no km floor. About 22 of its flags come from moves of under a km to a few km. Adding a floor is a threshold change, made in config.
-- These classifier gaps were found; v1 is frozen, so they are candidates for v2:
-  - `use_sidepath`;
-  - `shoulder` (about 14 km in the Paris FUA);
-  - `crossing`;
-  - untyped `yes`;
-  - comma multi-values such as `share_busway,track`.
-- These minor findings were parked:
-  - The Geofabrik cookie jar also matches subdomains.
-  - Every current run needs the public Geofabrik index (cached daily).
-  - A `--years` range outside `history.yaml` gets no activity.
+## Decided after M3 (user, 2026-10-02)
+- `tag_drift` gains a km floor, `tag_drift_min_km: 5` in `config/activity.yaml`, scaled like
+  `km_jump_min_km` for the current point. It removed 18 flags, all moves of under 5 km; 16
+  flagged city-years remain, each explained.
+- Classifier v2 (`config/classifier/v2.yaml`) recognises the M3 gaps without counting them:
+  `use_sidepath`, `shoulder`, `crossing`, untyped `yes` (all excluded under their own subtype),
+  and splits values on `,` as well as `;`. v1 is unchanged; published M3 numbers stay on v1.
+
+## Parked
+- The Geofabrik cookie jar also matches subdomains.
+- Every current run needs the public Geofabrik index (cached daily).
+- A `--years` range outside `history.yaml` gets no activity.

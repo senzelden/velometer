@@ -241,6 +241,7 @@ class FlagThresholds(_Strict):
     activity_spike_factor: float
     single_mapper_share: float
     tag_drift_pct: float
+    tag_drift_min_km: float
 
 
 class ActivityConfig(_Strict):

@@ -13,3 +13,6 @@ flags:
   activity_spike_factor: 2.0
   single_mapper_share: 0.5
   tag_drift_pct: 50
+  # tag_drift also needs a move of at least this many km (scaled for the current point):
+  # without it, moves of 0.1 -> 0.2 km flagged (user decision 2026-10-02)
+  tag_drift_min_km: 5

@@ -132,11 +132,13 @@ def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> lis
     return points
 
 
-def _drift(prev: float | None, cur: float | None, pct: float) -> bool:
-    """An unknown side (no diagnostics recorded) is never drift: unknown is not 0 km."""
+def _drift(prev: float | None, cur: float | None, pct: float, min_km: float) -> bool:
+    """A change of at least `pct` percent and at least `min_km` km. An unknown side (no
+    diagnostics recorded) is never drift: unknown is not 0 km."""
     if prev is None or cur is None:
         return False
-    return prev > 0 and abs(cur - prev) / prev * 100 >= pct
+    change = abs(cur - prev)
+    return prev > 0 and change / prev * 100 >= pct and change >= min_km
 
 
 def _consecutive(prev: YearPoint, p: YearPoint) -> bool:
@@ -156,7 +158,7 @@ def flags(
     city_id: str = "",
     kind: str = "",
 ) -> list[Flag]:
-    """Spec §2.13. Only min_km and the spike threshold scale for the current point.
+    """Spec §2.13. Only the km floors and the spike threshold scale for the current point.
 
     Change rules (km_jump, tag_drift) compare consecutive points only: never across a gap.
     """
@@ -179,7 +181,7 @@ def flags(
                 ("legacy_km", prev.legacy_km, p.legacy_km),
                 ("unrecognised_km", prev.unrecognised_km, p.unrecognised_km),
             ):
-                if _drift(a, b, t.tag_drift_pct):
+                if _drift(a, b, t.tag_drift_pct, t.tag_drift_min_km * scale):
                     rules.setdefault("tag_drift", f"{name} {a:.1f} -> {b:.1f}")
         spike = False
         if p.activity is not None and median:  # no median or 0: nothing to spike against
