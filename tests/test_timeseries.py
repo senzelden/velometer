@@ -23,7 +23,7 @@ from velometer.models import ActivityYear
 CFG = load_activity(
     CFG_DIR / "activity.yaml"
 )  # pct 10, min 25 km, factor 2, share 0.5, drift 50 % and 5 km
-ACTIVITY_SHA = T.activity_sha(CFG_DIR / "activity.yaml")
+OLD_ACTIVITY_PART = "de066a28e74c"  # the marker of docs/review/m3_timeseries.md before v6
 CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
 
 
@@ -196,7 +196,7 @@ def _flag(label="2020"):
     return T.Flag("berlin", "lau", label, ("km_jump",), "")
 
 
-def _report(tmp_path, body="", marker="berlin/lau=abcd1234", activity=ACTIVITY_SHA):
+def _report(tmp_path, body="", marker="berlin/lau=abcd1234", activity=None):
     p = tmp_path / "r.md"
     marker += f" activity={activity}" if activity else ""
     p.write_text(
@@ -220,12 +220,6 @@ def test_check_requires_explanation_per_flag_and_fresh_marker(tmp_path):
     assert len(T.unexplained_sets(p, {("paris", "fua"): "ffff0000" + "0" * 24})) == 1
     assert T.explained_against_marker(sets) == "<!-- explained-against: berlin/lau=abcd1234 -->"
     assert T.explained_against(p) == {"berlin/lau": "abcd1234"}
-    assert T.explained_activity(p) == ACTIVITY_SHA
-    assert T.unexplained_activity(p, ACTIVITY_SHA) is None
-    assert "ffffffffffff" in T.unexplained_activity(p, "ffffffffffff")
-    assert T.explained_against_marker(sets, "a" * 12) == (
-        f"<!-- explained-against: berlin/lau=abcd1234 activity={'a' * 12} -->"
-    )
 
 
 def test_write_keeps_text_outside_markers_and_is_idempotent(tmp_path):
@@ -261,11 +255,12 @@ def db(tmp_path):
     return path, fakes.set_md5, cfg
 
 
-def _spike(path, set_md5, cfg=None, year=2020):
+def _spike(path, set_md5, cfg, year=2020):
+    sha = R.file_sha256(cfg / "activity.yaml")
     with open_db(path) as conn:
-        rows = fetch_activity(conn, "berlin", "lau", set_md5)
+        rows = fetch_activity(conn, "berlin", "lau", set_md5, sha)
         rows = [r.model_copy(update={"n_edits": 50}) if r.year == year else r for r in rows]
-        replace_activity(conn, "berlin", "lau", set_md5, rows)
+        replace_activity(conn, "berlin", "lau", set_md5, sha, rows)
 
 
 def _ts(db, report, *args):
@@ -298,7 +293,7 @@ def test_cli_check_fails_on_unexplained_flag_then_passes(db, tmp_path):
 def test_cli_check_fails_on_stale_marker_and_prints_the_fix(db, tmp_path):
     res = _ts(db, _report(tmp_path, marker="berlin/lau=deadbeef"), "--check")
     assert res.exit_code == 1
-    want = f"<!-- explained-against: berlin/lau={db[1][:8]} activity={ACTIVITY_SHA} -->"
+    want = f"<!-- explained-against: berlin/lau={db[1][:8]} -->"
     assert want in res.output
 
 
@@ -544,15 +539,14 @@ def test_series_without_the_current_year_has_no_current_point_and_a_note(tmp_pat
     assert "no current run" in cs.provenance
 
 
-def test_cli_check_fails_when_activity_yaml_differs_from_the_marker(db, tmp_path):
-    for activity in ("ffffffffffff", None):
-        report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}", activity=activity)
-        res = _ts(db, report, "--check")
-        assert res.exit_code == 1, res.output
-        assert "activity.yaml" in res.output and f"activity={ACTIVITY_SHA}" in res.output
-    (db[2] / "activity.yaml").write_text((db[2] / "activity.yaml").read_text() + "\n# edited\n")
-    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")  # marked with the old sha
-    assert _ts(db, report, "--check").exit_code == 1
+def test_marker_has_no_activity_part_and_check_ignores_it(db, tmp_path):
+    sets = {("berlin", "lau"): db[1]}
+    assert "activity=" not in T.explained_against_marker(sets)
+    assert not hasattr(T, "unexplained_activity") and not hasattr(T, "activity_sha")
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}", activity=OLD_ACTIVITY_PART)
+    assert T.explained_against(report) == {"berlin/lau": db[1][:8]}  # the old part is ignored
+    res = _ts(db, report, "--check")
+    assert res.exit_code == 0, res.output
 
 
 def test_cli_check_boundary_fua_applies_only_to_cities_requiring_fua(tmp_path):

@@ -70,7 +70,7 @@ def load_config() -> tuple[str, PresetsConfig]:
     config_dir = default_config_dir()
     classifier = config_dir / "classifier" / f"{CLASSIFIER}.yaml"
     presets_path = config_dir / "presets.yaml"
-    return config_sha256(classifier, presets_path), load_presets(
+    return config_sha256(classifier, presets_path, config_dir / "activity.yaml"), load_presets(
         presets_path, load_classifier(classifier)
     )
 

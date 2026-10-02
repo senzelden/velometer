@@ -21,7 +21,7 @@ from velometer.models import (
     TierLength,
 )
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 _RESULT_TABLES = (
     "duplicates",
     "completeness",
@@ -45,6 +45,16 @@ _METRICS_COLUMNS = """
   length_basis TEXT NOT NULL CHECK (length_basis IN ('per_side','qecio_weighted')),
   value REAL, numerator_km REAL NOT NULL, denominator_km REAL NOT NULL, per_100k REAL,
   PRIMARY KEY (run_id, city_id, preset, length_basis)
+"""
+
+# v6: yearly mapper aggregates per (city, boundary, year, history set, activity.yaml sha256).
+_ACTIVITY_TABLE_COLUMNS = """
+  city_id TEXT NOT NULL REFERENCES cities(id), boundary_kind TEXT NOT NULL,
+  year INTEGER NOT NULL, history_set_md5 TEXT NOT NULL, activity_sha256 TEXT NOT NULL,
+  n_edits INTEGER NOT NULL, n_changesets INTEGER NOT NULL, n_mappers INTEGER NOT NULL,
+  top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
+  n_ways_deleted_cycling INTEGER NOT NULL,
+  PRIMARY KEY (city_id, boundary_kind, year, history_set_md5, activity_sha256)
 """
 
 _SCHEMA = """
@@ -102,14 +112,7 @@ CREATE TABLE IF NOT EXISTS external_figures (
   length_basis TEXT NOT NULL CHECK (length_basis IN ('streckenlaenge','reallaenge','unknown')),
   source_url TEXT NOT NULL, retrieved_at TEXT NOT NULL, note TEXT NOT NULL DEFAULT ''
 );
-CREATE TABLE IF NOT EXISTS activity (
-  city_id TEXT NOT NULL REFERENCES cities(id), boundary_kind TEXT NOT NULL,
-  year INTEGER NOT NULL, history_set_md5 TEXT NOT NULL,
-  n_edits INTEGER NOT NULL, n_changesets INTEGER NOT NULL, n_mappers INTEGER NOT NULL,
-  top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
-  n_ways_deleted_cycling INTEGER NOT NULL,
-  PRIMARY KEY (city_id, boundary_kind, year, history_set_md5)
-);
+CREATE TABLE IF NOT EXISTS activity (@ACTIVITY@);
 CREATE TABLE IF NOT EXISTS history_sets (
   set_md5 TEXT PRIMARY KEY, regions_json TEXT NOT NULL, index_path TEXT NOT NULL,
   index_sha256 TEXT NOT NULL, uncovered_km2 REAL NOT NULL, recorded_at TEXT NOT NULL
@@ -127,7 +130,9 @@ CREATE TABLE IF NOT EXISTS duplicates (
   PRIMARY KEY (run_id, kind, way_id_separate, way_id_road, side)
 );
 """
-_SCHEMA = _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS)
+_SCHEMA = _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS).replace(
+    "@ACTIVITY@", _ACTIVITY_TABLE_COLUMNS
+)
 
 
 @contextmanager
@@ -213,12 +218,44 @@ def _migrate_4_to_5(conn: sqlite3.Connection) -> None:
     conn.execute("DROP INDEX IF EXISTS runs_done_key")  # recreated with source
 
 
+def _after_activity_copy(conn: sqlite3.Connection) -> None:
+    """No-op; the atomicity test patches it to fail between the copy and the swap."""
+
+
+def _migrate_5_to_6(conn: sqlite3.Connection, activity_sha256: str | None) -> None:
+    """Rebuild activity with the activity.yaml sha256 in the key; rows keep the given sha."""
+    if "activity" not in _tables(conn):
+        return
+    n_rows = conn.execute("SELECT COUNT(*) FROM activity").fetchone()[0]
+    if n_rows and activity_sha256 is None:
+        raise SchemaError(
+            f"v5 database has {n_rows} activity rows that predate activity_sha256; run "
+            "`velometer migrate --activity-sha <sha>` with the sha256 of the activity.yaml "
+            "they were computed with (the earlier sha256sum of config/activity.yaml)"
+        )
+    if not conn.in_transaction:  # DDL does not open one: make the rebuild atomic
+        conn.execute("BEGIN")
+    conn.execute("DROP TABLE IF EXISTS activity_v6")
+    conn.execute(f"CREATE TABLE activity_v6 ({_ACTIVITY_TABLE_COLUMNS})")
+    conn.execute(
+        "INSERT INTO activity_v6 (city_id, boundary_kind, year, history_set_md5, activity_sha256, "
+        "n_edits, n_changesets, n_mappers, top_mapper_share, n_ways_created_cycling, "
+        "n_ways_deleted_cycling) SELECT city_id, boundary_kind, year, history_set_md5, ?, "
+        "n_edits, n_changesets, n_mappers, top_mapper_share, n_ways_created_cycling, "
+        "n_ways_deleted_cycling FROM activity",
+        (activity_sha256,),
+    )
+    _after_activity_copy(conn)
+    conn.execute("DROP TABLE activity")
+    conn.execute("ALTER TABLE activity_v6 RENAME TO activity")
+
+
 _MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
     3: _migrate_3_to_4,
     4: _migrate_4_to_5,
-}
+}  # 5 -> 6 takes the activity sha and is called by create_schema directly
 
 
 def _repair_done_key_index(conn: sqlite3.Connection) -> None:
@@ -229,7 +266,9 @@ def _repair_done_key_index(conn: sqlite3.Connection) -> None:
         conn.execute("DROP INDEX runs_done_key")
 
 
-def create_schema(conn: sqlite3.Connection) -> None:
+def create_schema(conn: sqlite3.Connection, activity_sha256_for_v5: str | None = None) -> None:
+    """Create or migrate the schema. A v5 database with activity rows needs the sha256 of the
+    activity.yaml they were computed with (`velometer migrate --activity-sha`)."""
     current = conn.execute("PRAGMA user_version").fetchone()[0]
     if current > SCHEMA_VERSION:
         raise SchemaError(
@@ -237,7 +276,11 @@ def create_schema(conn: sqlite3.Connection) -> None:
         )
     with conn:
         for v in range(max(current, 1), SCHEMA_VERSION):
-            if current:  # a fresh database (user_version 0) needs no migration
+            if not current:  # a fresh database (user_version 0) needs no migration
+                continue
+            if v == 5:
+                _migrate_5_to_6(conn, activity_sha256_for_v5)
+            else:
                 _MIGRATIONS[v](conn)
         _repair_done_key_index(conn)
         conn.executescript(_SCHEMA)
@@ -252,7 +295,7 @@ class RunKey:
     boundary_sha256: str
     classifier_version: str
     classifier_parameters: str  # canonical JSON: json.dumps(params, sort_keys=True)
-    config_sha256: str  # run.config_sha256: classifier and presets YAML (names and bytes)
+    config_sha256: str  # run.config_sha256: classifier, presets, activity YAML
     source: str = "current"  # 'history' for a yearly history run (M3)
 
 
@@ -564,7 +607,7 @@ def fetch_diagnostics(conn: sqlite3.Connection, run_id: int) -> dict[str, float]
 _ACTIVITY_COLUMNS = (
     "city_id, boundary_kind, year, history_set_md5, n_edits, n_changesets, n_mappers, "
     "top_mapper_share, n_ways_created_cycling, n_ways_deleted_cycling"
-)
+)  # the ActivityYear fields; the table adds activity_sha256 after history_set_md5
 
 
 def replace_activity(
@@ -572,30 +615,38 @@ def replace_activity(
     city_id: str,
     boundary_kind: str,
     history_set_md5: str,
+    activity_sha256: str,
     rows: list[ActivityYear],
 ) -> None:
-    """Replace this (city, boundary, history set)'s yearly aggregates, atomically."""
+    """Replace this (city, boundary, history set, activity.yaml)'s yearly aggregates, atomically."""
+    fields = [c.strip() for c in _ACTIVITY_COLUMNS.split(",")]
     with conn:
         conn.execute(
-            "DELETE FROM activity WHERE city_id=? AND boundary_kind=? AND history_set_md5=?",
-            (city_id, boundary_kind, history_set_md5),
+            "DELETE FROM activity WHERE city_id=? AND boundary_kind=? AND history_set_md5=? "
+            "AND activity_sha256=?",
+            (city_id, boundary_kind, history_set_md5, activity_sha256),
         )
         conn.executemany(
-            f"INSERT INTO activity ({_ACTIVITY_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?,?)",
-            [tuple(r.model_dump()[c.strip()] for c in _ACTIVITY_COLUMNS.split(",")) for r in rows],
+            f"INSERT INTO activity ({_ACTIVITY_COLUMNS}, activity_sha256) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [(*(r.model_dump()[f] for f in fields), activity_sha256) for r in rows],
         )
 
 
 def fetch_activity(
-    conn: sqlite3.Connection, city_id: str, boundary_kind: str, history_set_md5: str
+    conn: sqlite3.Connection,
+    city_id: str,
+    boundary_kind: str,
+    history_set_md5: str,
+    activity_sha256: str,
 ) -> list[ActivityYear]:
     return [
         ActivityYear(**r)
         for r in _rows(
             conn,
             f"SELECT {_ACTIVITY_COLUMNS} FROM activity WHERE city_id=? AND boundary_kind=? "
-            "AND history_set_md5=? ORDER BY year",
-            (city_id, boundary_kind, history_set_md5),
+            "AND history_set_md5=? AND activity_sha256=? ORDER BY year",
+            (city_id, boundary_kind, history_set_md5, activity_sha256),
         )
     ]
 

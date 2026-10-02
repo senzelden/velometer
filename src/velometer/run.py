@@ -1,7 +1,7 @@
 """Orchestrate one persisted city run: region -> boundary -> snapshot -> measure -> SQLite.
 
 A run is keyed on (city, OSM timestamp, boundary kind + sha, classifier version + parameters,
-config sha256 of the classifier and presets YAML (see config_sha256), source `current` or
+config sha256 of the classifier, presets and activity YAML (see config_sha256), source `current` or
 `history`) (see RunKey); a done run with the same key is skipped. A history run is reused only
 within its history set: its region_md5 holds the md5 of the set (history_set_md5), where a current
 run's holds its extract's md5, and the database's done-key index includes region_md5. `force`
@@ -135,13 +135,18 @@ def with_per_100k(metrics: list[Metric], population_value: int | None) -> list[M
     ]
 
 
-def config_sha256(classifier_path: Path, presets_path: Path) -> str:
-    """sha256 over both YAML files, each as `<file name> NUL <bytes> NUL`.
+def file_sha256(path: Path) -> str:
+    """Hex sha256 of the file's bytes."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
-    The separators keep a byte moved from one file's tail to the other's head from colliding.
+
+def config_sha256(classifier_path: Path, presets_path: Path, activity_path: Path) -> str:
+    """sha256 over the classifier, presets and activity YAML, each as `<name> NUL <bytes> NUL`.
+
+    The separators keep a byte moved from one file's tail to the next file's head from colliding.
     """
     digest = hashlib.sha256()
-    for path in (classifier_path, presets_path):
+    for path in (classifier_path, presets_path, activity_path):
         digest.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
     return digest.hexdigest()
 
@@ -192,7 +197,7 @@ def run_city(
         boundary_sha256=rec.boundary.sha256,
         classifier_version=cfg.version,
         classifier_parameters=canonical_parameters(cfg.parameters.model_dump()),
-        config_sha256=config_sha256(classifier_path, presets_path),
+        config_sha256=config_sha256(classifier_path, presets_path, config_dir / "activity.yaml"),
     )
     done = find_done_run(conn, key)
     if done is not None and not force:
@@ -326,7 +331,8 @@ def run_history(
     except Exception as e:  # noqa: BLE001 - no run row yet; report and let the next city run
         return [RunOutcome(city.id, "failed", None, _describe(e))]
     params = canonical_parameters(cfg.parameters.model_dump())
-    sha = config_sha256(classifier_path, presets_path)
+    sha = config_sha256(classifier_path, presets_path, config_dir / "activity.yaml")
+    activity_sha = file_sha256(config_dir / "activity.yaml")
     done_before = history_runs(
         conn,
         city.id,
@@ -382,6 +388,7 @@ def run_history(
             activity_years,
             hist,
             hs.set_md5,
+            activity_sha,
             activity_cfg,
             deps,
             outcomes,
@@ -390,16 +397,16 @@ def run_history(
 
 
 def _write_activity(
-    conn, city, boundary_kind, wanted, hist, set_md5, activity_cfg, deps, outcomes
+    conn, city, boundary_kind, wanted, hist, set_md5, activity_sha, activity_cfg, deps, outcomes
 ) -> None:
-    """Replace the set's activity rows with `wanted` (the series years plus last + 1).
+    """Replace the (set, activity.yaml)'s activity rows with `wanted` (series years plus last + 1).
 
     The standard window rule makes year last + 1 cover [last-01-01, end of the history file),
     which is the current point's window; the series shows it only with a current point. Rows are
     kept when every year was reused and the stored years already match.
     """
     if all(o.status == "skipped" for o in outcomes):
-        have = [a.year for a in fetch_activity(conn, city.id, boundary_kind, set_md5)]
+        have = [a.year for a in fetch_activity(conn, city.id, boundary_kind, set_md5, activity_sha)]
         if have == list(wanted):
             return
     try:
@@ -411,6 +418,6 @@ def _write_activity(
             boundary_kind=boundary_kind,
             history_set_md5=set_md5,
         )
-        replace_activity(conn, city.id, boundary_kind, set_md5, rows)
+        replace_activity(conn, city.id, boundary_kind, set_md5, activity_sha, rows)
     except Exception as e:  # noqa: BLE001 - the year runs stand; surface the failure as an outcome
         outcomes.append(RunOutcome(city.id, "failed", None, f"activity: {_describe(e)}"))

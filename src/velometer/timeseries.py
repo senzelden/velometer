@@ -1,6 +1,5 @@
 """Yearly time series per city and boundary, rule-based flags and the explained-against check."""
 
-import hashlib
 import re
 import statistics
 from dataclasses import dataclass, field
@@ -113,7 +112,10 @@ def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> lis
         config_sha256=selector.config_sha256,
         history_set_md5=history_set_md5,
     )
-    activity = {a.year: a for a in fetch_activity(conn, city_id, kind, history_set_md5)}
+    activity = {
+        a.year: a
+        for a in fetch_activity(conn, city_id, kind, history_set_md5, selector.activity_sha256)
+    }
     points = [
         _point(conn, run_id, ts[:4], selector, activity.get(int(ts[:4])))
         for ts, run_id in sorted(runs.items())
@@ -353,12 +355,9 @@ def stale_explanations(
     )
 
 
-ACTIVITY_KEY = "activity"
-
-
-def activity_sha(path: Path) -> str:
-    """First 12 hex of the sha256 of config/activity.yaml: what the explanations were read with."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+# Markers written before schema v6 carry an `activity=<sha>` item; activity.yaml is part of the run
+# identity now, so it is ignored.
+IGNORED_MARKER_KEYS = ("activity",)
 
 
 def _marker_items(path: Path) -> dict[str, str]:
@@ -368,7 +367,9 @@ def _marker_items(path: Path) -> dict[str, str]:
     out = {}
     for item in m.group("body").split():
         key, _, value = item.partition("=")
-        if not value or ("/" not in key and key != ACTIVITY_KEY):
+        if key in IGNORED_MARKER_KEYS and value:
+            continue
+        if not value or "/" not in key:
             raise ValueError(f"{path}: bad explained-against entry {item!r}")
         out[key] = value
     return out
@@ -376,31 +377,12 @@ def _marker_items(path: Path) -> dict[str, str]:
 
 def explained_against(path: Path) -> dict[str, str]:
     """`city/kind` -> history_set_md5[:8] from the marker ({} if there is none)."""
-    return {k: v for k, v in _marker_items(path).items() if k != ACTIVITY_KEY}
+    return _marker_items(path)
 
 
-def explained_activity(path: Path) -> str | None:
-    """The marker's `activity=` entry: activity_sha of the activity.yaml the flags were read by."""
-    return _marker_items(path).get(ACTIVITY_KEY)
-
-
-def explained_against_marker(sets: dict[tuple[str, str], str], activity: str | None = None) -> str:
+def explained_against_marker(sets: dict[tuple[str, str], str]) -> str:
     body = " ".join(f"{c}/{k}={md5[:8]}" for (c, k), md5 in sorted(sets.items()))
-    if activity is not None:
-        body += f" {ACTIVITY_KEY}={activity}"
     return f"<!-- explained-against: {body} -->"
-
-
-def unexplained_activity(path: Path, sha: str) -> str | None:
-    """Why the explanations do not match this activity.yaml, or None when they do."""
-    marked = explained_activity(path)
-    if marked == sha:
-        return None
-    return (
-        f"explanations written against activity.yaml {marked or 'none'}, current is {sha}: "
-        "if cycling_keys or legacy changed, rerun `run --years ... --force` so diagnostics and "
-        "activity use them; then re-check the flags"
-    )
 
 
 def unexplained_sets(path: Path, sets: dict[tuple[str, str], str]) -> list[str]:

@@ -3,6 +3,7 @@ from dataclasses import replace
 
 import pytest
 
+from velometer import db
 from velometer.config import default_config_dir, load_cities
 from velometer.db import (
     DEFAULT_PARAMETERS,
@@ -457,7 +458,7 @@ def test_v3_db_with_metric_rows_migrates_to_v4_and_keeps_them(tmp_path, cities):
         c.commit()
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 5
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert c.execute("SELECT * FROM metrics").fetchall() == [
             (rid, "berlin", "clean_cities_2025", "per_side", 17.5, 1000.0, 5000.0, 12.5)
         ]
@@ -521,7 +522,7 @@ def test_migration_4_to_5_keeps_runs_and_marks_them_current(tmp_path, cities):
         assert "source" not in {r[1] for r in c.execute("PRAGMA table_info(runs)")}
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 5
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert c.execute("SELECT id, source, status FROM runs").fetchall() == [
             (rid, "current", "done")
         ]
@@ -609,19 +610,121 @@ def _activity_row(year=2019, **kw):
     )
 
 
+SHA_A, SHA_B = "a" * 64, "b" * 64
+
+
 def test_replace_activity_is_atomic_and_round_trips(conn):
     rows = [_activity_row(2019), _activity_row(2020, n_edits=9)]
-    replace_activity(conn, "berlin", "lau", "h", rows)
-    replace_activity(conn, "berlin", "lau", "h", rows)  # replace, not duplicate
-    assert fetch_activity(conn, "berlin", "lau", "h") == rows
+    replace_activity(conn, "berlin", "lau", "h", SHA_A, rows)
+    replace_activity(conn, "berlin", "lau", "h", SHA_A, rows)  # replace, not duplicate
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_A) == rows
     other = [_activity_row(2019, history_set_md5="g")]
-    replace_activity(conn, "berlin", "lau", "g", other)  # another set is left alone
-    assert fetch_activity(conn, "berlin", "lau", "h") == rows
-    assert fetch_activity(conn, "berlin", "lau", "g") == other
+    replace_activity(conn, "berlin", "lau", "g", SHA_A, other)  # another set is left alone
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_A) == rows
+    assert fetch_activity(conn, "berlin", "lau", "g", SHA_A) == other
     # atomic: a failing replace (duplicate year) keeps the previous rows
     with pytest.raises(sqlite3.IntegrityError):
-        replace_activity(conn, "berlin", "lau", "h", [_activity_row(2021), _activity_row(2021)])
-    assert fetch_activity(conn, "berlin", "lau", "h") == rows
+        replace_activity(
+            conn, "berlin", "lau", "h", SHA_A, [_activity_row(2021), _activity_row(2021)]
+        )
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_A) == rows
+
+
+def test_activity_is_keyed_by_activity_sha(conn):
+    rows_a = [_activity_row(2019), _activity_row(2020)]
+    rows_b = [_activity_row(2019, n_edits=77)]
+    replace_activity(conn, "berlin", "lau", "h", SHA_A, rows_a)
+    replace_activity(conn, "berlin", "lau", "h", SHA_B, rows_b)
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_A) == rows_a
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_B) == rows_b
+    new_a = [_activity_row(2019, n_edits=5)]
+    replace_activity(conn, "berlin", "lau", "h", SHA_A, new_a)  # replacing A leaves B untouched
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_A) == new_a
+    assert fetch_activity(conn, "berlin", "lau", "h", SHA_B) == rows_b
+    assert fetch_activity(conn, "berlin", "lau", "h", "c" * 64) == []
+
+
+_V5_ACTIVITY = """
+CREATE TABLE activity (
+  city_id TEXT NOT NULL REFERENCES cities(id), boundary_kind TEXT NOT NULL,
+  year INTEGER NOT NULL, history_set_md5 TEXT NOT NULL,
+  n_edits INTEGER NOT NULL, n_changesets INTEGER NOT NULL, n_mappers INTEGER NOT NULL,
+  top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
+  n_ways_deleted_cycling INTEGER NOT NULL,
+  PRIMARY KEY (city_id, boundary_kind, year, history_set_md5)
+)
+"""
+
+
+def _make_v5_db_with_activity(path, rows):
+    """A v5 database (activity without a sha) holding `rows` activity rows."""
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, load_cities(default_config_dir() / "cities.yaml"))
+        c.execute("DROP TABLE activity")
+        c.execute(_V5_ACTIVITY)
+        for i in range(rows):
+            c.execute(
+                "INSERT INTO activity VALUES ('berlin','lau',?,'h',3,2,2,0.67,1,0)", (2019 + i,)
+            )
+        c.execute("PRAGMA user_version = 5")
+        c.commit()
+
+
+def _master(c):
+    """sqlite_master without the identifier quotes ALTER ... RENAME adds to a table's name."""
+    rows = c.execute("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'")
+    return sorted((t, n, (sql or "").replace('"', "")) for t, n, sql in rows)
+
+
+def test_v5_to_v6_keeps_activity_rows_under_the_given_sha(tmp_path):
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=3)
+    with open_db(path) as c:
+        create_schema(c, activity_sha256_for_v5="f" * 64)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+        shas = {r[0] for r in c.execute("SELECT activity_sha256 FROM activity")}
+        assert shas == {"f" * 64}
+        assert c.execute("SELECT count(*) FROM activity").fetchone()[0] == 3
+        assert len(fetch_activity(c, "berlin", "lau", "h", "f" * 64)) == 3
+    with open_db(tmp_path / "fresh.sqlite") as fresh, open_db(path) as migrated:
+        create_schema(fresh)
+        assert _master(migrated) == _master(fresh)  # the migrated schema equals a fresh one
+
+
+def test_v6_migration_is_atomic(tmp_path, monkeypatch):
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=3)
+
+    def boom(conn):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(db, "_after_activity_copy", boom)
+    with open_db(path) as c, pytest.raises(RuntimeError):
+        create_schema(c, activity_sha256_for_v5="f" * 64)
+    with open_db(path) as c:
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert c.execute("SELECT count(*) FROM activity").fetchone()[0] == 3
+        assert "activity_sha256" not in {r[1] for r in c.execute("PRAGMA table_info(activity)")}
+        assert "activity_v6" not in _tables(c)
+
+
+def test_v5_with_activity_rows_needs_the_sha(tmp_path):
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=2)
+    with open_db(path) as c, pytest.raises(SchemaError, match="velometer migrate --activity-sha"):
+        create_schema(c)
+    with open_db(path) as c:
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 5
+
+
+def test_v5_with_empty_activity_migrates_without_a_sha(tmp_path):
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=0)
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert "activity_sha256" in {r[1] for r in c.execute("PRAGMA table_info(activity)")}
 
 
 def test_activity_table_has_no_user_columns(conn):

@@ -29,6 +29,7 @@ CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
 CLS = load_classifier(CFG_DIR / "classifier" / "v1.yaml")
 MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
 SHA = "s" * 64
+ACT_SHA = R.file_sha256(CFG_DIR / "activity.yaml")
 SERIES = load_history(CFG_DIR / "history.yaml").year_range()
 ACTIVITY_YEARS = list(range(SERIES.start, SERIES.stop + 1))  # the series years plus last + 1
 INDEX = {
@@ -173,7 +174,11 @@ def test_new_history_set_makes_new_runs_and_series_uses_one_set(conn, tmp_path):
     kw = dict(
         classifier_version=cfg.version,
         classifier_parameters=canonical_parameters(cfg.parameters.model_dump()),
-        config_sha256=config_sha256(CFG_DIR / "classifier" / "v1.yaml", CFG_DIR / "presets.yaml"),
+        config_sha256=config_sha256(
+            CFG_DIR / "classifier" / "v1.yaml",
+            CFG_DIR / "presets.yaml",
+            CFG_DIR / "activity.yaml",
+        ),
     )
     got_old = history_runs(
         conn, "berlin", "lau", history_set_md5=Fakes(tmp_path, md5="old").set_md5, **kw
@@ -220,20 +225,20 @@ def test_activity_written_once_per_city_kind_set(conn, tmp_path):
     fakes = Fakes(tmp_path)
     _history(conn, tmp_path, fakes)
     assert fakes.activity_args == [(ACTIVITY_YEARS, fakes.set_md5)]
-    stored = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    stored = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5, ACT_SHA)]
     assert stored == ACTIVITY_YEARS
     _history(conn, tmp_path, fakes)  # everything reused: rows already match, no recompute
     assert len(fakes.activity_args) == 1
     _history(conn, tmp_path, fakes, force=True)  # forced: replaced, never duplicated
     assert len(fakes.activity_args) == 2
-    assert len(fetch_activity(conn, "berlin", "lau", fakes.set_md5)) == len(ACTIVITY_YEARS)
+    assert len(fetch_activity(conn, "berlin", "lau", fakes.set_md5, ACT_SHA)) == len(ACTIVITY_YEARS)
 
 
 def test_activity_covers_the_current_window_without_a_current_run(conn, tmp_path):
     fakes = Fakes(tmp_path)
     _history(conn, tmp_path, fakes)
     assert _runs(conn, "current") == []
-    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5, ACT_SHA)]
     assert years[-1] == SERIES.stop  # last + 1: the current point's window
     assert [r[2] for r in _runs(conn)][-1] == "2021-01-01T00:00:00Z"  # but no extra run
 
@@ -254,7 +259,7 @@ def test_retrying_some_years_keeps_the_activity_of_every_year(conn, tmp_path):
     retry = Fakes(tmp_path)
     out = _history(conn, tmp_path, retry, years=range(2020, 2021))  # retry the failed year only
     assert [o.status for o in out] == ["done"]
-    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)]
+    years = [a.year for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5, ACT_SHA)]
     assert set(range(2018, 2023)) <= set(years)
     assert years == ACTIVITY_YEARS
 
@@ -282,7 +287,7 @@ def test_no_mapper_id_or_name_reaches_the_database(conn, tmp_path):
         conn, CITY, range(2019, 2021), data_dir=tmp_path, config_dir=CFG_DIR, deps=deps
     )
     assert {o.status for o in out} == {"done"}
-    act = {a.year: a for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5)}
+    act = {a.year: a for a in fetch_activity(conn, "berlin", "lau", fakes.set_md5, ACT_SHA)}
     assert act[2020].n_edits == 3 and act[2020].top_mapper_share == 1.0  # the fixture was read
     leaks = [
         (t, c, v)
@@ -374,7 +379,7 @@ def test_activity_failure_is_a_failed_outcome_and_the_year_runs_stay_done(conn, 
     assert [o.status for o in out] == ["done", "done", "failed"]
     assert out[2].run_id is None and "activity boom" in out[2].error
     assert [r[1] for r in _runs(conn)] == ["done", "done"]
-    assert fetch_activity(conn, "berlin", "lau", Fakes(tmp_path).set_md5) == []
+    assert fetch_activity(conn, "berlin", "lau", Fakes(tmp_path).set_md5, ACT_SHA) == []
 
 
 @pytest.mark.slow
@@ -421,3 +426,45 @@ def test_berlin_2018_history_run(tmp_path):
                     or any(k.startswith("sidewalk:") for k in c.side.tags)
                 ):
                     assert c.tier is not None and "unknown_value" not in c.attrs, wid
+
+
+def test_editing_activity_yaml_reruns_every_year_and_old_runs_are_not_selected(conn, tmp_path):
+    import shutil
+
+    cfg = tmp_path / "config"
+    shutil.copytree(CFG_DIR, cfg)
+    fakes = Fakes(tmp_path)
+    years = range(2025, 2027)
+
+    def run():
+        return R.run_history(
+            conn, CITY, years, data_dir=tmp_path, config_dir=cfg, deps=fakes.deps()
+        )
+
+    first = run()
+    assert [o.status for o in first] == ["done", "done"]
+    assert [o.status for o in run()] == ["skipped", "skipped"]
+    old_sha = R.config_sha256(
+        cfg / "classifier" / "v1.yaml", cfg / "presets.yaml", cfg / "activity.yaml"
+    )
+    old_act = R.file_sha256(cfg / "activity.yaml")
+    (cfg / "activity.yaml").write_text((cfg / "activity.yaml").read_text() + "\n# edit\n")
+    second = run()
+    assert [o.status for o in second] == ["done", "done"]  # not skipped
+    new_sha = R.config_sha256(
+        cfg / "classifier" / "v1.yaml", cfg / "presets.yaml", cfg / "activity.yaml"
+    )
+    kw = dict(
+        classifier_version=CLS.version,
+        classifier_parameters=canonical_parameters(CLS.parameters.model_dump()),
+        history_set_md5=fakes.set_md5,
+    )
+    got = history_runs(conn, "berlin", "lau", config_sha256=new_sha, **kw)
+    assert set(got.values()) == {o.run_id for o in second}
+    assert set(history_runs(conn, "berlin", "lau", config_sha256=old_sha, **kw).values()) == {
+        o.run_id for o in first
+    }
+    new_act = R.file_sha256(cfg / "activity.yaml")
+    assert new_act != old_act
+    assert fetch_activity(conn, "berlin", "lau", fakes.set_md5, new_act)
+    assert fetch_activity(conn, "berlin", "lau", fakes.set_md5, old_act)  # the old rows stay

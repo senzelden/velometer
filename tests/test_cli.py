@@ -660,3 +660,44 @@ def test_osm_fetch_history_prints_only_non_secret_fields(tmp_path, monkeypatch):
     assert missing.exit_code == 2
     neither = CliRunner().invoke(app, ["osm", "fetch-history"])
     assert neither.exit_code == 2
+
+
+def test_commands_on_a_v5_db_with_activity_rows_point_to_migrate(tmp_path):
+    from tests.test_db import _make_v5_db_with_activity
+
+    db = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(db, rows=2)
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    for args in (
+        ["init"],
+        ["results"],
+        ["reconcile", "--report", str(report)],
+        ["timeseries", "--report", str(report)],
+    ):
+        out = CliRunner().invoke(app, [*args, "--db", str(db)])
+        assert out.exit_code == 1, (args, out.output)
+        assert out.exception.__class__ is SystemExit, args
+        assert "migrate --activity-sha" in out.output, args
+
+
+def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
+    from tests.test_db import _make_v5_db_with_activity
+
+    db = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(db, rows=2)
+    out = CliRunner().invoke(app, ["migrate", "--activity-sha", "e" * 64, "--db", str(db)])
+    assert out.exit_code == 0, out.output
+    with sqlite3.connect(db) as c:
+        assert c.execute("SELECT DISTINCT activity_sha256 FROM activity").fetchall() == [
+            ("e" * 64,)
+        ]
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+
+
+def test_migrate_rejects_a_malformed_sha(tmp_path):
+    db = tmp_path / "v5.sqlite"
+    for bad in ("abc", "E" * 64, "g" * 64, "e" * 63):
+        out = CliRunner().invoke(app, ["migrate", "--activity-sha", bad, "--db", str(db)])
+        assert out.exit_code == 2, (bad, out.output)
+    assert not db.exists()

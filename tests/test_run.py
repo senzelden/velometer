@@ -367,7 +367,9 @@ def test_run_row_records_population_and_config_sha(conn, tmp_path):
         "WHERE id=?",
         (out.run_id,),
     ).fetchone()
-    expected_sha = R.config_sha256(CFG_DIR / "classifier" / "v1.yaml", CFG_DIR / "presets.yaml")
+    expected_sha = R.config_sha256(
+        CFG_DIR / "classifier" / "v1.yaml", CFG_DIR / "presets.yaml", CFG_DIR / "activity.yaml"
+    )
     assert row == (123_456, 2024, "t", expected_sha)
 
 
@@ -410,18 +412,40 @@ def test_berlin_end_to_end(tmp_path):
         assert again.status == "skipped" and again.run_id == out.run_id
 
 
-def test_config_sha_separates_the_two_files(tmp_path):
-    """Moving a byte from one file's end to the other's start must change the hash."""
-    a1, b1 = tmp_path / "a.yaml", tmp_path / "b.yaml"
+def test_config_sha_separates_the_files(tmp_path):
+    """Moving a byte from one file's end to the next file's start must change the hash."""
+    a1, b1, c1 = tmp_path / "a.yaml", tmp_path / "b.yaml", tmp_path / "c.yaml"
+    c1.write_text("zz")
     a1.write_text("xx")
     b1.write_text("yy")
-    first = R.config_sha256(a1, b1)
+    first = R.config_sha256(a1, b1, c1)
     a1.write_text("xxy")
     b1.write_text("y")
-    assert R.config_sha256(a1, b1) != first
-    a1.write_text("xx")
+    assert R.config_sha256(a1, b1, c1) != first
     b1.write_text("yy")
-    assert R.config_sha256(a1, b1) == first  # still a pure function of the file contents
+    c1.write_text("z")
+    a1.write_text("xx")
+    b1.write_text("yyz")
+    assert R.config_sha256(a1, b1, c1) != first
+    b1.write_text("yy")
+    c1.write_text("zz")
+    assert R.config_sha256(a1, b1, c1) == first  # still a pure function of the file contents
+
+
+def test_config_sha_covers_activity_yaml(tmp_path):
+    d = _config_copy(tmp_path)
+    args = (d / "classifier/v2.yaml", d / "presets.yaml", d / "activity.yaml")
+    before = R.config_sha256(*args)
+    (d / "activity.yaml").write_text((d / "activity.yaml").read_text() + "\n# edit\n")
+    assert R.config_sha256(*args) != before
+
+
+def test_file_sha256_is_the_hex_sha256_of_the_bytes(tmp_path):
+    import hashlib
+
+    p = tmp_path / "f.yaml"
+    p.write_bytes(b"abc")
+    assert R.file_sha256(p) == hashlib.sha256(b"abc").hexdigest()
 
 
 def test_gitattributes_pins_config_to_lf():

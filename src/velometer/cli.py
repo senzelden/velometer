@@ -18,7 +18,7 @@ from velometer.config import (
     default_config_dir,
     load_cities,
 )
-from velometer.db import SchemaError, create_schema, open_db, upsert_cities
+from velometer.db import SCHEMA_VERSION, SchemaError, create_schema, open_db, upsert_cities
 
 
 class PlainOneway(StrEnum):
@@ -68,6 +68,29 @@ def _open_schema(db: Path) -> Iterator:
 @app.callback()
 def main() -> None:
     """velometer: reproducible OSM cycling-infrastructure measurement."""
+
+
+@app.command()
+def migrate(
+    activity_sha: str = typer.Option(
+        ...,
+        "--activity-sha",
+        help="sha256 (64 lowercase hex) of the activity.yaml the stored activity rows were "
+        "computed with; needed only to migrate a v5 database that has activity rows.",
+    ),
+    db: Path = DB_OPT,
+) -> None:
+    """Migrate the database to the current schema (v5 to v6 needs --activity-sha)."""
+    if not re.fullmatch(r"[0-9a-f]{64}", activity_sha):
+        typer.echo("error: --activity-sha must be 64 lowercase hex characters", err=True)
+        raise typer.Exit(2)
+    with open_db(db) as conn:
+        try:
+            create_schema(conn, activity_sha256_for_v5=activity_sha)
+        except SchemaError as e:
+            typer.echo(f"database error: {e}", err=True)
+            raise typer.Exit(1) from e
+    typer.echo(f"{db}: schema v{SCHEMA_VERSION}")
 
 
 @app.command()
@@ -160,6 +183,7 @@ class Selector:
     parameters: str  # canonical JSON
     config_sha256: str
     presets: PresetsConfig
+    activity_sha256: str  # sha256 of activity.yaml's bytes: keys the activity rows
 
     def latest(self, conn, city_id: str, boundary: str) -> int | None:
         from velometer.db import latest_done_run
@@ -188,9 +212,10 @@ def run_selector(
     """The classifier, parameters and config sha of the config on disk: which runs to report."""
     from velometer.config import load_classifier, load_presets
     from velometer.db import canonical_parameters
-    from velometer.run import config_sha256
+    from velometer.run import config_sha256, file_sha256
 
     classifier_path = config_dir / "classifier" / f"{classifier}.yaml"
+    activity_path = config_dir / "activity.yaml"
     try:
         cfg = load_classifier(classifier_path)
         presets = _with_basis(load_presets(config_dir / "presets.yaml", cfg), basis)
@@ -199,8 +224,9 @@ def run_selector(
     return Selector(
         cfg.version,
         canonical_parameters(cfg.parameters.model_dump()),
-        config_sha256(classifier_path, config_dir / "presets.yaml"),
+        config_sha256(classifier_path, config_dir / "presets.yaml", activity_path),
         presets,
+        file_sha256(activity_path),
     )
 
 
@@ -847,7 +873,7 @@ def timeseries(
         False,
         "--check",
         help="Exit 1 if a flagged city-year lacks an explanation, the explanations name another"
-        " history set or activity.yaml than the current one, or a required city/kind lacks a"
+        " history set than the current one, or a required city/kind lacks a"
         " year of config/history.yaml.",
     ),
     report: Path = typer.Option(  # noqa: B008
@@ -931,19 +957,13 @@ def timeseries(
                 typer.echo(f"missing explanation: ### {key}", err=True)
             sets = {k: v.set_md5 for k, v in shown.items()}
             stale = ts.unexplained_sets(report, sets)
-            activity_now = ts.activity_sha(config_dir / "activity.yaml")
-            activity_stale = ts.unexplained_activity(report, activity_now)
-            if activity_stale:
-                stale.append(activity_stale)
             for line in stale:
                 typer.echo(f"explanations out of date: {line}", err=True)
             if stale:
                 problems = True
                 typer.echo(
                     "after re-checking the explanations, set: "
-                    + ts.explained_against_marker(
-                        {k: v.set_md5 for k, v in built.items()}, activity_now
-                    ),
+                    + ts.explained_against_marker({k: v.set_md5 for k, v in built.items()}),
                     err=True,
                 )
             for key in ts.stale_explanations(report, shown_flags, set(shown)):
