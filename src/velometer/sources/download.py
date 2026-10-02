@@ -44,7 +44,6 @@ def fetch(
     *,
     md5: str | None = None,
     client: httpx.Client | None = None,
-    headers: dict[str, str] | None = None,
     retries: int = 3,
     backoff_s: float = 5.0,
 ) -> Path:
@@ -66,7 +65,7 @@ def fetch(
     try:
         for attempt in range(1, retries + 1):
             try:
-                with client.stream("GET", url, headers=headers) as resp:
+                with client.stream("GET", url) as resp:
                     resp.raise_for_status()
                     with part.open("wb") as f:
                         for chunk in resp.iter_bytes(1 << 20):

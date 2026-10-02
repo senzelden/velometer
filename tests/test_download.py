@@ -226,12 +226,7 @@ def test_html_md5_body_is_retried_then_rejected(tmp_path, monkeypatch):
         geofabrik.fetch_region("r", tmp_path, client=_client(always_html), backoff_s=0)
 
 
-def test_fetch_sends_given_headers(tmp_path):
-    seen = {}
-
-    def handler(r):
-        seen["cookie"] = r.headers.get("cookie")
-        return httpx.Response(200, content=BODY)
-
-    fetch("https://h/f.pbf", tmp_path / "f.pbf", client=_client(handler), headers={"Cookie": "k=v"})
-    assert seen["cookie"] == "k=v"
+def test_fetch_takes_no_headers_so_cookies_stay_in_the_host_scoped_jar(tmp_path):
+    # a Cookie header would travel to every host a redirect leads to; the client jar does not
+    with pytest.raises(TypeError):
+        fetch("https://h/f.pbf", tmp_path / "f.pbf", headers={"Cookie": "k=v"})
