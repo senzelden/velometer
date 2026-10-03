@@ -47,8 +47,16 @@ def test_v3_reads_the_value_as_an_advisory_lane_on_each_side_form(value, form):
         assert (c.tier, c.rule_id, c.subtype) == ("D", NEW_RULES[value], "advisory"), (form, s)
         assert c.attrs.get("advisory") is True
         assert "unknown_value" not in c.attrs
+    untagged_v2 = sides({form: value}, V2)
     for s in {"left", "right"} - tagged:
-        assert s not in got or got[s].tier != "D", (form, s)
+        # the untagged side is none of this rule's business: it gets exactly what v2 gives it
+        assert (s in got) == (s in untagged_v2), (form, s)
+        if s in got:
+            assert (got[s].tier, got[s].subtype, got[s].rule_id) == (
+                untagged_v2[s].tier,
+                untagged_v2[s].subtype,
+                untagged_v2[s].rule_id,
+            ), (form, s)
 
 
 def test_v3_gives_the_same_tier_and_subtype_as_v2_lane_advisory():
@@ -59,41 +67,44 @@ def test_v3_gives_the_same_tier_and_subtype_as_v2_lane_advisory():
 
 
 def test_shared_busway_stays_unrecognised_in_v3():
-    got = sides({"cycleway:right": "shared_busway"}, V3)["right"]
-    assert got.tier is None
+    got = sides({"cycleway:right": "shared_busway"}, V3).get("right")
+    assert got is None or got.tier is None, f"shared_busway must stay unrecognised, got {got}"
 
 
 V3_ONLY_RULES = set(NEW_RULES.values())
 
 
-def test_v3_changes_only_sides_v2_left_untiered_and_only_to_new_rules():
+def _golden_sides(cfg_old, cfg_new):
+    """Yield (file, key, tags, old, new) for every classified side of every golden fixture."""
     cases = yaml.safe_load((FIX / "expected.yaml").read_text())["cases"]
     files = [FIX / "cases" / f"{c}.osm" for c in cases] + [FIX / "berlin_golden.osm"]
     files += sorted((FIX / "golden").glob("*.osm"))
-    changed: list[tuple] = []
     for f in files:
         ways = read_ways(f).ways
-        old = {(c.side.way_id, c.side.side): c for c in classify_ways(ways, V2)}
-        new = {(c.side.way_id, c.side.side): c for c in classify_ways(ways, V3)}
+        old = {(c.side.way_id, c.side.side): c for c in classify_ways(ways, cfg_old)}
+        new = {(c.side.way_id, c.side.side): c for c in classify_ways(ways, cfg_new)}
         assert new.keys() == old.keys(), f.name
-        for k, a in old.items():
-            b = new[k]
-            if (b.tier, b.subtype, b.rule_id) == (a.tier, a.subtype, a.rule_id):
-                continue
-            assert a.tier is None and b.rule_id in V3_ONLY_RULES, (f.name, k, a.rule_id, b.rule_id)
-            changed.append((f.stem, *k))
-    # the golden ways the two rules were made for: CZ soft_lane, SK and NO advisory
-    assert sorted(changed) == sorted(
-        [
-            ("cz", 135706932, "right"),
-            ("cz", 762313241, "right"),
-            ("cz", 821229572, "left"),
-            ("cz", 821229572, "right"),
-            ("no", 1262980246, "right"),
-            ("sk", 1050603989, "right"),
-            ("sk", 24836980, "left"),
-        ]
-    )
+        tags = {w.id: w.tags for w in ways}
+        for k in old:
+            yield f.name, k, tags[k[0]], old[k], new[k]
+
+
+def test_v3_changes_only_sides_v2_left_untiered_and_only_to_new_rules():
+    for name, k, _, a, b in _golden_sides(V2, V3):
+        if (b.tier, b.subtype, b.rule_id) == (a.tier, a.subtype, a.rule_id):
+            continue
+        assert a.tier is None, (name, k, "v2 had tiered it", a.rule_id)
+        assert b.rule_id in V3_ONLY_RULES, (name, k, "changed by another rule", b.rule_id)
+
+
+def test_v3_tiers_every_golden_soft_lane_or_advisory_side_as_advisory():
+    checked = 0
+    for name, k, tags, _, b in _golden_sides(V2, V3):
+        for form, tagged in SIDE_FORMS.items():
+            if tags.get(form) in NEW_RULES and k[1] in tagged:
+                checked += 1
+                assert (b.tier, b.subtype) == ("D", "advisory"), (name, k, form, b.rule_id)
+    assert checked, "no golden side carries soft_lane/advisory; the fixtures no longer test this"
 
 
 def test_v3_is_v2_plus_exactly_the_two_rules():
