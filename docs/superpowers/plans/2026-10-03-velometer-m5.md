@@ -43,7 +43,7 @@
 2. **A city that has no figure from one ranking source** (most of the new cities for Clean Cities). Its line breaks at that column; it is not drawn straight across. The city is not ranked there, nothing raises, and the column header says `n=`. Pinned in Task 5.
 3. **Two QECIO rows of the same metric for one city, or a QECIO row of another NUTS3 unit.** The duplicate raises a `ConfigError` naming the city and metric. The other unit's row is ignored. Pinned in Task 5.
 4. **A DB or config change while the app is running.** The next request reflects it: the cache key covers the DB file and every config and docs file the pages read. Pinned in Task 10.
-5. **A migration interrupted after its DDL.** The DB stays at its old `user_version` with its old tables. Pinned in Task 1.
+5. **A migration interrupted after its DDL.** The DB stays at its old `user_version` with its old tables. Pinned in Task 1, and exercised again by v6→v7 in Task 2.
 
 ---
 
@@ -126,14 +126,18 @@ def test_migrate_without_activity_sha_on_v5_rows_explains(tmp_path):
 **Files:**
 - Create: `src/velometer/memory.py`
 - Modify: `src/velometer/run.py` (`run_city`, `run_history`)
-- Test: `tests/test_memory.py`, `tests/test_run.py`, `tests/test_run_history.py`
+- Modify: `src/velometer/db.py` (schema v7, `complete_run`, `fetch_run`)
+- Test: `tests/test_memory.py`, `tests/test_run.py`, `tests/test_run_history.py`, `tests/test_db.py`
 
 **Interfaces:**
 - Produces:
   - `class PeakRss`, a context manager. A daemon thread samples `/proc/self/statm` (resident pages × page size) every `interval_s` (default 0.2). It also samples once on enter and once on exit. After exit, `.peak_mb: float` holds the maximum seen inside the block.
-  - Every run, current and history, writes the diagnostics key `peak_rss_mb`, measured around `read_ways` + `measure` + `compute_metrics`. `run_city` now passes `diagnostics={"peak_rss_mb": …}` to `complete_run`. `run_history` adds the key to its existing dict.
+  - Schema v7 (spec §5.1): `runs` gains `peak_rss_kb INTEGER`, nullable for old runs. `_migrate_6_to_7` is additive (`ALTER TABLE runs ADD COLUMN`), and it runs inside Task 1's single transaction.
+  - `complete_run(..., peak_rss_kb: int | None = None)` writes the column in the same transaction as the results.
+  - Every run, current and history, records it, measured around `read_ways` + `measure` + `compute_metrics`.
+  - `fetch_run` returns the column.
 
-**Why diagnostics rather than a schema v7 column (ruling for `rulings-m5.md`):** the `diagnostics` table already holds per-run key/value rows. A column would need a migration for one number. `ru_maxrss` is not usable, because runs execute in one process and it never goes down.
+**Mechanism (ruling for `rulings-m5.md`):** the spec's `getrusage(RUSAGE_SELF)` would need a fresh process per run, and runs execute in one process. `ru_maxrss` never goes down there, so it can't give a per-run peak. A sampling thread over `/proc/self/statm` measures the step itself.
 
 - [ ] **Step 1: Write failing tests**
 
@@ -155,13 +159,13 @@ def test_peak_sees_an_allocation_inside_the_block():
 ```python
 # tests/test_run.py
 def test_current_run_records_peak_rss(tmp_path):
-    ...  # run_city with _current_deps -> fetch_diagnostics(conn, run_id)["peak_rss_mb"] > 0
+    ...  # run_city with _current_deps -> fetch_run(conn, run_id)["peak_rss_kb"] > 0
 ```
 
 ```python
 # tests/test_run_history.py
 def test_history_run_records_peak_rss(tmp_path):
-    ...  # run_history over 2 years -> every run's diagnostics has peak_rss_mb > 0, legacy_km too
+    ...  # run_history over 2 years -> every run row has peak_rss_kb > 0
 ```
 
 - [ ] **Step 2: Run and confirm failure.** Run `uv run pytest -q tests/test_memory.py tests/test_run.py tests/test_run_history.py -k peak`. It fails: `velometer.memory` doesn't exist yet.
@@ -208,9 +212,9 @@ class PeakRss:
         self._thread.join()
 ```
 
-  In `run_city`, wrap the read/measure/metrics lines in `with PeakRss() as peak:` and pass `diagnostics={"peak_rss_mb": peak.peak_mb}`. In `run_history`, do the same and set `diagnostics["peak_rss_mb"] = peak.peak_mb`.
-- [ ] **Step 4: Run and confirm pass.** Run `uv run pytest -q tests/test_memory.py tests/test_run.py tests/test_run_history.py tests/test_timeseries.py`. Timeseries must stay green, since `_point` ignores unknown diagnostics keys.
-- [ ] **Step 5: Commit.** Run `git commit -m "feat(run): record peak RSS of every run as a diagnostic"`.
+  In `run_city` and `run_history`, wrap the read/measure/metrics lines in `with PeakRss() as peak:` and pass `peak_rss_kb=round(peak.peak_mb * 1024)` to `complete_run`. Add `SCHEMA_VERSION = 7`, `_migrate_6_to_7` and the column in `_SCHEMA`. Write a v6→v7 migration test on a v6 copy: the runs are untouched and `peak_rss_kb` is NULL.
+- [ ] **Step 4: Run and confirm pass.** Run `uv run pytest -q`. Every test that asserts `SCHEMA_VERSION` or migrations must stay green.
+- [ ] **Step 5: Commit.** Run `git commit -m "feat(run): schema v7, peak RSS of every run"`.
 
 ### Task 3: Boundaries, population and EPSG for new cities
 
@@ -781,7 +785,7 @@ def test_warm_page_times_are_reported(client_21, capsys):
 
 ### Task 12 (conditional): Streaming classification
 
-**Run only if Task 15 finds a run with `peak_rss_mb > 8192`.** Otherwise, skip it, and record the measured peaks in ADR 0007's notes (Task 18).
+**Run only if Task 15 finds a run with `peak_rss_kb > 8 * 2**20` (8 GB).** Otherwise, skip it, and record the measured peaks in ADR 0007's notes (Task 18).
 
 **Files:**
 - Create: `src/velometer/pipeline/stream.py`
@@ -806,7 +810,7 @@ def test_warm_page_times_are_reported(client_21, capsys):
 
 ## Part 2 — Execution (real data; the most capable model; the controller runs these)
 
-Before Task 13, take a DB backup: `cp velometer.sqlite data/velometer-pre-m5.sqlite`. Credentials come only from the stored Geofabrik cookie or `pass`, injected inline (R10).
+Before Task 13, take a DB backup (`cp velometer.sqlite data/velometer-pre-v7.sqlite`), then run `velometer migrate` (v6 → v7). Credentials come only from the stored Geofabrik cookie or `pass`, injected inline (R10).
 
 ### Task 13: Onboard the 16 cities, run diagnostics and samples → **stop for your sign-off**
 
@@ -855,8 +859,8 @@ Before Task 13, take a DB backup: `cp velometer.sqlite data/velometer-pre-m5.sql
 
 ### Task 15: Current FUA runs and the memory gate
 
-- [ ] **Step 1:** Run the current FUA runs for all 21 cities. Read `peak_rss_mb` for every current run (LAU and FUA) from `diagnostics`.
-- [ ] **Step 2:** If any run is over 8192 MB, do Task 12 now (implementer, review), then re-run that city. Otherwise record "gate not tripped" with the table of peaks.
+- [ ] **Step 1:** Run the current FUA runs for all 21 cities. Read `peak_rss_kb` for every current run (LAU and FUA) from `runs`. Before this, migrate the real DB to v7 after a backup to `data/velometer-pre-v7.sqlite`; do that in Task 13, before the first run.
+- [ ] **Step 2:** If any run is over 8 GB, do Task 12 now (implementer, review), then re-run that city. Otherwise record "gate not tripped" with the table of peaks.
 - [ ] **Step 3:** Run `report maps` for all 21 cities, LAU and FUA, with `/usr/bin/time -v`, and record the peak. Look at 4 maps, including the largest FUA.
 
 ### Task 16: Full history run
@@ -894,6 +898,6 @@ Before Task 13, take a DB backup: `cp velometer.sqlite data/velometer-pre-m5.sql
   - ADR 0007 notes: the peak-memory table and the streaming decision;
   - ADR 0004 notes: the boundary decisions for Oslo, Ljubljana and Bratislava;
   - ADR 0005 notes: the M5 run table;
-  - `docs/superpowers/rulings-m5.md`: every ruling made, including Task 2's diagnostics-not-column choice;
+  - `docs/superpowers/rulings-m5.md`: every ruling made, including Task 2's sampling mechanism;
   - `CLAUDE.md`'s "Latest delivered" line.
 - [ ] **Step 4:** Run the final whole-branch review (most capable model), fix it, and commit.
