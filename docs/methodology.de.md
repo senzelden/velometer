@@ -108,48 +108,48 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 <!-- generated:cities -->
 | Stadt | Grenzart | Aktueller Lauf (OSM-Zeitstempel) | Verlaufsdatensatz | Jahresstände (OSM-Zeitstempel) | Einwohner (Jahr) |
 |---|---|---|---|---|---|
-| Amsterdam | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 931.298 (2024) |
-| Amsterdam | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Barcelona | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.731.649 (2025) |
-| Barcelona | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Berlin | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.782.202 (2024) |
-| Berlin | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Bordeaux | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 267.991 (2023) |
-| Bordeaux | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Bratislava | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 478.040 (2024) |
-| Bratislava | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Budapest | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.686.222 (2024) |
-| Budapest | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| København | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 659.350 (2024) |
-| København | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Helsinki | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 674.500 (2024) |
-| Helsinki | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Kraków | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 806.201 (2024) |
-| Kraków | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Ljubljana | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 297.575 (2024) |
-| Ljubljana | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Lyon | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 519.127 (2023) |
-| Lyon | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Madrid | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.506.730 (2025) |
-| Madrid | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Oslo | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 717.710 (2024) |
-| Oslo | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Paris | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.084.894 (2024) |
-| Paris | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Praha | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.384.732 (2024) |
-| Praha | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Stockholm | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 988.943 (2024) |
-| Stockholm | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Strasbourg | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 293.771 (2023) |
-| Strasbourg | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Utrecht | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 374.238 (2024) |
-| Utrecht | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Wien | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.005.760 (2024) |
-| Wien | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Warszawa | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.861.599 (2024) |
-| Warszawa | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Wrocław | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 673.743 (2024) |
-| Wrocław | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Amsterdam | `lau` | 2026-10-02T20:21:34Z | `2a652dc280f7` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 931.298 (2024) |
+| Amsterdam | `fua` | 2026-10-02T20:21:34Z | `3ba1483e25bf` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Barcelona | `lau` | 2026-10-02T20:21:34Z | `9a77f00a5c1c` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1.731.649 (2025) |
+| Barcelona | `fua` | 2026-10-02T20:21:34Z | `9a77f00a5c1c` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Berlin | `lau` | 2026-10-02T20:21:34Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3.782.202 (2024) |
+| Berlin | `fua` | 2026-10-02T20:21:34Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Bordeaux | `lau` | 2026-10-02T20:21:34Z | `cb15813480d4` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 267.991 (2023) |
+| Bordeaux | `fua` | 2026-10-02T20:21:34Z | `5f5d0d9f2e4f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Bratislava | `lau` | 2026-10-02T20:21:34Z | `2e7369e09a0d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 478.040 (2024) |
+| Bratislava | `fua` | 2026-10-02T20:21:34Z | `2e7369e09a0d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Budapest | `lau` | 2026-10-02T20:21:34Z | `0a58443e8e3f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1.686.222 (2024) |
+| Budapest | `fua` | 2026-10-02T20:21:34Z | `0a58443e8e3f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| København | `lau` | 2026-10-02T20:21:34Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659.350 (2024) |
+| København | `fua` | 2026-10-02T20:21:34Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Helsinki | `lau` | 2026-10-02T20:21:34Z | `78321316cf46` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 674.500 (2024) |
+| Helsinki | `fua` | 2026-10-02T20:21:34Z | `78321316cf46` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Kraków | `lau` | 2026-10-02T20:21:34Z | `81a148c253e9` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 806.201 (2024) |
+| Kraków | `fua` | 2026-10-02T20:21:34Z | `81a148c253e9` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Ljubljana | `lau` | 2026-10-02T20:21:34Z | `81ef23ad74c1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 297.575 (2024) |
+| Ljubljana | `fua` | 2026-10-02T20:21:34Z | `81ef23ad74c1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Lyon | `lau` | 2026-10-02T20:21:34Z | `1404a50e78ba` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 519.127 (2023) |
+| Lyon | `fua` | 2026-10-02T20:21:34Z | `1404a50e78ba` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Madrid | `lau` | 2026-10-02T20:21:34Z | `323b467bcce8` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3.506.730 (2025) |
+| Madrid | `fua` | 2026-10-02T20:21:34Z | `f0e3c8ec3ba7` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Oslo | `lau` | 2026-10-02T20:21:34Z | `47a4f74ce955` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 717.710 (2024) |
+| Oslo | `fua` | 2026-10-02T20:21:34Z | `47a4f74ce955` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Paris | `lau` | 2026-10-02T20:21:34Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.084.894 (2024) |
+| Paris | `fua` | 2026-10-02T20:21:34Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Praha | `lau` | 2026-10-02T20:21:34Z | `6d1585485eb4` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1.384.732 (2024) |
+| Praha | `fua` | 2026-10-02T20:21:34Z | `678529b28752` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Stockholm | `lau` | 2026-10-02T20:21:34Z | `149b52577e9b` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 988.943 (2024) |
+| Stockholm | `fua` | 2026-10-02T20:21:34Z | `149b52577e9b` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Strasbourg | `lau` | 2026-10-02T20:21:34Z | `9c8283eccd88` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 293.771 (2023) |
+| Strasbourg | `fua` | 2026-10-02T20:21:34Z | `8bfe6202deab` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Utrecht | `lau` | 2026-10-02T20:21:34Z | `b0b39792e1fd` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 374.238 (2024) |
+| Utrecht | `fua` | 2026-10-02T20:21:34Z | `b37cd68d61fb` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Wien | `lau` | 2026-10-02T20:21:34Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.005.760 (2024) |
+| Wien | `fua` | 2026-10-02T20:21:34Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Warszawa | `lau` | 2026-10-02T20:21:34Z | `e910fce2f1b6` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1.861.599 (2024) |
+| Warszawa | `fua` | 2026-10-02T20:21:34Z | `72a9a41ebdf0` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Wrocław | `lau` | 2026-10-02T20:21:34Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673.743 (2024) |
+| Wrocław | `fua` | 2026-10-02T20:21:34Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
 <!-- /generated:cities -->
 
 Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons mit der Fläche der administrativen OSM-Relation der Stadt verglichen. Weichen beide stärker voneinander ab, als der Schwellenwert in `config/trust.yaml` zulässt, kann die Stadt auf die OSM-Relation umgestellt werden; `admin_boundary` in `config/cities.yaml` hält diese Wahl fest [M5-Spezifikation §3.1]. Die folgende Tabelle nennt je Stadt die Quelle der Verwaltungsgrenze und der Einwohnerzahl, so wie sie mit der Gebietsgrenze und den Läufen gespeichert sind.
