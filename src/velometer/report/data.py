@@ -7,16 +7,19 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 
 import sqlite3
 from pathlib import Path
+from string import Formatter
 
 from pydantic import BaseModel, ConfigDict
 
 from velometer import reconcile as rc
 from velometer import timeseries as ts
 from velometer.config import (
+    ConfigError,
     ExternalRanking,
     ExternalRatioRanking,
     PresetRanking,
     load_activity,
+    load_cities,
     load_history,
     load_report,
 )
@@ -75,6 +78,17 @@ class RankEntry(_Frozen):
     city_id: str
     value: float
     rank: int  # 1 = highest; ties share the lower rank number
+
+
+class RankingRow(_Frozen):
+    """One (ranking source, city) cell of the rankings, with or without a figure."""
+
+    source_id: str
+    source_label: str
+    city_id: str
+    value: float | None
+    rank: int | None  # None: no figure from this source
+    n_ranked: int  # cities with a value in this source
 
 
 def open_readonly(db_path: Path) -> sqlite3.Connection:
@@ -140,6 +154,7 @@ class ReportData:
         self.activity = load_activity(self.config_dir / "activity.yaml")
         self.years = load_history(self.config_dir / "history.yaml").year_range()
         self._cities: list[City] | None = None
+        self._city_config: dict[str, dict] | None = None
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
 
     def preset_labels(self) -> dict[str, str]:
@@ -221,6 +236,14 @@ class ReportData:
 
     # --- rankings -----------------------------------------------------------------------
 
+    def _city_fields(self) -> dict[str, dict]:
+        """city id -> its config/cities.yaml fields (the scope patterns format over these)."""
+        if self._city_config is None:
+            self._city_config = {
+                c.id: c.model_dump() for c in load_cities(self.config_dir / "cities.yaml")
+            }
+        return self._city_config
+
     def _ranking_values(self, ranking) -> dict[str, float]:
         out: dict[str, float] = {}
         for c in self.cities():
@@ -228,6 +251,21 @@ class ReportData:
             if v is not None:
                 out[c.id] = v
         return out
+
+    def _ratio_scope(self, ranking, city_id: str) -> str | None:
+        """The ratio ranking's scope for this city; None when a field it names has no value."""
+        fields = self._city_fields().get(city_id, {})
+        try:
+            scope = ranking.scope.format_map(fields)
+        except KeyError as e:
+            raise ConfigError(
+                f"ranking {ranking.id!r}: scope {ranking.scope!r} names unknown city field {e}"
+            ) from e
+        if any(
+            fields.get(name) is None for _, name, _, _ in Formatter().parse(ranking.scope) if name
+        ):
+            return None
+        return scope
 
     def _ranking_value(self, ranking, city_id: str) -> float | None:
         if isinstance(ranking, PresetRanking):
@@ -251,32 +289,62 @@ class ReportData:
                 None,
             )
         assert isinstance(ranking, ExternalRatioRanking)
+        scope = self._ratio_scope(ranking, city_id)
+        if scope is None:
+            return None
         by_metric: dict[str, float] = {}
         for f in figures:
-            if f.source == ranking.source:
-                by_metric.setdefault(f.metric_name, f.value)
+            if f.source == ranking.source and f.network_scope == scope:
+                if f.metric_name in by_metric:
+                    raise ConfigError(
+                        f"{city_id}: {ranking.source} {f.metric_name}: 2 figures with scope {scope}"
+                    )
+                by_metric[f.metric_name] = f.value
         needed = [*ranking.numerator, ranking.denominator]
         if any(m not in by_metric for m in needed) or not by_metric[ranking.denominator]:
             return None  # a missing component drops the city from this source
         return sum(by_metric[m] for m in ranking.numerator) / by_metric[ranking.denominator] * 100
 
-    def ranks(self) -> list[RankEntry]:
-        """Every configured ranking source, cities ranked highest first (rank 1 = highest)."""
+    def ranking_rows(self) -> list[RankingRow]:
+        """One row per (source, city), report.yaml order; ranked cities first (highest first),
+        then the cities without a figure (rank and value None)."""
         out = []
         for ranking in self.report_config.rankings:
             values = self._ranking_values(ranking)
             ranked = rank_values(list(values.items()))
-            for city_id, v in sorted(values.items(), key=lambda kv: (ranked[kv[0]], kv[0])):
-                out.append(
-                    RankEntry(
-                        source_id=ranking.id,
-                        source_label=ranking.label,
-                        city_id=city_id,
-                        value=v,
-                        rank=ranked[city_id],
-                    )
-                )
+            n = len(values)
+            ids = [c.id for c in self.cities()]
+            for city_id in sorted(values, key=lambda k: (ranked[k], k)):
+                out.append(self._ranking_row(ranking, city_id, values[city_id], ranked[city_id], n))
+            out += [
+                self._ranking_row(ranking, i, None, None, n) for i in sorted(ids) if i not in values
+            ]
         return out
+
+    @staticmethod
+    def _ranking_row(ranking, city_id, value, rank, n) -> RankingRow:
+        return RankingRow(
+            source_id=ranking.id,
+            source_label=ranking.label,
+            city_id=city_id,
+            value=value,
+            rank=rank,
+            n_ranked=n,
+        )
+
+    def ranks(self) -> list[RankEntry]:
+        """The ranked cells of `ranking_rows()` (rank 1 = highest)."""
+        return [
+            RankEntry(
+                source_id=r.source_id,
+                source_label=r.source_label,
+                city_id=r.city_id,
+                value=r.value,
+                rank=r.rank,
+            )
+            for r in self.ranking_rows()
+            if r.rank is not None and r.value is not None
+        ]
 
     # --- CSV ------------------------------------------------------------------------------
 

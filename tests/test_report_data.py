@@ -4,10 +4,19 @@ import pytest
 
 from tests.report_fixture import (
     SPIKE_YEAR,
+    _figure,
     external_figures,
 )
 from velometer.cli import report_selector
-from velometer.db import SCHEMA_VERSION, SchemaError, fetch_run, fetch_run_results
+from velometer.config import ConfigError
+from velometer.db import (
+    SCHEMA_VERSION,
+    SchemaError,
+    fetch_run,
+    fetch_run_results,
+    open_db,
+    replace_external_figures,
+)
 from velometer.pipeline.measure import select_metric
 from velometer.report import methodology as mt
 from velometer.report.data import ReportData, open_readonly, rank_values
@@ -180,3 +189,68 @@ def test_current_run_without_history(fixture_db):
         assert kind.current_osm_timestamp == point.osm_timestamp
     finally:
         conn.close()
+
+
+def _add_qecio(db_path, city_id, *extra):
+    """Add QECIO figures (metric, value, scope) through a writable connection (the fixture's is
+    read-only)."""
+    with open_db(db_path) as w:
+        figs = external_figures()["qecio_v2_10"]
+        added = [_figure(city_id, "qecio_v2_10", m, v, sc) for m, v, sc in extra]
+        replace_external_figures(w, "qecio_v2_10", [*figs, *added])
+
+
+def test_qecio_ratio_ignores_other_scopes(fixture_db):
+    db_path, _, _, data = fixture_db
+    _add_qecio(db_path, "berlin", ("main_roads_km", 1.0, "nuts3_XX000"))
+    q = _by(data.ranks(), "published_qecio")
+    assert q["berlin"].value == pytest.approx(50.0)
+
+
+def test_qecio_ratio_duplicate_same_scope_raises(fixture_db):
+    db_path, _, _, data = fixture_db
+    _add_qecio(db_path, "berlin", ("cycle_tracks_km", 7.0, "nuts3_DE300"))
+    with pytest.raises(ConfigError, match=r"berlin.*cycle_tracks_km|cycle_tracks_km.*berlin"):
+        data.ranks()
+
+
+def test_ranking_rows_include_cities_without_a_figure(fixture_db):
+    rows = fixture_db[3].ranking_rows()
+    paris = next(r for r in rows if r.source_id == "published_qecio" and r.city_id == "paris")
+    assert paris.rank is None and paris.value is None
+    assert {r.n_ranked for r in rows if r.source_id == "published_qecio"} == {1}
+    assert {r.city_id for r in rows if r.source_id == "ours_headline"} == {"berlin", "paris"}
+
+
+def test_ranks_is_the_ranked_part_of_ranking_rows(fixture_db):
+    data = fixture_db[3]
+    ranked = [r for r in data.ranking_rows() if r.rank is not None]
+    assert [(r.source_id, r.city_id, r.rank) for r in data.ranks()] == [
+        (r.source_id, r.city_id, r.rank) for r in ranked
+    ]
+
+
+def test_scope_pattern_with_unknown_field_is_a_config_error(fixture_db):
+    data = fixture_db[3]
+    data.report_config.rankings[1:]  # noqa: B018 (shape check)
+    bad = next(r for r in data.report_config.rankings if r.id == "published_qecio")
+    object.__setattr__(bad, "scope", "nuts3_{no_such_field}")
+    with pytest.raises(ConfigError, match="published_qecio"):
+        data.ranking_rows()
+
+
+def test_city_without_the_scope_field_has_no_value(fixture_db):
+    db_path, _, _, data = fixture_db
+    # a figure set whose scope is what str.format would make of None: it must not match
+    _add_qecio(
+        db_path,
+        "berlin",
+        ("cycle_tracks_km", 1.0, "nuts3_None"),
+        ("cycle_lanes_km", 1.0, "nuts3_None"),
+        ("shared_pedestrians_km", 1.0, "nuts3_None"),
+        ("main_roads_km", 2.0, "nuts3_None"),
+    )
+    data._city_fields()["berlin"]["nuts3_code"] = None
+    rows = data.ranking_rows()
+    berlin = next(r for r in rows if r.source_id == "published_qecio" and r.city_id == "berlin")
+    assert berlin.value is None and berlin.rank is None

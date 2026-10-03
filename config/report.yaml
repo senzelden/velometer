@@ -18,4 +18,5 @@ rankings:
     source: qecio_v2_10
     numerator: [cycle_tracks_km, cycle_lanes_km, shared_pedestrians_km]
     denominator: main_roads_km
+    scope: "nuts3_{nuts3_code}"
     note: "NUTS3 region (Berlin DE300, Paris FR101, Vienna AT130, Copenhagen DK011, Wroclaw PL514)"

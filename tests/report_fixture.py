@@ -58,8 +58,12 @@ def _figure(city_id, source, metric, value, scope="whole_network", unit="km"):
     )
 
 
+QECIO_NUTS3 = {"berlin": "DE300", "paris": "FR101"}  # nuts3_code of config/cities.yaml
+
+
 def _qecio(city_id, **km):
-    return [_figure(city_id, "qecio_v2_10", m, v, scope="nuts3") for m, v in km.items()]
+    scope = f"nuts3_{QECIO_NUTS3[city_id]}"
+    return [_figure(city_id, "qecio_v2_10", m, v, scope=scope) for m, v in km.items()]
 
 
 def external_figures() -> dict[str, list[ExternalFigure]]:

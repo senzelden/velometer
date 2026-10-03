@@ -10,7 +10,7 @@ from velometer.report.charts import (
     tiers_small_multiples,
     write_pngs,
 )
-from velometer.report.data import RankEntry
+from velometer.report.data import RankingRow
 
 EXPECTED_KEYS = {
     ("Berlin", "lau", "2024"),
@@ -93,31 +93,36 @@ def test_tier_small_multiples_cover_every_city_lau(fixture_data):
 
 def test_rankings_spec_orders_sources_as_report_yaml(fixture_data):
     spec = rankings_flip(fixture_data)
-    labels = [r.label for r in fixture_data.report_config.rankings]
-    order = json.dumps(spec)
-    positions = [order.index(json.dumps(label)) for label in labels]
-    assert positions == sorted(positions)
+    configured = [r.label for r in fixture_data.report_config.rankings]
     x_sort = spec["encoding"]["x"]["sort"] if "encoding" in spec else None
-    assert x_sort == labels
+    assert [s.rsplit(" (n=", 1)[0] for s in x_sort] == configured
+    assert all(s.endswith(")") for s in x_sort)
 
 
-def test_rankings_missing_city_is_absent(fixture_data):
+def test_rankings_missing_city_has_a_null_rank_not_a_zero(fixture_data):
     rows = _data_rows(rankings_flip(fixture_data))
     by_source = {}
     for r in rows:
         by_source.setdefault(r["source"], {})[r["city"]] = r["rank"]
-    # paris has no current run (no preset value) and lacks cycle_lanes_km: no row, not a zero
-    assert by_source["Ours: headline"] == {"Berlin": 1}
-    assert by_source["QECIO v2.10 (published)"] == {"Berlin": 1}
-    assert by_source["Clean Cities 2025 (published)"] == {"Berlin": 1, "Paris": 2}
+    # paris has no current run (no preset value) and lacks cycle_lanes_km: a gap, not a zero
+    assert by_source["Ours: headline (n=1)"] == {"Berlin": 1, "Paris": None}
+    assert by_source["QECIO v2.10 (published) (n=1)"] == {"Berlin": 1, "Paris": None}
+    assert by_source["Clean Cities 2025 (published) (n=2)"] == {"Berlin": 1, "Paris": 2}
 
 
 def test_rankings_tie_shares_rank(fixture_data, monkeypatch):
     tied = [
-        RankEntry(source_id="s", source_label="Ours: headline", city_id=c, value=5.0, rank=1)
+        RankingRow(
+            source_id="s",
+            source_label="Ours: headline",
+            city_id=c,
+            value=5.0,
+            rank=1,
+            n_ranked=2,
+        )
         for c in ("berlin", "paris")
     ]
-    monkeypatch.setattr(fixture_data, "ranks", lambda: tied)
+    monkeypatch.setattr(fixture_data, "ranking_rows", lambda: tied)
     rows = _data_rows(rankings_flip(fixture_data))
     assert {(r["city"], r["rank"]) for r in rows} == {("Berlin", 1), ("Paris", 1)}
 
@@ -201,3 +206,13 @@ def test_headline_axis_is_km_per_100_km_main_roads_not_a_share(fixture_data):
     for spec in (headline, rankings_flip(fixture_data)):
         for t in _titles(spec):
             assert "share" not in t.lower() and "%" not in t, t
+
+
+def test_rankings_line_breaks_at_a_missing_source(fixture_data):
+    spec = rankings_flip(fixture_data)
+    values = _data_rows(spec)
+    assert any(v["city"] == "Paris" and v["rank"] is None for v in values)
+    mark = spec["layer"][0]["mark"] if "layer" in spec else spec["mark"]
+    assert mark["invalid"] == "break-paths-filter-domains"
+    assert any("(n=1)" in v["source"] for v in values)
+    assert any(v["value_text"] == "not published" for v in values)

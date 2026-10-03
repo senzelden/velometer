@@ -350,6 +350,9 @@ class ExternalRatioRanking(_Strict):
     source: str
     numerator: list[str] = Field(min_length=1)
     denominator: str
+    # format string over city config fields, e.g. "nuts3_{nuts3_code}"; a city whose field is
+    # None has no value in this ranking
+    scope: str
     note: str | None = None
 
 

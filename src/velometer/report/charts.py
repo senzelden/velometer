@@ -212,22 +212,30 @@ def tiers_small_multiples(data: ReportData) -> dict:
 
 def rankings_flip(data: ReportData) -> dict:
     """Slope chart: x = ranking source (report.yaml order), y = rank (1 on top), colour = city."""
-    labels = [r.label for r in data.report_config.rankings]
     names = {c.id: c.name for c in data.cities()}
+    ranking_rows = data.ranking_rows()
+    # each column says how many cities it ranks (n differs per source: a missing figure is a gap)
+    column = {r.source_id: f"{r.source_label} (n={r.n_ranked})" for r in ranking_rows}
+    labels = [column[r.id] for r in data.report_config.rankings if r.id in column]
     rows = [
         {
-            "source": e.source_label,
+            "source": column[e.source_id],
             "city": names.get(e.city_id, e.city_id),
             "rank": e.rank,
-            "value": round(e.value, 3),
+            "value": None if e.value is None else round(e.value, 3),
+            "value_text": "not published" if e.value is None else f"{e.value:.2f}",
         }
-        for e in data.ranks()
+        for e in ranking_rows
     ]
     domain, colours = _city_domain(data)
-    top = max([r["rank"] for r in rows] + [1])
+    top = max([r["rank"] for r in rows if r["rank"] is not None] + [1])
     chart = (
         alt.Chart(alt.Data(values=rows))
-        .mark_line(point=alt.OverlayMarkDef(size=90, filled=True), strokeWidth=2.5)
+        .mark_line(
+            point=alt.OverlayMarkDef(size=90, filled=True),
+            strokeWidth=2.5,
+            invalid="break-paths-filter-domains",  # a null rank breaks the line
+        )
         .encode(
             x=alt.X(
                 "source:O", sort=labels, title=None, axis=alt.Axis(labelAngle=-25, labelLimit=220)
@@ -244,7 +252,7 @@ def rankings_flip(data: ReportData) -> dict:
                 alt.Tooltip("city:N"),
                 alt.Tooltip("rank:Q"),
                 # each source has its own unit and denominator (report.yaml notes, methodology)
-                alt.Tooltip("value:Q", format=".2f", title="value"),
+                alt.Tooltip("value_text:N", title="value"),
             ],
         )
         .properties(
