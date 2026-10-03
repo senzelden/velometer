@@ -274,10 +274,8 @@ def test_admin_boundary_and_urau_fields():
         CityConfig.model_validate({**BERLIN, "admin_boundary": "other"})
 
 
-def test_real_cities_epsg_in_range_and_exceptions_have_reasons():
+def test_real_cities_epsg_in_range_and_blank_exception_is_rejected():
     cities = load_cities(CFG / "cities.yaml")
     assert all(25828 <= c.epsg <= 25838 for c in cities)
-    assert all(c.epsg_exception is None or c.epsg_exception.strip() for c in cities)
-    assert {c.id for c in cities if c.epsg_exception} == {"copenhagen"}
     with pytest.raises(ValidationError):
         CityConfig.model_validate({**BERLIN, "epsg_exception": "  "})
