@@ -6,7 +6,13 @@ from velometer.config import ActivityConfig
 from velometer.pipeline.activity import cycling_tags
 from velometer.pipeline.measure import MeasureResult
 from velometer.pipeline.tags import parts
-from velometer.pipeline.types import WayRecord
+from velometer.pipeline.types import Classified, WayRecord
+
+
+def is_unmatched_road_side(c: Classified) -> bool:
+    """A road side no rule recognised: no tier, or a tier but an unknown cycleway value. Whether
+    its way also carries cycling tags (the "unrecognised cycling" case) is the caller's test."""
+    return c.side.kind == "road_side" and (c.tier is None or "unknown_value" in c.attrs)
 
 
 def drift_diagnostics(
@@ -23,7 +29,7 @@ def drift_diagnostics(
         way_id = c.side.way_id
         tags = tags_by_way[way_id]
         length = result.way_lengths[way_id]
-        if c.side.kind == "road_side" and (c.tier is None or "unknown_value" in c.attrs):
+        if is_unmatched_road_side(c):
             if cycling_tags(tags, cfg):
                 unrecognised += length
         elif c.tier is None:

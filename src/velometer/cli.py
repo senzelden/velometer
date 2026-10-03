@@ -20,6 +20,7 @@ from velometer.config import (
     load_cities,
 )
 from velometer.db import SCHEMA_VERSION, SchemaError, create_schema, open_db, upsert_cities
+from velometer.osmium import OsmiumError
 from velometer.selection import Selector
 
 
@@ -46,8 +47,12 @@ app.add_typer(auth_app, name="auth")
 report_app = typer.Typer(no_args_is_help=True, help="Report surfaces (read-only).")
 app.add_typer(report_app, name="report")
 
+trust_app = typer.Typer(no_args_is_help=True, help="Per-country trust diagnostics.")
+app.add_typer(trust_app, name="trust")
+
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
+DOCS_OPT = typer.Option(Path("docs"), "--docs", help="Docs directory (review/trust/ inside).")
 CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config directory.")
 CC_BASIS_OPT = typer.Option(
     None,
@@ -1174,6 +1179,75 @@ def report_maps(
         raise typer.Exit(1) from e
     finally:
         conn.close()
+
+
+@trust_app.command("diagnose")
+def trust_diagnose(
+    country: str = typer.Option(..., "--country", help="ISO 3166-1 alpha-2 code, e.g. FR."),
+    db: Path = DB_OPT,
+    data_dir: Path = DATA_OPT,
+    config_dir: Path = CONFIG_OPT,
+    docs: Path = DOCS_OPT,
+) -> None:
+    """Tagging diagnostics of the country's cities (current LAU runs): docs/review/trust/<cc>.*"""
+    from velometer import trust as tr
+    from velometer.config import load_activity, load_trust
+    from velometer.report.data import open_readonly
+
+    country = country.upper()
+    try:
+        trust = load_trust(config_dir / "trust.yaml")
+        activity_cfg = load_activity(config_dir / "activity.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    selector = report_selector(config_dir)
+    everyone = _all_cities(config_dir)
+    cities = [c for c in everyone if c.country_iso2 == country]
+    if not cities:
+        typer.echo(f"error: no cities configured for country {country}", err=True)
+        raise typer.Exit(2)
+    pilot_id = trust.countries[country].pilot if country in trust.countries else None
+    pilot_city = next((c for c in everyone if c.id == pilot_id), None) if pilot_id else None
+    if pilot_id and pilot_city is None:
+        typer.echo(f"error: pilot city {pilot_id} is not in cities.yaml", err=True)
+        raise typer.Exit(1)
+    try:
+        conn = open_readonly(db)
+    except (FileNotFoundError, SchemaError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        wanted = cities + ([pilot_city] if pilot_city and pilot_city not in cities else [])
+        missing = [c.id for c in wanted if selector.latest(conn, c.id, "lau") is None]
+        if missing:
+            typer.echo(f"error: no current LAU run for: {', '.join(missing)}", err=True)
+            raise typer.Exit(1)
+        diag = {}
+        for c in wanted:
+            try:
+                diag[c.id] = tr.diagnose_city(
+                    conn, c, selector, data_dir, activity_cfg, config_dir=config_dir
+                )
+            except (FileNotFoundError, tr.NoCurrentRun, OsmiumError) as e:
+                typer.echo(f"error: {c.id}: {e}", err=True)
+                raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    cd = tr.CountryDiagnostics(
+        country=country,
+        classifier_version=selector.version,
+        config_sha256=selector.config_sha256,
+        cities=[diag[c.id] for c in cities],
+    )
+    pilots = [diag[pilot_id]] if pilot_id else []
+    js, md = tr.write_country(docs, cd, trust.thresholds, pilots)
+    for d in cd.cities:
+        over = tr.breaches(d, trust.thresholds)
+        typer.echo(
+            f"{d.city_id}: " + (f"over limit: {', '.join(over)}" if over else "within limits")
+        )
+    typer.echo(f"written: {js}")
+    typer.echo(f"written: {md}")
 
 
 LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost")

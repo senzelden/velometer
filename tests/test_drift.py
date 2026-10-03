@@ -118,3 +118,19 @@ def test_road_side_with_unknown_cycleway_value_is_unrecognised():
     # the unknown_value clause alone suffices, whatever the tier
     d = synthetic(tags, "D", "D_lane", attrs={"unknown_value": "bogus"})
     assert d["unrecognised_cycling_km"] > 0
+
+
+def _classified(kind, tier, attrs=None):
+    return Classified(
+        WaySide(1, "right", kind, {}, ((0.0, 0.0), (0.0, 1.0))), tier, None, None, attrs or {}
+    )
+
+
+def test_unmatched_road_side_is_untiered_or_unknown_value_on_a_road_only():
+    from velometer.pipeline.drift import is_unmatched_road_side
+
+    assert is_unmatched_road_side(_classified("road_side", None))
+    assert is_unmatched_road_side(_classified("road_side", "A", {"unknown_value": "x"}))
+    assert not is_unmatched_road_side(_classified("road_side", "A"))
+    assert not is_unmatched_road_side(_classified("standalone", None))
+    assert not is_unmatched_road_side(_classified("road_side", "excluded"))
