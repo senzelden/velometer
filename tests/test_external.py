@@ -29,10 +29,10 @@ BERLIN = [c for c in CITIES if c.id == "berlin"]
 CURATED = CFG / "external" / "figures.csv"
 
 
-def _qecio_all_cities(path: Path) -> Path:
-    """The fixture's Berlin row once per pilot city NUTS3 code (one row per configured code)."""
+def _qecio_all_cities(path: Path, cities=None) -> Path:
+    """The fixture's Berlin row once per NUTS3 code of `cities` (default: the pilot cities)."""
     head, berlin = (FIX / "qecio_summary_head.csv").read_text(encoding="utf-8").splitlines()[:2]
-    rows = [berlin.replace(",DE300,", f",{c.nuts3_code},") for c in CITIES]
+    rows = [berlin.replace(",DE300,", f",{c.nuts3_code},") for c in cities or PILOT_CITIES]
     path.write_text("\n".join([head, *rows]) + "\n", encoding="utf-8")
     return path
 
@@ -92,6 +92,8 @@ BIKENETKIT_FILE_IDS = {
     "copenhagen": "copenhagen_dk",
     "wroclaw": "wroclaw_pl",
 }
+# the pilots' rows are pinned by pilot_rows.json; cities added later are not part of it
+PILOT_CITIES = [c for c in CITIES if c.id in BIKENETKIT_FILE_IDS]
 GOLDEN_TS = datetime(2026, 5, 6, 12, 0, tzinfo=UTC).timestamp()
 
 
@@ -112,7 +114,7 @@ def pilot_inputs(tmp_path: Path) -> tuple[Path, Path]:
 
 def pilot_rows(tmp_path: Path) -> list[dict]:
     qecio, zip_dir = pilot_inputs(tmp_path)
-    figs = X.qecio_figures(qecio, CITIES) + X.bikenetkit_figures(zip_dir, CITIES)
+    figs = X.qecio_figures(qecio, PILOT_CITIES) + X.bikenetkit_figures(zip_dir, PILOT_CITIES)
     return [f.model_dump(mode="json") for f in figs]
 
 
@@ -260,7 +262,7 @@ def test_refresh_qecio_deletes_cache_before_fetch(tmp_path, monkeypatch):
 
     def fake_fetch(url, dst, **kw):
         seen.append(dst.exists())
-        _qecio_all_cities(dst)
+        _qecio_all_cities(dst, CITIES)
         return dst
 
     monkeypatch.setattr(X, "fetch", fake_fetch)
@@ -341,7 +343,7 @@ def test_nuts3_note_is_appended_to_the_qecio_note():
 
 
 def test_pilot_cities_carry_their_external_source_ids():
-    by_id = {c.id: c for c in CITIES}
+    by_id = {c.id: c for c in PILOT_CITIES}
     assert {i: c.bikenetkit_id for i, c in by_id.items()} == BIKENETKIT_FILE_IDS
     assert {i: c.nuts3_is_city for i, c in by_id.items()} == {
         "berlin": True,

@@ -10,6 +10,43 @@
 # city commune; 7444 and 1641193 are suburb/district hits); vienna 109166 (city=Wien&country=Austria);
 # wroclaw 451516 (city=Wrocław&country=Poland); copenhagen: the city= query returns only a place
 # node, so 2192363 (Københavns Kommune, municipality) came from q=København Kommune Denmark.
+#
+# M5 lookups (Task 13), all run on 2026-10-03:
+# - osm_relation_id: Nominatim search?city=<name>&country=<country>&format=jsonv2 (UA velometer),
+#   then details?osmtype=R&osmid=<id> for admin_level; the municipality relation is taken, never
+#   a place node. amsterdam 47811 (city=Amsterdam&country=Netherlands; admin_level 8,
+#   ref:gemeentecode 0363; 271110 is the admin_level 10 woonplaats); utrecht 419203 (admin 8,
+#   gemeentecode 0344; 1433619 is an admin 10 district); madrid 5326784; barcelona 347950;
+#   stockholm 398021 (Stockholms kommun, admin 7; node 25929985 is the place node); oslo 2775550
+#   (Oslo kommune, admin 7; 406091 is the admin 4 fylke); helsinki 34914; lyon 120965 (INSEE
+#   69123; 1663048 is the arrondissement); strasbourg 71033 (INSEE 67482; 4630050 arrondissement);
+#   bordeaux 105270 (INSEE 33063; 1667452 arrondissement); warsaw 336075 (city=Warszawa&
+#   country=Poland); krakow 449696 (city=Kraków); budapest 1244004; prague 435514 (city=Praha&
+#   country=Czechia; the only hit, admin 4, ref:nuts:3 CZ010); ljubljana 1675898 (municipality;
+#   node 6968827 is the place node).
+# - lau_code: LAU_RG_01M_2024_3035.gpkg where CNTR_CODE=<cc> and LAU_NAME LIKE '%<name>%',
+#   exact-name row taken (Warszawa, Kraków, Praha, Helsinki / Helsingfors).
+# - fua_code: URAU_RG_100K_2024_3035_FUA.gpkg, URAU_NAME of the city, URAU_CATG F.
+# - nuts3_code: the QECIO v2.10 Summary-all CSV row (NUTS 2021 codes, as QECIO uses them);
+#   nuts3_is_city = QECIO Area within 5 % of LAU AREA_KM2. True: oslo NO081 454.86 vs 454.04,
+#   warsaw PL911 517.69 vs 517.19, krakow PL213 327.57 vs 326.85, budapest HU110 525.93 vs
+#   525.18, prague CZ010 497.20 vs 496.39; the others carry a nuts3_note.
+# - geofabrik_region: index-v1-20261002.json, the smallest region with a pbf whose polygon covers
+#   the LAU polygon (uncovered area within velometer.sources.geofabrik.tolerance_m2).
+# - epsg: utm_epsg(LAU centroid longitude in EPSG:4326); stockholm 17.994E -> 25833.
+# - bikenetkit_id: bike_networks.zip listing, bike_networks/<id>.gpkg.
+# - population: LAU POP_2024 where positive. It is 0 for madrid, barcelona, lyon, strasbourg and
+#   bordeaux, and no fallback holds: their NUTS3 units are provinces/départements, and the Urban
+#   Audit city codes are greater cities, not the communes (URAU_AT_2024.csv AREA_SQM vs LAU:
+#   FR002C Lyon 297.3 vs 48.0 km2, FR009C Strasbourg 139.7 vs 78.2, FR005C Bordeaux 340.4 vs
+#   49.7, ES001C Madrid 953.1 vs 605.0, ES002C Barcelona 211.1 vs 98.3; urb_cpop1 labels them
+#   "(greater city)"). So population_urau is not set and these cities have no per-100k figure.
+# - Bratislava is not configured: LAU 2024 has no Bratislava municipality, only its 17 boroughs
+#   (SK_528595 ... SK_529494, 367.61 km2, POP_2024 sum 478,040), and the code needs a lau_code
+#   even for an osm_relation admin boundary. Queried for the record: Nominatim relation 1702499
+#   (admin 5), FUA SK001F, NUTS3 SK010 (Bratislavský kraj, 2052.2 km2, not the city), Urban
+#   Audit SK001C (367.61 km2 = the 17 boroughs), BikeNetKit bratislava_sk, region europe/slovakia
+#   (smallest covering the union of the borough polygons; centroid 17.12E -> EPSG 25833).
 cities:
   - id: berlin
     name: Berlin
@@ -69,3 +106,179 @@ cities:
     nuts3_code: PL514
     bikenetkit_id: wroclaw_pl
     nuts3_is_city: true
+  # --- M5 cities (Task 13): every value below was queried on 2026-10-03 (header, "M5 lookups").
+  - id: amsterdam
+    name: Amsterdam
+    country_iso2: NL
+    epsg: 25831
+    geofabrik_region: europe/netherlands/noord-holland
+    osm_relation_id: 47811
+    lau_code: NL_GM0363
+    fua_code: NL001F
+    nuts3_code: NL329
+    bikenetkit_id: amsterdam_nl
+    nuts3_is_city: false
+    nuts3_note: "NL329 is Groot-Amsterdam (QECIO area 874.8 km2), not the gemeente (LAU 223.9 km2)"
+  - id: utrecht
+    name: Utrecht
+    country_iso2: NL
+    epsg: 25831
+    geofabrik_region: europe/netherlands/utrecht
+    osm_relation_id: 419203
+    lau_code: NL_GM0344
+    fua_code: NL042F
+    nuts3_code: NL310
+    bikenetkit_id: utrecht_nl
+    nuts3_is_city: false
+    nuts3_note: "NL310 is the province of Utrecht (QECIO area 1449.8 km2), not the gemeente (LAU 99.3 km2)"
+  - id: madrid
+    name: Madrid
+    country_iso2: ES
+    epsg: 25830
+    geofabrik_region: europe/spain/madrid
+    osm_relation_id: 5326784
+    lau_code: ES_28079
+    fua_code: ES001F
+    nuts3_code: ES300
+    bikenetkit_id: madrid_es
+    nuts3_is_city: false
+    nuts3_note: "ES300 is the Comunidad de Madrid (QECIO area 8029.5 km2), not the municipio (LAU 605.0 km2)"
+  - id: barcelona
+    name: Barcelona
+    country_iso2: ES
+    epsg: 25831
+    geofabrik_region: europe/spain/cataluna
+    osm_relation_id: 347950
+    lau_code: ES_08019
+    fua_code: ES002F
+    nuts3_code: ES511
+    bikenetkit_id: barcelona_es
+    nuts3_is_city: false
+    nuts3_note: "ES511 is the province of Barcelona (QECIO area 7730.1 km2), not the municipi (LAU 98.3 km2)"
+  - id: stockholm
+    name: Stockholm
+    country_iso2: SE
+    epsg: 25833
+    geofabrik_region: europe/sweden
+    osm_relation_id: 398021
+    lau_code: SE_0180
+    fua_code: SE001F
+    nuts3_code: SE110
+    bikenetkit_id: stockholm_se
+    nuts3_is_city: false
+    nuts3_note: "SE110 is Stockholms län (QECIO area 7072.8 km2), not Stockholms kommun (LAU 194.8 km2)"
+  - id: oslo
+    name: Oslo
+    country_iso2: "NO"
+    epsg: 25832
+    geofabrik_region: europe/norway/ostlandet
+    osm_relation_id: 2775550
+    lau_code: NO_0301
+    fua_code: NO001F
+    nuts3_code: NO081
+    bikenetkit_id: oslo_no
+    nuts3_is_city: true
+  - id: helsinki
+    name: Helsinki
+    country_iso2: FI
+    epsg: 25835
+    geofabrik_region: europe/finland
+    osm_relation_id: 34914
+    lau_code: FI_091
+    fua_code: FI001F
+    nuts3_code: FI1B1
+    bikenetkit_id: helsinki_fi
+    nuts3_is_city: false
+    nuts3_note: "FI1B1 is Helsinki-Uusimaa (QECIO area 9419.6 km2), not the city (LAU 213.4 km2)"
+  - id: lyon
+    name: Lyon
+    country_iso2: FR
+    epsg: 25831
+    geofabrik_region: europe/france/rhone-alpes
+    osm_relation_id: 120965
+    lau_code: FR_69123
+    fua_code: FR002F
+    nuts3_code: FRK26
+    bikenetkit_id: lyon_fr
+    nuts3_is_city: false
+    nuts3_note: "FRK26 is the Rhône département incl. the Métropole (QECIO area 3259.8 km2), not the commune (LAU 48.0 km2)"
+  - id: strasbourg
+    name: Strasbourg
+    country_iso2: FR
+    epsg: 25832
+    geofabrik_region: europe/france/alsace
+    osm_relation_id: 71033
+    lau_code: FR_67482
+    fua_code: FR009F
+    nuts3_code: FRF11
+    bikenetkit_id: strasbourg_fr
+    nuts3_is_city: false
+    nuts3_note: "FRF11 is the Bas-Rhin département (QECIO area 4797.2 km2), not the commune (LAU 78.2 km2)"
+  - id: bordeaux
+    name: Bordeaux
+    country_iso2: FR
+    epsg: 25830
+    geofabrik_region: europe/france/aquitaine
+    osm_relation_id: 105270
+    lau_code: FR_33063
+    fua_code: FR005F
+    nuts3_code: FRI12
+    bikenetkit_id: bordeaux_fr
+    nuts3_is_city: false
+    nuts3_note: "FRI12 is the Gironde département (QECIO area 10083.8 km2), not the commune (LAU 49.7 km2)"
+  - id: warsaw
+    name: Warszawa
+    country_iso2: PL
+    epsg: 25834
+    geofabrik_region: europe/poland/mazowieckie
+    osm_relation_id: 336075
+    lau_code: PL_1007141286501
+    fua_code: PL001F
+    nuts3_code: PL911
+    bikenetkit_id: warsaw_pl
+    nuts3_is_city: true
+  - id: krakow
+    name: Kraków
+    country_iso2: PL
+    epsg: 25834
+    geofabrik_region: europe/poland/malopolskie
+    osm_relation_id: 449696
+    lau_code: PL_1001121216101
+    fua_code: PL003F
+    nuts3_code: PL213
+    bikenetkit_id: krakow_pl
+    nuts3_is_city: true
+  - id: budapest
+    name: Budapest
+    country_iso2: HU
+    epsg: 25834
+    geofabrik_region: europe/hungary
+    osm_relation_id: 1244004
+    lau_code: HU_13578
+    fua_code: HU001F
+    nuts3_code: HU110
+    bikenetkit_id: budapest_hu
+    nuts3_is_city: true
+  - id: prague
+    name: Praha
+    country_iso2: CZ
+    epsg: 25833
+    geofabrik_region: europe/czech-republic/stredocesky
+    osm_relation_id: 435514
+    lau_code: CZ_554782
+    fua_code: CZ001F
+    nuts3_code: CZ010
+    bikenetkit_id: prague_cz
+    nuts3_is_city: true
+  - id: ljubljana
+    name: Ljubljana
+    country_iso2: SI
+    epsg: 25833
+    geofabrik_region: europe/slovenia
+    osm_relation_id: 1675898
+    lau_code: SI_061
+    fua_code: SI001F
+    nuts3_code: SI041
+    bikenetkit_id: ljubljana_si
+    nuts3_is_city: false
+    nuts3_note: "SI041 is Osrednjeslovenska (QECIO area 2333.9 km2), not the Mestna občina Ljubljana (LAU 275.0 km2)"

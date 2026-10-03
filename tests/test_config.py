@@ -21,7 +21,9 @@ CFG = default_config_dir()
 
 def test_pilot_cities_load_with_projected_epsg_and_integer_relations():
     cities = load_cities(CFG / "cities.yaml")
-    assert {c.id for c in cities} == {"berlin", "paris", "vienna", "copenhagen", "wroclaw"}
+    ids = [c.id for c in cities]
+    assert {"berlin", "paris", "vienna", "copenhagen", "wroclaw"} <= set(ids)
+    assert len(ids) == len(set(ids))
     assert all(isinstance(c.osm_relation_id, int) and c.osm_relation_id > 0 for c in cities)
 
 

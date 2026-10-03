@@ -653,7 +653,8 @@ def test_check_f_trusted_country_with_a_city_but_no_json(tmp_path, report_db_wit
     argv, p = _check_env(tmp_path, report_db_with_trust)
     trust = yaml.safe_load((p["cfg"] / "trust.yaml").read_text())
     trust["countries"]["FR"] = {"status": "trusted", "basis": "t"}  # paris is in cities.yaml
-    trust["countries"]["NL"] = {"status": "trusted", "basis": "t"}  # no city: nothing to check
+    assert not any(c.country_iso2 == "IS" for c in load_cities(p["cfg"] / "cities.yaml"))
+    trust["countries"]["IS"] = {"status": "trusted", "basis": "t"}  # no city: nothing to check
     (p["cfg"] / "trust.yaml").write_text(yaml.safe_dump(trust))
     code, out = _check(argv)
     assert code == 1

@@ -6,6 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from velometer.cli import app
+from velometer.config import default_config_dir, load_cities
 from velometer.db import SCHEMA_VERSION, connect, fetch_cities
 
 
@@ -15,8 +16,9 @@ def test_init_creates_db_with_cities_and_is_idempotent(tmp_path):
     for _ in range(2):
         result = runner.invoke(app, ["init", "--db", str(db)])
         assert result.exit_code == 0, result.output
-    assert len(fetch_cities(connect(db))) == 5
-    assert "5 cities" in result.output
+    n = len(load_cities(default_config_dir() / "cities.yaml"))
+    assert len(fetch_cities(connect(db))) == n
+    assert f"{n} cities" in result.output
 
 
 def test_init_refuses_newer_schema(tmp_path):
@@ -188,7 +190,8 @@ def test_failing_fetch_exits_1_and_continues_with_next_city(tmp_path, monkeypatc
     monkeypatch.setattr(R, "RunDeps", lambda: patched)
     out = CliRunner().invoke(app, ["osm", "fetch", "--data", str(tmp_path)])
     assert out.exit_code == 1
-    assert len(calls) == 5 and "failed RuntimeError: net down" in out.output
+    n = len(load_cities(default_config_dir() / "cities.yaml"))
+    assert len(calls) == n and "failed RuntimeError: net down" in out.output
     assert "md5=md5" in out.output
 
 
