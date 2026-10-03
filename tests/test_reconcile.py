@@ -150,8 +150,97 @@ def test_boundary_mismatch_tag_for_listed_city_and_source():
         _results(), figs, comps, threshold=0.2, date_gap_days=365, mismatch=mm, presets=PRESETS
     )
     assert "boundary_mismatch" in g.tags
-    cfg = RC.load_config(CFG)
-    assert cfg["boundary_mismatch"] == {"qecio_v2_10": ["copenhagen"]}
+
+
+def test_qecio_rows_of_a_city_whose_nuts3_is_not_the_city_are_tagged_boundary_mismatch():
+    comps = RC.load_comparisons(CFG)
+    figs = [
+        _fig("qecio_v2_10", "cycle_tracks_km", 679.471, "nuts3_DK011"),
+        _fig("clean_cities_2025", "protected_km", 990),
+    ]
+
+    def tags(nuts3_is_city, mismatch):
+        gaps = RC.gaps_for(
+            _results(),
+            figs,
+            comps,
+            threshold=0.2,
+            date_gap_days=365,
+            mismatch=mismatch,
+            nuts3_is_city=nuts3_is_city,
+            presets=PRESETS,
+        )
+        return {g.comparison: g.tags for g in gaps}
+
+    assert "boundary_mismatch" in tags(False, {})["qecio_tracks_km"]
+    assert "boundary_mismatch" not in tags(True, {})["qecio_tracks_km"]
+    assert "boundary_mismatch" not in tags(None, {})["qecio_tracks_km"]
+    assert "boundary_mismatch" not in tags(False, {})["cc_km"]  # not a per-NUTS3 source
+    both = tags(False, {"qecio_v2_10": ["berlin"]})["qecio_tracks_km"]
+    assert both.count("boundary_mismatch") == 1  # explicit list and cities.yaml: one tag
+
+
+def _nis_cfg(tmp_path, body):
+    p = tmp_path / "reconcile.yaml"
+    p.write_text(
+        "threshold: 0.2\ndate_gap_days: 365\ncomparisons:\n"
+        "  - id: cc_ratio\n    external: {source: src_a, metric_name: m}\n"
+        "    ours: {preset: clean_cities_2025}\n    required: true\n"
+        "  - id: other\n    external: {source: src_b, metric_name: m}\n"
+        "    ours: {preset: clean_cities_2025}\n    required: true\n"
+        "  - id: multi\n    external: {source: [src_a, src_b], metric_name: m}\n"
+        "    informational: true\n    required: true\n" + body
+    )
+    return p
+
+
+NIS = "not_in_source:\n  src_a:\n    - {city: ghent, reason: not in src_a}\n"
+CITIES = {"ghent", "berlin"}
+
+
+def test_missing_required_skips_a_not_in_source_comparison_only_for_the_listed_city(tmp_path):
+    cfg = _nis_cfg(tmp_path, NIS)
+    comps = RC.load_comparisons(cfg)
+    cc = RC.load_config(cfg)
+    ghent = RC.not_in_source_for(cc, comps, "ghent", CITIES, [])
+    assert ghent == (("cc_ratio", "not in src_a"),)  # src_b's comparison is still demanded
+    assert RC.not_in_source_for(cc, comps, "berlin", CITIES, []) == ()
+    reports = {
+        "ghent": RC.CityReport("ghent", 1, "p", [], ghent),
+        "berlin": RC.CityReport("berlin", 2, "p", []),
+    }
+    assert RC.missing_required(reports, comps) == [
+        "berlin/cc_ratio",
+        "berlin/other",
+        "berlin/multi",
+        "ghent/other",
+        "ghent/multi",  # only one of its two sources is listed: still demanded
+    ]
+
+
+def test_not_in_source_line_is_rendered_per_listed_comparison():
+    rep = RC.CityReport("ghent", 1, "p", [], (("cc_ratio", "not in src_a"),))
+    text = RC.render_block({"ghent": rep})
+    assert "cc_ratio: not in source (not in src_a)" in text
+    assert "not in source" not in RC.render_block({"ghent": _rep([], city="ghent")})
+
+
+@pytest.mark.parametrize(
+    ("body", "figures", "message"),
+    [
+        ("not_in_source:\n  src_zzz:\n    - {city: ghent, reason: r}\n", [], "unknown source"),
+        ("not_in_source:\n  src_a:\n    - {city: atlantis, reason: r}\n", [], "unknown city"),
+        (NIS, [_fig("src_a", "m", 1)], "has a figure row"),
+    ],
+)
+def test_not_in_source_config_errors(tmp_path, body, figures, message):
+    from velometer.config import ConfigError
+
+    cfg = _nis_cfg(tmp_path, body)
+    with pytest.raises(ConfigError, match=message):
+        RC.not_in_source_for(
+            RC.load_config(cfg), RC.load_comparisons(cfg), "ghent", CITIES, figures
+        )
 
 
 def test_missing_ours_is_none_not_zero_and_never_flagged():

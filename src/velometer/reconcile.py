@@ -7,7 +7,14 @@ from pathlib import Path
 
 import yaml
 
-from velometer.config import BASES, BasisRef, PresetParameters, PresetsConfig
+from velometer.config import (
+    BASES,
+    BasisRef,
+    ConfigError,
+    PresetParameters,
+    PresetsConfig,
+    load_cities,
+)
 from velometer.db import (
     DEFAULT_PARAMETERS,
     RunResults,
@@ -144,8 +151,14 @@ def gaps_for(
     threshold: float,
     date_gap_days: int,
     mismatch: dict,
+    nuts3_is_city: bool | None = None,
 ) -> list[Gap]:
     """Gaps per comparison and figure, on the selected presets parameters.
+
+    A per-NUTS3 figure (network_scope `nuts3_*`, QECIO) of a city whose cities.yaml says
+    `nuts3_is_city: false` is tagged `boundary_mismatch`; `mismatch` (config/reconcile.yaml
+    `boundary_mismatch:`, source -> city ids) adds the tag for any other source/city pair.
+    Example of what the first covers: Copenhagen, DK011 Byen København != Københavns Kommune.
 
     A comparison that depends on a parameter also gets one informational gap per other basis
     (key suffix `~<basis>`): shown, never flagged, never part of `--check`.
@@ -163,12 +176,11 @@ def gaps_for(
             tags = list(comp.tags)
             if f.reference_date and abs((ours_date - f.reference_date).days) > date_gap_days:
                 tags.append("date_gap")
-            if r.city_id in mismatch.get(f.source, []):
+            nuts3_row = f.network_scope.startswith("nuts3_")
+            if r.city_id in mismatch.get(f.source, []) or (nuts3_row and nuts3_is_city is False):
                 tags.append("boundary_mismatch")
             key = f"{r.city_id}/{comp.id}"
-            if f.network_scope not in _LIKE_FOR_LIKE_SCOPES and not f.network_scope.startswith(
-                "nuts3_"
-            ):
+            if f.network_scope not in _LIKE_FOR_LIKE_SCOPES and not nuts3_row:
                 # e.g. Vienna's web-correction row: its own key (never overwrites the PDF row)
                 # and tagged, since its scope is not like-for-like with ours.
                 key += f"@{f.network_scope}"
@@ -202,6 +214,8 @@ class CityReport:
     run_id: int
     provenance: str  # one line: run, OSM time, classifier, config, commit, boundary, sources
     gaps: list[Gap]
+    # (comparison id, reason): required comparisons whose source does not cover this city
+    not_in_source: tuple[tuple[str, str], ...] = ()
 
 
 def short_commit(sha: str) -> str:
@@ -237,6 +251,49 @@ def provenance_line(
     )
 
 
+def not_in_source_for(
+    cfg: dict,
+    comparisons: list[Comparison],
+    city_id: str,
+    city_ids: set[str],
+    figures: list[ExternalFigure],
+) -> tuple[tuple[str, str], ...]:
+    """(comparison id, reason) for this city from the `not_in_source:` mapping.
+
+    A listed comparison is every one whose sources are all listed for the city. Raises
+    ConfigError for an unknown city or source id, or for a city listed for a source that has
+    a figure row for it.
+    """
+    listed = cfg.get("not_in_source") or {}
+    known_sources = {s for c in comparisons for s in c.sources}
+    for source, entries in listed.items():
+        if source not in known_sources:
+            raise ConfigError(f"reconcile.yaml not_in_source: unknown source {source!r}")
+        for e in entries:
+            if e["city"] not in city_ids:
+                raise ConfigError(
+                    f"reconcile.yaml not_in_source {source}: unknown city {e['city']!r}"
+                )
+    reasons = {
+        source: e["reason"]
+        for source, entries in listed.items()
+        for e in entries
+        if e["city"] == city_id
+    }
+    for f in figures:
+        if f.source in reasons:
+            raise ConfigError(
+                f"reconcile.yaml not_in_source: {city_id} is listed for {f.source} "
+                "but has a figure row from it"
+            )
+    out = []
+    for comp in comparisons:
+        why = {reasons.get(src) for src in comp.sources}
+        if len(why) == 1 and None not in why:
+            out.append((comp.id, why.pop()))
+    return tuple(out)
+
+
 def reconcile_city(
     conn,
     city_id: str,
@@ -256,17 +313,22 @@ def reconcile_city(
     if run_id is None:
         return None
     figures = fetch_external_figures(conn, city_id)
+    comparisons = load_comparisons(config_path)
+    cities = load_cities(config_path.with_name("cities.yaml"))
+    city = next((c for c in cities if c.id == city_id), None)
+    not_in_source = not_in_source_for(cfg, comparisons, city_id, {c.id for c in cities}, figures)
     gaps = gaps_for(
         fetch_run_results(conn, run_id),
         figures,
-        load_comparisons(config_path),
+        comparisons,
         presets=presets,
         threshold=cfg["threshold"],
         date_gap_days=cfg["date_gap_days"],
-        mismatch=cfg.get("boundary_mismatch", {}),
+        mismatch=cfg.get("boundary_mismatch") or {},
+        nuts3_is_city=None if city is None else city.nuts3_is_city,
     )
     provenance = provenance_line(fetch_run(conn, run_id), figures, presets.parameters)
-    return CityReport(city_id, run_id, provenance, gaps)
+    return CityReport(city_id, run_id, provenance, gaps, not_in_source)
 
 
 def _fmt(v: float | None, pct: bool = False) -> str:
@@ -293,6 +355,8 @@ def render_block(reports: dict[str, CityReport]) -> str:
                 f"| {flag} | {', '.join(g.tags)} | {g.source} ({g.reference_date or '?'}) |"
             )
         lines.append("")
+        for comp_id, reason in rep.not_in_source:
+            lines += [f"{comp_id}: not in source ({reason})", ""]
     lines.append(END)
     return "\n".join(lines)
 
@@ -357,5 +421,7 @@ def missing_required(reports: dict[str, CityReport], comparisons: list[Compariso
         f"{c}/{comp.id}"
         for c, r in sorted(reports.items())
         for comp in comparisons
-        if comp.required and not any(g.comparison == comp.id for g in r.gaps)
+        if comp.required
+        and comp.id not in {i for i, _ in r.not_in_source}
+        and not any(g.comparison == comp.id for g in r.gaps)
     ]

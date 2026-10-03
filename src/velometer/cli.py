@@ -827,16 +827,19 @@ def reconcile(
     skipped: list[str] = []
     with _open_schema(db) as conn:
         for c in _report_cities(config_dir):
-            rep = rc.reconcile_city(
-                conn,
-                c.id,
-                config_path,
-                boundary,
-                classifier_version=sel.version,
-                classifier_parameters=sel.parameters,
-                config_sha256=sel.config_sha256,
-                presets=sel.presets,
-            )
+            try:
+                rep = rc.reconcile_city(
+                    conn,
+                    c.id,
+                    config_path,
+                    boundary,
+                    classifier_version=sel.version,
+                    classifier_parameters=sel.parameters,
+                    config_sha256=sel.config_sha256,
+                    presets=sel.presets,
+                )
+            except ConfigError as e:
+                raise _config_error(e) from e
             if rep is None:
                 if c.id in wanted:
                     skipped.append(c.id)

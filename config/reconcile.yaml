@@ -42,5 +42,20 @@ comparisons:
   - id: official_new_km
     external: {source: [official, changing_cities], metric_name: new_cycle_infra_km}
     informational: true   # new km in a year, not stock: listed, never flagged
-boundary_mismatch:
-  qecio_v2_10: [copenhagen]   # DK011 Byen København != Københavns Kommune
+# Extra boundary_mismatch tags: source -> city ids. QECIO rows of a city with
+# `nuts3_is_city: false` in cities.yaml are tagged automatically (e.g. Copenhagen: DK011 Byen
+# København != Københavns Kommune), so list a city here only for another source.
+boundary_mismatch: {}
+# A source that does not cover a city: source id -> [{city, reason}]. A required comparison of
+# that source is then not demanded for the city, and the report says so. A city listed here
+# with a figure row from the source is a config error.
+not_in_source:
+  clean_cities_2025:
+    - city: utrecht
+      reason: not in the Clean Cities 2025 ranking (36 cities)
+    - city: stockholm
+      reason: not in the Clean Cities 2025 ranking (36 cities)
+    - city: strasbourg
+      reason: not in the Clean Cities 2025 ranking (36 cities)
+    - city: bordeaux
+      reason: not in the Clean Cities 2025 ranking (36 cities)
