@@ -1,27 +1,27 @@
 {
   "country": "AT",
-  "classifier_version": "v2",
-  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "classifier_version": "v3",
+  "config_sha256": "0237b5b5c4329d480f88094d4274d9ba4ab8f1ef1a68f93ef0551005d30ea940",
   "cities": [
     {
       "city_id": "vienna",
-      "run_id": 149,
-      "osm_timestamp": "2026-09-30T20:22:42Z",
-      "cycling_km": 8528.931385318334,
-      "unrecognised_share": 0.000025224254947573525,
-      "excluded_share": 0.37045100542713516,
+      "run_id": 272,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 8530.26807059225,
+      "unrecognised_share": 0.000025220302329689196,
+      "excluded_share": 0.3705192749429761,
       "excluded_by_rule": {
-        "X_area": 0.009197270778940045,
-        "X_bicycle_no": 0.03728842323207505,
-        "X_construction_tag": 0.000032381005604282074,
-        "X_crossing": 6.281580077956906e-6,
-        "X_lifecycle": 0.00010921064953973722,
-        "X_no": 0.24781931676988941,
-        "X_private": 0.04740259424589136,
-        "X_road_private": 0.0008447883739557894,
-        "X_separate": 0.02102892754589525,
-        "X_shared_lane": 0.006578727597370799,
-        "X_shoulder": 0.0001430836478947181
+        "X_area": 0.009195829574946373,
+        "X_bicycle_no": 0.03728258016995679,
+        "X_construction_tag": 0.00003237593153005748,
+        "X_crossing": 6.280595760052985e-6,
+        "X_lifecycle": 0.00010919353632995454,
+        "X_no": 0.2477836241438095,
+        "X_private": 0.047395166302343805,
+        "X_road_private": 0.0008446559963833968,
+        "X_separate": 0.021068741701140682,
+        "X_shared_lane": 0.0066577657639579095,
+        "X_shoulder": 0.0001430612268167993
       },
       "tier_mix": {
         "A": 0.4775829108219269,
@@ -33,7 +33,7 @@
       "b_share_of_ab": 0.30167932324771013,
       "completeness": {
         "A": {
-          "width": 0.2716080939048311,
+          "width": 0.2719276139741082,
           "surface": 0.9028900448427004,
           "segregated": 0.6720618875152403
         },

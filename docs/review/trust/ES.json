@@ -1,11 +1,11 @@
 {
   "country": "ES",
-  "classifier_version": "v2",
-  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "classifier_version": "v3",
+  "config_sha256": "0237b5b5c4329d480f88094d4274d9ba4ab8f1ef1a68f93ef0551005d30ea940",
   "cities": [
     {
       "city_id": "madrid",
-      "run_id": 244,
+      "run_id": 277,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 7756.606744641896,
       "unrecognised_share": 0.0,
@@ -60,7 +60,7 @@
     },
     {
       "city_id": "barcelona",
-      "run_id": 245,
+      "run_id": 278,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 3687.1625122890828,
       "unrecognised_share": 0.00001916509306311516,

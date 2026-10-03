@@ -16,24 +16,24 @@ Prague from unrecognised to D and changes no other city's km, pilots included
 (docs/review/trust/v3-proposals.md, proposal 1). Tier D is outside the protected headline, so
 the headline does not move; the QECIO-method preset (lanes included) does.
 
+Resolved by classifier v3 (Task 14, user decision 2026-10-03): rule `D_soft_lane` recognises the
+58.8 km as D advisory. On run 288 Prague's unrecognised share is 0.0 % and it is within every
+limit; this note stays as the record.
+
 <!-- trust:begin -->
 ## Diagnostics CZ (generated)
 
-Classifier v2, config 7416d3c8c103. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| prague | 239 | 7645.0 | 0.8% | 19.8% | 63.8% | 0.1% | unrecognised_share |
+| prague | 288 | 7645.0 | 0.0% | 19.8% | 63.8% | 0.1% | none |
 
 ### prague: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 
-- `cycleway:right=soft_lane;highway=secondary`: 16.91 km
-- `cycleway:right=soft_lane;highway=tertiary`: 8.69 km
-- `cycleway=soft_lane;highway=secondary`: 6.17 km
-- `cycleway=soft_lane;highway=tertiary`: 3.35 km
-- `cycleway:left=no;cycleway:right=soft_lane;highway=primary`: 2.30 km
+- none
 
 Map data © OpenStreetMap contributors, ODbL 1.0
 <!-- trust:end -->

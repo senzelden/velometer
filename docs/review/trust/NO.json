@@ -1,14 +1,14 @@
 {
   "country": "NO",
-  "classifier_version": "v2",
-  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "classifier_version": "v3",
+  "config_sha256": "0237b5b5c4329d480f88094d4274d9ba4ab8f1ef1a68f93ef0551005d30ea940",
   "cities": [
     {
       "city_id": "oslo",
-      "run_id": 241,
+      "run_id": 280,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 4911.558859319679,
-      "unrecognised_share": 0.0000892827016677214,
+      "unrecognised_share": 0.0,
       "excluded_share": 0.09282843679892283,
       "excluded_by_rule": {
         "X_area": 0.008788364519967388,
@@ -23,11 +23,11 @@
         "X_untyped": 0.0003787245498175192
       },
       "tier_mix": {
-        "A": 0.12233993477421036,
-        "B": 0.5611859277748814,
+        "A": 0.12223406660246083,
+        "B": 0.5607002995268793,
         "C": 0.0,
-        "D": 0.31621100067515867,
-        "E": 0.00026313677574961995
+        "D": 0.31680272480313504,
+        "E": 0.00026290906752482734
       },
       "b_share_of_ab": 0.8210163777593364,
       "completeness": {
@@ -42,8 +42,8 @@
           "segregated": 0.7938413438385633
         },
         "D": {
-          "width": 0.009563469834477787,
-          "surface": 0.07022350935116507,
+          "width": 0.009537346792235396,
+          "surface": 0.07276323509522888,
           "segregated": 0.0
         },
         "E": {
@@ -52,12 +52,7 @@
           "segregated": 0.0
         }
       },
-      "top_unmatched": [
-        [
-          "bicycle:lanes:backward=yes;bicycle:lanes:forward=yes|designated;cycleway:lanes:forward=no|lane;cycleway:left=no;cycleway:right=advisory;cycleway:right:marking=dashed_line;cycleway:surface=asphalt;cycleway:surface:colour=red;highway=tertiary",
-          0.43851724436009293
-        ]
-      ],
+      "top_unmatched": [],
       "boundary_lau_km2": 454.9759864192284,
       "boundary_osm_km2": 480.4808283021865,
       "boundary_diff_pct": 5.30819137427009

@@ -1,11 +1,11 @@
 {
   "country": "NL",
-  "classifier_version": "v2",
-  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "classifier_version": "v3",
+  "config_sha256": "0237b5b5c4329d480f88094d4274d9ba4ab8f1ef1a68f93ef0551005d30ea940",
   "cities": [
     {
       "city_id": "amsterdam",
-      "run_id": 217,
+      "run_id": 275,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 3130.353839122298,
       "unrecognised_share": 0.00004440175962948282,
@@ -67,7 +67,7 @@
     },
     {
       "city_id": "utrecht",
-      "run_id": 218,
+      "run_id": 276,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 1700.7467973154276,
       "unrecognised_share": 0.0,

@@ -16,26 +16,28 @@ same pattern at a lower level (B_path 136.9 km, B_path_segregated 111.4 km vs A_
 A+B, so this changes the A/B split, not the headline. Report the split for Kraków. No rule
 change proposed: these ways are shared or side-by-side foot/cycle paths, which is what tier B means.
 
+Re-checked on classifier v3 (Task 14, run 286, 2026-10-03): 0.7843, unchanged; v3 moves no km in Kraków.
+
 <!-- trust:begin -->
 ## Diagnostics PL (generated)
 
-Classifier v2, config 7416d3c8c103. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| wroclaw | 151 | 4015.8 | 0.0% | 8.8% | 62.7% | 0.4% | none |
-| warsaw | 236 | 10895.9 | 0.0% | 23.1% | 33.4% | 0.0% | none |
-| krakow | 237 | 5238.9 | 0.0% | 33.1% | 78.4% | 0.0% | b_share_of_ab |
+| wroclaw | 274 | 4015.7 | 0.0% | 8.8% | 62.8% | 0.4% | none |
+| warsaw | 285 | 10895.9 | 0.0% | 23.1% | 33.4% | 0.0% | none |
+| krakow | 286 | 5238.9 | 0.0% | 33.1% | 78.4% | 0.0% | b_share_of_ab |
 
 ### Pilot comparison
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| wroclaw | 151 | 4015.8 | 0.0% | 8.8% | 62.7% | 0.4% | none |
+| wroclaw | 274 | 4015.7 | 0.0% | 8.8% | 62.8% | 0.4% | none |
 
-### wroclaw: top unmatched tag signatures (OSM 2026-09-30T20:22:42Z)
+### wroclaw: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 
 - none
 

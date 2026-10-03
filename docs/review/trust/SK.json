@@ -1,14 +1,14 @@
 {
   "country": "SK",
-  "classifier_version": "v2",
-  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "classifier_version": "v3",
+  "config_sha256": "0237b5b5c4329d480f88094d4274d9ba4ab8f1ef1a68f93ef0551005d30ea940",
   "cities": [
     {
       "city_id": "bratislava",
-      "run_id": 243,
+      "run_id": 290,
       "osm_timestamp": "2026-10-02T20:21:34Z",
       "cycling_km": 3036.8147132133536,
-      "unrecognised_share": 0.00023696873728599896,
+      "unrecognised_share": 0.000054012165898597605,
       "excluded_share": 0.10734580345304805,
       "excluded_by_rule": {
         "X_area": 0.006901858211630579,
@@ -21,11 +21,11 @@
         "X_untyped": 0.00003612749101451211
       },
       "tier_mix": {
-        "A": 0.48758385499373463,
-        "B": 0.2533462500725521,
+        "A": 0.4864672432050115,
+        "B": 0.2527660639023939,
         "C": 0.0,
-        "D": 0.2260542925385216,
-        "E": 0.03301560239519158
+        "D": 0.22782669925776022,
+        "E": 0.032939993634834366
       },
       "b_share_of_ab": 0.3419300259771287,
       "completeness": {
@@ -41,7 +41,7 @@
         },
         "D": {
           "width": 0.0,
-          "surface": 0.07033329498016401,
+          "surface": 0.06962631154621682,
           "segregated": 0.0
         },
         "E": {
@@ -54,30 +54,6 @@
         [
           "bicycle:lanes:forward=yes|designated;cycleway:right=shared_busway;highway=tertiary",
           0.16240776864988238
-        ],
-        [
-          "cycleway:left=separate;cycleway:right=advisory;highway=tertiary",
-          0.14102430703578553
-        ],
-        [
-          "cycleway:left=advisory;highway=tertiary",
-          0.12828029163782975
-        ],
-        [
-          "cycleway:right=advisory;highway=tertiary",
-          0.10823047817708169
-        ],
-        [
-          "cycleway=advisory;highway=tertiary",
-          0.07943976699681221
-        ],
-        [
-          "cycleway:right=advisory;highway=tertiary_link",
-          0.07044588288508671
-        ],
-        [
-          "cycleway:left=advisory;cycleway:right=lane;highway=tertiary",
-          0.028184481135733734
         ],
         [
           "cycleway=asl;highway=secondary",

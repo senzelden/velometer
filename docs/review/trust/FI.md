@@ -16,16 +16,18 @@ Effect, measured on the relation snapshot with v2: tiers A–E fall from 1343.0 
 (−23.1 km, −1.7 %), cycling km from 5404.6 (run 232) to 5224.8 (run 242); the lost km lie in
 the added area: islands and shoreline that the generalised (1:1M) LAU polygon leaves out.
 
+Re-checked on classifier v3 (Task 14, run 281, 2026-10-03): 69.09 %, unchanged (same boundary).
+
 <!-- trust:begin -->
 ## Diagnostics FI (generated)
 
-Classifier v2, config 7416d3c8c103. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| helsinki | 242 | 5224.8 | 0.0% | 26.3% | 53.6% | 69.1% | boundary_diff_pct |
+| helsinki | 281 | 5224.8 | 0.0% | 26.3% | 53.6% | 69.1% | boundary_diff_pct |
 
 ### helsinki: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 

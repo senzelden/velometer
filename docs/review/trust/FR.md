@@ -5,24 +5,24 @@ Hand-written notes go here. Only the generated block below is replaced when `vel
 <!-- trust:begin -->
 ## Diagnostics FR (generated)
 
-Classifier v2, config 7416d3c8c103. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| paris | 148 | 6981.3 | 0.0% | 41.3% | 6.0% | 0.0% | none |
-| lyon | 246 | 2320.3 | 0.0% | 32.9% | 15.2% | 0.1% | none |
-| strasbourg | 247 | 1197.7 | 0.0% | 29.9% | 29.3% | 0.1% | none |
-| bordeaux | 248 | 890.5 | 0.0% | 37.5% | 18.0% | 1.0% | none |
+| paris | 271 | 6981.7 | 0.0% | 41.3% | 6.0% | 0.0% | none |
+| lyon | 282 | 2320.3 | 0.0% | 32.9% | 15.2% | 0.1% | none |
+| strasbourg | 283 | 1197.7 | 0.0% | 29.9% | 29.3% | 0.1% | none |
+| bordeaux | 284 | 890.5 | 0.0% | 37.5% | 18.0% | 1.0% | none |
 
 ### Pilot comparison
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| paris | 148 | 6981.3 | 0.0% | 41.3% | 6.0% | 0.0% | none |
+| paris | 271 | 6981.7 | 0.0% | 41.3% | 6.0% | 0.0% | none |
 
-### paris: top unmatched tag signatures (OSM 2026-09-30T20:22:42Z)
+### paris: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 
 - `bicycle=yes;cycleway:left=piste_double_sens_cyclable;cycleway:right=no;highway=residential;oneway:bicycle=no`: 0.16 km
 - `cycleway:left=opposite:lane;highway=residential`: 0.07 km
