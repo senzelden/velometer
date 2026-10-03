@@ -699,6 +699,60 @@ Cause: **boundary** first (ours 378.3 km is 0.75 of QECIO's 505.3 km, the same r
 other categories; see `copenhagen/qecio_main_km`) and **definition** second: QECIO's total also
 counts limited-access roads, which our A–D sum does not (`definition_mismatch`).
 
+### helsinki/cc_ratio
+Cause: **definition** (the Clean Cities numerator is much narrower than OSM A+B). Our ratio is
+per-side A+B 1,284.1 km over our 1,404.5 km network. The networks are close (−13.7%,
+`helsinki/cc_network_km`, ok), so the gap is in the numerator (see `helsinki/cc_km`). Even over
+their 1,628 km network, our A+B gives 78.9% per side and 76.5% centreline (1,244.8 km), against
+their 48%. The boundary is not the cause. Clean Cities' area (214.0 km²) is the land
+municipality, like our GISCO LAU (221.7 km² in EPSG 25835). The OSM relation would add sea
+and islands and only raise A+B (1,301.9 km, run 232; the relation was run only with v2 and serves here as a boundary
+comparison; see `helsinki/boundary_diff_pct` in
+`docs/review/trust/FI.md`).
+
+### helsinki/cc_km
+Cause: **definition** (not a length-basis or date effect). Clean Cities' 783 km is well below
+our A+B of 1,284.1 km per side and 1,244.8 km centreline (+59.0%). Helsinki's A+B is mostly
+bidirectional, so the basis hardly matters. It is not date either: A+B on the LAU has stayed
+between 1,282.5 and 1,291.9 km from 2018 to 2026, and was 1,283.6 km on 2025-01-01. Our tier A
+alone (`A_cycleway`, 595.4 km per side, 556.6 centreline) is below 783. Tier B adds 688.7 km,
+almost all `B_cycleway_foot` (679.4 km): combined foot and cycle paths tagged
+`highway=cycleway` + `foot=designated`. Clean Cities' figure lies between A and A+B. Which
+paths it counts cannot be told, because the per-city source is unverified (research doc §6).
+
+### helsinki/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 FI1B1 Helsinki-Uusimaa, 9,419.6 km² by QECIO's own area
+column. Our LAU FI_091 is 221.7 km², 2.4% of that, and the region is mostly rural. The
+categories do not scale with area: main roads 0.11 of QECIO, tracks 0.33, shared 0.18, while
+lanes are equal (19.2 vs 19.2 km), because nearly all of the region's painted lanes are in the
+city. Our FUA FI001F (8,015.1 km², 0.85 of FI1B1) is a closer area. On its 2024-01-01 history
+run, nine days before QECIO's 2024-01-10 snapshot, raw main roads are 6,364.9 km, −9.7% against
+QECIO's 7,047.1 km on a 15% smaller area.
+
+### helsinki/qecio_tracks_km
+Cause: **scope** (FI1B1 Helsinki-Uusimaa vs the city, see `helsinki/qecio_main_km`), with
+**date** second. On the FUA's 2024-01-01 history run, tier A plus B/segregated is
+1,760.6 km centreline, +4.3% against QECIO's 1,688.1 km. Since then, Helsinki has retagged
+`highway=cycleway` to `foot=designated` (mostly from `foot=yes`, with `bicycle=designated`),
+which moves it from `A_cycleway` to `B_cycleway_foot`. On
+the LAU this is 1,127 sides and 120.1 km per side (e.g. way 125959164; way 732068919,
+Kuninkaantammentie). The FUA's tracks are now 1,179.6 km and the LAU's 557.2 km (678.7 km on
+2024-01-01).
+
+### helsinki/qecio_shared_km
+Cause: **scope** (see `helsinki/qecio_main_km`), with **date** second. On the FUA's
+2024-01-01 history run, tier B without B/segregated is 3,801.8 km centreline, −0.5% against
+QECIO's 3,821.4 km. Since then, the A-to-B retagging in `helsinki/qecio_tracks_km` has raised it
+to 4,588.0 km on the FUA, and from 574.7 to 687.5 km on the LAU.
+
+### helsinki/qecio_total_km
+Cause: **scope** first (see `helsinki/qecio_main_km`) and **definition** second. QECIO's total
+also counts limited-access roads, 268.5 km in FI1B1, which our A–D sum does not
+(`definition_mismatch`). On the FUA's 2024-01-01 history run, our A–D total is 5,581.5 km
+centreline. That is −3.7% against QECIO's 5,797.2 km, and +1.0% against QECIO without
+limited-access roads (5,528.7 km). The A-to-B retagging since then leaves the total unchanged
+(LAU 1,269.0 -> 1,263.9 km).
+
 ### krakow/cc_ratio
 Cause: **definition** (the numerator and the network both differ). Our 17.5% is per-side
 A+B 300.9 km over 1,718.3 km of public roads. Clean Cities' 11% is 229 km over 2,128 km
