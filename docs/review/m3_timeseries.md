@@ -760,6 +760,20 @@ before -> after.
 
 <!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca -->
 
+### amsterdam/fua/2022
+
+Cause: **tag drift** (contraflow retagging). `legacy_km` fell 10.2 -> 2.1 because
+`cycleway=opposite_lane` on one-way streets went from 7.10 km to zero during 2021. Of the 10.22 km
+of legacy sides on 1 January 2021, 4.04 km stay in tier D under the current scheme
+(`cycleway:left=lane` + `oneway:bicycle=no`, e.g. way 7373718 Eerste Helmersstraat, way 7409127
+Meer en Boslaan), 1.61 km became `cycleway:left=shared_lane` and are excluded (way 7408896
+Blekersvaartweg), and 1.89 km kept only `oneway:bicycle=no` with no lane tag (way 26013236
+Planetenlaan), so they leave tier D. The 2.07 km left in 2022 are `cycleway=opposite`. The 101
+legacy ways were last edited in 44 changesets by 20 mappers, 47 of them in February 2021; the
+year had 25,937 edits with a top-mapper share of 0.09, so this is not one mapper's sweep. The
+retagging touches tier D only: A+B rose normally (4,104.3 -> 4,134.2 km) and D grew 676.5 ->
+726.2 km.
+
 ### barcelona/lau/2021
 
 Cause: **campaign** (pedestrian network, with one dominant mapper). 16,309 counted edits
@@ -1096,6 +1110,21 @@ Piste Antonin Magne, `highway=cycleway` -> `path` + `bicycle=designated` + `foot
 9.3 km of it in March 2024, in 41 changesets by 18 mappers: A fell 172.2 -> 156.5 km while B
 rose 46.0 -> 69.5 km. A+B rose 218.2 -> 226.0 km, a normal year. Over the year the top-mapper
 share is 0.19 across 750 changesets.
+
+### utrecht/fua/2020
+
+Cause: **tag drift** (cycle streets moved to the standard key). `unrecognised_km` fell
+39.6 -> 4.2 because the non-standard `cycleway=cyclestreet`, which the classifier reads as an
+unknown value on both road sides (36.22 km per side in 2019, on 133 ways), was replaced by
+`cyclestreet=yes` during 2019 (e.g. way 141862135 Westkanaaldijk, way 7068064 Tuinbouwweg, way
+107229247 Engweg, all edited on 2 December 2019). In 2020, 109 of those ways carry
+`cyclestreet=yes` and are classified tier E (`E_cycle_street`, 17.79 km); 7 still carry
+`cycleway=cyclestreet` (0.82 km per side). The 119 surviving ways were last edited in 28
+changesets by 9 mappers, 61 of them in December 2019; the year had 5,009 edits with a
+top-mapper share of 0.10. The retagging moves km into tier E (23.1 -> 47.3 km), which is not in
+the headline. A+B also rose 1,224.8 -> 1,257.7 km (+2.7%, below the jump threshold); that is a
+separate change, mostly tier B (7.6 -> 33.6 km), of which 21.7 km are sides with no tier in 2019
+that are `B_path` in 2020.
 
 ### vienna/lau/2025
 

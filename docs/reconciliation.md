@@ -444,6 +444,64 @@ Clean Cities count. Our `cc_km` and the `clean_cities_2025` preset use the `per_
 which every side counts in full. The Clean Cities figures are dated 2025-05-14, 504 days before
 our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
 
+### amsterdam/cc_ratio
+Cause: **definition** (network denominator). The numerator is close: our per-side A+B is 861.6 km
+against Clean Cities' 919 km (−6.2%, `amsterdam/cc_km` ok). The gap comes from the denominator,
+which is 24.4% smaller than theirs (see `amsterdam/cc_network_km`). Our per-side numerator over
+their 2,700 km gives 31.9%, against their 34%. The centreline ratio (33.9%, −0.4%) matches only by
+coincidence: there the numerator (691.2 km, −24.8%) and the denominator (−24.4%) are both low by
+the same amount.
+
+### amsterdam/cc_network_km
+Cause: **definition** (network scope or source). Our public road network is 2,040.7 km: 2,323.4 km
+of main, motorway and local ways (residential 972.8, unclassified 331.1, tertiary 291.4,
+secondary 237.0, pedestrian 149.3, motorway and links 181.2) less 282.7 km from pairing dual
+carriageways. Clean Cities gives 2,700 km for the municipality (219.0 km², report Annex 1). The
+boundary is not the cause: our GISCO polygon measures 243.3 km² in EPSG:25831, larger than theirs.
+Of the 17 cities with a Clean Cities network figure, 13 match ours within 20%; the others are
+Amsterdam, Ljubljana, Warsaw and Wrocław, all below. The Amsterdam LAU also has 768.4 km of
+`highway=service` (any access), of which 540.4 km carry no `service=*` subtype. Adding those
+would give 2,581 km (−4.4%), but which scope the city-submitted or OSM-based figure uses cannot be checked:
+per-city sources are unverified (research doc §6).
+
+### amsterdam/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 NL329 Groot-Amsterdam, 874.8 km² (QECIO `Area`), a region
+around the city. Our LAU NL_GM0363 is the gemeente, 243.3 km² (our boundary polygon in EPSG:25831),
+0.28 of that area. Ours is 0.39 of QECIO's main roads (826.8 vs 2,100.5 km), 0.44 of its tracks, 0.29 of
+lanes, 0.80 of shared paths and 0.42 of the total. A larger and wider-drawn boundary does that.
+Our FUA run on the same snapshot (run 296, NL001F, 2,848.3 km², 3.3 times NL329) lands above
+QECIO in every category: main roads 4,777.7 km (2.27 times), tracks 3,655.7 (2.38), lanes 416.7
+(2.71), shared 81.5 (3.30). So NL329 sits between our two boundaries in every category. Track
+density agrees: tracks per main-road km are 0.73 for QECIO, 0.81 for our LAU and 0.77 for our
+FUA. The QECIO figure is dated 2024-01-11, 995 days before our snapshot. `nuts3_is_city: false` in
+`config/cities.yaml`.
+
+### amsterdam/qecio_tracks_km
+Cause: **scope** (NL329 Groot-Amsterdam, 874.8 km², vs gemeente 243.3 km²; see
+`amsterdam/qecio_main_km`). Ours 671.5 km is 0.44 of QECIO's 1,534.1 km, close to the main-road
+factor (0.39). Our FUA (3.3 times the area of NL329) has 3,655.7 km, 2.38 times QECIO's. Tracks
+per main-road km agree (QECIO 0.73, ours 0.81).
+
+### amsterdam/qecio_lanes_km
+Cause: **scope** (NL329 vs the gemeente; see `amsterdam/qecio_main_km`). Ours 45.0 km is 0.29 of
+QECIO's 153.5 km, below the main-road factor (0.39): painted lanes are rarer per main-road km in
+the gemeente (0.054) than in NL329 (0.073) or in our FUA (416.7 km, 0.087). The figure lies
+between our LAU and FUA values (FUA 2.71 times QECIO's), as the other categories do.
+
+### amsterdam/qecio_shared_km
+Cause: **scope** (NL329 vs the gemeente; see `amsterdam/qecio_main_km`). Ours 19.7 km is 0.80
+of QECIO's 24.7 km; the absolute gap is 5.0 km on a small base. The region is larger, so its
+figure is larger, and our FUA (81.5 km, 3.30 times QECIO's) brackets it from above. Shared paths
+are a larger share of QECIO's region figure here than main roads (0.80 vs 0.39). Whether that
+comes from where the paths are or from 995 days of retagging was not checked at way level: the
+repo holds no NL329 boundary to measure against.
+
+### amsterdam/qecio_total_km
+Cause: **scope** first (ours 736.2 km is 0.42 of QECIO's 1,751.4 km, close to the track and
+main-road factors; see `amsterdam/qecio_main_km`) and **definition** second: QECIO's total also
+counts limited-access roads (39.0 km in NL329), which our A–D sum does not
+(`definition_mismatch`).
+
 ### barcelona/qecio_main_km
 Cause: **scope**. QECIO reports NUTS3 ES511, the province of Barcelona (311 municipalities,
 7,730.1 km² in QECIO, 7,729.8 km² as the sum of its GISCO LAU areas), not the municipi (LAU 98.9
@@ -758,6 +816,37 @@ Cause: **scope** first (ours 227.1 km is 0.16 of QECIO's 1,458.4 km; see
 limited-access roads, which our A–D sum does not. On the département polygon our total is
 1,292.8 km: −11.4% against QECIO's total, +9.5% against its total without limited-access roads
 (1,180.9 km).
+
+### utrecht/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 NL310, the province of Utrecht, 1,449.8 km² (QECIO `Area`).
+Our LAU NL_GM0344 is the gemeente, 99.7 km² (our boundary polygon in EPSG:25831), 0.069 of that area. Main roads
+(0.18 of QECIO's: 423.1 vs 2,323.7 km), tracks (0.18), lanes (0.17), shared paths (0.20) and total
+(0.18) all scale by about the same factor. A boundary difference does that; a classifier or date
+effect would hit the categories unequally. Our FUA run on the same snapshot (run 297, NL042F,
+1,044.4 km², 0.72 of the province's area) confirms it: main roads 1,675.7 km (0.72 of QECIO's),
+tracks 1,126.0 (0.68), lanes 100.4 (0.69). Tracks per main-road km are 0.715 for QECIO and 0.718
+for our LAU. The QECIO figure is dated 2024-01-11, 995 days before our snapshot.
+`nuts3_is_city: false` in `config/cities.yaml`.
+
+### utrecht/qecio_tracks_km
+Cause: **scope** (NL310 province of Utrecht, 1,449.8 km², vs gemeente 99.7 km²; see
+`utrecht/qecio_main_km`). Ours 303.6 km is 0.18 of QECIO's 1,660.8 km, the same factor as main
+roads (0.18). Our FUA, at 0.72 of the province's area, has 1,126.0 km (0.68).
+
+### utrecht/qecio_lanes_km
+Cause: **scope** (NL310 vs the gemeente; see `utrecht/qecio_main_km`). Ours 24.2 km is 0.17 of
+QECIO's 146.5 km, the same factor as main roads; our FUA has 100.4 km (0.69).
+
+### utrecht/qecio_shared_km
+Cause: **scope** (NL310 vs the gemeente; see `utrecht/qecio_main_km`). Ours 17.0 km is 0.20 of
+QECIO's 83.0 km, close to the main-road factor (0.18). Our FUA has 35.8 km (0.43 of QECIO's), a
+lower factor than for main roads or tracks (0.72, 0.68): less of QECIO's shared-path length falls
+inside a boundary of the FUA's size than of the other categories.
+
+### utrecht/qecio_total_km
+Cause: **scope** first (ours 344.8 km is 0.18 of QECIO's 1,945.4 km, the same factor as the other
+categories; see `utrecht/qecio_main_km`) and **definition** second: QECIO's total also counts
+limited-access roads (55.2 km in NL310), which our A–D sum does not (`definition_mismatch`).
 
 ### vienna/cc_ratio
 Cause: **definition** (superseded narrower figure). This row is the report PDF's 14%, which
