@@ -1046,6 +1046,38 @@ Its 134.9 km of `highway=footway` + `bicycle=yes|permissive` hardly occur in Bik
 (0.5 km), although its documented filter names them. The boundaries agree: BikeNetKit 495.9 km²
 vs our 496.5 km², 492.1 km² shared.
 
+### stockholm/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 SE110 Stockholms län, 7,072.8 km² by QECIO's own area
+column. Our LAU SE_0180 (Stockholms kommun) is 211.2 km² in EPSG 25833, 3.0% of that. Raw main
+roads are 666.8 km in the LAU against QECIO's 4,946.3 km (0.13). Our FUA SE001F is 9,098.2 km²:
+not the same area as SE110, but of the same order. On its 2024-01-01 history run (QECIO is
+dated 2024-01-11), raw main roads are 5,768.5 km, +16.6% on a 29% larger area.
+
+### stockholm/qecio_tracks_km
+Cause: **scope** (SE110 Stockholms län vs Stockholms kommun, see `stockholm/qecio_main_km`).
+Ours 722.7 km centreline is 0.31 of QECIO's 2,327.9 km. On the FUA's 2024-01-01 history run,
+tier A plus B/segregated is 2,519.1 km, +8.2% against QECIO. The LAU value barely moved over the
+date gap (732.3 km on 2024-01-01).
+
+### stockholm/qecio_lanes_km
+Cause: **scope** (see `stockholm/qecio_main_km`). Ours, tiers C+D on the centreline basis, is
+24.0 km, 0.40 of QECIO's 59.4 km. On the FUA's 2024-01-01 history run it is 60.2 km, +1.3%
+against QECIO. Most of the county's painted lanes lie outside the city (LAU 22.2 km on the same
+date).
+
+### stockholm/qecio_shared_km
+Cause: **scope** (see `stockholm/qecio_main_km`). Ours 212.1 km centreline is 0.19 of QECIO's
+1,120.1 km. On the FUA's 2024-01-01 history run, tier B without B/segregated is 1,176.8 km,
++5.1% against QECIO. The LAU value has grown since (166.8 km on 2024-01-01), but the gap is
+almost all area.
+
+### stockholm/qecio_total_km
+Cause: **scope** first (see `stockholm/qecio_main_km`) and **definition** second. QECIO's total
+also counts limited-access roads, 294.6 km in SE110, which our A–D sum does not
+(`definition_mismatch`). Ours 958.9 km centreline is 0.25 of QECIO's 3,802.0 km. On the FUA's
+2024-01-01 history run, our A–D total is 3,756.1 km: −1.2% against QECIO's total and +7.1%
+against its total without limited-access roads (3,507.4 km).
+
 ### strasbourg/qecio_main_km
 Cause: **scope**. QECIO reports NUTS3 FRF11, the Bas-Rhin département: 4,797.2 km² in QECIO,
 matching the 4,797.4 km² of the 514 GISCO LAU 2024 communes coded `FR_67*`. Our LAU (FR_67482,
