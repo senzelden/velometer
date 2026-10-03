@@ -523,6 +523,44 @@ Cause: **boundary** first (ours 378.3 km is 0.75 of QECIO's 505.3 km, the same r
 other categories; see `copenhagen/qecio_main_km`) and **definition** second: QECIO's total also
 counts limited-access roads, which our A–D sum does not (`definition_mismatch`).
 
+### krakow/cc_ratio
+Cause: **definition** (the numerator and the network both differ). Our 17.5% is per-side
+A+B 300.9 km over 1,718.3 km of public roads. Clean Cities' 11% is 229 km over 2,128 km
+(10.8%). The length basis does not matter in Kraków (centreline A+B 298.8 km, 17.4%). Both
+sides push the ratio up: our A+B is 31.4% above their protected km (`krakow/cc_km`), and our
+network is 19.3% below theirs (`krakow/cc_network_km`, inside the band). Our A+B over their
+network gives 14.1%, and their protected km over our network 13.3%.
+
+### krakow/cc_km
+Cause: **definition**, plus build-out since the figure. Per side our A+B is 300.9 km; on the
+centreline basis it is 298.8 km (+30.5%), so the length basis is not the cause. Kraków's A+B
+is almost all bidirectional standalone ways, and 236.0 km of it is tier B (154.8 km
+segregated foot/cycle paths, 81.1 km shared). Every OSM measure near the figure's date is
+above 229 km:
+- our per-side A+B was 267.0 km on 1 January 2024 (+16.6%) and 286.3 km on 1 January 2025
+  (+25.0%);
+- QECIO's 2024-01-11 tracks plus shared paths are 194.0 + 73.0 = 267.0 km (+16.6%).
+
+Our A + segregated B on the centreline basis (QECIO's track definition) is 217.6 km, 5.0%
+below 229. The difference from full A+B is the 81.1 km of non-segregated shared paths. As for
+Warsaw, the claim that the figure leaves out shared paths is an inference (Wrocław's figure
+matches full A+B).
+
+### krakow/bnk_network_km
+Cause: **definition**. We matched BikeNetKit's 504.0 km of edges to our 2026-10-02 snapshot
+by OSM way id (edge km split equally over its way ids):
+- 291.9 km lie on ways we put in tier A, B or E (our per-side A+B+E is 301.0 km);
+- 208.0 km lie on ways with no tier: living streets 136.0 km, `highway=path` + `bicycle=yes`
+  54.7 km, `highway=pedestrian` + `bicycle=yes` 12.1 km, `highway=path` +
+  `bicycle=permissive` 2.9 km, other 2.3 km;
+- 3.4 km lie outside our LAU and 0.7 km on tier C/D ways.
+
+So the gap is the two groups the classifier deliberately leaves out of A/B/E: living streets
+and paths that bicycles may use. Kraków also maps 341.4 km of `highway=footway` +
+`bicycle=yes` inside the LAU. BikeNetKit's documented filter names such footways, but none
+occur in its Kraków edges. The boundaries agree (BikeNetKit 326.6 km² vs our LAU 326.6 km²,
+EPSG:25834).
+
 ### lyon/cc_ratio
 Cause: **definition** (length basis). Our preset divides per-side A+B (113.0 km) by all public
 roads (637.5 km): 17.7%. On the centreline basis A+B is 96.0 km, which gives 15.1% against our
@@ -643,29 +681,93 @@ centreline tier A alone is 411.5 km, close to 384, which suggests the PDF figure
 shared foot/cycle paths (our B: 202.1 km centreline). That is an inference: the Annex
 definition includes shared foot/bike paths, and the per-city source is unverified.
 
+### warsaw/cc_ratio
+Cause: **definition** (the numerator and the network both differ). Our 22.6% is per-side
+A+B 763.6 km over all public roads, 3,385.7 km. Clean Cities' 15% is 631 km over 4,300 km
+(14.7%). Warsaw's tracks are mostly separate bidirectional ways, so the length basis barely
+matters (centreline A+B 754.4 km, 22.3%). The gap splits between the two sides of the
+fraction: our A+B over their network gives 17.8%, and their protected km over our network
+18.6%. See `warsaw/cc_km` (+21.0%) and `warsaw/cc_network_km` (−21.3%).
+
+### warsaw/cc_km
+Cause: **definition** (the figure is narrower than OSM's protected infrastructure). Per side
+our A+B is 763.6 km; on the centreline basis it is 754.4 km (+19.6%), so the length basis is
+not the cause. The 506-day date gap explains only part of it:
+- our per-side A+B was 706.4 km on 1 January 2024 (+11.9%) and 736.3 km on 1 January 2025
+  (+16.7%);
+- QECIO's independent OSM count for 2024-01-11 gives tracks plus shared paths of 558.5 +
+  144.4 = 702.9 km (+11.4%).
+
+Every OSM measure near the figure's date is therefore 11–17% above 631 km. Our A + segregated
+B on the centreline basis (QECIO's track definition) is 596.6 km, 5.5% below 631. What
+separates the two is tier B's 158.0 km of non-segregated shared foot/cycle paths. That the
+figure leaves out shared paths is an inference: the annex does not state per-city sources.
+Kraków shows the same pattern (`krakow/cc_km`), but Wrocław's figure matches full A+B
+(`wroclaw/cc_km`, +6.8%).
+
+### warsaw/cc_network_km
+Cause: **definition** (network scope or source).
+- Our public road network (main, motorway and local roads, dual carriageways paired) is
+  3,385.7 km.
+- Counting both carriageways of dual roads (main roads raw 1,468.6 km instead of paired
+  1,023.1 km) gives 3,831.1 km (−10.9%).
+- QECIO's OSM main plus local roads (2024) are 1,477.1 + 2,260.0 = 3,737.1 km (−13.1%).
+
+Every OSM measure stays below Clean Cities' 4,300 km. Of the 17 cities with a Clean Cities
+network figure, 13 match within 20% (Berlin +5.1%, Paris −8.5%, Vienna +2.9%, Copenhagen
++7.2%). All three Polish cities are at the low end (Wrocław −24.3%, Kraków −19.3%). That
+points to a road register with a wider scope behind the Polish figures rather than to our
+road-class selection. Adding Warsaw's 898.4 km of public, untyped `highway=service` would
+give 4,284 km (−0.4%). The same addition overshoots Wrocław (+19.5%) and Kraków (+15.5%),
+though, so it does not explain the gap in general. The Annex says "city-submitted vs OSM
+source not stated per city".
+
+### warsaw/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out. We matched BikeNetKit's 1,182.8 km of edges
+to our 2026-10-02 snapshot by OSM way id (edge km split equally over its way ids):
+- 740.1 km lie on ways we put in tier A, B or E (our per-side A+B+E is 764.5 km);
+- 440.5 km lie on ways with no tier: living streets 399.5 km, `highway=path` +
+  `bicycle=yes` 21.9 km, `highway=pedestrian` + `bicycle=yes` 10.9 km, other 8.2 km;
+- 2.2 km lie outside our LAU and 0.2 km on a tier C/D way.
+
+Warsaw maps 414.9 km of `highway=living_street` inside the LAU, almost all without a tier.
+That one group is close to the whole 418.3 km gap. The boundaries agree (BikeNetKit 516.8 km²
+vs our LAU 517.0 km², both in EPSG:25834), so the boundary is not the cause.
+
 ### wroclaw/cc_ratio
 Cause: **definition** (network denominator). The numerator is close: our centreline A+B is
-379.0 km vs Clean Cities' 355 km (+6.8%; per side 398.6 km, `wroclaw/cc_km` ok). The gap
+379.2 km vs Clean Cities' 355 km (+6.8%; per side 398.8 km, `wroclaw/cc_km` ok). The gap
 comes from the denominator, which is 24% smaller than theirs (see `wroclaw/cc_network_km`).
 Our centreline numerator over their 1,769 km gives 21.4%, against their 20%.
 
 ### wroclaw/cc_network_km
-Cause: **definition** (network scope or source). Our public road network (main, motorway and
-local roads, dual carriageways paired) is 1,340.5 km. QECIO's OSM main plus local roads (2024)
-are 582.7 + 844.5 = 1,427.2 km. Both are well below Clean Cities' 1,769 km. Other cities'
-networks match within 9% (Berlin +5.1%, Paris −8.5%, Vienna +2.9%, Copenhagen +7.2%), so our
-road-class selection is not the cause. Adding all 1,727.8 km of Wrocław `highway=service`
-would overshoot it. The Wrocław figure most likely comes from a city-submitted road register
-with a different scope; per-city sources are unverified (research doc §6).
+Cause: **definition** (network scope or source).
+- Our public road network (main, motorway and local roads, dual carriageways paired) is
+  1,339.8 km.
+- Counting both carriageways (main roads raw 570.7 km instead of paired 447.7 km) gives
+  1,462.8 km.
+- QECIO's OSM main plus local roads (2024) are 582.7 + 844.5 = 1,427.2 km.
+
+All three are well below Clean Cities' 1,769 km. Of the 17 cities with a Clean Cities network
+figure, 13 match within 20% (Berlin +5.1%, Paris −8.5%, Vienna +2.9%, Copenhagen +7.2%). All
+three Polish cities are at the low end (Warsaw −21.3%, Kraków −19.3%). That points to a road
+register with a wider scope behind the Polish figures rather than to our road-class
+selection. Adding all 1,729.6 km of Wrocław `highway=service` would overshoot it. Per-city
+sources are unverified (research doc §6).
 
 ### wroclaw/bnk_network_km
-Cause: **definition**. BikeNetKit's filter also takes living streets and footways/paths with
-`bicycle=yes|permissive`, which our tiers A+B+E leave out. Applying that filter to our snapshot
-gives 769.1 km of ways (each way once), of which 370.7 km get no tier A–E. Almost all of
-that is the two groups the classifier deliberately leaves out of A/B/E: living streets (166.8 of their
-167.4 km; the other 0.7 km carry a painted lane) and footway/path/pedestrian ways with
-`bicycle=yes|permissive` (footway 113.9 + 3.1, path 77.9 + 0.04, pedestrian 8.7 = 203.7 km, all
-untiered); the remaining 0.2 km are other ways. BikeNetKit's 638.8 km sits between our 399.4 km and that raw 769.1 km, which
-fits its graph simplification and isolate removal. The boundaries agree (BikeNetKit ≈ 290 km²
-vs our 291.6 km²), so the boundary is not the cause. For the other four cities the same
-comparison stays within 10%.
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes|permissive`, which our tiers A+B+E leave out. We matched BikeNetKit's 638.8 km of
+edges to our 2026-10-02 snapshot by OSM way id (edge km split equally over its way ids):
+- 390.8 km lie on ways we put in tier A, B or E (our per-side A+B+E is 399.6 km);
+- 245.8 km lie on ways with no tier: living streets 158.8 km, `highway=path` + `bicycle=yes`
+  75.7 km, `highway=pedestrian` + `bicycle=yes` 8.2 km, other 3.1 km;
+- 1.7 km lie outside our LAU and 0.5 km on living streets with a painted lane (tier D).
+
+So the gap is the two groups the classifier deliberately leaves out of A/B/E. Footways with
+`bicycle=yes|permissive` (117.3 km in our snapshot) do not occur in BikeNetKit's Wrocław
+edges, although its documented filter names them. The boundaries agree (BikeNetKit 292.7 km²
+vs our LAU 291.6 km², both in EPSG:25833), so the boundary is not the cause. 13 of the 21
+cities are within 20%. The other seven flagged cities (Barcelona, Bratislava, Budapest, Kraków,
+Madrid, Prague, Warsaw) show the same split: living streets are the largest untiered group.

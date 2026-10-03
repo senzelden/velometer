@@ -826,6 +826,102 @@ it in August and 34.3 km in December 2019: B rose 87.7 -> 183.3 km while A staye
 872 km. Activity was ordinary: 6,302 edits, top-mapper share 0.23; the A/B ways with new ids
 (139.2 km) were created by 56 mappers, the largest with 37% of the km.
 
+### krakow/lau/2022
+
+Cause: **tag drift** (contraflow retagging). `legacy_km` fell 10.0 -> 3.3 as
+`cycleway=opposite_lane` went from 106 to 31 ways (9.95 -> 3.30 km). 81 edits in 2021
+removed it, across 18 changesets, 55 of them in December. 66 of those edits moved the value
+to `cycleway:left=opposite_lane` (e.g. way 26303566 Jana Zamoyskiego, way 195780180
+Nadwiślańska, way 338492810 Świętej Anny). The legacy diagnostic checks only the `cycleway`
+key (`config/activity.yaml`), so these sides leave it while 5.94 of the 6.65 km stay tier D
+lanes. A+B rose normally (204.4 -> 217.6 km).
+
+### krakow/lau/2024
+
+Cause: **mapping activity**, about half new ways and half retagging of existing ones. A+B
+rose 234.0 -> 267.0 km (+33.0; the 25 km floor applies, where 10% would be 23.4).
+- New ways add 20.0 km: 232 segregated foot/cycle paths (+10.5 km) and 82 cycleways
+  (+7.2 km), led by way 1144928679, a 3.6 km asphalt cycleway on a dyke.
+- Retags of existing ways add 17.8 km: 115 footway -> path ways with `bicycle=designated`
+  (+8.8 km, e.g. way 180015552) and path/track -> cycleway (+4.5 km, e.g. way 725715216).
+
+There were 17,860 edits in 2023 (limit 20,852), with a top-mapper share of 0.27. 1,425 of
+the edits add `bicycle=yes`, which moves no tier.
+
+### krakow/lau/current
+
+Cause: **mapping activity** at the steady recent pace, not a campaign. There were 15,703
+edits from 1 January to the 2 October 2026 snapshot, against a limit of 15,701.7 (2 × median
+10,426 × 0.753 of the year elapsed), so the flag is marginal: 1.3 edits above the limit. Annualised, that is about 20,850, close to the full years
+2024–2026 (17,443–18,695). The median is pulled down by 2018–2022 (3,903–10,426). Edits are
+spread evenly (1,129–2,215 a month), the top-mapper share is 0.17 and the largest changeset
+holds 1.2%. 8,647 of the edits add `highway=footway`. A+B rose 287.0 -> 300.9 km.
+
+### krakow/fua/2019
+
+Cause: **mapping activity** (the Wiślana Trasa Rowerowa). A+B rose 204.3 -> 242.0 km (+37.7;
+the 25 km floor applies). Niepołomice gained 19.9 km: new cycleways named Wiślana Trasa
+Rowerowa (way 587335464, 4.3 km; way 592717702, 3.6 km; way 657293994, 1.6 km) and the
+extension of way 396571694 (+8.6 km). Ways 587335464 and 396571694 are asphalt with
+`embankment=yes`. Kraków gained 12.1 km. Activity was normal: 7,274 edits in 2018 (median
+13,386), with a top-mapper share of 0.25.
+
+### krakow/fua/2020
+
+Cause: **mapping activity** (the Velo Raba route east of Kraków). A+B rose 242.0 -> 285.1 km
+(+43.2; the 25 km floor applies). Drwinia gained 15.2 km: cycleways named Velo Raba (way
+723989965, 4.6 km of gravel on an embankment; way 723993777, 2.4 km; way 723993781, 1.8 km)
+and a 4.0 km asphalt designated path (way 758100703). Kraków gained 12.9 km, Skawina 4.9 km
+and Zabierzów 3.3 km. There were 8,358 edits in 2019 (median 13,386), with a top-mapper
+share of 0.30.
+
+### krakow/fua/2021
+
+Cause: **mapping activity**, including finished construction. A+B rose 285.1 -> 329.6 km
+(+44.5, threshold 28.5):
+- 88 new cycleways add 16.0 km and 61 new designated paths 7.0 km;
+- footways turned into designated foot/cycle paths add 12.8 km (155 ways);
+- 10 `construction` -> `cycleway` retags add 6.0 km.
+
+Kraków gained 16.6 km, Miechów 6.6 km (way 298772347, a 2.6 km asphalt cycleway with
+`railway=abandoned`, previously `highway=construction`), Drwinia 6.5 km and Niepołomice
+5.1 km. There were 8,387 edits in 2020 (median 13,386), with a top-mapper share of 0.24; the
+largest changeset holds 2.4%.
+
+### krakow/fua/2022
+
+Cause: **tag drift**, the same contraflow retagging as `krakow/lau/2022`. All FUA legacy km
+lie in the city: 9.96 -> 3.30 km, identical to the LAU series. A+B rose 329.6 -> 355.5 km,
+below the jump threshold.
+
+### krakow/fua/2023
+
+Cause: **mapping activity**, with redrawing. A+B rose 355.5 -> 405.4 km (+49.9, threshold
+35.5):
+- new cycleways add 28.0 km against 12.1 km deleted;
+- 12 `construction` -> `cycleway` retags add 9.1 km;
+- new designated paths add 15.6 km.
+
+The deleted cycleways include the Velo Raba ways of `krakow/fua/2020`, now replaced by way
+1082048422 (9.2 km), so Drwinia nets only 1.5 km. Kraków gained 15.9 km, Skawina 8.8 km,
+Gołcza 8.5 km (way 1027429591, 3.0 km) and Siepraw 5.7 km. There were 13,950 edits in 2022
+(median 13,386), with a top-mapper share of 0.29.
+
+### krakow/fua/2024
+
+Cause: **mapping activity**, including a rail trail. A+B rose 405.4 -> 484.0 km (+78.7,
+threshold 40.5): 148 new cycleways (+32.9 km), 349 new designated paths (+27.0 km) and
+retags of existing ways (+23.9 km).
+- Kraków gained 33.5 km (the `krakow/lau/2024` step).
+- Proszowice gained 13.3 km, including an asphalt cycleway and path with
+  `railway=abandoned`, `gauge=750` (way 767489246, 4.5 km; way 806031541, 3.4 km).
+- Kocmyrzów-Luborzyca gained 10.0 km.
+- Myślenice gained 3.9 km from way 1143714546 "Rodzinny Flow", a one-way `highway=path` with
+  `bicycle=designated`, `foot=no` and `mtb:scale:imba=1`. Tier A takes it as a cycle-only
+  path (`A_path_cycle_only`).
+
+There were 22,071 edits in 2023 (limit 26,772), with a top-mapper share of 0.25.
+
 ### lyon/lau/2025
 
 Cause: **campaign** (pedestrian network, not cycling). 26,893 counted edits in 2024
@@ -931,9 +1027,98 @@ Cause: **tag drift**. `legacy_km` 23.1 -> 10.3 as `cycleway=opposite_lane` fell 
 (way 206839268 -> `oneway:bicycle=no`; way 8043778 -> `cycleway:left=opposite`). The
 retagging touches tier D only; A+B rose 608 -> 633 km.
 
+### warsaw/fua/2019
+
+Cause: **mapping activity** in the suburbs plus finished construction; no campaign or import.
+A+B rose 834.2 -> 982.0 km (+147.8, threshold 83.4). 418 new `highway=cycleway` ways add
+113.7 km (12.3 km of cycleways were deleted). 85 ways changed `highway=construction` ->
+`cycleway` (+19.6 km, e.g. way 496608963, 3.4 km in Warsaw), and new designated foot/cycle
+paths add 25.3 km. Warsaw itself gained 48.7 km (the `warsaw/lau` step 528.9 -> 577.7). The
+other 99 km are spread over the suburban gminas: Otwock 13.9 km, Nadarzyn 13.2 km (way
+589686898, 3.6 km), Józefów 11.0 km (way 655210340, 3.6 km), Pilawa 9.8 km and Pruszków
+7.8 km. The 17,074 edits of 2018 are below the median (41,531). The top-mapper share is
+0.16, and the largest changeset holds 0.9% of the edits.
+
+### warsaw/fua/2020
+
+Cause: **mapping activity** in the suburbs; activity normal. A+B rose 982.0 -> 1,175.2 km
+(+193.2, threshold 98.2):
+- 602 new `highway=cycleway` ways add 131.2 km (12.2 km deleted);
+- 136 new designated foot/cycle paths add 43.4 km;
+- 91 new `cycleway` + `foot=designated` ways add 18.9 km;
+- 44 `construction` -> `cycleway` retags add 14.1 km (e.g. way 495949799, 3.6 km in Warsaw).
+
+Warsaw gained 47.5 km and the suburbs 145.7 km: Ożarów Mazowiecki 11.5, Piaseczno 10.1,
+Pruszków 9.9, Nieporęt 9.0 (way 700813876, 4.6 km), Radzymin 8.3 (way 700814676, 4.6 km)
+and Jabłonna 6.6 (way 732168390, 6.1 km). There were 16,828 edits in 2019 (median 41,531),
+with a top-mapper share of 0.07.
+
+### warsaw/fua/2021
+
+Cause: **mapping activity**; activity elevated but below the spike limit. A+B rose 1,175.2
+-> 1,423.8 km (+248.6, threshold 117.5):
+- 1,302 new `highway=cycleway` ways add 156.4 km against 134 deleted (−33.7 km, mostly
+  redrawn);
+- new designated foot/cycle paths add 98.3 km (432 ways);
+- 85 `construction` -> `cycleway` retags add 22.4 km;
+- 138 existing `secondary` road ways gained track sides (+9.6 km).
+
+Warsaw gained 50.6 km and the suburbs 198.0 km: Błonie 20.2 (way 820164997, a 4.0 km
+foot/cycle path), Halinów 13.8, Nieporęt 11.0 and Nadarzyn 10.4. The 31,963 edits of 2020
+(median 41,531) peak in November–December (10,166). Most are `highway=footway` creations
+(17,667). The top-mapper share is 0.14, and the largest changeset holds 0.7%.
+
 ### wroclaw/lau/2018
 
 Cause: **campaign** by one mapper (pedestrian network). 22,113 counted edits in 2017 against a
 median of 8,419: 14,617 create `highway=footway` (e.g. way 24964920) and 15,708 of all counted edits fall in
 June–August 2017, with a top-mapper share of 0.89 across 2,783 changesets. 2018 is the first
 point, so no km change can be attributed; A+B grew steadily afterwards (261.5 -> 272.7 km).
+
+### wroclaw/fua/2018
+
+Cause: **campaign** by one mapper (pedestrian network), the same campaign as
+`wroclaw/lau/2018`. 23,299 counted edits in 2017 against a median of 10,439 (limit 20,878):
+15,165 add `highway=footway`, 16,119 fall in June–August, and the top-mapper share is 0.87
+across 3,147 changesets (largest changeset 0.5% of the edits). The city series counts 22,113
+of them. 2018 is the first point, so no km change can be attributed; A+B grew 332.0 -> 362.8
+km during 2018.
+
+### wroclaw/fua/2020
+
+Cause: **mapping activity** (new cycleways in the northern gminas and in the city). The
+`single_mapper` share does not carry the km. A+B rose 362.8 -> 413.7 km (+50.9, threshold
+36.3): 158 new `highway=cycleway` ways (+29.9 km), six `highway=track` -> `cycleway` retags
+(+9.6 km, e.g. way 188218945, 4.9 km) and 138 new `highway=path` ways with
+`bicycle=designated` (+11.0 km). By way midpoint, Żmigród gained 21.4 km (way 691709709, a
+7.9 km concrete cycleway; way 723787159, 2.2 km), Wrocław 15.6 km, Trzebnica 6.0 km and
+Oborniki Śląskie 3.9 km. The 6,409 edits of 2019 are below the median (10,439). One mapper
+made 55% of them, mostly `highway=footway` and `highway=path` creations (1,251 and 1,088
+edits). The ways that mapper edited in 2019 carry 19.7 of the 62.6 km gross A+B gain (0.31).
+
+### wroclaw/fua/2022
+
+Cause: **mapping activity**, with normal activity (11,351 edits in 2021, median 10,439;
+top-mapper share 0.37). A+B rose 439.4 -> 496.3 km (+56.9, threshold 43.9). 222 new
+`highway=cycleway` ways add 37.1 km against 9.6 km of deleted ones (251 ways, mostly
+redrawn). 310 new `highway=path` ways with `bicycle=designated` add 19.4 km. Two dyke paths
+in Wrocław changed `highway=service` -> `path` ("Grobla Szczytnicko-Bartoszowicka", way
+164857942 and way 616369204, 3.9 km). Half the gain is in the city (+27.6 km, the
+`wroclaw/lau` step 306.0 -> 333.6). Outside it, Trzebnica gained 9.0 km (way 916262472, a
+5.8 km concrete-plate cycleway; way 960207140, 3.1 km) and Prusice 3.1 km (way 995926320).
+
+### wroclaw/fua/2023
+
+Cause: **mapping activity** (paths drawn in the suburban gminas). One mapper made a large
+share of the edits but carries a minority of the km. A+B rose 496.3 -> 554.5 km (+58.2,
+threshold 49.6):
+- new `highway=path` ways with `bicycle=designated` add 47.0 km (693 ways);
+- new cycleways add 17.3 km against 12.3 km deleted (redrawing);
+- footway -> path retags add 8.6 km;
+- finished construction (`highway=construction` -> `cycleway`/`path`) adds 6.5 km.
+
+By way midpoint, Długołęka gained 16.3 km (e.g. way 1002612806, `track` -> `path`; way
+1001464229, `construction` -> `cycleway`), Wrocław 14.8 km, Sobótka 5.3 km and Siechnice
+5.0 km. The 17,938 edits of 2022 are below the spike limit (20,878). One mapper made 53% of
+them (`single_mapper`): 6,265 were `highway=footway` creations, and 5,720 fell in April–May.
+The ways that mapper edited in 2022 carry 22.9 of the 95.0 km gross A+B gain (0.24).
