@@ -231,6 +231,17 @@ def test_not_in_source_line_is_rendered_per_listed_comparison():
         ("not_in_source:\n  src_zzz:\n    - {city: ghent, reason: r}\n", [], "unknown source"),
         ("not_in_source:\n  src_a:\n    - {city: atlantis, reason: r}\n", [], "unknown city"),
         (NIS, [_fig("src_a", "m", 1)], "has a figure row"),
+        ("not_in_source:\n  src_a:\n    - {city: ghent}\n", [], "needs a city and a reason"),
+        ("not_in_source:\n  src_a:\n    - {reason: r}\n", [], "needs a city and a reason"),
+        ("not_in_source:\n  src_a:\n    - ghent\n", [], "needs a city and a reason"),
+        ("not_in_source:\n  src_a:\n", [], "must be a list"),
+        ("not_in_source: [src_a]\n", [], "must map source id"),
+        (
+            "not_in_source:\n  src_a:\n    - {city: ghent, reason: r}\n"
+            "    - {city: ghent, reason: r2}\n",
+            [],
+            "listed twice",
+        ),
     ],
 )
 def test_not_in_source_config_errors(tmp_path, body, figures, message):

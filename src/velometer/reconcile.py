@@ -265,15 +265,37 @@ def not_in_source_for(
     a figure row for it.
     """
     listed = cfg.get("not_in_source") or {}
+    if not isinstance(listed, dict):
+        raise ConfigError("reconcile.yaml not_in_source: must map source id -> list of entries")
     known_sources = {s for c in comparisons for s in c.sources}
     for source, entries in listed.items():
         if source not in known_sources:
             raise ConfigError(f"reconcile.yaml not_in_source: unknown source {source!r}")
+        if not isinstance(entries, list):
+            raise ConfigError(
+                f"reconcile.yaml not_in_source {source}: must be a list of {{city, reason}}, "
+                f"got {entries!r}"
+            )
+        seen = set()
         for e in entries:
+            if not (
+                isinstance(e, dict)
+                and isinstance(e.get("city"), str)
+                and isinstance(e.get("reason"), str)
+                and e["reason"].strip()
+            ):
+                raise ConfigError(
+                    f"reconcile.yaml not_in_source {source}: entry {e!r} needs a city and a reason"
+                )
             if e["city"] not in city_ids:
                 raise ConfigError(
                     f"reconcile.yaml not_in_source {source}: unknown city {e['city']!r}"
                 )
+            if e["city"] in seen:
+                raise ConfigError(
+                    f"reconcile.yaml not_in_source {source}: city {e['city']!r} listed twice"
+                )
+            seen.add(e["city"])
     reasons = {
         source: e["reason"]
         for source, entries in listed.items()
