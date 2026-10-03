@@ -591,6 +591,34 @@ limited-access roads, which our A–D sum does not. On the département polygon 
 1,782.7 km: +2.6% against QECIO's total, +6.6% against its total without limited-access roads
 (1,673.1 km).
 
+### budapest/cc_ratio
+Cause: **definition** (precision of the published share, with smaller differences in both
+terms). Clean Cities publishes 4%, but its own km give 212 / 4,821 = 4.40%. Against 4.40%, our
+5.22% is +18.8%, inside the 20% band. The rounding to a whole percent adds the rest of the
++30.6%. The terms are close: our per-side A+B is 232.2 km against 212 km (`budapest/cc_km`,
++9.5%), and our network is 4,445.4 km against 4,821 km (`budapest/cc_network_km`, −7.8%).
+These two gaps compound in the ratio. Budapest's A+B is mostly bidirectional (per side 232.2 km,
+centreline 221.3 km), so the length basis hardly matters. On the centreline basis the ratio is
+4.98%, or 4.59% against Clean Cities' network. The annex gives Budapest as the municipality at
+1,044.9 km², twice our LAU (526.0 km²) and twice QECIO's HU110 (525.9 km²). Because the networks
+still agree within 7.8%, that annex area does not look like the area the network was measured on.
+This is unverified.
+
+### budapest/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out, and it leaves out bus lanes, which our tier E
+includes (29.0 km per side). We matched BikeNetKit's 588.4 km of edges to our 2026-10-02 snapshot
+by OSM way id (edge km split equally over its way ids, EPSG:25834):
+- 227.7 km lie on ways we put in tier A, B or E (our per-side A+B+E is 261.2 km);
+- 359.0 km lie on ways with no tier: living streets 331.1 km, `highway=pedestrian` +
+  `bicycle=yes` 17.7 km, `highway=path` + `bicycle=yes` 7.9 km, other 2.3 km;
+- 1.6 km lie outside our LAU.
+
+Living streets are the bulk of the difference: Budapest maps 342.2 km of them inside the LAU.
+Its 33.0 km of `highway=footway` + `bicycle=yes|permissive` do not occur in BikeNetKit's edges,
+although its documented filter names them. The boundaries agree: BikeNetKit's is 525.9 km²
+against our LAU's 526.0 km², with a symmetric difference of 7.0 km².
+
 ### copenhagen/cc_ratio
 Cause: **definition** (length basis). Per side our A+B is 582.4 km, 1.62 times the
 centreline 360.0 km; on the centreline basis the ratio is 36.2% against our 993.1 km network,
