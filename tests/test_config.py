@@ -279,3 +279,33 @@ def test_real_cities_epsg_in_range_and_blank_exception_is_rejected():
     assert all(25828 <= c.epsg <= 25838 for c in cities)
     with pytest.raises(ValidationError):
         CityConfig.model_validate({**BERLIN, "epsg_exception": "  "})
+
+
+def _role_report(tmp_path: Path, **lists: str) -> Path:
+    extra = "".join(f"{k}: {v}\n" for k, v in lists.items())
+    return _report(tmp_path, "report_classifier: v2\nrankings: []\n" + extra)
+
+
+def test_report_roles_default_to_berlin_and_no_comparison_set(tmp_path: Path):
+    report = load_report(_role_report(tmp_path))
+    assert report.highlight == ["berlin"] and report.comparison_set == []
+
+
+def test_shipped_report_roles_are_cities(tmp_path: Path):
+    report = load_report(CFG / "report.yaml", cities_path=CFG / "cities.yaml")
+    assert report.highlight == ["berlin"]
+    assert report.comparison_set
+
+
+@pytest.mark.parametrize("field", ["highlight", "comparison_set"])
+def test_unknown_highlight_city_is_a_config_error(tmp_path: Path, field: str):
+    path = _role_report(tmp_path, **{field: "[atlantis]"})
+    load_report(path)  # unchecked without a cities file
+    with pytest.raises(ConfigError, match=rf"(?s)report\.yaml.*{field}.*'atlantis'"):
+        load_report(path, cities_path=CFG / "cities.yaml")
+
+
+def test_a_city_in_both_role_lists_is_a_config_error(tmp_path: Path):
+    path = _role_report(tmp_path, highlight="[berlin]", comparison_set="[berlin, paris]")
+    with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*both.*berlin"):
+        load_report(path)

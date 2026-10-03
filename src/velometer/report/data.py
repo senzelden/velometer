@@ -149,7 +149,9 @@ class ReportData:
         self.config_dir = Path(config_dir)
         self.selector = report_selector(self.config_dir)
         self.report_config = load_report(
-            self.config_dir / "report.yaml", self.config_dir / "presets.yaml"
+            self.config_dir / "report.yaml",
+            self.config_dir / "presets.yaml",
+            self.config_dir / "cities.yaml",
         )
         self.activity = load_activity(self.config_dir / "activity.yaml")
         self.years = load_history(self.config_dir / "history.yaml").year_range()

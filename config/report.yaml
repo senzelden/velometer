@@ -1,6 +1,9 @@
 # Report surfaces (reconcile, timeseries, charts, methodology, app) and the default run
 # classifier use this classifier with its default parameters (M4 spec section 3.3).
 report_classifier: v2
+# chart roles: highlighted city, coloured comparison set; every other city is grey context
+highlight: [berlin]
+comparison_set: [paris, copenhagen, vienna]
 rankings:
   - {id: ours_headline, label: "Ours: headline", kind: preset, preset: ours_headline}
   - {id: ours_ecf_qecio, label: "Ours: QECIO method", kind: preset, preset: ecf_qecio}
@@ -11,7 +14,7 @@ rankings:
     source: clean_cities_2025
     metric: protected_share_pct
     scope: whole_network
-    note: "city network as published; Vienna whole-network value"
+    note: "city network as published"
   - id: published_qecio
     label: "QECIO v2.10 (published)"
     kind: external_ratio
@@ -19,4 +22,4 @@ rankings:
     numerator: [cycle_tracks_km, cycle_lanes_km, shared_pedestrians_km]
     denominator: main_roads_km
     scope: "nuts3_{nuts3_code}"
-    note: "NUTS3 region (Berlin DE300, Paris FR101, Vienna AT130, Copenhagen DK011, Wroclaw PL514)"
+    note: "NUTS3 region per city; † NUTS3 region is not the city"

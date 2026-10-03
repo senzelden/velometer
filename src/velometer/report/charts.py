@@ -28,6 +28,9 @@ TIER_LABEL = {
 }
 OUTLINE = "#9a9994"  # the boundary outline on the tier maps (PNG and interactive)
 CITY_COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#7a5bd1", "#52514e"]
+GREY = "#c9c8c3"  # the context ("other") cities
+PICK_COLOUR = "#7a5bd1"  # a context city picked in the headline chart's select
+HIGHLIGHT, COMPARISON, OTHER = "highlight", "comparison", "other"
 NOW = "now"
 INK, INK_2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 
@@ -61,18 +64,40 @@ def _city_name(data: ReportData, city_id: str) -> str:
     return next((c.name for c in data.cities() if c.id == city_id), city_id)
 
 
-def _city_domain(data: ReportData) -> tuple[list[str], list[str]]:
-    names = [c.name for c in data.cities()]
+def _roles(data: ReportData) -> dict[str, str]:
+    """city id -> role, from report.yaml only; a city in neither list is "other"."""
+    cfg = data.report_config
+    roles = {c.id: OTHER for c in data.cities()}
+    roles |= {i: COMPARISON for i in cfg.comparison_set if i in roles}
+    roles |= {i: HIGHLIGHT for i in cfg.highlight if i in roles}
+    return roles
+
+
+def _focus_domain(data: ReportData) -> tuple[list[str], list[str]]:
+    """City names and colours of the highlighted and comparison cities, in config order."""
+    cfg = data.report_config
+    roles = _roles(data)
+    ids = [
+        i for i in [*cfg.highlight, *cfg.comparison_set] if roles.get(i) in (HIGHLIGHT, COMPARISON)
+    ]
+    names = [_city_name(data, i) for i in ids]
     return names, [CITY_COLOURS[i % len(CITY_COLOURS)] for i in range(len(names))]
+
+
+def _is_other(expr=alt.datum.role):
+    return expr == OTHER
 
 
 # --- headline over time ----------------------------------------------------------------------
 
 
-def _headline_rows(data: ReportData) -> list[dict]:
+def _headline_rows(data: ReportData, kinds: tuple[str, ...], city_ids=None) -> list[dict]:
+    roles = _roles(data)
     rows = []
     for c in data.cities():
-        for kind in ("lau", "fua"):
+        if city_ids is not None and c.id not in city_ids:
+            continue
+        for kind in kinds:
             cs = data.series(c.id, kind)
             if cs is None:
                 continue
@@ -83,6 +108,7 @@ def _headline_rows(data: ReportData) -> list[dict]:
                     {
                         "city": c.name,
                         "city_id": c.id,
+                        "role": roles[c.id],
                         "kind": kind,
                         "series": f"{c.name} ({kind.upper()})",
                         "label": _label(p.label),
@@ -95,16 +121,8 @@ def _headline_rows(data: ReportData) -> list[dict]:
     return rows
 
 
-def headline_over_time(data: ReportData) -> dict:
-    """One line per city on LAU, dashed lines for the FUA series; flagged points are ringed."""
-    rows = _headline_rows(data)
-    names, colours = _city_domain(data)
-    x = alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0))
-    y = alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True))
-    colour = alt.Color(
-        "city:N", scale=alt.Scale(domain=names, range=colours), title="City", legend=alt.Legend()
-    )
-    tooltip = [
+def _headline_tooltip() -> list[alt.Tooltip]:
+    return [
         alt.Tooltip("city:N"),
         alt.Tooltip("kind:N"),
         alt.Tooltip("label:N"),
@@ -112,27 +130,102 @@ def headline_over_time(data: ReportData) -> dict:
         alt.Tooltip("ab_km:Q", format=".1f"),
         alt.Tooltip("flags:N"),
     ]
-    base = alt.Chart().encode(x=x, y=y, color=colour, tooltip=tooltip)
-    lines = base.transform_filter(alt.datum.kind == "lau").mark_line(point=True, strokeWidth=2)
-    fua = (
-        base.encode(
-            strokeDash=alt.StrokeDash(
-                "kind:N",
-                scale=alt.Scale(domain=["lau", "fua"], range=[[1, 0], [5, 4]]),
-                title="Boundary",
-            )
-        )
-        .transform_filter(alt.datum.kind == "fua")
-        .mark_line(strokeWidth=1.5, opacity=0.8)
-    )
-    rings = (
+
+
+def _rings(x, y, tooltip) -> alt.Chart:
+    return (
         alt.Chart()
         .transform_filter(alt.datum.flagged == True)  # noqa: E712 - a Vega expression
         .mark_point(shape="circle", size=260, filled=False, stroke=INK, strokeWidth=2)
         .encode(x=x, y=y, tooltip=tooltip)
     )
-    chart = alt.layer(lines, fua, rings, data=alt.Data(values=rows)).properties(
-        width=560, height=320, title=_title("Protected cycling infrastructure over time")
+
+
+def headline_over_time(data: ReportData) -> dict:
+    """LAU headline of every city: the highlighted and comparison cities coloured and labelled,
+    every other city a thin grey line a select can pick out; flagged points are ringed."""
+    rows = _headline_rows(data, ("lau",))
+    names, colours = _focus_domain(data)
+    other_names = sorted({r["city"] for r in rows if r["role"] == OTHER})
+    x = alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0))
+    y = alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True))
+    city_scale = alt.Scale(domain=names, range=colours)
+    colour = alt.Color("city:N", scale=city_scale, title="City", legend=alt.Legend())
+    tooltip = _headline_tooltip()
+    pick = alt.selection_point(
+        name="pick",
+        fields=["city"],
+        empty=False,
+        bind=alt.binding_select(
+            options=[None, *other_names], labels=["—", *other_names], name="Highlight a city "
+        ),
+    )
+    focus = alt.datum.role != OTHER
+    grey = (
+        alt.Chart()
+        .transform_filter(_is_other())
+        .mark_line()
+        .encode(
+            x=x,
+            y=y,
+            detail="city:N",
+            color=alt.condition(pick, alt.value(PICK_COLOUR), alt.value(GREY)),
+            strokeWidth=alt.condition(pick, alt.value(2.5), alt.value(1)),
+            tooltip=tooltip,
+        )
+        .add_params(pick)
+    )
+    lines = (
+        alt.Chart()
+        .transform_filter(focus)
+        .mark_line(point=True)
+        .encode(
+            x=x,
+            y=y,
+            color=colour,
+            strokeWidth=alt.condition(alt.datum.role == HIGHLIGHT, alt.value(2.5), alt.value(1.8)),
+            tooltip=tooltip,
+        )
+    )
+    labels = (
+        alt.Chart()
+        .transform_filter(focus & (alt.datum.label == NOW))
+        .mark_text(align="left", dx=8, fontSize=11)
+        .encode(x=x, y=y, text="city:N", color=alt.Color("city:N", scale=city_scale, legend=None))
+    )
+    rings = _rings(x, y, tooltip).transform_filter(focus)
+    chart = alt.layer(grey, lines, labels, rings, data=alt.Data(values=rows)).properties(
+        width=560,
+        height=320,
+        padding={"left": 5, "top": 5, "right": 110, "bottom": 5},  # room for the "now" labels
+        title=_title("Protected cycling infrastructure over time"),
+    )
+    return _config(chart).to_dict()
+
+
+def headline_city(data: ReportData, city_id: str) -> dict:
+    """One city's headline over time: LAU solid, FUA dashed; flagged points are ringed."""
+    rows = _headline_rows(data, ("lau", "fua"), {city_id})
+    name = _city_name(data, city_id)
+    x = alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0))
+    y = alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True))
+    tooltip = _headline_tooltip()
+    lines = (
+        alt.Chart()
+        .mark_line(point=True, strokeWidth=2, color=CITY_COLOURS[0])
+        .encode(
+            x=x,
+            y=y,
+            strokeDash=alt.StrokeDash(
+                "kind:N",
+                scale=alt.Scale(domain=["lau", "fua"], range=[[1, 0], [5, 4]]),
+                title="Boundary",
+            ),
+            tooltip=tooltip,
+        )
+    )
+    chart = alt.layer(lines, _rings(x, y, tooltip), data=alt.Data(values=rows)).properties(
+        width=480, height=280, title=_title(f"Protected cycling infrastructure, {name}")
     )
     return _config(chart).to_dict()
 
@@ -193,13 +286,13 @@ def tier_composition(data: ReportData, city_id: str, kind: str = "lau") -> dict:
 
 
 def tiers_small_multiples(data: ReportData) -> dict:
-    """Every city's LAU tier composition as small multiples sharing one legend."""
+    """Every city's LAU tier composition as small multiples sharing one legend and one y scale."""
     rows = [r for c in data.cities() for r in _tier_rows(data, c.id, "lau")]
-    base = _tier_chart(data, rows, width=260, height=200)
+    base = _tier_chart(data, rows, width=150, height=110)
     chart = (
-        base.facet(facet=alt.Facet("city:N", title=None), columns=3)
+        base.facet(facet=alt.Facet("city:N", title=None, sort="ascending"), columns=7)
         .properties(title=_title("Tier composition per city (LAU)"))
-        .resolve_scale(y="independent")
+        .resolve_scale(y="shared")
         # one x axis per panel: a wrapped facet otherwise draws a column's axis under its last
         # row, which for a short last row is an empty cell
         .resolve_axis(x="independent")
@@ -210,51 +303,86 @@ def tiers_small_multiples(data: ReportData) -> dict:
 # --- rankings flip ---------------------------------------------------------------------------
 
 
+def _nuts3_columns(data: ReportData) -> set[str]:
+    """Ids of the ranking sources whose scope is each city's NUTS3 region."""
+    return {
+        r.id
+        for r in data.report_config.rankings
+        if r.kind == "external_ratio" and r.scope.startswith("nuts3_")
+    }
+
+
 def rankings_flip(data: ReportData) -> dict:
-    """Slope chart: x = ranking source (report.yaml order), y = rank (1 on top), colour = city."""
+    """Slope chart: x = ranking source (report.yaml order), y = rank (1 on top); the highlighted
+    and comparison cities are coloured, every other city a thin grey line."""
     names = {c.id: c.name for c in data.cities()}
+    roles = _roles(data)
+    nuts3 = _nuts3_columns(data)
+    # a city whose NUTS3 region is not the city: its QECIO figure is a region's, marked with †
+    region_only = {i for i, f in data._city_fields().items() if f.get("nuts3_is_city") is False}
     ranking_rows = data.ranking_rows()
     # each column says how many cities it ranks (n differs per source: a missing figure is a gap)
     column = {r.source_id: f"{r.source_label} (n={r.n_ranked})" for r in ranking_rows}
     labels = [column[r.id] for r in data.report_config.rankings if r.id in column]
-    rows = [
-        {
-            "source": column[e.source_id],
-            "city": names.get(e.city_id, e.city_id),
-            "rank": e.rank,
-            "value": None if e.value is None else round(e.value, 3),
-            "value_text": "not published" if e.value is None else f"{e.value:.2f}",
-        }
-        for e in ranking_rows
-    ]
-    domain, colours = _city_domain(data)
+    rows = []
+    for e in ranking_rows:
+        city = names.get(e.city_id, e.city_id)
+        dagger = e.source_id in nuts3 and e.city_id in region_only
+        rows.append(
+            {
+                "source": column[e.source_id],
+                "city": city,
+                "city_id": e.city_id,
+                "city_label": f"{city} †" if dagger else city,
+                "dagger": dagger,
+                "role": roles.get(e.city_id, OTHER),
+                "rank": e.rank,
+                "value": None if e.value is None else round(e.value, 3),
+                "value_text": "not published" if e.value is None else f"{e.value:.2f}",
+            }
+        )
+    domain, colours = _focus_domain(data)
     top = max([r["rank"] for r in rows if r["rank"] is not None] + [1])
-    chart = (
-        alt.Chart(alt.Data(values=rows))
-        .mark_line(
-            point=alt.OverlayMarkDef(size=90, filled=True),
-            strokeWidth=2.5,
-            invalid="break-paths-filter-domains",  # a null rank breaks the line
-        )
+    x = alt.X("source:O", sort=labels, title=None, axis=alt.Axis(labelAngle=-25, labelLimit=220))
+    y = alt.Y(
+        "rank:Q",
+        title="Rank (1 = highest)",
+        scale=alt.Scale(reverse=True, domain=[1, top], nice=False),
+        axis=alt.Axis(values=list(range(1, top + 1)), format="d"),
+    )
+    tooltip = [
+        alt.Tooltip("source:N"),
+        alt.Tooltip("city_label:N", title="city"),
+        alt.Tooltip("rank:Q"),
+        # each source has its own unit and denominator (report.yaml notes, methodology)
+        alt.Tooltip("value_text:N", title="value"),
+    ]
+    invalid = "break-paths-filter-domains"  # a null rank breaks the line
+    grey = (
+        alt.Chart()
+        .transform_filter(_is_other())
+        .mark_line(strokeWidth=1, color=GREY, invalid=invalid)
+        .encode(detail="city:N", tooltip=tooltip)
+    )
+    focus = (
+        alt.Chart()
+        .transform_filter(alt.datum.role != OTHER)
+        .mark_line(point=alt.OverlayMarkDef(size=90, filled=True), invalid=invalid)
         .encode(
-            x=alt.X(
-                "source:O", sort=labels, title=None, axis=alt.Axis(labelAngle=-25, labelLimit=220)
-            ),
-            y=alt.Y(
-                "rank:Q",
-                title="Rank (1 = highest)",
-                scale=alt.Scale(reverse=True, domain=[1, top], nice=False),
-                axis=alt.Axis(values=list(range(1, top + 1)), format="d"),
-            ),
             color=alt.Color("city:N", scale=alt.Scale(domain=domain, range=colours), title="City"),
-            tooltip=[
-                alt.Tooltip("source:N"),
-                alt.Tooltip("city:N"),
-                alt.Tooltip("rank:Q"),
-                # each source has its own unit and denominator (report.yaml notes, methodology)
-                alt.Tooltip("value_text:N", title="value"),
-            ],
+            strokeWidth=alt.condition(alt.datum.role == HIGHLIGHT, alt.value(2.5), alt.value(1.8)),
+            tooltip=tooltip,
         )
+    )
+    daggers = (
+        alt.Chart()
+        .transform_filter(alt.datum.dagger == True)  # noqa: E712 - a Vega expression
+        .mark_text(text="†", dx=10, dy=-8, fontSize=14, color=INK)
+        .encode(tooltip=tooltip)
+    )
+    chart = (
+        alt.layer(grey, focus, daggers, data=alt.Data(values=rows))
+        .encode(x=x, y=y)
         .properties(
             width=560,
             height=320,

@@ -34,6 +34,11 @@
 </section>
 
 <section>
+<h2>Over time</h2>
+{{ chart("c0", headline) }}
+</section>
+
+<section>
 <h2>Tier composition</h2>
 {% for k in kinds %}
 {% if k.tiers %}{{ chart("c" ~ loop.index, k.tiers) }}{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}

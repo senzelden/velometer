@@ -368,6 +368,16 @@ class ReportConfig(_Strict):
 
     report_classifier: str = Field(pattern=r"^v\d+$")
     rankings: list[RankingSource]
+    # chart roles: a city in neither list is "other" (grey context lines)
+    highlight: list[str] = ["berlin"]
+    comparison_set: list[str] = []
+
+    @model_validator(mode="after")
+    def _roles_are_disjoint(self):
+        both = sorted(set(self.highlight) & set(self.comparison_set))
+        if both:
+            raise ValueError(f"cities in both highlight and comparison_set: {both}")
+        return self
 
     @model_validator(mode="after")
     def _unique_ids(self):
@@ -378,9 +388,11 @@ class ReportConfig(_Strict):
         return self
 
 
-def load_report(path: Path, presets_path: Path | None = None) -> ReportConfig:
+def load_report(
+    path: Path, presets_path: Path | None = None, cities_path: Path | None = None
+) -> ReportConfig:
     """Load report.yaml; every preset ranking must name a preset of presets.yaml (default: the
-    one beside it)."""
+    one beside it). With `cities_path`, every highlight / comparison_set id must be a city."""
     config = _parse(path, ReportConfig.model_validate)
     presets_path = presets_path or path.parent / "presets.yaml"
     known = {p.id for p in _parse(presets_path, PresetsConfig.model_validate).presets}
@@ -390,6 +402,14 @@ def load_report(path: Path, presets_path: Path | None = None) -> ReportConfig:
                 f"{path}: ranking {r.id!r}: preset {r.preset!r} is not in {presets_path.name} "
                 f"(known: {sorted(known)})"
             )
+    if cities_path is not None:
+        cities = {c.id for c in load_cities(cities_path)}
+        for field in ("highlight", "comparison_set"):
+            unknown = [i for i in getattr(config, field) if i not in cities]
+            if unknown:
+                raise ConfigError(
+                    f"{path}: {field}: unknown city id {unknown[0]!r} (not in {cities_path.name})"
+                )
     return config
 
 

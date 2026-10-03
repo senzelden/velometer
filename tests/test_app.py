@@ -141,6 +141,7 @@ def test_city_page_sections_in_order(client):
     text = _text(client.get("/city/berlin").text)
     order = [
         "Headline and presets",
+        "Over time",
         "Tier composition",
         "LAU vs FUA",
         "Flagged years",
@@ -151,6 +152,15 @@ def test_city_page_sections_in_order(client):
     positions = [text.find(h) for h in order]
     assert -1 not in positions, dict(zip(order, positions, strict=True))
     assert positions == sorted(positions)
+
+
+def test_city_page_embeds_the_headline_with_lau_and_fua(client):
+    html = client.get("/city/berlin").text
+    spec = re.search(r"vegaEmbed\('#c0', (\{.*?\}), \{actions", html, re.S)
+    assert spec, "the headline chart is embedded as c0"
+    kinds = {r["kind"] for r in json.loads(spec.group(1))["data"]["values"]}
+    assert kinds == {"lau", "fua"}
+    assert html.index("vegaEmbed('#c0'") < html.index("vegaEmbed('#c1'")  # above the tier charts
 
 
 def test_city_page_shows_current_numbers(client, fixture_db):
