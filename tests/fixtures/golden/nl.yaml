@@ -13,7 +13,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 81041300
   group: X_no
@@ -30,7 +30,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 30686463
   group: X_private
@@ -42,7 +42,7 @@ ways:
     rule: X_private
     subtype: private
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 350999663
   group: X_bicycle_no
@@ -54,7 +54,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 37614919
   group: X_area
@@ -66,7 +66,7 @@ ways:
     rule: X_area
     subtype: area
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 7062188
   group: D_lane
@@ -83,21 +83,21 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 790330137
   group: unmatched:1
   name: Koivistokade
   highway: residential
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1527660171
   group: unmatched:2
   name: Veeteeltstraat
   highway: residential
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 7056827
   group: extra
@@ -109,7 +109,7 @@ ways:
     rule: E_cycle_street
     subtype: cycle_street
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 7010586
   group: extra
@@ -126,7 +126,7 @@ ways:
     rule: D_lane_advisory
     subtype: advisory
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1525558445
   group: extra
@@ -143,7 +143,7 @@ ways:
     rule: X_shared_lane
     subtype: shared_lane
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1505076700
   group: extra
@@ -155,5 +155,5 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''

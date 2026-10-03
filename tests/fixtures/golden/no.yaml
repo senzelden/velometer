@@ -13,7 +13,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 27071517
   group: X_no
@@ -30,7 +30,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 160459177
   group: D_lane
@@ -47,7 +47,7 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 130447630
   group: X_bicycle_no
@@ -59,7 +59,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 118364891
   group: A_cycleway
@@ -71,7 +71,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 142320283
   group: X_area
@@ -83,7 +83,7 @@ ways:
     rule: X_area
     subtype: area
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1262980246
   group: unmatched:1
@@ -95,7 +95,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 136540510
   group: extra
@@ -107,7 +107,7 @@ ways:
     rule: B_path
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 863615478
   group: extra
@@ -124,7 +124,7 @@ ways:
     rule: A_track_side
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 4361293
   group: extra
@@ -141,7 +141,7 @@ ways:
     rule: X_shoulder
     subtype: shoulder
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 3426698
   group: extra
@@ -158,5 +158,5 @@ ways:
     rule: X_shared_lane
     subtype: shared_lane
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''

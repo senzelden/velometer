@@ -18,7 +18,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1422461231
   group: X_private
@@ -30,7 +30,7 @@ ways:
     rule: X_private
     subtype: private
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 917953378
   group: X_lifecycle
@@ -42,7 +42,7 @@ ways:
     rule: X_lifecycle
     subtype: lifecycle
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 25464752
   group: B_cycleway_foot
@@ -54,7 +54,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 320297312
   group: X_bicycle_no
@@ -66,7 +66,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1361268398
   group: A_cycleway
@@ -78,29 +78,55 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 135706932
   group: unmatched:1
   name: Hartigova
   highway: secondary
-  proposed: []
-  confirmed: false
-  note: ''
+  proposed:
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
 - way_id: 762313241
   group: unmatched:2
   name: Ocelkova
   highway: tertiary
-  proposed: []
-  confirmed: false
-  note: ''
+  proposed:
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
 - way_id: 821229572
   group: unmatched:3
   name: Novovysočanská
   highway: secondary
-  proposed: []
-  confirmed: false
-  note: ''
+  proposed:
+  - side: left
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
 - way_id: 129259688
   group: extra
   name: ''
@@ -116,7 +142,7 @@ ways:
     rule: X_shared_lane
     subtype: shared_lane
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 715769616
   group: extra
@@ -128,7 +154,7 @@ ways:
     rule: E_bus
     subtype: bus
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 4052180
   group: extra
@@ -140,5 +166,5 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''

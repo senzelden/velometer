@@ -18,7 +18,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 279328952
   group: A_cycleway
@@ -30,7 +30,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 308379125
   group: X_shared_lane
@@ -47,7 +47,7 @@ ways:
     rule: X_shared_lane
     subtype: shared_lane
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 29023984
   group: X_private
@@ -59,7 +59,7 @@ ways:
     rule: X_private
     subtype: private
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 285007057
   group: X_area
@@ -71,7 +71,7 @@ ways:
     rule: X_area
     subtype: area
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 177572223
   group: X_lifecycle
@@ -83,14 +83,14 @@ ways:
     rule: X_lifecycle
     subtype: lifecycle
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1413308046
   group: unmatched:1
   name: Carrer dels Escultors Claperós
   highway: living_street
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 963354308
   group: extra
@@ -102,7 +102,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 3997433
   group: extra
@@ -114,7 +114,7 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 294082522
   group: extra
@@ -131,7 +131,7 @@ ways:
     rule: E_bus
     subtype: bus
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 87101690
   group: extra
@@ -143,5 +143,5 @@ ways:
     rule: A_track_side
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''

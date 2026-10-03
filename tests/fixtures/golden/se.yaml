@@ -13,7 +13,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 151884980
   group: X_no
@@ -30,7 +30,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 39822770
   group: B_cycleway_foot
@@ -42,7 +42,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1367954012
   group: X_bicycle_no
@@ -54,7 +54,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 249421858
   group: X_separate
@@ -71,7 +71,7 @@ ways:
     rule: X_separate
     subtype: separate
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 81126534
   group: X_lifecycle
@@ -83,28 +83,28 @@ ways:
     rule: X_lifecycle
     subtype: lifecycle
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 806880345
   group: unmatched:1
   name: Svartlösavägen
   highway: tertiary
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 4079732
   group: unmatched:2
   name: Askrikegatan
   highway: residential
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 233028188
   group: unmatched:3
   name: Storängsvägen
   highway: unclassified
   proposed: []
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 149487167
   group: extra
@@ -121,7 +121,7 @@ ways:
     rule: A_track_side
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 198689124
   group: extra
@@ -133,7 +133,7 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 120132761
   group: extra
@@ -145,5 +145,5 @@ ways:
     rule: B_path_segregated
     subtype: segregated
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''

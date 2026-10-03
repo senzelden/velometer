@@ -18,7 +18,7 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 263646527
   group: A_cycleway
@@ -30,7 +30,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 220990755
   group: X_private
@@ -42,7 +42,7 @@ ways:
     rule: X_private
     subtype: private
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 328672666
   group: D_lane
@@ -59,7 +59,7 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 6172172
   group: X_shared_lane
@@ -76,7 +76,7 @@ ways:
     rule: X_shared_lane
     subtype: shared_lane
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 278008760
   group: X_bicycle_no
@@ -88,7 +88,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 81401180
   group: extra
@@ -100,7 +100,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 125067709
   group: extra
@@ -112,7 +112,7 @@ ways:
     rule: E_bus
     subtype: bus
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 152908559
   group: extra
@@ -129,7 +129,7 @@ ways:
     rule: D_lane_advisory
     subtype: advisory
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 114787033
   group: extra
@@ -146,5 +146,5 @@ ways:
     rule: X_separate
     subtype: separate
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
