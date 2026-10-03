@@ -522,7 +522,10 @@ def boundaries_fetch(
                     typer.echo(f"{c.id} {k} skipped (no code configured)")
                     continue
                 try:
-                    if k == "osm_admin" and region_path is None:
+                    needs_region = k == "osm_admin" or (
+                        k == "lau" and c.admin_boundary == "osm_relation"
+                    )
+                    if needs_region and region_path is None:
                         region_path = deps.fetch_region(c.geofabrik_region, data).path
                     rec, pop = deps.city_boundary(c, k, data, region_path=region_path)
                     upsert_boundary(conn, rec.boundary)

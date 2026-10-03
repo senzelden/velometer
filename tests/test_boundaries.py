@@ -5,6 +5,7 @@ import pyogrio
 import pytest
 import shapely
 from shapely import MultiPolygon, Polygon
+from shapely.geometry import box
 
 from velometer.config import CityConfig
 from velometer.sources import boundaries as b
@@ -261,3 +262,100 @@ def test_every_pilot_city_code_selects_exactly_one_feature(tmp_path_factory):
     for city in load_cities(default_config_dir() / "cities.yaml"):
         b.select_feature(lau, "GISCO_ID", city.lau_code)
         b.select_feature(fua, b.FUA_FIELD, city.fua_code)
+
+
+URAU_JSON = {  # the shape of the Eurostat JSON-stat response (dimension time, values by index)
+    "value": {"0": 515695.0, "2": 522250.0},
+    "dimension": {"time": {"category": {"index": {"2021": 0, "2022": 1, "2023": 2}}}},
+}
+
+
+def test_population_falls_back_to_urban_audit_latest_year():
+    city = CITY.model_copy(update={"population_urau": "FR003C", "population_nuts3": None})
+    pop = b.population(city, {"POP_2024": 0}, fetch_json=lambda url: URAU_JSON)
+    assert (pop.value, pop.year) == (522250, 2023)
+    assert "urb_cpop1 FR003C" in pop.source
+
+
+def test_urau_request_names_the_city_and_indicator():
+    seen = []
+    city = CITY.model_copy(update={"population_urau": "FR003C"})
+    b.population(city, {}, fetch_json=lambda url: seen.append(url) or URAU_JSON)
+    assert "cities=FR003C" in seen[0] and "indic_ur=DE1001V" in seen[0]
+
+
+def test_urau_without_positive_value_or_with_extra_dimension_fails_loudly():
+    city = CITY.model_copy(update={"population_urau": "FR003C"})
+    empty = {**URAU_JSON, "value": {"1": 0}}
+    with pytest.raises(ValueError, match="urb_cpop1 FR003C"):
+        b.population(city, {}, fetch_json=lambda url: empty)
+    extra = {
+        **URAU_JSON,
+        "dimension": {
+            **URAU_JSON["dimension"],
+            "cities": {"category": {"index": {"FR003C": 0, "FR001C": 1}}},
+        },
+    }
+    with pytest.raises(ValueError, match="extra dimension"):
+        b.population(city, {}, fetch_json=lambda url: extra)
+
+
+def test_population_nuts3_wins_over_urau():
+    city = CITY.model_copy(update={"population_urau": "FR003C", "population_nuts3": "DE300"})
+    urls = []
+
+    def fake(url):
+        urls.append(url)
+        if "urb_cpop1" in url:
+            pytest.fail("urb_cpop1 must not be called")
+        return {"value": {"0": 2084894}}
+
+    pop = b.population(city, {"POP_2024": 0}, fetch_json=fake)
+    assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source and len(urls) == 1
+
+
+def test_utm_epsg_rule():
+    assert b.utm_epsg(13.4) == 25833 and b.utm_epsg(2.35) == 25831 and b.utm_epsg(24.9) == 25835
+
+
+def test_lau_with_wrong_epsg_is_refused(tmp_path):
+    city = CITY.model_copy(update={"epsg": 25832})  # Berlin is 25833
+    with pytest.raises(ValueError, match="EPSG 25832.*UTM zone.*25833"):
+        b.check_epsg(city, box(13.3, 52.4, 13.5, 52.6))
+    with pytest.raises(ValueError, match="EPSG 25832"):  # write_boundary applies it to lau
+        b.write_boundary(city, "lau", MultiPolygon([_sq(4.5e6, 3.27e6)]), "GISCO", tmp_path)
+    # a FUA may straddle zones: not checked
+    b.write_boundary(city, "fua", MultiPolygon([_sq(4.5e6, 3.27e6)]), "GISCO", tmp_path)
+
+
+def test_osm_relation_admin_boundary_keeps_kind_lau(tmp_path, monkeypatch):
+    _stub_gisco(monkeypatch, tmp_path, pop=3782202)
+    seen = {}
+
+    def fake_relation_polygon(src, relation_id, dst):
+        seen["relation"] = relation_id
+        wgs = b._to(_sq(4.5e6, 3.27e6, 2000), 3035, 4326)
+        feat = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": json.loads(shapely.to_geojson(wgs)),
+        }
+        dst.write_text(json.dumps({"type": "FeatureCollection", "features": [feat]}))
+        return dst
+
+    monkeypatch.setattr(b, "relation_polygon", fake_relation_polygon)
+    city = CITY.model_copy(update={"admin_boundary": "osm_relation"})
+    rec, pop = b.city_boundary(city, "lau", tmp_path / "d", region_path=tmp_path / "r.pbf")
+    assert seen["relation"] == 62422
+    assert rec.boundary.kind == "lau" and rec.boundary.source == "OSM relation 62422"
+    assert rec.boundary.area_km2 == pytest.approx(4.0, rel=0.02)  # not the 1 km2 GISCO polygon
+    assert pop.value == 3782202
+    with pytest.raises(ValueError, match="region file"):
+        b.city_boundary(city, "lau", tmp_path / "d")
+
+
+@pytest.mark.slow
+def test_urb_cpop1_live_lyon():
+    city = CITY.model_copy(update={"population_urau": "FR003C", "population_nuts3": None})
+    pop = b.population(city, {"POP_2024": 0})
+    assert 400_000 < pop.value < 700_000

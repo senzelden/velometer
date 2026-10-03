@@ -45,11 +45,20 @@ class CityConfig(_Strict):
     nuts3_code: str | None = None  # NUTS3 unit for QECIO matching (may be larger than the city)
     # NUTS3 unit identical to the commune: the population fallback when LAU has none
     population_nuts3: str | None = None
+    # "gisco": the LAU polygon; "osm_relation": the admin layer is built from osm_relation_id
+    # (still stored as kind "lau"; population still comes from the GISCO LAU feature)
+    admin_boundary: Literal["gisco", "osm_relation"] = "gisco"
+    # Urban Audit city code (urb_cpop1): the population fallback when LAU has none and
+    # population_nuts3 is unset
+    population_urau: str | None = None
 
     @field_validator("epsg")
     @classmethod
     def _projected(cls, v: int) -> int:
-        return require_projected(v)
+        require_projected(v)
+        if not 25828 <= v <= 25838:
+            raise ValueError(f"EPSG:{v} is not ETRS89 / UTM 28N-38N (EPSG 25828-25838)")
+        return v
 
 
 class RoadClasses(_Strict):

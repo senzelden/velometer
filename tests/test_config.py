@@ -2,8 +2,10 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from velometer.config import (
+    CityConfig,
     ConfigError,
     default_config_dir,
     load_cities,
@@ -244,3 +246,29 @@ def test_history_yaml_with_report_classifier_points_to_report_yaml(tmp_path: Pat
     path.write_text((CFG / "history.yaml").read_text() + "report_classifier: v2\n")
     with pytest.raises(ConfigError, match=r"(?s)history\.yaml.*config/report\.yaml"):
         load_history(path)
+
+
+BERLIN = {
+    "id": "berlin",
+    "name": "Berlin",
+    "country_iso2": "DE",
+    "epsg": 25833,
+    "geofabrik_region": "europe/germany/berlin",
+    "osm_relation_id": 62422,
+}
+
+
+def test_epsg_must_be_etrs89_utm():
+    assert CityConfig.model_validate(BERLIN).admin_boundary == "gisco"
+    for bad in (3857, 32633, 25827, 25839):
+        with pytest.raises(ValidationError):
+            CityConfig.model_validate({**BERLIN, "epsg": bad})
+
+
+def test_admin_boundary_and_urau_fields():
+    c = CityConfig.model_validate(
+        {**BERLIN, "admin_boundary": "osm_relation", "population_urau": "FR003C"}
+    )
+    assert c.admin_boundary == "osm_relation" and c.population_urau == "FR003C"
+    with pytest.raises(ValidationError):
+        CityConfig.model_validate({**BERLIN, "admin_boundary": "other"})
