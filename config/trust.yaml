@@ -35,23 +35,33 @@ countries:
   PL: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw,
        classifier_reviewed: v3}
-  # M5 countries (Task 13, 2026-10-03): pending until the golden sample is signed off
-  NL: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/nl}
-  ES: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/es}
-  SE: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/se}
-  "NO": {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-         basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/no}
-  FI: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/fi}
-  HU: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/hu}
-  CZ: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/cz}
+  # M5 countries (Task 13, 2026-10-03), signed off in Task 14 (2026-10-03): golden sample fully
+  # confirmed and matching classifier v3, diagnostics re-run on the v3 runs 270-290
+  NL: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/nl,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  ES: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/es,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  SE: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/se,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  "NO": {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+         basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/no,
+         classifier_reviewed: v3, signed_off: 2026-10-03}
+  FI: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/fi,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  HU: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/hu,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  CZ: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/cz,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
   # SK: Bratislava, configured in Task 13c as the union of its 17 borough LAU (cities.yaml)
-  SK: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/sk}
-  SI: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
-       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/si}
+  SK: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/sk,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
+  SI: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/si,
+       classifier_reviewed: v3, signed_off: 2026-10-03}
