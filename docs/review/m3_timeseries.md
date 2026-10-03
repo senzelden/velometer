@@ -1192,6 +1192,30 @@ Cause: **construction** with ordinary catch-up mapping, not a campaign or import
 removed from roads (way 188144495) and 59 km of deleted cycleways. The 38,570 edits are spread
 over 10,445 changesets (top changeset 1.4%, top-mapper share 0.10) and are not a spike.
 
+### prague/lau/2020
+
+Cause: **tag drift** (park and riverside footways retagged as cycleways), with some new cycleways.
+A+B rose 201.5 -> 232.8 km (+31.3, threshold 25.0). 26.8 km per side came from ways that had no
+tier before: 20.5 km of `highway=footway` + `bicycle=yes` became `highway=cycleway` + `foot=yes`
+(e.g. way 26427950, named Letenské sady; way 25401468), plus 2.4 km of other footways and 1.1 km
+of tracks retagged the same way. `foot=yes` is not `designated`, so these ways go to tier A
+(`A_cycleway`). 205 of the 230 retagged ways were edited in February–April 2019, in 32
+changesets by 11 mappers (top-mapper share 0.37). A further 11.4 km are 64 ways not in the 2019
+snapshot (10.7 km of new `highway=cycleway`, e.g. way 757691856, way 694511682). Shortened
+ways (−2.8 km), ways retagged out of A/B (−3.1 km) and deleted ways (−1.7 km) offset part of it.
+The year's activity was normal (6,861 edits, top mapper 0.27).
+
+### prague/fua/2020
+
+Cause: **tag drift**, the same footway retagging as prague/lau/2020, plus **mapping activity**
+in the suburbs. A+B rose 351.9 -> 393.7 km (+41.8, threshold 35.2), 31.3 km of it inside the
+city. Across the FUA, 33.1 km per side came from previously untiered ways (254 ways; 20.7 km is
+`highway=footway` + `bicycle=yes` -> `highway=cycleway` + `foot=yes`) and 19.7 km from 95 ways
+not in the 2019 snapshot (17.4 km `highway=cycleway`, e.g. way 672969814 "Cyklostezka
+Vestec-Kunratice", way 751574330). A further 6.5 km moved from A to B as `highway=cycleway`
+ways gained `foot=designated`, which leaves A+B unchanged. Activity was normal (9,692 edits,
+top mapper 0.22).
+
 ### strasbourg/lau/2023
 
 Cause: **campaign** (pedestrian ways). 3,216 counted edits in 2022 against a limit of

@@ -866,6 +866,55 @@ QECIO's rule agree on today's data, and the gap to QECIO's 24.3 km (−6.3 km ce
 small base) lies in the data: 996 days of retagging since QECIO's 2024-01-10 snapshot. Not
 verified against a 2024 snapshot.
 
+### prague/cc_ratio
+Cause: **definition** (scope of both Clean Cities figures; the two gaps compound). Our preset
+divides per-side A+B (295.0 km) by all public roads (3,423.0 km), 8.6%. Neither part is out of
+band on its own (`prague/cc_km` +19.0%, `prague/cc_network_km` −16.4%), but together they give
+1.19 / 0.84 = 1.42 times the ratio. The length basis is not the cause: Prague's A+B is almost
+all bidirectional (290.5 km centreline, 8.5%). Our numerator over their 4,093 km network gives
+7.2% against their 6%. Their 248 km is below our A+B on 1 January 2025 (283.1 km, history run),
+so the date gap does not explain the numerator. Their network is also above QECIO's OSM main
+plus local roads for CZ010 (1,384.3 + 2,304.3 = 3,688.6 km, 2024), as in Wrocław. Per-city
+sources are not stated (Annex 1), so the figures may come from a city register with a wider
+scope.
+
+### prague/qecio_lanes_km
+Cause: **definition** first (v3 counts `soft_lane` as an advisory lane, QECIO does not), **date**
+second. QECIO counts `cycleway*=lane|opposite_lane`
+(Methodology Table 2). Our C+D centreline of 94.9 km includes 29.4 km of
+`cycleway[:side]=soft_lane` (58.8 km per side), which v3 counts as tier D advisory and QECIO does
+not count. On QECIO's definition our lanes are 65.5 km (`cycleway=lane` 37.6 km plus lane +
+`cycleway:lane=advisory` 28.0 km). On our 1 January 2024 snapshot those same lanes are 45.5 km
+against QECIO's 45.7 (−0.4%). That snapshot is 9 days before QECIO's, and CZ010 is the city:
+main roads 1,379.8 vs 1,384.3 km. Since then 24.1 km per side (12.0 km centreline) of
+`soft_lane` were retagged `cycleway=lane` + `cycleway:lane=advisory` (e.g. way 8111218), 1.8 km
+became plain lanes, and about 6 km are lanes added on other roads.
+
+### prague/qecio_shared_km
+Cause: **date** (retagging after QECIO's snapshot). Our tier B without `B/segregated` follows QECIO's
+cycle-and-pedestrian rule (Table 2). On our 1 January 2024 snapshot that rule gives 141.3 km
+centreline (`highway=cycleway` + `foot=designated` 133.3, designated footways and paths 8.0),
+against QECIO's 139.0 (+1.7%), so classifier and QECIO agree at the same date. Since then
+tier B grew 45.9 km per side. 22.7 km of it is `highway=cycleway` + `foot=yes` retagged
+`foot=designated` + `bicycle=designated` (A -> B, e.g. way 421316921, way 887225488). 14.9 km
+are new `highway=cycleway` + `foot=designated` ways, and 14.1 km are previously untiered tracks
+and footways retagged as designated cycleways. The A -> B part shows as the opposite gap in
+`prague/qecio_tracks_km` (ours 103.4 vs 124.3; 126.0 km, +1.4%, on the 2024 snapshot).
+
+### prague/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out. We matched BikeNetKit's 666.7 km of edges to our
+2026-10-02 snapshot by OSM way id (edge km split equally over its way ids, EPSG:25833):
+- 280.1 km lie on ways we put in tier A, B or E (our per-side A+B+E is 336.6 km);
+- 384.8 km lie on ways with no tier: living streets 296.7 km, `highway=path` + `bicycle=yes`
+  43.5 km, `highway=pedestrian` + `bicycle=yes` 39.2 km, other 5.4 km;
+- 1.6 km lie outside our LAU and 0.3 km on tier C/D ways.
+
+The gap is wider than Wrocław's because Prague maps 307.8 km of living streets inside the LAU.
+Its 134.9 km of `highway=footway` + `bicycle=yes|permissive` hardly occur in BikeNetKit's edges
+(0.5 km), although its documented filter names them. The boundaries agree: BikeNetKit 495.9 km²
+vs our 496.5 km², 492.1 km² shared.
+
 ### strasbourg/qecio_main_km
 Cause: **scope**. QECIO reports NUTS3 FRF11, the Bas-Rhin département: 4,797.2 km² in QECIO,
 matching the 4,797.4 km² of the 514 GISCO LAU 2024 communes coded `FR_67*`. Our LAU (FR_67482,
