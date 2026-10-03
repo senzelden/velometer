@@ -760,6 +760,46 @@ before -> after.
 
 <!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca -->
 
+### barcelona/lau/2021
+
+Cause: **campaign** (pedestrian network, with one dominant mapper). 16,309 counted edits
+in 2020 against a limit of 12,666 (median 6,333). 13,722 of them create `highway=footway` ways:
+of the 13,819 new footways, 6,976 are sidewalks and 5,250 crossings (e.g. way 43210773). 8,716
+of the edits fall in December 2020, and the top-mapper share is 0.76 (8,113 of the December
+edits; 11,755 footway creations over the year). They are spread over 1,176 changesets, with a top
+changeset of 1.6%. A+B rose 189.6 -> 214.4 mapped km. That is +24.8 km, 0.2 km below the 25 km
+jump floor, and it is real cycleway mapping, not the footway work: `A_cycleway` +22.2 km, with
+204 new `highway=cycleway` ways (36.8 km, partly re-drawn splits of older ways), e.g. way
+871562924 on Carrer d'Aragó (4.8 km) and way 766736025 on Carrer de Bilbao. Tier E appears (0.0
+-> 10.0 km), from bus lanes and cycle streets newly tagged on roads (see barcelona/fua/2021).
+
+### barcelona/lau/2022
+
+Cause: **campaign**, the second half of the barcelona/lau/2021 footway mapping by the same
+dominant mapper. 21,116 counted edits in 2021 against a limit of 12,666: 18,335 create
+`highway=footway` (of 18,412 new footways, 10,779 sidewalks and 6,348 crossings; e.g. way
+49790703). 17,595 of the edits fall in January to March 2021, and the top-mapper share is 0.86
+(16,769 footway creations). 1,305 changesets, top changeset 1.7%. A+B moved normally, 214.4 ->
+219.1 mapped km: `A_cycleway` +6.1 km. The largest gains are way 867922053 and way 867922054 on
+Passeig de la Zona Franca (+3.3 km), which went from a lifecycle tag (excluded) to a built
+cycleway, and new way 914437793 (2.6 km).
+
+### barcelona/fua/2021
+
+Cause: **mapping activity** (catch-up mapping of existing cycleways, half of it by one mapper). A+B rose 656.4 -> 833.6 mapped km (+177.2; the threshold is
+65.6). By rule: `A_cycleway` +147.9 km, `B_path` +20.8, `B_cycleway_foot` +10.1. 216.3 km sit on
+ways that were not tiered in 2020, and 187.8 km of those ways were first drawn in 2020. They are
+spread over 83 municipalities: Barcelona 41.2 km, Sabadell 19.0, Viladecans 15.2, Sant Cugat del
+Vallès 11.5, L'Hospitalet de Llobregat 9.1. One mapper drew 52.5% of the km, across 70
+municipalities. Drawing peaked in April to June 2020 (94.6 km). That is network-wide catch-up,
+not a single build-out. That they were catch-up rather than new builds is inferred from this
+spread; it is not verified on the ground. Existing ways were also retagged into tier B, e.g. way
+127720993 and way 112450547 (`highway=footway` -> `path` + `bicycle=designated`). Activity was
+high but did not spike: 32,541 edits (limit 46,004), with a top-mapper share of 0.42 (below the
+0.5 `single_mapper` threshold). The same year adds tier D (15.4 -> 40.3 km of painted lanes,
+e.g. way 34048002) and tier E (0.1 -> 13.9 km: cycle streets on Passeig de Gràcia laterals, e.g.
+way 116343002, and bus lanes on Carrer de Sants, way 45185735).
+
 ### berlin/lau/2019
 
 Cause: **tag drift**. `legacy_km` rose 13.8 -> 24.7 because mappers added the older
@@ -957,6 +997,42 @@ tier B: `highway=path` + `bicycle=designated` + `segregated=no` grew 204.0 -> 26
 2025 were normal (20,435 against a limit of 26,492; 415 mappers, top-mapper share 0.19), and
 the A/B ways with new ids (61.1 km) were created by 84 mappers, none with more than 18% of the
 km.
+
+### madrid/lau/2025
+
+Cause: **campaign** (pedestrian network, not cycling). 27,859 counted edits in 2024 against
+a limit of 15,538 (twice the median of 7,769). 20,601 of them create `highway=footway` ways: of
+the 21,110 ways that became footways in 2024, 8,666 are `footway=crossing`, 7,267
+`footway=sidewalk` and 5,095 untyped (e.g. way 4330856, way 7732915). The edits are spread over
+2,675 changesets (top changeset 1.4%), with a top-mapper share of 0.33. That mapper's edits
+(9,212 of them footway creations) fall in March to May and August to September, 6,099 of them
+in March. Footways
+carry no tier, so A+B moved normally: 325.6 -> 334.1 mapped km (+8.5; the jump threshold is
+32.6). The crossings split the cycleways where footpaths cross them: tiered ways went from 1,074
+to 2,063, with 61.0 km on 972 new `highway=cycleway` ways (e.g. way 1320432687, Anillo Verde
+Ciclista) and 51.2 km lost from 314 existing ways that were shortened (e.g. way 27885470),
+so `A_cycleway` grew by only 7.1 km.
+
+### madrid/lau/current
+
+Cause: **campaign**, the same footway mapping continuing in 2026. 11,959 counted edits
+from 1 January to the 2026-10-02 snapshot, against a limit of 11,700.3 (15,538 scaled by the
+0.753 of the year elapsed). 9,102 edits create `highway=footway` ways (of the 9,238 new footways:
+3,984 sidewalks, 2,227 crossings, 2,835 untyped; e.g. way 6126321); the top-mapper share is
+0.32 (3,759 footway creations), and that mapper's edits fall almost all in May to September. 1,631 changesets, top changeset
+1.4%. The 2026 point (15,500 edits in 2025) sits just under its limit of 15,538, so this is the
+third year of the same pedestrian mapping, not a new event. A+B rose 350.9 -> 357.4 mapped km
+(+6.5; the jump threshold is 35.1).
+
+### madrid/fua/2025
+
+Cause: **campaign**: the madrid/lau/2025 footway mapping, seen from the FUA. 39,353
+counted edits in 2024 against a limit of 34,450 (median 17,225). 27,859 of them are inside the
+municipio. The 11,494 edits outside it are close to 2023's 9,392 (17,225 FUA minus 7,833 LAU),
+so the excess comes from the city. 26,468 edits create `highway=footway`. The top mapper (share
+0.24, 9,235 footway creations) has the same monthly pattern as the LAU top mapper (March 6,122,
+April 1,694, May 1,098). 4,975 changesets, top changeset 1.0%. A+B rose 1,130.1 -> 1,180.5 mapped km
+(+4.5%, below the 10% jump threshold).
 
 ### paris/lau/2020
 

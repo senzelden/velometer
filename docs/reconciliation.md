@@ -444,6 +444,52 @@ Clean Cities count. Our `cc_km` and the `clean_cities_2025` preset use the `per_
 which every side counts in full. The Clean Cities figures are dated 2025-05-14, 504 days before
 our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
 
+### barcelona/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 ES511, the province of Barcelona (311 municipalities,
+7,730.1 km² in QECIO, 7,729.8 km² as the sum of its GISCO LAU areas), not the municipi (LAU 98.9
+km², 0.013 of the area). Measured over the union of those 311 LAUs on a 2024-01-10 snapshot
+(the Geofabrik Cataluña history, time-filtered), our main roads come to 7,579.6 km against
+QECIO's 7,687.6 (−1.4%). So the gap is the region, not the classifier or road selection. The
+municipi holds 566.5 km, 0.074 of the province's 7,629.8 km today.
+
+### barcelona/qecio_tracks_km
+Cause: **scope** (ES511 province of Barcelona vs the municipi; see `barcelona/qecio_main_km`).
+Over the province on the 2024-01-10 snapshot, our tracks (A + B/segregated, centreline) are 794.1
+km against QECIO's 770.0 (+3.1%). The municipi's 173.8 km are 0.20 of the province's 872.1 km
+today; the province gained 78 km of tracks between the two snapshots.
+
+### barcelona/qecio_lanes_km
+Cause: **scope** (see `barcelona/qecio_main_km`). Over the province on the 2024-01-10 snapshot,
+our lanes (C + D, centreline) are 24.8 km against QECIO's 25.2 (−1.8%). The municipi has almost
+none: its 0.6 km are 0.02 of the province's 28.9 km today, because Barcelona's cycle
+infrastructure is mapped as tracks (`highway=cycleway`), not painted lanes.
+
+### barcelona/qecio_shared_km
+Cause: **scope** (see `barcelona/qecio_main_km`). Over the province on the 2024-01-10 snapshot,
+our shared foot/cycle paths (B without B/segregated, centreline) are 79.8 km against QECIO's 80.6
+(−1.0%). The municipi's 10.5 km are 0.11 of the province's 95.0 km today.
+
+### barcelona/qecio_total_km
+Cause: **scope** first (see `barcelona/qecio_main_km`) and **definition** second. QECIO's total
+1,140.5 km includes 264.7 km of limited-access ways, which our A–D sum does not count
+(`definition_mismatch`). Without them QECIO has 875.8 km. Over the province on the 2024-01-10
+snapshot our A–D total is 898.8 km (+2.6%). The municipi's 184.9 km are 0.19 of the province's
+996.1 km today.
+
+### barcelona/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out. We matched BikeNetKit's 440.0 km of edges to our
+2026-10-02 snapshot by OSM way id (edge km split equally over its way ids, EPSG:25831):
+- 233.8 km lie on ways we put in tier A, B or E (our per-side A+B+E is 250.4 km);
+- 200.2 km lie on ways with no tier: living streets 164.0 km, `highway=path` + `bicycle=yes`
+  15.8 km, `highway=pedestrian` + `bicycle=yes` 15.1 km, other 5.3 km;
+- 5.8 km lie outside our LAU and 0.1 km on a tier C/D way.
+
+Living streets alone are 37% of BikeNetKit's total. Barcelona maps 44.3 km of
+`highway=footway` + `bicycle=yes|permissive` inside the LAU; only 0.4 km of them occur in
+BikeNetKit's edges, although its documented filter names them. The boundaries agree: the
+BikeNetKit polygon is 98.5 km² against our LAU's 98.9 km², and they overlap on 94.4 km².
+
 ### berlin/cc_ratio
 Cause: **definition** (length basis). Our preset divides per-side A+B km (1,557.9) by all
 public roads (5,624.6 km). On the centreline basis our A+B is 918.3 km, which gives 16.3%
@@ -605,6 +651,54 @@ and **definition** second: QECIO's total also counts 65.1 km of limited-access r
 A–D sum does not (`definition_mismatch`). On the département polygon our total is 1,187.5 km,
 +6.1% against QECIO's total and +12.6% against its total without limited-access roads
 (1,054.3 km), in line with the growth in `lyon/qecio_tracks_km`.
+
+### madrid/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 ES300, the Comunidad de Madrid (179 municipalities, 8,029.5
+km² in QECIO, 8,025.1 km² as the sum of its GISCO LAU areas), not the municipio (LAU 604.4 km²,
+0.075 of the area). Measured over the union of those 179 LAUs on a 2024-01-10 snapshot (the
+Geofabrik Madrid history, time-filtered), our main roads come to 8,401.7 km against QECIO's
+8,669.3 (−3.1%). So the classifier and road selection agree, and the gap is the region. The
+municipio holds 2,146.8 km, 0.25 of the region's main roads on today's snapshot (8,491.8 km):
+the capital is denser than the region, so road km scale by more than its area share.
+
+### madrid/qecio_tracks_km
+Cause: **scope** (ES300 Comunidad de Madrid vs the municipio; see `madrid/qecio_main_km`). Over
+the region on the 2024-01-10 snapshot, our tracks (A + B/segregated, centreline) are 915.3 km
+against QECIO's 920.3 (−0.5%). The municipio's 289.0 km are 0.31 of the region's 939.4 km today.
+
+### madrid/qecio_lanes_km
+Cause: **scope** (see `madrid/qecio_main_km`). Over the region on the 2024-01-10 snapshot, our
+lanes (C + D, centreline) are 36.9 km against QECIO's 40.5 (−8.8%, a 3.6 km gap). Lanes are
+concentrated in the city: the municipio's 19.2 km are 0.70 of the region's 27.5 km today, which
+is why this gap (−52.5%) is smaller than the others. Region-wide, lanes fell 36.9 -> 27.5 km
+between the two snapshots.
+
+### madrid/qecio_shared_km
+Cause: **scope** (see `madrid/qecio_main_km`). Over the region on the 2024-01-10 snapshot, our
+shared foot/cycle paths (B without B/segregated, centreline) are 148.7 km against QECIO's 153.0
+(−2.8%). The municipio's 35.4 km are 0.24 of the region's 150.0 km today.
+
+### madrid/qecio_total_km
+Cause: **scope** first (see `madrid/qecio_main_km`) and **definition** second. QECIO's total
+1,289.3 km includes 175.5 km of limited-access ways (`overview-limited-access-km`), which our A–D
+sum does not count (`definition_mismatch`). Without them QECIO has 1,113.8 km. Over the region on
+the 2024-01-10 snapshot our A–D total is 1,100.9 km (−1.2%). The municipio's 343.6 km are 0.31
+of the region's 1,116.8 km today.
+
+### madrid/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out. We matched BikeNetKit's 480.5 km of edges to our
+2026-10-02 snapshot by OSM way id (edge km split equally over its way ids, EPSG:25830):
+- 334.1 km lie on ways we put in tier A, B or E (our per-side A+B+E is 358.5 km);
+- 145.7 km lie on ways with no tier: living streets 95.9 km, `highway=path` + `bicycle=yes`
+  29.9 km, `highway=pedestrian` + `bicycle=yes` 12.1 km, other 7.8 km;
+- 0.6 km lie outside our LAU.
+
+So the gap is the two groups the classifier deliberately leaves out of A/B/E. Madrid also maps
+223.1 km of `highway=footway` + `bicycle=yes|permissive` inside the LAU. BikeNetKit's documented
+filter names such footways, but only 0.4 km of them occur in its Madrid edges; why they are left
+out is not established. The boundaries agree: the BikeNetKit polygon is 603.9 km² against our
+LAU's 604.4 km², and they overlap on 598.6 km².
 
 ### paris/cc_ratio
 Cause: **definition** (source and scope of the Clean Cities numerator). The denominators agree
