@@ -25,6 +25,806 @@
   "data": {
     "values": [
       {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 844.472
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.171
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 75.951
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.196
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 850.647
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.543
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 76.567
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.196
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 842.791
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 10.442
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 76.361
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.33
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 843.13
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.988
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 77.407
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 3.617
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 850.899
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 12.023
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 76.951
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 4.519
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 849.765
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 13.83
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 79.105
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 5.008
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 851.053
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 13.423
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 80.698
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 5.514
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 855.532
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.846
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 81.002
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 7.532
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 851.797
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 14.461
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 86.558
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 8.76
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 841.325
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 20.311
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 89.954
+      },
+      {
+        "city": "Amsterdam",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 9.037
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 158.164
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.751
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.055
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 172.196
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.137
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.57
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 187.073
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.53
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.578
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 208.607
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 5.759
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.652
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 10.033
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 214.931
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 4.201
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.874
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 10.325
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 213.865
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.268
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 2.804
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 9.693
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 231.26
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.45
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.73
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 7.708
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 234.405
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.613
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 2.285
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 7.512
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 234.431
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.88
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 2.667
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 6.963
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 232.397
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.243
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 1.105
+      },
+      {
+        "city": "Barcelona",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 6.745
+      },
+      {
         "city": "Berlin",
         "kind": "lau",
         "label": "2018",
@@ -390,7 +1190,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1151.301
+        "km": 1151.203
       },
       {
         "city": "Berlin",
@@ -398,7 +1198,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 406.657
+        "km": 406.656
       },
       {
         "city": "Berlin",
@@ -422,7 +1222,1207 @@
         "label": "now",
         "tier": "E",
         "tier_label": "E cycle street / bus lane",
-        "km": 115.212
+        "km": 116.584
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 50.938
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 1.737
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 107.225
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 21.069
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 53.436
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.846
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 103.188
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 25.454
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 51.025
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 5.979
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 99.391
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 28.112
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 45.114
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 6.213
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 101.069
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 36.127
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 49.129
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.562
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 102.313
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 37.019
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 49.041
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.431
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 102.511
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 38.174
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 50.035
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 6.105
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 102.95
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 38.58
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 52.392
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.228
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 103.034
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 41.996
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 53.55
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 9.407
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 106.396
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 45.088
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 53.348
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.726
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 106.84
+      },
+      {
+        "city": "Bordeaux",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 48.657
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 98.401
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 28.609
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 16.959
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 101.606
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 30.623
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 19.874
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 87.74
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 25.159
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 19.201
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.076
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 87.009
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 28.21
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 23.621
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.793
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 88.011
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 42.712
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 25.951
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.632
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 82.415
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 49.37
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 33.457
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.699
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 85.338
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 56.334
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 36.574
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 3.27
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 105.757
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 58.608
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 38.756
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 3.483
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 110.871
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 59.984
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 51.852
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 5.77
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 118.023
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 61.324
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.274
+      },
+      {
+        "city": "Bratislava",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 7.992
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 126.861
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 69.216
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 72.449
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 20.1
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 127.868
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 71.898
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 76.452
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 20.974
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 131.379
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 75.935
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 83.162
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 21.342
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 136.416
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 73.209
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 99.399
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 21.452
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 143.859
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 71.273
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 101.101
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 24.195
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 145.128
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 68.993
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 118.108
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 29.193
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 150.428
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 66.515
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 152.71
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 28.311
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 157.753
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 64.657
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 157.4
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 28.203
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 162.923
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 64.068
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 162.01
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 28.799
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 164.618
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 67.585
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 160.954
+      },
+      {
+        "city": "Budapest",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 28.963
       },
       {
         "city": "K\u00f8benhavn",
@@ -790,7 +2790,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 498.446
+        "km": 498.491
       },
       {
         "city": "K\u00f8benhavn",
@@ -798,7 +2798,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 83.864
+        "km": 83.87
       },
       {
         "city": "K\u00f8benhavn",
@@ -823,6 +2823,2406 @@
         "tier": "E",
         "tier_label": "E cycle street / bus lane",
         "km": 6.262
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 862.42
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 420.585
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 13.68
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 872.406
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 419.54
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 17.656
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.045
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 861.026
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 421.471
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 19.868
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.065
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 830.583
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 454.325
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 23.759
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.252
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 821.044
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 462.72
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 27.205
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.252
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 793.561
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 497.042
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 27.171
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.252
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 706.642
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 575.939
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 30.376
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.486
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 658.62
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 624.978
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 35.962
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.21
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 634.776
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 649.994
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 38.319
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.213
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 595.376
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 688.741
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 38.363
+      },
+      {
+        "city": "Helsinki",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.213
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 40.054
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 123.264
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 19.376
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.202
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 44.303
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 131.184
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 18.708
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.202
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 50.643
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 137.712
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 18.718
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 52.206
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 152.15
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 24.901
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 45.776
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 171.825
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 23.899
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.074
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 49.077
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 184.942
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 23.509
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.082
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 59.816
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 207.204
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 23.714
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.082
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 63.6
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 222.654
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 24.664
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.082
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 64.522
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 222.5
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 22.935
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.082
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 64.901
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 236.02
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 22.125
+      },
+      {
+        "city": "Krak\u00f3w",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.082
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 121.269
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 6.519
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 36.698
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 122.633
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 7.434
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 40.85
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 124.961
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 13.45
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 42.516
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.846
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 154.82
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 42.783
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 56.563
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.892
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 108.633
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 103.416
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 69.646
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.98
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 51.785
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 169.057
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 70.314
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.98
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 41.813
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 183.846
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 87.514
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.412
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 44.296
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 184.204
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 92.139
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.412
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 50.658
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 180.982
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 93.713
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.754
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 46.376
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 202.185
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 101.647
+      },
+      {
+        "city": "Ljubljana",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.754
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 47.809
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 16.686
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 110.491
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 40.481
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 48.214
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 13.838
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 119.456
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 37.468
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 49.299
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.732
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 138.111
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 38.341
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 57.955
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 10.696
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 141.945
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 62.15
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 59.203
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 9.419
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 161.526
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 69.97
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 64.915
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 9.481
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 160.124
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 73.066
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 71.956
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 11.419
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 167.89
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 78.673
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 83.908
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 10.799
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 170.636
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 78.451
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 92.876
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 13.803
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 173.302
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 72.975
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 95.802
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 17.19
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 172.928
+      },
+      {
+        "city": "Lyon",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 77.354
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 249.052
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 33.3
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 33.934
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.862
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 249.08
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 33.23
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 38.595
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.862
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 249.436
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 28.667
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 28.59
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.863
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 261.552
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 26.315
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 34.29
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.819
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 266.241
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 31.59
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 39.487
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.841
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 274.19
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 37.98
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 40.834
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.681
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 286.48
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 39.09
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 44.166
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.691
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 293.57
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 40.493
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 43.506
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.233
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 312.371
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 38.559
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 37.32
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.233
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 318.342
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 39.104
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 37.278
+      },
+      {
+        "city": "Madrid",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.019
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 130.924
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 132.313
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 111.412
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 114.287
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 151.149
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 115.615
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 110.794
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 155.125
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 115.046
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 108.906
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 191.497
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 125.116
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 101.83
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 214.582
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 128.25
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 93.758
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 227.946
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 159.842
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 97.557
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 232.093
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 161.587
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.038
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 57.675
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 277.167
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 159.246
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.133
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 60.262
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 278.856
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 160.67
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.133
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 61.942
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 284.132
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 160.538
+      },
+      {
+        "city": "Oslo",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.133
       },
       {
         "city": "Paris",
@@ -1190,7 +5590,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 335.081
+        "km": 335.092
       },
       {
         "city": "Paris",
@@ -1214,7 +5614,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 147.1
+        "km": 146.996
       },
       {
         "city": "Paris",
@@ -1222,7 +5622,1607 @@
         "label": "now",
         "tier": "E",
         "tier_label": "E cycle street / bus lane",
-        "km": 174.756
+        "km": 174.754
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 145.677
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 37.116
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.685
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 20.088
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 163.911
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 37.598
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 64.826
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 20.885
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 196.626
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 36.158
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 73.789
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 22.167
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 191.322
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 51.854
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 103.65
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 27.973
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 140.189
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 113.959
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 142.454
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 31.817
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 136.92
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 123.584
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 159.353
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 36.917
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 127.69
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 142.422
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 171.039
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 41.177
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 128.55
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 154.507
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 178.973
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 41.1
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 129.77
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 160.626
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 186.729
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 40.882
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 106.722
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 188.323
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 189.798
+      },
+      {
+        "city": "Praha",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 41.554
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 886.427
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 58.618
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 37.607
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.092
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 880.434
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 75.482
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 41.834
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.471
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 863.207
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 91.229
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 42.805
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 1.496
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 850.917
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 111.54
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 42.543
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.174
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 832.414
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 139.122
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 43.16
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.173
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 807.315
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 146.554
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 43.94
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.675
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 789.348
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 177.001
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 44.384
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.729
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 796.357
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 187.074
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 45.803
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.73
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 788.777
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 206.923
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 45.333
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 4.114
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 769.078
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 232.989
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 47.795
+      },
+      {
+        "city": "Stockholm",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 4.016
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 165.4
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 18.689
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 58.02
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.792
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 169.595
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 17.424
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 59.686
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 2.704
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 173.266
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 26.251
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 63.904
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 3.369
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 176.031
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 29.875
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 60.733
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 3.674
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 172.796
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 33.119
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 61.852
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 4.21
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 168.534
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 43.417
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 58.369
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 5.491
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 172.231
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 45.971
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.644
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 7.312
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 156.466
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 69.541
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 48.943
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 9.492
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 164.013
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 68.956
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 43.686
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 11.206
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 170.498
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 70.62
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 44.673
+      },
+      {
+        "city": "Strasbourg",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 11.138
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 339.263
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.109
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 50.731
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 10.334
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 339.64
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.109
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 50.445
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 12.956
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 342.475
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.112
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 51.782
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 17.478
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 343.22
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 2.524
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 50.896
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 19.916
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 343.398
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 1.853
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 51.484
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 20.644
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 343.275
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 5.19
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.492
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 22.755
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 345.281
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 10.099
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.249
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 23.613
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 344.758
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 12.422
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 54.967
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 24.282
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 343.204
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 19.035
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 50.503
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 26.934
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 343.836
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 18.995
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 48.438
+      },
+      {
+        "city": "Utrecht",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 26.955
       },
       {
         "city": "Wien",
@@ -1625,6 +7625,406 @@
         "km": 41.061
       },
       {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 406.974
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 121.918
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 45.887
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2018",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 451.078
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 126.573
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 50.233
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2019",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 487.456
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 137.844
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 51.785
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2020",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 530.874
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 145.073
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 54.566
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2021",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 498.503
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 190.607
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 57.085
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2022",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 494.72
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 210.257
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 54.78
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2023",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.056
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 503.946
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 202.449
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 55.83
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2024",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.066
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 508.383
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 227.896
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 62.781
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2025",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.066
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 505.724
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 247.538
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0.205
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 62.362
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "2026",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.066
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "now",
+        "tier": "A",
+        "tier_label": "A separated track",
+        "km": 508.516
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "now",
+        "tier": "B",
+        "tier_label": "B shared foot/cycle path",
+        "km": 255.104
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "now",
+        "tier": "C",
+        "tier_label": "C protected lane",
+        "km": 0.205
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "now",
+        "tier": "D",
+        "tier_label": "D painted lane",
+        "km": 65.303
+      },
+      {
+        "city": "Warszawa",
+        "kind": "lau",
+        "label": "now",
+        "tier": "E",
+        "tier_label": "E cycle street / bus lane",
+        "km": 0.92
+      },
+      {
         "city": "Wroc\u0142aw",
         "kind": "lau",
         "label": "2018",
@@ -1990,7 +8390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 148.68
+        "km": 148.43
       },
       {
         "city": "Wroc\u0142aw",
@@ -1998,7 +8398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 249.961
+        "km": 250.382
       },
       {
         "city": "Wroc\u0142aw",
@@ -2014,7 +8414,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 32.346
+        "km": 32.345
       },
       {
         "city": "Wroc\u0142aw",
@@ -2028,6 +8428,7 @@
   },
   "facet": {
     "field": "city",
+    "sort": "ascending",
     "title": null,
     "type": "nominal"
   },
@@ -2108,16 +8509,16 @@
         "type": "quantitative"
       }
     },
-    "height": 200,
-    "width": 260
+    "height": 110,
+    "width": 150
   },
-  "columns": 3,
+  "columns": 7,
   "resolve": {
     "axis": {
       "x": "independent"
     },
     "scale": {
-      "y": "independent"
+      "y": "shared"
     }
   },
   "title": {

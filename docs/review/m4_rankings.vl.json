@@ -22,210 +22,1309 @@
       "subtitleFontSize": 11
     }
   },
+  "layer": [
+    {
+      "mark": {
+        "type": "line",
+        "color": "#c9c8c3",
+        "invalid": "break-paths-filter-domains",
+        "strokeWidth": 1
+      },
+      "encoding": {
+        "detail": {
+          "field": "city",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "source",
+            "type": "nominal"
+          },
+          {
+            "field": "city_label",
+            "title": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "rank",
+            "type": "quantitative"
+          },
+          {
+            "field": "value_text",
+            "title": "value",
+            "type": "nominal"
+          }
+        ]
+      },
+      "transform": [
+        {
+          "filter": "(datum.role === 'other')"
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "line",
+        "invalid": "break-paths-filter-domains",
+        "point": {
+          "filled": true,
+          "size": 90
+        }
+      },
+      "encoding": {
+        "color": {
+          "field": "city",
+          "scale": {
+            "domain": [
+              "Berlin",
+              "Paris",
+              "K\u00f8benhavn",
+              "Wien",
+              "Amsterdam"
+            ],
+            "range": [
+              "#2a78d6",
+              "#eb6834",
+              "#1baf7a",
+              "#eda100",
+              "#e87ba4"
+            ]
+          },
+          "title": "City",
+          "type": "nominal"
+        },
+        "strokeWidth": {
+          "condition": {
+            "test": "(datum.role === 'highlight')",
+            "value": 2.5
+          },
+          "value": 1.8
+        },
+        "tooltip": [
+          {
+            "field": "source",
+            "type": "nominal"
+          },
+          {
+            "field": "city_label",
+            "title": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "rank",
+            "type": "quantitative"
+          },
+          {
+            "field": "value_text",
+            "title": "value",
+            "type": "nominal"
+          }
+        ]
+      },
+      "transform": [
+        {
+          "filter": "(datum.role !== 'other')"
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "text",
+        "color": "#0b0b0b",
+        "dx": 10,
+        "dy": -8,
+        "fontSize": 14,
+        "text": "\u2020"
+      },
+      "encoding": {
+        "tooltip": [
+          {
+            "field": "source",
+            "type": "nominal"
+          },
+          {
+            "field": "city_label",
+            "title": "city",
+            "type": "nominal"
+          },
+          {
+            "field": "rank",
+            "type": "quantitative"
+          },
+          {
+            "field": "value_text",
+            "title": "value",
+            "type": "nominal"
+          }
+        ]
+      },
+      "transform": [
+        {
+          "filter": "(datum.dagger === true)"
+        }
+      ]
+    }
+  ],
   "data": {
     "values": [
       {
-        "source": "Ours: headline",
-        "city": "K\u00f8benhavn",
+        "source": "Ours: headline (n=21)",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm",
+        "dagger": false,
+        "role": "other",
         "rank": 1,
-        "value": 238.764
+        "value": 263.884,
+        "value_text": "263.88"
       },
       {
-        "source": "Ours: headline",
-        "city": "Berlin",
+        "source": "Ours: headline (n=21)",
+        "city": "Helsinki",
+        "city_id": "helsinki",
+        "city_label": "Helsinki",
+        "dagger": false,
+        "role": "other",
         "rank": 2,
-        "value": 109.637
+        "value": 263.287,
+        "value_text": "263.29"
       },
       {
-        "source": "Ours: headline",
-        "city": "Wroc\u0142aw",
-        "rank": 3,
-        "value": 95.254
-      },
-      {
-        "source": "Ours: headline",
-        "city": "Wien",
-        "rank": 4,
-        "value": 90.955
-      },
-      {
-        "source": "Ours: headline",
-        "city": "Paris",
-        "rank": 5,
-        "value": 63.066
-      },
-      {
-        "source": "Ours: QECIO method",
+        "source": "Ours: headline (n=21)",
         "city": "K\u00f8benhavn",
-        "rank": 1,
-        "value": 109.325
-      },
-      {
-        "source": "Ours: QECIO method",
-        "city": "Wien",
-        "rank": 2,
-        "value": 69.783
-      },
-      {
-        "source": "Ours: QECIO method",
-        "city": "Wroc\u0142aw",
+        "city_id": "copenhagen",
+        "city_label": "K\u00f8benhavn",
+        "dagger": false,
+        "role": "comparison",
         "rank": 3,
-        "value": 69.251
+        "value": 238.075,
+        "value_text": "238.08"
       },
       {
-        "source": "Ours: QECIO method",
-        "city": "Berlin",
+        "source": "Ours: headline (n=21)",
+        "city": "Amsterdam",
+        "city_id": "amsterdam",
+        "city_label": "Amsterdam",
+        "dagger": false,
+        "role": "comparison",
         "rank": 4,
-        "value": 54.041
+        "value": 202.959,
+        "value_text": "202.96"
       },
       {
-        "source": "Ours: QECIO method",
-        "city": "Paris",
+        "source": "Ours: headline (n=21)",
+        "city": "Utrecht",
+        "city_id": "utrecht",
+        "city_label": "Utrecht",
+        "dagger": false,
+        "role": "other",
         "rank": 5,
-        "value": 46.471
+        "value": 194.762,
+        "value_text": "194.76"
       },
       {
-        "source": "Ours: Clean Cities method",
+        "source": "Ours: headline (n=21)",
+        "city": "Strasbourg",
+        "city_id": "strasbourg",
+        "city_label": "Strasbourg",
+        "dagger": false,
+        "role": "other",
+        "rank": 6,
+        "value": 136.059,
+        "value_text": "136.06"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Berlin",
+        "city_id": "berlin",
+        "city_label": "Berlin",
+        "dagger": false,
+        "role": "highlight",
+        "rank": 7,
+        "value": 109.629,
+        "value_text": "109.63"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "city_label": "Wroc\u0142aw",
+        "dagger": false,
+        "role": "other",
+        "rank": 8,
+        "value": 95.295,
+        "value_text": "95.30"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 9,
+        "value": 90.955,
+        "value_text": "90.95"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Warszawa",
+        "city_id": "warsaw",
+        "city_label": "Warszawa",
+        "dagger": false,
+        "role": "other",
+        "rank": 10,
+        "value": 82.445,
+        "value_text": "82.45"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Ljubljana",
+        "city_id": "ljubljana",
+        "city_label": "Ljubljana",
+        "dagger": false,
+        "role": "other",
+        "rank": 11,
+        "value": 74.595,
+        "value_text": "74.60"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Krak\u00f3w",
+        "city_id": "krakow",
+        "city_label": "Krak\u00f3w",
+        "dagger": false,
+        "role": "other",
+        "rank": 12,
+        "value": 73.775,
+        "value_text": "73.78"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Oslo",
+        "city_id": "oslo",
+        "city_label": "Oslo",
+        "dagger": false,
+        "role": "other",
+        "rank": 13,
+        "value": 71.811,
+        "value_text": "71.81"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Paris",
+        "city_id": "paris",
+        "city_label": "Paris",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 14,
+        "value": 63.067,
+        "value_text": "63.07"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Bratislava",
+        "city_id": "bratislava",
+        "city_label": "Bratislava",
+        "dagger": false,
+        "role": "other",
+        "rank": 15,
+        "value": 61.186,
+        "value_text": "61.19"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Barcelona",
+        "city_id": "barcelona",
+        "city_label": "Barcelona",
+        "dagger": false,
+        "role": "other",
+        "rank": 16,
+        "value": 55.098,
+        "value_text": "55.10"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Lyon",
+        "city_id": "lyon",
+        "city_label": "Lyon",
+        "dagger": false,
+        "role": "other",
+        "rank": 17,
+        "value": 52.305,
+        "value_text": "52.30"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Madrid",
+        "city_id": "madrid",
+        "city_label": "Madrid",
+        "dagger": false,
+        "role": "other",
+        "rank": 18,
+        "value": 43.075,
+        "value_text": "43.08"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Bordeaux",
+        "city_id": "bordeaux",
+        "city_label": "Bordeaux",
+        "dagger": false,
+        "role": "other",
+        "rank": 19,
+        "value": 39.979,
+        "value_text": "39.98"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Praha",
+        "city_id": "prague",
+        "city_label": "Praha",
+        "dagger": false,
+        "role": "other",
+        "rank": 20,
+        "value": 30.21,
+        "value_text": "30.21"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "city": "Budapest",
+        "city_id": "budapest",
+        "city_label": "Budapest",
+        "dagger": false,
+        "role": "other",
+        "rank": 21,
+        "value": 22.405,
+        "value_text": "22.40"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Helsinki",
+        "city_id": "helsinki",
+        "city_label": "Helsinki",
+        "dagger": false,
+        "role": "other",
+        "rank": 1,
+        "value": 167.193,
+        "value_text": "167.19"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm",
+        "dagger": false,
+        "role": "other",
+        "rank": 2,
+        "value": 143.806,
+        "value_text": "143.81"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
         "city": "K\u00f8benhavn",
-        "rank": 1,
-        "value": 58.646
-      },
-      {
-        "source": "Ours: Clean Cities method",
-        "city": "Wroc\u0142aw",
-        "rank": 2,
-        "value": 29.739
-      },
-      {
-        "source": "Ours: Clean Cities method",
-        "city": "Berlin",
+        "city_id": "copenhagen",
+        "city_label": "K\u00f8benhavn",
+        "dagger": false,
+        "role": "comparison",
         "rank": 3,
-        "value": 27.702
+        "value": 109.111,
+        "value_text": "109.11"
       },
       {
-        "source": "Ours: Clean Cities method",
-        "city": "Wien",
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Strasbourg",
+        "city_id": "strasbourg",
+        "city_label": "Strasbourg",
+        "dagger": false,
+        "role": "other",
         "rank": 4,
-        "value": 23.228
+        "value": 99.842,
+        "value_text": "99.84"
       },
       {
-        "source": "Ours: Clean Cities method",
-        "city": "Paris",
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Amsterdam",
+        "city_id": "amsterdam",
+        "city_label": "Amsterdam",
+        "dagger": false,
+        "role": "comparison",
         "rank": 5,
-        "value": 22.913
+        "value": 89.043,
+        "value_text": "89.04"
       },
       {
-        "source": "Clean Cities 2025 (published)",
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Utrecht",
+        "city_id": "utrecht",
+        "city_label": "Utrecht",
+        "dagger": false,
+        "role": "other",
+        "rank": 6,
+        "value": 81.495,
+        "value_text": "81.49"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 7,
+        "value": 69.785,
+        "value_text": "69.79"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Lyon",
+        "city_id": "lyon",
+        "city_label": "Lyon",
+        "dagger": false,
+        "role": "other",
+        "rank": 8,
+        "value": 69.369,
+        "value_text": "69.37"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "city_label": "Wroc\u0142aw",
+        "dagger": false,
+        "role": "other",
+        "rank": 9,
+        "value": 69.276,
+        "value_text": "69.28"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Oslo",
+        "city_id": "oslo",
+        "city_label": "Oslo",
+        "dagger": false,
+        "role": "other",
+        "rank": 10,
+        "value": 65.822,
+        "value_text": "65.82"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Berlin",
+        "city_id": "berlin",
+        "city_label": "Berlin",
+        "dagger": false,
+        "role": "highlight",
+        "rank": 11,
+        "value": 54.036,
+        "value_text": "54.04"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Warszawa",
+        "city_id": "warsaw",
+        "city_label": "Warszawa",
+        "dagger": false,
+        "role": "other",
+        "rank": 12,
+        "value": 53.606,
+        "value_text": "53.61"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Bordeaux",
+        "city_id": "bordeaux",
+        "city_label": "Bordeaux",
+        "dagger": false,
+        "role": "other",
+        "rank": 13,
+        "value": 50.771,
+        "value_text": "50.77"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Krak\u00f3w",
+        "city_id": "krakow",
+        "city_label": "Krak\u00f3w",
+        "dagger": false,
+        "role": "other",
+        "rank": 14,
+        "value": 47.638,
+        "value_text": "47.64"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
         "city": "Paris",
-        "rank": 1,
-        "value": 48.0
+        "city_id": "paris",
+        "city_label": "Paris",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 15,
+        "value": 46.457,
+        "value_text": "46.46"
       },
       {
-        "source": "Clean Cities 2025 (published)",
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Ljubljana",
+        "city_id": "ljubljana",
+        "city_label": "Ljubljana",
+        "dagger": false,
+        "role": "other",
+        "rank": 16,
+        "value": 42.694,
+        "value_text": "42.69"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Barcelona",
+        "city_id": "barcelona",
+        "city_label": "Barcelona",
+        "dagger": false,
+        "role": "other",
+        "rank": 17,
+        "value": 32.633,
+        "value_text": "32.63"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Bratislava",
+        "city_id": "bratislava",
+        "city_label": "Bratislava",
+        "dagger": false,
+        "role": "other",
+        "rank": 18,
+        "value": 32.483,
+        "value_text": "32.48"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Praha",
+        "city_id": "prague",
+        "city_label": "Praha",
+        "dagger": false,
+        "role": "other",
+        "rank": 19,
+        "value": 28.298,
+        "value_text": "28.30"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Budapest",
+        "city_id": "budapest",
+        "city_label": "Budapest",
+        "dagger": false,
+        "role": "other",
+        "rank": 20,
+        "value": 23.239,
+        "value_text": "23.24"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "city": "Madrid",
+        "city_id": "madrid",
+        "city_label": "Madrid",
+        "dagger": false,
+        "role": "other",
+        "rank": 21,
+        "value": 16.005,
+        "value_text": "16.00"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Helsinki",
+        "city_id": "helsinki",
+        "city_label": "Helsinki",
+        "dagger": false,
+        "role": "other",
+        "rank": 1,
+        "value": 91.427,
+        "value_text": "91.43"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
         "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "city_label": "K\u00f8benhavn",
+        "dagger": false,
+        "role": "comparison",
         "rank": 2,
-        "value": 43.0
+        "value": 58.64,
+        "value_text": "58.64"
       },
       {
-        "source": "Clean Cities 2025 (published)",
-        "city": "Wroc\u0142aw",
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm",
+        "dagger": false,
+        "role": "other",
         "rank": 3,
-        "value": 20.0
+        "value": 50.918,
+        "value_text": "50.92"
       },
       {
-        "source": "Clean Cities 2025 (published)",
-        "city": "Berlin",
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Amsterdam",
+        "city_id": "amsterdam",
+        "city_label": "Amsterdam",
+        "dagger": false,
+        "role": "comparison",
         "rank": 4,
-        "value": 17.0
+        "value": 42.223,
+        "value_text": "42.22"
       },
       {
-        "source": "Clean Cities 2025 (published)",
-        "city": "Wien",
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Strasbourg",
+        "city_id": "strasbourg",
+        "city_label": "Strasbourg",
+        "dagger": false,
+        "role": "other",
         "rank": 5,
-        "value": 14.0
+        "value": 39.422,
+        "value_text": "39.42"
       },
       {
-        "source": "QECIO v2.10 (published)",
-        "city": "K\u00f8benhavn",
-        "rank": 1,
-        "value": 104.177
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Utrecht",
+        "city_id": "utrecht",
+        "city_label": "Utrecht",
+        "dagger": false,
+        "role": "other",
+        "rank": 6,
+        "value": 32.342,
+        "value_text": "32.34"
       },
       {
-        "source": "QECIO v2.10 (published)",
+        "source": "Ours: Clean Cities method (n=21)",
         "city": "Wroc\u0142aw",
-        "rank": 2,
-        "value": 63.808
+        "city_id": "wroclaw",
+        "city_label": "Wroc\u0142aw",
+        "dagger": false,
+        "role": "other",
+        "rank": 7,
+        "value": 29.767,
+        "value_text": "29.77"
       },
       {
-        "source": "QECIO v2.10 (published)",
-        "city": "Wien",
-        "rank": 3,
-        "value": 63.79
-      },
-      {
-        "source": "QECIO v2.10 (published)",
+        "source": "Ours: Clean Cities method (n=21)",
         "city": "Berlin",
-        "rank": 4,
-        "value": 54.376
+        "city_id": "berlin",
+        "city_label": "Berlin",
+        "dagger": false,
+        "role": "highlight",
+        "rank": 8,
+        "value": 27.697,
+        "value_text": "27.70"
       },
       {
-        "source": "QECIO v2.10 (published)",
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 9,
+        "value": 23.23,
+        "value_text": "23.23"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
         "city": "Paris",
+        "city_id": "paris",
+        "city_label": "Paris",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 10,
+        "value": 22.913,
+        "value_text": "22.91"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Warszawa",
+        "city_id": "warsaw",
+        "city_label": "Warszawa",
+        "dagger": false,
+        "role": "other",
+        "rank": 11,
+        "value": 22.555,
+        "value_text": "22.55"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Ljubljana",
+        "city_id": "ljubljana",
+        "city_label": "Ljubljana",
+        "dagger": false,
+        "role": "other",
+        "rank": 12,
+        "value": 21.204,
+        "value_text": "21.20"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Oslo",
+        "city_id": "oslo",
+        "city_label": "Oslo",
+        "dagger": false,
+        "role": "other",
+        "rank": 13,
+        "value": 21.057,
+        "value_text": "21.06"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Lyon",
+        "city_id": "lyon",
+        "city_label": "Lyon",
+        "dagger": false,
+        "role": "other",
+        "rank": 14,
+        "value": 17.725,
+        "value_text": "17.72"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Krak\u00f3w",
+        "city_id": "krakow",
+        "city_label": "Krak\u00f3w",
+        "dagger": false,
+        "role": "other",
+        "rank": 15,
+        "value": 17.513,
+        "value_text": "17.51"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Barcelona",
+        "city_id": "barcelona",
+        "city_label": "Barcelona",
+        "dagger": false,
+        "role": "other",
+        "rank": 16,
+        "value": 17.053,
+        "value_text": "17.05"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Bratislava",
+        "city_id": "bratislava",
+        "city_label": "Bratislava",
+        "dagger": false,
+        "role": "other",
+        "rank": 17,
+        "value": 13.801,
+        "value_text": "13.80"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Bordeaux",
+        "city_id": "bordeaux",
+        "city_label": "Bordeaux",
+        "dagger": false,
+        "role": "other",
+        "rank": 18,
+        "value": 11.15,
+        "value_text": "11.15"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Praha",
+        "city_id": "prague",
+        "city_label": "Praha",
+        "dagger": false,
+        "role": "other",
+        "rank": 19,
+        "value": 8.619,
+        "value_text": "8.62"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Madrid",
+        "city_id": "madrid",
+        "city_label": "Madrid",
+        "dagger": false,
+        "role": "other",
+        "rank": 20,
+        "value": 7.837,
+        "value_text": "7.84"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "city": "Budapest",
+        "city_id": "budapest",
+        "city_label": "Budapest",
+        "dagger": false,
+        "role": "other",
+        "rank": 21,
+        "value": 5.223,
+        "value_text": "5.22"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Helsinki",
+        "city_id": "helsinki",
+        "city_label": "Helsinki",
+        "dagger": false,
+        "role": "other",
+        "rank": 1,
+        "value": 48.0,
+        "value_text": "48.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Paris",
+        "city_id": "paris",
+        "city_label": "Paris",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 1,
+        "value": 48.0,
+        "value_text": "48.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "city_label": "K\u00f8benhavn",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 3,
+        "value": 43.0,
+        "value_text": "43.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Amsterdam",
+        "city_id": "amsterdam",
+        "city_label": "Amsterdam",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 4,
+        "value": 34.0,
+        "value_text": "34.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "city_label": "Wroc\u0142aw",
+        "dagger": false,
+        "role": "other",
         "rank": 5,
-        "value": 41.467
+        "value": 20.0,
+        "value_text": "20.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Barcelona",
+        "city_id": "barcelona",
+        "city_label": "Barcelona",
+        "dagger": false,
+        "role": "other",
+        "rank": 6,
+        "value": 19.0,
+        "value_text": "19.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Berlin",
+        "city_id": "berlin",
+        "city_label": "Berlin",
+        "dagger": false,
+        "role": "highlight",
+        "rank": 7,
+        "value": 17.0,
+        "value_text": "17.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Oslo",
+        "city_id": "oslo",
+        "city_label": "Oslo",
+        "dagger": false,
+        "role": "other",
+        "rank": 7,
+        "value": 17.0,
+        "value_text": "17.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Ljubljana",
+        "city_id": "ljubljana",
+        "city_label": "Ljubljana",
+        "dagger": false,
+        "role": "other",
+        "rank": 9,
+        "value": 15.0,
+        "value_text": "15.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Warszawa",
+        "city_id": "warsaw",
+        "city_label": "Warszawa",
+        "dagger": false,
+        "role": "other",
+        "rank": 9,
+        "value": 15.0,
+        "value_text": "15.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Lyon",
+        "city_id": "lyon",
+        "city_label": "Lyon",
+        "dagger": false,
+        "role": "other",
+        "rank": 11,
+        "value": 14.0,
+        "value_text": "14.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 11,
+        "value": 14.0,
+        "value_text": "14.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Bratislava",
+        "city_id": "bratislava",
+        "city_label": "Bratislava",
+        "dagger": false,
+        "role": "other",
+        "rank": 13,
+        "value": 12.0,
+        "value_text": "12.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Krak\u00f3w",
+        "city_id": "krakow",
+        "city_label": "Krak\u00f3w",
+        "dagger": false,
+        "role": "other",
+        "rank": 14,
+        "value": 11.0,
+        "value_text": "11.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Madrid",
+        "city_id": "madrid",
+        "city_label": "Madrid",
+        "dagger": false,
+        "role": "other",
+        "rank": 15,
+        "value": 8.0,
+        "value_text": "8.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Praha",
+        "city_id": "prague",
+        "city_label": "Praha",
+        "dagger": false,
+        "role": "other",
+        "rank": 16,
+        "value": 6.0,
+        "value_text": "6.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Budapest",
+        "city_id": "budapest",
+        "city_label": "Budapest",
+        "dagger": false,
+        "role": "other",
+        "rank": 17,
+        "value": 4.0,
+        "value_text": "4.00"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Bordeaux",
+        "city_id": "bordeaux",
+        "city_label": "Bordeaux",
+        "dagger": false,
+        "role": "other",
+        "rank": null,
+        "value": null,
+        "value_text": "not published"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm",
+        "dagger": false,
+        "role": "other",
+        "rank": null,
+        "value": null,
+        "value_text": "not published"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Strasbourg",
+        "city_id": "strasbourg",
+        "city_label": "Strasbourg",
+        "dagger": false,
+        "role": "other",
+        "rank": null,
+        "value": null,
+        "value_text": "not published"
+      },
+      {
+        "source": "Clean Cities 2025 (published) (n=17)",
+        "city": "Utrecht",
+        "city_id": "utrecht",
+        "city_label": "Utrecht",
+        "dagger": false,
+        "role": "other",
+        "rank": null,
+        "value": null,
+        "value_text": "not published"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "K\u00f8benhavn",
+        "city_id": "copenhagen",
+        "city_label": "K\u00f8benhavn \u2020",
+        "dagger": true,
+        "role": "comparison",
+        "rank": 1,
+        "value": 104.177,
+        "value_text": "104.18"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Amsterdam",
+        "city_id": "amsterdam",
+        "city_label": "Amsterdam \u2020",
+        "dagger": true,
+        "role": "comparison",
+        "rank": 2,
+        "value": 81.522,
+        "value_text": "81.52"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Utrecht",
+        "city_id": "utrecht",
+        "city_label": "Utrecht \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 3,
+        "value": 81.345,
+        "value_text": "81.34"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Helsinki",
+        "city_id": "helsinki",
+        "city_label": "Helsinki \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 4,
+        "value": 78.454,
+        "value_text": "78.45"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 5,
+        "value": 70.909,
+        "value_text": "70.91"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Wroc\u0142aw",
+        "city_id": "wroclaw",
+        "city_label": "Wroc\u0142aw",
+        "dagger": false,
+        "role": "other",
+        "rank": 6,
+        "value": 63.808,
+        "value_text": "63.81"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 7,
+        "value": 63.79,
+        "value_text": "63.79"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Oslo",
+        "city_id": "oslo",
+        "city_label": "Oslo",
+        "dagger": false,
+        "role": "other",
+        "rank": 8,
+        "value": 60.738,
+        "value_text": "60.74"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Berlin",
+        "city_id": "berlin",
+        "city_label": "Berlin",
+        "dagger": false,
+        "role": "highlight",
+        "rank": 9,
+        "value": 54.376,
+        "value_text": "54.38"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Warszawa",
+        "city_id": "warsaw",
+        "city_label": "Warszawa",
+        "dagger": false,
+        "role": "other",
+        "rank": 10,
+        "value": 49.488,
+        "value_text": "49.49"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Krak\u00f3w",
+        "city_id": "krakow",
+        "city_label": "Krak\u00f3w",
+        "dagger": false,
+        "role": "other",
+        "rank": 11,
+        "value": 44.282,
+        "value_text": "44.28"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Paris",
+        "city_id": "paris",
+        "city_label": "Paris",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 12,
+        "value": 41.467,
+        "value_text": "41.47"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Strasbourg",
+        "city_id": "strasbourg",
+        "city_label": "Strasbourg \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 13,
+        "value": 24.149,
+        "value_text": "24.15"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Praha",
+        "city_id": "prague",
+        "city_label": "Praha",
+        "dagger": false,
+        "role": "other",
+        "rank": 14,
+        "value": 22.314,
+        "value_text": "22.31"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Budapest",
+        "city_id": "budapest",
+        "city_label": "Budapest",
+        "dagger": false,
+        "role": "other",
+        "rank": 15,
+        "value": 22.242,
+        "value_text": "22.24"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Lyon",
+        "city_id": "lyon",
+        "city_label": "Lyon \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 16,
+        "value": 21.258,
+        "value_text": "21.26"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Bordeaux",
+        "city_id": "bordeaux",
+        "city_label": "Bordeaux \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 17,
+        "value": 19.335,
+        "value_text": "19.33"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Ljubljana",
+        "city_id": "ljubljana",
+        "city_label": "Ljubljana \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 18,
+        "value": 16.314,
+        "value_text": "16.31"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Bratislava",
+        "city_id": "bratislava",
+        "city_label": "Bratislava \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 19,
+        "value": 15.306,
+        "value_text": "15.31"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Madrid",
+        "city_id": "madrid",
+        "city_label": "Madrid \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 20,
+        "value": 12.848,
+        "value_text": "12.85"
+      },
+      {
+        "source": "QECIO v2.10 (published) (n=21)",
+        "city": "Barcelona",
+        "city_id": "barcelona",
+        "city_label": "Barcelona \u2020",
+        "dagger": true,
+        "role": "other",
+        "rank": 21,
+        "value": 11.392,
+        "value_text": "11.39"
       }
     ]
   },
-  "mark": {
-    "type": "line",
-    "point": {
-      "filled": true,
-      "size": 90
-    },
-    "strokeWidth": 2.5
-  },
   "encoding": {
-    "color": {
-      "field": "city",
-      "scale": {
-        "domain": [
-          "Berlin",
-          "K\u00f8benhavn",
-          "Paris",
-          "Wien",
-          "Wroc\u0142aw"
-        ],
-        "range": [
-          "#2a78d6",
-          "#eb6834",
-          "#1baf7a",
-          "#eda100",
-          "#e87ba4"
-        ]
-      },
-      "title": "City",
-      "type": "nominal"
-    },
-    "tooltip": [
-      {
-        "field": "source",
-        "type": "nominal"
-      },
-      {
-        "field": "city",
-        "type": "nominal"
-      },
-      {
-        "field": "rank",
-        "type": "quantitative"
-      },
-      {
-        "field": "value",
-        "format": ".2f",
-        "title": "value",
-        "type": "quantitative"
-      }
-    ],
     "x": {
       "axis": {
         "labelAngle": -25,
@@ -233,11 +1332,11 @@
       },
       "field": "source",
       "sort": [
-        "Ours: headline",
-        "Ours: QECIO method",
-        "Ours: Clean Cities method",
-        "Clean Cities 2025 (published)",
-        "QECIO v2.10 (published)"
+        "Ours: headline (n=21)",
+        "Ours: QECIO method (n=21)",
+        "Ours: Clean Cities method (n=21)",
+        "Clean Cities 2025 (published) (n=17)",
+        "QECIO v2.10 (published) (n=21)"
       ],
       "title": null,
       "type": "ordinal"
@@ -250,14 +1349,30 @@
           2,
           3,
           4,
-          5
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
         ]
       },
       "field": "rank",
       "scale": {
         "domain": [
           1,
-          5
+          21
         ],
         "nice": false,
         "reverse": true
@@ -273,8 +1388,8 @@
     "fontSize": 16,
     "subtitle": [
       "Map data \u00a9 OpenStreetMap contributors, ODbL 1.0 \u00b7 OSM mapped km, not built km (ADR 0006)",
-      "Clean Cities 2025 (published): city network as published; Vienna whole-network value",
-      "QECIO v2.10 (published): NUTS3 region (Berlin DE300, Paris FR101, Vienna AT130, Copenhagen DK011, Wroclaw PL514)"
+      "Clean Cities 2025 (published): city network as published",
+      "QECIO v2.10 (published): NUTS3 region per city; \u2020 NUTS3 region is not the city"
     ]
   },
   "width": 560,
