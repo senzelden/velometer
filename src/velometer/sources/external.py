@@ -31,18 +31,7 @@ BIKENETKIT_FILES = {
     "bike_networks.zip": "ffccda3c4fa40953a31d4cb8d88930d5",
     "boundaries.zip": "655c204a16f17b644e6a22d40cf1f68a",
 }
-BIKENETKIT_IDS = {
-    "berlin": "berlin_de",
-    "paris": "paris_fr",
-    "vienna": "vienna_at",
-    "copenhagen": "copenhagen_dk",
-    "wroclaw": "wroclaw_pl",
-}
-# Per-city caveats appended to the QECIO row notes (research doc section 5, "Gotcha").
-QECIO_CITY_NOTES = {
-    "DK011": "DK011 is Byen København (area about 185 km2), not Københavns Kommune "
-    "(about 92-104 km2); not comparable to commune-bounded runs",
-}
+NUTS3_NOT_CITY = "NUTS3 unit is not the city"
 
 
 def retrieved_at(path: Path) -> date:
@@ -93,7 +82,8 @@ def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigu
                         for p in (
                             f"NUTS3 {row['NUTS_ID']} ({row['City']})",
                             "QECIO halves unidirectional infrastructure",
-                            QECIO_CITY_NOTES.get(row["NUTS_ID"]),
+                            city.nuts3_note,
+                            NUTS3_NOT_CITY if city.nuts3_is_city is False else None,
                             f"file md5 {digest}",
                         )
                         if p
@@ -108,7 +98,7 @@ def bikenetkit_figures(zip_dir: Path, cities: list[CityConfig]) -> list[External
     got = retrieved_at(zip_dir / "bike_networks.zip")
     with zipfile.ZipFile(zip_dir / "bike_networks.zip") as z:
         for city in cities:
-            cid = BIKENETKIT_IDS.get(city.id)
+            cid = city.bikenetkit_id
             if cid is None:
                 continue
             target = zip_dir / "bikenetkit" / f"{cid}.gpkg"

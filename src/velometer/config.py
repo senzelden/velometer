@@ -54,6 +54,12 @@ class CityConfig(_Strict):
     # Reason for an EPSG that is not the UTM zone of the boundary centroid (only the adjacent
     # zone is accepted, see sources.boundaries.check_epsg)
     epsg_exception: str | None = None
+    # BikeNetKit city id (file stem in bike_networks.zip); None = the city is not in BikeNetKit
+    bikenetkit_id: str | None = None
+    # Is the NUTS3 unit the city itself? None = not assessed. False adds a QECIO row caveat.
+    nuts3_is_city: bool | None = None
+    # Free-text caveat appended to the QECIO row notes of this city
+    nuts3_note: str | None = None
 
     @field_validator("epsg_exception")
     @classmethod

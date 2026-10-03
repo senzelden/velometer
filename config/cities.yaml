@@ -4,6 +4,8 @@
 # (see docs/research/m2-data-sources-2026-10-01.md). EPSG = ETRS89 / UTM zone of the city.
 # population_nuts3 = NUTS3 unit identical to the commune, used only when LAU has no population;
 # set only where that holds (Paris FR101 = Ville de Paris). nuts3_code is for QECIO matching.
+# bikenetkit_id = BikeNetKit city id (zip file stem); nuts3_is_city: NUTS3 unit equals the city
+# (Wroclaw PL514 = Miasto Wroclaw, QECIO area 292.068 vs LAU 292.80 km2, research doc lines 19, 76).
 # Lookups: berlin 62422 (city=Berlin&country=Germany); paris 71525 (city=Paris&country=France,
 # city commune; 7444 and 1641193 are suburb/district hits); vienna 109166 (city=Wien&country=Austria);
 # wroclaw 451516 (city=Wrocław&country=Poland); copenhagen: the city= query returns only a place
@@ -18,6 +20,8 @@ cities:
     lau_code: DE_11000000
     fua_code: DE001F
     nuts3_code: DE300
+    bikenetkit_id: berlin_de
+    nuts3_is_city: true
   - id: paris
     name: Paris
     country_iso2: FR
@@ -28,6 +32,8 @@ cities:
     fua_code: FR001F
     nuts3_code: FR101
     population_nuts3: FR101
+    bikenetkit_id: paris_fr
+    nuts3_is_city: true
   - id: vienna
     name: Wien
     country_iso2: AT
@@ -37,6 +43,8 @@ cities:
     lau_code: AT_90001
     fua_code: AT001F
     nuts3_code: AT130
+    bikenetkit_id: vienna_at
+    nuts3_is_city: true
   - id: copenhagen
     name: København
     country_iso2: DK
@@ -47,6 +55,9 @@ cities:
     lau_code: DK_101
     fua_code: DK001F
     nuts3_code: DK011
+    bikenetkit_id: copenhagen_dk
+    nuts3_is_city: false
+    nuts3_note: "DK011 is Byen København (area about 185 km2), not Københavns Kommune (about 92-104 km2); not comparable to commune-bounded runs"
   - id: wroclaw
     name: Wrocław
     country_iso2: PL
@@ -56,3 +67,5 @@ cities:
     lau_code: PL_1003021056401
     fua_code: PL004F
     nuts3_code: PL514
+    bikenetkit_id: wroclaw_pl
+    nuts3_is_city: true

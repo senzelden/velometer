@@ -4,6 +4,7 @@ The QECIO fixture rows are copied from the ECF QECIO v2.10 Summary-all.csv, whic
 OpenStreetMap data (c) OpenStreetMap contributors, ODbL.
 """
 
+import json
 import os
 import zipfile
 from collections import Counter
@@ -74,6 +75,45 @@ def test_qecio_nuts3_code_matching_two_rows_raises(tmp_path):
     dup.write_text(src.replace(",Berat,AL031,", ",Berlin,DE300,"), encoding="utf-8")
     with pytest.raises(ValueError, match=r"DE300 \(berlin\) matched 2"):
         X.qecio_figures(dup, BERLIN)
+
+
+# one 1 km-ish line per pilot city (lon, lat of the city centre), for the golden-rows test
+PILOT_LINES = {
+    "berlin": (13.40, 52.50),
+    "paris": (2.35, 48.85),
+    "vienna": (16.37, 48.21),
+    "copenhagen": (12.57, 55.68),
+    "wroclaw": (17.04, 51.11),
+}
+BIKENETKIT_FILE_IDS = {
+    "berlin": "berlin_de",
+    "paris": "paris_fr",
+    "vienna": "vienna_at",
+    "copenhagen": "copenhagen_dk",
+    "wroclaw": "wroclaw_pl",
+}
+GOLDEN_TS = datetime(2026, 5, 6, 12, 0, tzinfo=UTC).timestamp()
+
+
+def pilot_inputs(tmp_path: Path) -> tuple[Path, Path]:
+    """A QECIO CSV and a BikeNetKit zip dir covering every pilot city, with fixed mtimes."""
+    qecio = _qecio_all_cities(tmp_path / "pilot_qecio.csv")
+    os.utime(qecio, (GOLDEN_TS, GOLDEN_TS))
+    zip_dir = tmp_path / "bnk"
+    zip_dir.mkdir()
+    with zipfile.ZipFile(zip_dir / "bike_networks.zip", "w") as z:
+        for city, (lon, lat) in PILOT_LINES.items():
+            gpkg = tmp_path / f"{BIKENETKIT_FILE_IDS[city]}.gpkg"
+            _write_edges(gpkg, LineString([(lon, lat), (lon + 0.01, lat + 0.005)]))
+            z.write(gpkg, f"bike_networks/{gpkg.name}")
+    os.utime(zip_dir / "bike_networks.zip", (GOLDEN_TS, GOLDEN_TS))
+    return qecio, zip_dir
+
+
+def pilot_rows(tmp_path: Path) -> list[dict]:
+    qecio, zip_dir = pilot_inputs(tmp_path)
+    figs = X.qecio_figures(qecio, CITIES) + X.bikenetkit_figures(zip_dir, CITIES)
+    return [f.model_dump(mode="json") for f in figs]
 
 
 def _write_edges(path: Path, line: LineString, crs: str = "EPSG:4326") -> None:
@@ -252,3 +292,62 @@ def test_vienna_web_correction_is_dated_after_the_report():
     pdf = {f.reference_date for f in figs if f.network_scope == "whole_network"}
     web = {f.reference_date for f in figs if f.network_scope != "whole_network"}
     assert len(pdf) == len(web) == 1 and min(web) > max(pdf)
+
+
+def test_pilot_rows_unchanged_after_moving_ids_to_config(tmp_path):
+    # tests/fixtures/external/pilot_rows.json was generated from the code before BikeNetKit ids
+    # and NUTS3 notes moved into cities.yaml. Only Copenhagen's QECIO notes may differ, by the
+    # one new "NUTS3 unit is not the city" part (nuts3_is_city: false), placed before the md5.
+    golden = json.loads((FIX / "pilot_rows.json").read_text(encoding="utf-8"))
+    got = pilot_rows(tmp_path)
+    assert len(got) == len(golden) == 30
+    flag = "NUTS3 unit is not the city"
+    for g in golden:
+        if g["city_id"] == "copenhagen" and g["source"] == "qecio_v2_10":
+            head, md5 = g["note"].rsplit("; file md5 ", 1)
+            g["note"] = f"{head}; {flag}; file md5 {md5}"
+    assert got == golden
+    assert sum(flag in r["note"] for r in got) == 5  # Copenhagen's five QECIO metrics only
+
+
+def test_city_without_bikenetkit_id_is_skipped(tmp_path):
+    _, zip_dir = pilot_inputs(tmp_path)
+    berlin = BERLIN[0].model_copy(update={"bikenetkit_id": None})
+    assert X.bikenetkit_figures(zip_dir, [berlin]) == []
+
+
+def test_city_without_nuts3_code_gets_no_qecio_rows():
+    berlin = BERLIN[0].model_copy(update={"nuts3_code": None})
+    assert X.qecio_figures(FIX / "qecio_summary_head.csv", [berlin]) == []
+
+
+def test_nuts3_not_city_is_noted():
+    city = BERLIN[0].model_copy(update={"nuts3_is_city": False, "nuts3_note": None})
+    rows = X.qecio_figures(FIX / "qecio_summary_head.csv", [city])
+    assert rows and all("NUTS3 unit is not the city" in r.note for r in rows)
+
+
+def test_nuts3_is_city_true_or_unassessed_adds_no_flag():
+    for value in (True, None):
+        city = BERLIN[0].model_copy(update={"nuts3_is_city": value, "nuts3_note": None})
+        rows = X.qecio_figures(FIX / "qecio_summary_head.csv", [city])
+        assert rows and all("not the city" not in r.note for r in rows)
+
+
+def test_nuts3_note_is_appended_to_the_qecio_note():
+    city = BERLIN[0].model_copy(update={"nuts3_note": "custom caveat"})
+    rows = X.qecio_figures(FIX / "qecio_summary_head.csv", [city])
+    assert all("; custom caveat; file md5 " in r.note for r in rows)
+
+
+def test_pilot_cities_carry_their_external_source_ids():
+    by_id = {c.id: c for c in CITIES}
+    assert {i: c.bikenetkit_id for i, c in by_id.items()} == BIKENETKIT_FILE_IDS
+    assert {i: c.nuts3_is_city for i, c in by_id.items()} == {
+        "berlin": True,
+        "paris": True,
+        "vienna": True,
+        "copenhagen": False,
+        "wroclaw": True,
+    }
+    assert "Byen København" in by_id["copenhagen"].nuts3_note
