@@ -257,6 +257,9 @@ def _auth_refused(e: DownloadError) -> bool:
     return isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code in (401, 403)
 
 
+_EMPTY_MD5 = hashlib.md5(b"").hexdigest()
+
+
 def _published_md5(url: str, client: httpx.Client) -> str | None:
     def get() -> str | None:
         resp = client.get(url + ".md5")
@@ -264,7 +267,9 @@ def _published_md5(url: str, client: httpx.Client) -> str | None:
             return None
         resp.raise_for_status()
         words = resp.text.split()
-        return words[0] if words and re.fullmatch(r"[0-9a-f]{32}", words[0]) else None
+        if not words or not re.fullmatch(r"[0-9a-f]{32}", words[0]) or words[0] == _EMPTY_MD5:
+            return None  # no md5, or the md5 of zero bytes: a broken sidecar, never a PBF's
+        return words[0]
 
     return _with_retries(url + ".md5", get, 3, 5.0)
 

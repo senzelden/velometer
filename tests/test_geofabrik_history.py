@@ -472,3 +472,16 @@ def test_set_md5_pins_the_known_value_and_history_set_md5_delegates():
         == set_md5(pairs[::-1])
         == "613ee8749a17536bccb292a12e04f6bb"
     )
+
+
+def test_fetch_history_treats_the_md5_of_zero_bytes_as_unpublished(tmp_path):
+    # Geofabrik once published d41d8cd9... (md5 of an empty input) beside an unchanged,
+    # non-empty file (austria, hungary, slovakia, 2026-10-03). No history PBF is empty, so that
+    # checksum is a broken sidecar: the download is verified by its computed md5 instead.
+    empty = hashlib.md5(b"").hexdigest()
+    c = _client(_history_handler([], md5_body=f"{empty}  a-internal.osh.pbf\n"))
+    hf = fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert hf.md5 == MD5 and hf.md5_source == "computed"
+    assert hf.path.read_bytes() == BODY
