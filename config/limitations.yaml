@@ -14,13 +14,15 @@ limitations:
   - id: population_2024
     en: >-
       The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it
-      is the figure of the identical NUTS3 unit [ADR 0004], or else the Urban Audit figure
-      described below. The same value is used for every
-      snapshot year, so per-100k values do not follow population change [M3 spec, decision 2].
+      is a cited national-statistics figure described below, or else the figure of the
+      identical NUTS3 unit [ADR 0004] or of the Urban Audit city. The same value is used for
+      every snapshot year, so per-100k values do not follow population change [M3 spec,
+      decision 2].
     de: >-
       Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt
-      der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004], ersatzweise der unten
-      beschriebene Wert aus dem Urban Audit. Derselbe Wert gilt für jedes
+      der unten beschriebene, belegte Wert des nationalen Statistikamts, ersatzweise der Wert
+      der deckungsgleichen NUTS-3-Einheit [ADR 0004] oder der Urban-Audit-Stadt. Derselbe Wert
+      gilt für jedes
       Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab
       [M3-Spezifikation, Entscheidung 2].
   - id: fua_no_per_100k
@@ -112,19 +114,21 @@ limitations:
       Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen, Österreich
       und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich ihrer
       Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
-  - id: population_urban_audit
+  - id: population_national_statistics
     en: >-
-      Lyon, Strasbourg and Bordeaux have no LAU population, and their NUTS3 unit is the
-      département, not the commune. Their population is the Eurostat Urban Audit city
-      population (`urb_cpop1`) for the latest year with a figure, which may not be 2024
-      [M5 spec, decision 9]. Their per-100k values can therefore rest on a different year than
+      Some cities have no LAU population, and neither their NUTS3 unit (a province or
+      département) nor their Urban Audit city (a greater city) matches the municipality. Their
+      population is the official figure of the national statistics office, cited with its year
+      and URL in `config/cities.yaml` (`population_override`) [M5 spec, decision 9; Task 13c].
+      That year may not be 2024, so their per-100k values can rest on a different year than
       those of the other cities. The tables above give the year and source of each figure.
     de: >-
-      Für Lyon, Straßburg und Bordeaux gibt es keine LAU-Einwohnerzahl, und ihre
-      NUTS-3-Einheit ist das Département, nicht die Gemeinde. Ihr Einwohnerwert stammt aus der
-      Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit
-      einem Wert. Das muss nicht 2024 sein [M5-Spezifikation, Entscheidung 9]. Ihre Werte je
-      100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen
+      Für einige Städte gibt es keine LAU-Einwohnerzahl, und weder ihre NUTS-3-Einheit (eine
+      Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt
+      sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen
+      Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`)
+      [M5-Spezifikation, Entscheidung 9; Task 13c]. Das Jahr muss nicht 2024 sein; ihre Werte
+      je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen
       Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben.
   - id: qecio_nuts3_not_city
     en: >-

@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict
 
 from velometer import timeseries as ts
 from velometer.config import (
+    CityConfig,
     CountryTrust,
     Limitation,
     load_cities,
@@ -69,6 +70,8 @@ class CityFacts(_Frozen):
     boundary_source: str | None  # of the admin (`lau`) boundary: GISCO LAU or OSM relation N
     population_source: str | None  # of the population the LAU runs carry
     nuts3_is_city: bool | None  # cities.yaml; False: QECIO's NUTS3 unit is not the city
+    # cities.yaml population_override.source: a cited national-statistics population
+    population_override: str | None = None
 
 
 class CountryFact(_Frozen):
@@ -153,7 +156,7 @@ def _boundary_source(data: ReportData, city_id: str) -> str | None:
     return b.source if b.source.startswith("OSM relation") else f"{b.source} {b.source_version}"
 
 
-def _city_facts(data: ReportData, city: City, nuts3_is_city: bool | None) -> CityFacts:
+def _city_facts(data: ReportData, city: City, cfg: CityConfig | None) -> CityFacts:
     kinds = [_kind_facts(data, city.id, k) for k in KINDS]
     lau = next(k for k in kinds if k.kind == "lau")
     population_source = lau.population_source or (city.population and city.population.source)
@@ -163,7 +166,10 @@ def _city_facts(data: ReportData, city: City, nuts3_is_city: bool | None) -> Cit
         kinds=kinds,
         boundary_source=_boundary_source(data, city.id),
         population_source=population_source,
-        nuts3_is_city=nuts3_is_city,
+        nuts3_is_city=None if cfg is None else cfg.nuts3_is_city,
+        population_override=(
+            cfg.population_override.source if cfg and cfg.population_override else None
+        ),
     )
 
 
@@ -219,7 +225,7 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
                 basis_parameter=p.basis.parameter if p.parameterised else None,
             )
         )
-    nuts3 = {c.id: c.nuts3_is_city for c in load_cities(data.config_dir / "cities.yaml")}
+    configured = {c.id: c for c in load_cities(data.config_dir / "cities.yaml")}
     return MethodologyFacts(
         classifier_version=cfg.version,
         classifier_parameters={k: str(v) for k, v in cfg.parameters.model_dump().items()},
@@ -236,7 +242,7 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
         value_separators=list(cfg.value_separators),
         presets=preset_rows,
         countries=_country_facts(data.config_dir),
-        cities=[_city_facts(data, c, nuts3.get(c.id)) for c in data.cities()],
+        cities=[_city_facts(data, c, configured.get(c.id)) for c in data.cities()],
         snapshot_dates=[f"{y}-01-01" for y in data.years],
         flag_thresholds=dict(data.activity.flags.model_dump()),
         limitations=load_limitations(data.config_dir / "limitations.yaml"),

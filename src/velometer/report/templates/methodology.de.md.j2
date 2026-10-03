@@ -76,7 +76,7 @@ Jede Stadt wird auf zwei Gebietsgrenzen berechnet [ADR 0004]:
 - **LAU** ist die Stadtgrenze: die lokale Verwaltungseinheit von Eurostat GISCO, Stand 2024. Sie ist der Standard. Fehlt ein sauberes LAU-Polygon, tritt die administrative OSM-Relation an seine Stelle.
 - **FUA** ist der funktionale Stadtraum (Functional Urban Area), also die Stadt mit ihrem Pendlereinzugsgebiet. Er dient als Robustheitsprüfung.
 
-Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]. Gibt es keine NUTS-3-Einheit, die mit der Stadt übereinstimmt, stammt der Wert aus der Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit einem Wert [M5-Spezifikation, Entscheidung 9; `population` in `sources/boundaries.py`]. Für alle Stichjahre gilt derselbe Einwohnerwert [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
+Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Besteht eine Stadt aus mehreren LAU (`lau_codes`), gilt die Summe ihrer Werte, und nur, wenn jede einen Wert hat. Fehlt der LAU-Wert, liefert ihn die amtliche Einwohnerzahl des nationalen Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`). Fehlt auch diese, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]; gibt es keine NUTS-3-Einheit, die mit der Stadt übereinstimmt, stammt der Wert aus der Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit einem Wert [M5-Spezifikation, Entscheidung 9; `population` in `sources/boundaries.py`]. Für alle Stichjahre gilt derselbe Einwohnerwert [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
 
 Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten Läufe, den Verlaufsdatensatz und die Einwohnerzahl.
 
@@ -164,8 +164,10 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 
 <!-- generated:limitations -->
 {% set nuts3_not_city = f.cities | selectattr("nuts3_is_city", "sameas", false) | map(attribute="name") | list %}
+{% set overrides = [] %}
+{% for c in f.cities if c.population_override %}{% set _ = overrides.append(c.name ~ " (" ~ c.population_override ~ ")") %}{% endfor %}
 {% for lim in f.limitations %}
-- {{ lim.de }}{% if lim.id == "qecio_nuts3_not_city" and nuts3_not_city %} Das betrifft {{ nuts3_not_city | and_list }}.{% endif %}
+- {{ lim.de }}{% if lim.id == "qecio_nuts3_not_city" and nuts3_not_city %} Das betrifft {{ nuts3_not_city | and_list }}.{% endif %}{% if lim.id == "population_national_statistics" and overrides %} Das betrifft {{ overrides | and_list }}.{% endif %}
 
 {% endfor %}
 <!-- /generated:limitations -->

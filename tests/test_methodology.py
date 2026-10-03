@@ -33,10 +33,10 @@ SPEC_LIMITATIONS = [
     "dirty_provenance_m3",
     "history_vs_current_date",
     "trust_gate",
-    "population_urban_audit",
+    "population_national_statistics",
     "qecio_nuts3_not_city",
 ]
-M5_LIMITATIONS = ["trust_gate", "population_urban_audit", "qecio_nuts3_not_city"]
+M5_LIMITATIONS = ["trust_gate", "population_national_statistics", "qecio_nuts3_not_city"]
 
 
 @pytest.fixture
@@ -393,6 +393,38 @@ def test_qecio_nuts3_city_list_follows_cities_yaml(fixture_db):
     one = _facts_of(db_path, cfg)
     assert _nuts3_item(render(one, "en"), lim.en) == " This applies to Paris."
     assert _nuts3_item(render(one, "de"), lim.de) == " Das betrifft Paris."
+
+
+def test_population_override_city_list_follows_cities_yaml(fixture_db):
+    """The national-statistics limitation names the cities with a cited population_override in
+    cities.yaml, with their source; no city is named in limitations.yaml itself."""
+    db_path, cfg, _, data = fixture_db
+    facts = methodology_facts(data)  # config/cities.yaml of the fixture: no override
+    lim = next(x for x in facts.limitations if x.id == "population_national_statistics")
+    for name in ("Paris", "Berlin", "Lyon", "Madrid"):
+        assert name not in lim.en + lim.de
+    assert _nuts3_item(render(facts, "en"), lim.en) == ""
+    assert _nuts3_item(render(facts, "de"), lim.de) == ""
+    cities = cfg / "cities.yaml"
+    doc = yaml.safe_load(cities.read_text())
+    for c in doc["cities"]:
+        if c["id"] == "paris":
+            c.pop("population_nuts3", None)
+            c["population_override"] = {
+                "value": 2_100_000,
+                "year": 2023,
+                "source": "INSEE populations de référence 2023",
+                "source_url": "https://www.insee.fr/fr/statistiques/8643952?geo=COM-75056",
+            }
+    cities.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+    with_override = _facts_of(db_path, cfg)
+    assert {c.id: c.population_override for c in with_override.cities} == {
+        "berlin": None,
+        "paris": "INSEE populations de référence 2023",
+    }
+    expected = "Paris (INSEE populations de référence 2023)."
+    assert _nuts3_item(render(with_override, "en"), lim.en) == f" This applies to {expected}"
+    assert _nuts3_item(render(with_override, "de"), lim.de) == f" Das betrifft {expected}"
 
 
 @pytest.mark.parametrize("lim_id", M5_LIMITATIONS)
