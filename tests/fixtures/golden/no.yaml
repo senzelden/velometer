@@ -95,8 +95,15 @@ ways:
     rule: X_no
     subtype: 'no'
     bidirectional: false
+  - side: right
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
   confirmed: true
-  note: ''
+  note: 'expects classifier v3 (Task 14): the right side, cycleway:right=advisory, is the D
+    advisory lane the verdict names (user decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
 - way_id: 136540510
   group: extra
   name: ''

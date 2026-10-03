@@ -13,7 +13,7 @@ ways:
     rule: X_private
     subtype: private
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 208087851
   group: A_cycleway
@@ -25,7 +25,7 @@ ways:
     rule: A_cycleway
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 960705749
   group: X_bicycle_no
@@ -37,7 +37,7 @@ ways:
     rule: X_bicycle_no
     subtype: bicycle_no
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 793056624
   group: X_lifecycle
@@ -49,7 +49,7 @@ ways:
     rule: X_lifecycle
     subtype: lifecycle
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 126367668
   group: X_no
@@ -66,7 +66,7 @@ ways:
     rule: X_separate
     subtype: separate
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 177916468
   group: D_lane
@@ -83,15 +83,16 @@ ways:
     rule: D_lane
     subtype: null
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 1311124898
   group: unmatched:1
   name: Hany Meličkovej
   highway: tertiary
   proposed: []
-  confirmed: false
-  note: ''
+  confirmed: true
+  note: 'no output by decision (2026-10-03): cycleway:right=shared_busway misspells share_busway,
+    an OSM mistag that v3 leaves unrecognised'
 - way_id: 1050603989
   group: unmatched:2
   name: Furdekova
@@ -102,15 +103,29 @@ ways:
     rule: X_separate
     subtype: separate
     bidirectional: false
-  confirmed: false
-  note: ''
+  - side: right
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): cycleway:right=advisory is an advisory lane (user
+    decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
 - way_id: 24836980
   group: unmatched:3
   name: Mamateyova
   highway: tertiary
-  proposed: []
-  confirmed: false
-  note: ''
+  proposed:
+  - side: left
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): cycleway:left=advisory is an advisory lane (user
+    decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
 - way_id: 34609152
   group: extra
   name: ''
@@ -121,7 +136,7 @@ ways:
     rule: B_cycleway_foot
     subtype: null
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 223471544
   group: extra
@@ -138,7 +153,7 @@ ways:
     rule: D_lane_advisory
     subtype: advisory
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 373209244
   group: extra
@@ -150,7 +165,7 @@ ways:
     rule: E_bus
     subtype: bus
     bidirectional: false
-  confirmed: false
+  confirmed: true
   note: ''
 - way_id: 227951535
   group: extra
@@ -162,5 +177,5 @@ ways:
     rule: E_cycle_street
     subtype: cycle_street
     bidirectional: true
-  confirmed: false
+  confirmed: true
   note: ''
