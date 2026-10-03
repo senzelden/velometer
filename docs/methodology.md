@@ -99,7 +99,7 @@ Every city is computed on two boundaries [ADR 0004]:
 - **LAU** is the city boundary: the Eurostat GISCO local administrative unit of 2024. It is the default. Where a city has no clean LAU polygon, the OSM administrative relation replaces it.
 - **FUA** is the functional urban area, the city with its commuting zone. It is a robustness check.
 
-Results are only compared within the same boundary kind. The LAU population comes from Eurostat. Where the LAU has no figure, the identical NUTS3 unit supplies it [ADR 0004]. One population value, that of 2024, applies to all snapshot years [M3 spec, decision 2]. FUA runs carry no population, so the FUA has no per-100k figure [M4 spec §4.4].
+Results are only compared within the same boundary kind. The LAU population comes from Eurostat. A city made of several LAU (`lau_codes`) has the sum of their figures, and only when every one has a figure. Where the LAU has no figure, the official population of the national statistics office, cited with year and URL in `config/cities.yaml` (`population_override`), supplies it. Without one, the identical NUTS3 unit supplies it [ADR 0004], and where no NUTS3 unit is identical to the city, the Eurostat Urban Audit city population (`urb_cpop1`), for the latest year with a figure [M5 spec, decision 9; `population` in `sources/boundaries.py`]. One population value applies to all snapshot years [M3 spec, decision 2]. FUA runs carry no population, so the FUA has no per-100k figure [M4 spec §4.4].
 
 The table lists, per city and boundary, the OSM timestamps of the runs this report uses, the history set and the population.
 
@@ -108,15 +108,68 @@ The table lists, per city and boundary, the OSM timestamps of the runs this repo
 |---|---|---|---|---|---|
 | Berlin | `lau` | 2026-09-30T20:22:42Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3,782,202 (2024) |
 | Berlin | `fua` | 2026-09-30T20:22:42Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
+| Bordeaux | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 267,991 (2023) |
+| Bordeaux | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | København | `lau` | 2026-09-30T20:22:42Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659,350 (2024) |
 | København | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Kraków | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 806,201 (2024) |
+| Kraków | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Lyon | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 519,127 (2023) |
+| Lyon | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Paris | `lau` | 2026-09-30T20:22:42Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,084,894 (2024) |
 | Paris | `fua` | 2026-09-30T20:22:42Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
+| Strasbourg | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 293,771 (2023) |
+| Strasbourg | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Wien | `lau` | 2026-09-30T20:22:42Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,005,760 (2024) |
 | Wien | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Warszawa | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,861,599 (2024) |
+| Warszawa | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Wrocław | `lau` | 2026-09-30T20:22:42Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673,743 (2024) |
 | Wrocław | `fua` | no current run | none | no history runs | none, no per-100k figure |
 <!-- /generated:cities -->
+
+The trust gate (see below) compares the area of the GISCO LAU polygon with that of the city's OSM administrative relation. Where the two differ by more than the threshold in `config/trust.yaml`, the city can be switched to the OSM relation, and `admin_boundary` in `config/cities.yaml` records that choice [M5 spec §3.1]. The next table lists, per city, the source of the admin boundary and of the population figure, as stored with the boundary and the runs.
+
+<!-- generated:sources -->
+| City | Admin boundary (LAU) | Population source |
+|---|---|---|
+| Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
+| København | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Kraków | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Lyon | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123) |
+| Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat demo_r_pjangrp3 FR101 2024 |
+| Strasbourg | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-67482) |
+| Wien | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Warszawa | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Wrocław | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+<!-- /generated:sources -->
+
+## Country trust gate
+
+A city enters the report only when its country is trusted in `config/trust.yaml`. Cities of other countries can be run and diagnosed, but no report surface shows them [M5 spec §3.3]. Two checks come before a country is trusted:
+
+- **Diagnostics.** They are computed from each city's current LAU run on the report classifier. They measure the share of cycling-tagged km that no rule recognises, the share that is excluded, tier B's share of A+B, and the area difference between the GISCO LAU polygon and the OSM relation. The thresholds are in `config/trust.yaml`. A value over its threshold needs a written note in the country's review file [M5 spec §3.1].
+- **A golden sample** of about 12 ways per new country, chosen by query from the country's current snapshot. The tiers of each way are checked by hand and signed off. A test then holds the report classifier to them [M5 spec §3.2].
+
+`velometer trust --check` fails when
+
+- a share threshold in `config/trust.yaml` is still the placeholder 1.0;
+- a trusted country with cities in the configuration has no diagnostics file, or its diagnostics were computed on a run that is no longer the city's current LAU run;
+- a diagnostic value breaks its threshold without a note in the country's review file;
+- for a country with a golden sample: a golden way is unconfirmed, confirmed ways no longer match the report classifier, or the sample was reviewed on a classifier other than the report classifier [M5 spec §3.3].
+
+Germany needs no diagnostics file: it rests on the Berlin golden set of M1, which predates the trust gate. France, Poland, Austria and Denmark were trusted through the M2 reconciliation and have no golden sample of their own [M5 spec, decision 7].
+
+<!-- generated:trust -->
+| Country | Status | Basis | Classifier reviewed | Signed off | Golden ways confirmed |
+|---|---|---|---|---|---|
+| AT | trusted | M2 reconciliation | – | – | none |
+| DE | trusted | Berlin golden set (M1) | – | – | none |
+| DK | trusted | M2 reconciliation | – | – | none |
+| FR | trusted | M2 reconciliation | – | – | none |
+| PL | trusted | M2 reconciliation | – | – | none |
+<!-- /generated:trust -->
 
 ## History snapshots
 
@@ -161,13 +214,16 @@ Every number traces to a run. A run records the git commit, the classifier versi
 
 <!-- generated:limitations -->
 - All OSM lengths are mapped km, not built km. A rise can come from construction, but also from a mapping campaign, an import or a change in tagging practice. No figure here states what a city has built [ADR 0006].
-- The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it is the figure of the identical NUTS3 unit [ADR 0004]. The same value is used for every snapshot year, so per-100k values do not follow population change [M3 spec, decision 2].
+- The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it is a cited national-statistics figure described below, or else the figure of the identical NUTS3 unit [ADR 0004] or of the Urban Audit city. The same value is used for every snapshot year, so per-100k values do not follow population change [M3 spec, decision 2].
 - FUA runs carry no population, so the FUA has no per-100k figure [M4 spec §4.4; `city_boundary` in `sources/boundaries.py` returns a population only for the LAU]. The FUA serves as a robustness check [ADR 0004].
 - The tiers do not consider width or surface. A narrow or rough cycle track counts like any other way of its tier. The share of lengths tagged with `width`, `surface` and `segregated` is recorded per tier as a diagnostic only [ADR 0002, ADR 0006].
 - Tagging that the classifier recognises but does not treat as cycling infrastructure, for example `cycleway=shoulder` or an untyped `cycleway=yes`, is classified as excluded and counts in no preset (see the rules table). Road sides with cycling tags that no rule matches are reported as unrecognised km. They are not added to any tier [M3 R11; classifier v2, decided after M3].
 - Clean Cities 2025 used city-submitted figures for most cities and OSM only as a fallback. The `clean_cities_2025` preset reproduces that fallback method, not the published numbers [ADR 0001, ADR 0003]. QECIO v2.10 publishes results only per NUTS3 region, frozen in January 2024. A NUTS3 region need not match the city boundary [ADR 0001].
 - A run records the git commit it ran from. When the working tree had uncommitted changes, the commit carries the suffix `-dirty` and does not pin the code exactly. Most M3 history runs (classifier v1) carry it, because docs and scripts were uncommitted while they ran [M3 R19]. They are superseded by the M4 runs and not shown; no run in this report carries the suffix [M4 spec §3.4].
 - History snapshots are cut from Geofabrik full-history files, which end on the date they were downloaded. The current run reads public extracts, whose OSM timestamp can be a different date. The mapping activity of the current point ends where the history file ends [M3 R9]. A current run merged from several regions takes the oldest region timestamp [M4 spec §3.2].
+- The trust gate checks tagging practice, not whether the map is complete. Its thresholds catch cycling tags that the classifier does not recognise or excludes, an unusually high share of tier B in A+B, and an admin boundary that differs from the OSM relation [M5 spec §3.1]. The golden sample has about 12 ways per new country. That is too few to cover every local tagging habit [M5 spec §3.2]. France, Poland, Austria and Denmark have no golden sample of their own: they were trusted through the M2 reconciliation of their pilot cities [M5 spec, decision 7].
+- Some cities have no LAU population, and neither their NUTS3 unit (a province or département) nor their Urban Audit city (a greater city) matches the municipality. Their population is the official figure of the national statistics office, cited with its year and URL in `config/cities.yaml` (`population_override`) [M5 spec, decision 9; Task 13c]. That year may not be 2024, so their per-100k values can rest on a different year than those of the other cities. The tables above give the year and source of each figure. This applies to Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale) and Strasbourg (INSEE populations de référence 2023, population municipale).
+- QECIO v2.10 publishes results per NUTS3 region. Where that region is not the city, the QECIO figure covers a different area than our runs. Its comparison rows then carry the note "NUTS3 unit is not the city", and the rankings chart marks the city with † [M5 spec §4.3]. This applies to Bordeaux, København, Lyon and Strasbourg.
 <!-- /generated:limitations -->
 
 ## Licences

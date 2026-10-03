@@ -99,7 +99,7 @@ Jede Stadt wird auf zwei Gebietsgrenzen berechnet [ADR 0004]:
 - **LAU** ist die Stadtgrenze: die lokale Verwaltungseinheit von Eurostat GISCO, Stand 2024. Sie ist der Standard. Fehlt ein sauberes LAU-Polygon, tritt die administrative OSM-Relation an seine Stelle.
 - **FUA** ist der funktionale Stadtraum (Functional Urban Area), also die Stadt mit ihrem Pendlereinzugsgebiet. Er dient als Robustheitsprüfung.
 
-Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]. Für alle Stichjahre gilt derselbe Einwohnerwert von 2024 [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
+Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Besteht eine Stadt aus mehreren LAU (`lau_codes`), gilt die Summe ihrer Werte, und nur, wenn jede einen Wert hat. Fehlt der LAU-Wert, liefert ihn die amtliche Einwohnerzahl des nationalen Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`). Fehlt auch diese, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]; gibt es keine NUTS-3-Einheit, die mit der Stadt übereinstimmt, stammt der Wert aus der Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit einem Wert [M5-Spezifikation, Entscheidung 9; `population` in `sources/boundaries.py`]. Für alle Stichjahre gilt derselbe Einwohnerwert [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
 
 Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten Läufe, den Verlaufsdatensatz und die Einwohnerzahl.
 
@@ -108,15 +108,68 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 |---|---|---|---|---|---|
 | Berlin | `lau` | 2026-09-30T20:22:42Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3.782.202 (2024) |
 | Berlin | `fua` | 2026-09-30T20:22:42Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Bordeaux | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 267.991 (2023) |
+| Bordeaux | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | København | `lau` | 2026-09-30T20:22:42Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659.350 (2024) |
 | København | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Kraków | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 806.201 (2024) |
+| Kraków | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Lyon | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 519.127 (2023) |
+| Lyon | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Paris | `lau` | 2026-09-30T20:22:42Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.084.894 (2024) |
 | Paris | `fua` | 2026-09-30T20:22:42Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Strasbourg | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 293.771 (2023) |
+| Strasbourg | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Wien | `lau` | 2026-09-30T20:22:42Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.005.760 (2024) |
 | Wien | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Warszawa | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.861.599 (2024) |
+| Warszawa | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Wrocław | `lau` | 2026-09-30T20:22:42Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673.743 (2024) |
 | Wrocław | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 <!-- /generated:cities -->
+
+Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons mit der Fläche der administrativen OSM-Relation der Stadt verglichen. Weichen beide stärker voneinander ab, als der Schwellenwert in `config/trust.yaml` zulässt, kann die Stadt auf die OSM-Relation umgestellt werden; `admin_boundary` in `config/cities.yaml` hält diese Wahl fest [M5-Spezifikation §3.1]. Die folgende Tabelle nennt je Stadt die Quelle der Verwaltungsgrenze und der Einwohnerzahl, so wie sie mit der Gebietsgrenze und den Läufen gespeichert sind.
+
+<!-- generated:sources -->
+| Stadt | Verwaltungsgrenze (LAU) | Quelle der Einwohnerzahl |
+|---|---|---|
+| Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
+| København | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Kraków | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Lyon | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123) |
+| Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat demo_r_pjangrp3 FR101 2024 |
+| Strasbourg | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-67482) |
+| Wien | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Warszawa | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Wrocław | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+<!-- /generated:sources -->
+
+## Freigabe je Land
+
+Eine Stadt kommt erst in die Auswertung, wenn ihr Land in `config/trust.yaml` freigegeben ist. Städte anderer Länder lassen sich berechnen und prüfen, erscheinen aber in keinem Teil der Auswertung [M5-Spezifikation §3.3]. Vor der Freigabe eines Landes stehen zwei Prüfungen:
+
+- **Diagnose.** Sie wird aus dem aktuellen LAU-Lauf jeder Stadt mit dem Klassifikator der Auswertung berechnet. Gemessen werden der Anteil der Kilometer mit Radverkehrs-Tags, den keine Regel erkennt, der ausgeschlossene Anteil, der Anteil der Stufe B an A+B und der Flächenunterschied zwischen dem GISCO-LAU-Polygon und der OSM-Relation. Die Schwellenwerte stehen in `config/trust.yaml`. Liegt ein Wert darüber, muss die Prüfdatei des Landes ihn schriftlich begründen [M5-Spezifikation §3.1].
+- **Eine Referenzstichprobe** von etwa 12 Wegen je neuem Land, per Abfrage aus dem aktuellen Stand des Landes ausgewählt. Die Stufen jedes Wegs werden von Hand geprüft und abgezeichnet. Ein Test stellt danach sicher, dass der Klassifikator der Auswertung diese Wege weiterhin so einstuft [M5-Spezifikation §3.2].
+
+`velometer trust --check` schlägt fehl, wenn
+
+- ein Schwellenwert für einen Anteil in `config/trust.yaml` noch auf dem Platzhalter 1,0 steht;
+- ein freigegebenes Land mit Städten in der Konfiguration keine Diagnosedatei hat oder seine Diagnose auf einem Lauf beruht, der nicht mehr der aktuelle LAU-Lauf der Stadt ist;
+- ein Diagnosewert seinen Schwellenwert ohne Begründung in der Prüfdatei des Landes überschreitet;
+- bei einem Land mit Referenzstichprobe Referenzwege unbestätigt sind, der Klassifikator der Auswertung bestätigte Wege anders einstuft oder die Stichprobe mit einem anderen Klassifikator geprüft wurde als dem der Auswertung [M5-Spezifikation §3.3].
+
+Deutschland braucht keine Diagnosedatei: Es stützt sich auf die Berliner Referenzstichprobe aus M1, die älter ist als die Freigabe je Land. Frankreich, Polen, Österreich und Dänemark wurden über den Abgleich mit veröffentlichten Zahlen in M2 freigegeben und haben keine eigene Stichprobe [M5-Spezifikation, Entscheidung 7].
+
+<!-- generated:trust -->
+| Land | Status | Grundlage | Geprüfter Klassifikator | Abgezeichnet am | Bestätigte Referenzwege |
+|---|---|---|---|---|---|
+| AT | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
+| DE | freigegeben | Berliner Referenzstichprobe (M1) | – | – | keine |
+| DK | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
+| FR | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
+| PL | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
+<!-- /generated:trust -->
 
 ## Jahresstände
 
@@ -161,13 +214,16 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 
 <!-- generated:limitations -->
 - Alle OSM-Längen sind kartierte Kilometer, keine gebauten Kilometer. Ein Zuwachs kann auf Bau zurückgehen, aber auch auf eine Kartierungsaktion, einen Import oder eine geänderte Erfassungspraxis. Keine der Zahlen hier besagt, was eine Stadt gebaut hat [ADR 0006].
-- Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004]. Derselbe Wert gilt für jedes Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab [M3-Spezifikation, Entscheidung 2].
+- Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt der unten beschriebene, belegte Wert des nationalen Statistikamts, ersatzweise der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004] oder der Urban-Audit-Stadt. Derselbe Wert gilt für jedes Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab [M3-Spezifikation, Entscheidung 2].
 - FUA-Läufe führen keine Einwohnerzahl. Für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4; `city_boundary` in `sources/boundaries.py` liefert eine Einwohnerzahl nur für die LAU]. Die FUA dient als Robustheitsprüfung [ADR 0004].
 - Die Stufen berücksichtigen weder Breite noch Oberfläche. Ein schmaler oder holpriger Radweg zählt wie jeder andere Weg seiner Stufe. Der Längenanteil mit `width`, `surface` und `segregated` wird je Stufe nur als Diagnose erfasst [ADR 0002, ADR 0006].
 - Erfassungen, die der Klassifikator erkennt, aber nicht als Radverkehrsanlage wertet, etwa `cycleway=shoulder` oder ein `cycleway=yes` ohne Typ, gelten als ausgeschlossen und zählen in keiner Kennzahlvariante (siehe Regeltabelle). Straßenseiten mit Radverkehrs-Tags, auf die keine Regel passt, werden als nicht erkannte Kilometer ausgewiesen. Sie fließen in keine Stufe ein [M3 R11; Klassifikator v2, nach M3 entschieden].
 - Clean Cities 2025 hat für die meisten Städte von den Städten gemeldete Zahlen verwendet und OSM nur ersatzweise. Die Kennzahlvariante `clean_cities_2025` bildet diese Ersatzmethode nach, nicht die veröffentlichten Zahlen [ADR 0001, ADR 0003]. QECIO v2.10 veröffentlicht Ergebnisse nur je NUTS-3-Region, Stand Januar 2024. Eine NUTS-3-Region muss nicht mit der Stadtgrenze übereinstimmen [ADR 0001].
 - Jeder Lauf speichert den Git-Commit, mit dem er erstellt wurde. Gab es dabei nicht committete Änderungen im Arbeitsverzeichnis, trägt der Commit die Endung `-dirty` und legt den Code nicht genau fest. Die meisten historischen Läufe aus M3 (Klassifikator v1) tragen diese Endung, weil Dokumentation und Skripte während der Läufe nicht committet waren [M3 R19]. Sie sind durch die Läufe aus M4 ersetzt und werden nicht gezeigt; kein Lauf in diesem Bericht trägt die Endung [M4-Spezifikation §3.4].
 - Die Jahresstände werden aus Geofabrik-Dateien mit vollständiger Versionsgeschichte geschnitten. Diese enden am Tag ihres Downloads. Der aktuelle Lauf liest öffentliche Extrakte, deren OSM-Zeitstempel ein anderes Datum haben kann. Die Kartierungsaktivität des aktuellen Stands endet dort, wo die Verlaufsdatei endet [M3 R9]. Ein aktueller Lauf aus mehreren zusammengeführten Regionen trägt den ältesten Zeitstempel der Regionen [M4-Spezifikation §3.2].
+- Die Freigabe je Land prüft die Erfassungspraxis, nicht die Vollständigkeit der Karte. Ihre Schwellenwerte schlagen an bei Radverkehrs-Tags, die der Klassifikator nicht erkennt oder ausschließt, bei einem ungewöhnlich hohen Anteil der Stufe B an A+B und bei einer Verwaltungsgrenze, die von der OSM-Relation abweicht [M5-Spezifikation §3.1]. Die Referenzstichprobe umfasst etwa 12 Wege je neuem Land. Das reicht nicht, um jede örtliche Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen, Österreich und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich ihrer Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
+- Für einige Städte gibt es keine LAU-Einwohnerzahl, und weder ihre NUTS-3-Einheit (eine Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`) [M5-Spezifikation, Entscheidung 9; Task 13c]. Das Jahr muss nicht 2024 sein; ihre Werte je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben. Das betrifft Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale) und Strasbourg (INSEE populations de référence 2023, population municipale).
+- QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die Stadt, bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Ihre Vergleichszeilen tragen dann den Hinweis „NUTS3 unit is not the city“, und das Ranglistendiagramm kennzeichnet die Stadt mit † [M5-Spezifikation §4.3]. Das betrifft Bordeaux, København, Lyon und Strasbourg.
 <!-- /generated:limitations -->
 
 ## Lizenzen
