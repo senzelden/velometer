@@ -3,7 +3,7 @@
 report_classifier: v2
 # chart roles: highlighted city, coloured comparison set; every other city is grey context
 highlight: [berlin]
-comparison_set: [paris, copenhagen, vienna]
+comparison_set: [paris, copenhagen, vienna, amsterdam]
 rankings:
   - {id: ours_headline, label: "Ours: headline", kind: preset, preset: ours_headline}
   - {id: ours_ecf_qecio, label: "Ours: QECIO method", kind: preset, preset: ecf_qecio}
