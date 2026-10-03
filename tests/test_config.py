@@ -311,3 +311,38 @@ def test_a_city_in_both_role_lists_is_a_config_error(tmp_path: Path):
     path = _role_report(tmp_path, highlight="[berlin]", comparison_set="[berlin, paris]")
     with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*both.*berlin"):
         load_report(path)
+
+
+def test_lau_codes_validation_and_exclusivity_with_lau_code():
+    c = CityConfig.model_validate({**BERLIN, "lau_code": None, "lau_codes": ["SK_A", "SK_B"]})
+    assert c.lau_codes == ["SK_A", "SK_B"] and c.lau_code is None
+    with pytest.raises(ValidationError):  # both set
+        CityConfig.model_validate({**BERLIN, "lau_code": "DE_1", "lau_codes": ["SK_A", "SK_B"]})
+    with pytest.raises(ValidationError):  # a single code belongs in lau_code
+        CityConfig.model_validate({**BERLIN, "lau_code": None, "lau_codes": ["SK_A"]})
+    assert CityConfig.model_validate({**BERLIN, "lau_code": None}).lau_codes is None
+
+
+OVERRIDE = {
+    "value": 522250,
+    "year": 2022,
+    "source": "INSEE population légale 2022",
+    "source_url": "https://www.insee.fr/fr/statistiques/example",
+}
+
+
+def test_population_override_validation():
+    c = CityConfig.model_validate({**BERLIN, "population_override": OVERRIDE})
+    assert c.population_override.value == 522250 and c.population_override.year == 2022
+    assert CityConfig.model_validate(BERLIN).population_override is None
+    for bad in (
+        {"value": 0},
+        {"value": -3},
+        {"year": 1999},
+        {"year": 2031},
+        {"source": "  "},
+        {"source_url": "http://insee.fr/x"},
+        {"source_url": "insee.fr/x"},
+    ):
+        with pytest.raises(ValidationError):
+            CityConfig.model_validate({**BERLIN, "population_override": {**OVERRIDE, **bad}})

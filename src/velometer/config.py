@@ -35,6 +35,29 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class PopulationOverride(_Strict):
+    """A cited national-statistics population, used only when GISCO LAU has none."""
+
+    value: int = Field(gt=0)
+    year: int = Field(ge=2000, le=2030)
+    source: str  # e.g. "INSEE population légale 2022"
+    source_url: str
+
+    @field_validator("source")
+    @classmethod
+    def _source_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("population_override.source must name the statistic")
+        return v
+
+    @field_validator("source_url")
+    @classmethod
+    def _https(cls, v: str) -> str:
+        if not v.startswith("https://"):
+            raise ValueError("population_override.source_url must start with https://")
+        return v
+
+
 class CityConfig(_Strict):
     id: str = Field(pattern=r"^[a-z0-9_]+$")
     name: str
@@ -43,6 +66,9 @@ class CityConfig(_Strict):
     geofabrik_region: str
     osm_relation_id: int = Field(gt=0)
     lau_code: str | None = None
+    # A city without one GISCO LAU polygon (Bratislava): the admin layer is the union of these
+    # LAU polygons and its population the sum of their POP_2024. Exclusive with lau_code.
+    lau_codes: list[str] | None = Field(default=None, min_length=2)
     fua_code: str | None = None
     nuts3_code: str | None = None  # NUTS3 unit for QECIO matching (may be larger than the city)
     # NUTS3 unit identical to the commune: the population fallback when LAU has none
@@ -53,6 +79,8 @@ class CityConfig(_Strict):
     # Urban Audit city code (urb_cpop1): the population fallback when LAU has none and
     # population_nuts3 is unset
     population_urau: str | None = None
+    # Cited national-statistics population (INSEE, INE); fills a gap in LAU, wins over NUTS3/URAU
+    population_override: PopulationOverride | None = None
     # Reason for an EPSG that is not the UTM zone of the boundary centroid (only the adjacent
     # zone is accepted, see sources.boundaries.check_epsg)
     epsg_exception: str | None = None
@@ -62,6 +90,12 @@ class CityConfig(_Strict):
     nuts3_is_city: bool | None = None
     # Free-text caveat appended to the QECIO row notes of this city
     nuts3_note: str | None = None
+
+    @model_validator(mode="after")
+    def _one_lau_source(self) -> "CityConfig":
+        if self.lau_code and self.lau_codes:
+            raise ValueError("set lau_code or lau_codes, not both")
+        return self
 
     @field_validator("epsg_exception")
     @classmethod

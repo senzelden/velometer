@@ -7,7 +7,7 @@ import shapely
 from shapely import MultiPolygon, Polygon
 from shapely.geometry import box
 
-from velometer.config import CityConfig
+from velometer.config import CityConfig, PopulationOverride
 from velometer.sources import boundaries as b
 
 CITY = CityConfig(
@@ -368,3 +368,97 @@ def test_epsg_exception_accepts_only_the_adjacent_zone():
     two_away = CITY.model_copy(update={"epsg": 25831, "epsg_exception": "national standard"})
     with pytest.raises(ValueError, match="EPSG 25831"):
         b.check_epsg(two_away, poly)
+
+
+def _multi_city(**kw):
+    return CITY.model_copy(update={"lau_code": None, "lau_codes": ["SK_A", "SK_B"], **kw})
+
+
+def _two_lau(tmp_path, pops=(10, 20)):
+    return _gpkg(
+        tmp_path / "multi.gpkg",
+        [
+            ("SK_A", MultiPolygon([_sq(4.5e6, 3.27e6)]), pops[0]),
+            ("SK_B", MultiPolygon([_sq(4.502e6, 3.27e6, 2000)]), pops[1]),
+            ("SK_OTHER", MultiPolygon([_sq(4.6e6, 3.27e6)]), 99),
+        ],
+    )
+
+
+def _stub_multi(monkeypatch, gpkg):
+    monkeypatch.setattr(b, "fetch_gisco", lambda d: (gpkg, gpkg))
+
+
+def test_multi_lau_boundary_is_the_union_with_summed_population(tmp_path, monkeypatch):
+    _stub_multi(monkeypatch, _two_lau(tmp_path))
+    rec, pop = b.city_boundary(_multi_city(), "lau", tmp_path / "data")
+    assert rec.boundary.kind == "lau"
+    assert rec.boundary.area_km2 == pytest.approx(1.0 + 4.0, rel=0.02)
+    assert rec.boundary.source == "Eurostat GISCO"
+    assert rec.boundary.source_version == "LAU 2024 (1:1M), union of 2 LAU"
+    assert (pop.value, pop.year) == (30, 2024)
+    assert pop.source == "GISCO LAU 2024 POP_2024 (sum of 2 LAU)"
+
+
+def test_multi_lau_missing_or_duplicate_code_names_the_code(tmp_path, monkeypatch):
+    _stub_multi(monkeypatch, _two_lau(tmp_path))
+    with pytest.raises(ValueError, match="SK_MISSING"):
+        b.city_boundary(_multi_city(lau_codes=["SK_A", "SK_MISSING"]), "lau", tmp_path / "d")
+    dup = _gpkg(
+        tmp_path / "dup.gpkg",
+        [
+            ("SK_A", MultiPolygon([_sq(4.5e6, 3.27e6)]), 1),
+            ("SK_B", MultiPolygon([_sq(4.6e6, 3.27e6)]), 1),
+            ("SK_B", MultiPolygon([_sq(4.7e6, 3.27e6)]), 1),
+        ],
+    )
+    _stub_multi(monkeypatch, dup)
+    with pytest.raises(ValueError, match="SK_B"):
+        b.city_boundary(_multi_city(), "lau", tmp_path / "d")
+
+
+def test_multi_lau_boundary_gets_the_epsg_check(tmp_path, monkeypatch):
+    _stub_multi(monkeypatch, _two_lau(tmp_path))
+    with pytest.raises(ValueError, match="EPSG 25832"):
+        b.city_boundary(_multi_city(epsg=25832), "lau", tmp_path / "d")
+
+
+def test_multi_lau_with_a_feature_lacking_population_gives_no_partial_sum(tmp_path, monkeypatch):
+    payload = {"value": {"0": 777}}
+    city = _multi_city(population_nuts3="DE300")
+    for bad in (0, -1):
+        _stub_multi(monkeypatch, _two_lau(tmp_path, pops=(10, bad)))
+        _, pop = b.city_boundary(city, "lau", tmp_path / "d", fetch_json=lambda u: payload)
+        assert pop.value == 777 and "demo_r_pjangrp3" in pop.source  # never 10
+    # direct, with a NaN and a missing feature
+    props = [{"POP_2024": 10.0}, {"POP_2024": float("nan")}]
+    assert b.population(_multi_city(), props) is None
+    assert b.population(_multi_city(), [{"POP_2024": 10.0}, {}]) is None
+
+
+OVERRIDE = PopulationOverride(
+    value=522250,
+    year=2022,
+    source="INSEE population légale 2022",
+    source_url="https://www.insee.fr/x",
+)
+
+
+def test_population_override_only_fills_a_gap_in_lau():
+    city = CITY.model_copy(update={"population_override": OVERRIDE})
+    boom = lambda url: pytest.fail("net")  # noqa: E731
+    pop = b.population(city, {"POP_2024": 0}, fetch_json=boom)
+    assert (pop.value, pop.year) == (522250, 2022)
+    assert pop.source == "INSEE population légale 2022 (https://www.insee.fr/x)"
+    pop = b.population(city, {"POP_2024": 3782202}, fetch_json=boom)  # positive LAU wins
+    assert pop.value == 3782202 and pop.source == "GISCO LAU 2024 POP_2024"
+    # the override beats NUTS3 and URAU
+    both = city.model_copy(update={"population_nuts3": "DE300", "population_urau": "FR003C"})
+    assert b.population(both, {"POP_2024": None}, fetch_json=boom).value == 522250
+
+
+def test_multi_lau_with_partial_population_uses_the_override(tmp_path, monkeypatch):
+    _stub_multi(monkeypatch, _two_lau(tmp_path, pops=(10, 0)))
+    city = _multi_city(population_override=OVERRIDE)
+    _, pop = b.city_boundary(city, "lau", tmp_path / "d")
+    assert pop.value == 522250

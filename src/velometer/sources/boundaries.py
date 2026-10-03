@@ -137,12 +137,34 @@ def load_boundary_polygon(geojson_path: Path, epsg: int) -> BaseGeometry:
     return _valid_polygonal(_to(_valid_polygonal(geom), 4326, epsg))
 
 
+def _positive(raw: object) -> bool:
+    return raw is not None and not math.isnan(raw) and raw > 0  # type: ignore[operator]
+
+
+def _lau_population(lau_props: dict | list[dict]) -> Population | None:
+    if isinstance(lau_props, dict):
+        raw = lau_props.get("POP_2024")
+        if _positive(raw):
+            return Population(value=int(raw), year=2024, source="GISCO LAU 2024 POP_2024")
+        return None
+    raws = [p.get("POP_2024") for p in lau_props]
+    if not raws or not all(_positive(r) for r in raws):  # never a partial sum
+        return None
+    return Population(
+        value=int(sum(raws)),
+        year=2024,
+        source=f"GISCO LAU 2024 POP_2024 (sum of {len(raws)} LAU)",
+    )
+
+
 def population(
-    city: CityConfig, lau_props: dict, fetch_json: Callable[[str], dict] | None = None
+    city: CityConfig, lau_props: dict | list[dict], fetch_json: Callable[[str], dict] | None = None
 ) -> Population | None:
-    raw = lau_props.get("POP_2024")
-    if raw is not None and not math.isnan(raw) and raw > 0:
-        return Population(value=int(raw), year=2024, source="GISCO LAU 2024 POP_2024")
+    """LAU POP_2024 (or the sum over lau_codes) -> population_override -> NUTS3 -> URAU."""
+    if (pop := _lau_population(lau_props)) is not None:
+        return pop
+    if (o := city.population_override) is not None:
+        return Population(value=o.value, year=o.year, source=f"{o.source} ({o.source_url})")
     # Only a NUTS3 unit identical to the commune may stand in (spec section 2.7); nuts3_code is
     # for QECIO matching and can be larger (Copenhagen DK011).
     nuts3 = city.population_nuts3
@@ -190,23 +212,38 @@ def _get_json(url: str) -> dict:
         return r.json()
 
 
+def _select_all(gpkg: Path, codes: list[str]) -> tuple[BaseGeometry, list[dict]]:
+    """Union of the LAU features `codes`, and their properties; each code must match once."""
+    found = [select_feature(gpkg, "GISCO_ID", code) for code in codes]
+    return shapely.union_all([_valid_polygonal(g) for g, _ in found]), [p for _, p in found]
+
+
 def city_boundary(
-    city: CityConfig, kind: str, data_dir: Path, region_path: Path | None = None
+    city: CityConfig,
+    kind: str,
+    data_dir: Path,
+    region_path: Path | None = None,
+    fetch_json: Callable[[str], dict] | None = None,
 ) -> tuple[BoundaryRecord, Population | None]:
     if kind in ("lau", "fua"):
+        multi = kind == "lau" and bool(city.lau_codes)
         code = city.lau_code if kind == "lau" else city.fua_code
-        if not code:
+        if not code and not multi:
             raise ValueError(f"{city.id}: no {kind}_code configured")
         lau, fua = fetch_gisco(data_dir)
         gpkg, field = (lau, "GISCO_ID") if kind == "lau" else (fua, FUA_FIELD)
-        geom, props = select_feature(gpkg, field, code)
+        if multi:
+            geom, props = _select_all(gpkg, city.lau_codes)
+        else:
+            geom, props = select_feature(gpkg, field, code)
         if kind == "lau" and city.admin_boundary == "osm_relation":
             if region_path is None:
                 raise ValueError("an osm_relation admin boundary needs the Geofabrik region file")
             rec = _osm_relation_boundary(city, "lau", region_path, data_dir)
-            return rec, population(city, props)
-        rec = write_boundary(city, kind, geom, "Eurostat GISCO", data_dir)
-        return rec, (population(city, props) if kind == "lau" else None)
+            return rec, population(city, props, fetch_json)
+        version = f"{GISCO_VERSION['lau']}, union of {len(city.lau_codes)} LAU" if multi else None
+        rec = write_boundary(city, kind, geom, "Eurostat GISCO", data_dir, source_version=version)
+        return rec, (population(city, props, fetch_json) if kind == "lau" else None)
     if region_path is None:
         raise ValueError("osm_admin boundaries need the city's Geofabrik region file")
     return _osm_relation_boundary(city, "osm_admin", region_path, data_dir), None

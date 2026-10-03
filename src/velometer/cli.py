@@ -554,7 +554,7 @@ def boundaries_fetch(
         for c in selected:
             region_path = None
             for k in kinds:
-                code = {"lau": c.lau_code, "fua": c.fua_code, "osm_admin": True}[k]
+                code = {"lau": c.lau_code or c.lau_codes, "fua": c.fua_code, "osm_admin": True}[k]
                 if not code and kind == "all":
                     typer.echo(f"{c.id} {k} skipped (no code configured)")
                     continue
