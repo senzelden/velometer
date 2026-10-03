@@ -882,6 +882,39 @@ filter names such footways, but only 0.4 km of them occur in its Madrid edges; w
 out is not established. The boundaries agree: the BikeNetKit polygon is 603.9 km² against our
 LAU's 604.4 km², and they overlap on 598.6 km².
 
+### oslo/cc_ratio
+Cause: **definition** (numerator and network denominator each differ by about 11%, in opposite
+directions). Our per-side A+B is 346.1 km, 12.7% above Clean Cities' 307 km (`oslo/cc_km`, ok;
+on the centreline basis 338.0 km, +10.1%). Our public road network is 1,643.5 km, 10.7% below
+their 1,840 km (`oslo/cc_network_km`, ok). Neither gap alone reaches 20%, but together they do:
+346.1 / 1,840 = 18.8%, against their 17%. The date gap (506 days) explains little, because A+B
+was 334.8 km on 2025-01-01 and 339.1 km on 2026-01-01. The boundary is not the cause either.
+Clean Cities' 480.8 km² matches the OSM relation (480.48 km², with Oslofjord water), not our
+GISCO LAU (454.98 km²). But on the relation (run 222; run only with v2, used here as a boundary comparison) A+B is 348.5 km and the network is
+1,647.3 km, a 21.2% ratio (see `oslo/boundary_diff_pct` in `docs/review/trust/NO.md`). The
+per-city source is unverified (research doc §6).
+
+### oslo/qecio_tracks_km
+Cause: **date** (retagging after QECIO's snapshot). NO081 is the city (QECIO area 454.86 km²
+vs our LAU 454.98 km²), and QECIO's main roads agree with ours (`oslo/qecio_main_km`, −0.4%).
+On our 2024-01-01 history run, ten days before QECIO's 2024-01-11 snapshot, tier A plus
+B/segregated is 90.6 km centreline, +2.1% against QECIO's 88.7 km. Since then, 458 sides of
+`highway=cycleway` (42.3 km per side) changed from `foot=yes` (or no `foot` tag) to
+`foot=designated` (e.g. way 80874349, way 109810802). That moves them from `A_cycleway` to
+`B_cycleway_foot`, the Norwegian combined foot and cycle path, and from QECIO's "cycle tracks" to
+its "shared with pedestrians". Tier A fell 90.6 -> 54.2 km centreline. Total infrastructure
+still agrees (`oslo/qecio_total_km`, +1.2%).
+
+### oslo/qecio_shared_km
+Cause: **date**, the other side of `oslo/qecio_tracks_km`. On our 2024-01-01 history run, tier
+B without B/segregated is 231.9 km centreline, +6.3% against QECIO's 218.1 km. It is now
+283.8 km (+51.9 km). The gains are `highway=cycleway` retagged from `foot=yes` (or no
+`foot` tag) to `foot=designated` (A -> B, 41.8 km, way 80874349), footways and paths retagged as `highway=cycleway` +
+`foot=designated` (12.2 km, e.g. way 39177701) and new ways (4.4 km). Ways deleted or retagged
+out of B offset part of them. The
+mapping matches the gang- og sykkelvei note in `docs/review/trust/NO.md`
+(`oslo/b_share_of_ab`).
+
 ### paris/cc_ratio
 Cause: **definition** (source and scope of the Clean Cities numerator). The denominators agree
 (our 1,555.8 km vs 1,700 km, −8.5%), but Clean Cities' 822 km protected cannot be reproduced

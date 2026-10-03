@@ -1199,6 +1199,32 @@ so the excess comes from the city. 26,468 edits create `highway=footway`. The to
 April 1,694, May 1,098). 4,975 changesets, top changeset 1.0%. A+B rose 1,130.1 -> 1,180.5 mapped km
 (+4.5%, below the 10% jump threshold).
 
+### oslo/lau/2021
+
+Cause: **tag drift** (gang- og sykkelvei retagging), with **mapping activity** second. A+B rose
+265.9 -> 300.4 km (+34.5 km, +13.0%; the rule needs 26.6), all in tier B (155.1 -> 191.5) while
+A was flat (110.8 -> 108.9). During 2020, 265 existing footways and paths were retagged as
+combined foot and cycle paths, `highway=footway` -> `highway=cycleway` + `bicycle=designated` +
+`foot=designated` (rule `B_cycleway_foot`, +26.3 km; e.g. way 3692715, 1.0 km; way 98638646).
+This is how Norway's standard facility is mapped (see `oslo/b_share_of_ab` in
+`docs/review/trust/NO.md`). Newly drawn ways added 8.2 km of `A_cycleway` and 6.8 km of
+`B_cycleway_foot`. Deletions, retags out of A/B and geometry edits net to −6.7 km. Activity was ordinary: 7,193
+counted edits (6,158 the year before), 111 mappers, top-mapper share 0.36.
+
+### oslo/fua/2021
+
+Cause: **mapping activity** (combined foot and cycle paths drawn as separate ways), with
+**tag drift** second. A+B rose 1,656.8 -> 1,854.6 km (+197.8 km, +11.9%; the rule needs 165.7):
+B +317.8 km, A −120.0 km. Three changes during 2020 make it up. First, 1,351 new
+`highway=cycleway` + `foot=designated` ways (+178.0 km of `B_cycleway_foot`, e.g. way 815611705,
+3.5 km), of which only 6.8 km lie in Oslo kommune, so the growth is in the surrounding
+municipalities. Second, existing footways, paths and tracks were retagged to the same scheme
+(+87.1 km, 588 ways; e.g. way 23330061, 4.8 km, `highway=footway` -> `cycleway`). Third,
+`highway=cycleway` was retagged from `foot=yes` (or no `foot` tag) to `foot=designated`, which
+moves it from `A_cycleway` to `B_cycleway_foot` (116.3 km, 447 sides; e.g. way 620971715), which explains the fall in tier A and is inside A+B. Deleted
+cycleways took off 35.4 km. Edits rose to 20,201 from 14,646 (281 mappers, top-mapper share 0.20),
+not a spike.
+
 ### paris/lau/2020
 
 Cause: **construction**, with **tag drift** in the legacy diagnostic. A+B rose 223.9 -> 257.3
