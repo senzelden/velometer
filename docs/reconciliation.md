@@ -425,24 +425,32 @@ Provenance: run 274 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cyclew
 
 ## Explanations
 
-<!-- explained-against: berlin=147 copenhagen=150 paris=148 vienna=149 wroclaw=151 -->
+<!-- explained-against: amsterdam=275 barcelona=278 berlin=270 bordeaux=284 bratislava=290 budapest=287 copenhagen=273 helsinki=281 krakow=286 ljubljana=289 lyon=282 madrid=277 oslo=280 paris=271 prague=288 stockholm=279 strasbourg=283 utrecht=276 vienna=272 warsaw=285 wroclaw=274 -->
 
-Evidence used below: tier and road km from the run rows (`velometer.sqlite`, runs 147–151, OSM
-2026-09-30, classifier v2, GISCO LAU 2024). These explanations were first written against the
-v1 runs 11–15 on the same snapshot. Against those, the v2 runs have identical road km and
-identical tier A–E km in every city except Berlin, where the `,` value separator adds 0.08 km
-to tier A per side (A+B 1,557.87 -> 1,557.96 km; centreline 918.34 -> 918.39 km); v2's other
-additions (`use_sidepath`, `shoulder`, `crossing`, untyped `yes`) are excluded and move only
-excluded and unrecognised km. On the Paris and Wrocław snapshots, v1 and v2 give every
-road side and way the same tier A–E (compared side by side on 2026-10-02), so the way-level
-analyses in `paris/qecio_shared_km` and `wroclaw/bnk_network_km`, first made with v1, hold
-for v2. Further evidence: the external rows and their notes, the QECIO v2.10
+Evidence used below: tier and road km from the run rows (`velometer.sqlite`, LAU runs 270–290,
+one per city, OSM 2026-10-02, classifier v3, GISCO LAU 2024), and way-level analyses of the same
+2026-10-02 snapshots classified with `config/classifier/v3.yaml` in the city's EPSG. The pilot
+explanations (Berlin, Copenhagen, Paris, Vienna, Wrocław) were first written against the v1 runs
+11–15 and the v2 runs 147–151 on the 2026-09-30 snapshot. They were re-checked against the v3
+runs, and the numbers that moved with the newer snapshot were updated. v3 adds only two road-side
+values (`soft_lane` and `advisory`, both tier D advisory); on the Berlin, Copenhagen, Paris and
+Vienna snapshots v2 and v3 give every road side the same tier. Where a QECIO NUTS3 unit is not
+the city (`nuts3_is_city: false` in `config/cities.yaml`, which also sets the
+`boundary_mismatch` tag), the explanations compare the categories' shares, our FUA, or our
+classifier measured over the region itself. BikeNetKit rows are decomposed by matching its edges'
+OSM way ids to our snapshot. Further evidence: the external rows and their notes, the QECIO v2.10
 Methodology PDF (Table 2) and `docs/research/m2-data-sources-2026-10-01.md`. "Centreline" means
 our `qecio_weighted` basis: a bidirectional way counts once and each one-way side counts half,
-which is how QECIO counts and, judging by Berlin and Wrocław, how the ECF tracker numbers in
-Clean Cities count. Our `cc_km` and the `clean_cities_2025` preset use the `per_side` basis, in
-which every side counts in full. The Clean Cities figures are dated 2025-05-14, 504 days before
-our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
+which is how QECIO counts and, judging by Berlin, how some Clean Cities figures count
+(Ljubljana's matches the per-side basis instead). Our `cc_km` and the `clean_cities_2025` preset
+use the `per_side` basis, in which every side counts in full. The Clean Cities figures are dated
+2025-05-14, 506 days before our snapshot; QECIO is dated 2024-01-10 (996 days) or 2024-01-11
+(995 days), depending on the region. Mapper data is aggregate only; no mapper is named.
+
+Causes used below: **definition** (the figure measures a different quantity: length basis,
+network scope, rounding or what counts as protected), **boundary** (a different outline of the
+same city), **scope** (a NUTS3 region much larger than the city) and **date** (the data changed
+between the figure's date and our snapshot).
 
 ### amsterdam/cc_ratio
 Cause: **definition** (network denominator). The numerator is close: our per-side A+B is 861.6 km

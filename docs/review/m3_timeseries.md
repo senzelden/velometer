@@ -7,8 +7,10 @@ FUA boundaries carry no population, so FUA series have no per-100k figure. Our n
 `--write`; everything outside it is hand-written.
 
 Classifier: the series reports `report_classifier` from `config/report.yaml`, currently
-**v2** (v1 plus recognised `use_sidepath`, `shoulder`, `crossing`, untyped `yes`, and `,` as a
-value separator). The v1 runs stay in the database; `--classifier v1` shows them.
+**v3** (v2 plus the road-side values `soft_lane` and `advisory`, counted as tier D advisory
+lanes; v2 is v1 plus recognised `use_sidepath`, `shoulder`, `crossing`, untyped `yes`, and `,`
+as a value separator). Runs of earlier classifiers stay in the database; `--classifier v2` (or
+`v1`, pilot cities only) reports them where they exist.
 
 Flag rules (`config/activity.yaml`, spec section 2.13): `km_jump`, `activity_spike`,
 `campaign_suspected`, `single_mapper`, `tag_drift`. Every flagged city-year needs an
@@ -754,11 +756,24 @@ Provenance: history runs 2018=341, 2019=342, 2020=343, 2021=344, 2022=345, 2023=
 
 How to read `tag_drift` here: the rule fires when `legacy_km` or `unrecognised_km` changes by
 at least 50% and by at least 5 km (`tag_drift_min_km`, scaled for the current point). The km
-floor was added on 2026-10-02: without it, 18 further city-years were flagged for moves of a few
-km or less, down to 0.1 -> 0.2 km. Way ids are OSM way ids; tag changes are quoted
-before -> after.
+floor was added on 2026-10-02: without it, the five pilot cities had 18 further city-years
+flagged for moves of a few km or less, down to 0.1 -> 0.2 km. Way ids are OSM way ids; tag
+changes are quoted before -> after. Mapper data is aggregate: counts of edits, changesets and
+mappers, and the top mapper's share; no mapper is named.
 
-<!-- explained-against: berlin/fua=1308e2c9 berlin/lau=c3335f42 copenhagen/lau=be41de5b paris/fua=df7be7ff paris/lau=7db1f306 vienna/lau=1254c077 wroclaw/lau=fda036ca -->
+Causes used below: **construction** (new infrastructure, built and mapped), **campaign** (a burst
+of mapping or retagging, mostly not cycling infrastructure or not new), **tag drift** (the same
+ways retagged, which moves km between tiers or diagnostics) and **mapping activity** (ordinary
+mapping that adds or redraws cycling ways where construction cannot be shown).
+
+Evidence: the v3 history runs and current runs listed in the tables above, and way-level diffs of
+consecutive yearly snapshots classified with `config/classifier/v3.yaml` in the city's EPSG. The
+pilot explanations (Berlin, Paris, Vienna, Wrocław) were first written against the v2 runs; the
+v3 history runs read the same snapshots and give identical tier, road and diagnostic rows there,
+and on the Berlin, Paris and Vienna snapshots those explanations cite, v2 and v3 classify every
+road side the same.
+
+<!-- explained-against: amsterdam/fua=3ba1483e amsterdam/lau=2a652dc2 barcelona/fua=9a77f00a barcelona/lau=9a77f00a berlin/fua=1308e2c9 berlin/lau=c3335f42 bordeaux/fua=5f5d0d9f bordeaux/lau=cb158134 bratislava/fua=2e7369e0 bratislava/lau=2e7369e0 budapest/fua=0a58443e budapest/lau=0a58443e copenhagen/fua=be41de5b copenhagen/lau=be41de5b helsinki/fua=78321316 helsinki/lau=78321316 krakow/fua=81a148c2 krakow/lau=81a148c2 ljubljana/fua=81ef23ad ljubljana/lau=81ef23ad lyon/fua=1404a50e lyon/lau=1404a50e madrid/fua=f0e3c8ec madrid/lau=323b467b oslo/fua=47a4f74c oslo/lau=47a4f74c paris/fua=df7be7ff paris/lau=7db1f306 prague/fua=678529b2 prague/lau=6d158548 stockholm/fua=149b5257 stockholm/lau=149b5257 strasbourg/fua=8bfe6202 strasbourg/lau=9c8283ec utrecht/fua=b37cd68d utrecht/lau=b0b39792 vienna/fua=1254c077 vienna/lau=1254c077 warsaw/fua=72a9a41e warsaw/lau=e910fce2 wroclaw/fua=fda036ca wroclaw/lau=fda036ca -->
 
 ### amsterdam/fua/2022
 
