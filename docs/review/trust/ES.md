@@ -11,8 +11,8 @@ Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| madrid | 219 | 7756.6 | 0.0% | 16.2% | 10.9% | 0.1% | none |
-| barcelona | 220 | 3687.2 | 0.0% | 25.0% | 4.6% | 2.3% | none |
+| madrid | 244 | 7756.6 | 0.0% | 16.2% | 10.9% | 0.1% | none |
+| barcelona | 245 | 3687.2 | 0.0% | 25.0% | 4.6% | 2.3% | none |
 
 ### madrid: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 
