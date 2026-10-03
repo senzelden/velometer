@@ -458,17 +458,17 @@ much), because most Berlin tracks are one-way tracks on both sides of the road. 
 (506 days) is within the noise of this comparison.
 
 ### copenhagen/cc_ratio
-Cause: **definition** (length basis). Per side our A+B is 582.3 km, 1.62 times the
-centreline 359.9 km; on the centreline basis the ratio is 36.3% against our 992.9 km network,
+Cause: **definition** (length basis). Per side our A+B is 582.4 km, 1.62 times the
+centreline 360.0 km; on the centreline basis the ratio is 36.2% against our 993.1 km network,
 or 38.9% against Clean Cities' 926 km, against their 43%. The remaining gap of about 4–7
-points follows from `copenhagen/cc_km` (centreline −9.3%) plus a 504-day date gap; the
+points follows from `copenhagen/cc_km` (centreline −9.3%) plus a 506-day date gap; the
 networks agree within 7.2% (`copenhagen/cc_network_km`).
 
 ### copenhagen/cc_km
 Cause: **definition** (length basis), with a smaller residual. Copenhagen's tracks are almost
-all one-way pairs on both sides (A: 498.4 km per side vs 278.3 km centreline), so per side we
-report 582.3 km against Clean Cities' 397 km. On the centreline basis our A+B is 359.9 km
-(−9.3%), inside the 20% band. Whether the residual is date (504 days) or source cannot be told:
+all one-way pairs on both sides (A: 498.5 km per side vs 278.4 km centreline), so per side we
+report 582.4 km against Clean Cities' 397 km. On the centreline basis our A+B is 360.0 km
+(−9.3%), inside the 20% band. Whether the residual is date (506 days) or source cannot be told:
 the research doc could not verify whether Copenhagen's figure was city-submitted or OSM-based.
 
 ### copenhagen/qecio_main_km
@@ -476,8 +476,8 @@ Cause: **boundary**. QECIO reports NUTS3 DK011 "Byen København", 185.0 km² and
 commune (per the research doc it includes Frederiksberg and other municipalities). Our LAU
 DK_101 is 94.9 km², 0.51 of that area. Main roads (0.73), tracks (0.74), lanes (0.73) and
 total (0.75) all scale by the same factor of about 0.73–0.75. A boundary difference does that;
-a classifier or date effect would hit the categories unequally. Already tagged
-`boundary_mismatch` in `config/reconcile.yaml`.
+a classifier or date effect would hit the categories unequally. Tagged
+`boundary_mismatch` because `config/cities.yaml` records `nuts3_is_city: false`.
 
 ### copenhagen/qecio_tracks_km
 Cause: **boundary** (DK011 Byen København, 185.0 km², vs our LAU 94.9 km²). Ours 284.0 km is
@@ -489,7 +489,7 @@ Cause: **boundary** (DK011 vs Københavns Kommune, see `copenhagen/qecio_main_km
 18.3 km is 0.73 of QECIO's 25.2 km, the same ratio as main roads; the absolute gap is 6.9 km.
 
 ### copenhagen/qecio_total_km
-Cause: **boundary** first (ours 378.2 km is 0.75 of QECIO's 505.3 km, the same ratio as the
+Cause: **boundary** first (ours 378.3 km is 0.75 of QECIO's 505.3 km, the same ratio as the
 other categories; see `copenhagen/qecio_main_km`) and **definition** second: QECIO's total also
 counts limited-access roads, which our A–D sum does not (`definition_mismatch`).
 
