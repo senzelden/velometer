@@ -43,6 +43,7 @@ def fetch(
     dst: Path,
     *,
     md5: str | None = None,
+    verify_length: bool = False,
     client: httpx.Client | None = None,
     retries: int = 3,
     backoff_s: float = 5.0,
@@ -52,6 +53,8 @@ def fetch(
     An existing dst is trusted when md5 is None, so callers without a published md5 must use
     versioned file names (e.g. GISCO's names carry the year). Only transient failures are
     retried (transport errors, 5xx, 408, 429); other HTTP errors raise DownloadError at once.
+    With verify_length, a response that carried a Content-Length must deliver exactly that many
+    bytes (a truncated body raises DownloadError); meant for downloads accepted without an md5.
     Non-HTTP errors (e.g. OSError while writing) propagate unwrapped. No .part survives a failure.
     """
     if retries < 1:
@@ -67,9 +70,23 @@ def fetch(
             try:
                 with client.stream("GET", url) as resp:
                     resp.raise_for_status()
+                    written = 0
                     with part.open("wb") as f:
                         for chunk in resp.iter_bytes(1 << 20):
-                            f.write(chunk)
+                            written += f.write(chunk)
+                    declared = resp.headers.get("Content-Length")
+                    # a Content-Encoding makes the declared length that of the encoded body
+                    plain = "Content-Encoding" not in resp.headers
+                    if (
+                        verify_length
+                        and plain
+                        and declared is not None
+                        and declared.isdigit()
+                        and written != int(declared)
+                    ):
+                        raise DownloadError(
+                            f"{url}: got {written} bytes, Content-Length said {declared}"
+                        )
                 if md5 is not None and md5_of(part) != md5:
                     raise DownloadError(f"{url}: md5 mismatch (expected {md5})")
                 part.replace(dst)

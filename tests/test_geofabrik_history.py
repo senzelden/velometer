@@ -485,3 +485,43 @@ def test_fetch_history_treats_the_md5_of_zero_bytes_as_unpublished(tmp_path):
     )
     assert hf.md5 == MD5 and hf.md5_source == "computed"
     assert hf.path.read_bytes() == BODY
+
+
+def test_fetch_history_warns_when_the_published_md5_is_the_md5_of_zero_bytes(tmp_path, caplog):
+    empty = hashlib.md5(b"").hexdigest()
+    c = _client(_history_handler([], md5_body=f"{empty}  a-internal.osh.pbf\n"))
+    with caplog.at_level("WARNING", logger="velometer.sources.geofabrik"):
+        fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert "a-internal.osh.pbf" in caplog.text
+    assert "published md5 is the md5 of empty input; using the computed md5" in caplog.text
+
+
+def _short_body_handler(md5_body):
+    def handler(r):
+        if str(r.url).endswith(".md5"):
+            return httpx.Response(404) if md5_body is None else httpx.Response(200, text=md5_body)
+        return httpx.Response(200, content=BODY, headers={"Content-Length": str(len(BODY) + 100)})
+
+    return handler
+
+
+@pytest.mark.parametrize("md5_body", [None, f"{hashlib.md5(b'').hexdigest()}  a.osh.pbf\n"])
+def test_fetch_history_rejects_a_body_shorter_than_content_length_on_a_computed_md5(
+    tmp_path, md5_body
+):
+    c = _client(_short_body_handler(md5_body))
+    with pytest.raises(DownloadError, match="Content-Length"):
+        fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert list((tmp_path / "history").iterdir()) == []
+
+
+def test_fetch_history_accepts_a_body_matching_content_length_on_a_computed_md5(tmp_path):
+    c = _client(_history_handler([]))  # httpx sets Content-Length to len(BODY)
+    hf = fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert hf.md5_source == "computed" and hf.path.read_bytes() == BODY

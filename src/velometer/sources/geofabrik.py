@@ -3,6 +3,7 @@
 import functools
 import hashlib
 import json
+import logging
 import re
 import time
 from collections.abc import Callable
@@ -257,6 +258,8 @@ def _auth_refused(e: DownloadError) -> bool:
     return isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code in (401, 403)
 
 
+log = logging.getLogger(__name__)
+
 _EMPTY_MD5 = hashlib.md5(b"").hexdigest()
 
 
@@ -267,8 +270,15 @@ def _published_md5(url: str, client: httpx.Client) -> str | None:
             return None
         resp.raise_for_status()
         words = resp.text.split()
-        if not words or not re.fullmatch(r"[0-9a-f]{32}", words[0]) or words[0] == _EMPTY_MD5:
-            return None  # no md5, or the md5 of zero bytes: a broken sidecar, never a PBF's
+        if words and words[0] == _EMPTY_MD5:
+            # the md5 of zero bytes: a broken sidecar, never a PBF's
+            log.warning(
+                "%s: published md5 is the md5 of empty input; using the computed md5",
+                url.rsplit("/", 1)[-1],
+            )
+            return None
+        if not words or not re.fullmatch(r"[0-9a-f]{32}", words[0]):
+            return None
         return words[0]
 
     return _with_retries(url + ".md5", get, 3, 5.0)
@@ -337,7 +347,7 @@ def fetch_history(
                         if known.name == f"{stem}_{md5[:8]}.osh.pbf":
                             return HistoryFile(region, known, md5, "computed", today)
                 interim = hist / f"{stem}.osh.pbf"
-                fetch(url, interim, md5=published, client=client)
+                fetch(url, interim, md5=published, verify_length=published is None, client=client)
                 break
             except DownloadError as e:
                 if not (relogin_left and _auth_refused(e)):
