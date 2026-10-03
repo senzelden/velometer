@@ -1,6 +1,7 @@
 import json
 import shutil
 from datetime import UTC, datetime
+from pathlib import Path
 
 import osmium as pyosmium
 import pytest
@@ -176,3 +177,26 @@ def test_merge_is_not_a_history_merge(tmp_path, monkeypatch):
     monkeypatch.setattr(O, "_atomic", lambda dst, build: build(dst) or dst)
     O.merge([tmp_path / "a.osm.pbf", tmp_path / "b.osm.pbf"], tmp_path / "m.osm.pbf")
     assert seen[0][0] == "merge" and "--with-history" not in seen[0]
+
+
+def test_getid_runs_osmium_getid_with_referenced_objects(tmp_path, monkeypatch):
+    from velometer import osmium as O
+
+    seen = []
+
+    def fake_run(*args):
+        seen.append(args)
+        Path(args[args.index("-o") + 1]).write_text("<osm/>")
+        return ""
+
+    monkeypatch.setattr(O, "_run", fake_run)
+    dst = tmp_path / "g" / "nl.osm"
+    dst.parent.mkdir()
+    src = tmp_path / "city.osm.pbf"
+    assert O.getid(src, [5, 7], dst) == dst
+    (argv,) = seen
+    # written to a sibling .part (format inferred from its suffix), then moved into place
+    assert argv == (
+        "getid", "-r", "--overwrite", "-o", str(dst.with_name("nl.part.osm")), str(src), "w5", "w7"
+    )  # fmt: skip
+    assert dst.read_text() == "<osm/>" and not list(dst.parent.glob("*.part*"))

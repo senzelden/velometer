@@ -61,6 +61,16 @@ def _atomic(dst: Path, build: Callable[[Path], None]) -> Path:
     return dst
 
 
+def getid(src: Path, way_ids: list[int], dst: Path) -> Path:
+    """The ways `way_ids` of `src` with their nodes (`getid -r`), atomically."""
+    return _atomic(
+        dst,
+        lambda part: _run(
+            "getid", "-r", "--overwrite", "-o", str(part), str(src), *(f"w{i}" for i in way_ids)
+        ),
+    )
+
+
 def merge(srcs: list[Path], dst: Path) -> Path:
     """Merge current-state extracts (no history) into one file, atomically."""
     return _atomic(

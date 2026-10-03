@@ -2,6 +2,7 @@
 
 import re
 import sqlite3
+import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from enum import StrEnum
@@ -1248,6 +1249,184 @@ def trust_diagnose(
         )
     typer.echo(f"written: {js}")
     typer.echo(f"written: {md}")
+
+
+TESTS_OPT = typer.Option(
+    Path("tests"), "--tests-dir", help="Tests directory (fixtures/golden/ inside)."
+)
+EXTRA_WAY_OPT = typer.Option(
+    [], "--extra-way", help="Also sample this way (a hotspot); repeatable."
+)
+
+
+@trust_app.command("sample")
+def trust_sample(
+    country: str = typer.Option(..., "--country", help="ISO 3166-1 alpha-2 code, e.g. FR."),
+    extra_way: list[int] = EXTRA_WAY_OPT,
+    force: bool = typer.Option(False, "--force", help="Overwrite an existing golden yaml."),
+    db: Path = DB_OPT,
+    data_dir: Path = DATA_OPT,
+    config_dir: Path = CONFIG_OPT,
+    docs: Path = DOCS_OPT,
+    tests_dir: Path = TESTS_OPT,
+) -> None:
+    """Golden sample ways for the country: tests/fixtures/golden/<cc>.{osm,yaml}, review sheet."""
+    from velometer import osmium
+    from velometer import trust as tr
+    from velometer.config import load_activity, load_classifier
+    from velometer.db import fetch_boundary, fetch_run
+    from velometer.pipeline.measure import measure
+    from velometer.pipeline.read import read_ways
+    from velometer.report.data import open_readonly
+    from velometer.report.maps import snapshot_path
+    from velometer.sources.boundaries import load_boundary_polygon
+
+    country = country.upper()
+    try:
+        activity_cfg = load_activity(config_dir / "activity.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    selector = report_selector(config_dir)
+    cities = [c for c in _all_cities(config_dir) if c.country_iso2 == country]
+    if not cities:
+        typer.echo(f"error: no cities configured for country {country}", err=True)
+        raise typer.Exit(2)
+    golden = tests_dir / "fixtures" / "golden"
+    yml = golden / f"{country.lower()}.yaml"
+    if yml.exists() and not force:
+        typer.echo(f"error: {yml} exists (--force overwrites)", err=True)
+        raise typer.Exit(1)
+    try:
+        conn = open_readonly(db)
+    except (FileNotFoundError, SchemaError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    classified, lengths, tags_by_way, city_by_way, snaps = [], {}, {}, {}, {}
+    stamps = []
+    try:
+        for c in cities:
+            run_id = selector.latest(conn, c.id, "lau")
+            if run_id is None:
+                typer.echo(f"error: no current LAU run for: {c.id}", err=True)
+                raise typer.Exit(1)
+            row = fetch_run(conn, run_id)
+            snap = snapshot_path(row, data_dir)
+            boundary = fetch_boundary(conn, c.id, "lau")
+            if not snap.is_file() or boundary is None or not Path(boundary.path).is_file():
+                typer.echo(f"error: {c.id}: snapshot or boundary file not found", err=True)
+                raise typer.Exit(1)
+            ways = read_ways(snap).ways
+            result = measure(
+                ways,
+                load_classifier(config_dir / "classifier" / f"{selector.version}.yaml"),
+                c.epsg,
+                boundary=load_boundary_polygon(Path(boundary.path), c.epsg),
+            )
+            classified += result.classified
+            lengths |= result.way_lengths
+            for w in ways:
+                tags_by_way[w.id] = w.tags
+                city_by_way.setdefault(w.id, c.id)
+            snaps[c.id] = snap
+            stamps.append(f"{c.id} {row['osm_timestamp']}")
+    finally:
+        conn.close()
+    unknown = [w for w in extra_way if w not in lengths]
+    if unknown:
+        typer.echo(f"error: way {unknown[0]} is in no city snapshot of {country}", err=True)
+        raise typer.Exit(2)
+    samples = tr.sample_ways(
+        classified, lengths, tags_by_way, activity_cfg=activity_cfg, city_by_way=city_by_way
+    )
+    have = {s.way_id for s in samples}
+    samples += [
+        tr.make_sample(w, "extra", classified, tags_by_way, city_by_way)
+        for w in dict.fromkeys(extra_way)
+        if w not in have
+    ]
+    golden.mkdir(parents=True, exist_ok=True)
+    dst = golden / f"{country.lower()}.osm"
+    try:
+        with tempfile.TemporaryDirectory(dir=golden) as tmp:
+            parts = []
+            for city_id, snap in snaps.items():
+                ids = [s.way_id for s in samples if s.city_id == city_id]
+                if ids:
+                    parts.append(osmium.getid(snap, ids, Path(tmp) / f"{city_id}.osm"))
+            if len(parts) == 1:
+                parts[0].replace(dst)
+            else:
+                osmium.merge(parts, dst)
+    except OsmiumError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    source = f"velometer snapshots ({'; '.join(stamps)}); © OpenStreetMap contributors, ODbL 1.0"
+    tr.write_golden_yaml(yml, tr.golden_doc(samples, source, selector.version))
+    sheet = tr.write_golden_review(docs, country, samples, tags_by_way, activity_cfg)
+    typer.echo(f"{len(samples)} samples")
+    for f in (dst, yml, sheet):
+        typer.echo(f"written: {f}")
+
+
+@trust_app.command("check")
+def trust_check(
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+    docs: Path = DOCS_OPT,
+    tests_dir: Path = TESTS_OPT,
+) -> None:
+    """The evidence of every trusted country is complete and current; exit 1 otherwise."""
+    import json
+
+    from velometer import trust as tr
+    from velometer.config import load_trust
+    from velometer.report.data import open_readonly
+
+    try:
+        trust = load_trust(config_dir / "trust.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    selector = report_selector(config_dir)
+    everyone = _all_cities(config_dir)
+    try:
+        conn = open_readonly(db)
+    except (FileNotFoundError, SchemaError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    problems = tr.placeholder_problems(trust.thresholds)
+    classifier = config_dir / "classifier" / f"{selector.version}.yaml"
+    review = docs / "review" / "trust"
+    try:
+        for cc, ct in sorted(trust.countries.items()):
+            if ct.status != "trusted":
+                continue
+            if ct.golden is not None:
+                if ct.classifier_reviewed != selector.version:
+                    problems.append(
+                        f"{cc}: classifier_reviewed is {ct.classifier_reviewed}, "
+                        f"the report classifier is {selector.version}"
+                    )
+                problems += tr.golden_problems(cc, tests_dir.parent / ct.golden, classifier)
+            js = review / f"{cc}.json"
+            if not js.is_file():
+                has_city = any(c.country_iso2 == cc for c in everyone)
+                if cc not in tr.EXEMPT_NO_EVIDENCE and has_city:
+                    problems.append(f"{cc}: no {js.name} (run `velometer trust diagnose`)")
+                continue
+            cd = tr.CountryDiagnostics.model_validate(json.loads(js.read_text()))
+            latest = {d.city_id: selector.latest(conn, d.city_id, "lau") for d in cd.cities}
+            problems += tr.stale_problems(cc, cd, latest)
+            md = review / f"{cc}.md"
+            problems += tr.breach_problems(
+                cc, cd, trust.thresholds, md.read_text() if md.is_file() else ""
+            )
+    finally:
+        conn.close()
+    for line in problems:
+        typer.echo(line)
+    if problems:
+        raise typer.Exit(1)
+    typer.echo("trust check: ok")
 
 
 LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost")

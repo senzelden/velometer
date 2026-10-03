@@ -13,8 +13,10 @@ the block are kept).
 import re
 import tempfile
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
+import yaml
 from pydantic import BaseModel
 
 from velometer.config import (
@@ -27,9 +29,11 @@ from velometer.config import (
 from velometer.db import fetch_boundary, fetch_run
 from velometer.osmium import relation_polygon
 from velometer.pipeline.activity import cycling_tags
+from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.drift import is_unmatched_road_side
 from velometer.pipeline.measure import measure
 from velometer.pipeline.read import read_ways
+from velometer.pipeline.types import Classified
 from velometer.report.maps import snapshot_path
 from velometer.selection import Selector
 from velometer.sources.boundaries import load_boundary_polygon
@@ -273,3 +277,240 @@ def write_country(
         text = old.rstrip("\n") + "\n\n" + block + "\n"
     _write_atomic(md, text)
     return js, md
+
+
+# --- golden samples ---------------------------------------------------------------------------
+
+
+class Sample(BaseModel):
+    way_id: int
+    city_id: str
+    group: str  # rule id, "unmatched:<n>" or "extra"
+    name: str  # the way's name tag or ""
+    highway: str
+    proposed: list[dict]  # [{side, tier, rule, subtype, bidirectional}], as berlin_golden
+
+
+def proposed_sides(classified: Iterable[Classified]) -> dict[int, list[dict]]:
+    """The classifier's output per way in the berlin_golden schema: sides with a tier (or
+    `excluded`), sorted by side."""
+    out: dict[int, list[dict]] = defaultdict(list)
+    for c in classified:
+        if c.tier is not None:
+            out[c.side.way_id].append(
+                {
+                    "side": c.side.side,
+                    "tier": c.tier,
+                    "rule": c.rule_id,
+                    "subtype": c.subtype,
+                    "bidirectional": c.attrs.get("bidirectional"),
+                }
+            )
+    return {w: sorted(p, key=lambda d: d["side"]) for w, p in out.items()}
+
+
+def make_sample(
+    way_id: int,
+    group: str,
+    classified: Iterable[Classified],
+    tags_by_way: Mapping[int, Mapping[str, str]],
+    city_by_way: Mapping[int, str] | None = None,
+    city_id: str = "",
+) -> Sample:
+    tags = tags_by_way[way_id]
+    return Sample(
+        way_id=way_id,
+        city_id=(city_by_way or {}).get(way_id, city_id),
+        group=group,
+        name=tags.get("name", ""),
+        highway=tags.get("highway", ""),
+        proposed=proposed_sides(classified).get(way_id, []),
+    )
+
+
+def sample_ways(
+    classified: list[Classified],
+    way_lengths: Mapping[int, float],
+    tags_by_way: Mapping[int, Mapping[str, str]],
+    *,
+    activity_cfg: ActivityConfig,
+    top_rules: int = 6,
+    per_rule: int = 1,
+    unmatched: int = 3,
+    city_by_way: Mapping[int, str] | None = None,
+    city_id: str = "",
+) -> list[Sample]:
+    """The longest way-side of each of the `top_rules` rules with the most km (tiers A-E and
+    excluded), then of each of the `unmatched` largest unmatched tag signatures (road sides no
+    rule recognised, on ways with cycling tags). Deduplicated by way id: a way already picked is
+    skipped and the next longest side of the group is taken. Deterministic: ties break on way id.
+    """
+
+    def longest(sides: list[Classified], n: int, taken: set[int]) -> list[int]:
+        ranked = sorted(
+            sides, key=lambda c: (-way_lengths[c.side.way_id], c.side.way_id, c.side.side)
+        )
+        picked: list[int] = []
+        for c in ranked:
+            w = c.side.way_id
+            if w not in taken and w not in picked:
+                picked.append(w)
+            if len(picked) == n:
+                break
+        return picked
+
+    by_rule: dict[str, list[Classified]] = defaultdict(list)
+    by_sig: dict[str, list[Classified]] = defaultdict(list)
+    for c in classified:
+        if c.tier in (*TIERS, "excluded") and c.rule_id is not None:
+            by_rule[c.rule_id].append(c)
+        if is_unmatched_road_side(c) and cycling_tags(tags_by_way[c.side.way_id], activity_cfg):
+            by_sig[tag_signature(tags_by_way[c.side.way_id], activity_cfg)].append(c)
+
+    def km(sides: list[Classified]) -> float:
+        return sum(way_lengths[c.side.way_id] for c in sides)
+
+    taken: set[int] = set()
+    picks: list[tuple[int, str]] = []
+    rules = sorted(by_rule, key=lambda r: (-km(by_rule[r]), r))[:top_rules]
+    for rule in rules:
+        for w in longest(by_rule[rule], per_rule, taken):
+            taken.add(w)
+            picks.append((w, rule))
+    sigs = sorted(by_sig, key=lambda s: (-km(by_sig[s]), s))[:unmatched]
+    for n, sig in enumerate(sigs, 1):
+        for w in longest(by_sig[sig], 1, taken):
+            taken.add(w)
+            picks.append((w, f"unmatched:{n}"))
+    return [
+        make_sample(w, group, classified, tags_by_way, city_by_way, city_id) for w, group in picks
+    ]
+
+
+GOLDEN_HEADER = "# Map data © OpenStreetMap contributors, ODbL 1.0\n"
+
+
+def golden_doc(samples: list[Sample], source: str, classifier_version: str) -> dict:
+    """The berlin_golden.yaml schema: every way unconfirmed, for the user to sign off."""
+    return {
+        "source": source,
+        "classifier_version": classifier_version,
+        "ways": [
+            {**s.model_dump(exclude={"city_id"}), "confirmed": False, "note": ""} for s in samples
+        ],
+    }
+
+
+def write_golden_yaml(path: Path, doc: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True)
+    _write_atomic(path, GOLDEN_HEADER + body)
+
+
+def _sample_tags(tags: Mapping[str, str], cfg: ActivityConfig) -> str:
+    keep = dict(cycling_tags(tags, cfg))
+    if "highway" in tags:
+        keep["highway"] = tags["highway"]
+    return "<br>".join(f"`{k}={keep[k]}`" for k in sorted(keep))
+
+
+def write_golden_review(
+    docs_dir: Path,
+    country: str,
+    samples: list[Sample],
+    tags_by_way: Mapping[int, Mapping[str, str]],
+    activity_cfg: ActivityConfig,
+) -> Path:
+    """docs/review/trust/<cc>_golden.md: one row per sample, with an empty verdict column."""
+    out = Path(docs_dir) / "review" / "trust"
+    out.mkdir(parents=True, exist_ok=True)
+    lines = [
+        f"# Golden samples: {country}",
+        "",
+        "Open each way, compare the tags with our tier and rule, write the verdict (ok, or what "
+        "is wrong), then set `confirmed: true` in the yaml for the ways you agree with.",
+        "",
+        "| way | city | tags | our tier / rule | verdict |",
+        "|---|---|---|---|---|",
+    ]
+    for s in samples:
+        link = f"[{s.way_id}](https://www.openstreetmap.org/way/{s.way_id})"
+        ours = (
+            "<br>".join(f"{p['side']}: {p['tier']} / {p['rule']}" for p in s.proposed)
+            or "no output"
+        )
+        lines.append(
+            f"| {link} {s.name} | {s.city_id} | {_sample_tags(tags_by_way[s.way_id], activity_cfg)}"
+            f" | {ours} | |"
+        )
+    lines += ["", ODBL, ""]
+    path = out / f"{country}_golden.md"
+    _write_atomic(path, "\n".join(lines))
+    return path
+
+
+# --- trust check ------------------------------------------------------------------------------
+
+SHARE_THRESHOLDS = ("unrecognised_share_max", "excluded_share_max", "b_share_of_ab_max")
+PLACEHOLDER = 1.0
+EXEMPT_NO_EVIDENCE = frozenset({"DE"})  # the Berlin golden set predates the trust layer
+
+
+def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[str]:
+    """(a): the country's golden fixtures (`<base>.yaml`, `<base>.osm`) must be fully confirmed
+    and every confirmed way must match the classifier at `classifier_path`."""
+    yml, osm = golden_base.with_suffix(".yaml"), golden_base.with_suffix(".osm")
+    for f in (yml, osm):
+        if not f.is_file():
+            return [f"{cc}: golden fixture missing: {f}"]
+    ways = yaml.safe_load(yml.read_text())["ways"]
+    observed: dict[int, set[tuple]] = defaultdict(set)
+    for c in classify_ways(read_ways(osm).ways, load_classifier(classifier_path)):
+        if c.tier is not None:
+            observed[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
+    out = []
+    unconfirmed = [w for w in ways if not w["confirmed"]]
+    if unconfirmed:
+        out.append(f"{cc}: {len(unconfirmed)}/{len(ways)} golden ways unconfirmed")
+    for w in ways:
+        if not w["confirmed"]:
+            continue
+        want = {(p["side"], p["tier"], p["rule"]) for p in w["proposed"]}
+        if observed[w["way_id"]] != want:
+            out.append(f"{cc}: golden way {w['way_id']} does not match the report classifier")
+    return out
+
+
+def stale_problems(cc: str, cd: CountryDiagnostics, latest: Mapping[str, int | None]) -> list[str]:
+    """(c): each city's `run_id` in <cc>.json must be the latest current LAU run."""
+    return [
+        f"{cc}: {d.city_id} diagnosed run {d.run_id}, current run is {latest.get(d.city_id)} "
+        f"(stale: re-run `velometer trust diagnose --country {cc}`)"
+        for d in cd.cities
+        if latest.get(d.city_id) != d.run_id
+    ]
+
+
+def breach_problems(
+    cc: str, cd: CountryDiagnostics, thresholds: TrustThresholds, md_text: str
+) -> list[str]:
+    """(d): every breach needs a `### <city>/<metric>` heading (the reviewer's note) in <cc>.md."""
+    out = []
+    for d in cd.cities:
+        for metric in breaches(d, thresholds):
+            heading = re.compile(rf"^### {re.escape(d.city_id)}/{re.escape(metric)}\b", re.M)
+            if not heading.search(md_text):
+                out.append(
+                    f"{cc}: {d.city_id} breaches {metric} with no `### {d.city_id}/{metric}` "
+                    f"note in {cc}.md"
+                )
+    return out
+
+
+def placeholder_problems(t: TrustThresholds) -> list[str]:
+    """(e): a share threshold still at 1.0 limits nothing."""
+    return [
+        f"threshold {name} is still the placeholder {PLACEHOLDER}"
+        for name in SHARE_THRESHOLDS
+        if getattr(t, name) == PLACEHOLDER
+    ]

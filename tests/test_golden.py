@@ -1,10 +1,10 @@
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
 import pytest
 import yaml
 
+from tests.golden_util import check_golden
 from velometer.config import default_config_dir, load_classifier
 from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.read import read_ways
@@ -38,23 +38,6 @@ def test_golden_set_is_large_enough_and_covers_named_streets():
 def test_every_golden_way_is_in_the_osm_fixture():
     ids = {w.id for w in read_ways(FIX / "berlin_golden.osm").ways}
     assert {w["way_id"] for w in GOLDEN["ways"]} <= ids
-
-
-def check_golden(ways: list[dict], observed: dict[int, set[tuple]]) -> None:
-    """Assert confirmed ways; skip if none is confirmed, else warn with the unconfirmed count."""
-    confirmed = [w for w in ways if w["confirmed"]]
-    unconfirmed = len(ways) - len(confirmed)
-    if not confirmed:
-        pytest.skip(f"0/{len(ways)} golden ways confirmed yet (awaiting review)")
-    if unconfirmed:
-        warnings.warn(
-            f"{unconfirmed}/{len(ways)} golden ways unconfirmed (skipped)",
-            UserWarning,
-            stacklevel=2,
-        )
-    for w in confirmed:
-        want = {(p["side"], p["tier"], p["rule"]) for p in w["proposed"]}
-        assert observed[w["way_id"]] == want, (w["way_id"], w["name"])
 
 
 def test_confirmed_ways_match_classifier():

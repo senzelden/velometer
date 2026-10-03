@@ -365,3 +365,294 @@ def test_cli_diagnose_unknown_country_exits_2(fixture_db, tmp_path):
     res = CliRunner().invoke(app, ["trust", "diagnose", "--country", "ZZ", "--db", str(db_path),
                                    "--config-dir", str(cfg)])  # fmt: skip
     assert res.exit_code == 2
+
+
+# --- golden samples and trust check (Task 8) -------------------------------------------------
+from tests.golden_util import check_golden  # noqa: E402
+from velometer.pipeline.drift import is_unmatched_road_side  # noqa: E402
+from velometer.pipeline.measure import measure  # noqa: E402
+from velometer.pipeline.read import read_ways  # noqa: E402
+from velometer.pipeline.types import Classified, WaySide  # noqa: E402
+
+ACT = load_activity(default_config_dir() / "activity.yaml")
+
+
+def _trust_city_sample_inputs():
+    ways = read_ways(TRUST_CITY).ways
+    cfg = load_classifier(default_config_dir() / "classifier" / "v2.yaml")
+    result = measure(ways, cfg, 25833)
+    return result.classified, result.way_lengths, {w.id: w.tags for w in ways}
+
+
+def test_sample_ways_picks_longest_side_per_top_rule_then_unmatched():
+    classified, lengths, tags = _trust_city_sample_inputs()
+    got = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
+    # rules by km: A_track_side (2 sides of way 1: 1.996), D_lane (ways 4 and 10: 1.993, the
+    # longer, 4, wins), then A_cycleway and B_path (0.998 each, tie broken by id), X_shoulder;
+    # and the one unmatched signature (way 8)
+    assert [(s.way_id, s.group) for s in got] == [
+        (1, "A_track_side"), (4, "D_lane"), (2, "A_cycleway"), (3, "B_path"),
+        (9, "X_shoulder"), (8, "unmatched:1"),
+    ]  # fmt: skip
+    assert got == tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
+    one = got[0]
+    assert one.city_id == "berlin" and one.highway == "primary" and one.name == ""
+    assert [(p["side"], p["tier"], p["rule"]) for p in one.proposed] == [
+        ("left", "A", "A_track_side"),
+        ("right", "A", "A_track_side"),
+    ]
+    limited = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, top_rules=2, unmatched=0)
+    assert [s.way_id for s in limited] == [1, 4]
+
+
+def _side(way_id, side="right"):
+    return WaySide(way_id, side, "road_side", {}, ((0.0, 0.0), (1.0, 0.0)))
+
+
+def test_sample_ways_dedupes_by_way_id_and_takes_the_next_longest():
+    tags = {
+        1: {"highway": "primary", "cycleway:right": "bogus", "cycleway:left": "lane"},
+        2: {"highway": "primary", "cycleway:left": "lane"},
+        3: {"highway": "residential"},  # no cycling tags: never an unmatched sample
+    }
+    classified = [
+        Classified(_side(1, "left"), "D", None, "D_lane", {}),
+        Classified(_side(2, "left"), "D", None, "D_lane", {}),
+        Classified(_side(1, "right"), None, None, None, {}),  # unmatched, same way as the D_lane
+        Classified(_side(3), None, None, None, {}),
+    ]
+    assert is_unmatched_road_side(classified[3])
+    lengths = {1: 5.0, 2: 1.0, 3: 9.0}
+    got = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT)
+    assert [(s.way_id, s.group) for s in got] == [(1, "D_lane")]  # 2 is no signature's longest
+    got = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, per_rule=2)
+    assert [(s.way_id, s.group) for s in got] == [(1, "D_lane"), (2, "D_lane")]
+
+
+def test_golden_yaml_has_the_berlin_schema_and_round_trips(tmp_path):
+    berlin = yaml.safe_load((Path(__file__).parent / "fixtures" / "berlin_golden.yaml").read_text())
+    classified, lengths, tags = _trust_city_sample_inputs()
+    samples = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
+    path = tmp_path / "g" / "xx.yaml"
+    tr.write_golden_yaml(path, tr.golden_doc(samples, "src", "v2"))
+    text = path.read_text()
+    assert text.startswith("# Map data © OpenStreetMap contributors, ODbL 1.0")
+    doc = yaml.safe_load(text)
+    assert set(doc) == set(berlin) and doc["classifier_version"] == "v2"
+    assert set(doc["ways"][0]) == set(berlin["ways"][0])
+    assert {set_ for w in doc["ways"] for set_ in [w["confirmed"]]} == {False}
+    assert all(w["note"] == "" for w in doc["ways"])
+    # the way entries feed the Berlin checker unchanged
+    observed = {
+        w["way_id"]: {(p["side"], p["tier"], p["rule"]) for p in w["proposed"]} for w in doc["ways"]
+    }
+    for w in doc["ways"]:
+        w["confirmed"] = True
+    check_golden(doc["ways"], observed)
+
+
+@pytest.fixture
+def fake_osmium(monkeypatch):
+    """Record argv of every osmium call and write the file named by `-o`."""
+    from velometer import osmium as O
+
+    seen = []
+
+    def run(*args):
+        seen.append(args)
+        if "-o" in args:
+            Path(args[args.index("-o") + 1]).write_text("<osm/>")
+        return ""
+
+    monkeypatch.setattr(O, "_run", run)
+    return seen
+
+
+@needs_osmium
+def test_cli_sample_writes_fixtures_and_review_sheet(diag_env, tmp_path, fake_osmium):
+    db_path, cfg, _, data_dir = diag_env
+    docs, tests_dir = tmp_path / "docs", tmp_path / "tests"
+    res = CliRunner().invoke(app, [
+        "trust", "sample", "--country", "DE", "--extra-way", "5", "--db", str(db_path),
+        "--data", str(data_dir), "--config-dir", str(cfg), "--docs", str(docs),
+        "--tests-dir", str(tests_dir),
+    ])  # fmt: skip
+    assert res.exit_code == 0, res.output
+    golden = tests_dir / "fixtures" / "golden"
+    doc = yaml.safe_load((golden / "de.yaml").read_text())
+    assert [(w["way_id"], w["group"]) for w in doc["ways"]] == [
+        (1, "A_track_side"), (4, "D_lane"), (2, "A_cycleway"), (3, "B_path"),
+        (9, "X_shoulder"), (8, "unmatched:1"), (5, "extra"),
+    ]  # fmt: skip
+    assert doc["ways"][-1]["proposed"] == [] and not any(w["confirmed"] for w in doc["ways"])
+    (getid,) = [a for a in fake_osmium if a[0] == "getid"]
+    assert getid[-7:] == ("w1", "w4", "w2", "w3", "w9", "w8", "w5")
+    assert "snapshots" in getid[-8]  # the city's snapshot is the source
+    assert (golden / "de.osm").is_file() and not list(golden.glob("*part*"))
+    sheet = (docs / "review" / "trust" / "DE_golden.md").read_text()
+    assert "https://www.openstreetmap.org/way/4" in sheet and "D / D_lane" in sheet
+    assert sheet.count("\n| [") == 7 and "bogus" in sheet and "ODbL 1.0" in sheet
+    assert "name=" not in sheet  # only cycling keys and highway are shown
+
+
+@needs_osmium
+def test_cli_sample_refuses_to_overwrite_signed_off_fixtures(diag_env, tmp_path, fake_osmium):
+    db_path, cfg, _, data_dir = diag_env
+    tests_dir = tmp_path / "tests"
+    (tests_dir / "fixtures" / "golden").mkdir(parents=True)
+    keep = tests_dir / "fixtures" / "golden" / "de.yaml"
+    keep.write_text("mine")
+    args = [
+        "trust", "sample", "--country", "DE", "--db", str(db_path), "--data", str(data_dir),
+        "--config-dir", str(cfg), "--docs", str(tmp_path / "docs"), "--tests-dir", str(tests_dir),
+    ]  # fmt: skip
+    res = CliRunner().invoke(app, args)
+    assert res.exit_code == 1 and keep.read_text() == "mine" and not fake_osmium
+    assert CliRunner().invoke(app, [*args, "--force"]).exit_code == 0
+
+
+# --- trust check ---------------------------------------------------------------------------
+
+
+def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
+    """A DE-trusted fixture config with fresh evidence: a fully confirmed golden set that matches
+    v2, a current <cc>.json whose one breach has its note, and thresholds below the placeholder.
+    Returns (argv, paths)."""
+    ct = {
+        "status": "trusted",
+        "basis": "t",
+        "classifier_reviewed": "v2",
+        "signed_off": "2026-10-03",
+    }
+    if golden:
+        ct["golden"] = "tests/fixtures/golden/de"
+    db_path, cfg = report_db_with_trust({"DE": {**ct, **country}})
+    trust = yaml.safe_load((cfg / "trust.yaml").read_text())
+    trust["thresholds"] = THRESHOLDS
+    (cfg / "trust.yaml").write_text(yaml.safe_dump(trust))
+
+    tests_dir, docs = tmp_path / "tests", tmp_path / "docs"
+    gdir = tests_dir / "fixtures" / "golden"
+    gdir.mkdir(parents=True)
+    shutil.copy(TRUST_CITY, gdir / "de.osm")
+    classified, lengths, tags = _trust_city_sample_inputs()
+    samples = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
+    doc = tr.golden_doc(samples, "t", "v2")
+    for w in doc["ways"]:
+        w["confirmed"] = True
+    tr.write_golden_yaml(gdir / "de.yaml", doc)
+
+    conn = open_readonly(db_path)
+    run_id = report_selector(cfg).latest(conn, "berlin", "lau")
+    conn.close()
+    city = _diag(city_id="berlin", run_id=run_id, unrecognised_share=0.9)  # over the 0.5 limit
+    tr.write_country(docs, _country(city).model_copy(update={"country": "DE"}), T, [])
+    md = docs / "review" / "trust" / "DE.md"
+    md.write_text(md.read_text() + "\n### berlin/unrecognised_share\n\nreviewed: a one-off.\n")
+    argv = ["trust", "check", "--db", str(db_path), "--config-dir", str(cfg),
+            "--docs", str(docs), "--tests-dir", str(tests_dir)]  # fmt: skip
+    return argv, {"cfg": cfg, "docs": docs, "golden": gdir, "md": md, "run_id": run_id}
+
+
+from velometer.config import load_classifier  # noqa: E402
+from velometer.report.data import open_readonly  # noqa: E402
+
+
+def _check(argv):
+    res = CliRunner().invoke(app, argv)
+    return res.exit_code, res.output
+
+
+def test_check_clean_case_exits_0(tmp_path, report_db_with_trust):
+    argv, _ = _check_env(tmp_path, report_db_with_trust)
+    assert _check(argv) == (0, "trust check: ok\n")
+
+
+def test_check_a_unconfirmed_golden_way(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    path = p["golden"] / "de.yaml"
+    doc = yaml.safe_load(path.read_text())
+    doc["ways"][0]["confirmed"] = False
+    path.write_text(yaml.safe_dump(doc))
+    code, out = _check(argv)
+    assert code == 1 and out == "DE: 1/6 golden ways unconfirmed\n"
+
+
+def test_check_a_confirmed_way_that_no_longer_matches(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    path = p["golden"] / "de.yaml"
+    doc = yaml.safe_load(path.read_text())
+    doc["ways"][2]["proposed"][0]["tier"] = "E"
+    path.write_text(yaml.safe_dump(doc))
+    code, out = _check(argv)
+    assert code == 1 and out == "DE: golden way 2 does not match the report classifier\n"
+
+
+def test_check_a_missing_golden_fixture(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    (p["golden"] / "de.osm").unlink()
+    code, out = _check(argv)
+    assert code == 1 and "DE: golden fixture missing:" in out and out.count("\n") == 1
+
+
+def test_check_b_classifier_reviewed_is_not_the_report_classifier(tmp_path, report_db_with_trust):
+    argv, _ = _check_env(tmp_path, report_db_with_trust, classifier_reviewed="v1")
+    code, out = _check(argv)
+    assert code == 1 and out == "DE: classifier_reviewed is v1, the report classifier is v2\n"
+
+
+def test_check_without_golden_skips_a_and_b(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust, golden=False, classifier_reviewed="v1")
+    (p["golden"] / "de.yaml").unlink()
+    assert _check(argv)[0] == 0
+
+
+def test_check_c_stale_run_ids(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    js = p["docs"] / "review" / "trust" / "DE.json"
+    data = json.loads(js.read_text())
+    data["cities"][0]["run_id"] = p["run_id"] - 1
+    js.write_text(json.dumps(data))
+    code, out = _check(argv)
+    assert code == 1
+    assert out == (
+        f"DE: berlin diagnosed run {p['run_id'] - 1}, current run is {p['run_id']} "
+        "(stale: re-run `velometer trust diagnose --country DE`)\n"
+    )
+
+
+def test_check_d_breach_without_a_note_heading(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    p["md"].write_text(p["md"].read_text().replace("### berlin/unrecognised_share", "### berlin"))
+    code, out = _check(argv)
+    assert code == 1
+    assert out == (
+        "DE: berlin breaches unrecognised_share with no "
+        "`### berlin/unrecognised_share` note in DE.md\n"
+    )
+
+
+def test_check_e_placeholder_threshold(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    trust = yaml.safe_load((p["cfg"] / "trust.yaml").read_text())
+    trust["thresholds"]["excluded_share_max"] = 1.0
+    (p["cfg"] / "trust.yaml").write_text(yaml.safe_dump(trust))
+    code, out = _check(argv)
+    assert code == 1 and out == "threshold excluded_share_max is still the placeholder 1.0\n"
+
+
+def test_check_f_trusted_country_with_a_city_but_no_json(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    trust = yaml.safe_load((p["cfg"] / "trust.yaml").read_text())
+    trust["countries"]["FR"] = {"status": "trusted", "basis": "t"}  # paris is in cities.yaml
+    trust["countries"]["NL"] = {"status": "trusted", "basis": "t"}  # no city: nothing to check
+    (p["cfg"] / "trust.yaml").write_text(yaml.safe_dump(trust))
+    code, out = _check(argv)
+    assert code == 1
+    assert out == "FR: no FR.json (run `velometer trust diagnose`)\n"
+
+
+def test_check_f_exempts_germany(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    (p["docs"] / "review" / "trust" / "DE.json").unlink()
+    assert _check(argv) == (0, "trust check: ok\n")
