@@ -17,17 +17,24 @@ thresholds:
   # pilots: berlin 0.19, paris 0.03, vienna 0.18, copenhagen 0.43, wroclaw 0.38 (%); spec 3.1
   boundary_diff_pct_max: 5.0
 # basis_de: the German wording of basis, shown in docs/methodology.de.md (falls back to basis)
+# classifier_reviewed v3 on DE FR AT DK PL (Task 14, 2026-10-03): v3 changes no golden way of
+# theirs (Berlin 48/48 match v3) and moves no tier km of their cities (the v3 rules only match
+# soft_lane and advisory as cycleway values)
 countries:
   DE: {status: trusted, basis: "Berlin golden set (M1)",
-       basis_de: "Berliner Referenzstichprobe (M1)"}
+       basis_de: "Berliner Referenzstichprobe (M1)", classifier_reviewed: v3}
   FR: {status: trusted, basis: "M2 reconciliation",
-       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: paris}
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: paris,
+       classifier_reviewed: v3}
   AT: {status: trusted, basis: "M2 reconciliation",
-       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: vienna}
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: vienna,
+       classifier_reviewed: v3}
   DK: {status: trusted, basis: "M2 reconciliation",
-       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: copenhagen}
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: copenhagen,
+       classifier_reviewed: v3}
   PL: {status: trusted, basis: "M2 reconciliation",
-       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw}
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw,
+       classifier_reviewed: v3}
   # M5 countries (Task 13, 2026-10-03): pending until the golden sample is signed off
   NL: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/nl}

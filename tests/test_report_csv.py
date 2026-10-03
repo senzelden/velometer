@@ -7,6 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from tests.report_fixture import (
+    CLASSIFIER,
     SPIKE_YEAR,
 )
 from velometer.cli import app
@@ -58,7 +59,7 @@ def test_csv_row_values_match_db(fixture_db):
     results = fetch_run_results(conn, cur.run_id)
     head = select_metric(results.metrics, "ours_headline", data.selector.presets)
     assert row["run_id"] == str(cur.run_id) and row["osm_timestamp"] == cur.osm_timestamp
-    assert row["classifier_version"] == "v2" and row["config_sha256"] == cur.config_sha256
+    assert row["classifier_version"] == CLASSIFIER and row["config_sha256"] == cur.config_sha256
     assert row["ours_headline"] == f"{head.value:.3f}"
     assert row["ab_km"] == f"{cur.ab_km:.3f}"
     assert all(row[f"tier_{t}_km"] == f"{cur.tiers_km[t]:.3f}" for t in "ABCDE")

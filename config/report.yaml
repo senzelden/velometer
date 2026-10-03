@@ -1,6 +1,6 @@
 # Report surfaces (reconcile, timeseries, charts, methodology, app) and the default run
 # classifier use this classifier with its default parameters (M4 spec section 3.3).
-report_classifier: v2
+report_classifier: v3
 # chart roles: highlighted city, coloured comparison set; every other city is grey context
 highlight: [berlin]
 comparison_set: [paris, copenhagen, vienna, amsterdam]

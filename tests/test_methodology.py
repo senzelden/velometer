@@ -8,6 +8,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from tests.report_fixture import CLASSIFIER
 from velometer.cli import app
 from velometer.config import ConfigError, default_config_dir, load_classifier, load_trust
 from velometer.report.data import ReportData, open_readonly
@@ -59,10 +60,10 @@ def test_both_languages_list_classifier_version_and_every_city_timestamp(facts):
     # the fixture: berlin lau/fua current runs, and history 2024-2026 for berlin and paris
     assert "2026-09-30T00:00:00Z" in stamps
     assert {f"{y}-01-01T00:00:00Z" for y in (2024, 2025, 2026)} <= stamps
-    assert facts.classifier_version == "v2"
+    assert facts.classifier_version == CLASSIFIER
     for lang in LANGS:
         text = render(facts, lang)
-        assert re.search(r"\bv2\b", text)
+        assert re.search(rf"\b{CLASSIFIER}\b", text)
         for c in facts.cities:
             assert c.name in text
             for k in c.kinds:
@@ -158,7 +159,7 @@ def test_limitations_render_in_the_language_of_the_file(facts):
 
 def test_rules_table_lists_every_rule_of_the_report_classifier(facts, fixture_db):
     cfg = fixture_db[1]
-    rules = load_classifier(cfg / "classifier" / "v2.yaml").rules
+    rules = load_classifier(cfg / "classifier" / f"{CLASSIFIER}.yaml").rules
     assert [r.id for r in facts.rules] == [r.id for r in rules]
     for lang in LANGS:
         text = render(facts, lang)
@@ -169,7 +170,9 @@ def test_rules_table_lists_every_rule_of_the_report_classifier(facts, fixture_db
 def test_rules_follow_report_yaml(fixture_db):
     _, cfg, conn, _ = fixture_db
     report = cfg / "report.yaml"
-    report.write_text(report.read_text().replace("report_classifier: v2", "report_classifier: v1"))
+    report.write_text(
+        report.read_text().replace(f"report_classifier: {CLASSIFIER}", "report_classifier: v1")
+    )
     facts = methodology_facts(ReportData(conn, cfg))
     v1 = load_classifier(cfg / "classifier" / "v1.yaml")
     assert facts.classifier_version == "v1"

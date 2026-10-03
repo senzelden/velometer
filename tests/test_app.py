@@ -18,6 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
+from tests.report_fixture import CLASSIFIER
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
@@ -599,14 +600,16 @@ def test_app_follows_report_classifier_of_the_config(setup):
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs)) as c:
         before = c.get("/city/berlin").text
-    assert "Classifier v2" in _text(before)
+    assert f"Classifier {CLASSIFIER}" in _text(before)
     assert "no run (LAU current)" not in _text(before)
     path = cfg / "report.yaml"
-    path.write_text(path.read_text().replace("report_classifier: v2", "report_classifier: v1"))
+    path.write_text(
+        path.read_text().replace(f"report_classifier: {CLASSIFIER}", "report_classifier: v1")
+    )
     with _client(create_app(db_path, cfg, maps, docs)) as c:
         after = _text(c.get("/city/berlin").text)
-    assert "Classifier v1" in after and "Classifier v2" not in after
-    assert "no run (LAU current)" in after  # the fixture's runs are on v2 only
+    assert "Classifier v1" in after and f"Classifier {CLASSIFIER}" not in after
+    assert "no run (LAU current)" in after  # the fixture's runs are on CLASSIFIER only
 
 
 @pytest.mark.parametrize("host", ["attacker.example", "192.168.1.10", "127.0.0.1.nip.io"])

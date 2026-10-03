@@ -9,6 +9,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from tests.report_fixture import CLASSIFIER
 from tests.test_run_history import CITY
 from velometer import trust as tr
 from velometer.cli import app
@@ -354,7 +355,7 @@ def test_cli_diagnose_writes_the_review_files(diag_env, tmp_path):
     assert res.exit_code == 0, res.output
     assert "berlin:" in res.output
     out = json.loads((docs / "review" / "trust" / "DE.json").read_text())
-    assert out["cities"][0]["city_id"] == "berlin" and out["classifier_version"] == "v2"
+    assert out["cities"][0]["city_id"] == "berlin" and out["classifier_version"] == CLASSIFIER
     assert (docs / "review" / "trust" / "DE.md").is_file()
 
 
@@ -524,12 +525,12 @@ def test_cli_sample_refuses_to_overwrite_signed_off_fixtures(diag_env, tmp_path,
 
 def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
     """A DE-trusted fixture config with fresh evidence: a fully confirmed golden set that matches
-    v2, a current <cc>.json whose one breach has its note, and thresholds below the placeholder.
-    Returns (argv, paths)."""
+    the report classifier, a current <cc>.json whose one breach has its note, and thresholds
+    below the placeholder. Returns (argv, paths)."""
     ct = {
         "status": "trusted",
         "basis": "t",
-        "classifier_reviewed": "v2",
+        "classifier_reviewed": CLASSIFIER,
         "signed_off": "2026-10-03",
     }
     if golden:
@@ -545,7 +546,7 @@ def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
     shutil.copy(TRUST_CITY, gdir / "de.osm")
     classified, lengths, tags = _trust_city_sample_inputs()
     samples = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
-    doc = tr.golden_doc(samples, "t", "v2")
+    doc = tr.golden_doc(samples, "t", CLASSIFIER)
     for w in doc["ways"]:
         w["confirmed"] = True
     tr.write_golden_yaml(gdir / "de.yaml", doc)
@@ -564,6 +565,8 @@ def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
 
 from velometer.config import load_classifier  # noqa: E402
 from velometer.report.data import open_readonly  # noqa: E402
+
+NEXT = f"v{int(CLASSIFIER.removeprefix('v')) + 1}"  # a classifier newer than the report one
 
 
 def _check(argv):
@@ -601,11 +604,12 @@ def test_check_a_way_expecting_a_newer_classifier_blocks_trust(tmp_path, report_
     path = p["golden"] / "de.yaml"
     doc = yaml.safe_load(path.read_text())
     doc["ways"][2]["proposed"][0]["tier"] = "E"  # the verdict only a later classifier gives
-    doc["ways"][2]["min_classifier"] = "v3"
+    doc["ways"][2]["min_classifier"] = NEXT
     path.write_text(yaml.safe_dump(doc))
     code, out = _check(argv)
-    assert code == 1 and out == "DE: golden way 2 expects classifier v3 (report classifier v2)\n"
-    doc["ways"][2]["min_classifier"] = "v2"  # reached: the way is compared again
+    want = f"DE: golden way 2 expects classifier {NEXT} (report classifier {CLASSIFIER})\n"
+    assert code == 1 and out == want
+    doc["ways"][2]["min_classifier"] = CLASSIFIER  # reached: the way is compared again
     path.write_text(yaml.safe_dump(doc))
     code, out = _check(argv)
     assert code == 1 and out == "DE: golden way 2 does not match the report classifier\n"
@@ -621,7 +625,10 @@ def test_check_a_missing_golden_fixture(tmp_path, report_db_with_trust):
 def test_check_b_classifier_reviewed_is_not_the_report_classifier(tmp_path, report_db_with_trust):
     argv, _ = _check_env(tmp_path, report_db_with_trust, classifier_reviewed="v1")
     code, out = _check(argv)
-    assert code == 1 and out == "DE: classifier_reviewed is v1, the report classifier is v2\n"
+    assert (
+        code == 1
+        and out == f"DE: classifier_reviewed is v1, the report classifier is {CLASSIFIER}\n"
+    )
 
 
 def test_check_without_golden_skips_a_and_b(tmp_path, report_db_with_trust):

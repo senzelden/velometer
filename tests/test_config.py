@@ -201,14 +201,10 @@ def _report(tmp_path: Path, text: str) -> Path:
 
 def test_load_report_accepts_the_shipped_file():
     report = load_report(CFG / "report.yaml")
-    assert report.report_classifier == "v2"
+    shipped = CFG / "classifier" / f"{report.report_classifier}.yaml"
+    assert shipped.is_file()
     assert {r.kind for r in report.rankings} == {"preset", "external", "external_ratio"}
-    presets = {
-        p.id
-        for p in load_presets(
-            CFG / "presets.yaml", load_classifier(CFG / "classifier" / "v2.yaml")
-        ).presets
-    }
+    presets = {p.id for p in load_presets(CFG / "presets.yaml", load_classifier(shipped)).presets}
     assert {r.preset for r in report.rankings if r.kind == "preset"} <= presets
 
 

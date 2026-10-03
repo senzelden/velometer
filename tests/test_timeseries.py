@@ -617,10 +617,12 @@ def test_adr_0005_note_counts_history_runs_as_series_times_years():
     assert int(m[1]) == int(m[2]) * int(m[3])
 
 
-def test_report_classifier_is_v2_in_the_shipped_config():
+def test_report_classifier_is_the_newest_shipped_classifier():
+    """Reports use the newest classifier version in config/classifier/ (v2 in M4, v3 in M5)."""
     from velometer.config import load_report
 
-    assert load_report(CFG_DIR / "report.yaml").report_classifier == "v2"
+    newest = max(int(p.stem.removeprefix("v")) for p in (CFG_DIR / "classifier").glob("v*.yaml"))
+    assert load_report(CFG_DIR / "report.yaml").report_classifier == f"v{newest}"
 
 
 def test_cli_timeseries_defaults_to_the_report_classifier(db, tmp_path):

@@ -3,6 +3,7 @@ import sqlite3
 import pytest
 
 from tests.report_fixture import (
+    CLASSIFIER,
     SPIKE_YEAR,
     _figure,
     external_figures,
@@ -40,7 +41,7 @@ def test_current_point_matches_cli_headline(fixture_db):
     head = next(p for p in cur.presets if p.preset == "ours_headline")
     assert cur.run_id == run_id and head.value == metric.value and head.value is not None
     assert head.per_100k == metric.per_100k and head.per_100k is not None
-    assert cur.classifier_version == "v2" and cur.config_sha256 == sel.config_sha256
+    assert cur.classifier_version == CLASSIFIER and cur.config_sha256 == sel.config_sha256
     assert cur.city_name == "Berlin" and cur.kind == "lau"
     assert set(cur.tiers_km) == set("ABCDE") and cur.ab_km == pytest.approx(
         cur.tiers_km["A"] + cur.tiers_km["B"]
