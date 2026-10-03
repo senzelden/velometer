@@ -50,3 +50,14 @@ Decisions made while building M4, each with why and what it costs if wrong. The 
   - Its background tiles come from `tile.openstreetmap.org`. This lifts the M4 rule that the app makes no external request, for map tiles only. Scripts, styles and data still come from the local app, and Leaflet is vendored.
   - Light private use with the visible attribution follows the OSM tile usage policy.
   - The static PNG maps stay as a download and print version.
+
+## Carried into M5
+
+Parked during M4 and the tier map. Each one becomes due when the city count grows to 21.
+
+- **`report maps` peak memory.** Berlin FUA peaks at about 2.3 GB RSS. Dropping tags for unused ways only cut it from 2.34 to 2.29 GB. The fix is classification that streams ways instead of holding them all.
+- **Gaps in the rankings chart.** The line runs straight across a source that has no figure for a city. Cities without a published figure will hit this.
+- **QECIO ratio scope.** The external ratio takes the first figure per metric regardless of its scope. It needs a scope filter before more cities are added.
+- **App recomputes on every request.** Fine for 5 cities. At 21 it needs caching or precomputation.
+- **Migration minors (R14).** The v6 migration commits implicitly before `user_version` is set. `migrate` requires `--activity-sha` even on a fresh DB.
+- **Public publishing** (HANDOVER §12 Q4) is still open. The app stays private.
