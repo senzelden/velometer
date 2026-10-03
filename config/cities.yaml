@@ -41,6 +41,12 @@
 #   FR002C Lyon 297.3 vs 48.0 km2, FR009C Strasbourg 139.7 vs 78.2, FR005C Bordeaux 340.4 vs
 #   49.7, ES001C Madrid 953.1 vs 605.0, ES002C Barcelona 211.1 vs 98.3; urb_cpop1 labels them
 #   "(greater city)"). So population_urau is not set and these cities have no per-100k figure.
+# - boundary check (ADR 0004, spec 3.1): GISCO LAU polygon vs the OSM relation polygon from the
+#   region extract, both in the city EPSG; |LAU - OSM| / OSM. Above 5 %: oslo 5.31 % and
+#   helsinki 69.1 % (OSM includes fjord / sea water), so both use admin_boundary: osm_relation
+#   (population still LAU POP_2024). Others: amsterdam 0.12, utrecht 0.54, madrid 0.08,
+#   barcelona 2.29, stockholm 2.12, lyon 0.13, strasbourg 0.12, bordeaux 1.00, warsaw 0.05,
+#   krakow 0.01, budapest 0.04, prague 0.13, ljubljana 0.10 (%).
 # - Bratislava is not configured: LAU 2024 has no Bratislava municipality, only its 17 boroughs
 #   (SK_528595 ... SK_529494, 367.61 km2, POP_2024 sum 478,040), and the code needs a lau_code
 #   even for an osm_relation admin boundary. Queried for the record: Nominatim relation 1702499
@@ -173,6 +179,9 @@ cities:
     epsg: 25832
     geofabrik_region: europe/norway/ostlandet
     osm_relation_id: 2775550
+    # boundary check 2026-10-03: GISCO LAU 454.98 km2 vs OSM relation 480.48 km2 (EPSG 25832),
+    # 5.31 % > 5 %; the OSM polygon adds 28.0 km2 (Oslofjord water and islands) and lacks 2.5
+    admin_boundary: osm_relation
     lau_code: NO_0301
     fua_code: NO001F
     nuts3_code: NO081
@@ -184,6 +193,9 @@ cities:
     epsg: 25835
     geofabrik_region: europe/finland
     osm_relation_id: 34914
+    # boundary check 2026-10-03: GISCO LAU 221.69 km2 vs OSM relation 717.28 km2 (EPSG 25835),
+    # 69.1 % > 5 %; the OSM polygon adds 496.7 km2 (sea area and islands) and lacks 1.1
+    admin_boundary: osm_relation
     lau_code: FI_091
     fua_code: FI001F
     nuts3_code: FI1B1
