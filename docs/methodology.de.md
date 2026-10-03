@@ -109,47 +109,47 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 | Stadt | Grenzart | Aktueller Lauf (OSM-Zeitstempel) | Verlaufsdatensatz | Jahresstände (OSM-Zeitstempel) | Einwohner (Jahr) |
 |---|---|---|---|---|---|
 | Amsterdam | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 931.298 (2024) |
-| Amsterdam | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Amsterdam | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Barcelona | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.731.649 (2025) |
-| Barcelona | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Barcelona | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Berlin | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.782.202 (2024) |
-| Berlin | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Berlin | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Bordeaux | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 267.991 (2023) |
-| Bordeaux | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Bordeaux | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Bratislava | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 478.040 (2024) |
-| Bratislava | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Bratislava | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Budapest | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.686.222 (2024) |
-| Budapest | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Budapest | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | København | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 659.350 (2024) |
-| København | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| København | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Helsinki | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 674.500 (2024) |
-| Helsinki | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Helsinki | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Kraków | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 806.201 (2024) |
-| Kraków | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Kraków | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Ljubljana | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 297.575 (2024) |
-| Ljubljana | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Ljubljana | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Lyon | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 519.127 (2023) |
-| Lyon | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Lyon | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Madrid | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.506.730 (2025) |
-| Madrid | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Madrid | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Oslo | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 717.710 (2024) |
-| Oslo | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Oslo | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Paris | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.084.894 (2024) |
-| Paris | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Paris | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Praha | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.384.732 (2024) |
-| Praha | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Praha | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Stockholm | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 988.943 (2024) |
-| Stockholm | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Stockholm | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Strasbourg | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 293.771 (2023) |
-| Strasbourg | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Strasbourg | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Utrecht | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 374.238 (2024) |
-| Utrecht | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Utrecht | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Wien | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.005.760 (2024) |
-| Wien | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Wien | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Warszawa | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.861.599 (2024) |
-| Warszawa | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Warszawa | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Wrocław | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 673.743 (2024) |
-| Wrocław | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Wrocław | `fua` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 <!-- /generated:cities -->
 
 Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons mit der Fläche der administrativen OSM-Relation der Stadt verglichen. Weichen beide stärker voneinander ab, als der Schwellenwert in `config/trust.yaml` zulässt, kann die Stadt auf die OSM-Relation umgestellt werden; `admin_boundary` in `config/cities.yaml` hält diese Wahl fest [M5-Spezifikation §3.1]. Die folgende Tabelle nennt je Stadt die Quelle der Verwaltungsgrenze und der Einwohnerzahl, so wie sie mit der Gebietsgrenze und den Läufen gespeichert sind.

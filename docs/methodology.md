@@ -109,47 +109,47 @@ The table lists, per city and boundary, the OSM timestamps of the runs this repo
 | City | Boundary | Current run (OSM timestamp) | History set | History snapshots (OSM timestamp) | Population (year) |
 |---|---|---|---|---|---|
 | Amsterdam | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 931,298 (2024) |
-| Amsterdam | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Amsterdam | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Barcelona | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,731,649 (2025) |
-| Barcelona | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Barcelona | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Berlin | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 3,782,202 (2024) |
-| Berlin | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Berlin | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Bordeaux | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 267,991 (2023) |
-| Bordeaux | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Bordeaux | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Bratislava | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 478,040 (2024) |
-| Bratislava | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Bratislava | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Budapest | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,686,222 (2024) |
-| Budapest | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Budapest | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | København | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 659,350 (2024) |
-| København | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| København | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Helsinki | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 674,500 (2024) |
-| Helsinki | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Helsinki | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Kraków | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 806,201 (2024) |
-| Kraków | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Kraków | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Ljubljana | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 297,575 (2024) |
-| Ljubljana | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Ljubljana | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Lyon | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 519,127 (2023) |
-| Lyon | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Lyon | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Madrid | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 3,506,730 (2025) |
-| Madrid | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Madrid | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Oslo | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 717,710 (2024) |
-| Oslo | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Oslo | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Paris | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 2,084,894 (2024) |
-| Paris | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Paris | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Praha | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,384,732 (2024) |
-| Praha | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Praha | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Stockholm | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 988,943 (2024) |
-| Stockholm | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Stockholm | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Strasbourg | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 293,771 (2023) |
-| Strasbourg | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Strasbourg | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Utrecht | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 374,238 (2024) |
-| Utrecht | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Utrecht | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Wien | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 2,005,760 (2024) |
-| Wien | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Wien | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Warszawa | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,861,599 (2024) |
-| Warszawa | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Warszawa | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 | Wrocław | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 673,743 (2024) |
-| Wrocław | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Wrocław | `fua` | 2026-10-02T20:21:34Z | none | no history runs | none, no per-100k figure |
 <!-- /generated:cities -->
 
 The trust gate (see below) compares the area of the GISCO LAU polygon with that of the city's OSM administrative relation. Where the two differ by more than the threshold in `config/trust.yaml`, the city can be switched to the OSM relation, and `admin_boundary` in `config/cities.yaml` records that choice [M5 spec §3.1]. The next table lists, per city, the source of the admin boundary and of the population figure, as stored with the boundary and the runs.
