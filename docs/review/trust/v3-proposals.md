@@ -1,8 +1,16 @@
 # Classifier v3 proposals (M5 trust gate)
 
 Proposed on 2026-10-03 from the M5 diagnostics and golden samples, for your decision at the
-golden sign-off. Nothing here is in `config/classifier/` yet. A rule change becomes `v3.yaml`
-(ADR 0005), and only in Task 14.
+golden sign-off. A rule change becomes `v3.yaml` (ADR 0005), and only in Task 14.
+
+**Decided 2026-10-03, in `config/classifier/v3.yaml` (Task 14).** v3 is v2 plus two road-side
+rules, both tier D with subtype advisory, as v2 gives `cycleway=lane` + `cycleway:lane=advisory`:
+
+1. `D_soft_lane`: `cycleway[:left|:right|:both]=soft_lane` (proposal 1 below, CZ);
+2. `D_advisory`: `cycleway[:left|:right|:both]=advisory` (SK, NO; listed below as "considered,
+   not proposed" for Oslo, then adopted after the Bratislava sample showed the same value).
+
+`cycleway:right=shared_busway` (Bratislava, 0.16 km) stays unrecognised: it is an OSM mistag.
 
 Effects were measured with a scratch copy of `config/classifier/v2.yaml`, written to `$TMPDIR`,
 with only the rule below added. Each city's current LAU snapshot was re-measured with v2 and with
