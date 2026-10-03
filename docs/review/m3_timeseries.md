@@ -798,6 +798,70 @@ Cause: **campaign**, the same sidepath re-mapping as berlin/lau/2022 extended in
 3,817.6 -> 3,469.6
 km (-9.1%, below the 10% jump threshold) with 77,158 edits and a top-mapper share of 0.50.
 
+### bordeaux/fua/2019
+
+Cause: **mapping activity** led by one mapper (`single_mapper`), mostly cycleways drawn beside
+roads. A+B rose 850.1 -> 959.5 km (+109.4 km; threshold 85.0). Matching geometry within 10 m,
+140.4 km of tiered geometry is new and 30.7 km gone. Of the new, 109.2 km lie beside roads
+already mapped, whose sides mostly carried no cycleway tag (e.g. way 651236625, 2.3 km along a
+secondary road), and 17.2 km where no way was mapped before (e.g. way 517088624, a `Voie verte`).
+The largest single loss is way 194343158, Piste Roger Lapébie (14.2 km), retagged
+`highway=cycleway` -> `highway=path` + `bicycle=yes`, which no tier counts; it was a cycleway
+again by 1 January 2020 (see bordeaux/fua/2020). The 7,874 edits of 2018 stay below the spike
+limit (13,176) over 1,397 changesets (top changeset 1.8%), but one mapper made 50% of them,
+including 632 of the 964 new `highway=cycleway` ways, and created 44% of the 175.0 km of A/B
+ways with ids that were new in 2018 (new ids include the pieces of split ways).
+
+### bordeaux/fua/2020
+
+Cause: **mapping activity**, with **tag drift** from tier A to tier B. A+B rose 959.5 ->
+1,056.1 km (+96.6 km; threshold 96.0). Matching geometry within 10 m, 110.2 km of tiered
+geometry is new and 12.5 km gone: 67.2 km are cycleways drawn beside roads already mapped (e.g.
+way 746140548, 1.6 km along a residential street), 16.8 km lie where no way was mapped, and
+15.2 km are mapped paths retagged, mainly way 194343158 (Piste Roger Lapébie, 14.2 km) back from
+`highway=path` to `highway=cycleway`. Separately, 66.5 km on 120 existing ways moved from A to
+B when `highway=cycleway` gained `bicycle=designated` + `foot=designated` or became
+`highway=path` (e.g. way 590816799, way 597019071), in 24 changesets by 10 mappers, 30.0 km of
+it in August and 34.3 km in December 2019: B rose 87.7 -> 183.3 km while A stayed at about
+872 km. Activity was ordinary: 6,302 edits, top-mapper share 0.23; the A/B ways with new ids
+(139.2 km) were created by 56 mappers, the largest with 37% of the km.
+
+### lyon/lau/2025
+
+Cause: **campaign** (pedestrian network, not cycling). 26,893 counted edits in 2024
+against a limit of 6,700 (twice the median of 3,350): 23,570 of them create `highway=footway`
+ways, 18,046 in July 2024 alone. The 18,039 footways first drawn that July are sidewalks
+(`footway=sidewalk`, 11,252), crossings (6,041) and traffic islands (592), e.g. way 1298053632;
+three mappers made 99% of them, in 558 changesets. Over the year the top-mapper share is 0.37
+and the top changeset 2.0%. Footways count as cycling-relevant edits in `config/activity.yaml`
+but carry no tier, so A+B moved normally (83.4 -> 94.7 km, +11.3 km against a 25 km jump
+threshold), mostly from cycleways drawn beside roads (e.g. way 1311767651, 1.9 km along a
+secondary road whose side had a painted lane).
+
+### lyon/fua/2025
+
+Cause: **campaign**, the July 2024 sidewalk and crossing mapping of lyon/lau/2025
+extended over the FUA. 49,952 counted edits in 2024 against a limit of 26,492 (median 13,246):
+38,997 create `highway=footway`, 27,361 of them in July 2024. The 27,348 footways first drawn
+that July are 17,139 sidewalks, 9,146 crossings and 750 traffic islands; three mappers made 99%
+of them in 765 changesets. Over the year the top-mapper share is 0.30 and the top changeset
+1.5%. A+B rose 742.8 -> 776.6 km (+33.8 km, below the 74.3 km jump threshold).
+
+### lyon/fua/2026
+
+Cause: **mapping activity**, spread over many mappers, not a campaign or import. A+B rose
+776.6 -> 856.8 km (+80.2 km; threshold 77.7). Matching geometry within 10 m between the two
+snapshots, 90.1 km (per side) of tiered geometry is new and 14.2 km gone. Of the new, 44.2 km
+are cycleways and paths drawn beside roads that were already mapped; 19.2 km are mapped footways
+retagged as designated paths (e.g. way 26420781, Promenade de la Vorla, `highway=footway` +
+`bicycle=yes` -> `highway=path` + `bicycle=designated`); 11.2 km are tracks retagged the same
+way (way 171670318, the ViaRhôna towpath, 3.2 km); and 6.2 km were `highway=construction` on
+1 January 2025 and are cycleways now (e.g. way 1417218765, named `VL7`). Most of it lands in
+tier B: `highway=path` + `bicycle=designated` + `segregated=no` grew 204.0 -> 266.1 km. Edits in
+2025 were normal (20,435 against a limit of 26,492; 415 mappers, top-mapper share 0.19), and
+the A/B ways with new ids (61.1 km) were created by 84 mappers, none with more than 18% of the
+km.
+
 ### paris/lau/2020
 
 Cause: **construction**, with **tag drift** in the legacy diagnostic. A+B rose 223.9 -> 257.3
@@ -838,6 +902,28 @@ Cause: **construction** with ordinary catch-up mapping, not a campaign or import
 `bicycle=yes` -> `designated` (way 107496601); partly offset by 65 km of `cycleway=track`
 removed from roads (way 188144495) and 59 km of deleted cycleways. The 38,570 edits are spread
 over 10,445 changesets (top changeset 1.4%, top-mapper share 0.10) and are not a spike.
+
+### strasbourg/lau/2023
+
+Cause: **campaign** (pedestrian ways). 3,216 counted edits in 2022 against a limit of
+3,086 (median 1,543): 1,298 create `highway=footway`, 492 of them in October 2022 (of the 485
+footways first drawn that month, one mapper drew 90%; 31 changesets in all), 307 create
+`highway=cycleway`, and 741 modify tags, led by `highway=path -> footway` (168). Over the year
+the top-mapper share is 0.19 across 617 changesets. A+B moved normally, 205.9 -> 212.0 km
+(+6.0 km; jump threshold 25 km).
+
+### strasbourg/lau/2025
+
+Cause: **campaign** (a retagging sweep over cycle and shared paths, plus sidewalk and
+crossing mapping). 3,615 counted edits in 2024 against a limit of 3,086: 1,282 tag modifications,
+865 of them in March–April 2024, led by `segregated` added (`yes` 202, `no` 178),
+`bicycle=designated` added (162) and `highway=cycleway -> path` (109); and 1,213 `highway=footway`
+creations (of the 1,206 footways first drawn in 2024, 560 are sidewalks and 421 crossings, 57%
+by one mapper). The sweep moved 15.5 km on 120 existing ways from tier A to B (e.g. way 20336855,
+Piste Antonin Magne, `highway=cycleway` -> `path` + `bicycle=designated` + `foot=designated`),
+9.3 km of it in March 2024, in 41 changesets by 18 mappers: A fell 172.2 -> 156.5 km while B
+rose 46.0 -> 69.5 km. A+B rose 218.2 -> 226.0 km, a normal year. Over the year the top-mapper
+share is 0.19 across 750 changesets.
 
 ### vienna/lau/2025
 

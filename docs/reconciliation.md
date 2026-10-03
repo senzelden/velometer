@@ -457,6 +457,36 @@ the centreline basis is 918.3 km (−0.7%), while per side it is 1,557.9 km (1.7
 much), because most Berlin tracks are one-way tracks on both sides of the road. The date gap
 (506 days) is within the noise of this comparison.
 
+### bordeaux/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 FRI12, the Gironde département: 10,083.8 km² in QECIO,
+matching the 10,086.4 km² of the 535 GISCO LAU 2024 communes coded `FR_33*`. Our LAU (FR_33063,
+the commune) is 49.5 km², 0.5% of it. Measured on that département polygon (union of the 535
+communes, EPSG:25830, the 2026-10-02 extract, classifier v3), our main roads are 8,534.4 km
+against QECIO's 8,653.3 km (−1.4%), so the −97.6% is the difference in area. The commune's
+shares differ by category (main roads 0.02, tracks 0.04, lanes 0.19, shared 0.04): Bordeaux has
+more painted lanes and fewer separate tracks than the rest of Gironde.
+
+### bordeaux/qecio_tracks_km
+Cause: **scope** (FRI12 Gironde, 10,083.8 km², against our 49.5 km² commune; see
+`bordeaux/qecio_main_km`). Ours (45.0 km) is 0.04 of QECIO's 1,131.5 km; on the département
+polygon our tracks are 1,158.2 km (+2.4%).
+
+### bordeaux/qecio_lanes_km
+Cause: **scope** (FRI12 Gironde vs the commune; see `bordeaux/qecio_main_km`). Ours (53.5 km)
+is 0.19 of QECIO's 284.9 km; on the département polygon our lanes are 292.5 km (+2.7%).
+
+### bordeaux/qecio_shared_km
+Cause: **scope** (FRI12 Gironde vs the commune; see `bordeaux/qecio_main_km`). Ours (9.0 km)
+is 0.04 of QECIO's 256.8 km; on the département polygon our shared paths are 332.1 km (+29.3%),
+the same excess over QECIO as in Rhône and Bas-Rhin (see `lyon/qecio_shared_km`).
+
+### bordeaux/qecio_total_km
+Cause: **scope** first (ours 107.5 km is 0.06 of QECIO's 1,737.8 km; see
+`bordeaux/qecio_main_km`) and **definition** second: QECIO's total includes 64.7 km of
+limited-access roads, which our A–D sum does not. On the département polygon our total is
+1,782.7 km: +2.6% against QECIO's total, +6.6% against its total without limited-access roads
+(1,673.1 km).
+
 ### copenhagen/cc_ratio
 Cause: **definition** (length basis). Per side our A+B is 582.4 km, 1.62 times the
 centreline 360.0 km; on the centreline basis the ratio is 36.2% against our 993.1 km network,
@@ -493,6 +523,51 @@ Cause: **boundary** first (ours 378.3 km is 0.75 of QECIO's 505.3 km, the same r
 other categories; see `copenhagen/qecio_main_km`) and **definition** second: QECIO's total also
 counts limited-access roads, which our A–D sum does not (`definition_mismatch`).
 
+### lyon/cc_ratio
+Cause: **definition** (length basis). Our preset divides per-side A+B (113.0 km) by all public
+roads (637.5 km): 17.7%. On the centreline basis A+B is 96.0 km, which gives 15.1% against our
+network, or 14.0% against Clean Cities' own 685 km, matching their 14%. The denominators agree
+within 6.9% (`lyon/cc_network_km`) and the centreline numerator within 2.0%
+(`lyon/cc_km~qecio_weighted`), so the gap is the numerator's basis: per side counts 1.18 times
+the centreline km. The boundary is the same: Clean Cities' Lyon is the municipality, 48.0 km²
+(Annex 1), and our LAU is 47.9 km². Date gap: 506 days.
+
+### lyon/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 FRK26, the Rhône département including the Métropole de
+Lyon: 3,259.8 km² in QECIO, matching the 3,258.7 km² of the 267 GISCO LAU 2024 communes coded
+`FR_69*`. Our LAU (FR_69123, the commune) is 47.9 km², 1.5% of it. Measured on that département
+polygon (union of the 267 communes, EPSG:25831, the 2026-10-02 extract, classifier v3), our
+main roads are 4,916.3 km against QECIO's 4,959.4 km (−0.9%), so the −94.7% is the difference in
+area, not road selection or date. The commune holds a larger share of each category than of the
+area, and unequal shares (main roads 0.05, tracks 0.29, lanes 0.16, shared 0.06) are what a dense
+city compared with a mostly rural département gives.
+
+### lyon/qecio_tracks_km
+Cause: **scope** (FRK26 Rhône, 3,259.8 km², against our 47.9 km² commune; see
+`lyon/qecio_main_km`). Ours (82.2 km) is 0.29 of QECIO's 278.8 km. On the département polygon our
+tracks are 336.5 km (+20.7%). That remainder fits the 995-day date gap: on the Lyon FUA, which
+covers 62% of the département, our A+B grew 742.8 -> 902.9 km (+21.6%) between the 2024-01-01
+history point (10 days before QECIO's snapshot) and the 2026-10-02 run.
+
+### lyon/qecio_lanes_km
+Cause: **scope** (FRK26 Rhône vs the commune; see `lyon/qecio_main_km`). Ours (86.5 km) is 0.16
+of QECIO's 539.1 km; on the département polygon our lanes are 558.1 km (+3.5%).
+
+### lyon/qecio_shared_km
+Cause: **scope** (FRK26 Rhône vs the commune; see `lyon/qecio_main_km`). Ours (13.8 km) is 0.06
+of QECIO's 236.4 km; on the département polygon our shared paths are 292.9 km (+23.9%). Shared
+paths come out 24–29% above QECIO on all three French départements measured this way (Bas-Rhin
++23.8%, Gironde +29.3%), more than the date gap explains elsewhere; that points to a difference
+in what counts as shared, which was not examined further and does not change the cause of the
+−94.1%.
+
+### lyon/qecio_total_km
+Cause: **scope** first (ours 182.5 km is 0.16 of QECIO's 1,119.3 km; see `lyon/qecio_main_km`)
+and **definition** second: QECIO's total also counts 65.1 km of limited-access roads, which our
+A–D sum does not (`definition_mismatch`). On the département polygon our total is 1,187.5 km,
++6.1% against QECIO's total and +12.6% against its total without limited-access roads
+(1,054.3 km), in line with the growth in `lyon/qecio_tracks_km`.
+
 ### paris/cc_ratio
 Cause: **definition** (source and scope of the Clean Cities numerator). The denominators agree
 (our 1,555.8 km vs 1,700 km, −8.5%), but Clean Cities' 822 km protected cannot be reproduced
@@ -501,23 +576,56 @@ from OSM: see `paris/cc_km`. Our 22.9% would only drop further on the centreline
 
 ### paris/cc_km
 Cause: **definition** (the figure is not an OSM protected-infrastructure length). Clean Cities'
-822 km is more than everything we map in Paris across all tiers A–E per side (678.3 km,
-including 147.1 km of painted lanes and 174.8 km of bus lanes and cycle streets). It is also
-3.6 times QECIO's OSM-based tracks plus shared paths (202.7 + 24.3 = 227.0 km, 2024) and 3.4
-times our centreline A+B (243.1 km). Even our per-side A+B (356.5 km) is far below it. The
-report's per-city source is unverified (research doc §6: the data PDF is image-only), but a
-figure this far above every OSM measure points to city-submitted data with a wider scope than
-"physically segregated". Not a classifier issue: QECIO's independent tag logic lands near our
-numbers (`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.6%).
+822 km is more than everything we map in Paris across all tiers A–E per side (678.2 km,
+including 147.0 km of painted lanes and 174.8 km of bus lanes and cycle streets). It is also 3.6
+times QECIO's OSM-based tracks plus shared paths (202.7 + 24.3 = 227.0 km, 2024) and 3.4 times
+our centreline A+B (243.1 km). Even our per-side A+B (356.5 km) is far below it. The report's
+per-city source is unverified (research doc §6: the data PDF is image-only), but a figure this
+far above every OSM measure points to city-submitted data with a wider scope than "physically
+segregated". Not a classifier issue: QECIO's independent tag logic lands near our numbers
+(`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.7%).
 
 ### paris/qecio_shared_km
 Cause: **date**. Applying QECIO's own tag definition of cycle and pedestrian tracks (Methodology
 Table 2: footway/path/pedestrian + `bicycle=designated` + `segregated!=yes`, or cycleway +
-`foot=designated` + `segregated!=yes`) to our 2026-09-30 snapshot selects 20.3 km of ways, which
-the classifier puts in tier B in full: 18.0 km centreline (20.2 km per side), the same 18.0 km as our
-`qecio_shared_km` value. So our classifier and QECIO's rule agree on today's data, and the gap to
-QECIO's 24.3 km (−6.3 km centreline on a small base) lies in the data: 994 days of retagging
-since QECIO's 2024-01-10 snapshot. Not verified against a 2024 snapshot.
+`foot=designated` + `segregated!=yes`) to our 2026-10-02 snapshot selects 250 ways, 20.3 km.
+The classifier puts 20.2 km of them in tier B (18.0 km centreline), the same 18.0 km as our
+`qecio_shared_km` value; the other 0.2 km is way 175866038 (Parvis Radio France), a closed
+`highway=pedestrian` square that the classifier excludes as an area. So our classifier and
+QECIO's rule agree on today's data, and the gap to QECIO's 24.3 km (−6.3 km centreline on a
+small base) lies in the data: 996 days of retagging since QECIO's 2024-01-10 snapshot. Not
+verified against a 2024 snapshot.
+
+### strasbourg/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 FRF11, the Bas-Rhin département: 4,797.2 km² in QECIO,
+matching the 4,797.4 km² of the 514 GISCO LAU 2024 communes coded `FR_67*`. Our LAU (FR_67482,
+the commune) is 78.1 km², 1.6% of it. Measured on that département polygon (union of the 514
+communes, EPSG:25832, the 2026-10-02 extract, classifier v3), our main roads are 4,879.7 km
+against QECIO's 4,890.2 km (−0.2%), so the −95.3% is the difference in area. The commune's
+shares differ by category (main roads 0.05, tracks 0.20, lanes 0.15, shared 0.19), as expected
+for a dense city inside a mostly rural département.
+
+### strasbourg/qecio_tracks_km
+Cause: **scope** (FRF11 Bas-Rhin, 4,797.2 km², against our 78.1 km² commune; see
+`strasbourg/qecio_main_km`). Ours (150.2 km) is 0.20 of QECIO's 742.4 km; on the département
+polygon our tracks are 785.9 km (+5.9%).
+
+### strasbourg/qecio_lanes_km
+Cause: **scope** (FRF11 Bas-Rhin vs the commune; see `strasbourg/qecio_main_km`). Ours
+(22.7 km) is 0.15 of QECIO's 152.2 km; on the département polygon our lanes are 152.4 km
+(+0.2%).
+
+### strasbourg/qecio_shared_km
+Cause: **scope** (FRF11 Bas-Rhin vs the commune; see `strasbourg/qecio_main_km`). Ours
+(54.3 km) is 0.19 of QECIO's 286.4 km; on the département polygon our shared paths are 354.6 km
+(+23.8%), the same excess over QECIO as in Rhône and Gironde (see `lyon/qecio_shared_km`).
+
+### strasbourg/qecio_total_km
+Cause: **scope** first (ours 227.1 km is 0.16 of QECIO's 1,458.4 km; see
+`strasbourg/qecio_main_km`) and **definition** second: QECIO's total includes 277.5 km of
+limited-access roads, which our A–D sum does not. On the département polygon our total is
+1,292.8 km: −11.4% against QECIO's total, +9.5% against its total without limited-access roads
+(1,180.9 km).
 
 ### vienna/cc_ratio
 Cause: **definition** (superseded narrower figure). This row is the report PDF's 14%, which
