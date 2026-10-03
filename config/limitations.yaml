@@ -14,11 +14,13 @@ limitations:
   - id: population_2024
     en: >-
       The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it
-      is the figure of the identical NUTS3 unit [ADR 0004]. The same value is used for every
+      is the figure of the identical NUTS3 unit [ADR 0004], or else the Urban Audit figure
+      described below. The same value is used for every
       snapshot year, so per-100k values do not follow population change [M3 spec, decision 2].
     de: >-
       Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt
-      der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004]. Derselbe Wert gilt für jedes
+      der Wert der deckungsgleichen NUTS-3-Einheit [ADR 0004], ersatzweise der unten
+      beschriebene Wert aus dem Urban Audit. Derselbe Wert gilt für jedes
       Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab
       [M3-Spezifikation, Entscheidung 2].
   - id: fua_no_per_100k
@@ -92,3 +94,46 @@ limitations:
       des aktuellen Stands endet dort, wo die Verlaufsdatei endet [M3 R9]. Ein aktueller Lauf
       aus mehreren zusammengeführten Regionen trägt den ältesten Zeitstempel der Regionen
       [M4-Spezifikation §3.2].
+  - id: trust_gate
+    en: >-
+      The trust gate checks tagging practice, not whether the map is complete. Its thresholds
+      catch cycling tags that the classifier does not recognise or excludes, an unusually high
+      share of tier B in A+B, and an admin boundary that differs from the OSM relation [M5 spec
+      §3.1]. The golden sample has about 12 ways per new country. That is too few to cover
+      every local tagging habit [M5 spec §3.2]. France, Poland, Austria and Denmark have no
+      golden sample of their own: they were trusted through the M2 reconciliation of their
+      pilot cities [M5 spec, decision 7].
+    de: >-
+      Die Freigabe je Land prüft die Erfassungspraxis, nicht die Vollständigkeit der Karte.
+      Ihre Schwellenwerte schlagen an bei Radverkehrs-Tags, die der Klassifikator nicht erkennt
+      oder ausschließt, bei einem ungewöhnlich hohen Anteil der Stufe B an A+B und bei einer
+      Verwaltungsgrenze, die von der OSM-Relation abweicht [M5-Spezifikation §3.1]. Die
+      Referenzstichprobe umfasst etwa 12 Wege je neuem Land. Das reicht nicht, um jede örtliche
+      Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen, Österreich
+      und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich ihrer
+      Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
+  - id: population_urban_audit
+    en: >-
+      Lyon, Strasbourg and Bordeaux have no LAU population, and their NUTS3 unit is the
+      département, not the commune. Their population is the Eurostat Urban Audit city
+      population (`urb_cpop1`) for the latest year with a figure, which may not be 2024
+      [M5 spec, decision 9]. Their per-100k values can therefore rest on a different year than
+      those of the other cities. The tables above give the year and source of each figure.
+    de: >-
+      Für Lyon, Straßburg und Bordeaux gibt es keine LAU-Einwohnerzahl, und ihre
+      NUTS-3-Einheit ist das Département, nicht die Gemeinde. Ihr Einwohnerwert stammt aus der
+      Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit
+      einem Wert. Das muss nicht 2024 sein [M5-Spezifikation, Entscheidung 9]. Ihre Werte je
+      100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen
+      Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben.
+  - id: qecio_nuts3_not_city
+    en: >-
+      QECIO v2.10 publishes results per NUTS3 region. Where that region is not the city, the
+      QECIO figure covers a different area than our runs. Its comparison rows then carry the
+      note "NUTS3 unit is not the city", and the rankings chart marks the city with †
+      [M5 spec §4.3].
+    de: >-
+      QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die
+      Stadt, bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Ihre
+      Vergleichszeilen tragen dann den Hinweis „NUTS3 unit is not the city“, und das
+      Ranglistendiagramm kennzeichnet die Stadt mit † [M5-Spezifikation §4.3].

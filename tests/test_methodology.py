@@ -1,4 +1,6 @@
 import re
+import sqlite3
+from contextlib import closing
 from importlib import resources
 from pathlib import Path
 
@@ -8,7 +10,7 @@ from typer.testing import CliRunner
 
 from velometer.cli import app
 from velometer.config import ConfigError, default_config_dir, load_classifier
-from velometer.report.data import ReportData
+from velometer.report.data import ReportData, open_readonly
 from velometer.report.methodology import (
     FILES,
     Limitation,
@@ -30,7 +32,11 @@ SPEC_LIMITATIONS = [
     "published_scope",
     "dirty_provenance_m3",
     "history_vs_current_date",
+    "trust_gate",
+    "population_urban_audit",
+    "qecio_nuts3_not_city",
 ]
+M5_LIMITATIONS = ["trust_gate", "population_urban_audit", "qecio_nuts3_not_city"]
 
 
 @pytest.fixture
@@ -272,3 +278,130 @@ def test_german_tier_b_names_both_footway_kinds(facts):
     assert "| B | Geh- und Radweg (gemeinsam oder getrennt) |" in de
     assert "(getrennter Geh- und Radweg) hier als Stufe B" in de
     assert "gemeinsamer Geh- und Radweg" not in de  # Zeichen 240 is the unsegregated kind
+
+
+# --- M5: trust gate, boundary and population sources, NUTS3 caveat ---------------------------
+
+
+def _facts_of(db_path, cfg):
+    with closing(open_readonly(db_path)) as conn:
+        return methodology_facts(ReportData(conn, cfg))
+
+
+def _row(text: str, prefix: str) -> str:
+    return next(line for line in text.splitlines() if line.startswith(prefix))
+
+
+def test_trusted_countries_are_listed_with_their_golden_counts(report_db_with_trust):
+    nl = {
+        "status": "trusted",
+        "basis": "golden sample",
+        "golden": "tests/fixtures/golden/nl",
+        "classifier_reviewed": "v2",
+        "signed_off": "2026-10-03",
+    }
+    db, cfg = report_db_with_trust(
+        countries={
+            "DE": {"status": "trusted", "basis": "berlin golden set (M1)"},
+            "FR": {"status": "pending", "basis": "not yet"},
+            "NL": nl,
+        }
+    )
+    golden = cfg.parent / "tests" / "fixtures" / "golden" / "nl.yaml"  # relative to the repo root
+    golden.parent.mkdir(parents=True)
+    ways = [{"way_id": i, "confirmed": i != 3} for i in (1, 2, 3)]
+    golden.write_text(yaml.safe_dump({"status": "signed_off", "ways": ways}))
+    facts = _facts_of(db, cfg)
+    by = {c.iso2: c for c in facts.countries}
+    assert list(by) == ["DE", "NL"]  # trusted only, sorted
+    assert (by["NL"].n_golden_confirmed, by["NL"].n_golden) == (2, 3)
+    assert (by["DE"].n_golden_confirmed, by["DE"].n_golden) == (0, 0)  # no golden file
+    assert by["NL"].classifier_reviewed == "v2" and by["NL"].signed_off == "2026-10-03"
+    en, de = render(facts, "en"), render(facts, "de")
+    assert _row(en, "| DE |") == "| DE | trusted | berlin golden set (M1) | – | – | none |"
+    assert _row(en, "| NL |") == "| NL | trusted | golden sample | v2 | 2026-10-03 | 2 of 3 |"
+    assert _row(de, "| DE |") == "| DE | freigegeben | berlin golden set (M1) | – | – | keine |"
+    assert _row(de, "| NL |") == "| NL | freigegeben | golden sample | v2 | 2026-10-03 | 2 von 3 |"
+    for text in (en, de):
+        assert not any(line.startswith("| FR |") for line in text.splitlines())
+        start, end = "<!-- generated:trust -->", "<!-- /generated:trust -->"
+        assert text.count(start) == 1 and text.index(start) < text.index("| DE |") < text.index(end)
+
+
+def test_each_city_lists_its_boundary_and_population_source(fixture_db):
+    db_path, cfg, _, _ = fixture_db
+    with closing(sqlite3.connect(db_path)) as w, w:
+        w.execute(
+            "UPDATE boundaries SET source='OSM relation 123', source_version='OSM admin relation' "
+            "WHERE city_id='berlin' AND kind='lau'"
+        )
+        w.execute(
+            "UPDATE boundaries SET source='Eurostat GISCO', source_version='LAU 2024 (1:1M)' "
+            "WHERE city_id='paris' AND kind='lau'"
+        )
+        w.execute(
+            "UPDATE runs SET population_source='GISCO LAU 2024 POP_2024' WHERE city_id='berlin'"
+        )
+        w.execute(
+            "UPDATE runs SET population_source='Eurostat urb_cpop1 XX001C 2023' "
+            "WHERE city_id='paris'"
+        )
+    facts = _facts_of(db_path, cfg)
+    by = {c.id: c for c in facts.cities}
+    assert by["berlin"].boundary_source == "OSM relation 123"
+    assert by["paris"].boundary_source == "Eurostat GISCO LAU 2024 (1:1M)"
+    assert by["berlin"].population_source == "GISCO LAU 2024 POP_2024"
+    assert by["paris"].population_source == "Eurostat urb_cpop1 XX001C 2023"
+    for lang in LANGS:
+        text = render(facts, lang)
+        assert "| Berlin | OSM relation 123 | GISCO LAU 2024 POP_2024 |" in text, lang
+        assert "| Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat urb_cpop1 XX001C 2023 |" in text
+        start, end = "<!-- generated:sources -->", "<!-- /generated:sources -->"
+        assert text.count(start) == 1
+        assert text.index(start) < text.index("| Berlin | OSM relation 123 |") < text.index(end)
+
+
+def _nuts3_item(text: str, lim) -> str:
+    """The rendered list item of the qecio_nuts3_not_city limitation, after the YAML text."""
+    line = next(x for x in text.splitlines() if x.startswith(f"- {lim}"))
+    return line[len(f"- {lim}") :]
+
+
+def test_qecio_nuts3_city_list_follows_cities_yaml(fixture_db):
+    db_path, cfg, _, data = fixture_db
+    facts = methodology_facts(data)  # config/cities.yaml: berlin and paris are their NUTS3 unit
+    lim = next(x for x in facts.limitations if x.id == "qecio_nuts3_not_city")
+    assert "Paris" not in lim.en + lim.de and "Berlin" not in lim.en + lim.de
+    assert _nuts3_item(render(facts, "en"), lim.en) == ""  # no list sentence at all
+    assert _nuts3_item(render(facts, "de"), lim.de) == ""
+    cities = cfg / "cities.yaml"
+    doc = yaml.safe_load(cities.read_text())
+    for c in doc["cities"]:
+        if c["id"] in ("paris", "berlin"):
+            c["nuts3_is_city"] = False
+    cities.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+    flipped = _facts_of(db_path, cfg)
+    assert _nuts3_item(render(flipped, "en"), lim.en) == " This applies to Berlin and Paris."
+    assert _nuts3_item(render(flipped, "de"), lim.de) == " Das betrifft Berlin und Paris."
+    for c in doc["cities"]:
+        if c["id"] == "berlin":
+            c["nuts3_is_city"] = True
+    cities.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+    one = _facts_of(db_path, cfg)
+    assert _nuts3_item(render(one, "en"), lim.en) == " This applies to Paris."
+    assert _nuts3_item(render(one, "de"), lim.de) == " Das betrifft Paris."
+
+
+@pytest.mark.parametrize("lim_id", M5_LIMITATIONS)
+def test_cli_check_fails_when_a_new_limitation_lacks_german(fixture_db, tmp_path, lim_id):
+    db_path, cfg, _, _ = fixture_db
+    docs = tmp_path / "docs"
+    common = ["--docs", str(docs), "--db", str(db_path), "--config-dir", str(cfg)]
+    assert _cli(*common).exit_code == 0
+    assert _cli("--check", *common).exit_code == 0
+    lim = cfg / "limitations.yaml"
+    data = yaml.safe_load(lim.read_text())
+    del next(x for x in data["limitations"] if x["id"] == lim_id)["de"]
+    lim.write_text(yaml.safe_dump(data, allow_unicode=True))
+    res = _cli("--check", *common)
+    assert res.exit_code == 1 and "limitations.yaml" in res.output

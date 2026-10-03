@@ -76,7 +76,7 @@ Jede Stadt wird auf zwei Gebietsgrenzen berechnet [ADR 0004]:
 - **LAU** ist die Stadtgrenze: die lokale Verwaltungseinheit von Eurostat GISCO, Stand 2024. Sie ist der Standard. Fehlt ein sauberes LAU-Polygon, tritt die administrative OSM-Relation an seine Stelle.
 - **FUA** ist der funktionale Stadtraum (Functional Urban Area), also die Stadt mit ihrem Pendlereinzugsgebiet. Er dient als Robustheitsprüfung.
 
-Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]. Für alle Stichjahre gilt derselbe Einwohnerwert von 2024 [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
+Verglichen wird nur innerhalb derselben Grenzart. Die Einwohnerzahl der LAU stammt von Eurostat. Fehlt dort ein Wert, liefert ihn die deckungsgleiche NUTS-3-Einheit [ADR 0004]. Gibt es keine NUTS-3-Einheit, die mit der Stadt übereinstimmt, stammt der Wert aus der Städtestatistik Urban Audit von Eurostat (`urb_cpop1`), und zwar für das jüngste Jahr mit einem Wert [M5-Spezifikation, Entscheidung 9; `population` in `sources/boundaries.py`]. Für alle Stichjahre gilt derselbe Einwohnerwert [M3-Spezifikation, Entscheidung 2]. FUA-Läufe führen keine Einwohnerzahl; für die FUA gibt es daher keinen Wert je 100.000 Einwohner [M4-Spezifikation §4.4].
 
 Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten Läufe, den Verlaufsdatensatz und die Einwohnerzahl.
 
@@ -89,6 +89,33 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 {% endfor %}
 {% endfor %}
 <!-- /generated:cities -->
+
+Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons mit der Fläche der administrativen OSM-Relation der Stadt verglichen. Weichen beide stärker voneinander ab, als der Schwellenwert in `config/trust.yaml` zulässt, kann die Stadt auf die OSM-Relation umgestellt werden; `admin_boundary` in `config/cities.yaml` hält diese Wahl fest [M5-Spezifikation §3.1]. Die folgende Tabelle nennt je Stadt die Quelle der Verwaltungsgrenze und der Einwohnerzahl, so wie sie mit der Gebietsgrenze und den Läufen gespeichert sind.
+
+<!-- generated:sources -->
+| Stadt | Verwaltungsgrenze (LAU) | Quelle der Einwohnerzahl |
+|---|---|---|
+{% for c in f.cities %}
+| {{ c.name }} | {{ c.boundary_source or "nicht erfasst" }} | {{ c.population_source or "keine" }} |
+{% endfor %}
+<!-- /generated:sources -->
+
+## Freigabe je Land
+
+Eine Stadt kommt erst in die Auswertung, wenn ihr Land in `config/trust.yaml` freigegeben ist. Städte anderer Länder lassen sich berechnen und prüfen, erscheinen aber in keinem Teil der Auswertung [M5-Spezifikation §3.3]. Vor der Freigabe eines Landes stehen zwei Prüfungen:
+
+- **Diagnose.** Sie wird aus dem aktuellen LAU-Lauf jeder Stadt mit dem Klassifikator der Auswertung berechnet. Gemessen werden der Anteil der Kilometer mit Radverkehrs-Tags, den keine Regel erkennt, der ausgeschlossene Anteil, der Anteil der Stufe B an A+B und der Flächenunterschied zwischen dem GISCO-LAU-Polygon und der OSM-Relation. Die Schwellenwerte stehen in `config/trust.yaml`. Liegt ein Wert darüber, muss die Prüfdatei des Landes ihn schriftlich begründen [M5-Spezifikation §3.1].
+- **Eine Referenzstichprobe** von etwa 12 Wegen je neuem Land, per Abfrage aus dem aktuellen Stand des Landes ausgewählt. Die Stufen jedes Wegs werden von Hand geprüft und abgezeichnet. Ein Test stellt danach sicher, dass der Klassifikator der Auswertung diese Wege weiterhin so einstuft [M5-Spezifikation §3.2].
+
+`velometer trust --check` schlägt in drei Fällen fehl: wenn ein freigegebenes Land unbestätigte Referenzwege hat oder Wege, die der Klassifikator der Auswertung anders einstuft; wenn ein Schwellenwert ohne Begründung überschritten ist; und wenn die Stichprobe mit einem anderen Klassifikator geprüft wurde als dem der Auswertung [M5-Spezifikation §3.3]. Deutschland stützt sich auf die Berliner Referenzstichprobe aus M1. Frankreich, Polen, Österreich und Dänemark wurden über den Abgleich mit veröffentlichten Zahlen in M2 freigegeben und haben keine eigene Stichprobe [M5-Spezifikation, Entscheidung 7].
+
+<!-- generated:trust -->
+| Land | Status | Grundlage | Geprüfter Klassifikator | Abgezeichnet am | Bestätigte Referenzwege |
+|---|---|---|---|---|---|
+{% for c in f.countries %}
+| {{ c.iso2 }} | {{ {"trusted": "freigegeben", "pending": "ausstehend"}[c.status] }} | {{ c.basis }} | {{ c.classifier_reviewed or "–" }} | {{ c.signed_off or "–" }} | {% if c.n_golden %}{{ c.n_golden_confirmed }} von {{ c.n_golden }}{% else %}keine{% endif %} |
+{% endfor %}
+<!-- /generated:trust -->
 
 ## Jahresstände
 
@@ -129,8 +156,10 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 ## Bekannte Einschränkungen
 
 <!-- generated:limitations -->
+{% set nuts3_not_city = f.cities | selectattr("nuts3_is_city", "sameas", false) | map(attribute="name") | list %}
 {% for lim in f.limitations %}
-- {{ lim.de }}
+- {{ lim.de }}{% if lim.id == "qecio_nuts3_not_city" and nuts3_not_city %} Das betrifft {{ nuts3_not_city | and_list }}.{% endif %}
+
 {% endfor %}
 <!-- /generated:limitations -->
 
