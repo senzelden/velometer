@@ -880,6 +880,54 @@ it in August and 34.3 km in December 2019: B rose 87.7 -> 183.3 km while A staye
 872 km. Activity was ordinary: 6,302 edits, top-mapper share 0.23; the A/B ways with new ids
 (139.2 km) were created by 56 mappers, the largest with 37% of the km.
 
+### bratislava/lau/current
+
+Cause: **campaign** (pedestrian network), the city part of bratislava/fua/current.
+7,114 counted edits between 1 January and 2 October 2026, against a limit of 6,176.2 (2 × median
+4,101 × 0.753). 5,362 of them give a way `highway=footway` (5,290 new ways; 1,387 sidewalks, 768
+crossings), and 399 create `highway=path`. The edits are spread over 1,173 changesets (top
+changeset 2.5%) and 85 mappers (top-mapper share 0.29), with 578–1,079 edits in every month.
+A+B rose normally (170.9 -> 179.3 km).
+
+### bratislava/fua/2022
+
+Cause: **mapping activity** (new cycleways) for the A+B jump, and **tag drift** for the A -> B
+shift inside it. A+B rose 286.6 -> 319.4 km (+32.7, threshold 28.7). Ways not in the 2021
+snapshot added 31.6 km (146 ways; 25.7 km of `highway=cycleway`, e.g. way 962211589, 2.9 km;
+way 908367212, 2.5 km). Previously untiered ways retagged into A/B added 12.8 km. Shortened
+ways and splits (−5.8 km) and deleted ways (−5.4 km) offset part of that. The 100 new tier-A ways
+were drawn over 49 changesets by 20 mappers (top-mapper share 0.19), mostly
+September–November 2021. Tier B doubled (45.9 -> 88.6 km) mainly because 31.9 km of
+`highway=cycleway` + `foot=yes` were retagged `foot=designated` + `bicycle=designated` (e.g.
+way 230140923, 6.5 km; way 181363641, 3.0 km): 83 ways in 32 changesets by 9 mappers, top-mapper
+share 0.66, 40 of them in October 2021. That retagging moves km from A to B and does not change
+A+B. The city's share of the jump is +15.5 km (LAU 115.2 -> 130.7, below its threshold).
+
+### bratislava/fua/2025
+
+Cause: **tag drift** in the city plus **mapping activity** in the surrounding FUA. A+B rose
+379.1 -> 420.1 km (+41.0, threshold 37.9). Inside the LAU A+B rose 22.7 km (below the city's
+25 km threshold), 19.8 km of it from retagged ways. 7.4 km of `highway=footway` + `bicycle=yes`
+became `highway=cycleway` + `bicycle=designated` (way 5027830, 3.7 km; way 801057656, 3.3 km),
+and 4.3 km of other footways became cycleways. 6.1 km are mountain-bike trails: `highway=path`
++ `foot=no` gained `bicycle=designated` and `oneway=yes` (way 985431315 "Krivé Jarky Trail",
+way 383753005 "Rohatka"). The `A_path_cycle_only` rule puts these in tier A. Outside the
+city the +18.3 km is mostly new ways: across the FUA, 229 ways not in the 2024 snapshot add
+19.2 km, of which 5.6 km lie in the LAU. The retags were 36 ways in 17 changesets by 14
+mappers (top share 0.28). Activity was normal (7,392 edits, top mapper 0.32).
+
+### bratislava/fua/current
+
+Cause: **campaign** (pedestrian network), not cycling. 15,720 counted edits between
+1 January and 2 October 2026, against a limit of 10,748.5 (2 × median 7,137 × 0.753 of the
+year). 12,922 of them give a way `highway=footway` (12,831 new ways: 5,156 tagged
+`footway=sidewalk` and 2,144 `footway=crossing`), and 708 create `highway=path`. The edits are
+spread over 1,909 changesets (top changeset 2.0%) and 148 mappers (top-mapper share 0.42). The
+busiest months were January (2,601) and March (2,580). It continues 2025 (13,206 edits, 9,256 of
+them footway creations, just under that year's limit of 14,274). Footways count as
+cycling-relevant edits in `config/activity.yaml` but carry no tier, so A+B moved normally
+(436.5 -> 454.9 km).
+
 ### krakow/lau/2022
 
 Cause: **tag drift** (contraflow retagging). `legacy_km` fell 10.0 -> 3.3 as

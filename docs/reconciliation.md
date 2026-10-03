@@ -591,6 +591,50 @@ limited-access roads, which our A–D sum does not. On the département polygon 
 1,782.7 km: +2.6% against QECIO's total, +6.6% against its total without limited-access roads
 (1,673.1 km).
 
+### bratislava/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 SK010 Bratislavský kraj. We took its polygon from the OSM
+relation tagged `ref:nuts:3=SK010` (relation 388265): 2,051.7 km² and 89 LAU, with 732,757
+inhabitants (GISCO LAU 2024 POP_2024). Our city is the 17 boroughs: 367.6 km² (17.9%) and
+478,040 inhabitants (65.2%). On a 2024-01-11 snapshot of SK010, cut from the Slovakia history
+file, our main roads are 1,369.5 km against QECIO's 1,365.2 (+0.3%). The region fully explains
+the gap: the city holds 598.5 km, 0.44 of it.
+
+### bratislava/qecio_lanes_km
+Cause: **date** (lanes mapped since QECIO's snapshot), not scope. On the SK010 2024-01-11 snapshot our
+C+D centreline is 19.3 km (`cycleway=lane` 15.3 plus advisory lanes 4.0), equal to QECIO's 19.3.
+Almost all of it is in the city: the LAU had 18.3 km on 1 January 2024. Since then the LAU gained
+18.7 km per side (9.4 km centreline): 8.3 km of `cycleway=shared_lane` became `cycleway=lane`
+(e.g. way 177916468), and 11.9 km are on road ways not in the 2024 snapshot (new or split).
+v3's `cycleway=advisory` adds only 0.3 km centreline.
+
+### bratislava/qecio_shared_km
+Cause: **scope** (SK010 vs the city, see `bratislava/qecio_main_km`). Applied to SK010 on
+2024-01-11, our tier B without `B/segregated` is 67.9 km against QECIO's 67.3 (+0.8%). The city
+holds less: 51.4 km now (designated `highway=cycleway` 33.4 + designated footways and paths 18.0),
+47.2 km in January 2024. On today's data SK010 has 74.3 km, so 22.9 km of shared paths lie
+outside the city.
+
+### bratislava/qecio_total_km
+Cause: **scope** first (see `bratislava/qecio_main_km`) and **definition** second. QECIO's total
+of 267.4 km includes 58.5 km of limited-access roads (`definition_mismatch`), which our A–D sum
+does not count. On SK010 at 2024-01-11 our A–D centreline is 233.8 km: −12.6% against QECIO's
+total and +11.9% against its total without limited-access roads (209.0 km). The city alone has
+194.4 km. Of the residual, tracks make up most (146.6 vs 122.3 km on SK010); that row is within
+band at city level.
+
+### bratislava/bnk_network_km
+Cause: **definition**. BikeNetKit's network includes living streets and paths with
+`bicycle=yes`, which our tiers A+B+E leave out. We matched BikeNetKit's 256.9 km of edges to our
+2026-10-02 snapshot by OSM way id (edge km split equally over its way ids, EPSG:25833):
+- 158.7 km lie on ways we put in tier A, B or E (our per-side A+B+E is 187.3 km);
+- 97.4 km lie on ways with no tier: living streets 64.9 km, `highway=path` + `bicycle=yes`
+  22.4 km, `highway=pedestrian` + `bicycle=yes` 8.7 km, other 1.4 km;
+- 0.8 km lie outside our LAU.
+
+Bratislava's 17.6 km of `highway=footway` + `bicycle=yes|permissive` do not occur in
+BikeNetKit's edges, although its documented filter names them. The boundaries agree: BikeNetKit
+367.5 km² vs our 367.9 km², 365.0 km² shared.
+
 ### budapest/cc_ratio
 Cause: **definition** (precision of the published share, with smaller differences in both
 terms). Clean Cities publishes 4%, but its own km give 212 / 4,821 = 4.40%. Against 4.40%, our
