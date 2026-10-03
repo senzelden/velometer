@@ -107,13 +107,20 @@ Eine Stadt kommt erst in die Auswertung, wenn ihr Land in `config/trust.yaml` fr
 - **Diagnose.** Sie wird aus dem aktuellen LAU-Lauf jeder Stadt mit dem Klassifikator der Auswertung berechnet. Gemessen werden der Anteil der Kilometer mit Radverkehrs-Tags, den keine Regel erkennt, der ausgeschlossene Anteil, der Anteil der Stufe B an A+B und der Flächenunterschied zwischen dem GISCO-LAU-Polygon und der OSM-Relation. Die Schwellenwerte stehen in `config/trust.yaml`. Liegt ein Wert darüber, muss die Prüfdatei des Landes ihn schriftlich begründen [M5-Spezifikation §3.1].
 - **Eine Referenzstichprobe** von etwa 12 Wegen je neuem Land, per Abfrage aus dem aktuellen Stand des Landes ausgewählt. Die Stufen jedes Wegs werden von Hand geprüft und abgezeichnet. Ein Test stellt danach sicher, dass der Klassifikator der Auswertung diese Wege weiterhin so einstuft [M5-Spezifikation §3.2].
 
-`velometer trust --check` schlägt in drei Fällen fehl: wenn ein freigegebenes Land unbestätigte Referenzwege hat oder Wege, die der Klassifikator der Auswertung anders einstuft; wenn ein Schwellenwert ohne Begründung überschritten ist; und wenn die Stichprobe mit einem anderen Klassifikator geprüft wurde als dem der Auswertung [M5-Spezifikation §3.3]. Deutschland stützt sich auf die Berliner Referenzstichprobe aus M1. Frankreich, Polen, Österreich und Dänemark wurden über den Abgleich mit veröffentlichten Zahlen in M2 freigegeben und haben keine eigene Stichprobe [M5-Spezifikation, Entscheidung 7].
+`velometer trust --check` schlägt fehl, wenn
+
+- ein Schwellenwert für einen Anteil in `config/trust.yaml` noch auf dem Platzhalter 1,0 steht;
+- ein freigegebenes Land mit Städten in der Konfiguration keine Diagnosedatei hat oder seine Diagnose auf einem Lauf beruht, der nicht mehr der aktuelle LAU-Lauf der Stadt ist;
+- ein Diagnosewert seinen Schwellenwert ohne Begründung in der Prüfdatei des Landes überschreitet;
+- bei einem Land mit Referenzstichprobe Referenzwege unbestätigt sind, der Klassifikator der Auswertung bestätigte Wege anders einstuft oder die Stichprobe mit einem anderen Klassifikator geprüft wurde als dem der Auswertung [M5-Spezifikation §3.3].
+
+Deutschland braucht keine Diagnosedatei: Es stützt sich auf die Berliner Referenzstichprobe aus M1, die älter ist als die Freigabe je Land. Frankreich, Polen, Österreich und Dänemark wurden über den Abgleich mit veröffentlichten Zahlen in M2 freigegeben und haben keine eigene Stichprobe [M5-Spezifikation, Entscheidung 7].
 
 <!-- generated:trust -->
 | Land | Status | Grundlage | Geprüfter Klassifikator | Abgezeichnet am | Bestätigte Referenzwege |
 |---|---|---|---|---|---|
 {% for c in f.countries %}
-| {{ c.iso2 }} | {{ {"trusted": "freigegeben", "pending": "ausstehend"}[c.status] }} | {{ c.basis }} | {{ c.classifier_reviewed or "–" }} | {{ c.signed_off or "–" }} | {% if c.n_golden %}{{ c.n_golden_confirmed }} von {{ c.n_golden }}{% else %}keine{% endif %} |
+| {{ c.iso2 }} | {{ {"trusted": "freigegeben", "pending": "ausstehend"}[c.status] }} | {{ c.basis_de }} | {{ c.classifier_reviewed or "–" }} | {{ c.signed_off or "–" }} | {% if c.n_golden %}{{ c.n_golden_confirmed }} von {{ c.n_golden }}{% else %}keine{% endif %} |
 {% endfor %}
 <!-- /generated:trust -->
 

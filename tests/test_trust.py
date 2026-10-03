@@ -69,6 +69,14 @@ def test_trusted_with_golden_requires_signoff(tmp_path):
     assert _load(tmp_path, countries={"NL": ok}).countries["NL"].golden == "g/nl"
 
 
+def test_basis_de_is_optional_and_not_blank(tmp_path):
+    assert _load(tmp_path, countries={"DE": TRUSTED}).countries["DE"].basis_de is None
+    de = {**TRUSTED, "basis_de": "Abgleich (M2)"}
+    assert _load(tmp_path, countries={"DE": de}).countries["DE"].basis_de == "Abgleich (M2)"
+    with pytest.raises(ConfigError, match="basis_de"):
+        _load(tmp_path, countries={"DE": {**TRUSTED, "basis_de": "  "}})
+
+
 def test_pending_with_golden_needs_no_signoff(tmp_path):
     pending = {"status": "pending", "basis": "x", "golden": "g/nl"}
     assert _load(tmp_path, countries={"NL": pending}).countries["NL"].signed_off is None

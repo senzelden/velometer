@@ -5,9 +5,15 @@ thresholds:            # set in Task 13 from the pilots (largest pilot value x 1
   excluded_share_max: 1.0
   b_share_of_ab_max: 1.0
   boundary_diff_pct_max: 5.0
+# basis_de: the German wording of basis, shown in docs/methodology.de.md (falls back to basis)
 countries:
-  DE: {status: trusted, basis: "berlin golden set (M1)"}
-  FR: {status: trusted, basis: "M2 reconciliation", pilot: paris}
-  AT: {status: trusted, basis: "M2 reconciliation", pilot: vienna}
-  DK: {status: trusted, basis: "M2 reconciliation", pilot: copenhagen}
-  PL: {status: trusted, basis: "M2 reconciliation", pilot: wroclaw}
+  DE: {status: trusted, basis: "Berlin golden set (M1)",
+       basis_de: "Berliner Referenzstichprobe (M1)"}
+  FR: {status: trusted, basis: "M2 reconciliation",
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: paris}
+  AT: {status: trusted, basis: "M2 reconciliation",
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: vienna}
+  DK: {status: trusted, basis: "M2 reconciliation",
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: copenhagen}
+  PL: {status: trusted, basis: "M2 reconciliation",
+       basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw}

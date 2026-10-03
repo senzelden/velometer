@@ -75,6 +75,7 @@ class CountryFact(_Frozen):
     iso2: str
     status: str
     basis: str
+    basis_de: str  # the German wording; basis where trust.yaml has none
     classifier_reviewed: str | None
     signed_off: str | None  # ISO date
     n_golden_confirmed: int  # confirmed ways of the golden fixture; 0 of 0 without one
@@ -188,6 +189,7 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
                 iso2=cc,
                 status=ct.status,
                 basis=ct.basis,
+                basis_de=ct.basis_de or ct.basis,
                 classifier_reviewed=ct.classifier_reviewed,
                 signed_off=None if ct.signed_off is None else ct.signed_off.isoformat(),
                 n_golden_confirmed=confirmed,

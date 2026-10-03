@@ -460,10 +460,18 @@ class TrustThresholds(_Strict):
 class CountryTrust(_Strict):
     status: Literal["pending", "trusted"]
     basis: str
+    basis_de: str | None = None  # German wording of basis for methodology.de.md; None: basis
     pilot: str | None = None  # same-country pilot city for comparison
     golden: str | None = None  # "tests/fixtures/golden/<cc>" (no extension)
     classifier_reviewed: str | None = None  # e.g. "v2"; required when golden is set and trusted
     signed_off: date | None = None  # required when golden is set and trusted
+
+    @field_validator("basis_de")
+    @classmethod
+    def _basis_de_not_blank(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("basis_de must not be blank (omit it to fall back to basis)")
+        return v
 
     @model_validator(mode="after")
     def _golden_needs_signoff(self):

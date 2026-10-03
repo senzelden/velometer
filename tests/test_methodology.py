@@ -9,7 +9,7 @@ import yaml
 from typer.testing import CliRunner
 
 from velometer.cli import app
-from velometer.config import ConfigError, default_config_dir, load_classifier
+from velometer.config import ConfigError, default_config_dir, load_classifier, load_trust
 from velometer.report.data import ReportData, open_readonly
 from velometer.report.methodology import (
     FILES,
@@ -296,13 +296,14 @@ def test_trusted_countries_are_listed_with_their_golden_counts(report_db_with_tr
     nl = {
         "status": "trusted",
         "basis": "golden sample",
+        "basis_de": "Referenzstichprobe",
         "golden": "tests/fixtures/golden/nl",
         "classifier_reviewed": "v2",
         "signed_off": "2026-10-03",
     }
     db, cfg = report_db_with_trust(
         countries={
-            "DE": {"status": "trusted", "basis": "berlin golden set (M1)"},
+            "DE": {"status": "trusted", "basis": "Berlin golden set (M1)"},
             "FR": {"status": "pending", "basis": "not yet"},
             "NL": nl,
         }
@@ -318,10 +319,12 @@ def test_trusted_countries_are_listed_with_their_golden_counts(report_db_with_tr
     assert (by["DE"].n_golden_confirmed, by["DE"].n_golden) == (0, 0)  # no golden file
     assert by["NL"].classifier_reviewed == "v2" and by["NL"].signed_off == "2026-10-03"
     en, de = render(facts, "en"), render(facts, "de")
-    assert _row(en, "| DE |") == "| DE | trusted | berlin golden set (M1) | – | – | none |"
+    assert _row(en, "| DE |") == "| DE | trusted | Berlin golden set (M1) | – | – | none |"
     assert _row(en, "| NL |") == "| NL | trusted | golden sample | v2 | 2026-10-03 | 2 of 3 |"
-    assert _row(de, "| DE |") == "| DE | freigegeben | berlin golden set (M1) | – | – | keine |"
-    assert _row(de, "| NL |") == "| NL | freigegeben | golden sample | v2 | 2026-10-03 | 2 von 3 |"
+    assert _row(de, "| DE |") == "| DE | freigegeben | Berlin golden set (M1) | – | – | keine |"
+    assert _row(de, "| NL |") == (
+        "| NL | freigegeben | Referenzstichprobe | v2 | 2026-10-03 | 2 von 3 |"
+    )  # basis_de in German; DE above has none and falls back to basis
     for text in (en, de):
         assert not any(line.startswith("| FR |") for line in text.splitlines())
         start, end = "<!-- generated:trust -->", "<!-- /generated:trust -->"
@@ -405,3 +408,41 @@ def test_cli_check_fails_when_a_new_limitation_lacks_german(fixture_db, tmp_path
     lim.write_text(yaml.safe_dump(data, allow_unicode=True))
     res = _cli("--check", *common)
     assert res.exit_code == 1 and "limitations.yaml" in res.output
+
+
+def test_committed_trusted_countries_have_a_german_basis():
+    trust = load_trust(default_config_dir() / "trust.yaml")
+    trusted = {cc: t for cc, t in trust.countries.items() if t.status == "trusted"}
+    assert trusted and all(t.basis_de for t in trusted.values())
+
+
+TRUST_CHECK_CONDITIONS = {
+    # each failure condition of `velometer trust --check` (cli.trust_check, trust.py)
+    "en": [
+        "still the placeholder 1.0",  # placeholder_problems
+        "has no diagnostics file",  # missing <cc>.json
+        "no longer the city's current LAU run",  # stale_problems
+        "without a note in the country's review file",  # breach_problems
+        "unconfirmed",  # golden_problems
+        "no longer match the report classifier",  # golden_problems
+        "reviewed on a classifier other than the report classifier",  # classifier_reviewed
+    ],
+    "de": [
+        "noch auf dem Platzhalter 1,0",
+        "keine Diagnosedatei",
+        "nicht mehr der aktuelle LAU-Lauf",
+        "ohne Begründung in der Prüfdatei",
+        "unbestätigt",
+        "anders einstuft",
+        "mit einem anderen Klassifikator geprüft",
+    ],
+}
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_trust_check_conditions_are_all_described(facts, lang):
+    text = render(facts, lang)
+    section = text[text.index("velometer trust --check") : text.index("<!-- generated:trust -->")]
+    for phrase in TRUST_CHECK_CONDITIONS[lang]:
+        assert phrase in section, (lang, phrase)
+    assert "drei Fällen" not in section
