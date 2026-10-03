@@ -254,3 +254,33 @@ def test_city_without_the_scope_field_has_no_value(fixture_db):
     rows = data.ranking_rows()
     berlin = next(r for r in rows if r.source_id == "published_qecio" and r.city_id == "berlin")
     assert berlin.value is None and berlin.rank is None
+
+
+def test_untrusted_country_is_absent_from_every_report_surface(report_db_with_trust):
+    import json
+
+    from velometer.report import charts, methodology
+
+    db, cfg = report_db_with_trust(countries={"DE": {"status": "trusted", "basis": "t"}})
+    conn = open_readonly(db)
+    try:
+        data = ReportData(conn, cfg)  # FR pending
+        assert [c.id for c in data.cities()] == ["berlin"]
+        assert {c.id for c in data.all_cities()} == {"berlin", "paris"}
+        assert data.csv_rows() and all(r["city_id"] == "berlin" for r in data.csv_rows())
+        assert data.csv_rows("paris") == []
+        assert all(r.city_id == "berlin" for r in data.ranking_rows())
+        assert all(r.source_id and r.city_id == "berlin" for r in data.ranking_rows())
+        assert "paris" not in json.dumps(charts.headline_over_time(data))
+        assert "Paris" not in methodology.render(methodology.methodology_facts(data), "en")
+    finally:
+        conn.close()
+
+
+def test_country_absent_from_trust_yaml_is_pending(report_db_with_trust):
+    db, cfg = report_db_with_trust(countries={})
+    conn = open_readonly(db)
+    try:
+        assert ReportData(conn, cfg).cities() == []
+    finally:
+        conn.close()

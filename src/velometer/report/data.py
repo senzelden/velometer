@@ -33,7 +33,7 @@ from velometer.db import (
 )
 from velometer.models import City
 from velometer.pipeline.measure import select_metric
-from velometer.selection import report_selector
+from velometer.selection import report_selector, trusted_countries
 
 KINDS = ("lau", "fua")
 CSV_PRESETS = ("ours_headline", "ecf_qecio", "clean_cities_2025")
@@ -154,6 +154,7 @@ class ReportData:
         self.activity = load_activity(self.config_dir / "activity.yaml")
         self.years = load_history(self.config_dir / "history.yaml").year_range()
         self._cities: list[City] | None = None
+        self._all_cities: list[City] | None = None
         self._city_config: dict[str, dict] | None = None
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
 
@@ -173,9 +174,17 @@ class ReportData:
             for p in self.selector.presets.presets
         }
 
+    def all_cities(self) -> list[City]:
+        """Every city in the database, trusted or not (only `results` shows the difference)."""
+        if self._all_cities is None:
+            self._all_cities = fetch_cities(self.conn)
+        return self._all_cities
+
     def cities(self) -> list[City]:
+        """The cities of trusted countries: the one filter every report surface goes through."""
         if self._cities is None:
-            self._cities = fetch_cities(self.conn)
+            trusted = trusted_countries(self.config_dir)
+            self._cities = [c for c in self.all_cities() if c.country_iso2 in trusted]
         return self._cities
 
     def _city_name(self, city_id: str) -> str:

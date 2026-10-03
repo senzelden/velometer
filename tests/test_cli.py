@@ -790,3 +790,46 @@ def test_results_and_reconcile_default_to_the_report_classifier(tmp_path, monkey
     res = runner.invoke(app, ["results", *rargs, "--classifier", version])
     assert re.search(r"^berlin\s", res.output, re.M), res.output
     assert "Provenance: run 1 " in runner.invoke(app, [*rec, "--classifier", version]).output
+
+
+def _only_de_trusted(report_db_with_trust):
+    return report_db_with_trust(countries={"DE": {"status": "trusted", "basis": "t"}})
+
+
+def test_reconcile_check_skips_untrusted_and_city_flag_refuses(report_db_with_trust, tmp_path):
+    db, cfg = _only_de_trusted(report_db_with_trust)
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    base = ["--db", str(db), "--config-dir", str(cfg), "--report", str(report)]
+    out = CliRunner().invoke(app, ["reconcile", *base])
+    assert "paris" not in out.output
+    refused = CliRunner().invoke(app, ["reconcile", "--city", "paris", *base])
+    assert refused.exit_code == 2
+    assert "paris is not trusted yet (country FR pending, see config/trust.yaml)" in refused.output
+    ts = CliRunner().invoke(app, ["timeseries", "--city", "paris", *base[:4]])
+    assert ts.exit_code == 2 and "not trusted yet" in ts.output
+    csv = CliRunner().invoke(
+        app, ["report", "csv", "--city", "paris", "--db", str(db), "--config-dir", str(cfg)]
+    )
+    assert csv.exit_code == 2 and "not trusted yet" in csv.output
+    nope = CliRunner().invoke(app, ["reconcile", "--city", "atlantis", *base])
+    assert nope.exit_code == 2 and "unknown city" in nope.output
+
+
+def test_results_marks_untrusted(report_db_with_trust, tmp_path):
+    from tests.report_fixture import CLASSIFIER, PARIS
+    from tests.test_run_history import _current_deps
+    from velometer import run as R
+    from velometer.db import open_db
+
+    db, cfg = _only_de_trusted(report_db_with_trust)
+    with open_db(db) as conn:  # paris has history runs only: give it a current run too
+        R.run_city(
+            conn, PARIS, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER,
+            deps=_current_deps(tmp_path),
+        )  # fmt: skip
+    out = CliRunner().invoke(app, ["results", "--db", str(db), "--config-dir", str(cfg)])
+    assert out.exit_code == 0, out.output
+    assert re.search(r"^berlin\s+\d{4}-", out.output, re.M), out.output
+    paris = [ln for ln in out.output.splitlines() if ln.startswith("paris")]
+    assert paris and "untrusted" in paris[0], out.output

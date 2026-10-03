@@ -1,4 +1,5 @@
 import pytest
+import yaml
 
 from tests.report_fixture import build_report_fixture
 from velometer.report.data import ReportData, open_readonly
@@ -11,3 +12,18 @@ def fixture_db(tmp_path):
     conn = open_readonly(db_path)
     yield db_path, cfg, conn, ReportData(conn, cfg)
     conn.close()
+
+
+@pytest.fixture
+def report_db_with_trust(tmp_path):
+    """Factory `(countries) -> (db_path, config_dir)`: the report fixture whose config copy's
+    trust.yaml lists exactly `countries` (ISO2 -> CountryTrust fields); the rest are pending."""
+
+    def build(countries: dict[str, dict]):
+        db_path, cfg = build_report_fixture(tmp_path)
+        trust = yaml.safe_load((cfg / "trust.yaml").read_text())
+        trust["countries"] = countries
+        (cfg / "trust.yaml").write_text(yaml.safe_dump(trust))
+        return db_path, cfg
+
+    return build

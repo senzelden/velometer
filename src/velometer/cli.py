@@ -166,8 +166,39 @@ def _all_cities(config_dir: Path) -> list[CityConfig]:
         raise _config_error(e) from e
 
 
-def _select_cities(config_dir: Path, wanted: list[str] | None) -> list[CityConfig]:
-    cities = _all_cities(config_dir)
+def _not_trusted(city_id: str, country: str) -> str:
+    return f"{city_id} is not trusted yet (country {country} pending, see config/trust.yaml)"
+
+
+def _report_cities(config_dir: Path) -> list[CityConfig]:
+    """The cities of trusted countries (config/trust.yaml): what the report commands cover."""
+    try:
+        trusted = _selection.trusted_countries(config_dir)
+    except ConfigError as e:
+        raise _config_error(e) from e
+    return [c for c in _all_cities(config_dir) if c.country_iso2 in trusted]
+
+
+def _select_report_cities(config_dir: Path, wanted: list[str] | None) -> list[CityConfig]:
+    """`--city` ids among the trusted cities: unknown ids and untrusted ones exit 2."""
+    trusted = _report_cities(config_dir)
+    if wanted is None:
+        return trusted
+    by_id = {c.id: c for c in trusted}
+    for w in wanted:
+        if w not in by_id:
+            other = next((c for c in _all_cities(config_dir) if c.id == w), None)
+            if other is not None:
+                typer.echo(f"error: {_not_trusted(w, other.country_iso2)}", err=True)
+                raise typer.Exit(2)
+    return _select_cities(config_dir, wanted, trusted)
+
+
+def _select_cities(
+    config_dir: Path, wanted: list[str] | None, cities: list[CityConfig] | None = None
+) -> list[CityConfig]:
+    if cities is None:
+        cities = _all_cities(config_dir)
     if wanted is None:
         return cities
     by_id = {c.id: c for c in cities}
@@ -691,6 +722,7 @@ def results(
     from velometer.pipeline.measure import select_metric
 
     sel = run_selector(config_dir, _report_classifier(config_dir, classifier), clean_cities_basis)
+    trusted_ids = {c.id for c in _report_cities(config_dir)}
 
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
@@ -721,7 +753,7 @@ def results(
             )
             rows.append(
                 [
-                    c.id,
+                    c.id if c.id in trusted_ids else f"{c.id} (untrusted)",
                     r.osm_timestamp[:10],
                     fmt(head and head.value),
                     fmt(ecf and ecf.value),
@@ -782,13 +814,13 @@ def reconcile(
             err=True,
         )
         raise typer.Exit(2)
-    wanted = {c.id for c in _select_cities(config_dir, city or None)}
+    wanted = {c.id for c in _select_report_cities(config_dir, city or None)}
     sel = run_selector(config_dir, _report_classifier(config_dir, classifier), clean_cities_basis)
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
     with _open_schema(db) as conn:
-        for c in _all_cities(config_dir):
+        for c in _report_cities(config_dir):
             rep = rc.reconcile_city(
                 conn,
                 c.id,
@@ -885,7 +917,7 @@ def timeseries(
     if boundary not in (None, "lau", "fua"):
         typer.echo("error: --boundary must be lau or fua", err=True)
         raise typer.Exit(2)
-    wanted = {c.id for c in _select_cities(config_dir, city or None)}
+    wanted = {c.id for c in _select_report_cities(config_dir, city or None)}
     kinds = (boundary,) if boundary else ("lau", "fua")
     try:
         cfg = load_activity(config_dir / "activity.yaml")
@@ -895,7 +927,7 @@ def timeseries(
     sel = run_selector(config_dir, _report_classifier(config_dir, classifier))
     built: dict[tuple[str, str], ts.CitySeries] = {}
     with _open_schema(db) as conn:
-        for c in _all_cities(config_dir):
+        for c in _report_cities(config_dir):
             for kind in ("lau", "fua"):  # every kind, so --write never drops other tables
                 cs = ts.build_city(conn, c.id, kind, sel, history_cfg.year_range())
                 if cs is not None:
@@ -982,6 +1014,18 @@ def auth_check(data: Path = DATA_OPT) -> None:
     typer.echo(f"ok: cookie valid until {cookie.expires:%Y-%m-%d %H:%M} UTC")
 
 
+def _check_report_city(data, city: str | None) -> None:
+    """Exit 2 for a `--city` of an untrusted country, 1 for an unknown one."""
+    if city is None or city in {c.id for c in data.cities()}:
+        return
+    other = next((c for c in data.all_cities() if c.id == city), None)
+    if other is not None:
+        typer.echo(f"error: {_not_trusted(city, other.country_iso2)}", err=True)
+        raise typer.Exit(2)
+    typer.echo(f"error: unknown city {city!r}", err=True)
+    raise typer.Exit(1)
+
+
 @report_app.command("csv")
 def report_csv(
     city: str | None = typer.Option(None, "--city", help="City id; default all cities."),
@@ -1004,9 +1048,7 @@ def report_csv(
         raise typer.Exit(1) from e
     try:
         data = ReportData(conn, config_dir)
-        if city is not None and city not in {c.id for c in data.cities()}:
-            typer.echo(f"error: unknown city {city!r}", err=True)
-            raise typer.Exit(1)
+        _check_report_city(data, city)
         text = to_csv(
             data.csv_rows(city),
             short_commit(git_commit()),
@@ -1114,9 +1156,7 @@ def report_maps(
     try:
         data = ReportData(conn, config_dir)
         ids = [c.id for c in data.cities()]
-        if city is not None and city not in ids:
-            typer.echo(f"error: unknown city {city!r}", err=True)
-            raise typer.Exit(1)
+        _check_report_city(data, city)
         for cid in [city] if city else ids:
             for k in kinds:
                 point = data.current(cid, k)

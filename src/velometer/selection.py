@@ -6,7 +6,13 @@ A library module (no CLI imports); errors are `ConfigError`, which the CLI turns
 from dataclasses import dataclass
 from pathlib import Path
 
-from velometer.config import PresetsConfig, load_classifier, load_presets, load_report
+from velometer.config import (
+    PresetsConfig,
+    load_classifier,
+    load_presets,
+    load_report,
+    load_trust,
+)
 from velometer.db import canonical_parameters, latest_done_run
 from velometer.run import config_sha256, file_sha256
 
@@ -62,3 +68,9 @@ def report_selector(config_dir: Path) -> Selector:
     """The runs every report surface shows: the classifier named in config/report.yaml."""
     report = load_report(config_dir / "report.yaml", config_dir / "presets.yaml")
     return run_selector(config_dir, report.report_classifier)
+
+
+def trusted_countries(config_dir: Path) -> frozenset[str]:
+    """ISO2 codes of the countries signed off in config/trust.yaml; absent counts as pending."""
+    trust = load_trust(config_dir / "trust.yaml")
+    return frozenset(cc for cc, t in trust.countries.items() if t.status == "trusted")

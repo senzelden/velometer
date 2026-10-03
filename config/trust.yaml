@@ -1,0 +1,13 @@
+# Per-country trust gate (M5 spec section 3). Not part of config_sha256: signing off a country
+# never invalidates runs. Report surfaces show only cities of trusted countries.
+thresholds:            # set in Task 13 from the pilots (largest pilot value x 1.25)
+  unrecognised_share_max: 1.0
+  excluded_share_max: 1.0
+  b_share_of_ab_max: 1.0
+  boundary_diff_pct_max: 5.0
+countries:
+  DE: {status: trusted, basis: "berlin golden set (M1)"}
+  FR: {status: trusted, basis: "M2 reconciliation", pilot: paris}
+  AT: {status: trusted, basis: "M2 reconciliation", pilot: vienna}
+  DK: {status: trusted, basis: "M2 reconciliation", pilot: copenhagen}
+  PL: {status: trusted, basis: "M2 reconciliation", pilot: wroclaw}

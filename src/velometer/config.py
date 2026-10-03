@@ -1,6 +1,8 @@
 """Load and validate YAML configuration (cities, classifier, presets)."""
 
 import os
+import re
+from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -426,3 +428,45 @@ class _LimitationsFile(BaseModel):
 def load_limitations(path: Path) -> list[Limitation]:
     """config/limitations.yaml; ConfigError (naming the file) when a language is missing."""
     return _parse(path, lambda d: _LimitationsFile.model_validate(d).limitations)
+
+
+class TrustThresholds(_Strict):
+    unrecognised_share_max: float = Field(gt=0, le=1)
+    excluded_share_max: float = Field(gt=0, le=1)
+    b_share_of_ab_max: float = Field(gt=0, le=1)
+    boundary_diff_pct_max: float = Field(gt=0)
+
+
+class CountryTrust(_Strict):
+    status: Literal["pending", "trusted"]
+    basis: str
+    pilot: str | None = None  # same-country pilot city for comparison
+    golden: str | None = None  # "tests/fixtures/golden/<cc>" (no extension)
+    classifier_reviewed: str | None = None  # e.g. "v2"; required when golden is set and trusted
+    signed_off: date | None = None  # required when golden is set and trusted
+
+    @model_validator(mode="after")
+    def _golden_needs_signoff(self):
+        if self.status == "trusted" and self.golden is not None:
+            missing = [n for n in ("classifier_reviewed", "signed_off") if getattr(self, n) is None]
+            if missing:
+                raise ValueError(f"a trusted country with a golden set needs {', '.join(missing)}")
+        return self
+
+
+class TrustConfig(_Strict):
+    thresholds: TrustThresholds
+    countries: dict[str, CountryTrust]  # key: ISO2
+
+    @field_validator("countries")
+    @classmethod
+    def _iso2_keys(cls, v):
+        for key in v:
+            if not re.fullmatch(r"[A-Z]{2}", key):
+                raise ValueError(f"country key {key!r} is not an ISO 3166-1 alpha-2 code")
+        return v
+
+
+def load_trust(path: Path) -> TrustConfig:
+    """config/trust.yaml; ConfigError when it is missing or invalid."""
+    return _parse(path, TrustConfig.model_validate)

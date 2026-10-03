@@ -686,3 +686,14 @@ def test_table_cells_never_break_inside_words():
         assert decl(cell, "overflow-wrap") == "normal", cell
     assert decl("th", "white-space") == "nowrap"
     assert decl("td code", "white-space") == "nowrap"
+
+
+def test_untrusted_city_page_is_404(report_db_with_trust, tmp_path):
+    db_path, cfg = report_db_with_trust(countries={"DE": {"status": "trusted", "basis": "t"}})
+    maps = tmp_path / "maps2"
+    maps.mkdir()
+    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d2"))) as c:
+        assert c.get("/city/berlin").status_code == 200
+        assert c.get("/city/paris").status_code == 404
+        assert "/city/paris" not in c.get("/").text
+        assert "/city/berlin" in c.get("/").text
