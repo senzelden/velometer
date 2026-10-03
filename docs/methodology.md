@@ -28,7 +28,7 @@ Two lengths are stored for every way side. On the **`per_side`** basis each road
 The rules are data, not code. A rule change is a new classifier version, and every run records the version it used [ADR 0005].
 
 <!-- generated:classifier -->
-- Report classifier: **v2** (`config/classifier/v2.yaml`)
+- Report classifier: **v3** (`config/classifier/v3.yaml`)
 - Parameter `plain_cycleway_on_oneway`: `traffic_side`
 - Value separators: `;`, `,`
 <!-- /generated:classifier -->
@@ -60,6 +60,8 @@ The rules apply in the order listed; the first rule that matches decides. `road_
 | `B_share_sidewalk` | `B` | sidewalk | road_side | `cycleway=share_sidewalk` |
 | `C_lane_physical` | `C` |  | road_side | `cycleway=lane and cycleway:separation:traffic in <physical_separation>` |
 | `D_lane_advisory` | `D` | advisory | road_side | `cycleway=lane and cycleway:lane in [advisory, pictogram]` |
+| `D_soft_lane` | `D` | advisory | road_side | `cycleway=soft_lane` |
+| `D_advisory` | `D` | advisory | road_side | `cycleway=advisory` |
 | `D_lane` | `D` |  | road_side | `cycleway=lane` |
 | `E_cycle_street` | `E` | cycle_street | standalone | `(bicycle_road=yes or cyclestreet=yes or cycle_street=yes)` |
 | `E_bus` | `E` | bus | road_side | `cycleway=share_busway` |
@@ -106,25 +108,47 @@ The table lists, per city and boundary, the OSM timestamps of the runs this repo
 <!-- generated:cities -->
 | City | Boundary | Current run (OSM timestamp) | History set | History snapshots (OSM timestamp) | Population (year) |
 |---|---|---|---|---|---|
-| Berlin | `lau` | 2026-09-30T20:22:42Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3,782,202 (2024) |
-| Berlin | `fua` | 2026-09-30T20:22:42Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
+| Amsterdam | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 931,298 (2024) |
+| Amsterdam | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Barcelona | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,731,649 (2025) |
+| Barcelona | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Berlin | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 3,782,202 (2024) |
+| Berlin | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Bordeaux | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 267,991 (2023) |
 | Bordeaux | `fua` | no current run | none | no history runs | none, no per-100k figure |
-| København | `lau` | 2026-09-30T20:22:42Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659,350 (2024) |
+| Bratislava | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 478,040 (2024) |
+| Bratislava | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Budapest | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,686,222 (2024) |
+| Budapest | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| København | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 659,350 (2024) |
 | København | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Helsinki | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 674,500 (2024) |
+| Helsinki | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Kraków | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 806,201 (2024) |
 | Kraków | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Ljubljana | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 297,575 (2024) |
+| Ljubljana | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Lyon | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 519,127 (2023) |
 | Lyon | `fua` | no current run | none | no history runs | none, no per-100k figure |
-| Paris | `lau` | 2026-09-30T20:22:42Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,084,894 (2024) |
-| Paris | `fua` | 2026-09-30T20:22:42Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
+| Madrid | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 3,506,730 (2025) |
+| Madrid | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Oslo | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 717,710 (2024) |
+| Oslo | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Paris | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 2,084,894 (2024) |
+| Paris | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Praha | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,384,732 (2024) |
+| Praha | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Stockholm | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 988,943 (2024) |
+| Stockholm | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Strasbourg | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 293,771 (2023) |
 | Strasbourg | `fua` | no current run | none | no history runs | none, no per-100k figure |
-| Wien | `lau` | 2026-09-30T20:22:42Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,005,760 (2024) |
+| Utrecht | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 374,238 (2024) |
+| Utrecht | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Wien | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 2,005,760 (2024) |
 | Wien | `fua` | no current run | none | no history runs | none, no per-100k figure |
 | Warszawa | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 1,861,599 (2024) |
 | Warszawa | `fua` | no current run | none | no history runs | none, no per-100k figure |
-| Wrocław | `lau` | 2026-09-30T20:22:42Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673,743 (2024) |
+| Wrocław | `lau` | 2026-10-02T20:21:34Z | none | no history runs | 673,743 (2024) |
 | Wrocław | `fua` | no current run | none | no history runs | none, no per-100k figure |
 <!-- /generated:cities -->
 
@@ -133,13 +157,24 @@ The trust gate (see below) compares the area of the GISCO LAU polygon with that 
 <!-- generated:sources -->
 | City | Admin boundary (LAU) | Population source |
 |---|---|---|
+| Amsterdam | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Barcelona | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2861) |
 | Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
+| Bratislava | Eurostat GISCO LAU 2024 (1:1M), union of 17 LAU | GISCO LAU 2024 POP_2024 (sum of 17 LAU) |
+| Budapest | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | København | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Helsinki | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Kraków | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Ljubljana | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Lyon | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123) |
+| Madrid | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2881) |
+| Oslo | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat demo_r_pjangrp3 FR101 2024 |
+| Praha | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Stockholm | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Strasbourg | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-67482) |
+| Utrecht | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Wien | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Warszawa | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Wrocław | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
@@ -164,11 +199,20 @@ Germany needs no diagnostics file: it rests on the Berlin golden set of M1, whic
 <!-- generated:trust -->
 | Country | Status | Basis | Classifier reviewed | Signed off | Golden ways confirmed |
 |---|---|---|---|---|---|
-| AT | trusted | M2 reconciliation | – | – | none |
-| DE | trusted | Berlin golden set (M1) | – | – | none |
-| DK | trusted | M2 reconciliation | – | – | none |
-| FR | trusted | M2 reconciliation | – | – | none |
-| PL | trusted | M2 reconciliation | – | – | none |
+| AT | trusted | M2 reconciliation | v3 | – | none |
+| CZ | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
+| DE | trusted | Berlin golden set (M1) | v3 | – | none |
+| DK | trusted | M2 reconciliation | v3 | – | none |
+| ES | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 11 of 11 |
+| FI | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
+| FR | trusted | M2 reconciliation | v3 | – | none |
+| HU | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
+| NL | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
+| NO | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 11 of 11 |
+| PL | trusted | M2 reconciliation | v3 | – | none |
+| SE | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
+| SI | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
+| SK | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 13 of 13 |
 <!-- /generated:trust -->
 
 ## History snapshots
@@ -222,8 +266,8 @@ Every number traces to a run. A run records the git commit, the classifier versi
 - A run records the git commit it ran from. When the working tree had uncommitted changes, the commit carries the suffix `-dirty` and does not pin the code exactly. Most M3 history runs (classifier v1) carry it, because docs and scripts were uncommitted while they ran [M3 R19]. They are superseded by the M4 runs and not shown; no run in this report carries the suffix [M4 spec §3.4].
 - History snapshots are cut from Geofabrik full-history files, which end on the date they were downloaded. The current run reads public extracts, whose OSM timestamp can be a different date. The mapping activity of the current point ends where the history file ends [M3 R9]. A current run merged from several regions takes the oldest region timestamp [M4 spec §3.2].
 - The trust gate checks tagging practice, not whether the map is complete. Its thresholds catch cycling tags that the classifier does not recognise or excludes, an unusually high share of tier B in A+B, and an admin boundary that differs from the OSM relation [M5 spec §3.1]. The golden sample has about 12 ways per new country. That is too few to cover every local tagging habit [M5 spec §3.2]. France, Poland, Austria and Denmark have no golden sample of their own: they were trusted through the M2 reconciliation of their pilot cities [M5 spec, decision 7].
-- Some cities have no LAU population, and neither their NUTS3 unit (a province or département) nor their Urban Audit city (a greater city) matches the municipality. Their population is the official figure of the national statistics office, cited with its year and URL in `config/cities.yaml` (`population_override`) [M5 spec, decision 9; Task 13c]. That year may not be 2024, so their per-100k values can rest on a different year than those of the other cities. The tables above give the year and source of each figure. This applies to Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale) and Strasbourg (INSEE populations de référence 2023, population municipale).
-- QECIO v2.10 publishes results per NUTS3 region. Where that region is not the city, the QECIO figure covers a different area than our runs. Its comparison rows then carry the note "NUTS3 unit is not the city", and the rankings chart marks the city with † [M5 spec §4.3]. This applies to Bordeaux, København, Lyon and Strasbourg.
+- Some cities have no LAU population, and neither their NUTS3 unit (a province or département) nor their Urban Audit city (a greater city) matches the municipality. Their population is the official figure of the national statistics office, cited with its year and URL in `config/cities.yaml` (`population_override`) [M5 spec, decision 9; Task 13c]. That year may not be 2024, so their per-100k values can rest on a different year than those of the other cities. The tables above give the year and source of each figure. This applies to Barcelona (INE Revisión del Padrón Municipal 2025 (1 Jan 2025)), Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale), Madrid (INE Revisión del Padrón Municipal 2025 (1 Jan 2025)) and Strasbourg (INSEE populations de référence 2023, population municipale).
+- QECIO v2.10 publishes results per NUTS3 region. Where that region is not the city, the QECIO figure covers a different area than our runs. Its comparison rows then carry the note "NUTS3 unit is not the city", and the rankings chart marks the city with † [M5 spec §4.3]. This applies to Amsterdam, Barcelona, Bordeaux, Bratislava, København, Helsinki, Ljubljana, Lyon, Madrid, Stockholm, Strasbourg and Utrecht.
 <!-- /generated:limitations -->
 
 ## Licences

@@ -28,7 +28,7 @@ Für jede Seite werden zwei Längen gespeichert. Auf der Basis **`per_side`** z�
 Die Regeln sind Daten, kein Code. Jede Regeländerung ergibt eine neue Klassifikatorversion, und jeder Lauf speichert die verwendete Version [ADR 0005].
 
 <!-- generated:classifier -->
-- Klassifikator der Auswertung: **v2** (`config/classifier/v2.yaml`)
+- Klassifikator der Auswertung: **v3** (`config/classifier/v3.yaml`)
 - Parameter `plain_cycleway_on_oneway`: `traffic_side`
 - Trennzeichen zwischen Werten: `;`, `,`
 <!-- /generated:classifier -->
@@ -60,6 +60,8 @@ Die Regeln gelten in der aufgeführten Reihenfolge; die erste passende Regel ent
 | `B_share_sidewalk` | `B` | sidewalk | road_side | `cycleway=share_sidewalk` |
 | `C_lane_physical` | `C` |  | road_side | `cycleway=lane and cycleway:separation:traffic in <physical_separation>` |
 | `D_lane_advisory` | `D` | advisory | road_side | `cycleway=lane and cycleway:lane in [advisory, pictogram]` |
+| `D_soft_lane` | `D` | advisory | road_side | `cycleway=soft_lane` |
+| `D_advisory` | `D` | advisory | road_side | `cycleway=advisory` |
 | `D_lane` | `D` |  | road_side | `cycleway=lane` |
 | `E_cycle_street` | `E` | cycle_street | standalone | `(bicycle_road=yes or cyclestreet=yes or cycle_street=yes)` |
 | `E_bus` | `E` | bus | road_side | `cycleway=share_busway` |
@@ -106,25 +108,47 @@ Die Tabelle nennt je Stadt und Grenzart die OSM-Zeitstempel der hier verwendeten
 <!-- generated:cities -->
 | Stadt | Grenzart | Aktueller Lauf (OSM-Zeitstempel) | Verlaufsdatensatz | Jahresstände (OSM-Zeitstempel) | Einwohner (Jahr) |
 |---|---|---|---|---|---|
-| Berlin | `lau` | 2026-09-30T20:22:42Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3.782.202 (2024) |
-| Berlin | `fua` | 2026-09-30T20:22:42Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Amsterdam | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 931.298 (2024) |
+| Amsterdam | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Barcelona | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.731.649 (2025) |
+| Barcelona | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Berlin | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.782.202 (2024) |
+| Berlin | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Bordeaux | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 267.991 (2023) |
 | Bordeaux | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| København | `lau` | 2026-09-30T20:22:42Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659.350 (2024) |
+| Bratislava | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 478.040 (2024) |
+| Bratislava | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Budapest | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.686.222 (2024) |
+| Budapest | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| København | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 659.350 (2024) |
 | København | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Helsinki | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 674.500 (2024) |
+| Helsinki | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Kraków | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 806.201 (2024) |
 | Kraków | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Ljubljana | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 297.575 (2024) |
+| Ljubljana | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Lyon | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 519.127 (2023) |
 | Lyon | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Paris | `lau` | 2026-09-30T20:22:42Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.084.894 (2024) |
-| Paris | `fua` | 2026-09-30T20:22:42Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | keine, kein Wert je 100.000 Einwohner |
+| Madrid | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 3.506.730 (2025) |
+| Madrid | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Oslo | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 717.710 (2024) |
+| Oslo | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Paris | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.084.894 (2024) |
+| Paris | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Praha | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.384.732 (2024) |
+| Praha | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Stockholm | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 988.943 (2024) |
+| Stockholm | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Strasbourg | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 293.771 (2023) |
 | Strasbourg | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Wien | `lau` | 2026-09-30T20:22:42Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2.005.760 (2024) |
+| Utrecht | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 374.238 (2024) |
+| Utrecht | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
+| Wien | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 2.005.760 (2024) |
 | Wien | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 | Warszawa | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 1.861.599 (2024) |
 | Warszawa | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
-| Wrocław | `lau` | 2026-09-30T20:22:42Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673.743 (2024) |
+| Wrocław | `lau` | 2026-10-02T20:21:34Z | keiner | keine historischen Läufe | 673.743 (2024) |
 | Wrocław | `fua` | kein aktueller Lauf | keiner | keine historischen Läufe | keine, kein Wert je 100.000 Einwohner |
 <!-- /generated:cities -->
 
@@ -133,13 +157,24 @@ Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons m
 <!-- generated:sources -->
 | Stadt | Verwaltungsgrenze (LAU) | Quelle der Einwohnerzahl |
 |---|---|---|
+| Amsterdam | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Barcelona | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2861) |
 | Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
+| Bratislava | Eurostat GISCO LAU 2024 (1:1M), union of 17 LAU | GISCO LAU 2024 POP_2024 (sum of 17 LAU) |
+| Budapest | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | København | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Helsinki | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Kraków | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Ljubljana | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Lyon | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123) |
+| Madrid | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2881) |
+| Oslo | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat demo_r_pjangrp3 FR101 2024 |
+| Praha | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
+| Stockholm | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Strasbourg | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-67482) |
+| Utrecht | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Wien | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Warszawa | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Wrocław | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
@@ -164,11 +199,20 @@ Deutschland braucht keine Diagnosedatei: Es stützt sich auf die Berliner Refere
 <!-- generated:trust -->
 | Land | Status | Grundlage | Geprüfter Klassifikator | Abgezeichnet am | Bestätigte Referenzwege |
 |---|---|---|---|---|---|
-| AT | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
-| DE | freigegeben | Berliner Referenzstichprobe (M1) | – | – | keine |
-| DK | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
-| FR | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
-| PL | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | – | – | keine |
+| AT | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | v3 | – | keine |
+| CZ | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 12 von 12 |
+| DE | freigegeben | Berliner Referenzstichprobe (M1) | v3 | – | keine |
+| DK | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | v3 | – | keine |
+| ES | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 11 von 11 |
+| FI | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 10 von 10 |
+| FR | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | v3 | – | keine |
+| HU | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 10 von 10 |
+| NL | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 12 von 12 |
+| NO | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 11 von 11 |
+| PL | freigegeben | Abgleich mit veröffentlichten Zahlen (M2) | v3 | – | keine |
+| SE | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 12 von 12 |
+| SI | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 10 von 10 |
+| SK | freigegeben | Referenzstichprobe und Tagging-Diagnose (M5) | v3 | 2026-10-03 | 13 von 13 |
 <!-- /generated:trust -->
 
 ## Jahresstände
@@ -222,8 +266,8 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 - Jeder Lauf speichert den Git-Commit, mit dem er erstellt wurde. Gab es dabei nicht committete Änderungen im Arbeitsverzeichnis, trägt der Commit die Endung `-dirty` und legt den Code nicht genau fest. Die meisten historischen Läufe aus M3 (Klassifikator v1) tragen diese Endung, weil Dokumentation und Skripte während der Läufe nicht committet waren [M3 R19]. Sie sind durch die Läufe aus M4 ersetzt und werden nicht gezeigt; kein Lauf in diesem Bericht trägt die Endung [M4-Spezifikation §3.4].
 - Die Jahresstände werden aus Geofabrik-Dateien mit vollständiger Versionsgeschichte geschnitten. Diese enden am Tag ihres Downloads. Der aktuelle Lauf liest öffentliche Extrakte, deren OSM-Zeitstempel ein anderes Datum haben kann. Die Kartierungsaktivität des aktuellen Stands endet dort, wo die Verlaufsdatei endet [M3 R9]. Ein aktueller Lauf aus mehreren zusammengeführten Regionen trägt den ältesten Zeitstempel der Regionen [M4-Spezifikation §3.2].
 - Die Freigabe je Land prüft die Erfassungspraxis, nicht die Vollständigkeit der Karte. Ihre Schwellenwerte schlagen an bei Radverkehrs-Tags, die der Klassifikator nicht erkennt oder ausschließt, bei einem ungewöhnlich hohen Anteil der Stufe B an A+B und bei einer Verwaltungsgrenze, die von der OSM-Relation abweicht [M5-Spezifikation §3.1]. Die Referenzstichprobe umfasst etwa 12 Wege je neuem Land. Das reicht nicht, um jede örtliche Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen, Österreich und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich ihrer Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
-- Für einige Städte gibt es keine LAU-Einwohnerzahl, und weder ihre NUTS-3-Einheit (eine Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`) [M5-Spezifikation, Entscheidung 9; Task 13c]. Das Jahr muss nicht 2024 sein; ihre Werte je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben. Das betrifft Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale) und Strasbourg (INSEE populations de référence 2023, population municipale).
-- QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die Stadt, bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Ihre Vergleichszeilen tragen dann den Hinweis „NUTS3 unit is not the city“, und das Ranglistendiagramm kennzeichnet die Stadt mit † [M5-Spezifikation §4.3]. Das betrifft Bordeaux, København, Lyon und Strasbourg.
+- Für einige Städte gibt es keine LAU-Einwohnerzahl, und weder ihre NUTS-3-Einheit (eine Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`) [M5-Spezifikation, Entscheidung 9; Task 13c]. Das Jahr muss nicht 2024 sein; ihre Werte je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben. Das betrifft Barcelona (INE Revisión del Padrón Municipal 2025 (1 Jan 2025)), Bordeaux (INSEE populations de référence 2023, population municipale), Lyon (INSEE populations de référence 2023, population municipale), Madrid (INE Revisión del Padrón Municipal 2025 (1 Jan 2025)) und Strasbourg (INSEE populations de référence 2023, population municipale).
+- QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die Stadt, bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Ihre Vergleichszeilen tragen dann den Hinweis „NUTS3 unit is not the city“, und das Ranglistendiagramm kennzeichnet die Stadt mit † [M5-Spezifikation §4.3]. Das betrifft Amsterdam, Barcelona, Bordeaux, Bratislava, København, Helsinki, Ljubljana, Lyon, Madrid, Stockholm, Strasbourg und Utrecht.
 <!-- /generated:limitations -->
 
 ## Lizenzen
