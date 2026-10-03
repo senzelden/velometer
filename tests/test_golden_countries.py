@@ -24,4 +24,5 @@ def test_confirmed_ways_match_the_report_classifier(yml):
     for c in classify_ways(read_ways(yml.with_suffix(".osm")).ways, cfg):
         if c.tier is not None:
             observed[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
-    check_country_golden(yml.stem.upper(), yaml.safe_load(yml.read_text())["ways"], observed)
+    ways = yaml.safe_load(yml.read_text())["ways"]
+    check_country_golden(yml.stem.upper(), ways, observed, cfg.version)

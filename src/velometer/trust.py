@@ -456,6 +456,15 @@ PLACEHOLDER = 1.0
 EXEMPT_NO_EVIDENCE = frozenset({"DE"})  # the Berlin golden set predates the trust layer
 
 
+def expects_newer_classifier(way: Mapping, classifier_version: str) -> bool:
+    """The golden way's verdict needs a later classifier (its `min_classifier`, e.g. "v3") than
+    `classifier_version`: it is not compared yet, and its country cannot be trusted."""
+    want = way.get("min_classifier")
+    return want is not None and int(want.removeprefix("v")) > int(
+        classifier_version.removeprefix("v")
+    )
+
+
 def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[str]:
     """(a): the country's golden fixtures (`<base>.yaml`, `<base>.osm`) must be fully confirmed
     and every confirmed way must match the classifier at `classifier_path`."""
@@ -464,8 +473,9 @@ def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[s
         if not f.is_file():
             return [f"{cc}: golden fixture missing: {f}"]
     ways = yaml.safe_load(yml.read_text())["ways"]
+    cfg = load_classifier(classifier_path)
     observed: dict[int, set[tuple]] = defaultdict(set)
-    for c in classify_ways(read_ways(osm).ways, load_classifier(classifier_path)):
+    for c in classify_ways(read_ways(osm).ways, cfg):
         if c.tier is not None:
             observed[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
     out = []
@@ -474,6 +484,12 @@ def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[s
         out.append(f"{cc}: {len(unconfirmed)}/{len(ways)} golden ways unconfirmed")
     for w in ways:
         if not w["confirmed"]:
+            continue
+        if expects_newer_classifier(w, cfg.version):
+            out.append(
+                f"{cc}: golden way {w['way_id']} expects classifier {w['min_classifier']} "
+                f"(report classifier {cfg.version})"
+            )
             continue
         want = {(p["side"], p["tier"], p["rule"]) for p in w["proposed"]}
         if observed[w["way_id"]] != want:

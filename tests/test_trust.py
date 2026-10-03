@@ -596,6 +596,21 @@ def test_check_a_confirmed_way_that_no_longer_matches(tmp_path, report_db_with_t
     assert code == 1 and out == "DE: golden way 2 does not match the report classifier\n"
 
 
+def test_check_a_way_expecting_a_newer_classifier_blocks_trust(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    path = p["golden"] / "de.yaml"
+    doc = yaml.safe_load(path.read_text())
+    doc["ways"][2]["proposed"][0]["tier"] = "E"  # the verdict only a later classifier gives
+    doc["ways"][2]["min_classifier"] = "v3"
+    path.write_text(yaml.safe_dump(doc))
+    code, out = _check(argv)
+    assert code == 1 and out == "DE: golden way 2 expects classifier v3 (report classifier v2)\n"
+    doc["ways"][2]["min_classifier"] = "v2"  # reached: the way is compared again
+    path.write_text(yaml.safe_dump(doc))
+    code, out = _check(argv)
+    assert code == 1 and out == "DE: golden way 2 does not match the report classifier\n"
+
+
 def test_check_a_missing_golden_fixture(tmp_path, report_db_with_trust):
     argv, p = _check_env(tmp_path, report_db_with_trust)
     (p["golden"] / "de.osm").unlink()
