@@ -4,9 +4,12 @@ import gzip
 import hashlib
 import importlib.resources
 import json
+import os
 import re
 import shutil
 import sqlite3
+import time
+from collections import Counter
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -15,9 +18,11 @@ import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
+from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
 from velometer.report import charts
+from velometer.report.data import ReportData, open_readonly
 
 VENDOR = Path(__file__).parents[1] / "src" / "velometer" / "app" / "static" / "vendor"
 EXPLANATION = "Fixture cause: a spike of 50 edits in the fixture activity rows."
@@ -707,3 +712,150 @@ def test_untrusted_city_page_is_404(report_db_with_trust, tmp_path):
         assert c.get("/city/paris").status_code == 404
         assert "/city/paris" not in c.get("/").text
         assert "/city/berlin" in c.get("/").text
+
+
+# --- page cache (Task 10) and the 21-city fixture ---------------------------------------------
+
+
+@pytest.fixture
+def setup_21(report_db_21, tmp_path):
+    db_path, cfg = report_db_21
+    maps = tmp_path / "maps"
+    maps.mkdir()
+    return db_path, cfg, maps, _docs(tmp_path)
+
+
+@pytest.fixture
+def client_21(setup_21):
+    with _client(create_app(*setup_21)) as c:
+        yield c
+
+
+@pytest.fixture
+def cities_calls(monkeypatch):
+    calls = Counter()
+    real = ReportData.cities
+    monkeypatch.setattr(ReportData, "cities", lambda self: calls.update(["q"]) or real(self))
+    return calls
+
+
+def test_second_request_does_not_query(client_21, cities_calls):
+    client_21.get("/")
+    first = cities_calls["q"]
+    client_21.get("/")
+    assert first > 0 and cities_calls["q"] == first
+
+
+def test_cache_hit_never_opens_the_database(client_21, setup_21, monkeypatch):
+    for path in ["/", "/city/c21", "/data/all.csv", "/data/c21.csv"]:
+        client_21.get(path)
+
+    def boom(*a, **k):
+        raise AssertionError("a cache hit opened the database")
+
+    monkeypatch.setattr("velometer.app.main.open_readonly", boom)
+    for path in ["/", "/city/c21", "/data/all.csv", "/data/c21.csv"]:
+        assert client_21.get(path).status_code == 200
+
+
+def test_db_change_invalidates(client_21, setup_21, cities_calls):
+    client_21.get("/")
+    first = cities_calls["q"]
+    os.utime(setup_21[0], ns=(time.time_ns(), time.time_ns() + 10**9))
+    client_21.get("/")
+    assert cities_calls["q"] > first
+
+
+def test_config_change_invalidates(client_21, setup_21, cities_calls):
+    client_21.get("/")
+    first = cities_calls["q"]
+    report = setup_21[1] / "report.yaml"
+    os.utime(report, ns=(time.time_ns(), time.time_ns() + 10**9))
+    client_21.get("/")
+    assert cities_calls["q"] > first
+
+
+def test_docs_and_maps_change_invalidates(client_21, setup_21, cities_calls):
+    _db, _cfg, maps, docs = setup_21
+    client_21.get("/city/berlin")
+    first = cities_calls["q"]
+    (maps / "berlin_lau.geojson").write_bytes(GEOJSON)  # a new map file
+    assert "/maps/berlin_lau.geojson" in client_21.get("/city/berlin").text
+    assert cities_calls["q"] > first
+    second = cities_calls["q"]
+    (docs / "review" / "m3_timeseries.md").write_text("# changed\n")
+    client_21.get("/city/berlin")
+    assert cities_calls["q"] > second
+
+
+def test_unknown_city_is_not_cached_and_stays_404(client_21):
+    assert client_21.get("/city/nowhere").status_code == 404
+    assert client_21.get("/city/nowhere").status_code == 404
+    assert client_21.get("/data/nowhere.csv").status_code == 404
+
+
+def test_missing_db_is_503_even_after_a_cached_page(client_21, setup_21):
+    assert client_21.get("/").status_code == 200
+    setup_21[0].unlink()
+    assert client_21.get("/").status_code == 503
+
+
+def test_fingerprint_covers_every_file_the_pages_read(setup_21):
+    db, cfg, maps, docs = setup_21
+    fp = lambda: fingerprint(db, cfg, docs, maps)  # noqa: E731
+    base = fp()
+    assert ("reconciliation.md", None, None) in base[2]  # missing: contributes None
+    (docs / "reconciliation.md").write_text("x")
+    assert fp() != base
+    before = fp()
+    (cfg / "classifier").mkdir(exist_ok=True)
+    (cfg / "classifier" / "extra.yaml").write_text("a: 1\n")  # config is recursive
+    assert fp() != before
+    before = fp()
+    (maps / "y.txt").write_text("ignored")  # only png / geojson count
+    assert fp() == before
+    (maps / "y.png").write_bytes(PNG)
+    assert fp() != before
+
+
+def test_page_cache_rebuilds_only_when_fingerprint_differs():
+    cache, calls = PageCache(), Counter()
+
+    def build():
+        calls.update(["b"])
+        return calls["b"]
+
+    assert [cache.get("a", (1,), build), cache.get("a", (1,), build)] == [1, 1]
+    assert cache.get("a", (2,), build) == 2
+    assert cache.get("b", (2,), build) == 3  # one entry per name
+
+
+def test_every_route_200_at_21_cities(client_21):
+    for path in ["/", "/city/berlin", "/city/c21", "/data/all.csv", "/methodology"]:
+        assert client_21.get(path).status_code == 200
+
+
+def test_png_export_at_21_cities(report_db_21, tmp_path):
+    db_path, cfg = report_db_21
+    conn = open_readonly(db_path)
+    try:
+        paths = charts.write_pngs(ReportData(conn, cfg), tmp_path / "png")
+    finally:
+        conn.close()
+    pngs = [p for p in paths if p.suffix == ".png"]
+    assert len(pngs) == 3 and all(p.stat().st_size > 0 for p in pngs)
+
+
+def test_warm_page_times_are_reported(client_21, capsys):
+    rows = []
+    for path in ["/", "/city/berlin", "/city/c21", "/data/all.csv", "/methodology"]:
+        t0 = time.perf_counter()
+        client_21.get(path)
+        cold = time.perf_counter() - t0
+        t0 = time.perf_counter()
+        client_21.get(path)
+        rows.append((path, cold * 1000, (time.perf_counter() - t0) * 1000))
+    with capsys.disabled():
+        print(f"\n{'route':<16} {'cold ms':>10} {'warm ms':>10}")
+        for path, cold, warm in rows:
+            print(f"{path:<16} {cold:>10.0f} {warm:>10.0f}")

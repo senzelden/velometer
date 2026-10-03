@@ -1,6 +1,7 @@
 """FastAPI + Jinja app over the report query layer: index, city pages, methodology, maps, CSV.
 
-Read-only: every request opens its own `mode=ro` connection (`open_readonly`) and closes it.
+Read-only: a request that must build a page opens its own `mode=ro` connection (lazily) and
+closes it; built pages are cached per DB/config/docs fingerprint (`app/cache.py`).
 Missing data is a note on the page ("no run ...", "map not generated ..."), never a 500; an
 unknown city is a 404. Charts are Vega-Lite specs with inline data, drawn by the vendored
 vega / vega-lite / vega-embed bundles under /static. The city page's tier map is the vendored
@@ -25,6 +26,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from velometer import timeseries as ts
+from velometer.app.cache import PageCache, fingerprint
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report import charts
@@ -67,6 +69,31 @@ def _embed(spec: dict) -> dict:
     return {k: v for k, v in spec.items() if k != "$schema"}
 
 
+class LazyData:
+    """The per-request ReportData, opened on first attribute access: a page-cache hit never
+    touches the database. A missing database or a schema mismatch is a 503 at that access."""
+
+    def __init__(self, db_path: Path, config_dir: Path):
+        self._db_path, self._config_dir = db_path, config_dir
+        self._conn: sqlite3.Connection | None = None
+        self._data: ReportData | None = None
+
+    def __getattr__(self, name: str):
+        if self._data is None:
+            try:
+                self._conn = open_readonly(self._db_path)
+            except FileNotFoundError as e:
+                raise HTTPException(503, f"database not found: {self._db_path}") from e
+            except SchemaError as e:
+                raise HTTPException(503, str(e)) from e
+            self._data = ReportData(self._conn, self._config_dir)
+        return getattr(self._data, name)
+
+    def close(self) -> None:
+        if self._conn is not None:
+            self._conn.close()
+
+
 def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) -> FastAPI:
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir = Path(maps_dir), Path(docs_dir)
@@ -79,25 +106,28 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     templates.env.filters["md"] = _md
     templates.env.filters["embed"] = _embed
 
+    cache = PageCache()
+
+    def fp() -> tuple:
+        return fingerprint(db_path, config_dir, docs_dir, maps_dir)
+
     # async: the connection is made, used and closed on the event-loop thread (sqlite3
     # connections are bound to the thread that made them).
-    async def report_data() -> AsyncIterator[ReportData]:
+    async def report_data() -> AsyncIterator[LazyData]:
+        lazy = LazyData(db_path, config_dir)
         try:
-            conn = open_readonly(db_path)
-        except FileNotFoundError as e:
-            raise HTTPException(503, f"database not found: {db_path}") from e
-        except SchemaError as e:
-            raise HTTPException(503, str(e)) from e
-        try:
-            yield ReportData(conn, config_dir)
+            yield lazy
         finally:
-            conn.close()
+            lazy.close()
 
     Data = Annotated[ReportData, Depends(report_data)]
 
     def page(request: Request, name: str, **ctx) -> HTMLResponse:
-        sel = report_selector(config_dir)  # config only: the footer needs no database
-        footer = {"classifier": sel.version, "config": sel.short_sha}
+        def build_footer() -> dict:
+            sel = report_selector(config_dir)  # config only: the footer needs no database
+            return {"classifier": sel.version, "config": sel.short_sha}
+
+        footer = cache.get("footer", fp(), build_footer)
         return templates.TemplateResponse(request, name, {"footer": footer, **ctx})
 
     def known(data: ReportData, city_id: str):
@@ -108,31 +138,38 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
 
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request, data: Data):
-        rows = []
-        for c in data.cities():
-            point = data.current(c.id, "lau")
-            presets = {} if point is None else {p.preset: p.value for p in point.presets}
-            rows.append(
-                {
-                    "city": c,
-                    "point": point,
-                    "presets": presets,
-                    "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
-                }
-            )
-        return page(
-            request,
-            "index.html",
-            rows=rows,
-            preset_label=data.preset_labels(),
-            preset_unit=data.preset_units(),
-            headline_unit=HEADLINE_UNIT,
-            headline=charts.headline_over_time(data),
-            rankings=charts.rankings_flip(data) if data.ranks() else None,
-        )
+        def build() -> dict:
+            rows = []
+            for c in data.cities():
+                point = data.current(c.id, "lau")
+                presets = {} if point is None else {p.preset: p.value for p in point.presets}
+                rows.append(
+                    {
+                        "city": c,
+                        "point": point,
+                        "presets": presets,
+                        "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
+                    }
+                )
+            return {
+                "rows": rows,
+                "preset_label": data.preset_labels(),
+                "preset_unit": data.preset_units(),
+                "headline_unit": HEADLINE_UNIT,
+                "headline": charts.headline_over_time(data),
+                "rankings": charts.rankings_flip(data) if data.ranks() else None,
+            }
+
+        return page(request, "index.html", **cache.get("index", fp(), build))
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):
+        def build() -> dict:
+            return city_context(data, city_id)
+
+        return page(request, "city.html", **cache.get(f"city:{city_id}", fp(), build))
+
+    def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
         explanations = docs_dir / EXPLANATIONS
         kinds, map_kinds = [], []
@@ -170,19 +207,17 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             "outline": charts.OUTLINE,
             "kinds": map_kinds,
         }
-        return page(
-            request,
-            "city.html",
-            city=c,
-            kinds=kinds,
-            headline=charts.headline_city(data, city_id),
-            reconcile=data.reconcile(city_id),
-            preset_label=data.preset_labels(),
-            preset_unit=data.preset_units(),
-            headline_unit=HEADLINE_UNIT,
-            tiers=ts.TIERS,
-            tiermap=tiermap if map_kinds else None,
-        )
+        return {
+            "city": c,
+            "kinds": kinds,
+            "headline": charts.headline_city(data, city_id),
+            "reconcile": data.reconcile(city_id),
+            "preset_label": data.preset_labels(),
+            "preset_unit": data.preset_units(),
+            "headline_unit": HEADLINE_UNIT,
+            "tiers": ts.TIERS,
+            "tiermap": tiermap if map_kinds else None,
+        }
 
     def methodology(request: Request, lang: str) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[lang]
@@ -215,14 +250,19 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         return FileResponse(path, media_type="application/geo+json")
 
     def csv_response(data: ReportData, city_id: str | None) -> Response:
-        try:
-            text = to_csv(
-                data.csv_rows(city_id),
-                short_commit(git_commit()),
-                datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            )
-        except sqlite3.Error as e:
-            raise HTTPException(503, f"database error: {e}") from e
+        def build() -> str:
+            if city_id is not None:
+                known(data, city_id)
+            try:
+                return to_csv(
+                    data.csv_rows(city_id),
+                    short_commit(git_commit()),
+                    datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                )
+            except sqlite3.Error as e:
+                raise HTTPException(503, f"database error: {e}") from e
+
+        text = cache.get(f"csv:{city_id or 'all'}", fp(), build)
         name = f"velometer-{city_id or 'all'}.csv"
         return Response(
             text,
@@ -236,7 +276,6 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
 
     @app.get("/data/{city_id}.csv")
     async def csv_city(city_id: str, data: Data):
-        known(data, city_id)
         return csv_response(data, city_id)
 
     return app

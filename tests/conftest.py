@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from tests.report_fixture import build_report_fixture
+from tests.report_fixture import build_report_fixture, build_report_fixture_n
 from velometer.report.data import ReportData, open_readonly
 
 
@@ -27,3 +27,9 @@ def report_db_with_trust(tmp_path):
         return db_path, cfg
 
     return build
+
+
+@pytest.fixture
+def report_db_21(tmp_path):
+    """(db_path, config_dir) of the report fixture grown to 21 cities (berlin, paris, c03..c21)."""
+    return build_report_fixture_n(tmp_path, 21)

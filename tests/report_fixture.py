@@ -16,6 +16,8 @@ import shutil
 from datetime import date
 from pathlib import Path
 
+import yaml
+
 from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
 from velometer import run as R
 from velometer.config import load_cities
@@ -85,11 +87,42 @@ def external_figures() -> dict[str, list[ExternalFigure]]:
     }
 
 
+def synthetic_cities(n: int) -> list:
+    """`n - 2` copies of berlin, ids c03..cNN, country DE (so trust.yaml trusts them)."""
+    return [
+        CITY.model_copy(
+            update={
+                "id": f"c{i:02d}",
+                "name": f"City {i:02d}",
+                "osm_relation_id": 900000 + i,
+                "lau_code": f"DE_9{i:07d}",
+                "fua_code": f"DE9{i:02d}F",
+                "nuts3_code": f"DE9{i:02d}",
+                "bikenetkit_id": f"city{i:02d}_de",
+            }
+        )
+        for i in range(3, n + 1)
+    ]
+
+
 def build_report_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    return build_report_fixture_n(tmp_path, 2)
+
+
+def build_report_fixture_n(tmp_path: Path, n_cities: int) -> tuple[Path, Path]:
+    """berlin and paris as `build_report_fixture`, plus `n_cities - 2` synthetic DE cities
+    (history 2024-2026 and a current LAU run each). The synthetic cities are appended to the
+    config copy's cities.yaml so report.yaml / trust validation see them."""
     db_path = tmp_path / "report.sqlite"
     cfg = _config_dir(tmp_path)
+    extra = synthetic_cities(n_cities)
+    if extra:
+        doc = yaml.safe_load((cfg / "cities.yaml").read_text())
+        doc["cities"] += [c.model_dump(mode="json", exclude_none=True) for c in extra]
+        (cfg / "cities.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     fakes = Fakes(tmp_path)
     cities = [c for c in load_cities(CFG_DIR / "cities.yaml") if c.id in ("berlin", "paris")]
+    cities += extra
     deps = _current_deps(tmp_path)
     hdeps = fakes.deps()
 
@@ -106,6 +139,14 @@ def build_report_fixture(tmp_path: Path) -> tuple[Path, Path]:
                 deps=hdeps,
             )  # fmt: skip
         R.run_city(conn, CITY, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER, deps=deps)
+        for city in extra:
+            R.run_history(
+                conn, city, YEARS, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER,
+                deps=hdeps,
+            )  # fmt: skip
+            R.run_city(
+                conn, city, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER, deps=deps
+            )
         fua_deps = fakes.deps(city_boundary=no_population_boundary)
         R.run_history(
             conn, CITY, YEARS, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER,
