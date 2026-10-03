@@ -36,23 +36,35 @@
 # - epsg: utm_epsg(LAU centroid longitude in EPSG:4326); stockholm 17.994E -> 25833.
 # - bikenetkit_id: bike_networks.zip listing, bike_networks/<id>.gpkg.
 # - population: LAU POP_2024 where positive. It is 0 for madrid, barcelona, lyon, strasbourg and
-#   bordeaux, and no fallback holds: their NUTS3 units are provinces/départements, and the Urban
-#   Audit city codes are greater cities, not the communes (URAU_AT_2024.csv AREA_SQM vs LAU:
-#   FR002C Lyon 297.3 vs 48.0 km2, FR009C Strasbourg 139.7 vs 78.2, FR005C Bordeaux 340.4 vs
-#   49.7, ES001C Madrid 953.1 vs 605.0, ES002C Barcelona 211.1 vs 98.3; urb_cpop1 labels them
-#   "(greater city)"). So population_urau is not set and these cities have no per-100k figure.
+#   bordeaux, and no Eurostat fallback holds: their NUTS3 units are provinces/départements, and
+#   the Urban Audit city codes are greater cities, not the communes (URAU_AT_2024.csv AREA_SQM
+#   vs LAU: FR002C Lyon 297.3 vs 48.0 km2, FR009C Strasbourg 139.7 vs 78.2, FR005C Bordeaux
+#   340.4 vs 49.7, ES001C Madrid 953.1 vs 605.0, ES002C Barcelona 211.1 vs 98.3; urb_cpop1
+#   labels them "(greater city)"). So they carry population_override (user decision
+#   2026-10-03, Task 13c), looked up 2026-10-03:
+#   FR: INSEE "Populations de référence 2023" (millésime 2023, in force 1 Jan 2026, décret
+#   n° 2025-1362 du 26 décembre 2025), population municipale, page
+#   https://www.insee.fr/fr/statistiques/8643952?geo=COM-<INSEE code>.
+#   ES: INE "Cifras oficiales de población de los municipios españoles: Revisión del Padrón
+#   Municipal" at 1 Jan 2025, total habitantes, INE table "<province>: Población por municipios
+#   y sexo" (Madrid t=2881, Barcelona t=2861), read through the INE API
+#   https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/<t>?nult=1 (series DPOP13156 = MUN
+#   28079, DPOP2665 = MUN 08019).
 # - boundary check (ADR 0004, spec 3.1): GISCO LAU polygon vs the OSM relation polygon from the
 #   region extract, both in the city EPSG; |LAU - OSM| / OSM. Above 5 %: oslo 5.31 % and
-#   helsinki 69.1 % (OSM includes fjord / sea water), so both use admin_boundary: osm_relation
-#   (population still LAU POP_2024). Others: amsterdam 0.12, utrecht 0.54, madrid 0.08,
+#   helsinki 69.1 % (OSM includes fjord / sea water); both keep the GISCO LAU admin boundary
+#   (Task 13c: the difference is water, see their boundary_diff_pct trust notes). Others: amsterdam 0.12, utrecht 0.54, madrid 0.08,
 #   barcelona 2.29, stockholm 2.12, lyon 0.13, strasbourg 0.12, bordeaux 1.00, warsaw 0.05,
 #   krakow 0.01, budapest 0.04, prague 0.13, ljubljana 0.10 (%).
-# - Bratislava is not configured: LAU 2024 has no Bratislava municipality, only its 17 boroughs
-#   (SK_528595 ... SK_529494, 367.61 km2, POP_2024 sum 478,040), and the code needs a lau_code
-#   even for an osm_relation admin boundary. Queried for the record: Nominatim relation 1702499
-#   (admin 5), FUA SK001F, NUTS3 SK010 (Bratislavský kraj, 2052.2 km2, not the city), Urban
-#   Audit SK001C (367.61 km2 = the 17 boroughs), BikeNetKit bratislava_sk, region europe/slovakia
-#   (smallest covering the union of the borough polygons; centroid 17.12E -> EPSG 25833).
+# - bratislava (Task 13c, 2026-10-03): GISCO LAU 2024 has no Bratislava municipality, only its
+#   boroughs, so the admin layer is the union of lau_codes (user decision 2026-10-03). Query:
+#   LAU_RG_01M_2024_3035.gpkg where CNTR_CODE='SK' AND LAU_NAME LIKE '%Bratislava%' -> 17 rows
+#   "Bratislava - mestská časť ...", AREA_KM2 sum 367.61 (= Urban Audit SK001C 367.61 km2),
+#   POP_2024 sum 478,040; no other SK LAU overlaps the union. osm_relation_id 1702499
+#   (city=Bratislava&country=Slovakia, the only hit, admin_level 5); fua_code SK001F
+#   (URAU_NAME Bratislava, URAU_CATG F); nuts3_code SK010 (QECIO row Bratislavský kraj, area
+#   2052.246 km2, not the city); bikenetkit_id bratislava_sk; geofabrik_region
+#   europe/slovakia (no smaller region; union uncovered 0 m2); union centroid 17.119E -> 25833.
 cities:
   - id: berlin
     name: Berlin
@@ -149,6 +161,11 @@ cities:
     bikenetkit_id: madrid_es
     nuts3_is_city: false
     nuts3_note: "ES300 is the Comunidad de Madrid (QECIO area 8029.5 km2), not the municipio (LAU 605.0 km2)"
+    population_override:
+      value: 3506730
+      year: 2025
+      source: "INE Revisión del Padrón Municipal 2025 (1 Jan 2025)"
+      source_url: "https://www.ine.es/jaxiT3/Tabla.htm?t=2881"
   - id: barcelona
     name: Barcelona
     country_iso2: ES
@@ -161,6 +178,11 @@ cities:
     bikenetkit_id: barcelona_es
     nuts3_is_city: false
     nuts3_note: "ES511 is the province of Barcelona (QECIO area 7730.1 km2), not the municipi (LAU 98.3 km2)"
+    population_override:
+      value: 1731649
+      year: 2025
+      source: "INE Revisión del Padrón Municipal 2025 (1 Jan 2025)"
+      source_url: "https://www.ine.es/jaxiT3/Tabla.htm?t=2861"
   - id: stockholm
     name: Stockholm
     country_iso2: SE
@@ -180,8 +202,9 @@ cities:
     geofabrik_region: europe/norway/ostlandet
     osm_relation_id: 2775550
     # boundary check 2026-10-03: GISCO LAU 454.98 km2 vs OSM relation 480.48 km2 (EPSG 25832),
-    # 5.31 % > 5 %; the OSM polygon adds 28.0 km2 (Oslofjord water and islands) and lacks 2.5
-    admin_boundary: osm_relation
+    # 5.31 % > 5 %; the OSM polygon adds 28.0 km2 (Oslofjord water and islands) and lacks 2.5.
+    # The difference is water, so the admin boundary stays GISCO LAU (ADR 0004 default; user
+    # decision 2026-10-03); the note is oslo/boundary_diff_pct in docs/review/trust/NO.md
     lau_code: NO_0301
     fua_code: NO001F
     nuts3_code: NO081
@@ -194,8 +217,9 @@ cities:
     geofabrik_region: europe/finland
     osm_relation_id: 34914
     # boundary check 2026-10-03: GISCO LAU 221.69 km2 vs OSM relation 717.28 km2 (EPSG 25835),
-    # 69.1 % > 5 %; the OSM polygon adds 496.7 km2 (sea area and islands) and lacks 1.1
-    admin_boundary: osm_relation
+    # 69.1 % > 5 %; the OSM polygon adds 496.7 km2 (sea area and islands) and lacks 1.1.
+    # The difference is water, so the admin boundary stays GISCO LAU (ADR 0004 default; user
+    # decision 2026-10-03); the note is helsinki/boundary_diff_pct in docs/review/trust/FI.md
     lau_code: FI_091
     fua_code: FI001F
     nuts3_code: FI1B1
@@ -214,6 +238,11 @@ cities:
     bikenetkit_id: lyon_fr
     nuts3_is_city: false
     nuts3_note: "FRK26 is the Rhône département incl. the Métropole (QECIO area 3259.8 km2), not the commune (LAU 48.0 km2)"
+    population_override:
+      value: 519127
+      year: 2023
+      source: "INSEE populations de référence 2023, population municipale"
+      source_url: "https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123"
   - id: strasbourg
     name: Strasbourg
     country_iso2: FR
@@ -226,6 +255,11 @@ cities:
     bikenetkit_id: strasbourg_fr
     nuts3_is_city: false
     nuts3_note: "FRF11 is the Bas-Rhin département (QECIO area 4797.2 km2), not the commune (LAU 78.2 km2)"
+    population_override:
+      value: 293771
+      year: 2023
+      source: "INSEE populations de référence 2023, population municipale"
+      source_url: "https://www.insee.fr/fr/statistiques/8643952?geo=COM-67482"
   - id: bordeaux
     name: Bordeaux
     country_iso2: FR
@@ -238,6 +272,11 @@ cities:
     bikenetkit_id: bordeaux_fr
     nuts3_is_city: false
     nuts3_note: "FRI12 is the Gironde département (QECIO area 10083.8 km2), not the commune (LAU 49.7 km2)"
+    population_override:
+      value: 267991
+      year: 2023
+      source: "INSEE populations de référence 2023, population municipale"
+      source_url: "https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063"
   - id: warsaw
     name: Warszawa
     country_iso2: PL
@@ -294,3 +333,33 @@ cities:
     bikenetkit_id: ljubljana_si
     nuts3_is_city: false
     nuts3_note: "SI041 is Osrednjeslovenska (QECIO area 2333.9 km2), not the Mestna občina Ljubljana (LAU 275.0 km2)"
+  - id: bratislava
+    name: Bratislava
+    country_iso2: SK
+    epsg: 25833
+    geofabrik_region: europe/slovakia
+    osm_relation_id: 1702499
+    # the 17 mestské časti (header, "bratislava"); population = sum of their POP_2024
+    lau_codes:
+      - SK_528595
+      - SK_529311
+      - SK_529320
+      - SK_529338
+      - SK_529346
+      - SK_529354
+      - SK_529362
+      - SK_529371
+      - SK_529389
+      - SK_529397
+      - SK_529401
+      - SK_529419
+      - SK_529427
+      - SK_529435
+      - SK_529443
+      - SK_529460
+      - SK_529494
+    fua_code: SK001F
+    nuts3_code: SK010
+    bikenetkit_id: bratislava_sk
+    nuts3_is_city: false
+    nuts3_note: "SK010 is Bratislavský kraj (QECIO area 2052.2 km2), not the city (17 borough LAU, 367.6 km2)"

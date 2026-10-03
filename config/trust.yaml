@@ -43,8 +43,7 @@ countries:
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/hu}
   CZ: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/cz}
-  # SK: no city configured yet (Bratislava has no LAU 2024 municipality; see cities.yaml), so
-  # no diagnostics and no golden sample exist
+  # SK: Bratislava, configured in Task 13c as the union of its 17 borough LAU (cities.yaml)
   SK: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/sk}
   SI: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
