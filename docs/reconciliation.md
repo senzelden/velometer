@@ -462,26 +462,26 @@ the same amount.
 
 ### amsterdam/cc_network_km
 Cause: **definition** (network scope or source). Our public road network is 2,040.7 km: 2,323.4 km
-of main, motorway and local ways (residential 972.8, unclassified 331.1, tertiary 291.4,
-secondary 237.0, pedestrian 149.3, motorway and links 181.2) less 282.7 km from pairing dual
-carriageways. Clean Cities gives 2,700 km for the municipality (219.0 km², report Annex 1). The
-boundary is not the cause: our GISCO polygon measures 243.3 km² in EPSG:25831, larger than theirs.
-Of the 17 cities with a Clean Cities network figure, 13 match ours within 20%; the others are
-Amsterdam, Ljubljana, Warsaw and Wrocław, all below. The Amsterdam LAU also has 768.4 km of
-`highway=service` (any access), of which 540.4 km carry no `service=*` subtype. Adding those
-would give 2,581 km (−4.4%), but which scope the city-submitted or OSM-based figure uses cannot be checked:
-per-city sources are unverified (research doc §6).
+of main, motorway and local ways (residential 972.8, unclassified 331.1, tertiary 291.4, secondary
+237.0, pedestrian 149.3, motorway and links 181.2) less 282.7 km from pairing dual carriageways.
+Clean Cities gives 2,700 km for the municipality (219.0 km², report Annex 1). The boundary is not
+the cause: our GISCO polygon measures 243.3 km² in EPSG:25831, larger than theirs. Of the 17 cities
+with a Clean Cities network figure, 13 match ours within 20%; the others are Amsterdam, Ljubljana,
+Warsaw and Wrocław, all below. The Amsterdam LAU also has 768.4 km of `highway=service` (any
+access), of which 540.4 km carry no `service=*` subtype. Adding those would give 2,581 km (−4.4%),
+but which scope the city-submitted or OSM-based figure uses cannot be checked: per-city sources are
+unverified (research doc §6).
 
 ### amsterdam/qecio_main_km
 Cause: **scope**. QECIO reports NUTS3 NL329 Groot-Amsterdam, 874.8 km² (QECIO `Area`), a region
 around the city. Our LAU NL_GM0363 is the gemeente, 243.3 km² (our boundary polygon in EPSG:25831),
-0.28 of that area. Ours is 0.39 of QECIO's main roads (826.8 vs 2,100.5 km), 0.44 of its tracks, 0.29 of
-lanes, 0.80 of shared paths and 0.42 of the total. A larger and wider-drawn boundary does that.
-Our FUA run on the same snapshot (run 296, NL001F, 2,848.3 km², 3.3 times NL329) lands above
+0.28 of that area. Ours is 0.39 of QECIO's main roads (826.8 vs 2,100.5 km), 0.44 of its tracks,
+0.29 of lanes, 0.80 of shared paths and 0.42 of the total. A larger and wider-drawn boundary does
+that. Our FUA run on the same snapshot (run 296, NL001F, 2,848.3 km², 3.3 times NL329) lands above
 QECIO in every category: main roads 4,777.7 km (2.27 times), tracks 3,655.7 (2.38), lanes 416.7
 (2.71), shared 81.5 (3.30). So NL329 sits between our two boundaries in every category. Track
-density agrees: tracks per main-road km are 0.73 for QECIO, 0.81 for our LAU and 0.77 for our
-FUA. The QECIO figure is dated 2024-01-11, 995 days before our snapshot. `nuts3_is_city: false` in
+density agrees: tracks per main-road km are 0.73 for QECIO, 0.81 for our LAU and 0.77 for our FUA.
+The QECIO figure is dated 2024-01-11, 995 days before our snapshot. `nuts3_is_city: false` in
 `config/cities.yaml`.
 
 ### amsterdam/qecio_tracks_km
@@ -608,12 +608,14 @@ file, our main roads are 1,369.5 km against QECIO's 1,365.2 (+0.3%). The region 
 the gap: the city holds 598.5 km, 0.44 of it.
 
 ### bratislava/qecio_lanes_km
-Cause: **date** (lanes mapped since QECIO's snapshot), not scope. On the SK010 2024-01-11 snapshot our
-C+D centreline is 19.3 km (`cycleway=lane` 15.3 plus advisory lanes 4.0), equal to QECIO's 19.3.
-Almost all of it is in the city: the LAU had 18.3 km on 1 January 2024. Since then the LAU gained
-18.7 km per side (9.4 km centreline): 8.3 km of `cycleway=shared_lane` became `cycleway=lane`
-(e.g. way 177916468), and 11.9 km are on road ways not in the 2024 snapshot (new or split).
-v3's `cycleway=advisory` adds only 0.3 km centreline.
+Cause: **date** (lanes mapped since QECIO's snapshot), not scope. On the SK010 2024-01-11 snapshot
+our C+D centreline is 19.3 km (`cycleway=lane` 15.3 plus advisory lanes 4.0), equal to QECIO's 19.3.
+Almost all of it is in the city: the LAU had 18.3 km on 1 January 2024. Since then the LAU's tier D
+grew 36.6 -> 55.3 km per side (+18.7; 9.4 km centreline). The gains are 8.3 km of
+`cycleway=shared_lane` that became `cycleway=lane` (e.g. way 177916468), 8.4 km on roads that had no
+cycleway tag in 2024, 3.7 km on way ids not in the 2024 snapshot (new or split ways) and 0.3 km from
+other tags. Against them, length changes of lane ways took off 0.9 km net, 1.0 km of sides left
+tier D and 0.1 km were on deleted ways. v3's `cycleway=advisory` adds only 0.3 km centreline.
 
 ### bratislava/qecio_shared_km
 Cause: **scope** (SK010 vs the city, see `bratislava/qecio_main_km`). Applied to SK010 on
@@ -714,9 +716,9 @@ per-side A+B 1,284.1 km over our 1,404.5 km network. The networks are close (−
 their 1,628 km network, our A+B gives 78.9% per side and 76.5% centreline (1,244.8 km), against
 their 48%. The boundary is not the cause. Clean Cities' area (214.0 km²) is the land
 municipality, like our GISCO LAU (221.7 km² in EPSG 25835). The OSM relation would add sea
-and islands and only raise A+B (1,301.9 km, run 232; the relation was run only with v2 and serves here as a boundary
-comparison; see `helsinki/boundary_diff_pct` in
-`docs/review/trust/FI.md`).
+and islands and only raise A+B (1,301.9 km, run 232; see `helsinki/boundary_diff_pct` in
+`docs/review/trust/FI.md`). The relation was run only with v2; it serves here as a boundary
+comparison.
 
 ### helsinki/cc_km
 Cause: **definition** (not a length-basis or date effect). Clean Cities' 783 km is well below
@@ -738,14 +740,13 @@ run, nine days before QECIO's 2024-01-10 snapshot, raw main roads are 6,364.9 km
 QECIO's 7,047.1 km on a 15% smaller area.
 
 ### helsinki/qecio_tracks_km
-Cause: **scope** (FI1B1 Helsinki-Uusimaa vs the city, see `helsinki/qecio_main_km`), with
-**date** second. On the FUA's 2024-01-01 history run, tier A plus B/segregated is
-1,760.6 km centreline, +4.3% against QECIO's 1,688.1 km. Since then, Helsinki has retagged
-`highway=cycleway` to `foot=designated` (mostly from `foot=yes`, with `bicycle=designated`),
-which moves it from `A_cycleway` to `B_cycleway_foot`. On
-the LAU this is 1,127 sides and 120.1 km per side (e.g. way 125959164; way 732068919,
-Kuninkaantammentie). The FUA's tracks are now 1,179.6 km and the LAU's 557.2 km (678.7 km on
-2024-01-01).
+Cause: **scope** (FI1B1 Helsinki-Uusimaa vs the city, see `helsinki/qecio_main_km`), with **date**
+second. On the FUA's 2024-01-01 history run, tier A plus B/segregated is 1,760.6 km centreline,
++4.3% against QECIO's 1,688.1 km. Since then, Helsinki has retagged `highway=cycleway` to
+`foot=designated` (mostly from `foot=yes`, with `bicycle=designated`), which moves it from
+`A_cycleway` to `B_cycleway_foot`. On the LAU this is 1,127 sides and 120.1 km per side (e.g. way
+125959164; way 732068919, Kuninkaantammentie). The FUA's tracks are now 1,179.6 km and the LAU's
+557.2 km (679.0 km on 2024-01-01).
 
 ### helsinki/qecio_shared_km
 Cause: **scope** (see `helsinki/qecio_main_km`), with **date** second. On the FUA's
@@ -770,19 +771,16 @@ network is 19.3% below theirs (`krakow/cc_network_km`, inside the band). Our A+B
 network gives 14.1%, and their protected km over our network 13.3%.
 
 ### krakow/cc_km
-Cause: **definition**, plus build-out since the figure. Per side our A+B is 300.9 km; on the
-centreline basis it is 298.8 km (+30.5%), so the length basis is not the cause. Kraków's A+B
-is almost all bidirectional standalone ways, and 236.0 km of it is tier B (154.8 km
-segregated foot/cycle paths, 81.1 km shared). Every OSM measure near the figure's date is
-above 229 km:
-- our per-side A+B was 267.0 km on 1 January 2024 (+16.6%) and 286.3 km on 1 January 2025
-  (+25.0%);
+Cause: **definition**. Per side our A+B is 300.9 km; on the centreline basis it is 298.8 km
+(+30.5%), so the length basis is not the cause. Kraków's A+B is almost all bidirectional standalone
+ways, and 236.0 km of it is tier B (154.8 km segregated foot/cycle paths, 81.1 km shared). Every OSM
+measure near the figure's date is above 229 km:
+- our per-side A+B was 267.0 km on 1 January 2024 (+16.6%) and 286.3 km on 1 January 2025 (+25.0%);
 - QECIO's 2024-01-11 tracks plus shared paths are 194.0 + 73.0 = 267.0 km (+16.6%).
 
-Our A + segregated B on the centreline basis (QECIO's track definition) is 217.6 km, 5.0%
-below 229. The difference from full A+B is the 81.1 km of non-segregated shared paths. As for
-Warsaw, the claim that the figure leaves out shared paths is an inference (Wrocław's figure
-matches full A+B).
+Our A + segregated B on the centreline basis (QECIO's track definition) is 217.6 km, 5.0% below 229.
+The difference from full A+B is the 81.1 km of non-segregated shared paths. As for Warsaw, the claim
+that the figure leaves out shared paths is an inference (Wrocław's figure matches full A+B).
 
 ### krakow/bnk_network_km
 Cause: **definition**. We matched BikeNetKit's 504.0 km of edges to our 2026-10-02 snapshot
@@ -946,36 +944,35 @@ LAU's 604.4 km², and they overlap on 598.6 km².
 
 ### oslo/cc_ratio
 Cause: **definition** (numerator and network denominator each differ by about 11%, in opposite
-directions). Our per-side A+B is 346.1 km, 12.7% above Clean Cities' 307 km (`oslo/cc_km`, ok;
-on the centreline basis 338.0 km, +10.1%). Our public road network is 1,643.5 km, 10.7% below
-their 1,840 km (`oslo/cc_network_km`, ok). Neither gap alone reaches 20%, but together they do:
-346.1 / 1,840 = 18.8%, against their 17%. The date gap (506 days) explains little, because A+B
-was 334.8 km on 2025-01-01 and 339.1 km on 2026-01-01. The boundary is not the cause either.
-Clean Cities' 480.8 km² matches the OSM relation (480.48 km², with Oslofjord water), not our
-GISCO LAU (454.98 km²). But on the relation (run 222; run only with v2, used here as a boundary comparison) A+B is 348.5 km and the network is
-1,647.3 km, a 21.2% ratio (see `oslo/boundary_diff_pct` in `docs/review/trust/NO.md`). The
-per-city source is unverified (research doc §6).
+directions). Our per-side A+B is 346.1 km, 12.7% above Clean Cities' 307 km (`oslo/cc_km`, ok; on
+the centreline basis 338.0 km, +10.1%). Our public road network is 1,643.5 km, 10.7% below their
+1,840 km (`oslo/cc_network_km`, ok). Neither gap alone reaches 20%, but together they do: 346.1 /
+1,840 = 18.8%, against their 17%. The date gap (506 days) explains little, because A+B was 334.8 km
+on 2025-01-01 and 339.1 km on 2026-01-01. The boundary is not the cause either. Clean Cities' 480.8
+km² matches the OSM relation (480.48 km², with Oslofjord water), not our GISCO LAU (454.98 km²). But
+on the relation (run 222) A+B is 348.5 km and the network is 1,647.3 km, a 21.2% ratio (see
+`oslo/boundary_diff_pct` in `docs/review/trust/NO.md`). The relation was run only with v2; it serves
+here as a boundary comparison. The per-city source is unverified (research doc §6).
 
 ### oslo/qecio_tracks_km
-Cause: **date** (retagging after QECIO's snapshot). NO081 is the city (QECIO area 454.86 km²
-vs our LAU 454.98 km²), and QECIO's main roads agree with ours (`oslo/qecio_main_km`, −0.4%).
-On our 2024-01-01 history run, ten days before QECIO's 2024-01-11 snapshot, tier A plus
-B/segregated is 90.6 km centreline, +2.1% against QECIO's 88.7 km. Since then, 458 sides of
-`highway=cycleway` (42.3 km per side) changed from `foot=yes` (or no `foot` tag) to
+Cause: **date** (retagging after QECIO's snapshot). NO081 is the city (QECIO area 454.86 km² vs our
+LAU 454.98 km²), and QECIO's main roads agree with ours (`oslo/qecio_main_km`, −0.4%). On our
+2024-01-01 history run, ten days before QECIO's 2024-01-11 snapshot, tier A plus B/segregated is
+90.6 km centreline, +2.1% against QECIO's 88.7 km. Since then, 458 sides of `highway=cycleway` (42.3
+km per side, measured on the 2024-01-01 geometry) changed from `foot=yes` (or no `foot` tag) to
 `foot=designated` (e.g. way 80874349, way 109810802). That moves them from `A_cycleway` to
 `B_cycleway_foot`, the Norwegian combined foot and cycle path, and from QECIO's "cycle tracks" to
-its "shared with pedestrians". Tier A fell 90.6 -> 54.2 km centreline. Total infrastructure
-still agrees (`oslo/qecio_total_km`, +1.2%).
+its "shared with pedestrians". Tier A fell 90.6 -> 54.2 km centreline. Total infrastructure still
+agrees (`oslo/qecio_total_km`, +1.2%).
 
 ### oslo/qecio_shared_km
-Cause: **date**, the other side of `oslo/qecio_tracks_km`. On our 2024-01-01 history run, tier
-B without B/segregated is 231.9 km centreline, +6.3% against QECIO's 218.1 km. It is now
-283.8 km (+51.9 km). The gains are `highway=cycleway` retagged from `foot=yes` (or no
-`foot` tag) to `foot=designated` (A -> B, 41.8 km, way 80874349), footways and paths retagged as `highway=cycleway` +
-`foot=designated` (12.2 km, e.g. way 39177701) and new ways (4.4 km). Ways deleted or retagged
-out of B offset part of them. The
-mapping matches the gang- og sykkelvei note in `docs/review/trust/NO.md`
-(`oslo/b_share_of_ab`).
+Cause: **date**, the other side of `oslo/qecio_tracks_km`. On our 2024-01-01 history run, tier B
+without B/segregated is 231.9 km centreline, +6.3% against QECIO's 218.1 km. It is now 283.8 km
+(+51.9 km). The gains are `highway=cycleway` retagged from `foot=yes` (or no `foot` tag) to
+`foot=designated` (A -> B, 41.8 km per side, measured on the 2026-10-02 geometry; way 80874349),
+footways and paths retagged as `highway=cycleway` + `foot=designated` (12.2 km, e.g. way 39177701)
+and new ways (4.4 km). Ways deleted or retagged out of B offset part of them. The mapping matches
+the gang- og sykkelvei note in `docs/review/trust/NO.md` (`oslo/b_share_of_ab`).
 
 ### paris/cc_ratio
 Cause: **definition** (source and scope of the Clean Cities numerator). The denominators agree
@@ -1019,26 +1016,25 @@ scope.
 
 ### prague/qecio_lanes_km
 Cause: **definition** first (v3 counts `soft_lane` as an advisory lane, QECIO does not), **date**
-second. QECIO counts `cycleway*=lane|opposite_lane`
-(Methodology Table 2). Our C+D centreline of 94.9 km includes 29.4 km of
-`cycleway[:side]=soft_lane` (58.8 km per side), which v3 counts as tier D advisory and QECIO does
-not count. On QECIO's definition our lanes are 65.5 km (`cycleway=lane` 37.6 km plus lane +
-`cycleway:lane=advisory` 28.0 km). On our 1 January 2024 snapshot those same lanes are 45.5 km
-against QECIO's 45.7 (−0.4%). That snapshot is 9 days before QECIO's, and CZ010 is the city:
-main roads 1,379.8 vs 1,384.3 km. Since then 24.1 km per side (12.0 km centreline) of
+second. QECIO counts `cycleway*=lane|opposite_lane` (Methodology Table 2). Our C+D centreline of
+94.9 km includes 29.4 km of `cycleway[:side]=soft_lane` (58.8 km per side), which v3 counts as tier
+D advisory and QECIO does not count. On QECIO's definition our lanes are 65.5 km (`cycleway=lane`
+37.6 km plus lane + `cycleway:lane=advisory` 28.0 km). On our 1 January 2024 snapshot those same
+lanes are 45.5 km against QECIO's 45.7 (−0.4%). That snapshot is 9 days before QECIO's, and CZ010 is
+the city: main roads 1,379.8 vs 1,384.3 km. Since then 24.1 km per side (12.0 km centreline) of
 `soft_lane` were retagged `cycleway=lane` + `cycleway:lane=advisory` (e.g. way 8111218), 1.8 km
 became plain lanes, and about 6 km are lanes added on other roads.
 
 ### prague/qecio_shared_km
-Cause: **date** (retagging after QECIO's snapshot). Our tier B without `B/segregated` follows QECIO's
-cycle-and-pedestrian rule (Table 2). On our 1 January 2024 snapshot that rule gives 141.3 km
+Cause: **date** (retagging after QECIO's snapshot). Our tier B without `B/segregated` follows
+QECIO's cycle-and-pedestrian rule (Table 2). On our 1 January 2024 snapshot that rule gives 141.3 km
 centreline (`highway=cycleway` + `foot=designated` 133.3, designated footways and paths 8.0),
-against QECIO's 139.0 (+1.7%), so classifier and QECIO agree at the same date. Since then
-tier B grew 45.9 km per side. 22.7 km of it is `highway=cycleway` + `foot=yes` retagged
-`foot=designated` + `bicycle=designated` (A -> B, e.g. way 421316921, way 887225488). 14.9 km
-are new `highway=cycleway` + `foot=designated` ways, and 14.1 km are previously untiered tracks
-and footways retagged as designated cycleways. The A -> B part shows as the opposite gap in
-`prague/qecio_tracks_km` (ours 103.4 vs 124.3; 126.0 km, +1.4%, on the 2024 snapshot).
+against QECIO's 139.0 (+1.7%), so classifier and QECIO agree at the same date. Since then tier B
+grew 45.9 km per side. 22.7 km of it is `highway=cycleway` + `foot=yes` retagged `foot=designated` +
+`bicycle=designated` (A -> B, e.g. way 421316921, way 887225488). 14.9 km are new `highway=cycleway`
++ `foot=designated` ways, and 14.1 km are previously untiered tracks and footways retagged as
+designated cycleways. The A -> B part shows as the opposite gap in `prague/qecio_tracks_km` (ours
+103.4 vs 124.3; 126.0 km, +1.4%, on the 2024 snapshot).
 
 ### prague/bnk_network_km
 Cause: **definition**. BikeNetKit's network includes living streets and paths with
@@ -1119,13 +1115,13 @@ limited-access roads, which our A–D sum does not. On the département polygon 
 
 ### utrecht/qecio_main_km
 Cause: **scope**. QECIO reports NUTS3 NL310, the province of Utrecht, 1,449.8 km² (QECIO `Area`).
-Our LAU NL_GM0344 is the gemeente, 99.7 km² (our boundary polygon in EPSG:25831), 0.069 of that area. Main roads
-(0.18 of QECIO's: 423.1 vs 2,323.7 km), tracks (0.18), lanes (0.17), shared paths (0.20) and total
-(0.18) all scale by about the same factor. A boundary difference does that; a classifier or date
-effect would hit the categories unequally. Our FUA run on the same snapshot (run 297, NL042F,
-1,044.4 km², 0.72 of the province's area) confirms it: main roads 1,675.7 km (0.72 of QECIO's),
-tracks 1,126.0 (0.68), lanes 100.4 (0.69). Tracks per main-road km are 0.715 for QECIO and 0.718
-for our LAU. The QECIO figure is dated 2024-01-11, 995 days before our snapshot.
+Our LAU NL_GM0344 is the gemeente, 99.7 km² (our boundary polygon in EPSG:25831), 0.069 of that
+area. Main roads (0.18 of QECIO's: 423.1 vs 2,323.7 km), tracks (0.18), lanes (0.17), shared paths
+(0.20) and total (0.18) all scale by about the same factor. A boundary difference does that; a
+classifier or date effect would hit the categories unequally. Our FUA run on the same snapshot (run
+297, NL042F, 1,044.4 km², 0.72 of the province's area) confirms it: main roads 1,675.7 km (0.72 of
+QECIO's), tracks 1,126.0 (0.68), lanes 100.4 (0.69). Tracks per main-road km are 0.715 for QECIO and
+0.718 for our LAU. The QECIO figure is dated 2024-01-11, 995 days before our snapshot.
 `nuts3_is_city: false` in `config/cities.yaml`.
 
 ### utrecht/qecio_tracks_km
