@@ -1,0 +1,149 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (stockholm 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v2
+ways:
+- way_id: 24404271
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycleway
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 151884980
+  group: X_no
+  name: Söderledstunneln
+  highway: trunk
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 39822770
+  group: B_cycleway_foot
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_cycleway_foot
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 1367954012
+  group: X_bicycle_no
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 249421858
+  group: X_separate
+  name: Bogårdsvägen
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 81126534
+  group: X_lifecycle
+  name: Skärholmstunneln (Förbifart Stockholm)
+  highway: construction
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_lifecycle
+    subtype: lifecycle
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 806880345
+  group: unmatched:1
+  name: Svartlösavägen
+  highway: tertiary
+  proposed: []
+  confirmed: false
+  note: ''
+- way_id: 4079732
+  group: unmatched:2
+  name: Askrikegatan
+  highway: residential
+  proposed: []
+  confirmed: false
+  note: ''
+- way_id: 233028188
+  group: unmatched:3
+  name: Storängsvägen
+  highway: unclassified
+  proposed: []
+  confirmed: false
+  note: ''
+- way_id: 149487167
+  group: extra
+  name: Gamla Tyresövägen
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 198689124
+  group: extra
+  name: Sockenvägen
+  highway: tertiary
+  proposed:
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 120132761
+  group: extra
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: B
+    rule: B_path_segregated
+    subtype: segregated
+    bidirectional: false
+  confirmed: false
+  note: ''

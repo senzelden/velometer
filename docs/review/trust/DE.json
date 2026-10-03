@@ -1,0 +1,80 @@
+{
+  "country": "DE",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "berlin",
+      "run_id": 147,
+      "osm_timestamp": "2026-09-30T20:22:42Z",
+      "cycling_km": 28968.352069559856,
+      "unrecognised_share": 2.956510455139621e-6,
+      "excluded_share": 0.4855345886807995,
+      "excluded_by_rule": {
+        "X_area": 0.004135219584753305,
+        "X_bicycle_no": 0.033796186625680597,
+        "X_construction_tag": 0.000023187335447774487,
+        "X_crossing": 0.0003134890933815256,
+        "X_lifecycle": 0.0008789956326214214,
+        "X_no": 0.3719073143797313,
+        "X_private": 0.013467035297661292,
+        "X_road_area": 3.7401062862136278e-6,
+        "X_road_construction": 0.000018999724219194474,
+        "X_road_private": 0.028051714562923522,
+        "X_separate": 0.03274151108166403,
+        "X_shared_lane": 0.00010001053283691351,
+        "X_shoulder": 8.680984715759793e-6,
+        "X_sidewalk_bicycle_permitted": 0.00008800333342889343,
+        "X_untyped": 5.004054482829612e-7
+      },
+      "tier_mix": {
+        "A": 0.5321157965267449,
+        "B": 0.18795154415193746,
+        "C": 0.013337528785342922,
+        "D": 0.21334577380075875,
+        "E": 0.05324935673521594
+      },
+      "b_share_of_ab": 0.261019398511795,
+      "completeness": {
+        "A": {
+          "width": 0.668925907854271,
+          "surface": 0.8346870302227088,
+          "segregated": 0.19801886031953964
+        },
+        "B": {
+          "width": 0.6698652311173602,
+          "surface": 0.9828235441686828,
+          "segregated": 0.9821938180590397
+        },
+        "C": {
+          "width": 0.9132774694022251,
+          "surface": 0.730844695778922,
+          "segregated": 0.010508250864355459
+        },
+        "D": {
+          "width": 0.5399484138272299,
+          "surface": 0.48609097768939,
+          "segregated": 0.0004920314605474821
+        },
+        "E": {
+          "width": 0.5962749627530038,
+          "surface": 0.5363448862010093,
+          "segregated": 0.00007901664934074363
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway:both=lanes;cycleway:both:lane=advisory;highway=secondary",
+          0.06522701073397565
+        ],
+        [
+          "cycleway=link;highway=service",
+          0.020418225027843556
+        ]
+      ],
+      "boundary_lau_km2": 892.3447522292817,
+      "boundary_osm_km2": 890.6886224505689,
+      "boundary_diff_pct": 0.18593813112333205
+    }
+  ]
+}

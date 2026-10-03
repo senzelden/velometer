@@ -1,0 +1,265 @@
+{
+  "country": "FR",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "paris",
+      "run_id": 148,
+      "osm_timestamp": "2026-09-30T20:22:42Z",
+      "cycling_km": 6981.312819784569,
+      "unrecognised_share": 0.00003619253479952071,
+      "excluded_share": 0.4133715208769426,
+      "excluded_by_rule": {
+        "X_area": 0.1439637879141232,
+        "X_bicycle_no": 0.01141952837625241,
+        "X_construction_tag": 2.9134052987651938e-6,
+        "X_lifecycle": 0.00019956506103643507,
+        "X_no": 0.20420462091666983,
+        "X_private": 0.010295868198478452,
+        "X_road_construction": 0.000017381749400925414,
+        "X_road_private": 0.0004999701935350955,
+        "X_separate": 0.038435543076206974,
+        "X_shared_lane": 0.004289029125456668,
+        "X_shoulder": 0.00002405461011819949,
+        "X_untyped": 0.0000192582503688944
+      },
+      "tier_mix": {
+        "A": 0.49397125722069846,
+        "B": 0.03155317019188373,
+        "C": 0.0,
+        "D": 0.21685318705407233,
+        "E": 0.25762238553334554
+      },
+      "b_share_of_ab": 0.06004130073883656,
+      "completeness": {
+        "A": {
+          "width": 0.27414312018781617,
+          "surface": 0.9026013607807203,
+          "segregated": 0.07522368484235686
+        },
+        "B": {
+          "width": 0.06046881589057064,
+          "surface": 0.9519162382786776,
+          "segregated": 0.9036688337566691
+        },
+        "D": {
+          "width": 0.020321631614025754,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.011559039506045435,
+          "surface": 0.052623451096322035,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "bicycle=yes;cycleway:left=piste_double_sens_cyclable;cycleway:right=no;highway=residential;oneway:bicycle=no",
+          0.16351902467499915
+        ],
+        [
+          "cycleway:left=opposite:lane;highway=residential",
+          0.06810047325492556
+        ],
+        [
+          "cycleway:left=no;cycleway:right=ane;cycleway:right:lane=pictogram;highway=primary",
+          0.021051909246468374
+        ]
+      ],
+      "boundary_lau_km2": 105.28267255611149,
+      "boundary_osm_km2": 105.31322697595675,
+      "boundary_diff_pct": 0.029012898685779574
+    },
+    {
+      "city_id": "lyon",
+      "run_id": 233,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 2320.311234230214,
+      "unrecognised_share": 0.0001280072626679216,
+      "excluded_share": 0.32859942683895227,
+      "excluded_by_rule": {
+        "X_area": 0.022932401863476327,
+        "X_bicycle_no": 0.022810466870880616,
+        "X_lifecycle": 0.00014808369218500365,
+        "X_no": 0.22429130890668852,
+        "X_private": 0.016949987896989153,
+        "X_road_private": 0.002951701522193939,
+        "X_separate": 0.02461922486956199,
+        "X_shared_lane": 0.013185649076964555,
+        "X_untyped": 0.0007106021400120256
+      },
+      "tier_mix": {
+        "A": 0.2637184566030524,
+        "B": 0.04731993389076758,
+        "C": 0.0,
+        "D": 0.47602633914306985,
+        "E": 0.2129352703631102
+      },
+      "b_share_of_ab": 0.15213534835889583,
+      "completeness": {
+        "A": {
+          "width": 0.34396357960746854,
+          "surface": 0.8812418955906944,
+          "segregated": 0.16551377000944037
+        },
+        "B": {
+          "width": 0.06617529853293048,
+          "surface": 0.953981868744281,
+          "segregated": 0.890404413439618
+        },
+        "D": {
+          "width": 0.0015064475962365733,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.005713792006714483,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway:left=share_emergencyway;highway=residential;oneway:bicycle=no",
+          0.1526124442722419
+        ],
+        [
+          "cycleway:right=share_taxiway;highway=residential;oneway:bicycle=no",
+          0.08762180048860196
+        ],
+        [
+          "cycleway=link;highway=service",
+          0.023822449590999554
+        ],
+        [
+          "cycleway:both=link;highway=residential;oneway:bicycle=no",
+          0.01705047002757619
+        ],
+        [
+          "cycleway:left=opposite:lane;highway=residential;oneway:bicycle=no",
+          0.008490959585553355
+        ],
+        [
+          "bicycle=yes;cycleway=link;highway=service",
+          0.007418565666463324
+        ]
+      ],
+      "boundary_lau_km2": 47.918767889290116,
+      "boundary_osm_km2": 47.97817732470512,
+      "boundary_diff_pct": 0.12382595323064621
+    },
+    {
+      "city_id": "strasbourg",
+      "run_id": 234,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 1197.6655596621567,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.2987858769492314,
+      "excluded_by_rule": {
+        "X_area": 0.026879238244715428,
+        "X_bicycle_no": 0.013285420404267447,
+        "X_lifecycle": 0.0003586125508369443,
+        "X_no": 0.18457640697011257,
+        "X_private": 0.026041537137360737,
+        "X_road_private": 0.0006144297299588433,
+        "X_separate": 0.04217819571583545,
+        "X_shared_lane": 0.004852036196144849
+      },
+      "tier_mix": {
+        "A": 0.5742044212492429,
+        "B": 0.2378335299867794,
+        "C": 0.0,
+        "D": 0.15045047346046644,
+        "E": 0.03751157530351134
+      },
+      "b_share_of_ab": 0.2928847471042053,
+      "completeness": {
+        "A": {
+          "width": 0.3904897201485071,
+          "surface": 0.8501629093128342,
+          "segregated": 0.32502394405445534
+        },
+        "B": {
+          "width": 0.18984462128186325,
+          "surface": 0.8779434086820829,
+          "segregated": 0.8196907121239227
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.15605962345546642,
+          "surface": 0.4069353126425307,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 78.13671898415869,
+      "boundary_osm_km2": 78.2312009597843,
+      "boundary_diff_pct": 0.12077275366663735
+    },
+    {
+      "city_id": "bordeaux",
+      "run_id": 235,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 890.4612480776793,
+      "unrecognised_share": 0.00036906448684016064,
+      "excluded_share": 0.37515208249115894,
+      "excluded_by_rule": {
+        "X_area": 0.0420835901246597,
+        "X_bicycle_no": 0.008836644606076735,
+        "X_construction_tag": 0.00003199383873909993,
+        "X_lifecycle": 0.0006379121404283927,
+        "X_no": 0.2590633285792452,
+        "X_private": 0.011351977614156034,
+        "X_road_private": 0.004814288833931358,
+        "X_separate": 0.03143772352387237,
+        "X_shared_lane": 0.012382343551242618,
+        "X_shoulder": 0.004512279678806088
+      },
+      "tier_mix": {
+        "A": 0.24186205564975374,
+        "B": 0.053162464284641484,
+        "C": 0.0,
+        "D": 0.4843802662408568,
+        "E": 0.22059521382474803
+      },
+      "b_share_of_ab": 0.1801967656670139,
+      "completeness": {
+        "A": {
+          "width": 0.1817454607132444,
+          "surface": 0.8104384771978772,
+          "segregated": 0.17215953767278722
+        },
+        "B": {
+          "width": 0.005873840622031661,
+          "surface": 0.7960888925781765,
+          "segregated": 0.7042752279669964
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.026895071960279016,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway=left;cycleway:left:oneway=-1;highway=residential;oneway:bicycle=no",
+          0.3286376235728377
+        ]
+      ],
+      "boundary_lau_km2": 49.49493734811271,
+      "boundary_osm_km2": 49.99186952843554,
+      "boundary_diff_pct": 0.9940259986479862
+    }
+  ]
+}

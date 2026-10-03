@@ -1,0 +1,121 @@
+{
+  "country": "ES",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "madrid",
+      "run_id": 219,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 7756.606744641896,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.16228762189689352,
+      "excluded_by_rule": {
+        "X_area": 0.012842824698465032,
+        "X_bicycle_no": 0.010020961353189122,
+        "X_construction_tag": 0.0005778529569546588,
+        "X_lifecycle": 0.00034419308528585093,
+        "X_no": 0.09221897359117523,
+        "X_private": 0.011096775969884273,
+        "X_road_private": 0.0007912150060902994,
+        "X_separate": 0.0009030301013783158,
+        "X_shared_lane": 0.03330210815387096,
+        "X_shoulder": 0.0001280613523565937,
+        "X_untyped": 0.00006162562824325511
+      },
+      "tier_mix": {
+        "A": 0.8044174115342744,
+        "B": 0.09881225207809369,
+        "C": 0.0,
+        "D": 0.09419658547018983,
+        "E": 0.0025737509174420443
+      },
+      "b_share_of_ab": 0.10939881190671363,
+      "completeness": {
+        "A": {
+          "width": 0.11512293930783586,
+          "surface": 0.6681954884628106,
+          "segregated": 0.33358618887416375
+        },
+        "B": {
+          "width": 0.03955311204488126,
+          "surface": 0.6844516673209796,
+          "segregated": 0.7118284425060232
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.015293329620092215,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.01655225879661378,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 604.3843451870919,
+      "boundary_osm_km2": 603.9025147267484,
+      "boundary_diff_pct": 0.07978613246236174
+    },
+    {
+      "city_id": "barcelona",
+      "run_id": 220,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 3687.1625122890828,
+      "unrecognised_share": 0.00001916509306311516,
+      "excluded_share": 0.250440477047127,
+      "excluded_by_rule": {
+        "X_area": 0.0623045893628145,
+        "X_bicycle_no": 0.011353636709763432,
+        "X_crossing": 2.3248002636753537e-6,
+        "X_lifecycle": 0.0006167622465274477,
+        "X_no": 0.11359061870646095,
+        "X_private": 0.004186937655496428,
+        "X_road_private": 0.0006683096359174601,
+        "X_separate": 0.023514317097503436,
+        "X_shared_lane": 0.03411839808708318,
+        "X_shoulder": 0.00008458274529765677
+      },
+      "tier_mix": {
+        "A": 0.9240787191316239,
+        "B": 0.04470686002454143,
+        "C": 0.0,
+        "D": 0.004395767303789644,
+        "E": 0.026818653540045048
+      },
+      "b_share_of_ab": 0.04614732195279181,
+      "completeness": {
+        "A": {
+          "width": 0.6360991004347877,
+          "surface": 0.9837248270639776,
+          "segregated": 0.7713274354316341
+        },
+        "B": {
+          "width": 0.055252698779438544,
+          "surface": 0.9353984825037258,
+          "segregated": 0.5977992241391119
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0815380395878345,
+          "surface": 0.20984942688981498,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "bicycle=yes;cycleway=pictogram;highway=living_street",
+          0.07066481268684977
+        ]
+      ],
+      "boundary_lau_km2": 98.94629973220934,
+      "boundary_osm_km2": 101.2643262769853,
+      "boundary_diff_pct": 2.289085041098809
+    }
+  ]
+}

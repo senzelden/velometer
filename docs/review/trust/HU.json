@@ -1,0 +1,61 @@
+{
+  "country": "HU",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "budapest",
+      "run_id": 238,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 5428.529189944858,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.3785238958677121,
+      "excluded_by_rule": {
+        "X_area": 0.008547446182810009,
+        "X_bicycle_no": 0.01562854006603806,
+        "X_lifecycle": 0.0003328250353376013,
+        "X_no": 0.2951310341755476,
+        "X_private": 0.015370237057234027,
+        "X_road_private": 0.000354966820648126,
+        "X_separate": 0.01526805266074463,
+        "X_shared_lane": 0.027203171392374312,
+        "X_shoulder": 0.0006580570133969572,
+        "X_sidewalk_bicycle_permitted": 0.00002956546358154558
+      },
+      "tier_mix": {
+        "A": 0.38997846651183077,
+        "B": 0.16010945401023016,
+        "C": 0.0,
+        "D": 0.3812991282546069,
+        "E": 0.06861295122333229
+      },
+      "b_share_of_ab": 0.2910615704091053,
+      "completeness": {
+        "A": {
+          "width": 0.26101230791690677,
+          "surface": 0.910446287336322,
+          "segregated": 0.41334928523876374
+        },
+        "B": {
+          "width": 0.088095028301328,
+          "surface": 0.9175485957411303,
+          "segregated": 0.8734815638168738
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.00817714403482792,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 525.9816826570787,
+      "boundary_osm_km2": 525.7589117416691,
+      "boundary_diff_pct": 0.042371305637352856
+    }
+  ]
+}

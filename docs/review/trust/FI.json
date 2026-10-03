@@ -1,0 +1,61 @@
+{
+  "country": "FI",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "helsinki",
+      "run_id": 232,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 5404.577966853123,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.262663744627863,
+      "excluded_by_rule": {
+        "X_area": 0.0356645102532355,
+        "X_bicycle_no": 0.16212248618249292,
+        "X_lifecycle": 0.004921602421213499,
+        "X_no": 0.031896245022908526,
+        "X_private": 0.022953048365767184,
+        "X_road_area": 0.00006877123218374845,
+        "X_road_private": 0.00031849724626300917,
+        "X_separate": 0.004608350157042067,
+        "X_shared_lane": 0.00006817825234352938,
+        "X_shoulder": 0.000042055494413368254
+      },
+      "tier_mix": {
+        "A": 0.45373438482611084,
+        "B": 0.51568761250607,
+        "C": 0.0,
+        "D": 0.028830089072102143,
+        "E": 0.001747913595717021
+      },
+      "b_share_of_ab": 0.5319536939797387,
+      "completeness": {
+        "A": {
+          "width": 0.09254245912024515,
+          "surface": 0.9908144120715603,
+          "segregated": 0.731570314572265
+        },
+        "B": {
+          "width": 0.03449894464816743,
+          "surface": 0.9895778085559028,
+          "segregated": 0.84667934095014
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.009053936640695318,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.10005040388820616,
+          "surface": 0.8926955487724796,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 717.2831975983518,
+      "boundary_osm_km2": 717.2831975983518,
+      "boundary_diff_pct": 0.0
+    }
+  ]
+}

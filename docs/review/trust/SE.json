@@ -1,0 +1,78 @@
+{
+  "country": "SE",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "stockholm",
+      "run_id": 221,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 3659.6951118068014,
+      "unrecognised_share": 0.0007874439876549586,
+      "excluded_share": 0.15435346370464767,
+      "excluded_by_rule": {
+        "X_area": 0.014597036669068692,
+        "X_bicycle_no": 0.0353074188429306,
+        "X_lifecycle": 0.0009407933177052406,
+        "X_no": 0.07344359073199722,
+        "X_private": 0.0018711431146923893,
+        "X_road_private": 0.000528163038690167,
+        "X_separate": 0.024304269131914327,
+        "X_shared_lane": 0.003011239350880097,
+        "X_shoulder": 0.00005293712976299949,
+        "X_untyped": 0.00029687237700685884
+      },
+      "tier_mix": {
+        "A": 0.7297597859103843,
+        "B": 0.22107775100430407,
+        "C": 0.0,
+        "D": 0.04535169458432333,
+        "E": 0.003810768500988433
+      },
+      "b_share_of_ab": 0.23250843853058756,
+      "completeness": {
+        "A": {
+          "width": 0.1020656469076053,
+          "surface": 0.7837412287500297,
+          "segregated": 0.43748863865082127
+        },
+        "B": {
+          "width": 0.04308695158801109,
+          "surface": 0.9020891296131598,
+          "segregated": 0.6134863700289116
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.28385644351950995,
+          "surface": 0.3202127203014048,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway=path;highway=tertiary",
+          2.130187629153375
+        ],
+        [
+          "cycleway:left=exclusive;cycleway:left:oneway=-1;highway=residential;oneway:bicycle=no",
+          0.3990602176861996
+        ],
+        [
+          "cycleway=segregated;highway=unclassified",
+          0.3197685487521331
+        ],
+        [
+          "bicycle:lanes=no|designated|no;cycleway=no|lane|no;highway=tertiary",
+          0.03278851685079973
+        ]
+      ],
+      "boundary_lau_km2": 211.18745413745268,
+      "boundary_osm_km2": 215.75731812839678,
+      "boundary_diff_pct": 2.1180574687272404
+    }
+  ]
+}

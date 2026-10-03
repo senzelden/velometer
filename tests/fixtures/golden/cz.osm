@@ -1,0 +1,987 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="osmium/1.19.0">
+  <node id="723498" version="3" timestamp="2011-02-21T22:44:20Z" lat="50.0551295" lon="14.4183282"/>
+  <node id="723499" version="4" timestamp="2011-02-21T22:44:09Z" lat="50.0575487" lon="14.4191373"/>
+  <node id="6929704" version="8" timestamp="2022-01-29T12:38:12Z" lat="50.1027128" lon="14.5726521"/>
+  <node id="6929706" version="9" timestamp="2022-01-29T12:38:12Z" lat="50.1031323" lon="14.5740217"/>
+  <node id="7786160" version="3" timestamp="2025-04-10T21:53:01Z" lat="50.1295772" lon="14.5883067"/>
+  <node id="7786166" version="4" timestamp="2012-05-18T20:21:52Z" lat="50.1326482" lon="14.5964123"/>
+  <node id="7786525" version="2" timestamp="2012-05-18T20:21:52Z" lat="50.1316375" lon="14.5942763"/>
+  <node id="10703798" version="4" timestamp="2020-01-18T13:58:32Z" lat="50.013848" lon="14.3941091"/>
+  <node id="10703799" version="2" timestamp="2009-09-12T21:31:37Z" lat="50.0177773" lon="14.3941537"/>
+  <node id="25552433" version="2" timestamp="2008-05-28T12:44:06Z" lat="50.0973049" lon="14.4796223"/>
+  <node id="25917028" version="1" timestamp="2007-02-14T23:41:57Z" lat="50.098333" lon="14.4816313"/>
+  <node id="25917319" version="6" timestamp="2021-01-08T10:06:24Z" lat="50.0919735" lon="14.4781238"/>
+  <node id="25917320" version="4" timestamp="2021-01-08T10:06:24Z" lat="50.0921344" lon="14.4797247"/>
+  <node id="25917321" version="4" timestamp="2016-12-29T14:24:37Z" lat="50.0923081" lon="14.4812767"/>
+  <node id="25917323" version="7" timestamp="2021-01-08T10:06:24Z" lat="50.0924576" lon="14.482813"/>
+  <node id="25917329" version="3" timestamp="2008-10-23T22:32:57Z" lat="50.0925496" lon="14.4846372"/>
+  <node id="25973396" version="2" timestamp="2008-10-23T19:15:27Z" lat="50.0918235" lon="14.4765756"/>
+  <node id="25973398" version="5" timestamp="2024-10-02T11:08:32Z" lat="50.0916732" lon="14.4750753"/>
+  <node id="26781640" version="2" timestamp="2011-02-21T22:44:14Z" lat="50.0514615" lon="14.4162891"/>
+  <node id="30294811" version="8" timestamp="2022-01-29T12:38:12Z" lat="50.1029379" lon="14.5732755"/>
+  <node id="34595928" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0352616" lon="14.6358892"/>
+  <node id="34769477" version="2" timestamp="2020-10-03T20:38:16Z" lat="50.0171054" lon="14.6387223"/>
+  <node id="64809996" version="4" timestamp="2011-02-21T22:03:20Z" lat="50.0580622" lon="14.4192541"/>
+  <node id="109810081" version="3" timestamp="2009-01-21T11:45:18Z" lat="50.0994711" lon="14.4837691"/>
+  <node id="237170772" version="6" timestamp="2023-07-17T19:48:21Z" lat="50.0421954" lon="14.4079901"/>
+  <node id="267221368" version="2" timestamp="2025-04-27T09:50:17Z" lat="50.0971482" lon="14.479202"/>
+  <node id="277483252" version="4" timestamp="2015-10-16T12:59:21Z" lat="50.0248965" lon="14.3958056"/>
+  <node id="277483255" version="3" timestamp="2021-05-24T15:48:30Z" lat="50.0256291" lon="14.3960179"/>
+  <node id="277483256" version="3" timestamp="2018-10-21T19:53:09Z" lat="50.0266204" lon="14.3963449"/>
+  <node id="277483257" version="4" timestamp="2018-10-21T19:53:09Z" lat="50.0267991" lon="14.3964082"/>
+  <node id="297040330" version="2" timestamp="2009-03-03T21:09:37Z" lat="50.0271012" lon="14.6171813"/>
+  <node id="297041163" version="2" timestamp="2019-03-21T19:26:57Z" lat="50.0187274" lon="14.6321732"/>
+  <node id="304338067" version="3" timestamp="2025-07-14T16:44:19Z" lat="50.0272194" lon="14.3966072"/>
+  <node id="304338070" version="3" timestamp="2021-05-24T15:48:30Z" lat="50.0275354" lon="14.3967833"/>
+  <node id="305861752" version="6" timestamp="2026-06-27T12:02:50Z" lat="50.0917226" lon="14.4754244">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="306685625" version="3" timestamp="2011-02-01T23:55:50Z" lat="50.0925044" lon="14.4837168"/>
+  <node id="333636598" version="2" timestamp="2013-07-05T19:19:13Z" lat="50.0917819" lon="14.4760478"/>
+  <node id="334342245" version="2" timestamp="2011-02-21T22:44:22Z" lat="50.0561028" lon="14.4187574"/>
+  <node id="334507304" version="2" timestamp="2024-03-06T22:52:39Z" lat="50.097412" lon="14.4798362"/>
+  <node id="344795959" version="1" timestamp="2009-02-12T23:41:32Z" lat="50.0981584" lon="14.4813229"/>
+  <node id="344795964" version="3" timestamp="2021-09-02T17:15:23Z" lat="50.0982213" lon="14.4814323">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="363455938" version="1" timestamp="2009-03-19T10:47:53Z" lat="50.0997417" lon="14.4843192"/>
+  <node id="365599697" version="2" timestamp="2022-01-29T12:38:12Z" lat="50.1026306" lon="14.5724425"/>
+  <node id="371093067" version="7" timestamp="2026-06-27T12:02:50Z" lat="50.0917136" lon="14.4753357">
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="399728446" version="1" timestamp="2009-05-14T21:20:10Z" lat="50.0976156" lon="14.4802714"/>
+  <node id="503640580" version="5" timestamp="2023-07-17T19:48:21Z" lat="50.041364" lon="14.4074635"/>
+  <node id="503640584" version="5" timestamp="2023-07-17T19:48:21Z" lat="50.0410536" lon="14.4072517"/>
+  <node id="503640588" version="5" timestamp="2017-01-21T21:01:00Z" lat="50.0403957" lon="14.4067924"/>
+  <node id="503640596" version="4" timestamp="2025-06-11T15:05:08Z" lat="50.0388673" lon="14.4056879"/>
+  <node id="503640599" version="3" timestamp="2012-06-07T15:56:00Z" lat="50.0384964" lon="14.4054137"/>
+  <node id="503640602" version="4" timestamp="2025-06-11T15:05:08Z" lat="50.0375343" lon="14.4047745"/>
+  <node id="503640605" version="3" timestamp="2012-06-07T15:56:00Z" lat="50.0364244" lon="14.4039622"/>
+  <node id="503640609" version="4" timestamp="2025-06-11T15:05:08Z" lat="50.0346818" lon="14.4027417"/>
+  <node id="503640613" version="3" timestamp="2012-06-07T15:56:01Z" lat="50.0338767" lon="14.4020328"/>
+  <node id="503640616" version="5" timestamp="2018-10-21T19:53:09Z" lat="50.0319139" lon="14.4003766"/>
+  <node id="503640619" version="2" timestamp="2012-06-07T15:56:01Z" lat="50.0306373" lon="14.3992598"/>
+  <node id="503640622" version="3" timestamp="2018-10-21T19:53:09Z" lat="50.0290311" lon="14.3979133"/>
+  <node id="503640625" version="2" timestamp="2012-06-07T15:56:01Z" lat="50.0279878" lon="14.3970619"/>
+  <node id="556569634" version="6" timestamp="2025-10-16T22:41:30Z" lat="50.0698785" lon="14.6412808"/>
+  <node id="556569694" version="6" timestamp="2025-10-16T22:41:30Z" lat="50.0676519" lon="14.6474191"/>
+  <node id="556569730" version="6" timestamp="2025-10-21T11:25:31Z" lat="50.0665159" lon="14.6571628"/>
+  <node id="581449910" version="8" timestamp="2023-06-06T14:27:44Z" lat="50.0919919" lon="14.4783044">
+    <tag k="crossing" v="marked"/>
+    <tag k="crossing:markings" v="yes"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="581449925" version="9" timestamp="2026-06-27T21:54:07Z" lat="50.0922814" lon="14.4810696">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="581449926" version="9" timestamp="2026-06-27T21:54:07Z" lat="50.0923418" lon="14.4814568">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="615912392" version="3" timestamp="2025-04-10T21:53:01Z" lat="50.1286737" lon="14.5850257"/>
+  <node id="856561588" version="2" timestamp="2022-01-29T12:38:12Z" lat="50.1032576" lon="14.5748456"/>
+  <node id="1131736381" version="2" timestamp="2024-02-19T13:22:36Z" lat="50.0924467" lon="14.4824531"/>
+  <node id="1131736482" version="7" timestamp="2026-06-27T12:02:50Z" lat="50.0918145" lon="14.4763845">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="source" v="bing:ortofoto"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="1165858398" version="4" timestamp="2026-07-29T17:29:31Z" lat="50.050696" lon="14.4158717"/>
+  <node id="1165898893" version="10" timestamp="2026-03-04T19:06:20Z" lat="50.054506" lon="14.4179846">
+    <tag k="button_operated" v="yes"/>
+    <tag k="check_date:traffic_signals:sound" v="2025-04-26"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:arrow" v="no"/>
+    <tag k="traffic_signals:sound" v="no"/>
+    <tag k="traffic_signals:vibration" v="no"/>
+  </node>
+  <node id="1165898960" version="1" timestamp="2011-02-21T22:44:07Z" lat="50.0556077" lon="14.4185642"/>
+  <node id="1165898978" version="1" timestamp="2011-02-21T22:44:08Z" lat="50.0569788" lon="14.4190025"/>
+  <node id="1165899011" version="1" timestamp="2011-02-21T22:44:09Z" lat="50.0528907" lon="14.4170947"/>
+  <node id="1285851532" version="3" timestamp="2017-01-21T21:01:00Z" lat="50.0392529" lon="14.4059308"/>
+  <node id="1285851543" version="3" timestamp="2024-10-24T20:25:48Z" lat="50.035737" lon="14.4035274"/>
+  <node id="1376701684" version="5" timestamp="2025-10-16T22:26:28Z" lat="50.0742798" lon="14.6251413"/>
+  <node id="1410761583" version="2" timestamp="2022-01-29T12:38:12Z" lat="50.1034671" lon="14.5766145"/>
+  <node id="1425613043" version="3" timestamp="2025-04-10T21:53:01Z" lat="50.1279521" lon="14.5824018"/>
+  <node id="1553581138" version="4" timestamp="2025-06-11T15:05:08Z" lat="50.0371671" lon="14.404518"/>
+  <node id="1563946292" version="4" timestamp="2023-12-29T19:02:34Z" lat="50.0995077" lon="14.4838436">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="incorrect"/>
+  </node>
+  <node id="1571592924" version="2" timestamp="2022-01-29T12:38:12Z" lat="50.1032964" lon="14.5751835"/>
+  <node id="1571592972" version="6" timestamp="2026-04-16T11:02:28Z" lat="50.1034256" lon="14.576315">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="1576952141" version="7" timestamp="2025-08-27T20:37:03Z" lat="50.0622718" lon="14.4038747">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="crossing:signals" v="no"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="1620999000" version="3" timestamp="2025-10-21T11:25:31Z" lat="50.0665514" lon="14.6548892"/>
+  <node id="1620999001" version="4" timestamp="2025-10-21T11:25:31Z" lat="50.0665939" lon="14.6529304"/>
+  <node id="1620999002" version="4" timestamp="2025-10-16T22:41:30Z" lat="50.0666943" lon="14.6514324"/>
+  <node id="1620999007" version="4" timestamp="2025-10-16T22:41:30Z" lat="50.0717156" lon="14.6361566"/>
+  <node id="1620999010" version="4" timestamp="2025-10-16T22:26:28Z" lat="50.0721363" lon="14.6348748"/>
+  <node id="1620999017" version="4" timestamp="2025-10-16T22:26:28Z" lat="50.0732498" lon="14.6307667"/>
+  <node id="1620999019" version="4" timestamp="2025-10-16T22:26:28Z" lat="50.0736579" lon="14.6288674"/>
+  <node id="1620999020" version="4" timestamp="2025-10-16T22:26:28Z" lat="50.0741363" lon="14.626145"/>
+  <node id="1620999023" version="4" timestamp="2025-10-16T22:26:28Z" lat="50.0746004" lon="14.6220939"/>
+  <node id="1621021927" version="2" timestamp="2025-10-16T22:41:30Z" lat="50.0667616" lon="14.6508948"/>
+  <node id="1621021928" version="3" timestamp="2025-10-16T22:41:30Z" lat="50.0668142" lon="14.6505561"/>
+  <node id="1757599404" version="1" timestamp="2012-05-18T20:18:26Z" lat="50.1306039" lon="14.5913984"/>
+  <node id="1757599408" version="1" timestamp="2012-05-18T20:18:26Z" lat="50.13109" lon="14.5928497"/>
+  <node id="1757599415" version="1" timestamp="2012-05-18T20:18:26Z" lat="50.132099" lon="14.5953614"/>
+  <node id="1779357928" version="1" timestamp="2012-06-07T15:55:56Z" lat="50.02776" lon="14.3969057"/>
+  <node id="1800982382" version="2" timestamp="2025-07-14T16:44:19Z" lat="50.0270716" lon="14.3965332"/>
+  <node id="1899415134" version="2" timestamp="2020-01-18T13:58:32Z" lat="50.0142718" lon="14.3940843"/>
+  <node id="1899415190" version="1" timestamp="2012-09-05T02:40:20Z" lat="50.0147345" lon="14.3940852"/>
+  <node id="1899427092" version="1" timestamp="2012-09-05T02:44:00Z" lat="50.0502175" lon="14.415598"/>
+  <node id="2293533004" version="3" timestamp="2020-12-26T20:02:04Z" lat="50.0132222" lon="14.3941902"/>
+  <node id="3748777910" version="2" timestamp="2021-09-16T08:26:41Z" lat="50.0394816" lon="14.4060981"/>
+  <node id="3748777912" version="3" timestamp="2023-07-18T19:28:03Z" lat="50.0397116" lon="14.4062628"/>
+  <node id="4956358926" version="3" timestamp="2025-10-16T22:26:28Z" lat="50.0723168" lon="14.6342878"/>
+  <node id="4956358929" version="5" timestamp="2025-10-16T22:26:28Z" lat="50.0729824" lon="14.6318718">
+    <tag k="construction" v="motorway_junction"/>
+    <tag k="construction:name" v="Běchovice"/>
+    <tag k="highway" v="construction"/>
+  </node>
+  <node id="4956367207" version="3" timestamp="2025-10-16T22:41:30Z" lat="50.0668358" lon="14.650423"/>
+  <node id="4956367210" version="4" timestamp="2025-10-16T22:41:30Z" lat="50.0674923" lon="14.647876">
+    <tag k="construction" v="motorway_junction"/>
+    <tag k="construction:name" v="Koloděje"/>
+    <tag k="highway" v="construction"/>
+  </node>
+  <node id="4956367211" version="2" timestamp="2025-10-21T11:25:31Z" lat="50.0664579" lon="14.6597145"/>
+  <node id="4956367212" version="2" timestamp="2025-10-21T11:25:31Z" lat="50.0663305" lon="14.662736"/>
+  <node id="4956367230" version="3" timestamp="2025-10-21T11:25:31Z" lat="50.0660628" lon="14.6697797"/>
+  <node id="4956367232" version="4" timestamp="2025-10-21T11:25:31Z" lat="50.066173" lon="14.6664995">
+    <tag k="construction" v="motorway_junction"/>
+    <tag k="construction:name" v="Újezd nad Lesy"/>
+    <tag k="highway" v="construction"/>
+  </node>
+  <node id="5081465138" version="2" timestamp="2021-02-25T17:14:17Z" lat="50.058743" lon="14.4193038"/>
+  <node id="6126313239" version="2" timestamp="2026-07-29T17:29:31Z" lat="50.0503861" lon="14.4156702"/>
+  <node id="6419096917" version="6" timestamp="2025-03-15T22:29:55Z" lat="50.0210983" lon="14.6279288">
+    <tag k="check_date:tactile_paving" v="2024-09-09"/>
+    <tag k="crossing" v="unmarked"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="no"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="no"/>
+  </node>
+  <node id="6726649008" version="2" timestamp="2020-01-18T13:58:32Z" lat="50.0130317" lon="14.3942228"/>
+  <node id="7122950796" version="2" timestamp="2022-01-29T12:41:41Z" lat="50.1020153" lon="14.5708182"/>
+  <node id="7122950850" version="2" timestamp="2022-01-29T12:38:12Z" lat="50.1030513" lon="14.5736713"/>
+  <node id="7141105588" version="2" timestamp="2020-12-26T20:02:04Z" lat="50.0134285" lon="14.3941568"/>
+  <node id="7667718632" version="2" timestamp="2025-04-27T09:50:17Z" lat="50.0971156" lon="14.479078"/>
+  <node id="7841096470" version="1" timestamp="2020-08-24T20:24:12Z" lat="50.021044" lon="14.3941949"/>
+  <node id="8457412160" version="1" timestamp="2021-02-25T12:13:14Z" lat="50.0584446" lon="14.419295"/>
+  <node id="8457412170" version="1" timestamp="2021-02-25T12:13:14Z" lat="50.0590372" lon="14.4193042"/>
+  <node id="8457412171" version="6" timestamp="2022-12-27T14:18:09Z" lat="50.059055" lon="14.419305">
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="yes"/>
+    <tag k="traffic_signals:vibration" v="no"/>
+  </node>
+  <node id="8602016978" version="2" timestamp="2026-04-16T11:02:28Z" lat="50.1025565" lon="14.5722581">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="8656749804" version="2" timestamp="2024-10-02T11:08:32Z" lat="50.0917182" lon="14.475378">
+    <tag k="cycleway" v="asl"/>
+    <tag k="direction" v="forward"/>
+    <tag k="start_date" v="2021"/>
+  </node>
+  <node id="8779244000" version="2" timestamp="2025-04-10T21:53:01Z" lat="50.1280424" lon="14.5827303"/>
+  <node id="8786243736" version="1" timestamp="2021-05-31T14:57:43Z" lat="50.0259363" lon="14.3961074"/>
+  <node id="8786243742" version="1" timestamp="2021-05-31T14:57:43Z" lat="50.025945" lon="14.3961104"/>
+  <node id="8786246212" version="1" timestamp="2021-05-31T15:00:51Z" lat="50.0253502" lon="14.3959371"/>
+  <node id="8786246214" version="1" timestamp="2021-05-31T15:00:51Z" lat="50.0259692" lon="14.3961188"/>
+  <node id="8786246216" version="1" timestamp="2021-05-31T15:00:51Z" lat="50.0263137" lon="14.3962384"/>
+  <node id="9130412659" version="1" timestamp="2021-09-28T20:14:00Z" lat="50.0925549" lon="14.4849059"/>
+  <node id="9356004232" version="2" timestamp="2025-10-23T20:06:59Z" lat="50.0974886" lon="14.4799983">
+    <tag k="crossing" v="marked"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+  </node>
+  <node id="9457856863" version="1" timestamp="2022-01-29T12:38:12Z" lat="50.1028329" lon="14.5729691"/>
+  <node id="9457856865" version="1" timestamp="2022-01-29T12:38:12Z" lat="50.1032212" lon="14.5745408"/>
+  <node id="9457856866" version="1" timestamp="2022-01-29T12:38:12Z" lat="50.1031805" lon="14.5742834"/>
+  <node id="9457856867" version="1" timestamp="2022-01-29T12:38:12Z" lat="50.1030893" lon="14.5738332"/>
+  <node id="9457856868" version="1" timestamp="2022-01-29T12:38:12Z" lat="50.10336" lon="14.57574"/>
+  <node id="9876450546" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0289723" lon="14.6471716"/>
+  <node id="9876450547" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0300912" lon="14.6460642"/>
+  <node id="9876450548" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0334242" lon="14.643153"/>
+  <node id="9876450549" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.033212" lon="14.639355"/>
+  <node id="9876450550" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0336146" lon="14.6381942"/>
+  <node id="9876450551" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0344978" lon="14.6368842"/>
+  <node id="9876450552" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0347529" lon="14.6365913"/>
+  <node id="9876450553" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0352264" lon="14.63603"/>
+  <node id="9876450554" version="2" timestamp="2023-01-25T23:34:46Z" lat="50.0316074" lon="14.6444092"/>
+  <node id="10409342927" version="2" timestamp="2025-10-16T22:41:30Z" lat="50.0671619" lon="14.6489499"/>
+  <node id="10582856535" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0277108" lon="14.6483508"/>
+  <node id="10582856536" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0276139" lon="14.6484044"/>
+  <node id="10582856537" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0278521" lon="14.6482334"/>
+  <node id="10582856538" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0281989" lon="14.6477842"/>
+  <node id="10582856539" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0282799" lon="14.6476936"/>
+  <node id="10582856540" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0283445" lon="14.6476346"/>
+  <node id="10582856541" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0277836" lon="14.6483025"/>
+  <node id="10582856542" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0284462" lon="14.6475555"/>
+  <node id="10582856543" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0291307" lon="14.6470667"/>
+  <node id="10582856544" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0297255" lon="14.6465249"/>
+  <node id="10582856545" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0298207" lon="14.6463968"/>
+  <node id="10582856546" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0296674" lon="14.6465939"/>
+  <node id="10582856547" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0305388" lon="14.6455251"/>
+  <node id="10582856548" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0302976" lon="14.6458201"/>
+  <node id="10582856549" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0309945" lon="14.645057"/>
+  <node id="10582856550" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0308369" lon="14.6451616"/>
+  <node id="10582856551" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0307791" lon="14.6452153"/>
+  <node id="10582856552" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0313387" lon="14.6447016"/>
+  <node id="10582856553" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0314679" lon="14.644534"/>
+  <node id="10582856554" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0314085" lon="14.6446037"/>
+  <node id="10582856555" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0315321" lon="14.6444696"/>
+  <node id="10582856556" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0312745" lon="14.6447828"/>
+  <node id="10582856557" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0310583" lon="14.6450074"/>
+  <node id="10582856558" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0320757" lon="14.6440297"/>
+  <node id="10582856559" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0323996" lon="14.6438621"/>
+  <node id="10582856560" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0317634" lon="14.6442986"/>
+  <node id="10582856561" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0321661" lon="14.6439741"/>
+  <node id="10582856562" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0328631" lon="14.6436314"/>
+  <node id="10582856563" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.032683" lon="14.6437401"/>
+  <node id="10582856564" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333989" lon="14.6432224"/>
+  <node id="10582856565" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333461" lon="14.6433287"/>
+  <node id="10582856566" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333048" lon="14.6433776"/>
+  <node id="10582856567" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332675" lon="14.6434081"/>
+  <node id="10582856568" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.033431" lon="14.6431101"/>
+  <node id="10582856569" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334286" lon="14.6430638"/>
+  <node id="10582856570" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334172" lon="14.6429434"/>
+  <node id="10582856571" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334105" lon="14.6427852"/>
+  <node id="10582856572" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334066" lon="14.6425109"/>
+  <node id="10582856573" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333855" lon="14.6420731"/>
+  <node id="10582856574" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334021" lon="14.6413153"/>
+  <node id="10582856575" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333952" lon="14.6417076"/>
+  <node id="10582856576" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333849" lon="14.6419497"/>
+  <node id="10582856577" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333924" lon="14.6411806"/>
+  <node id="10582856578" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333696" lon="14.6410867"/>
+  <node id="10582856579" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333377" lon="14.6409988"/>
+  <node id="10582856580" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332869" lon="14.6404839"/>
+  <node id="10582856581" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333265" lon="14.6409398"/>
+  <node id="10582856582" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0334006" lon="14.6412624"/>
+  <node id="10582856583" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332378" lon="14.6399984"/>
+  <node id="10582856584" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332119" lon="14.6392809"/>
+  <node id="10582856585" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332197" lon="14.6392085"/>
+  <node id="10582856586" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332395" lon="14.6391173"/>
+  <node id="10582856587" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0332869" lon="14.6389791"/>
+  <node id="10582856588" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0333782" lon="14.6387337"/>
+  <node id="10582856589" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0335858" lon="14.6382496"/>
+  <node id="10582856590" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0348823" lon="14.6364525"/>
+  <node id="10582856591" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0350382" lon="14.6362755"/>
+  <node id="10582856592" version="1" timestamp="2023-01-25T23:34:46Z" lat="50.0352622" lon="14.6359442"/>
+  <node id="10856128488" version="1" timestamp="2023-04-29T15:59:08Z" lat="50.0545325" lon="14.4179992">
+    <tag k="cycleway" v="asl"/>
+    <tag k="direction" v="forward"/>
+    <tag k="start_date" v="2020"/>
+  </node>
+  <node id="11003299660" version="1" timestamp="2023-06-24T16:24:50Z" lat="50.1019667" lon="14.5706959"/>
+  <node id="11051682754" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.040961" lon="14.4071827"/>
+  <node id="11051682763" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.040901" lon="14.4071291"/>
+  <node id="11051682771" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0409982" lon="14.4072127"/>
+  <node id="11051682772" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0408301" lon="14.4070909"/>
+  <node id="11051682775" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.040786" lon="14.4070661"/>
+  <node id="11051682776" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0409262" lon="14.4071499"/>
+  <node id="11051682777" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0408802" lon="14.4071153"/>
+  <node id="11051682779" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0417476" lon="14.4077176"/>
+  <node id="11051682782" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0408601" lon="14.4071055"/>
+  <node id="11051682783" version="1" timestamp="2023-07-17T19:48:21Z" lat="50.0407196" lon="14.4070229"/>
+  <node id="11641057070" version="3" timestamp="2026-06-27T21:54:07Z" lat="50.0924555" lon="14.482542">
+    <tag k="crossing" v="uncontrolled"/>
+    <tag k="crossing:island" v="no"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="tactile_paving" v="yes"/>
+  </node>
+  <node id="11755318815" version="2" timestamp="2025-04-10T21:53:01Z" lat="50.1290399" lon="14.5863575"/>
+  <node id="12215778889" version="1" timestamp="2024-10-02T11:08:32Z" lat="50.0918348" lon="14.4767954"/>
+  <node id="12498622270" version="2" timestamp="2026-07-29T17:29:31Z" lat="50.0502749" lon="14.4156217">
+    <tag k="railway" v="tram_level_crossing"/>
+  </node>
+  <node id="12601967250" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0600556" lon="14.4016723"/>
+  <node id="12601967251" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.060669" lon="14.4033842"/>
+  <node id="12601967252" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0606961" lon="14.4034727"/>
+  <node id="12601967253" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0607245" lon="14.4036068"/>
+  <node id="12601967254" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0607516" lon="14.4037966"/>
+  <node id="12601967255" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0608145" lon="14.4043679"/>
+  <node id="12601967256" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0608321" lon="14.4044839"/>
+  <node id="12601967257" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0608459" lon="14.4045422"/>
+  <node id="12601967258" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0608666" lon="14.4045892"/>
+  <node id="12601967259" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0609079" lon="14.4046415"/>
+  <node id="12601967260" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0610066" lon="14.4046888"/>
+  <node id="12601967261" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0611029" lon="14.404724"/>
+  <node id="12601967262" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0611454" lon="14.4047347"/>
+  <node id="12601967263" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0612045" lon="14.4047448"/>
+  <node id="12601967264" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0612377" lon="14.4047448"/>
+  <node id="12601967265" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.061276" lon="14.4047253"/>
+  <node id="12601967266" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0618849" lon="14.404187"/>
+  <node id="12601967267" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.062251" lon="14.4038737"/>
+  <node id="12601967268" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.061256" lon="14.4047384"/>
+  <node id="12601967285" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0600435" lon="14.4015972"/>
+  <node id="12601967286" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0600198" lon="14.4012968"/>
+  <node id="12601967287" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0599994" lon="14.4010638"/>
+  <node id="12601967288" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0599662" lon="14.4008395"/>
+  <node id="12601967289" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0598887" lon="14.4004777"/>
+  <node id="12601967290" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0598407" lon="14.4001957"/>
+  <node id="12601967291" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0598117" lon="14.3999832"/>
+  <node id="12601967292" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0598003" lon="14.3998725"/>
+  <node id="12601967293" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059793" lon="14.399603"/>
+  <node id="12601967294" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059788" lon="14.3993592"/>
+  <node id="12601967295" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0597822" lon="14.3989029"/>
+  <node id="12601967296" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0597741" lon="14.3988399"/>
+  <node id="12601967297" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0597482" lon="14.3987172"/>
+  <node id="12601967298" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0597112" lon="14.3986568"/>
+  <node id="12601967299" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0596819" lon="14.3986327"/>
+  <node id="12601967300" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0596354" lon="14.3986246"/>
+  <node id="12601967301" version="3" timestamp="2025-02-19T22:45:36Z" lat="50.0595623" lon="14.3986582"/>
+  <node id="12601967302" version="3" timestamp="2025-02-19T22:45:36Z" lat="50.0595295" lon="14.3987145"/>
+  <node id="12601967303" version="3" timestamp="2025-02-19T22:45:36Z" lat="50.0595071" lon="14.3988286"/>
+  <node id="12601967304" version="2" timestamp="2025-02-19T22:33:37Z" lat="50.0594959" lon="14.3990645"/>
+  <node id="12601967305" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0594004" lon="14.4016609"/>
+  <node id="12601967306" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0593565" lon="14.4025219"/>
+  <node id="12601967307" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059328" lon="14.4027311"/>
+  <node id="12601967308" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059291" lon="14.4028968"/>
+  <node id="12601967309" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059254" lon="14.4030234"/>
+  <node id="12601967310" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0592041" lon="14.4031576"/>
+  <node id="12601967311" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.059176" lon="14.403225"/>
+  <node id="12601967312" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0591274" lon="14.4033212"/>
+  <node id="12601967313" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0590542" lon="14.4034218"/>
+  <node id="12601967314" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0589471" lon="14.4035219"/>
+  <node id="12601967315" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0588046" lon="14.4036417"/>
+  <node id="12601967316" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.058715" lon="14.4036886"/>
+  <node id="12601967317" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0584498" lon="14.4037785"/>
+  <node id="12601967318" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.05817" lon="14.4038657"/>
+  <node id="12601967319" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.058096" lon="14.4038737"/>
+  <node id="12601967320" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0580443" lon="14.403863"/>
+  <node id="12601967321" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0579995" lon="14.4038442"/>
+  <node id="12601967322" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0578807" lon="14.4037584"/>
+  <node id="12601967323" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0578256" lon="14.4036953"/>
+  <node id="12601967324" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577757" lon="14.4035974"/>
+  <node id="12601967325" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577361" lon="14.4034714"/>
+  <node id="12601967326" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577085" lon="14.4033198"/>
+  <node id="12601967327" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577042" lon="14.403226"/>
+  <node id="12601967328" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577145" lon="14.4030892"/>
+  <node id="12601967329" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0577318" lon="14.4029846"/>
+  <node id="12601967330" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0578637" lon="14.4023252"/>
+  <node id="12601967331" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0579315" lon="14.4019385"/>
+  <node id="12601967332" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0579358" lon="14.4018996"/>
+  <node id="12601967333" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0579256" lon="14.4018482"/>
+  <node id="12601967393" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0601239" lon="14.4018631"/>
+  <node id="12601967395" version="3" timestamp="2025-02-19T22:45:36Z" lat="50.0595154" lon="14.3987541"/>
+  <node id="12601967396" version="1" timestamp="2025-02-19T22:05:01Z" lat="50.0596504" lon="14.3986272"/>
+  <node id="12602042707" version="1" timestamp="2025-02-19T22:33:37Z" lat="50.059598" lon="14.39863"/>
+  <node id="12602044159" version="1" timestamp="2025-02-19T22:45:36Z" lat="50.0604504" lon="14.4027742"/>
+  <node id="12640975113" version="2" timestamp="2025-11-12T13:36:14Z" lat="50.0292564" lon="14.6303173"/>
+  <node id="12745546957" version="1" timestamp="2025-04-10T21:53:01Z" lat="50.1294607" lon="14.5878912"/>
+  <node id="12745546958" version="1" timestamp="2025-04-10T21:53:01Z" lat="50.129664" lon="14.5885831"/>
+  <node id="12791324486" version="1" timestamp="2025-04-27T09:50:17Z" lat="50.0971821" lon="14.4793085"/>
+  <node id="12906274224" version="1" timestamp="2025-06-11T15:05:08Z" lat="50.032889" lon="14.401223"/>
+  <node id="12906274225" version="1" timestamp="2025-06-11T15:05:08Z" lat="50.0389284" lon="14.4057264"/>
+  <node id="13016873638" version="2" timestamp="2025-10-16T22:41:30Z" lat="50.0666442" lon="14.6519579"/>
+  <node id="13072399403" version="2" timestamp="2025-11-12T13:36:14Z" lat="50.0293177" lon="14.6318051"/>
+  <node id="13072399404" version="2" timestamp="2025-11-12T13:36:14Z" lat="50.0268168" lon="14.634002"/>
+  <node id="13072399405" version="2" timestamp="2025-11-12T13:36:14Z" lat="50.0223872" lon="14.6377653"/>
+  <node id="13072399406" version="1" timestamp="2025-08-15T11:55:25Z" lat="50.0208503" lon="14.6376654"/>
+  <node id="13072399407" version="1" timestamp="2025-08-15T11:55:25Z" lat="50.0191394" lon="14.637984"/>
+  <node id="13072399408" version="1" timestamp="2025-08-15T11:55:25Z" lat="50.0186958" lon="14.638553"/>
+  <node id="13135700134" version="2" timestamp="2025-10-16T22:41:30Z" lat="50.0680858" lon="14.6462067"/>
+  <node id="13238059691" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0721334" lon="14.6348837"/>
+  <node id="13238059692" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0724807" lon="14.6337275"/>
+  <node id="13238059693" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.072676" lon="14.6330391"/>
+  <node id="13238059694" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.073457" lon="14.6298452"/>
+  <node id="13238059695" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0738047" lon="14.6281205"/>
+  <node id="13238059696" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0739833" lon="14.6271005"/>
+  <node id="13238059697" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0744018" lon="14.6241605"/>
+  <node id="13238059698" version="1" timestamp="2025-10-16T22:26:28Z" lat="50.0745087" lon="14.623139"/>
+  <node id="13238079537" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0714779" lon="14.6368455"/>
+  <node id="13238079538" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0712165" lon="14.6375766"/>
+  <node id="13238079539" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0705989" lon="14.6392849"/>
+  <node id="13238079540" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0702719" lon="14.6401908"/>
+  <node id="13238079541" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0696258" lon="14.6419703"/>
+  <node id="13238079542" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0693161" lon="14.6428211"/>
+  <node id="13238079543" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0690072" lon="14.6436759"/>
+  <node id="13238079544" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0686061" lon="14.6447901"/>
+  <node id="13238079545" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0678279" lon="14.6469406"/>
+  <node id="13238079546" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0672887" lon="14.6484983"/>
+  <node id="13238079547" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0670316" lon="14.6494526"/>
+  <node id="13238079548" version="1" timestamp="2025-10-16T22:41:30Z" lat="50.0669229" lon="14.6499539"/>
+  <node id="13238079549" version="2" timestamp="2025-10-21T11:25:31Z" lat="50.0666111" lon="14.6524799"/>
+  <node id="13247684950" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0662133" lon="14.6654686"/>
+  <node id="13247684951" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0662692" lon="14.6641873"/>
+  <node id="13247684952" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0663837" lon="14.6614899"/>
+  <node id="13247684953" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0664278" lon="14.6604707"/>
+  <node id="13247684954" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0664939" lon="14.6584625"/>
+  <node id="13247684955" version="1" timestamp="2025-10-21T11:25:31Z" lat="50.0665745" lon="14.6536866"/>
+  <node id="13273656543" version="1" timestamp="2025-11-01T10:45:18Z" lat="50.0738322" lon="14.6279636"/>
+  <node id="13273703044" version="1" timestamp="2025-11-01T10:45:18Z" lat="50.0665388" lon="14.6556935"/>
+  <node id="13299610378" version="1" timestamp="2025-11-12T13:36:13Z" lat="50.0283037" lon="14.6326841"/>
+  <node id="13299610379" version="1" timestamp="2025-11-12T13:36:13Z" lat="50.0260656" lon="14.6346584"/>
+  <node id="13299610380" version="1" timestamp="2025-11-12T13:36:13Z" lat="50.024945" lon="14.6356755"/>
+  <node id="13299610381" version="1" timestamp="2025-11-12T13:36:13Z" lat="50.023211" lon="14.6371352"/>
+  <node id="13386345334" version="1" timestamp="2025-12-18T12:39:04Z" lat="50.0545497" lon="14.4180087">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="13718890689" version="6" timestamp="2026-07-29T17:29:31Z" lat="50.0505167" lon="14.4157391">
+    <tag k="bicycle" v="yes"/>
+    <tag k="button_operated" v="yes"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="crossing:island" v="yes"/>
+    <tag k="crossing:markings" v="zebra"/>
+    <tag k="crossing:signals" v="yes"/>
+    <tag k="highway" v="crossing"/>
+    <tag k="kerb" v="flush"/>
+    <tag k="tactile_paving" v="yes"/>
+    <tag k="traffic_signals:sound" v="no"/>
+  </node>
+  <node id="13738652255" version="2" timestamp="2026-07-29T17:29:31Z" lat="50.0505613" lon="14.4157641">
+    <tag k="cycleway" v="asl"/>
+    <tag k="direction" v="forward"/>
+    <tag k="start_date" v="2026"/>
+  </node>
+  <node id="13746021810" version="3" timestamp="2026-07-29T17:29:31Z" lat="50.0504417" lon="14.4156978">
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="cycleway" v="crossing"/>
+    <tag k="highway" v="cycleway"/>
+  </node>
+  <node id="14059276959" version="1" timestamp="2026-07-29T17:29:31Z" lat="50.0503327" lon="14.4156482">
+    <tag k="railway" v="tram_level_crossing"/>
+  </node>
+  <node id="14059276960" version="1" timestamp="2026-07-29T17:29:31Z" lat="50.0507877" lon="14.4159251"/>
+  <node id="14059276972" version="1" timestamp="2026-07-29T17:29:31Z" lat="50.050539" lon="14.4157516">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="signal"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <way id="4052180" version="66" timestamp="2026-09-03T10:38:52Z">
+    <nd ref="8457412171"/>
+    <nd ref="8457412170"/>
+    <nd ref="5081465138"/>
+    <nd ref="8457412160"/>
+    <nd ref="64809996"/>
+    <nd ref="723499"/>
+    <nd ref="1165898978"/>
+    <nd ref="334342245"/>
+    <nd ref="1165898960"/>
+    <nd ref="723498"/>
+    <nd ref="13386345334"/>
+    <nd ref="10856128488"/>
+    <nd ref="1165898893"/>
+    <nd ref="1165899011"/>
+    <nd ref="26781640"/>
+    <nd ref="14059276960"/>
+    <nd ref="1165858398"/>
+    <nd ref="13738652255"/>
+    <nd ref="14059276972"/>
+    <nd ref="13718890689"/>
+    <nd ref="13746021810"/>
+    <nd ref="6126313239"/>
+    <nd ref="14059276959"/>
+    <nd ref="12498622270"/>
+    <nd ref="1899427092"/>
+    <tag k="cycleway:right" v="lane"/>
+    <tag k="cycleway:right:lane" v="exclusive"/>
+    <tag k="destination" v="Braník"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Podolské nábřeží"/>
+    <tag k="name:etymology:wikidata" v="Q2638290"/>
+    <tag k="name:ru" v="Подольская набережная"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="sidewalk" v="separate"/>
+    <tag k="source:maxspeed" v="CZ:urban"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="25464752" version="23" timestamp="2026-09-02T22:08:13Z">
+    <nd ref="237170772"/>
+    <nd ref="11051682779"/>
+    <nd ref="503640580"/>
+    <nd ref="503640584"/>
+    <nd ref="11051682771"/>
+    <nd ref="11051682754"/>
+    <nd ref="11051682776"/>
+    <nd ref="11051682763"/>
+    <nd ref="11051682777"/>
+    <nd ref="11051682782"/>
+    <nd ref="11051682772"/>
+    <nd ref="11051682775"/>
+    <nd ref="11051682783"/>
+    <nd ref="503640588"/>
+    <nd ref="3748777912"/>
+    <nd ref="3748777910"/>
+    <nd ref="1285851532"/>
+    <nd ref="12906274225"/>
+    <nd ref="503640596"/>
+    <nd ref="503640599"/>
+    <nd ref="503640602"/>
+    <nd ref="1553581138"/>
+    <nd ref="503640605"/>
+    <nd ref="1285851543"/>
+    <nd ref="503640609"/>
+    <nd ref="503640613"/>
+    <nd ref="12906274224"/>
+    <nd ref="503640616"/>
+    <nd ref="503640619"/>
+    <nd ref="503640622"/>
+    <nd ref="503640625"/>
+    <nd ref="1779357928"/>
+    <nd ref="304338070"/>
+    <nd ref="304338067"/>
+    <nd ref="1800982382"/>
+    <nd ref="277483257"/>
+    <nd ref="277483256"/>
+    <nd ref="8786246216"/>
+    <nd ref="8786246214"/>
+    <nd ref="8786243742"/>
+    <nd ref="8786243736"/>
+    <nd ref="277483255"/>
+    <nd ref="8786246212"/>
+    <nd ref="277483252"/>
+    <tag k="bicycle" v="designated"/>
+    <tag k="foot" v="designated"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="segregated" v="no"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="source" v="local_knowledge"/>
+    <tag k="surface" v="asphalt"/>
+    <tag k="width" v="2"/>
+  </way>
+  <way id="27074770" version="24" timestamp="2026-09-03T21:39:36Z">
+    <nd ref="297040330"/>
+    <nd ref="6419096917"/>
+    <nd ref="297041163"/>
+    <tag k="cycleway:both" v="no"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="maxspeed" v="80"/>
+    <tag k="official_ref" v="333"/>
+    <tag k="ref" v="333"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="129259688" version="12" timestamp="2026-07-31T13:44:22Z">
+    <nd ref="1425613043"/>
+    <nd ref="8779244000"/>
+    <nd ref="615912392"/>
+    <nd ref="11755318815"/>
+    <nd ref="12745546957"/>
+    <nd ref="7786160"/>
+    <nd ref="12745546958"/>
+    <nd ref="1757599404"/>
+    <nd ref="1757599408"/>
+    <nd ref="7786525"/>
+    <nd ref="1757599415"/>
+    <nd ref="7786166"/>
+    <tag k="cycleway:left" v="lane"/>
+    <tag k="cycleway:left:lane" v="advisory"/>
+    <tag k="cycleway:left:oneway" v="-1"/>
+    <tag k="cycleway:right" v="shared_lane"/>
+    <tag k="cycleway:right:lane" v="pictogram"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="no"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="oneway:bicycle" v="no"/>
+    <tag k="ref" v="0103"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="135706932" version="19" timestamp="2026-06-20T02:51:49Z">
+    <nd ref="9130412659"/>
+    <nd ref="25917329"/>
+    <nd ref="306685625"/>
+    <nd ref="25917323"/>
+    <nd ref="11641057070"/>
+    <nd ref="1131736381"/>
+    <nd ref="581449926"/>
+    <nd ref="25917321"/>
+    <nd ref="581449925"/>
+    <nd ref="25917320"/>
+    <nd ref="581449910"/>
+    <nd ref="25917319"/>
+    <nd ref="12215778889"/>
+    <nd ref="25973396"/>
+    <nd ref="1131736482"/>
+    <nd ref="333636598"/>
+    <nd ref="305861752"/>
+    <nd ref="8656749804"/>
+    <nd ref="371093067"/>
+    <nd ref="25973398"/>
+    <tag k="cycleway:right" v="soft_lane"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="maxspeed:type" v="CZ:urban"/>
+    <tag k="name" v="Hartigova"/>
+    <tag k="name:etymology:wikidata" v="Q64674209"/>
+    <tag k="old_name" v="Koněvova"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="sidewalk:left" v="no"/>
+    <tag k="sidewalk:right" v="separate"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="320297312" version="5" timestamp="2024-03-02T10:59:06Z">
+    <nd ref="10582856536"/>
+    <nd ref="10582856535"/>
+    <nd ref="10582856541"/>
+    <nd ref="10582856537"/>
+    <nd ref="10582856538"/>
+    <nd ref="10582856539"/>
+    <nd ref="10582856540"/>
+    <nd ref="10582856542"/>
+    <nd ref="9876450546"/>
+    <nd ref="10582856543"/>
+    <nd ref="10582856546"/>
+    <nd ref="10582856544"/>
+    <nd ref="10582856545"/>
+    <nd ref="9876450547"/>
+    <nd ref="10582856548"/>
+    <nd ref="10582856547"/>
+    <nd ref="10582856551"/>
+    <nd ref="10582856550"/>
+    <nd ref="10582856549"/>
+    <nd ref="10582856557"/>
+    <nd ref="10582856556"/>
+    <nd ref="10582856552"/>
+    <nd ref="10582856554"/>
+    <nd ref="10582856553"/>
+    <nd ref="10582856555"/>
+    <nd ref="9876450554"/>
+    <nd ref="10582856560"/>
+    <nd ref="10582856558"/>
+    <nd ref="10582856561"/>
+    <nd ref="10582856559"/>
+    <nd ref="10582856563"/>
+    <nd ref="10582856562"/>
+    <nd ref="10582856567"/>
+    <nd ref="10582856566"/>
+    <nd ref="10582856565"/>
+    <nd ref="10582856564"/>
+    <nd ref="9876450548"/>
+    <nd ref="10582856568"/>
+    <nd ref="10582856569"/>
+    <nd ref="10582856570"/>
+    <nd ref="10582856571"/>
+    <nd ref="10582856572"/>
+    <nd ref="10582856573"/>
+    <nd ref="10582856576"/>
+    <nd ref="10582856575"/>
+    <nd ref="10582856574"/>
+    <nd ref="10582856582"/>
+    <nd ref="10582856577"/>
+    <nd ref="10582856578"/>
+    <nd ref="10582856579"/>
+    <nd ref="10582856581"/>
+    <nd ref="10582856580"/>
+    <nd ref="10582856583"/>
+    <nd ref="9876450549"/>
+    <nd ref="10582856584"/>
+    <nd ref="10582856585"/>
+    <nd ref="10582856586"/>
+    <nd ref="10582856587"/>
+    <nd ref="10582856588"/>
+    <nd ref="10582856589"/>
+    <nd ref="9876450550"/>
+    <nd ref="9876450551"/>
+    <nd ref="9876450552"/>
+    <nd ref="10582856590"/>
+    <nd ref="10582856591"/>
+    <nd ref="9876450553"/>
+    <nd ref="10582856592"/>
+    <nd ref="34595928"/>
+    <tag k="bicycle" v="no"/>
+    <tag k="highway" v="path"/>
+    <tag k="horse" v="no"/>
+    <tag k="start_date" v="2022"/>
+    <tag k="surface" v="compacted"/>
+    <tag k="tracktype" v="grade3"/>
+  </way>
+  <way id="715769616" version="21" timestamp="2026-09-23T17:23:36Z">
+    <nd ref="6726649008"/>
+    <nd ref="2293533004"/>
+    <nd ref="7141105588"/>
+    <nd ref="10703798"/>
+    <nd ref="1899415134"/>
+    <nd ref="1899415190"/>
+    <nd ref="10703799"/>
+    <nd ref="7841096470"/>
+    <tag k="access:lanes" v="yes|yes|no"/>
+    <tag k="bicycle" v="yes"/>
+    <tag k="busway:right" v="lane"/>
+    <tag k="cycleway:right" v="share_busway"/>
+    <tag k="foot" v="no"/>
+    <tag k="hgv:12t" v="destination"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lit" v="yes"/>
+    <tag k="maxspeed" v="80"/>
+    <tag k="motorroad" v="no"/>
+    <tag k="name" v="Strakonická"/>
+    <tag k="name:etymology:wikidata" v="Q750224"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="psv:lanes" v="yes|yes|designated"/>
+    <tag k="sidewalk" v="no"/>
+    <tag k="source:maxspeed" v="sign"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="762313241" version="8" timestamp="2025-07-08T21:02:57Z">
+    <nd ref="11003299660"/>
+    <nd ref="7122950796"/>
+    <nd ref="8602016978"/>
+    <nd ref="365599697"/>
+    <nd ref="6929704"/>
+    <nd ref="9457856863"/>
+    <nd ref="30294811"/>
+    <nd ref="7122950850"/>
+    <nd ref="9457856867"/>
+    <nd ref="6929706"/>
+    <nd ref="9457856866"/>
+    <nd ref="9457856865"/>
+    <nd ref="856561588"/>
+    <nd ref="1571592924"/>
+    <nd ref="9457856868"/>
+    <nd ref="1571592972"/>
+    <nd ref="1410761583"/>
+    <tag k="cycleway:right" v="soft_lane"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="lanes" v="1"/>
+    <tag k="maxheight" v="default"/>
+    <tag k="maxspeed" v="50"/>
+    <tag k="name" v="Ocelkova"/>
+    <tag k="name:etymology:wikidata" v="Q97537411"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="821229572" version="9" timestamp="2025-07-19T10:42:18Z">
+    <nd ref="7667718632"/>
+    <nd ref="267221368"/>
+    <nd ref="12791324486"/>
+    <nd ref="25552433"/>
+    <nd ref="334507304"/>
+    <nd ref="9356004232"/>
+    <nd ref="399728446"/>
+    <nd ref="344795959"/>
+    <nd ref="344795964"/>
+    <nd ref="25917028"/>
+    <nd ref="109810081"/>
+    <nd ref="1563946292"/>
+    <nd ref="363455938"/>
+    <tag k="cycleway" v="soft_lane"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="lanes" v="2"/>
+    <tag k="lit" v="yes"/>
+    <tag k="name" v="Novovysočanská"/>
+    <tag k="name:etymology:wikidata" v="Q2782104"/>
+    <tag k="sidewalk:left" v="separate"/>
+    <tag k="sidewalk:right" v="no"/>
+    <tag k="smoothness" v="excellent"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="917953378" version="16" timestamp="2026-02-23T17:43:33Z">
+    <nd ref="1620999023"/>
+    <nd ref="13238059698"/>
+    <nd ref="13238059697"/>
+    <nd ref="1376701684"/>
+    <nd ref="1620999020"/>
+    <nd ref="13238059696"/>
+    <nd ref="13273656543"/>
+    <nd ref="13238059695"/>
+    <nd ref="1620999019"/>
+    <nd ref="13238059694"/>
+    <nd ref="1620999017"/>
+    <nd ref="4956358929"/>
+    <nd ref="13238059693"/>
+    <nd ref="13238059692"/>
+    <nd ref="4956358926"/>
+    <nd ref="1620999010"/>
+    <nd ref="13238059691"/>
+    <nd ref="1620999007"/>
+    <nd ref="13238079537"/>
+    <nd ref="13238079538"/>
+    <nd ref="13238079539"/>
+    <nd ref="13238079540"/>
+    <nd ref="556569634"/>
+    <nd ref="13238079541"/>
+    <nd ref="13238079542"/>
+    <nd ref="13238079543"/>
+    <nd ref="13238079544"/>
+    <nd ref="13135700134"/>
+    <nd ref="13238079545"/>
+    <nd ref="556569694"/>
+    <nd ref="4956367210"/>
+    <nd ref="13238079546"/>
+    <nd ref="10409342927"/>
+    <nd ref="13238079547"/>
+    <nd ref="13238079548"/>
+    <nd ref="4956367207"/>
+    <nd ref="1621021928"/>
+    <nd ref="1621021927"/>
+    <nd ref="1620999002"/>
+    <nd ref="13016873638"/>
+    <nd ref="13238079549"/>
+    <nd ref="1620999001"/>
+    <nd ref="13247684955"/>
+    <nd ref="1620999000"/>
+    <nd ref="13273703044"/>
+    <nd ref="556569730"/>
+    <nd ref="13247684954"/>
+    <nd ref="4956367211"/>
+    <nd ref="13247684953"/>
+    <nd ref="13247684952"/>
+    <nd ref="4956367212"/>
+    <nd ref="13247684951"/>
+    <nd ref="13247684950"/>
+    <nd ref="4956367232"/>
+    <nd ref="4956367230"/>
+    <tag k="construction" v="trunk"/>
+    <tag k="construction:motorroad" v="yes"/>
+    <tag k="highway" v="construction"/>
+    <tag k="lanes" v="3"/>
+    <tag k="maxheight" v="default"/>
+    <tag k="maxspeed" v="110"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="ref" v="12"/>
+    <tag k="source:maxspeed" v="CZ:trunk"/>
+  </way>
+  <way id="1361268398" version="4" timestamp="2025-04-03T08:50:18Z">
+    <nd ref="12601967333"/>
+    <nd ref="12601967332"/>
+    <nd ref="12601967331"/>
+    <nd ref="12601967330"/>
+    <nd ref="12601967329"/>
+    <nd ref="12601967328"/>
+    <nd ref="12601967327"/>
+    <nd ref="12601967326"/>
+    <nd ref="12601967325"/>
+    <nd ref="12601967324"/>
+    <nd ref="12601967323"/>
+    <nd ref="12601967322"/>
+    <nd ref="12601967321"/>
+    <nd ref="12601967320"/>
+    <nd ref="12601967319"/>
+    <nd ref="12601967318"/>
+    <nd ref="12601967317"/>
+    <nd ref="12601967316"/>
+    <nd ref="12601967315"/>
+    <nd ref="12601967314"/>
+    <nd ref="12601967313"/>
+    <nd ref="12601967312"/>
+    <nd ref="12601967311"/>
+    <nd ref="12601967310"/>
+    <nd ref="12601967309"/>
+    <nd ref="12601967308"/>
+    <nd ref="12601967307"/>
+    <nd ref="12601967306"/>
+    <nd ref="12601967305"/>
+    <nd ref="12601967304"/>
+    <nd ref="12601967303"/>
+    <nd ref="12601967395"/>
+    <nd ref="12601967302"/>
+    <nd ref="12601967301"/>
+    <nd ref="12602042707"/>
+    <nd ref="12601967300"/>
+    <nd ref="12601967396"/>
+    <nd ref="12601967299"/>
+    <nd ref="12601967298"/>
+    <nd ref="12601967297"/>
+    <nd ref="12601967296"/>
+    <nd ref="12601967295"/>
+    <nd ref="12601967294"/>
+    <nd ref="12601967293"/>
+    <nd ref="12601967292"/>
+    <nd ref="12601967291"/>
+    <nd ref="12601967290"/>
+    <nd ref="12601967289"/>
+    <nd ref="12601967288"/>
+    <nd ref="12601967287"/>
+    <nd ref="12601967286"/>
+    <nd ref="12601967285"/>
+    <nd ref="12601967250"/>
+    <nd ref="12601967393"/>
+    <nd ref="12602044159"/>
+    <nd ref="12601967251"/>
+    <nd ref="12601967252"/>
+    <nd ref="12601967253"/>
+    <nd ref="12601967254"/>
+    <nd ref="12601967255"/>
+    <nd ref="12601967256"/>
+    <nd ref="12601967257"/>
+    <nd ref="12601967258"/>
+    <nd ref="12601967259"/>
+    <nd ref="12601967260"/>
+    <nd ref="12601967261"/>
+    <nd ref="12601967262"/>
+    <nd ref="12601967263"/>
+    <nd ref="12601967264"/>
+    <nd ref="12601967268"/>
+    <nd ref="12601967265"/>
+    <nd ref="12601967266"/>
+    <nd ref="12601967267"/>
+    <nd ref="1576952141"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="surface" v="asphalt"/>
+  </way>
+  <way id="1422461231" version="2" timestamp="2025-11-12T13:36:14Z">
+    <nd ref="34769477"/>
+    <nd ref="13072399408"/>
+    <nd ref="13072399407"/>
+    <nd ref="13072399406"/>
+    <nd ref="13072399405"/>
+    <nd ref="13299610381"/>
+    <nd ref="13299610380"/>
+    <nd ref="13299610379"/>
+    <nd ref="13072399404"/>
+    <nd ref="13299610378"/>
+    <nd ref="13072399403"/>
+    <nd ref="12640975113"/>
+    <tag k="access" v="private"/>
+    <tag k="highway" v="track"/>
+    <tag k="layer" v="2"/>
+    <tag k="tracktype" v="grade5"/>
+  </way>
+</osm>

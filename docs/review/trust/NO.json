@@ -1,0 +1,66 @@
+{
+  "country": "NO",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "oslo",
+      "run_id": 222,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 4945.763420245274,
+      "unrecognised_share": 0.00008866522862073044,
+      "excluded_share": 0.09363643525938707,
+      "excluded_by_rule": {
+        "X_area": 0.009230826697398645,
+        "X_bicycle_no": 0.023808191709336988,
+        "X_lifecycle": 0.000681760967934993,
+        "X_no": 0.050300357223310915,
+        "X_private": 0.002744529368953775,
+        "X_separate": 0.001256851099282378,
+        "X_shared_lane": 0.004481081868572707,
+        "X_shoulder": 0.0007510967525686118,
+        "X_sidewalk_bicycle_permitted": 5.6342552463487345e-6,
+        "X_untyped": 0.0003761053167815789
+      },
+      "tier_mix": {
+        "A": 0.12195589574830824,
+        "B": 0.5622438977387586,
+        "C": 0.0,
+        "D": 0.3155386374040732,
+        "E": 0.00026156910886004995
+      },
+      "b_share_of_ab": 0.8217539717064918,
+      "completeness": {
+        "A": {
+          "width": 0.09571256132684225,
+          "surface": 0.8361625995138021,
+          "segregated": 0.6169809902964752
+        },
+        "B": {
+          "width": 0.014491866628274635,
+          "surface": 0.89417366284196,
+          "segregated": 0.7952052898873075
+        },
+        "D": {
+          "width": 0.009526751235292298,
+          "surface": 0.06995388870741422,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.28371976665683474,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "bicycle:lanes:backward=yes;bicycle:lanes:forward=yes|designated;cycleway:lanes:forward=no|lane;cycleway:left=no;cycleway:right=advisory;cycleway:right:marking=dashed_line;cycleway:surface=asphalt;cycleway:surface:colour=red;highway=tertiary",
+          0.43851724436009293
+        ]
+      ],
+      "boundary_lau_km2": 480.4808283021865,
+      "boundary_osm_km2": 480.4808283021865,
+      "boundary_diff_pct": 0.0
+    }
+  ]
+}

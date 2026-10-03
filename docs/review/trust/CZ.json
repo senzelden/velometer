@@ -1,0 +1,143 @@
+{
+  "country": "CZ",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "prague",
+      "run_id": 239,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 7645.004297174642,
+      "unrecognised_share": 0.0076914503571780075,
+      "excluded_share": 0.19767398324753793,
+      "excluded_by_rule": {
+        "X_area": 0.010052582074394906,
+        "X_bicycle_no": 0.02243481853339779,
+        "X_lifecycle": 0.0006452635202918063,
+        "X_no": 0.13585988509897926,
+        "X_private": 0.013410992046656408,
+        "X_road_private": 0.000559385429882297,
+        "X_separate": 0.0022955004430985832,
+        "X_shared_lane": 0.012136266561505318,
+        "X_shoulder": 0.00021545255044247335,
+        "X_sidewalk_bicycle_permitted": 7.218702564460023e-6,
+        "X_untyped": 0.00005661828632469788
+      },
+      "tier_mix": {
+        "A": 0.2282357285339072,
+        "B": 0.4027463943757729,
+        "C": 0.0,
+        "D": 0.28015054308330173,
+        "E": 0.0888673340070182
+      },
+      "b_share_of_ab": 0.6382849525412351,
+      "completeness": {
+        "A": {
+          "width": 0.1445341670185644,
+          "surface": 0.9342081475107754,
+          "segregated": 0.6813737985169093
+        },
+        "B": {
+          "width": 0.1425396740005948,
+          "surface": 0.9660004002582679,
+          "segregated": 0.9119400215263427
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway:right=soft_lane;highway=secondary",
+          16.914389796258593
+        ],
+        [
+          "cycleway:right=soft_lane;highway=tertiary",
+          8.69264340437103
+        ],
+        [
+          "cycleway=soft_lane;highway=secondary",
+          6.173490380896911
+        ],
+        [
+          "cycleway=soft_lane;highway=tertiary",
+          3.3510543950499363
+        ],
+        [
+          "cycleway:left=no;cycleway:right=soft_lane;highway=primary",
+          2.3044135388975895
+        ],
+        [
+          "cycleway:right=soft_lane;highway=primary",
+          2.22701903201011
+        ],
+        [
+          "cycleway:left=no;cycleway:right=soft_lane;highway=secondary",
+          1.737136677304187
+        ],
+        [
+          "cycleway:left=no;cycleway:right=soft_lane;highway=tertiary",
+          1.4324353494198585
+        ],
+        [
+          "cycleway:left=soft_lane;highway=tertiary",
+          1.135346753470819
+        ],
+        [
+          "cycleway:left=no;cycleway:right=soft_lane;highway=residential",
+          0.9874780289428821
+        ],
+        [
+          "cycleway:left=share_busway;cycleway:right=soft_lane;highway=secondary",
+          0.896441859001639
+        ],
+        [
+          "cycleway:left=shared_lane;cycleway:right=soft_lane;highway=secondary",
+          0.7551164180147684
+        ],
+        [
+          "cycleway:right=soft_lane;highway=secondary_link",
+          0.6374003208371237
+        ],
+        [
+          "cycleway:left=share_busway;cycleway:right=soft_lane;highway=primary",
+          0.5609226154218213
+        ],
+        [
+          "cycleway=soft_lane;cycleway:both=soft_lane;highway=secondary",
+          0.5501149443677517
+        ],
+        [
+          "cycleway=soft_lane;cycleway:both=soft_lane;cycleway:both:lane=advisory;highway=secondary",
+          0.5271294782617026
+        ],
+        [
+          "cycleway=soft_lane;highway=residential",
+          0.5125274331295115
+        ],
+        [
+          "cycleway:left=no;cycleway:right=soft_lane;cycleway:right:lane=advisory;highway=primary",
+          0.5081810261315087
+        ],
+        [
+          "cycleway:right=soft_lane;highway=residential",
+          0.5079154141684283
+        ],
+        [
+          "cycleway:left=soft_lane;cycleway:right=lane;highway=secondary",
+          0.47100424393101537
+        ]
+      ],
+      "boundary_lau_km2": 496.5289824252263,
+      "boundary_osm_km2": 495.88929830232814,
+      "boundary_diff_pct": 0.12899736394555872
+    }
+  ]
+}

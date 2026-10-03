@@ -1,0 +1,187 @@
+{
+  "country": "PL",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "wroclaw",
+      "run_id": 151,
+      "osm_timestamp": "2026-09-30T20:22:42Z",
+      "cycling_km": 4015.7522659749684,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.08781459992373308,
+      "excluded_by_rule": {
+        "X_area": 0.004116590508789251,
+        "X_bicycle_no": 0.0029721510227889575,
+        "X_lifecycle": 0.00014993880812193088,
+        "X_no": 0.03863413509117774,
+        "X_private": 0.025342919919040616,
+        "X_road_private": 0.00019727876132090912,
+        "X_separate": 0.015209488807933498,
+        "X_shared_lane": 0.001102351615861624,
+        "X_shoulder": 0.00008974538869849126
+      },
+      "tier_mix": {
+        "A": 0.34429021329945897,
+        "B": 0.5788188858372189,
+        "C": 0.0002060039447236748,
+        "D": 0.07490078915042842,
+        "E": 0.0017841077681700823
+      },
+      "b_share_of_ab": 0.6270319362885161,
+      "completeness": {
+        "A": {
+          "width": 0.12889099931172834,
+          "surface": 0.948571117004876,
+          "segregated": 0.004393598017639718
+        },
+        "B": {
+          "width": 0.05048645786187854,
+          "surface": 0.9448728161249872,
+          "segregated": 0.9820713162308231
+        },
+        "C": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.01372924277758009,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 291.60157796972305,
+      "boundary_osm_km2": 292.7040185373446,
+      "boundary_diff_pct": 0.3766400519987742
+    },
+    {
+      "city_id": "warsaw",
+      "run_id": 236,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 10895.905054167199,
+      "unrecognised_share": 0.00010239381265945853,
+      "excluded_share": 0.2310675380269253,
+      "excluded_by_rule": {
+        "X_area": 0.004113067069321619,
+        "X_bicycle_no": 0.010996121263657618,
+        "X_construction_tag": 7.339075873537489e-6,
+        "X_lifecycle": 0.00047898881524764767,
+        "X_no": 0.1295530876864703,
+        "X_private": 0.057174608937592235,
+        "X_road_private": 0.0012955840320119834,
+        "X_separate": 0.025777689424299727,
+        "X_shared_lane": 0.001615735111288648,
+        "X_shoulder": 0.00005531661116301907
+      },
+      "tier_mix": {
+        "A": 0.6126341303823598,
+        "B": 0.30733620761915836,
+        "C": 0.0002472632643112831,
+        "D": 0.07867380148467287,
+        "E": 0.0011085972494977506
+      },
+      "b_share_of_ab": 0.334071866150375,
+      "completeness": {
+        "A": {
+          "width": 0.2145377626400425,
+          "surface": 0.9938549474379166,
+          "segregated": 0.042896352646310684
+        },
+        "B": {
+          "width": 0.06352506968252232,
+          "surface": 0.9632839344434665,
+          "segregated": 0.9122886043808903
+        },
+        "C": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.002346825032760632,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [
+        [
+          "cycleway:right=sidepath;highway=tertiary",
+          0.9940494650366467
+        ],
+        [
+          "cycleway=highway;highway=secondary",
+          0.12162379583499686
+        ]
+      ],
+      "boundary_lau_km2": 517.0331496921297,
+      "boundary_osm_km2": 516.7772731175957,
+      "boundary_diff_pct": 0.049513898509962816
+    },
+    {
+      "city_id": "krakow",
+      "run_id": 237,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 5238.907745033981,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.3309689689628534,
+      "excluded_by_rule": {
+        "X_area": 0.005941525549710559,
+        "X_bicycle_no": 0.01679567671490672,
+        "X_lifecycle": 0.0008601187197110962,
+        "X_no": 0.24131493768976198,
+        "X_private": 0.03449235670318511,
+        "X_road_private": 0.002099072117824801,
+        "X_separate": 0.026058552192790248,
+        "X_shared_lane": 0.0033015665094584695,
+        "X_shoulder": 0.00002997728114810909,
+        "X_untyped": 0.00007518548435728867
+      },
+      "tier_mix": {
+        "A": 0.20085298830487544,
+        "B": 0.730422013930555,
+        "C": 0.0,
+        "D": 0.06847074683722187,
+        "E": 0.00025425092734766223
+      },
+      "b_share_of_ab": 0.7843247291908959,
+      "completeness": {
+        "A": {
+          "width": 0.21695755618551443,
+          "surface": 0.9894342689964403,
+          "segregated": 0.3258821349380491
+        },
+        "B": {
+          "width": 0.22255887715033837,
+          "surface": 0.9866732335560844,
+          "segregated": 0.9782714735950601
+        },
+        "D": {
+          "width": 0.0,
+          "surface": 0.0037442582114664883,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.0,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 326.61045170154307,
+      "boundary_osm_km2": 326.63178808781436,
+      "boundary_diff_pct": 0.00653224427303766
+    }
+  ]
+}

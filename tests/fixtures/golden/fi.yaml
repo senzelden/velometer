@@ -1,0 +1,135 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (helsinki 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v2
+ways:
+- way_id: 31719831
+  group: X_bicycle_no
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 55109739
+  group: B_cycleway_foot
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_cycleway_foot
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 36816610
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycleway
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 55445809
+  group: X_area
+  name: ''
+  highway: pedestrian
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_area
+    subtype: area
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 639244857
+  group: X_no
+  name: Viilarintie
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 410524766
+  group: X_private
+  name: ''
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 443801797
+  group: extra
+  name: Koirasaarentie
+  highway: tertiary
+  proposed:
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 127178977
+  group: extra
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_path
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 107325048
+  group: extra
+  name: Kulosaaren puistotie
+  highway: tertiary
+  proposed:
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 370089006
+  group: extra
+  name: Kivikonlaita
+  highway: unclassified
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: false
+  note: ''

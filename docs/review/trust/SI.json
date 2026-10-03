@@ -1,0 +1,60 @@
+{
+  "country": "SI",
+  "classifier_version": "v2",
+  "config_sha256": "7416d3c8c1036cbd2b6c2e17404ee61570cda577ef941f848e8b7615107d7f98",
+  "cities": [
+    {
+      "city_id": "ljubljana",
+      "run_id": 240,
+      "osm_timestamp": "2026-10-02T20:21:34Z",
+      "cycling_km": 1715.0220298482077,
+      "unrecognised_share": 0.0,
+      "excluded_share": 0.12048662445255155,
+      "excluded_by_rule": {
+        "X_area": 0.0022273190129335186,
+        "X_bicycle_no": 0.0270154875068817,
+        "X_lifecycle": 0.00031173758841482443,
+        "X_no": 0.06579779805835681,
+        "X_private": 0.01049541938484675,
+        "X_road_private": 0.00005553154011421103,
+        "X_separate": 0.007987435847112876,
+        "X_shared_lane": 0.006089406719977598,
+        "X_use_sidepath": 0.0005064887939134862
+      },
+      "tier_mix": {
+        "A": 0.13176551625827465,
+        "B": 0.5744507606651479,
+        "C": 0.0,
+        "D": 0.288800183562316,
+        "E": 0.004983539514261496
+      },
+      "b_share_of_ab": 0.81342044843217,
+      "completeness": {
+        "A": {
+          "width": 0.4494154304619568,
+          "surface": 0.7601578287651324,
+          "segregated": 0.14573354555716336
+        },
+        "B": {
+          "width": 0.4345044579567079,
+          "surface": 0.9896089514383752,
+          "segregated": 0.9960291504346301
+        },
+        "D": {
+          "width": 0.008559486927888217,
+          "surface": 0.0,
+          "segregated": 0.0
+        },
+        "E": {
+          "width": 0.0,
+          "surface": 0.4417220913228312,
+          "segregated": 0.0
+        }
+      },
+      "top_unmatched": [],
+      "boundary_lau_km2": 275.0953240822497,
+      "boundary_osm_km2": 274.8236298418539,
+      "boundary_diff_pct": 0.09886130990706075
+    }
+  ]
+}

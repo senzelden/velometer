@@ -1,0 +1,150 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (budapest 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v2
+ways:
+- way_id: 158264567
+  group: X_no
+  name: Lőrinci út
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 263646527
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycleway
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 220990755
+  group: X_private
+  name: Nagy-Káros-híd dűlő
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 328672666
+  group: D_lane
+  name: Újszász utca
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 6172172
+  group: X_shared_lane
+  name: Álmos utca
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 278008760
+  group: X_bicycle_no
+  name: Monspart Sarolta Futókör
+  highway: footway
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 81401180
+  group: extra
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_cycleway_foot
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: ''
+- way_id: 125067709
+  group: extra
+  name: Soroksári út
+  highway: primary
+  proposed:
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 152908559
+  group: extra
+  name: Kossuth Lajos utca
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: false
+  note: ''
+- way_id: 114787033
+  group: extra
+  name: Ferihegyi repülőtérre vezető út
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: false
+  note: ''

@@ -1,9 +1,20 @@
 # Per-country trust gate (M5 spec section 3). Not part of config_sha256: signing off a country
 # never invalidates runs. Report surfaces show only cities of trusted countries.
-thresholds:            # set in Task 13 from the pilots (largest pilot value x 1.25)
-  unrecognised_share_max: 1.0
-  excluded_share_max: 1.0
-  b_share_of_ab_max: 1.0
+# thresholds: set in Task 13 (2026-10-03) as round(max over the 5 pilots x 1.25, 3), capped at 1,
+# from `velometer trust diagnose` on the pilots' current LAU runs (classifier v2): berlin 147,
+# paris 148, vienna 149, copenhagen 150, wroclaw 151.
+thresholds:
+  # pilots: berlin 0.0000030, paris 0.0000362, vienna 0.0000252, copenhagen 0, wroclaw 0;
+  # max x 1.25 = 0.0000452 rounds to 0.0 at 3 places, which the schema refuses (must be > 0):
+  # 0.001 is the smallest positive 3-place value (ruling, see the Task 13 report)
+  unrecognised_share_max: 0.001
+  # pilots: berlin 0.4855, paris 0.4134, vienna 0.3705, copenhagen 0.4229, wroclaw 0.0878;
+  # 0.4855 x 1.25 = 0.6069
+  excluded_share_max: 0.607
+  # pilots: berlin 0.2610, paris 0.0600, vienna 0.3017, copenhagen 0.1440, wroclaw 0.6270;
+  # 0.6270 x 1.25 = 0.7838
+  b_share_of_ab_max: 0.784
+  # pilots: berlin 0.19, paris 0.03, vienna 0.18, copenhagen 0.43, wroclaw 0.38 (%); spec 3.1
   boundary_diff_pct_max: 5.0
 # basis_de: the German wording of basis, shown in docs/methodology.de.md (falls back to basis)
 countries:
@@ -17,3 +28,24 @@ countries:
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: copenhagen}
   PL: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw}
+  # M5 countries (Task 13, 2026-10-03): pending until the golden sample is signed off
+  NL: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/nl}
+  ES: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/es}
+  SE: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/se}
+  "NO": {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+         basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/no}
+  FI: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/fi}
+  HU: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/hu}
+  CZ: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/cz}
+  # SK: no city configured yet (Bratislava has no LAU 2024 municipality; see cities.yaml), so
+  # no diagnostics and no golden sample exist
+  SK: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/sk}
+  SI: {status: pending, basis: "Golden sample and tagging diagnostics (M5)",
+       basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/si}
