@@ -786,7 +786,7 @@ Cause: **tag drift** (legacy clean-up). `legacy_km` 19.3 -> 3.9: `cycleway=oppos
 sides was removed during 2025 (9.0 -> 0.0 km, e.g. way 4787341 on a
 `bicycle_road`), and `sidewalk:*:bicycle=yes` fell 9.9 -> 3.1 km (way 111283473 ->
 `cycleway:both=no`). The new `cycleway:*=crossing` value on road sides (e.g. way 1133761372
-`cycleway:right=lane` -> `crossing`) is recognised by v2 (excluded, subtype `crossing`), so it
+`cycleway:right=lane` -> `crossing`) is recognised since v2 (excluded, subtype `crossing`), so it
 no longer shows as unrecognised. Headline km rose normally (A+B 1,510 -> 1,539).
 
 ### berlin/fua/2022
@@ -794,7 +794,7 @@ no longer shows as unrecognised. Headline km rose normally (A+B 1,510 -> 1,539).
 Cause: **campaign**, the same sidepath re-mapping as berlin/lau/2022 extended into Brandenburg.
 `legacy_km` 48.1 -> 73.0 because `sidewalk:both:bicycle=yes` on rural main roads grew 41.1 ->
 67.6 km; road sides moved from `cycleway=right`/`use_sidepath` to `cycleway:right=separate`
-(way 206903446, 3.8 km; way 449341004); `unrecognised_km` fell 16.9 -> 9.1 (v2). A+B fell
+(way 206903446, 3.8 km; way 449341004); `unrecognised_km` fell 16.9 -> 9.1 (classifier v2 and later). A+B fell
 3,817.6 -> 3,469.6
 km (-9.1%, below the 10% jump threshold) with 77,158 edits and a top-mapper share of 0.50.
 
@@ -851,4 +851,3 @@ Cause: **campaign** by one mapper (pedestrian network). 22,113 counted edits in 
 median of 8,419: 14,617 create `highway=footway` (e.g. way 24964920) and 15,708 of all counted edits fall in
 June–August 2017, with a top-mapper share of 0.89 across 2,783 changesets. 2018 is the first
 point, so no km change can be attributed; A+B grew steadily afterwards (261.5 -> 272.7 km).
-

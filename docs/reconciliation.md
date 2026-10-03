@@ -445,17 +445,17 @@ which every side counts in full. The Clean Cities figures are dated 2025-05-14, 
 our snapshot; QECIO is dated 2024-01-10/11, 994 days before it.
 
 ### berlin/cc_ratio
-Cause: **definition** (length basis). Our preset divides per-side A+B km (1,558.0) by all
-public roads (5,624.1 km). On the centreline basis our A+B is 918.4 km, which gives 16.3%
+Cause: **definition** (length basis). Our preset divides per-side A+B km (1,557.9) by all
+public roads (5,624.6 km). On the centreline basis our A+B is 918.3 km, which gives 16.3%
 against our network, or 17.2% against Clean Cities' own 5,350 km, matching their 17%. The
 denominators agree within 5.1% (`berlin/cc_network_km`), so the whole gap is in the numerator's
 basis, not in the classifier or the boundary.
 
 ### berlin/cc_km
 Cause: **definition** (length basis). Clean Cities' 925 km is a centreline figure: our A+B on
-the centreline basis is 918.4 km (−0.7%), while per side it is 1,558.0 km (1.70 times as
+the centreline basis is 918.3 km (−0.7%), while per side it is 1,557.9 km (1.70 times as
 much), because most Berlin tracks are one-way tracks on both sides of the road. The date gap
-(504 days) is within the noise of this comparison.
+(506 days) is within the noise of this comparison.
 
 ### copenhagen/cc_ratio
 Cause: **definition** (length basis). Per side our A+B is 582.3 km, 1.62 times the
