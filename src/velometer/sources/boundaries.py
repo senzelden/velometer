@@ -88,7 +88,9 @@ def utm_epsg(lon: float) -> int:
 def check_epsg(city: CityConfig, polygon_4326: BaseGeometry) -> None:
     """Refuse a city whose configured EPSG is not the UTM zone of its boundary's centroid."""
     expected = utm_epsg(polygon_4326.centroid.x)
-    if expected != city.epsg:
+    if expected == city.epsg:
+        return
+    if not (city.epsg_exception and abs(city.epsg - expected) == 1):
         raise ValueError(
             f"{city.id}: configured EPSG {city.epsg} but the boundary centroid lies in "
             f"UTM zone EPSG {expected}"

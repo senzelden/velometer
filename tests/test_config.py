@@ -272,3 +272,12 @@ def test_admin_boundary_and_urau_fields():
     assert c.admin_boundary == "osm_relation" and c.population_urau == "FR003C"
     with pytest.raises(ValidationError):
         CityConfig.model_validate({**BERLIN, "admin_boundary": "other"})
+
+
+def test_real_cities_epsg_in_range_and_exceptions_have_reasons():
+    cities = load_cities(CFG / "cities.yaml")
+    assert all(25828 <= c.epsg <= 25838 for c in cities)
+    assert all(c.epsg_exception is None or c.epsg_exception.strip() for c in cities)
+    assert {c.id for c in cities if c.epsg_exception} == {"copenhagen"}
+    with pytest.raises(ValidationError):
+        CityConfig.model_validate({**BERLIN, "epsg_exception": "  "})

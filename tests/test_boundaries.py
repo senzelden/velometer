@@ -359,3 +359,12 @@ def test_urb_cpop1_live_lyon():
     city = CITY.model_copy(update={"population_urau": "FR003C", "population_nuts3": None})
     pop = b.population(city, {"POP_2024": 0})
     assert 400_000 < pop.value < 700_000
+
+
+def test_epsg_exception_accepts_only_the_adjacent_zone():
+    poly = box(13.3, 52.4, 13.5, 52.6)  # zone 25833
+    adjacent = CITY.model_copy(update={"epsg": 25832, "epsg_exception": "national standard"})
+    b.check_epsg(adjacent, poly)
+    two_away = CITY.model_copy(update={"epsg": 25831, "epsg_exception": "national standard"})
+    with pytest.raises(ValueError, match="EPSG 25831"):
+        b.check_epsg(two_away, poly)

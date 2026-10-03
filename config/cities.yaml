@@ -41,6 +41,7 @@ cities:
     name: København
     country_iso2: DK
     epsg: 25832
+    epsg_exception: "Danish national standard ETRS89 / UTM 32N; centroid 12.57E is 0.57 deg into zone 33, scale error about 0.06 %"
     geofabrik_region: europe/denmark
     osm_relation_id: 2192363
     lau_code: DK_101

@@ -51,6 +51,16 @@ class CityConfig(_Strict):
     # Urban Audit city code (urb_cpop1): the population fallback when LAU has none and
     # population_nuts3 is unset
     population_urau: str | None = None
+    # Reason for an EPSG that is not the UTM zone of the boundary centroid (only the adjacent
+    # zone is accepted, see sources.boundaries.check_epsg)
+    epsg_exception: str | None = None
+
+    @field_validator("epsg_exception")
+    @classmethod
+    def _reason_not_blank(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("epsg_exception must give a reason")
+        return v
 
     @field_validator("epsg")
     @classmethod
