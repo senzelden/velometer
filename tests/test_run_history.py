@@ -154,6 +154,13 @@ def test_run_history_makes_one_history_run_per_year(conn, tmp_path):
         assert d["uncovered_km2"] == pytest.approx(0, abs=1)
 
 
+def test_history_run_records_peak_rss(conn, tmp_path):
+    out = _history(conn, tmp_path, Fakes(tmp_path), years=range(2019, 2021))
+    assert len(out) == 2
+    peaks = [r[0] for r in conn.execute("SELECT peak_rss_kb FROM runs WHERE source='history'")]
+    assert len(peaks) == 2 and all(p > 0 for p in peaks)
+
+
 def test_rerun_skips_done_years(conn, tmp_path):
     fakes = Fakes(tmp_path)
     first = _history(conn, tmp_path, fakes)

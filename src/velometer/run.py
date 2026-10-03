@@ -43,6 +43,7 @@ from velometer.db import (
     upsert_boundary,
     upsert_history_set,
 )
+from velometer.memory import PeakRss
 from velometer.models import Metric
 from velometer.osmium import merge as _merge
 from velometer.pipeline.activity import activity as _activity
@@ -287,10 +288,19 @@ def run_city(
             rec.boundary.sha256,
             data_dir,
         )
-        ways = deps.read_ways(snap).ways
-        result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
-        metrics = with_per_100k(compute_metrics(result, presets), pop.value if pop else None)
-        complete_run(conn, run_id, city.id, result, metrics, supersedes=done)
+        with PeakRss() as peak:
+            ways = deps.read_ways(snap).ways
+            result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
+            metrics = with_per_100k(compute_metrics(result, presets), pop.value if pop else None)
+        complete_run(
+            conn,
+            run_id,
+            city.id,
+            result,
+            metrics,
+            supersedes=done,
+            peak_rss_kb=round(peak.peak_mb * 1024),
+        )
     except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next city runs
         fail_run(conn, run_id, _describe(e))
         return RunOutcome(city.id, "failed", run_id, _describe(e))
@@ -434,13 +444,23 @@ def run_history(
         )
         try:
             snap = deps.snapshot_at(hist, ts, data_dir)
-            ways = deps.read_ways(snap).ways
-            result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
-            metrics = with_per_100k(compute_metrics(result, presets), pop.value if pop else None)
+            with PeakRss() as peak:
+                ways = deps.read_ways(snap).ways
+                result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
+                metrics = with_per_100k(
+                    compute_metrics(result, presets), pop.value if pop else None
+                )
             diagnostics = drift_diagnostics(result, ways, activity_cfg)
             diagnostics["uncovered_km2"] = hs.uncovered_km2
             complete_run(
-                conn, run_id, city.id, result, metrics, supersedes=done, diagnostics=diagnostics
+                conn,
+                run_id,
+                city.id,
+                result,
+                metrics,
+                supersedes=done,
+                diagnostics=diagnostics,
+                peak_rss_kb=round(peak.peak_mb * 1024),
             )
         except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next year runs
             fail_run(conn, run_id, _describe(e))

@@ -7,7 +7,7 @@ from shapely import box
 
 from velometer import run as R
 from velometer.config import default_config_dir, load_cities
-from velometer.db import create_schema, open_db, upsert_cities
+from velometer.db import create_schema, fetch_run, open_db, upsert_cities
 from velometer.models import Boundary, Metric, Population
 from velometer.pipeline.read import read_ways
 from velometer.sources.boundaries import BoundaryRecord
@@ -609,3 +609,8 @@ def test_covered_city_run_never_touches_the_index(conn, tmp_path):
     deps = R.RunDeps(**{**_deps(tmp_path, []).__dict__, "fetch_index": boom, "regions_for": boom})
     assert _run(conn, tmp_path, deps).status == "done"
     assert _count(conn, "history_sets") == 0
+
+
+def test_current_run_records_peak_rss(conn, tmp_path):
+    out = _run(conn, tmp_path, _deps(tmp_path, []))
+    assert fetch_run(conn, out.run_id)["peak_rss_kb"] > 0

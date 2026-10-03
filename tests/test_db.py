@@ -20,6 +20,7 @@ from velometer.db import (
     fetch_diagnostics,
     fetch_external_figures,
     fetch_history_set,
+    fetch_run,
     fetch_run_results,
     find_done_run,
     history_runs,
@@ -682,7 +683,7 @@ def test_v5_to_v6_keeps_activity_rows_under_the_given_sha(tmp_path):
     _make_v5_db_with_activity(path, rows=3)
     with open_db(path) as c:
         create_schema(c, activity_sha256_for_v5="f" * 64)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         shas = {r[0] for r in c.execute("SELECT activity_sha256 FROM activity")}
         assert shas == {"f" * 64}
         assert c.execute("SELECT count(*) FROM activity").fetchone()[0] == 3
@@ -739,8 +740,45 @@ def test_v5_with_empty_activity_migrates_without_a_sha(tmp_path):
     _make_v5_db_with_activity(path, rows=0)
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert "activity_sha256" in {r[1] for r in c.execute("PRAGMA table_info(activity)")}
+
+
+def _make_v6_db_with_runs(path, cities):
+    """A v6 database: a done run, no peak_rss_kb column."""
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, cities)
+        rid = _done(c, KEY)
+        c.execute("ALTER TABLE runs DROP COLUMN peak_rss_kb")
+        c.execute("PRAGMA user_version = 6")
+        c.commit()
+    return rid
+
+
+def test_v6_to_v7_adds_a_null_peak_rss_and_keeps_runs(tmp_path, cities):
+    path = tmp_path / "v6.sqlite"
+    rid = _make_v6_db_with_runs(path, cities)
+    with open_db(path) as c:
+        assert "peak_rss_kb" not in {r[1] for r in c.execute("PRAGMA table_info(runs)")}
+        before = c.execute("SELECT * FROM runs").fetchall()
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert fetch_run(c, rid)["peak_rss_kb"] is None
+        after = c.execute("SELECT * FROM runs").fetchall()
+        assert [r[:-1] for r in after] == before  # runs untouched; one NULL column appended
+        assert after[0][-1] is None
+    with open_db(tmp_path / "fresh.sqlite") as fresh, open_db(path) as migrated:
+        create_schema(fresh)
+        cols = "SELECT name, type, \"notnull\", dflt_value, pk FROM pragma_table_info('runs')"
+        assert migrated.execute(cols).fetchall() == fresh.execute(cols).fetchall()
+
+
+def test_complete_run_stores_peak_rss(conn):
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m")
+    complete_run(conn, rid, "berlin", _result(), _metrics(), peak_rss_kb=123_456)
+    assert fetch_run(conn, rid)["peak_rss_kb"] == 123_456
 
 
 def test_activity_table_has_no_user_columns(conn):

@@ -6,7 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from velometer.cli import app
-from velometer.db import connect, fetch_cities
+from velometer.db import SCHEMA_VERSION, connect, fetch_cities
 
 
 def test_init_creates_db_with_cities_and_is_idempotent(tmp_path):
@@ -372,8 +372,6 @@ def test_reconcile_missing_markers_or_report_exit_1_without_traceback(tmp_path, 
 
 
 def test_commands_on_a_newer_schema_exit_1_without_traceback(tmp_path):
-    from velometer.db import SCHEMA_VERSION
-
     db = tmp_path / "v.sqlite"
     with sqlite3.connect(db) as c:
         c.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
@@ -693,7 +691,7 @@ def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
         assert c.execute("SELECT DISTINCT activity_sha256 FROM activity").fetchall() == [
             ("e" * 64,)
         ]
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
 
 
 def test_migrate_without_activity_sha_on_empty_activity(tmp_path):
@@ -703,7 +701,7 @@ def test_migrate_without_activity_sha_on_empty_activity(tmp_path):
     _make_v5_db_with_activity(path, rows=0)
     r = CliRunner().invoke(app, ["migrate", "--db", str(path)])
     assert r.exit_code == 0, r.output
-    assert "schema v6" in r.output
+    assert f"schema v{SCHEMA_VERSION}" in r.output
 
 
 def test_migrate_without_activity_sha_on_v5_rows_explains(tmp_path):

@@ -22,7 +22,7 @@ from velometer.models import (
     TierLength,
 )
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 _RESULT_TABLES = (
     "duplicates",
     "completeness",
@@ -81,7 +81,8 @@ CREATE TABLE IF NOT EXISTS runs (
   status TEXT NOT NULL CHECK (status IN ('running','done','failed')), error TEXT,
   population_value INTEGER, population_year INTEGER, population_source TEXT,
   config_sha256 TEXT,
-  source TEXT NOT NULL DEFAULT 'current' CHECK (source IN ('current','history'))
+  source TEXT NOT NULL DEFAULT 'current' CHECK (source IN ('current','history')),
+  peak_rss_kb INTEGER
 );
 CREATE UNIQUE INDEX IF NOT EXISTS runs_done_key ON runs (
   city_id, osm_timestamp, boundary_kind, boundary_sha256, classifier_version,
@@ -247,11 +248,19 @@ def _migrate_5_to_6(conn: sqlite3.Connection, activity_sha256: str | None) -> No
     conn.execute("ALTER TABLE activity_v6 RENAME TO activity")
 
 
+def _migrate_6_to_7(conn: sqlite3.Connection) -> None:
+    """Additive: runs gains peak_rss_kb (NULL for runs made before it was measured)."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(runs)")}
+    if cols and "peak_rss_kb" not in cols:  # no runs table yet: the schema script creates it
+        conn.execute("ALTER TABLE runs ADD COLUMN peak_rss_kb INTEGER")
+
+
 _MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
     3: _migrate_3_to_4,
     4: _migrate_4_to_5,
+    6: _migrate_6_to_7,
 }  # 5 -> 6 takes the activity sha and is called by create_schema directly
 
 
@@ -414,6 +423,7 @@ def complete_run(
     *,
     supersedes: int | None = None,
     diagnostics: dict[str, float] | None = None,
+    peak_rss_kb: int | None = None,
 ) -> None:
     """Write every result row and mark the run done, atomically.
 
@@ -422,9 +432,11 @@ def complete_run(
 
     Dual-carriageway rows hold one row per (way, partner) pair: overlap_share is the share of the
     way within the pairing distance of that partner, distance_m their minimum distance.
-    `diagnostics` (key -> value) lands in the diagnostics table in the same transaction.
+    `diagnostics` (key -> value) lands in the diagnostics table in the same transaction, and
+    so does `peak_rss_kb` (the run's peak resident memory) on the run row.
     """
     with conn:  # one transaction: commit on success, rollback on any exception
+        conn.execute("UPDATE runs SET peak_rss_kb=? WHERE id=?", (peak_rss_kb, run_id))
         if supersedes is not None:
             conn.execute(
                 "UPDATE runs SET status='failed', error=? WHERE id=?",
