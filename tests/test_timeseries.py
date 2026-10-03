@@ -27,14 +27,22 @@ OLD_ACTIVITY_PART = "de066a28e74c"  # the marker of docs/review/m3_timeseries.md
 CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
 
 
+# A per-city override (berlin needs FUA, every other city LAU only), pinned here so the tests of
+# the override rule do not depend on the shipped required_kinds.
+REQUIRED_KINDS = "required_kinds:\n  default: [lau]\n  berlin: [lau, fua]\n"
+
+
 def config_dir(tmp_path, years="2019-2021", report_classifier="v1") -> Path:
-    """A copy of config/ whose history.yaml series is `years` and whose report.yaml classifier is
-    the one the fake runs use (run_history's default, v1); classifier/presets sha unchanged."""
+    """A copy of config/ whose history.yaml series is `years`, whose required_kinds is
+    REQUIRED_KINDS, and whose report.yaml classifier is the one the fake runs use (run_history's
+    default, v1); classifier/presets sha unchanged."""
     d = tmp_path / "config"
     if not d.exists():
         shutil.copytree(CFG_DIR, d)
     text = (CFG_DIR / "history.yaml").read_text()
     text = re.sub(r'years: "[^"]*"', f'years: "{years}"', text)
+    text, n = re.subn(r"required_kinds:\n(?:  .*\n)+", REQUIRED_KINDS, text)
+    assert n == 1, "config/history.yaml has no required_kinds block"
     (d / "history.yaml").write_text(text)
     rep = (CFG_DIR / "report.yaml").read_text()
     rep = re.sub(r"report_classifier: \S+", f"report_classifier: {report_classifier}", rep)
@@ -461,11 +469,16 @@ def test_cli_check_requires_fua_for_berlin_but_not_vienna(db, tmp_path):
 
 
 def test_history_config_is_strict_and_has_a_default(tmp_path):
-    from velometer.config import ConfigError, load_history
+    from velometer.config import ConfigError, load_cities, load_history
 
     h = load_history(CFG_DIR / "history.yaml")
-    assert h.required("berlin") == ["lau", "fua"] and h.required("vienna") == ["lau"]
+    for c in load_cities(CFG_DIR / "cities.yaml"):  # M5: every city has a LAU and a FUA series
+        assert h.required(c.id) == ["lau", "fua"], c.id
     assert h.year_range() == range(2018, 2027)
+    override = tmp_path / "o.yaml"
+    override.write_text(f'years: "2018-2026"\n{REQUIRED_KINDS}')
+    o = load_history(override)
+    assert o.required("berlin") == ["lau", "fua"] and o.required("vienna") == ["lau"]
     bad = tmp_path / "h.yaml"
     bad.write_text('years: "2026-2018"\nrequired_kinds: {default: [lau]}\n')
     with pytest.raises(ConfigError):
