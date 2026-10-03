@@ -665,6 +665,58 @@ and paths that bicycles may use. Kraków also maps 341.4 km of `highway=footway`
 occur in its Kraków edges. The boundaries agree (BikeNetKit 326.6 km² vs our LAU 326.6 km²,
 EPSG:25834).
 
+### ljubljana/cc_ratio
+Cause: **definition** (network denominator). The numerator matches: our per-side A+B is 248.6 km
+against Clean Cities' 251 km (`ljubljana/cc_km`, −1.0%). The gap is in the denominator, ours
+1,172.3 km against their 1,649 km (`ljubljana/cc_network_km`, −28.9%). Our numerator over their
+network gives 248.6 / 1,649 = 15.1%, against their 15%. Unlike Berlin and Copenhagen, the Clean
+Cities figure matches our per-side basis, not the centreline basis (150.6 km, 12.8%). Ljubljana's
+largest A+B rule is one-way `highway=path` + `segregated=yes` sidepaths drawn on both sides of
+the road (`B_path_segregated`, 170.2 km per side, 92.4 km centreline; see
+`docs/review/trust/SI.md`). Whether the 251 km is city-submitted or OSM-based is not stated per
+city.
+
+### ljubljana/cc_network_km
+Cause: **definition** (network scope or source). The boundaries agree: the Clean Cities annex
+gives Ljubljana as the municipality at 275.1 km², and our LAU is 275.1 km². Our public road
+network is 1,172.3 km. That counts main, motorway and local roads (unclassified, residential,
+living street, pedestrian) with dual carriageways paired. Clean Cities' 1,649 km is 476.7 km
+more. The LAU snapshot also holds 766.8 km of `highway=service` (255.9 km with no `service=*`
+value, 107.6 km `service=alley`) and 744.2 km of `highway=track`, none of which we count. The
+untyped service roads plus alleys (363.5 km) would bring us to 1,535.8 km. Adding all service
+roads (1,939.1 km) would overshoot. Budapest's network, built the same way, matches within 7.8%
+(`budapest/cc_network_km`). The Ljubljana figure probably comes from a road register with a
+different scope, as for `wroclaw/cc_network_km`. Per-city sources are unverified.
+
+### ljubljana/qecio_main_km
+Cause: **scope**. QECIO reports NUTS3 SI041 Osrednjeslovenska, 2,333.9 km². Our LAU, the Mestna
+občina Ljubljana, is 275.1 km², 0.118 of that area. Our 472.1 km of main roads (motorway
+included, no dual-carriageway pairing) is 0.318 of QECIO's 1,484.0 km. The categories do not
+scale by one factor. Measured on our own 1 January 2024 snapshot (history run 482, ten days
+before QECIO's 2024-01-11 date), the LAU holds 457.3 km of main roads (0.31 of the region), but
+117.2 km of tracks (0.76), 43.8 km of lanes (0.91) and 21.8 km of shared paths (0.55). The
+region's cycling infrastructure is concentrated in the city and its main roads are not, so the
+date gap does not explain the difference. The difference is the unit. `config/cities.yaml`
+records `nuts3_is_city: false` for Ljubljana.
+
+### ljubljana/qecio_shared_km
+Cause: **scope** (SI041 Osrednjeslovenska, 2,333.9 km², vs our LAU 275.1 km²; see
+`ljubljana/qecio_main_km`). Ours, 23.8 km (tier B without `segregated`, centreline), is 0.60 of
+QECIO's 39.7 km. The date gap does not explain it: on 1 January 2024 (history run 482) the LAU
+had 21.8 km, 0.55 of QECIO's figure. QECIO's own surface breakdown puts 8.1 km of the region's
+shared paths on gravel/dirt and 2.2 km on stabilised gravel. That fits shared paths outside the
+city. Our definition matches QECIO's (`segregated!=yes` is shared, `segregated=yes` counts as a
+track). Ljubljana's 92.4 km centreline of `B_path_segregated` therefore counts in
+`ljubljana/qecio_tracks_km` in both sources, and that comparison is within 20% (−17.8%).
+
+### ljubljana/qecio_total_km
+Cause: **scope** first (SI041 vs the LAU; see `ljubljana/qecio_main_km`) and **definition**
+second. Ours, 201.6 km, is 0.67 of QECIO's 300.4 km. QECIO's total includes 58.3 km of
+limited-access roads, which our A–D sum does not count (`definition_mismatch`). Without them,
+QECIO's tracks + lanes + shared paths are 242.1 km, and ours is 0.83 of that. The region outside
+the city adds little cycling infrastructure, so the total gap is much smaller than the main-road
+gap (0.318).
+
 ### lyon/cc_ratio
 Cause: **definition** (length basis). Our preset divides per-side A+B (113.0 km) by all public
 roads (637.5 km): 17.7%. On the centreline basis A+B is 96.0 km, which gives 15.1% against our

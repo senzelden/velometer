@@ -976,6 +976,109 @@ retags of existing ways (+23.9 km).
 
 There were 22,071 edits in 2023 (limit 26,772), with a top-mapper share of 0.25.
 
+### ljubljana/lau/2021
+
+Cause: **campaign** (sidepaths re-mapped as separate ways), concentrated in one mapper.
+A+B rose 138.4 -> 197.6 km (+59.2, needs 25.0). Road-side `cycleway=track` fell 76.0 -> 3.0 km
+per side because 371 road sides lost the tag when the roads were re-tagged `bicycle=no` +
+`foot=no` (e.g. way 149769844 Zaloška cesta, way 369157584 Letališka cesta). In their place came
+108.3 km of new `highway=cycleway` sides (rule `A_cycleway`, e.g. way 849525190 Ižanska cesta)
+and 31.3 km of `highway=cycleway` + `foot=designated` + `segregated=no` (`B_cycleway_foot`,
+e.g. way 866576235 Dunajska cesta). 114.9 km of the new A+B sides are on way ids not present on
+1 January 2020. The point counts 6,205 edits in 2020 against a median of 2,779 (limit 5,558).
+4,669 of them fall in October–December 2020. The largest groups are 1,262 `highway=path`, 1,206
+`highway=cycleway` and 864 `highway=footway` creations. They are spread over 1,037 changesets
+(top changeset 2.3%), and the top-mapper share is 0.52 (`single_mapper`).
+
+### ljubljana/lau/2022
+
+Cause: **tag drift** (separated foot/cycle sidepaths re-tagged from `highway=cycleway` to
+`highway=path`). 8,004 edits in 2021 (limit 5,558, top-mapper share 0.67). Among them are 641
+`highway` changes cycleway -> path, 692 `cycleway:surface` edits, 280 `segregated` edits, and
+1,632 `highway=footway` plus 1,529 `highway=path` creations. 41.9 km of sides moved from
+`A_cycleway` to `B_path_segregated`. In the examples only the `highway` value changed (way
+530977027 Vilharjeva cesta, way 878942853 Litijska cesta: `highway=cycleway` -> `path`, keeping
+`bicycle=designated`, `foot=designated` and `segregated=yes`). A further 25.0 km of new `B_path_segregated` sides appeared
+(way 986479122 Vodnikova cesta). Tier A fell 154.8 -> 108.6 km and tier B rose 42.8 -> 103.4 km.
+A+B rose only 197.6 -> 212.0 km, below the jump threshold. This is where the B-heavy split in
+`docs/review/trust/SI.md` (`ljubljana/b_share_of_ab`) starts.
+
+### ljubljana/lau/2023
+
+Cause: **tag drift**, the main year of the same `highway=cycleway` -> `highway=path` re-tagging.
+The point counts 7,934 edits in 2022 (limit 5,558), 875 of them `highway` changes cycleway ->
+path. The top-mapper share is 0.83, but no km jump, so `single_mapper` does not fire. 58.1 km of
+sides moved from `A_cycleway` to `B_path_segregated` (e.g. way 640258468 Letališka cesta, way
+849525190 Ižanska cesta). 8.5 km moved from `B_cycleway_foot` to `B_path` (way 875765266 Pot
+Roberta Blinca), and 12.7 km of new `B_path_segregated` sides were drawn. Tier A fell
+108.6 -> 51.8 km and tier B rose 103.4 -> 169.1 km. A+B moved 212.0 -> 220.8 km, so the headline
+is unaffected.
+
+### ljubljana/lau/2024
+
+Cause: **mapping activity** (further sidepaths drawn as separate `highway=path` ways), the tail of
+the 2021–2022 campaign. The point counts 7,922 edits in 2023 (limit 5,558), with 2,154 of them in
+March, and a top-mapper share of 0.64. The edits are led by 1,798 `highway=footway` and 1,094
+`highway=path` creations and 793 `cycleway:surface` edits. Sides added were 21.4 km of new
+`B_path_segregated` (e.g. way 1172474051 Cesta dveh cesarjev) and 6.2 km of `B_path` (way
+1194995566 Cesta 27. aprila). 30.3 of the 34.5 km of new A+B sides are on way ids not present
+on 1 January 2023, while 18.4 km of A+B sides disappeared. A+B rose
+220.8 -> 225.7 km (+4.9), below the jump threshold.
+
+### ljubljana/fua/2021
+
+Cause: **campaign**, mostly the sidepath re-mapping inside the city (see
+`ljubljana/lau/2021`). A+B rose 233.0 -> 314.8 km (+81.8, needs 25.0). Of that rise, +59.2 km is
+inside the LAU and +22.6 km is in the rest of the FUA (FUA minus LAU A+B: 94.6 -> 117.2 km).
+Outside the city, the largest additions are 12.3 km of new road-side `cycleway=track` (way
+809933528) and 7.8 km of `highway=path` + `bicycle=designated` (`B_path`). The point counts
+10,736 edits in 2020, 5,731 of them in October–December. The FUA median is 9,703, so there is no
+activity spike. The top-mapper share is 0.30.
+
+### ljubljana/fua/2022
+
+Cause: **mapping activity** outside the city. A+B rose 314.8 -> 352.7 km (+37.9, needs 31.5).
+The LAU's share of that was +14.4 km, while the rest of the FUA added +23.5 km (117.2 -> 140.7).
+The FUA also carries the city's `highway=cycleway` -> `highway=path` re-tagging (41.9 km
+`A_cycleway` -> `B_path_segregated`, see `ljubljana/lau/2022`). That moves km from A to B but
+not the A+B sum. New sides outside the LAU include 13.4 km of `A_cycleway` and 10.1 km of
+`B_path` (e.g. way 981127313).
+68.3 of the 72.1 km of new A+B sides are on way ids not present a year earlier. 12,751 edits in
+2021, top-mapper share 0.42, no spike.
+
+### ljubljana/fua/2023
+
+Cause: **mapping activity** outside the city. A+B rose 352.7 -> 399.8 km (+47.1, needs 35.3).
+The LAU added +8.8 km and the rest of the FUA +38.3 km (140.7 -> 179.0). 19.9 km of the new A+B
+sides are `highway=cycleway` outside the LAU (e.g. way 1086139162, 3.1 km). The LAU's 58.1 km
+`A_cycleway` -> `B_path_segregated` re-tagging (see `ljubljana/lau/2023`) also shows here and
+moves only the split. 11,261 edits in 2022 (no spike) over 2,874 changesets (top changeset 0.8%).
+The top-mapper share of 0.60 raises `single_mapper`. The city's share for the same year is 0.83,
+and its main change that year is the re-tagging, which does not change A+B. The jump itself
+comes from outside the city.
+
+### ljubljana/fua/2024
+
+Cause: **mapping activity** outside the city. A+B rose 399.8 -> 449.5 km (+49.7, needs 40.0).
+The LAU added +4.9 km and the rest of the FUA +44.8 km (179.0 -> 223.8). Outside the LAU, the new
+sides are 18.5 km of `highway=cycleway` (e.g. way 1182208725, 3.1 km), 16.1 km of road-side
+`cycleway=track` (e.g. way 150354472 Loška cesta, `cycleway:left=track`) and 10.4 km of
+`B_path`. 12,619 edits in 2023, top-mapper share 0.41, no spike.
+
+### ljubljana/fua/2025
+
+Cause: **mapping activity** outside the city, with some new construction. A+B rose 449.5 ->
+536.8 km (+87.3, needs 45.0). +84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km
+inside. Of 105.2 km of new A+B sides, 53.2 km are on ways that already existed in 2024 and were
+newly tiered A or B. The largest groups are untagged secondary and primary roads (12.0 + 9.2 km),
+e.g. way 28675982 (road 102), which gained `cycleway=track` on both sides outside the city.
+Some of the new km is new infrastructure. Way 442354000, outside the city, went from
+`highway=track` to `highway=cycleway` with a fixme saying "change surface when complerted 2024".
+Inside the city, way 1198338337 Pionirska proga went from `railway=abandoned` to
+`highway=cycleway`. The other 52.0 km are on way ids not present a year earlier (new or split
+ways), and 12.8 km of A+B sides were lost. 9,703 edits in
+2024 over 2,785 changesets, top-mapper share 0.19, no spike.
+
 ### lyon/lau/2025
 
 Cause: **campaign** (pedestrian network, not cycling). 26,893 counted edits in 2024
