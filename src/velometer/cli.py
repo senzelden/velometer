@@ -77,8 +77,8 @@ def main() -> None:
 
 @app.command()
 def migrate(
-    activity_sha: str = typer.Option(
-        ...,
+    activity_sha: str | None = typer.Option(
+        None,
         "--activity-sha",
         help="sha256 (64 lowercase hex) of the activity.yaml the stored activity rows were "
         "computed with; needed only to migrate a v5 database that has activity rows.",
@@ -86,7 +86,7 @@ def migrate(
     db: Path = DB_OPT,
 ) -> None:
     """Migrate the database to the current schema (v5 to v6 needs --activity-sha)."""
-    if not re.fullmatch(r"[0-9a-f]{64}", activity_sha):
+    if activity_sha is not None and not re.fullmatch(r"[0-9a-f]{64}", activity_sha):
         typer.echo("error: --activity-sha must be 64 lowercase hex characters", err=True)
         raise typer.Exit(2)
     with open_db(db) as conn:

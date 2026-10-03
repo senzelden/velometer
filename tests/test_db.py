@@ -709,6 +709,22 @@ def test_v6_migration_is_atomic(tmp_path, monkeypatch):
         assert "activity_v6" not in _tables(c)
 
 
+def test_interrupt_after_schema_ddl_keeps_old_version(tmp_path, monkeypatch):
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=0)
+
+    def boom(conn, v):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(db, "_set_user_version", boom)
+    with open_db(path) as conn, pytest.raises(RuntimeError):
+        create_schema(conn)
+    with open_db(path) as conn:
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 5
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(activity)")}
+        assert "activity_sha256" not in cols  # the v6 rebuild rolled back too
+
+
 def test_v5_with_activity_rows_needs_the_sha(tmp_path):
     path = tmp_path / "v5.sqlite"
     _make_v5_db_with_activity(path, rows=2)

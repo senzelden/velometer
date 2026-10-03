@@ -1,6 +1,7 @@
 """SQLite schema and repository functions (ADR 0007: SQLite is canonical)."""
 
 import json
+import re
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -192,8 +193,6 @@ def _migrate_3_to_4(conn: sqlite3.Connection) -> None:
     """Rebuild metrics with the basis in the primary key; existing rows are copied unchanged."""
     if "metrics" not in _tables(conn):
         return
-    if not conn.in_transaction:  # DDL does not open one: make the rebuild atomic
-        conn.execute("BEGIN")
     conn.execute("DROP TABLE IF EXISTS metrics_v4")
     conn.execute(f"CREATE TABLE metrics_v4 ({_METRICS_COLUMNS})")
     conn.execute(
@@ -233,8 +232,6 @@ def _migrate_5_to_6(conn: sqlite3.Connection, activity_sha256: str | None) -> No
             "`velometer migrate --activity-sha <sha>` with the sha256 of the activity.yaml "
             "they were computed with (the earlier sha256sum of config/activity.yaml)"
         )
-    if not conn.in_transaction:  # DDL does not open one: make the rebuild atomic
-        conn.execute("BEGIN")
     conn.execute("DROP TABLE IF EXISTS activity_v6")
     conn.execute(f"CREATE TABLE activity_v6 ({_ACTIVITY_TABLE_COLUMNS})")
     conn.execute(
@@ -266,6 +263,15 @@ def _repair_done_key_index(conn: sqlite3.Connection) -> None:
         conn.execute("DROP INDEX runs_done_key")
 
 
+def _statements(script: str) -> list[str]:
+    """Split a SQL script into statements (it holds no triggers, so `;` at line end ends one)."""
+    return [p.strip() for p in re.split(r";[ \t]*\n", script) if p.strip()]
+
+
+def _set_user_version(conn: sqlite3.Connection, version: int) -> None:
+    conn.execute(f"PRAGMA user_version = {int(version)}")
+
+
 def create_schema(conn: sqlite3.Connection, activity_sha256_for_v5: str | None = None) -> None:
     """Create or migrate the schema. A v5 database with activity rows needs the sha256 of the
     activity.yaml they were computed with (`velometer migrate --activity-sha`)."""
@@ -274,17 +280,31 @@ def create_schema(conn: sqlite3.Connection, activity_sha256_for_v5: str | None =
         raise SchemaError(
             f"database schema v{current} is newer than this velometer (v{SCHEMA_VERSION})"
         )
-    with conn:
-        for v in range(max(current, 1), SCHEMA_VERSION):
-            if not current:  # a fresh database (user_version 0) needs no migration
-                continue
-            if v == 5:
-                _migrate_5_to_6(conn, activity_sha256_for_v5)
-            else:
-                _MIGRATIONS[v](conn)
-        _repair_done_key_index(conn)
-        conn.executescript(_SCHEMA)
-        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    # One explicit transaction: executescript would COMMIT first, and PRAGMA user_version is
+    # transactional, so an interrupted migration leaves schema and version as they were.
+    saved = conn.isolation_level
+    conn.isolation_level = None
+    try:
+        conn.execute("BEGIN")
+        try:
+            for v in range(max(current, 1), SCHEMA_VERSION):
+                if not current:  # a fresh database (user_version 0) needs no migration
+                    continue
+                if v == 5:
+                    _migrate_5_to_6(conn, activity_sha256_for_v5)
+                else:
+                    _MIGRATIONS[v](conn)
+            _repair_done_key_index(conn)
+            for stmt in _statements(_SCHEMA):
+                conn.execute(stmt)
+            _set_user_version(conn, SCHEMA_VERSION)
+            conn.execute("COMMIT")
+        except BaseException:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+    finally:
+        conn.isolation_level = saved
 
 
 @dataclass(frozen=True)

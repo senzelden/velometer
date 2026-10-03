@@ -696,6 +696,26 @@ def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
         assert c.execute("PRAGMA user_version").fetchone()[0] == 6
 
 
+def test_migrate_without_activity_sha_on_empty_activity(tmp_path):
+    from tests.test_db import _make_v5_db_with_activity
+
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=0)
+    r = CliRunner().invoke(app, ["migrate", "--db", str(path)])
+    assert r.exit_code == 0, r.output
+    assert "schema v6" in r.output
+
+
+def test_migrate_without_activity_sha_on_v5_rows_explains(tmp_path):
+    from tests.test_db import _make_v5_db_with_activity
+
+    path = tmp_path / "v5.sqlite"
+    _make_v5_db_with_activity(path, rows=2)
+    r = CliRunner().invoke(app, ["migrate", "--db", str(path)])
+    assert r.exit_code == 1
+    assert "--activity-sha" in r.output
+
+
 def test_migrate_rejects_a_malformed_sha(tmp_path):
     db = tmp_path / "v5.sqlite"
     for bad in ("abc", "E" * 64, "g" * 64, "e" * 63):
