@@ -21,11 +21,11 @@ Re-checked on classifier v3 (Task 14, run 289, 2026-10-03): 0.813, unchanged; v3
 
 Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
-Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
+Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| ljubljana | 289 | 1715.0 | 0.0% | 12.0% | 81.3% | 0.1% | b_share_of_ab |
+| ljubljana | 289 | 1715.0 | 0.00% | 12.0% | 81.3% | 0.1% | b_share_of_ab |
 
 ### ljubljana: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 

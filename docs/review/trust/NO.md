@@ -37,11 +37,11 @@ Re-checked on classifier v3 (Task 14, run 280, 2026-10-03): 5.31 %, unchanged (s
 
 Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
-Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
+Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| oslo | 280 | 4911.6 | 0.0% | 9.3% | 82.1% | 5.3% | b_share_of_ab, boundary_diff_pct |
+| oslo | 280 | 4911.6 | 0.00% | 9.3% | 82.1% | 5.3% | b_share_of_ab, boundary_diff_pct |
 
 ### oslo: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 

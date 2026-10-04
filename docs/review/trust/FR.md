@@ -7,20 +7,20 @@ Hand-written notes go here. Only the generated block below is replaced when `vel
 
 Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
-Limits: unrecognised 0.1%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
+Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| paris | 271 | 6981.7 | 0.0% | 41.3% | 6.0% | 0.0% | none |
-| lyon | 282 | 2320.3 | 0.0% | 32.9% | 15.2% | 0.1% | none |
-| strasbourg | 283 | 1197.7 | 0.0% | 29.9% | 29.3% | 0.1% | none |
-| bordeaux | 284 | 890.5 | 0.0% | 37.5% | 18.0% | 1.0% | none |
+| paris | 271 | 6981.7 | 0.00% | 41.3% | 6.0% | 0.0% | none |
+| lyon | 282 | 2320.3 | 0.01% | 32.9% | 15.2% | 0.1% | none |
+| strasbourg | 283 | 1197.7 | 0.00% | 29.9% | 29.3% | 0.1% | none |
+| bordeaux | 284 | 890.5 | 0.04% | 37.5% | 18.0% | 1.0% | none |
 
 ### Pilot comparison
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| paris | 271 | 6981.7 | 0.0% | 41.3% | 6.0% | 0.0% | none |
+| paris | 271 | 6981.7 | 0.00% | 41.3% | 6.0% | 0.0% | none |
 
 ### paris: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
 

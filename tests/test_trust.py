@@ -337,6 +337,22 @@ def test_write_country_keeps_hand_written_notes(tmp_path):
     assert json.loads(js.read_text())["cities"][0]["city_id"] == "second"
 
 
+def test_shares_below_one_percent_show_two_decimals(tmp_path):
+    # Stockholm read "0.1%" against a limit of "0.1%" while under it: a value or limit below 1 %
+    # needs 2 decimals to be compared; larger shares keep 1
+    t = TrustThresholds(
+        unrecognised_share_max=0.001,
+        excluded_share_max=0.5,
+        b_share_of_ab_max=0.5,
+        boundary_diff_pct_max=5,
+    )
+    d = _diag(city_id="c", unrecognised_share=0.0012, excluded_share=0.154, b_share_of_ab=0.004)
+    _, md = tr.write_country(tmp_path, _country(d), t, [])
+    text = md.read_text()
+    assert "Limits: unrecognised 0.10%, excluded 50.0%, B of A+B 50.0%" in text
+    assert "| c | 1 | 10.0 | 0.12% | 15.4% | 0.40% |" in text
+
+
 def test_write_country_appends_a_block_to_a_file_without_one(tmp_path):
     md = tmp_path / "review" / "trust" / "XX.md"
     md.parent.mkdir(parents=True)

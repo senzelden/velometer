@@ -200,16 +200,23 @@ def breaches(d: CityDiagnostics, t: TrustThresholds) -> list[str]:
     return [name for name, value, limit in checks if value is not None and value > limit]
 
 
-def _pct(x: float | None) -> str:
-    return "n/a" if x is None else f"{100 * x:.1f}%"
+def _pct(x: float | None, limit: float | None = None) -> str:
+    """A share as a percentage: 2 decimals when it or its limit is below 1 %, so a value and a
+    limit that differ there do not print alike ("0.1%" against "0.1%"); 1 decimal otherwise."""
+    if x is None:
+        return "n/a"
+    places = 2 if min(x, x if limit is None else limit) < 0.01 else 1
+    return f"{100 * x:.{places}f}%"
 
 
 def _row(d: CityDiagnostics, t: TrustThresholds) -> str:
     diff = "n/a" if d.boundary_diff_pct is None else f"{d.boundary_diff_pct:.1f}%"
     over = ", ".join(breaches(d, t)) or "none"
     return (
-        f"| {d.city_id} | {d.run_id} | {d.cycling_km:.1f} | {_pct(d.unrecognised_share)} "
-        f"| {_pct(d.excluded_share)} | {_pct(d.b_share_of_ab)} | {diff} | {over} |"
+        f"| {d.city_id} | {d.run_id} | {d.cycling_km:.1f} "
+        f"| {_pct(d.unrecognised_share, t.unrecognised_share_max)} "
+        f"| {_pct(d.excluded_share, t.excluded_share_max)} "
+        f"| {_pct(d.b_share_of_ab, t.b_share_of_ab_max)} | {diff} | {over} |"
     )
 
 
