@@ -421,3 +421,20 @@ def test_qecio_dagger_sits_on_its_own_point_to_the_right(fixture_db):
     assert dagger["mark"].get("dy", 0) == 0
     assert dagger["mark"]["dx"] > 0
     assert dagger["mark"]["baseline"] == "middle" and dagger["mark"]["align"] == "left"
+
+
+def test_spread_labels_never_swap_order_and_stay_near_their_own_line():
+    from velometer.report.charts import _spread_labels
+
+    gap = 10.7
+    values = {"berlin": 110.0, "wien": 91.0, "paris": 62.0, "far": 240.0, "close": 108.0}
+    out = _spread_labels(values, gap)
+    assert sorted(out, key=out.get) == sorted(values, key=values.get)  # same vertical order
+    assert all(out[k] <= values[k] + 1e-9 for k in values)  # pushed down only, never up
+    assert all(values[k] - out[k] <= gap * (len(values) - 1) for k in values)
+    # wien is 19 below berlin: more than the gap, so it stays on its own line end
+    assert _spread_labels({"berlin": 110.0, "wien": 91.0, "paris": 62.0}, gap) == {
+        "berlin": 110.0,
+        "wien": 91.0,
+        "paris": 62.0,
+    }

@@ -125,24 +125,12 @@ LABEL_GAP_PX = 13  # least vertical distance between two end labels (11 px text)
 
 
 def _spread_labels(values: dict[str, float], gap: float) -> dict[str, float]:
-    """Label positions (data units) at least `gap` apart, in the order of the values: a label
-    that would sit within `gap` of the one above is pushed down, then the group is re-centred
-    on its own mean so a pair of close lines is labelled either side of them."""
-    out = dict(values)
-    order = sorted(values, key=lambda k: -values[k])
-    i = 0
-    while i < len(order):
-        j = i  # grow a cluster of labels chained within `gap`
-        while j + 1 < len(order) and out[order[j]] - values[order[j + 1]] < gap:
-            out[order[j + 1]] = out[order[j]] - gap
-            j += 1
-        if j > i:
-            shift = (
-                sum(out[k] for k in order[i : j + 1]) - sum(values[k] for k in order[i : j + 1])
-            ) / (j - i + 1)
-            for k in order[i : j + 1]:
-                out[k] -= shift
-        i = j + 1
+    """Label positions (data units) at least `gap` apart that keep the order of the values.
+    The highest label stays on its line end; each next one is pushed DOWN (smaller values) just
+    far enough, so no label ever passes a higher-valued neighbour."""
+    out: dict[str, float] = {}
+    for k in sorted(values, key=lambda k: -values[k]):
+        out[k] = min(values[k], min(out.values(), default=float("inf")) - gap)
     return out
 
 
@@ -186,7 +174,12 @@ def headline_over_time(data: ReportData) -> dict:
         legend=alt.Legend(orient="bottom", direction="horizontal"),
     )
     tooltip = _headline_tooltip()
-    now = {r["city"]: r["headline"] for r in rows if r["label"] == NOW and r["kind"] == "lau"}
+    # only the labelled (coloured) cities are spread: the grey ones carry no end label
+    now = {
+        r["city"]: r["headline"]
+        for r in rows
+        if r["label"] == NOW and r["kind"] == "lau" and r["role"] != OTHER
+    }
     top = max([r["headline"] for r in rows if r["headline"] is not None] + [1.0])
     gap = LABEL_GAP_PX / HEADLINE_HEIGHT * top
     spread = _spread_labels({c: v for c, v in now.items() if v is not None}, gap)
