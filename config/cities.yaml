@@ -66,6 +66,12 @@
 #   (URAU_NAME Bratislava, URAU_CATG F); nuts3_code SK010 (QECIO row Bratislavský kraj, area
 #   2052.246 km2, not the city); bikenetkit_id bratislava_sk; geofabrik_region
 #   europe/slovakia (no smaller region; union uncovered 0 m2); union centroid 17.119E -> 25833.
+#
+# M6 Bezirke (Task 13), queried on 2026-10-04 from data/raw/berlin-261003.osm.pbf
+# (osm_timestamp 2026-10-03T20:20:50+00:00): osmium tags-filter r/boundary=administrative, then
+# osmium export --add-unique-id=type_id; kept admin_level=9 areas lying within the Berlin LAU
+# (12 at >= 98.6 % area inside; Schoenerlinde 2 % and Gosen 5 % are Brandenburg, dropped).
+# Relation id = (area id - 1) / 2, each confirmed by name with osmium getid.
 cities:
   - id: berlin
     name: Berlin
@@ -78,6 +84,22 @@ cities:
     nuts3_code: DE300
     bikenetkit_id: berlin_de
     nuts3_is_city: true
+    subareas:
+      source: osm_admin
+      admin_level: 9
+      relations:
+        - {id: 404538, name: Charlottenburg-Wilmersdorf, slug: charlottenburg_wilmersdorf}
+        - {id: 55764, name: Friedrichshain-Kreuzberg, slug: friedrichshain_kreuzberg}
+        - {id: 404554, name: Lichtenberg, slug: lichtenberg}
+        - {id: 164712, name: Marzahn-Hellersdorf, slug: marzahn_hellersdorf}
+        - {id: 16347, name: Mitte, slug: mitte}
+        - {id: 162902, name: Neukölln, slug: neukoelln}
+        - {id: 164723, name: Pankow, slug: pankow}
+        - {id: 16334, name: Reinickendorf, slug: reinickendorf}
+        - {id: 16343, name: Spandau, slug: spandau}
+        - {id: 55734, name: Steglitz-Zehlendorf, slug: steglitz_zehlendorf}
+        - {id: 158437, name: Tempelhof-Schöneberg, slug: tempelhof_schoeneberg}
+        - {id: 55754, name: Treptow-Köpenick, slug: treptow_koepenick}
   - id: paris
     name: Paris
     country_iso2: FR

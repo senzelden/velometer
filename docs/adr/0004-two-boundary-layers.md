@@ -92,3 +92,37 @@ these cities under the `population_national_statistics` limitation. Paris keeps 
 **EPSG.** Each city's EPSG is its LAU centroid's UTM zone, checked on write (`check_epsg`).
 Copenhagen keeps EPSG 25832 through an explicit `epsg_exception` (Danish national standard; the
 centroid is 0.57° into zone 33, a scale error of about 0.06 %).
+
+## M6 notes (2026-10-04)
+
+**Berlin Bezirke as subareas.** The 12 Bezirke are OSM `boundary=administrative`
+relations with `admin_level=9`. They were queried from `data/raw/berlin-261003.osm.pbf`
+(osm_timestamp 2026-10-03T20:20:50+00:00) with `osmium tags-filter` and `osmium export`, and
+each id was confirmed by name with `osmium getid`. Two other admin_level 9 areas in the extract,
+Schönerlinde and Gosen, are Brandenburg villages (2 % and 5 % of their area inside the LAU) and
+are not used. `velometer boundaries fetch --city berlin --subareas` measured (EPSG 25833):
+
+| Bezirk | relation | km² |
+|---|---:|---:|
+| Charlottenburg-Wilmersdorf | 404538 | 64.6 |
+| Friedrichshain-Kreuzberg | 55764 | 20.4 |
+| Lichtenberg | 404554 | 52.1 |
+| Marzahn-Hellersdorf | 164712 | 61.8 |
+| Mitte | 16347 | 39.4 |
+| Neukölln | 162902 | 44.9 |
+| Pankow | 164723 | 103.2 |
+| Reinickendorf | 16334 | 89.3 |
+| Spandau | 16343 | 91.8 |
+| Steglitz-Zehlendorf | 55734 | 102.5 |
+| Tempelhof-Schöneberg | 158437 | 53.0 |
+| Treptow-Köpenick | 55754 | 167.6 |
+
+- The union is 890.69 km². It equals OSM relation 62422, the city, to 0.00 %.
+- Against the LAU (892.35 km²), the union's area differs by 0.19 %. Its symmetric difference
+  is 1.45 %: 5.64 km² lies outside the LAU and 7.30 km² of the LAU lies outside the union.
+  This is the LAU's 1:1M generalisation. LAU and OSM relation 62422 differ by the same 1.45 %.
+- The pairwise overlap is 0.000 %.
+- The subarea check therefore compares areas, as the spec says ("within 1 % of the LAU
+  area") and as this ADR compares boundary layers. The symmetric difference is reported but not
+  enforced. The binding guard is the per-tier rule that Bezirk km must sum to city km within
+  0.5 %, checked on every run (ruling, M6 Task 13).
