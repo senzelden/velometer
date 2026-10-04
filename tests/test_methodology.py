@@ -486,3 +486,74 @@ def test_trust_check_conditions_are_all_described(facts, lang):
     (line,) = [x for x in section.splitlines() if TRUST_CHECK_CONDITIONS[lang][-1] in x]
     assert "golden" not in line and "Referenzstichprobe" not in line, line
     assert "drei Fällen" not in section
+
+
+TEMPLATES = resources.files("velometer.report") / "templates"
+PUBLISHED_SOURCES = {
+    "en": [TEMPLATES / "methodology.en.md.j2"],
+    "de": [TEMPLATES / "methodology.de.md.j2"],
+}
+
+
+def _published(lang: str) -> str:
+    """The hand-written text of the published methodology in `lang`: its template plus the
+    limitations in that language."""
+    lims = yaml.safe_load((default_config_dir() / "limitations.yaml").read_text())["limitations"]
+    parts = [p.read_text() for p in PUBLISHED_SOURCES[lang]]
+    return "\n".join(parts + [x[lang] for x in lims])
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_published_text_cites_no_task_id_and_no_superseded_decision(lang):
+    text = _published(lang)
+    assert not re.search(r"\bTask \d+[a-z]?\b", text)  # internal ids mean nothing to a reader
+    # spec decision 9 (urb_cpop1) was superseded by the user decision of 2026-10-03
+    assert not re.search(r"(decision|Entscheidung) 9\b", text)
+
+
+def test_the_urban_audit_fallback_is_described_as_unused_and_is_unused():
+    from velometer.config import load_cities
+
+    cities = load_cities(default_config_dir() / "cities.yaml")
+    assert not any(c.population_urau for c in cities)
+    for lang, unused in (("en", "no configured city uses it"), ("de", "keine konfigurierte Stadt")):
+        text = _published(lang)
+        (para,) = [p for p in text.split("\n\n") if "urb_cpop1" in p]
+        assert unused in para, (lang, para)
+
+
+GERMAN_SLIPS = {
+    # wrong or awkward German in published text, with the fix
+    "den keine Regel erkennt": "die keine Regel erkennt (the km, not the share, go unrecognised)",
+    "je neuem Land": "für jedes neue Land",
+    "Ihre Vergleichszeilen": "Die QECIO-Vergleichszeilen der Stadt (unclear antecedent)",
+}
+
+
+def test_published_german_has_none_of_the_known_slips():
+    text = _published("de")
+    for slip, fix in GERMAN_SLIPS.items():
+        assert slip not in text, f"{slip!r}: use {fix!r}"
+
+
+def test_english_qecio_rows_name_their_city():
+    assert "Its comparison rows" not in _published("en")
+    assert "The city's QECIO comparison rows" in _published("en")
+
+
+def test_the_english_qecio_note_is_glossed_in_german():
+    text = _published("de")
+    for para in text.split("\n"):
+        if "NUTS3 unit is not the city" in para:
+            assert "(NUTS-3-Einheit ist nicht die Stadt)" in para, para
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_trust_gate_bullets_are_parallel(lang):
+    # each check before trust is a bold term with a full stop, then sentences
+    text = _published(lang)
+    section = text[text.index("## Country trust gate" if lang == "en" else "## Freigabe je Land") :]
+    bullets = section.split("\n\n")[2].splitlines()
+    assert len(bullets) == 2
+    for b in bullets:
+        assert re.match(r"- \*\*[^*]+\.\*\* [A-ZÄÖÜ]", b), b

@@ -110,34 +110,36 @@ limitations:
       Ihre Schwellenwerte schlagen an bei Radverkehrs-Tags, die der Klassifikator nicht erkennt
       oder ausschließt, bei einem ungewöhnlich hohen Anteil der Stufe B an A+B und bei einer
       Verwaltungsgrenze, die von der OSM-Relation abweicht [M5-Spezifikation §3.1]. Die
-      Referenzstichprobe umfasst etwa 12 Wege je neuem Land. Das reicht nicht, um jede örtliche
-      Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen, Österreich
-      und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich ihrer
-      Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
+      Referenzstichprobe umfasst etwa 12 Wege für jedes neue Land. Das reicht nicht, um jede
+      örtliche Erfassungsgewohnheit abzudecken [M5-Spezifikation §3.2]. Frankreich, Polen,
+      Österreich und Dänemark haben keine eigene Referenzstichprobe: Sie wurden über den Abgleich
+      ihrer Pilotstädte in M2 freigegeben [M5-Spezifikation, Entscheidung 7].
   - id: population_national_statistics
     en: >-
       Some cities have no LAU population, and neither their NUTS3 unit (a province or
       département) nor their Urban Audit city (a greater city) matches the municipality. Their
       population is the official figure of the national statistics office, cited with its year
-      and URL in `config/cities.yaml` (`population_override`) [M5 spec, decision 9; Task 13c].
-      That year may not be 2024, so their per-100k values can rest on a different year than
-      those of the other cities. The tables above give the year and source of each figure.
+      and URL in `config/cities.yaml` (`population_override`) [user decision of 2026-10-03,
+      `docs/superpowers/rulings-m5.md`]. That year may not be 2024, so their per-100k values can
+      rest on a different year than those of the other cities. The tables above give the year
+      and source of each figure.
     de: >-
       Für einige Städte gibt es keine LAU-Einwohnerzahl, und weder ihre NUTS-3-Einheit (eine
       Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt
       sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen
       Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`)
-      [M5-Spezifikation, Entscheidung 9; Task 13c]. Das Jahr muss nicht 2024 sein; ihre Werte
-      je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen als die der übrigen
-      Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben.
+      [Entscheidung vom 3. Oktober 2026, `docs/superpowers/rulings-m5.md`]. Das Jahr muss nicht
+      2024 sein; ihre Werte je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen
+      als die der übrigen Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben.
   - id: qecio_nuts3_not_city
     en: >-
       QECIO v2.10 publishes results per NUTS3 region. Where that region is not the city, the
-      QECIO figure covers a different area than our runs. Its comparison rows then carry the
-      note "NUTS3 unit is not the city", and the rankings chart marks the city with †
+      QECIO figure covers a different area than our runs. The city's QECIO comparison rows then
+      carry the note "NUTS3 unit is not the city", and the rankings chart marks the city with †
       [M5 spec §4.3].
     de: >-
-      QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die
-      Stadt, bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Ihre
-      Vergleichszeilen tragen dann den Hinweis „NUTS3 unit is not the city“, und das
-      Ranglistendiagramm kennzeichnet die Stadt mit † [M5-Spezifikation §4.3].
+      QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die Stadt,
+      bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Die
+      QECIO-Vergleichszeilen der Stadt tragen dann den Hinweis „NUTS3 unit is not the city“
+      (NUTS-3-Einheit ist nicht die Stadt), und das Ranglistendiagramm kennzeichnet die Stadt
+      mit † [M5-Spezifikation §4.3].
