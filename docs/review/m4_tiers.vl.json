@@ -8484,7 +8484,12 @@
       ],
       "x": {
         "axis": {
-          "labelAngle": 0
+          "labelAngle": 0,
+          "values": [
+            "2018",
+            "2022",
+            "now"
+          ]
         },
         "field": "label",
         "sort": [

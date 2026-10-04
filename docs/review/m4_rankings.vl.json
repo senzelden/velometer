@@ -130,9 +130,11 @@
     {
       "mark": {
         "type": "text",
+        "align": "left",
+        "baseline": "middle",
         "color": "#0b0b0b",
-        "dx": 10,
-        "dy": -8,
+        "dx": 9,
+        "dy": 0,
         "fontSize": 14,
         "text": "\u2020"
       },
