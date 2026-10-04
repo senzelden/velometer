@@ -819,6 +819,40 @@ def test_reconcile_check_skips_untrusted_and_city_flag_refuses(report_db_with_tr
     assert nope.exit_code == 2 and "unknown city" in nope.output
 
 
+@pytest.mark.parametrize("fr_status", ["pending", "trusted"])
+def test_write_blocks_omit_the_cities_of_untrusted_countries(
+    report_db_with_trust, tmp_path, fr_status
+):
+    # R7: reconcile --write and timeseries --write publish only trusted cities; with FR trusted
+    # the same fixture shows paris, so its absence under "pending" is the trust filter's doing
+    from tests.report_fixture import CLASSIFIER, PARIS
+    from tests.test_run_history import _current_deps
+    from velometer import reconcile as rc
+    from velometer import run as R
+    from velometer import timeseries as ts
+    from velometer.db import open_db
+
+    ok = {"status": "trusted", "basis": "t"}
+    db, cfg = report_db_with_trust(countries={"DE": ok, "FR": {**ok, "status": fr_status}})
+    with open_db(db) as conn:  # paris has history runs only: give it a current run too
+        R.run_city(
+            conn, PARIS, data_dir=tmp_path, config_dir=cfg, classifier=CLASSIFIER,
+            deps=_current_deps(tmp_path),
+        )  # fmt: skip
+    base = ["--db", str(db), "--config-dir", str(cfg)]
+    blocks = {}
+    for cmd, mod in (("reconcile", rc), ("timeseries", ts)):
+        report = tmp_path / f"{cmd}.md"
+        report.write_text(f"{mod.BEGIN}\n{mod.END}\n")
+        res = CliRunner().invoke(app, [cmd, *base, "--report", str(report), "--write"])
+        assert res.exit_code == 0, res.output
+        text = report.read_text()
+        blocks[cmd] = text[text.index(mod.BEGIN) : text.index(mod.END)].lower()
+    for cmd, block in blocks.items():
+        assert "berlin" in block, cmd
+        assert ("paris" in block) == (fr_status == "trusted"), (cmd, block)
+
+
 def test_results_marks_untrusted(report_db_with_trust, tmp_path):
     from tests.report_fixture import CLASSIFIER, PARIS
     from tests.test_run_history import _current_deps
