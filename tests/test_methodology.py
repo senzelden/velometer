@@ -367,6 +367,22 @@ def test_each_city_lists_its_boundary_and_population_source(fixture_db):
         assert text.index(start) < text.index("| Berlin | OSM relation 123 |") < text.index(end)
 
 
+def test_boundary_source_follows_the_stored_version_not_the_wording_of_the_source(fixture_db):
+    db_path, cfg, _, _ = fixture_db
+    with closing(sqlite3.connect(db_path)) as w, w:
+        w.execute(  # an OSM-relation boundary whose source text is not the usual "OSM relation N"
+            "UPDATE boundaries SET source='relation 7 of OSM', source_version='OSM admin relation' "
+            "WHERE city_id='berlin' AND kind='lau'"
+        )
+        w.execute(  # a GISCO boundary whose source text happens to start with "OSM relation"
+            "UPDATE boundaries SET source='OSM relation 9 clipped', source_version='LAU 2024' "
+            "WHERE city_id='paris' AND kind='lau'"
+        )
+    by = {c.id: c for c in _facts_of(db_path, cfg).cities}
+    assert by["berlin"].boundary_source == "relation 7 of OSM"
+    assert by["paris"].boundary_source == "OSM relation 9 clipped LAU 2024"
+
+
 def _nuts3_item(text: str, lim) -> str:
     """The rendered list item of the qecio_nuts3_not_city limitation, after the YAML text."""
     line = next(x for x in text.splitlines() if x.startswith(f"- {lim}"))

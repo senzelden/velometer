@@ -27,6 +27,7 @@ from velometer.config import (
 from velometer.db import fetch_boundary, fetch_run
 from velometer.models import City
 from velometer.report.data import KINDS, ReportData
+from velometer.sources.boundaries import OSM_ADMIN_VERSION
 
 Lang = Literal["en", "de"]
 LANGS: tuple[Lang, ...] = ("en", "de")
@@ -148,12 +149,13 @@ def _kind_facts(data: ReportData, city_id: str, kind: str) -> KindFacts:
 
 
 def _boundary_source(data: ReportData, city_id: str) -> str | None:
-    """The stored source of the city's admin (`lau`) boundary: "OSM relation N" as stored, or
-    the GISCO source with its version ("Eurostat GISCO LAU 2024 (1:1M)")."""
+    """The stored source of the city's admin (`lau`) boundary: "OSM relation N" as stored (its
+    `source_version` says it is an OSM relation), or the GISCO source with its version
+    ("Eurostat GISCO LAU 2024 (1:1M)")."""
     b = fetch_boundary(data.conn, city_id, "lau")
     if b is None:
         return None
-    return b.source if b.source.startswith("OSM relation") else f"{b.source} {b.source_version}"
+    return b.source if b.source_version == OSM_ADMIN_VERSION else f"{b.source} {b.source_version}"
 
 
 def _city_facts(data: ReportData, city: City, cfg: CityConfig | None) -> CityFacts:

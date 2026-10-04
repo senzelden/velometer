@@ -22,6 +22,7 @@ GISCO = "https://gisco-services.ec.europa.eu/distribution/v2"
 LAU_URL = f"{GISCO}/lau/gpkg/LAU_RG_01M_2024_3035.gpkg"
 FUA_URL = f"{GISCO}/urau/gpkg/URAU_RG_100K_2024_3035_FUA.gpkg"
 FUA_FIELD = "URAU_CODE"
+OSM_ADMIN_VERSION = "OSM admin relation"  # source_version of a boundary built from an OSM relation
 GISCO_VERSION = {"lau": "LAU 2024 (1:1M)", "fua": "URAU 2024 FUA (1:100k)"}
 EUROSTAT_POP = (
     "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3"
@@ -123,7 +124,7 @@ def write_boundary(
         city_id=city.id,
         kind=kind,
         source=source,
-        source_version=source_version or GISCO_VERSION.get(kind, "OSM admin relation"),
+        source_version=source_version or GISCO_VERSION.get(kind, OSM_ADMIN_VERSION),
         area_km2=projected.area / 1e6,
         path=str(out),
         sha256=hashlib.sha256(out.read_bytes()).hexdigest(),
@@ -266,7 +267,7 @@ def _osm_relation_boundary(
         f"OSM relation {city.osm_relation_id}",
         data_dir,
         src_epsg=4326,
-        source_version="OSM admin relation",
+        source_version=OSM_ADMIN_VERSION,
     )
     gj.unlink()
     return rec
