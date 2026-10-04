@@ -522,6 +522,24 @@ def test_the_urban_audit_fallback_is_described_as_unused_and_is_unused():
         assert unused in para, (lang, para)
 
 
+def test_no_published_population_order_offers_the_unused_urban_audit_fallback():
+    # the population order is stated in the body and in the population_2024 limitation; neither
+    # may list the Urban Audit city as a live source while no configured city uses it
+    limitations = yaml.safe_load((default_config_dir() / "limitations.yaml").read_text())
+    (pop,) = [lim for lim in limitations["limitations"] if lim["id"] == "population_2024"]
+    assert "Urban Audit" not in pop["en"], pop["en"]
+    assert "Urban-Audit" not in pop["de"], pop["de"]
+
+
+def test_published_citations_name_which_user_decision():
+    # rulings-m5.md holds several user decisions of the same date: a citation names its topic
+    for lang, generic in (
+        ("en", "[user decision of 2026-10-03,"),
+        ("de", "[Entscheidung vom 3. Oktober 2026,"),
+    ):
+        assert generic not in _published(lang), lang
+
+
 GERMAN_SLIPS = {
     # wrong or awkward German in published text, with the fix
     "den keine Regel erkennt": "die keine Regel erkennt (the km, not the share, go unrecognised)",

@@ -392,3 +392,6 @@ change is a new classifier version (ADR 0005):
 - T15 The map PNGs draw whole ways across the boundary while the km are clipped (M4 behaviour).
 - T16 The timeseries shipped-config test ties to the default; the `history.yaml` regex assumes
   2-space indentation; the no-sidecar computed-md5 path logs nothing.
+- Re-review residuals: two explanation lines break the 100-column wrapping (paris/lau/2021,
+  ljubljana/fua/2025); the construction-label test checks only entries that start with
+  "Cause: **construction**".

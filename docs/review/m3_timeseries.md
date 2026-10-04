@@ -1436,7 +1436,8 @@ threshold 49.6):
 - new `highway=path` ways with `bicycle=designated` add 47.0 km (693 ways);
 - new cycleways add 17.3 km against 12.3 km deleted (redrawing);
 - footway -> path retags add 8.6 km;
-- finished construction (`highway=construction` -> `cycleway`/`path`) adds 6.5 km.
+- ways retagged from `highway=construction` to `cycleway`/`path` add 6.5 km (mapped km;
+  the retag marks the mapping, not a verified opening).
 
 By way midpoint, Długołęka gained 16.3 km (e.g. way 1002612806, `track` -> `path`; way
 1001464229, `construction` -> `cycleway`), Wrocław 14.8 km, Sobótka 5.3 km and Siechnice

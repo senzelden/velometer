@@ -15,13 +15,13 @@ limitations:
     en: >-
       The population is the LAU 2024 figure. Where the LAU has none, as for French communes, it
       is a cited national-statistics figure described below, or else the figure of the
-      identical NUTS3 unit [ADR 0004] or of the Urban Audit city. The same value is used for
+      identical NUTS3 unit [ADR 0004]. The same value is used for
       every snapshot year, so per-100k values do not follow population change [M3 spec,
       decision 2].
     de: >-
       Die Einwohnerzahl ist der LAU-Wert 2024. Fehlt er, wie bei französischen Gemeinden, gilt
       der unten beschriebene, belegte Wert des nationalen Statistikamts, ersatzweise der Wert
-      der deckungsgleichen NUTS-3-Einheit [ADR 0004] oder der Urban-Audit-Stadt. Derselbe Wert
+      der deckungsgleichen NUTS-3-Einheit [ADR 0004]. Derselbe Wert
       gilt für jedes
       Stichjahr. Werte je 100.000 Einwohner bilden Bevölkerungsänderungen daher nicht ab
       [M3-Spezifikation, Entscheidung 2].
@@ -119,8 +119,8 @@ limitations:
       Some cities have no LAU population, and neither their NUTS3 unit (a province or
       département) nor their Urban Audit city (a greater city) matches the municipality. Their
       population is the official figure of the national statistics office, cited with its year
-      and URL in `config/cities.yaml` (`population_override`) [user decision of 2026-10-03,
-      `docs/superpowers/rulings-m5.md`]. That year may not be 2024, so their per-100k values can
+      and URL in `config/cities.yaml` (`population_override`) [user decision on population of
+      2026-10-03, `docs/superpowers/rulings-m5.md`]. That year may not be 2024, so their per-100k values can
       rest on a different year than those of the other cities. The tables above give the year
       and source of each figure.
     de: >-
@@ -128,7 +128,7 @@ limitations:
       Provinz oder ein Département) noch ihre Urban-Audit-Stadt (eine erweiterte Stadt) deckt
       sich mit der Gemeinde. Ihr Einwohnerwert ist die amtliche Zahl des nationalen
       Statistikamts, mit Jahr und URL belegt in `config/cities.yaml` (`population_override`)
-      [Entscheidung vom 3. Oktober 2026, `docs/superpowers/rulings-m5.md`]. Das Jahr muss nicht
+      [Entscheidung zur Einwohnerzahl vom 3. Oktober 2026, `docs/superpowers/rulings-m5.md`]. Das Jahr muss nicht
       2024 sein; ihre Werte je 100.000 Einwohner können sich daher auf ein anderes Jahr stützen
       als die der übrigen Städte. Jahr und Quelle jedes Werts stehen in den Tabellen oben.
   - id: qecio_nuts3_not_city
