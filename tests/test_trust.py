@@ -872,3 +872,169 @@ def test_check_f_exempts_germany(tmp_path, report_db_with_trust):
     argv, p = _check_env(tmp_path, report_db_with_trust)
     (p["docs"] / "review" / "trust" / "DE.json").unlink()
     assert _check(argv) == (0, "trust check: ok\n")
+
+
+# --- golden diff (M6 Task 3) -------------------------------------------------------------------
+
+V4 = default_config_dir() / "classifier" / "v4.yaml"
+DIFF_OSM = """<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+  <node id="1" lat="52.5" lon="13.4000"/>
+  <node id="2" lat="52.5" lon="13.4147"/>
+  <node id="3" lat="52.51" lon="13.4000"/>
+  <node id="4" lat="52.51" lon="13.4147"/>
+  <node id="5" lat="52.52" lon="13.4000"/>
+  <node id="6" lat="52.52" lon="13.4147"/>
+  <way id="11"><nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="cycleway"/>
+    <tag k="foot" v="yes"/>
+    <tag k="name" v="Shared | Path"/>
+  </way>
+  <way id="12"><nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="13"><nd ref="5"/><nd ref="6"/>
+    <tag k="highway" v="primary"/>
+    <tag k="cycleway:both" v="track"/>
+  </way>
+</osm>
+"""
+
+
+def _golden_way(way_id, sides, **extra):
+    return {
+        "way_id": way_id,
+        "group": "g",
+        "name": "",
+        "highway": "cycleway",
+        "proposed": [
+            {"side": s, "tier": t, "rule": r, "subtype": None, "bidirectional": True}
+            for s, t, r in sides
+        ],
+        "confirmed": True,
+        "note": "",
+        **extra,
+    }
+
+
+def _diff_fixture(tmp_path, name="xx"):
+    gdir = tmp_path / "golden"
+    gdir.mkdir()
+    (gdir / f"{name}.osm").write_text(DIFF_OSM)
+    doc = {
+        "source": "t",
+        "classifier_version": "v3",
+        "ways": [
+            _golden_way(11, [("self", "A", "A_cycleway")]),
+            _golden_way(12, [("self", "A", "A_cycleway")], min_classifier="v3"),
+            _golden_way(
+                13,
+                [("left", "A", "A_track_side"), ("right", "A", "A_track_side")],
+            ),
+        ],
+    }
+    tr.write_golden_yaml(gdir / f"{name}.yaml", doc)
+    return gdir / f"{name}.yaml", gdir / f"{name}.osm"
+
+
+def test_golden_diff_sorts_ways_into_renamed_retiered_unchanged(tmp_path):
+    yml, osm = _diff_fixture(tmp_path)
+    cfg = load_classifier(V4)
+    diff = tr.golden_diff(yml, osm, cfg)
+    assert diff.cc == "XX"
+    assert diff.renamed == [12]  # min_classifier is compared like any other way
+    assert diff.unchanged == [13]
+    rows = [(r.way_id, r.side, r.old_tier, r.old_rule, r.new_tier, r.new_rule)
+            for r in diff.retiered]  # fmt: skip
+    assert rows == [(11, "self", "A", "A_cycleway", "B", "B_shared")]
+    assert diff.retiered[0].name == "Shared | Path"
+    assert diff.retiered[0].tags == {"foot": "yes", "highway": "cycleway", "name": "Shared | Path"}
+
+
+def test_write_v4_proposal_confirms_renamed_and_unconfirms_retiered(tmp_path):
+    yml, osm = _diff_fixture(tmp_path)
+    cfg = load_classifier(V4)
+    diff = tr.golden_diff(yml, osm, cfg)
+    out = tr.write_v4_proposal(yml, diff, cfg, tmp_path / "out")
+    assert out == tmp_path / "out" / "xx.yaml"
+    text = out.read_text()
+    assert text.startswith(f"# {tr.ODBL}\n")
+    doc = yaml.safe_load(text)
+    assert doc["classifier_version"] == "v4"
+    by_id = {w["way_id"]: w for w in doc["ways"]}
+    assert by_id[12]["confirmed"] is True and by_id[12]["note"] == ""
+    assert by_id[12]["proposed"][0]["rule"] == "A_cycle_only"
+    assert by_id[12]["min_classifier"] == "v3"
+    assert by_id[11]["confirmed"] is False
+    assert by_id[11]["note"] == "v3: A A_cycleway; awaiting re-sign"
+    assert by_id[11]["proposed"][0]["tier"] == "B"
+    assert by_id[13]["confirmed"] is True
+    assert [w["way_id"] for w in doc["ways"]] == [11, 12, 13]
+    # the source golden file is untouched
+    assert yaml.safe_load(yml.read_text())["classifier_version"] == "v3"
+
+
+def test_golden_diff_way_v4_no_longer_tiers_is_retiered_with_no_new_tier(tmp_path):
+    # a way v4 no longer tiers at all is retiered, with new_tier None
+    yml, osm = _diff_fixture(tmp_path)
+    doc = yaml.safe_load(yml.read_text())
+    doc["ways"].append(_golden_way(99, [("self", "B", "B_path")]))
+    tr.write_golden_yaml(yml, doc)
+    cfg = load_classifier(V4)
+    diff = tr.golden_diff(yml, osm, cfg)  # way 99 is not in the osm file: v4 gives no output
+    row = next(r for r in diff.retiered if r.way_id == 99)
+    assert (row.new_tier, row.new_rule, row.tags) == (None, None, {})
+
+
+def test_render_golden_changes_tables_and_counts(tmp_path):
+    yml, osm = _diff_fixture(tmp_path)
+    diff = tr.golden_diff(yml, osm, load_classifier(V4))
+    text = tr.render_golden_changes({"XX": diff}, "v4")
+    assert tr.GOLDEN_DIFF_BEGIN in text and tr.GOLDEN_DIFF_END in text
+    assert "XX: 1 renamed, 1 retiered, 1 unchanged" in text
+    assert "[11](https://www.openstreetmap.org/way/11)" in text
+    assert "| verdict |" in text
+    assert "`foot=yes`<br>`highway=cycleway`" in text
+    assert "Shared \\| Path" in text  # a pipe in a value must not break the table
+    assert "A A_cycleway" in text and "B B_shared" in text
+    assert text.rstrip().endswith(tr.ODBL)
+
+
+def test_write_golden_changes_keeps_text_outside_the_block(tmp_path):
+    path = tmp_path / "v4-changes.md"
+    path.write_text(
+        "# Notes\n\nmine\n\n<!-- golden-diff:start -->STALEBLOCK<!-- golden-diff:end -->\n\ntail\n"
+    )
+    yml, osm = _diff_fixture(tmp_path)
+    diff = tr.golden_diff(yml, osm, load_classifier(V4))
+    tr.write_golden_changes(path, {"XX": diff}, "v4")
+    got = path.read_text()
+    assert got.startswith("# Notes\n\nmine\n\n") and got.endswith("\n\ntail\n")
+    assert "STALEBLOCK" not in got and "XX: 1 renamed" in got
+
+
+def test_cli_golden_diff_writes_changes_and_proposals(tmp_path):
+    yml, osm = _diff_fixture(tmp_path)  # tmp/golden/xx.*
+    fixtures = tmp_path / "tests" / "fixtures"
+    fixtures.mkdir(parents=True)
+    shutil.copytree(yml.parent, fixtures / "golden")
+    shutil.copy(yml, fixtures / "berlin_golden.yaml")
+    shutil.copy(osm, fixtures / "berlin_golden.osm")
+    out = tmp_path / "out"
+    res = CliRunner().invoke(
+        app,
+        ["trust", "golden-diff", "--classifier", "v4", "--out", str(out),
+         "--tests-dir", str(tmp_path / "tests")],
+    )  # fmt: skip
+    assert res.exit_code == 0, res.output
+    md = (out / "v4-changes.md").read_text()
+    assert "XX: 1 renamed, 1 retiered, 1 unchanged" in md
+    assert "BERLIN: 1 renamed, 1 retiered, 1 unchanged" in md
+    assert sorted(p.name for p in (out / "v4-golden").iterdir()) == ["berlin.yaml", "xx.yaml"]
+    assert yaml.safe_load((out / "v4-golden" / "xx.yaml").read_text())["classifier_version"] == "v4"
+
+
+def test_cli_golden_diff_unknown_classifier_exits_2(tmp_path):
+    res = CliRunner().invoke(app, ["trust", "golden-diff", "--classifier", "v99",
+                                   "--out", str(tmp_path)])  # fmt: skip
+    assert res.exit_code == 2

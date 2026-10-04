@@ -527,6 +527,151 @@ def write_golden_review(
     return path
 
 
+# --- golden diff (a new classifier against the signed-off golden samples) -------------------
+
+GOLDEN_DIFF_BEGIN = "<!-- golden-diff:start -->"
+GOLDEN_DIFF_END = "<!-- golden-diff:end -->"
+
+
+@dataclass(frozen=True)
+class RetierRow:
+    """One side of a retiered golden way; the new tier and rule are None where the new
+    classifier gives that side none, the old ones where the golden file had no such side."""
+
+    way_id: int
+    name: str
+    side: str
+    old_tier: str | None
+    old_rule: str | None
+    new_tier: str | None
+    new_rule: str | None
+    tags: Mapping[str, str]
+
+
+@dataclass
+class GoldenDiff:
+    cc: str
+    renamed: list[int] = field(default_factory=list)  # same (side, tier), other rule ids
+    retiered: list[RetierRow] = field(default_factory=list)  # the (side, tier) set differs
+    unchanged: list[int] = field(default_factory=list)
+    proposed: dict[int, list[dict]] = field(default_factory=dict)  # new classifier, per way
+
+
+def golden_diff(yml: Path, osm: Path, cfg, cc: str | None = None) -> GoldenDiff:
+    """Compare the golden file's `proposed` sides with the classifier `cfg` on the same ways.
+
+    A way is unchanged when its (side, tier, rule) set is the same, renamed when only the rule
+    ids differ, retiered when its (side, tier) set differs. `min_classifier` plays no part."""
+    ways = yaml.safe_load(Path(yml).read_text())["ways"]
+    osm_ways = read_ways(osm).ways
+    observed = observed_tiers(osm_ways, cfg)
+    tags_by_way = {w.id: dict(w.tags) for w in osm_ways}
+    diff = GoldenDiff(cc=cc if cc is not None else Path(yml).stem.upper())
+    diff.proposed = proposed_sides(classify_ways(osm_ways, cfg))
+    for w in ways:
+        wid = w["way_id"]
+        old = {(p["side"], p["tier"], p["rule"]) for p in w["proposed"]}
+        new = observed.get(wid, set())
+        if old == new:
+            diff.unchanged.append(wid)
+        elif {(s, t) for s, t, _ in old} == {(s, t) for s, t, _ in new}:
+            diff.renamed.append(wid)
+        else:
+            name = w.get("name") or tags_by_way.get(wid, {}).get("name", "")
+            old_by = {s: (t, r) for s, t, r in old}
+            new_by = {s: (t, r) for s, t, r in new}
+            for side in sorted(old_by.keys() | new_by.keys()):
+                (ot, orule) = old_by.get(side, (None, None))
+                (nt, nrule) = new_by.get(side, (None, None))
+                diff.retiered.append(
+                    RetierRow(wid, name, side, ot, orule, nt, nrule, tags_by_way.get(wid, {}))
+                )
+    return diff
+
+
+def _tier_rules(proposed: list[dict]) -> str:
+    return ", ".join(sorted({f"{p['tier']} {p['rule']}" for p in proposed}))
+
+
+def write_v4_proposal(
+    yml: Path, diff: GoldenDiff, cfg, out_dir: Path, name: str | None = None
+) -> Path:
+    """<out_dir>/<name> (default the yml's name): the golden file re-proposed by `cfg`.
+
+    Renamed and unchanged ways keep their sign-off; a retiered way is unconfirmed, its note
+    recording the old tier and rule."""
+    doc = yaml.safe_load(Path(yml).read_text())
+    old_version = doc.get("classifier_version", "?")
+    retiered = {r.way_id for r in diff.retiered}
+    ways = []
+    for w in doc["ways"]:
+        wid = w["way_id"]
+        new = {**w, "proposed": diff.proposed.get(wid, [])}
+        if wid in retiered:
+            new["confirmed"] = False
+            new["note"] = f"{old_version}: {_tier_rules(w['proposed'])}; awaiting re-sign"
+        ways.append(new)
+    doc = {**doc, "classifier_version": cfg.version, "ways": ways}
+    out = Path(out_dir) / (name or Path(yml).name)
+    write_golden_yaml(out, doc)
+    return out
+
+
+def _cell(text: str) -> str:
+    return text.replace("|", "\\|")
+
+
+def _tr(tier: str | None, rule: str | None) -> str:
+    return f"{tier} {rule}" if tier is not None else "none"
+
+
+def render_golden_changes(diffs: Mapping[str, GoldenDiff], version: str) -> str:
+    """The generated block of v4-changes.md: a count line and a retiered table per country."""
+    lines = [GOLDEN_DIFF_BEGIN, ""]
+    for d in diffs.values():
+        n_retiered = len({r.way_id for r in d.retiered})
+        lines.append(
+            f"- {d.cc}: {len(d.renamed)} renamed, {n_retiered} retiered, "
+            f"{len(d.unchanged)} unchanged"
+        )
+    for cc, d in diffs.items():
+        lines += [
+            "",
+            f"## {cc}",
+            "",
+            f"| way | name | tags | old tier / rule | {version} tier / rule | side | verdict |",
+            "|---|---|---|---|---|---|---|",
+        ]
+        for r in d.retiered:
+            link = f"[{r.way_id}](https://www.openstreetmap.org/way/{r.way_id})"
+            tags = "<br>".join(f"`{_cell(f'{k}={v}')}`" for k, v in sorted(r.tags.items()))
+            lines.append(
+                f"| {link} | {_cell(r.name)} | {tags} | {_tr(r.old_tier, r.old_rule)} "
+                f"| {_tr(r.new_tier, r.new_rule)} | {r.side} | |"
+            )
+    lines += ["", GOLDEN_DIFF_END, "", ODBL, ""]
+    return "\n".join(lines)
+
+
+def write_golden_changes(path: Path, diffs: Mapping[str, GoldenDiff], version: str) -> Path:
+    """Write the generated block into `path`; text outside the markers is kept."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    full = render_golden_changes(diffs, version)
+    block = full[full.index(GOLDEN_DIFF_BEGIN) : full.index(GOLDEN_DIFF_END) + len(GOLDEN_DIFF_END)]
+    old = path.read_text() if path.exists() else None
+    if old is not None and GOLDEN_DIFF_BEGIN in old and GOLDEN_DIFF_END in old:
+        head, _, rest = old.partition(GOLDEN_DIFF_BEGIN)
+        text = head + block + rest.partition(GOLDEN_DIFF_END)[2]
+    elif old is not None:
+        text = old.rstrip("\n") + "\n\n" + block + "\n"
+    else:
+        title = f"# Golden samples against classifier {version}\n\n"
+        text = title + full
+    _write_atomic(path, text)
+    return path
+
+
 # --- trust check ------------------------------------------------------------------------------
 
 SHARE_THRESHOLDS = ("unrecognised_share_max", "excluded_share_max", "b_share_of_ab_max")

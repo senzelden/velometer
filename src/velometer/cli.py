@@ -1347,6 +1347,57 @@ def trust_sample(
         typer.echo(f"written: {f}")
 
 
+GOLDEN_OUT_OPT = typer.Option(
+    Path("docs/review/trust"), "--out", help="Directory for <classifier>-changes.md."
+)
+
+
+@trust_app.command("golden-diff")
+def trust_golden_diff(
+    classifier: str = typer.Option(..., "--classifier", help="Classifier version, e.g. v4."),
+    out: Path = GOLDEN_OUT_OPT,
+    config_dir: Path = CONFIG_OPT,
+    tests_dir: Path = TESTS_OPT,
+) -> None:
+    """Golden samples against a classifier: <out>/<v>-changes.md, <out>/<v>-golden/<cc>.yaml."""
+    from velometer import trust as tr
+    from velometer.config import load_classifier
+
+    path = config_dir / "classifier" / f"{classifier}.yaml"
+    if not path.is_file():
+        typer.echo(f"error: no classifier {classifier} ({path} not found)", err=True)
+        raise typer.Exit(2)
+    try:
+        cfg = load_classifier(path)
+    except ConfigError as e:
+        raise _config_error(e) from e
+    fixtures = tests_dir / "fixtures"
+    sources = [
+        (p, p.with_suffix(".osm"), None) for p in sorted((fixtures / "golden").glob("*.yaml"))
+    ]
+    sources.append((fixtures / "berlin_golden.yaml", fixtures / "berlin_golden.osm", "BERLIN"))
+    diffs: dict[str, tr.GoldenDiff] = {}
+    written = []
+    for yml, osm, cc in sources:
+        for f in (yml, osm):
+            if not f.is_file():
+                typer.echo(f"error: golden fixture missing: {f}", err=True)
+                raise typer.Exit(1)
+        diff = tr.golden_diff(yml, osm, cfg, cc)
+        diffs[diff.cc] = diff
+        dst = out / f"{classifier}-golden" / f"{diff.cc.lower()}.yaml"
+        written.append(tr.write_v4_proposal(yml, diff, cfg, dst.parent, dst.name))
+    md = tr.write_golden_changes(out / f"{classifier}-changes.md", diffs, classifier)
+    for d in diffs.values():
+        typer.echo(
+            f"{d.cc}: {len(d.renamed)} renamed, {len({r.way_id for r in d.retiered})} retiered, "
+            f"{len(d.unchanged)} unchanged"
+        )
+    typer.echo(f"written: {md}")
+    for w in written:
+        typer.echo(f"written: {w}")
+
+
 @trust_app.command("check")
 def trust_check(
     db: Path = DB_OPT,
