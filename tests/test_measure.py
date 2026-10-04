@@ -5,9 +5,18 @@ from shapely import MultiPolygon, Polygon
 
 from velometer.config import Preset, default_config_dir, load_classifier, load_presets
 from velometer.pipeline.geometry import Projector
-from velometer.pipeline.measure import compute_metrics, measure, road_length, select_metric
+from velometer.pipeline.measure import (
+    SubareaSumError,
+    attribute_subareas,
+    check_subarea_sums,
+    compute_metrics,
+    measure,
+    road_length,
+    select_metric,
+)
 from velometer.pipeline.read import read_ways
 from velometer.pipeline.types import WayRecord
+from velometer.subareas import SubareaPolygon
 
 FIX = Path(__file__).parent / "fixtures" / "measure"
 CFG = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
@@ -350,3 +359,114 @@ def test_way_outside_boundary_is_not_counted_in_n_ways():
     assert rows and all(t.n_ways == 1 for t in rows)
     only_out = measure([outside], CFG, 25833, boundary=_proj_box(13.39, 52.49, 13.41, 52.51))
     assert only_out.tier_lengths == []  # an all-outside tier gets no row, not 0 km with ways
+
+
+# --- per-subarea attribution (M6) ---
+
+CITY_BOX = (13.39, 52.49, 13.43, 52.51)
+
+
+def _sub(slug, box):
+    return SubareaPolygon(slug, slug.upper(), 1, _proj_box(*box), "0" * 64)
+
+
+NORTH_SOUTH = [
+    _sub("n", (13.38, 52.50, 13.44, 52.52)),  # overhangs the city: clipped to it
+    _sub("s", (13.38, 52.48, 13.44, 52.50)),
+]
+
+
+def _attribute(ways, subareas, city_box=CITY_BOX):
+    city = _proj_box(*city_box)
+    result = measure(ways, CFG, 25833, boundary=city)
+    return result, attribute_subareas(ways, result, CFG, 25833, city, subareas)
+
+
+def _tier_map(rows):
+    return {(t.tier, t.subtype, t.length_basis): t for t in rows}
+
+
+def test_subareas_sum_to_the_city():
+    ways = [
+        WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505))),  # crosses the split
+        WayRecord(
+            2, {"highway": "primary", "cycleway:both": "track"}, ((13.41, 52.505), (13.42, 52.505))
+        ),
+        WayRecord(
+            3,
+            {"highway": "secondary", "cycleway:right": "lane"},
+            ((13.41, 52.495), (13.42, 52.495)),
+        ),
+        WayRecord(4, {"highway": "residential"}, ((13.395, 52.492), (13.425, 52.508))),
+        WayRecord(5, {"highway": "motorway"}, ((13.385, 52.497), (13.435, 52.497))),
+    ]
+    result, parts = _attribute(ways, NORTH_SOUTH)
+    assert set(parts) == {"n", "s"}
+    city_tiers = _tier_map(result.tier_lengths)
+    assert {k[0] for k in city_tiers} >= {"A", "D"}  # not vacuous
+    for key, row in city_tiers.items():
+        total = sum(
+            t.length_km
+            for p in parts.values()
+            for t in p.tier_lengths
+            if t.tier == key[0] and t.subtype == key[1] and t.length_basis == key[2]
+        )
+        assert total == pytest.approx(row.length_km, abs=1e-9), key
+    for r in result.road_lengths:
+        total = sum(road_length(p, r.road_class) for p in parts.values())
+        assert r.length_km > 0
+        assert total == pytest.approx(r.length_km, abs=1e-9), r.road_class
+    # the crossing way 1 counts in both subareas; way 2 (tier A) only in n
+    n_ways = {
+        s: _tier_map(p.tier_lengths)[("A", None, "per_side")].n_ways for s, p in parts.items()
+    }
+    assert n_ways == {"n": 2, "s": 1}
+    check_subarea_sums(result, parts)
+    assert compute_metrics(parts["n"], PRESETS)  # SubareaMeasure works as a MeasureResult
+
+
+def test_dual_carriageway_halving_carries_into_subareas():
+    a = WayRecord(
+        1,
+        {"highway": "primary", "oneway": "yes", "name": "X"},
+        ((13.40, 52.505), (13.4147, 52.505)),
+    )
+    b = WayRecord(
+        2,
+        {"highway": "primary", "oneway": "yes", "name": "X"},
+        ((13.4147, 52.50525), (13.40, 52.50525)),
+    )
+    result, parts = _attribute([a, b], NORTH_SOUTH)
+    city = road_length(result, "main_excl_motorway")
+    assert city == pytest.approx(road_length(result, "main_incl_motorway_raw") / 2, rel=1e-9)
+    assert road_length(parts["n"], "main_excl_motorway") == pytest.approx(city, rel=1e-9)
+    assert road_length(parts["n"], "main_incl_motorway_raw") == pytest.approx(2 * city, rel=1e-9)
+    assert road_length(parts["s"], "main_excl_motorway") == 0
+
+
+def test_uncovered_sliver_beyond_tolerance_fails():
+    # subareas cover 13.39-13.4292 of the city's 13.39-13.43: 98 % of its area
+    covering = [_sub("w", (13.38, 52.48, 13.4292, 52.52))]
+    ways = [
+        WayRecord(1, TRACK, ((13.40, 52.49), (13.40, 52.51))),
+        WayRecord(2, TRACK, ((13.4296, 52.49), (13.4296, 52.51))),  # in the gap
+    ]
+    result, parts = _attribute(ways, covering)
+    city_a = _tier_map(result.tier_lengths)[("A", None, "per_side")].length_km
+    part_a = _tier_map(parts["w"].tier_lengths)[("A", None, "per_side")].length_km
+    with pytest.raises(SubareaSumError) as exc:
+        check_subarea_sums(result, parts)
+    msg = str(exc.value)
+    assert "'A'" in msg and f"{part_a:.3f}" in msg and f"{city_a:.3f}" in msg
+
+
+def test_a_way_wholly_outside_every_subarea_counts_no_n_ways():
+    covering = [_sub("w", (13.38, 52.48, 13.41, 52.52))]
+    inside = WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505)))
+    outside = WayRecord(2, TRACK, ((13.42, 52.495), (13.42, 52.505)))  # in the city, no subarea
+    result, parts = _attribute([inside, outside], covering)
+    assert all(t.n_ways == 2 for t in result.tier_lengths if t.tier == "A")
+    rows = [t for t in parts["w"].tier_lengths if t.tier == "A"]
+    assert rows and all(t.n_ways == 1 for t in rows)
+    _, only_out = _attribute([outside], covering)
+    assert only_out["w"].tier_lengths == []

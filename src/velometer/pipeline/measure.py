@@ -2,6 +2,7 @@
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from shapely.geometry.base import BaseGeometry
 from shapely.prepared import prep
@@ -14,6 +15,9 @@ from velometer.pipeline.explode import explode
 from velometer.pipeline.geometry import Projector, length_km
 from velometer.pipeline.tags import parts
 from velometer.pipeline.types import Classified, DualPair, DuplicateFlag, WayRecord
+
+if TYPE_CHECKING:
+    from velometer.subareas import SubareaPolygon
 
 COMPLETENESS_KEYS = {
     "width": ("width", "cycleway:width"),
@@ -222,6 +226,73 @@ def measure(
         way_lengths=lengths,
         road_factors=factors,
     )
+
+
+@dataclass(frozen=True)
+class SubareaMeasure:
+    """Tier and road lengths clipped to one subarea; `compute_metrics` accepts it."""
+
+    tier_lengths: list[TierLength]
+    road_lengths: list[RoadLength]
+
+
+class SubareaSumError(ValueError):
+    """The subarea parts do not add up to the city totals within tolerance."""
+
+
+def attribute_subareas(
+    ways: list[WayRecord],
+    result: MeasureResult,
+    cfg: ClassifierConfig,
+    epsg: int,
+    city_boundary: BaseGeometry,
+    subareas: list["SubareaPolygon"],
+) -> dict[str, SubareaMeasure]:
+    """Split `result` by subarea, each clipped to `subarea.polygon ∩ city_boundary`.
+
+    Reuses the city's classification and dual-carriageway factors (ADR 0003), so a pair halved
+    in the city stays halved in its subarea. A way crossing two subareas counts in the n_ways of
+    both; a way outside every subarea counts in none.
+    """
+    proj = Projector(epsg)
+    public = _public_roads(ways, cfg)
+    relevant = {c.side.way_id for c in result.classified if c.tier is not None}
+    relevant |= {w.id for w in public}
+    lines = {w.id: proj.line(w.coords) for w in ways if w.id in relevant}
+    out = {}
+    for sub in subareas:
+        area = sub.polygon.intersection(city_boundary)
+        prepared = prep(area)
+        lengths = {i: clipped_length_km(line, prepared, area) for i, line in lines.items()}
+        out[sub.subarea_id] = SubareaMeasure(
+            tier_lengths=_tier_lengths(result.classified, lengths, True),
+            road_lengths=_road_lengths(public, result.road_factors, lengths, cfg.road_classes),
+        )
+    return out
+
+
+def check_subarea_sums(
+    result: MeasureResult, parts: dict[str, SubareaMeasure], tol: float = 0.005
+) -> None:
+    """Every city tier row and road class above 0.01 km is matched by the sum of its parts to
+    within `tol` (relative); the slack covers LAU area the subareas leave uncovered."""
+    tier_sums: dict[tuple, float] = defaultdict(float)
+    road_sums: dict[str, float] = defaultdict(float)
+    for p in parts.values():
+        for t in p.tier_lengths:
+            tier_sums[(t.tier, t.subtype, t.length_basis)] += t.length_km
+        for r in p.road_lengths:
+            road_sums[r.road_class] += r.length_km
+    pairs = [
+        ((t.tier, t.subtype, t.length_basis), tier_sums, t.length_km) for t in result.tier_lengths
+    ] + [(r.road_class, road_sums, r.length_km) for r in result.road_lengths]
+    for key, sums, c in pairs:
+        if c <= 0.01:
+            continue
+        s = sums[key]
+        pct = 100 * abs(s - c) / c
+        if abs(s - c) / c > tol:
+            raise SubareaSumError(f"{key}: subareas {s:.3f} km vs city {c:.3f} km ({pct:.2f} %)")
 
 
 def road_length(result: MeasureResult, road_class: str) -> float:
