@@ -149,6 +149,26 @@ def test_population_uses_lau_value_else_nuts3_fallback():
     assert pop.value == 2084894 and "demo_r_pjangrp3" in pop.source and pop.year == 2024
 
 
+@pytest.mark.parametrize(
+    ("raw", "positive"),
+    [
+        (5, True),
+        (2.5, True),
+        (np.int64(7), True),
+        (np.float64(7.5), True),
+        (None, False),
+        (float("nan"), False),
+        (np.float64("nan"), False),
+        (0, False),
+        (-1, False),
+        ("7", False),  # a string is no population, and must not raise
+        (True, False),
+    ],
+)
+def test_positive_accepts_only_positive_real_numbers(raw, positive):
+    assert b._positive(raw) is positive
+
+
 def test_population_nan_or_nonpositive_lau_falls_back_to_nuts3():
     payload = {"value": {"0": 2084894}}
     for bad in (float("nan"), 0.0, -5, None):

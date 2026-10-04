@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+import numbers
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -139,7 +140,13 @@ def load_boundary_polygon(geojson_path: Path, epsg: int) -> BaseGeometry:
 
 
 def _positive(raw: object) -> bool:
-    return raw is not None and not math.isnan(raw) and raw > 0  # type: ignore[operator]
+    """A real number above zero (not None, NaN, a string or a bool)."""
+    return (
+        isinstance(raw, numbers.Real)
+        and not isinstance(raw, bool)
+        and not math.isnan(raw)
+        and bool(raw > 0)
+    )
 
 
 def _lau_population(lau_props: dict | list[dict]) -> Population | None:

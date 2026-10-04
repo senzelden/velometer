@@ -317,14 +317,37 @@ def test_a_duplicate_id_within_a_role_list_is_a_config_error_naming_it(tmp_path:
     load_report(_role_report(tmp_path, **{field: "[paris, wien]"}))  # distinct ids are fine
 
 
-def test_lau_codes_validation_and_exclusivity_with_lau_code():
-    c = CityConfig.model_validate({**BERLIN, "lau_code": None, "lau_codes": ["SK_A", "SK_B"]})
+SK = {**BERLIN, "lau_code": None, "lau_codes": ["SK_A", "SK_B"]}
+
+
+def test_lau_codes_are_accepted_without_lau_code():
+    c = CityConfig.model_validate(SK)
     assert c.lau_codes == ["SK_A", "SK_B"] and c.lau_code is None
-    with pytest.raises(ValidationError):  # both set
-        CityConfig.model_validate({**BERLIN, "lau_code": "DE_1", "lau_codes": ["SK_A", "SK_B"]})
-    with pytest.raises(ValidationError):  # a single code belongs in lau_code
-        CityConfig.model_validate({**BERLIN, "lau_code": None, "lau_codes": ["SK_A"]})
+
+
+def test_lau_codes_and_lau_code_are_exclusive():
+    with pytest.raises(ValidationError, match="not both"):
+        CityConfig.model_validate({**SK, "lau_code": "DE_1"})
+
+
+def test_a_single_code_belongs_in_lau_code_not_lau_codes():
+    with pytest.raises(ValidationError):
+        CityConfig.model_validate({**SK, "lau_codes": ["SK_A"]})
+
+
+def test_lau_codes_default_to_none():
     assert CityConfig.model_validate({**BERLIN, "lau_code": None}).lau_codes is None
+
+
+def test_lau_codes_with_an_osm_relation_admin_boundary_is_a_config_error(tmp_path: Path):
+    cities = {"cities": [{**SK, "admin_boundary": "osm_relation"}]}
+    path = tmp_path / "cities.yaml"
+    path.write_text(yaml.safe_dump(cities))
+    with pytest.raises(ConfigError, match=r"(?s)cities\.yaml.*lau_codes.*osm_relation.*two admin"):
+        load_cities(path)
+    cities["cities"][0]["admin_boundary"] = "gisco"  # the same city is fine on the GISCO layer
+    path.write_text(yaml.safe_dump(cities))
+    assert load_cities(path)[0].lau_codes == ["SK_A", "SK_B"]
 
 
 OVERRIDE = {

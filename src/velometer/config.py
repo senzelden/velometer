@@ -95,6 +95,11 @@ class CityConfig(_Strict):
     def _one_lau_source(self) -> "CityConfig":
         if self.lau_code and self.lau_codes:
             raise ValueError("set lau_code or lau_codes, not both")
+        if self.lau_codes and self.admin_boundary == "osm_relation":
+            raise ValueError(
+                "lau_codes (a union of LAU polygons) and admin_boundary: osm_relation are two "
+                "admin layers; set one"
+            )
         return self
 
     @field_validator("epsg_exception")
