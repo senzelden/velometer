@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- Map data © OpenStreetMap contributors, ODbL 1.0 -->
 <osm version="0.6" generator="osmium/1.19.0">
   <node id="13877901" version="3" timestamp="2021-12-12T15:32:44Z" lat="52.0681499" lon="5.1159473"/>
   <node id="26926852" version="8" timestamp="2026-04-27T12:04:10Z" lat="52.4009491" lon="5.0314205"/>

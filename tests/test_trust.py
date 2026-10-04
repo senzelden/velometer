@@ -505,6 +505,33 @@ def test_cli_sample_writes_fixtures_and_review_sheet(diag_env, tmp_path, fake_os
 
 
 @needs_osmium
+def test_cli_sample_writes_the_odbl_note_into_the_osm(diag_env, tmp_path, fake_osmium):
+    db_path, cfg, _, data_dir = diag_env
+    tests_dir = tmp_path / "tests"
+    res = CliRunner().invoke(app, [
+        "trust", "sample", "--country", "DE", "--db", str(db_path), "--data", str(data_dir),
+        "--config-dir", str(cfg), "--docs", str(tmp_path / "docs"), "--tests-dir", str(tests_dir),
+    ])  # fmt: skip
+    assert res.exit_code == 0, res.output
+    text = (tests_dir / "fixtures" / "golden" / "de.osm").read_text()
+    assert f"<!-- {tr.ODBL} -->" in text  # the wording of the .yaml header (ADR 0008)
+
+
+def test_osm_attribution_follows_the_xml_declaration_and_is_added_once(tmp_path):
+    osm = tmp_path / "x.osm"
+    osm.write_text("<?xml version='1.0' encoding='UTF-8'?>\n<osm version=\"0.6\">\n</osm>\n")
+    tr.add_osm_attribution(osm)
+    tr.add_osm_attribution(osm)
+    lines = osm.read_text().splitlines()
+    assert lines[0].startswith("<?xml") and lines[1] == f"<!-- {tr.ODBL} -->"
+    assert osm.read_text().count(tr.ODBL) == 1
+    bare = tmp_path / "y.osm"
+    bare.write_text("<osm/>")
+    tr.add_osm_attribution(bare)
+    assert bare.read_text() == f"<!-- {tr.ODBL} -->\n<osm/>"
+
+
+@needs_osmium
 def test_cli_sample_refuses_to_overwrite_signed_off_fixtures(diag_env, tmp_path, fake_osmium):
     db_path, cfg, _, data_dir = diag_env
     tests_dir = tmp_path / "tests"

@@ -1360,6 +1360,7 @@ def trust_sample(
                 parts[0].replace(dst)
             else:
                 osmium.merge(parts, dst)
+        tr.add_osm_attribution(dst)
     except OsmiumError as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e

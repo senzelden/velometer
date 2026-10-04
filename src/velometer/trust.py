@@ -387,7 +387,7 @@ def sample_ways(
     ]
 
 
-GOLDEN_HEADER = "# Map data © OpenStreetMap contributors, ODbL 1.0\n"
+GOLDEN_HEADER = f"# {ODBL}\n"
 
 
 def golden_doc(samples: list[Sample], source: str, classifier_version: str) -> dict:
@@ -399,6 +399,21 @@ def golden_doc(samples: list[Sample], source: str, classifier_version: str) -> d
             {**s.model_dump(exclude={"city_id"}), "confirmed": False, "note": ""} for s in samples
         ],
     }
+
+
+def add_osm_attribution(path: Path) -> None:
+    """Put the ODbL note (the wording of GOLDEN_HEADER) into an .osm file as an XML comment
+    right after the XML declaration (ADR 0008); a file that already carries it is left alone."""
+    text = path.read_text(encoding="utf-8")
+    if ODBL in text:
+        return
+    comment = f"<!-- {ODBL} -->"
+    if text.startswith("<?xml"):
+        end = text.index("?>") + 2
+        text = f"{text[:end]}\n{comment}{text[end:]}"
+    else:
+        text = f"{comment}\n{text}"
+    _write_atomic(path, text)
 
 
 def write_golden_yaml(path: Path, doc: dict) -> None:

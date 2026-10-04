@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- Map data © OpenStreetMap contributors, ODbL 1.0 -->
 <osm version="0.6" generator="osmium/1.19.0">
   <node id="16147898" version="14" timestamp="2023-10-28T14:11:29Z" lat="46.0668352" lon="14.4903157">
     <tag k="highway" v="traffic_signals"/>

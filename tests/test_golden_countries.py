@@ -11,6 +11,7 @@ from tests.golden_util import check_country_golden
 from velometer.config import default_config_dir, load_classifier, load_report
 from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.read import read_ways
+from velometer.trust import ODBL
 
 GOLDEN_DIR = Path(__file__).parent / "fixtures" / "golden"
 CONFIG = default_config_dir()
@@ -26,3 +27,10 @@ def test_confirmed_ways_match_the_report_classifier(yml):
             observed[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
     ways = yaml.safe_load(yml.read_text())["ways"]
     check_country_golden(yml.stem.upper(), ways, observed, cfg.version)
+
+
+@pytest.mark.parametrize("osm", sorted(GOLDEN_DIR.glob("*.osm")), ids=lambda p: p.stem)
+def test_every_golden_osm_carries_the_odbl_note(osm):
+    # ADR 0008: each test fixture with real OSM data carries an attribution note
+    head = osm.read_text().splitlines()[:3]
+    assert f"<!-- {ODBL} -->" in head, head
