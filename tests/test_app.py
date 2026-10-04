@@ -153,6 +153,7 @@ def test_city_page_sections_in_order(client):
         "LAU vs FUA",
         "Flagged years",
         "Comparison with published figures",
+        "Official and reported figures",
         "Tier map",
         "Provenance",
     ]
@@ -1104,3 +1105,55 @@ def test_fingerprint_follows_the_change_page(subarea_setup):
     before = fingerprint(db_path, cfg, docs, maps)
     (docs / "review" / f"{CHANGE_STEM}.md").write_text(_change_markdown())
     assert fingerprint(db_path, cfg, docs, maps) != before
+
+
+def _add_reported(db_path, **overrides):
+    from tests.report_fixture import _figure
+    from velometer.db import open_db, replace_external_figures
+
+    base = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    rows = [
+        base.model_copy(update={"network_scope": "vorrangnetz", "value": 17.3, **overrides}),
+        base.model_copy(update={"source_url": "", "value": 20.5, "reference_date": None}),
+    ]
+    with open_db(db_path) as conn:
+        replace_external_figures(conn, "official", rows)
+
+
+def test_reported_figures_skip_the_comparison_layers_and_sort_by_date(fixture_db_path, setup):
+    from datetime import date
+
+    _add_reported(fixture_db_path, reference_date=date(2024, 12, 31), length_basis="streckenlaenge")
+    conn = open_readonly(fixture_db_path)
+    try:
+        figs = ReportData(conn, setup[1]).reported_figures("berlin")
+    finally:
+        conn.close()
+    assert {f.source for f in figs} == {"official"}  # fixture also holds clean_cities, qecio
+    assert [f.value for f in figs] == [17.3, 20.5]  # dated first, undated last
+    assert (figs[0].network_scope, figs[0].length_basis) == ("vorrangnetz", "streckenlaenge")
+
+
+def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
+    db_path, cfg, maps, docs = setup
+    _add_reported(db_path, length_basis="unknown")
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin").text
+        other = c.get("/city/paris").text
+    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    assert section.count("<tr>") == 3  # header and two rows
+    assert 'href="https://example.invalid/fixture"' in section
+    assert 'href=""' not in section
+    assert section.count("no source URL recorded") == 1
+    text = _text(section)
+    assert "17.3" in text and "20.5" in text and "vorrangnetz" in text and "unknown" in text
+    assert "clean_cities_2025" not in section and "qecio" not in section
+    assert "no official or reported figures for Paris" in _text(other)
+
+
+def test_fingerprint_follows_the_external_figures_csv(setup):
+    db, cfg, maps, docs = setup
+    before = fingerprint(db, cfg, docs, maps)
+    (cfg / "external").mkdir(exist_ok=True)
+    (cfg / "external" / "figures.csv").write_text("city_id\n")
+    assert fingerprint(db, cfg, docs, maps) != before

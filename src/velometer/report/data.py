@@ -6,6 +6,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 """
 
 import sqlite3
+from datetime import date
 from pathlib import Path
 from string import Formatter
 
@@ -33,7 +34,7 @@ from velometer.db import (
     subarea_names,
     subarea_rows,
 )
-from velometer.models import City
+from velometer.models import City, ExternalFigure
 from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.selection import report_selector, trusted_countries
 
@@ -47,6 +48,10 @@ ROAD_CLASS_TEXT = {
     "all_public": "all public roads",
 }
 HEADLINE_UNIT = f"A+B km per 100 km of {ROAD_CLASS_TEXT['main_excl_motorway']}"
+
+
+# the layers the comparison table and rankings already use; the list below is for the rest
+COMPARISON_SOURCES = frozenset({"clean_cities_2025", "qecio_v2_10", "bikenetkit_v1"})
 
 
 class _Frozen(BaseModel):
@@ -266,6 +271,18 @@ class ReportData:
                 c.id: c.model_dump() for c in load_cities(self.config_dir / "cities.yaml")
             }
         return self._city_config
+
+    def reported_figures(self, city_id: str) -> list[ExternalFigure]:
+        """Every external figure but the three comparison layers, oldest reference date first
+        (undated last); each keeps its own scope, basis and source."""
+        return sorted(
+            (
+                f
+                for f in fetch_external_figures(self.conn, city_id)
+                if f.source not in COMPARISON_SOURCES
+            ),
+            key=lambda f: (f.reference_date is None, f.reference_date or date.min),
+        )
 
     def _ranking_values(self, ranking) -> dict[str, float]:
         out: dict[str, float] = {}

@@ -163,6 +163,34 @@
 </section>
 
 <section>
+<h2>Official and reported figures</h2>
+{% if not reported %}
+<p class="note">no official or reported figures for {{ city.name }}</p>
+{% else %}
+<p class="meta">Figures as published by their sources, each with its own scope and length basis. They are not mapped km and are not equal to the velometer numbers above.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Source</th><th>Metric</th><th class="num">Value</th><th>Unit</th><th>Scope</th><th>Length basis</th><th>Date</th><th>Source link</th></tr></thead>
+<tbody>
+{% for f in reported %}
+<tr>
+  <td>{{ f.source }}</td>
+  <td><code>{{ f.metric_name }}</code></td>
+  <td class="num">{{ f.value | num }}</td>
+  <td>{{ f.unit }}</td>
+  <td>{{ f.network_scope }}</td>
+  <td>{{ f.length_basis }}</td>
+  <td>{{ f.reference_date or "?" }}</td>
+  <td>{% if f.source_url %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}{% if f.note %} <span class="meta">{{ f.note }}</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+</section>
+
+<section>
 <h2>Tier map</h2>
 {% if tiermap %}
 <div class="tiermap-controls">

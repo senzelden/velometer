@@ -229,6 +229,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             "kinds": kinds,
             "headline": charts.headline_city(data, city_id),
             "reconcile": data.reconcile(city_id),
+            "reported": data.reported_figures(city_id),
             "preset_label": data.preset_labels(),
             "preset_unit": data.preset_units(),
             "headline_unit": HEADLINE_UNIT,

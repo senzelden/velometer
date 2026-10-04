@@ -354,3 +354,20 @@ def test_every_configured_city_carries_its_external_source_ids():
     for c in CITIES:
         assert c.bikenetkit_id, c.id
         assert c.nuts3_code, c.id
+
+
+def test_vorrangnetz_scope_with_unknown_basis_round_trips(tmp_path):
+    src = tmp_path / "figures.csv"
+    src.write_text(
+        "city_id,source,metric_name,value,unit,reference_date,network_scope,length_basis,"
+        "source_url,retrieved_at,note\n"
+        "berlin,official,new_cycle_infra_km,17.3,km,2025-12-31,vorrangnetz,unknown,"
+        "https://example.invalid/x,2026-10-01,n\n"
+    )
+    (fig,) = X.load_figures_csv(src)
+    with open_db(tmp_path / "v.sqlite") as conn:
+        create_schema(conn)
+        upsert_cities(conn, CITIES)
+        X.replace_external_figures(conn, "official", [fig])
+        assert fetch_external_figures(conn, "berlin") == [fig]
+    assert (fig.network_scope, fig.length_basis) == ("vorrangnetz", "unknown")
