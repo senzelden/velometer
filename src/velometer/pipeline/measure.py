@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from shapely.geometry.base import BaseGeometry
 from shapely.prepared import prep
 
-from velometer.config import BASES, ClassifierConfig, Preset, PresetsConfig
+from velometer.config import BASES, ClassifierConfig, Preset, PresetsConfig, RoadClasses
 from velometer.models import Completeness, Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify, classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
@@ -80,6 +80,7 @@ class MeasureResult:
     plain_oneway: PlainOnewayReport
     completeness: list[Completeness] = field(default_factory=list)
     way_lengths: dict[int, float] = field(default_factory=dict)  # clipped km per way id
+    road_factors: dict[int, float] = field(default_factory=dict)  # dual-carriageway factor per id
 
 
 def _closed_to_public(tags, bicycle_allowed: set[str]) -> bool:
@@ -132,6 +133,55 @@ def _plain_oneway_report(
     return PlainOnewayReport(mode, other, n, road_km, {t: v for t, v in sorted(delta.items()) if v})
 
 
+def _tier_lengths(
+    classified: list[Classified], lengths: dict[int, float], clipped: bool
+) -> list[TierLength]:
+    """Per (tier, subtype, basis) km and way count. With `clipped`, zero-length sides (wholly
+    outside the boundary) count neither km nor n_ways."""
+    km: dict[tuple, float] = defaultdict(float)
+    way_ids: dict[tuple, set[int]] = defaultdict(set)
+    for c in classified:
+        if c.tier is None:
+            continue
+        length = lengths[c.side.way_id]
+        if clipped and length == 0:
+            continue  # wholly outside the boundary: neither km nor n_ways
+        weight = 1.0 if c.attrs["bidirectional"] else 0.5
+        for basis, value in (("per_side", length), ("qecio_weighted", length * weight)):
+            key = (c.tier, c.subtype, basis)
+            km[key] += value
+            way_ids[key].add(c.side.way_id)
+    return [
+        TierLength(tier=t, subtype=s, length_basis=b, length_km=v, n_ways=len(way_ids[(t, s, b)]))
+        for (t, s, b), v in sorted(km.items(), key=lambda kv: (kv[0][0], kv[0][1] or "", kv[0][2]))
+    ]
+
+
+def _road_lengths(
+    public: list[WayRecord],
+    factors: dict[int, float],
+    lengths: dict[int, float],
+    rc: RoadClasses,
+) -> list[RoadLength]:
+    """The four denominator rows; `factors` halves paired dual carriageways (ADR 0003)."""
+    main, motorway = set(rc.main), set(rc.motorway)
+
+    def total(highways: set[str], dedupe: bool) -> float:
+        return sum(
+            lengths[w.id] * (factors[w.id] if dedupe else 1.0)
+            for w in public
+            if w.tags["highway"] in highways
+        )
+
+    everything = main | motorway | set(rc.local)
+    return [
+        RoadLength(road_class="main_excl_motorway", length_km=total(main, True)),
+        RoadLength(road_class="main_incl_motorway", length_km=total(main | motorway, True)),
+        RoadLength(road_class="main_incl_motorway_raw", length_km=total(main | motorway, False)),
+        RoadLength(road_class="all_public", length_km=total(everything, True)),
+    ]
+
+
 def measure(
     ways: list[WayRecord],
     cfg: ClassifierConfig,
@@ -152,49 +202,17 @@ def measure(
         lengths = {w.id: clipped_length_km(proj.line(w.coords), prepared, boundary) for w in ways}
     classified = classify_ways(ways, cfg)
 
-    km: dict[tuple, float] = defaultdict(float)
-    way_ids: dict[tuple, set[int]] = defaultdict(set)
-    unknown: Counter[str] = Counter()
-    for c in classified:
-        if c.tier is None:
-            if "unknown_value" in c.attrs:
-                unknown[str(c.attrs["unknown_value"])] += 1
-            continue
-        length = lengths[c.side.way_id]
-        if boundary is not None and length == 0:
-            continue  # wholly outside the boundary: neither km nor n_ways
-        weight = 1.0 if c.attrs["bidirectional"] else 0.5
-        for basis, value in (("per_side", length), ("qecio_weighted", length * weight)):
-            key = (c.tier, c.subtype, basis)
-            km[key] += value
-            way_ids[key].add(c.side.way_id)
-    tier_lengths = [
-        TierLength(tier=t, subtype=s, length_basis=b, length_km=v, n_ways=len(way_ids[(t, s, b)]))
-        for (t, s, b), v in sorted(km.items(), key=lambda kv: (kv[0][0], kv[0][1] or "", kv[0][2]))
-    ]
-
+    unknown: Counter[str] = Counter(
+        str(c.attrs["unknown_value"])
+        for c in classified
+        if c.tier is None and "unknown_value" in c.attrs
+    )
     rc = cfg.road_classes
-    main, motorway = set(rc.main), set(rc.motorway)
     public = _public_roads(ways, cfg)
-    factors, pairs = pair_dual_carriageways(public, main | motorway, proj)
-
-    def total(highways: set[str], dedupe: bool) -> float:
-        return sum(
-            lengths[w.id] * (factors[w.id] if dedupe else 1.0)
-            for w in public
-            if w.tags["highway"] in highways
-        )
-
-    everything = main | motorway | set(rc.local)
-    road_lengths = [
-        RoadLength(road_class="main_excl_motorway", length_km=total(main, True)),
-        RoadLength(road_class="main_incl_motorway", length_km=total(main | motorway, True)),
-        RoadLength(road_class="main_incl_motorway_raw", length_km=total(main | motorway, False)),
-        RoadLength(road_class="all_public", length_km=total(everything, True)),
-    ]
+    factors, pairs = pair_dual_carriageways(public, set(rc.main) | set(rc.motorway), proj)
     return MeasureResult(
-        tier_lengths=tier_lengths,
-        road_lengths=road_lengths,
+        tier_lengths=_tier_lengths(classified, lengths, boundary is not None),
+        road_lengths=_road_lengths(public, factors, lengths, rc),
         duplicates=flag_parallel_duplicates(classified, proj),
         dual_pairs=pairs,
         classified=classified,
@@ -202,6 +220,7 @@ def measure(
         plain_oneway=_plain_oneway_report(ways, classified, cfg, lengths),
         completeness=_completeness(classified, lengths),
         way_lengths=lengths,
+        road_factors=factors,
     )
 
 
