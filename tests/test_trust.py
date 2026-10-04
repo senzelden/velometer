@@ -9,6 +9,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from tests.golden_util import check_golden
 from tests.report_fixture import CLASSIFIER
 from tests.test_run_history import CITY
 from velometer import trust as tr
@@ -19,9 +20,15 @@ from velometer.config import (
     default_config_dir,
     load_activity,
     load_cities,
+    load_classifier,
     load_trust,
 )
 from velometer.db import fetch_run
+from velometer.pipeline.drift import is_unmatched_road_side
+from velometer.pipeline.measure import measure
+from velometer.pipeline.read import read_ways
+from velometer.pipeline.types import Classified, WaySide
+from velometer.report.data import open_readonly
 from velometer.report.maps import snapshot_path
 from velometer.selection import report_selector, run_selector, trusted_countries
 from velometer.trust import CityDiagnostics, CountryDiagnostics, breaches, diagnose_city
@@ -152,14 +159,14 @@ def _geojson(ring):
     return json.dumps({"type": "FeatureCollection", "features": [feature]})
 
 
-def _place(conn, data_dir, osm=TRUST_CITY):
-    """`osm` as berlin's current LAU snapshot, and BOX as the boundary file its row names."""
-    row = fetch_run(conn, report_selector(default_config_dir()).latest(conn, "berlin", "lau"))
+def _place(conn, data_dir, osm=TRUST_CITY, city_id="berlin"):
+    """`osm` as the city's current LAU snapshot, and BOX as the boundary file its row names."""
+    row = fetch_run(conn, report_selector(default_config_dir()).latest(conn, city_id, "lau"))
     dst = snapshot_path(row, data_dir)
     dst.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["osmium", "cat", str(osm), "-o", str(dst)], check=True)
     path = conn.execute(
-        "SELECT path FROM boundaries WHERE city_id='berlin' AND kind='lau'"
+        "SELECT path FROM boundaries WHERE city_id=? AND kind='lau'", (city_id,)
     ).fetchone()[0]
     Path(path).write_text(_geojson(BOX))
 
@@ -284,7 +291,15 @@ def test_no_cycling_tags_gives_zero_shares_not_nan(fixture_db, tmp_path):
         ({"highway": "secondary", "cycleway:right": "lane"}, True),  # prefix "cycleway"
         ({"highway": "residential", "bicycle_road": "yes"}, True),  # exact key
     ],
-    ids=["plain", "track", "cycleway", "non-cycling-tags", "bicycle=yes", "cycleway:right=lane", "bicycle_road=yes"],
+    ids=[
+        "plain",
+        "track",
+        "cycleway",
+        "non-cycling-tags",
+        "bicycle=yes",
+        "cycleway:right=lane",
+        "bicycle_road=yes",
+    ],
 )
 def test_diagnose_counts_only_cycling_tagged_ways_in_the_denominator(
     fixture_db, tmp_path, tags, counted
@@ -430,11 +445,6 @@ def test_cli_diagnose_unknown_country_exits_2(fixture_db, tmp_path):
 
 
 # --- golden samples and trust check (Task 8) -------------------------------------------------
-from tests.golden_util import check_golden  # noqa: E402
-from velometer.pipeline.drift import is_unmatched_road_side  # noqa: E402
-from velometer.pipeline.measure import measure  # noqa: E402
-from velometer.pipeline.read import read_ways  # noqa: E402
-from velometer.pipeline.types import Classified, WaySide  # noqa: E402
 
 ACT = load_activity(default_config_dir() / "activity.yaml")
 
@@ -444,6 +454,15 @@ def _trust_city_sample_inputs():
     cfg = load_classifier(default_config_dir() / "classifier" / "v2.yaml")
     result = measure(ways, cfg, 25833)
     return result.classified, result.way_lengths, {w.id: w.tags for w in ways}
+
+
+def test_observed_tiers_lists_side_tier_rule_of_every_tiered_side():
+    cfg = load_classifier(default_config_dir() / "classifier" / "v2.yaml")
+    got = tr.observed_tiers(read_ways(TRUST_CITY).ways, cfg)
+    assert got[2] == {("self", "A", "A_cycleway")}
+    assert got[9] == {("right", "excluded", "X_shoulder")}  # an excluded side is tiered
+    assert {s for _, t, _ in got[1] for s in [t]} == {"A"} and len(got[1]) == 2  # both sides
+    assert 8 not in got and got[8] == set()  # untiered: absent, and a lookup gives the empty set
 
 
 def test_sample_ways_picks_longest_side_per_top_rule_then_unmatched():
@@ -600,6 +619,40 @@ def test_cli_sample_refuses_to_overwrite_signed_off_fixtures(diag_env, tmp_path,
     assert CliRunner().invoke(app, [*args, "--force"]).exit_code == 0
 
 
+SECOND_CITY = """<osm version="0.6">
+<node id="101" lat="52.5" lon="13.4"/><node id="102" lat="52.5" lon="13.4147"/>
+<way id="101"><nd ref="101"/><nd ref="102"/><tag k="highway" v="secondary"/>
+<tag k="cycleway:both" v="track"/></way></osm>"""
+
+
+@needs_osmium
+def test_cli_sample_merges_the_extracts_of_a_multi_city_country(tmp_path, fake_osmium, monkeypatch):
+    from tests.report_fixture import build_report_fixture_n
+
+    db_path, cfg = build_report_fixture_n(tmp_path, 3)  # DE: berlin and c03
+    conn = open_readonly(db_path)
+    data_dir, tests_dir = tmp_path / "data", tmp_path / "tests"
+    second = tmp_path / "c03.osm"
+    second.write_text(SECOND_CITY)
+    _place(conn, data_dir)
+    _place(conn, data_dir, second, "c03")
+    conn.close()
+    res = CliRunner().invoke(app, [
+        "trust", "sample", "--country", "DE", "--extra-way", "101", "--db", str(db_path),
+        "--data", str(data_dir), "--config-dir", str(cfg), "--docs", str(tmp_path / "docs"),
+        "--tests-dir", str(tests_dir),
+    ])  # fmt: skip
+    assert res.exit_code == 0, res.output
+    getids = [a for a in fake_osmium if a[0] == "getid"]
+    assert len(getids) == 2 and any(a[-1] == "w101" for a in getids)  # one extract per city
+    (merge,) = [a for a in fake_osmium if a[0] == "merge"]
+    parts = merge[merge.index("-o") + 2 :]
+    assert [Path(p).name for p in parts] == ["berlin.osm", "c03.osm"]
+    doc = yaml.safe_load((tests_dir / "fixtures" / "golden" / "de.yaml").read_text())
+    assert (101, "extra") in {(w["way_id"], w["group"]) for w in doc["ways"]}
+    assert (tests_dir / "fixtures" / "golden" / "de.osm").is_file()
+
+
 # --- trust check ---------------------------------------------------------------------------
 
 
@@ -642,9 +695,6 @@ def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
             "--docs", str(docs), "--tests-dir", str(tests_dir)]  # fmt: skip
     return argv, {"cfg": cfg, "docs": docs, "golden": gdir, "md": md, "run_id": run_id}
 
-
-from velometer.config import load_classifier  # noqa: E402
-from velometer.report.data import open_readonly  # noqa: E402
 
 NEXT = f"v{int(CLASSIFIER.removeprefix('v')) + 1}"  # a classifier newer than the report one
 

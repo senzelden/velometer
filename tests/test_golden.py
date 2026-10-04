@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 
 import pytest
@@ -6,8 +5,8 @@ import yaml
 
 from tests.golden_util import check_country_golden, check_golden
 from velometer.config import default_config_dir, load_classifier
-from velometer.pipeline.classify import classify_ways
 from velometer.pipeline.read import read_ways
+from velometer.trust import observed_tiers
 
 FIX = Path(__file__).parent / "fixtures"
 GOLDEN = yaml.safe_load((FIX / "berlin_golden.yaml").read_text())
@@ -15,11 +14,7 @@ CFG = load_classifier(default_config_dir() / "classifier" / "v1.yaml")
 
 
 def _observed() -> dict[int, set[tuple]]:
-    out: dict[int, set[tuple]] = defaultdict(set)
-    for c in classify_ways(read_ways(FIX / "berlin_golden.osm").ways, CFG):
-        if c.tier is not None:
-            out[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
-    return out
+    return observed_tiers(read_ways(FIX / "berlin_golden.osm").ways, CFG)
 
 
 def test_golden_set_is_large_enough_and_covers_named_streets():
@@ -82,3 +77,12 @@ def test_a_way_is_asserted_once_the_classifier_reaches_its_min_classifier():
         check_country_golden("XX", _ways_with_a_v3_verdict(), observed, "v3")
     observed[2] = {("right", "D", "D_soft_lane")}
     check_country_golden("XX", _ways_with_a_v3_verdict(), observed, "v3")
+
+
+def test_a_country_with_no_confirmed_way_is_skipped_naming_it_and_the_count():
+    ways = [
+        {"way_id": 1, "name": "x", "proposed": [], "confirmed": False},
+        {"way_id": 2, "name": "y", "proposed": [], "confirmed": False},
+    ]
+    with pytest.raises(pytest.skip.Exception, match=r"XX: 0/2 confirmed \(awaiting review\)"):
+        check_country_golden("XX", ways, {}, "v3")

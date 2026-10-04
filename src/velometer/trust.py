@@ -14,6 +14,7 @@ import re
 import tempfile
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -316,6 +317,16 @@ def proposed_sides(classified: Iterable[Classified]) -> dict[int, list[dict]]:
     return {w: sorted(p, key=lambda d: d["side"]) for w, p in out.items()}
 
 
+def observed_tiers(ways: Iterable, cfg) -> dict[int, set[tuple[str, str, str]]]:
+    """The classifier's verdict per way: (side, tier, rule_id) of every tiered way-side. A way
+    with no tiered side is absent (a defaultdict, so a lookup gives the empty set)."""
+    out: dict[int, set[tuple[str, str, str]]] = defaultdict(set)
+    for c in classify_ways(ways, cfg):
+        if c.tier is not None:
+            out[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
+    return out
+
+
 def make_sample(
     way_id: int,
     group: str,
@@ -392,6 +403,50 @@ def sample_ways(
     return [
         make_sample(w, group, classified, tags_by_way, city_by_way, city_id) for w, group in picks
     ]
+
+
+@dataclass
+class SampleInputs:
+    """What `trust sample` needs from the current LAU runs of one country's cities."""
+
+    classified: list[Classified] = field(default_factory=list)
+    way_lengths: dict[int, float] = field(default_factory=dict)
+    tags_by_way: dict[int, Mapping[str, str]] = field(default_factory=dict)
+    city_by_way: dict[int, str] = field(default_factory=dict)  # first city to hold the way
+    snapshots: dict[str, Path] = field(default_factory=dict)  # city id -> its snapshot
+    stamps: list[str] = field(default_factory=list)  # "<city id> <osm timestamp>"
+
+
+def load_sample_inputs(
+    conn, cities: Iterable[CityConfig], selector: Selector, data_dir: Path, config_dir: Path
+) -> SampleInputs:
+    """Classify each city's current LAU snapshot with the selector's classifier.
+
+    Raises NoCurrentRun, or FileNotFoundError naming a city whose snapshot or boundary file is
+    missing."""
+    classifier = load_classifier(Path(config_dir) / "classifier" / f"{selector.version}.yaml")
+    inputs = SampleInputs()
+    for c in cities:
+        run_id = selector.latest(conn, c.id, "lau")
+        if run_id is None:
+            raise NoCurrentRun(f"no current LAU run for: {c.id}")
+        row = fetch_run(conn, run_id)
+        snap = snapshot_path(row, data_dir)
+        boundary = fetch_boundary(conn, c.id, "lau")
+        if not snap.is_file() or boundary is None or not Path(boundary.path).is_file():
+            raise FileNotFoundError(f"{c.id}: snapshot or boundary file not found")
+        ways = read_ways(snap).ways
+        result = measure(
+            ways, classifier, c.epsg, boundary=load_boundary_polygon(Path(boundary.path), c.epsg)
+        )
+        inputs.classified += result.classified
+        inputs.way_lengths |= result.way_lengths
+        for w in ways:
+            inputs.tags_by_way[w.id] = w.tags
+            inputs.city_by_way.setdefault(w.id, c.id)
+        inputs.snapshots[c.id] = snap
+        inputs.stamps.append(f"{c.id} {row['osm_timestamp']}")
+    return inputs
 
 
 GOLDEN_HEADER = f"# {ODBL}\n"
@@ -496,10 +551,7 @@ def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[s
             return [f"{cc}: golden fixture missing: {f}"]
     ways = yaml.safe_load(yml.read_text())["ways"]
     cfg = load_classifier(classifier_path)
-    observed: dict[int, set[tuple]] = defaultdict(set)
-    for c in classify_ways(read_ways(osm).ways, cfg):
-        if c.tier is not None:
-            observed[c.side.way_id].add((c.side.side, c.tier, c.rule_id))
+    observed = observed_tiers(read_ways(osm).ways, cfg)
     out = []
     unconfirmed = [w for w in ways if not w["confirmed"]]
     if unconfirmed:

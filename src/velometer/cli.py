@@ -1276,13 +1276,8 @@ def trust_sample(
     """Golden sample ways for the country: tests/fixtures/golden/<cc>.{osm,yaml}, review sheet."""
     from velometer import osmium
     from velometer import trust as tr
-    from velometer.config import load_activity, load_classifier
-    from velometer.db import fetch_boundary, fetch_run
-    from velometer.pipeline.measure import measure
-    from velometer.pipeline.read import read_ways
+    from velometer.config import load_activity
     from velometer.report.data import open_readonly
-    from velometer.report.maps import snapshot_path
-    from velometer.sources.boundaries import load_boundary_polygon
 
     country = country.upper()
     try:
@@ -1304,36 +1299,16 @@ def trust_sample(
     except (FileNotFoundError, SchemaError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
-    classified, lengths, tags_by_way, city_by_way, snaps = [], {}, {}, {}, {}
-    stamps = []
     try:
-        for c in cities:
-            run_id = selector.latest(conn, c.id, "lau")
-            if run_id is None:
-                typer.echo(f"error: no current LAU run for: {c.id}", err=True)
-                raise typer.Exit(1)
-            row = fetch_run(conn, run_id)
-            snap = snapshot_path(row, data_dir)
-            boundary = fetch_boundary(conn, c.id, "lau")
-            if not snap.is_file() or boundary is None or not Path(boundary.path).is_file():
-                typer.echo(f"error: {c.id}: snapshot or boundary file not found", err=True)
-                raise typer.Exit(1)
-            ways = read_ways(snap).ways
-            result = measure(
-                ways,
-                load_classifier(config_dir / "classifier" / f"{selector.version}.yaml"),
-                c.epsg,
-                boundary=load_boundary_polygon(Path(boundary.path), c.epsg),
-            )
-            classified += result.classified
-            lengths |= result.way_lengths
-            for w in ways:
-                tags_by_way[w.id] = w.tags
-                city_by_way.setdefault(w.id, c.id)
-            snaps[c.id] = snap
-            stamps.append(f"{c.id} {row['osm_timestamp']}")
+        inputs = tr.load_sample_inputs(conn, cities, selector, data_dir, config_dir)
+    except (tr.NoCurrentRun, FileNotFoundError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
     finally:
         conn.close()
+    classified, lengths = inputs.classified, inputs.way_lengths
+    tags_by_way, city_by_way = inputs.tags_by_way, inputs.city_by_way
+    snaps, stamps = inputs.snapshots, inputs.stamps
     unknown = [w for w in extra_way if w not in lengths]
     if unknown:
         typer.echo(f"error: way {unknown[0]} is in no city snapshot of {country}", err=True)
