@@ -121,6 +121,31 @@ def _headline_rows(data: ReportData, kinds: tuple[str, ...], city_ids=None) -> l
     return rows
 
 
+LABEL_GAP_PX = 13  # least vertical distance between two end labels (11 px text)
+
+
+def _spread_labels(values: dict[str, float], gap: float) -> dict[str, float]:
+    """Label positions (data units) at least `gap` apart, in the order of the values: a label
+    that would sit within `gap` of the one above is pushed down, then the group is re-centred
+    on its own mean so a pair of close lines is labelled either side of them."""
+    out = dict(values)
+    order = sorted(values, key=lambda k: -values[k])
+    i = 0
+    while i < len(order):
+        j = i  # grow a cluster of labels chained within `gap`
+        while j + 1 < len(order) and out[order[j]] - values[order[j + 1]] < gap:
+            out[order[j + 1]] = out[order[j]] - gap
+            j += 1
+        if j > i:
+            shift = (
+                sum(out[k] for k in order[i : j + 1]) - sum(values[k] for k in order[i : j + 1])
+            ) / (j - i + 1)
+            for k in order[i : j + 1]:
+                out[k] -= shift
+        i = j + 1
+    return out
+
+
 def _headline_tooltip() -> list[alt.Tooltip]:
     return [
         alt.Tooltip("city:N"),
@@ -141,6 +166,9 @@ def _rings(x, y, tooltip) -> alt.Chart:
     )
 
 
+HEADLINE_HEIGHT = 320
+
+
 def headline_over_time(data: ReportData) -> dict:
     """LAU headline of every city: the highlighted and comparison cities coloured and labelled,
     every other city a thin grey line a select can pick out; flagged points are ringed."""
@@ -150,8 +178,20 @@ def headline_over_time(data: ReportData) -> dict:
     x = alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0))
     y = alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True))
     city_scale = alt.Scale(domain=names, range=colours)
-    colour = alt.Color("city:N", scale=city_scale, title="City", legend=alt.Legend())
+    # the legend sits below the plot: on the right it ran into the end labels
+    colour = alt.Color(
+        "city:N",
+        scale=city_scale,
+        title="City",
+        legend=alt.Legend(orient="bottom", direction="horizontal"),
+    )
     tooltip = _headline_tooltip()
+    now = {r["city"]: r["headline"] for r in rows if r["label"] == NOW and r["kind"] == "lau"}
+    top = max([r["headline"] for r in rows if r["headline"] is not None] + [1.0])
+    gap = LABEL_GAP_PX / HEADLINE_HEIGHT * top
+    spread = _spread_labels({c: v for c, v in now.items() if v is not None}, gap)
+    for r in rows:
+        r["label_y"] = spread.get(r["city"], r["headline"]) if r["label"] == NOW else r["headline"]
     pick = alt.selection_point(
         name="pick",
         fields=["city"],
@@ -191,12 +231,17 @@ def headline_over_time(data: ReportData) -> dict:
         alt.Chart()
         .transform_filter(focus & (alt.datum.label == NOW))
         .mark_text(align="left", dx=8, fontSize=11)
-        .encode(x=x, y=y, text="city:N", color=alt.Color("city:N", scale=city_scale, legend=None))
+        .encode(
+            x=x,
+            y=alt.Y("label_y:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True)),
+            text="city:N",
+            color=alt.Color("city:N", scale=city_scale, legend=None),
+        )
     )
     rings = _rings(x, y, tooltip).transform_filter(focus)
     chart = alt.layer(grey, lines, labels, rings, data=alt.Data(values=rows)).properties(
         width=560,
-        height=320,
+        height=HEADLINE_HEIGHT,
         padding={"left": 5, "top": 5, "right": 110, "bottom": 5},  # room for the "now" labels
         title=_title("Protected cycling infrastructure over time"),
     )
@@ -251,12 +296,21 @@ def _tier_rows(data: ReportData, city_id: str, kind: str) -> list[dict]:
     ]
 
 
-def _tier_chart(data: ReportData, rows: list[dict], *, width: int, height: int) -> alt.Chart:
+def _sparse_years(data: ReportData) -> list[str]:
+    """First, middle and last label: nine labels do not fit under a 150 px panel."""
+    labels = _x_labels(data)
+    return list(dict.fromkeys([labels[0], labels[(len(labels) - 1) // 2], labels[-1]]))
+
+
+def _tier_chart(
+    data: ReportData, rows: list[dict], *, width: int, height: int, sparse: bool = False
+) -> alt.Chart:
+    axis = alt.Axis(labelAngle=0, values=_sparse_years(data)) if sparse else alt.Axis(labelAngle=0)
     return (
         alt.Chart(alt.Data(values=rows))
         .mark_bar()
         .encode(
-            x=alt.X("label:O", sort=_x_labels(data), title=None, axis=alt.Axis(labelAngle=0)),
+            x=alt.X("label:O", sort=_x_labels(data), title=None, axis=axis),
             y=alt.Y("km:Q", title="Mapped km (per side)", stack="zero"),
             color=alt.Color(
                 "tier_label:N",
@@ -288,7 +342,7 @@ def tier_composition(data: ReportData, city_id: str, kind: str = "lau") -> dict:
 def tiers_small_multiples(data: ReportData) -> dict:
     """Every city's LAU tier composition as small multiples sharing one legend and one y scale."""
     rows = [r for c in data.cities() for r in _tier_rows(data, c.id, "lau")]
-    base = _tier_chart(data, rows, width=150, height=110)
+    base = _tier_chart(data, rows, width=150, height=110, sparse=True)
     chart = (
         base.facet(facet=alt.Facet("city:N", title=None, sort="ascending"), columns=7)
         .properties(title=_title("Tier composition per city (LAU)"))
@@ -377,7 +431,7 @@ def rankings_flip(data: ReportData) -> dict:
     daggers = (
         alt.Chart()
         .transform_filter(alt.datum.dagger == True)  # noqa: E712 - a Vega expression
-        .mark_text(text="†", dx=10, dy=-8, fontSize=14, color=INK)
+        .mark_text(text="†", dx=9, dy=0, align="left", baseline="middle", fontSize=14, color=INK)
         .encode(tooltip=tooltip)
     )
     chart = (

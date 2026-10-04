@@ -356,3 +356,68 @@ def test_ranking_notes_are_generic_and_name_no_city(fixture_db):
         assert not re.search(rf"published\)?: .*{name}", text)
     for line in subtitle[1:]:
         assert not re.search(r"\b[A-Z]{2}\d{3}\b", line), line  # no NUTS3 code
+
+
+def _label_layer(spec):
+    return next(
+        lay
+        for lay in _layers(spec)
+        if lay["mark"]["type"] == "text" and "now" in json.dumps(lay["transform"])
+    )
+
+
+def test_headline_legend_does_not_sit_where_the_end_labels_are(fixture_db):
+    data = _reconfigure(fixture_db, report={"highlight": ["berlin"], "comparison_set": ["paris"]})
+    spec = headline_over_time(data)
+    colour = next(
+        lay["encoding"]["color"]
+        for lay in _layers(spec)
+        if lay["mark"]["type"] == "line"
+        and "legend" in lay["encoding"].get("color", {})
+        and lay["encoding"]["color"]["legend"] is not None
+    )
+    legend = colour["legend"]
+    assert legend.get("orient") not in (None, "right", "top-right", "top")  # default is right
+    assert _label_layer(spec)  # the labels exist, so the legend is a duplicate at best
+
+
+def test_spread_labels_keeps_a_minimum_gap_and_order():
+    from velometer.report.charts import _spread_labels
+
+    out = _spread_labels({"a": 238.0, "b": 237.0, "c": 100.0, "d": 99.5, "e": 99.0}, gap=5.0)
+    ys = sorted(out.values())
+    assert all(b - a >= 5.0 - 1e-9 for a, b in zip(ys, ys[1:], strict=False))
+    assert out["c"] > out["d"] > out["e"] and out["a"] > out["b"]  # order is kept
+    assert _spread_labels({"x": 1.0, "y": 50.0}, gap=5.0) == {"x": 1.0, "y": 50.0}
+
+
+def test_headline_end_labels_use_the_spread_position(fixture_db):
+    data = _reconfigure(fixture_db, report={"highlight": ["berlin"], "comparison_set": ["paris"]})
+    spec = headline_over_time(data)
+    assert _label_layer(spec)["encoding"]["y"]["field"] == "label_y"
+    now = [r for r in _data_rows(spec) if r["label"] == "now" and r["role"] != "other"]
+    assert all("label_y" in r for r in now)
+
+
+def test_small_multiples_show_at_most_four_year_labels(fixture_db):
+    spec = tiers_small_multiples(fixture_db[3])
+    axis = spec["spec"]["encoding"]["x"]["axis"]
+    assert 1 <= len(axis["values"]) <= 4
+    assert axis["values"][-1] == "now"
+
+
+def test_qecio_dagger_sits_on_its_own_point_to_the_right(fixture_db):
+    data = _reconfigure(fixture_db, cities={"paris": {"nuts3_is_city": False}})
+    spec = rankings_flip(data)
+    dagger = next(lay for lay in _layers(spec) if lay["mark"].get("text") == "†")
+    point = next(
+        lay
+        for lay in _layers(spec)
+        if lay["mark"]["type"] == "line" and lay["mark"].get("strokeWidth") != 1
+    )
+    # y comes from the shared top-level encoding unless a layer overrides it: same field for both
+    y_of = lambda lay: lay.get("encoding", {}).get("y", spec["encoding"]["y"])["field"]  # noqa: E731
+    assert y_of(dagger) == y_of(point) == "rank"
+    assert dagger["mark"].get("dy", 0) == 0
+    assert dagger["mark"]["dx"] > 0
+    assert dagger["mark"]["baseline"] == "middle" and dagger["mark"]["align"] == "left"
