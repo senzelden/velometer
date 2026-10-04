@@ -1386,8 +1386,9 @@ def trust_check(
                     f"{cc}: classifier_reviewed is {ct.classifier_reviewed or 'not set'}, "
                     f"the report classifier is {selector.version}"
                 )
-            if ct.golden is not None:
-                problems += tr.golden_problems(cc, tests_dir.parent / ct.golden, classifier)
+            golden = tr.golden_paths(cc, config_dir, tests_dir.parent)
+            if golden is not None:
+                problems += tr.golden_problems(cc, golden, classifier)
             js = review / f"{cc}.json"
             if not js.is_file():
                 has_city = any(c.country_iso2 == cc for c in everyone)

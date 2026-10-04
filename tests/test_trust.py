@@ -653,6 +653,26 @@ def test_cli_sample_merges_the_extracts_of_a_multi_city_country(tmp_path, fake_o
     assert (tests_dir / "fixtures" / "golden" / "de.osm").is_file()
 
 
+def test_golden_paths_come_from_trust_yaml_relative_to_the_repo_root(tmp_path):
+    cfg = _config_with_trust(
+        tmp_path,
+        countries={
+            "DE": TRUSTED,
+            "NL": {**TRUSTED, "golden": "tests/fixtures/golden/nl", "classifier_reviewed": "v2",
+                   "signed_off": "2026-10-03"},
+        },
+    )  # fmt: skip
+    root = cfg.parent
+    nl = root / "tests" / "fixtures" / "golden" / "nl"
+    assert tr.golden_paths("NL", cfg) == (nl.with_suffix(".yaml"), nl.with_suffix(".osm"))
+    elsewhere = tmp_path / "elsewhere"
+    assert tr.golden_paths("NL", cfg, elsewhere)[0] == (
+        elsewhere / "tests" / "fixtures" / "golden" / "nl.yaml"
+    )
+    assert tr.golden_paths("DE", cfg) is None  # trusted, no golden entry
+    assert tr.golden_paths("XX", cfg) is None  # not in trust.yaml
+
+
 # --- trust check ---------------------------------------------------------------------------
 
 

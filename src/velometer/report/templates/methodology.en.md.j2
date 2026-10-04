@@ -121,7 +121,7 @@ Germany needs no diagnostics file: it rests on the Berlin golden set of M1, whic
 | Country | Status | Basis | Classifier reviewed | Signed off | Golden ways confirmed |
 |---|---|---|---|---|---|
 {% for c in f.countries %}
-| {{ c.iso2 }} | {{ c.status }} | {{ c.basis }} | {{ c.classifier_reviewed or "–" }} | {{ c.signed_off or "–" }} | {% if c.n_golden %}{{ c.n_golden_confirmed }} of {{ c.n_golden }}{% else %}none{% endif %} |
+| {{ c.iso2 }} | {{ c.status }} | {{ c.basis }} | {{ c.classifier_reviewed or "–" }} | {{ c.signed_off or "–" }} | {% if c.golden_not_found %}golden: not found at `{{ c.golden_not_found }}`{% elif c.n_golden %}{{ c.n_golden_confirmed }} of {{ c.n_golden }}{% else %}none{% endif %} |
 {% endfor %}
 <!-- /generated:trust -->
 

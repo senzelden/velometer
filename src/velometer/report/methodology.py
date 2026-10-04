@@ -17,7 +17,6 @@ from pydantic import BaseModel, ConfigDict
 from velometer import timeseries as ts
 from velometer.config import (
     CityConfig,
-    CountryTrust,
     Limitation,
     load_cities,
     load_classifier,
@@ -28,6 +27,7 @@ from velometer.db import fetch_boundary, fetch_run
 from velometer.models import City
 from velometer.report.data import KINDS, ReportData
 from velometer.sources.boundaries import OSM_ADMIN_VERSION
+from velometer.trust import golden_paths
 
 Lang = Literal["en", "de"]
 LANGS: tuple[Lang, ...] = ("en", "de")
@@ -84,6 +84,7 @@ class CountryFact(_Frozen):
     signed_off: str | None  # ISO date
     n_golden_confirmed: int  # confirmed ways of the golden fixture; 0 of 0 without one
     n_golden: int
+    golden_not_found: str | None = None  # the path trust.yaml names, when no file is there
 
 
 class MethodologyFacts(_Frozen):
@@ -175,12 +176,11 @@ def _city_facts(data: ReportData, city: City, cfg: CityConfig | None) -> CityFac
     )
 
 
-def _golden_counts(repo_root: Path, ct: CountryTrust) -> tuple[int, int]:
-    """(confirmed, total) ways of the country's golden yaml; (0, 0) when it has none."""
-    path = None if ct.golden is None else repo_root / f"{ct.golden}.yaml"
-    if path is None or not path.is_file():
+def _golden_counts(paths: tuple[Path, Path] | None) -> tuple[int, int]:
+    """(confirmed, total) ways of the golden yaml; (0, 0) when there is none to read."""
+    if paths is None or not paths[0].is_file():
         return 0, 0
-    ways = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("ways") or []
+    ways = (yaml.safe_load(paths[0].read_text(encoding="utf-8")) or {}).get("ways") or []
     return sum(1 for w in ways if w.get("confirmed")), len(ways)
 
 
@@ -191,7 +191,9 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
     for cc, ct in sorted(load_trust(config_dir / "trust.yaml").countries.items()):
         if ct.status != "trusted":
             continue
-        confirmed, total = _golden_counts(config_dir.parent, ct)
+        golden = golden_paths(cc, config_dir)
+        confirmed, total = _golden_counts(golden)
+        missing = golden is not None and not golden[0].is_file()
         out.append(
             CountryFact(
                 iso2=cc,
@@ -202,6 +204,7 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
                 signed_off=None if ct.signed_off is None else ct.signed_off.isoformat(),
                 n_golden_confirmed=confirmed,
                 n_golden=total,
+                golden_not_found=str(golden[0]) if missing else None,
             )
         )
     return out

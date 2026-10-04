@@ -334,6 +334,24 @@ def test_trusted_countries_are_listed_with_their_golden_counts(report_db_with_tr
         assert text.count(start) == 1 and text.index(start) < text.index("| DE |") < text.index(end)
 
 
+def test_a_golden_set_that_is_not_where_trust_yaml_says_is_named_not_shown_as_none(
+    report_db_with_trust,
+):
+    nl = {
+        "status": "trusted",
+        "basis": "golden sample",
+        "golden": "tests/fixtures/golden/nl",
+        "classifier_reviewed": "v2",
+        "signed_off": "2026-10-03",
+    }
+    db, cfg = report_db_with_trust(countries={"NL": nl})  # no golden file under cfg's parent
+    facts = _facts_of(db, cfg)
+    want = str(cfg.parent / "tests" / "fixtures" / "golden" / "nl.yaml")
+    assert facts.countries[0].golden_not_found == want
+    assert _row(render(facts, "en"), "| NL |").endswith(f"| golden: not found at `{want}` |")
+    assert f"nicht gefunden unter `{want}`" in _row(render(facts, "de"), "| NL |")
+
+
 def test_each_city_lists_its_boundary_and_population_source(fixture_db):
     db_path, cfg, _, _ = fixture_db
     with closing(sqlite3.connect(db_path)) as w, w:

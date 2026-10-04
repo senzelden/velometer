@@ -26,6 +26,7 @@ from velometer.config import (
     TrustThresholds,
     default_config_dir,
     load_classifier,
+    load_trust,
 )
 from velometer.db import fetch_boundary, fetch_run
 from velometer.osmium import relation_polygon
@@ -542,10 +543,21 @@ def expects_newer_classifier(way: Mapping, classifier_version: str) -> bool:
     )
 
 
-def golden_problems(cc: str, golden_base: Path, classifier_path: Path) -> list[str]:
-    """(a): the country's golden fixtures (`<base>.yaml`, `<base>.osm`) must be fully confirmed
-    and every confirmed way must match the classifier at `classifier_path`."""
-    yml, osm = golden_base.with_suffix(".yaml"), golden_base.with_suffix(".osm")
+def golden_paths(cc: str, config_dir: Path, root: Path | None = None) -> tuple[Path, Path] | None:
+    """(yaml, osm) of the golden fixtures the country's `golden` entry in trust.yaml names, or
+    None when it names none. The entry is a path without extension, relative to the repo root
+    (`root`, default the parent of `config_dir`). The files are not checked to exist."""
+    ct = load_trust(Path(config_dir) / "trust.yaml").countries.get(cc)
+    if ct is None or ct.golden is None:
+        return None
+    base = Path(root if root is not None else Path(config_dir).parent) / ct.golden
+    return base.parent / f"{base.name}.yaml", base.parent / f"{base.name}.osm"
+
+
+def golden_problems(cc: str, paths: tuple[Path, Path], classifier_path: Path) -> list[str]:
+    """(a): the country's golden fixtures (`golden_paths`) must be fully confirmed and every
+    confirmed way must match the classifier at `classifier_path`."""
+    yml, osm = paths
     for f in (yml, osm):
         if not f.is_file():
             return [f"{cc}: golden fixture missing: {f}"]
