@@ -761,10 +761,12 @@ flagged for moves of a few km or less, down to 0.1 -> 0.2 km. Way ids are OSM wa
 changes are quoted before -> after. Mapper data is aggregate: counts of edits, changesets and
 mappers, and the top mapper's share; no mapper is named.
 
-Causes used below: **construction** (new infrastructure, built and mapped), **campaign** (a burst
-of mapping or retagging, mostly not cycling infrastructure or not new), **tag drift** (the same
-ways retagged, which moves km between tiers or diagnostics) and **mapping activity** (ordinary
-mapping that adds or redraws cycling ways where construction cannot be shown).
+Causes used below: **construction** (new ways mapped, consistent with known construction; the
+entry cites the official source of that construction, ADR 0006), **campaign** (a burst of mapping
+or retagging, mostly not cycling infrastructure or not new), **tag drift** (the same ways
+retagged, which moves km between tiers or diagnostics) and **mapping activity** (ordinary mapping
+that adds or redraws cycling ways where no official source shows construction). All km are
+mapped km, not built km.
 
 Evidence: the v3 history runs and current runs listed in the tables above, and way-level diffs of
 consecutive yearly snapshots classified with `config/classifier/v3.yaml` in the city's EPSG. The
@@ -994,8 +996,8 @@ share of 0.30.
 
 ### krakow/fua/2021
 
-Cause: **mapping activity**, including finished construction. A+B rose 285.1 -> 329.6 km
-(+44.5, threshold 28.5):
+Cause: **mapping activity**, including ways retagged from `highway=construction`. A+B rose
+285.1 -> 329.6 mapped km (+44.5, threshold 28.5):
 - 88 new cycleways add 16.0 km and 61 new designated paths 7.0 km;
 - footways turned into designated foot/cycle paths add 12.8 km (155 ways);
 - 10 `construction` -> `cycleway` retags add 6.0 km.
@@ -1129,8 +1131,8 @@ sides are 18.5 km of `highway=cycleway` (e.g. way 1182208725, 3.1 km), 16.1 km o
 
 ### ljubljana/fua/2025
 
-Cause: **mapping activity** outside the city, probably with some new construction. A+B rose 449.5 ->
-536.8 km (+87.3, needs 45.0). +84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km inside.
+Cause: **mapping activity** outside the city. A+B rose 449.5 ->
+536.8 mapped km (+87.3, needs 45.0). +84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km inside.
 Of 105.2 km of new A+B sides, 53.2 km are on ways that already existed in 2024 and were newly tiered
 A or B. The largest groups are untagged secondary and primary roads (12.0 + 9.2 km), e.g. way
 28675982 (road 102), which gained `cycleway=track` on both sides outside the city. Some of the new
@@ -1239,19 +1241,20 @@ not a spike.
 
 ### paris/lau/2020
 
-Cause: **construction**, with **tag drift** in the legacy diagnostic. A+B rose 223.9 -> 257.3
-km, almost all from 357 new `highway=cycleway` ways (+40.8 km, e.g. way 744744226, way
-701119869) and 53 new roads with `cycleway=track` (+5.6 km) drawn during 2019, the Plan Vélo
-build-out; activity was normal (8,422 edits, top mapper 0.22). `legacy_km` 49.5 -> 8.2 is
+Cause: **mapping activity**, with **tag drift** in the legacy diagnostic. A+B rose 223.9 ->
+257.3 mapped km, almost all from 357 new `highway=cycleway` ways (+40.8 km, e.g. way 744744226,
+way 701119869) and 53 new roads with `cycleway=track` (+5.6 km) drawn during 2019, while the
+city's Plan Vélo ran. No official figure of what was built that year is cited here, so these are
+mapped km only. Activity was normal (8,422 edits, top mapper 0.22). `legacy_km` 49.5 -> 8.2 is
 contraflow retagging: `cycleway=opposite_lane` 44.3 -> 6.4 km (way 25599714 ->
 `cycleway:left=opposite`).
 
 ### paris/lau/2021
 
-Cause: **construction** (the 2020 temporary "coronapistes"). A+B rose 257.3 -> 305.6 km: +29.3
-km of new `highway=cycleway` ways (way 840939982) and roads gaining `cycleway=track` with
-`cycleway:temporary=yes` (way 31823633, way 41872851 `share_busway` -> `track`, way 31956307
-`lane` -> `track`). `legacy_km` 8.2 -> 3.4 is the end of the `opposite_lane` retagging (way
+Cause: **mapping activity**: the 2020 temporary "coronapistes" as mapped (no official build
+figure is cited here). A+B rose 257.3 -> 305.6 mapped km: +29.3 km of new `highway=cycleway`
+ways (way 840939982) and roads gaining `cycleway=track` with `cycleway:temporary=yes` (way
+31823633, way 41872851 `share_busway` -> `track`, way 31956307 `lane` -> `track`). `legacy_km` 8.2 -> 3.4 is the end of the `opposite_lane` retagging (way
 24709554).
 
 ### paris/lau/2024
@@ -1271,8 +1274,8 @@ rose 318.6 -> 345.7 mapped km (+8.5%, below the jump threshold), within the norm
 
 ### paris/fua/2019
 
-Cause: **construction** with ordinary catch-up mapping, not a campaign or import. A+B rose
-2,332.9 -> 2,576.7 km (+10.5%): 1,336 new `highway=cycleway` ways (+236 km, e.g. way
+Cause: **mapping activity**, ordinary catch-up mapping, not a campaign or import. A+B rose
+2,332.9 -> 2,576.7 mapped km (+10.5%): 1,336 new `highway=cycleway` ways (+236 km, e.g. way
 597170301), +71 km of new `highway=path` + `bicycle=designated`, and 51 km of tier B from
 `bicycle=yes` -> `designated` (way 107496601); partly offset by 65 km of `cycleway=track`
 removed from roads (way 188144495) and 59 km of deleted cycleways. The 38,570 edits are spread
@@ -1347,8 +1350,8 @@ retagging touches tier D only; A+B rose 608 -> 633 km.
 
 ### warsaw/fua/2019
 
-Cause: **mapping activity** in the suburbs plus finished construction; no campaign or import.
-A+B rose 834.2 -> 982.0 km (+147.8, threshold 83.4). 418 new `highway=cycleway` ways add
+Cause: **mapping activity** in the suburbs, including ways retagged from `highway=construction`;
+no campaign or import. A+B rose 834.2 -> 982.0 mapped km (+147.8, threshold 83.4). 418 new `highway=cycleway` ways add
 113.7 km (12.3 km of cycleways were deleted). 85 ways changed `highway=construction` ->
 `cycleway` (+19.6 km, e.g. way 496608963, 3.4 km in Warsaw), and new designated foot/cycle
 paths add 25.3 km. Warsaw itself gained 48.7 km (the `warsaw/lau` step 528.9 -> 577.7). The

@@ -355,6 +355,22 @@ def test_committed_report_markers_and_headings_are_well_formed():
         assert label == T.CURRENT or (label.isdigit() and len(label) == 4), h
 
 
+def test_committed_construction_causes_cite_a_source():
+    # ADR 0006: OSM gives mapped km, not built km. "construction" means new ways mapped that are
+    # consistent with known construction, so an explanation that names it must cite the source
+    from velometer.reconcile import headings
+
+    p = Path(__file__).parent.parent / "docs" / "review" / "m3_timeseries.md"
+    explained = p.read_text().split("## Explanations", 1)[1]
+    legend = explained.split("Causes used below:", 1)[1].split("\n\n", 1)[0]
+    assert "**construction** (new ways mapped, consistent with known construction" in legend
+    assert "built and mapped" not in legend
+    for h in headings(explained):
+        text = T.explanation(p, h)
+        if text.startswith("Cause: **construction**"):
+            assert "https://" in text, h
+
+
 def _selector():
     from velometer.cli import run_selector
 
