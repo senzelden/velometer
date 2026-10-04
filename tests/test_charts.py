@@ -533,3 +533,28 @@ def test_spread_labels_never_go_below_the_floor_and_keep_order_and_gap():
     ys = sorted(out.values())
     assert all(b - a >= 5.0 - 1e-9 for a, b in zip(ys, ys[1:], strict=False))
     assert out["d"] == 0.0  # the lowest label sits on the floor, not above it
+
+
+def test_headline_subareas_is_one_facet_per_subarea_on_a_shared_y(tmp_path):
+    from tests.report_fixture import build_report_fixture_subareas
+    from velometer.report.charts import headline_subareas
+    from velometer.report.data import open_readonly
+
+    db_path, cfg = build_report_fixture_subareas(tmp_path)
+    conn = open_readonly(db_path)
+    try:
+        spec = headline_subareas(ReportData(conn, cfg), "berlin")
+    finally:
+        conn.close()
+    rows = _data_rows(spec)
+    assert {r["name"] for r in rows} == {"West", "East"}
+    assert {(r["name"], r["label"]) for r in rows} == {
+        (n, y) for n in ("West", "East") for y in ("2024", "2025", "2026", "now")
+    }
+    assert {r["headline"] for r in rows if r["name"] == "West"} == {4.0}
+    assert spec["facet"]["field"] == "name"
+    assert spec["resolve"]["scale"]["y"] == "shared"
+    labels = spec["spec"]["encoding"]["x"]["axis"]["values"]
+    assert len(labels) <= 4  # R32: at most four year labels per panel
+    assert ATTRIBUTION in json.dumps(spec, ensure_ascii=False)
+    assert "url" not in set(_keys(spec))

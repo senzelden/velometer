@@ -287,3 +287,61 @@ def test_country_absent_from_trust_yaml_is_pending(report_db_with_trust):
         assert ReportData(conn, cfg).cities() == []
     finally:
         conn.close()
+
+
+# --- subareas (M6 Task 10) -------------------------------------------------------------------
+
+
+@pytest.fixture
+def sub_data(tmp_path):
+    from tests.report_fixture import build_report_fixture_subareas
+
+    db_path, cfg = build_report_fixture_subareas(tmp_path)
+    conn = open_readonly(db_path)
+    yield ReportData(conn, cfg)
+    conn.close()
+
+
+def test_subareas_rows_of_the_current_run(sub_data):
+    rows = sub_data.subareas("berlin")
+    assert [r.name for r in rows] == ["East", "West"]
+    west = rows[1]
+    assert west.subarea_id == "west" and west.headline == pytest.approx(4.0)
+    assert west.tier_km["A"] == 3.0 and west.tier_km["B"] == 1.0 and west.tier_km["C"] == 0.0
+    assert west.a_share_of_ab == pytest.approx(75.0)
+    assert rows[0].a_share_of_ab == pytest.approx(25.0)
+
+
+def test_subareas_is_none_without_subareas(sub_data):
+    assert sub_data.subareas("paris") is None  # a city without subareas in config
+
+
+def test_subareas_is_none_for_a_city_whose_config_has_none(fixture_db):
+    assert fixture_db[3].subareas("berlin") is None
+
+
+def test_subarea_surfaces_are_empty_for_an_untrusted_country(tmp_path):
+    from tests.report_fixture import build_report_fixture_subareas
+
+    db_path, cfg = build_report_fixture_subareas(tmp_path)
+    trust = yaml.safe_load((cfg / "trust.yaml").read_text())
+    trust["countries"] = {"FR": {"status": "trusted", "basis": "t"}}  # DE is pending
+    (cfg / "trust.yaml").write_text(yaml.safe_dump(trust))
+    conn = open_readonly(db_path)
+    try:
+        data = ReportData(conn, cfg)
+        assert data.subareas("berlin") is None
+        assert data.subarea_series("berlin") == {}
+        assert data.subarea_csv_rows("berlin") == []
+    finally:
+        conn.close()
+
+
+def test_subarea_series_and_csv_rows(sub_data):
+    series = sub_data.subarea_series("berlin")
+    assert set(series) == {"west", "east"}
+    assert [p.label for p in series["west"]] == ["2024", "2025", "2026", "current"]
+    assert sub_data.subarea_series("paris") == {}
+    rows = sub_data.subarea_csv_rows("berlin")
+    assert {r["run_id"] for r in rows} == {str(p.run_id) for p in series["west"]}
+    assert sub_data.subarea_csv_rows("paris") == []

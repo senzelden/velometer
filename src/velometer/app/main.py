@@ -29,14 +29,23 @@ from velometer import timeseries as ts
 from velometer.app.cache import PageCache, fingerprint
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
+from velometer.report import change as change_report
 from velometer.report import charts
-from velometer.report.csvexport import csv_preamble, csv_table
+from velometer.report.csvexport import (
+    SUBAREA_CSV_COLUMNS,
+    csv_preamble,
+    csv_table,
+)
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, open_readonly
 from velometer.run import git_commit
 from velometer.selection import report_selector
 
 HERE = Path(__file__).parent
 MAP_NAME = re.compile(r"^[a-z0-9_]+_(lau|fua)$")
+# a change map: <city>_change_<from>_<to>, each end a 1 January snapshot date or `current`
+CHANGE_NAME = re.compile(
+    r"^([a-z0-9_]+)_change_(\d{4}-\d{2}-\d{2}|current)_(\d{4}-\d{2}-\d{2}|current)$"
+)
 EXPLANATIONS = Path("review") / "m3_timeseries.md"
 METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
 # The Host headers the app answers: the loopback names `velometer serve` binds to. Any other
@@ -216,6 +225,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         }
         return {
             "city": c,
+            "bezirke": bezirke_context(data, city_id),
             "kinds": kinds,
             "headline": charts.headline_city(data, city_id),
             "reconcile": data.reconcile(city_id),
@@ -224,6 +234,41 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             "headline_unit": HEADLINE_UNIT,
             "tiers": ts.TIERS,
             "tiermap": tiermap if map_kinds else None,
+        }
+
+    def bezirke_context(data: ReportData, city_id: str) -> dict | None:
+        """The Bezirk section: current table, small multiples, and the change map with the
+        per-Bezirk table of its markdown. None for a city without (trusted) subareas."""
+        rows = data.subareas(city_id)
+        if rows is None:
+            return None
+        window = data.report_config.change_window
+        label_from = window.from_.isoformat()
+        label_to = window.to if isinstance(window.to, str) else window.to.isoformat()
+        stem = f"{city_id}_change_{label_from}_{label_to}"
+        md_path = docs_dir / "review" / f"{stem}.md"
+        try:
+            table = change_report.bezirk_table(md_path.read_text(encoding="utf-8"))
+        except OSError:
+            table = None
+        has_map = (maps_dir / f"{stem}.geojson").is_file()
+        colours = change_report.CATEGORY_COLOURS
+        return {
+            "rows": rows,
+            "series": charts.headline_subareas(data, city_id),
+            "window": f"{label_from} to {label_to}",
+            "change_table": table,
+            "change_map": {
+                "url": f"/maps/{stem}.geojson",
+                "tiles": OSM_TILES,
+                "tile_class": TILE_CLASS,
+                "weight": LINE_WEIGHT,
+                "links": OSM_LINKS,
+                "colours": colours,
+                "labels": {c: f"mapped {c}" for c in colours},
+            }
+            if has_map
+            else None,
         }
 
     def methodology(request: Request, lang: str) -> HTMLResponse:
@@ -245,9 +290,10 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     def map_file(data: ReportData, name: str, suffix: str) -> Path:
         """The map file of a trusted city's run, else 404 (the city page and CSV do the same)."""
         path = maps_dir / f"{name}.{suffix}"
-        if not MAP_NAME.fullmatch(name):
+        change = CHANGE_NAME.fullmatch(name) if suffix == "geojson" else None
+        if change is None and not MAP_NAME.fullmatch(name):
             raise HTTPException(404, "map not found")
-        city_id = name.rsplit("_", 1)[0]
+        city_id = change.group(1) if change else name.rsplit("_", 1)[0]
         if city_id not in {c.id for c in data.cities()} or not path.is_file():
             raise HTTPException(404, "map not found")
         return path
@@ -287,6 +333,33 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     @app.get("/data/all.csv")
     async def csv_all(request: Request, data: Data):
         return csv_response(request, data, None)
+
+    @app.get("/data/{city_id}_subareas.csv")
+    async def csv_subareas(request: Request, city_id: str, data: Data):
+        def build() -> str:
+            known(data, city_id)
+            try:
+                rows = data.subarea_csv_rows(city_id)
+            except sqlite3.Error as e:
+                raise HTTPException(503, f"database error: {e}") from e
+            if not rows:
+                raise HTTPException(404, f"no subareas for {city_id!r}")
+            return csv_table(rows, SUBAREA_CSV_COLUMNS)
+
+        table = cache.get(f"csv-subareas:{city_id}", fp(request), build)
+        text = (
+            csv_preamble(
+                short_commit(git_commit()), datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            )
+            + table
+        )
+        return Response(
+            text,
+            media_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="velometer-{city_id}-subareas.csv"'
+            },
+        )
 
     @app.get("/data/{city_id}.csv")
     async def csv_city(request: Request, city_id: str, data: Data):

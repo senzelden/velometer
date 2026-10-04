@@ -947,3 +947,160 @@ def test_maps_of_an_untrusted_city_are_404(report_db_with_trust, tmp_path):
         assert c.get("/maps/berlin_lau.geojson").status_code == 200
         assert c.get("/maps/paris_lau.png").status_code == 404
         assert c.get("/maps/paris_lau.geojson").status_code == 404
+
+
+# --- Bezirke: subarea table, small multiples, change map and subarea CSV (M6 Task 10) ----------
+
+CHANGE_STEM = "berlin_change_2023-01-01_current"  # the shipped report.yaml change_window
+
+
+def _change_markdown() -> str:
+    from velometer.report import change as ch
+
+    rows = [
+        ch.ChangeRow("gained", None, 7, "right", None, "A", 1.25, {"west": 1.25}),
+        ch.ChangeRow("lost", 8, None, "left", "B", None, 0.5, {"east": 0.5}),
+    ]
+    result = ch.ChangeResult(rows, {"A": 1.0}, {"A": 2.0})
+    run = {"id": 1, "osm_timestamp": "2023-01-01T00:00:00Z", "classifier_version": "v4",
+           "boundary_sha256": "b" * 64}  # fmt: skip
+    md = ch.render_markdown(
+        result, "Berlin", run, {**run, "id": 2}, {"west": "West", "east": "East"}
+    )
+    return md + "\nMARKER-BEYOND-THE-TABLE\n"
+
+
+@pytest.fixture
+def subarea_setup(tmp_path):
+    from tests.report_fixture import build_report_fixture_subareas
+
+    db_path, cfg = build_report_fixture_subareas(tmp_path)
+    maps = tmp_path / "maps"
+    maps.mkdir()
+    return db_path, cfg, maps, _docs(tmp_path)
+
+
+@pytest.fixture
+def subarea_client(subarea_setup):
+    with _client(create_app(*subarea_setup)) as c:
+        yield c
+
+
+def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM) -> None:
+    (maps / f"{stem}.geojson").write_bytes(GEOJSON)
+    (docs / "review" / f"{stem}.md").write_text(_change_markdown())
+
+
+def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
+    html = subarea_client.get("/city/berlin").text
+    assert "<h2>Bezirke</h2>" in html
+    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
+    assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
+    assert "4.0" in bezirke  # West's headline, 4 %
+    assert "facet" in bezirke  # the small-multiples spec is embedded
+
+
+def test_city_without_subareas_has_no_bezirke(client):
+    html = client.get("/city/berlin").text  # the plain fixture: no subareas in config
+    assert "Bezirke" not in html and "_subareas.csv" not in html
+
+
+def test_other_city_of_a_subarea_config_has_no_bezirke(subarea_client):
+    assert "Bezirke" not in subarea_client.get("/city/paris").text
+
+
+def test_bezirke_without_a_change_file_says_so_and_loads_no_change_map(subarea_client):
+    html = subarea_client.get("/city/berlin").text
+    assert "No change map generated yet" in html
+    assert "changemap" not in html.replace("No change map", "")
+
+
+def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea_setup):
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin").text
+        assert "No change map generated yet" not in html
+        assert f"/maps/{CHANGE_STEM}.geojson" in html
+        assert "/static/changemap.js" in html and "/static/vendor/leaflet.js" in html
+        table = html.split("<h3>Mapped change")[1].split("</table>")[0]
+        assert "<td>West</td>" in table and "<td>East</td>" in table and "1.250" in table
+        assert "MARKER-BEYOND-THE-TABLE" not in html  # only the generated table, not the page
+        assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 200
+
+
+def test_change_geojson_route_refuses_unknown_and_missing_files(subarea_setup):
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs)
+    (maps / "paris_change_2023-01-01_current.geojson").write_bytes(GEOJSON)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        assert c.get("/maps/berlin_change_2022-01-01_current.geojson").status_code == 404
+        assert c.get("/maps/berlin_change_x_y.geojson").status_code == 404
+        assert c.get("/maps/nowhere_change_2023-01-01_current.geojson").status_code == 404
+
+
+def test_subarea_csv_has_provenance_columns_the_odbl_line_and_a_row_per_tier(subarea_client):
+    import csv
+    import io
+
+    text = subarea_client.get("/data/berlin_subareas.csv").text
+    lines = text.splitlines()
+    assert lines[0].startswith("# Map data © OpenStreetMap contributors, ODbL 1.0")
+    assert lines[1].startswith("# velometer ")
+    rows = list(csv.DictReader(io.StringIO("\n".join(lines[2:]))))
+    assert list(rows[0]) == [
+        "city_id", "subarea_id", "name", "run_id", "osm_timestamp", "classifier_version",
+        "git_commit", "config_sha256", "boundary_sha256", "subarea_sha", "tier", "length_basis",
+        "length_km",
+    ]  # fmt: skip
+    assert {r["subarea_id"] for r in rows} == {"west", "east"}
+    west_a = [r for r in rows if r["subarea_id"] == "west" and r["tier"] == "A"]
+    assert {r["length_basis"] for r in west_a} == {"per_side", "qecio_weighted"}
+    assert {r["length_km"] for r in west_a} == {"3.000"}
+    assert all(r["name"] in ("West", "East") and r["git_commit"] for r in rows)
+    assert (
+        "attachment"
+        in subarea_client.get("/data/berlin_subareas.csv").headers["content-disposition"]
+    )
+
+
+def test_subarea_csv_commit_and_generated_line_are_of_the_request(subarea_client, monkeypatch):
+    from velometer.app import main
+
+    monkeypatch.setattr(main, "git_commit", lambda: "aaaaaaaa" * 5)
+    first = subarea_client.get("/data/berlin_subareas.csv").text.splitlines()
+    monkeypatch.setattr(main, "git_commit", lambda: "bbbbbbbb" * 5)
+    second = subarea_client.get("/data/berlin_subareas.csv").text.splitlines()
+    assert "aaaaaaa" in first[1] and "bbbbbbb" in second[1]
+    assert first[2:] == second[2:]
+
+
+def test_subarea_csv_of_a_city_without_subareas_is_404(subarea_client):
+    assert subarea_client.get("/data/paris_subareas.csv").status_code == 404
+    assert subarea_client.get("/data/nowhere_subareas.csv").status_code == 404
+
+
+def test_pending_country_hides_bezirke_csv_and_change_geojson(subarea_setup):
+    import yaml
+
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:  # control: DE is trusted
+        assert c.get("/city/berlin").status_code == 200
+        assert c.get("/data/berlin_subareas.csv").status_code == 200
+        assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 200
+    trust = yaml.safe_load((cfg / "trust.yaml").read_text())
+    trust["countries"] = {k: v for k, v in trust["countries"].items() if k != "DE"}
+    trust["countries"]["FR"] = {"status": "trusted", "basis": "t"}
+    (cfg / "trust.yaml").write_text(yaml.safe_dump(trust))
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        assert c.get("/city/berlin").status_code == 404
+        assert c.get("/data/berlin_subareas.csv").status_code == 404
+        assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 404
+
+
+def test_fingerprint_follows_the_change_page(subarea_setup):
+    db_path, cfg, maps, docs = subarea_setup
+    before = fingerprint(db_path, cfg, docs, maps)
+    (docs / "review" / f"{CHANGE_STEM}.md").write_text(_change_markdown())
+    assert fingerprint(db_path, cfg, docs, maps) != before

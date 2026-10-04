@@ -24,6 +24,21 @@ CSV_COLUMNS = [
     "population_year",
     "flags",
 ]
+SUBAREA_CSV_COLUMNS = [
+    "city_id",
+    "subarea_id",
+    "name",
+    "run_id",
+    "osm_timestamp",
+    "classifier_version",
+    "git_commit",
+    "config_sha256",
+    "boundary_sha256",
+    "subarea_sha",
+    "tier",
+    "length_basis",
+    "length_km",
+]
 ATTRIBUTION = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km"
 
 
@@ -32,10 +47,10 @@ def csv_preamble(commit: str, generated_at: str) -> str:
     return f"{ATTRIBUTION}\n# velometer {commit} generated {generated_at}\n"
 
 
-def csv_table(rows: list[dict[str, str]]) -> str:
+def csv_table(rows: list[dict[str, str]], columns: list[str] = CSV_COLUMNS) -> str:
     """The header and the rows (what stays the same while the data does)."""
     out = io.StringIO()
-    writer = csv.DictWriter(out, CSV_COLUMNS, lineterminator="\n")
+    writer = csv.DictWriter(out, columns, lineterminator="\n")
     writer.writeheader()
     writer.writerows(rows)
     return out.getvalue()

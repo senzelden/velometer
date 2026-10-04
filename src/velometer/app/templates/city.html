@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% from "macros.html" import chart %}
 {% block title %}velometer · {{ city.name }}{% endblock %}
-{% block head %}{% if tiermap %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
+{% block head %}{% if tiermap or (bezirke and bezirke.change_map) %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="/">Cities</a> / {{ city.name }} · <a href="/data/{{ city.id }}.csv">CSV</a></p>
+<p class="crumbs"><a href="/">Cities</a> / {{ city.name }} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}</p>
 <h1>{{ city.name }}</h1>
 
 <section>
@@ -72,6 +72,48 @@
 </div>
 </section>
 
+{% if bezirke %}
+<section>
+<h2>Bezirke</h2>
+<p class="meta">Latest current LAU run, per subarea. Headline: {{ headline_unit }}. Tier A share is A of A+B per-side mapped km.</p>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>Bezirk</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A share of A+B</th>
+  {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for r in bezirke.rows %}
+<tr>
+  <td>{{ r.name }}</td>
+  <td class="num">{{ r.headline | num }}</td>
+  <td class="num">{% if r.a_share_of_ab is none %}n/a{% else %}{{ r.a_share_of_ab | num }} %{% endif %}</td>
+  {% for t in tiers %}<td class="num">{{ r.tier_km[t] | num }}</td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<h3>Over time</h3>
+{{ chart("cb", bezirke.series) }}
+<h3>Mapped change {{ bezirke.window }}</h3>
+{% if bezirke.change_map %}
+<div id="changemap" class="tiermap" role="region" aria-label="Interactive change map, {{ city.name }}"></div>
+<p class="meta tiermap-note" id="changemap-status">Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.</p>
+<script type="application/json" id="changemap-config">{{ bezirke.change_map | tojson }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/changemap.js"></script>
+{% endif %}
+{% if bezirke.change_table %}
+<div class="scroll">{{ bezirke.change_table | md }}</div>
+<p class="meta">Mapped km per Bezirk and category, from the change page <code>docs/review</code>; "geometry" is the signed length change of a same-tier way-side.</p>
+{% endif %}
+{% if not bezirke.change_map and not bezirke.change_table %}
+<p class="note">No change map generated yet (<code>velometer report change --city {{ city.id }}</code>)</p>
+{% endif %}
+</section>
+{% endif %}
+
 <section>
 <h2>Flagged years</h2>
 {% for k in kinds %}
@@ -134,7 +176,7 @@
 <div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
 <p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
 <script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
-<script src="/static/vendor/leaflet.js"></script>
+{% if not (bezirke and bezirke.change_map) %}<script src="/static/vendor/leaflet.js"></script>{% endif %}
 <script src="/static/map.js"></script>
 {% endif %}
 <ul class="tiermap-files">

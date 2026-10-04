@@ -14,6 +14,7 @@ T = TypeVar("T")
 
 DOC_FILES = ("review/m3_timeseries.md", "reconciliation.md", "methodology.md", "methodology.de.md")
 MAP_GLOBS = ("*.png", "*.geojson")
+CHANGE_DOCS = ("*_change_*.md",)  # docs/review: the change pages' per-Bezirk tables
 
 
 def _stat(path: Path, rel: str) -> tuple:
@@ -30,12 +31,14 @@ def _tree(root: Path, patterns: tuple[str, ...] = ("*",)) -> list[tuple]:
 
 
 def fingerprint(db_path: Path, config_dir: Path, docs_dir: Path, maps_dir: Path) -> tuple:
-    """Everything a page reads: the DB, every config file, four docs files, the map files."""
+    """Everything a page reads: the DB, every config file, four docs files, the change pages and
+    the map files."""
     db_path, config_dir, docs_dir, maps_dir = map(Path, (db_path, config_dir, docs_dir, maps_dir))
     return (
         _stat(db_path, "db")[1:],
         ("config", *_tree(config_dir)),
         ("docs", *(_stat(docs_dir / rel, rel) for rel in DOC_FILES)),
+        ("changes", *_tree(docs_dir / "review", CHANGE_DOCS)),
         ("maps", *_tree(maps_dir, MAP_GLOBS)),
     )
 

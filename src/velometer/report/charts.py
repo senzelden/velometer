@@ -12,6 +12,7 @@ import altair as alt
 import vl_convert as vlc
 
 from velometer import timeseries as ts
+from velometer.db import subarea_names
 from velometer.report.data import HEADLINE_UNIT, ReportData
 
 ATTRIBUTION = (
@@ -347,6 +348,55 @@ def tiers_small_multiples(data: ReportData) -> dict:
         .resolve_scale(y="shared")
         # one x axis per panel: a wrapped facet otherwise draws a column's axis under its last
         # row, which for a short last row is an empty cell
+        .resolve_axis(x="independent")
+    )
+    return _config(chart).to_dict()
+
+
+# --- subareas (Bezirke) ----------------------------------------------------------------------
+
+
+def headline_subareas(data: ReportData, city_id: str) -> dict:
+    """The headline of each subarea over time as small multiples: one panel per subarea, one
+    shared y scale, first/middle/last x labels (at most four, as `tiers_small_multiples`)."""
+    names = subarea_names(data.conn, city_id)
+    rows = [
+        {
+            "name": names.get(sid, sid),
+            "subarea_id": sid,
+            "label": _label(p.label),
+            "headline": None if p.headline is None else round(p.headline, 3),
+        }
+        for sid, points in data.subarea_series(city_id).items()
+        for p in points
+    ]
+    base = (
+        alt.Chart(alt.Data(values=rows))
+        .mark_line(point=True, strokeWidth=2, color=CITY_COLOURS[0])
+        .encode(
+            x=alt.X(
+                "label:O",
+                sort=_x_labels(data),
+                title=None,
+                axis=alt.Axis(labelAngle=0, values=_sparse_years(data)),
+            ),
+            y=alt.Y("headline:Q", title=HEADLINE_UNIT, scale=alt.Scale(zero=True)),
+            tooltip=[
+                alt.Tooltip("name:N", title="Bezirk"),
+                alt.Tooltip("label:N"),
+                alt.Tooltip("headline:Q", format=".2f"),
+            ],
+        )
+        .properties(width=150, height=110)
+    )
+    chart = (
+        base.facet(facet=alt.Facet("name:N", title=None, sort="ascending"), columns=4)
+        .properties(
+            title=_title(
+                f"Protected cycling infrastructure per Bezirk, {_city_name(data, city_id)}"
+            )
+        )
+        .resolve_scale(y="shared")
         .resolve_axis(x="independent")
     )
     return _config(chart).to_dict()

@@ -67,6 +67,7 @@ MAPPED_KM_LINE = (
     "infrastructure, not a construction."
 )
 OSM_WAY = "https://www.openstreetmap.org/way/{}"
+BEZIRK_HEADING = "## Mapped km per category"  # the per-Bezirk table's section in the markdown
 
 
 @dataclass(frozen=True)
@@ -398,7 +399,7 @@ def render_markdown(
             f"| {t} | {_km(result.totals_from.get(t, 0.0))} | {_km(result.totals_to.get(t, 0.0))} |"
         )
     by_cat = {c: [r for r in result.rows if r.category == c] for c in CATEGORIES}
-    lines += ["", "## Mapped km per category", ""]
+    lines += ["", BEZIRK_HEADING, ""]
     lines += ["| | " + " | ".join(CATEGORIES) + " |", "|---|" + "---:|" * len(CATEGORIES)]
     if names:
         for sid, name in sorted(names.items(), key=lambda kv: kv[1]):
@@ -432,6 +433,21 @@ def render_markdown(
             lines.append(line)
     lines += ["", f"_{ODBL}_", ""]
     return "\n".join(lines)
+
+
+def bezirk_table(markdown: str) -> str | None:
+    """The per-Bezirk table of a change markdown (its `BEZIRK_HEADING` section's table lines),
+    or None if the page has none. The app shows it as written, never re-computed."""
+    lines = markdown.splitlines()
+    if BEZIRK_HEADING not in lines:
+        return None
+    table = []
+    for line in lines[lines.index(BEZIRK_HEADING) + 1 :]:
+        if line.startswith("## "):
+            break
+        if line.startswith("|"):
+            table.append(line)
+    return "\n".join(table) or None
 
 
 def _coords(ways: Iterable[WayRecord]) -> dict[int, tuple]:

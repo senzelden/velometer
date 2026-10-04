@@ -217,3 +217,18 @@ def add_subareas(db_path: Path, cfg: Path, run_ids: list[int]) -> None:
                         (run_id, "berlin", sid, road, 100.0),
                     )
         conn.commit()
+
+
+def build_report_fixture_subareas(tmp_path: Path) -> tuple[Path, Path]:
+    """`build_report_fixture` with berlin's two subareas on every berlin LAU run."""
+    db_path, cfg = build_report_fixture(tmp_path)
+    with open_db(db_path) as conn:
+        runs = [
+            r[0]
+            for r in conn.execute(
+                "SELECT id FROM runs WHERE city_id='berlin' AND boundary_kind='lau' "
+                "AND status='done'"
+            )
+        ]
+    add_subareas(db_path, cfg, runs)
+    return db_path, cfg

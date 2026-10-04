@@ -30,9 +30,11 @@ from velometer.db import (
     fetch_external_figures,
     fetch_run,
     fetch_run_results,
+    subarea_names,
+    subarea_rows,
 )
 from velometer.models import City
-from velometer.pipeline.measure import select_metric
+from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.selection import report_selector, trusted_countries
 
 KINDS = ("lau", "fua")
@@ -135,6 +137,16 @@ def rank_values(values: list[tuple[str, float]]) -> dict[str, int]:
             rank, prev = i, r
         out[key] = rank
     return out
+
+
+class SubareaRow(_Frozen):
+    """One subarea (Bezirk) of a city's current LAU run: headline, per-side tier km, A share."""
+
+    subarea_id: str
+    name: str
+    headline: float | None  # ours_headline on the subarea's own road lengths
+    tier_km: dict[str, float]  # per_side km of tiers A-E
+    a_share_of_ab: float | None  # tier A's share of A+B in percent; None without A+B km
 
 
 def _fmt(v: float | None) -> str:
@@ -356,6 +368,95 @@ class ReportData:
             for r in self.ranking_rows()
             if r.rank is not None and r.value is not None
         ]
+
+    # --- subareas (Bezirke) ---------------------------------------------------------------
+
+    def _has_subareas(self, city_id: str) -> bool:
+        """A trusted city whose config lists subareas (the one gate of every subarea surface)."""
+        if city_id not in {c.id for c in self.cities()}:
+            return False
+        return bool(self.city_fields().get(city_id, {}).get("subareas"))
+
+    def _headline(self, tiers, roads) -> float | None:
+        metrics = compute_metrics(SubareaMeasure(tiers, roads), self.selector.presets.presets)
+        metric = select_metric(metrics, "ours_headline", self.selector.presets)
+        return None if metric is None else metric.value
+
+    def subareas(self, city_id: str) -> list[SubareaRow] | None:
+        """The latest current LAU run's subarea rows by name; None for a city without subareas,
+        an untrusted city, or a run without subarea rows."""
+        if not self._has_subareas(city_id):
+            return None
+        run_id = self.selector.latest(self.conn, city_id, "lau")
+        parts = {} if run_id is None else subarea_rows(self.conn, run_id)
+        if not parts:
+            return None
+        names = subarea_names(self.conn, city_id)
+        rows = []
+        for sid, (tiers, roads) in parts.items():
+            km = {
+                t: sum(x.length_km for x in tiers if x.tier == t and x.length_basis == "per_side")
+                for t in ts.TIERS
+            }
+            ab = km["A"] + km["B"]
+            rows.append(
+                SubareaRow(
+                    subarea_id=sid,
+                    name=names.get(sid, sid),
+                    headline=self._headline(tiers, roads),
+                    tier_km=km,
+                    a_share_of_ab=100 * km["A"] / ab if ab else None,
+                )
+            )
+        return sorted(rows, key=lambda r: (r.name, r.subarea_id))
+
+    def subarea_series(self, city_id: str) -> dict[str, list[ts.SubareaPoint]]:
+        """The yearly headline and tier km of each subarea, by subarea_id ({} where `subareas`
+        is None, or the city has no history set)."""
+        if not self._has_subareas(city_id):
+            return {}
+        cs = self.series(city_id, "lau")
+        if cs is None:
+            return {}
+        return ts.subarea_series(self.conn, city_id, self.selector, cs.set_md5)
+
+    def subarea_csv_rows(self, city_id: str) -> list[dict[str, str]]:
+        """One row per (run, subarea, tier, length basis) over the series runs and the latest
+        current run: tier km summed over subtypes, with each run's own provenance."""
+        run_ids = {p.run_id for pts in self.subarea_series(city_id).values() for p in pts}
+        if not self._has_subareas(city_id):
+            return []
+        current = self.selector.latest(self.conn, city_id, "lau")
+        if current is not None:
+            run_ids.add(current)
+        names = subarea_names(self.conn, city_id)
+        out = []
+        for run_id in sorted(run_ids):
+            run = fetch_run(self.conn, run_id)
+            for sid, (tiers, _roads) in sorted(subarea_rows(self.conn, run_id).items()):
+                km: dict[tuple[str, str], float] = {}
+                for t in tiers:
+                    key = (t.tier, t.length_basis)
+                    km[key] = km.get(key, 0.0) + t.length_km
+                for (tier, basis), length in sorted(km.items()):
+                    out.append(
+                        {
+                            "city_id": city_id,
+                            "subarea_id": sid,
+                            "name": names.get(sid, sid),
+                            "run_id": str(run_id),
+                            "osm_timestamp": run["osm_timestamp"],
+                            "classifier_version": run["classifier_version"],
+                            "git_commit": run["git_commit"],
+                            "config_sha256": run["config_sha256"] or "",
+                            "boundary_sha256": run["boundary_sha256"],
+                            "subarea_sha": run["subarea_sha"] or "",
+                            "tier": tier,
+                            "length_basis": basis,
+                            "length_km": _fmt(length),
+                        }
+                    )
+        return out
 
     # --- CSV ------------------------------------------------------------------------------
 
