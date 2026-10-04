@@ -27,6 +27,14 @@ def md5_of(path: Path) -> str:
     return h.hexdigest()
 
 
+def looks_like_pbf(path: Path) -> bool:
+    """The file starts like an OSM PBF: a 4-byte BlobHeader length, then a BlobHeader whose
+    first field (type, a length-delimited string) is "OSMHeader"."""
+    with path.open("rb") as f:
+        head = f.read(4 + 2 + len(b"OSMHeader"))
+    return head[4:] == b"\x0a\x09OSMHeader"
+
+
 def new_client() -> httpx.Client:
     return httpx.Client(headers={"User-Agent": user_agent()}, timeout=120, follow_redirects=True)
 
@@ -44,6 +52,7 @@ def fetch(
     *,
     md5: str | None = None,
     verify_length: bool = False,
+    expect_pbf: bool = False,
     client: httpx.Client | None = None,
     retries: int = 3,
     backoff_s: float = 5.0,
@@ -55,6 +64,8 @@ def fetch(
     retried (transport errors, 5xx, 408, 429); other HTTP errors raise DownloadError at once.
     With verify_length, a response that carried a Content-Length must deliver exactly that many
     bytes (a truncated body raises DownloadError); meant for downloads accepted without an md5.
+    With expect_pbf, a text/html response or a body that does not start like an OSM PBF raises
+    DownloadError (e.g. a login page served with 200); also meant for downloads without an md5.
     Non-HTTP errors (e.g. OSError while writing) propagate unwrapped. No .part survives a failure.
     """
     if retries < 1:
@@ -86,6 +97,11 @@ def fetch(
                     ):
                         raise DownloadError(
                             f"{url}: got {written} bytes, Content-Length said {declared}"
+                        )
+                    ctype = resp.headers.get("Content-Type", "")
+                    if expect_pbf and (ctype.startswith("text/html") or not looks_like_pbf(part)):
+                        raise DownloadError(
+                            f"{url}: the body is not an OSM PBF (Content-Type {ctype or 'none'})"
                         )
                 if md5 is not None and md5_of(part) != md5:
                     raise DownloadError(f"{url}: md5 mismatch (expected {md5})")

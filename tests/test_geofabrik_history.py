@@ -23,7 +23,10 @@ from velometer.sources.geofabrik import (
 from velometer.sources.geofabrik_auth import Cookie
 
 FIX = Path(__file__).parent / "fixtures" / "geofabrik"
-BODY = b"history-bytes" * 500
+# the start of a real .osh.pbf: a 4-byte BlobHeader length, then the BlobHeader whose
+# field 1 (type) is "OSMHeader" (bytes 0a 09 "OSMHeader")
+PBF_START = b"\x00\x00\x00\x0e\x0a\x09OSMHeader\x18\x81\x01"
+BODY = PBF_START + b"history-bytes" * 500
 MD5 = hashlib.md5(BODY).hexdigest()
 TODAY = date(2026, 10, 1)
 URL = "https://osm-internal.download.geofabrik.de/a-internal.osh.pbf"
@@ -521,6 +524,42 @@ def test_fetch_history_rejects_a_body_shorter_than_content_length_on_a_computed_
 
 def test_fetch_history_accepts_a_body_matching_content_length_on_a_computed_md5(tmp_path):
     c = _client(_history_handler([]))  # httpx sets Content-Length to len(BODY)
+    hf = fetch_history(
+        "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+    )
+    assert hf.md5_source == "computed" and hf.path.read_bytes() == BODY
+
+
+def _body_handler(content, content_type="application/octet-stream"):
+    def handler(r):
+        if str(r.url).endswith(".md5"):
+            return httpx.Response(404)  # no published md5: the computed-md5 path
+        return httpx.Response(200, content=content, headers={"Content-Type": content_type})
+
+    return handler
+
+
+@pytest.mark.parametrize(
+    "content, content_type",
+    [
+        (b"<!doctype html><html><body>please log in</body></html>", "application/octet-stream"),
+        (b"<html>please log in</html>", "text/html; charset=utf-8"),
+        (BODY, "text/html"),  # a PBF-looking body served as a web page is not trusted either
+    ],
+    ids=["html-body", "html-body-and-type", "html-type"],
+)
+def test_fetch_history_rejects_a_non_pbf_on_a_computed_md5(tmp_path, content, content_type):
+    # an expired session answered with a login page (200) must not be stored as a history file
+    c = _client(_body_handler(content, content_type))
+    with pytest.raises(DownloadError, match="not an OSM PBF"):
+        fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert list((tmp_path / "history").iterdir()) == []
+
+
+def test_fetch_history_accepts_a_pbf_header_on_a_computed_md5(tmp_path):
+    c = _client(_body_handler(BODY))
     hf = fetch_history(
         "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
     )

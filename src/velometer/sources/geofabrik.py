@@ -347,7 +347,15 @@ def fetch_history(
                         if known.name == f"{stem}_{md5[:8]}.osh.pbf":
                             return HistoryFile(region, known, md5, "computed", today)
                 interim = hist / f"{stem}.osh.pbf"
-                fetch(url, interim, md5=published, verify_length=published is None, client=client)
+                computed = published is None
+                fetch(
+                    url,
+                    interim,
+                    md5=published,
+                    verify_length=computed,
+                    expect_pbf=computed,
+                    client=client,
+                )
                 break
             except DownloadError as e:
                 if not (relogin_left and _auth_refused(e)):
