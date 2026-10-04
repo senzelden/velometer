@@ -268,6 +268,43 @@ def test_no_cycling_tags_gives_zero_shares_not_nan(fixture_db, tmp_path):
     assert d.b_share_of_ab is None and set(d.tier_mix.values()) == {0.0}
 
 
+# the cycling denominator takes the classified sides of ways that carry a cycling key
+# (config/activity.yaml `cycling_keys`). `bicycle=yes` alone is a cycling key, but the classifier
+# gives a road with no cycleway tag no side, so such a way adds nothing; the others do. A
+# `highway=track` has a standalone side but no cycling key: only the filter keeps it out.
+@needs_osmium
+@pytest.mark.parametrize(
+    ("tags", "counted"),
+    [
+        ({"highway": "residential"}, False),
+        ({"highway": "track"}, False),  # a standalone side exists, but no cycling key
+        ({"highway": "cycleway"}, True),  # highway_values
+        ({"highway": "residential", "maxspeed": "30", "surface": "asphalt"}, False),
+        ({"highway": "residential", "bicycle": "yes"}, False),  # no classified side
+        ({"highway": "secondary", "cycleway:right": "lane"}, True),  # prefix "cycleway"
+        ({"highway": "residential", "bicycle_road": "yes"}, True),  # exact key
+    ],
+    ids=["plain", "track", "cycleway", "non-cycling-tags", "bicycle=yes", "cycleway:right=lane", "bicycle_road=yes"],
+)
+def test_diagnose_counts_only_cycling_tagged_ways_in_the_denominator(
+    fixture_db, tmp_path, tags, counted
+):
+    _, cfg, conn, _ = fixture_db
+    osm = tmp_path / "one.osm"
+    tag_xml = "".join(f'<tag k="{k}" v="{v}"/>' for k, v in tags.items())
+    osm.write_text(
+        '<osm version="0.6"><node id="1" lat="52.5" lon="13.4"/>'
+        '<node id="2" lat="52.5" lon="13.4147"/>'
+        f'<way id="1"><nd ref="1"/><nd ref="2"/>{tag_xml}</way></osm>'
+    )
+    _place(conn, tmp_path / "data", osm)
+    d = diagnose_city(
+        conn, CITY, report_selector(cfg), tmp_path / "data", load_activity(cfg / "activity.yaml"),
+        config_dir=cfg,
+    )  # fmt: skip
+    assert (d.cycling_km > 0) is counted
+
+
 def test_city_without_a_current_run_is_an_error_naming_it(fixture_db, tmp_path):
     _, cfg, conn, _ = fixture_db
     paris = next(c for c in load_cities(cfg / "cities.yaml") if c.id == "paris")
