@@ -164,6 +164,57 @@ def test_boundaries_fetch_all_skips_missing_code_and_stores_rest(tmp_path, monke
     assert kinds == {"lau", "osm_admin"}
 
 
+def test_boundaries_fetch_lau_of_an_osm_relation_city_fetches_the_region_first(
+    tmp_path, monkeypatch
+):
+    import dataclasses
+    import shutil
+
+    from velometer import run as R
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(default_config_dir(), cfg)
+    text = (cfg / "cities.yaml").read_text()
+    marker = "    osm_relation_id: 62422\n"
+    assert text.count(marker) == 1
+    (cfg / "cities.yaml").write_text(
+        text.replace(marker, marker + "    admin_boundary: osm_relation\n")
+    )
+    deps = _patched(monkeypatch, tmp_path)
+    seen = []
+
+    def spy(city, kind, data_dir, region_path=None):
+        seen.append((kind, region_path))
+        return deps.city_boundary(city, kind, data_dir, region_path=region_path)
+
+    fetched = []
+
+    def fetch(region, data_dir):
+        fetched.append(region)
+        return deps.fetch_region(region, data_dir)
+
+    monkeypatch.setattr(
+        R, "RunDeps", lambda: dataclasses.replace(deps, city_boundary=spy, fetch_region=fetch)
+    )
+
+    def invoke(*extra):
+        return CliRunner().invoke(
+            app,
+            ["boundaries", "fetch", "--city", "berlin", "--config-dir", str(cfg)]
+            + [*extra, "--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
+        )
+
+    out = invoke("--kind", "lau")
+    assert out.exit_code == 0, out.output
+    assert fetched == ["europe/germany/berlin"]
+    assert seen and seen[0][0] == "lau" and seen[0][1] is not None
+    # the FUA is not an OSM layer: no region needed
+    seen.clear()
+    fetched.clear()
+    assert invoke("--kind", "fua").exit_code == 0
+    assert fetched == [] and seen == [("fua", None)]
+
+
 def test_boundaries_fetch_unknown_kind_exits_2(tmp_path, monkeypatch):
     _patched(monkeypatch, tmp_path)
     out = CliRunner().invoke(

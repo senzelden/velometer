@@ -370,6 +370,24 @@ def test_epsg_exception_accepts_only_the_adjacent_zone():
         b.check_epsg(two_away, poly)
 
 
+def test_write_boundary_applies_the_epsg_exception_to_the_adjacent_zone_only(tmp_path):
+    mp = MultiPolygon([_sq(4.5e6, 3.27e6)])  # Berlin: UTM zone 25833
+    adjacent = CITY.model_copy(update={"epsg": 25832, "epsg_exception": "national standard"})
+    rec = b.write_boundary(adjacent, "lau", mp, "GISCO", tmp_path)
+    assert rec.geojson_path.exists()
+    for epsg in (25834, 25831):  # +1 is the other neighbour; 25831 is two away
+        city = CITY.model_copy(update={"epsg": epsg, "epsg_exception": "national standard"})
+        if abs(epsg - 25833) == 1:
+            b.write_boundary(city, "lau", mp, "GISCO", tmp_path)
+        else:
+            with pytest.raises(ValueError, match=f"EPSG {epsg}"):
+                b.write_boundary(city, "lau", mp, "GISCO", tmp_path / "two_away")
+    assert not (tmp_path / "two_away").exists()  # refused before anything is written
+    # without the exception the adjacent zone is refused
+    with pytest.raises(ValueError, match="EPSG 25832"):
+        b.write_boundary(CITY.model_copy(update={"epsg": 25832}), "lau", mp, "GISCO", tmp_path)
+
+
 def _multi_city(**kw):
     return CITY.model_copy(update={"lau_code": None, "lau_codes": ["SK_A", "SK_B"], **kw})
 
