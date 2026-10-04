@@ -1457,6 +1457,12 @@ def report_change(
         boundary_row = fetch_boundary(conn, city, "lau")
         if boundary_row is None:
             raise ValueError(f"{city} has no LAU boundary row")
+        run_sha = fetch_run(conn, run_from)["boundary_sha256"]  # check_runs: both runs share it
+        if boundary_row.sha256 != run_sha:
+            raise ch.ChangeRefused(
+                f"{city} LAU boundary on file has sha256 {boundary_row.sha256}, the runs were "
+                f"measured on {run_sha}; the runs cannot be re-clipped to it"
+            )
         boundary = load_boundary_polygon(Path(boundary_row.path), city_cfg.epsg)
         subareas = load_subareas(city_cfg, data_dir)
         cfg = load_classifier(config_dir / "classifier" / f"{selector.version}.yaml")

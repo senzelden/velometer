@@ -18,6 +18,7 @@ from velometer.pipeline.geometry import Projector
 from velometer.pipeline.history import city_history_name, snapshot_at
 from velometer.pipeline.measure import measure
 from velometer.pipeline.read import read_ways
+from velometer.pipeline.types import WayRecord
 from velometer.report import change as ch
 from velometer.run import snapshot_path_for_run
 from velometer.subareas import SubareaPolygon
@@ -120,6 +121,39 @@ def _stored(ways, boundary=BOUNDARY) -> dict[str, float]:
     return stored
 
 
+def _way(way_id: int, lons: tuple[float, float], lat: float, **tags) -> WayRecord:
+    return WayRecord(way_id, tags, ((lons[0], lat), (lons[1], lat)))
+
+
+def test_a_short_stub_does_not_hide_a_long_loss():
+    # a 30 m stub drawn on a deleted 400 m path lies wholly within 15 m of it, but covers
+    # under 80 % of it: the path is lost and the stub gained (decision 15 needs both ways)
+    long = _way(W + 101, (13.400, 13.4059), 52.52, highway="cycleway")
+    stub = _way(W + 102, (13.400, 13.40044), 52.52, highway="cycleway")
+    got = ch.compute_change([long], [stub], CFG, EPSG, BOUNDARY, [])
+    assert [(r.category, r.way_id_from, r.way_id_to) for r in got.rows] == [
+        ("gained", None, W + 102),
+        ("lost", W + 101, None),
+    ]
+
+
+def test_road_sides_redraw_only_the_same_side():
+    # the old road has a track on both sides; the split new ways only on the right. Both sides
+    # carry the centreline, so without the side rule the right-side ways would hide the left loss
+    old = _way(W + 201, (13.400, 13.4059), 52.53, highway="secondary", **{"cycleway:both": "track"})
+    new = [
+        _way(W + 202, (13.400, 13.403), 52.53, highway="secondary", **{"cycleway:right": "track"}),
+        _way(W + 203, (13.403, 13.4059), 52.53, highway="secondary", **{"cycleway:right": "track"}),
+    ]
+    got = ch.compute_change([old], new, CFG, EPSG, BOUNDARY, [])
+    rows = {(r.category, r.way_id_from, r.way_id_to, r.side) for r in got.rows}
+    assert rows == {
+        ("redrawn", W + 201, W + 202, "right"),
+        ("redrawn", W + 201, W + 203, "right"),
+        ("lost", W + 201, None, "left"),
+    }
+
+
 def test_totals_are_the_per_side_tier_sums_measure_stores(result):
     for ways, totals in ((FROM, result.totals_from), (TO, result.totals_to)):
         stored = _stored(ways)
@@ -218,11 +252,25 @@ def test_runs_of_the_same_classifier_and_boundary_pass(conn):
 
 @pytest.mark.parametrize(
     "field, value",
-    [("classifier_version", "v3"), ("boundary_sha256", "e" * 64), ("boundary_kind", "fua")],
+    [
+        ("classifier_version", "v3"),
+        ("boundary_sha256", "e" * 64),
+        ("boundary_kind", "fua"),
+        ("city_id", "paris"),
+        ("classifier_parameters", '{"plain_cycleway_on_oneway":"both_sides"}'),
+    ],
 )
 def test_runs_with_different_classifier_or_boundary_are_refused(conn, field, value):
     a, b = _run(conn), _run(conn, _current(**{field: value}))
     with pytest.raises(ch.ChangeRefused, match=field):
+        ch.check_runs(conn, a, b)
+
+
+@pytest.mark.parametrize("osm_timestamp", ["2024-01-01T00:00:00Z", "2023-01-01T00:00:00Z"])
+def test_from_run_must_be_older_than_to_run(conn, osm_timestamp):
+    # swapped arguments would silently turn every gain into a loss
+    a, b = _run(conn), _run(conn, _current(osm_timestamp=osm_timestamp))
+    with pytest.raises(ch.ChangeRefused, match=rf"run {a}.*not older than run {b}"):
         ch.check_runs(conn, a, b)
 
 

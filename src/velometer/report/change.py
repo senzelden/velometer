@@ -11,13 +11,15 @@ Categories (all mapped km, ADR 0006: a gain is a way newly mapped, not a constru
 - `lost`: a way-side in A-E only in `from`, not redrawn;
 - `retiered`: the same way-side in A-E on both sides, in another tier;
 - `redrawn`: a `to`-only side of the same tier lying within 15 m of `from`-only sides for at
-  least 80 % of its length (decision 15: redrawing sidepaths as new ways is not churn);
+  least 80 % of its length, where those `to` sides together also cover 80 % of each `from` side
+  they replace (decision 15: redrawing sidepaths as new ways is not churn);
 - `geometry`: the same way-side and tier, its clipped length changed by more than 1 m.
 """
 
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -27,7 +29,7 @@ matplotlib.use("Agg")  # before pyplot: no display needed
 
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
-from shapely import STRtree  # noqa: E402
+from shapely import STRtree, unary_union  # noqa: E402
 from shapely.geometry.base import BaseGeometry  # noqa: E402
 from shapely.prepared import prep  # noqa: E402
 
@@ -115,6 +117,10 @@ class _Clip:
     def km(self, line) -> float:
         return clipped_length_km(line, self.prepared, self.boundary)
 
+    def inside(self, line):
+        """The part of `line` inside the boundary."""
+        return line if self.prepared.contains(line) else line.intersection(self.boundary)
+
     def by_subarea(self, line, city_km: float) -> dict[str, float]:
         parts = {sid: clipped_length_km(line, p, area) for sid, area, p in self.areas}
         total = sum(parts.values())
@@ -155,6 +161,45 @@ def _totals(sides: dict[tuple[int, str], _Side]) -> dict[str, float]:
     for s in sides.values():
         out[s.tier] += s.km
     return dict(sorted(out.items()))
+
+
+ROAD_SIDES = frozenset({"left", "right"})
+
+
+def _redraw_matches(a, b, lost, gained, clip: _Clip, dist_m: float, min_share: float):
+    """gained key -> [(share, lost key)] of the lost sides it redraws (decision 15).
+
+    A gained side matches a lost side of the same tier when at least `min_share` of it lies
+    within `dist_m` of it; two road sides match only on the same side (both carry the way's
+    centreline). A lost side counts as redrawn only when the gained sides matched to it together
+    cover `min_share` of its part inside the boundary in turn (the part that counts), so a short
+    stub never hides a long loss; matches to a lost side that fails this are dropped.
+    """
+    if not lost:
+        return {}
+    tree = STRtree([a[k].line for k in lost])
+    pairs: dict[tuple, list] = defaultdict(list)
+    by_lost: dict[tuple, list] = defaultdict(list)
+    for key in gained:
+        g = b[key]
+        for i in tree.query(g.line.buffer(dist_m)):
+            cand = lost[int(i)]
+            if a[cand].tier != g.tier:
+                continue
+            if key[1] in ROAD_SIDES and cand[1] in ROAD_SIDES and key[1] != cand[1]:
+                continue
+            share = share_within(g.line, a[cand].line, dist_m)
+            if share >= min_share:
+                pairs[key].append((share, cand))
+                by_lost[cand].append(key)
+    covered = {
+        cand
+        for cand, keys in by_lost.items()
+        if share_within(clip.inside(a[cand].line), unary_union([b[k].line for k in keys]), dist_m)
+        >= min_share
+    }
+    out = {k: [m for m in ms if m[1] in covered] for k, ms in pairs.items()}
+    return {k: ms for k, ms in out.items() if ms}
 
 
 def compute_change(
@@ -209,21 +254,10 @@ def compute_change(
             )
     lost = sorted(set(a) - set(b))
     gained = sorted(set(b) - set(a))
-    tree = STRtree([a[k].line for k in lost]) if lost else None
-    consumed: set[tuple[int, str]] = set()
+    matches = _redraw_matches(a, b, lost, gained, clip, redraw_dist_m, redraw_share)
     for key in gained:
         g = b[key]
-        best: tuple[float, tuple[int, str]] | None = None
-        if tree is not None:
-            for i in tree.query(g.line.buffer(redraw_dist_m)):
-                cand = lost[int(i)]
-                if a[cand].tier != g.tier:
-                    continue
-                share = share_within(g.line, a[cand].line, redraw_dist_m)
-                if share >= redraw_share:
-                    consumed.add(cand)
-                    if best is None or (share, -cand[0]) > (best[0], -best[1][0]):
-                        best = (share, cand)
+        best = max(matches.get(key, []), default=None, key=lambda m: (m[0], -m[1][0]))
         if best is not None:
             rows.append(
                 ChangeRow(
@@ -244,6 +278,7 @@ def compute_change(
                     g.km_by_subarea,
                 )
             )
+    consumed = {cand for ms in matches.values() for _, cand in ms}
     for key in lost:
         if key in consumed:
             continue
@@ -264,8 +299,9 @@ COMPARED = ("city_id", "classifier_version", "classifier_parameters", "boundary_
 
 
 def check_runs(conn, run_from: int, run_to: int) -> None:
-    """Both runs done, of one city, classifier (version and parameters) and boundary; else
-    ChangeRefused. Retiering by the classifier then cannot occur (spec §4.4)."""
+    """Both runs done, of one city, classifier (version and parameters) and boundary, and
+    `run_from`'s OSM timestamp before `run_to`'s; else ChangeRefused. Retiering by the
+    classifier then cannot occur (spec §4.4)."""
     rows = {}
     for run_id in (run_from, run_to):
         try:
@@ -275,6 +311,12 @@ def check_runs(conn, run_from: int, run_to: int) -> None:
         if rows[run_id]["status"] != "done":
             raise ChangeRefused(f"run {run_id} is {rows[run_id]['status']}, not done")
     a, b = rows[run_from], rows[run_to]
+    t_from, t_to = (datetime.fromisoformat(r["osm_timestamp"]) for r in (a, b))
+    if t_from >= t_to:
+        raise ChangeRefused(
+            f"run {run_from} (OSM {a['osm_timestamp']}) is not older than run {run_to} "
+            f"(OSM {b['osm_timestamp']}): --from must be the earlier snapshot"
+        )
     for col in COMPARED:
         if a[col] != b[col]:
             raise ChangeRefused(
@@ -342,8 +384,9 @@ def render_markdown(
         MAPPED_KM_LINE,
         "Categories: mapped gained / lost / retiered / redrawn, and geometry (the same way-side "
         "and tier, its length changed by more than 1 m; km is the signed length change). A "
-        "redrawn way-side replaces ways of the same tier within 15 m for at least 80 % of its "
-        "length; its km is the new way-side's.",
+        "redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least "
+        "80 % of its length, and the new way-sides together cover 80 % of each one they "
+        "replace; its km is the new way-side's.",
         "",
         "## Totals (per_side mapped km, recomputed and checked against both runs)",
         "",

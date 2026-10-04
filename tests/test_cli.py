@@ -1172,6 +1172,22 @@ def test_report_change_refuses_when_stored_totals_differ(tmp_path):
 
 
 @needs_osmium
+def test_report_change_refuses_a_boundary_other_than_the_runs(tmp_path):
+    db_path, cfg, data_dir, *_ = _change_db(tmp_path)
+    c = sqlite3.connect(db_path)
+    c.execute("UPDATE boundaries SET sha256=? WHERE city_id='berlin' AND kind='lau'", ("f" * 64,))
+    c.commit()
+    c.close()
+    out = tmp_path / "review"
+    result = CliRunner().invoke(app, _change_args(db_path, cfg, data_dir, out))
+    assert result.exit_code == 1
+    assert "refused:" in result.output
+    assert "f" * 64 in result.output and "s" * 64 in result.output  # the row's and the runs' sha
+    assert "totals agree" not in result.output
+    assert not out.exists()
+
+
+@needs_osmium
 def test_report_change_without_a_run_at_the_date_fails(tmp_path):
     db_path, cfg, data_dir, *_ = _change_db(tmp_path)
     args = _change_args(db_path, cfg, data_dir, tmp_path / "review")
