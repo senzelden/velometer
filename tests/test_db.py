@@ -42,6 +42,7 @@ from velometer.models import (
     Metric,
     Population,
     RoadLength,
+    Subarea,
     TierLength,
 )
 from velometer.pipeline.measure import MeasureResult, PlainOnewayReport
@@ -752,12 +753,18 @@ def test_v5_with_empty_activity_migrates_without_a_sha(tmp_path):
         assert "activity_sha256" in {r[1] for r in c.execute("PRAGMA table_info(activity)")}
 
 
+_V8_TABLES = ("subareas", "subarea_tier_lengths", "subarea_road_lengths")
+
+
 def _make_v6_db_with_runs(path, cities):
     """A v6 database: a done run, no peak_rss_kb column."""
     with open_db(path) as c:
         create_schema(c)
         upsert_cities(c, cities)
         rid = _done(c, KEY)
+        for t in _V8_TABLES:
+            c.execute(f"DROP TABLE {t}")
+        c.execute("ALTER TABLE runs DROP COLUMN subarea_sha")
         c.execute("ALTER TABLE runs DROP COLUMN peak_rss_kb")
         c.execute("PRAGMA user_version = 6")
         c.commit()
@@ -772,15 +779,115 @@ def test_v6_to_v7_adds_a_null_peak_rss_and_keeps_runs(tmp_path, cities):
         before = c.execute("SELECT * FROM runs").fetchall()
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert fetch_run(c, rid)["peak_rss_kb"] is None
         after = c.execute("SELECT * FROM runs").fetchall()
-        assert [r[:-1] for r in after] == before  # runs untouched; one NULL column appended
-        assert after[0][-1] is None
+        assert [r[:-2] for r in after] == before  # runs untouched; NULL columns appended
+        assert after[0][-2] is None  # peak_rss_kb; v8 adds subarea_sha after it
     with open_db(tmp_path / "fresh.sqlite") as fresh, open_db(path) as migrated:
         create_schema(fresh)
         cols = "SELECT name, type, \"notnull\", dflt_value, pk FROM pragma_table_info('runs')"
         assert migrated.execute(cols).fetchall() == fresh.execute(cols).fetchall()
+
+
+def _make_v7_db_with_runs(path, cities):
+    """A v7 database: a done run, no subarea tables, no runs.subarea_sha."""
+    with open_db(path) as c:
+        create_schema(c)
+        upsert_cities(c, cities)
+        rid = _done(c, KEY)
+        for t in _V8_TABLES:
+            c.execute(f"DROP TABLE {t}")
+        c.execute("ALTER TABLE runs DROP COLUMN subarea_sha")
+        c.execute("PRAGMA user_version = 7")
+        c.commit()
+    return rid
+
+
+def test_v7_db_migrates_to_v8_keeping_every_row(tmp_path, cities):
+    path = tmp_path / "v7.sqlite"
+    rid = _make_v7_db_with_runs(path, cities)
+    counts = "SELECT (SELECT count(*) FROM cities), (SELECT count(*) FROM runs), "
+    counts += "(SELECT count(*) FROM tier_lengths), (SELECT count(*) FROM road_lengths)"
+    with open_db(path) as c:
+        assert not set(_V8_TABLES) & _tables(c)
+        before = c.execute(counts).fetchall()
+        runs_before = c.execute("SELECT * FROM runs").fetchall()
+    with open_db(path) as c:
+        create_schema(c)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 8
+        assert set(_V8_TABLES) <= _tables(c)
+        assert c.execute(counts).fetchall() == before
+        assert fetch_run(c, rid)["subarea_sha"] is None
+        after = c.execute("SELECT * FROM runs").fetchall()
+        assert [r[:-1] for r in after] == runs_before  # one NULL column appended
+    with open_db(tmp_path / "fresh.sqlite") as fresh, open_db(path) as migrated:
+        create_schema(fresh)
+        for t in ("runs", *_V8_TABLES):
+            cols = f"SELECT name, type, \"notnull\", dflt_value, pk FROM pragma_table_info('{t}')"
+            assert migrated.execute(cols).fetchall() == fresh.execute(cols).fetchall()
+
+
+def test_interrupted_v7_to_v8_leaves_v7(tmp_path, cities, monkeypatch):
+    path = tmp_path / "v7.sqlite"
+    _make_v7_db_with_runs(path, cities)
+    real = db._migrate_7_to_8
+
+    def run_ddl_then_fail(conn):
+        real(conn)
+        raise RuntimeError("boom")
+
+    monkeypatch.setitem(db._MIGRATIONS, 7, run_ddl_then_fail)
+    with open_db(path) as c, pytest.raises(RuntimeError):
+        create_schema(c)
+    with open_db(path) as c:
+        assert c.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert "subareas" not in _tables(c)
+        assert "subarea_sha" not in {r[1] for r in c.execute("PRAGMA table_info(runs)")}
+
+
+def test_subareas_upsert_and_rows_roundtrip(conn):
+    rid = start_run(conn, KEY, git_commit="g", region_md5="m")
+    conn.execute(
+        "INSERT INTO subarea_tier_lengths "
+        "VALUES (?, 'berlin', 'mitte', 'A', '', 'per_side', 2.5, 3)",
+        (rid,),
+    )
+    conn.execute(
+        "INSERT INTO subarea_tier_lengths "
+        "VALUES (?, 'berlin', 'mitte', 'B', 'lane', 'per_side', 1, 2)",
+        (rid,),
+    )
+    conn.execute(
+        "INSERT INTO subarea_road_lengths VALUES (?, 'berlin', 'mitte', 'all_public', 40.5)",
+        (rid,),
+    )
+    conn.commit()
+    sub = Subarea(
+        city_id="berlin",
+        subarea_id="mitte",
+        name="Mitte",
+        source="osm",
+        relation_id=None,
+        area_km2=39.5,
+        path="p",
+        sha256="s",
+    )
+    db.upsert_subareas(conn, [sub])
+    db.upsert_subareas(conn, [replace_name(sub, "Mitte 2")])  # upsert, not duplicate
+    assert conn.execute("SELECT name, relation_id FROM subareas").fetchall() == [("Mitte 2", None)]
+    rows = db.subarea_rows(conn, rid)
+    tiers, roads = rows["mitte"]
+    assert [(t.tier, t.subtype, t.city_id, t.run_id) for t in tiers] == [
+        ("A", None, "berlin", rid),
+        ("B", "lane", "berlin", rid),
+    ]
+    assert [(r.road_class, r.length_km) for r in roads] == [("all_public", 40.5)]
+    assert db.subarea_rows(conn, rid + 1) == {}
+
+
+def replace_name(sub, name):
+    return sub.model_copy(update={"name": name})
 
 
 def test_complete_run_stores_peak_rss(conn):

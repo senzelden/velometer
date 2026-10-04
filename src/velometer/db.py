@@ -19,10 +19,11 @@ from velometer.models import (
     Metric,
     Population,
     RoadLength,
+    Subarea,
     TierLength,
 )
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 _RESULT_TABLES = (
     "duplicates",
     "completeness",
@@ -82,7 +83,8 @@ CREATE TABLE IF NOT EXISTS runs (
   population_value INTEGER, population_year INTEGER, population_source TEXT,
   config_sha256 TEXT,
   source TEXT NOT NULL DEFAULT 'current' CHECK (source IN ('current','history')),
-  peak_rss_kb INTEGER
+  peak_rss_kb INTEGER,
+  subarea_sha TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS runs_done_key ON runs (
   city_id, osm_timestamp, boundary_kind, boundary_sha256, classifier_version,
@@ -122,6 +124,23 @@ CREATE TABLE IF NOT EXISTS history_sets (
 CREATE TABLE IF NOT EXISTS diagnostics (
   run_id INTEGER NOT NULL REFERENCES runs(id), key TEXT NOT NULL, value REAL NOT NULL,
   PRIMARY KEY (run_id, key)
+);
+CREATE TABLE IF NOT EXISTS subareas (
+  city_id TEXT NOT NULL, subarea_id TEXT NOT NULL, name TEXT NOT NULL,
+  source TEXT NOT NULL, relation_id INTEGER, area_km2 REAL NOT NULL,
+  path TEXT NOT NULL, sha256 TEXT NOT NULL,
+  PRIMARY KEY (city_id, subarea_id)
+);
+CREATE TABLE IF NOT EXISTS subarea_tier_lengths (
+  run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL, subarea_id TEXT NOT NULL,
+  tier TEXT NOT NULL, subtype TEXT NOT NULL, length_basis TEXT NOT NULL,
+  length_km REAL NOT NULL, n_ways INTEGER NOT NULL,
+  PRIMARY KEY (run_id, subarea_id, tier, subtype, length_basis)
+);
+CREATE TABLE IF NOT EXISTS subarea_road_lengths (
+  run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL, subarea_id TEXT NOT NULL,
+  road_class TEXT NOT NULL, length_km REAL NOT NULL,
+  PRIMARY KEY (run_id, subarea_id, road_class)
 );
 CREATE TABLE IF NOT EXISTS duplicates (
   run_id INTEGER NOT NULL REFERENCES runs(id),
@@ -255,12 +274,21 @@ def _migrate_6_to_7(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE runs ADD COLUMN peak_rss_kb INTEGER")
 
 
+def _migrate_7_to_8(conn: sqlite3.Connection) -> None:
+    """Additive: runs gains subarea_sha (NULL on older runs); the subarea tables come from the
+    schema script."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(runs)")}
+    if cols and "subarea_sha" not in cols:  # no runs table yet: the schema script creates it
+        conn.execute("ALTER TABLE runs ADD COLUMN subarea_sha TEXT")
+
+
 _MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
     3: _migrate_3_to_4,
     4: _migrate_4_to_5,
     6: _migrate_6_to_7,
+    7: _migrate_7_to_8,
 }  # 5 -> 6 takes the activity sha and is called by create_schema directly
 
 
@@ -744,6 +772,49 @@ def fetch_run_results(conn: sqlite3.Connection, run_id: int) -> RunResults:
             )
         ],
     )
+
+
+def upsert_subareas(conn: sqlite3.Connection, rows: list[Subarea]) -> None:
+    with conn:
+        conn.executemany(
+            """
+            INSERT INTO subareas (city_id, subarea_id, name, source, relation_id, area_km2,
+                                  path, sha256)
+            VALUES (:city_id, :subarea_id, :name, :source, :relation_id, :area_km2, :path, :sha256)
+            ON CONFLICT(city_id, subarea_id) DO UPDATE SET
+              name=excluded.name, source=excluded.source, relation_id=excluded.relation_id,
+              area_km2=excluded.area_km2, path=excluded.path, sha256=excluded.sha256
+            """,
+            [r.model_dump() for r in rows],
+        )
+
+
+def subarea_rows(
+    conn: sqlite3.Connection, run_id: int
+) -> dict[str, tuple[list[TierLength], list[RoadLength]]]:
+    """A run's per-subarea tier and road lengths by subarea_id (subtype '' is read back as None)."""
+    out: dict[str, tuple[list[TierLength], list[RoadLength]]] = {}
+    tiers = _rows(
+        conn,
+        "SELECT run_id, city_id, subarea_id, tier, subtype, length_basis, length_km, n_ways "
+        "FROM subarea_tier_lengths WHERE run_id=? ORDER BY subarea_id, tier, subtype, "
+        "length_basis",
+        (run_id,),
+    )
+    for t in tiers:
+        sid = t.pop("subarea_id")
+        t["subtype"] = t["subtype"] or None
+        out.setdefault(sid, ([], []))[0].append(TierLength(**t))
+    roads = _rows(
+        conn,
+        "SELECT run_id, city_id, subarea_id, road_class, length_km FROM subarea_road_lengths "
+        "WHERE run_id=? ORDER BY subarea_id, road_class",
+        (run_id,),
+    )
+    for r in roads:
+        sid = r.pop("subarea_id")
+        out.setdefault(sid, ([], []))[1].append(RoadLength(**r))
+    return out
 
 
 def upsert_boundary(conn: sqlite3.Connection, b: Boundary) -> None:

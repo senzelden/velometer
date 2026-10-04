@@ -74,6 +74,19 @@ class RoadLength(_Model):
     length_km: float
 
 
+class Subarea(_Model):
+    """A sub-city area (a Berlin Bezirk) whose boundary file is hashed like a city boundary."""
+
+    city_id: str
+    subarea_id: str
+    name: str
+    source: str
+    relation_id: int | None = None
+    area_km2: float
+    path: str
+    sha256: str
+
+
 class Metric(_Model):
     run_id: int | None = None
     city_id: str | None = None
