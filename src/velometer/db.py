@@ -284,6 +284,8 @@ def _set_user_version(conn: sqlite3.Connection, version: int) -> None:
 def create_schema(conn: sqlite3.Connection, activity_sha256_for_v5: str | None = None) -> None:
     """Create or migrate the schema. A v5 database with activity rows needs the sha256 of the
     activity.yaml they were computed with (`velometer migrate --activity-sha`)."""
+    if conn.in_transaction:  # setting isolation_level would silently COMMIT the caller's work
+        raise SchemaError("create_schema must not run inside an open transaction")
     current = conn.execute("PRAGMA user_version").fetchone()[0]
     if current > SCHEMA_VERSION:
         raise SchemaError(

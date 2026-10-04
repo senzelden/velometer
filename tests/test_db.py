@@ -173,6 +173,14 @@ def test_schema_guard_refuses_newer_db(tmp_path):
             create_schema(c)
 
 
+def test_create_schema_inside_a_callers_transaction_is_a_clear_error(tmp_path):
+    with open_db(tmp_path / "t.sqlite") as c:
+        c.execute("BEGIN")
+        with pytest.raises(SchemaError, match="must not run inside an open transaction"):
+            create_schema(c)
+        c.execute("ROLLBACK")
+
+
 def test_v1_db_without_results_migrates_and_keeps_cities(tmp_path, cities):
     path = tmp_path / "v.sqlite"
     c = sqlite3.connect(path)
