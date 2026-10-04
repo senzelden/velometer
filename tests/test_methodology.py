@@ -36,6 +36,9 @@ SPEC_LIMITATIONS = [
     "trust_gate",
     "population_national_statistics",
     "qecio_nuts3_not_city",
+    "subareas_osm",
+    "change_map_mapped",
+    "mtb_excluded",
 ]
 M5_LIMITATIONS = ["trust_gate", "population_national_statistics", "qecio_nuts3_not_city"]
 
@@ -609,3 +612,71 @@ def test_trust_gate_bullets_are_parallel(lang):
     assert len(bullets) == 2
     for b in bullets:
         assert re.match(r"- \*\*[^*]+\.\*\* [A-ZÄÖÜ]", b), b
+
+
+M6_LIMITATIONS = ["subareas_osm", "change_map_mapped", "mtb_excluded"]
+NEW_SINCE_V3 = ["A_segregated", "B_shared", "A_cycle_only", "B_crossing", "X_mtb_trail"]
+REMOVED_SINCE_V3 = [
+    "A_cycleway",
+    "B_cycleway_foot",
+    "A_path_cycle_only",
+    "B_path_segregated",
+    "B_path",
+]
+
+
+def _facts_for_classifier(fixture_db, version):
+    _, cfg, conn, _ = fixture_db
+    path = cfg / "report.yaml"
+    path.write_text(
+        re.sub(r"report_classifier: \S+", f"report_classifier: {version}", path.read_text())
+    )
+    return methodology_facts(ReportData(conn, cfg))
+
+
+@pytest.mark.parametrize("lim_id", M6_LIMITATIONS)
+def test_m6_limitations_have_en_and_de_text(lim_id):
+    lim = next(
+        x for x in load_limitations(default_config_dir() / "limitations.yaml") if x.id == lim_id
+    )
+    assert lim.en.strip() and lim.de.strip()
+
+
+def test_mtb_exclusion_is_named_in_classifier_gaps():
+    lim = next(
+        x
+        for x in load_limitations(default_config_dir() / "limitations.yaml")
+        if x.id == "classifier_gaps_excluded"
+    )
+    assert "mtb" in lim.en and "mtb" in lim.de
+
+
+def test_rules_table_of_v4_notes_new_rules_and_lists_removed_ones(fixture_db):
+    facts = _facts_for_classifier(fixture_db, "v4")
+    assert facts.previous_classifier == "v3"
+    changed = {r.id for r in facts.rules if r.changed_from == "v3"}
+    assert changed == set(NEW_SINCE_V3)
+    assert sorted(facts.removed_rules) == sorted(REMOVED_SINCE_V3)
+    en, de = render(facts, "en"), render(facts, "de")
+    for rid in NEW_SINCE_V3:
+        assert re.search(rf"\| `{rid}` .*changed from v3", en)
+        assert re.search(rf"\| `{rid}` .*geändert gegenüber v3", de)
+    for rid in REMOVED_SINCE_V3:
+        assert (
+            f"`{rid}`"
+            in en.split("<!-- generated:rules -->")[1].split("<!-- /generated:rules -->")[0]
+        )
+        assert (
+            f"`{rid}`"
+            in de.split("<!-- generated:rules -->")[1].split("<!-- /generated:rules -->")[0]
+        )
+
+
+def test_rules_table_of_v3_carries_no_change_notes(fixture_db):
+    facts = _facts_for_classifier(fixture_db, "v3")
+    assert facts.previous_classifier is None and facts.removed_rules == []
+    assert all(r.changed_from is None for r in facts.rules)
+    for lang in LANGS:
+        assert "changed from" not in render(facts, lang) and "geändert gegenüber" not in render(
+            facts, lang
+        )

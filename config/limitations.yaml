@@ -46,14 +46,16 @@ limitations:
   - id: classifier_gaps_excluded
     en: >-
       Tagging that the classifier recognises but does not treat as cycling infrastructure, for
-      example `cycleway=shoulder` or an untyped `cycleway=yes`, is classified as excluded and
+      example `cycleway=shoulder`, an untyped `cycleway=yes` or a path with explicit mountain-bike
+      tagging (`mtb:scale`, `mtb`, `mtb:type`, `cycling=mtb`), is classified as excluded and
       counts in no preset (see the rules table). Road sides with cycling tags that no rule
       matches are reported as unrecognised km. They are not added to any tier [M3 R11;
       classifier v2, decided after M3].
     de: >-
       Erfassungen, die der Klassifikator erkennt, aber nicht als Radverkehrsanlage wertet, etwa
-      `cycleway=shoulder` oder ein `cycleway=yes` ohne Typ, gelten als ausgeschlossen und
-      zählen in keiner Kennzahlvariante (siehe Regeltabelle). Straßenseiten mit Radverkehrs-Tags,
+      `cycleway=shoulder`, ein `cycleway=yes` ohne Typ oder ein Weg mit ausdrücklicher
+      Mountainbike-Kennzeichnung (`mtb:scale`, `mtb`, `mtb:type`, `cycling=mtb`), gelten als
+      ausgeschlossen und zählen in keiner Kennzahlvariante (siehe Regeltabelle). Straßenseiten mit Radverkehrs-Tags,
       auf die keine Regel passt, werden als nicht erkannte Kilometer ausgewiesen. Sie fließen
       in keine Stufe ein [M3 R11; Klassifikator v2, nach M3 entschieden].
   - id: published_scope
@@ -143,3 +145,33 @@ limitations:
       QECIO-Vergleichszeilen der Stadt tragen dann den Hinweis „NUTS3 unit is not the city“
       (NUTS-3-Einheit ist nicht die Stadt), und das Ranglistendiagramm kennzeichnet die Stadt
       mit † [M5-Spezifikation §4.3].
+  - id: subareas_osm
+    en: >-
+      Bezirk boundaries are the 12 OSM administrative relations (admin_level 9), queried from
+      the Berlin extract; slivers against the LAU boundary are under 0.5 % of every tier and
+      road class.
+    de: >-
+      Die Bezirksgrenzen sind die 12 administrativen OSM-Relationen (admin_level 9), abgefragt
+      aus dem Berliner Extrakt; Randstücke gegenüber der LAU-Grenze machen unter 0,5 % jeder
+      Stufe und Straßenklasse aus.
+  - id: change_map_mapped
+    en: >-
+      The change map compares two snapshots on the same classifier. A gain is a way newly mapped
+      as cycling infrastructure, and a loss is one no longer mapped. Redrawn and retagged ways
+      are shown separately. None of it is evidence of construction (ADR 0006). A single new path
+      that replaces tracks on both sides of a road counts as redrawn on both sides, so redrawn
+      km can include a real reduction from two sides to one.
+    de: >-
+      Die Änderungskarte vergleicht zwei Stände mit demselben Klassifikator. Ein Zugewinn ist
+      ein Weg, der neu als Radverkehrsanlage kartiert ist, ein Verlust ein Weg, der nicht mehr
+      so kartiert ist. Neu gezeichnete und neu getaggte Wege werden getrennt ausgewiesen. Nichts
+      davon belegt einen Bau (ADR 0006). Ein einzelner neuer Weg, der Radwege auf beiden Seiten
+      einer Straße ersetzt, zählt auf beiden Seiten als neu gezeichnet; die neu gezeichneten
+      Kilometer können daher eine tatsächliche Verringerung von zwei Seiten auf eine enthalten.
+  - id: mtb_excluded
+    en: >-
+      Paths with explicit mountain-bike tagging (mtb:scale, mtb, mtb:type, cycling=mtb) are
+      excluded. Trails without such tags remain counted.
+    de: >-
+      Wege mit ausdrücklicher Mountainbike-Kennzeichnung (mtb:scale, mtb, mtb:type, cycling=mtb)
+      sind ausgeschlossen. Pfade ohne solche Tags bleiben gezählt.

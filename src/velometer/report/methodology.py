@@ -44,6 +44,7 @@ class RuleRow(_Frozen):
     subtype: str | None
     applies_to: str
     match: str  # a one-line summary of the match expression
+    changed_from: str | None = None  # the previous version, when the rule id is new since it
 
 
 class PresetRow(_Frozen):
@@ -91,6 +92,8 @@ class MethodologyFacts(_Frozen):
     classifier_version: str
     classifier_parameters: dict[str, str]
     rules: list[RuleRow]
+    previous_classifier: str | None = None  # the version the rules table is diffed against
+    removed_rules: list[str] = []  # rule ids of the previous version that this one lacks
     value_separators: list[str]
     presets: list[PresetRow]
     countries: list[CountryFact]  # trusted countries only, by ISO2
@@ -98,6 +101,22 @@ class MethodologyFacts(_Frozen):
     snapshot_dates: list[str]
     flag_thresholds: dict[str, float]
     limitations: list[Limitation]
+
+
+# The rules table is diffed against the previous version from v4 on, the rewrite that renamed
+# and split tiers. Earlier versions keep the plain table.
+RULES_DIFF_FROM = 4
+
+
+def _version_number(version: str) -> int:
+    return int(version.removeprefix("v"))  # the ordering `trust.expects_newer_classifier` uses
+
+
+def previous_classifier(config_dir: Path, version: str) -> str | None:
+    """The highest classifier version in `config_dir/classifier` below `version`, or None."""
+    found = [p.stem for p in (config_dir / "classifier").glob("v*.yaml")]
+    older = [v for v in found if _version_number(v) < _version_number(version)]
+    return max(older, key=_version_number, default=None)
 
 
 # --- facts --------------------------------------------------------------------------------
@@ -230,6 +249,16 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
                 basis_parameter=p.basis.parameter if p.parameterised else None,
             )
         )
+    prev_version = (
+        previous_classifier(data.config_dir, cfg.version)
+        if _version_number(cfg.version) >= RULES_DIFF_FROM
+        else None
+    )
+    prev_ids: set[str] | None = None
+    if prev_version is not None:
+        prev = load_classifier(data.config_dir / "classifier" / f"{prev_version}.yaml")
+        prev_ids = {r.id for r in prev.rules}
+    current_ids = {r.id for r in cfg.rules}
     configured = {c.id: c for c in load_cities(data.config_dir / "cities.yaml")}
     return MethodologyFacts(
         classifier_version=cfg.version,
@@ -241,9 +270,14 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
                 subtype=r.subtype,
                 applies_to=r.applies_to,
                 match=summarise_match(r.match),
+                changed_from=prev_version
+                if prev_ids is not None and r.id not in prev_ids
+                else None,
             )
             for r in cfg.rules
         ],
+        previous_classifier=prev_version,
+        removed_rules=[] if prev_ids is None else sorted(prev_ids - current_ids),
         value_separators=list(cfg.value_separators),
         presets=preset_rows,
         countries=_country_facts(data.config_dir),

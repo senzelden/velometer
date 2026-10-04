@@ -45,8 +45,14 @@ Die Regeln gelten in der aufgeführten Reihenfolge; die erste passende Regel ent
 | Regel | Stufe | Untertyp | Gilt für | Bedingung |
 |---|---|---|---|---|
 {% for r in f.rules %}
-| `{{ r.id }}` | `{{ r.tier }}` | {{ r.subtype or "" }} | {{ r.applies_to }} | `{{ r.match }}` |
+| `{{ r.id }}`{% if r.changed_from %} (geändert gegenüber {{ r.changed_from }}){% endif %} | `{{ r.tier }}` | {{ r.subtype or "" }} | {{ r.applies_to }} | `{{ r.match }}` |
 {% endfor %}
+{% if f.removed_rules %}
+{% set removed = [] %}
+{% for rid in f.removed_rules %}{% set _ = removed.append('`' ~ rid ~ '`') %}{% endfor %}
+
+Entfallen seit {{ f.previous_classifier }}: {{ removed | and_list }}.
+{% endif %}
 <!-- /generated:rules -->
 
 ## Hauptkennzahl und Kennzahlvarianten
