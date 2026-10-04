@@ -34,8 +34,9 @@ def matches(
     lists: Mapping[str, list[str]],
     separators: Sequence[str] = (";",),
 ) -> bool:
-    """True if every entry of `expr` holds. Keys are `all`/`any`/`not` or tag keys.
-    Tag values are split into parts on `separators` (the classifier's `value_separators`)."""
+    """True if every entry of `expr` holds. Keys are `all`/`any`/`not` or tag keys; a tag key
+    ending in `*` is a prefix. Tag values are split into parts on `separators` (the classifier's
+    `value_separators`)."""
     for key, cond in expr.items():
         if key == "all":
             ok = all(matches(e, tags, lists, separators) for e in cond)
@@ -44,7 +45,15 @@ def matches(
         elif key == "not":
             ok = not matches(cond, tags, lists, separators)
         else:
-            ok = _check(set(parts(tags.get(key), separators)), cond, lists)
+            if key.endswith("*"):  # key prefix: every tag whose key starts with it
+                prefix = key[:-1]
+                values: set[str] = set()
+                for k, v in tags.items():
+                    if k.startswith(prefix):
+                        values |= set(parts(v, separators))
+            else:
+                values = set(parts(tags.get(key), separators))
+            ok = _check(values, cond, lists)
         if not ok:
             return False
     return True

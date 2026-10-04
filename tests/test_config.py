@@ -100,6 +100,14 @@ def test_match_semantics(expr, tags, expected):
     assert matches(expr, tags, LISTS) is expected
 
 
+def test_prefix_key_collects_every_matching_key():
+    tags = {"mtb:scale:imba": "2"}
+    assert matches({"mtb:scale*": {"absent": False}}, tags, {})
+    assert matches({"mtb:scale*": {"absent": False}}, {"mtb:scale": "0"}, {})
+    assert not matches({"mtb:scale*": {"absent": False}}, {"mtb": "yes"}, {})
+    assert matches({"mtb:scale*": ["2"]}, {"mtb:scale": "1", "mtb:scale:imba": "2"}, {})
+
+
 def test_validate_expr_rejects_unknown_operator():
     with pytest.raises(ValueError, match="unknown condition"):
         validate_expr({"a": {"regex": "x"}}, LISTS)
