@@ -107,12 +107,13 @@ A city enters the report only when its country is trusted in `config/trust.yaml`
 - **Diagnostics.** They are computed from each city's current LAU run on the report classifier. They measure the share of cycling-tagged km that no rule recognises, the share that is excluded, tier B's share of A+B, and the area difference between the GISCO LAU polygon and the OSM relation. The thresholds are in `config/trust.yaml`. A value over its threshold needs a written note in the country's review file [M5 spec §3.1].
 - **A golden sample** of about 12 ways per new country, chosen by query from the country's current snapshot. The tiers of each way are checked by hand and signed off. A test then holds the report classifier to them [M5 spec §3.2].
 
-`velometer trust --check` fails when
+`velometer trust check` fails when
 
 - a share threshold in `config/trust.yaml` is still the placeholder 1.0;
-- a trusted country with cities in the configuration has no diagnostics file, or its diagnostics were computed on a run that is no longer the city's current LAU run;
+- a trusted country with cities in the configuration has no diagnostics file, its diagnostics leave out one of its cities, or they were computed on a run that is no longer the city's current LAU run;
 - a diagnostic value breaks its threshold without a note in the country's review file;
-- for a country with a golden sample: a golden way is unconfirmed, confirmed ways no longer match the report classifier, or the sample was reviewed on a classifier other than the report classifier [M5 spec §3.3].
+- a trusted country was reviewed on a classifier other than the report classifier, or names none (`classifier_reviewed`);
+- for a country with a golden sample: a golden way is unconfirmed, or confirmed ways no longer match the report classifier [M5 spec §3.3].
 
 Germany needs no diagnostics file: it rests on the Berlin golden set of M1, which predates the trust gate. France, Poland, Austria and Denmark were trusted through the M2 reconciliation and have no golden sample of their own [M5 spec, decision 7].
 

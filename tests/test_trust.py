@@ -658,10 +658,44 @@ def test_check_b_classifier_reviewed_is_not_the_report_classifier(tmp_path, repo
     )
 
 
-def test_check_without_golden_skips_a_and_b(tmp_path, report_db_with_trust):
+def test_check_without_golden_skips_a(tmp_path, report_db_with_trust):
+    argv, p = _check_env(tmp_path, report_db_with_trust, golden=False)
+    (p["golden"] / "de.yaml").unlink()
+    assert _check(argv) == (0, "trust check: ok\n")
+
+
+def test_check_b_applies_to_a_trusted_country_without_golden(tmp_path, report_db_with_trust):
+    # spec 3.3: a classifier switch forces a re-review of every trusted country
     argv, p = _check_env(tmp_path, report_db_with_trust, golden=False, classifier_reviewed="v1")
     (p["golden"] / "de.yaml").unlink()
-    assert _check(argv)[0] == 0
+    code, out = _check(argv)
+    assert code == 1
+    assert out == f"DE: classifier_reviewed is v1, the report classifier is {CLASSIFIER}\n"
+
+
+def test_check_b_flags_a_trusted_country_that_names_no_reviewed_classifier(
+    tmp_path, report_db_with_trust
+):
+    argv, p = _check_env(tmp_path, report_db_with_trust, golden=False)
+    trust = yaml.safe_load((p["cfg"] / "trust.yaml").read_text())
+    del trust["countries"]["DE"]["classifier_reviewed"]
+    (p["cfg"] / "trust.yaml").write_text(yaml.safe_dump(trust))
+    code, out = _check(argv)
+    assert code == 1
+    assert out == f"DE: classifier_reviewed is not set, the report classifier is {CLASSIFIER}\n"
+
+
+def test_check_c_city_of_a_trusted_country_missing_from_its_json(tmp_path, report_db_with_trust):
+    # a new city in an already trusted country must not enter the report undiagnosed
+    argv, p = _check_env(tmp_path, report_db_with_trust)
+    path = p["cfg"] / "cities.yaml"
+    doc = yaml.safe_load(path.read_text())
+    berlin = next(c for c in doc["cities"] if c["id"] == "berlin")
+    doc["cities"].append({**berlin, "id": "potsdam", "name": "Potsdam"})
+    path.write_text(yaml.safe_dump(doc, sort_keys=False))
+    code, out = _check(argv)
+    assert code == 1
+    assert out == ("DE: potsdam is not in DE.json (run `velometer trust diagnose --country DE`)\n")
 
 
 def test_check_c_stale_run_ids(tmp_path, report_db_with_trust):
@@ -701,9 +735,10 @@ def test_check_e_placeholder_threshold(tmp_path, report_db_with_trust):
 def test_check_f_trusted_country_with_a_city_but_no_json(tmp_path, report_db_with_trust):
     argv, p = _check_env(tmp_path, report_db_with_trust)
     trust = yaml.safe_load((p["cfg"] / "trust.yaml").read_text())
-    trust["countries"]["FR"] = {"status": "trusted", "basis": "t"}  # paris is in cities.yaml
+    ok = {"status": "trusted", "basis": "t", "classifier_reviewed": CLASSIFIER}
+    trust["countries"]["FR"] = ok  # paris is in cities.yaml
     assert not any(c.country_iso2 == "IS" for c in load_cities(p["cfg"] / "cities.yaml"))
-    trust["countries"]["IS"] = {"status": "trusted", "basis": "t"}  # no city: nothing to check
+    trust["countries"]["IS"] = ok  # no city: nothing to check
     (p["cfg"] / "trust.yaml").write_text(yaml.safe_dump(trust))
     code, out = _check(argv)
     assert code == 1

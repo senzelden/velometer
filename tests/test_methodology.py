@@ -452,10 +452,11 @@ def test_committed_trusted_countries_have_a_german_basis():
 
 
 TRUST_CHECK_CONDITIONS = {
-    # each failure condition of `velometer trust --check` (cli.trust_check, trust.py)
+    # each failure condition of `velometer trust check` (cli.trust_check, trust.py)
     "en": [
         "still the placeholder 1.0",  # placeholder_problems
         "has no diagnostics file",  # missing <cc>.json
+        "leave out one of its cities",  # a configured city missing from <cc>.json
         "no longer the city's current LAU run",  # stale_problems
         "without a note in the country's review file",  # breach_problems
         "unconfirmed",  # golden_problems
@@ -465,6 +466,7 @@ TRUST_CHECK_CONDITIONS = {
     "de": [
         "noch auf dem Platzhalter 1,0",
         "keine Diagnosedatei",
+        "eine seiner Städte auslässt",
         "nicht mehr der aktuelle LAU-Lauf",
         "ohne Begründung in der Prüfdatei",
         "unbestätigt",
@@ -477,7 +479,10 @@ TRUST_CHECK_CONDITIONS = {
 @pytest.mark.parametrize("lang", LANGS)
 def test_trust_check_conditions_are_all_described(facts, lang):
     text = render(facts, lang)
-    section = text[text.index("velometer trust --check") : text.index("<!-- generated:trust -->")]
+    section = text[text.index("velometer trust check") : text.index("<!-- generated:trust -->")]
     for phrase in TRUST_CHECK_CONDITIONS[lang]:
         assert phrase in section, (lang, phrase)
+    # classifier_reviewed is checked for every trusted country, not only golden-sample ones
+    (line,) = [x for x in section.splitlines() if TRUST_CHECK_CONDITIONS[lang][-1] in x]
+    assert "golden" not in line and "Referenzstichprobe" not in line, line
     assert "drei Fällen" not in section

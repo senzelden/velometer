@@ -497,7 +497,9 @@ class CountryTrust(_Strict):
     basis_de: str | None = None  # German wording of basis for methodology.de.md; None: basis
     pilot: str | None = None  # same-country pilot city for comparison
     golden: str | None = None  # "tests/fixtures/golden/<cc>" (no extension)
-    classifier_reviewed: str | None = None  # e.g. "v2"; required when golden is set and trusted
+    # e.g. "v3"; required when golden is set and trusted; `trust check` holds every trusted
+    # country to the report classifier (spec 3.3)
+    classifier_reviewed: str | None = None
     signed_off: date | None = None  # required when golden is set and trusted
 
     @field_validator("basis_de")

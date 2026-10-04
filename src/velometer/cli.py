@@ -1404,12 +1404,14 @@ def trust_check(
         for cc, ct in sorted(trust.countries.items()):
             if ct.status != "trusted":
                 continue
+            # (b) every trusted country, golden set or not: a classifier switch forces a
+            # re-review (spec 3.3)
+            if ct.classifier_reviewed != selector.version:
+                problems.append(
+                    f"{cc}: classifier_reviewed is {ct.classifier_reviewed or 'not set'}, "
+                    f"the report classifier is {selector.version}"
+                )
             if ct.golden is not None:
-                if ct.classifier_reviewed != selector.version:
-                    problems.append(
-                        f"{cc}: classifier_reviewed is {ct.classifier_reviewed}, "
-                        f"the report classifier is {selector.version}"
-                    )
                 problems += tr.golden_problems(cc, tests_dir.parent / ct.golden, classifier)
             js = review / f"{cc}.json"
             if not js.is_file():
@@ -1418,6 +1420,12 @@ def trust_check(
                     problems.append(f"{cc}: no {js.name} (run `velometer trust diagnose`)")
                 continue
             cd = tr.CountryDiagnostics.model_validate(json.loads(js.read_text()))
+            diagnosed = {d.city_id for d in cd.cities}
+            problems += [
+                f"{cc}: {c.id} is not in {js.name} (run `velometer trust diagnose --country {cc}`)"
+                for c in everyone
+                if c.country_iso2 == cc and c.id not in diagnosed
+            ]
             latest = {d.city_id: selector.latest(conn, d.city_id, "lau") for d in cd.cities}
             problems += tr.stale_problems(cc, cd, latest)
             md = review / f"{cc}.md"
