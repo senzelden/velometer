@@ -1,0 +1,150 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (ljubljana 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 1513714682
+  group: B_path_segregated
+  name: Črna vas
+  highway: path
+  proposed:
+  - side: self
+    tier: A
+    rule: A_segregated
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: 'v2: B B_path_segregated; awaiting re-sign'
+- way_id: 706908809
+  group: X_no
+  name: Cesta v Kresnice
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 32976406
+  group: D_lane
+  name: Ob dolenjski železnici
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 649256821
+  group: X_bicycle_no
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 553808731
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycle_only
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 551327799
+  group: B_path
+  name: Zasavska cesta
+  highway: path
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 3283481
+  group: extra
+  name: Derčeva ulica
+  highway: residential
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1028502896
+  group: extra
+  name: Cesta Dolomitskega odreda
+  highway: tertiary
+  proposed:
+  - side: right
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1119247786
+  group: extra
+  name: Jamova cesta
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 13027280
+  group: extra
+  name: Ižanska cesta
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''

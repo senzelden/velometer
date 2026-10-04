@@ -1,0 +1,147 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (madrid 2026-10-02T20:21:34Z; barcelona 2026-10-02T20:21:34Z);
+  © OpenStreetMap contributors, ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 306168597
+  group: X_no
+  name: ''
+  highway: motorway
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 279328952
+  group: A_cycleway
+  name: Anillo Verde Ciclista
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_segregated
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 308379125
+  group: X_shared_lane
+  name: Calle de Eduardo Barreiros
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 29023984
+  group: X_private
+  name: Carretera Particular del Chalet
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 285007057
+  group: X_area
+  name: Gran Vía de Villaverde
+  highway: pedestrian
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_area
+    subtype: area
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 177572223
+  group: X_lifecycle
+  name: Calle de Alcalá de Henares
+  highway: construction
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_lifecycle
+    subtype: lifecycle
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 1413308046
+  group: unmatched:1
+  name: Carrer dels Escultors Claperós
+  highway: living_street
+  proposed: []
+  confirmed: true
+  note: ''
+- way_id: 963354308
+  group: extra
+  name: Madrid Río
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 3997433
+  group: extra
+  name: Calle de Aquitania
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 294082522
+  group: extra
+  name: Carrer de Sants
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 87101690
+  group: extra
+  name: ''
+  highway: primary
+  proposed:
+  - side: right
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''

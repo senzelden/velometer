@@ -1,0 +1,181 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (bratislava 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 1279751700
+  group: X_private
+  name: ''
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 208087851
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: 'v2: A A_cycleway; awaiting re-sign'
+- way_id: 960705749
+  group: X_bicycle_no
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 793056624
+  group: X_lifecycle
+  name: ''
+  highway: proposed
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_lifecycle
+    subtype: lifecycle
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 126367668
+  group: X_no
+  name: ''
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 177916468
+  group: D_lane
+  name: Devínska cesta
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1311124898
+  group: unmatched:1
+  name: Hany Meličkovej
+  highway: tertiary
+  proposed: []
+  confirmed: true
+  note: 'no output by decision (2026-10-03): cycleway:right=shared_busway misspells
+    share_busway, an OSM mistag that v3 leaves unrecognised'
+- way_id: 1050603989
+  group: unmatched:2
+  name: Furdekova
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): cycleway:right=advisory is an advisory lane
+    (user decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
+- way_id: 24836980
+  group: unmatched:3
+  name: Mamateyova
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): cycleway:left=advisory is an advisory lane
+    (user decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
+- way_id: 34609152
+  group: extra
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 223471544
+  group: extra
+  name: Pionierska
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 373209244
+  group: extra
+  name: Hodonínska
+  highway: primary
+  proposed:
+  - side: left
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 227951535
+  group: extra
+  name: Zidiny
+  highway: residential
+  proposed:
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: true
+  confirmed: true
+  note: ''

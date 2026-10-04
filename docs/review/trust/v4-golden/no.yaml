@@ -1,0 +1,169 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (oslo 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 119146754
+  group: B_cycleway_foot
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 27071517
+  group: X_no
+  name: Grefsenkollveien
+  highway: unclassified
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 160459177
+  group: D_lane
+  name: Sognsveien
+  highway: secondary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 130447630
+  group: X_bicycle_no
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 118364891
+  group: A_cycleway
+  name: Tour de Finance
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_segregated
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 142320283
+  group: X_area
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_area
+    subtype: area
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 1262980246
+  group: unmatched:1
+  name: Frysjaveien
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): the right side, cycleway:right=advisory,
+    is the D advisory lane the verdict names (user decision 2026-10-03, v3 rule D_advisory)'
+  min_classifier: v3
+- way_id: 136540510
+  group: extra
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 863615478
+  group: extra
+  name: Grefsenveien
+  highway: secondary
+  proposed:
+  - side: left
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: A
+    rule: A_track_side
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4361293
+  group: extra
+  name: Ryenbergveien
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shoulder
+    subtype: shoulder
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 3426698
+  group: extra
+  name: Geitmyrsveien
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  confirmed: true
+  note: ''

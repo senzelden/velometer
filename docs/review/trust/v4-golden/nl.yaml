@@ -1,0 +1,159 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (amsterdam 2026-10-02T20:21:34Z; utrecht 2026-10-02T20:21:34Z);
+  © OpenStreetMap contributors, ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 517771727
+  group: A_cycleway
+  name: Gooilandseweg
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycle_only
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 81041300
+  group: X_no
+  name: Ringkade
+  highway: unclassified
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 30686463
+  group: X_private
+  name: ''
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 350999663
+  group: X_bicycle_no
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 37614919
+  group: X_area
+  name: De loper
+  highway: pedestrian
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_area
+    subtype: area
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 7062188
+  group: D_lane
+  name: Rijksstraatweg
+  highway: residential
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 790330137
+  group: unmatched:1
+  name: Koivistokade
+  highway: residential
+  proposed: []
+  confirmed: true
+  note: ''
+- way_id: 1527660171
+  group: unmatched:2
+  name: Veeteeltstraat
+  highway: residential
+  proposed: []
+  confirmed: true
+  note: ''
+- way_id: 7056827
+  group: extra
+  name: Jutfaseweg
+  highway: residential
+  proposed:
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 7010586
+  group: extra
+  name: Maliesingel
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1525558445
+  group: extra
+  name: Nedereindseweg
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1505076700
+  group: extra
+  name: Uitdammerdijk
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''

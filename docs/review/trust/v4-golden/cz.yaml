@@ -1,0 +1,170 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: velometer snapshots (prague 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 27074770
+  group: X_no
+  name: ''
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1422461231
+  group: X_private
+  name: ''
+  highway: track
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_private
+    subtype: private
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 917953378
+  group: X_lifecycle
+  name: ''
+  highway: construction
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_lifecycle
+    subtype: lifecycle
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 25464752
+  group: B_cycleway_foot
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 320297312
+  group: X_bicycle_no
+  name: ''
+  highway: path
+  proposed:
+  - side: self
+    tier: excluded
+    rule: X_bicycle_no
+    subtype: bicycle_no
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 1361268398
+  group: A_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycle_only
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 135706932
+  group: unmatched:1
+  name: Hartigova
+  highway: secondary
+  proposed:
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
+- way_id: 762313241
+  group: unmatched:2
+  name: Ocelkova
+  highway: tertiary
+  proposed:
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
+- way_id: 821229572
+  group: unmatched:3
+  name: Novovysočanská
+  highway: secondary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_soft_lane
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: 'expects classifier v3 (Task 14): v3 proposal 1, cycleway=soft_lane is an
+    advisory lane'
+  min_classifier: v3
+- way_id: 129259688
+  group: extra
+  name: ''
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_shared_lane
+    subtype: shared_lane
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 715769616
+  group: extra
+  name: Strakonická
+  highway: primary
+  proposed:
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4052180
+  group: extra
+  name: Podolské nábřeží
+  highway: tertiary
+  proposed:
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''

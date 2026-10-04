@@ -1,0 +1,776 @@
+# Map data © OpenStreetMap contributors, ODbL 1.0
+source: Overpass API, fetched 2026-10-01T13:55:17Z; © OpenStreetMap contributors,
+  ODbL 1.0
+classifier_version: v4
+ways:
+- way_id: 4396016
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4396321
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 28658322
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 28658323
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 28658327
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 32909622
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 32909623
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 32909627
+  group: kantstrasse
+  name: Kantstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 23125889
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 37304507
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 39965120
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 39965422
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 39965423
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 39965424
+  group: ollenhauerstrasse
+  name: Ollenhauerstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4484276
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: primary_link
+  proposed:
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4484277
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4484278
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4484279
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 7744347
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 14851818
+  group: unter_den_eichen
+  name: Unter den Eichen
+  highway: primary_link
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4615614
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4615777
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4782480
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 28133482
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: living_street
+  proposed: []
+  confirmed: true
+  note: ''
+- way_id: 29177662
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 29183328
+  group: karl_marx_allee
+  name: Karl-Marx-Allee
+  highway: service
+  proposed: []
+  confirmed: true
+  note: ''
+- way_id: 4083461
+  group: fahrradstrasse
+  name: Holsteiner Ufer
+  highway: unclassified
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 4395584
+  group: fahrradstrasse
+  name: Prinzregentenstraße
+  highway: residential
+  proposed:
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 4492002
+  group: fahrradstrasse
+  name: Fasanenplatz
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4492007
+  group: fahrradstrasse
+  name: Fasanenstraße
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: self
+    tier: E
+    rule: E_cycle_street
+    subtype: cycle_street
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 106652853
+  group: hochbord_shared
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 233227500
+  group: hochbord_shared
+  name: Walter-Nicklitz-Promenade
+  highway: footway
+  proposed:
+  - side: self
+    tier: B
+    rule: B_shared
+    subtype: null
+    bidirectional: true
+  confirmed: true
+  note: ''
+- way_id: 403679183
+  group: hochbord_shared
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_segregated
+    subtype: null
+    bidirectional: true
+  confirmed: false
+  note: 'v1: B B_path_segregated; awaiting re-sign'
+- way_id: 479700952
+  group: hochbord_shared
+  name: ''
+  highway: footway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_segregated
+    subtype: null
+    bidirectional: false
+  confirmed: false
+  note: 'v1: B B_path_segregated; awaiting re-sign'
+- way_id: 1083897477
+  group: sidewalk_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycle_only
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 1164113868
+  group: sidewalk_cycleway
+  name: ''
+  highway: cycleway
+  proposed:
+  - side: self
+    tier: A
+    rule: A_cycle_only
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 25778031
+  group: protected_lane
+  name: Wisbyer Straße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: D
+    rule: D_lane_advisory
+    subtype: advisory
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 71282500
+  group: protected_lane
+  name: Hauptstraße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: C
+    rule: C_lane_physical
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 71401494
+  group: protected_lane
+  name: Hauptstraße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: C
+    rule: C_lane_physical
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 110450330
+  group: protected_lane
+  name: Hauptstraße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: C
+    rule: C_lane_physical
+    subtype: null
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4377785
+  group: busway
+  name: Hardenbergstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4389412
+  group: busway
+  name: Kurfürstendamm
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4395698
+  group: busway
+  name: Potsdamer Straße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4395950
+  group: busway
+  name: Martin-Luther-Straße
+  highway: primary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_no
+    subtype: 'no'
+    bidirectional: false
+  - side: right
+    tier: E
+    rule: E_bus
+    subtype: bus
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4067883
+  group: separate
+  name: Jafféstraße
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4068188
+  group: separate
+  name: Wasgensteig
+  highway: residential
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4071972
+  group: separate
+  name: Klemkestraße
+  highway: tertiary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
+- way_id: 4316780
+  group: separate
+  name: Spanische Allee
+  highway: secondary
+  proposed:
+  - side: left
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  - side: right
+    tier: excluded
+    rule: X_separate
+    subtype: separate
+    bidirectional: false
+  confirmed: true
+  note: ''
