@@ -534,6 +534,9 @@ def run(
 def boundaries_fetch(
     city: str | None = typer.Option(None, help="City id (default: all cities)."),
     kind: str = typer.Option("all", help="lau, fua, osm_admin or all."),
+    subareas: bool = typer.Option(
+        False, "--subareas", help="Assemble the city's configured subareas instead (needs the LAU)."
+    ),
     config_dir: Path = CONFIG_OPT,
     db: Path = DB_OPT,
     data: Path = DATA_OPT,
@@ -543,6 +546,9 @@ def boundaries_fetch(
     from velometer.db import set_population, upsert_boundary
 
     deps = run_mod.RunDeps()
+    if subareas:
+        _fetch_subareas(deps, city, config_dir, db, data)
+        return
     kinds = ("lau", "fua", "osm_admin") if kind == "all" else (kind,)
     if any(k not in ("lau", "fua", "osm_admin") for k in kinds):
         typer.echo(f"error: unknown --kind {kind!r}", err=True)
@@ -574,6 +580,50 @@ def boundaries_fetch(
                     continue
                 popmsg = f" population={pop.value}" if pop else ""
                 typer.echo(f"{c.id} {k} area_km2={rec.boundary.area_km2:.1f}{popmsg}")
+    if failed:
+        raise typer.Exit(1)
+
+
+def _fetch_subareas(deps, city: str | None, config_dir: Path, db: Path, data: Path) -> None:
+    """`boundaries fetch --subareas`: assemble, check against the LAU, store."""
+    from velometer import subareas as sub
+    from velometer.db import upsert_subareas
+    from velometer.sources.boundaries import load_boundary_polygon
+
+    selected = _select_cities(config_dir, [city] if city else None)
+    failed = False
+    with _open_schema(db) as conn:
+        upsert_cities(conn, _all_cities(config_dir))
+        for c in selected:
+            if c.subareas is None:
+                typer.echo(f"no subareas configured for {c.id}", err=True)
+                failed = failed or city is not None
+                continue
+            try:
+                lau_path = data / "boundaries" / f"{c.id}_lau.geojson"
+                if not lau_path.is_file():
+                    raise FileNotFoundError(
+                        f"{lau_path} is missing; run `velometer boundaries fetch --city {c.id}"
+                        " --kind lau` first"
+                    )
+                region_path = deps.fetch_region(c.geofabrik_region, data).path
+                rows = sub.fetch_subareas(c, region_path, data)
+                polys = sub.load_subareas(c, data)
+                checks = sub.check_subareas(load_boundary_polygon(lau_path, c.epsg), polys)
+                upsert_subareas(conn, rows)
+            except Exception as e:  # noqa: BLE001 - report per city, keep going
+                typer.echo(f"{c.id} subareas failed {type(e).__name__}: {e}", err=True)
+                failed = True
+                continue
+            for r in rows:
+                typer.echo(
+                    f"{c.id} {r.subarea_id} {r.name} relation={r.relation_id} "
+                    f"area_km2={r.area_km2:.1f}"
+                )
+            typer.echo(
+                f"{c.id} subareas union_diff_pct={checks['union_diff_pct']:.2f} "
+                f"overlap_pct={checks['overlap_pct']:.3f}"
+            )
     if failed:
         raise typer.Exit(1)
 

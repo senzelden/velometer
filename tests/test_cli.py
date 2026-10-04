@@ -921,3 +921,99 @@ def test_results_marks_untrusted(report_db_with_trust, tmp_path):
     assert re.search(r"^berlin\s+\d{4}-", out.output, re.M), out.output
     paris = [ln for ln in out.output.splitlines() if ln.startswith("paris")]
     assert paris and "untrusted" in paris[0], out.output
+
+
+def _subarea_cfg(tmp_path):
+    import shutil
+
+    import yaml
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(default_config_dir(), cfg)
+    data = yaml.safe_load((cfg / "cities.yaml").read_text())
+    berlin = next(c for c in data["cities"] if c["id"] == "berlin")
+    berlin["subareas"] = {
+        "source": "osm_admin",
+        "admin_level": 9,
+        "relations": [
+            {"id": 9001, "name": "West", "slug": "west"},
+            {"id": 9002, "name": "East", "slug": "east"},
+        ],
+    }
+    (cfg / "cities.yaml").write_text(yaml.safe_dump(data))
+    return cfg
+
+
+def _write_geojson(path, geom_25833):
+    import json
+
+    import shapely
+
+    from velometer.sources.boundaries import _to
+
+    wgs = _to(geom_25833, 25833, 4326)
+    feat = {"type": "Feature", "properties": {}, "geometry": json.loads(shapely.to_geojson(wgs))}
+    path.write_text(json.dumps({"type": "FeatureCollection", "features": [feat]}))
+
+
+def _subarea_run(tmp_path, monkeypatch, east_right: float):
+    from shapely.geometry import box
+
+    from velometer import subareas as S
+
+    cfg = _subarea_cfg(tmp_path)
+    _patched(monkeypatch, tmp_path)
+    (tmp_path / "boundaries").mkdir()
+    x0, y0, side = 390_000.0, 5_820_000.0, 10_000.0
+    _write_geojson(
+        tmp_path / "boundaries" / "berlin_lau.geojson", box(x0, y0, x0 + side, y0 + side)
+    )
+    shapes = {
+        9001: box(x0, y0, x0 + side / 2, y0 + side),
+        9002: box(x0 + side / 2, y0, x0 + east_right, y0 + side),
+    }
+
+    def fake(src, relation_id, dst):
+        _write_geojson(dst, shapes[relation_id])
+        return dst
+
+    monkeypatch.setattr(S, "relation_polygon", fake)
+    db = tmp_path / "v.sqlite"
+    out = CliRunner().invoke(
+        app,
+        ["boundaries", "fetch", "--city", "berlin", "--subareas", "--config-dir", str(cfg)]
+        + ["--db", str(db), "--data", str(tmp_path)],
+    )
+    return out, db
+
+
+def test_boundaries_fetch_subareas_stores_rows_and_prints_checks(tmp_path, monkeypatch):
+    out, db = _subarea_run(tmp_path, monkeypatch, east_right=10_000.0)
+    assert out.exit_code == 0, out.output
+    assert "berlin west West relation=9001 area_km2=50.0" in out.output
+    assert "berlin east East relation=9002 area_km2=50.0" in out.output
+    assert "union_diff_pct=0.00 overlap_pct=0.000" in out.output
+    rows = (
+        sqlite3.connect(db)
+        .execute("SELECT subarea_id, relation_id, source FROM subareas ORDER BY subarea_id")
+        .fetchall()
+    )
+    assert rows == [("east", 9002, "OSM relation 9002"), ("west", 9001, "OSM relation 9001")]
+
+
+def test_boundaries_fetch_subareas_that_leave_a_gap_exit_1_and_store_nothing(tmp_path, monkeypatch):
+    out, db = _subarea_run(tmp_path, monkeypatch, east_right=9_800.0)
+    assert out.exit_code == 1
+    assert "union differs from the LAU by 2.0 %" in out.output
+    assert sqlite3.connect(db).execute("SELECT count(*) FROM subareas").fetchone() == (0,)
+
+
+def test_boundaries_fetch_subareas_of_a_city_without_them_exits_1(tmp_path, monkeypatch):
+    _patched(monkeypatch, tmp_path)
+    out = CliRunner().invoke(
+        app,
+        ["boundaries", "fetch", "--city", "berlin", "--subareas"]
+        + ["--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
+    )
+    assert out.exit_code == 1
+    assert "no subareas configured for berlin" in out.output

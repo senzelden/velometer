@@ -58,6 +58,29 @@ class PopulationOverride(_Strict):
         return v
 
 
+class SubareaRelation(_Strict):
+    id: int = Field(gt=0)
+    name: str
+    slug: str = Field(pattern=r"^[a-z0-9_]+$")  # unique within the city
+
+
+class SubareasConfig(_Strict):
+    """Sub-city areas (Berlin's Bezirke), assembled offline from OSM admin relations."""
+
+    source: Literal["osm_admin"]
+    admin_level: int
+    relations: list[SubareaRelation] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _unique(self) -> "SubareasConfig":
+        for field in ("id", "slug"):
+            values = [getattr(r, field) for r in self.relations]
+            dup = sorted({v for v in values if values.count(v) > 1}, key=str)
+            if dup:
+                raise ValueError(f"subareas.relations: duplicate {field} {dup}")
+        return self
+
+
 class CityConfig(_Strict):
     id: str = Field(pattern=r"^[a-z0-9_]+$")
     name: str
@@ -90,6 +113,8 @@ class CityConfig(_Strict):
     nuts3_is_city: bool | None = None
     # Free-text caveat appended to the QECIO row notes of this city
     nuts3_note: str | None = None
+    # Optional sub-city areas; None = the city has none
+    subareas: SubareasConfig | None = None
 
     @model_validator(mode="after")
     def _one_lau_source(self) -> "CityConfig":

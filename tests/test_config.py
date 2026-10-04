@@ -398,3 +398,52 @@ def test_population_override_source_urls_are_https_and_not_a_js_page():
         url = c.population_override.source_url
         assert url.startswith("https://"), c.id
         assert not urlparse(url).path.endswith((".htm", ".html")), c.id
+
+
+def _cities_yaml(tmp_path: Path, subareas: dict | None = None) -> Path:
+    city = {
+        "id": "x",
+        "name": "X",
+        "country_iso2": "DE",
+        "epsg": 25833,
+        "geofabrik_region": "europe/x",
+        "osm_relation_id": 1,
+    }
+    if subareas is not None:
+        city["subareas"] = subareas
+    p = tmp_path / "cities.yaml"
+    p.write_text(yaml.safe_dump({"cities": [city]}))
+    return p
+
+
+def _rel(id_: int, slug: str) -> dict:
+    return {"id": id_, "name": slug.upper(), "slug": slug}
+
+
+def _with_subareas(tmp_path: Path, relations: list[dict]) -> Path:
+    subareas = {"source": "osm_admin", "admin_level": 9, "relations": relations}
+    return _cities_yaml(tmp_path, subareas)
+
+
+def test_city_without_subareas_loads_as_none(tmp_path: Path):
+    assert load_cities(_cities_yaml(tmp_path))[0].subareas is None
+
+
+def test_subareas_load(tmp_path: Path):
+    p = _with_subareas(tmp_path, [_rel(5, "a"), _rel(6, "b_2")])
+    subs = load_cities(p)[0].subareas
+    assert subs is not None and [r.slug for r in subs.relations] == ["a", "b_2"]
+
+
+@pytest.mark.parametrize(
+    ("relations", "message"),
+    [
+        ([_rel(5, "a"), _rel(6, "a")], "duplicate slug"),
+        ([_rel(5, "a"), _rel(5, "b")], "duplicate id"),
+        ([], "at least 1"),
+        ([_rel(5, "Bad-Slug")], "slug"),
+    ],
+)
+def test_bad_subareas_are_a_config_error(tmp_path: Path, relations: list[dict], message: str):
+    with pytest.raises(ConfigError, match=message):
+        load_cities(_with_subareas(tmp_path, relations))
