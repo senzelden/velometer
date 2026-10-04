@@ -72,3 +72,243 @@ helsinki = finland, stockholm = sweden, oslo = ostlandet, krakow = malopolskie,
 wroclaw = dolnoslaskie, lyon = rhone-alpes, barcelona = cataluna).
 
 - **R1** A published md5 equal to the md5 of zero bytes (`d41d8cd9…`) counts as no published md5: the download is verified by its computed md5 (`md5_source: computed`). Why: on 2026-10-03 Geofabrik's `.md5` sidecars for austria, hungary and slovakia (regenerated 11:29 UTC) held that value beside unchanged, non-empty files (Last-Modified 2026-09-25), so every fetch failed. The austria download's computed md5 equals the md5 Geofabrik published on 2026-10-01 (`ce458253…`), so its history set is M3's `1254c077`. Cost: these three files rest on a computed, not a published, checksum.
+
+## Rulings and user decisions, by task
+
+Decisions made while building and running M5, each with why and what it costs if wrong. The M5
+spec (`docs/superpowers/specs/2026-10-03-velometer-m5-design.md`) and the ADRs win where they
+differ, except where a user decision below says it supersedes the spec.
+
+### Setup
+
+- **R2** M5 was built on branch `m5` in the main checkout, not in a git worktree. Why: the
+  execution tasks (13–18) need the git-ignored `data/` (about 20 GB of extracts and histories) and
+  `velometer.sqlite`, which a worktree lacks. Cost: a less isolated tree; nothing else.
+- **User decision (2026-10-03):** unsandboxed Bash is allowed for this repo, because the
+  sandbox cannot start on this machine (`apply-seccomp`: nested user namespaces are restricted).
+  A later decision the same day allowed the controller and agents to run the regeneration
+  commands (`report charts`, `maps`, `methodology`, `csv`; `reconcile --write` and
+  `timeseries --write`) inside the repo, on the condition that each commit's diff changes only
+  the generated blocks.
+
+### Task 2: per-run peak memory (`runs.peak_rss_kb`, schema v7)
+
+- **R3** The sampling mechanism. `velometer.memory.PeakRss` is a context manager around the run
+  block. It samples the process RSS on entry and on exit, and a daemon thread samples it every
+  0.2 s in between; the run stores the highest sample. It replaced `getrusage`'s `ru_maxrss`,
+  which never goes down within a process and so cannot give a per-run peak when one invocation
+  runs several cities or years. Its caveats:
+  - **Lower bound under a long GIL hold.** The sampler thread cannot run while one C call holds
+    the GIL. Pure-Python loops release it every 5 ms (the interpreter switch interval), and the
+    entry and exit samples bracket the step, so only a peak inside one long C call can be missed.
+  - **Process-wide baseline.** The sample is the RSS of the whole process, so in a multi-run
+    invocation a run's peak includes memory still held from earlier runs.
+  - **Cross-check.** Task 15 ran Paris FUA (the largest run) alone under `/usr/bin/time -v`:
+    3,384,384 kB against `peak_rss_kb` 3,387,384 kB, within 0.1 %.
+
+  Why: good enough for an 8 GB gate with the ways list alive throughout the run. Cost: a peak
+  under-read near the threshold. The peaks and the gate result are in ADR 0007's M5 notes.
+
+### Task 3: boundary EPSG check
+
+- **R4** `check_epsg` runs in `write_boundary` for the `lau` and `osm_relation` kinds only. Where
+  test fakes wrote synthetic polygons far from the city, the fakes were moved into the city's UTM
+  zone; the rule was not weakened. Why: the rule must hold for every real write. Cost: a few
+  fixture edits.
+- **R5** Copenhagen keeps EPSG 25832 through an explicit `CityConfig.epsg_exception` with a
+  reason text. `check_epsg` accepts it only when the configured zone is adjacent to the centroid's
+  zone. Why: 25832 is the Danish national standard; the centroid (12.57° E) is only 0.57° into
+  zone 33, a scale error of about 0.06 %; and changing it would silently diverge from the 70
+  recorded pilot runs, because the EPSG is not part of the run key. Cost: Copenhagen lengths off
+  by under 0.1 %.
+
+### Task 6: trust gate on report surfaces
+
+- **R6** The static `note` texts of the rankings in `config/report.yaml`, which named pilot NUTS3
+  codes, became generic ("NUTS3 region per city; marked cities: NUTS3 is not the city"). The
+  per-city NUTS3≠city marker (the † on the QECIO axis) is generated from `cities.yaml`
+  (spec §4.3). Why: static notes would name untrusted or new cities and do not scale to 21.
+  Cost: one subtitle line.
+- **R7** `reconcile --write` and `timeseries --write` leave untrusted cities out of the generated
+  blocks. Why: report surfaces show trusted cities only (spec §3.3). Cost: an untrusted city's
+  block reappears once it is trusted, which is the intended flow.
+
+### Task 7: trust diagnostics
+
+- **R8** The pilot comparison block in `trust diagnose` applies to any country whose `trust.yaml`
+  entry sets `pilot`, not only France and Poland. Why: the field is data; FR and PL just happen
+  to be the only ones that set it. Cost: none.
+
+### Task 9: charts for 21 cities
+
+- **R9** The city page gains `headline_city(data, city_id)`: one city's headline over time, LAU
+  solid and FUA dashed. Why: the index headline chart became LAU-only, and spec §4.1 says FUA
+  "lives on the city page", which until then showed only tier charts. Cost: one extra chart per
+  city page.
+- **R10** The "Highlight a city" picker's parameter is hoisted by altair to the top-level
+  `params` of the spec, and the tests accept it there. Why: that is altair's output shape, not a
+  design choice. Cost: none.
+
+### Task 10: caching and the 21-city chart
+
+- **R11** The grey "other" layer and the comparison end labels were verified visually on real
+  data in Task 18, not on the synthetic fixture, whose cities are copies of Berlin and overlap.
+  Cost: a chart fix found late (see the Task 18 verification below).
+
+### Task 13: onboarding the 16 cities
+
+- **R12** `trust.yaml` `unrecognised_share_max` is 0.001. The pilot maximum × 1.25 is 0.0000452,
+  which rounds to 0.0 at three places, and the schema refuses 0. Cost: more breaches to note than
+  a tighter limit would give.
+- **R13** The nine `-dirty` current runs 223–231 (a `trust diagnose` wrote untracked docs while
+  the batch ran) stay in the DB, superseded by the clean reruns 232–240. Cost: none; history only.
+- **User decisions (2026-10-03, the Task 13 sign-off stop):**
+  - **Golden samples:** all proposed verdicts for NL, ES, SE, NO, FI, HU, CZ and SI were
+    accepted. Classifier v3 = v2 + `cycleway[:side]=soft_lane` → tier D advisory, and v3 becomes
+    the report classifier.
+  - **Bratislava:** the admin layer is the union of its 17 GISCO LAU borough polygons, and its
+    population is the sum of their `POP_2024`.
+  - **Population for Lyon, Strasbourg, Bordeaux, Madrid and Barcelona:** national statistics
+    (INSEE populations de référence, INE padrón), cited in `cities.yaml` as
+    `{value, year, source, source_url}`, with a methodology limitation naming them. This
+    supersedes spec decision 9 (`urb_cpop1`), whose Urban Audit "city" codes turned out to be
+    greater cities, not the commune.
+  - **Oslo and Helsinki:** back to GISCO LAU, the ADR 0004 default; the boundary difference is
+    water.
+- **R14** The boundary check stays an area comparison of LAU against the OSM relation. A breach
+  caused by water is explained by a reviewed `### <city>/boundary_diff_pct` note (Oslo in
+  `NO.md`, Helsinki in `FI.md`), not by an automatic switch of the admin layer. Why: there is no
+  offline land/water layer to compute a land-only area, and the note is the trust gate's existing
+  mechanism. Cost: the "land area" wording given to the user is implemented as a reviewed note,
+  not a computed metric.
+
+### Task 13b: LAU unions and cited populations (code)
+
+- **R15** `cities.lau_code` in the DB stays NULL for a `lau_codes` city (Bratislava). Why: nothing
+  downstream reads it (only `upsert_cities` writes it); the codes live in `cities.yaml` and in the
+  boundary's `source_version`. Cost: a SQL consumer sees no LAU code for Bratislava.
+
+### Task 13c: finishing the onboarding
+
+- **Disclosed, Oslo and Helsinki land loss.** The user's decision rested on "the difference is
+  water". The area difference is water, but moving from the relation to the 1:1M GISCO LAU also
+  drops tier A–E km on islands and shoreline that the LAU polygon leaves out: **Helsinki −23.1 km
+  (−1.7 %)** and **Oslo −3.5 km (−0.7 %)**, measured by clipping the relation snapshot to the LAU
+  (classifier v2). Both boundary notes say so; ADR 0004's M5 notes record the areas.
+- **User decision (2026-10-03), Slovakia's golden sample:** v3 also adds
+  `cycleway[:side]=advisory` → tier D advisory. `cycleway:right=shared_busway` (a misspelling of
+  `share_busway`, 0.16 km) stays unrecognised, and its golden verdict is restated as
+  unrecognised. SK is confirmed with the other countries.
+
+### Task 14: classifier v3 and the trust sign-off
+
+- **R16** After the switch to v3 the report surfaces temporarily lacked history and FUA, because
+  v2-only runs are filtered out. This was planned: Task 15 ran FUA current for all 21 on v3 and
+  Task 16 the full LAU and FUA history, and the methodology was regenerated afterwards. Cost:
+  none; the v2 runs stay in the DB.
+- **R17** Norwegian golden way 1262980246 (Frysjaveien), right side, now expects tier D advisory
+  (`min_classifier: v3`). The user accepted all NO verdicts, whose text calls it "a D advisory
+  lane", and approved the advisory rule. Cost: one golden expectation.
+- **R18** France, Austria, Denmark and Poland got `classifier_reviewed: v3` on a zero-km-change
+  basis: v3 adds only `soft_lane` and `advisory` values, which move 0 km in their cities on the
+  same snapshot, and the Berlin golden set passes 48/48 on v3. Cost: a later rule that touches
+  their tags would need the review this field claims happened.
+- **R19** The dirty runs 249–269 (a doc edited while the batch ran) stay in the DB, superseded by
+  the clean runs 270–290, as with 223–231.
+
+### Task 15: current FUA runs and the memory gate
+
+- **R20** The 8 GB gate was not tripped (largest current run Paris FUA, 3.26 GB; largest run of
+  all, Paris FUA history 2026, 4.86 GB), so **Task 12, streaming classification, was skipped**,
+  and the peaks are recorded in ADR 0007's M5 notes.
+- **R21** Task 15 had no separate task review: its only commit, 9a545a2, is a regenerated
+  methodology that passes `--check`. Cost: none; the final review covers it.
+
+### Task 16: history runs
+
+- **R22** The history run set spans two commits: Berlin and Paris LAU ran at 9a545a2, every
+  other series at 0b4e0f2. The second commit touches download verification only (R1), and the
+  `config_sha256` is the same. Cost: none.
+- **R23** Run 313 is kept as a `failed` row with a note. It was a launcher kill, not a pipeline
+  failure, and Berlin LAU 2018 is run 314. "No run may fail" is read as "no city-year lacks a done
+  run", and none does. Cost: one row to delete if read literally.
+- **The Geofabrik zero-byte md5 incident (2026-10-03).** Geofabrik regenerated the `.md5`
+  sidecars for austria, hungary and slovakia at 11:29 UTC with `d41d8cd98f00b204e9800998ecf8427e`,
+  the md5 of an empty input, next to unchanged, non-empty files (Last-Modified 2026-09-25,
+  sizes unchanged). Every fetch of those regions failed the md5 check, correctly, but on an
+  impossible checksum. The fix (R1, commit 0b4e0f2, with a test that fails without it) treats that
+  value as "no published md5" and verifies by computed md5; a review round (commit 5735e7e) added
+  a warning and a `Content-Length` size check on that path. Austria's computed md5 equals the md5
+  Geofabrik published on 2026-10-01, so the file is byte-identical to M3's. Hungary and Slovakia
+  were never downloaded before and rest on computed checksums only.
+
+### Task 17: explanations
+
+- **R24** The draft writers (eight agents, one per country group) wrote into workspace files, and
+  one integrator edited `docs/review/m3_timeseries.md` and `docs/reconciliation.md`. Why: eight
+  agents editing the same two tracked files would conflict and dirty the tree. Cost: one extra
+  integration pass.
+- **R25** Cause labels follow each doc's existing pilot vocabulary. The time series uses
+  construction, campaign and tag drift, and falls back to mapping activity, classifier and
+  boundary when nothing fits. The reconciliation uses definition, boundary and date, plus scope
+  and mapping activity. The drafts' "tagging" became "tag drift", and each Explanations intro has
+  a one-line legend. Why: one vocabulary per doc, consistent with the pilots; the plan's six-label
+  list matched neither doc. Cost: label wording only.
+- **R26** "Tag drift" is both a cause label (for retagging sweeps) and the name of the
+  `tag_drift` flag, and the legend defines it. Why: it is the pilot vocabulary. Cost: possible
+  reader confusion, fixable by a wording pass.
+- **R27** QECIO's `boundary_mismatch` tag is derived from `cities.yaml` `nuts3_is_city: false`
+  (in union with any explicit `reconcile.yaml` list), not hand-listed. Why: spec §4.3 generates
+  the NUTS3≠city marker from `cities.yaml`; only Copenhagen was listed, while about 12 cities have
+  `nuts3_is_city: false`. Cost: more tagged rows in the table.
+- **R28** `config/reconcile.yaml` gains an explicit `not_in_source: {clean_cities_2025: [...]}`
+  list with a reason (Utrecht, Stockholm, Strasbourg and Bordeaux are not in the 36-city ranking).
+  `missing_required` skips listed cities, and the table says "not in source". Why: `required`
+  could never be met for them, and an explicit list keeps "required" meaning "no forgotten data
+  entry". Cost: one config list.
+- **R29** Areas in the explanations cite our boundary polygon measured in the city's EPSG, not
+  GISCO's `AREA_KM2` attribute, which is 4–9 % lower for Stockholm, Helsinki and Amsterdam (cause
+  not checked). Why: lengths and areas are computed only in the city's projected EPSG. Cost: area
+  shares off by a few per cent.
+
+### Classifier design points left for later
+
+Found while explaining the series. They are recorded here, not changed in M5, because a rule
+change is a new classifier version (ADR 0005):
+
+- **Ljubljana, cycleway against path:** the same tags give tier A on `highway=cycleway` and
+  tier B on `highway=path`. About 100 km moved from A to B in 2021–23 with A+B unchanged.
+- **Mountain-bike trails at tier A:** `highway=path` + `bicycle=designated` (+ `foot=no`) trails
+  reach tier A through `A_path_cycle_only` (Bratislava 6.1 km; also at Myślenice).
+- **Prague footways retagged as cycleways:** park and riverside footways retagged to
+  `highway=cycleway` + `foot=yes` count as tier A (`A_cycleway`), about 20.5 km, because
+  `foot=yes` is not `designated`.
+
+## Task 18: report regeneration and verification (2026-10-03)
+
+- **R30** `report charts` regenerated the three `docs/review/m4_*` charts for 21 cities;
+  `report methodology` produced no diff (already current); `report maps` found all 42 maps
+  unchanged (current runs unchanged since Task 15). `report csv` was written to the session
+  scratchpad and not committed; M4 committed no CSV either, and the app serves it live.
+- **R31** The visual check used headless Chrome (153, `--headless=new`) driven over the DevTools
+  protocol from a scratch Node script, as in M4's R15, now with a live network log. All 23 pages
+  (`/`, `/methodology`, 21 city pages) were screenshotted at 1280 and 390 px. No page scrolls
+  horizontally at 390 px: wide tables and charts scroll inside their own boxes.
+- **Network:** the browser requested only the app on 127.0.0.1 (pages, `/static/`,
+  `/maps/*.geojson` and a 404 favicon) and `tile.openstreetmap.org`.
+- **Picker:** choosing "Praha" in "Highlight a city" sets the `pick` selection to
+  `{"city": ["Praha"]}` in the Vega view, and the Praha line is drawn highlighted.
+- **Trust filter:** with SK set to `pending` in a scratch copy of `config/` (served with
+  `--config-dir`), Bratislava is absent from the index and the CSV, and `/city/bratislava` and
+  `/data/bratislava.csv` return 404. Its map GeoJSON is still served by URL (a known deferred
+  minor from Task 6).
+- **Numbers:** the Berlin, Bratislava and Prague pages match `velometer results` (LAU and FUA): the
+  three presets, tier km A–E and km per 100k residents.
+- **Charts (R11's real-data check):** the grey "other" layer shows the 16 non-focus cities, Berlin
+  is highlighted, and Paris, København, Wien and Amsterdam carry end labels; the QECIO axis marks
+  the 12 cities whose NUTS3 region is not the city with †. Two layout defects were seen and not
+  fixed here: the København and Amsterdam end labels run into the legend in the headline chart
+  (the labels sit near the top of the y range, beside the legend), and the year labels of the
+  21 small multiples in `m4_tiers.png` overlap. A third is ambiguity, not error: the † is drawn
+  8 px above its point (`dy: -8`), so Strasbourg's mark (QECIO rank 13) reads as if it belonged to
+  Paris (rank 12). The spec's data marks exactly the 12 `nuts3_is_city: false` cities.
