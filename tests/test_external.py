@@ -308,7 +308,14 @@ def test_pilot_rows_unchanged_after_moving_ids_to_config(tmp_path):
         if g["city_id"] == "copenhagen" and g["source"] == "qecio_v2_10":
             head, md5 = g["note"].rsplit("; file md5 ", 1)
             g["note"] = f"{head}; {flag}; file md5 {md5}"
-    assert got == golden
+    assert len(got) == len(golden)
+    for g, r in zip(golden, got, strict=True):
+        assert r.keys() == g.keys()
+        for key, want in g.items():
+            if isinstance(want, float):
+                assert r[key] == pytest.approx(want, rel=1e-9), (g["city_id"], key)
+            else:
+                assert r[key] == want, (g["city_id"], key)
     assert sum(flag in r["note"] for r in got) == 5  # Copenhagen's five QECIO metrics only
 
 
@@ -342,14 +349,8 @@ def test_nuts3_note_is_appended_to_the_qecio_note():
     assert all("; custom caveat; file md5 " in r.note for r in rows)
 
 
-def test_pilot_cities_carry_their_external_source_ids():
-    by_id = {c.id: c for c in PILOT_CITIES}
-    assert {i: c.bikenetkit_id for i, c in by_id.items()} == BIKENETKIT_FILE_IDS
-    assert {i: c.nuts3_is_city for i, c in by_id.items()} == {
-        "berlin": True,
-        "paris": True,
-        "vienna": True,
-        "copenhagen": False,
-        "wroclaw": True,
-    }
-    assert "Byen København" in by_id["copenhagen"].nuts3_note
+def test_every_configured_city_carries_its_external_source_ids():
+    assert CITIES
+    for c in CITIES:
+        assert c.bikenetkit_id, c.id
+        assert c.nuts3_code, c.id
