@@ -383,7 +383,7 @@ def rankings_flip(data: ReportData) -> dict:
     roles = _roles(data)
     nuts3 = _nuts3_columns(data)
     # a city whose NUTS3 region is not the city: its QECIO figure is a region's, marked with †
-    region_only = {i for i, f in data._city_fields().items() if f.get("nuts3_is_city") is False}
+    region_only = {i for i, f in data.city_fields().items() if f.get("nuts3_is_city") is False}
     ranking_rows = data.ranking_rows()
     # each column says how many cities it ranks (n differs per source: a missing figure is a gap)
     column = {r.source_id: f"{r.source_label} (n={r.n_ranked})" for r in ranking_rows}

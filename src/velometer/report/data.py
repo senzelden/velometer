@@ -247,7 +247,7 @@ class ReportData:
 
     # --- rankings -----------------------------------------------------------------------
 
-    def _city_fields(self) -> dict[str, dict]:
+    def city_fields(self) -> dict[str, dict]:
         """city id -> its config/cities.yaml fields (the scope patterns format over these)."""
         if self._city_config is None:
             self._city_config = {
@@ -265,7 +265,7 @@ class ReportData:
 
     def _ratio_scope(self, ranking, city_id: str) -> str | None:
         """The ratio ranking's scope for this city; None when a field it names has no value."""
-        fields = self._city_fields().get(city_id, {})
+        fields = self.city_fields().get(city_id, {})
         try:
             scope = ranking.scope.format_map(fields)
         except KeyError as e:
@@ -320,11 +320,11 @@ class ReportData:
         """One row per (source, city), report.yaml order; ranked cities first (highest first),
         then the cities without a figure (rank and value None)."""
         out = []
+        ids = [c.id for c in self.cities()]
         for ranking in self.report_config.rankings:
             values = self._ranking_values(ranking)
             ranked = rank_values(list(values.items()))
             n = len(values)
-            ids = [c.id for c in self.cities()]
             for city_id in sorted(values, key=lambda k: (ranked[k], k)):
                 out.append(self._ranking_row(ranking, city_id, values[city_id], ranked[city_id], n))
             out += [

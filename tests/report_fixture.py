@@ -62,7 +62,11 @@ def _figure(city_id, source, metric, value, scope="whole_network", unit="km"):
     )
 
 
-QECIO_NUTS3 = {"berlin": "DE300", "paris": "FR101"}  # nuts3_code of config/cities.yaml
+QECIO_NUTS3 = {  # each fixture city's nuts3_code, from config/cities.yaml
+    c.id: c.nuts3_code
+    for c in load_cities(_CFG / "cities.yaml")
+    if c.id in ("berlin", "paris")
+}
 
 
 def _qecio(city_id, **km):

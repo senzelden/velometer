@@ -1,6 +1,7 @@
 import sqlite3
 
 import pytest
+import yaml
 
 from tests.report_fixture import (
     CLASSIFIER,
@@ -232,12 +233,14 @@ def test_ranks_is_the_ranked_part_of_ranking_rows(fixture_db):
 
 
 def test_scope_pattern_with_unknown_field_is_a_config_error(fixture_db):
-    data = fixture_db[3]
-    data.report_config.rankings[1:]  # noqa: B018 (shape check)
-    bad = next(r for r in data.report_config.rankings if r.id == "published_qecio")
-    object.__setattr__(bad, "scope", "nuts3_{no_such_field}")
+    _db, cfg, conn, _data = fixture_db
+    path = cfg / "report.yaml"
+    doc = yaml.safe_load(path.read_text())
+    bad = next(r for r in doc["rankings"] if r["id"] == "published_qecio")
+    bad["scope"] = "nuts3_{no_such_field}"
+    path.write_text(yaml.safe_dump(doc, sort_keys=False))
     with pytest.raises(ConfigError, match="published_qecio"):
-        data.ranking_rows()
+        ReportData(conn, cfg).ranking_rows()
 
 
 def test_city_without_the_scope_field_has_no_value(fixture_db):
@@ -251,7 +254,7 @@ def test_city_without_the_scope_field_has_no_value(fixture_db):
         ("shared_pedestrians_km", 1.0, "nuts3_None"),
         ("main_roads_km", 2.0, "nuts3_None"),
     )
-    data._city_fields()["berlin"]["nuts3_code"] = None
+    data.city_fields()["berlin"]["nuts3_code"] = None
     rows = data.ranking_rows()
     berlin = next(r for r in rows if r.source_id == "published_qecio" and r.city_id == "berlin")
     assert berlin.value is None and berlin.rank is None
@@ -271,7 +274,6 @@ def test_untrusted_country_is_absent_from_every_report_surface(report_db_with_tr
         assert data.csv_rows() and all(r["city_id"] == "berlin" for r in data.csv_rows())
         assert data.csv_rows("paris") == []
         assert all(r.city_id == "berlin" for r in data.ranking_rows())
-        assert all(r.source_id and r.city_id == "berlin" for r in data.ranking_rows())
         assert "paris" not in json.dumps(charts.headline_over_time(data))
         assert "Paris" not in methodology.render(methodology.methodology_facts(data), "en")
     finally:

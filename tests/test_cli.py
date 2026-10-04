@@ -336,7 +336,7 @@ def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatc
     rargs = ["reconcile", "--city", "berlin", "--db", str(db), "--report", str(report)]
     bad = runner.invoke(app, [*rargs, "--write", "--check"])
     assert bad.exit_code == 1
-    assert "berlin/cc_network_km" in bad.output
+    assert "missing explanation: ### berlin/cc_network_km" in bad.output
     assert f"explained-against: berlin={rid}" in bad.output  # the marker to set is printed
     with report.open("a") as f:
         f.write("\n### berlin/cc_network_km\n\nBecause.\n")
