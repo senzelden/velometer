@@ -181,7 +181,7 @@
   <td>{{ f.network_scope }}</td>
   <td>{{ f.length_basis }}</td>
   <td>{{ f.reference_date or "?" }}</td>
-  <td>{% if f.source_url %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}{% if f.note %} <span class="meta">{{ f.note }}</span>{% endif %}</td>
+  <td>{% if f.source_url.startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}{% if f.note %} <span class="meta">{{ f.note }}</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>

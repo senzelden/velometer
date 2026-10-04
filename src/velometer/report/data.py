@@ -50,7 +50,8 @@ ROAD_CLASS_TEXT = {
 HEADLINE_UNIT = f"A+B km per 100 km of {ROAD_CLASS_TEXT['main_excl_motorway']}"
 
 
-# the layers the comparison table and rankings already use; the list below is for the rest
+# Sources of the comparison layers (the ranking and reconcile tables); `reported_figures` lists
+# every other source. tests/test_external.py checks each id is one the loaders emit.
 COMPARISON_SOURCES = frozenset({"clean_cities_2025", "qecio_v2_10", "bikenetkit_v1"})
 
 

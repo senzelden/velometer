@@ -371,3 +371,15 @@ def test_vorrangnetz_scope_with_unknown_basis_round_trips(tmp_path):
         X.replace_external_figures(conn, "official", [fig])
         assert fetch_external_figures(conn, "berlin") == [fig]
     assert (fig.network_scope, fig.length_basis) == ("vorrangnetz", "unknown")
+
+
+def test_comparison_sources_are_the_ids_the_loaders_emit(tmp_path):
+    from velometer.report.data import COMPARISON_SOURCES
+
+    gpkg = tmp_path / "berlin_de.gpkg"
+    _write_edges(gpkg, LineString([(13.4, 52.5), (13.4147, 52.5)]))
+    _zip_gpkg(tmp_path, gpkg)
+    emitted = {f.source for f in X.load_figures_csv(CURATED)}
+    emitted |= {f.source for f in X.qecio_figures(FIX / "qecio_summary_head.csv", BERLIN)}
+    emitted |= {f.source for f in X.bikenetkit_figures(tmp_path, BERLIN)}
+    assert emitted >= COMPARISON_SOURCES

@@ -1141,7 +1141,10 @@ def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
         html = c.get("/city/berlin").text
         other = c.get("/city/paris").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
-    assert section.count("<tr>") == 3  # header and two rows
+    assert (
+        section.count("<td>new_cycle_infra_km") == 0
+        and section.count("<code>new_cycle_infra_km</code>") == 2
+    )
     assert 'href="https://example.invalid/fixture"' in section
     assert 'href=""' not in section
     assert section.count("no source URL recorded") == 1
@@ -1157,3 +1160,13 @@ def test_fingerprint_follows_the_external_figures_csv(setup):
     (cfg / "external").mkdir(exist_ok=True)
     (cfg / "external" / "figures.csv").write_text("city_id\n")
     assert fingerprint(db, cfg, docs, maps) != before
+
+
+def test_non_http_source_url_is_never_a_link(setup):
+    db_path, cfg, maps, docs = setup
+    _add_reported(db_path, source_url="javascript:alert(1)")
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin").text
+    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    assert 'href="javascript:' not in html and "javascript:" not in section
+    assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
