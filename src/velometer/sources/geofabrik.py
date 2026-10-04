@@ -342,6 +342,7 @@ def fetch_history(
                         path, fetched_at = cached
                         return HistoryFile(region, path, published, "published", fetched_at)
                 else:
+                    log.warning("%s: md5_source: computed (no published md5)", region)
                     for known in sorted(hist.glob(f"{stem}_{'?' * 8}.osh.pbf")):
                         md5 = md5_of(known)
                         if known.name == f"{stem}_{md5[:8]}.osh.pbf":

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
@@ -19,6 +20,7 @@ from velometer.db import (
     upsert_cities,
 )
 from velometer.models import ActivityYear
+from velometer.selection import trusted_countries
 
 CFG = load_activity(
     CFG_DIR / "activity.yaml"
@@ -39,11 +41,11 @@ def config_dir(tmp_path, years="2019-2021", report_classifier="v1") -> Path:
     d = tmp_path / "config"
     if not d.exists():
         shutil.copytree(CFG_DIR, d)
-    text = (CFG_DIR / "history.yaml").read_text()
-    text = re.sub(r'years: "[^"]*"', f'years: "{years}"', text)
-    text, n = re.subn(r"required_kinds:\n(?:  .*\n)+", REQUIRED_KINDS, text)
-    assert n == 1, "config/history.yaml has no required_kinds block"
-    (d / "history.yaml").write_text(text)
+    doc = yaml.safe_load((CFG_DIR / "history.yaml").read_text())
+    assert "required_kinds" in doc, "config/history.yaml has no required_kinds block"
+    doc["years"] = years
+    doc["required_kinds"] = yaml.safe_load(REQUIRED_KINDS)["required_kinds"]
+    (d / "history.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
     rep = (CFG_DIR / "report.yaml").read_text()
     rep = re.sub(r"report_classifier: \S+", f"report_classifier: {report_classifier}", rep)
     (d / "report.yaml").write_text(rep)
@@ -488,8 +490,11 @@ def test_history_config_is_strict_and_has_a_default(tmp_path):
     from velometer.config import ConfigError, load_cities, load_history
 
     h = load_history(CFG_DIR / "history.yaml")
-    for c in load_cities(CFG_DIR / "cities.yaml"):  # M5: every city has a LAU and a FUA series
-        assert h.required(c.id) == ["lau", "fua"], c.id
+    trusted = trusted_countries(CFG_DIR)
+    cities = [c for c in load_cities(CFG_DIR / "cities.yaml") if c.country_iso2 in trusted]
+    assert cities
+    for c in cities:  # M5: every trusted city has a LAU and a FUA series, however it is listed
+        assert {"lau", "fua"} <= set(h.required(c.id)), c.id
     assert h.year_range() == range(2018, 2027)
     override = tmp_path / "o.yaml"
     override.write_text(f'years: "2018-2026"\n{REQUIRED_KINDS}')

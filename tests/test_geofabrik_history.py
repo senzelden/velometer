@@ -501,6 +501,26 @@ def test_fetch_history_warns_when_the_published_md5_is_the_md5_of_zero_bytes(tmp
     assert "published md5 is the md5 of empty input; using the computed md5" in caplog.text
 
 
+def test_fetch_history_warns_when_it_falls_back_to_a_computed_md5(tmp_path, caplog):
+    c = _client(_history_handler([], md5_body=None))  # no .md5 sidecar: 404
+    with caplog.at_level("WARNING", logger="velometer.sources.geofabrik"):
+        hf = fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert hf.md5_source == "computed"
+    assert "a: md5_source: computed (no published md5)" in caplog.text
+    assert [r.levelname for r in caplog.records] == ["WARNING"]
+
+
+def test_fetch_history_does_not_warn_when_the_md5_is_published(tmp_path, caplog):
+    c = _client(_history_handler([], md5_body=f"{MD5}  x\n"))
+    with caplog.at_level("WARNING", logger="velometer.sources.geofabrik"):
+        hf = fetch_history(
+            "a", tmp_path, IDX, client=c, cookie_loader=lambda force=False: _cookie(), today=TODAY
+        )
+    assert hf.md5_source == "published" and "no published md5" not in caplog.text
+
+
 def _short_body_handler(md5_body):
     def handler(r):
         if str(r.url).endswith(".md5"):
