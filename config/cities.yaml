@@ -49,7 +49,8 @@
 #   Municipal" at 1 Jan 2025, total habitantes, INE table "<province>: Población por municipios
 #   y sexo" (Madrid t=2881, Barcelona t=2861), read through the INE API
 #   https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/<t>?nult=1 (series DPOP13156 = MUN
-#   28079, DPOP2665 = MUN 08019).
+#   28079, DPOP2665 = MUN 08019); source_url is that API URL. The human-readable page is
+#   https://www.ine.es/jaxiT3/Tabla.htm?t=<t> (JavaScript-rendered, so not used as source_url).
 # - boundary check (ADR 0004, spec 3.1): GISCO LAU polygon vs the OSM relation polygon from the
 #   region extract, both in the city EPSG; |LAU - OSM| / OSM. Above 5 %: oslo 5.31 % and
 #   helsinki 69.1 % (OSM includes fjord / sea water); both keep the GISCO LAU admin boundary
@@ -165,7 +166,7 @@ cities:
       value: 3506730
       year: 2025
       source: "INE Revisión del Padrón Municipal 2025 (1 Jan 2025)"
-      source_url: "https://www.ine.es/jaxiT3/Tabla.htm?t=2881"
+      source_url: "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/2881?nult=1"
   - id: barcelona
     name: Barcelona
     country_iso2: ES
@@ -182,7 +183,7 @@ cities:
       value: 1731649
       year: 2025
       source: "INE Revisión del Padrón Municipal 2025 (1 Jan 2025)"
-      source_url: "https://www.ine.es/jaxiT3/Tabla.htm?t=2861"
+      source_url: "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/2861?nult=1"
   - id: stockholm
     name: Stockholm
     country_iso2: SE

@@ -1131,17 +1131,16 @@ sides are 18.5 km of `highway=cycleway` (e.g. way 1182208725, 3.1 km), 16.1 km o
 
 ### ljubljana/fua/2025
 
-Cause: **mapping activity** outside the city. A+B rose 449.5 ->
-536.8 mapped km (+87.3, needs 45.0). +84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km inside.
-Of 105.2 km of new A+B sides, 53.2 km are on ways that already existed in 2024 and were newly tiered
-A or B. The largest groups are untagged secondary and primary roads (12.0 + 9.2 km), e.g. way
-28675982 (road 102), which gained `cycleway=track` on both sides outside the city. Some of the new
-km is probably new infrastructure; that is an inference from the tags of two ways. Way 442354000,
-outside the city, went from `highway=track` to `highway=cycleway` with a fixme saying "change
-surface when complerted 2024". Inside the city, way 1198338337 Pionirska proga went from
-`railway=abandoned` to `highway=cycleway`. The other 52.0 km are on way ids not present a year
-earlier (new or split ways), and 12.8 km of A+B sides were lost. 9,703 edits in 2024 over 2,785
-changesets, top-mapper share 0.19, no spike.
+Cause: **mapping activity** outside the city. A+B rose 449.5 -> 536.8 mapped km (+87.3, needs 45.0).
++84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km inside. Of 105.2 km of new A+B sides,
+53.2 km are on ways that already existed in 2024 and were newly tiered A or B. The largest groups
+are untagged secondary and primary roads (12.0 + 9.2 km), e.g. way 28675982 (road 102), which gained
+`cycleway=track` on both sides outside the city. Some of the new km is probably new infrastructure;
+that is an inference from the tags of two ways. Way 442354000, outside the city, went from
+`highway=track` to `highway=cycleway` with a fixme saying "change surface when complerted 2024".
+Inside the city, way 1198338337 Pionirska proga went from `railway=abandoned` to `highway=cycleway`.
+The other 52.0 km are on way ids not present a year earlier (new or split ways), and 12.8 km of A+B
+sides were lost. 9,703 edits in 2024 over 2,785 changesets, top-mapper share 0.19, no spike.
 
 ### lyon/lau/2025
 
@@ -1251,11 +1250,11 @@ contraflow retagging: `cycleway=opposite_lane` 44.3 -> 6.4 km (way 25599714 ->
 
 ### paris/lau/2021
 
-Cause: **mapping activity**: the 2020 temporary "coronapistes" as mapped (no official build
-figure is cited here). A+B rose 257.3 -> 305.6 mapped km: +29.3 km of new `highway=cycleway`
-ways (way 840939982) and roads gaining `cycleway=track` with `cycleway:temporary=yes` (way
-31823633, way 41872851 `share_busway` -> `track`, way 31956307 `lane` -> `track`). `legacy_km` 8.2 -> 3.4 is the end of the `opposite_lane` retagging (way
-24709554).
+Cause: **mapping activity**: the 2020 temporary "coronapistes" as mapped (no official build figure
+is cited here). A+B rose 257.3 -> 305.6 mapped km: +29.3 km of new `highway=cycleway` ways (way
+840939982) and roads gaining `cycleway=track` with `cycleway:temporary=yes` (way 31823633, way
+41872851 `share_busway` -> `track`, way 31956307 `lane` -> `track`). `legacy_km` 8.2 -> 3.4 is the
+end of the `opposite_lane` retagging (way 24709554).
 
 ### paris/lau/2024
 

@@ -405,3 +405,58 @@ def test_tiered_keeps_tags_of_tiered_ways_only(monkeypatch):
     sides, tags = maps.tiered(Path("x"), Path("cfg"), "v2")
     assert [c.side.way_id for c in sides] == [1]
     assert tags == {1: {"highway": "primary"}}  # only the kept subset of the tiered way
+
+
+def test_a_way_crossing_the_boundary_is_drawn_only_inside():
+    from shapely.geometry import LineString, box
+
+    boundary = box(13.40, 52.52, 13.41, 52.53)
+    line = LineString([(13.405, 52.525), (13.42, 52.525)])
+    clipped = maps.clip_feature(line, boundary)
+    assert clipped is not None
+    assert clipped.bounds[2] <= 13.41 + 1e-9
+    assert maps.clip_feature(LineString([(13.5, 52.6), (13.6, 52.6)]), boundary) is None
+
+
+def test_geojson_geometry_is_clipped_and_a_side_outside_is_dropped():
+    from shapely.geometry import box
+
+    from velometer.pipeline.geometry import Projector
+
+    proj = Projector(25833)
+    boundary = box(13.40, 52.50, 13.41, 52.51)
+    crossing = _side(1, "A", coords=((13.405, 52.505), (13.42, 52.505)))
+    outside = _side(2, "A", coords=((13.50, 52.60), (13.51, 52.60)))
+    feats = maps.side_features([crossing, outside], {}, proj, None, boundary)
+    assert [f["properties"]["way_id"] for f in feats] == [1]
+    xs = [x for x, _ in feats[0]["geometry"]["coordinates"]]
+    assert max(xs) <= 13.41 + 1e-9
+
+
+def test_drawn_and_counted_tier_a_km_agree_on_the_measure_fixture():
+    from shapely.geometry import box
+
+    from velometer.config import default_config_dir, load_classifier
+    from velometer.pipeline.geometry import Projector, length_km
+    from velometer.pipeline.measure import measure
+    from velometer.pipeline.read import read_ways
+
+    cfg_dir = default_config_dir()
+    ways = read_ways(MINI).ways
+    proj = Projector(25833)
+    cfg = load_classifier(cfg_dir / "classifier" / "v1.yaml")
+    sides, _ = maps.tiered(MINI, cfg_dir, "v1")
+    x0, y0, x1, y1 = [
+        f(g.bounds[i] for g in maps._by_tier(sides, proj)["A"])
+        for i, f in ((0, min), (1, min), (2, max), (3, max))
+    ]
+    # a boundary that cuts through the tier-A ways: drawn and counted both lose the outer part
+    outline = box(x0 - 10, y0 - 10, (x0 + x1) / 2, y1 + 10)
+    counted = measure(ways, cfg, 25833, boundary=outline)
+    counted_a = sum(
+        t.length_km for t in counted.tier_lengths if t.tier == "A" and t.length_basis == "per_side"
+    )
+    drawn_a = sum(length_km(g) for g in maps._by_tier(sides, proj, outline)["A"])
+    whole_a = sum(length_km(g) for g in maps._by_tier(sides, proj)["A"])
+    assert 0 < counted_a < whole_a
+    assert drawn_a == pytest.approx(counted_a, rel=1e-6)

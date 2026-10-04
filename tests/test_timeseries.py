@@ -369,7 +369,8 @@ def test_committed_construction_causes_cite_a_source():
     assert "built and mapped" not in legend
     for h in headings(explained):
         text = T.explanation(p, h)
-        if text.startswith("Cause: **construction**"):
+        cause = text.split("\n\n", 1)[0]  # the "Cause:" paragraph, wherever it names the cause
+        if cause.startswith("Cause:") and "**construction**" in cause:
             assert "https://" in text, h
 
 

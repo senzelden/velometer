@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -373,3 +374,13 @@ def test_population_override_validation():
     ):
         with pytest.raises(ValidationError):
             CityConfig.model_validate({**BERLIN, "population_override": {**OVERRIDE, **bad}})
+
+
+def test_population_override_source_urls_are_https_and_not_a_js_page():
+    # the INE table page (Tabla.htm) renders its numbers in JavaScript: cite the data API instead
+    overrides = [c for c in load_cities(CFG / "cities.yaml") if c.population_override]
+    assert overrides
+    for c in overrides:
+        url = c.population_override.source_url
+        assert url.startswith("https://"), c.id
+        assert not urlparse(url).path.endswith((".htm", ".html")), c.id

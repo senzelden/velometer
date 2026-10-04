@@ -27,7 +27,7 @@ matplotlib.use("Agg")  # before pyplot: no display needed
 import matplotlib.pyplot as plt  # noqa: E402
 import shapely  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
-from shapely import LineString  # noqa: E402
+from shapely import LineString, MultiLineString  # noqa: E402
 from shapely.geometry.base import BaseGeometry  # noqa: E402
 from shapely.prepared import prep  # noqa: E402
 
@@ -85,11 +85,31 @@ def tiered(
     return sides, tags
 
 
-def _by_tier(sides: list[Classified], proj: Projector) -> dict[str, list[LineString]]:
-    out: dict[str, list[LineString]] = {t: [] for t in TIERS}
+def clip_feature(geom_4326: BaseGeometry, boundary_4326: BaseGeometry) -> BaseGeometry | None:
+    """The part of a way's line inside the boundary, as a (Multi)LineString; None when nothing
+    of it lies inside. Both arguments share one CRS, whichever it is (the name is the GeoJSON
+    case); a map draws what `pipeline.measure` counts, so the two clip the same way."""
+    inside = geom_4326.intersection(boundary_4326)
+    lines = [g for g in getattr(inside, "geoms", [inside]) if isinstance(g, LineString)]
+    lines = [g for g in lines if not g.is_empty and g.length > 0]
+    if not lines:
+        return None
+    return lines[0] if len(lines) == 1 else MultiLineString(lines)
+
+
+def _by_tier(
+    sides: list[Classified], proj: Projector, outline: BaseGeometry | None = None
+) -> dict[str, list[BaseGeometry]]:
+    """Side lines per tier in `proj`'s EPSG; clipped to `outline` (same EPSG) when given."""
+    out: dict[str, list[BaseGeometry]] = {t: [] for t in TIERS}
     for c in sides:
-        if c.tier in TIER_SET:
-            out[c.tier].append(proj.line(c.side.coords))
+        if c.tier not in TIER_SET:
+            continue
+        line = proj.line(c.side.coords)
+        if outline is not None:
+            line = clip_feature(line, outline)
+        if line is not None:
+            out[c.tier].append(line)
     return {t: lines for t, lines in out.items() if lines}
 
 
@@ -114,30 +134,47 @@ def _round(coords) -> list[list[float]]:
     return [[round(x, DECIMALS), round(y, DECIMALS)] for x, y in coords]
 
 
+def _geojson_geometry(geom: BaseGeometry) -> dict:
+    if isinstance(geom, MultiLineString):
+        return {
+            "type": "MultiLineString",
+            "coordinates": [_round(part.coords) for part in geom.geoms],
+        }
+    return {"type": "LineString", "coordinates": _round(geom.coords)}
+
+
 def side_features(
     sides: list[Classified],
     way_tags: Mapping[int, Mapping[str, str]],
     proj: Projector,
     outline: BaseGeometry | None,
+    outline_4326: BaseGeometry | None = None,
 ) -> list[dict]:
     """One GeoJSON Feature per side in tiers A-E (WGS84, rounded to DECIMALS).
 
     `km` is the side's length in `proj`'s EPSG, clipped to `outline` (same EPSG) when given, as
     `pipeline.measure` measures it for the run. `tags` are the way's OSM tags (as on the linked
     openstreetmap.org page, not the classifier's per-side view) filtered by `keep_tag`.
+    With `outline_4326` (the boundary in WGS84) the geometry is clipped to it, a (Multi)LineString
+    of what lies inside; a side with nothing inside is dropped.
     """
     prepared = None if outline is None else prep(outline)
     feats = []
     for c in sides:
         if c.tier not in TIER_SET:
             continue
+        geom = LineString(c.side.coords)
+        if outline_4326 is not None:
+            geom = clip_feature(geom, outline_4326)
+            if geom is None:
+                continue
         line = proj.line(c.side.coords)
         km = length_km(line) if outline is None else clipped_length_km(line, prepared, outline)
         tags = way_tags.get(c.side.way_id, {})
         feats.append(
             {
                 "type": "Feature",
-                "geometry": {"type": "LineString", "coordinates": _round(c.side.coords)},
+                "geometry": _geojson_geometry(geom),
                 "properties": {
                     "way_id": c.side.way_id,
                     "side": c.side.side,
@@ -152,11 +189,15 @@ def side_features(
     return feats
 
 
+def boundary_geometry(path: Path) -> BaseGeometry:
+    """The boundary file's geometry (WGS84, unrounded): the union of its features."""
+    feats = json.loads(Path(path).read_text())["features"]
+    return shapely.union_all([shapely.from_geojson(json.dumps(f["geometry"])) for f in feats])
+
+
 def boundary_feature(path: Path, city_id: str, kind: str) -> dict:
     """The boundary file's geometry (WGS84) as one Feature, rounded to DECIMALS."""
-    feats = json.loads(Path(path).read_text())["features"]
-    geom = shapely.union_all([shapely.from_geojson(json.dumps(f["geometry"])) for f in feats])
-    geom = shapely.transform(geom, lambda xy: xy.round(DECIMALS))
+    geom = shapely.transform(boundary_geometry(path), lambda xy: xy.round(DECIMALS))
     return {
         "type": "Feature",
         "properties": {"city_id": city_id, "kind": kind},
@@ -189,9 +230,10 @@ def _draw(sides, outline, title: str, footer: str, out: Path) -> None:
             for ring in (poly.exterior, *poly.interiors):
                 ax.plot(*ring.xy, color=OUTLINE, linewidth=0.8, zorder=1)
     for i, tier in enumerate(TIERS):  # A drawn last: on top where sides overlap
-        for line in sides.get(tier, []):
-            ax.plot(*line.xy, color=TIER_COLOURS[i], linewidth=1.1, zorder=10 - i,
-                    solid_capstyle="round")  # fmt: skip
+        for geom in sides.get(tier, []):
+            for line in getattr(geom, "geoms", [geom]):  # a clipped way may be several parts
+                ax.plot(*line.xy, color=TIER_COLOURS[i], linewidth=1.1, zorder=10 - i,
+                        solid_capstyle="round")  # fmt: skip
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_title(title, loc="left", fontsize=14)
@@ -242,12 +284,13 @@ def build_map(
     epsg = _epsg(data.config_dir, city_id)
     proj = Projector(epsg)
     classified, way_tags = tiered(snap, data.config_dir, point.classifier_version)
-    sides = _by_tier(classified, proj)
     boundary = fetch_boundary(data.conn, city_id, kind)
-    outline, boundary_member = None, None
+    outline, outline_4326, boundary_member = None, None, None
     if boundary is not None and Path(boundary.path).is_file():
         outline = load_boundary_polygon(Path(boundary.path), epsg)
+        outline_4326 = boundary_geometry(Path(boundary.path))
         boundary_member = boundary_feature(Path(boundary.path), city_id, kind)
+    sides = _by_tier(classified, proj, outline)
     footer = (
         f"{ODBL} · {MAPPED_KM}\nOSM {point.osm_timestamp}, classifier {point.classifier_version}"
     )
@@ -263,7 +306,7 @@ def build_map(
             "classifier": point.classifier_version,
         },
         "boundary": boundary_member,
-        "features": side_features(classified, way_tags, proj, outline),
+        "features": side_features(classified, way_tags, proj, outline, outline_4326),
     }
     text = json.dumps(collection, ensure_ascii=False, separators=(",", ":"))
     write_atomic(maps_dir / f"{city_id}_{kind}.geojson", text.encode("utf-8"))
