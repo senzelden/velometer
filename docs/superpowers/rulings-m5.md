@@ -300,15 +300,95 @@ change is a new classifier version (ADR 0005):
   `{"city": ["Praha"]}` in the Vega view, and the Praha line is drawn highlighted.
 - **Trust filter:** with SK set to `pending` in a scratch copy of `config/` (served with
   `--config-dir`), Bratislava is absent from the index and the CSV, and `/city/bratislava` and
-  `/data/bratislava.csv` return 404. Its map GeoJSON is still served by URL (a known deferred
-  minor from Task 6).
+  `/data/bratislava.csv` return 404. Its map GeoJSON was still served by URL at the time (the
+  deferred Task 6 minor); Task 18b fixed it (R32).
 - **Numbers:** the Berlin, Bratislava and Prague pages match `velometer results` (LAU and FUA): the
   three presets, tier km A–E and km per 100k residents.
 - **Charts (R11's real-data check):** the grey "other" layer shows the 16 non-focus cities, Berlin
   is highlighted, and Paris, København, Wien and Amsterdam carry end labels; the QECIO axis marks
-  the 12 cities whose NUTS3 region is not the city with †. Two layout defects were seen and not
-  fixed here: the København and Amsterdam end labels run into the legend in the headline chart
+  the 12 cities whose NUTS3 region is not the city with †. Two layout defects were seen, and
+  Task 18b fixed them (R32): the København and Amsterdam end labels run into the legend in the headline chart
   (the labels sit near the top of the y range, beside the legend), and the year labels of the
   21 small multiples in `m4_tiers.png` overlap. A third is ambiguity, not error: the † is drawn
   8 px above its point (`dy: -8`), so Strasbourg's mark (QECIO rank 13) reads as if it belonged to
-  Paris (rank 12). The spec's data marks exactly the 12 `nuts3_is_city: false` cities.
+  Paris (rank 12). The spec's data marks exactly the 12 `nuts3_is_city: false` cities. Task 18b
+  fixed this as well (R32).
+
+## Task 18b: chart fixes and the /maps trust filter (2026-10-03)
+
+- **R32** Inserted after Task 18 to fix the defects its screenshots showed, before the final
+  review. Why: they are visible in published charts, and `/maps` leaked untrusted cities. Cost:
+  one extra task.
+  - The headline legend moved below the plot, so the end labels no longer run into it; the
+    21 small multiples show at most four year labels; the QECIO † sits on its own point, to the
+    right (6e3a0d9, charts regenerated in 4ae54a8).
+  - `/maps/*.png` and `/maps/*.geojson` return 404 for a city whose country is not trusted
+    (84d2512).
+  - The controller's re-render showed the end-label spread inverting the order (Wien above
+    Berlin). Labels now keep their lines' order and are pushed down only (14b3673, charts
+    regenerated in 7b8e80d).
+
+## Final fix pass after the whole-branch review (2026-10-04)
+
+- **R33** One fix dispatch took the review's three Important findings, its new minors 1–7, and
+  the deferred items graded medium or published (base 7b8e80d). Rulings of the controller:
+  `trust check` enforces `classifier_reviewed == report_classifier` for every trusted country,
+  per spec §3.3 (the plan had narrowed it to countries with a golden set). The remaining low and
+  trivial deferred minors are listed below as known follow-ups.
+  - Rankings chart: the grey lines carry small grey points, so a city whose line breaks beside a
+    column (no Clean Cities figure: Utrecht, Stockholm, Strasbourg, Bordeaux) shows its QECIO
+    rank, and each † sits beside a point. A null rank draws no mark, so the subtitle names the
+    cities each source does not publish a figure for. End labels stay above 0 (e379954;
+    regenerated in 9ccfa69).
+  - The nine golden `.osm` fixtures carry the ODbL note of their `.yaml` siblings, and
+    `trust sample` writes it (c0d8332, ADR 0008). A test holds every golden way id to its
+    `.osm` (e8ca430).
+  - `trust check` also fails when a configured city of a trusted country is missing from its
+    `<cc>.json`; the methodology lists both conditions under the command's real name,
+    `velometer trust check` (29167b6).
+  - Trust review files show shares below 1 % with 2 decimals; they were re-rendered from the
+    committed `<cc>.json`, numbers unchanged (0dea1e5).
+  - A history download without a published md5 must be an OSM PBF: a `text/html` response or a
+    body without the `OSMHeader` blob raises `DownloadError` and leaves no file (0582111).
+  - A test pins that `reconcile --write` and `timeseries --write` leave untrusted cities out
+    (1472794).
+  - Published text (a569047): the Urban Audit population fallback is marked as unused by any
+    configured city; the national-statistics limitation cites the user decision of 2026-10-03
+    (Task 13 sign-off, above), which has no R-number, instead of spec decision 9 and a task id;
+    the German slips are fixed; the trust-gate bullets are parallel.
+  - The time-series legend defines **construction** as new ways mapped, consistent with known
+    construction, with an official source. No source is at hand for paris/lau/2020,
+    paris/lau/2021 or paris/fua/2019, so they are now mapping activity in mapped km (03feef7).
+
+### Known follow-ups (low or trivial, from the final review)
+
+- T1 `create_schema` raises on `BEGIN` inside a caller's transaction (no call site).
+- T2 The peak tests assert only `> 0`; the `PeakRss` docstring lacks the R3 caveats.
+- T3 The CLI `needs_region` branch (`lau` + `osm_relation`) is untested; the ±1 adjacency is
+  tested only through `check_epsg`, not `write_boundary`; the spec §5.3 stored-boundary EPSG test
+  became a write-time check, so boundaries stored before M5 are not re-validated by a test.
+- T4 `test_pilot_cities_carry_their_external_source_ids` pins config values; golden rows are
+  compared with exact float equality.
+- T5 A no-op `rankings[1:]` and an `object.__setattr__` mutation in `test_report_data.py`;
+  `ranking_rows` recomputes city ids per ranking; the fixture hard-codes DE300/FR101.
+- T6 A redundant assertion in `test_report_data.py`; the reconcile `--check` assertion is weak.
+- T7 The cycling-tags filter in `diagnose_city` is only partly pinned.
+- T8 The multi-city `osmium.merge` path of `trust sample` is untested; the skip reason of
+  `check_country_golden` is not unit-tested; the classify→observed loop is duplicated three
+  times; the per-city loading of `trust sample` lives in `cli.py`; mid-file imports in
+  `tests/test_trust.py`.
+- T9 `charts.py` uses the private `ReportData._city_fields()`; duplicate ids within `highlight`
+  or `comparison_set` are not rejected; the rings-layer filter is asserted by substring.
+- T10 The cached CSV freezes `git_commit()` and its "generated" time until the fingerprint
+  changes; no threaded test for `PageCache.get`; `LazyData` forwards any attribute; the
+  fingerprint is computed twice per request.
+- T11 `_boundary_source` keys on the "OSM relation" prefix; the golden path is built two ways,
+  and with a scratch `--config-dir` the golden counts silently show "none"; the English Status
+  column is always "trusted".
+- T13b The missing-code error test is not red-proofed; `lau_codes` + `osm_relation` is untested;
+  a `# type: ignore` on `_positive`; the `lau_codes` config test is bundled.
+- T13c The Madrid/Barcelona `source_url` is a JS-rendered page (the API URL is in the yaml
+  header); `golden_util` filters with dict equality.
+- T15 The map PNGs draw whole ways across the boundary while the km are clipped (M4 behaviour).
+- T16 The timeseries shipped-config test ties to the default; the `history.yaml` regex assumes
+  2-space indentation; the no-sidecar computed-md5 path logs nothing.
