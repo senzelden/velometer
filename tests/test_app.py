@@ -862,3 +862,17 @@ def test_warm_page_times_are_reported(client_21, capsys):
         print(f"\n{'route':<16} {'cold ms':>10} {'warm ms':>10}")
         for path, cold, warm in rows:
             print(f"{path:<16} {cold:>10.0f} {warm:>10.0f}")
+
+
+def test_maps_of_an_untrusted_city_are_404(report_db_with_trust, tmp_path):
+    db_path, cfg = report_db_with_trust(countries={"DE": {"status": "trusted", "basis": "t"}})
+    maps = tmp_path / "maps3"
+    maps.mkdir()
+    for city in ("berlin", "paris"):  # both have files; only Berlin's country is trusted
+        (maps / f"{city}_lau.png").write_bytes(PNG)
+        (maps / f"{city}_lau.geojson").write_bytes(GEOJSON)
+    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d3"))) as c:
+        assert c.get("/maps/berlin_lau.png").status_code == 200
+        assert c.get("/maps/berlin_lau.geojson").status_code == 200
+        assert c.get("/maps/paris_lau.png").status_code == 404
+        assert c.get("/maps/paris_lau.geojson").status_code == 404

@@ -235,19 +235,23 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     async def methodology_de(request: Request):
         return methodology(request, "de")
 
-    @app.get("/maps/{name}.png")
-    async def map_png(name: str):
-        path = maps_dir / f"{name}.png"
-        if not MAP_NAME.fullmatch(name) or not path.is_file():
+    def map_file(data: ReportData, name: str, suffix: str) -> Path:
+        """The map file of a trusted city's run, else 404 (the city page and CSV do the same)."""
+        path = maps_dir / f"{name}.{suffix}"
+        if not MAP_NAME.fullmatch(name):
             raise HTTPException(404, "map not found")
-        return FileResponse(path, media_type="image/png")
+        city_id = name.rsplit("_", 1)[0]
+        if city_id not in {c.id for c in data.cities()} or not path.is_file():
+            raise HTTPException(404, "map not found")
+        return path
+
+    @app.get("/maps/{name}.png")
+    async def map_png(name: str, data: Data):
+        return FileResponse(map_file(data, name, "png"), media_type="image/png")
 
     @app.get("/maps/{name}.geojson")
-    async def map_geojson(name: str):
-        path = maps_dir / f"{name}.geojson"
-        if not MAP_NAME.fullmatch(name) or not path.is_file():
-            raise HTTPException(404, "map not found")
-        return FileResponse(path, media_type="application/geo+json")
+    async def map_geojson(name: str, data: Data):
+        return FileResponse(map_file(data, name, "geojson"), media_type="application/geo+json")
 
     def csv_response(data: ReportData, city_id: str | None) -> Response:
         def build() -> str:
