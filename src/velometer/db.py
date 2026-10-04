@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from velometer.config import CityConfig, ClassifierParameters
 from velometer.models import (
@@ -22,6 +23,9 @@ from velometer.models import (
     Subarea,
     TierLength,
 )
+
+if TYPE_CHECKING:
+    from velometer.pipeline.measure import SubareaMeasure
 
 SCHEMA_VERSION = 8
 _RESULT_TABLES = (
@@ -454,6 +458,8 @@ def complete_run(
     supersedes: int | None = None,
     diagnostics: dict[str, float] | None = None,
     peak_rss_kb: int | None = None,
+    subareas: dict[str, SubareaMeasure] | None = None,
+    subarea_sha: str | None = None,
 ) -> None:
     """Write every result row and mark the run done, atomically.
 
@@ -463,10 +469,35 @@ def complete_run(
     Dual-carriageway rows hold one row per (way, partner) pair: overlap_share is the share of the
     way within the pairing distance of that partner, distance_m their minimum distance.
     `diagnostics` (key -> value) lands in the diagnostics table in the same transaction, and
-    so does `peak_rss_kb` (the run's peak resident memory) on the run row.
+    so does `peak_rss_kb` (the run's peak resident memory) on the run row. `subareas` (id ->
+    per-subarea lengths) lands in the subarea tables and `subarea_sha` on the run row.
     """
     with conn:  # one transaction: commit on success, rollback on any exception
-        conn.execute("UPDATE runs SET peak_rss_kb=? WHERE id=?", (peak_rss_kb, run_id))
+        conn.execute(
+            "UPDATE runs SET peak_rss_kb=?, subarea_sha=? WHERE id=?",
+            (peak_rss_kb, subarea_sha, run_id),
+        )
+        for sid, part in (subareas or {}).items():
+            conn.executemany(
+                "INSERT INTO subarea_tier_lengths VALUES (?,?,?,?,?,?,?,?)",
+                [
+                    (
+                        run_id,
+                        city_id,
+                        sid,
+                        t.tier,
+                        t.subtype or "",
+                        t.length_basis,
+                        t.length_km,
+                        t.n_ways,
+                    )
+                    for t in part.tier_lengths
+                ],
+            )
+            conn.executemany(
+                "INSERT INTO subarea_road_lengths VALUES (?,?,?,?,?)",
+                [(run_id, city_id, sid, r.road_class, r.length_km) for r in part.road_lengths],
+            )
         if supersedes is not None:
             conn.execute(
                 "UPDATE runs SET status='failed', error=? WHERE id=?",
@@ -787,6 +818,11 @@ def upsert_subareas(conn: sqlite3.Connection, rows: list[Subarea]) -> None:
             """,
             [r.model_dump() for r in rows],
         )
+
+
+def subarea_shas(conn: sqlite3.Connection, city_id: str) -> dict[str, str]:
+    """The checked GeoJSON sha256 of each of a city's subareas, by subarea_id."""
+    return dict(conn.execute("SELECT subarea_id, sha256 FROM subareas WHERE city_id=?", (city_id,)))
 
 
 def subarea_rows(

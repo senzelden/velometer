@@ -6,6 +6,7 @@ from shapely import MultiPolygon, Polygon
 from velometer.config import Preset, default_config_dir, load_classifier, load_presets
 from velometer.pipeline.geometry import Projector
 from velometer.pipeline.measure import (
+    SubareaMeasure,
     SubareaSumError,
     attribute_subareas,
     check_subarea_sums,
@@ -470,3 +471,42 @@ def test_a_way_wholly_outside_every_subarea_counts_no_n_ways():
     assert rows and all(t.n_ways == 1 for t in rows)
     _, only_out = _attribute([outside], covering)
     assert only_out["w"].tier_lengths == []
+
+
+def test_a_way_on_a_shared_edge_is_split_not_double_counted():
+    on_edge = WayRecord(1, TRACK, ((13.41, 52.495), (13.41, 52.505)))
+    (x0, y0), (x1, y1) = Projector(25833).line(on_edge.coords).coords
+    # the shared edge is the way itself (exact in projected space), one side each
+    west = SubareaPolygon(
+        "w", "W", 1, Polygon([(x0, y0), (x1, y1), (x1 - 500, y1), (x0 - 500, y0)]), "0" * 64
+    )
+    east = SubareaPolygon(
+        "e", "E", 1, Polygon([(x0, y0), (x1, y1), (x1 + 500, y1), (x0 + 500, y0)]), "0" * 64
+    )
+    result, parts = _attribute([on_edge], [west, east], city_box=(13.39, 52.49, 13.43, 52.51))
+    city = _tier_map(result.tier_lengths)[("A", None, "per_side")].length_km
+    assert city > 0
+    halves = [_tier_map(p.tier_lengths)[("A", None, "per_side")].length_km for p in parts.values()]
+    assert halves == [pytest.approx(city / 2, rel=1e-9)] * 2
+    check_subarea_sums(result, parts)
+
+
+def _scaled(result, parts, factor):
+    """`parts` with every length multiplied by `factor` (a controlled deviation from the city)."""
+    return {
+        k: SubareaMeasure(
+            [t.model_copy(update={"length_km": t.length_km * factor}) for t in p.tier_lengths],
+            [r.model_copy(update={"length_km": r.length_km * factor}) for r in p.road_lengths],
+        )
+        for k, p in parts.items()
+    }
+
+
+def test_sum_check_tolerance_is_half_a_percent():
+    ways = [WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505)))]
+    result, parts = _attribute(ways, NORTH_SOUTH)
+    check_subarea_sums(result, _scaled(result, parts, 0.997))  # 0.3 % short: passes
+    check_subarea_sums(result, _scaled(result, parts, 1.003))
+    for factor in (0.993, 1.007):  # 0.7 % off: fails
+        with pytest.raises(SubareaSumError):
+            check_subarea_sums(result, _scaled(result, parts, factor))

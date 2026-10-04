@@ -252,23 +252,36 @@ def attribute_subareas(
 
     Reuses the city's classification and dual-carriageway factors (ADR 0003), so a pair halved
     in the city stays halved in its subarea. A way crossing two subareas counts in the n_ways of
-    both; a way outside every subarea counts in none.
+    both; a way outside every subarea counts in none. A way lying on a shared edge has its
+    length split in proportion, so the parts never exceed the city length.
     """
     proj = Projector(epsg)
     public = _public_roads(ways, cfg)
     relevant = {c.side.way_id for c in result.classified if c.tier is not None}
     relevant |= {w.id for w in public}
     lines = {w.id: proj.line(w.coords) for w in ways if w.id in relevant}
-    out = {}
+    per_sub = {}
     for sub in subareas:
         area = sub.polygon.intersection(city_boundary)
         prepared = prep(area)
-        lengths = {i: clipped_length_km(line, prepared, area) for i, line in lines.items()}
-        out[sub.subarea_id] = SubareaMeasure(
+        per_sub[sub.subarea_id] = {
+            i: clipped_length_km(line, prepared, area) for i, line in lines.items()
+        }
+    # A way on the shared edge of two (closed) subareas is clipped in full into both: scale its
+    # parts so they never add up to more than its city-clipped length.
+    for i in lines:
+        total = sum(lengths[i] for lengths in per_sub.values())
+        city = result.way_lengths[i]
+        if total > city + 1e-9:
+            for lengths in per_sub.values():
+                lengths[i] *= city / total
+    return {
+        sid: SubareaMeasure(
             tier_lengths=_tier_lengths(result.classified, lengths, True),
             road_lengths=_road_lengths(public, result.road_factors, lengths, cfg.road_classes),
         )
-    return out
+        for sid, lengths in per_sub.items()
+    }
 
 
 def check_subarea_sums(

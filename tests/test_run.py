@@ -1,3 +1,4 @@
+import dataclasses
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -6,12 +7,22 @@ import pytest
 from shapely import box
 
 from velometer import run as R
-from velometer.config import default_config_dir, load_cities
-from velometer.db import create_schema, fetch_run, open_db, upsert_cities
-from velometer.models import Boundary, Metric, Population
+from velometer.config import SubareaRelation, SubareasConfig, default_config_dir, load_cities
+from velometer.db import (
+    create_schema,
+    fetch_run,
+    open_db,
+    subarea_rows,
+    subarea_shas,
+    upsert_cities,
+    upsert_subareas,
+)
+from velometer.models import Boundary, Metric, Population, Subarea
+from velometer.pipeline.measure import SubareaSumError
 from velometer.pipeline.read import read_ways
 from velometer.sources.boundaries import BoundaryRecord
 from velometer.sources.geofabrik import IndexSnapshot, RegionFile
+from velometer.subareas import SubareaPolygon, subarea_set_sha
 
 CFG_DIR = default_config_dir()
 CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
@@ -614,3 +625,106 @@ def test_covered_city_run_never_touches_the_index(conn, tmp_path):
 def test_current_run_records_peak_rss(conn, tmp_path):
     out = _run(conn, tmp_path, _deps(tmp_path, []))
     assert fetch_run(conn, out.run_id)["peak_rss_kb"] > 0
+
+
+# --- subareas (M6) ---
+
+SUB_SHA = "a" * 64
+WITH_SUBAREAS = CITY.model_copy(
+    update={
+        "subareas": SubareasConfig(
+            source="osm_admin",
+            admin_level=9,
+            relations=[SubareaRelation(id=1, name="A", slug="a")],
+        )
+    }
+)
+
+
+def _sub_deps(tmp_path, *, sha=SUB_SHA, checked=None, load=None):
+    """Deps whose one subarea covers the whole fake city."""
+    polys = [SubareaPolygon("a", "A", 1, box(-1e9, -1e9, 1e9, 1e9), sha)]
+    return dataclasses.replace(
+        _deps(tmp_path, []),
+        load_subareas=load or (lambda city, d: polys),
+        subarea_shas=lambda c, city_id: {"a": SUB_SHA} if checked is None else checked,
+    )
+
+
+def _sub_run(conn, tmp_path, deps, city=WITH_SUBAREAS, **kw):
+    return R.run_city(conn, city, data_dir=tmp_path, config_dir=CFG_DIR, deps=deps, **kw)
+
+
+def _sub_state(conn, run_id):
+    sha = conn.execute("SELECT subarea_sha FROM runs WHERE id=?", (run_id,)).fetchone()[0]
+    n = sum(
+        conn.execute(f"SELECT COUNT(*) FROM {t} WHERE run_id=?", (run_id,)).fetchone()[0]
+        for t in ("subarea_tier_lengths", "subarea_road_lengths")
+    )
+    return sha, n
+
+
+def test_lau_run_of_a_city_with_subareas_stores_them(conn, tmp_path):
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path))
+    assert out.status == "done"
+    sha, n = _sub_state(conn, out.run_id)
+    assert sha == subarea_set_sha([SubareaPolygon("a", "A", 1, None, SUB_SHA)])
+    assert n > 0
+    assert set(subarea_rows(conn, out.run_id)) == {"a"}
+
+
+def test_fua_run_and_cities_without_subareas_store_none(conn, tmp_path):
+    fua = _sub_run(conn, tmp_path, _sub_deps(tmp_path), boundary_kind="fua")
+    plain = _sub_run(conn, tmp_path, _sub_deps(tmp_path), city=CITY)
+    for out in (fua, plain):
+        assert out.status == "done"
+        assert _sub_state(conn, out.run_id) == (None, 0)
+
+
+def test_missing_subarea_file_fails_the_run_with_the_reason(conn, tmp_path):
+    def load(city, d):
+        raise FileNotFoundError("berlin: subarea 'a' has no boundary file x")
+
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, load=load))
+    assert out.status == "failed" and _status(conn, out.run_id) == "failed"
+    assert "FileNotFoundError: berlin: subarea 'a' has no boundary file" in out.error
+    assert (
+        conn.execute("SELECT error FROM runs WHERE id=?", (out.run_id,)).fetchone()[0] == out.error
+    )
+    assert _sub_state(conn, out.run_id)[1] == 0
+
+
+def test_subarea_sum_error_fails_the_run(conn, tmp_path):
+    small = [SubareaPolygon("a", "A", 1, box(0, 0, 1, 1), SUB_SHA)]  # covers none of the city
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, load=lambda c, d: small))
+    assert out.status == "failed" and _status(conn, out.run_id) == "failed"
+    assert SubareaSumError.__name__ in out.error
+
+
+@pytest.mark.parametrize("checked", [{}, {"a": "b" * 64}], ids=["no row", "other sha"])
+def test_unchecked_or_stale_subarea_file_fails_the_run(conn, tmp_path, checked):
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, checked=checked))
+    assert out.status == "failed" and _status(conn, out.run_id) == "failed"
+    assert "'a'" in out.error and SUB_SHA in out.error
+    assert (checked.get("a") or "None") in out.error
+    assert _sub_state(conn, out.run_id) == (None, 0)
+
+
+def test_db_subarea_shas_reads_the_checked_rows(conn):
+    upsert_subareas(
+        conn,
+        [
+            Subarea(
+                city_id="berlin",
+                subarea_id="a",
+                name="A",
+                source="osm_admin",
+                relation_id=1,
+                area_km2=1.0,
+                path="p",
+                sha256=SUB_SHA,
+            )
+        ],
+    )
+    assert subarea_shas(conn, "berlin") == {"a": SUB_SHA}
+    assert subarea_shas(conn, "paris") == {}

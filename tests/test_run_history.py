@@ -6,7 +6,14 @@ import pytest
 from shapely import box
 
 from velometer import run as R
-from velometer.config import default_config_dir, load_cities, load_classifier, load_history
+from velometer.config import (
+    SubareaRelation,
+    SubareasConfig,
+    default_config_dir,
+    load_cities,
+    load_classifier,
+    load_history,
+)
 from velometer.db import (
     canonical_parameters,
     create_schema,
@@ -23,6 +30,7 @@ from velometer.pipeline.read import read_ways
 from velometer.pipeline.tags import parts
 from velometer.sources.boundaries import BoundaryRecord
 from velometer.sources.geofabrik import HistoryFile, IndexSnapshot, history_set_md5
+from velometer.subareas import SubareaPolygon, subarea_set_sha
 
 CFG_DIR = default_config_dir()
 CITY = next(c for c in load_cities(CFG_DIR / "cities.yaml") if c.id == "berlin")
@@ -475,3 +483,83 @@ def test_editing_activity_yaml_reruns_every_year_and_old_runs_are_not_selected(c
     assert new_act != old_act
     assert fetch_activity(conn, "berlin", "lau", fakes.set_md5, new_act)
     assert fetch_activity(conn, "berlin", "lau", fakes.set_md5, old_act)  # the old rows stay
+
+
+# --- subareas (M6) ---
+
+SUB_SHA = "a" * 64
+WITH_SUBAREAS = CITY.model_copy(
+    update={
+        "subareas": SubareasConfig(
+            source="osm_admin",
+            admin_level=9,
+            relations=[SubareaRelation(id=1, name="A", slug="a")],
+        )
+    }
+)
+
+
+def _sub_history(conn, tmp_path, *, city=WITH_SUBAREAS, kind="lau", load=None, checked=None):
+    polys = [SubareaPolygon("a", "A", 1, box(-1e9, -1e9, 1e9, 1e9), SUB_SHA)]
+    deps = Fakes(tmp_path).deps(
+        load_subareas=load or (lambda c, d: polys),
+        subarea_shas=lambda c, city_id: {"a": SUB_SHA} if checked is None else checked,
+    )
+    return R.run_history(
+        conn,
+        city,
+        range(2019, 2021),
+        data_dir=tmp_path,
+        config_dir=CFG_DIR,
+        deps=deps,
+        boundary_kind=kind,
+    )
+
+
+def _sub_count(conn, run_id):
+    return sum(
+        conn.execute(f"SELECT COUNT(*) FROM {t} WHERE run_id=?", (run_id,)).fetchone()[0]
+        for t in ("subarea_tier_lengths", "subarea_road_lengths")
+    )
+
+
+def _sha(conn, run_id):
+    return conn.execute("SELECT subarea_sha FROM runs WHERE id=?", (run_id,)).fetchone()[0]
+
+
+def test_history_runs_of_a_city_with_subareas_store_them(conn, tmp_path):
+    outs = _sub_history(conn, tmp_path)
+    assert [o.status for o in outs] == ["done", "done"]
+    expected = subarea_set_sha([SubareaPolygon("a", "A", 1, None, SUB_SHA)])
+    for o in outs:
+        assert _sha(conn, o.run_id) == expected
+        assert _sub_count(conn, o.run_id) > 0
+
+
+def test_history_fua_and_plain_city_store_no_subareas(conn, tmp_path):
+    for outs in (_sub_history(conn, tmp_path, kind="fua"), _sub_history(conn, tmp_path, city=CITY)):
+        assert [o.status for o in outs] == ["done", "done"]
+        for o in outs:
+            assert _sha(conn, o.run_id) is None and _sub_count(conn, o.run_id) == 0
+
+
+def test_history_missing_subarea_file_fails_each_year(conn, tmp_path):
+    def load(city, d):
+        raise FileNotFoundError("berlin: subarea 'a' has no boundary file x")
+
+    outs = _sub_history(conn, tmp_path, load=load)
+    assert [o.status for o in outs] == ["failed", "failed"]
+    assert all("FileNotFoundError" in o.error for o in outs)
+
+
+def test_history_sum_error_fails_the_year(conn, tmp_path):
+    small = [SubareaPolygon("a", "A", 1, box(0, 0, 1, 1), SUB_SHA)]
+    outs = _sub_history(conn, tmp_path, load=lambda c, d: small)
+    assert [o.status for o in outs] == ["failed", "failed"]
+    assert all("SubareaSumError" in o.error for o in outs)
+
+
+def test_history_stale_subarea_file_fails_each_year(conn, tmp_path):
+    outs = _sub_history(conn, tmp_path, checked={"a": "b" * 64})
+    assert [o.status for o in outs] == ["failed", "failed"]
+    assert all(SUB_SHA in o.error and "b" * 64 in o.error for o in outs)

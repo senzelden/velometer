@@ -40,6 +40,7 @@ from velometer.db import (
     replace_activity,
     set_population,
     start_run,
+    subarea_shas,
     upsert_boundary,
     upsert_history_set,
 )
@@ -52,7 +53,12 @@ from velometer.pipeline.extract import snapshot as _snapshot
 from velometer.pipeline.history import SNAPSHOT_DATES
 from velometer.pipeline.history import city_history as _city_history
 from velometer.pipeline.history import snapshot_at as _snapshot_at
-from velometer.pipeline.measure import compute_metrics, measure
+from velometer.pipeline.measure import (
+    attribute_subareas,
+    check_subarea_sums,
+    compute_metrics,
+    measure,
+)
 from velometer.pipeline.read import read_ways as _read_ways
 from velometer.sources.boundaries import city_boundary as _city_boundary
 from velometer.sources.geofabrik import (
@@ -70,6 +76,8 @@ from velometer.sources.geofabrik import fetch_history as _fetch_history
 from velometer.sources.geofabrik import fetch_index as _fetch_index
 from velometer.sources.geofabrik import fetch_region as _fetch_region
 from velometer.sources.geofabrik import load_index as _load_index
+from velometer.subareas import load_subareas as _load_subareas
+from velometer.subareas import subarea_set_sha
 
 
 def region_uncovered_km2(
@@ -104,6 +112,8 @@ class RunDeps:
     load_index: Callable = _load_index
     regions_for: Callable = regions_for
     merge: Callable = _merge
+    load_subareas: Callable = _load_subareas
+    subarea_shas: Callable = subarea_shas
 
 
 def _select_regions(polygon_city_epsg, epsg: int, data_dir: Path, deps, select=None):
@@ -230,6 +240,32 @@ def _describe(e: BaseException) -> str:
     return f"{type(e).__name__}: {e}"
 
 
+class SubareaStaleError(ValueError):
+    """A subarea file on disk is not the one `boundaries fetch --subareas` checked."""
+
+
+def _attribute_subareas(conn, city, boundary_kind, data_dir, deps, ways, result, cfg, polygon):
+    """Per-subarea lengths and the set sha, or (None, None) where the city has none.
+
+    Only the LAU run is split. A subarea file whose sha256 differs from (or has no) `subareas`
+    row was written without passing the union/overlap checks, so the run fails.
+    """
+    if boundary_kind != "lau" or city.subareas is None:
+        return None, None
+    polys = deps.load_subareas(city, data_dir)
+    checked = deps.subarea_shas(conn, city.id)
+    for p in polys:
+        if checked.get(p.subarea_id) != p.sha256:
+            raise SubareaStaleError(
+                f"{city.id}: subarea {p.subarea_id!r} file sha256 {p.sha256} does not match the "
+                f"checked row ({checked.get(p.subarea_id)}); re-run "
+                f"`velometer boundaries fetch --city {city.id} --subareas`"
+            )
+    parts = attribute_subareas(ways, result, cfg, city.epsg, polygon, polys)
+    check_subarea_sums(result, parts)
+    return parts, subarea_set_sha(polys)
+
+
 def run_city(
     conn,
     city: CityConfig,
@@ -292,6 +328,9 @@ def run_city(
             ways = deps.read_ways(snap).ways
             result = measure(ways, cfg, city.epsg, boundary=rec.polygon)
             metrics = with_per_100k(compute_metrics(result, presets), pop.value if pop else None)
+            parts, sub_sha = _attribute_subareas(
+                conn, city, boundary_kind, data_dir, deps, ways, result, cfg, rec.polygon
+            )
         complete_run(
             conn,
             run_id,
@@ -300,6 +339,8 @@ def run_city(
             metrics,
             supersedes=done,
             peak_rss_kb=round(peak.peak_mb * 1024),
+            subareas=parts,
+            subarea_sha=sub_sha,
         )
     except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next city runs
         fail_run(conn, run_id, _describe(e))
@@ -320,6 +361,8 @@ class HistoryDeps:
     snapshot_at: Callable = _snapshot_at
     read_ways: Callable = _read_ways
     activity: Callable = _activity
+    load_subareas: Callable = _load_subareas
+    subarea_shas: Callable = subarea_shas
 
 
 @dataclass(frozen=True)
@@ -450,6 +493,9 @@ def run_history(
                 metrics = with_per_100k(
                     compute_metrics(result, presets), pop.value if pop else None
                 )
+                parts, sub_sha = _attribute_subareas(
+                    conn, city, boundary_kind, data_dir, deps, ways, result, cfg, rec.polygon
+                )
             diagnostics = drift_diagnostics(result, ways, activity_cfg)
             diagnostics["uncovered_km2"] = hs.uncovered_km2
             complete_run(
@@ -461,6 +507,8 @@ def run_history(
                 supersedes=done,
                 diagnostics=diagnostics,
                 peak_rss_kb=round(peak.peak_mb * 1024),
+                subareas=parts,
+                subarea_sha=sub_sha,
             )
         except Exception as e:  # noqa: BLE001 - recorded on the run row, then the next year runs
             fail_run(conn, run_id, _describe(e))
