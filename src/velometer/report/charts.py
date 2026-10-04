@@ -124,13 +124,18 @@ def _headline_rows(data: ReportData, kinds: tuple[str, ...], city_ids=None) -> l
 LABEL_GAP_PX = 13  # least vertical distance between two end labels (11 px text)
 
 
-def _spread_labels(values: dict[str, float], gap: float) -> dict[str, float]:
+def _spread_labels(values: dict[str, float], gap: float, floor: float = 0.0) -> dict[str, float]:
     """Label positions (data units) at least `gap` apart that keep the order of the values.
     The highest label stays on its line end; each next one is pushed DOWN (smaller values) just
-    far enough, so no label ever passes a higher-valued neighbour."""
+    far enough, so no label ever passes a higher-valued neighbour. A push below `floor` (the
+    scale minimum) lifts the bottom of the stack back up to it, still in order and `gap` apart."""
     out: dict[str, float] = {}
     for k in sorted(values, key=lambda k: -values[k]):
         out[k] = min(values[k], min(out.values(), default=float("inf")) - gap)
+    low = floor
+    for k in sorted(out, key=out.get):
+        out[k] = max(out[k], low)
+        low = out[k] + gap
     return out
 
 
@@ -359,6 +364,18 @@ def _nuts3_columns(data: ReportData) -> set[str]:
     }
 
 
+def _gap_lines(data: ReportData, rows: list[dict]) -> list[str]:
+    """One subtitle line per source that has no figure for some cities: a null rank breaks the
+    line and draws no mark, so the chart itself cannot carry its "not published" tooltip."""
+    out = []
+    for r in data.report_config.rankings:
+        missing = sorted({x["city"] for x in rows if x["rank"] is None and x["source_id"] == r.id})
+        if missing:
+            what = "has no value" if r.kind == "preset" else "does not publish a figure"
+            out.append(f"{r.label} {what} for {', '.join(missing)} (gap in the line)")
+    return out
+
+
 def rankings_flip(data: ReportData) -> dict:
     """Slope chart: x = ranking source (report.yaml order), y = rank (1 on top); the highlighted
     and comparison cities are coloured, every other city a thin grey line."""
@@ -378,6 +395,7 @@ def rankings_flip(data: ReportData) -> dict:
         rows.append(
             {
                 "source": column[e.source_id],
+                "source_id": e.source_id,
                 "city": city,
                 "city_id": e.city_id,
                 "city_label": f"{city} †" if dagger else city,
@@ -405,10 +423,17 @@ def rankings_flip(data: ReportData) -> dict:
         alt.Tooltip("value_text:N", title="value"),
     ]
     invalid = "break-paths-filter-domains"  # a null rank breaks the line
+    # small grey points: a city whose line breaks beside a column (a gap in the next or previous
+    # source) is a lone point there, which a line mark alone would not draw
     grey = (
         alt.Chart()
         .transform_filter(_is_other())
-        .mark_line(strokeWidth=1, color=GREY, invalid=invalid)
+        .mark_line(
+            strokeWidth=1,
+            color=GREY,
+            invalid=invalid,
+            point=alt.OverlayMarkDef(size=18, filled=True, color=GREY),
+        )
         .encode(detail="city:N", tooltip=tooltip)
     )
     focus = (
@@ -440,7 +465,8 @@ def rankings_flip(data: ReportData) -> dict:
                     f"{r.label}: {n}"
                     for r in data.report_config.rankings
                     if (n := getattr(r, "note", None))
-                ],
+                ]
+                + _gap_lines(data, rows),
             ),
         )
     )

@@ -317,12 +317,12 @@ def test_headline_coloured_layers_follow_config_order_and_label_now(fixture_db):
     assert "other" in json.dumps(rings[0]["transform"])
 
 
-def test_rankings_grey_lines_are_thin_without_points(fixture_db):
+def test_rankings_grey_lines_are_thin(fixture_db):
     data = _reconfigure(fixture_db, report={"highlight": ["berlin"], "comparison_set": []})
     spec = rankings_flip(data)
     assert _roles(_ranking_rows(spec)) == {"berlin": {"highlight"}, "paris": {"other"}}
     grey = next(layer for layer in _layers(spec) if "other" in json.dumps(layer["transform"]))
-    assert grey["mark"]["strokeWidth"] == 1 and not grey["mark"].get("point")
+    assert grey["mark"]["strokeWidth"] == 1
     assert grey["mark"]["invalid"] == "break-paths-filter-domains"
 
 
@@ -350,7 +350,8 @@ def test_qecio_marker_follows_the_flag(fixture_db):
 
 def test_ranking_notes_are_generic_and_name_no_city(fixture_db):
     subtitle = rankings_flip(fixture_db[3])["title"]["subtitle"]
-    text = " ".join(subtitle)
+    # the config notes; the "(gap in the line)" lines name the cities a source lacks, by design
+    text = " ".join(s for s in subtitle if "(gap in the line)" not in s)
     assert "QECIO v2.10 (published): NUTS3 region per city; † NUTS3 region is not the city" in text
     for name in ("Berlin", "Paris", "Vienna", "Copenhagen", "Wroclaw"):
         assert not re.search(rf"published\)?: .*{name}", text)
@@ -438,3 +439,88 @@ def test_spread_labels_never_swap_order_and_stay_near_their_own_line():
         "wien": 91.0,
         "paris": 62.0,
     }
+
+
+def _vega_filter(expr: str):
+    """A Python predicate for the simple Vega filter expressions the charts use."""
+    py = re.sub(r"datum\.(\w+)", r"r.get('\1')", expr)
+    for a, b in (("===", "=="), ("!==", "!="), ("&&", " and "), ("||", " or ")):
+        py = py.replace(a, b)
+    py = re.sub(r"\btrue\b", "True", re.sub(r"\bfalse\b", "False", py))
+    return lambda r: eval(py, {}, {"r": r})  # noqa: S307 - test-only, expressions from our spec
+
+
+def _draws_points(layer) -> bool:
+    mark = layer["mark"]
+    return mark["type"] in ("point", "circle") or (
+        mark["type"] == "line" and bool(mark.get("point"))
+    )
+
+
+def _rows_of(layer, rows):
+    preds = [_vega_filter(t["filter"]) for t in layer.get("transform", []) if "filter" in t]
+    return [r for r in rows if all(p(r) for p in preds)]
+
+
+@pytest.mark.parametrize(
+    "report",
+    [
+        {"highlight": ["berlin"], "comparison_set": []},
+        {"highlight": [], "comparison_set": []},
+        {"highlight": ["paris"], "comparison_set": ["berlin"]},
+    ],
+)
+def test_rankings_every_ranked_row_is_drawn_as_a_point(fixture_db, report):
+    # a line mark draws nothing for an isolated point (a city whose figure gap sits beside it):
+    # every ranked row needs a layer that renders points, whatever its role
+    spec = rankings_flip(_reconfigure(fixture_db, report=report))
+    rows = _data_rows(spec)
+    drawn = {
+        (r["source"], r["city_id"])
+        for lay in _layers(spec)
+        if _draws_points(lay)
+        for r in _rows_of(lay, rows)
+    }
+    ranked = {(r["source"], r["city_id"]) for r in rows if r["rank"] is not None}
+    assert ranked and ranked <= drawn
+
+
+def test_rankings_grey_points_are_small_and_grey(fixture_db):
+    data = _reconfigure(fixture_db, report={"highlight": ["berlin"], "comparison_set": []})
+    spec = rankings_flip(data)
+    grey = next(layer for layer in _layers(spec) if "other" in json.dumps(layer["transform"]))
+    point = grey["mark"]["point"]
+    assert point["color"] == GREY and point["size"] <= 30
+
+
+def test_rankings_name_every_city_a_source_has_no_figure_for(fixture_data):
+    spec = rankings_flip(fixture_data)
+    subtitle = spec["title"]["subtitle"]
+    by_label = {r.label: r.kind for r in fixture_data.report_config.rankings}
+    gaps = [r for r in _data_rows(spec) if r["rank"] is None]
+    assert gaps  # the fixture's paris has no QECIO figure and no current run
+    for r in gaps:
+        label = r["source"].rsplit(" (n=", 1)[0]
+        line = next((s for s in subtitle if s.startswith(label) and r["city"] in s), None)
+        assert line is not None, (label, r["city"], subtitle)
+        if by_label[label] != "preset":
+            assert "not publish" in line
+    # a source with no gap gets no line
+    full = {r["source"].rsplit(" (n=", 1)[0] for r in _data_rows(spec)} - {
+        r["source"].rsplit(" (n=", 1)[0] for r in gaps
+    }
+    assert full and not any(
+        s.startswith(f"{lab} ") and "gap" in s for s in subtitle for lab in full
+    )
+
+
+def test_spread_labels_never_go_below_the_floor_and_keep_order_and_gap():
+    from velometer.report.charts import _spread_labels
+
+    values = {"a": 2.0, "b": 1.5, "c": 1.0, "d": 0.2}
+    out = _spread_labels(values, gap=5.0)
+    assert min(out.values()) >= 0.0
+    assert sorted(out, key=out.get) == sorted(values, key=values.get)
+    ys = sorted(out.values())
+    assert all(b - a >= 5.0 - 1e-9 for a, b in zip(ys, ys[1:], strict=False))
+    assert out["d"] == 0.0  # the lowest label sits on the floor, not above it
