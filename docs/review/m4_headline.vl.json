@@ -491,7 +491,7 @@
         "ab_km": 861.635,
         "flagged": false,
         "flags": "",
-        "label_y": 204.50268900652287
+        "label_y": 202.95874289072674
       },
       {
         "city": "Barcelona",
@@ -621,7 +621,7 @@
         "ab_km": 243.64,
         "flagged": false,
         "flags": "",
-        "label_y": 44.23062548216935
+        "label_y": 55.09837549744661
       },
       {
         "city": "Berlin",
@@ -881,7 +881,7 @@
         "ab_km": 65.074,
         "flagged": false,
         "flags": "",
-        "label_y": 10.37718701229847
+        "label_y": 39.978634799585826
       },
       {
         "city": "Bratislava",
@@ -1011,7 +1011,7 @@
         "ab_km": 179.347,
         "flagged": true,
         "flags": "activity_spike",
-        "label_y": 55.51510497212631
+        "label_y": 61.186441680434086
       },
       {
         "city": "Budapest",
@@ -1141,7 +1141,7 @@
         "ab_km": 232.203,
         "flagged": false,
         "flags": "",
-        "label_y": -12.191771967615445
+        "label_y": 22.40463480614625
       },
       {
         "city": "K\u00f8benhavn",
@@ -1401,7 +1401,7 @@
         "ab_km": 1284.117,
         "flagged": false,
         "flags": "",
-        "label_y": 257.94351908268777
+        "label_y": 263.28747938538675
       },
       {
         "city": "Krak\u00f3w",
@@ -1531,7 +1531,7 @@
         "ab_km": 300.922,
         "flagged": true,
         "flags": "activity_spike",
-        "label_y": 89.36854344199719
+        "label_y": 73.77505369938939
       },
       {
         "city": "Ljubljana",
@@ -1661,7 +1661,7 @@
         "ab_km": 248.561,
         "flagged": false,
         "flags": "",
-        "label_y": 100.65302293195414
+        "label_y": 74.59511958126483
       },
       {
         "city": "Lyon",
@@ -1791,7 +1791,7 @@
         "ab_km": 112.992,
         "flagged": false,
         "flags": "",
-        "label_y": 32.946145992212394
+        "label_y": 52.304971840163965
       },
       {
         "city": "Madrid",
@@ -1921,7 +1921,7 @@
         "ab_km": 357.446,
         "flagged": true,
         "flags": "activity_spike",
-        "label_y": 21.66166650225543
+        "label_y": 43.075369433764656
       },
       {
         "city": "Oslo",
@@ -2051,7 +2051,7 @@
         "ab_km": 346.074,
         "flagged": false,
         "flags": "",
-        "label_y": 78.08406395204022
+        "label_y": 71.8112868937087
       },
       {
         "city": "Paris",
@@ -2181,7 +2181,7 @@
         "ab_km": 356.496,
         "flagged": false,
         "flags": "",
-        "label_y": 66.79958446208326
+        "label_y": 63.06706072366637
       },
       {
         "city": "Praha",
@@ -2311,7 +2311,7 @@
         "ab_km": 295.045,
         "flagged": false,
         "flags": "",
-        "label_y": -0.907292477658487
+        "label_y": 30.21049136495376
       },
       {
         "city": "Stockholm",
@@ -2441,7 +2441,7 @@
         "ab_km": 1002.067,
         "flagged": false,
         "flags": "",
-        "label_y": 269.22799857264476
+        "label_y": 263.8840382699458
       },
       {
         "city": "Strasbourg",
@@ -2701,7 +2701,7 @@
         "ab_km": 362.831,
         "flagged": false,
         "flags": "",
-        "label_y": 193.2182095165659
+        "label_y": 194.76215563236198
       },
       {
         "city": "Wien",
@@ -2831,7 +2831,7 @@
         "ab_km": 679.83,
         "flagged": false,
         "flags": "",
-        "label_y": 123.22198191186806
+        "label_y": 90.95484547816795
       },
       {
         "city": "Warszawa",
@@ -2961,7 +2961,7 @@
         "ab_km": 763.621,
         "flagged": false,
         "flags": "",
-        "label_y": 111.93750242191109
+        "label_y": 82.44531095773195
       },
       {
         "city": "Wroc\u0142aw",
@@ -3091,7 +3091,7 @@
         "ab_km": 398.812,
         "flagged": false,
         "flags": "",
-        "label_y": 134.50646140182502
+        "label_y": 95.2952292830426
       }
     ]
   },
