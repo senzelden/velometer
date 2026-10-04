@@ -992,7 +992,7 @@ def test_boundaries_fetch_subareas_stores_rows_and_prints_checks(tmp_path, monke
     assert out.exit_code == 0, out.output
     assert "berlin west West relation=9001 area_km2=50.0" in out.output
     assert "berlin east East relation=9002 area_km2=50.0" in out.output
-    assert "union_diff_pct=0.00 overlap_pct=0.000" in out.output
+    assert "union_diff_pct=0.00 symdiff_pct=0.00 overlap_pct=0.000" in out.output
     rows = (
         sqlite3.connect(db)
         .execute("SELECT subarea_id, relation_id, source FROM subareas ORDER BY subarea_id")
@@ -1004,7 +1004,7 @@ def test_boundaries_fetch_subareas_stores_rows_and_prints_checks(tmp_path, monke
 def test_boundaries_fetch_subareas_that_leave_a_gap_exit_1_and_store_nothing(tmp_path, monkeypatch):
     out, db = _subarea_run(tmp_path, monkeypatch, east_right=9_800.0)
     assert out.exit_code == 1
-    assert "union differs from the LAU by 2.0 %" in out.output
+    assert "union area differs from the LAU by 2.0 %" in out.output
     assert sqlite3.connect(db).execute("SELECT count(*) FROM subareas").fetchone() == (0,)
 
 

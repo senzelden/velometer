@@ -30,7 +30,11 @@ def _halves(gap: float = 0.0, overlap: float = 0.0):
 
 
 def test_exact_halves_pass_with_zero_percentages():
-    assert S.check_subareas(_lau(), _halves()) == {"union_diff_pct": 0.0, "overlap_pct": 0.0}
+    assert S.check_subareas(_lau(), _halves()) == {
+        "union_diff_pct": 0.0,
+        "symdiff_pct": 0.0,
+        "overlap_pct": 0.0,
+    }
 
 
 def test_a_two_percent_gap_raises_with_the_measured_value():
@@ -52,6 +56,19 @@ def test_a_union_spilling_outside_the_lau_counts_as_a_difference():
     wide = box(X0, Y0, X0 + SIDE * 1.03, Y0 + SIDE)
     with pytest.raises(S.SubareaCheckError, match=r"3\.0"):
         S.check_subareas(_lau(), [_poly("a", wide)])
+
+
+def test_a_generalised_lau_edge_is_reported_but_not_refused():
+    # Berlin: the Bezirke union equals the OSM city relation, while the generalised GISCO LAU
+    # differs from it by 1.45 % symmetric difference and 0.19 % by area. The spec's rule is the
+    # area one ("the union is within 1 % of the LAU area"), as for boundaries in ADR 0004; the
+    # binding sliver guard is the 0.5 % per-tier sum check at run time.
+    notch = box(X0, Y0, X0 + SIDE * 0.0075, Y0 + SIDE)  # 0.75 % of the LAU cut off on the left
+    bulge = box(X0 + SIDE, Y0, X0 + SIDE * 1.0075, Y0 + SIDE)  # and 0.75 % added on the right
+    union = _lau().difference(notch).union(bulge)
+    got = S.check_subareas(_lau(), [_poly("a", union)])
+    assert got["union_diff_pct"] == pytest.approx(0.0, abs=1e-9)
+    assert got["symdiff_pct"] == pytest.approx(1.5)
 
 
 def _city(slugs=("a", "b")) -> CityConfig:

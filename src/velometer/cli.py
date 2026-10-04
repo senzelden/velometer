@@ -622,7 +622,7 @@ def _fetch_subareas(deps, city: str | None, config_dir: Path, db: Path, data: Pa
                 )
             typer.echo(
                 f"{c.id} subareas union_diff_pct={checks['union_diff_pct']:.2f} "
-                f"overlap_pct={checks['overlap_pct']:.3f}"
+                f"symdiff_pct={checks['symdiff_pct']:.2f} overlap_pct={checks['overlap_pct']:.3f}"
             )
     if failed:
         raise typer.Exit(1)

@@ -82,14 +82,18 @@ def check_subareas(
     union_tol: float = 0.01,
     overlap_tol: float = 0.001,
 ) -> dict[str, float]:
-    """Union within `union_tol` and pairwise overlaps under `overlap_tol` of the LAU area.
+    """Union area within `union_tol` and pairwise overlaps under `overlap_tol` of the LAU area.
 
     All polygons share one CRS (the city EPSG). Tolerances are fractions; the returned
-    percentages are relative to the LAU area.
+    percentages are relative to the LAU area. The union is compared by area, as boundaries are
+    in ADR 0004: a generalised LAU edge (Berlin: 1.45 % symmetric difference against the OSM
+    relations, 0.19 % by area) is reported as `symdiff_pct`, not refused. The binding sliver
+    guard is the per-tier sum check at run time (`measure.check_subarea_sums`).
     """
     lau_area = lau_polygon.area
     union = shapely.union_all([p.polygon for p in polys])
-    union_diff = 100 * union.symmetric_difference(lau_polygon).area / lau_area
+    union_diff = 100 * abs(union.area - lau_area) / lau_area
+    symdiff = 100 * union.symmetric_difference(lau_polygon).area / lau_area
     overlap = 0.0
     for i, a in enumerate(polys):
         for b in polys[i + 1 :]:
@@ -98,7 +102,7 @@ def check_subareas(
     problems = []
     if union_diff > union_tol * 100:
         problems.append(
-            f"union differs from the LAU by {union_diff:.1f} % (limit {union_tol * 100:g} %)"
+            f"union area differs from the LAU by {union_diff:.1f} % (limit {union_tol * 100:g} %)"
         )
     if overlap_pct > overlap_tol * 100:
         problems.append(
@@ -106,7 +110,7 @@ def check_subareas(
         )
     if problems:
         raise SubareaCheckError("; ".join(problems))
-    return {"union_diff_pct": union_diff, "overlap_pct": overlap_pct}
+    return {"union_diff_pct": union_diff, "symdiff_pct": symdiff, "overlap_pct": overlap_pct}
 
 
 def load_subareas(city: CityConfig, data_dir: Path) -> list[SubareaPolygon]:
