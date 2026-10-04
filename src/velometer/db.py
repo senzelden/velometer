@@ -458,7 +458,7 @@ def complete_run(
     supersedes: int | None = None,
     diagnostics: dict[str, float] | None = None,
     peak_rss_kb: int | None = None,
-    subareas: dict[str, SubareaMeasure] | None = None,
+    subareas: "dict[str, SubareaMeasure] | None" = None,
     subarea_sha: str | None = None,
 ) -> None:
     """Write every result row and mark the run done, atomically.
