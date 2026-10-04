@@ -14,10 +14,14 @@ ROAD_TIERS = {"A", "B", "C", "D"}
 STANDALONE_TIERS = {"A", "B"}
 
 
-def _share_within(line, other, dist_m: float) -> float:
+def share_within(line, other, dist_m: float) -> float:
+    """Share of `line`'s length within `dist_m` of `other` (both in a metric CRS); 0 if empty."""
     if line.length == 0:
         return 0.0
     return line.intersection(other.buffer(dist_m)).length / line.length
+
+
+_share_within = share_within  # the module's own callers
 
 
 def flag_parallel_duplicates(

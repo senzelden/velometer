@@ -1369,6 +1369,133 @@ def report_maps(
         conn.close()
 
 
+def _change_run(conn, city_id: str, when: str, selector) -> int:
+    """The done report-classifier LAU run of `when`: `current` is the latest current run, a date
+    the run of the latest history set at that date (history runs sit on 1 January)."""
+    from datetime import UTC, date, datetime
+
+    from velometer.db import history_runs, latest_history_set
+
+    if when == "current":
+        run_id = selector.latest(conn, city_id, "lau")
+        if run_id is None:
+            raise ValueError(
+                f"{city_id} has no done current LAU run of config {selector.short_sha}"
+            )
+        return run_id
+    try:
+        day = date.fromisoformat(when)
+    except ValueError as e:
+        raise ValueError(f"--from/--to must be `current` or YYYY-MM-DD, not {when!r}") from e
+    kw = dict(
+        classifier_version=selector.version,
+        classifier_parameters=selector.parameters,
+        config_sha256=selector.config_sha256,
+    )
+    md5 = latest_history_set(conn, city_id, "lau", **kw)
+    runs = history_runs(conn, city_id, "lau", history_set_md5=md5, **kw) if md5 else {}
+    ts = datetime(day.year, day.month, day.day, tzinfo=UTC).isoformat().replace("+00:00", "Z")
+    if ts not in runs:
+        raise ValueError(
+            f"{city_id} has no done history LAU run at {day} of config {selector.short_sha}"
+        )
+    return runs[ts]
+
+
+def _window_label(when) -> str:
+    return when if isinstance(when, str) else when.isoformat()
+
+
+@report_app.command("change")
+def report_change(
+    city: str = typer.Option("berlin", "--city", help="City id."),
+    from_: str | None = typer.Option(
+        None, "--from", help="A 1 January snapshot date; default report.yaml change_window."
+    ),
+    to: str | None = typer.Option(
+        None, "--to", help="`current` or a 1 January date; default report.yaml change_window."
+    ),
+    out: Path = typer.Option(Path("docs/review"), "--out", help="Directory for the .md and .png."),  # noqa: B008
+    data_dir: Path = DATA_OPT,
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Change map between two done LAU runs: mapped km gained, lost, retiered, redrawn, geometry.
+
+    The two snapshots are re-read with the report classifier; nothing is written unless the
+    recomputed tier totals equal the stored run totals (to 0.01 km).
+    """
+    from velometer.config import load_classifier, load_report
+    from velometer.db import fetch_boundary, fetch_run, fetch_run_results
+    from velometer.pipeline.read import read_ways
+    from velometer.report import change as ch
+    from velometer.report.data import ReportData, open_readonly
+    from velometer.run import snapshot_path_for_run
+    from velometer.sources.boundaries import load_boundary_polygon
+    from velometer.subareas import load_subareas
+
+    try:
+        window = load_report(config_dir / "report.yaml", config_dir / "presets.yaml").change_window
+    except ConfigError as e:
+        raise _config_error(e) from e
+    label_from = from_ or _window_label(window.from_)
+    label_to = to or _window_label(window.to)
+    selector = report_selector(config_dir)
+    try:
+        conn = open_readonly(db)
+    except (FileNotFoundError, SchemaError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        _check_report_city(ReportData(conn, config_dir), city)
+        city_cfg = next(c for c in _all_cities(config_dir) if c.id == city)
+        run_from = _change_run(conn, city, label_from, selector)
+        run_to = _change_run(conn, city, label_to, selector)
+        ch.check_runs(conn, run_from, run_to)
+        snap_from = snapshot_path_for_run(conn, run_from, data_dir)
+        snap_to = snapshot_path_for_run(conn, run_to, data_dir)
+        boundary_row = fetch_boundary(conn, city, "lau")
+        if boundary_row is None:
+            raise ValueError(f"{city} has no LAU boundary row")
+        boundary = load_boundary_polygon(Path(boundary_row.path), city_cfg.epsg)
+        subareas = load_subareas(city_cfg, data_dir)
+        cfg = load_classifier(config_dir / "classifier" / f"{selector.version}.yaml")
+        ways_from, ways_to = read_ways(snap_from).ways, read_ways(snap_to).ways
+        result = ch.compute_change(ways_from, ways_to, cfg, city_cfg.epsg, boundary, subareas)
+        stored = []
+        for run_id in (run_from, run_to):
+            totals: dict[str, float] = {}
+            for t in fetch_run_results(conn, run_id).tier_lengths:
+                if t.length_basis == "per_side" and t.tier != "excluded":
+                    totals[t.tier] = totals.get(t.tier, 0.0) + t.length_km
+            stored.append(totals)
+        ch.check_totals(result, *stored)
+        rows = fetch_run(conn, run_from), fetch_run(conn, run_to)
+    except ch.ChangeRefused as e:
+        typer.echo(f"refused: {e}", err=True)
+        raise typer.Exit(1) from e
+    except ConfigError as e:
+        raise _config_error(e) from e
+    except (OSError, ValueError, sqlite3.Error) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    typer.echo(f"run {run_from} -> run {run_to}: totals agree (A..E)")
+    stem = f"{city}_change_{label_from}_{label_to}"
+    names = {s.subarea_id: s.name for s in subareas}
+    out.mkdir(parents=True, exist_ok=True)
+    md = out / f"{stem}.md"
+    md.write_text(ch.render_markdown(result, city_cfg.name, *rows, names))
+    geojson = ch.write_geojson(result, ways_from, ways_to, data_dir / "maps" / f"{stem}.geojson")
+    png = ch.render_png(
+        result, ways_from, ways_to, boundary, out / f"{stem}.png", epsg=city_cfg.epsg,
+        subareas=subareas, title=f"{city_cfg.name}: mapped change {label_from} → {label_to}",
+    )  # fmt: skip
+    for p in (md, geojson, png):
+        typer.echo(f"written: {p}")
+
+
 @trust_app.command("diagnose")
 def trust_diagnose(
     country: str = typer.Option(..., "--country", help="ISO 3166-1 alpha-2 code, e.g. FR."),

@@ -427,6 +427,28 @@ RankingSource = Annotated[
 ]
 
 
+class ChangeWindow(_Strict):
+    """The default window of `report change`: two snapshot dates (1 January, where history runs
+    sit), or `current` for the latest current run (decision 17)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    from_: date = Field(alias="from")
+    to: Literal["current"] | date = "current"
+
+    @field_validator("from_", "to")
+    @classmethod
+    def _first_of_january(cls, v):
+        if isinstance(v, date) and (v.month, v.day) != (1, 1):
+            raise ValueError(
+                f"{v} is not a 1 January snapshot date (history runs sit on 1 January)"
+            )
+        return v
+
+
+DEFAULT_CHANGE_WINDOW = ChangeWindow(from_=date(2023, 1, 1), to="current")
+
+
 class ReportConfig(_Strict):
     """Which classifier every report surface shows, and which ranking sources it lists."""
 
@@ -435,6 +457,7 @@ class ReportConfig(_Strict):
     # chart roles: a city in neither list is "other" (grey context lines)
     highlight: list[str] = ["berlin"]
     comparison_set: list[str] = []
+    change_window: ChangeWindow = DEFAULT_CHANGE_WINDOW
 
     @model_validator(mode="after")
     def _roles_are_disjoint(self):

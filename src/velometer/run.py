@@ -11,6 +11,7 @@ error `superseded by run N`, inside the same transaction that completes the new 
 forced re-run leaves the old run done.
 """
 
+import errno
 import hashlib
 import subprocess
 from collections.abc import Callable
@@ -35,6 +36,7 @@ from velometer.db import (
     complete_run,
     fail_run,
     fetch_activity,
+    fetch_run,
     find_done_run,
     history_runs,
     replace_activity,
@@ -50,7 +52,8 @@ from velometer.osmium import merge as _merge
 from velometer.pipeline.activity import activity as _activity
 from velometer.pipeline.drift import drift_diagnostics
 from velometer.pipeline.extract import snapshot as _snapshot
-from velometer.pipeline.history import SNAPSHOT_DATES
+from velometer.pipeline.extract import snapshot_name
+from velometer.pipeline.history import SNAPSHOT_DATES, history_snapshot_name
 from velometer.pipeline.history import city_history as _city_history
 from velometer.pipeline.history import snapshot_at as _snapshot_at
 from velometer.pipeline.measure import (
@@ -349,6 +352,28 @@ def run_city(
         fail_run(conn, run_id, _describe(e))
         raise
     return RunOutcome(city.id, "done", run_id)
+
+
+def run_snapshot_path(run_row: dict, data_dir: Path) -> Path:
+    """Where the run's snapshot was written: `pipeline.extract.snapshot`'s name for a current run,
+    `pipeline.history.snapshot_at`'s for a history run (whose region_md5 is its set md5)."""
+    ts = datetime.fromisoformat(run_row["osm_timestamp"]).astimezone(UTC)
+    args = (run_row["city_id"], run_row["boundary_kind"])
+    md5, sha = run_row["region_md5"], run_row["boundary_sha256"]
+    if run_row["source"] == "history":
+        name = history_snapshot_name(*args, md5, sha, ts)
+    else:
+        name = snapshot_name(*args, ts, md5, sha)
+    return Path(data_dir) / "snapshots" / name
+
+
+def snapshot_path_for_run(conn, run_id: int, data_dir: Path) -> Path:
+    """The cached snapshot behind a run; FileNotFoundError (naming the path) when it is gone."""
+    path = run_snapshot_path(fetch_run(conn, run_id), data_dir)
+    if not path.is_file():
+        why = f"run {run_id}: no snapshot file {path} (re-run the city to rebuild it)"
+        raise FileNotFoundError(errno.ENOENT, why, str(path))
+    return path
 
 
 @dataclass(frozen=True)

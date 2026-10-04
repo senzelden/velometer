@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="velometer tests">
+  <node id="9100000001" version="1" lat="52.50000" lon="13.40000"/>
+  <node id="9100000002" version="1" lat="52.50000" lon="13.40300"/>
+  <node id="9100000003" version="1" lat="52.50200" lon="13.40000"/>
+  <node id="9100000004" version="1" lat="52.50200" lon="13.40300"/>
+  <node id="9100000007" version="1" lat="52.50600" lon="13.40000"/>
+  <node id="9100000008" version="1" lat="52.50600" lon="13.40300"/>
+  <node id="9100000009" version="1" lat="52.50800" lon="13.40000"/>
+  <node id="9100000010" version="1" lat="52.50800" lon="13.40300"/>
+  <node id="9100000011" version="1" lat="52.50800" lon="13.40590"/>
+  <node id="9100000012" version="1" lat="52.51000" lon="13.40000"/>
+  <node id="9100000013" version="1" lat="52.51000" lon="13.40300"/>
+  <way id="9000000001" version="1">
+    <nd ref="9100000001"/>
+    <nd ref="9100000002"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="9000000002" version="1">
+    <nd ref="9100000003"/>
+    <nd ref="9100000004"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="9000000004" version="1">
+    <nd ref="9100000007"/>
+    <nd ref="9100000008"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="9000000005" version="1">
+    <nd ref="9100000009"/>
+    <nd ref="9100000010"/>
+    <nd ref="9100000011"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="9000000008" version="1">
+    <nd ref="9100000012"/>
+    <nd ref="9100000013"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+</osm>

@@ -1062,3 +1062,120 @@ def test_results_subareas_of_a_city_without_them_exits_1(tmp_path):
     )
     assert out.exit_code == 1
     assert "no subareas configured for berlin" in out.output
+
+
+# --- report change ------------------------------------------------------------------------------
+
+CHANGE_FIX = Path(__file__).parent / "fixtures" / "change"
+needs_osmium = pytest.mark.skipif(
+    __import__("shutil").which("osmium") is None, reason="osmium-tool not installed"
+)
+
+
+def _change_db(tmp_path):
+    """berlin/lau: a 2024 history run on from.osm and a current run on to.osm (the M3 fakes),
+    both snapshots placed where `snapshot_path_for_run` looks, and a config copy giving berlin
+    two subareas (west/east) whose files sit in <data>/boundaries."""
+    import json
+    import shutil
+    import subprocess
+
+    import yaml
+
+    from tests.report_fixture import CLASSIFIER
+    from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
+    from velometer import run as R
+    from velometer.db import create_schema, fetch_run, open_db, upsert_cities
+
+    db_path, data_dir = tmp_path / "v.sqlite", tmp_path / "data"
+    fakes = Fakes(tmp_path)
+    hdeps = fakes.deps(snapshot_at=lambda hist, ts, d: CHANGE_FIX / "from.osm")
+    cur = _current_deps(tmp_path)
+    cur = R.RunDeps(**{**cur.__dict__, "snapshot": lambda *a, **k: CHANGE_FIX / "to.osm"})
+    with open_db(db_path) as conn:
+        create_schema(conn)
+        upsert_cities(conn, load_cities(CFG_DIR / "cities.yaml"))
+        (h,) = R.run_history(conn, CITY, range(2024, 2025), data_dir=tmp_path,
+                             config_dir=CFG_DIR, classifier=CLASSIFIER, deps=hdeps)  # fmt: skip
+        c = R.run_city(conn, CITY, data_dir=tmp_path, config_dir=CFG_DIR,
+                       classifier=CLASSIFIER, deps=cur)  # fmt: skip
+        assert (h.status, c.status) == ("done", "done")
+        for run_id, src in ((h.run_id, "from.osm"), (c.run_id, "to.osm")):
+            dst = R.run_snapshot_path(fetch_run(conn, run_id), data_dir)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            subprocess.run(["osmium", "cat", str(CHANGE_FIX / src), "-o", str(dst)], check=True)
+
+    def wgs_box(x0, y0, x1, y1):
+        ring = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]
+        geom = {"type": "Polygon", "coordinates": [ring]}
+        return {"type": "FeatureCollection",
+                "features": [{"type": "Feature", "properties": {}, "geometry": geom}]}  # fmt: skip
+
+    # the run's boundary row points at tmp_path/b.geojson (the fakes); it holds every fixture way
+    (tmp_path / "b.geojson").write_text(json.dumps(wgs_box(13.3, 52.45, 13.5, 52.55)))
+    cfg = tmp_path / "config"
+    shutil.copytree(CFG_DIR, cfg)
+    doc = yaml.safe_load((cfg / "cities.yaml").read_text())
+    berlin = next(x for x in doc["cities"] if x["id"] == "berlin")
+    berlin["subareas"] = {
+        "source": "osm_admin",
+        "admin_level": 9,
+        "relations": [
+            {"id": 9_200_000_001, "name": "West", "slug": "west"},
+            {"id": 9_200_000_002, "name": "East", "slug": "east"},
+        ],
+    }
+    (cfg / "cities.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
+    (data_dir / "boundaries").mkdir(parents=True)
+    for slug, (x0, x1) in (("west", (13.3, 13.4015)), ("east", (13.4015, 13.5))):
+        path = data_dir / "boundaries" / f"berlin_sub_{slug}.geojson"
+        path.write_text(json.dumps(wgs_box(x0, 52.45, x1, 52.55)))
+    return db_path, cfg, data_dir, h.run_id, c.run_id
+
+
+def _change_args(db_path, cfg, data_dir, out):
+    return ["report", "change", "--city", "berlin", "--from", "2024-01-01", "--to", "current",
+            "--out", str(out), "--data", str(data_dir), "--db", str(db_path),
+            "--config-dir", str(cfg)]  # fmt: skip
+
+
+@needs_osmium
+def test_report_change_checks_totals_and_writes_md_geojson_png(tmp_path):
+    db_path, cfg, data_dir, run_from, run_to = _change_db(tmp_path)
+    out = tmp_path / "review"
+    result = CliRunner().invoke(app, _change_args(db_path, cfg, data_dir, out))
+    assert result.exit_code == 0, result.output
+    assert f"run {run_from} -> run {run_to}: totals agree (A..E)" in result.output
+    md = (out / "berlin_change_2024-01-01_current.md").read_text()
+    assert "West" in md and "East" in md and "mapped km" in md
+    assert (out / "berlin_change_2024-01-01_current.png").stat().st_size > 0
+    assert (data_dir / "maps" / "berlin_change_2024-01-01_current.geojson").is_file()
+
+
+@needs_osmium
+def test_report_change_refuses_when_stored_totals_differ(tmp_path):
+    db_path, cfg, data_dir, run_from, _ = _change_db(tmp_path)
+    c = sqlite3.connect(db_path)
+    c.execute(
+        "UPDATE tier_lengths SET length_km = length_km + 1 WHERE run_id=? AND tier='A' "
+        "AND length_basis='per_side'",
+        (run_from,),
+    )
+    c.commit()
+    c.close()
+    out = tmp_path / "review"
+    result = CliRunner().invoke(app, _change_args(db_path, cfg, data_dir, out))
+    assert result.exit_code == 1
+    assert "tier A" in result.output
+    assert not out.exists()
+    assert not (data_dir / "maps").exists()
+
+
+@needs_osmium
+def test_report_change_without_a_run_at_the_date_fails(tmp_path):
+    db_path, cfg, data_dir, *_ = _change_db(tmp_path)
+    args = _change_args(db_path, cfg, data_dir, tmp_path / "review")
+    args[args.index("2024-01-01")] = "2023-01-01"
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 1
+    assert "2023-01-01" in result.output

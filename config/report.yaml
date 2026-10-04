@@ -4,6 +4,8 @@ report_classifier: v3
 # chart roles: highlighted city, coloured comparison set; every other city is grey context
 highlight: [berlin]
 comparison_set: [paris, copenhagen, vienna, amsterdam]
+# `report change` default window (M6 decision 17): a 1 January snapshot -> the latest current run
+change_window: {from: "2023-01-01", to: current}
 rankings:
   - {id: ours_headline, label: "Ours: headline", kind: preset, preset: ours_headline}
   - {id: ours_ecf_qecio, label: "Ours: QECIO method", kind: preset, preset: ecf_qecio}

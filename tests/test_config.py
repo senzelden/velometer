@@ -447,3 +447,33 @@ def test_subareas_load(tmp_path: Path):
 def test_bad_subareas_are_a_config_error(tmp_path: Path, relations: list[dict], message: str):
     with pytest.raises(ConfigError, match=message):
         load_cities(_with_subareas(tmp_path, relations))
+
+
+def test_change_window_ships_2023_to_current_and_defaults_to_it(tmp_path: Path):
+    from datetime import date
+
+    shipped = load_report(CFG / "report.yaml").change_window
+    assert (shipped.from_, shipped.to) == (date(2023, 1, 1), "current")
+    absent = load_report(_role_report(tmp_path)).change_window
+    assert (absent.from_, absent.to) == (date(2023, 1, 1), "current")
+    later = _report(
+        tmp_path,
+        "report_classifier: v2\nrankings: []\n"
+        'change_window: {from: "2024-01-01", to: "2026-01-01"}\n',
+    )
+    assert load_report(later).change_window.to == date(2026, 1, 1)
+
+
+@pytest.mark.parametrize(
+    "window",
+    [
+        '{from: "2023-04-01", to: current}',
+        '{from: "2023-01-01", to: "2026-06-30"}',
+        '{from: "2023-01-01", to: latest}',
+    ],  # fmt: skip
+)
+def test_change_window_dates_are_snapshot_dates(tmp_path: Path, window: str):
+    # history runs sit on 1 January; any other date never names a run
+    path = _report(tmp_path, f"report_classifier: v2\nrankings: []\nchange_window: {window}\n")
+    with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*change_window"):
+        load_report(path)

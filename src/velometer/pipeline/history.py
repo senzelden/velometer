@@ -11,6 +11,24 @@ def SNAPSHOT_DATES(years: range) -> list[datetime]:  # noqa: N802
     return [datetime(y, 1, 1, tzinfo=UTC) for y in years]
 
 
+def city_history_name(city_id: str, kind: str, set_md5: str, boundary_sha256: str) -> str:
+    """The cached city history file's name (`city_history` writes it)."""
+    return f"{city_id}_{kind}_{set_md5[:8]}_{boundary_sha256[:8]}.osh.pbf"
+
+
+def dated_snapshot_name(city_history_file: str, ts: datetime) -> str:
+    """The name of the snapshot `snapshot_at` cuts from a city history file at `ts` (UTC)."""
+    stem = city_history_file.removesuffix(".osh.pbf")
+    return f"{stem}_{ts.astimezone(UTC):%Y%m%d}.osm.pbf"
+
+
+def history_snapshot_name(
+    city_id: str, kind: str, set_md5: str, boundary_sha256: str, ts: datetime
+) -> str:
+    """The snapshot file of a history run: its city history file's name, dated."""
+    return dated_snapshot_name(city_history_name(city_id, kind, set_md5, boundary_sha256), ts)
+
+
 def city_history(
     city_id: str,
     kind: str,
@@ -22,7 +40,7 @@ def city_history(
 ) -> Path:
     out_dir = data_dir / "history" / "city"
     out_dir.mkdir(parents=True, exist_ok=True)
-    dst = out_dir / f"{city_id}_{kind}_{set_md5[:8]}_{boundary_sha256[:8]}.osh.pbf"
+    dst = out_dir / city_history_name(city_id, kind, set_md5, boundary_sha256)
     if dst.exists():
         return dst
     if len(files) > 1:
@@ -41,8 +59,7 @@ def snapshot_at(city_history: Path, ts: datetime, data_dir: Path) -> Path:
     ts = ts.astimezone(UTC)
     out_dir = data_dir / "snapshots"
     out_dir.mkdir(parents=True, exist_ok=True)
-    stem = city_history.name.removesuffix(".osh.pbf")
-    dst = out_dir / f"{stem}_{ts:%Y%m%d}.osm.pbf"
+    dst = out_dir / dated_snapshot_name(city_history.name, ts)
     if dst.exists():
         return dst
     return osmium.time_filter(city_history, ts, dst)
