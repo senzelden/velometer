@@ -108,6 +108,12 @@ def test_prefix_key_collects_every_matching_key():
     assert matches({"mtb:scale*": ["2"]}, {"mtb:scale": "1", "mtb:scale:imba": "2"}, {})
 
 
+def test_validate_expr_rejects_a_bare_star_key():
+    with pytest.raises(ValueError, match="prefix"):
+        validate_expr({"*": {"absent": False}}, LISTS)
+    validate_expr({"mtb:scale*": {"absent": False}}, LISTS)
+
+
 def test_validate_expr_rejects_unknown_operator():
     with pytest.raises(ValueError, match="unknown condition"):
         validate_expr({"a": {"regex": "x"}}, LISTS)

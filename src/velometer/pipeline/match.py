@@ -64,6 +64,10 @@ def validate_expr(expr: dict, lists: Mapping[str, list[str]]) -> None:
     if not isinstance(expr, dict) or not expr:
         raise ValueError(f"match expression must be a non-empty mapping, got {expr!r}")
     for key, cond in expr.items():
+        if key == "*":
+            raise ValueError(
+                "a `*` key needs a prefix before it (an empty prefix matches every tag)"
+            )
         if key in ("all", "any"):
             if not isinstance(cond, list) or not cond:
                 raise ValueError(f"{key} needs a non-empty list")

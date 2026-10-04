@@ -89,7 +89,24 @@ CASES = [
         ("A", "A_cycle_only"),
         "A",
     ),
-    # `;` parts (Review Focus 4)
+    # multi-valued tags
+    ({"highway": "cycleway", "foot": "yes,designated"}, ("B", "B_shared"), "B"),
+    ({"highway": "cycleway", "mtb": "yes"}, ("excluded", "X_mtb_trail"), "A"),
+    ({"highway": "cycleway", "mtb": "permissive"}, ("excluded", "X_mtb_trail"), "A"),
+    (
+        {"highway": "path", "bicycle": "designated", "mtb:scale": "1", "mtb": "no"},
+        ("excluded", "X_mtb_trail"),
+        "B",
+    ),
+    # X_mtb_trail is limited to path/cycleway/footway (spec §3.3)
+    (
+        {"highway": "pedestrian", "bicycle": "designated", "mtb:scale": "1"},
+        ("B", "B_shared"),
+        "B",
+    ),
+    # v3 gave a foot=no footway B (A_path_cycle_only covered `path` only)
+    ({"highway": "footway", "bicycle": "designated", "foot": "no"}, ("A", "A_cycle_only"), "B"),
+    ({"highway": "cycleway", "segregated": "no"}, ("A", "A_cycle_only"), "A"),
     ({"highway": "cycleway", "foot": "yes;designated"}, ("B", "B_shared"), "B"),
     (
         {"highway": "path", "bicycle": "designated", "segregated": "yes;no"},
