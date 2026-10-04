@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import sqlite3
+import threading
 import time
 from collections import Counter
 from pathlib import Path
@@ -831,6 +832,76 @@ def test_page_cache_rebuilds_only_when_fingerprint_differs():
     assert [cache.get("a", (1,), build), cache.get("a", (1,), build)] == [1, 1]
     assert cache.get("a", (2,), build) == 2
     assert cache.get("b", (2,), build) == 3  # one entry per name
+
+
+def test_page_cache_builds_once_under_concurrent_gets():
+    cache, builds = PageCache(), Counter()
+    start = threading.Barrier(8)
+
+    def build():
+        builds.update(["n"])
+        time.sleep(0.05)  # long enough for every other thread to arrive while this one builds
+        return builds["n"]
+
+    results = []
+
+    def worker():
+        start.wait()
+        results.append(cache.get("page", (1,), build))
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert builds["n"] == 1 and results == [1] * 8
+
+
+def test_csv_commit_and_generated_line_are_of_the_request_not_the_cache(client, monkeypatch):
+    from velometer.app import main
+
+    monkeypatch.setattr(main, "git_commit", lambda: "aaaaaaaa" * 5)
+    first = client.get("/data/berlin.csv").text.splitlines()
+    monkeypatch.setattr(main, "git_commit", lambda: "bbbbbbbb" * 5)
+    second = client.get("/data/berlin.csv").text.splitlines()
+    assert first[0] == second[0] and first[0].startswith("# Map data ©")
+    assert first[1] != second[1]  # the provenance line follows git_commit()
+    assert "aaaaaaa" in first[1] and "bbbbbbb" in second[1]
+    assert first[2:] == second[2:]  # the table is the cached part
+
+
+def test_lazy_data_forwards_only_public_report_data_attributes(fixture_db):
+    from velometer.app.main import LazyData
+
+    db_path, cfg, _conn, _data = fixture_db
+    lazy = LazyData(db_path, cfg)
+    try:
+        assert [c.id for c in lazy.cities()] == ["berlin", "paris"]  # a public method
+        assert lazy.config_dir == cfg and lazy.report_config.highlight  # public attributes
+        for name in ("_series", "_cities", "no_such_attribute", "__deepcopy__"):
+            with pytest.raises(AttributeError):
+                getattr(lazy, name)
+        assert not hasattr(lazy, "conn_typo")
+    finally:
+        lazy.close()
+
+
+def test_the_fingerprint_is_computed_once_per_request(setup, monkeypatch):
+    from velometer.app import main
+
+    db_path, cfg, maps, docs = setup
+    calls = []
+
+    def counting(*args):
+        calls.append(args)
+        return fingerprint(*args)
+
+    monkeypatch.setattr(main, "fingerprint", counting)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        for path in ["/", "/city/berlin", "/data/berlin.csv", "/methodology"]:
+            calls.clear()
+            assert c.get(path).status_code == 200
+            assert len(calls) == 1, path
 
 
 def test_every_route_200_at_21_cities(client_21):

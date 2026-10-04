@@ -27,10 +27,19 @@ CSV_COLUMNS = [
 ATTRIBUTION = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km"
 
 
-def to_csv(rows: list[dict[str, str]], commit: str, generated_at: str) -> str:
+def csv_preamble(commit: str, generated_at: str) -> str:
+    """The two comment lines: attribution, then the commit and time of this export."""
+    return f"{ATTRIBUTION}\n# velometer {commit} generated {generated_at}\n"
+
+
+def csv_table(rows: list[dict[str, str]]) -> str:
+    """The header and the rows (what stays the same while the data does)."""
     out = io.StringIO()
-    out.write(f"{ATTRIBUTION}\n# velometer {commit} generated {generated_at}\n")
     writer = csv.DictWriter(out, CSV_COLUMNS, lineterminator="\n")
     writer.writeheader()
     writer.writerows(rows)
     return out.getvalue()
+
+
+def to_csv(rows: list[dict[str, str]], commit: str, generated_at: str) -> str:
+    return csv_preamble(commit, generated_at) + csv_table(rows)

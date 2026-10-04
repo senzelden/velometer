@@ -30,7 +30,7 @@ from velometer.app.cache import PageCache, fingerprint
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report import charts
-from velometer.report.csvexport import to_csv
+from velometer.report.csvexport import csv_preamble, csv_table
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, open_readonly
 from velometer.run import git_commit
 from velometer.selection import report_selector
@@ -79,6 +79,8 @@ class LazyData:
         self._data: ReportData | None = None
 
     def __getattr__(self, name: str):
+        if name.startswith("_"):  # private names (and dunder probes) are not ReportData's API
+            raise AttributeError(name)
         if self._data is None:
             try:
                 self._conn = open_readonly(self._db_path)
@@ -87,6 +89,8 @@ class LazyData:
             except SchemaError as e:
                 raise HTTPException(503, str(e)) from e
             self._data = ReportData(self._conn, self._config_dir)
+        if name not in ReportData.__dict__ and name not in vars(self._data):
+            raise AttributeError(f"ReportData has no attribute {name!r}")
         return getattr(self._data, name)
 
     def close(self) -> None:
@@ -108,8 +112,11 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
 
     cache = PageCache()
 
-    def fp() -> tuple:
-        return fingerprint(db_path, config_dir, docs_dir, maps_dir)
+    def fp(request: Request) -> tuple:
+        """The request's fingerprint, computed on first use and kept on `request.state`."""
+        if not hasattr(request.state, "fingerprint"):
+            request.state.fingerprint = fingerprint(db_path, config_dir, docs_dir, maps_dir)
+        return request.state.fingerprint
 
     # async: the connection is made, used and closed on the event-loop thread (sqlite3
     # connections are bound to the thread that made them).
@@ -127,7 +134,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             sel = report_selector(config_dir)  # config only: the footer needs no database
             return {"classifier": sel.version, "config": sel.short_sha}
 
-        footer = cache.get("footer", fp(), build_footer)
+        footer = cache.get("footer", fp(request), build_footer)
         return templates.TemplateResponse(request, name, {"footer": footer, **ctx})
 
     def known(data: ReportData, city_id: str):
@@ -160,14 +167,14 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                 "rankings": charts.rankings_flip(data) if data.ranks() else None,
             }
 
-        return page(request, "index.html", **cache.get("index", fp(), build))
+        return page(request, "index.html", **cache.get("index", fp(request), build))
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):
         def build() -> dict:
             return city_context(data, city_id)
 
-        return page(request, "city.html", **cache.get(f"city:{city_id}", fp(), build))
+        return page(request, "city.html", **cache.get(f"city:{city_id}", fp(request), build))
 
     def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
@@ -253,20 +260,23 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
     async def map_geojson(name: str, data: Data):
         return FileResponse(map_file(data, name, "geojson"), media_type="application/geo+json")
 
-    def csv_response(data: ReportData, city_id: str | None) -> Response:
+    def csv_response(request: Request, data: ReportData, city_id: str | None) -> Response:
         def build() -> str:
             if city_id is not None:
                 known(data, city_id)
             try:
-                return to_csv(
-                    data.csv_rows(city_id),
-                    short_commit(git_commit()),
-                    datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                )
+                return csv_table(data.csv_rows(city_id))
             except sqlite3.Error as e:
                 raise HTTPException(503, f"database error: {e}") from e
 
-        text = cache.get(f"csv:{city_id or 'all'}", fp(), build)
+        # the table is cached; the commit and the generated time are of this request
+        table = cache.get(f"csv:{city_id or 'all'}", fp(request), build)
+        text = (
+            csv_preamble(
+                short_commit(git_commit()), datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            )
+            + table
+        )
         name = f"velometer-{city_id or 'all'}.csv"
         return Response(
             text,
@@ -275,11 +285,11 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         )
 
     @app.get("/data/all.csv")
-    async def csv_all(data: Data):
-        return csv_response(data, None)
+    async def csv_all(request: Request, data: Data):
+        return csv_response(request, data, None)
 
     @app.get("/data/{city_id}.csv")
-    async def csv_city(city_id: str, data: Data):
-        return csv_response(data, city_id)
+    async def csv_city(request: Request, city_id: str, data: Data):
+        return csv_response(request, data, city_id)
 
     return app
