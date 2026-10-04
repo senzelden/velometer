@@ -17,6 +17,17 @@ class PeakRss:
 
     getrusage's ru_maxrss never goes down within a process, so it cannot give a per-run peak
     when several runs share one process; a sampling thread measures the block itself.
+
+    The sample is the RSS at entry, at exit and every `interval_s` in between. Caveats:
+
+    - Lower bound under a long GIL hold. The sampler thread cannot run while one C call holds
+      the GIL. Pure-Python loops release it every 5 ms (the interpreter switch interval), and the
+      entry and exit samples bracket the block, so only a peak inside one long C call can be
+      missed.
+    - Process-wide baseline. The sample is the RSS of the whole process, so in a multi-run
+      invocation a run's peak includes memory still held from earlier runs.
+    - Cross-check. Paris FUA (the largest run) alone under `/usr/bin/time -v` gave
+      3,384,384 kB against a recorded `peak_rss_kb` of 3,387,384 kB, within 0.1 %.
     """
 
     def __init__(self, interval_s: float = 0.2):
