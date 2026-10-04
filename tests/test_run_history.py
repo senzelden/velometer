@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from shapely import box
 
+from tests.fake_subareas import config_subareas, without_subareas
 from velometer import run as R
 from velometer.config import (
     SubareaRelation,
@@ -107,6 +108,7 @@ class Fakes:
                 for y in years
             ]
 
+        load_subareas, subarea_shas = config_subareas()  # the shipped Berlin has Bezirke
         d = dict(
             fetch_index=fetch_index,
             load_index=lambda path: INDEX,
@@ -116,6 +118,8 @@ class Fakes:
             snapshot_at=snapshot_at,
             read_ways=read_ways,
             activity=activity,
+            load_subareas=load_subareas,
+            subarea_shas=subarea_shas,
         )
         return R.HistoryDeps(**{**d, **override})
 
@@ -325,6 +329,8 @@ def _current_deps(tmp_path):
         snapshot=lambda *a, **k: MINI,
         read_ways=read_ways,
         region_uncovered_km2=lambda *a: (0.0, 1.0),
+        load_subareas=h.load_subareas,
+        subarea_shas=h.subarea_shas,
     )
 
 
@@ -537,7 +543,10 @@ def test_history_runs_of_a_city_with_subareas_store_them(conn, tmp_path):
 
 
 def test_history_fua_and_plain_city_store_no_subareas(conn, tmp_path):
-    for outs in (_sub_history(conn, tmp_path, kind="fua"), _sub_history(conn, tmp_path, city=CITY)):
+    for outs in (
+        _sub_history(conn, tmp_path, kind="fua"),
+        _sub_history(conn, tmp_path, city=without_subareas(CITY)),
+    ):
         assert [o.status for o in outs] == ["done", "done"]
         for o in outs:
             assert _sha(conn, o.run_id) is None and _sub_count(conn, o.run_id) == 0

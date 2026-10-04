@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from shapely import box
 
+from tests.fake_subareas import config_subareas, without_subareas
 from velometer import run as R
 from velometer.config import SubareaRelation, SubareasConfig, default_config_dir, load_cities
 from velometer.db import (
@@ -51,12 +52,15 @@ def _deps(tmp_path, calls, read=None, population=100_000):
         calls.append("snapshot")
         return MINI
 
+    load_subareas, subarea_shas = config_subareas()  # the shipped Berlin has Bezirke
     return R.RunDeps(
         fetch_region=fetch_region,
         city_boundary=city_boundary,
         snapshot=snapshot,
         read_ways=read or read_ways,
         region_uncovered_km2=lambda *a: (0.0, 1.0),  # coverage has its own tests
+        load_subareas=load_subareas,
+        subarea_shas=subarea_shas,
     )
 
 
@@ -675,7 +679,7 @@ def test_lau_run_of_a_city_with_subareas_stores_them(conn, tmp_path):
 
 def test_fua_run_and_cities_without_subareas_store_none(conn, tmp_path):
     fua = _sub_run(conn, tmp_path, _sub_deps(tmp_path), boundary_kind="fua")
-    plain = _sub_run(conn, tmp_path, _sub_deps(tmp_path), city=CITY)
+    plain = _sub_run(conn, tmp_path, _sub_deps(tmp_path), city=without_subareas(CITY))
     for out in (fua, plain):
         assert out.status == "done"
         assert _sub_state(conn, out.run_id) == (None, 0)

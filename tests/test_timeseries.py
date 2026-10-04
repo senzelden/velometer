@@ -7,7 +7,9 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
+from tests.fake_subareas import strip_subareas, without_subareas
+from tests.test_run_history import CFG_DIR, Fakes, _current_deps
+from tests.test_run_history import CITY as _SHIPPED_BERLIN
 from velometer import run as R
 from velometer import timeseries as T
 from velometer.cli import app
@@ -30,6 +32,8 @@ OLD_ACTIVITY_PART = "de066a28e74c"  # the marker of docs/review/m3_timeseries.md
 CURRENT_TS = "2026-07-01T00:00:00Z"  # current points in unit tests follow the 2026 history year
 
 
+CITY = without_subareas(_SHIPPED_BERLIN)  # matches config_dir's cities.yaml
+
 # A per-city override (berlin needs FUA, every other city LAU only), pinned here so the tests of
 # the override rule do not depend on the shipped required_kinds.
 REQUIRED_KINDS = "required_kinds:\n  default: [lau]\n  berlin: [lau, fua]\n"
@@ -42,6 +46,7 @@ def config_dir(tmp_path, years="2019-2021", report_classifier="v1") -> Path:
     d = tmp_path / "config"
     if not d.exists():
         shutil.copytree(CFG_DIR, d)
+        strip_subareas(d)  # berlin's subareas come only from report_fixture.add_subareas
     doc = yaml.safe_load((CFG_DIR / "history.yaml").read_text())
     assert "required_kinds" in doc, "config/history.yaml has no required_kinds block"
     doc["years"] = years

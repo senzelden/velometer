@@ -2,7 +2,8 @@
 
 `build_report_fixture(tmp_path) -> (db_path, config_dir)`:
 
-- config_dir: a copy of config/ whose history.yaml series is 2024-2026; every run uses the shipped
+- config_dir: a copy of config/ whose history.yaml series is 2024-2026 and whose cities carry no
+  subareas (berlin gets West/East only from `add_subareas`); every run uses the shipped
   report_classifier (`CLASSIFIER`);
 - berlin/lau: history 2024-2026 plus a current run (2026-09-30), with population 100000 (2024);
   2025 carries an activity spike, so it is flagged `activity_spike`;
@@ -19,7 +20,9 @@ from pathlib import Path
 
 import yaml
 
-from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
+from tests.fake_subareas import strip_subareas, without_subareas
+from tests.test_run_history import CFG_DIR, Fakes, _current_deps
+from tests.test_run_history import CITY as _SHIPPED_BERLIN
 from velometer import run as R
 from velometer.config import default_config_dir, load_cities, load_report
 from velometer.db import (
@@ -33,6 +36,7 @@ from velometer.db import (
 from velometer.models import ExternalFigure
 
 YEARS = range(2024, 2027)
+CITY = without_subareas(_SHIPPED_BERLIN)  # see tests/fake_subareas.py: no Bezirke here
 _CFG = default_config_dir()
 CLASSIFIER = load_report(_CFG / "report.yaml", _CFG / "presets.yaml").report_classifier
 PARIS = CITY.model_copy(update={"id": "paris", "name": "Paris"})
@@ -44,7 +48,7 @@ def _config_dir(tmp_path: Path) -> Path:
     shutil.copytree(CFG_DIR, d)
     text = (CFG_DIR / "history.yaml").read_text()
     (d / "history.yaml").write_text(re.sub(r'years: "[^"]*"', 'years: "2024-2026"', text))
-    return d
+    return strip_subareas(d)  # berlin's subareas come only from add_subareas
 
 
 def _figure(city_id, source, metric, value, scope="whole_network", unit="km"):

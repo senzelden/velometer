@@ -28,6 +28,17 @@ def test_pilot_cities_load_with_projected_epsg_and_integer_relations():
     assert all(isinstance(c.osm_relation_id, int) and c.osm_relation_id > 0 for c in cities)
 
 
+def test_shipped_berlin_has_its_twelve_bezirke_with_unique_slugs_and_ids():
+    """The shipped cities.yaml only (never data/): Berlin's 12 Bezirk relations (M6 Task 13)."""
+    berlin = next(c for c in load_cities(CFG / "cities.yaml") if c.id == "berlin")
+    assert berlin.subareas is not None
+    assert (berlin.subareas.source, berlin.subareas.admin_level) == ("osm_admin", 9)
+    rels = berlin.subareas.relations
+    assert len(rels) == 12
+    assert len({r.slug for r in rels}) == 12
+    assert len({r.id for r in rels}) == 12
+
+
 def test_geographic_epsg_is_rejected(tmp_path: Path):
     bad = tmp_path / "cities.yaml"
     bad.write_text(

@@ -1009,10 +1009,13 @@ def test_boundaries_fetch_subareas_that_leave_a_gap_exit_1_and_store_nothing(tmp
 
 
 def test_boundaries_fetch_subareas_of_a_city_without_them_exits_1(tmp_path, monkeypatch):
+    from tests.fake_subareas import plain_config_dir
+
     _patched(monkeypatch, tmp_path)
+    cfg = plain_config_dir(tmp_path)  # the shipped berlin has Bezirke
     out = CliRunner().invoke(
         app,
-        ["boundaries", "fetch", "--city", "berlin", "--subareas"]
+        ["boundaries", "fetch", "--city", "berlin", "--subareas", "--config-dir", str(cfg)]
         + ["--db", str(tmp_path / "v.sqlite"), "--data", str(tmp_path)],
     )
     assert out.exit_code == 1
