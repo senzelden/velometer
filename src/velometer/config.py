@@ -414,6 +414,15 @@ class ReportConfig(_Strict):
         return self
 
     @model_validator(mode="after")
+    def _roles_have_no_duplicates(self):
+        for field in ("highlight", "comparison_set"):
+            ids = getattr(self, field)
+            dup = sorted({i for i in ids if ids.count(i) > 1})
+            if dup:
+                raise ValueError(f"duplicate ids in {field}: {dup}")
+        return self
+
+    @model_validator(mode="after")
     def _unique_ids(self):
         ids = [r.id for r in self.rankings]
         dup = sorted({i for i in ids if ids.count(i) > 1})

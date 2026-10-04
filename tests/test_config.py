@@ -309,6 +309,14 @@ def test_a_city_in_both_role_lists_is_a_config_error(tmp_path: Path):
         load_report(path)
 
 
+@pytest.mark.parametrize("field", ["highlight", "comparison_set"])
+def test_a_duplicate_id_within_a_role_list_is_a_config_error_naming_it(tmp_path: Path, field):
+    path = _role_report(tmp_path, **{field: "[paris, wien, paris]"})
+    with pytest.raises(ConfigError, match=rf"(?s)report\.yaml.*duplicate.*{field}.*'paris'"):
+        load_report(path)
+    load_report(_role_report(tmp_path, **{field: "[paris, wien]"}))  # distinct ids are fine
+
+
 def test_lau_codes_validation_and_exclusivity_with_lau_code():
     c = CityConfig.model_validate({**BERLIN, "lau_code": None, "lau_codes": ["SK_A", "SK_B"]})
     assert c.lau_codes == ["SK_A", "SK_B"] and c.lau_code is None

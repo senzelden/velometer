@@ -288,6 +288,15 @@ def _layers(spec):
     return spec["layer"]
 
 
+FLAGGED = "(datum.flagged === true)"
+NOT_OTHER = "(datum.role !== 'other')"
+
+
+def _filters(layer):
+    """The Vega filter expressions of a layer's transform, in order."""
+    return [t["filter"] for t in layer.get("transform", []) if "filter" in t]
+
+
 def test_headline_has_a_bound_picker_on_the_grey_layer(fixture_db):
     data = _reconfigure(fixture_db, report={"highlight": ["berlin"], "comparison_set": []})
     spec = headline_over_time(data)
@@ -312,9 +321,9 @@ def test_headline_coloured_layers_follow_config_order_and_label_now(fixture_db):
     assert '"domain": ["Berlin", "Paris"]' in text
     assert any(layer["mark"]["type"] == "text" for layer in _layers(spec))
     # flag rings are drawn for the coloured layer only
-    rings = [layer for layer in _layers(spec) if "flagged" in json.dumps(layer)]
+    rings = [layer for layer in _layers(spec) if FLAGGED in _filters(layer)]
     assert len(rings) == 1
-    assert "other" in json.dumps(rings[0]["transform"])
+    assert NOT_OTHER in _filters(rings[0])
 
 
 def test_rankings_grey_lines_are_thin(fixture_db):
