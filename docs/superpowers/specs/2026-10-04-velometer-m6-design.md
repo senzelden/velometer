@@ -89,7 +89,7 @@
     recomputed tier totals equal the stored run totals (to 0.01 km). No way-level geometry goes
     into SQLite (ADR 0007 stays as is).
 15. **Redrawn ways are not churn.** A way-side lost and one gained, of the same tier, within 15 m
-    and with at least 80 % overlap (the dedupe matcher, `pipeline/match.py`), count as `redrawn`,
+    and with at least 80 % overlap (the dedupe overlap measure, `_share_within` in `pipeline/dedupe.py`), count as `redrawn`,
     not as one loss plus one gain. Ljubljana 2021 shows why: redrawing sidepaths as separate ways
     would otherwise read as building.
 16. **Bezirk and change-map figures are mapped km (ADR 0006).** Every surface says so. The change
@@ -136,7 +136,9 @@ exclusions:
 | `A_cycle_only` | otherwise (cycleway with no `foot` tag or `foot=no`; path with `foot=no`) | A |
 
 - The rules are evaluated in this order. Any `;`/`,`-separated part counts, as in v2.
-- `footway=crossing` keeps its own B rule ahead of these, as in v1–v3.
+- Designated crossings (`highway=footway` + `footway=crossing` + `bicycle=designated`) stay B through
+  a new `B_crossing` rule ahead of these. v1–v3 had no separate rule; they counted crossings through
+  `B_path`, so v4 keeps their tier.
 - The rule ids change, so every classification records its v4 `rule_id`. The rule-level
   diagnostics and trust metrics are keyed by tier and stay comparable across versions.
 
