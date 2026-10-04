@@ -762,8 +762,73 @@ CLASSIFIER_REPORT_OPT = typer.Option(
 )
 
 
+SUBAREA_COLUMNS = (
+    ["subarea", "headline", "ecf_qecio", "clean_cities"]
+    + [f"{t}_km" for t in "ABCDE"]
+    + ["a_of_ab_pct", "main_km"]
+)
+
+
+def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
+    """`results --subareas`: one row per subarea of the city's latest done run (exit 1 if none)."""
+    from velometer.db import fetch_run, subarea_names, subarea_rows
+    from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
+
+    if city_id is None:
+        typer.echo("error: --subareas needs --city", err=True)
+        raise typer.Exit(2)
+    city = _select_cities(config_dir, [city_id])[0]
+    if city.subareas is None:
+        typer.echo(f"error: no subareas configured for {city_id}", err=True)
+        raise typer.Exit(1)
+    if city.country_iso2 not in _selection.trusted_countries(config_dir):
+        typer.echo(f"error: {_not_trusted(city_id, city.country_iso2)}", err=True)
+        raise typer.Exit(2)
+    with _open_schema(db) as conn:
+        run_id = sel.latest(conn, city_id, boundary)
+        if run_id is None:
+            typer.echo(f"no done runs for {city_id} {boundary!r} of the current config")
+            raise typer.Exit(1)
+        parts = subarea_rows(conn, run_id)
+        names = subarea_names(conn, city_id)
+        osm_timestamp = fetch_run(conn, run_id)["osm_timestamp"]
+    if not parts:
+        typer.echo(f"error: run {run_id} of {city_id} has no subarea rows: rerun it", err=True)
+        raise typer.Exit(1)
+    rows = []
+    for sid, (tiers, roads) in sorted(parts.items(), key=lambda kv: names.get(kv[0], kv[0])):
+        metrics = compute_metrics(SubareaMeasure(tiers, roads), sel.presets.presets)
+        head, ecf, clean = (
+            select_metric(metrics, p, sel.presets)
+            for p in ("ours_headline", "ecf_qecio", "clean_cities_2025")
+        )
+        km = dict.fromkeys("ABCDE", 0.0)
+        for t in tiers:
+            if t.length_basis == "per_side" and t.tier in km:
+                km[t.tier] += t.length_km
+        ab = km["A"] + km["B"]
+        main = next((x.length_km for x in roads if x.road_class == "main_excl_motorway"), None)
+        rows.append(
+            [names.get(sid, sid), fmt(head and head.value), fmt(ecf and ecf.value)]
+            + [fmt(clean and clean.value)]
+            + [fmt(km[t]) for t in "ABCDE"]
+            + [fmt(100 * km["A"] / ab if ab else None), fmt(main)]
+        )
+    typer.echo(f"{city_id} run {run_id} (OSM {osm_timestamp[:10]})")
+    typer.echo(_presets_line(sel.presets))
+    widths = [max(len(h), *(len(r[i]) for r in rows)) for i, h in enumerate(SUBAREA_COLUMNS)]
+    typer.echo("  ".join(h.ljust(w) for h, w in zip(SUBAREA_COLUMNS, widths, strict=True)).rstrip())
+    for r in rows:
+        typer.echo("  ".join(v.ljust(w) for v, w in zip(r, widths, strict=True)).rstrip())
+    typer.echo("per 100k: not available per subarea (no subarea population)")
+
+
 @app.command()
 def results(
+    city: str | None = typer.Option(None, "--city", help="Only this city."),
+    subareas: bool = typer.Option(
+        False, "--subareas", help="One row per subarea of --city (a city with `subareas`)."
+    ),
     boundary: str = typer.Option("lau", help="Boundary kind."),
     classifier: str | None = CLASSIFIER_REPORT_OPT,
     config_dir: Path = CONFIG_OPT,
@@ -783,11 +848,17 @@ def results(
     def fmt(v: float | None) -> str:
         return "n/a" if v is None else f"{v:.1f}"
 
+    if subareas:
+        _results_subareas(city, boundary, sel, config_dir, db, fmt)
+        return
+
     rows = []
     metrics_by_city: dict[str, list] = {}
     stale: list[str] = []
     with _open_schema(db) as conn:
         for c in fetch_cities(conn):
+            if city is not None and c.id != city:
+                continue
             run_id = sel.latest(conn, c.id, boundary)
             if run_id is None:
                 if sel.stale(conn, c.id, boundary):
@@ -936,6 +1007,44 @@ def reconcile(
         raise typer.Exit(1) from e
 
 
+def _timeseries_subareas(selected, config_dir, db, classifier) -> None:
+    """`timeseries --subareas`: the yearly series of each subarea, per city that has them."""
+    from velometer import timeseries as ts
+    from velometer.db import latest_history_set, subarea_names
+
+    sel = run_selector(config_dir, _report_classifier(config_dir, classifier))
+    cities = [c for c in selected if c.subareas is not None]
+    if not cities:
+        typer.echo("error: no subareas configured for the selected cities", err=True)
+        raise typer.Exit(1)
+    typer.echo(_presets_line(sel.presets))
+    with _open_schema(db) as conn:
+        for c in cities:
+            md5 = latest_history_set(
+                conn,
+                c.id,
+                "lau",
+                classifier_version=sel.version,
+                classifier_parameters=sel.parameters,
+                config_sha256=sel.config_sha256,
+            )
+            by_sub = ts.subarea_series(conn, c.id, sel, md5) if md5 else {}
+            if not by_sub:
+                typer.echo(f"note: {c.id} has no subarea series of the current config")
+                continue
+            names = subarea_names(conn, c.id)
+            for sid, points in sorted(by_sub.items(), key=lambda kv: names.get(kv[0], kv[0])):
+                typer.echo(f"#### {c.id}/lau/{names.get(sid, sid)}")
+                typer.echo("| year | headline % | A | B | C | D | E |")
+                typer.echo("|---|---:|---:|---:|---:|---:|---:|")
+                for p in points:
+                    typer.echo(
+                        f"| {p.label} | {ts._n(p.headline)} "
+                        + " ".join(f"| {ts._n(p.tier_km[t])}" for t in ts.TIERS)
+                        + " |"
+                    )
+
+
 @app.command()
 def timeseries(
     city: list[str] = typer.Option(  # noqa: B008
@@ -952,13 +1061,19 @@ def timeseries(
         help="Report runs of this classifier with its default parameters"
         " (default: report_classifier in config/report.yaml).",
     ),
+    subareas: bool = typer.Option(
+        False,
+        "--subareas",
+        help="Print the yearly LAU series per subarea of each --city that has `subareas`"
+        " (read-only; no flags per subarea).",
+    ),
     write: bool = typer.Option(False, "--write", help="Rewrite the generated report block."),
     check: bool = typer.Option(
         False,
         "--check",
         help="Exit 1 if a flagged city-year lacks an explanation, the explanations name another"
-        " history set than the current one, or a required city/kind lacks a"
-        " year of config/history.yaml.",
+        " history set than the current one, a required city/kind lacks a"
+        " year of config/history.yaml, or a LAU run of a city with `subareas` has no subarea rows.",
     ),
     report: Path = typer.Option(  # noqa: B008
         Path("docs/review/m3_timeseries.md"), "--report", help="Report file."
@@ -976,8 +1091,15 @@ def timeseries(
     if boundary not in (None, "lau", "fua"):
         typer.echo("error: --boundary must be lau or fua", err=True)
         raise typer.Exit(2)
-    wanted = {c.id for c in _select_report_cities(config_dir, city or None)}
+    selected = _select_report_cities(config_dir, city or None)
+    wanted = {c.id for c in selected}
     kinds = (boundary,) if boundary else ("lau", "fua")
+    if subareas:
+        if write or check or boundary == "fua":
+            typer.echo("error: --subareas is a read-only LAU view", err=True)
+            raise typer.Exit(2)
+        _timeseries_subareas(selected, config_dir, db, classifier)
+        return
     try:
         cfg = load_activity(config_dir / "activity.yaml")
         history_cfg = load_history(config_dir / "history.yaml")
@@ -991,6 +1113,11 @@ def timeseries(
                 cs = ts.build_city(conn, c.id, kind, sel, history_cfg.year_range())
                 if cs is not None:
                     built[(c.id, kind)] = cs
+        no_subareas = (
+            ts.missing_subarea_runs(conn, [c for c in selected if c.id in wanted], sel)
+            if boundary in (None, "lau")
+            else []
+        )
     shown = {k: v for k, v in built.items() if k[0] in wanted and k[1] in kinds}
     all_flags = {k: ts.city_flags(v, cfg) for k, v in built.items()}
     shown_flags = [f for k, fl in all_flags.items() if k in shown for f in fl]
@@ -1036,6 +1163,13 @@ def timeseries(
                             f"years {history_cfg.years}): rerun `run --years`",
                             err=True,
                         )
+            for key in no_subareas:
+                problems = True
+                typer.echo(
+                    f"missing subarea rows: {key} (a LAU run of a city with subareas): "
+                    "rerun it to store them",
+                    err=True,
+                )
             for key in ts.missing_explanations(report, shown_flags):
                 problems = True
                 typer.echo(f"missing explanation: ### {key}", err=True)

@@ -1,5 +1,6 @@
 import re
 import shutil
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -741,3 +742,62 @@ def test_explanation_reads_utf8_under_a_non_utf8_locale(tmp_path):
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, check=False)
     assert r.returncode == 0, r.stderr.decode()
     assert r.stdout.decode("utf-8") == "Plan Vélo, June–August."
+
+
+# --- subareas (M6) ---
+
+
+def test_check_fails_for_a_subarea_city_run_without_rows_then_passes(db, tmp_path):
+    from tests.report_fixture import add_subareas
+
+    with sqlite3.connect(db[0]) as conn:
+        runs = [r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'")]
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    assert _ts(db, report, "--check").exit_code == 0
+    add_subareas(db[0], db[2], runs[:1])  # config gains subareas; only one run has rows
+    res = _ts(db, report, "--check")
+    assert res.exit_code == 1
+    assert f"berlin/{runs[1]}" in res.output and f"berlin/{runs[0]}" not in res.output
+    add_subareas(db[0], db[2], runs[1:])
+    assert _ts(db, report, "--check").exit_code == 0
+
+
+def test_check_without_subareas_in_config_never_reports_missing_rows(db, tmp_path):
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    assert "missing subarea rows" not in _ts(db, report, "--check").output
+
+
+def test_subareas_flag_prints_the_yearly_series_per_subarea(db, tmp_path):
+    from tests.report_fixture import add_subareas
+
+    with sqlite3.connect(db[0]) as conn:
+        runs = [r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'")]
+    add_subareas(db[0], db[2], runs)
+    res = _ts(db, _report(tmp_path), "--subareas")
+    assert res.exit_code == 0, res.output
+    assert "#### berlin/lau/West" in res.output and "#### berlin/lau/East" in res.output
+    west = res.output.split("#### berlin/lau/West")[1].split("####")[0]
+    assert [ln.split("|")[1].strip() for ln in west.splitlines() if ln.startswith("| 20")] == [
+        "2019",
+        "2020",
+        "2021",
+    ]
+    assert "| 2020 | 4.0 | 3.0 | 1.0 |" in west
+
+
+def test_subareas_flag_on_a_city_without_them_exits_1(db, tmp_path):
+    res = _ts(db, _report(tmp_path), "--subareas")
+    assert res.exit_code == 1 and "no subareas configured" in res.output
+
+
+def test_subarea_series_skips_runs_without_rows(db, tmp_path):
+    from tests.report_fixture import add_subareas
+    from velometer.selection import run_selector
+
+    with sqlite3.connect(db[0]) as conn:
+        runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
+    add_subareas(db[0], db[2], runs[1:])
+    sel = run_selector(db[2], "v1")
+    with open_db(db[0]) as conn:
+        out = T.subarea_series(conn, "berlin", sel, db[1])
+    assert [p.label for p in out["west"]] == ["2020", "2021"]

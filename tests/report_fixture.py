@@ -171,3 +171,49 @@ def build_report_fixture_n(tmp_path: Path, n_cities: int) -> tuple[Path, Path]:
         for source, figures in external_figures().items():
             replace_external_figures(conn, source, figures)
     return db_path, cfg
+
+
+SUBAREA_NAMES = {"west": "West", "east": "East"}
+
+
+def add_subareas(db_path: Path, cfg: Path, run_ids: list[int]) -> None:
+    """Give berlin two subareas in `cfg`'s cities.yaml and store subarea rows on `run_ids`.
+
+    West gets A 3 km and B 1 km (per side, every basis), East A 1 km and B 3 km; each has
+    100 km of every road class, so West's headline (tiers A+B on main_excl_motorway) is 4 %.
+    """
+    from velometer.config import BASES
+
+    doc = yaml.safe_load((cfg / "cities.yaml").read_text())
+    berlin = next(c for c in doc["cities"] if c["id"] == "berlin")
+    berlin["subareas"] = {
+        "source": "osm_admin",
+        "admin_level": 9,
+        "relations": [
+            {"id": 9001, "name": "West", "slug": "west"},
+            {"id": 9002, "name": "East", "slug": "east"},
+        ],
+    }
+    (cfg / "cities.yaml").write_text(yaml.safe_dump(doc, sort_keys=False))
+    km = {"west": {"A": 3.0, "B": 1.0}, "east": {"A": 1.0, "B": 3.0}}
+    with open_db(db_path) as conn:
+        for sid, name in SUBAREA_NAMES.items():
+            conn.execute(
+                "INSERT OR REPLACE INTO subareas VALUES ('berlin', ?, ?, 'osm_admin', 1, 10.0, "
+                "'x', ?)",
+                (sid, name, "a" * 64),
+            )
+        for run_id in run_ids:
+            for sid, tiers in km.items():
+                for tier, length in tiers.items():
+                    for basis in BASES:
+                        conn.execute(
+                            "INSERT INTO subarea_tier_lengths VALUES (?,?,?,?,?,?,?,?)",
+                            (run_id, "berlin", sid, tier, "", basis, length, 2),
+                        )
+                for road in ("main_excl_motorway", "main_incl_motorway_raw", "all_public"):
+                    conn.execute(
+                        "INSERT INTO subarea_road_lengths VALUES (?,?,?,?,?)",
+                        (run_id, "berlin", sid, road, 100.0),
+                    )
+        conn.commit()

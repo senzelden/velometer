@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from velometer.config import ActivityConfig
+from velometer.config import ActivityConfig, CityConfig
 from velometer.db import (
     fetch_activity,
     fetch_diagnostics,
@@ -15,9 +15,10 @@ from velometer.db import (
     history_runs,
     latest_done_run,
     latest_history_set,
+    subarea_rows,
 )
 from velometer.models import ActivityYear
-from velometer.pipeline.measure import select_metric
+from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.reconcile import EXPLAINED_AGAINST, headings, ours_value
 
 BEGIN, END = "<!-- timeseries:begin -->", "<!-- timeseries:end -->"
@@ -97,11 +98,13 @@ def _year(osm_timestamp: str) -> int:
     return int(osm_timestamp[:4])
 
 
-def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> list[YearPoint]:
-    """Year points of one history set in label order, then the matching current run if any.
+def _series_runs(
+    conn, city_id: str, kind: str, selector, history_set_md5: str
+) -> list[tuple[str, int]]:
+    """(label, run_id) of one history set in label order, then the matching current run if any.
 
-    The current point follows only a last history year that is its own year (the 1 January
-    before it); it carries the activity of year last + 1, whose window ends at the history file.
+    The current run follows only a last history year that is its own year (the 1 January
+    before it).
     """
     runs = history_runs(
         conn,
@@ -112,26 +115,109 @@ def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> lis
         config_sha256=selector.config_sha256,
         history_set_md5=history_set_md5,
     )
-    activity = {
-        a.year: a
-        for a in fetch_activity(conn, city_id, kind, history_set_md5, selector.activity_sha256)
-    }
-    points = [
-        _point(conn, run_id, ts[:4], selector, activity.get(int(ts[:4])))
-        for ts, run_id in sorted(runs.items())
-    ]
+    out = [(ts[:4], run_id) for ts, run_id in sorted(runs.items())]
     current = latest_done_run(
         conn, city_id, kind, selector.version, selector.parameters, selector.config_sha256
     )
     if (
-        points
+        out
         and current is not None
-        and _year(fetch_run(conn, current)["osm_timestamp"]) == int(points[-1].label)
+        and _year(fetch_run(conn, current)["osm_timestamp"]) == int(out[-1][0])
     ):
-        points.append(
-            _point(conn, current, CURRENT, selector, activity.get(int(points[-1].label) + 1))
+        out.append((CURRENT, current))
+    return out
+
+
+def series(conn, city_id: str, kind: str, selector, history_set_md5: str) -> list[YearPoint]:
+    """Year points of one history set in label order, then the matching current run if any.
+
+    The current point carries the activity of year last + 1, whose window ends at the history file.
+    """
+    activity = {
+        a.year: a
+        for a in fetch_activity(conn, city_id, kind, history_set_md5, selector.activity_sha256)
+    }
+    runs = _series_runs(conn, city_id, kind, selector, history_set_md5)
+    return [
+        _point(
+            conn,
+            run_id,
+            label,
+            selector,
+            activity.get(
+                int(runs[-2][0]) + 1 if label == CURRENT else int(label)  # current: last + 1
+            ),
         )
-    return points
+        for label, run_id in runs
+    ]
+
+
+@dataclass(frozen=True)
+class SubareaPoint:
+    label: str  # as YearPoint.label
+    run_id: int
+    osm_timestamp: str
+    headline: float | None  # ours_headline in percent, on the selector's presets
+    tier_km: dict[str, float]  # per_side km of tiers A-E
+
+
+def subarea_series(
+    conn, city_id: str, selector, history_set_md5: str
+) -> dict[str, list[SubareaPoint]]:
+    """The yearly points of each subarea (LAU runs of the selector), by subarea_id.
+
+    A run without subarea rows adds no point. No flags are computed per subarea.
+    """
+    out: dict[str, list[SubareaPoint]] = {}
+    for label, run_id in _series_runs(conn, city_id, "lau", selector, history_set_md5):
+        ts = fetch_run(conn, run_id)["osm_timestamp"]
+        for sid, (tiers, roads) in subarea_rows(conn, run_id).items():
+            metrics = compute_metrics(SubareaMeasure(tiers, roads), selector.presets.presets)
+            metric = select_metric(metrics, "ours_headline", selector.presets)
+            out.setdefault(sid, []).append(
+                SubareaPoint(
+                    label,
+                    run_id,
+                    ts,
+                    None if metric is None else metric.value,
+                    {
+                        t: sum(
+                            x.length_km
+                            for x in tiers
+                            if x.tier == t and x.length_basis == "per_side"
+                        )
+                        for t in TIERS
+                    },
+                )
+            )
+    return out
+
+
+def missing_subarea_runs(conn, cities: list[CityConfig], selector) -> list[str]:
+    """`<city>/<run_id>` of each report-classifier LAU run (the latest history set's runs and the
+    latest current run) of a city with `subareas` that has no subarea rows."""
+    out = []
+    for c in cities:
+        if c.subareas is None:
+            continue
+        md5 = latest_history_set(
+            conn,
+            c.id,
+            "lau",
+            classifier_version=selector.version,
+            classifier_parameters=selector.parameters,
+            config_sha256=selector.config_sha256,
+        )
+        ids = [r for _, r in _series_runs(conn, c.id, "lau", selector, md5)] if md5 else []
+        current = selector.latest(conn, c.id, "lau")
+        if current is not None and current not in ids:
+            ids.append(current)
+        for run_id in sorted(ids):
+            if not conn.execute(
+                "SELECT 1 FROM subarea_tier_lengths WHERE run_id=? LIMIT 1", (run_id,)
+            ).fetchone():
+                out.append(f"{c.id}/{run_id}")
+    return out
 
 
 def _drift(prev: float | None, cur: float | None, pct: float, min_km: float) -> bool:

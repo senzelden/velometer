@@ -1017,3 +1017,48 @@ def test_boundaries_fetch_subareas_of_a_city_without_them_exits_1(tmp_path, monk
     )
     assert out.exit_code == 1
     assert "no subareas configured for berlin" in out.output
+
+
+# --- subarea read surfaces (M6) ---
+
+
+def _berlin_run_ids(db, kind="lau"):
+    with sqlite3.connect(db) as conn:
+        return [
+            r[0]
+            for r in conn.execute(
+                "SELECT id FROM runs WHERE city_id='berlin' AND boundary_kind=? AND status='done'",
+                (kind,),
+            )
+        ]
+
+
+def test_results_subareas_prints_a_row_per_subarea(tmp_path):
+    from tests.report_fixture import add_subareas, build_report_fixture
+
+    db, cfg = build_report_fixture(tmp_path)
+    add_subareas(db, cfg, _berlin_run_ids(db))
+    out = CliRunner().invoke(
+        app,
+        ["results", "--city", "berlin", "--subareas", "--db", str(db), "--config-dir", str(cfg)],
+    )
+    assert out.exit_code == 0, out.output
+    west = next(ln for ln in out.output.splitlines() if ln.startswith("West"))
+    east = next(ln for ln in out.output.splitlines() if ln.startswith("East"))
+    assert west.split()[1] == "4.0"  # (3 + 1) / 100 main_excl_motorway
+    assert "A_km" in out.output and "a_of_ab_pct" in out.output
+    assert west.split()[4:7] == ["3.0", "1.0", "0.0"] and west.split()[9] == "75.0"
+    assert east.split()[4:6] == ["1.0", "3.0"] and east.split()[9] == "25.0"
+    assert "per 100k: not available per subarea (no subarea population)" in out.output
+
+
+def test_results_subareas_of_a_city_without_them_exits_1(tmp_path):
+    from tests.report_fixture import build_report_fixture
+
+    db, cfg = build_report_fixture(tmp_path)
+    out = CliRunner().invoke(
+        app,
+        ["results", "--city", "berlin", "--subareas", "--db", str(db), "--config-dir", str(cfg)],
+    )
+    assert out.exit_code == 1
+    assert "no subareas configured for berlin" in out.output

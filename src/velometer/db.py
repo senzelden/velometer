@@ -825,6 +825,15 @@ def subarea_shas(conn: sqlite3.Connection, city_id: str) -> dict[str, str]:
     return dict(conn.execute("SELECT subarea_id, sha256 FROM subareas WHERE city_id=?", (city_id,)))
 
 
+def subarea_names(conn: sqlite3.Connection, city_id: str) -> dict[str, str]:
+    """The display name of each of a city's subareas, by subarea_id."""
+    return dict(
+        conn.execute(
+            "SELECT subarea_id, name FROM subareas WHERE city_id=? ORDER BY subarea_id", (city_id,)
+        )
+    )
+
+
 def subarea_rows(
     conn: sqlite3.Connection, run_id: int
 ) -> dict[str, tuple[list[TierLength], list[RoadLength]]]:
