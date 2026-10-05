@@ -853,8 +853,8 @@ headline is unaffected (A+B 1,640 -> 1,612 km, below the jump threshold).
 ### berlin/lau/2022
 
 Cause: **campaign** (re-mapping of sidepaths and of "sidewalk, bicycles permitted" ways), not a
-loss of built infrastructure. A+B fell 1,677.1 -> 1,494.4 mapped km. 191 km of road sides went
-from `cycleway=track` to `cycleway=separate` (e.g. way 155594970, way 193875622), and only part of
+loss of built infrastructure. A+B fell 1,677.1 -> 1,494.4 mapped km. About 200 km of road sides
+(196–209 km, depending on how retagged sides are matched) went from `cycleway=track` to `cycleway=separate` (e.g. way 155594970, way 193875622), and only part of
 the separate ways were drawn by 1 January 2022 (+121 km of new `highway=cycleway`). Further,
 135 km of standalone ways left tiers A and B when `highway=path` + `bicycle=designated` became
 `highway=footway` + `bicycle=yes` (89 km) or `highway=path` + `bicycle=yes` (22 km), which the

@@ -441,8 +441,9 @@ and B, the entry names the move, measured by classifying the same snapshot with 
 QECIO's "tracks" comparison is our tier A and its "shared" comparison our tier B
 (`config/reconcile.yaml`). "QECIO's rule" means its own tag definition of cycle and pedestrian
 tracks (Methodology Table 2): footway/path/pedestrian + `bicycle=designated` +
-`segregated!=yes`, or cycleway + `foot=designated` + `segregated!=yes`; the entries read the
-other cycleways as QECIO cycle tracks. Where a QECIO NUTS3 unit is not
+`segregated!=yes`, or cycleway + `foot=designated` + `segregated!=yes`. Every other
+`highway=cycleway` is a QECIO cycle track: Table 2 defines cycle tracks as cycleway &
+(`foot!=designated` | `segregated=yes`) (`docs/research/ecf-qecio-2.1-methodology.pdf`, p. 15). Where a QECIO NUTS3 unit is not
 the city (`nuts3_is_city: false` in `config/cities.yaml`, which also sets the
 `boundary_mismatch` tag), the explanations compare the categories' shares, our FUA, or our
 classifier measured over the region itself. BikeNetKit rows are decomposed by matching its edges'
@@ -808,7 +809,7 @@ Cause: **scope** (FI1B1 Helsinki-Uusimaa vs the city, see `helsinki/qecio_main_k
 621.3 km centreline, −63.2% against QECIO's 1,688.1 km. Under v3, tier A plus B/segregated on the
 same snapshot was 1,760.6 km (+4.3%). The difference is the `highway=cycleway` + `foot=yes` paths
 (1,122.8 km, 11,141 sides; e.g. way 47575672): v4 rates them `B_shared` because pedestrians are
-explicitly allowed, while QECIO, like v3, appears to count them as cycle tracks. Our A+B on that
+explicitly allowed, while QECIO, like v3, counts them as cycle tracks. Our A+B on that
 run (5,526.9 km) is +0.3% against QECIO's tracks plus shared paths (5,509.5 km), so the two
 sources split the same network differently. v4 also excludes 16.5 km of MTB-tagged cycleways
 (`X_mtb_trail`). Since 2024-01-01, 847 sides (105.7 km per side) of `highway=cycleway` without a
@@ -1085,7 +1086,7 @@ ours (`oslo/qecio_main_km`, −0.4%). On our 2024-01-01 history run (831), ten d
 2024-01-11 snapshot, tier A is 46.4 km centreline, −47.7% against QECIO's 88.7 km. Under v3, tier
 A plus B/segregated on the same snapshot was 90.6 km (+2.1%). The difference is 468 sides (43.5
 km) of `highway=cycleway` that then carried `foot=yes` (e.g. way 80874349, way 109810802). v4 rates
-them `B_shared`; QECIO, like v3, appears to count them as cycle tracks. These ways have since
+them `B_shared`; QECIO, like v3, counts them as cycle tracks. These ways have since
 been retagged `foot=designated`, which keeps them in `B_shared`. Since 2024, tier A has grown
 46.4 -> 52.0 km, mostly road-side tracks (+5.7 km per side, 3.3 km of it retagged from painted
 lanes) and new segregated and cycle-only ways. Total infrastructure still agrees (`oslo/qecio_total_km`, +0.0%).
@@ -1197,7 +1198,7 @@ Cause: **scope** (SE110 Stockholms län vs Stockholms kommun, see `stockholm/qec
 2,327.9 km. On the FUA's 2024-01-01 history run (1011), tier A is 1,190.9 km, −48.8% against
 QECIO. Under v3, tier A plus B/segregated on the same snapshot was 2,519.1 km (+8.2%). The
 difference is the `highway=cycleway` + `foot=yes` paths (1,300.5 km, 8,218 sides; e.g. way
-131132471): v4 rates them `B_shared`, while QECIO, like v3, appears to count them as cycle
+131132471): v4 rates them `B_shared`, while QECIO, like v3, counts them as cycle
 tracks. Our FUA A+B on that run (3,600.2 km) is +4.4% against QECIO's tracks plus shared paths
 (3,448.0 km). v4 also excludes 24.0 km of MTB-tagged cycleways and paths from tier A. The LAU's
 tier A has grown since QECIO's date (317.5 km on 2024-01-01).
