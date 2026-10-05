@@ -3,38 +3,41 @@
 From run 740 (OSM 2023-01-01T00:00:00Z) to run 713 (OSM 2026-10-03T20:20:50Z); classifier v4, boundary sha `760d04d86a75`.
 
 All figures are mapped km (ADR 0006): a gain is a way newly mapped as cycling infrastructure, not a construction.
-Categories: mapped gained / lost / retiered / redrawn, and geometry (the same way-side and tier, its length changed by more than 1 m; km is the signed length change). A redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least 80 % of its length, and the new way-sides together cover 80 % of each one they replace; its km is the new way-side's.
+Categories: mapped gained / lost / retiered / redrawn, and geometry (the same way-side and tier, its length changed by more than 1 m; km is the signed length change). A redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least 80 % of its length, and the new way-sides together cover 80 % of each one they replace; a way-side split off an existing way-side of the same tier (a new way id on the length that way-side lost) counts as redrawn too. A redrawn row's km is the new way-side's.
 
 ## Totals (per_side mapped km, recomputed and checked against both runs)
 
-| tier | from | to |
-|---|---:|---:|
-| A | 1228.181 | 1275.380 |
-| B | 286.900 | 275.296 |
-| C | 20.401 | 28.857 |
-| D | 441.563 | 461.493 |
-| E | 87.235 | 116.907 |
+The net change (to − from) is the change in mapped km per tier. The categories below do not sum to it: a redrawn or retiered row carries only its `to` km, and a split way's persisting piece shows its shortening as a negative geometry row, which its split-off (redrawn) pieces offset.
+
+| tier | from | to | net change (to − from) |
+|---|---:|---:|---:|
+| A | 1228.181 | 1275.380 | +47.199 |
+| B | 286.900 | 275.296 | -11.603 |
+| C | 20.401 | 28.857 | +8.456 |
+| D | 441.563 | 461.493 | +19.930 |
+| E | 87.235 | 116.907 | +29.672 |
+| **A–E** | 2064.279 | 2157.933 | +93.654 |
 
 ## Mapped km per category
 
 | | gained | lost | retiered | redrawn | geometry |
 |---|---:|---:|---:|---:|---:|
-| Charlottenburg-Wilmersdorf | 77.616 | 32.740 | 6.566 | 63.446 | -32.568 |
-| Friedrichshain-Kreuzberg | 36.959 | 17.098 | 5.320 | 9.168 | -19.660 |
-| Lichtenberg | 37.211 | 19.631 | 0.558 | 13.443 | -15.769 |
-| Marzahn-Hellersdorf | 36.001 | 18.954 | 1.345 | 12.825 | -13.784 |
-| Mitte | 87.635 | 30.550 | 8.408 | 23.097 | -30.265 |
-| Neukölln | 42.986 | 15.193 | 1.203 | 11.835 | -23.845 |
-| Pankow | 74.467 | 36.943 | 1.597 | 13.996 | -38.247 |
-| Reinickendorf | 77.536 | 35.353 | 1.827 | 31.836 | -30.138 |
-| Spandau | 67.640 | 20.642 | 1.244 | 18.721 | -32.714 |
-| Steglitz-Zehlendorf | 98.188 | 27.542 | 9.271 | 48.301 | -60.609 |
-| Tempelhof-Schöneberg | 79.664 | 23.081 | 5.040 | 31.189 | -37.270 |
-| Treptow-Köpenick | 80.383 | 39.367 | 5.034 | 23.163 | -29.451 |
+| Charlottenburg-Wilmersdorf | 47.166 | 32.740 | 6.566 | 93.896 | -32.568 |
+| Friedrichshain-Kreuzberg | 18.502 | 17.098 | 5.320 | 27.625 | -19.660 |
+| Lichtenberg | 21.547 | 19.631 | 0.558 | 29.108 | -15.769 |
+| Marzahn-Hellersdorf | 19.627 | 18.954 | 1.345 | 29.198 | -13.784 |
+| Mitte | 56.712 | 30.550 | 8.408 | 54.020 | -30.265 |
+| Neukölln | 20.102 | 15.193 | 1.203 | 34.719 | -23.845 |
+| Pankow | 38.084 | 36.943 | 1.597 | 50.379 | -38.247 |
+| Reinickendorf | 46.860 | 35.353 | 1.827 | 62.512 | -30.138 |
+| Spandau | 35.558 | 20.642 | 1.244 | 50.803 | -32.714 |
+| Steglitz-Zehlendorf | 39.705 | 27.542 | 9.271 | 106.784 | -60.609 |
+| Tempelhof-Schöneberg | 45.102 | 23.081 | 5.040 | 65.751 | -37.270 |
+| Treptow-Köpenick | 52.443 | 39.367 | 5.034 | 51.103 | -29.451 |
 | Outside the 12 Bezirke (LAU edge) | 0.903 | 3.147 | 0.000 | 0.009 | -0.046 |
-| **Berlin** | 797.189 | 320.242 | 47.413 | 301.028 | -364.365 |
+| **Berlin** | 442.311 | 320.242 | 47.413 | 655.905 | -364.365 |
 
-## gained: 14362 way-sides (top 20 by mapped km)
+## gained: 6111 way-sides (top 20 by mapped km)
 
 | way (from) | way (to) | side | tier | mapped km |
 |---|---|---|---|---:|
@@ -43,7 +46,6 @@ Categories: mapped gained / lost / retiered / redrawn, and geometry (the same wa
 | [897616698](https://www.openstreetmap.org/way/897616698) | [897616698](https://www.openstreetmap.org/way/897616698) | self | untiered → B | 1.842 |
 | – | [1218406753](https://www.openstreetmap.org/way/1218406753) | self | – → A | 1.811 |
 | – | [25156778](https://www.openstreetmap.org/way/25156778) | self | – → B | 1.640 |
-| – | [1164639569](https://www.openstreetmap.org/way/1164639569) | self | – → B | 1.613 |
 | – | [1429258104](https://www.openstreetmap.org/way/1429258104) | self | – → B | 1.575 |
 | – | [1521472339](https://www.openstreetmap.org/way/1521472339) | self | – → B | 1.473 |
 | – | [1450028883](https://www.openstreetmap.org/way/1450028883) | self | – → A | 1.440 |
@@ -58,6 +60,7 @@ Categories: mapped gained / lost / retiered / redrawn, and geometry (the same wa
 | [25731621](https://www.openstreetmap.org/way/25731621) | [25731621](https://www.openstreetmap.org/way/25731621) | self | untiered → B | 1.193 |
 | [1004141243](https://www.openstreetmap.org/way/1004141243) | [1004141243](https://www.openstreetmap.org/way/1004141243) | self | untiered → B | 1.133 |
 | [246086794](https://www.openstreetmap.org/way/246086794) | [246086794](https://www.openstreetmap.org/way/246086794) | self | untiered → A | 1.097 |
+| – | [1462142363](https://www.openstreetmap.org/way/1462142363) | self | – → A | 1.094 |
 
 ## lost: 3596 way-sides (top 20 by mapped km)
 
@@ -109,15 +112,18 @@ Categories: mapped gained / lost / retiered / redrawn, and geometry (the same wa
 | [23213546](https://www.openstreetmap.org/way/23213546) | [23213546](https://www.openstreetmap.org/way/23213546) | right | A → E | 0.287 | `cycleway:right`: track → share_busway; `cycleway:right:oneway`: – → yes; `cycleway:right:traffic_sign`: – → DE:245,1022-10,Zusatzzeichen; `cycleway:right:width`: – → 2.7; `foot`: – → use_sidepath; `lanes`: 2 → 2+1 Busspur; `parking:both`: – → no; `parking:left:reason`: – → dual_carriage; `parking:right:restriction`: – → no_stopping; `parking:right:restriction:reason`: – → bus_lane; `smoothness`: – → good; `source:cycleway:right:traffic_sign:mapillary`: – → 357912689094570; `source:cycleway:right:width`: – → Luftbild 2024 |
 | [996075256](https://www.openstreetmap.org/way/996075256) | [996075256](https://www.openstreetmap.org/way/996075256) | self | B → A | 0.278 | `check_date:surface`: – → 2023-08-04; `cycleway:surface`: – → concrete; `footway:surface`: – → concrete; `segregated`: no → yes; `traffic_sign`: DE:240 → DE:241 |
 
-## redrawn: 5236 way-sides (top 20 by mapped km)
+## redrawn: 13487 way-sides (top 20 by mapped km)
 
 | way (from) | way (to) | side | tier | mapped km |
 |---|---|---|---|---:|
+| [1036290000](https://www.openstreetmap.org/way/1036290000) | [1164639569](https://www.openstreetmap.org/way/1164639569) | self | B | 1.613 |
 | [86571257](https://www.openstreetmap.org/way/86571257) | [1435863277](https://www.openstreetmap.org/way/1435863277) | self | A | 1.134 |
 | [16942408](https://www.openstreetmap.org/way/16942408) | [1316352013](https://www.openstreetmap.org/way/1316352013) | self | B | 1.058 |
 | [331318342](https://www.openstreetmap.org/way/331318342) | [1211938430](https://www.openstreetmap.org/way/1211938430) | self | A | 1.039 |
+| [941966168](https://www.openstreetmap.org/way/941966168) | [1149394829](https://www.openstreetmap.org/way/1149394829) | self | A | 1.009 |
 | [26614075](https://www.openstreetmap.org/way/26614075) | [1444499536](https://www.openstreetmap.org/way/1444499536) | self | A | 1.003 |
 | [166645719](https://www.openstreetmap.org/way/166645719) | [1447126278](https://www.openstreetmap.org/way/1447126278) | self | A | 0.908 |
+| [909222808](https://www.openstreetmap.org/way/909222808) | [1271161544](https://www.openstreetmap.org/way/1271161544) | self | A | 0.853 |
 | [1038272616](https://www.openstreetmap.org/way/1038272616) | [1226718529](https://www.openstreetmap.org/way/1226718529) | self | A | 0.829 |
 | [30243828](https://www.openstreetmap.org/way/30243828) | [1445755359](https://www.openstreetmap.org/way/1445755359) | self | A | 0.817 |
 | [4581781](https://www.openstreetmap.org/way/4581781) | [1297394261](https://www.openstreetmap.org/way/1297394261) | self | A | 0.813 |
@@ -126,13 +132,10 @@ Categories: mapped gained / lost / retiered / redrawn, and geometry (the same wa
 | [4484024](https://www.openstreetmap.org/way/4484024) | [508112391](https://www.openstreetmap.org/way/508112391) | self | A | 0.776 |
 | [169079399](https://www.openstreetmap.org/way/169079399) | [1188469367](https://www.openstreetmap.org/way/1188469367) | self | A | 0.698 |
 | [60077029](https://www.openstreetmap.org/way/60077029) | [1443462078](https://www.openstreetmap.org/way/1443462078) | self | A | 0.684 |
+| [112408882](https://www.openstreetmap.org/way/112408882) | [1223440779](https://www.openstreetmap.org/way/1223440779) | self | A | 0.669 |
 | [25414231](https://www.openstreetmap.org/way/25414231) | [1229450882](https://www.openstreetmap.org/way/1229450882) | self | A | 0.656 |
 | [5117633](https://www.openstreetmap.org/way/5117633) | [1391160882](https://www.openstreetmap.org/way/1391160882) | self | A | 0.654 |
 | [370405123](https://www.openstreetmap.org/way/370405123) | [915348997](https://www.openstreetmap.org/way/915348997) | self | A | 0.650 |
-| [405711264](https://www.openstreetmap.org/way/405711264) | [1334176804](https://www.openstreetmap.org/way/1334176804) | self | A | 0.647 |
-| [1120576995](https://www.openstreetmap.org/way/1120576995) | [1225893108](https://www.openstreetmap.org/way/1225893108) | right | C | 0.635 |
-| [307059068](https://www.openstreetmap.org/way/307059068) | [1188591721](https://www.openstreetmap.org/way/1188591721) | self | A | 0.611 |
-| [684872878](https://www.openstreetmap.org/way/684872878) | [1207984426](https://www.openstreetmap.org/way/1207984426) | self | A | 0.604 |
 
 ## geometry: 5929 way-sides (top 20 by mapped km)
 
