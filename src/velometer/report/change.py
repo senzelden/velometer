@@ -474,8 +474,9 @@ def render_markdown(
         "and tier, its length changed by more than 1 m; km is the signed length change). A "
         "redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least "
         "80 % of its length, and the new way-sides together cover 80 % of each one they "
-        "replace; a way-side split off an existing way-side of the same tier (a new way id on "
-        "the length that way-side lost) counts as redrawn too. A redrawn row's km is the new "
+        "replace; a way-side split off an existing way-side of the same tier (a new way id "
+        "along a way-side that got shorter, up to 1.2 times the length it lost) counts as "
+        "redrawn too. A redrawn row's km is the new "
         "way-side's.",
         "",
         "## Totals (per_side mapped km, recomputed and checked against both runs)",

@@ -163,6 +163,12 @@ One line each: what was decided, why, and what it costs if wrong.
 - `docs/review/trust/v4-golden/` holds pre-re-sign copies; `docs/review/trust/README.md` is
   still the M5 record.
 - ADR 0002's `B_shared` wording is narrower than `config/classifier/v4.yaml` for paths.
+- The change page cannot be reconciled by a reader: the categories sum to the net change per
+  tier (within 0.015 km), but only with the replaced km of redrawn sides (296.4 km for Berlin
+  2023 → current) and the old km of retiered sides, which the page does not show.
+- Split-off pieces are matched against the shrunk way's whole old geometry, not only the part it
+  lost; 5.8 of 354.9 km (210 pieces) lie mostly along the kept part. The 1.2× lost-length cap
+  bounds this.
 - The change-map caption counts way-sides ("6111 mapped gained") without saying so.
 - Deferred minors from the task reviews (test gaps and small refactors), by task:
   - **1a:** `observed_tiers` returns a defaultdict; `golden_paths` re-parses `trust.yaml`;

@@ -5,8 +5,8 @@ are mapped km per side in each city's EPSG (ADR 0006). The headline is `ours_hea
 per 100 km of main roads excl. motorways), ranked 1 = highest.
 
 **Note (2026-10-05).** The run ids on this page are partly from a scratch copy of the DB: the v3
-column's runs 714–734 and Berlin's v4 run 713 below are scratch-DB ids (in `velometer.sqlite`,
-714–734 are the v4 current FUA runs). The report's real v4 current LAU runs are 693–697, 713 and
+column's runs 714–734 are scratch-DB ids (in `velometer.sqlite`, 714–734 are the v4 current FUA
+runs). Berlin's v4 row came from a scratch run; its figures equal the real Berlin run 713. The report's real v4 current LAU runs are 693–697, 713 and
 1113–1127; 698–712 are superseded (failed, "superseded by 1113–1127", see ADR 0005). The user
 took the decision this page asked for on 2026-10-05: the v4 impact is accepted, and Berlin's LAU
 edge outside the 12 Bezirke became an explicit remainder row (`docs/superpowers/rulings-m6.md`,

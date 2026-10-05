@@ -3,7 +3,7 @@
 From run 740 (OSM 2023-01-01T00:00:00Z) to run 713 (OSM 2026-10-03T20:20:50Z); classifier v4, boundary sha `760d04d86a75`.
 
 All figures are mapped km (ADR 0006): a gain is a way newly mapped as cycling infrastructure, not a construction.
-Categories: mapped gained / lost / retiered / redrawn, and geometry (the same way-side and tier, its length changed by more than 1 m; km is the signed length change). A redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least 80 % of its length, and the new way-sides together cover 80 % of each one they replace; a way-side split off an existing way-side of the same tier (a new way id on the length that way-side lost) counts as redrawn too. A redrawn row's km is the new way-side's.
+Categories: mapped gained / lost / retiered / redrawn, and geometry (the same way-side and tier, its length changed by more than 1 m; km is the signed length change). A redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least 80 % of its length, and the new way-sides together cover 80 % of each one they replace; a way-side split off an existing way-side of the same tier (a new way id along a way-side that got shorter, up to 1.2 times the length it lost) counts as redrawn too. A redrawn row's km is the new way-side's.
 
 ## Totals (per_side mapped km, recomputed and checked against both runs)
 
