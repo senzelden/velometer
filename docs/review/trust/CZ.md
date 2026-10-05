@@ -20,6 +20,17 @@ Resolved by classifier v3 (Task 14, user decision 2026-10-03): rule `D_soft_lane
 58.8 km as D advisory. On run 288 Prague's unrecognised share is 0.0 % and it is within every
 limit; this note stays as the record.
 
+### prague/b_share_of_ab
+
+Prague's B share of A+B is 0.845 on run 710 (classifier v4, OSM 2026-10-03), against a limit of
+0.784. Under v3 on the same extract it was 0.638 (scratch run, docs/review/trust/v4-impact.md).
+The breach comes from the v4 facility rule (ADR 0002, M6 amendment): a cycleway on which
+pedestrians are explicitly allowed is now `B_shared`, not A. Prague moves A 106.7 → 44.7 km
+and B 188.3 → 244.5 km per side; A+B falls by 5.8 km, mostly through the MTB exclusion. The share
+reflects how Prague's paths are tagged under a rule the user accepted, not missing tags or a
+boundary problem: unrecognised is 0.00 % and the boundary diff is 0.1 %. Accepted with the v4
+impact review (user decision 2026-10-05). A and B are always reported separately (HANDOVER §10.1).
+
 <!-- trust:begin -->
 ## Diagnostics CZ (generated)
 
