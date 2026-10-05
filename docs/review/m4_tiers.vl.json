@@ -30,7 +30,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 844.472
+        "km": 698.093
       },
       {
         "city": "Amsterdam",
@@ -38,7 +38,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.171
+        "km": 153.55
       },
       {
         "city": "Amsterdam",
@@ -70,7 +70,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 850.647
+        "km": 687.766
       },
       {
         "city": "Amsterdam",
@@ -78,7 +78,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.543
+        "km": 170.424
       },
       {
         "city": "Amsterdam",
@@ -110,7 +110,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 842.791
+        "km": 692.28
       },
       {
         "city": "Amsterdam",
@@ -118,7 +118,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 10.442
+        "km": 160.954
       },
       {
         "city": "Amsterdam",
@@ -150,7 +150,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 843.13
+        "km": 682.499
       },
       {
         "city": "Amsterdam",
@@ -158,7 +158,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.988
+        "km": 172.619
       },
       {
         "city": "Amsterdam",
@@ -190,7 +190,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 850.899
+        "km": 696.511
       },
       {
         "city": "Amsterdam",
@@ -198,7 +198,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 12.023
+        "km": 166.412
       },
       {
         "city": "Amsterdam",
@@ -230,7 +230,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 849.765
+        "km": 698.355
       },
       {
         "city": "Amsterdam",
@@ -238,7 +238,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 13.83
+        "km": 165.24
       },
       {
         "city": "Amsterdam",
@@ -270,7 +270,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 851.053
+        "km": 704.309
       },
       {
         "city": "Amsterdam",
@@ -278,7 +278,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 13.423
+        "km": 160.167
       },
       {
         "city": "Amsterdam",
@@ -310,7 +310,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 855.532
+        "km": 660.347
       },
       {
         "city": "Amsterdam",
@@ -318,7 +318,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.846
+        "km": 207.03
       },
       {
         "city": "Amsterdam",
@@ -350,7 +350,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 851.797
+        "km": 656.334
       },
       {
         "city": "Amsterdam",
@@ -358,7 +358,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 14.461
+        "km": 209.924
       },
       {
         "city": "Amsterdam",
@@ -390,7 +390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 841.325
+        "km": 650.378
       },
       {
         "city": "Amsterdam",
@@ -398,7 +398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 20.311
+        "km": 211.257
       },
       {
         "city": "Amsterdam",
@@ -414,7 +414,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 89.954
+        "km": 89.999
       },
       {
         "city": "Amsterdam",
@@ -430,7 +430,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 158.164
+        "km": 155.492
       },
       {
         "city": "Barcelona",
@@ -438,7 +438,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.751
+        "km": 5.423
       },
       {
         "city": "Barcelona",
@@ -470,7 +470,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 172.196
+        "km": 168.565
       },
       {
         "city": "Barcelona",
@@ -478,7 +478,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.137
+        "km": 5.768
       },
       {
         "city": "Barcelona",
@@ -510,7 +510,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 187.073
+        "km": 184.135
       },
       {
         "city": "Barcelona",
@@ -518,7 +518,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.53
+        "km": 5.467
       },
       {
         "city": "Barcelona",
@@ -550,7 +550,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 208.607
+        "km": 205.754
       },
       {
         "city": "Barcelona",
@@ -558,7 +558,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 5.759
+        "km": 8.612
       },
       {
         "city": "Barcelona",
@@ -590,7 +590,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 214.931
+        "km": 211.924
       },
       {
         "city": "Barcelona",
@@ -598,7 +598,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 4.201
+        "km": 7.207
       },
       {
         "city": "Barcelona",
@@ -630,7 +630,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 213.865
+        "km": 214.43
       },
       {
         "city": "Barcelona",
@@ -638,7 +638,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.268
+        "km": 6.703
       },
       {
         "city": "Barcelona",
@@ -670,7 +670,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 231.26
+        "km": 231.498
       },
       {
         "city": "Barcelona",
@@ -678,7 +678,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.45
+        "km": 7.212
       },
       {
         "city": "Barcelona",
@@ -710,7 +710,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 234.405
+        "km": 233.887
       },
       {
         "city": "Barcelona",
@@ -718,7 +718,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.613
+        "km": 8.13
       },
       {
         "city": "Barcelona",
@@ -750,7 +750,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 234.431
+        "km": 233.054
       },
       {
         "city": "Barcelona",
@@ -758,7 +758,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.88
+        "km": 9.258
       },
       {
         "city": "Barcelona",
@@ -790,7 +790,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 232.397
+        "km": 231.481
       },
       {
         "city": "Barcelona",
@@ -798,7 +798,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.243
+        "km": 12.159
       },
       {
         "city": "Barcelona",
@@ -830,7 +830,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1357.86
+        "km": 1370.686
       },
       {
         "city": "Berlin",
@@ -838,7 +838,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 285.282
+        "km": 269.118
       },
       {
         "city": "Berlin",
@@ -870,7 +870,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1335.679
+        "km": 1357.021
       },
       {
         "city": "Berlin",
@@ -878,7 +878,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 279.298
+        "km": 254.616
       },
       {
         "city": "Berlin",
@@ -910,7 +910,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1337.951
+        "km": 1368.803
       },
       {
         "city": "Berlin",
@@ -918,7 +918,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 299.281
+        "km": 265.296
       },
       {
         "city": "Berlin",
@@ -950,7 +950,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1243.269
+        "km": 1348.431
       },
       {
         "city": "Berlin",
@@ -958,7 +958,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 437.417
+        "km": 328.716
       },
       {
         "city": "Berlin",
@@ -990,7 +990,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1132.665
+        "km": 1223.041
       },
       {
         "city": "Berlin",
@@ -998,7 +998,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 364.13
+        "km": 271.327
       },
       {
         "city": "Berlin",
@@ -1030,7 +1030,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1130.792
+        "km": 1228.181
       },
       {
         "city": "Berlin",
@@ -1038,7 +1038,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 387.114
+        "km": 286.9
       },
       {
         "city": "Berlin",
@@ -1070,7 +1070,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1129.34
+        "km": 1229.379
       },
       {
         "city": "Berlin",
@@ -1078,7 +1078,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 364.486
+        "km": 256.66
       },
       {
         "city": "Berlin",
@@ -1110,7 +1110,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1156.409
+        "km": 1249.549
       },
       {
         "city": "Berlin",
@@ -1118,7 +1118,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 354.116
+        "km": 250.693
       },
       {
         "city": "Berlin",
@@ -1150,7 +1150,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1144.071
+        "km": 1264.012
       },
       {
         "city": "Berlin",
@@ -1158,7 +1158,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 395.285
+        "km": 268.031
       },
       {
         "city": "Berlin",
@@ -1190,7 +1190,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 1151.203
+        "km": 1275.38
       },
       {
         "city": "Berlin",
@@ -1198,7 +1198,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 406.656
+        "km": 275.296
       },
       {
         "city": "Berlin",
@@ -1214,7 +1214,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 461.601
+        "km": 461.493
       },
       {
         "city": "Berlin",
@@ -1222,7 +1222,7 @@
         "label": "now",
         "tier": "E",
         "tier_label": "E cycle street / bus lane",
-        "km": 116.584
+        "km": 116.907
       },
       {
         "city": "Bordeaux",
@@ -1230,7 +1230,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 50.938
+        "km": 39.839
       },
       {
         "city": "Bordeaux",
@@ -1238,7 +1238,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 1.737
+        "km": 12.836
       },
       {
         "city": "Bordeaux",
@@ -1270,7 +1270,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 53.436
+        "km": 41.989
       },
       {
         "city": "Bordeaux",
@@ -1278,7 +1278,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.846
+        "km": 14.293
       },
       {
         "city": "Bordeaux",
@@ -1310,7 +1310,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 51.025
+        "km": 40.232
       },
       {
         "city": "Bordeaux",
@@ -1318,7 +1318,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 5.979
+        "km": 16.771
       },
       {
         "city": "Bordeaux",
@@ -1350,7 +1350,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 45.114
+        "km": 41.242
       },
       {
         "city": "Bordeaux",
@@ -1358,7 +1358,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 6.213
+        "km": 10.084
       },
       {
         "city": "Bordeaux",
@@ -1390,7 +1390,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 49.129
+        "km": 44.28
       },
       {
         "city": "Bordeaux",
@@ -1398,7 +1398,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.562
+        "km": 12.41
       },
       {
         "city": "Bordeaux",
@@ -1430,7 +1430,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 49.041
+        "km": 42.207
       },
       {
         "city": "Bordeaux",
@@ -1438,7 +1438,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.431
+        "km": 14.265
       },
       {
         "city": "Bordeaux",
@@ -1470,7 +1470,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 50.035
+        "km": 43.185
       },
       {
         "city": "Bordeaux",
@@ -1478,7 +1478,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 6.105
+        "km": 12.956
       },
       {
         "city": "Bordeaux",
@@ -1510,7 +1510,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 52.392
+        "km": 45.262
       },
       {
         "city": "Bordeaux",
@@ -1518,7 +1518,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.228
+        "km": 14.358
       },
       {
         "city": "Bordeaux",
@@ -1550,7 +1550,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 53.55
+        "km": 48.469
       },
       {
         "city": "Bordeaux",
@@ -1558,7 +1558,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 9.407
+        "km": 14.488
       },
       {
         "city": "Bordeaux",
@@ -1590,7 +1590,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 53.348
+        "km": 48.695
       },
       {
         "city": "Bordeaux",
@@ -1598,7 +1598,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.726
+        "km": 16.71
       },
       {
         "city": "Bordeaux",
@@ -1614,7 +1614,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 106.84
+        "km": 106.884
       },
       {
         "city": "Bordeaux",
@@ -1622,7 +1622,7 @@
         "label": "now",
         "tier": "E",
         "tier_label": "E cycle street / bus lane",
-        "km": 48.657
+        "km": 48.63
       },
       {
         "city": "Bratislava",
@@ -1630,7 +1630,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 98.401
+        "km": 56.963
       },
       {
         "city": "Bratislava",
@@ -1638,7 +1638,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 28.609
+        "km": 67.476
       },
       {
         "city": "Bratislava",
@@ -1670,7 +1670,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 101.606
+        "km": 62.968
       },
       {
         "city": "Bratislava",
@@ -1678,7 +1678,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 30.623
+        "km": 69.262
       },
       {
         "city": "Bratislava",
@@ -1710,7 +1710,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 87.74
+        "km": 49.825
       },
       {
         "city": "Bratislava",
@@ -1718,7 +1718,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 25.159
+        "km": 63.074
       },
       {
         "city": "Bratislava",
@@ -1750,7 +1750,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 87.009
+        "km": 51.768
       },
       {
         "city": "Bratislava",
@@ -1758,7 +1758,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 28.21
+        "km": 63.452
       },
       {
         "city": "Bratislava",
@@ -1790,7 +1790,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 88.011
+        "km": 58.971
       },
       {
         "city": "Bratislava",
@@ -1798,7 +1798,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 42.712
+        "km": 71.753
       },
       {
         "city": "Bratislava",
@@ -1830,7 +1830,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 82.415
+        "km": 60.853
       },
       {
         "city": "Bratislava",
@@ -1838,7 +1838,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 49.37
+        "km": 70.931
       },
       {
         "city": "Bratislava",
@@ -1870,7 +1870,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 85.338
+        "km": 63.391
       },
       {
         "city": "Bratislava",
@@ -1878,7 +1878,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 56.334
+        "km": 78.281
       },
       {
         "city": "Bratislava",
@@ -1910,7 +1910,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 105.757
+        "km": 78.568
       },
       {
         "city": "Bratislava",
@@ -1918,7 +1918,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 58.608
+        "km": 79.701
       },
       {
         "city": "Bratislava",
@@ -1950,7 +1950,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 110.871
+        "km": 83.554
       },
       {
         "city": "Bratislava",
@@ -1958,7 +1958,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 59.984
+        "km": 81.205
       },
       {
         "city": "Bratislava",
@@ -1990,7 +1990,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 118.023
+        "km": 89.747
       },
       {
         "city": "Bratislava",
@@ -1998,7 +1998,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 61.324
+        "km": 82.401
       },
       {
         "city": "Bratislava",
@@ -2014,7 +2014,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 55.274
+        "km": 55.493
       },
       {
         "city": "Bratislava",
@@ -2030,7 +2030,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 126.861
+        "km": 125.555
       },
       {
         "city": "Budapest",
@@ -2038,7 +2038,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 69.216
+        "km": 70.522
       },
       {
         "city": "Budapest",
@@ -2070,7 +2070,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 127.868
+        "km": 125.504
       },
       {
         "city": "Budapest",
@@ -2078,7 +2078,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 71.898
+        "km": 74.063
       },
       {
         "city": "Budapest",
@@ -2110,7 +2110,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 131.379
+        "km": 131.763
       },
       {
         "city": "Budapest",
@@ -2118,7 +2118,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 75.935
+        "km": 75.503
       },
       {
         "city": "Budapest",
@@ -2150,7 +2150,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 136.416
+        "km": 134.925
       },
       {
         "city": "Budapest",
@@ -2158,7 +2158,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 73.209
+        "km": 74.644
       },
       {
         "city": "Budapest",
@@ -2190,7 +2190,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 143.859
+        "km": 142.275
       },
       {
         "city": "Budapest",
@@ -2198,7 +2198,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 71.273
+        "km": 71.717
       },
       {
         "city": "Budapest",
@@ -2230,7 +2230,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 145.128
+        "km": 143.115
       },
       {
         "city": "Budapest",
@@ -2238,7 +2238,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 68.993
+        "km": 69.503
       },
       {
         "city": "Budapest",
@@ -2270,7 +2270,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 150.428
+        "km": 148.251
       },
       {
         "city": "Budapest",
@@ -2278,7 +2278,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 66.515
+        "km": 67.183
       },
       {
         "city": "Budapest",
@@ -2310,7 +2310,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 157.753
+        "km": 155.606
       },
       {
         "city": "Budapest",
@@ -2318,7 +2318,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 64.657
+        "km": 66.069
       },
       {
         "city": "Budapest",
@@ -2350,7 +2350,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 162.923
+        "km": 160.258
       },
       {
         "city": "Budapest",
@@ -2358,7 +2358,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 64.068
+        "km": 65.997
       },
       {
         "city": "Budapest",
@@ -2390,7 +2390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 164.618
+        "km": 162.101
       },
       {
         "city": "Budapest",
@@ -2398,7 +2398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 67.585
+        "km": 69.374
       },
       {
         "city": "Budapest",
@@ -2414,7 +2414,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 160.954
+        "km": 160.972
       },
       {
         "city": "Budapest",
@@ -2430,7 +2430,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 488.92
+        "km": 446.892
       },
       {
         "city": "K\u00f8benhavn",
@@ -2438,7 +2438,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 40.893
+        "km": 82.922
       },
       {
         "city": "K\u00f8benhavn",
@@ -2470,7 +2470,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 481.397
+        "km": 444.747
       },
       {
         "city": "K\u00f8benhavn",
@@ -2478,7 +2478,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 41.382
+        "km": 78.032
       },
       {
         "city": "K\u00f8benhavn",
@@ -2510,7 +2510,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 488.127
+        "km": 454.893
       },
       {
         "city": "K\u00f8benhavn",
@@ -2518,7 +2518,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 45.943
+        "km": 79.177
       },
       {
         "city": "K\u00f8benhavn",
@@ -2550,7 +2550,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 460.774
+        "km": 451.762
       },
       {
         "city": "K\u00f8benhavn",
@@ -2558,7 +2558,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 75.045
+        "km": 84.057
       },
       {
         "city": "K\u00f8benhavn",
@@ -2590,7 +2590,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 473.355
+        "km": 465.233
       },
       {
         "city": "K\u00f8benhavn",
@@ -2598,7 +2598,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 76.808
+        "km": 84.931
       },
       {
         "city": "K\u00f8benhavn",
@@ -2630,7 +2630,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 484.84
+        "km": 476.336
       },
       {
         "city": "K\u00f8benhavn",
@@ -2638,7 +2638,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 81.581
+        "km": 89.552
       },
       {
         "city": "K\u00f8benhavn",
@@ -2670,7 +2670,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 486.354
+        "km": 480.188
       },
       {
         "city": "K\u00f8benhavn",
@@ -2678,7 +2678,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 83.193
+        "km": 88.826
       },
       {
         "city": "K\u00f8benhavn",
@@ -2710,7 +2710,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 482.523
+        "km": 482.237
       },
       {
         "city": "K\u00f8benhavn",
@@ -2718,7 +2718,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 73.675
+        "km": 73.96
       },
       {
         "city": "K\u00f8benhavn",
@@ -2750,7 +2750,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 489.191
+        "km": 485.453
       },
       {
         "city": "K\u00f8benhavn",
@@ -2758,7 +2758,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 83.276
+        "km": 86.481
       },
       {
         "city": "K\u00f8benhavn",
@@ -2790,7 +2790,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 498.491
+        "km": 492.729
       },
       {
         "city": "K\u00f8benhavn",
@@ -2798,7 +2798,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 83.87
+        "km": 89.099
       },
       {
         "city": "K\u00f8benhavn",
@@ -2830,7 +2830,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 862.42
+        "km": 302.97
       },
       {
         "city": "Helsinki",
@@ -2838,7 +2838,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 420.585
+        "km": 979.992
       },
       {
         "city": "Helsinki",
@@ -2870,7 +2870,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 872.406
+        "km": 322.938
       },
       {
         "city": "Helsinki",
@@ -2878,7 +2878,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 419.54
+        "km": 968.965
       },
       {
         "city": "Helsinki",
@@ -2910,7 +2910,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 861.026
+        "km": 319.85
       },
       {
         "city": "Helsinki",
@@ -2918,7 +2918,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 421.471
+        "km": 962.61
       },
       {
         "city": "Helsinki",
@@ -2950,7 +2950,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 830.583
+        "km": 317.012
       },
       {
         "city": "Helsinki",
@@ -2958,7 +2958,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 454.325
+        "km": 967.75
       },
       {
         "city": "Helsinki",
@@ -2990,7 +2990,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 821.044
+        "km": 320.474
       },
       {
         "city": "Helsinki",
@@ -2998,7 +2998,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 462.72
+        "km": 963.017
       },
       {
         "city": "Helsinki",
@@ -3030,7 +3030,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 793.561
+        "km": 327.77
       },
       {
         "city": "Helsinki",
@@ -3038,7 +3038,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 497.042
+        "km": 962.546
       },
       {
         "city": "Helsinki",
@@ -3070,7 +3070,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 706.642
+        "km": 328.219
       },
       {
         "city": "Helsinki",
@@ -3078,7 +3078,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 575.939
+        "km": 954.074
       },
       {
         "city": "Helsinki",
@@ -3110,7 +3110,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 658.62
+        "km": 331.314
       },
       {
         "city": "Helsinki",
@@ -3118,7 +3118,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 624.978
+        "km": 950.414
       },
       {
         "city": "Helsinki",
@@ -3150,7 +3150,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 634.776
+        "km": 337.626
       },
       {
         "city": "Helsinki",
@@ -3158,7 +3158,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 649.994
+        "km": 942.951
       },
       {
         "city": "Helsinki",
@@ -3190,7 +3190,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 595.376
+        "km": 336.024
       },
       {
         "city": "Helsinki",
@@ -3198,7 +3198,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 688.741
+        "km": 943.185
       },
       {
         "city": "Helsinki",
@@ -3230,7 +3230,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 40.054
+        "km": 111.571
       },
       {
         "city": "Krak\u00f3w",
@@ -3238,7 +3238,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 123.264
+        "km": 49.105
       },
       {
         "city": "Krak\u00f3w",
@@ -3270,7 +3270,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 44.303
+        "km": 118.358
       },
       {
         "city": "Krak\u00f3w",
@@ -3278,7 +3278,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 131.184
+        "km": 52.952
       },
       {
         "city": "Krak\u00f3w",
@@ -3310,7 +3310,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 50.643
+        "km": 126.506
       },
       {
         "city": "Krak\u00f3w",
@@ -3318,7 +3318,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 137.712
+        "km": 57.465
       },
       {
         "city": "Krak\u00f3w",
@@ -3350,7 +3350,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 52.206
+        "km": 135.836
       },
       {
         "city": "Krak\u00f3w",
@@ -3358,7 +3358,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 152.15
+        "km": 64.088
       },
       {
         "city": "Krak\u00f3w",
@@ -3390,7 +3390,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 45.776
+        "km": 141.769
       },
       {
         "city": "Krak\u00f3w",
@@ -3398,7 +3398,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 171.825
+        "km": 71.413
       },
       {
         "city": "Krak\u00f3w",
@@ -3430,7 +3430,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 49.077
+        "km": 152.117
       },
       {
         "city": "Krak\u00f3w",
@@ -3438,7 +3438,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 184.942
+        "km": 76.048
       },
       {
         "city": "Krak\u00f3w",
@@ -3470,7 +3470,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 59.816
+        "km": 169.606
       },
       {
         "city": "Krak\u00f3w",
@@ -3478,7 +3478,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 207.204
+        "km": 91.893
       },
       {
         "city": "Krak\u00f3w",
@@ -3510,7 +3510,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 63.6
+        "km": 182.592
       },
       {
         "city": "Krak\u00f3w",
@@ -3518,7 +3518,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 222.654
+        "km": 98.76
       },
       {
         "city": "Krak\u00f3w",
@@ -3550,7 +3550,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 64.522
+        "km": 184.112
       },
       {
         "city": "Krak\u00f3w",
@@ -3558,7 +3558,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 222.5
+        "km": 98.011
       },
       {
         "city": "Krak\u00f3w",
@@ -3590,7 +3590,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 64.901
+        "km": 191.618
       },
       {
         "city": "Krak\u00f3w",
@@ -3598,7 +3598,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 236.02
+        "km": 104.514
       },
       {
         "city": "Krak\u00f3w",
@@ -3614,7 +3614,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 22.125
+        "km": 21.928
       },
       {
         "city": "Krak\u00f3w",
@@ -3630,7 +3630,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 121.269
+        "km": 118.854
       },
       {
         "city": "Ljubljana",
@@ -3638,7 +3638,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 6.519
+        "km": 8.934
       },
       {
         "city": "Ljubljana",
@@ -3670,7 +3670,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 122.633
+        "km": 117.319
       },
       {
         "city": "Ljubljana",
@@ -3678,7 +3678,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 7.434
+        "km": 12.748
       },
       {
         "city": "Ljubljana",
@@ -3710,7 +3710,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 124.961
+        "km": 120.776
       },
       {
         "city": "Ljubljana",
@@ -3718,7 +3718,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 13.45
+        "km": 17.636
       },
       {
         "city": "Ljubljana",
@@ -3750,7 +3750,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 154.82
+        "km": 151.35
       },
       {
         "city": "Ljubljana",
@@ -3758,7 +3758,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 42.783
+        "km": 42.242
       },
       {
         "city": "Ljubljana",
@@ -3790,7 +3790,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 108.633
+        "km": 175.888
       },
       {
         "city": "Ljubljana",
@@ -3798,7 +3798,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 103.416
+        "km": 36.028
       },
       {
         "city": "Ljubljana",
@@ -3830,7 +3830,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 51.785
+        "km": 189.593
       },
       {
         "city": "Ljubljana",
@@ -3838,7 +3838,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 169.057
+        "km": 31.115
       },
       {
         "city": "Ljubljana",
@@ -3870,7 +3870,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 41.813
+        "km": 190.783
       },
       {
         "city": "Ljubljana",
@@ -3878,7 +3878,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 183.846
+        "km": 33.84
       },
       {
         "city": "Ljubljana",
@@ -3910,7 +3910,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 44.296
+        "km": 194.102
       },
       {
         "city": "Ljubljana",
@@ -3918,7 +3918,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 184.204
+        "km": 33.362
       },
       {
         "city": "Ljubljana",
@@ -3950,7 +3950,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 50.658
+        "km": 193.749
       },
       {
         "city": "Ljubljana",
@@ -3958,7 +3958,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 180.982
+        "km": 34.343
       },
       {
         "city": "Ljubljana",
@@ -3990,7 +3990,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 46.376
+        "km": 208.704
       },
       {
         "city": "Ljubljana",
@@ -3998,7 +3998,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 202.185
+        "km": 36.309
       },
       {
         "city": "Ljubljana",
@@ -4030,7 +4030,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 47.809
+        "km": 40.317
       },
       {
         "city": "Lyon",
@@ -4038,7 +4038,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 16.686
+        "km": 24.178
       },
       {
         "city": "Lyon",
@@ -4070,7 +4070,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 48.214
+        "km": 40.839
       },
       {
         "city": "Lyon",
@@ -4078,7 +4078,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 13.838
+        "km": 21.213
       },
       {
         "city": "Lyon",
@@ -4110,7 +4110,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 49.299
+        "km": 40.364
       },
       {
         "city": "Lyon",
@@ -4118,7 +4118,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.732
+        "km": 20.667
       },
       {
         "city": "Lyon",
@@ -4150,7 +4150,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 57.955
+        "km": 49.742
       },
       {
         "city": "Lyon",
@@ -4158,7 +4158,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 10.696
+        "km": 18.909
       },
       {
         "city": "Lyon",
@@ -4190,7 +4190,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 59.203
+        "km": 52.663
       },
       {
         "city": "Lyon",
@@ -4198,7 +4198,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 9.419
+        "km": 15.959
       },
       {
         "city": "Lyon",
@@ -4230,7 +4230,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 64.915
+        "km": 57.545
       },
       {
         "city": "Lyon",
@@ -4238,7 +4238,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 9.481
+        "km": 16.851
       },
       {
         "city": "Lyon",
@@ -4270,7 +4270,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 71.956
+        "km": 65.765
       },
       {
         "city": "Lyon",
@@ -4278,7 +4278,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.419
+        "km": 17.61
       },
       {
         "city": "Lyon",
@@ -4310,7 +4310,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 83.908
+        "km": 76.923
       },
       {
         "city": "Lyon",
@@ -4318,7 +4318,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 10.799
+        "km": 17.784
       },
       {
         "city": "Lyon",
@@ -4350,7 +4350,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 92.876
+        "km": 88.133
       },
       {
         "city": "Lyon",
@@ -4358,7 +4358,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 13.803
+        "km": 18.545
       },
       {
         "city": "Lyon",
@@ -4390,7 +4390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 95.802
+        "km": 93.142
       },
       {
         "city": "Lyon",
@@ -4398,7 +4398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 17.19
+        "km": 19.851
       },
       {
         "city": "Lyon",
@@ -4414,7 +4414,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 172.928
+        "km": 172.927
       },
       {
         "city": "Lyon",
@@ -4430,7 +4430,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 249.052
+        "km": 183.054
       },
       {
         "city": "Madrid",
@@ -4438,7 +4438,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 33.3
+        "km": 99.298
       },
       {
         "city": "Madrid",
@@ -4470,7 +4470,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 249.08
+        "km": 187.567
       },
       {
         "city": "Madrid",
@@ -4478,7 +4478,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 33.23
+        "km": 94.744
       },
       {
         "city": "Madrid",
@@ -4510,7 +4510,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 249.436
+        "km": 185.526
       },
       {
         "city": "Madrid",
@@ -4518,7 +4518,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 28.667
+        "km": 92.578
       },
       {
         "city": "Madrid",
@@ -4550,7 +4550,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 261.552
+        "km": 225.223
       },
       {
         "city": "Madrid",
@@ -4558,7 +4558,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 26.315
+        "km": 62.644
       },
       {
         "city": "Madrid",
@@ -4590,7 +4590,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 266.241
+        "km": 231.375
       },
       {
         "city": "Madrid",
@@ -4598,7 +4598,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 31.59
+        "km": 66.455
       },
       {
         "city": "Madrid",
@@ -4630,7 +4630,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 274.19
+        "km": 242.373
       },
       {
         "city": "Madrid",
@@ -4638,7 +4638,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 37.98
+        "km": 65.48
       },
       {
         "city": "Madrid",
@@ -4670,7 +4670,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 286.48
+        "km": 254.655
       },
       {
         "city": "Madrid",
@@ -4678,7 +4678,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 39.09
+        "km": 66.344
       },
       {
         "city": "Madrid",
@@ -4710,7 +4710,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 293.57
+        "km": 252.573
       },
       {
         "city": "Madrid",
@@ -4718,7 +4718,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 40.493
+        "km": 76.919
       },
       {
         "city": "Madrid",
@@ -4750,7 +4750,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 312.371
+        "km": 266.132
       },
       {
         "city": "Madrid",
@@ -4758,7 +4758,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 38.559
+        "km": 80.219
       },
       {
         "city": "Madrid",
@@ -4790,7 +4790,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 318.342
+        "km": 273.349
       },
       {
         "city": "Madrid",
@@ -4798,7 +4798,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 39.104
+        "km": 79.668
       },
       {
         "city": "Madrid",
@@ -4830,7 +4830,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 130.924
+        "km": 38.383
       },
       {
         "city": "Oslo",
@@ -4838,7 +4838,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 132.313
+        "km": 222.418
       },
       {
         "city": "Oslo",
@@ -4870,7 +4870,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 114.287
+        "km": 36.587
       },
       {
         "city": "Oslo",
@@ -4878,7 +4878,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 151.149
+        "km": 226.653
       },
       {
         "city": "Oslo",
@@ -4910,7 +4910,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 110.794
+        "km": 41.861
       },
       {
         "city": "Oslo",
@@ -4918,7 +4918,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 155.125
+        "km": 222.01
       },
       {
         "city": "Oslo",
@@ -4950,7 +4950,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 108.906
+        "km": 49.63
       },
       {
         "city": "Oslo",
@@ -4958,7 +4958,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 191.497
+        "km": 248.458
       },
       {
         "city": "Oslo",
@@ -4990,7 +4990,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 101.83
+        "km": 50.244
       },
       {
         "city": "Oslo",
@@ -4998,7 +4998,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 214.582
+        "km": 262.689
       },
       {
         "city": "Oslo",
@@ -5030,7 +5030,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 93.758
+        "km": 48.683
       },
       {
         "city": "Oslo",
@@ -5038,7 +5038,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 227.946
+        "km": 269.062
       },
       {
         "city": "Oslo",
@@ -5070,7 +5070,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 97.557
+        "km": 53.306
       },
       {
         "city": "Oslo",
@@ -5078,7 +5078,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 232.093
+        "km": 271.702
       },
       {
         "city": "Oslo",
@@ -5110,7 +5110,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 57.675
+        "km": 55.54
       },
       {
         "city": "Oslo",
@@ -5118,7 +5118,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 277.167
+        "km": 274.735
       },
       {
         "city": "Oslo",
@@ -5150,7 +5150,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 60.262
+        "km": 57.611
       },
       {
         "city": "Oslo",
@@ -5158,7 +5158,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 278.856
+        "km": 276.941
       },
       {
         "city": "Oslo",
@@ -5190,7 +5190,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 61.942
+        "km": 59.817
       },
       {
         "city": "Oslo",
@@ -5198,7 +5198,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 284.132
+        "km": 281.56
       },
       {
         "city": "Oslo",
@@ -5214,7 +5214,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 160.538
+        "km": 160.563
       },
       {
         "city": "Oslo",
@@ -5230,7 +5230,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 196.912
+        "km": 181.05
       },
       {
         "city": "Paris",
@@ -5238,7 +5238,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 11.655
+        "km": 27.517
       },
       {
         "city": "Paris",
@@ -5270,7 +5270,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 211.231
+        "km": 199.121
       },
       {
         "city": "Paris",
@@ -5278,7 +5278,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 12.694
+        "km": 24.804
       },
       {
         "city": "Paris",
@@ -5310,7 +5310,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 241.132
+        "km": 231.869
       },
       {
         "city": "Paris",
@@ -5318,7 +5318,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 16.155
+        "km": 25.418
       },
       {
         "city": "Paris",
@@ -5350,7 +5350,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 286.42
+        "km": 277.525
       },
       {
         "city": "Paris",
@@ -5358,7 +5358,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 19.142
+        "km": 28.038
       },
       {
         "city": "Paris",
@@ -5390,7 +5390,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 281.953
+        "km": 278.987
       },
       {
         "city": "Paris",
@@ -5398,7 +5398,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 27.13
+        "km": 30.097
       },
       {
         "city": "Paris",
@@ -5430,7 +5430,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 278.72
+        "km": 276.537
       },
       {
         "city": "Paris",
@@ -5438,7 +5438,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 25.472
+        "km": 27.654
       },
       {
         "city": "Paris",
@@ -5470,7 +5470,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 294.612
+        "km": 291.857
       },
       {
         "city": "Paris",
@@ -5478,7 +5478,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 23.975
+        "km": 26.73
       },
       {
         "city": "Paris",
@@ -5510,7 +5510,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 324.569
+        "km": 317.441
       },
       {
         "city": "Paris",
@@ -5518,7 +5518,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 21.169
+        "km": 28.297
       },
       {
         "city": "Paris",
@@ -5550,7 +5550,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 334.079
+        "km": 330.531
       },
       {
         "city": "Paris",
@@ -5558,7 +5558,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 21.143
+        "km": 24.691
       },
       {
         "city": "Paris",
@@ -5590,7 +5590,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 335.092
+        "km": 332.494
       },
       {
         "city": "Paris",
@@ -5598,7 +5598,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 21.404
+        "km": 24.077
       },
       {
         "city": "Paris",
@@ -5614,7 +5614,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 146.996
+        "km": 147.011
       },
       {
         "city": "Paris",
@@ -5630,7 +5630,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 145.677
+        "km": 32.949
       },
       {
         "city": "Praha",
@@ -5638,7 +5638,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 37.116
+        "km": 148.661
       },
       {
         "city": "Praha",
@@ -5670,7 +5670,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 163.911
+        "km": 43.356
       },
       {
         "city": "Praha",
@@ -5678,7 +5678,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 37.598
+        "km": 156.969
       },
       {
         "city": "Praha",
@@ -5710,7 +5710,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 196.626
+        "km": 46.561
       },
       {
         "city": "Praha",
@@ -5718,7 +5718,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 36.158
+        "km": 184.894
       },
       {
         "city": "Praha",
@@ -5750,7 +5750,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 191.322
+        "km": 49.489
       },
       {
         "city": "Praha",
@@ -5758,7 +5758,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 51.854
+        "km": 192.36
       },
       {
         "city": "Praha",
@@ -5790,7 +5790,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 140.189
+        "km": 41.756
       },
       {
         "city": "Praha",
@@ -5798,7 +5798,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 113.959
+        "km": 205.686
       },
       {
         "city": "Praha",
@@ -5830,7 +5830,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 136.92
+        "km": 41.546
       },
       {
         "city": "Praha",
@@ -5838,7 +5838,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 123.584
+        "km": 212.211
       },
       {
         "city": "Praha",
@@ -5870,7 +5870,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 127.69
+        "km": 39.024
       },
       {
         "city": "Praha",
@@ -5878,7 +5878,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 142.422
+        "km": 227.098
       },
       {
         "city": "Praha",
@@ -5910,7 +5910,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 128.55
+        "km": 45.516
       },
       {
         "city": "Praha",
@@ -5918,7 +5918,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 154.507
+        "km": 233.364
       },
       {
         "city": "Praha",
@@ -5950,7 +5950,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 129.77
+        "km": 45.111
       },
       {
         "city": "Praha",
@@ -5958,7 +5958,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 160.626
+        "km": 241.039
       },
       {
         "city": "Praha",
@@ -5990,7 +5990,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 106.722
+        "km": 44.742
       },
       {
         "city": "Praha",
@@ -5998,7 +5998,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 188.323
+        "km": 244.545
       },
       {
         "city": "Praha",
@@ -6014,7 +6014,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 189.798
+        "km": 189.792
       },
       {
         "city": "Praha",
@@ -6030,7 +6030,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 886.427
+        "km": 314.966
       },
       {
         "city": "Stockholm",
@@ -6038,7 +6038,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 58.618
+        "km": 629.119
       },
       {
         "city": "Stockholm",
@@ -6070,7 +6070,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 880.434
+        "km": 302.745
       },
       {
         "city": "Stockholm",
@@ -6078,7 +6078,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 75.482
+        "km": 644.413
       },
       {
         "city": "Stockholm",
@@ -6110,7 +6110,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 863.207
+        "km": 288.415
       },
       {
         "city": "Stockholm",
@@ -6118,7 +6118,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 91.229
+        "km": 656.518
       },
       {
         "city": "Stockholm",
@@ -6150,7 +6150,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 850.917
+        "km": 334.111
       },
       {
         "city": "Stockholm",
@@ -6158,7 +6158,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 111.54
+        "km": 617.302
       },
       {
         "city": "Stockholm",
@@ -6190,7 +6190,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 832.414
+        "km": 337.47
       },
       {
         "city": "Stockholm",
@@ -6198,7 +6198,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 139.122
+        "km": 622.853
       },
       {
         "city": "Stockholm",
@@ -6230,7 +6230,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 807.315
+        "km": 351.063
       },
       {
         "city": "Stockholm",
@@ -6238,7 +6238,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 146.554
+        "km": 592.171
       },
       {
         "city": "Stockholm",
@@ -6270,7 +6270,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 789.348
+        "km": 369.877
       },
       {
         "city": "Stockholm",
@@ -6278,7 +6278,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 177.001
+        "km": 586.74
       },
       {
         "city": "Stockholm",
@@ -6310,7 +6310,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 796.357
+        "km": 394.132
       },
       {
         "city": "Stockholm",
@@ -6318,7 +6318,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 187.074
+        "km": 579.284
       },
       {
         "city": "Stockholm",
@@ -6350,7 +6350,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 788.777
+        "km": 407.891
       },
       {
         "city": "Stockholm",
@@ -6358,7 +6358,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 206.923
+        "km": 577.792
       },
       {
         "city": "Stockholm",
@@ -6390,7 +6390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 769.078
+        "km": 414.715
       },
       {
         "city": "Stockholm",
@@ -6398,7 +6398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 232.989
+        "km": 576.575
       },
       {
         "city": "Stockholm",
@@ -6414,7 +6414,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 47.795
+        "km": 47.915
       },
       {
         "city": "Stockholm",
@@ -6430,7 +6430,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 165.4
+        "km": 156.019
       },
       {
         "city": "Strasbourg",
@@ -6438,7 +6438,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 18.689
+        "km": 28.071
       },
       {
         "city": "Strasbourg",
@@ -6470,7 +6470,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 169.595
+        "km": 156.342
       },
       {
         "city": "Strasbourg",
@@ -6478,7 +6478,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 17.424
+        "km": 30.677
       },
       {
         "city": "Strasbourg",
@@ -6510,7 +6510,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 173.266
+        "km": 158.576
       },
       {
         "city": "Strasbourg",
@@ -6518,7 +6518,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 26.251
+        "km": 40.941
       },
       {
         "city": "Strasbourg",
@@ -6550,7 +6550,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 176.031
+        "km": 165.512
       },
       {
         "city": "Strasbourg",
@@ -6558,7 +6558,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 29.875
+        "km": 40.393
       },
       {
         "city": "Strasbourg",
@@ -6590,7 +6590,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 172.796
+        "km": 167.169
       },
       {
         "city": "Strasbourg",
@@ -6598,7 +6598,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 33.119
+        "km": 38.746
       },
       {
         "city": "Strasbourg",
@@ -6630,7 +6630,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 168.534
+        "km": 162.459
       },
       {
         "city": "Strasbourg",
@@ -6638,7 +6638,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 43.417
+        "km": 49.492
       },
       {
         "city": "Strasbourg",
@@ -6670,7 +6670,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 172.231
+        "km": 165.634
       },
       {
         "city": "Strasbourg",
@@ -6678,7 +6678,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 45.971
+        "km": 52.568
       },
       {
         "city": "Strasbourg",
@@ -6710,7 +6710,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 156.466
+        "km": 158.199
       },
       {
         "city": "Strasbourg",
@@ -6718,7 +6718,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 69.541
+        "km": 67.807
       },
       {
         "city": "Strasbourg",
@@ -6750,7 +6750,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 164.013
+        "km": 165.699
       },
       {
         "city": "Strasbourg",
@@ -6758,7 +6758,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 68.956
+        "km": 67.271
       },
       {
         "city": "Strasbourg",
@@ -6790,7 +6790,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 170.498
+        "km": 172.019
       },
       {
         "city": "Strasbourg",
@@ -6798,7 +6798,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 70.62
+        "km": 69.098
       },
       {
         "city": "Strasbourg",
@@ -6830,7 +6830,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 339.263
+        "km": 336.315
       },
       {
         "city": "Utrecht",
@@ -6838,7 +6838,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.109
+        "km": 5.0
       },
       {
         "city": "Utrecht",
@@ -6870,7 +6870,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 339.64
+        "km": 334.986
       },
       {
         "city": "Utrecht",
@@ -6878,7 +6878,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.109
+        "km": 6.706
       },
       {
         "city": "Utrecht",
@@ -6910,7 +6910,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 342.475
+        "km": 336.164
       },
       {
         "city": "Utrecht",
@@ -6918,7 +6918,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.112
+        "km": 8.269
       },
       {
         "city": "Utrecht",
@@ -6950,7 +6950,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 343.22
+        "km": 329.923
       },
       {
         "city": "Utrecht",
@@ -6958,7 +6958,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 2.524
+        "km": 15.676
       },
       {
         "city": "Utrecht",
@@ -6990,7 +6990,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 343.398
+        "km": 328.444
       },
       {
         "city": "Utrecht",
@@ -6998,7 +6998,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 1.853
+        "km": 16.662
       },
       {
         "city": "Utrecht",
@@ -7030,7 +7030,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 343.275
+        "km": 326.034
       },
       {
         "city": "Utrecht",
@@ -7038,7 +7038,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 5.19
+        "km": 22.283
       },
       {
         "city": "Utrecht",
@@ -7070,7 +7070,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 345.281
+        "km": 327.831
       },
       {
         "city": "Utrecht",
@@ -7078,7 +7078,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 10.099
+        "km": 27.401
       },
       {
         "city": "Utrecht",
@@ -7110,7 +7110,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 344.758
+        "km": 321.107
       },
       {
         "city": "Utrecht",
@@ -7118,7 +7118,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 12.422
+        "km": 34.292
       },
       {
         "city": "Utrecht",
@@ -7150,7 +7150,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 343.204
+        "km": 312.943
       },
       {
         "city": "Utrecht",
@@ -7158,7 +7158,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 19.035
+        "km": 46.972
       },
       {
         "city": "Utrecht",
@@ -7190,7 +7190,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 343.836
+        "km": 316.873
       },
       {
         "city": "Utrecht",
@@ -7198,7 +7198,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 18.995
+        "km": 43.62
       },
       {
         "city": "Utrecht",
@@ -7230,7 +7230,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 495.212
+        "km": 238.624
       },
       {
         "city": "Wien",
@@ -7238,7 +7238,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 63.279
+        "km": 319.552
       },
       {
         "city": "Wien",
@@ -7270,7 +7270,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 483.123
+        "km": 233.796
       },
       {
         "city": "Wien",
@@ -7278,7 +7278,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 75.105
+        "km": 324.117
       },
       {
         "city": "Wien",
@@ -7310,7 +7310,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 454.575
+        "km": 226.849
       },
       {
         "city": "Wien",
@@ -7318,7 +7318,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 108.24
+        "km": 325.292
       },
       {
         "city": "Wien",
@@ -7350,7 +7350,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 436.792
+        "km": 243.099
       },
       {
         "city": "Wien",
@@ -7358,7 +7358,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 146.226
+        "km": 328.623
       },
       {
         "city": "Wien",
@@ -7390,7 +7390,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 433.52
+        "km": 252.555
       },
       {
         "city": "Wien",
@@ -7398,7 +7398,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 158.602
+        "km": 327.815
       },
       {
         "city": "Wien",
@@ -7430,7 +7430,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 426.712
+        "km": 255.418
       },
       {
         "city": "Wien",
@@ -7438,7 +7438,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 169.146
+        "km": 328.611
       },
       {
         "city": "Wien",
@@ -7470,7 +7470,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 427.502
+        "km": 263.666
       },
       {
         "city": "Wien",
@@ -7478,7 +7478,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 180.58
+        "km": 332.628
       },
       {
         "city": "Wien",
@@ -7510,7 +7510,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 440.401
+        "km": 278.79
       },
       {
         "city": "Wien",
@@ -7518,7 +7518,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 192.522
+        "km": 341.294
       },
       {
         "city": "Wien",
@@ -7550,7 +7550,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 465.788
+        "km": 301.388
       },
       {
         "city": "Wien",
@@ -7558,7 +7558,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 201.618
+        "km": 352.125
       },
       {
         "city": "Wien",
@@ -7590,7 +7590,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 474.739
+        "km": 313.957
       },
       {
         "city": "Wien",
@@ -7598,7 +7598,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 205.091
+        "km": 351.712
       },
       {
         "city": "Wien",
@@ -7630,7 +7630,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 406.974
+        "km": 394.608
       },
       {
         "city": "Warszawa",
@@ -7638,7 +7638,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 121.918
+        "km": 133.569
       },
       {
         "city": "Warszawa",
@@ -7670,7 +7670,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 451.078
+        "km": 432.125
       },
       {
         "city": "Warszawa",
@@ -7678,7 +7678,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 126.573
+        "km": 144.812
       },
       {
         "city": "Warszawa",
@@ -7710,7 +7710,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 487.456
+        "km": 471.279
       },
       {
         "city": "Warszawa",
@@ -7718,7 +7718,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 137.844
+        "km": 152.461
       },
       {
         "city": "Warszawa",
@@ -7750,7 +7750,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 530.874
+        "km": 528.039
       },
       {
         "city": "Warszawa",
@@ -7758,7 +7758,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 145.073
+        "km": 146.341
       },
       {
         "city": "Warszawa",
@@ -7790,7 +7790,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 498.503
+        "km": 533.11
       },
       {
         "city": "Warszawa",
@@ -7798,7 +7798,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 190.607
+        "km": 151.867
       },
       {
         "city": "Warszawa",
@@ -7830,7 +7830,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 494.72
+        "km": 543.645
       },
       {
         "city": "Warszawa",
@@ -7838,7 +7838,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 210.257
+        "km": 157.187
       },
       {
         "city": "Warszawa",
@@ -7870,7 +7870,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 503.946
+        "km": 557.138
       },
       {
         "city": "Warszawa",
@@ -7878,7 +7878,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 202.449
+        "km": 148.304
       },
       {
         "city": "Warszawa",
@@ -7910,7 +7910,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 508.383
+        "km": 574.628
       },
       {
         "city": "Warszawa",
@@ -7918,7 +7918,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 227.896
+        "km": 160.703
       },
       {
         "city": "Warszawa",
@@ -7950,7 +7950,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 505.724
+        "km": 584.689
       },
       {
         "city": "Warszawa",
@@ -7958,7 +7958,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 247.538
+        "km": 167.625
       },
       {
         "city": "Warszawa",
@@ -7990,7 +7990,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 508.516
+        "km": 597.977
       },
       {
         "city": "Warszawa",
@@ -7998,7 +7998,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 255.104
+        "km": 164.721
       },
       {
         "city": "Warszawa",
@@ -8014,7 +8014,7 @@
         "label": "now",
         "tier": "D",
         "tier_label": "D painted lane",
-        "km": 65.303
+        "km": 65.276
       },
       {
         "city": "Warszawa",
@@ -8030,7 +8030,7 @@
         "label": "2018",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 167.692
+        "km": 178.413
       },
       {
         "city": "Wroc\u0142aw",
@@ -8038,7 +8038,7 @@
         "label": "2018",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 93.783
+        "km": 83.063
       },
       {
         "city": "Wroc\u0142aw",
@@ -8070,7 +8070,7 @@
         "label": "2019",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 131.956
+        "km": 183.83
       },
       {
         "city": "Wroc\u0142aw",
@@ -8078,7 +8078,7 @@
         "label": "2019",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 140.745
+        "km": 88.87
       },
       {
         "city": "Wroc\u0142aw",
@@ -8110,7 +8110,7 @@
         "label": "2020",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 133.538
+        "km": 192.767
       },
       {
         "city": "Wroc\u0142aw",
@@ -8118,7 +8118,7 @@
         "label": "2020",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 154.948
+        "km": 95.719
       },
       {
         "city": "Wroc\u0142aw",
@@ -8150,7 +8150,7 @@
         "label": "2021",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 137.991
+        "km": 204.239
       },
       {
         "city": "Wroc\u0142aw",
@@ -8158,7 +8158,7 @@
         "label": "2021",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 167.99
+        "km": 101.742
       },
       {
         "city": "Wroc\u0142aw",
@@ -8190,7 +8190,7 @@
         "label": "2022",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 143.17
+        "km": 216.881
       },
       {
         "city": "Wroc\u0142aw",
@@ -8198,7 +8198,7 @@
         "label": "2022",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 190.391
+        "km": 116.68
       },
       {
         "city": "Wroc\u0142aw",
@@ -8230,7 +8230,7 @@
         "label": "2023",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 132.234
+        "km": 224.631
       },
       {
         "city": "Wroc\u0142aw",
@@ -8238,7 +8238,7 @@
         "label": "2023",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 215.881
+        "km": 123.483
       },
       {
         "city": "Wroc\u0142aw",
@@ -8270,7 +8270,7 @@
         "label": "2024",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 135.21
+        "km": 234.077
       },
       {
         "city": "Wroc\u0142aw",
@@ -8278,7 +8278,7 @@
         "label": "2024",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 227.115
+        "km": 128.248
       },
       {
         "city": "Wroc\u0142aw",
@@ -8310,7 +8310,7 @@
         "label": "2025",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 151.044
+        "km": 252.029
       },
       {
         "city": "Wroc\u0142aw",
@@ -8318,7 +8318,7 @@
         "label": "2025",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 235.305
+        "km": 134.32
       },
       {
         "city": "Wroc\u0142aw",
@@ -8350,7 +8350,7 @@
         "label": "2026",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 148.765
+        "km": 255.675
       },
       {
         "city": "Wroc\u0142aw",
@@ -8358,7 +8358,7 @@
         "label": "2026",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 241.868
+        "km": 134.959
       },
       {
         "city": "Wroc\u0142aw",
@@ -8390,7 +8390,7 @@
         "label": "now",
         "tier": "A",
         "tier_label": "A separated track",
-        "km": 148.43
+        "km": 258.082
       },
       {
         "city": "Wroc\u0142aw",
@@ -8398,7 +8398,7 @@
         "label": "now",
         "tier": "B",
         "tier_label": "B shared foot/cycle path",
-        "km": 250.382
+        "km": 140.73
       },
       {
         "city": "Wroc\u0142aw",

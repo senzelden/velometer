@@ -177,26 +177,26 @@
       {
         "source": "Ours: headline (n=21)",
         "source_id": "ours_headline",
-        "city": "Stockholm",
-        "city_id": "stockholm",
-        "city_label": "Stockholm",
-        "dagger": false,
-        "role": "other",
-        "rank": 1,
-        "value": 263.884,
-        "value_text": "263.88"
-      },
-      {
-        "source": "Ours: headline (n=21)",
-        "source_id": "ours_headline",
         "city": "Helsinki",
         "city_id": "helsinki",
         "city_label": "Helsinki",
         "dagger": false,
         "role": "other",
+        "rank": 1,
+        "value": 262.281,
+        "value_text": "262.28"
+      },
+      {
+        "source": "Ours: headline (n=21)",
+        "source_id": "ours_headline",
+        "city": "Stockholm",
+        "city_id": "stockholm",
+        "city_label": "Stockholm",
+        "dagger": false,
+        "role": "other",
         "rank": 2,
-        "value": 263.287,
-        "value_text": "263.29"
+        "value": 261.046,
+        "value_text": "261.05"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -207,8 +207,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 3,
-        "value": 238.075,
-        "value_text": "238.08"
+        "value": 237.857,
+        "value_text": "237.86"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -231,8 +231,8 @@
         "dagger": false,
         "role": "other",
         "rank": 5,
-        "value": 194.762,
-        "value_text": "194.76"
+        "value": 193.56,
+        "value_text": "193.56"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -255,8 +255,8 @@
         "dagger": false,
         "role": "highlight",
         "rank": 7,
-        "value": 109.629,
-        "value_text": "109.63"
+        "value": 109.124,
+        "value_text": "109.12"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -279,8 +279,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 9,
-        "value": 90.955,
-        "value_text": "90.95"
+        "value": 89.06,
+        "value_text": "89.06"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -291,8 +291,8 @@
         "dagger": false,
         "role": "other",
         "rank": 10,
-        "value": 82.445,
-        "value_text": "82.45"
+        "value": 82.339,
+        "value_text": "82.34"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -303,8 +303,8 @@
         "dagger": false,
         "role": "other",
         "rank": 11,
-        "value": 74.595,
-        "value_text": "74.60"
+        "value": 73.531,
+        "value_text": "73.53"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -315,8 +315,8 @@
         "dagger": false,
         "role": "other",
         "rank": 12,
-        "value": 73.775,
-        "value_text": "73.78"
+        "value": 72.601,
+        "value_text": "72.60"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -327,8 +327,8 @@
         "dagger": false,
         "role": "other",
         "rank": 13,
-        "value": 71.811,
-        "value_text": "71.81"
+        "value": 70.837,
+        "value_text": "70.84"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -339,8 +339,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 14,
-        "value": 63.067,
-        "value_text": "63.07"
+        "value": 63.08,
+        "value_text": "63.08"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -351,8 +351,8 @@
         "dagger": false,
         "role": "other",
         "rank": 15,
-        "value": 61.186,
-        "value_text": "61.19"
+        "value": 58.73,
+        "value_text": "58.73"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -376,7 +376,7 @@
         "role": "other",
         "rank": 17,
         "value": 52.305,
-        "value_text": "52.30"
+        "value_text": "52.31"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -387,8 +387,8 @@
         "dagger": false,
         "role": "other",
         "rank": 18,
-        "value": 43.075,
-        "value_text": "43.08"
+        "value": 42.542,
+        "value_text": "42.54"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -399,8 +399,8 @@
         "dagger": false,
         "role": "other",
         "rank": 19,
-        "value": 39.979,
-        "value_text": "39.98"
+        "value": 40.279,
+        "value_text": "40.28"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -411,8 +411,8 @@
         "dagger": false,
         "role": "other",
         "rank": 20,
-        "value": 30.21,
-        "value_text": "30.21"
+        "value": 29.635,
+        "value_text": "29.63"
       },
       {
         "source": "Ours: headline (n=21)",
@@ -423,8 +423,8 @@
         "dagger": false,
         "role": "other",
         "rank": 21,
-        "value": 22.405,
-        "value_text": "22.40"
+        "value": 22.334,
+        "value_text": "22.33"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -435,8 +435,8 @@
         "dagger": false,
         "role": "other",
         "rank": 1,
-        "value": 167.193,
-        "value_text": "167.19"
+        "value": 166.544,
+        "value_text": "166.54"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -447,8 +447,8 @@
         "dagger": false,
         "role": "other",
         "rank": 2,
-        "value": 143.806,
-        "value_text": "143.81"
+        "value": 142.465,
+        "value_text": "142.47"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -459,8 +459,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 3,
-        "value": 109.111,
-        "value_text": "109.11"
+        "value": 108.957,
+        "value_text": "108.96"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -483,8 +483,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 5,
-        "value": 89.043,
-        "value_text": "89.04"
+        "value": 89.046,
+        "value_text": "89.05"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -495,20 +495,8 @@
         "dagger": false,
         "role": "other",
         "rank": 6,
-        "value": 81.495,
-        "value_text": "81.49"
-      },
-      {
-        "source": "Ours: QECIO method (n=21)",
-        "source_id": "ours_ecf_qecio",
-        "city": "Wien",
-        "city_id": "vienna",
-        "city_label": "Wien",
-        "dagger": false,
-        "role": "comparison",
-        "rank": 7,
-        "value": 69.785,
-        "value_text": "69.79"
+        "value": 81.208,
+        "value_text": "81.21"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -518,7 +506,7 @@
         "city_label": "Lyon",
         "dagger": false,
         "role": "other",
-        "rank": 8,
+        "rank": 7,
         "value": 69.369,
         "value_text": "69.37"
       },
@@ -530,9 +518,21 @@
         "city_label": "Wroc\u0142aw",
         "dagger": false,
         "role": "other",
-        "rank": 9,
+        "rank": 8,
         "value": 69.276,
         "value_text": "69.28"
+      },
+      {
+        "source": "Ours: QECIO method (n=21)",
+        "source_id": "ours_ecf_qecio",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
+        "rank": 9,
+        "value": 68.984,
+        "value_text": "68.98"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -543,8 +543,8 @@
         "dagger": false,
         "role": "other",
         "rank": 10,
-        "value": 65.822,
-        "value_text": "65.82"
+        "value": 65.084,
+        "value_text": "65.08"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -555,8 +555,8 @@
         "dagger": false,
         "role": "highlight",
         "rank": 11,
-        "value": 54.036,
-        "value_text": "54.04"
+        "value": 53.811,
+        "value_text": "53.81"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -567,8 +567,8 @@
         "dagger": false,
         "role": "other",
         "rank": 12,
-        "value": 53.606,
-        "value_text": "53.61"
+        "value": 53.536,
+        "value_text": "53.54"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -579,8 +579,8 @@
         "dagger": false,
         "role": "other",
         "rank": 13,
-        "value": 50.771,
-        "value_text": "50.77"
+        "value": 50.957,
+        "value_text": "50.96"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -591,8 +591,8 @@
         "dagger": false,
         "role": "other",
         "rank": 14,
-        "value": 47.638,
-        "value_text": "47.64"
+        "value": 46.886,
+        "value_text": "46.89"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -603,7 +603,7 @@
         "dagger": false,
         "role": "comparison",
         "rank": 15,
-        "value": 46.457,
+        "value": 46.463,
         "value_text": "46.46"
       },
       {
@@ -615,8 +615,8 @@
         "dagger": false,
         "role": "other",
         "rank": 16,
-        "value": 42.694,
-        "value_text": "42.69"
+        "value": 42.236,
+        "value_text": "42.24"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -639,8 +639,8 @@
         "dagger": false,
         "role": "other",
         "rank": 18,
-        "value": 32.483,
-        "value_text": "32.48"
+        "value": 31.921,
+        "value_text": "31.92"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -651,8 +651,8 @@
         "dagger": false,
         "role": "other",
         "rank": 19,
-        "value": 28.298,
-        "value_text": "28.30"
+        "value": 27.959,
+        "value_text": "27.96"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -663,8 +663,8 @@
         "dagger": false,
         "role": "other",
         "rank": 20,
-        "value": 23.239,
-        "value_text": "23.24"
+        "value": 23.184,
+        "value_text": "23.18"
       },
       {
         "source": "Ours: QECIO method (n=21)",
@@ -675,8 +675,8 @@
         "dagger": false,
         "role": "other",
         "rank": 21,
-        "value": 16.005,
-        "value_text": "16.00"
+        "value": 15.798,
+        "value_text": "15.80"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -687,8 +687,8 @@
         "dagger": false,
         "role": "other",
         "rank": 1,
-        "value": 91.427,
-        "value_text": "91.43"
+        "value": 91.078,
+        "value_text": "91.08"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -699,8 +699,8 @@
         "dagger": false,
         "role": "comparison",
         "rank": 2,
-        "value": 58.64,
-        "value_text": "58.64"
+        "value": 58.587,
+        "value_text": "58.59"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -711,8 +711,8 @@
         "dagger": false,
         "role": "other",
         "rank": 3,
-        "value": 50.918,
-        "value_text": "50.92"
+        "value": 50.37,
+        "value_text": "50.37"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -723,7 +723,7 @@
         "dagger": false,
         "role": "comparison",
         "rank": 4,
-        "value": 42.223,
+        "value": 42.221,
         "value_text": "42.22"
       },
       {
@@ -747,8 +747,8 @@
         "dagger": false,
         "role": "other",
         "rank": 6,
-        "value": 32.342,
-        "value_text": "32.34"
+        "value": 32.135,
+        "value_text": "32.14"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -771,20 +771,8 @@
         "dagger": false,
         "role": "highlight",
         "rank": 8,
-        "value": 27.697,
-        "value_text": "27.70"
-      },
-      {
-        "source": "Ours: Clean Cities method (n=21)",
-        "source_id": "ours_clean_cities",
-        "city": "Wien",
-        "city_id": "vienna",
-        "city_label": "Wien",
-        "dagger": false,
-        "role": "comparison",
-        "rank": 9,
-        "value": 23.23,
-        "value_text": "23.23"
+        "value": 27.569,
+        "value_text": "27.57"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -794,9 +782,21 @@
         "city_label": "Paris",
         "dagger": false,
         "role": "comparison",
+        "rank": 9,
+        "value": 22.918,
+        "value_text": "22.92"
+      },
+      {
+        "source": "Ours: Clean Cities method (n=21)",
+        "source_id": "ours_clean_cities",
+        "city": "Wien",
+        "city_id": "vienna",
+        "city_label": "Wien",
+        "dagger": false,
+        "role": "comparison",
         "rank": 10,
-        "value": 22.913,
-        "value_text": "22.91"
+        "value": 22.745,
+        "value_text": "22.74"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -807,8 +807,8 @@
         "dagger": false,
         "role": "other",
         "rank": 11,
-        "value": 22.555,
-        "value_text": "22.55"
+        "value": 22.527,
+        "value_text": "22.53"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -819,8 +819,8 @@
         "dagger": false,
         "role": "other",
         "rank": 12,
-        "value": 21.204,
-        "value_text": "21.20"
+        "value": 20.901,
+        "value_text": "20.90"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -831,8 +831,8 @@
         "dagger": false,
         "role": "other",
         "rank": 13,
-        "value": 21.057,
-        "value_text": "21.06"
+        "value": 20.771,
+        "value_text": "20.77"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -855,8 +855,8 @@
         "dagger": false,
         "role": "other",
         "rank": 15,
-        "value": 17.513,
-        "value_text": "17.51"
+        "value": 17.239,
+        "value_text": "17.24"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -879,8 +879,8 @@
         "dagger": false,
         "role": "other",
         "rank": 17,
-        "value": 13.801,
-        "value_text": "13.80"
+        "value": 13.247,
+        "value_text": "13.25"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -891,8 +891,8 @@
         "dagger": false,
         "role": "other",
         "rank": 18,
-        "value": 11.15,
-        "value_text": "11.15"
+        "value": 11.205,
+        "value_text": "11.20"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -903,8 +903,8 @@
         "dagger": false,
         "role": "other",
         "rank": 19,
-        "value": 8.619,
-        "value_text": "8.62"
+        "value": 8.452,
+        "value_text": "8.45"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -915,8 +915,8 @@
         "dagger": false,
         "role": "other",
         "rank": 20,
-        "value": 7.837,
-        "value_text": "7.84"
+        "value": 7.74,
+        "value_text": "7.74"
       },
       {
         "source": "Ours: Clean Cities method (n=21)",
@@ -927,8 +927,8 @@
         "dagger": false,
         "role": "other",
         "rank": 21,
-        "value": 5.223,
-        "value_text": "5.22"
+        "value": 5.207,
+        "value_text": "5.21"
       },
       {
         "source": "Clean Cities 2025 (published) (n=17)",
