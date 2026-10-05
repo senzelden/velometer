@@ -129,7 +129,9 @@ def test_v4_standalone_way(tags, v4, v3):
 
 
 def test_retagging_cycleway_to_path_keeps_the_tier():
-    for foot, seg in itertools.product((None, "no", "yes", "designated"), (None, "yes", "no")):
+    for foot, seg in itertools.product(
+        (None, "no", "yes", "designated", "permissive"), (None, "yes", "no")
+    ):
         extra = {k: v for k, v in (("foot", foot), ("segregated", seg)) if v}
         cyc = standalone({"highway": "cycleway", "bicycle": "designated", **extra}, V4).tier
         path = standalone({"highway": "path", "bicycle": "designated", **extra}, V4).tier
