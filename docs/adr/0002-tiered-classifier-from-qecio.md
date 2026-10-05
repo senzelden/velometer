@@ -58,3 +58,75 @@ The rules are data (`config/classifier/v1.yaml`), not code. Every classification
 
 - Changing a rule means a new classifier version (`v2.yaml`). Versions are frozen per run (ADR 0005).
 - Fixture tests pin every rule (`tests/fixtures/`).
+
+## M6 amendment (2026-10-04)
+
+Classifier v4 (`config/classifier/v4.yaml`) changes the standalone-way rules and adds an MTB
+exclusion (M6 spec §3, `docs/superpowers/specs/2026-10-04-velometer-m6-design.md`). The user
+decided it on 2026-10-04, accepted its measured impact on 2026-10-05, and it became the report
+classifier then. The text above stays as the record of v1–v3.
+
+### Unified facility rule (spec §3.2)
+
+The v3 rules `A_cycleway`, `B_cycleway_foot`, `A_path_cycle_only`, `B_path_segregated` and
+`B_path` are replaced. The new rules apply to standalone ways with `highway=cycleway`, or
+`highway=path|footway|pedestrian` + `bicycle=designated`, that survive the exclusions. They are
+evaluated in this order, and any `;`/`,`-separated part of a value counts:
+
+| rule | condition | tier |
+|---|---|---|
+| `A_segregated` | `segregated=yes` | A |
+| `B_shared` | pedestrians permitted: `foot` ∈ {designated, yes, permissive}, or no `foot` tag on path/footway/pedestrian (decision 9) | B |
+| `A_cycle_only` | otherwise (cycleway with no `foot` tag or `foot=no`; path with `foot=no`) | A |
+
+Designated crossings (`highway=footway` + `footway=crossing` + `bicycle=designated`) stay B through
+a new `B_crossing` rule ahead of these, as v1–v3 counted them through `B_path`.
+
+**Decision 9: implicit pedestrian access follows the highway value.** On
+`highway=path|footway|pedestrian` a missing `foot` tag means pedestrians are permitted (the OSM
+default). On `highway=cycleway` it means they are not. So "otherwise → A" applies to cycleways
+with no `foot` tag or `foot=no`, and to paths with `foot=no`. Untagged cycleways stay A.
+
+### MTB exclusion (spec §3.3)
+
+`X_mtb_trail` (tier `excluded`, subtype `mtb`) applies to standalone `highway=path|cycleway|footway`
+ways with explicit MTB tagging: `mtb:scale` or any `mtb:scale:*` key; `mtb` ∈ {yes, designated,
+permissive}; an `mtb:type` key; or `cycling=mtb`. It sits with the other exclusions, before the
+tier rules. Surface and `route=mtb` membership are not used.
+
+### Divergences dropped
+
+- **Segregated shared paths in B.** `highway=path|footway|pedestrian` + `bicycle=designated` +
+  `segregated=yes` is now tier A (`A_segregated`), as QECIO counts it as a cycle track. The
+  `segregated` subtype of B disappears with `B_path_segregated`, so QECIO's "tracks" comparison is
+  A alone (`config/reconcile.yaml`, spec decision 11).
+- **`foot!=designated` as the A test on cycleways.** A cycleway with `foot=yes` or
+  `foot=permissive` is now B (`B_shared`), like `foot=designated`; only cycleways without
+  pedestrian access, or segregated ones, are A.
+
+### Kept
+
+- `qecio_weighted`: QECIO's halving of unidirectional infrastructure still lives in this length
+  basis, not in the tiers.
+- Road-side tracks are unchanged (decision 10): `cycleway:<side>=track` stays A, and
+  `B_track_shared` (`cycleway:<side>:segregated=no`) stays B. Road-side rules are identical to v3.
+- C/D (buffered vs painted lanes) and the remaining divergences above.
+
+### Measured impact (`docs/review/trust/v4-impact.md`)
+
+v3 against v4 on the same OSM extract (2026-10-03T20:20:50Z), LAU boundary, 21 cities, mapped km
+per side (ADR 0006):
+
+- The headline (`ours_headline`) moves by at most 2.7 points per city (Stockholm 263.7 → 261.0,
+  Bratislava 61.2 → 58.7, Vienna 91.0 → 89.1). The only rank change is the top pair: Helsinki
+  (262.3) now leads Stockholm (261.0).
+- A and B swap km in both directions. Cycleways with explicit foot access move A → B (Stockholm
+  A −354 / B +344 km, Helsinki −259 / +255, Amsterdam −191 / +191, Vienna −161 / +147). Segregated
+  sidepaths move B → A (Ljubljana A +162 / B −166 km, Kraków +127 / −132, Berlin +124 / −131,
+  Wrocław +110 / −110, Warsaw +89 / −90).
+- The MTB exclusion removes many km but few were counted: X_mtb_trail is 880 km in Oslo, 548 in
+  Helsinki, 169 in Prague, 125 in Berlin, 109 in Madrid, yet A+B falls by at most 14.2 km
+  (Vienna).
+- Six golden samples change tier (`docs/review/trust/v4-changes.md`). The user re-signed all six
+  as v4 classifies them (2026-10-05); they carry `min_classifier: v4`. Berlin's set for v4 is
+  `tests/fixtures/berlin_golden_v4.yaml`. The v1 set stays as the M1 record.
