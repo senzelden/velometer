@@ -1194,3 +1194,15 @@ def test_non_http_source_url_is_never_a_link(setup):
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="javascript:' not in html and "javascript:" not in section
     assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
+
+
+def test_reported_figure_note_gets_its_own_full_width_row(setup):
+    # A long source note in the link cell squeezed that column to a word per line (M6 render).
+    db_path, cfg, maps, docs = setup
+    _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin").text
+    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]
+    assert "Drucksache" not in link_cell
+    assert '<td colspan="8" class="meta">primary: Drucksache 19/25987' in section

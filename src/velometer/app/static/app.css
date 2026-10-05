@@ -51,6 +51,8 @@ td code { white-space: nowrap; }
 th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--flag); }
 tr.remainder td { border-top: 2px solid var(--ink-2); color: var(--ink-2); font-style: italic; }
+tr:has(+ tr.note-row) td { border-bottom: 0; }
+tr.note-row td { padding-top: 0; }
 
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem 2rem; }
 .chart { max-width: 100%; overflow-x: auto; margin: 0.5rem 0 1rem; }
