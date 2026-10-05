@@ -4,6 +4,14 @@ v3 against v4 on the same OSM extract (2026-10-03T20:20:50Z), LAU boundary, all 
 are mapped km per side in each city's EPSG (ADR 0006). The headline is `ours_headline` (A+B km
 per 100 km of main roads excl. motorways), ranked 1 = highest.
 
+**Note (2026-10-05).** The run ids on this page are partly from a scratch copy of the DB: the v3
+column's runs 714–734 and Berlin's v4 run 713 below are scratch-DB ids (in `velometer.sqlite`,
+714–734 are the v4 current FUA runs). The report's real v4 current LAU runs are 693–697, 713 and
+1113–1127; 698–712 are superseded (failed, "superseded by 1113–1127", see ADR 0005). The user
+took the decision this page asked for on 2026-10-05: the v4 impact is accepted, and Berlin's LAU
+edge outside the 12 Bezirke became an explicit remainder row (`docs/superpowers/rulings-m6.md`,
+"User decisions"). The table and text below are unchanged.
+
 **How this was made.**
 - v4 runs 693–712 are the real v4 runs in `velometer.sqlite`.
 - The real Berlin v4 run (692) failed the Bezirk sum check (see "Berlin" below). Berlin's v4

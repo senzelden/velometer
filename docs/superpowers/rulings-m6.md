@@ -130,15 +130,25 @@ One line each: what was decided, why, and what it costs if wrong.
   (p. 15). Cost: wording only.
 - **Task 18.** The reported-figures source notes moved to their own full-width row (the long
   notes squeezed the link column to one word per line on the Berlin page). Cost: none.
+- **Final fix wave (whole-branch review C1, I1, M2–M8; controller rulings).** C1 fixed, not
+  reworded: a still-unmatched gained side of a new way id that lies ≥ 80 % within 15 m of the
+  `from` geometry of a same-tier way-side whose id persists and whose length fell counts as
+  redrawn; a shrunk side absorbs at most its lost length + 20 % + 15 m; the change page gives the
+  net change per tier; the `change_map_mapped` limitation (EN/DE) says so. I1: the page, the
+  GeoJSON and the app name both runs, and the app notes when the change map ends before the
+  latest current LAU run. M1 parked (a rule change is a new version); the invariance test gained
+  `foot=permissive` only (green on v4). M2–M8 fixed as reviewed (M4 by a dated note). Cost: the
+  split matcher only considers new way ids, so a retagged existing way along a split stays a gain.
 
 ## Run set and verification (Tasks 16–18)
 
 - 420 done v4 runs, one `config_sha256`, one subarea sha, none `-dirty`: current LAU 693–697,
   713, 1113–1127; current FUA 714–734; history LAU 735–923; history FUA 924–1112. Wall clocks
   and peaks are in the ADR 0005 and 0007 M6 notes (largest: Paris FUA history 2026, 5.36 GB).
-- Berlin change map 2023-01-01 → current (runs 740 → 713): gained 797.2, lost 320.2, retiered
-  47.4, redrawn 301.0, geometry −364.4 mapped km; the Bezirk rows plus the remainder sum to the
-  city.
+- Berlin change map 2023-01-01 → current (runs 740 → 713), after the final fix wave (split-off
+  pieces count as redrawn): gained 442.3, lost 320.2, retiered 47.4, redrawn 655.9, geometry
+  −364.4 mapped km; net A–E +93.7 (2,064.3 → 2,157.9). Before the fix, gained was 797.2 and
+  redrawn 301.0. The Bezirk rows plus the remainder sum to the city.
 - Render check: 24 pages at 1280 and 390 px; network hosts only the app and OSM tiles; the only
   error was a favicon 404. The Berlin, Ljubljana, Stockholm and Vienna headlines (109.1, 73.5,
   261.0, 89.1) and the Neukölln, Pankow and Treptow-Köpenick rows match `velometer results`.
@@ -153,7 +163,7 @@ One line each: what was decided, why, and what it costs if wrong.
 - `docs/review/trust/v4-golden/` holds pre-re-sign copies; `docs/review/trust/README.md` is
   still the M5 record.
 - ADR 0002's `B_shared` wording is narrower than `config/classifier/v4.yaml` for paths.
-- The change-map caption counts way-sides ("14362 mapped gained") without saying so.
+- The change-map caption counts way-sides ("6111 mapped gained") without saying so.
 - Deferred minors from the task reviews (test gaps and small refactors), by task:
   - **1a:** `observed_tiers` returns a defaultdict; `golden_paths` re-parses `trust.yaml`;
     `golden_not_found` ignores a missing `.osm`.
