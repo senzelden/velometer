@@ -32,7 +32,7 @@ has no done run of the current config.
 
 #### amsterdam
 
-Provenance: run 275 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `37ac75e5b7f1` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 697 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `00c2a29` · boundary lau `37ac75e5b7f1` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -40,17 +40,17 @@ Provenance: run 275 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cyclew
 | `amsterdam/cc_ratio~qecio_weighted` | 33.9 | 34.0 | -0.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `amsterdam/cc_km` | 861.6 | 919.0 | -6.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `amsterdam/cc_km~qecio_weighted` | 691.2 | 919.0 | -24.8% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `amsterdam/cc_network_km` | 2,040.7 | 2,700.0 | -24.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `amsterdam/cc_network_km` | 2,040.8 | 2,700.0 | -24.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
 | `amsterdam/qecio_main_km` | 826.8 | 2,100.5 | -60.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `amsterdam/qecio_tracks_km` | 671.5 | 1,534.1 | -56.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `amsterdam/qecio_tracks_km` | 502.5 | 1,534.1 | -67.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `amsterdam/qecio_lanes_km` | 45.0 | 153.5 | -70.7% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `amsterdam/qecio_shared_km` | 19.7 | 24.7 | -20.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `amsterdam/qecio_shared_km` | 188.7 | 24.7 | +663.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `amsterdam/qecio_total_km` | 736.2 | 1,751.4 | -58.0% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `amsterdam/bnk_network_km` | 870.7 | 792.2 | +9.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### barcelona
 
-Provenance: run 278 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `92ad64274846` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1115 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `92ad64274846` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -60,46 +60,46 @@ Provenance: run 278 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cyclew
 | `barcelona/cc_km~qecio_weighted` | 184.3 | 264.0 | -30.2% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `barcelona/cc_network_km` | 1,428.7 | 1,367.0 | +4.5% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `barcelona/qecio_main_km` | 566.5 | 7,687.6 | -92.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `barcelona/qecio_tracks_km` | 173.8 | 770.0 | -77.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `barcelona/qecio_tracks_km` | 172.4 | 770.0 | -77.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `barcelona/qecio_lanes_km` | 0.6 | 25.2 | -97.7% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `barcelona/qecio_shared_km` | 10.5 | 80.6 | -87.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `barcelona/qecio_shared_km` | 11.9 | 80.6 | -85.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `barcelona/qecio_total_km` | 184.9 | 1,140.5 | -83.8% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `barcelona/bnk_network_km` | 250.4 | 440.0 | -43.1% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### berlin
 
-Provenance: run 270 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `760d04d86a75` · sources: bikenetkit_v1 retrieved 2026-10-01; changing_cities retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 713 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `9e05848` · boundary lau `760d04d86a75` · sources: bikenetkit_v1 retrieved 2026-10-01; changing_cities retrieved 2026-10-05; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-05; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `berlin/cc_ratio` | 27.7 | 17.0 | +62.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `berlin/cc_ratio~qecio_weighted` | 16.3 | 17.0 | -4.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `berlin/cc_km` | 1,557.9 | 925.0 | +68.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `berlin/cc_km~qecio_weighted` | 918.3 | 925.0 | -0.7% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_ratio` | 27.6 | 17.0 | +62.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_ratio~qecio_weighted` | 16.2 | 17.0 | -4.5% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_km` | 1,550.7 | 925.0 | +67.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `berlin/cc_km~qecio_weighted` | 913.5 | 925.0 | -1.2% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `berlin/cc_network_km` | 5,624.6 | 5,350.0 | +5.1% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `berlin/qecio_main_km` | 2,153.4 | 2,149.6 | +0.2% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/qecio_tracks_km` | 673.4 | 679.5 | -0.9% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/qecio_lanes_km` | 245.3 | 244.3 | +0.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/qecio_shared_km` | 244.9 | 245.1 | -0.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/qecio_total_km` | 1,163.6 | 1,255.4 | -7.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
-| `berlin/bnk_network_km` | 1,674.4 | 1,793.2 | -6.6% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `berlin/qecio_tracks_km` | 672.1 | 679.5 | -1.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_lanes_km` | 245.2 | 244.3 | +0.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_shared_km` | 241.4 | 245.1 | -1.5% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/qecio_total_km` | 1,158.7 | 1,255.4 | -7.7% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `berlin/bnk_network_km` | 1,667.6 | 1,793.2 | -7.0% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 | `berlin/official_new_km#official:21.2` | n/a | 21.2 | n/a | info |  | official (2025-12-31) |
 | `berlin/official_new_km#official:20.5` | n/a | 20.5 | n/a | info |  | official (2025-12-31) |
-| `berlin/official_new_km@vorrangnetz_ergaenzungsnetz#official:17.3` | n/a | 17.3 | n/a | info | scope_mismatch | official (2025-12-31) |
+| `berlin/official_new_km@vorrangnetz#official:7.5` | n/a | 7.5 | n/a | info | scope_mismatch | official (2025-12-31) |
 | `berlin/official_new_km#changing_cities:25.2` | n/a | 25.2 | n/a | info |  | changing_cities (2025-12-31) |
 
 #### bordeaux
 
-Provenance: run 284 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `123a139f23e3` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1121 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `123a139f23e3` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `bordeaux/qecio_main_km` | 211.7 | 8,653.3 | -97.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bordeaux/qecio_tracks_km` | 45.0 | 1,131.5 | -96.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bordeaux/qecio_main_km` | 211.3 | 8,653.3 | -97.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bordeaux/qecio_tracks_km` | 39.0 | 1,131.5 | -96.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `bordeaux/qecio_lanes_km` | 53.5 | 284.9 | -81.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bordeaux/qecio_shared_km` | 9.0 | 256.8 | -96.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bordeaux/qecio_total_km` | 107.5 | 1,737.8 | -93.8% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bordeaux/bnk_network_km` | 113.7 | 116.3 | -2.2% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `bordeaux/qecio_shared_km` | 15.2 | 256.8 | -94.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bordeaux/qecio_total_km` | 107.6 | 1,737.8 | -93.8% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bordeaux/bnk_network_km` | 114.0 | 116.3 | -1.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 cc_ratio: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
@@ -109,115 +109,115 @@ cc_network_km: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
 #### bratislava
 
-Provenance: run 290 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `f54ace55dfb7` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1127 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `f54ace55dfb7` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `bratislava/cc_ratio` | 13.8 | 12.0 | +15.0% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `bratislava/cc_ratio~qecio_weighted` | 12.8 | 12.0 | +6.9% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `bratislava/cc_km` | 179.3 | 186.0 | -3.6% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `bratislava/cc_km~qecio_weighted` | 166.8 | 186.0 | -10.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `bratislava/cc_ratio` | 13.2 | 12.0 | +10.4% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `bratislava/cc_ratio~qecio_weighted` | 12.6 | 12.0 | +4.7% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `bratislava/cc_km` | 172.1 | 186.0 | -7.4% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `bratislava/cc_km~qecio_weighted` | 163.3 | 186.0 | -12.2% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `bratislava/cc_network_km` | 1,299.5 | 1,490.0 | -12.8% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `bratislava/qecio_main_km` | 598.5 | 1,365.2 | -56.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bratislava/qecio_tracks_km` | 115.3 | 122.3 | -5.7% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bratislava/qecio_lanes_km` | 27.6 | 19.3 | +43.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bratislava/qecio_shared_km` | 51.4 | 67.3 | -23.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bratislava/qecio_total_km` | 194.4 | 267.4 | -27.3% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `bratislava/bnk_network_km` | 187.3 | 256.9 | -27.1% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `bratislava/qecio_tracks_km` | 82.0 | 122.3 | -33.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bratislava/qecio_lanes_km` | 27.7 | 19.3 | +43.9% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bratislava/qecio_shared_km` | 81.3 | 67.3 | +20.8% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bratislava/qecio_total_km` | 191.0 | 267.4 | -28.6% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `bratislava/bnk_network_km` | 180.1 | 256.9 | -29.9% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### budapest
 
-Provenance: run 287 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `7f38f070f54d` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1124 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `7f38f070f54d` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `budapest/cc_ratio` | 5.2 | 4.0 | +30.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `budapest/cc_ratio~qecio_weighted` | 5.0 | 4.0 | +24.5% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `budapest/cc_km` | 232.2 | 212.0 | +9.5% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `budapest/cc_km~qecio_weighted` | 221.3 | 212.0 | +4.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `budapest/cc_ratio` | 5.2 | 4.0 | +30.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `budapest/cc_ratio~qecio_weighted` | 5.0 | 4.0 | +24.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `budapest/cc_km` | 231.5 | 212.0 | +9.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `budapest/cc_km~qecio_weighted` | 220.6 | 212.0 | +4.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `budapest/cc_network_km` | 4,445.4 | 4,821.0 | -7.8% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `budapest/qecio_main_km` | 1,298.9 | 1,294.9 | +0.3% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `budapest/qecio_tracks_km` | 154.6 | 145.5 | +6.2% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `budapest/qecio_tracks_km` | 152.0 | 145.5 | +4.5% | ok | date_gap | qecio_v2_10 (2024-01-11) |
 | `budapest/qecio_lanes_km` | 80.5 | 76.3 | +5.5% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `budapest/qecio_shared_km` | 66.7 | 66.2 | +0.8% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `budapest/qecio_total_km` | 301.9 | 307.3 | -1.8% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
-| `budapest/bnk_network_km` | 261.2 | 588.4 | -55.6% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `budapest/qecio_shared_km` | 68.6 | 66.2 | +3.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `budapest/qecio_total_km` | 301.1 | 307.3 | -2.0% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
+| `budapest/bnk_network_km` | 260.4 | 588.4 | -55.7% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### copenhagen
 
-Provenance: run 273 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `e7afb8eb0bb0` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 695 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `00c2a29` · boundary lau `e7afb8eb0bb0` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; official retrieved 2026-10-05; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `copenhagen/cc_ratio` | 58.6 | 43.0 | +36.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `copenhagen/cc_ratio~qecio_weighted` | 36.2 | 43.0 | -15.7% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `copenhagen/cc_km` | 582.4 | 397.0 | +46.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `copenhagen/cc_km~qecio_weighted` | 360.0 | 397.0 | -9.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_ratio` | 58.6 | 43.0 | +36.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_ratio~qecio_weighted` | 36.2 | 43.0 | -15.8% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_km` | 581.8 | 397.0 | +46.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `copenhagen/cc_km~qecio_weighted` | 359.5 | 397.0 | -9.5% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `copenhagen/cc_network_km` | 993.1 | 926.0 | +7.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `copenhagen/qecio_main_km` | 346.7 | 474.2 | -26.9% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `copenhagen/qecio_tracks_km` | 284.0 | 385.7 | -26.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_tracks_km` | 273.2 | 385.7 | -29.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `copenhagen/qecio_lanes_km` | 18.3 | 25.2 | -27.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `copenhagen/qecio_shared_km` | 76.0 | 83.1 | -8.6% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `copenhagen/qecio_total_km` | 378.3 | 505.3 | -25.1% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `copenhagen/bnk_network_km` | 588.6 | 558.2 | +5.4% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `copenhagen/qecio_shared_km` | 86.2 | 83.1 | +3.7% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/qecio_total_km` | 377.8 | 505.3 | -25.2% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `copenhagen/bnk_network_km` | 588.1 | 558.2 | +5.4% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### helsinki
 
-Provenance: run 281 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `33742e90c84a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1118 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `33742e90c84a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `helsinki/cc_ratio` | 91.4 | 48.0 | +90.5% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `helsinki/cc_ratio~qecio_weighted` | 88.6 | 48.0 | +84.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `helsinki/cc_km` | 1,284.1 | 783.0 | +64.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `helsinki/cc_km~qecio_weighted` | 1,244.8 | 783.0 | +59.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `helsinki/cc_ratio` | 91.1 | 48.0 | +89.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `helsinki/cc_ratio~qecio_weighted` | 88.3 | 48.0 | +83.9% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `helsinki/cc_km` | 1,279.2 | 783.0 | +63.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `helsinki/cc_km~qecio_weighted` | 1,239.8 | 783.0 | +58.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `helsinki/cc_network_km` | 1,404.5 | 1,628.0 | -13.7% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `helsinki/qecio_main_km` | 756.0 | 7,047.1 | -89.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `helsinki/qecio_tracks_km` | 557.2 | 1,688.1 | -67.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `helsinki/qecio_tracks_km` | 297.3 | 1,688.1 | -82.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `helsinki/qecio_lanes_km` | 19.2 | 19.2 | -0.1% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `helsinki/qecio_shared_km` | 687.5 | 3,821.4 | -82.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `helsinki/qecio_total_km` | 1,263.9 | 5,797.2 | -78.2% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `helsinki/bnk_network_km` | 1,286.3 | 1,396.2 | -7.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `helsinki/qecio_shared_km` | 942.5 | 3,821.4 | -75.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `helsinki/qecio_total_km` | 1,259.0 | 5,797.2 | -78.3% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `helsinki/bnk_network_km` | 1,281.4 | 1,396.2 | -8.2% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### krakow
 
-Provenance: run 286 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `a8c1622fd129` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1123 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `a8c1622fd129` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `krakow/cc_ratio` | 17.5 | 11.0 | +59.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `krakow/cc_ratio~qecio_weighted` | 17.4 | 11.0 | +58.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `krakow/cc_km` | 300.9 | 229.0 | +31.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `krakow/cc_km~qecio_weighted` | 298.8 | 229.0 | +30.5% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `krakow/cc_network_km` | 1,718.3 | 2,128.0 | -19.3% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `krakow/cc_ratio` | 17.2 | 11.0 | +56.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `krakow/cc_ratio~qecio_weighted` | 17.1 | 11.0 | +55.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `krakow/cc_km` | 296.1 | 229.0 | +29.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `krakow/cc_km~qecio_weighted` | 294.0 | 229.0 | +28.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `krakow/cc_network_km` | 1,717.8 | 2,128.0 | -19.3% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `krakow/qecio_main_km` | 650.5 | 631.5 | +3.0% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `krakow/qecio_tracks_km` | 217.6 | 194.0 | +12.2% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `krakow/qecio_lanes_km` | 11.1 | 12.7 | -12.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `krakow/qecio_shared_km` | 81.1 | 73.0 | +11.2% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `krakow/qecio_total_km` | 309.9 | 289.0 | +7.2% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
-| `krakow/bnk_network_km` | 301.0 | 504.0 | -40.3% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `krakow/qecio_tracks_km` | 189.5 | 194.0 | -2.3% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `krakow/qecio_lanes_km` | 11.0 | 12.7 | -13.3% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `krakow/qecio_shared_km` | 104.5 | 73.0 | +43.1% | **>20%** | date_gap | qecio_v2_10 (2024-01-11) |
+| `krakow/qecio_total_km` | 305.0 | 289.0 | +5.5% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
+| `krakow/bnk_network_km` | 296.2 | 504.0 | -41.2% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### ljubljana
 
-Provenance: run 289 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `e9c6b0916555` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1126 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `e9c6b0916555` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `ljubljana/cc_ratio` | 21.2 | 15.0 | +41.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `ljubljana/cc_ratio~qecio_weighted` | 12.8 | 15.0 | -14.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `ljubljana/cc_km` | 248.6 | 251.0 | -1.0% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `ljubljana/cc_km~qecio_weighted` | 150.6 | 251.0 | -40.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `ljubljana/cc_ratio` | 20.9 | 15.0 | +39.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `ljubljana/cc_ratio~qecio_weighted` | 12.7 | 15.0 | -15.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `ljubljana/cc_km` | 245.0 | 251.0 | -2.4% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `ljubljana/cc_km~qecio_weighted` | 148.5 | 251.0 | -40.9% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `ljubljana/cc_network_km` | 1,172.3 | 1,649.0 | -28.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
 | `ljubljana/qecio_main_km` | 472.1 | 1,484.0 | -68.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `ljubljana/qecio_tracks_km` | 126.8 | 154.3 | -17.8% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `ljubljana/qecio_tracks_km` | 120.4 | 154.3 | -22.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `ljubljana/qecio_lanes_km` | 51.0 | 48.1 | +6.0% | ok | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `ljubljana/qecio_shared_km` | 23.8 | 39.7 | -40.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `ljubljana/qecio_total_km` | 201.6 | 300.4 | -32.9% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `ljubljana/bnk_network_km` | 250.3 | 260.4 | -3.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `ljubljana/qecio_shared_km` | 28.0 | 39.7 | -29.4% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `ljubljana/qecio_total_km` | 199.4 | 300.4 | -33.6% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `ljubljana/bnk_network_km` | 246.8 | 260.4 | -5.2% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### lyon
 
-Provenance: run 282 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `c5104fea4bfc` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1119 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `c5104fea4bfc` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -227,96 +227,96 @@ Provenance: run 282 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cyclew
 | `lyon/cc_km~qecio_weighted` | 96.0 | 98.0 | -2.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `lyon/cc_network_km` | 637.5 | 685.0 | -6.9% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `lyon/qecio_main_km` | 263.1 | 4,959.4 | -94.7% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `lyon/qecio_tracks_km` | 82.2 | 278.8 | -70.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `lyon/qecio_tracks_km` | 76.8 | 278.8 | -72.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `lyon/qecio_lanes_km` | 86.5 | 539.1 | -84.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `lyon/qecio_shared_km` | 13.8 | 236.4 | -94.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `lyon/qecio_shared_km` | 19.2 | 236.4 | -91.9% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `lyon/qecio_total_km` | 182.5 | 1,119.3 | -83.7% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `lyon/bnk_network_km` | 190.3 | 159.6 | +19.3% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### madrid
 
-Provenance: run 277 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `66a778723f71` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1114 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `66a778723f71` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `madrid/cc_ratio` | 7.8 | 8.0 | -2.0% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `madrid/cc_ratio~qecio_weighted` | 7.1 | 8.0 | -11.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `madrid/cc_km` | 357.4 | 405.0 | -11.7% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `madrid/cc_km~qecio_weighted` | 324.4 | 405.0 | -19.9% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `madrid/cc_ratio` | 7.7 | 8.0 | -3.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `madrid/cc_ratio~qecio_weighted` | 7.0 | 8.0 | -12.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `madrid/cc_km` | 353.0 | 405.0 | -12.8% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `madrid/cc_km~qecio_weighted` | 319.9 | 405.0 | -21.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `madrid/cc_network_km` | 4,560.9 | 5,018.0 | -9.1% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `madrid/qecio_main_km` | 2,146.8 | 8,669.3 | -75.2% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `madrid/qecio_tracks_km` | 289.0 | 920.3 | -68.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `madrid/qecio_tracks_km` | 241.6 | 920.3 | -73.8% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
 | `madrid/qecio_lanes_km` | 19.2 | 40.5 | -52.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `madrid/qecio_shared_km` | 35.4 | 153.0 | -76.9% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `madrid/qecio_total_km` | 343.6 | 1,289.3 | -73.4% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
-| `madrid/bnk_network_km` | 358.5 | 480.5 | -25.4% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `madrid/qecio_shared_km` | 78.4 | 153.0 | -48.8% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `madrid/qecio_total_km` | 339.2 | 1,289.3 | -73.7% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-10) |
+| `madrid/bnk_network_km` | 354.0 | 480.5 | -26.3% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### oslo
 
-Provenance: run 280 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `2826b9849bbf` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1117 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `2826b9849bbf` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `oslo/cc_ratio` | 21.1 | 17.0 | +23.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `oslo/cc_ratio~qecio_weighted` | 20.6 | 17.0 | +21.0% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `oslo/cc_km` | 346.1 | 307.0 | +12.7% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `oslo/cc_km~qecio_weighted` | 338.0 | 307.0 | +10.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `oslo/cc_ratio` | 20.8 | 17.0 | +22.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `oslo/cc_ratio~qecio_weighted` | 20.3 | 17.0 | +19.3% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `oslo/cc_km` | 341.4 | 307.0 | +11.2% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `oslo/cc_km~qecio_weighted` | 333.3 | 307.0 | +8.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `oslo/cc_network_km` | 1,643.5 | 1,840.0 | -10.7% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `oslo/qecio_main_km` | 635.5 | 637.9 | -0.4% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `oslo/qecio_tracks_km` | 54.2 | 88.7 | -38.9% | **>20%** | date_gap | qecio_v2_10 (2024-01-11) |
+| `oslo/qecio_tracks_km` | 52.0 | 88.7 | -41.3% | **>20%** | date_gap | qecio_v2_10 (2024-01-11) |
 | `oslo/qecio_lanes_km` | 80.3 | 80.6 | -0.4% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `oslo/qecio_shared_km` | 283.8 | 218.1 | +30.1% | **>20%** | date_gap | qecio_v2_10 (2024-01-11) |
-| `oslo/qecio_total_km` | 418.3 | 413.4 | +1.2% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
-| `oslo/bnk_network_km` | 346.2 | 384.6 | -10.0% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `oslo/qecio_shared_km` | 281.3 | 218.1 | +28.9% | **>20%** | date_gap | qecio_v2_10 (2024-01-11) |
+| `oslo/qecio_total_km` | 413.6 | 413.4 | +0.0% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
+| `oslo/bnk_network_km` | 341.5 | 384.6 | -11.2% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### paris
 
-Provenance: run 271 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `87ba05899604` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 693 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `00c2a29` · boundary lau `87ba05899604` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `paris/cc_ratio` | 22.9 | 48.0 | -52.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
 | `paris/cc_ratio~qecio_weighted` | 15.6 | 48.0 | -67.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `paris/cc_km` | 356.5 | 822.0 | -56.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `paris/cc_km~qecio_weighted` | 243.1 | 822.0 | -70.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `paris/cc_km` | 356.6 | 822.0 | -56.6% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `paris/cc_km~qecio_weighted` | 243.2 | 822.0 | -70.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `paris/cc_network_km` | 1,555.8 | 1,700.0 | -8.5% | ok | date_gap | clean_cities_2025 (2025-05-14) |
 | `paris/qecio_main_km` | 682.2 | 706.7 | -3.5% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `paris/qecio_tracks_km` | 225.2 | 202.7 | +11.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_tracks_km` | 221.6 | 202.7 | +9.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
 | `paris/qecio_lanes_km` | 73.8 | 66.0 | +11.8% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `paris/qecio_shared_km` | 18.0 | 24.3 | -26.1% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
-| `paris/qecio_total_km` | 316.9 | 358.8 | -11.7% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_shared_km` | 21.5 | 24.3 | -11.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `paris/qecio_total_km` | 317.0 | 358.8 | -11.6% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
 | `paris/bnk_network_km` | 531.3 | 483.4 | +9.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### prague
 
-Provenance: run 288 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `1ced9ca6ed19` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1125 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `1ced9ca6ed19` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `prague/cc_ratio` | 8.6 | 6.0 | +43.7% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `prague/cc_ratio~qecio_weighted` | 8.5 | 6.0 | +41.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `prague/cc_km` | 295.0 | 248.0 | +19.0% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `prague/cc_km~qecio_weighted` | 290.5 | 248.0 | +17.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `prague/cc_network_km` | 3,423.0 | 4,093.0 | -16.4% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `prague/qecio_main_km` | 1,362.0 | 1,384.3 | -1.6% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `prague/qecio_tracks_km` | 103.4 | 124.3 | -16.8% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `prague/qecio_lanes_km` | 94.9 | 45.7 | +107.9% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
-| `prague/qecio_shared_km` | 187.1 | 139.0 | +34.7% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
-| `prague/qecio_total_km` | 385.4 | 367.7 | +4.8% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
-| `prague/bnk_network_km` | 336.6 | 666.7 | -49.5% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `prague/cc_ratio` | 8.5 | 6.0 | +40.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `prague/cc_ratio~qecio_weighted` | 8.3 | 6.0 | +39.1% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `prague/cc_km` | 289.3 | 248.0 | +16.6% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `prague/cc_km~qecio_weighted` | 285.7 | 248.0 | +15.2% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `prague/cc_network_km` | 3,422.7 | 4,093.0 | -16.4% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `prague/qecio_main_km` | 1,361.4 | 1,384.3 | -1.7% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `prague/qecio_tracks_km` | 41.9 | 124.3 | -66.3% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
+| `prague/qecio_lanes_km` | 94.9 | 45.7 | +107.8% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
+| `prague/qecio_shared_km` | 243.8 | 139.0 | +75.4% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
+| `prague/qecio_total_km` | 380.6 | 367.7 | +3.5% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `prague/bnk_network_km` | 330.8 | 666.7 | -50.4% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### stockholm
 
-Provenance: run 279 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `478d1a4e3250` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1116 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `478d1a4e3250` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `stockholm/qecio_main_km` | 666.8 | 4,946.3 | -86.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `stockholm/qecio_tracks_km` | 722.7 | 2,327.9 | -69.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `stockholm/qecio_lanes_km` | 24.0 | 59.4 | -59.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `stockholm/qecio_shared_km` | 212.1 | 1,120.1 | -81.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `stockholm/qecio_total_km` | 958.9 | 3,802.0 | -74.8% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `stockholm/bnk_network_km` | 1,006.1 | 1,102.4 | -8.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `stockholm/qecio_tracks_km` | 357.7 | 2,327.9 | -84.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `stockholm/qecio_lanes_km` | 24.1 | 59.4 | -59.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `stockholm/qecio_shared_km` | 568.1 | 1,120.1 | -49.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `stockholm/qecio_total_km` | 949.9 | 3,802.0 | -75.0% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `stockholm/bnk_network_km` | 995.3 | 1,102.4 | -9.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 cc_ratio: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
@@ -326,14 +326,14 @@ cc_network_km: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
 #### strasbourg
 
-Provenance: run 283 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `8c768c25b802` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1120 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `8c768c25b802` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `strasbourg/qecio_main_km` | 227.5 | 4,890.2 | -95.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `strasbourg/qecio_tracks_km` | 150.2 | 742.4 | -79.8% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `strasbourg/qecio_tracks_km` | 137.5 | 742.4 | -81.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `strasbourg/qecio_lanes_km` | 22.7 | 152.2 | -85.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `strasbourg/qecio_shared_km` | 54.3 | 286.4 | -81.1% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `strasbourg/qecio_shared_km` | 67.0 | 286.4 | -76.6% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `strasbourg/qecio_total_km` | 227.1 | 1,458.4 | -84.4% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `strasbourg/bnk_network_km` | 252.3 | 270.0 | -6.6% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
@@ -345,16 +345,16 @@ cc_network_km: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
 #### utrecht
 
-Provenance: run 276 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `432e58550174` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1113 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `432e58550174` · sources: bikenetkit_v1 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
 | `utrecht/qecio_main_km` | 423.1 | 2,323.7 | -81.8% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `utrecht/qecio_tracks_km` | 303.6 | 1,660.8 | -81.7% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `utrecht/qecio_tracks_km` | 277.9 | 1,660.8 | -83.3% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
 | `utrecht/qecio_lanes_km` | 24.2 | 146.5 | -83.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `utrecht/qecio_shared_km` | 17.0 | 83.0 | -79.5% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `utrecht/qecio_total_km` | 344.8 | 1,945.4 | -82.3% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
-| `utrecht/bnk_network_km` | 389.8 | 420.4 | -7.3% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `utrecht/qecio_shared_km` | 41.5 | 83.0 | -50.0% | **>20%** | date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `utrecht/qecio_total_km` | 343.6 | 1,945.4 | -82.3% | **>20%** | definition_mismatch, date_gap, boundary_mismatch | qecio_v2_10 (2024-01-11) |
+| `utrecht/bnk_network_km` | 387.4 | 420.4 | -7.8% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 cc_ratio: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
@@ -364,48 +364,48 @@ cc_network_km: not in source (not in the Clean Cities 2025 ranking (36 cities))
 
 #### vienna
 
-Provenance: run 272 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `e9f660e9d87a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 694 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `00c2a29` · boundary lau `e9f660e9d87a` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; mobilitaetsagentur_wien retrieved 2026-10-05; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `vienna/cc_ratio` | 23.2 | 14.0 | +65.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_ratio~qecio_weighted` | 21.0 | 14.0 | +49.8% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_ratio@incl_traffic_calmed_restricted_access` | 23.2 | 22.0 | +5.6% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
-| `vienna/cc_ratio@incl_traffic_calmed_restricted_access~qecio_weighted` | 21.0 | 22.0 | -4.7% | info | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
-| `vienna/cc_km` | 679.8 | 384.0 | +77.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_km~qecio_weighted` | 613.6 | 384.0 | +59.8% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_km@incl_traffic_calmed_restricted_access` | 679.8 | 625.1 | +8.8% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
-| `vienna/cc_km@incl_traffic_calmed_restricted_access~qecio_weighted` | 613.6 | 625.1 | -1.8% | info | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
-| `vienna/cc_network_km` | 2,926.5 | 2,844.0 | +2.9% | ok | date_gap | clean_cities_2025 (2025-05-14) |
-| `vienna/cc_network_km@incl_traffic_calmed_restricted_access` | 2,926.5 | 2,844.0 | +2.9% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
+| `vienna/cc_ratio` | 22.7 | 14.0 | +62.5% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_ratio~qecio_weighted` | 20.7 | 14.0 | +47.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_ratio@incl_traffic_calmed_restricted_access` | 22.7 | 22.0 | +3.4% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
+| `vienna/cc_ratio@incl_traffic_calmed_restricted_access~qecio_weighted` | 20.7 | 22.0 | -6.0% | info | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
+| `vienna/cc_km` | 665.7 | 384.0 | +73.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_km~qecio_weighted` | 604.9 | 384.0 | +57.5% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_km@incl_traffic_calmed_restricted_access` | 665.7 | 625.1 | +6.5% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
+| `vienna/cc_km@incl_traffic_calmed_restricted_access~qecio_weighted` | 604.9 | 625.1 | -3.2% | info | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
+| `vienna/cc_network_km` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap | clean_cities_2025 (2025-05-14) |
+| `vienna/cc_network_km@incl_traffic_calmed_restricted_access` | 2,926.7 | 2,844.0 | +2.9% | ok | date_gap, scope_mismatch | clean_cities_2025 (2025-07-17) |
 | `vienna/qecio_main_km` | 1,075.2 | 1,078.2 | -0.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `vienna/qecio_tracks_km` | 423.5 | 380.5 | +11.3% | ok | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_tracks_km` | 256.0 | 380.5 | -32.7% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
 | `vienna/qecio_lanes_km` | 136.7 | 141.2 | -3.1% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `vienna/qecio_shared_km` | 190.1 | 166.1 | +14.4% | ok | date_gap | qecio_v2_10 (2024-01-10) |
-| `vienna/qecio_total_km` | 750.3 | 801.0 | -6.3% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
-| `vienna/bnk_network_km` | 720.9 | 782.6 | -7.9% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `vienna/qecio_shared_km` | 349.0 | 166.1 | +110.1% | **>20%** | date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/qecio_total_km` | 741.7 | 801.0 | -7.4% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-10) |
+| `vienna/bnk_network_km` | 706.7 | 782.6 | -9.7% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### warsaw
 
-Provenance: run 285 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `a81f1b419f30` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 1122 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `ae704fa` · boundary lau `a81f1b419f30` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-03; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
-| `warsaw/cc_ratio` | 22.6 | 15.0 | +50.4% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `warsaw/cc_ratio~qecio_weighted` | 22.3 | 15.0 | +48.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
-| `warsaw/cc_km` | 763.6 | 631.0 | +21.0% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `warsaw/cc_km~qecio_weighted` | 754.4 | 631.0 | +19.6% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `warsaw/cc_ratio` | 22.5 | 15.0 | +50.2% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `warsaw/cc_ratio~qecio_weighted` | 22.3 | 15.0 | +48.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
+| `warsaw/cc_km` | 762.7 | 631.0 | +20.9% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
+| `warsaw/cc_km~qecio_weighted` | 753.5 | 631.0 | +19.4% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `warsaw/cc_network_km` | 3,385.7 | 4,300.0 | -21.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
-| `warsaw/qecio_main_km` | 1,468.6 | 1,477.1 | -0.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `warsaw/qecio_tracks_km` | 596.6 | 558.5 | +6.8% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `warsaw/qecio_main_km` | 1,468.7 | 1,477.1 | -0.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `warsaw/qecio_tracks_km` | 589.3 | 558.5 | +5.5% | ok | date_gap | qecio_v2_10 (2024-01-11) |
 | `warsaw/qecio_lanes_km` | 32.8 | 28.1 | +16.7% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `warsaw/qecio_shared_km` | 157.9 | 144.4 | +9.4% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `warsaw/qecio_total_km` | 787.2 | 750.7 | +4.9% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
-| `warsaw/bnk_network_km` | 764.5 | 1,182.8 | -35.4% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
+| `warsaw/qecio_shared_km` | 164.2 | 144.4 | +13.7% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `warsaw/qecio_total_km` | 786.3 | 750.7 | +4.7% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
+| `warsaw/bnk_network_km` | 763.6 | 1,182.8 | -35.4% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
 #### wroclaw
 
-Provenance: run 274 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `0237b5b5c432` (clean_cities_basis=per_side) · commit `fe3bfdc` · boundary lau `6e5e44174776` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
+Provenance: run 696 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cycleway_on_oneway":"traffic_side"}` · config `22238ca57b73` (clean_cities_basis=per_side) · commit `00c2a29` · boundary lau `6e5e44174776` · sources: bikenetkit_v1 retrieved 2026-10-01; clean_cities_2025 retrieved 2026-10-01; qecio_v2_10 retrieved 2026-10-01, file md5 fc8712edb94749b5cee4838075d59274
 
 | key | ours | theirs | gap | flag | tags | source (date) |
 |---|---:|---:|---:|---|---|---|
@@ -415,9 +415,9 @@ Provenance: run 274 · OSM 2026-10-02T20:21:34Z · classifier v3 `{"plain_cyclew
 | `wroclaw/cc_km~qecio_weighted` | 379.2 | 355.0 | +6.8% | info | date_gap | clean_cities_2025 (2025-05-14) |
 | `wroclaw/cc_network_km` | 1,339.8 | 1,769.0 | -24.3% | **>20%** | date_gap | clean_cities_2025 (2025-05-14) |
 | `wroclaw/qecio_main_km` | 570.7 | 582.6 | -2.0% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `wroclaw/qecio_tracks_km` | 242.2 | 227.2 | +6.6% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_tracks_km` | 240.1 | 227.2 | +5.7% | ok | date_gap | qecio_v2_10 (2024-01-11) |
 | `wroclaw/qecio_lanes_km` | 16.2 | 15.6 | +3.8% | ok | date_gap | qecio_v2_10 (2024-01-11) |
-| `wroclaw/qecio_shared_km` | 136.9 | 128.9 | +6.2% | ok | date_gap | qecio_v2_10 (2024-01-11) |
+| `wroclaw/qecio_shared_km` | 139.0 | 128.9 | +7.8% | ok | date_gap | qecio_v2_10 (2024-01-11) |
 | `wroclaw/qecio_total_km` | 395.4 | 385.6 | +2.5% | ok | definition_mismatch, date_gap | qecio_v2_10 (2024-01-11) |
 | `wroclaw/bnk_network_km` | 399.6 | 638.8 | -37.5% | **>20%** | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 
