@@ -31,8 +31,10 @@
 - ADR 0002 carries an M6 amendment recording the v4 rules and the divergences they replace.
 - Every trusted country has `classifier_reviewed: v4`. Each golden sample whose tier v4 changes
   has been re-signed by you.
-- Berlin has 12 Bezirk rows for each of its 10 v4 LAU runs (current plus 2018–2026). In every run
-  and tier, the Bezirk km sum to the city km within 0.5 %.
+- Berlin has 12 Bezirk rows for each of its 10 v4 LAU runs (current plus 2018–2026). In every run,
+  tier and road class, the Bezirk km plus the "outside the 12 Bezirke (LAU edge)" remainder row
+  sum to the city km within 0.01 km. (changed 2026-10-05 by user decision after Task 14: explicit
+  remainder row)
 - `velometer report change --city berlin` writes the default-window change map and its per-Bezirk
   table.
 - The §11 facts you signed off are loaded as `ExternalFigure` rows with source URLs.
@@ -207,8 +209,13 @@ measure. These go into the decision 12 stop.
   - dual-carriageway halving carries through, so the Bezirk denominators sum to the city's.
 - The run row stores the subarea set's combined sha (`runs.subarea_sha`, nullable).
 - **Invariant**, checked in the run, which fails on a breach: per tier and road class, the sum
-  over subareas equals the city value within 0.5 %. The gap is boundary slivers between the LAU
-  and the OSM relations.
+  over subareas plus the remainder equals the city value within 0.01 km, absolute. The
+  remainder (`subarea_id = 'remainder'`, a reserved slug) is the city boundary minus the union of
+  the subarea polygons, computed once per run in the run EPSG; ways are clipped to it as to any
+  subarea, with the shared-edge scaling, and an empty remainder writes no rows. It is the LAU's
+  1:1M generalisation beyond the OSM relations (Berlin: 7.30 km² of the LAU outside the
+  Bezirke). Every read surface shows it last and set apart, never as a Bezirk.
+  (changed 2026-10-05 by user decision after Task 14: explicit remainder row)
 - **Migration v7 → v8** uses the M5 pattern (R14 / spec §5.2), with a copy test and an
   interrupted-step test. The DB is backed up first (`data/velometer-pre-v8.sqlite`).
 - `runs` gets no new key field, so idempotency is unchanged. A v4 Berlin LAU run without subarea
@@ -287,7 +294,9 @@ Notable ones:
 
 - **The rules table** shows v4, with a short "changed from v3" note per rule.
 - **New limitation entries, EN and DE:**
-  - `subareas_osm`: Bezirk polygons come from OSM relations; slivers against the LAU are under 0.5 %.
+  - `subareas_osm`: Bezirk polygons come from OSM relations; km inside the LAU but outside every
+    Bezirk are a separate "outside the Bezirke" row, so the rows add up to the city total.
+    (changed 2026-10-05 by user decision after Task 14: explicit remainder row)
   - `change_map_mapped`: the change map shows mapped change; redrawn and retagged ways are separated
     out, but a gain is not a construction.
   - `mtb_excluded`: MTB-tagged trails are excluded, and trails without MTB tags stay counted.

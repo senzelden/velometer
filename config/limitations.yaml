@@ -148,12 +148,15 @@ limitations:
   - id: subareas_osm
     en: >-
       Bezirk boundaries are the 12 OSM administrative relations (admin_level 9), queried from
-      the Berlin extract; slivers against the LAU boundary are under 0.5 % of every tier and
-      road class.
+      the Berlin extract. Km inside the LAU boundary but outside every Bezirk (the LAU is
+      generalised at 1:1M) are reported as a separate "outside the Bezirke" row, so the Bezirk
+      rows plus that row add up to the city total.
     de: >-
       Die Bezirksgrenzen sind die 12 administrativen OSM-Relationen (admin_level 9), abgefragt
-      aus dem Berliner Extrakt; Randstücke gegenüber der LAU-Grenze machen unter 0,5 % jeder
-      Stufe und Straßenklasse aus.
+      aus dem Berliner Extrakt. Kilometer innerhalb der LAU-Grenze, aber außerhalb jedes
+      Bezirks (die LAU ist im Maßstab 1:1 Mio. generalisiert), werden als eigene Zeile
+      „außerhalb der Bezirke“ ausgewiesen, sodass die Bezirkszeilen und diese Zeile zusammen
+      die Summe der Stadt ergeben.
   - id: change_map_mapped
     en: >-
       The change map compares two snapshots on the same classifier. A gain is a way newly mapped

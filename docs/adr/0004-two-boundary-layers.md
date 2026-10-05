@@ -124,5 +124,8 @@ are not used. `velometer boundaries fetch --city berlin --subareas` measured (EP
 - The pairwise overlap is 0.000 %.
 - The subarea check therefore compares areas, as the spec says ("within 1 % of the LAU
   area") and as this ADR compares boundary layers. The symmetric difference is reported but not
-  enforced. The binding guard is the per-tier rule that Bezirk km must sum to city km within
-  0.5 %, checked on every run (ruling, M6 Task 13).
+  enforced. The binding guard is the per-tier rule, checked on every run: the Bezirk km plus
+  an explicit remainder row (the LAU outside the union, "Outside the 12 Bezirke (LAU edge)")
+  sum to the city km within 0.01 km. The first rule (within 0.5 %, ruling, M6 Task 13) failed on
+  Berlin's real v4 run (B per_side 1.16 % short), and the user replaced it on 2026-10-05
+  (M6 Task 14b).

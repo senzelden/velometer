@@ -31,3 +31,24 @@ cost).
 - Construction-label test: the "Cause:" paragraph (up to the first blank line) is what is searched
   for `**construction**`, since a cause line may wrap. No committed explanation uses the label
   today, so the test is a guard; it was red-proofed with a temporary edit.
+
+## Task 14b: explicit remainder row (user decision, 2026-10-05)
+
+(changed 2026-10-05 by user decision after Task 14: explicit remainder row)
+
+- Why: Berlin's 12 OSM Bezirke cover the OSM city relation, but the generalised GISCO LAU (1:1M)
+  the run clips to holds 7.30 km² outside their union (892.35 km² LAU, 890.69 km² union). On the
+  real v4 run six rows missed the 0.5 % sum check (B per_side 1.16 %, excluded/mtb 1.33 %).
+- Rule: the city boundary minus the union of the subarea polygons is attributed to one derived
+  row, `subarea_id = 'remainder'` (a slug `SubareasConfig` now refuses). Subareas plus remainder
+  must equal the city per tier row and road class within 0.01 km absolute, replacing 0.5 %
+  relative; the `> 0.01 km` skip for tiny city rows is gone, since the absolute rule covers them.
+  An empty remainder writes no rows; `runs.subarea_sha` still covers the subarea files only.
+- Label: `Outside the {n} Bezirke (LAU edge)` with n from the configured relation count, as a
+  constant keyed on the section title "Bezirke" (`config.REMAINDER_LABELS`), not a new
+  `cities.yaml` field; other section titles fall back to `Outside the subareas (boundary edge)`.
+  Cost if wrong: a second subarea city needs its section title added to the constant.
+- Read surfaces show it last and set apart (CLI separator line, an italic row with a rule above
+  in the app, last per run in the CSV, last above the city total in the change table); the
+  timeseries and the small multiples leave it out. `timeseries --check` now counts only
+  non-remainder rows as subarea rows.
