@@ -75,7 +75,7 @@
     },
     {
       "city_id": "lyon",
-      "run_id": 704,
+      "run_id": 1119,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 2321.1730006663956,
       "unrecognised_share": 0.00012795973826430193,
@@ -154,7 +154,7 @@
     },
     {
       "city_id": "strasbourg",
-      "run_id": 705,
+      "run_id": 1120,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 1203.5986547355571,
       "unrecognised_share": 0.0,
@@ -207,7 +207,7 @@
     },
     {
       "city_id": "bordeaux",
-      "run_id": 706,
+      "run_id": 1121,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 889.6443921631411,
       "unrecognised_share": 0.0003694033553943572,

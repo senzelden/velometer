@@ -27,7 +27,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| helsinki | 703 | 5226.6 | 0.00% | 36.8% | 73.7% | 69.1% | boundary_diff_pct |
+| helsinki | 1118 | 5226.6 | 0.00% | 36.8% | 73.7% | 69.1% | boundary_diff_pct |
 
 ### helsinki: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

@@ -64,7 +64,7 @@
     },
     {
       "city_id": "warsaw",
-      "run_id": 707,
+      "run_id": 1122,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 10898.713869680414,
       "unrecognised_share": 0.00010236742373569247,
@@ -133,7 +133,7 @@
     },
     {
       "city_id": "krakow",
-      "run_id": 708,
+      "run_id": 1123,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 5240.347712699751,
       "unrecognised_share": 0.0,

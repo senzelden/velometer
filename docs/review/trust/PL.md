@@ -9,7 +9,8 @@ Hand-written notes go here. Only the generated block below is replaced when `vel
 Kraków's B share of A+B is 0.7843 (run 237), against a limit of 0.784 (Wrocław 0.6270 x 1.25),
 so it is over by 0.0003. The cause is a mapping convention, not missing tags: Kraków maps most of
 its physically separated paths as `highway=path|footway` + `bicycle=designated` +
-`segregated=yes` (rule `B_path_segregated`, 154.8 km per side) or unsegregated
+`segregated=yes` (rule `B_path_segregated`, 154.8 km per side; v3 rule names and km in this
+paragraph, superseded by v4, see ADR 0002 M6 amendment) or unsegregated
 (`B_path`, 81.1 km), and few as `highway=cycleway` (`A_cycleway`, 63.7 km). Wrocław shows the
 same pattern at a lower level (B_path 136.9 km, B_path_segregated 111.4 km vs A_cycleway
 146.6 km). The Polish pilot's shared-path caveat (HANDOVER §10.1) applies: the headline counts
@@ -17,6 +18,10 @@ A+B, so this changes the A/B split, not the headline. Report the split for Krak�
 change proposed: these ways are shared or side-by-side foot/cycle paths, which is what tier B means.
 
 Re-checked on classifier v3 (Task 14, run 286, 2026-10-03): 0.7843, unchanged; v3 moves no km in Kraków.
+
+No longer fires under classifier v4 (run 1123, 2026-10-03): B is 0.353 of A+B (104.5 of 296.1 km per
+side), because v4 rates segregated footway and path sidepaths `A_segregated` (Kraków A +126.6 /
+B −131.5 km against v3 on the same extract, docs/review/trust/v4-impact.md).
 
 <!-- trust:begin -->
 ## Diagnostics PL (generated)
@@ -28,8 +33,8 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
 | wroclaw | 696 | 4015.9 | 0.00% | 9.0% | 35.3% | 0.4% | none |
-| warsaw | 707 | 10898.7 | 0.01% | 23.4% | 21.6% | 0.0% | none |
-| krakow | 708 | 5240.3 | 0.00% | 33.6% | 35.3% | 0.0% | none |
+| warsaw | 1122 | 10898.7 | 0.01% | 23.4% | 21.6% | 0.0% | none |
+| krakow | 1123 | 5240.3 | 0.00% | 33.6% | 35.3% | 0.0% | none |
 
 ### Pilot comparison
 

@@ -11,7 +11,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| stockholm | 701 | 3658.1 | 0.08% | 16.5% | 58.2% | 2.1% | none |
+| stockholm | 1116 | 3658.1 | 0.08% | 16.5% | 58.2% | 2.1% | none |
 
 ### stockholm: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

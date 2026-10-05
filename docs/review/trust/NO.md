@@ -9,7 +9,8 @@ Hand-written notes go here. Only the generated block below is replaced when `vel
 Oslo's B share of A+B is 0.821 (run 241; 0.822 in run 222 on the OSM relation), against a limit
 of 0.784. The cause is the Norwegian standard facility, not tagging: the gang- og sykkelvei
 (combined foot and cycle path, segregated=no) is mapped as `highway=cycleway` + `foot=designated`
-(rule `B_cycleway_foot`, 263.3 km per side), and sidewalks with `bicycle=designated` add `B_path`
+(rule `B_cycleway_foot`, 263.3 km per side; v3 rule names and km in this paragraph, superseded by
+v4, see ADR 0002 M6 amendment), and sidewalks with `bicycle=designated` add `B_path`
 (20.0 km). Separate cycle-only paths (`A_cycleway` 53.7 km, `A_track_side` 8.2 km) are rare. The
 golden sample confirms the tagging (ways 119146754, 136540510). The headline counts A+B, so this
 is the A/B split, not the headline; report the split for Oslo (HANDOVER §10.1). No rule change
@@ -17,6 +18,13 @@ proposed.
 
 Re-checked on classifier v3 (Task 14, run 280, 2026-10-03): 0.821, unchanged. v3 adds 0.44 km of
 D advisory in Oslo (`cycleway:right=advisory`, rule `D_advisory`), outside A+B.
+
+Re-checked on classifier v4 (run 1117, 2026-10-03): 0.825, still over the limit. The gang- og
+sykkelvei (`highway=cycleway` + `foot=designated`) and the sidewalks with `bicycle=designated` are
+now both `B_shared`, and separate cycle-only paths `A_cycle_only`. v4 moves little in Oslo: A
+61.9 → 59.8 km and B 284.1 → 281.6 km per side against v3 on the same extract; the 4.7 km fall of
+A+B is the MTB exclusion (`X_mtb_trail`; docs/review/trust/v4-impact.md). The note's conclusion
+stands.
 
 ### oslo/boundary_diff_pct
 
@@ -41,7 +49,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| oslo | 702 | 4914.4 | 0.00% | 27.2% | 82.5% | 5.3% | b_share_of_ab, boundary_diff_pct |
+| oslo | 1117 | 4914.4 | 0.00% | 27.2% | 82.5% | 5.3% | b_share_of_ab, boundary_diff_pct |
 
 ### oslo: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

@@ -5,7 +5,7 @@
   "cities": [
     {
       "city_id": "madrid",
-      "run_id": 699,
+      "run_id": 1114,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 7757.969449174339,
       "unrecognised_share": 0.0,
@@ -61,7 +61,7 @@
     },
     {
       "city_id": "barcelona",
-      "run_id": 700,
+      "run_id": 1115,
       "osm_timestamp": "2026-10-03T20:20:50Z",
       "cycling_km": 3687.1621987361677,
       "unrecognised_share": 0.000019165094692897217,

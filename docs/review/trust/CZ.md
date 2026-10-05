@@ -22,7 +22,8 @@ limit; this note stays as the record.
 
 ### prague/b_share_of_ab
 
-Prague's B share of A+B is 0.845 on run 710 (classifier v4, OSM 2026-10-03), against a limit of
+Prague's B share of A+B is 0.845 on run 1125 (classifier v4, OSM 2026-10-03; it reran the
+superseded run 710 with identical tier km), against a limit of
 0.784. Under v3 on the same extract it was 0.638 (scratch run, docs/review/trust/v4-impact.md).
 The breach comes from the v4 facility rule (ADR 0002, M6 amendment): a cycleway on which
 pedestrians are explicitly allowed is now `B_shared`, not A. Prague moves A 106.7 → 44.7 km
@@ -41,7 +42,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| prague | 710 | 7650.3 | 0.00% | 22.0% | 84.5% | 0.1% | b_share_of_ab |
+| prague | 1125 | 7650.3 | 0.00% | 22.0% | 84.5% | 0.1% | b_share_of_ab |
 
 ### prague: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

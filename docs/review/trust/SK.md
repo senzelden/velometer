@@ -11,7 +11,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| bratislava | 712 | 3036.9 | 0.01% | 11.8% | 47.9% | 0.1% | none |
+| bratislava | 1127 | 3036.9 | 0.01% | 11.8% | 47.9% | 0.1% | none |
 
 ### bratislava: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

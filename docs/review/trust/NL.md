@@ -12,7 +12,7 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
 | amsterdam | 697 | 3131.2 | 0.00% | 18.7% | 24.5% | 0.1% | none |
-| utrecht | 698 | 1704.3 | 0.00% | 25.3% | 12.1% | 0.5% | none |
+| utrecht | 1113 | 1704.3 | 0.00% | 25.3% | 12.1% | 0.5% | none |
 
 ### amsterdam: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 

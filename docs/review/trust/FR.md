@@ -12,9 +12,9 @@ Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
 | paris | 693 | 6982.3 | 0.00% | 41.3% | 6.8% | 0.0% | none |
-| lyon | 704 | 2321.2 | 0.01% | 33.0% | 17.6% | 0.1% | none |
-| strasbourg | 705 | 1203.6 | 0.00% | 30.3% | 28.7% | 0.1% | none |
-| bordeaux | 706 | 889.6 | 0.04% | 37.4% | 25.5% | 1.0% | none |
+| lyon | 1119 | 2321.2 | 0.01% | 33.0% | 17.6% | 0.1% | none |
+| strasbourg | 1120 | 1203.6 | 0.00% | 30.3% | 28.7% | 0.1% | none |
+| bordeaux | 1121 | 889.6 | 0.04% | 37.4% | 25.5% | 1.0% | none |
 
 ### Pilot comparison
 
