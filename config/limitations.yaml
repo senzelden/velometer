@@ -161,16 +161,21 @@ limitations:
     en: >-
       The change map compares two snapshots on the same classifier. A gain is a way newly mapped
       as cycling infrastructure, and a loss is one no longer mapped. Redrawn and retagged ways
-      are shown separately. None of it is evidence of construction (ADR 0006). A single new path
-      that replaces tracks on both sides of a road counts as redrawn on both sides, so redrawn
-      km can include a real reduction from two sides to one.
+      are shown separately; a piece split off an existing way (a new way id on the length that
+      way lost) counts as redrawn, not as a gain. The page also gives the net change per tier.
+      None of it is evidence of construction (ADR 0006). A single new path that replaces tracks
+      on both sides of a road counts as redrawn on both sides, so redrawn km can include a real
+      reduction from two sides to one.
     de: >-
       Die Änderungskarte vergleicht zwei Stände mit demselben Klassifikator. Ein Zugewinn ist
       ein Weg, der neu als Radverkehrsanlage kartiert ist, ein Verlust ein Weg, der nicht mehr
-      so kartiert ist. Neu gezeichnete und neu getaggte Wege werden getrennt ausgewiesen. Nichts
-      davon belegt einen Bau (ADR 0006). Ein einzelner neuer Weg, der Radwege auf beiden Seiten
-      einer Straße ersetzt, zählt auf beiden Seiten als neu gezeichnet; die neu gezeichneten
-      Kilometer können daher eine tatsächliche Verringerung von zwei Seiten auf eine enthalten.
+      so kartiert ist. Neu gezeichnete und neu getaggte Wege werden getrennt ausgewiesen; ein
+      Stück, das von einem bestehenden Weg abgetrennt wurde (eine neue Weg-ID auf der Länge, die
+      dieser Weg verlor), zählt als neu gezeichnet, nicht als Zugewinn. Die Seite nennt auch die
+      Nettoänderung je Stufe. Nichts davon belegt einen Bau (ADR 0006). Ein einzelner neuer Weg,
+      der Radwege auf beiden Seiten einer Straße ersetzt, zählt auf beiden Seiten als neu
+      gezeichnet; die neu gezeichneten Kilometer können daher eine tatsächliche Verringerung von
+      zwei Seiten auf eine enthalten.
   - id: mtb_excluded
     en: >-
       Paths with explicit mountain-bike tagging (mtb:scale, mtb, mtb:type, cycling=mtb) are

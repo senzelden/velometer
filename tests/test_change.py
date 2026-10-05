@@ -154,6 +154,64 @@ def test_road_sides_redraw_only_the_same_side():
     }
 
 
+def test_a_way_split_into_the_old_id_and_a_new_id_is_redrawn_not_gained():
+    # the common OSM split: the old id keeps the west half, the east half gets a new id. The
+    # new piece lies on the old geometry, so it is a redraw (decision 15), not a new mapping
+    old = _way(W + 301, (13.400, 13.4059), 52.54, highway="cycleway")
+    kept = _way(W + 301, (13.400, 13.403), 52.54, highway="cycleway")
+    piece = _way(W + 302, (13.403, 13.4059), 52.54, highway="cycleway")
+    got = ch.compute_change([old], [kept, piece], CFG, EPSG, BOUNDARY, [])
+    rows = {(r.category, r.way_id_from, r.way_id_to, r.tier_from, r.tier_to) for r in got.rows}
+    assert rows == {
+        ("geometry", W + 301, W + 301, "A", "A"),
+        ("redrawn", W + 301, W + 302, "A", "A"),
+    }
+    (redrawn,) = _rows(got, "redrawn")
+    assert redrawn.km == pytest.approx(_km([piece], W + 302))
+
+
+def test_split_pieces_of_one_way_are_all_redrawn():
+    old = _way(W + 311, (13.400, 13.4059), 52.545, highway="cycleway")
+    new = [
+        _way(W + 311, (13.400, 13.402), 52.545, highway="cycleway"),
+        _way(W + 312, (13.402, 13.404), 52.545, highway="cycleway"),
+        _way(W + 313, (13.404, 13.4059), 52.545, highway="cycleway"),
+    ]
+    got = ch.compute_change([old], new, CFG, EPSG, BOUNDARY, [])
+    assert {(r.way_id_from, r.way_id_to) for r in _rows(got, "redrawn")} == {
+        (W + 311, W + 312),
+        (W + 311, W + 313),
+    }
+    assert not _rows(got, "gained")
+
+
+def test_a_shrunk_way_absorbs_no_more_than_its_lost_length():
+    # the old 400 m way loses 40 m; a new 300 m way drawn along its remaining part lies wholly
+    # within 15 m of it but is far longer than what the old way lost: a gain, not a split piece
+    old = _way(W + 321, (13.400, 13.4059), 52.55, highway="cycleway")
+    kept = _way(W + 321, (13.400, 13.4053), 52.55, highway="cycleway")
+    parallel = _way(W + 322, (13.400, 13.40443), 52.55001, highway="cycleway")
+    got = ch.compute_change([old], [kept, parallel], CFG, EPSG, BOUNDARY, [])
+    assert {(r.category, r.way_id_to) for r in got.rows} == {
+        ("geometry", W + 321),
+        ("gained", W + 322),
+    }
+
+
+def test_a_split_piece_needs_the_same_tier_and_a_new_way_id():
+    old = _way(W + 331, (13.400, 13.4059), 52.555, highway="cycleway")
+    kept = _way(W + 331, (13.400, 13.403), 52.555, highway="cycleway")
+    tier_b = _way(W + 332, (13.403, 13.4059), 52.555, highway="footway", bicycle="designated")
+    got = ch.compute_change([old], [kept, tier_b], CFG, EPSG, BOUNDARY, [])
+    assert ("gained", W + 332) in {(r.category, r.way_id_to) for r in got.rows}
+    # a footway mapped before (untiered) and now tagged for cycling is a gain, even on the
+    # geometry a neighbouring way lost: it is not a new id split off that way
+    footway = _way(W + 333, (13.403, 13.4059), 52.555, highway="footway")
+    retagged = _way(W + 333, (13.403, 13.4059), 52.555, highway="cycleway")
+    got = ch.compute_change([old, footway], [kept, retagged], CFG, EPSG, BOUNDARY, [])
+    assert ("gained", W + 333) in {(r.category, r.way_id_to) for r in got.rows}
+
+
 def test_totals_are_the_per_side_tier_sums_measure_stores(result):
     for ways, totals in ((FROM, result.totals_from), (TO, result.totals_to)):
         stored = _stored(ways)
@@ -324,6 +382,17 @@ def test_markdown_never_says_built(result):
     assert "All figures are mapped km (ADR 0006): a gain is a way newly mapped as cycling " \
         "infrastructure, not a construction." in md  # fmt: skip
     assert "© OpenStreetMap contributors, ODbL 1.0" in md
+
+
+def test_markdown_gives_the_net_change_per_tier_and_in_all(result):
+    md = ch.render_markdown(result, "berlin", RUN_FROM, RUN_TO, {})
+    assert "net change (to − from)" in md
+    rows = {ln.split("|")[1].strip(): ln for ln in md.splitlines() if ln.startswith("| ")}
+    for t in ch.TIERS:
+        net = result.totals_to.get(t, 0.0) - result.totals_from.get(t, 0.0)
+        assert rows[t].split("|")[4].strip() == f"{net:+.3f}", t
+    total = sum(result.totals_to.values()) - sum(result.totals_from.values())
+    assert rows["**A–E**"].split("|")[4].strip() == f"{total:+.3f}"
 
 
 def test_markdown_lists_runs_bezirke_top_rows_and_changed_tags():

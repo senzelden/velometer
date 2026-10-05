@@ -12,7 +12,11 @@ Categories (all mapped km, ADR 0006: a gain is a way newly mapped, not a constru
 - `retiered`: the same way-side in A-E on both sides, in another tier;
 - `redrawn`: a `to`-only side of the same tier lying within 15 m of `from`-only sides for at
   least 80 % of its length, where those `to` sides together also cover 80 % of each `from` side
-  they replace (decision 15: redrawing sidepaths as new ways is not churn);
+  they replace (decision 15: redrawing sidepaths as new ways is not churn); or a side of a new
+  way id split off a way-side of the same tier whose id persists and whose length fell, lying
+  within 15 m of that side's `from` geometry for at least 80 % of its length (an OSM split
+  keeps the old id on one piece; the split-off pieces together absorb at most the length the
+  persisting side lost, plus a slack);
 - `geometry`: the same way-side and tier, its clipped length changed by more than 1 m.
 """
 
@@ -53,6 +57,10 @@ Category = Literal["gained", "lost", "retiered", "redrawn", "geometry"]
 CATEGORIES: tuple[Category, ...] = ("gained", "lost", "retiered", "redrawn", "geometry")
 TIERS = ("A", "B", "C", "D", "E")
 GEOMETRY_MIN_KM = 0.001  # a same-tier side whose length changed by more than 1 m
+# what the split-off pieces of a shrunk side may add up to beyond its lost length: a piece
+# redrawn on split is rarely exactly as long as the part it replaces
+SPLIT_SLACK_SHARE = 0.2
+SPLIT_SLACK_KM = 0.015
 TOP_N = 20
 # four map colours from the chart palette (geometry changes are listed, not drawn)
 CATEGORY_COLOURS = {
@@ -208,6 +216,48 @@ def _redraw_matches(a, b, lost, gained, clip: _Clip, dist_m: float, min_share: f
     return {k: ms for k, ms in out.items() if ms}
 
 
+def _split_matches(
+    a, b, shrunk, gained, ways_from: set[int], dist_m: float, min_share: float
+) -> dict[tuple, tuple]:
+    """gained key -> shrunk key of the persisting way-side it was split off (C1, decision 15).
+
+    Only a side of a way id absent from `from` qualifies (a split gives the split-off pieces new
+    ids). It matches a shrunk side of the same tier (and road side, as `_redraw_matches`) when
+    at least `min_share` of it lies within `dist_m` of that side's `from` geometry. Pieces are
+    assigned best share first; a shrunk side takes a piece only while the pieces it holds stay
+    within its lost length (from km - to km) plus `SPLIT_SLACK_SHARE` of it and
+    `SPLIT_SLACK_KM`, so a long new way along a slightly shortened one stays a gain.
+    """
+    if not shrunk or not gained:
+        return {}
+    tree = STRtree([a[k].line for k in shrunk])
+    cands = []
+    for key in gained:
+        if key[0] in ways_from:
+            continue
+        g = b[key]
+        for i in tree.query(g.line.buffer(dist_m)):
+            cand = shrunk[int(i)]
+            if a[cand].tier != g.tier:
+                continue
+            if key[1] in ROAD_SIDES and cand[1] in ROAD_SIDES and key[1] != cand[1]:
+                continue
+            share = share_within(g.line, a[cand].line, dist_m)
+            if share >= min_share:
+                cands.append((-share, key, cand))
+    room = {}
+    for k in shrunk:
+        lost_km = a[k].km - b[k].km
+        room[k] = lost_km * (1 + SPLIT_SLACK_SHARE) + SPLIT_SLACK_KM
+    out = {}
+    for _, key, cand in sorted(cands):
+        if key in out or b[key].km > room[cand]:
+            continue
+        out[key] = cand
+        room[cand] -= b[key].km
+    return out
+
+
 def compute_change(
     ways_from: list[WayRecord],
     ways_to: list[WayRecord],
@@ -261,9 +311,23 @@ def compute_change(
     lost = sorted(set(a) - set(b))
     gained = sorted(set(b) - set(a))
     matches = _redraw_matches(a, b, lost, gained, clip, redraw_dist_m, redraw_share)
+    shrunk = sorted(
+        k for k in set(a) & set(b) if a[k].tier == b[k].tier and a[k].km - b[k].km > GEOMETRY_MIN_KM
+    )
+    splits = _split_matches(
+        a,
+        b,
+        shrunk,
+        [k for k in gained if k not in matches],
+        {w.id for w in ways_from},
+        redraw_dist_m,
+        redraw_share,
+    )
     for key in gained:
         g = b[key]
         best = max(matches.get(key, []), default=None, key=lambda m: (m[0], -m[1][0]))
+        if best is None and key in splits:
+            best = (1.0, splits[key])
         if best is not None:
             rows.append(
                 ChangeRow(
@@ -393,17 +457,25 @@ def render_markdown(
         "and tier, its length changed by more than 1 m; km is the signed length change). A "
         "redrawn way-side lies within 15 m of replaced way-sides of the same tier for at least "
         "80 % of its length, and the new way-sides together cover 80 % of each one they "
-        "replace; its km is the new way-side's.",
+        "replace; a way-side split off an existing way-side of the same tier (a new way id on "
+        "the length that way-side lost) counts as redrawn too. A redrawn row's km is the new "
+        "way-side's.",
         "",
         "## Totals (per_side mapped km, recomputed and checked against both runs)",
         "",
-        "| tier | from | to |",
-        "|---|---:|---:|",
+        "The net change (to − from) is the change in mapped km per tier. The categories below "
+        "do not sum to it: a redrawn or retiered row carries only its `to` km, and a split "
+        "way's persisting piece shows its shortening as a negative geometry row, which its "
+        "split-off (redrawn) pieces offset.",
+        "",
+        "| tier | from | to | net change (to − from) |",
+        "|---|---:|---:|---:|",
     ]
-    for t in TIERS:
-        lines.append(
-            f"| {t} | {_km(result.totals_from.get(t, 0.0))} | {_km(result.totals_to.get(t, 0.0))} |"
-        )
+    for t in (*TIERS, None):
+        f = sum(result.totals_from.values()) if t is None else result.totals_from.get(t, 0.0)
+        to = sum(result.totals_to.values()) if t is None else result.totals_to.get(t, 0.0)
+        label = "**A–E**" if t is None else t
+        lines.append(f"| {label} | {_km(f)} | {_km(to)} | {to - f:+.3f} |")
     by_cat = {c: [r for r in result.rows if r.category == c] for c in CATEGORIES}
     lines += ["", BEZIRK_HEADING, ""]
     lines += ["| | " + " | ".join(CATEGORIES) + " |", "|---|" + "---:|" * len(CATEGORIES)]
