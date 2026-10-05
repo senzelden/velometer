@@ -171,6 +171,8 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 
 **M5 — Scale to 21 cities.** Paris, Copenhagen, Vienna, Amsterdam, Utrecht, Madrid, Barcelona, Stockholm, Oslo, Helsinki, Lyon, Strasbourg, Bordeaux, Wrocław, Warsaw, Kraków, Budapest, Prague, Bratislava, Ljubljana, plus Berlin. Per-country tag-completeness check before trusting any new city.
 
+**M6 — Classifier v4 and the Berlin deep-dive** (added after M5; spec `docs/superpowers/specs/2026-10-04-velometer-m6-design.md`, rulings `docs/superpowers/rulings-m6.md`). Classifier v4 draws the A/B line by whether pedestrians share the surface, not by the `highway` value, and excludes explicit MTB trails (ADR 0002 M6 amendment). Berlin is read per Bezirk (12 OSM admin_level 9 relations plus an explicit LAU-edge remainder row), with a mapped-km change map for a chosen window. HANDOVER §11 length figures sit in the DB as cited rows. *Accept:* v4 is the report classifier with 420 done runs (current and 2018–2026, LAU and FUA, none `-dirty`); Bezirk rows plus remainder sum to the city within 0.01 km; every flag and gap is explained on the v4 run set; delivered 2026-10-05.
+
 ---
 
 ## 10. Known pitfalls (put these in tests or diagnostics, not just in prose)
