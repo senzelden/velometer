@@ -1071,7 +1071,7 @@ def test_change_section_says_when_the_change_map_is_older_than_the_figures(subar
     with _client(create_app(db_path, cfg, maps, docs)) as c:
         section = c.get("/city/berlin").text.split("<h3>Mapped change")[1]
     assert f"Run 1 → run {latest - 1}" in section
-    assert f"ends at run {latest - 1}, older than the run {latest} of the figures above" in section
+    assert f"ends at run {latest - 1}, not at the run {latest} of the figures above" in section
     assert "<code>velometer report change --city berlin</code>" in section
 
 

@@ -104,7 +104,7 @@
 <p class="meta">Run {{ bezirke.change_runs[0] }} → run {{ bezirke.change_runs[1] }}</p>
 {% endif %}
 {% if bezirke.change_stale %}
-<p class="note">This change map {% if bezirke.change_runs %}ends at run {{ bezirke.change_runs[1] }}, older than the run {{ bezirke.latest_run }} of the figures above{% else %}does not name its runs, so it may be older than the figures above{% endif %}. Regenerate it with <code>velometer report change --city {{ city.id }}</code>.</p>
+<p class="note">This change map {% if bezirke.change_runs %}ends at run {{ bezirke.change_runs[1] }}, not at the run {{ bezirke.latest_run }} of the figures above{% else %}does not name its runs, so it may not match the figures above{% endif %}. Regenerate it with <code>velometer report change --city {{ city.id }}</code>.</p>
 {% endif %}
 {% if bezirke.change_map %}
 <div id="changemap" class="tiermap" role="region" aria-label="Interactive change map, {{ city.name }}"></div>
