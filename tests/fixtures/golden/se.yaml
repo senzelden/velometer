@@ -146,5 +146,5 @@ ways:
     subtype: null
     bidirectional: false
   confirmed: true
-  note: re-signed for v4 by the user, 2026-10-05
+  note: 're-signed for v4 by the user, 2026-10-05; was B B_path_segregated'
   min_classifier: v4

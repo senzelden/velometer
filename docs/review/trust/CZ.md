@@ -26,10 +26,11 @@ Prague's B share of A+B is 0.845 on run 710 (classifier v4, OSM 2026-10-03), aga
 0.784. Under v3 on the same extract it was 0.638 (scratch run, docs/review/trust/v4-impact.md).
 The breach comes from the v4 facility rule (ADR 0002, M6 amendment): a cycleway on which
 pedestrians are explicitly allowed is now `B_shared`, not A. Prague moves A 106.7 → 44.7 km
-and B 188.3 → 244.5 km per side; A+B falls by 5.8 km, mostly through the MTB exclusion. The share
-reflects how Prague's paths are tagged under a rule the user accepted, not missing tags or a
-boundary problem: unrecognised is 0.00 % and the boundary diff is 0.1 %. Accepted with the v4
-impact review (user decision 2026-10-05). A and B are always reported separately (HANDOVER §10.1).
+and B 188.3 → 244.5 km per side, and A+B falls by 5.8 km. The share reflects how Prague's paths
+are tagged under the v4 rule, not missing tags or a boundary problem: unrecognised is 0.00 % and
+the boundary diff is 0.1 %. The A/B move behind it was part of the v4 impact the user accepted on
+2026-10-05. The breach itself is a controller ruling (M6 Task 15) and was not put to the user
+separately. A and B are always reported separately (HANDOVER §10.1).
 
 <!-- trust:begin -->
 ## Diagnostics CZ (generated)

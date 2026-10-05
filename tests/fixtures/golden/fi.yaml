@@ -38,7 +38,7 @@ ways:
     subtype: null
     bidirectional: true
   confirmed: true
-  note: re-signed for v4 by the user, 2026-10-05
+  note: 're-signed for v4 by the user, 2026-10-05; was A A_cycleway'
   min_classifier: v4
 - way_id: 55445809
   group: X_area
