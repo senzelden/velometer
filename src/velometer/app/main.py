@@ -249,15 +249,24 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         stem = f"{city_id}_change_{label_from}_{label_to}"
         md_path = docs_dir / "review" / f"{stem}.md"
         try:
-            table = change_report.bezirk_table(md_path.read_text(encoding="utf-8"))
+            text = md_path.read_text(encoding="utf-8")
         except OSError:
-            table = None
+            text = None
+        table = None if text is None else change_report.bezirk_table(text)
+        if table is not None:  # never raw HTML from the page into the `md` filter
+            table = table.replace("<", "&lt;").replace(">", "&gt;")
+        runs = None if text is None else change_report.change_runs(text)
         has_map = (maps_dir / f"{stem}.geojson").is_file()
         colours = change_report.CATEGORY_COLOURS
+        latest = data.selector.latest(data.conn, city_id, "lau")
         return {
             "rows": rows,
             "series": charts.headline_subareas(data, city_id),
             "window": f"{label_from} to {label_to}",
+            "change_runs": runs,
+            # the change page does not end at the run the Bezirk table above shows
+            "change_stale": (has_map or table is not None) and (runs is None or runs[1] != latest),
+            "latest_run": latest,
             "change_table": table,
             "change_map": {
                 "url": f"/maps/{stem}.geojson",

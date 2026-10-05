@@ -100,6 +100,12 @@
 <h3>Over time</h3>
 {{ chart("cb", bezirke.series) }}
 <h3>Mapped change {{ bezirke.window }}</h3>
+{% if bezirke.change_runs %}
+<p class="meta">Run {{ bezirke.change_runs[0] }} → run {{ bezirke.change_runs[1] }}</p>
+{% endif %}
+{% if bezirke.change_stale %}
+<p class="note">This change map {% if bezirke.change_runs %}ends at run {{ bezirke.change_runs[1] }}, older than the run {{ bezirke.latest_run }} of the figures above{% else %}does not name its runs, so it may be older than the figures above{% endif %}. Regenerate it with <code>velometer report change --city {{ city.id }}</code>.</p>
+{% endif %}
 {% if bezirke.change_map %}
 <div id="changemap" class="tiermap" role="region" aria-label="Interactive change map, {{ city.name }}"></div>
 <p class="meta tiermap-note" id="changemap-status">Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.</p>
