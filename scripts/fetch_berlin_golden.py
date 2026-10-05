@@ -109,6 +109,14 @@ def check_xml(xml: str, ids: list[int]) -> None:
         raise RuntimeError(f"phase 2 download lacks picked way ids {missing}")
 
 
+EDITOR_ATTRS = re.compile(r' (?:changeset|uid|user)="[^"]*"')
+
+
+def strip_editor_metadata(xml: str) -> str:
+    """The download without the mapper's user name, uid and changeset (never kept in the repo)."""
+    return EDITOR_ATTRS.sub("", xml)
+
+
 def overpass(client: httpx.Client, query: str) -> httpx.Response:
     """POST a query, politely; retry on 429/504 (the public instance is often overloaded)."""
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -138,7 +146,7 @@ def phase1(client: httpx.Client) -> dict[str, list[int]]:
 
 def phase2(client: httpx.Client, ids: list[int], stamp: str) -> None:
     q = f"[timeout:180];way(id:{','.join(map(str, ids))});(._;>;);out meta;"
-    xml = overpass(client, q).text
+    xml = strip_editor_metadata(overpass(client, q).text)
     check_xml(xml, ids)
     comment = f"<!-- Overpass API, fetched {stamp}; (c) OpenStreetMap contributors, ODbL 1.0 -->"
     xml = re.sub(r"(<\?xml[^>]*\?>)", lambda m: f"{m.group(1)}\n{comment}", xml, count=1)
