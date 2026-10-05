@@ -878,24 +878,10 @@ already mapped, whose sides mostly carried no cycleway tag (e.g. way 651236625, 
 secondary road), and 17.2 km where no way was mapped before (e.g. way 517088624, a `Voie verte`).
 The largest single loss is way 194343158, Piste Roger Lapébie (14.2 km), retagged
 `highway=cycleway` -> `highway=path` + `bicycle=yes`, which no tier counts; it was a cycleway
-again by 1 January 2020 (see bordeaux/fua/2020). The 7,874 edits of 2018 stay below the spike
+again by 1 January 2020. The 7,874 edits of 2018 stay below the spike
 limit (13,176) over 1,397 changesets (top changeset 1.8%), but one mapper made 50% of them,
 including 632 of the 964 new `highway=cycleway` ways, and created 44% of the 175.0 km of A/B
 ways with ids that were new in 2018 (new ids include the pieces of split ways).
-
-### bordeaux/fua/2020
-
-Cause: **mapping activity**, with **tag drift** from tier A to tier B. A+B rose 959.5 ->
-1,056.1 km (+96.6 km; threshold 96.0). Matching geometry within 10 m, 110.2 km of tiered
-geometry is new and 12.5 km gone: 67.2 km are cycleways drawn beside roads already mapped (e.g.
-way 746140548, 1.6 km along a residential street), 16.8 km lie where no way was mapped, and
-15.2 km are mapped paths retagged, mainly way 194343158 (Piste Roger Lapébie, 14.2 km) back from
-`highway=path` to `highway=cycleway`. Separately, 66.5 km on 120 existing ways moved from A to
-B when `highway=cycleway` gained `bicycle=designated` + `foot=designated` or became
-`highway=path` (e.g. way 590816799, way 597019071), in 24 changesets by 10 mappers, 30.0 km of
-it in August and 34.3 km in December 2019: B rose 87.7 -> 183.3 km while A stayed at about
-872 km. Activity was ordinary: 6,302 edits, top-mapper share 0.23; the A/B ways with new ids
-(139.2 km) were created by 56 mappers, the largest with 37% of the km.
 
 ### bratislava/lau/current
 
@@ -919,19 +905,6 @@ September–November 2021. Tier B doubled (45.9 -> 88.6 km) mainly because 31.9 
 way 230140923, 6.5 km; way 181363641, 3.0 km): 83 ways in 32 changesets by 9 mappers, top-mapper
 share 0.66, 40 of them in October 2021. That retagging moves km from A to B and does not change
 A+B. The city's share of the jump is +15.5 km (LAU 115.2 -> 130.7, below its threshold).
-
-### bratislava/fua/2025
-
-Cause: **tag drift** in the city plus **mapping activity** in the surrounding FUA. A+B rose
-379.1 -> 420.1 km (+41.0, threshold 37.9). Inside the LAU A+B rose 22.7 km (below the city's
-25 km threshold), 19.8 km of it from retagged ways. 7.4 km of `highway=footway` + `bicycle=yes`
-became `highway=cycleway` + `bicycle=designated` (way 5027830, 3.7 km; way 801057656, 3.3 km),
-and 4.3 km of other footways became cycleways. 6.1 km are mountain-bike trails: `highway=path`
-+ `foot=no` gained `bicycle=designated` and `oneway=yes` (way 985431315 "Krivé Jarky Trail",
-way 383753005 "Rohatka"). The `A_path_cycle_only` rule puts these in tier A. Outside the
-city the +18.3 km is mostly new ways: across the FUA, 229 ways not in the 2024 snapshot add
-19.2 km, of which 5.6 km lie in the LAU. The retags were 36 ways in 17 changesets by 14
-mappers (top share 0.28). Activity was normal (7,392 edits, top mapper 0.32).
 
 ### bratislava/fua/current
 
@@ -966,15 +939,6 @@ rose 234.0 -> 267.0 km (+33.0; the 25 km floor applies, where 10% would be 23.4)
 
 There were 17,860 edits in 2023 (limit 20,852), with a top-mapper share of 0.27. 1,425 of
 the edits add `bicycle=yes`, which moves no tier.
-
-### krakow/lau/current
-
-Cause: **mapping activity** at the steady recent pace, not a campaign. There were 15,703 edits from
-1 January to the 2 October 2026 snapshot, against a limit of 15,701.7 (2 × median 10,426 × 0.753 of
-the year elapsed), so the flag is marginal: 1.3 edits above the limit. Annualised, that is about
-20,850, close to the full years 2024–2026 (17,443–18,695). The median is pulled down by 2018–2022
-(3,903–10,426). Edits are spread evenly (1,129–2,215 a month), the top-mapper share is 0.17 and the
-largest changeset holds 1.2%. 8,647 of the edits add `highway=footway`. A+B rose 287.0 -> 300.9 km.
 
 ### krakow/fua/2019
 

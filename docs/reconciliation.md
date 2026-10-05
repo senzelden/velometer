@@ -991,17 +991,6 @@ far above every OSM measure points to city-submitted data with a wider scope tha
 segregated". Not a classifier issue: QECIO's independent tag logic lands near our numbers
 (`paris/qecio_tracks_km` +11.1%, `paris/qecio_total_km` −11.7%).
 
-### paris/qecio_shared_km
-Cause: **date**. Applying QECIO's own tag definition of cycle and pedestrian tracks (Methodology
-Table 2: footway/path/pedestrian + `bicycle=designated` + `segregated!=yes`, or cycleway +
-`foot=designated` + `segregated!=yes`) to our 2026-10-02 snapshot selects 250 ways, 20.3 km.
-The classifier puts 20.2 km of them in tier B (18.0 km centreline), the same 18.0 km as our
-`qecio_shared_km` value; the other 0.2 km is way 175866038 (Parvis Radio France), a closed
-`highway=pedestrian` square that the classifier excludes as an area. So our classifier and
-QECIO's rule agree on today's data, and the gap to QECIO's 24.3 km (−6.3 km centreline on a
-small base) lies in the data: 996 days of retagging since QECIO's 2024-01-10 snapshot. Not
-verified against a 2024 snapshot.
-
 ### prague/cc_ratio
 Cause: **definition** (scope of both Clean Cities figures; the two gaps compound). Our preset
 divides per-side A+B (295.0 km) by all public roads (3,423.0 km), 8.6%. Neither part is out of
