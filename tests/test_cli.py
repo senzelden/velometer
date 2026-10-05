@@ -1102,6 +1102,18 @@ def test_results_subareas_ends_with_the_remainder_after_a_separator(tmp_path):
     assert rest[4].startswith("per 100k")
 
 
+def test_results_subareas_with_a_non_lau_boundary_is_refused(tmp_path):
+    from tests.report_fixture import add_subareas, build_report_fixture
+
+    db, cfg = build_report_fixture(tmp_path)
+    add_subareas(db, cfg, _berlin_run_ids(db))
+    args = ["results", "--city", "berlin", "--subareas", "--db", str(db), "--config-dir", str(cfg)]
+    out = CliRunner().invoke(app, [*args, "--boundary", "fua"])
+    assert out.exit_code == 2
+    assert "--subareas is a LAU view" in out.output and "'fua'" in out.output
+    assert "rerun" not in out.output
+
+
 def test_results_subareas_of_a_city_without_them_exits_1(tmp_path):
     from tests.report_fixture import build_report_fixture
 

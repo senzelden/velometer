@@ -780,6 +780,13 @@ def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
     if city_id is None:
         typer.echo("error: --subareas needs --city", err=True)
         raise typer.Exit(2)
+    if boundary != "lau":
+        typer.echo(
+            f"error: --subareas is a LAU view: only LAU runs are split into subareas, "
+            f"not {boundary!r} runs",
+            err=True,
+        )
+        raise typer.Exit(2)
     city = _select_cities(config_dir, [city_id])[0]
     if city.subareas is None:
         typer.echo(f"error: no subareas configured for {city_id}", err=True)
