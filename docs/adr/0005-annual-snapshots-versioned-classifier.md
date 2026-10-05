@@ -97,3 +97,35 @@ All runs are on schema v7, at OSM 2026-10-02T20:21:34Z (current) or 1 January 00
   over 20 % has a written explanation against these runs.
 
 The rulings behind these runs are in `docs/superpowers/rulings-m5.md`.
+
+## M6 notes (2026-10-05)
+
+Classifier v4 (unified facility rule, MTB exclusion; ADR 0002 M6 amendment) is the report
+classifier. As this ADR requires, it is a new version: v1–v3 and their runs are unchanged. All
+runs are on schema v8, at OSM 2026-10-03T20:20:50Z (current) or 1 January 00:00 UTC 2018–2026
+(history). The run set behind the report (classifier v4, all `done`, none `-dirty`, one
+`config_sha256`, one `subarea_sha`):
+
+| run set | runs | count | commit | note |
+|---|---|---:|---|---|
+| current LAU, 21 cities | 693–697, Berlin 713, 1113–1127 | 21 | 00c2a29, 9e05848 (Berlin), ae704fa | the 15 at ae704fa rerun dirty runs 698–712; their tier km are identical |
+| current FUA, 21 cities | 714–734 | 21 | ae704fa | wall 20:11, `/usr/bin/time` max RSS 4.17 GB |
+| history LAU, 21 × 2018–2026 | 735–923 | 189 | ae704fa | wall 34:48, max RSS 2.93 GB; Berlin's 9 carry Bezirk rows |
+| history FUA, 21 × 2018–2026 | 924–1112 | 189 | ae704fa | wall 1:47:15, max RSS 5.84 GB |
+| **total** | | **420** | | |
+
+- **History files:** the cached Geofabrik full-history files of M5 were reused, because their
+  published md5 still matched. No new downloads were made, so the history sets are M5's.
+- **Berlin Bezirke:** every Berlin LAU v4 run (current and 9 history years) has rows for the 12
+  Bezirke plus the `remainder` row (ADR 0004 M6 notes). Their sum matches the city row for every
+  tier and road class to within 1.4e-10 km. The run check allows 0.01 km.
+- **Not in the report:** 16 v4 `failed` rows.
+  - Run 692 is the first Berlin v4 run, which failed the old 0.5 % Bezirk sum check. It led to
+    the remainder row (user decision 2026-10-05).
+  - Runs 698–712 were `-dirty`, because review files were written to the tree while they ran.
+    Each carries "superseded by run N" (1113–1127).
+- **Commits:** 00c2a29, 9e05848 and ae704fa differ in tests, docs, the remainder attribution
+  and config outside `config_sha256` (report, trust, reconcile, figures). The classifier,
+  presets and activity config are the same, as one `config_sha256` shows.
+- A first history launch failed in under a minute: the Geofabrik login variables were not in its
+  environment. It wrote no run rows.

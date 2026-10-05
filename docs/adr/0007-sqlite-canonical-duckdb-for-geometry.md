@@ -86,3 +86,45 @@ history runs 314–691), sorted by the current FUA peak:
 
 Per-city wall clocks of the history runs are in ADR 0005's M5 notes and in
 `docs/superpowers/rulings-m5.md`.
+
+## M6 notes (2026-10-05)
+
+Peaks of the classifier-v4 report runs, measured as in the M5 notes (`runs.peak_rss_kb`, a
+process-wide lower bound). The 8 GB gate from M5 was not tripped, so streaming classification is
+still not due.
+
+Peak per city, in GB (kB / 2²⁰), sorted by the current FUA peak. Current runs are the ones the
+report uses (ADR 0005 M6 notes); history columns are the max over runs 735–1112:
+
+| city | LAU current | FUA current | LAU history (max of 9) | FUA history (max of 9) |
+|---|---:|---:|---:|---:|
+| paris | 1.22 | 3.24 | 1.98 | 5.36 |
+| berlin | 1.70 | 2.53 | 2.42 | 3.66 |
+| warsaw | 1.03 | 1.98 | 2.03 | 3.33 |
+| helsinki | 0.66 | 1.85 | 1.65 | 3.13 |
+| vienna | 1.06 | 1.76 | 1.63 | 3.02 |
+| madrid | 0.65 | 1.76 | 1.62 | 3.00 |
+| barcelona | 0.58 | 1.73 | 1.49 | 2.97 |
+| lyon | 0.59 | 1.62 | 1.57 | 2.47 |
+| krakow | 0.88 | 1.60 | 1.80 | 2.43 |
+| copenhagen | 0.91 | 1.59 | 1.53 | 2.40 |
+| oslo | 0.55 | 1.58 | 1.48 | 2.87 |
+| stockholm | 0.49 | 1.57 | 1.43 | 2.51 |
+| amsterdam | 0.77 | 1.54 | 1.45 | 2.76 |
+| strasbourg | 0.51 | 1.50 | 1.46 | 2.22 |
+| wroclaw | 0.79 | 1.42 | 1.46 | 2.12 |
+| prague | 0.84 | 1.41 | 1.68 | 2.49 |
+| utrecht | 0.31 | 1.41 | 1.39 | 2.35 |
+| ljubljana | 0.77 | 1.41 | 1.58 | 2.43 |
+| budapest | 0.83 | 1.35 | 1.70 | 2.37 |
+| bratislava | 0.73 | 1.25 | 1.54 | 2.15 |
+| bordeaux | 0.50 | 1.12 | 1.42 | 2.02 |
+
+- **Largest run of all:** Paris FUA history 2026-01-01 (run 941), 5,623,804 kB (5.36 GB),
+  about 67 % of the gate. M5's largest was 4.86 GB (run 511). The history LAU columns run
+  higher than M5's because each history invocation now runs all 21 cities in one process, and
+  the peak is process-wide.
+- **Largest LAU run:** Berlin, 1.70 GB current and 2.42 GB in history. The Bezirk attribution
+  (12 Bezirke plus the remainder) does not move it measurably from M5's 1.68 / 2.43 GB.
+- **Batch maxima** (`/usr/bin/time -v`): current FUA 4.17 GB, history LAU 2.93 GB, history FUA
+  5.84 GB.
