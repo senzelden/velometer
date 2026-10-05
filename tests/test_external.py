@@ -4,6 +4,7 @@ The QECIO fixture rows are copied from the ECF QECIO v2.10 Summary-all.csv, whic
 OpenStreetMap data (c) OpenStreetMap contributors, ODbL.
 """
 
+import csv
 import json
 import os
 import zipfile
@@ -17,7 +18,7 @@ import pytest
 import shapely
 from shapely import LineString
 
-from velometer.config import default_config_dir, load_cities
+from velometer.config import ConfigError, default_config_dir, load_cities
 from velometer.db import create_schema, fetch_external_figures, open_db, upsert_cities
 from velometer.sources import external as X
 from velometer.sources.download import DownloadError, md5_of
@@ -41,7 +42,32 @@ def test_curated_figures_all_validate_and_are_cited():
     figs = X.load_figures_csv(CURATED)
     assert {f.city_id for f in figs} <= {c.id for c in CITIES}
     for f in figs:
-        assert f.source_url or "re-verify" in f.note, f
+        assert f.source_url.startswith(("http://", "https://")), f
+
+
+def _curated_with_url(tmp_path: Path, url: str) -> Path:
+    """The shipped CSV with the source_url of its second data row (file line 3) set to `url`."""
+    with CURATED.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    rows[1]["source_url"] = url
+    out = tmp_path / "figures.csv"
+    with out.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    return out
+
+
+@pytest.mark.parametrize("url", ["", "  "])
+def test_a_curated_row_without_source_url_is_refused_naming_its_line(tmp_path, url):
+    with pytest.raises(ConfigError, match=r"^row 3: source_url is required$"):
+        X.load_figures_csv(_curated_with_url(tmp_path, url))
+
+
+@pytest.mark.parametrize("url", ["www.example.org/x", "ftp://example.org/x", "javascript:x"])
+def test_a_curated_source_url_that_is_not_http_is_refused(tmp_path, url):
+    with pytest.raises(ConfigError, match=r"^row 3: source_url must be http\(s\)$"):
+        X.load_figures_csv(_curated_with_url(tmp_path, url))
 
 
 def test_curated_clean_cities_rows_follow_the_rules():
@@ -290,7 +316,11 @@ def test_failed_qecio_fetch_keeps_curated_rows(tmp_path, monkeypatch):
 
 
 def test_vienna_web_correction_is_dated_after_the_report():
-    figs = [f for f in X.load_figures_csv(CURATED) if f.city_id == "vienna"]
+    figs = [
+        f
+        for f in X.load_figures_csv(CURATED)
+        if f.city_id == "vienna" and f.source == "clean_cities_2025"
+    ]
     pdf = {f.reference_date for f in figs if f.network_scope == "whole_network"}
     web = {f.reference_date for f in figs if f.network_scope != "whole_network"}
     assert len(pdf) == len(web) == 1 and min(web) > max(pdf)

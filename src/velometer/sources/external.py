@@ -10,7 +10,7 @@ from pathlib import Path
 import pyogrio
 import shapely
 
-from velometer.config import CityConfig, load_cities
+from velometer.config import CityConfig, ConfigError, load_cities
 from velometer.db import replace_external_figures
 from velometer.models import ExternalFigure
 from velometer.pipeline.geometry import Projector, length_km
@@ -40,8 +40,16 @@ def retrieved_at(path: Path) -> date:
 
 
 def load_figures_csv(path: Path) -> list[ExternalFigure]:
+    """The curated rows. Each must cite an http(s) source_url; `row <n>` in an error is the
+    row's line in the file (the header is line 1)."""
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    for n, r in enumerate(rows, start=2):
+        url = (r.get("source_url") or "").strip()
+        if not url:
+            raise ConfigError(f"row {n}: source_url is required")
+        if not url.startswith(("http://", "https://")):
+            raise ConfigError(f"row {n}: source_url must be http(s)")
     return [
         ExternalFigure.model_validate({**r, "reference_date": r["reference_date"] or None})
         for r in rows

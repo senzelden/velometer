@@ -1,8 +1,25 @@
 # Berlin and comparison cities: reported-figure candidates (M6 Task 14 Step 4)
 
-These are candidate `ExternalFigure` rows for your verdict. Nothing here is loaded into `config/external/figures.csv`.
+These were candidate `ExternalFigure` rows for your verdict. The verdicts of 2026-10-05 are recorded under each row and summarised in "Load status" below.
 Retrieval date for every source below: 2026-10-05. Every URL was fetched in this session; where a page was read through the fetch tool's summary or a PDF text extraction, the quoted sentence is as returned and is worth a glance on the live page.
 No figure here is a claim that OSM-mapped km equal any reported km.
+
+## Load status (M6 Task 15, 2026-10-05)
+
+Loaded into `config/external/figures.csv` and the DB with `velometer external load` (retrieved_at 2026-10-05): rows line 20 (21.2 km), line 21 (20.5 km) and line 23 (25.2 km) with their source URLs; C1, C1b, C1c, C4 (three rows), C8c and C9.
+
+Not loaded:
+
+| row | reason |
+|---|---|
+| Row line 22 (17.3 km, infraVelo) | dropped: no source found |
+| C2 (2025 money spent) | user verdict 2026-10-05: length rows only |
+| C3 (2025 money available) | user verdict 2026-10-05: length rows only |
+| C5 (Mobilitätsgesetz target years) | user verdict 2026-10-05: length rows only |
+| C6 (Kantstraße rollback cost) | user verdict 2026-10-05: length rows only |
+| C7 (Titel 72016) | user verdict 2026-10-05: length rows only |
+| C8 (Copenhagen cycling trip share) | user verdict 2026-10-05: length rows only |
+| C8b (Copenhagen cycled km, weekdays) | user verdict 2026-10-05: length rows only |
 
 ## Awaiting a source URL (rows already in figures.csv)
 
@@ -14,7 +31,7 @@ These are `config/external/figures.csv` lines 20-23 (blank `source_url`). Row va
 - Classification: SECONDARY (dpa reporting on the Senate's Fahrrad-Fortschrittsbericht to the Hauptausschuss). The report itself was not reached; the berlin.de Radfortschrittsbericht page returned no document list.
 - Verbatim: "Das hatte zur Folge, dass mit 21,2 Kilometern deutlich weniger neue Fahrradwege fertiggestellt wurden als in den Vorjahren. 2022 waren es noch 32,4 Kilometer, seither ist die Länge jedes Jahr gesunken."
 - Basis (Streckenlänge or Reallänge) not stated in the article. Keep `unknown`.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv; source_url set to the Nordkurier URL, note marks it secondary.
 
 ### Row line 21: official / new_cycle_infra_km / 20.5 km / whole_network / unknown ("Senate preliminary, Dec 2025")
 
@@ -22,13 +39,13 @@ These are `config/external/figures.csv` lines 20-23 (blank `source_url`). Row va
 - Classification: SECONDARY (dpa query answered by the Senate transport administration; no Senate document reached).
 - Verbatim: "Im laufenden Jahr wurden 35 Radwege-Projekte mit einer Gesamtlänge von 20,5 Kilometern gebaut, teilte die Senatsverwaltung für Verkehr auf Anfrage der Deutschen Presse-Agentur mit."
 - Note: stated on 19 Dec 2025, so the year was not complete ("im laufenden Jahr"); the reference_date 2025-12-31 in the CSV is a year-end label, not the statement date. Basis not stated.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv; source_url set to the Tagesspiegel 19.12.2025 URL, note marks it secondary.
 
 ### Row line 22: official / new_cycle_infra_km / 17.3 km / vorrangnetz_ergaenzungsnetz / unknown ("infraVelo")
 
 - Found URL: NOT FOUND.
 - No fetched page contains 17.3 km. See "Not found".
-- Verdict:
+- Verdict: dropped: no source found (user verdict 2026-10-05); row removed from figures.csv and, by the source-wise replace of `external load`, from the DB.
 
 ### Row line 23: changing_cities / new_cycle_infra_km / 25.2 km / whole_network / unknown
 
@@ -36,11 +53,11 @@ These are `config/external/figures.csv` lines 20-23 (blank `source_url`). Row va
 - Classification: PRIMARY (Changing Cities' own monitor).
 - Verbatim: "25,2 Kilometer wurden 2025 neu geschaffen." The page says Changing Cities measure it themselves ("Wir messen selbst nach!") and the data stand is 31 Dec 2025 (as returned by the fetch tool).
 - Note: the same page gives 183.6 km built since 2018 (6.8% of the planned network); that is a different base from the Senate's "gut 140 km, 5.8%, 2017-2025".
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv; source_url set to the Changing Cities URL, note marks it primary.
 
 ## Candidates
 
-Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals: `official` where a Senate or city-government document is the origin, else flagged NEW.
+Common fields: retrieved_at 2026-10-05. `source` proposals: `official` where a Senate or city-government document is the origin, else flagged NEW.
 
 ### C1. Vorrangnetz implemented km
 
@@ -50,7 +67,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - PRIMARY (Drucksache 19/25987, Schriftliche Anfrage Tino Schopf, SPD, of 27.04.2026; answer of the Senate administration of 20.05.2026; the Senate asked infraVelo for input)
 - Verbatim (Antwort zu 18): "Insgesamt sind 78,2 km des Radvorrangnetzes umgesetzt worden."
 - Confidence: high for the value. Basis unstated for implemented km; the target network is given as "Streckenlänge" (see C1b).
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv.
 
 ### C1b. Vorrangnetz target km
 
@@ -58,7 +75,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url same Drucksache as C1; PRIMARY
 - Verbatim (Antwort zu 14): "Das Radvorrangnetz umfasst als planerisches Zielnetz ca. 870 km Streckenlänge."
 - Confidence: high; "ca." value. Optional row; useful as denominator for C1.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv.
 
 ### C1c. Vorrangnetz km implemented in 2025 (optional, same Drucksache)
 
@@ -66,7 +83,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url same Drucksache; PRIMARY
 - Source is the table in Antwort zu 17, row "Summe": "Summe 10,1 5,1 9,6 7,5" (2022, 2023, 2024, 2025 in km). The table carries no sentence form; the row label text is the quote.
 - Confidence: high for the extraction; the table header reads "Vorrangnetz [Km]".
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv.
 
 ### C2. 2025 money spent
 
@@ -75,7 +92,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - SECONDARY (dpa on the Fahrrad-Fortschrittsbericht)
 - Verbatim: "Inklusive Bundesmitteln flossen 2025 knapp 27 Millionen Euro in den Berliner Radverkehr, wie aus dem Fahrrad-Fortschrittsbericht der zuständigen Verkehrssenatsverwaltung für den Hauptausschuss im Abgeordnetenhaus hervorgeht."
 - Confidence: medium; "knapp 27" so the exact value is below 27.0M. Also "flossen" (flowed), and the article says about 4 M less than the previous year.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C3. 2025 money available
 
@@ -84,7 +101,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - Verbatim: "Dem Bericht zufolge standen im vergangenen Jahr über alle Haushaltstitel hinweg rund 82,4 Millionen Euro für den Radverkehr zur Verfügung."
 - Context sentence: "In der Abteilung Verkehr wurden demnach nur ein Drittel der verfügbaren Mittel ausgegeben. In der Abteilung Tiefbau waren es 80 Prozent."
 - Confidence: medium. Note C2 and C3 may not be like-for-like: 27 M "flossen ... inklusive Bundesmitteln" versus 82.4 M "zur Verfügung". The article itself does not give a spent/available ratio for the total.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C4. Network completed 2017-2025 (three values from one sentence)
 
@@ -93,7 +110,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670 ; SECONDARY
 - Verbatim: "Von den 2.400 Kilometern Strecke, die aktuell im Berliner Radverkehrsnetz vorgesehen sind, wurden zwischen 2017 und 2025 lediglich gut 140 Kilometer oder rund 5,8 Prozent fertiggestellt."
 - Confidence: medium. 140/2400 = 5.83%. Tagesspiegel (02.07.2026, see C5) gives the network as "gut 2.370 Kilometern", so the denominator varies between sources.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv as three rows (completed km, target km, completed share).
 
 ### C5. Mobilitätsgesetz amendment: target years
 
@@ -102,7 +119,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - Verbatim (entwicklungsstadt): "Nach dem bisherigen Gesetz sollte das Radverkehrsnetz samt Beschilderung bis 2030 entstehen. Die Novelle unterscheidet nun zwischen Radvorrangnetz bis 2030 und Nebennetz bis 2035."
 - Verbatim fragments (Tagesspiegel, as returned by the fetch tool): "das sogenannte Radvorrangnetz mit einer Gesamtlänge von 865 Kilometern" and "mit einer Länge von gut 2.370 Kilometern und entsprechender Beschilderung nun bis 2035 zur Verfügung stehen".
 - Confidence: low-medium for "enacted". Entwicklungsstadt says the vote was scheduled for 3 July 2026, and both articles are dated 2 July, i.e. before the vote. The fetch summary of Tagesspiegel called the law "passed" but that is not confirmed by any dated post-vote source. This is a date, not a length; consider a narrative note rather than a row.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C6. Kantstraße rollback cost
 
@@ -111,7 +128,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - Verbatim: "Die Gesamtkosten der Maßnahme werden nach Angaben des Senats mit Stand März 2026 auf rund 2,4 Millionen Euro beziffert."
 - Status context (not row values): DUH filed an Eilantrag at the Verwaltungsgericht on 07.09.2026 (https://www.duh.de/presse/pressemitteilungen/pressemitteilung/berliner-kantstrasse-deutsche-umwelthilfe-zieht-mit-eilantrag-gegen-den-autovernarrten-berliner-sena/ ; heading "Montag, 07.09.2026"). Entwicklungsstadt 15.09.2026: the Senate committed to the court that works would not begin before 30 Sep 2026. Entwicklungsstadt 24.09.2026 (https://www.entwicklungsstadt.de/radweg-oder-busspur-in-der-kantstrasse-gericht-erhoeht-druck-im-streit/): marking work scheduled "ab dem 1. Oktober", no final stop and no approval yet. The "postponed to 7 Oct 2026" claim was NOT found (see Not found).
 - Confidence: medium for the cost (a Senate figure reported by a local news site). Likely a narrative item, not a figure row.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C7. Titel 72016 (Kap. 0730), 2025 and from 2026
 
@@ -120,7 +137,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url https://berlin.adfc.de/artikel/500000-euro-fuer-den-radverkehr-mehr-gibt-es-nicht (ADFC Berlin, 20.01.2025). SECONDARY (advocacy group describing the Senate's draft budget).
 - Verbatim (as returned by the fetch tool): "6,5 Millionen vorgesehen" for 2025 and "reduziert der Senat diesen Posten ab 2026 auf 500.000 Euro pro Jahr".
 - Confidence: LOW for the 2026 value. The ADFC text predates the adopted double budget. Drucksache 19/2627-3 (17.12.2025, a Greens amendment motion to the Haushaltsgesetz 2026/27) lists Titel 72016 with "Ansatz bisher" 5.725.000 (2026) and 5.750.000 (2027), and proposed 6.500.000 / 6.525.000. See Notes.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C8. Copenhagen: cycling trip share
 
@@ -129,7 +146,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - PRIMARY
 - Verbatim: "I 2025 blev 26 % af alle ture i København foretaget i bil mens 25 % af turene blev foretaget til fods, 28 % på cykel og 21 % blev tilbagelagt med kollektiv transport. Sammenlignet med 2024 er turandelen i bil faldet med tre procentpoint, turandelen for cykler faldet med ét procentpoint, ..."
 - Confidence: high.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C8b. Copenhagen: cycled km, weekdays
 
@@ -137,7 +154,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url same Mobilitetsredegørelse 2026; PRIMARY
 - Verbatim: "Tilsvarende blev der tilbagelagt 2,48 mio. km på cykel og 1,01 km til fods (TU). Det er et fald i cykeltrafikken på 6 % og en stigning i km til fods på 6 % fra året før."
 - Note: HANDOVER says "cycle km -6%". The source's km are kilometres cycled by traffic on weekdays (traffic volume, 2.48 million km), NOT kilometres of cycle infrastructure. Naming the metric `cycle km` would mislead; the metric name above avoids it.
-- Verdict:
+- Verdict: not loaded (user verdict 2026-10-05: length rows only).
 
 ### C8c. Copenhagen: cycle track km (optional)
 
@@ -145,7 +162,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - source_url same Mobilitetsredegørelse 2026; PRIMARY
 - Verbatim: "I 2025 var der 401 km cykelsti i København." (Mobilitetsredegørelse section "Cykelstier og cykelparkering")
 - Confidence: medium; the municipal definition of "cykelsti" was not checked. Clean Cities in figures.csv has Copenhagen at 397 km protected for May 2025; these are different definitions and dates.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv.
 
 ### C9. Vienna: Radwegeausbau 2025 (projects started)
 
@@ -154,7 +171,7 @@ Common fields: retrieved_at 2026-10-05; Verdict empty on all. `source` proposals
 - Verbatim: "Die Bilanz zum Radwegeausbau 2025 enthält 53 Radinfrastrukturprojekte im Hauptradverkehrsnetz, mit deren Realisierung im Jahr 2025 begonnen wurde. Es handelt sich um 20,4 Kilometer, die im Jahr 2025 gestartet wurden." Header of the document: "53 Projekte 20.447 m Länge".
 - Note: these are projects STARTED in 2025, not completed; it is not the same measure as Berlin's "neu fertiggestellt". Same document: "Im Jahr 2025 wurden 57 Mio. in die Radinfrastruktur investiert (inklusive Planung, Beleuchtung etc)."
 - Confidence: high for the value; the metric must not be named `new_cycle_infra_km`.
-- Verdict:
+- Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv; source `mobilitaetsagentur_wien` as proposed; note "projects started in 2025, not completed".
 
 ### Context only, no row: Clean Cities 2025
 

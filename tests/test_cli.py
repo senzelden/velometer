@@ -281,6 +281,29 @@ def test_external_load_offline_prints_rows_per_source(tmp_path):
         assert f"{source} {n} rows" in r.output
 
 
+def test_external_load_refuses_a_curated_row_without_source_url(tmp_path):
+    shipped = (default_config_dir() / "external" / "figures.csv").read_text(encoding="utf-8")
+    head, first, *_ = shipped.splitlines()
+    bad = tmp_path / "figures.csv"
+    bad.write_text(f"{head}\n{re.sub(r',https?://[^,]*,', ',,', first, count=1)}\n")
+    r = CliRunner().invoke(
+        app,
+        [
+            "external",
+            "load",
+            "--figures",
+            str(bad),
+            "--no-qecio",
+            "--no-bikenetkit",
+            "--db",
+            str(tmp_path / "v.sqlite"),
+        ],
+    )
+    assert r.exit_code == 1, r.output
+    assert "external load failed: ConfigError: row 2: source_url is required" in r.output
+    assert r.exception is None or isinstance(r.exception, SystemExit)
+
+
 def test_reconcile_skips_cities_without_run(tmp_path):
     db = tmp_path / "v.sqlite"
     runner = CliRunner()

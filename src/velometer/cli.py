@@ -667,6 +667,7 @@ def external_load(
                 refresh_qecio=refresh_qecio,
             )
     except (
+        ConfigError,
         DownloadError,
         SchemaError,
         ValueError,
