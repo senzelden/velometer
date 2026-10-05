@@ -7,10 +7,11 @@ FUA boundaries carry no population, so FUA series have no per-100k figure. Our n
 `--write`; everything outside it is hand-written.
 
 Classifier: the series reports `report_classifier` from `config/report.yaml`, currently
-**v3** (v2 plus the road-side values `soft_lane` and `advisory`, counted as tier D advisory
-lanes; v2 is v1 plus recognised `use_sidepath`, `shoulder`, `crossing`, untyped `yes`, and `,`
-as a value separator). Runs of earlier classifiers stay in the database; `--classifier v2` (or
-`v1`, pilot cities only) reports them where they exist.
+**v4** (ADR 0002 M6 amendment): v3's standalone-way rules give way to one facility rule
+(segregated → A `A_segregated`, pedestrians permitted → B `B_shared`, otherwise A
+`A_cycle_only`), and explicitly MTB-tagged trails are excluded (`X_mtb_trail`); road-side rules
+are those of v3. Runs of earlier classifiers stay in the database; `--classifier v3` (or `v2`,
+`v1` for the pilot cities) reports them where they exist.
 
 Flag rules (`config/activity.yaml`, spec section 2.13): `km_jump`, `activity_spike`,
 `campaign_suspected`, `single_mapper`, `tag_drift`. Every flagged city-year needs an
@@ -768,12 +769,14 @@ retagged, which moves km between tiers or diagnostics) and **mapping activity** 
 that adds or redraws cycling ways where no official source shows construction). All km are
 mapped km, not built km.
 
-Evidence: the v3 history runs and current runs listed in the tables above, and way-level diffs of
-consecutive yearly snapshots classified with `config/classifier/v3.yaml` in the city's EPSG. The
-pilot explanations (Berlin, Paris, Vienna, Wrocław) were first written against the v2 runs; the
-v3 history runs read the same snapshots and give identical tier, road and diagnostic rows there,
-and on the Berlin, Paris and Vienna snapshots those explanations cite, v2 and v3 classify every
-road side the same.
+Evidence: the v4 runs listed in the tables above (ADR 0005 M6 notes): history LAU 735–923 and
+FUA 924–1112 (1 January 2018–2026), current LAU 693–697, 713 and 1113–1127 and current FUA
+714–734 (OSM 2026-10-03T20:20:50Z). Way-level diffs classify consecutive yearly snapshots with
+`config/classifier/v4.yaml` in the city's EPSG; where v4 moves km between tiers A and B, the
+entry names the move, measured by classifying the same snapshot with `v3.yaml`. The
+explanations were first written against the v2 (pilot cities) and v3 runs and re-checked against
+the v4 runs. Edit, changeset and mapper figures come from the activity rows and do not depend on
+the classifier, and v4's road-side rules are identical to v3's.
 
 <!-- explained-against: amsterdam/fua=3ba1483e amsterdam/lau=2a652dc2 barcelona/fua=9a77f00a barcelona/lau=9a77f00a berlin/fua=1308e2c9 berlin/lau=c3335f42 bordeaux/fua=5f5d0d9f bordeaux/lau=cb158134 bratislava/fua=2e7369e0 bratislava/lau=2e7369e0 budapest/fua=0a58443e budapest/lau=0a58443e copenhagen/fua=be41de5b copenhagen/lau=be41de5b helsinki/fua=78321316 helsinki/lau=78321316 krakow/fua=81a148c2 krakow/lau=81a148c2 ljubljana/fua=81ef23ad ljubljana/lau=81ef23ad lyon/fua=1404a50e lyon/lau=1404a50e madrid/fua=f0e3c8ec madrid/lau=323b467b oslo/fua=47a4f74c oslo/lau=47a4f74c paris/fua=df7be7ff paris/lau=7db1f306 prague/fua=678529b2 prague/lau=6d158548 stockholm/fua=149b5257 stockholm/lau=149b5257 strasbourg/fua=8bfe6202 strasbourg/lau=9c8283ec utrecht/fua=b37cd68d utrecht/lau=b0b39792 vienna/fua=1254c077 vienna/lau=1254c077 warsaw/fua=72a9a41e warsaw/lau=e910fce2 wroclaw/fua=fda036ca wroclaw/lau=fda036ca -->
 
@@ -788,7 +791,7 @@ Blekersvaartweg), and 1.89 km kept only `oneway:bicycle=no` with no lane tag (wa
 Planetenlaan), so they leave tier D. The 2.07 km left in 2022 are `cycleway=opposite`. The 101
 legacy ways were last edited in 44 changesets by 20 mappers, 47 of them in February 2021; the
 year had 25,937 edits with a top-mapper share of 0.09, so this is not one mapper's sweep. The
-retagging touches tier D only: A+B rose normally (4,104.3 -> 4,134.2 km) and D grew 676.5 ->
+retagging touches tier D only: A+B rose normally (4,101.1 -> 4,131.0 km) and D grew 676.5 ->
 726.2 km.
 
 ### barcelona/lau/2021
@@ -799,10 +802,13 @@ of the 13,819 new footways, 6,976 are sidewalks and 5,250 crossings (e.g. way 43
 of the edits fall in December 2020, and the top-mapper share is 0.76 (8,113 of the December
 edits; 11,755 footway creations over the year). They are spread over 1,176 changesets, with a top
 changeset of 1.6%. A+B rose 189.6 -> 214.4 mapped km. That is +24.8 km, 0.2 km below the 25 km
-jump floor, and it is real cycleway mapping, not the footway work: `A_cycleway` +22.2 km, with
-204 new `highway=cycleway` ways (36.8 km, partly re-drawn splits of older ways), e.g. way
-871562924 on Carrer d'Aragó (4.8 km) and way 766736025 on Carrer de Bilbao. Tier E appears (0.0
--> 10.0 km), from bus lanes and cycle streets newly tagged on roads (see barcelona/fua/2021).
+jump floor. It comes from cycleway mapping, not from the footway work: tier A gained 21.7 km, with 204 new
+`highway=cycleway` ways (36.8 km, partly re-drawn splits of older ways), e.g. way 871562924 on
+Carrer d'Aragó (4.8 km) and way 766736025 on Carrer de Bilbao. By rule, `A_segregated` rose 39.6 km
+and `A_cycle_only` fell 17.3 km. Most of the new cycleways carry `segregated=yes` (30.0 km), and
+17.7 km of existing cycleways gained the tag during 2020 (e.g. way 308033675), which moves them within
+tier A. Tier E appears (0.0 -> 10.0 km), from bus lanes and cycle streets newly tagged on roads
+(see barcelona/fua/2021).
 
 ### barcelona/lau/2022
 
@@ -811,25 +817,30 @@ dominant mapper. 21,116 counted edits in 2021 against a limit of 12,666: 18,335 
 `highway=footway` (of 18,412 new footways, 10,779 sidewalks and 6,348 crossings; e.g. way
 49790703). 17,595 of the edits fall in January to March 2021, and the top-mapper share is 0.86
 (16,769 footway creations). 1,305 changesets, top changeset 1.7%. A+B moved normally, 214.4 ->
-219.1 mapped km: `A_cycleway` +6.1 km. The largest gains are way 867922053 and way 867922054 on
-Passeig de la Zona Franca (+3.3 km), which went from a lifecycle tag (excluded) to a built
-cycleway, and new way 914437793 (2.6 km).
+219.1 mapped km: tier A +6.1 km. The largest gains are way 867922053 and way 867922054 on
+Passeig de la Zona Franca (+3.3 km), which went from a lifecycle tag (excluded) to
+`highway=cycleway`, and new way 914437793 (2.6 km). By rule, `A_segregated` rose 12.3 km and
+`A_cycle_only` fell 6.4 km, because 9.0 km of existing cycleways gained `segregated=yes` during
+2021 (e.g. way 459464518), which keeps them in tier A.
 
 ### barcelona/fua/2021
 
 Cause: **mapping activity** (catch-up mapping of existing cycleways, half of it by one mapper). A+B
-rose 656.4 -> 833.6 mapped km (+177.2; the threshold is 65.6). By rule: `A_cycleway` +147.9 km,
-`B_path` +20.8, `B_cycleway_foot` +10.1. 216.3 km sit on ways that were not tiered in 2020, and
-187.8 km of those ways were first drawn in 2020. They are spread over 83 municipalities: Barcelona
-41.2 km, Sabadell 19.0, Viladecans 15.2, Sant Cugat del Vallès 11.5, L'Hospitalet de Llobregat 9.1.
-One mapper drew 52.5% of the km, across 70 municipalities. Drawing peaked in April to June 2020
-(94.6 km). That is network-wide catch-up, not a single build-out. That they were catch-up rather
-than new builds is inferred from this spread; it is not verified on the ground. Existing ways were
-also retagged into tier B, e.g. way 127720993 and way 112450547 (`highway=footway` -> `path` +
-`bicycle=designated`). Activity was high but did not spike: 32,541 edits (limit 46,004), with a
-top-mapper share of 0.42 (below the 0.5 `single_mapper` threshold). The same year adds tier D (15.4
--> 40.3 km of painted lanes, e.g. way 34048002) and tier E (0.1 -> 13.9 km: cycle streets on Passeig
-de Gràcia laterals, e.g. way 116343002, and bus lanes on Carrer de Sants, way 45185735).
+rose 656.1 -> 832.6 mapped km (+176.5; the threshold is 65.6). By rule: `A_cycle_only` +91.2 km,
+`A_segregated` +56.9, `B_shared` +33.1, `A_track_side` −4.9. 25.3 km of the `A_segregated` gain is
+existing cycleways that gained `segregated=yes`, which moves them within tier A. 215.6 km sit on ways that
+were not tiered in 2020, and 187.1 km of them are on ways first drawn in 2020. Measured on the v3
+tiers (0.7 km more), they are spread over 83 municipalities: Barcelona 41.2 km, Sabadell 19.0,
+Viladecans 15.2, Sant Cugat del Vallès 11.5, L'Hospitalet de Llobregat 9.1. One mapper drew 52.5%
+of the km, across 70 municipalities. Drawing peaked in April to June 2020 (94.6 km). That is
+network-wide catch-up, not a single build-out. That they were catch-up rather than new builds is
+inferred from this spread; it is not verified on the ground. Existing ways were also retagged
+into tier B, e.g. way 127720993 and way 112450547 (`highway=footway` -> `path` +
+`bicycle=designated`, now `B_shared`). Activity was high but did not spike: 32,541 edits (limit
+46,004), with a top-mapper share of 0.42 (below the 0.5 `single_mapper` threshold). In the same
+year tier D grew (15.4 -> 40.3 km of painted lanes, e.g. way 34048002) and so did tier E (0.1 -> 13.9 km:
+cycle streets on Passeig de Gràcia laterals, e.g. way 116343002, and bus lanes on Carrer de Sants,
+way 45185735).
 
 ### berlin/lau/2019
 
@@ -837,19 +848,21 @@ Cause: **tag drift**. `legacy_km` rose 13.8 -> 24.7 because mappers added the ol
 `sidewalk:*:bicycle=yes` scheme to main roads (rule `X_sidewalk_bicycle_permitted`, 4.3 ->
 15.9 km), e.g. way 144884824 and way 31099696 (secondary roads that gained
 `sidewalk:both:bicycle=yes`, 2.5 and 2.2 km). Those sides are excluded from the tiers, so the
-headline is unaffected (A+B 1,643 -> 1,615 km, below the jump threshold).
+headline is unaffected (A+B 1,640 -> 1,612 km, below the jump threshold).
 
 ### berlin/lau/2022
 
 Cause: **campaign** (re-mapping of sidepaths and of "sidewalk, bicycles permitted" ways), not a
-loss of built infrastructure. A+B fell 1,680.7 -> 1,496.8 km: 191 km of road sides went from
-`cycleway=track` to `cycleway=separate` (e.g. way 155594970, way 193875622), with only part of
-the separate ways drawn by 1 January 2022 (+121 km of new `highway=cycleway`); and 127 km of
-tier B left because `highway=path` + `bicycle=designated` became `highway=footway` +
-`bicycle=yes` (e.g. way 354012617, way 699975735), which the classifier correctly does not
-count. The year's 50,701 edits (2.2x 2021) are led by `highway=footway` creation,
-`cycleway:both=no` and `cycleway:right=track -> separate`; one mapper made 51% of them
-(`single_mapper`).
+loss of built infrastructure. A+B fell 1,677.1 -> 1,494.4 mapped km. 191 km of road sides went
+from `cycleway=track` to `cycleway=separate` (e.g. way 155594970, way 193875622), and only part of
+the separate ways were drawn by 1 January 2022 (+121 km of new `highway=cycleway`). Further,
+135 km of standalone ways left tiers A and B when `highway=path` + `bicycle=designated` became
+`highway=footway` + `bicycle=yes` (89 km) or `highway=path` + `bicycle=yes` (22 km), which the
+classifier correctly does not count. Of those 135 km, 84 km were `B_shared` (e.g. way 354012617,
+way 699975735). Another 46 km were segregated paths, which v4 rates `A_segregated` (e.g. way
+887604839) and v3 counted as B, so under v4 the loss falls on both tiers: A −125.4 km, B −57.4 km.
+The year's 50,701 edits (2.2x 2021) are led by `highway=footway` creation, `cycleway:both=no` and
+`cycleway:right=track -> separate`; one mapper made 51% of them (`single_mapper`).
 
 ### berlin/lau/2026
 
@@ -858,7 +871,7 @@ was removed during 2025 (9.0 -> 0.0 km, e.g. way 4787341 on a `bicycle_road`), a
 `sidewalk:*:bicycle=yes` fell 9.9 -> 3.1 km (way 111283473 -> `cycleway:both=no`). The new
 `cycleway:*=crossing` value on road sides (e.g. way 1133761372 `cycleway:right=lane` -> `crossing`)
 is recognised since v2 (excluded, subtype `crossing`), so it no longer shows as unrecognised.
-Headline km rose normally (A+B 1,510 -> 1,539).
+Headline km rose normally (A+B 1,500 -> 1,532).
 
 ### berlin/fua/2022
 
@@ -866,57 +879,57 @@ Cause: **campaign**, the same sidepath re-mapping as berlin/lau/2022 extended in
 `legacy_km` 48.1 -> 73.0 because `sidewalk:both:bicycle=yes` on rural main roads grew 41.1 -> 67.6
 km; road sides moved from `cycleway=right`/`use_sidepath` to `cycleway:right=separate` (way
 206903446, 3.8 km; way 449341004); `unrecognised_km` fell 16.9 -> 9.1 (classifier v2 and later). A+B
-fell 3,817.6 -> 3,469.6 km (-9.1%, below the 10% jump threshold) with 77,158 edits and a top-mapper
+fell 3,808.5 -> 3,460.0 km (−9.2%, below the 10% jump threshold) with 77,158 edits and a top-mapper
 share of 0.50.
 
 ### bordeaux/fua/2019
 
 Cause: **mapping activity** led by one mapper (`single_mapper`), mostly cycleways drawn beside
-roads. A+B rose 850.1 -> 959.5 km (+109.4 km; threshold 85.0). Matching geometry within 10 m,
+roads. A+B rose 850.1 -> 959.5 km (+109.3 km; threshold 85.0). Matching geometry within 10 m,
 140.4 km of tiered geometry is new and 30.7 km gone. Of the new, 109.2 km lie beside roads
 already mapped, whose sides mostly carried no cycleway tag (e.g. way 651236625, 2.3 km along a
 secondary road), and 17.2 km where no way was mapped before (e.g. way 517088624, a `Voie verte`).
 The largest single loss is way 194343158, Piste Roger Lapébie (14.2 km), retagged
 `highway=cycleway` -> `highway=path` + `bicycle=yes`, which no tier counts; it was a cycleway
-again by 1 January 2020. The 7,874 edits of 2018 stay below the spike
-limit (13,176) over 1,397 changesets (top changeset 1.8%), but one mapper made 50% of them,
-including 632 of the 964 new `highway=cycleway` ways, and created 44% of the 175.0 km of A/B
-ways with ids that were new in 2018 (new ids include the pieces of split ways).
+again by 1 January 2020. The 7,874 edits of 2018 stay below the spike limit (13,176) over 1,397
+changesets (top changeset 1.8%), but one mapper made 50% of them, including 632 of the 964 new
+`highway=cycleway` ways, and created 44% of the 175.0 km of A/B ways with ids that were new in
+2018 (new ids include the pieces of split ways).
 
 ### bratislava/lau/current
 
 Cause: **campaign** (pedestrian network), the city part of bratislava/fua/current.
-7,114 counted edits between 1 January and 2 October 2026, against a limit of 6,176.2 (2 × median
-4,101 × 0.753). 5,362 of them give a way `highway=footway` (5,290 new ways; 1,387 sidewalks, 768
+7,114 counted edits between 1 January and 3 October 2026, against a limit of 6,198.6 (2 × median
+4,101 × 0.756). 5,362 of them give a way `highway=footway` (5,290 new ways; 1,387 sidewalks, 768
 crossings), and 399 create `highway=path`. The edits are spread over 1,173 changesets (top
 changeset 2.5%) and 85 mappers (top-mapper share 0.29), with 578–1,079 edits in every month.
-A+B rose normally (170.9 -> 179.3 km).
+A+B rose normally (164.8 -> 172.1 km).
 
 ### bratislava/fua/2022
 
-Cause: **mapping activity** (new cycleways) for the A+B jump, and **tag drift** for the A -> B
-shift inside it. A+B rose 286.6 -> 319.4 km (+32.7, threshold 28.7). Ways not in the 2021
-snapshot added 31.6 km (146 ways; 25.7 km of `highway=cycleway`, e.g. way 962211589, 2.9 km;
-way 908367212, 2.5 km). Previously untiered ways retagged into A/B added 12.8 km. Shortened
-ways and splits (−5.8 km) and deleted ways (−5.4 km) offset part of that. The 100 new tier-A ways
-were drawn over 49 changesets by 20 mappers (top-mapper share 0.19), mostly
-September–November 2021. Tier B doubled (45.9 -> 88.6 km) mainly because 31.9 km of
-`highway=cycleway` + `foot=yes` were retagged `foot=designated` + `bicycle=designated` (e.g.
+Cause: **mapping activity** (new cycleways). A+B rose 282.2 -> 315.0 km (+32.7, threshold 28.2).
+Ways not in the 2021 snapshot added 31.6 km (146 ways, almost all `highway=cycleway`, e.g. way
+962211589, 2.9 km; way 908367212, 2.5 km). Previously untiered ways retagged into A/B added
+12.8 km. Shortened ways and splits (−5.8 km) and deleted ways (−5.4 km) offset part of that.
+Under v4 the step is shared evenly between the tiers: A 168.3 -> 184.8 km, B 113.9 -> 130.2 km.
+The new ways add 18.3 km to A and 13.3 km to B, the retags 6.7 and 6.8 km. During 2021, 31.9 km
+of `highway=cycleway` + `foot=yes` were retagged `foot=designated` + `bicycle=designated` (e.g.
 way 230140923, 6.5 km; way 181363641, 3.0 km): 83 ways in 32 changesets by 9 mappers, top-mapper
-share 0.66, 40 of them in October 2021. That retagging moves km from A to B and does not change
-A+B. The city's share of the jump is +15.5 km (LAU 115.2 -> 130.7, below its threshold).
+share 0.66, 40 of them in October 2021. Classifier v3 moved those km from A to B. v4 rates
+both tag sets `B_shared` (pedestrians permitted), so the retagging no longer moves km between
+tiers. The city's share of the jump is +15.5 km (LAU 115.2 -> 130.7, below its threshold).
 
 ### bratislava/fua/current
 
 Cause: **campaign** (pedestrian network), not cycling. 15,720 counted edits between
-1 January and 2 October 2026, against a limit of 10,748.5 (2 × median 7,137 × 0.753 of the
+1 January and 3 October 2026, against a limit of 10,787.5 (2 × median 7,137 × 0.756 of the
 year). 12,922 of them give a way `highway=footway` (12,831 new ways: 5,156 tagged
 `footway=sidewalk` and 2,144 `footway=crossing`), and 708 create `highway=path`. The edits are
 spread over 1,909 changesets (top changeset 2.0%) and 148 mappers (top-mapper share 0.42). The
 busiest months were January (2,601) and March (2,580). It continues 2025 (13,206 edits, 9,256 of
 them footway creations, just under that year's limit of 14,274). Footways count as
 cycling-relevant edits in `config/activity.yaml` but carry no tier, so A+B moved normally
-(436.5 -> 454.9 km).
+(426.1 -> 443.3 km).
 
 ### krakow/lau/2022
 
@@ -926,47 +939,50 @@ removed it, across 18 changesets, 55 of them in December. 66 of those edits move
 to `cycleway:left=opposite_lane` (e.g. way 26303566 Jana Zamoyskiego, way 195780180
 Nadwiślańska, way 338492810 Świętej Anny). The legacy diagnostic checks only the `cycleway`
 key (`config/activity.yaml`), so these sides leave it while 5.94 of the 6.65 km stay tier D
-lanes. A+B rose normally (204.4 -> 217.6 km).
+lanes. A+B rose normally (199.9 -> 213.2 km).
 
 ### krakow/lau/2024
 
 Cause: **mapping activity**, about half new ways and half retagging of existing ones. A+B
-rose 234.0 -> 267.0 km (+33.0; the 25 km floor applies, where 10% would be 23.4).
+rose 228.2 -> 261.5 km (+33.3; the 25 km floor applies, where 10% would be 22.8).
 - New ways add 20.0 km: 232 segregated foot/cycle paths (+10.5 km) and 82 cycleways
   (+7.2 km), led by way 1144928679, a 3.6 km asphalt cycleway on a dyke.
 - Retags of existing ways add 17.8 km: 115 footway -> path ways with `bicycle=designated`
   (+8.8 km, e.g. way 180015552) and path/track -> cycleway (+4.5 km, e.g. way 725715216).
 
-There were 17,860 edits in 2023 (limit 20,852), with a top-mapper share of 0.27. 1,425 of
-the edits add `bicycle=yes`, which moves no tier.
+Under v4 the segregated paths are tier A (`A_segregated`, v3 rated them B), and way 1144928679
+carries `foot=yes`, so v4 rates it B (`B_shared`). A rose 152.1 -> 169.6 km and B 76.0 ->
+91.9 km. There were 17,860 edits in 2023 (limit 20,852), with a top-mapper share of 0.27.
+1,425 of the edits add `bicycle=yes`, which moves no tier.
 
 ### krakow/fua/2019
 
-Cause: **mapping activity** (the Wiślana Trasa Rowerowa). A+B rose 204.3 -> 242.0 km (+37.7;
+Cause: **mapping activity** (the Wiślana Trasa Rowerowa). A+B rose 201.6 -> 237.8 km (+36.2;
 the 25 km floor applies). Niepołomice gained 19.9 km: new cycleways named Wiślana Trasa
 Rowerowa (way 587335464, 4.3 km; way 592717702, 3.6 km; way 657293994, 1.6 km) and the
 extension of way 396571694 (+8.6 km). Ways 587335464 and 396571694 are asphalt with
-`embankment=yes`. Kraków gained 12.1 km. Activity was normal: 7,274 edits in 2018 (median
-13,386), with a top-mapper share of 0.25.
+`embankment=yes`. Kraków gained 10.6 km; v4 leaves out 1.5 km of MTB-tagged paths there
+(`X_mtb_trail`) that v3 counted. Activity was normal: 7,274 edits in 2018 (median 13,386), with
+a top-mapper share of 0.25.
 
 ### krakow/fua/2020
 
-Cause: **mapping activity** (the Velo Raba route east of Kraków). A+B rose 242.0 -> 285.1 km
-(+43.2; the 25 km floor applies). Drwinia gained 15.2 km: cycleways named Velo Raba (way
+Cause: **mapping activity** (the Velo Raba route east of Kraków). A+B rose 237.8 -> 280.7 km
+(+43.0; the 25 km floor applies). Drwinia gained 15.2 km: cycleways named Velo Raba (way
 723989965, 4.6 km of gravel on an embankment; way 723993777, 2.4 km; way 723993781, 1.8 km)
-and a 4.0 km asphalt designated path (way 758100703). Kraków gained 12.9 km, Skawina 4.9 km
+and a 4.0 km asphalt designated path (way 758100703). Kraków gained 12.7 km, Skawina 4.9 km
 and Zabierzów 3.3 km. There were 8,358 edits in 2019 (median 13,386), with a top-mapper
 share of 0.30.
 
 ### krakow/fua/2021
 
 Cause: **mapping activity**, including ways retagged from `highway=construction`. A+B rose
-285.1 -> 329.6 mapped km (+44.5, threshold 28.5):
+280.7 -> 325.1 mapped km (+44.4, threshold 28.1):
 - 88 new cycleways add 16.0 km and 61 new designated paths 7.0 km;
 - footways turned into designated foot/cycle paths add 12.8 km (155 ways);
 - 10 `construction` -> `cycleway` retags add 6.0 km.
 
-Kraków gained 16.6 km, Miechów 6.6 km (way 298772347, a 2.6 km asphalt cycleway with
+Kraków gained 16.5 km, Miechów 6.6 km (way 298772347, a 2.6 km asphalt cycleway with
 `railway=abandoned`, previously `highway=construction`), Drwinia 6.5 km and Niepołomice
 5.1 km. There were 8,387 edits in 2020 (median 13,386), with a top-mapper share of 0.24; the
 largest changeset holds 2.4%.
@@ -974,137 +990,158 @@ largest changeset holds 2.4%.
 ### krakow/fua/2022
 
 Cause: **tag drift**, the same contraflow retagging as `krakow/lau/2022`. All FUA legacy km
-lie in the city: 9.96 -> 3.30 km, identical to the LAU series. A+B rose 329.6 -> 355.5 km,
+lie in the city: 9.96 -> 3.30 km, identical to the LAU series. A+B rose 325.1 -> 350.4 km,
 below the jump threshold.
 
 ### krakow/fua/2023
 
-Cause: **mapping activity**, with redrawing. A+B rose 355.5 -> 405.4 km (+49.9, threshold
-35.5):
+Cause: **mapping activity**, with redrawing. A+B rose 350.4 -> 398.9 km (+48.5, threshold
+35.0):
 - new cycleways add 28.0 km against 12.1 km deleted;
-- 12 `construction` -> `cycleway` retags add 9.1 km;
+- 10 `construction` -> `cycleway` retags add 8.0 km;
 - new designated paths add 15.6 km.
 
-The deleted cycleways include the Velo Raba ways of `krakow/fua/2020`, now replaced by way
-1082048422 (9.2 km), so Drwinia nets only 1.5 km. Kraków gained 15.9 km, Skawina 8.8 km,
-Gołcza 8.5 km (way 1027429591, 3.0 km) and Siepraw 5.7 km. There were 13,950 edits in 2022
-(median 13,386), with a top-mapper share of 0.29.
+Two further `construction` -> `cycleway` retags in Kraków (1.2 km) carry `mtb:scale=0`, so v4
+excludes them (`X_mtb_trail`). The deleted cycleways include the Velo Raba ways of
+`krakow/fua/2020`, now replaced by way 1082048422 (9.2 km), so Drwinia nets only 1.5 km.
+Kraków gained 14.4 km, Skawina 8.8 km, Gołcza 8.5 km (way 1027429591, 3.0 km) and Siepraw
+5.7 km. There were 13,950 edits in 2022 (median 13,386), with a top-mapper share of 0.29.
 
 ### krakow/fua/2024
 
-Cause: **mapping activity**, including a rail trail. A+B rose 405.4 -> 484.0 km (+78.7,
-threshold 40.5): 148 new cycleways (+32.9 km), 349 new designated paths (+27.0 km) and
-retags of existing ways (+23.9 km).
-- Kraków gained 33.5 km (the `krakow/lau/2024` step).
+Cause: **mapping activity**, including a rail trail. A+B rose 398.9 -> 474.0 km (+75.1,
+threshold 39.9): 148 new cycleways (+32.9 km), 348 new designated paths (+23.1 km) and
+retags of existing ways (+24.3 km).
+- Kraków gained 33.8 km (the `krakow/lau/2024` step).
 - Proszowice gained 13.3 km, including an asphalt cycleway and path with
   `railway=abandoned`, `gauge=750` (way 767489246, 4.5 km; way 806031541, 3.4 km).
 - Kocmyrzów-Luborzyca gained 10.0 km.
-- Myślenice gained 3.9 km from way 1143714546 "Rodzinny Flow", a one-way `highway=path` with
-  `bicycle=designated`, `foot=no` and `mtb:scale:imba=1`. Tier A takes it as a cycle-only
-  path (`A_path_cycle_only`).
 
-There were 22,071 edits in 2023 (limit 26,772), with a top-mapper share of 0.25.
+Way 1143714546 "Rodzinny Flow" in Myślenice (3.9 km), a one-way `highway=path` with
+`bicycle=designated`, `foot=no` and `mtb:scale:imba=1`, no longer counts: v3 put it in tier A
+(`A_path_cycle_only`), v4 excludes it as an MTB trail (`X_mtb_trail`). There were 22,071 edits
+in 2023 (limit 26,772), with a top-mapper share of 0.25.
 
 ### ljubljana/lau/2021
 
 Cause: **campaign** (sidepaths re-mapped as separate ways), concentrated in one mapper.
-A+B rose 138.4 -> 197.6 km (+59.2, needs 25.0). Road-side `cycleway=track` fell 76.0 -> 3.0 km
-per side because 371 road sides lost the tag when the roads were re-tagged `bicycle=no` +
-`foot=no` (e.g. way 149769844 Zaloška cesta, way 369157584 Letališka cesta). In their place came
-108.3 km of new `highway=cycleway` sides (rule `A_cycleway`, e.g. way 849525190 Ižanska cesta)
-and 31.3 km of `highway=cycleway` + `foot=designated` + `segregated=no` (`B_cycleway_foot`,
-e.g. way 866576235 Dunajska cesta). 114.9 km of the new A+B sides are on way ids not present on
-1 January 2020. The point counts 6,205 edits in 2020 against a median of 2,779 (limit 5,558).
-4,669 of them fall in October–December 2020. The largest groups are 1,262 `highway=path`, 1,206
-`highway=cycleway` and 864 `highway=footway` creations. They are spread over 1,037 changesets
-(top changeset 2.3%), and the top-mapper share is 0.52 (`single_mapper`).
+A+B rose 138.4 -> 193.6 km (+55.2, needs 25.0). Road-side `cycleway=track` (`A_track_side`) fell
+76.0 -> 3.0 km per side because 357 road sides lost the tag when the roads were re-tagged
+`bicycle=no` + `foot=no` (e.g. way 149769844 Zaloška cesta, way 369157584 Letališka cesta). In
+their place came separate sidepaths. 74.6 km of new sides are `highway=cycleway` +
+`foot=designated` + `segregated=yes` (rule `A_segregated`, e.g. way 869836662 Celovška cesta, way
+866720417 Dunajska cesta), and 17.6 km of existing footways and paths were re-tagged the same way
+(way 530977027 Vilharjeva cesta, `highway=footway` -> `cycleway`). 26.6 km of new sides are
+`B_shared`, mostly `highway=cycleway` + `foot=designated` without segregation (e.g. way 866576235
+Dunajska cesta, `segregated=no`), and 13.3 km are cycle-only `highway=cycleway` (`A_cycle_only`,
+e.g. way 849525190 Ižanska cesta, no `foot` tag). Tier A rose 120.8 -> 151.3 km and tier B 17.6 -> 42.2 km. 114.9 of the
+142.2 km of new A+B sides are on way ids not present on 1 January 2020. The point counts 6,205
+edits in 2020 against a median of 2,779 (limit 5,558). 4,669 of them fall in October–December
+2020. The largest groups are 1,262 `highway=path`, 1,206 `highway=cycleway` and 864
+`highway=footway` creations. They are spread over 1,037 changesets (top changeset 2.3%), and the
+top-mapper share is 0.52 (`single_mapper`).
 
 ### ljubljana/lau/2022
 
-Cause: **tag drift** (separated foot/cycle sidepaths re-tagged from `highway=cycleway` to
-`highway=path`). 8,004 edits in 2021 (limit 5,558, top-mapper share 0.67). Among them are 641
-`highway` changes cycleway -> path, 692 `cycleway:surface` edits, 280 `segregated` edits, and 1,632
-`highway=footway` plus 1,529 `highway=path` creations. 41.9 km of sides moved from `A_cycleway` to
-`B_path_segregated`. In the examples only the `highway` value changed (way 530977027 Vilharjeva
-cesta, way 878942853 Litijska cesta: `highway=cycleway` -> `path`, keeping `bicycle=designated`,
-`foot=designated` and `segregated=yes`). A further 25.0 km of new `B_path_segregated` sides appeared
-(way 986479122 Vodnikova cesta). Tier A fell 154.8 -> 108.6 km and tier B rose 42.8 -> 103.4 km. A+B
-rose only 197.6 -> 212.0 km, below the jump threshold. This is where the B-heavy split in
-`docs/review/trust/SI.md` (`ljubljana/b_share_of_ab`) starts.
+Cause: **campaign** (a re-tagging sweep of the separated sidepaths, `highway=cycleway` ->
+`highway=path`). Under v4 it moves almost nothing between tiers. 8,004 edits in 2021 (limit 5,558,
+top-mapper share 0.67). Among them are 641 `highway` changes cycleway -> path, 692
+`cycleway:surface` edits, 280 `segregated` edits, and 1,632 `highway=footway` plus 1,529
+`highway=path` creations. 41.1 km of sides (327) changed only their `highway` value and stay
+`A_segregated`, because v4 rates a segregated path or cycleway as A whatever its `highway` value
+(way 530977027 Vilharjeva cesta, way 878942853 Litijska cesta: `highway=cycleway` -> `path`,
+keeping `bicycle=designated`, `foot=designated` and `segregated=yes`). 7.9 km of `B_shared` sides
+gained `segregated=yes`, mostly in the same re-tagging, and moved to `A_segregated` (e.g. way
+868033233 Bratislavska cesta). New sidepaths added 32.1 km of `A_segregated` (e.g. way 986479122
+Vodnikova cesta). Tier A rose 151.3 -> 175.9 km and tier B fell 42.2 -> 36.0 km. A+B rose
+193.6 -> 211.9 km (+18.3), below the jump threshold (25.0). Under v3 the same re-tagging moved
+41.9 km from A to B and started Ljubljana's B-heavy split; v4 has no such split (B is 0.15 of A+B
+in the current run).
 
 ### ljubljana/lau/2023
 
-Cause: **tag drift**, the main year of the same `highway=cycleway` -> `highway=path` re-tagging.
+Cause: **campaign**, the main year of the same `highway=cycleway` -> `highway=path` re-tagging.
 The point counts 7,934 edits in 2022 (limit 5,558), 875 of them `highway` changes cycleway ->
-path. The top-mapper share is 0.83, but no km jump, so `single_mapper` does not fire. 58.1 km of
-sides moved from `A_cycleway` to `B_path_segregated` (e.g. way 640258468 Letališka cesta, way
-849525190 Ižanska cesta). 8.5 km moved from `B_cycleway_foot` to `B_path` (way 875765266 Pot
-Roberta Blinca), and 12.7 km of new `B_path_segregated` sides were drawn. Tier A fell
-108.6 -> 51.8 km and tier B rose 103.4 -> 169.1 km. A+B moved 212.0 -> 220.8 km, so the headline
-is unaffected.
+path. The top-mapper share is 0.83, but there is no km jump, so `single_mapper` does not fire.
+Under v4 the re-tagging moves nothing between tiers. 57.4 km of sides (607) stay `A_segregated`
+(e.g. way 640258468 Letališka cesta, way 849525190 Ižanska cesta), and 8.5 km stay `B_shared`
+(`segregated=no`, e.g. way 875765266 Pot Roberta Blinca). New sidepaths added 12.2 km of
+`A_segregated`. The largest loss was 6.4 km of `B_shared` on the gravel Pot spominov in
+tovarištva (PST), re-tagged `highway=track` + `bicycle=yes` (way 863298376, way 858117391). Tier A
+rose 175.9 -> 189.6 km and tier B fell 36.0 -> 31.1 km. A+B moved 211.9 -> 220.7 km (+8.8), below
+the jump threshold.
 
 ### ljubljana/lau/2024
 
 Cause: **mapping activity** (further sidepaths drawn as separate `highway=path` ways), the tail of
 the 2021–2022 campaign. The point counts 7,922 edits in 2023 (limit 5,558), with 2,154 of them in
 March, and a top-mapper share of 0.64. The edits are led by 1,798 `highway=footway` and 1,094
-`highway=path` creations and 793 `cycleway:surface` edits. Sides added were 21.4 km of new
-`B_path_segregated` (e.g. way 1172474051 Cesta dveh cesarjev) and 6.2 km of `B_path` (way 1194995566
-Cesta 27. aprila). 30.3 of the 34.5 km of new A+B sides are on way ids not present on 1 January
-2023, while 18.4 km of A+B sides disappeared. A+B rose 220.8 -> 225.7 km (+4.9), below the jump
-threshold.
+`highway=path` creations and 793 `cycleway:surface` edits. Sides added were 20.6 km of new
+`A_segregated` (e.g. way 1172474051 Cesta dveh cesarjev) and 5.2 km of new `B_shared` (way
+1194995566 Cesta 27. aprila, `segregated=no`). 29.4 of the 33.6 km of new A+B sides are on way ids
+not present on 1 January 2023, while 18.4 km of A+B sides disappeared. A+B rose 220.7 -> 224.6 km
+(+3.9), below the jump threshold.
 
 ### ljubljana/fua/2021
 
 Cause: **campaign**, mostly the sidepath re-mapping inside the city (see
-`ljubljana/lau/2021`). A+B rose 233.0 -> 314.8 km (+81.8, needs 25.0). Of that rise, +59.2 km is
-inside the LAU and +22.6 km is in the rest of the FUA (FUA minus LAU A+B: 94.6 -> 117.2 km).
-Outside the city, the largest additions are 12.3 km of new road-side `cycleway=track` (way
-809933528) and 7.8 km of `highway=path` + `bicycle=designated` (`B_path`). The point counts
-10,736 edits in 2020, 5,731 of them in October–December. The FUA median is 9,703, so there is no
-activity spike. The top-mapper share is 0.30.
+`ljubljana/lau/2021`). A+B rose 229.8 -> 303.4 km (+73.6, needs 25.0). Of that rise, +55.2 km is
+inside the LAU and +18.4 km is in the rest of the FUA (FUA minus LAU A+B: 91.4 -> 109.8 km).
+Outside the city, the largest additions are 12.4 km of road-side `cycleway=track` (7.6 km tagged
+on existing roads, e.g. way 720165109 Drenov Grič; 4.8 km on new ways, e.g. way 809933528) and
+10.0 km of `B_shared`. Most of that is new `highway=path` + `bicycle=designated` without a `foot`
+tag, which v4 rates `B_shared` because pedestrians may use a path by default (decision 9; e.g.
+way 888232569). The point counts 10,736 edits in 2020, 5,731 of them in October–December. The
+FUA median is 9,703, so there is no activity spike. The top-mapper share is 0.30.
 
 ### ljubljana/fua/2022
 
-Cause: **mapping activity** outside the city. A+B rose 314.8 -> 352.7 km (+37.9, needs 31.5). The
-LAU's share of that was +14.4 km, while the rest of the FUA added +23.5 km (117.2 -> 140.7). The FUA
-also carries the city's `highway=cycleway` -> `highway=path` re-tagging (41.9 km `A_cycleway` ->
-`B_path_segregated`, see `ljubljana/lau/2022`). That moves km from A to B but not the A+B sum. New
-sides outside the LAU include 13.4 km of `A_cycleway` and 10.1 km of `B_path` (e.g. way 981127313).
-68.3 of the 72.1 km of new A+B sides are on way ids not present a year earlier. 12,751 edits in
-2021, top-mapper share 0.42, no spike.
+Cause: **mapping activity** outside the city. A+B rose 303.4 -> 345.0 km (+41.6, needs 30.3).
+The LAU's share of that was +18.3 km, while the rest of the FUA added +23.3 km (109.8 -> 133.1).
+New sides outside the LAU include 14.0 km of `B_shared` and 11.9 km of `A_cycle_only`
+(`highway=cycleway` with no `foot` tag, e.g. way 891270259). Half of the `B_shared` is paths with
+`bicycle=designated` and no `foot` tag (e.g. way 906631574, a 4.8 km named trail without MTB
+tags, so `X_mtb_trail` does not apply); the rest is mostly combined paths with `foot=designated`
++ `segregated=no` (e.g. way 981127313). 68.1 of the 71.9 km of new A+B sides are on way ids not
+present a year earlier. The FUA also carries the city's `highway=cycleway` -> `highway=path`
+re-tagging (see `ljubljana/lau/2022`), which under v4 keeps those sides in `A_segregated`.
+12,751 edits in 2021, top-mapper share 0.42, no spike.
 
 ### ljubljana/fua/2023
 
-Cause: **mapping activity** outside the city. A+B rose 352.7 -> 399.8 km (+47.1, needs 35.3).
-The LAU added +8.8 km and the rest of the FUA +38.3 km (140.7 -> 179.0). 19.9 km of the new A+B
-sides are `highway=cycleway` outside the LAU (e.g. way 1086139162, 3.1 km). The LAU's 58.1 km
-`A_cycleway` -> `B_path_segregated` re-tagging (see `ljubljana/lau/2023`) also shows here and
-moves only the split. 11,261 edits in 2022 (no spike) over 2,874 changesets (top changeset 0.8%).
-The top-mapper share of 0.60 raises `single_mapper`. The city's share for the same year is 0.83,
-and its main change that year is the re-tagging, which does not change A+B. The jump itself
+Cause: **mapping activity** outside the city. A+B rose 345.0 -> 389.7 km (+44.7, needs 34.5).
+The LAU added +8.8 km and the rest of the FUA +35.9 km (133.1 -> 169.0). Of the 37.0 km of new
+A+B sides outside the LAU, 16.6 km are `highway=cycleway` with no `foot` tag (`A_cycle_only`, e.g.
+way 1086139162, 3.1 km) and 8.3 km are new `B_shared`. The LAU's `highway=cycleway` ->
+`highway=path` re-tagging (see `ljubljana/lau/2023`) also lies in the FUA and, under v4, changes
+neither A+B nor the split. 11,261 edits in 2022 (no spike) over 2,874 changesets (top changeset
+0.8%). The top-mapper share of 0.60 raises `single_mapper`. The city's share for the same year is
+0.83, and its main change that year is the re-tagging, which does not change A+B. The jump itself
 comes from outside the city.
 
 ### ljubljana/fua/2024
 
-Cause: **mapping activity** outside the city. A+B rose 399.8 -> 449.5 km (+49.7, needs 40.0).
-The LAU added +4.9 km and the rest of the FUA +44.8 km (179.0 -> 223.8). Outside the LAU, the new
-sides are 18.5 km of `highway=cycleway` (e.g. way 1182208725, 3.1 km), 16.1 km of road-side
-`cycleway=track` (e.g. way 150354472 Loška cesta, `cycleway:left=track`) and 10.4 km of
-`B_path`. 12,619 edits in 2023, top-mapper share 0.41, no spike.
+Cause: **mapping activity** outside the city. A+B rose 389.7 -> 437.6 km (+47.9, needs 39.0).
+The LAU added +3.9 km and the rest of the FUA +44.0 km (169.0 -> 213.0). Outside the LAU, the new
+sides are 16.6 km of `B_shared` (mostly paths with `bicycle=designated` + `foot=designated`, e.g.
+way 1217282229), 16.0 km of road-side `cycleway=track` (e.g. way 150354472 Loška cesta,
+`cycleway:left=track`; 4.6 km of road-side tracks outside the LAU lost the tag) and 10.1 km of
+`highway=cycleway` with no `foot` tag (`A_cycle_only`, e.g. way 1182208725, 3.1 km). 12,619 edits
+in 2023, top-mapper share 0.41, no spike.
 
 ### ljubljana/fua/2025
 
-Cause: **mapping activity** outside the city. A+B rose 449.5 -> 536.8 mapped km (+87.3, needs 45.0).
-+84.5 km of it is outside the LAU (223.8 -> 308.3) and +2.8 km inside. Of 105.2 km of new A+B sides,
-53.2 km are on ways that already existed in 2024 and were newly tiered A or B. The largest groups
-are untagged secondary and primary roads (12.0 + 9.2 km), e.g. way 28675982 (road 102), which gained
-`cycleway=track` on both sides outside the city. Some of the new km is probably new infrastructure;
-that is an inference from the tags of two ways. Way 442354000, outside the city, went from
-`highway=track` to `highway=cycleway` with a fixme saying "change surface when complerted 2024".
-Inside the city, way 1198338337 Pionirska proga went from `railway=abandoned` to `highway=cycleway`.
-The other 52.0 km are on way ids not present a year earlier (new or split ways), and 12.8 km of A+B
-sides were lost. 9,703 edits in 2024 over 2,785 changesets, top-mapper share 0.19, no spike.
+Cause: **mapping activity** outside the city. A+B rose 437.6 -> 524.8 mapped km (+87.2, needs
+43.8). +84.3 km of it is outside the LAU (213.0 -> 297.3) and +2.9 km inside. Of 105.0 km of new
+A+B sides, 53.2 km are on ways that already existed in 2024 and were newly tiered A or B. The
+largest groups are untagged secondary roads (12.0 km), paths (9.9 km) and untagged primary roads
+(9.2 km), e.g. way 28675982 (road 102), which gained `cycleway=track` on both sides outside the
+city. Some of the new km is probably new infrastructure; that is an inference from the tags of
+two ways. Way 442354000, outside the city, went from `highway=track` to `highway=cycleway` with a
+fixme saying "change surface when complerted 2024". Inside the city, way 1198338337 Pionirska
+proga went from `railway=abandoned` to `highway=cycleway`. The other 51.8 km are on way ids not
+present a year earlier (new or split ways), and 12.8 km of A+B sides were lost. 9,703 edits in
+2024 over 2,785 changesets, top-mapper share 0.19, no spike.
 
 ### lyon/lau/2025
 
@@ -1118,6 +1155,28 @@ but carry no tier, so A+B moved normally (83.4 -> 94.7 km, +11.3 km against a 25
 threshold), mostly from cycleways drawn beside roads (e.g. way 1311767651, 1.9 km along a
 secondary road whose side had a painted lane).
 
+### lyon/fua/2021
+
+Cause: **mapping activity** (track tags added to existing roads, plus new paths), with
+**classifier** second: the flag fires only under v4. A+B rose 577.5 -> 637.1 mapped km (+59.6 km;
+the threshold is 57.8). A rose 268.3 -> 306.6 km and B 309.2 -> 330.6 km. During 2020, 36.6 km of road sides on
+existing roads became tier A tracks (`A_track_side`): `cycleway=track` added on 13.7 km and
+`cycleway:right=track` on 12.7 km, 4.2 km of them former painted lanes. The longest are on Route
+de Paris (5.7 km, e.g. way 258511906) and Route de Grenoble (5.1 km, e.g. way 5078322). 7.1 km of
+them lie in the commune of Lyon. Ways first drawn in 2020 add 49.7 km, most of it shared
+paths (`B_shared` 29.1 km, e.g. way 780336508, a `highway=cycleway` with `foot=yes`) and cycleways
+(`A_cycle_only` 11.9 km, `A_segregated` 4.5 km). Existing footways and paths retagged with
+`bicycle=designated` add 6.4 km of B. Losses offset part of the gain. 15.1 km of shared paths left
+tier B, mainly way 129002330 (Chemin du Bac à Traille, 4.8 km), which went from `highway=cycleway`
++ `bicycle=designated` to `highway=track` + `bicycle=yes`, and 10.2 km of cycleways were deleted.
+The classifier part: v4's `X_mtb_trail` leaves out 8.6 km of explicitly MTB-tagged trails on
+1 January 2020 but only 5.7 km a year later. The Voie Verte de la Bourbre (way 374341061, way
+374341073; 3.9 km) lost its `mtb:scale=0` tags during 2020 and entered `B_shared`. Under v3 the
+same year rose 586.1 -> 642.8 km (+56.7 against a threshold of 58.6) and was not flagged.
+Activity was ordinary: 10,596 edits, 316 mappers, top-mapper share 0.08. Tier E rose
+56.8 -> 91.2 km in the same year, mostly from bus lanes newly tagged on roads (e.g. way 3237103,
+Avenue Jean Jaurès).
+
 ### lyon/fua/2025
 
 Cause: **campaign**, the July 2024 sidewalk and crossing mapping of lyon/lau/2025
@@ -1125,22 +1184,22 @@ extended over the FUA. 49,952 counted edits in 2024 against a limit of 26,492 (m
 38,997 create `highway=footway`, 27,361 of them in July 2024. The 27,348 footways first drawn
 that July are 17,139 sidewalks, 9,146 crossings and 750 traffic islands; three mappers made 99%
 of them in 765 changesets. Over the year the top-mapper share is 0.30 and the top changeset
-1.5%. A+B rose 742.8 -> 776.6 km (+33.8 km, below the 74.3 km jump threshold).
+1.5%. A+B rose 735.4 -> 769.1 km (+33.7 km, below the 76.9 km jump threshold).
 
 ### lyon/fua/2026
 
 Cause: **mapping activity**, spread over many mappers, not a campaign or import. A+B rose
-776.6 -> 856.8 km (+80.2 km; threshold 77.7). Matching geometry within 10 m between the two
-snapshots, 90.1 km (per side) of tiered geometry is new and 14.2 km gone. Of the new, 44.2 km
+769.1 -> 847.6 km (+78.5 km; threshold 76.9). Matching geometry within 10 m between the two
+snapshots, 89.0 km (per side) of tiered geometry is new and 14.4 km gone. Of the new, 44.2 km
 are cycleways and paths drawn beside roads that were already mapped; 19.2 km are mapped footways
 retagged as designated paths (e.g. way 26420781, Promenade de la Vorla, `highway=footway` +
 `bicycle=yes` -> `highway=path` + `bicycle=designated`); 11.2 km are tracks retagged the same
 way (way 171670318, the ViaRhôna towpath, 3.2 km); and 6.2 km were `highway=construction` on
 1 January 2025 and are cycleways now (e.g. way 1417218765, named `VL7`). Most of it lands in
-tier B: `highway=path` + `bicycle=designated` + `segregated=no` grew 204.0 -> 266.1 km. Edits in
-2025 were normal (20,435 against a limit of 26,492; 415 mappers, top-mapper share 0.19), and
-the A/B ways with new ids (61.1 km) were created by 84 mappers, none with more than 18% of the
-km.
+tier B (`B_shared`): `highway=path` + `bicycle=designated` + `segregated=no` grew 201.6 -> 262.2
+km. Edits in 2025 were normal (20,435 against a limit of 26,492; 415 mappers, top-mapper share
+0.19), and the A/B ways with new ids (61.1 km) were created by 84 mappers, none with more than
+18% of the km.
 
 ### madrid/lau/2025
 
@@ -1150,21 +1209,23 @@ ways that became footways in 2024, 8,666 are `footway=crossing`, 7,267 `footway=
 untyped (e.g. way 4330856, way 7732915). The edits are spread over 2,675 changesets (top changeset
 1.4%), with a top-mapper share of 0.33. That mapper's edits (9,212 of them footway creations) fall
 in March to May and August to September, 6,099 of them in March. Footways carry no tier, so A+B
-moved normally: 325.6 -> 334.1 mapped km (+8.5; the jump threshold is 32.6). The crossings split the
-cycleways where footpaths cross them: tiered ways went from 1,074 to 2,063, with 61.0 km on 972 new
-`highway=cycleway` ways (e.g. way 1320432687, Anillo Verde Ciclista) and 51.2 km lost from 314
-existing ways that were shortened (e.g. way 27885470), so `A_cycleway` grew by only 7.1 km.
+moved normally: 321.0 -> 329.5 mapped km (+8.5; the jump threshold is 32.1). The crossings split the
+cycleways where footpaths cross them: tiered ways went from 1,068 to 2,057, with 61.0 km on 972 new
+`highway=cycleway` ways (e.g. way 1320432687, Anillo Verde Ciclista) and 51.2 km lost from 313
+existing ways that were shortened (e.g. way 27885470). That is why A+B grew by only 8.5 km. Tier A fell
+254.7 -> 252.6 km and B rose 66.3 -> 76.9 km, as 8.7 km of existing cycleways gained `foot=yes` or
+`foot=designated` and moved from `A_cycle_only` to `B_shared` (e.g. way 27874960).
 
 ### madrid/lau/current
 
 Cause: **campaign**, the same footway mapping continuing in 2026. 11,959 counted edits from 1
-January to the 2026-10-02 snapshot, against a limit of 11,700.3 (15,538 scaled by the 0.753 of the
+January to the 2026-10-03 snapshot, against a limit of 11,742.8 (15,538 scaled by the 0.756 of the
 year elapsed). 9,102 edits create `highway=footway` ways (of the 9,238 new footways: 3,984
 sidewalks, 2,227 crossings, 2,835 untyped; e.g. way 6126321); the top-mapper share is 0.32 (3,759
 footway creations), and that mapper's edits fall almost all in May to September. 1,631 changesets,
 top changeset 1.4%. The 2026 point (15,500 edits in 2025) sits just under its limit of 15,538, so
-this is the third year of the same pedestrian mapping, not a new event. A+B rose 350.9 -> 357.4
-mapped km (+6.5; the jump threshold is 35.1).
+this is the third year of the same pedestrian mapping, not a new event. A+B rose 346.4 -> 353.0
+mapped km (+6.7; the jump threshold is 34.6).
 
 ### madrid/fua/2025
 
@@ -1173,34 +1234,35 @@ counted edits in 2024 against a limit of 34,450 (median 17,225). 27,859 of them 
 municipio. The 11,494 edits outside it are close to 2023's 9,392 (17,225 FUA minus 7,833 LAU),
 so the excess comes from the city. 26,468 edits create `highway=footway`. The top mapper (share
 0.24, 9,235 footway creations) has the same monthly pattern as the LAU top mapper (March 6,122,
-April 1,694, May 1,098). 4,975 changesets, top changeset 1.0%. A+B rose 1,130.1 -> 1,180.5 mapped km
+April 1,694, May 1,098). 4,975 changesets, top changeset 1.0%. A+B rose 1,122.0 -> 1,172.4 mapped km
 (+4.5%, below the 10% jump threshold).
 
 ### oslo/lau/2021
 
 Cause: **tag drift** (gang- og sykkelvei retagging), with **mapping activity** second. A+B rose
-265.9 -> 300.4 km (+34.5 km, +13.0%; the rule needs 26.6), all in tier B (155.1 -> 191.5) while A
-was flat (110.8 -> 108.9). During 2020, 265 existing footways and paths were retagged as combined
-foot and cycle paths, `highway=footway` -> `highway=cycleway` + `bicycle=designated` +
-`foot=designated` (rule `B_cycleway_foot`, +26.3 km; e.g. way 3692715, 1.0 km; way 98638646). This
-is how Norway's standard facility is mapped (see `oslo/b_share_of_ab` in `docs/review/trust/NO.md`).
-Newly drawn ways added 8.2 km of `A_cycleway` and 6.8 km of `B_cycleway_foot`. Deletions, retags out
-of A/B and geometry edits net to −6.7 km. Activity was ordinary: 7,193 counted edits (6,158 the year
-before), 111 mappers, top-mapper share 0.36.
+263.9 -> 298.1 km (+34.2 km, +13.0%; the rule needs 26.4), mostly in tier B (222.0 -> 248.5),
+with A 41.9 -> 49.6. During 2020, 270 sides of existing footways (and a few paths) were retagged
+as combined foot and cycle paths, `highway=footway` -> `highway=cycleway` + `foot=designated`
+(rule `B_shared`, +26.6 km; e.g. way 3692715, 1.0 km; way 98638646). This is how Norway's
+standard facility is mapped (see `oslo/b_share_of_ab` in `docs/review/trust/NO.md`). Newly drawn
+ways added 7.2 km of `B_shared`, 6.9 km of `highway=cycleway` with no `foot` tag (`A_cycle_only`)
+and 1.4 km of road-side tracks. Retags out of A/B and deletions took off 8.9 km. Activity was
+ordinary: 7,193 counted edits (6,158 the year before), 111 mappers, top-mapper share 0.36.
 
 ### oslo/fua/2021
 
 Cause: **mapping activity** (combined foot and cycle paths drawn as separate ways), with **tag
-drift** second. A+B rose 1,656.8 -> 1,854.6 km (+197.8 km, +11.9%; the rule needs 165.7): B +317.8
-km, A −120.0 km. Three changes during 2020 make it up. First, 1,351 new `highway=cycleway` +
-`foot=designated` ways (+178.0 km of `B_cycleway_foot`, e.g. way 815611705, 3.5 km), of which only
-6.8 km lie in Oslo kommune, so the growth is in the surrounding municipalities. Second, existing
-footways, paths and tracks were retagged to the same scheme (+87.1 km, 588 ways; e.g. way 23330061,
-4.8 km, `highway=footway` -> `cycleway`). Third, `highway=cycleway` was retagged from `foot=yes` (or
-no `foot` tag) to `foot=designated`, which moves it from `A_cycleway` to `B_cycleway_foot` (116.3
-km, 447 sides; e.g. way 620971715), which explains the fall in tier A and is inside A+B. Deleted
-cycleways took off 35.4 km. Edits rose to 20,201 from 14,646 (281 mappers, top-mapper share 0.20),
-not a spike.
+drift** second. A+B rose 1,640.9 -> 1,836.9 km (+196.0 km, +11.9%; the rule needs 164.1): B
++229.1 km, A −33.2 km. Three changes during 2020 make it up. First, 1,348 new `highway=cycleway` +
+`foot=designated` ways (+177.4 km of `B_shared`, e.g. way 815611705, 3.5 km), of which only 6.5 km
+lie in Oslo kommune, so the growth is in the surrounding municipalities. Second, existing
+footways, paths and tracks were retagged to the same scheme (+99.9 km, 677 sides; e.g. way
+23330061, 4.8 km, `highway=footway` -> `cycleway`). Third, 161 sides (35.5 km) of
+`highway=cycleway` with no `foot` tag gained `foot=designated` (or `foot=yes`), which moves them
+from `A_cycle_only` to `B_shared` (e.g. way 620971715). That explains the fall in tier A and is
+inside A+B. Under v3 this move was 116.3 km, because v3 also moved cycleways from `foot=yes` to
+`foot=designated`; v4 already rates `foot=yes` as `B_shared`. Deleted A/B ways took off 35.0 km.
+Edits rose to 20,201 from 14,646 (281 mappers, top-mapper share 0.20), not a spike.
 
 ### paris/lau/2020
 
@@ -1238,7 +1300,7 @@ rose 318.6 -> 345.7 mapped km (+8.5%, below the jump threshold), within the norm
 ### paris/fua/2019
 
 Cause: **mapping activity**, ordinary catch-up mapping, not a campaign or import. A+B rose
-2,332.9 -> 2,576.7 mapped km (+10.5%): 1,336 new `highway=cycleway` ways (+236 km, e.g. way
+2,325.7 -> 2,571.5 mapped km (+10.6%): 1,336 new `highway=cycleway` ways (+236 km, e.g. way
 597170301), +71 km of new `highway=path` + `bicycle=designated`, and 51 km of tier B from
 `bicycle=yes` -> `designated` (way 107496601); partly offset by 65 km of `cycleway=track`
 removed from roads (way 188144495) and 59 km of deleted cycleways. The 38,570 edits are spread
@@ -1247,26 +1309,31 @@ over 10,445 changesets (top changeset 1.4%, top-mapper share 0.10) and are not a
 ### prague/lau/2020
 
 Cause: **tag drift** (park and riverside footways retagged as cycleways), with some new cycleways.
-A+B rose 201.5 -> 232.8 km (+31.3, threshold 25.0). 26.8 km per side came from ways that had no
+A+B rose 200.3 -> 231.5 km (+31.1, threshold 25.0). 26.7 km per side came from ways that had no
 tier before: 20.5 km of `highway=footway` + `bicycle=yes` became `highway=cycleway` + `foot=yes`
 (e.g. way 26427950, named Letenské sady; way 25401468), plus 2.4 km of other footways and 1.1 km
-of tracks retagged the same way. `foot=yes` is not `designated`, so these ways go to tier A
-(`A_cycleway`). 205 of the 230 retagged ways were edited in February–April 2019, in 32
-changesets by 11 mappers (top-mapper share 0.37). A further 11.4 km are 64 ways not in the 2019
-snapshot (10.7 km of new `highway=cycleway`, e.g. way 757691856, way 694511682). Shortened
-ways (−2.8 km), ways retagged out of A/B (−3.1 km) and deleted ways (−1.7 km) offset part of it.
-The year's activity was normal (6,861 edits, top mapper 0.27).
+of tracks retagged the same way. `foot=yes` permits pedestrians, so v4 rates these ways tier B
+(`B_shared`); v3 had put them in A (`A_cycleway`). 205 of the 230 retagged ways were edited in
+February–April 2019, in 32 changesets by 11 mappers (top-mapper share 0.37). A further 11.4 km
+are 64 ways not in the 2019 snapshot, all `highway=cycleway` (e.g. way 757691856, way
+694511682); v4 rates 7.0 km of them B and 4.4 km A. Shortened ways (−2.8 km), ways retagged out
+of A/B (−3.1 km) and deleted ways (−1.7 km) offset part of it. Under v4 the step is a tier-B
+step (B 157.0 -> 184.9 km, A 43.4 -> 46.6 km). The year's activity was normal (6,861 edits,
+top mapper 0.27).
 
 ### prague/fua/2020
 
 Cause: **tag drift**, the same footway retagging as prague/lau/2020, plus **mapping activity**
-in the suburbs. A+B rose 351.9 -> 393.7 km (+41.8, threshold 35.2), 31.3 km of it inside the
-city. Across the FUA, 33.1 km per side came from previously untiered ways (254 ways; 20.7 km is
-`highway=footway` + `bicycle=yes` -> `highway=cycleway` + `foot=yes`) and 19.7 km from 95 ways
-not in the 2019 snapshot (17.4 km `highway=cycleway`, e.g. way 672969814 "Cyklostezka
-Vestec-Kunratice", way 751574330). A further 6.5 km moved from A to B as `highway=cycleway`
-ways gained `foot=designated`, which leaves A+B unchanged. Activity was normal (9,692 edits,
-top mapper 0.22).
+in the suburbs. A+B rose 347.2 -> 387.3 km (+40.1, threshold 34.7), 31.1 km of it inside the
+city. Across the FUA, 31.5 km per side came from previously untiered ways (251 ways; 20.7 km is
+`highway=footway` + `bicycle=yes` -> `highway=cycleway` + `foot=yes`, which v4 rates
+`B_shared`) and 19.7 km from 95 ways not in the 2019 snapshot (17.4 km `highway=cycleway`, e.g.
+way 672969814 "Cyklostezka Vestec-Kunratice", way 751574330). v4 leaves out 1.6 km of
+MTB-tagged trails retagged into cycleways in 2019, mostly in Dolní Břežany (`X_mtb_trail`). A
+further 4.2 km moved from A to B as 18 `highway=cycleway` ways with no `foot` tag gained
+`foot=designated`, which leaves A+B unchanged. Cycleways retagged `foot=yes` ->
+`foot=designated` (2.4 km) stay `B_shared` under v4. Activity was normal (9,692 edits, top
+mapper 0.22).
 
 ### strasbourg/lau/2023
 
@@ -1280,15 +1347,19 @@ the top-mapper share is 0.19 across 617 changesets. A+B moved normally, 205.9 ->
 ### strasbourg/lau/2025
 
 Cause: **campaign** (a retagging sweep over cycle and shared paths, plus sidewalk and
-crossing mapping). 3,615 counted edits in 2024 against a limit of 3,086: 1,282 tag modifications,
-865 of them in March–April 2024, led by `segregated` added (`yes` 202, `no` 178),
-`bicycle=designated` added (162) and `highway=cycleway -> path` (109); and 1,213 `highway=footway`
+crossing mapping). 3,615 counted edits in 2024 against a limit of 3,086. 1,282 of them are tag
+modifications, 865 of those in March–April 2024, led by `segregated` added (`yes` 202, `no` 178),
+`bicycle=designated` added (162) and `highway=cycleway -> path` (109). Another 1,213 are `highway=footway`
 creations (of the 1,206 footways first drawn in 2024, 560 are sidewalks and 421 crossings, 57%
-by one mapper). The sweep moved 15.5 km on 120 existing ways from tier A to B (e.g. way 20336855,
-Piste Antonin Magne, `highway=cycleway` -> `path` + `bicycle=designated` + `foot=designated`),
-9.3 km of it in March 2024, in 41 changesets by 18 mappers: A fell 172.2 -> 156.5 km while B
-rose 46.0 -> 69.5 km. A+B rose 218.2 -> 226.0 km, a normal year. Over the year the top-mapper
-share is 0.19 across 750 changesets.
+by one mapper). The sweep moves km in both directions between A and B. 8.8 km on 77 existing ways
+went from A to B where cycleways became shared paths (`A_cycle_only` -> `B_shared`; e.g. way
+20336855, Piste Antonin Magne, `highway=cycleway` -> `path` + `bicycle=designated` +
+`foot=designated` + `segregated=no`). 4.7 km on 48 ways went from B to A where `segregated=yes`
+was added (`B_shared` -> `A_segregated`; e.g. way 43456568, Piste de Traenheim). A further 23.6 km
+of cycleways gained `segregated=yes` and stay in tier A (`A_cycle_only` -> `A_segregated`), and
+8.1 km of footways gained `bicycle=designated` and entered B (e.g. way 105927052). A fell
+165.6 -> 158.2 km while B rose 52.6 -> 67.8 km. A+B rose 218.2 -> 226.0 km, a normal year. Over
+the year the top-mapper share is 0.19 across 750 changesets.
 
 ### utrecht/fua/2020
 
@@ -1301,46 +1372,50 @@ unknown value on both road sides (36.22 km per side in 2019, on 133 ways), was r
 `cycleway=cyclestreet` (0.82 km per side). The 119 surviving ways were last edited in 28
 changesets by 9 mappers, 61 of them in December 2019; the year had 5,009 edits with a
 top-mapper share of 0.10. The retagging moves km into tier E (23.1 -> 47.3 km), which is not in
-the headline. A+B also rose 1,224.8 -> 1,257.7 km (+2.7%, below the jump threshold); that is a
-separate change, mostly tier B (7.6 -> 33.6 km), of which 21.7 km are sides with no tier in 2019
-that are `B_path` in 2020.
+the headline. A+B moved normally, 1,224.8 -> 1,230.6 km (+0.5%). The same year has a second,
+smaller retagging inside A+B: 18.4 km of cycleways gained `foot=yes` (e.g. way 145564855 and way
+61116865, Oude Spoorbaan), which v4 rates `B_shared`, so B rose 68.5 -> 85.9 km and A fell
+1,156.2 -> 1,144.7 km. Another 26.2 km of paths were newly tagged `bicycle=designated` during
+2019, but they carry explicit MTB tags (e.g. way 384215298, `mtb:scale=1`, 3.8 km). v4 excludes
+them as `X_mtb_trail` (32.6 -> 56.1 km), so they do not count.
 
 ### vienna/lau/2025
 
 Cause: **tag drift**. `legacy_km` 23.1 -> 10.3 as `cycleway=opposite_lane` fell 21.8 -> 9.4 km
 (way 206839268 -> `oneway:bicycle=no`; way 8043778 -> `cycleway:left=opposite`). The
-retagging touches tier D only; A+B rose 608 -> 633 km.
+retagging touches tier D only; A+B rose 596 -> 620 km.
 
 ### warsaw/fua/2019
 
 Cause: **mapping activity** in the suburbs, including ways retagged from `highway=construction`;
-no campaign or import. A+B rose 834.2 -> 982.0 mapped km (+147.8, threshold 83.4). 418 new `highway=cycleway` ways add
-113.7 km (12.3 km of cycleways were deleted). 85 ways changed `highway=construction` ->
-`cycleway` (+19.6 km, e.g. way 496608963, 3.4 km in Warsaw), and new designated foot/cycle
-paths add 25.3 km. Warsaw itself gained 48.7 km (the `warsaw/lau` step 528.9 -> 577.7). The
-other 99 km are spread over the suburban gminas: Otwock 13.9 km, Nadarzyn 13.2 km (way
-589686898, 3.6 km), Józefów 11.0 km (way 655210340, 3.6 km), Pilawa 9.8 km and Pruszków
-7.8 km. The 17,074 edits of 2018 are below the median (41,531). The top-mapper share is
+no campaign or import. A+B rose 833.1 -> 980.8 mapped km (+147.8, threshold 83.3). 418 new
+`highway=cycleway` ways add 113.7 km (12.3 km of cycleways were deleted). 85 ways changed
+`highway=construction` -> `cycleway` (+19.6 km, e.g. way 496608963, 3.4 km in Warsaw), and new
+designated foot/cycle paths add 25.3 km. Warsaw itself gained 48.7 km (the `warsaw/lau` step
+528.2 -> 576.9). The other 99 km are spread over the suburban gminas: Otwock 13.9 km, Nadarzyn
+13.2 km (way 589686898, 3.6 km), Józefów 11.0 km (way 655210340, 3.6 km), Pilawa 9.8 km and
+Pruszków 7.8 km. The 17,074 edits of 2018 are below the median (41,531). The top-mapper share is
 0.16, and the largest changeset holds 0.9% of the edits.
 
 ### warsaw/fua/2020
 
-Cause: **mapping activity** in the suburbs; activity normal. A+B rose 982.0 -> 1,175.2 km
-(+193.2, threshold 98.2):
-- 602 new `highway=cycleway` ways add 131.2 km (12.2 km deleted);
+Cause: **mapping activity** in the suburbs; activity normal. A+B rose 980.8 -> 1,173.2 km
+(+192.4, threshold 98.1):
+- 594 new `highway=cycleway` ways add 130.4 km (12.2 km deleted);
 - 136 new designated foot/cycle paths add 43.4 km;
 - 91 new `cycleway` + `foot=designated` ways add 18.9 km;
 - 44 `construction` -> `cycleway` retags add 14.1 km (e.g. way 495949799, 3.6 km in Warsaw).
 
-Warsaw gained 47.5 km and the suburbs 145.7 km: Ożarów Mazowiecki 11.5, Piaseczno 10.1,
-Pruszków 9.9, Nieporęt 9.0 (way 700813876, 4.6 km), Radzymin 8.3 (way 700814676, 4.6 km)
-and Jabłonna 6.6 (way 732168390, 6.1 km). There were 16,828 edits in 2019 (median 41,531),
-with a top-mapper share of 0.07.
+Eight further new cycleways (0.9 km, in Warsaw) are MTB-tagged, so v4 excludes them
+(`X_mtb_trail`). Warsaw gained 46.7 km and the suburbs 145.7 km: Ożarów Mazowiecki 11.5,
+Piaseczno 10.1, Pruszków 9.9, Nieporęt 9.0 (way 700813876, 4.6 km), Radzymin 8.3 (way
+700814676, 4.6 km) and Jabłonna 6.6 (way 732168390, 6.1 km). There were 16,828 edits in 2019
+(median 41,531), with a top-mapper share of 0.07.
 
 ### warsaw/fua/2021
 
-Cause: **mapping activity**; activity elevated but below the spike limit. A+B rose 1,175.2
--> 1,423.8 km (+248.6, threshold 117.5):
+Cause: **mapping activity**; activity elevated but below the spike limit. A+B rose 1,173.2
+-> 1,421.8 km (+248.6, threshold 117.3):
 - 1,302 new `highway=cycleway` ways add 156.4 km against 134 deleted (−33.7 km, mostly
   redrawn);
 - new designated foot/cycle paths add 98.3 km (432 ways);
