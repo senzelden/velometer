@@ -1441,7 +1441,7 @@ def report_change(
     from velometer.report.data import ReportData, open_readonly
     from velometer.run import snapshot_path_for_run
     from velometer.sources.boundaries import load_boundary_polygon
-    from velometer.subareas import load_subareas
+    from velometer.subareas import load_subareas, subarea_set_sha
 
     try:
         window = load_report(config_dir / "report.yaml", config_dir / "presets.yaml").change_window
@@ -1474,6 +1474,14 @@ def report_change(
             )
         boundary = load_boundary_polygon(Path(boundary_row.path), city_cfg.epsg)
         subareas = load_subareas(city_cfg, data_dir)
+        set_sha = subarea_set_sha(subareas) if subareas else None
+        for run_id in (run_from, run_to):
+            run_sub = fetch_run(conn, run_id)["subarea_sha"]
+            if run_sub != set_sha:
+                raise ch.ChangeRefused(
+                    f"{city} subarea files on disk have set sha {set_sha}, run {run_id} was "
+                    f"measured on {run_sub}; the Bezirk split would not be the runs'"
+                )
         cfg = load_classifier(config_dir / "classifier" / f"{selector.version}.yaml")
         ways_from, ways_to = read_ways(snap_from).ways, read_ways(snap_to).ways
         result = ch.compute_change(ways_from, ways_to, cfg, city_cfg.epsg, boundary, subareas)
@@ -1502,7 +1510,10 @@ def report_change(
     out.mkdir(parents=True, exist_ok=True)
     md = out / f"{stem}.md"
     md.write_text(ch.render_markdown(result, city_cfg.name, *rows, names))
-    geojson = ch.write_geojson(result, ways_from, ways_to, data_dir / "maps" / f"{stem}.geojson")
+    geojson = ch.write_geojson(
+        result, ways_from, ways_to, data_dir / "maps" / f"{stem}.geojson",
+        run_from=run_from, run_to=run_to,
+    )  # fmt: skip
     png = ch.render_png(
         result, ways_from, ways_to, boundary, out / f"{stem}.png", epsg=city_cfg.epsg,
         subareas=subareas, title=f"{city_cfg.name}: mapped change {label_from} → {label_to}",

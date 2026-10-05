@@ -20,6 +20,8 @@ Categories (all mapped km, ADR 0006: a gain is a way newly mapped, not a constru
 - `geometry`: the same way-side and tier, its clipped length changed by more than 1 m.
 """
 
+import html
+import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -437,6 +439,21 @@ def _tags(changed: Mapping[str, tuple[str | None, str | None]]) -> str:
     return "; ".join(f"`{k}`: {a or '–'} → {b or '–'}" for k, (a, b) in changed.items())
 
 
+def _cell(text: str) -> str:
+    """Table cell text from config (city and subarea names): HTML-escaped, so the page never
+    carries raw HTML into a renderer that passes it, and `|` escaped for the table."""
+    return html.escape(text, quote=False).replace("|", "\\|")
+
+
+RUNS_LINE = re.compile(r"^From run (\d+) \(OSM [^)]*\) to run (\d+) ", re.MULTILINE)
+
+
+def change_runs(markdown: str) -> tuple[int, int] | None:
+    """The (from, to) run ids of a change page's header, or None if it has none."""
+    m = RUNS_LINE.search(markdown)
+    return None if m is None else (int(m.group(1)), int(m.group(2)))
+
+
 def render_markdown(
     result: ChangeResult, city: str, run_from: Mapping, run_to: Mapping, names: dict[str, str]
 ) -> str:
@@ -446,7 +463,7 @@ def render_markdown(
     with km outside every subarea add the remainder as the table's last Bezirk-level row.
     """
     lines = [
-        f"# {city}: mapped cycling infrastructure change",
+        f"# {_cell(city)}: mapped cycling infrastructure change",
         "",
         f"From run {run_from['id']} (OSM {run_from['osm_timestamp']}) to run {run_to['id']} "
         f"(OSM {run_to['osm_timestamp']}); classifier {run_from['classifier_version']}, "
@@ -482,7 +499,7 @@ def render_markdown(
     if names:
         for sid, name in sorted(names.items(), key=lambda kv: kv[1]):
             cells = [_km(sum(r.km_by_subarea.get(sid, 0.0) for r in by_cat[c])) for c in CATEGORIES]
-            lines.append(f"| {name} | " + " | ".join(cells) + " |")
+            lines.append(f"| {_cell(name)} | " + " | ".join(cells) + " |")
         if any(REMAINDER_ID in r.km_by_subarea for r in result.rows):
             cells = [
                 _km(sum(r.km_by_subarea.get(REMAINDER_ID, 0.0) for r in by_cat[c]))
@@ -490,7 +507,7 @@ def render_markdown(
             ]
             lines.append(f"| {remainder_label(len(names))} | " + " | ".join(cells) + " |")
     total = [_km(sum(r.km for r in by_cat[c])) for c in CATEGORIES]
-    lines.append(f"| **{city}** | " + " | ".join(total) + " |")
+    lines.append(f"| **{_cell(city)}** | " + " | ".join(total) + " |")
     for c in CATEGORIES:
         rows = sorted(by_cat[c], key=lambda r: -abs(r.km))[:TOP_N]
         n = len(by_cat[c])
@@ -543,9 +560,16 @@ def _row_coords(row: ChangeRow, frm: dict, to: dict):
 
 
 def write_geojson(
-    result: ChangeResult, ways_from: list[WayRecord], ways_to: list[WayRecord], path: Path
+    result: ChangeResult,
+    ways_from: list[WayRecord],
+    ways_to: list[WayRecord],
+    path: Path,
+    *,
+    run_from: int | None = None,
+    run_to: int | None = None,
 ) -> Path:
-    """One WGS84 Feature per row (the `from` way for a loss, the `to` way otherwise)."""
+    """One WGS84 Feature per row (the `from` way for a loss, the `to` way otherwise); the
+    collection's properties name the two runs compared."""
     import json
 
     from shapely import LineString
@@ -569,7 +593,12 @@ def write_geojson(
         feats.append({"type": "Feature", "geometry": geom, "properties": props})
     doc = {
         "type": "FeatureCollection",
-        "properties": {"attribution": ODBL, "unit": "mapped km (ADR 0006)"},
+        "properties": {
+            "attribution": ODBL,
+            "unit": "mapped km (ADR 0006)",
+            "run_from": run_from,
+            "run_to": run_to,
+        },
         "features": feats,
     }
     path = Path(path)

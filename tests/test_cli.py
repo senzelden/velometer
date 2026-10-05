@@ -1136,6 +1136,7 @@ def _change_db(tmp_path):
     from tests.test_run_history import CFG_DIR, CITY, Fakes, _current_deps
     from velometer import run as R
     from velometer.db import create_schema, fetch_run, open_db, upsert_cities
+    from velometer.subareas import load_subareas, subarea_set_sha
 
     db_path, data_dir = tmp_path / "v.sqlite", tmp_path / "data"
     fakes = Fakes(tmp_path)
@@ -1180,6 +1181,12 @@ def _change_db(tmp_path):
     for slug, (x0, x1) in (("west", (13.3, 13.4015)), ("east", (13.4015, 13.5))):
         path = data_dir / "boundaries" / f"berlin_sub_{slug}.geojson"
         path.write_text(json.dumps(wgs_box(x0, 52.45, x1, 52.55)))
+    # the runs were measured on these subarea files (the fakes split on the shipped Bezirke)
+    city = next(x for x in load_cities(cfg / "cities.yaml") if x.id == "berlin")
+    sha = subarea_set_sha(load_subareas(city, data_dir))
+    with open_db(db_path) as conn:
+        conn.execute("UPDATE runs SET subarea_sha=? WHERE id IN (?, ?)", (sha, h.run_id, c.run_id))
+        conn.commit()
     return db_path, cfg, data_dir, h.run_id, c.run_id
 
 
@@ -1191,6 +1198,10 @@ def _change_args(db_path, cfg, data_dir, out):
 
 @needs_osmium
 def test_report_change_checks_totals_and_writes_md_geojson_png(tmp_path):
+    import json
+
+    from velometer.report import change as ch
+
     db_path, cfg, data_dir, run_from, run_to = _change_db(tmp_path)
     out = tmp_path / "review"
     result = CliRunner().invoke(app, _change_args(db_path, cfg, data_dir, out))
@@ -1199,7 +1210,27 @@ def test_report_change_checks_totals_and_writes_md_geojson_png(tmp_path):
     md = (out / "berlin_change_2024-01-01_current.md").read_text()
     assert "West" in md and "East" in md and "mapped km" in md
     assert (out / "berlin_change_2024-01-01_current.png").stat().st_size > 0
-    assert (data_dir / "maps" / "berlin_change_2024-01-01_current.geojson").is_file()
+    geojson = json.loads(
+        (data_dir / "maps" / "berlin_change_2024-01-01_current.geojson").read_text()
+    )
+    assert (geojson["properties"]["run_from"], geojson["properties"]["run_to"]) == (
+        run_from,
+        run_to,
+    )
+    assert ch.change_runs(md) == (run_from, run_to)
+
+
+@needs_osmium
+def test_report_change_refuses_subarea_files_other_than_the_runs(tmp_path):
+    db_path, cfg, data_dir, run_from, _ = _change_db(tmp_path)
+    east = data_dir / "boundaries" / "berlin_sub_east.geojson"
+    east.write_text(east.read_text().replace("13.5", "13.49"))  # re-fetched, now differs
+    out = tmp_path / "review"
+    result = CliRunner().invoke(app, _change_args(db_path, cfg, data_dir, out))
+    assert result.exit_code == 1
+    assert "refused:" in result.output and f"run {run_from}" in result.output
+    assert "totals agree" not in result.output
+    assert not out.exists()
 
 
 @needs_osmium
