@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (stockholm 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 24404271
   group: A_cycleway
@@ -10,7 +10,7 @@ ways:
   proposed:
   - side: self
     tier: A
-    rule: A_cycleway
+    rule: A_segregated
     subtype: null
     bidirectional: true
   confirmed: true
@@ -39,7 +39,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_cycleway_foot
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
@@ -141,9 +141,10 @@ ways:
   highway: path
   proposed:
   - side: self
-    tier: B
-    rule: B_path_segregated
-    subtype: segregated
+    tier: A
+    rule: A_segregated
+    subtype: null
     bidirectional: false
   confirmed: true
-  note: ''
+  note: re-signed for v4 by the user, 2026-10-05
+  min_classifier: v4

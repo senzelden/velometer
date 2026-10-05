@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (bratislava 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 1279751700
   group: X_private
@@ -21,12 +21,13 @@ ways:
   highway: cycleway
   proposed:
   - side: self
-    tier: A
-    rule: A_cycleway
+    tier: B
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
-  note: ''
+  note: re-signed for v4 by the user, 2026-10-05
+  min_classifier: v4
 - way_id: 960705749
   group: X_bicycle_no
   name: ''
@@ -91,8 +92,8 @@ ways:
   highway: tertiary
   proposed: []
   confirmed: true
-  note: 'no output by decision (2026-10-03): cycleway:right=shared_busway misspells share_busway,
-    an OSM mistag that v3 leaves unrecognised'
+  note: 'no output by decision (2026-10-03): cycleway:right=shared_busway misspells
+    share_busway, an OSM mistag that v3 leaves unrecognised'
 - way_id: 1050603989
   group: unmatched:2
   name: Furdekova
@@ -109,8 +110,8 @@ ways:
     subtype: advisory
     bidirectional: false
   confirmed: true
-  note: 'expects classifier v3 (Task 14): cycleway:right=advisory is an advisory lane (user
-    decision 2026-10-03, v3 rule D_advisory)'
+  note: 'expects classifier v3 (Task 14): cycleway:right=advisory is an advisory lane
+    (user decision 2026-10-03, v3 rule D_advisory)'
   min_classifier: v3
 - way_id: 24836980
   group: unmatched:3
@@ -123,8 +124,8 @@ ways:
     subtype: advisory
     bidirectional: false
   confirmed: true
-  note: 'expects classifier v3 (Task 14): cycleway:left=advisory is an advisory lane (user
-    decision 2026-10-03, v3 rule D_advisory)'
+  note: 'expects classifier v3 (Task 14): cycleway:left=advisory is an advisory lane
+    (user decision 2026-10-03, v3 rule D_advisory)'
   min_classifier: v3
 - way_id: 34609152
   group: extra
@@ -133,7 +134,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_cycleway_foot
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true

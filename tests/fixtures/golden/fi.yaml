@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (helsinki 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 31719831
   group: X_bicycle_no
@@ -22,7 +22,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_cycleway_foot
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
@@ -33,12 +33,13 @@ ways:
   highway: cycleway
   proposed:
   - side: self
-    tier: A
-    rule: A_cycleway
+    tier: B
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
-  note: ''
+  note: re-signed for v4 by the user, 2026-10-05
+  min_classifier: v4
 - way_id: 55445809
   group: X_area
   name: ''
@@ -99,7 +100,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_path
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true

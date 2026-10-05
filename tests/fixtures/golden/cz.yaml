@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (prague 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 27074770
   group: X_no
@@ -51,7 +51,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_cycleway_foot
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
@@ -75,7 +75,7 @@ ways:
   proposed:
   - side: self
     tier: A
-    rule: A_cycleway
+    rule: A_cycle_only
     subtype: null
     bidirectional: true
   confirmed: true

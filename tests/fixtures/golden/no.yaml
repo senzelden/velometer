@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (oslo 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 119146754
   group: B_cycleway_foot
@@ -10,7 +10,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_cycleway_foot
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true
@@ -68,7 +68,7 @@ ways:
   proposed:
   - side: self
     tier: A
-    rule: A_cycleway
+    rule: A_segregated
     subtype: null
     bidirectional: true
   confirmed: true
@@ -101,8 +101,8 @@ ways:
     subtype: advisory
     bidirectional: false
   confirmed: true
-  note: 'expects classifier v3 (Task 14): the right side, cycleway:right=advisory, is the D
-    advisory lane the verdict names (user decision 2026-10-03, v3 rule D_advisory)'
+  note: 'expects classifier v3 (Task 14): the right side, cycleway:right=advisory,
+    is the D advisory lane the verdict names (user decision 2026-10-03, v3 rule D_advisory)'
   min_classifier: v3
 - way_id: 136540510
   group: extra
@@ -111,7 +111,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_path
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true

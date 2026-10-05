@@ -1,7 +1,7 @@
 # Map data © OpenStreetMap contributors, ODbL 1.0
 source: velometer snapshots (ljubljana 2026-10-02T20:21:34Z); © OpenStreetMap contributors,
   ODbL 1.0
-classifier_version: v2
+classifier_version: v4
 ways:
 - way_id: 1513714682
   group: B_path_segregated
@@ -9,12 +9,13 @@ ways:
   highway: path
   proposed:
   - side: self
-    tier: B
-    rule: B_path_segregated
-    subtype: segregated
+    tier: A
+    rule: A_segregated
+    subtype: null
     bidirectional: false
   confirmed: true
-  note: ''
+  note: re-signed for v4 by the user, 2026-10-05
+  min_classifier: v4
 - way_id: 706908809
   group: X_no
   name: Cesta v Kresnice
@@ -68,7 +69,7 @@ ways:
   proposed:
   - side: self
     tier: A
-    rule: A_cycleway
+    rule: A_cycle_only
     subtype: null
     bidirectional: true
   confirmed: true
@@ -80,7 +81,7 @@ ways:
   proposed:
   - side: self
     tier: B
-    rule: B_path
+    rule: B_shared
     subtype: null
     bidirectional: true
   confirmed: true

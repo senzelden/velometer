@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from tests.golden_util import check_country_golden, check_golden
-from velometer.config import default_config_dir, load_classifier
+from velometer.config import default_config_dir, load_classifier, load_report
 from velometer.pipeline.read import read_ways
 from velometer.trust import observed_tiers
 
@@ -37,6 +37,22 @@ def test_every_golden_way_is_in_the_osm_fixture():
 
 def test_confirmed_ways_match_classifier():
     check_golden(GOLDEN["ways"], _observed())
+
+
+def test_berlin_golden_on_report_classifier():
+    """The Berlin set re-signed for a later classifier (berlin_golden_v4.yaml) holds on the report
+    classifier. The v1 set above stays the record of the M1 sign-off."""
+    golden = yaml.safe_load((FIX / "berlin_golden_v4.yaml").read_text())
+    config = default_config_dir()
+    version = load_report(config / "report.yaml", config / "presets.yaml").report_classifier
+    if golden["classifier_version"] != version:
+        pytest.skip(
+            f"berlin_golden_v4.yaml is signed for {golden['classifier_version']}, "
+            f"the report classifier is {version}"
+        )
+    cfg = load_classifier(config / "classifier" / f"{version}.yaml")
+    observed = observed_tiers(read_ways(FIX / "berlin_golden.osm").ways, cfg)
+    check_country_golden("BERLIN", golden["ways"], observed, cfg.version)
 
 
 def test_partial_signoff_reports_unconfirmed_count():
