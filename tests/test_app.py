@@ -1001,6 +1001,22 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
     assert "facet" in bezirke  # the small-multiples spec is embedded
 
 
+def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
+    html = subarea_client.get("/city/berlin").text
+    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h3>")[0]
+    body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
+    rows = body.split("<tr")[1:]
+    assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]
+    assert len(rows) == 3 and 'class="remainder"' in rows[2]
+    assert "<td>Outside the 2 Bezirke (LAU edge)</td>" in rows[2]
+    assert 'class="remainder"' not in "".join(rows[:2])
+    note = bezirke.split("</table>")[1]
+    assert (
+        "Road and path km inside the city's LAU boundary but outside every Bezirk polygon; "
+        "the LAU is generalised at 1:1M (ADR 0004)." in note
+    )
+
+
 def test_city_without_subareas_has_no_bezirke(client):
     html = client.get("/city/berlin").text  # the plain fixture: no subareas in config
     assert "Bezirke" not in html and "_subareas.csv" not in html
@@ -1054,11 +1070,19 @@ def test_subarea_csv_has_provenance_columns_the_odbl_line_and_a_row_per_tier(sub
         "git_commit", "config_sha256", "boundary_sha256", "subarea_sha", "tier", "length_basis",
         "length_km",
     ]  # fmt: skip
-    assert {r["subarea_id"] for r in rows} == {"west", "east"}
+    assert {r["subarea_id"] for r in rows} == {"west", "east", "remainder"}
     west_a = [r for r in rows if r["subarea_id"] == "west" and r["tier"] == "A"]
     assert {r["length_basis"] for r in west_a} == {"per_side", "qecio_weighted"}
     assert {r["length_km"] for r in west_a} == {"3.000"}
-    assert all(r["name"] in ("West", "East") and r["git_commit"] for r in rows)
+    assert all(r["git_commit"] for r in rows)
+    assert {(r["subarea_id"], r["name"]) for r in rows} == {
+        ("west", "West"),
+        ("east", "East"),
+        ("remainder", "Outside the 2 Bezirke (LAU edge)"),
+    }
+    for run_id in {r["run_id"] for r in rows}:  # the remainder's rows close each run's block
+        ids = [r["subarea_id"] for r in rows if r["run_id"] == run_id]
+        assert ids[-2:] == ["remainder"] * 2 and "remainder" not in ids[:-2]
     assert (
         "attachment"
         in subarea_client.get("/data/berlin_subareas.csv").headers["content-disposition"]

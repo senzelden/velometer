@@ -84,7 +84,7 @@
 </tr></thead>
 <tbody>
 {% for r in bezirke.rows %}
-<tr>
+<tr{% if r.remainder %} class="remainder"{% endif %}>
   <td>{{ r.name }}</td>
   <td class="num">{{ r.headline | num }}</td>
   <td class="num">{% if r.a_share_of_ab is none %}n/a{% else %}{{ r.a_share_of_ab | num }} %{% endif %}</td>
@@ -94,6 +94,9 @@
 </tbody>
 </table>
 </div>
+{% if bezirke.rows | selectattr("remainder") | list %}
+<p class="meta">Road and path km inside the city's LAU boundary but outside every Bezirk polygon; the LAU is generalised at 1:1M (ADR 0004).</p>
+{% endif %}
 <h3>Over time</h3>
 {{ chart("cb", bezirke.series) }}
 <h3>Mapped change {{ bezirke.window }}</h3>

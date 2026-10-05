@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from shapely import Polygon, box
 
-from velometer.config import default_config_dir, load_cities, load_classifier
+from velometer.config import REMAINDER_ID, default_config_dir, load_cities, load_classifier
 from velometer.db import RunKey, create_schema, open_db, start_run, upsert_cities
 from velometer.pipeline.extract import snapshot_name
 from velometer.pipeline.geometry import Projector
@@ -341,6 +341,34 @@ def test_markdown_lists_runs_bezirke_top_rows_and_changed_tags():
     assert len(bezirk) == 1
     gained = next(r for r in got.rows if r.category == "gained")
     assert f"{gained.km_by_subarea['west']:.3f}" in bezirk[0]
+
+
+def test_the_bezirk_table_ends_with_the_remainder_outside_every_subarea():
+    line = Projector(EPSG).line(next(w for w in TO if w.id == W + 3).coords)
+    x_mid = (line.coords[0][0] + line.coords[-1][0]) / 2
+    x_q = (x_mid + max(line.coords[0][0], line.coords[-1][0])) / 2
+    subs = [_sub("west", box(370_000, 5_800_000, x_mid, 5_850_000)),
+            _sub("east", box(x_mid, 5_800_000, x_q, 5_850_000))]  # fmt: skip
+    got = ch.compute_change(FROM, TO, CFG, EPSG, BOUNDARY, subs)
+    (gained,) = _rows(got, "gained")
+    rest = gained.km_by_subarea[REMAINDER_ID]
+    assert rest == pytest.approx(gained.km / 4, rel=0.02)  # the way's last quarter
+    assert sum(gained.km_by_subarea.values()) == pytest.approx(gained.km)
+    md = ch.render_markdown(got, "berlin", RUN_FROM, RUN_TO, {"west": "Westend", "east": "Ostend"})
+    table = ch.bezirk_table(md).splitlines()
+    assert [ln.split("|")[1].strip() for ln in table[2:]] == [
+        "Ostend", "Westend", "Outside the 2 Bezirke (LAU edge)", "**berlin**"
+    ]  # fmt: skip
+    assert f"{rest:.3f}" in table[-2]
+
+
+def test_subareas_covering_the_boundary_leave_no_remainder_row():
+    subs = [_sub("west", box(370_000, 5_800_000, 395_000, 5_850_000)),
+            _sub("east", box(395_000, 5_800_000, 420_000, 5_850_000))]  # fmt: skip
+    got = ch.compute_change(FROM, TO, CFG, EPSG, BOUNDARY, subs)
+    assert all(REMAINDER_ID not in r.km_by_subarea for r in got.rows)
+    md = ch.render_markdown(got, "berlin", RUN_FROM, RUN_TO, {"west": "Westend", "east": "Ostend"})
+    assert "Outside" not in md
 
 
 def test_geojson_has_one_feature_per_row_in_wgs84(result, tmp_path):

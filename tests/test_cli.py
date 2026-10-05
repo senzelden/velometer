@@ -1055,6 +1055,30 @@ def test_results_subareas_prints_a_row_per_subarea(tmp_path):
     assert "per 100k: not available per subarea (no subarea population)" in out.output
 
 
+def test_results_subareas_ends_with_the_remainder_after_a_separator(tmp_path):
+    from tests.report_fixture import add_remainder, add_subareas, build_report_fixture
+    from velometer.db import open_db
+
+    db, cfg = build_report_fixture(tmp_path)
+    add_subareas(db, cfg, _berlin_run_ids(db))
+    add_remainder(db, _berlin_run_ids(db))
+    with open_db(db) as conn:  # a name sorting after "remainder" by code point
+        conn.execute("UPDATE subareas SET name='Ölberg' WHERE subarea_id='west'")
+        conn.commit()
+    out = CliRunner().invoke(
+        app,
+        ["results", "--city", "berlin", "--subareas", "--db", str(db), "--config-dir", str(cfg)],
+    )
+    assert out.exit_code == 0, out.output
+    lines = out.output.splitlines()
+    rest = lines[next(i for i, ln in enumerate(lines) if ln.startswith("subarea")) + 1 :]
+    assert [ln.split()[0] for ln in rest[:2]] == ["East", "Ölberg"]
+    assert set(rest[2]) == {"-"}  # the separator line
+    assert rest[3].startswith("Outside the 2 Bezirke (LAU edge)")
+    assert rest[3].split("(LAU edge)")[1].split()[0] == "5.0"  # 0.5 / 10 main_excl_motorway
+    assert rest[4].startswith("per 100k")
+
+
 def test_results_subareas_of_a_city_without_them_exits_1(tmp_path):
     from tests.report_fixture import build_report_fixture
 

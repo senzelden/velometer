@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from shapely import MultiPolygon, Polygon
 
-from velometer.config import Preset, default_config_dir, load_classifier, load_presets
+from velometer.config import REMAINDER_ID, Preset, default_config_dir, load_classifier, load_presets
 from velometer.pipeline.geometry import Projector
 from velometer.pipeline.measure import (
     SubareaMeasure,
@@ -445,20 +445,42 @@ def test_dual_carriageway_halving_carries_into_subareas():
     assert road_length(parts["s"], "main_excl_motorway") == 0
 
 
-def test_uncovered_sliver_beyond_tolerance_fails():
-    # subareas cover 13.39-13.4292 of the city's 13.39-13.43: 98 % of its area
-    covering = [_sub("w", (13.38, 52.48, 13.4292, 52.52))]
+def test_the_uncovered_strip_is_the_remainder_and_closes_the_sums():
+    # the subarea covers 13.39-13.4292 of the city's 13.39-13.43: a 2 % strip is left uncovered
+    w = _sub("w", (13.38, 52.48, 13.4292, 52.52))
     ways = [
         WayRecord(1, TRACK, ((13.40, 52.49), (13.40, 52.51))),
-        WayRecord(2, TRACK, ((13.4296, 52.49), (13.4296, 52.51))),  # in the gap
+        WayRecord(2, TRACK, ((13.4296, 52.49), (13.4296, 52.51))),  # in the strip
+        WayRecord(3, TRACK, ((13.42, 52.50), (13.44, 52.50))),  # crosses into the strip
+        WayRecord(4, {"highway": "primary"}, ((13.385, 52.497), (13.435, 52.497))),
     ]
-    result, parts = _attribute(ways, covering)
+    result, parts = _attribute(ways, [w])
+    assert set(parts) == {"w", REMAINDER_ID}
+    strip = _proj_box(*CITY_BOX).difference(w.polygon)
+    in_strip = measure(ways, CFG, 25833, boundary=strip)  # clipped by `measure`, not attribution
+    got = _tier_map(parts[REMAINDER_ID].tier_lengths)
+    want = _tier_map(in_strip.tier_lengths)
+    assert want[("A", None, "per_side")].length_km > 0.1  # not vacuous
+    assert set(got) == set(want)
+    for key, row in want.items():
+        assert got[key].length_km == pytest.approx(row.length_km, abs=1e-9), key
+    assert road_length(parts[REMAINDER_ID], "main_excl_motorway") == pytest.approx(
+        road_length(in_strip, "main_excl_motorway"), abs=1e-9
+    )
+    check_subarea_sums(result, parts)
     city_a = _tier_map(result.tier_lengths)[("A", None, "per_side")].length_km
     part_a = _tier_map(parts["w"].tier_lengths)[("A", None, "per_side")].length_km
+    del parts[REMAINDER_ID]
     with pytest.raises(SubareaSumError) as exc:
         check_subarea_sums(result, parts)
     msg = str(exc.value)
     assert "'A'" in msg and f"{part_a:.3f}" in msg and f"{city_a:.3f}" in msg
+
+
+def test_subareas_that_tile_the_city_have_no_remainder():
+    ways = [WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505)))]
+    _, parts = _attribute(ways, NORTH_SOUTH)
+    assert set(parts) == {"n", "s"}
 
 
 def test_a_way_wholly_outside_every_subarea_counts_no_n_ways():
@@ -486,7 +508,27 @@ def test_a_way_on_a_shared_edge_is_split_not_double_counted():
     result, parts = _attribute([on_edge], [west, east], city_box=(13.39, 52.49, 13.43, 52.51))
     city = _tier_map(result.tier_lengths)[("A", None, "per_side")].length_km
     assert city > 0
-    halves = [_tier_map(p.tier_lengths)[("A", None, "per_side")].length_km for p in parts.values()]
+    halves = [
+        _tier_map(parts[s].tier_lengths)[("A", None, "per_side")].length_km for s in ("w", "e")
+    ]
+    assert halves == [pytest.approx(city / 2, rel=1e-9)] * 2
+    assert parts[REMAINDER_ID].tier_lengths == []  # the rest of the city box holds none of it
+    check_subarea_sums(result, parts)
+
+
+def test_a_way_on_the_edge_of_a_subarea_and_the_remainder_is_split():
+    on_edge = WayRecord(1, TRACK, ((13.41, 52.495), (13.41, 52.505)))
+    (x0, y0), (x1, y1) = Projector(25833).line(on_edge.coords).coords
+    # the subarea ends at the way; the city box east of it is the remainder
+    west = SubareaPolygon(
+        "w", "W", 1, Polygon([(x0, y0), (x1, y1), (x1 - 5000, y1), (x0 - 5000, y0)]), "0" * 64
+    )
+    result, parts = _attribute([on_edge], [west], city_box=(13.39, 52.49, 13.43, 52.51))
+    city = _tier_map(result.tier_lengths)[("A", None, "per_side")].length_km
+    halves = [
+        _tier_map(parts[s].tier_lengths)[("A", None, "per_side")].length_km
+        for s in ("w", REMAINDER_ID)
+    ]
     assert halves == [pytest.approx(city / 2, rel=1e-9)] * 2
     check_subarea_sums(result, parts)
 
@@ -502,11 +544,27 @@ def _scaled(result, parts, factor):
     }
 
 
-def test_sum_check_tolerance_is_half_a_percent():
-    ways = [WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505)))]
+def _short(parts, sid, key, km):
+    """`parts` with `km` taken off tier row `key` of subarea `sid` (a dropped part)."""
+    p = parts[sid]
+    tiers = [
+        t.model_copy(update={"length_km": t.length_km - km})
+        if (t.tier, t.subtype, t.length_basis) == key
+        else t
+        for t in p.tier_lengths
+    ]
+    return {**parts, sid: SubareaMeasure(tiers, p.road_lengths)}
+
+
+def test_sum_check_tolerance_is_a_hundredth_of_a_km_absolute():
+    ways = [
+        WayRecord(1, TRACK, ((13.40, 52.495), (13.40, 52.505))),
+        WayRecord(2, TRACK, ((13.385, 52.497), (13.435, 52.497))),  # 2.7 km in the city
+    ]
     result, parts = _attribute(ways, NORTH_SOUTH)
-    check_subarea_sums(result, _scaled(result, parts, 0.997))  # 0.3 % short: passes
-    check_subarea_sums(result, _scaled(result, parts, 1.003))
-    for factor in (0.993, 1.007):  # 0.7 % off: fails
-        with pytest.raises(SubareaSumError):
-            check_subarea_sums(result, _scaled(result, parts, factor))
+    key = ("A", None, "per_side")
+    assert _tier_map(result.tier_lengths)[key].length_km > 3.5  # 0.5 % of it exceeds 0.012 km
+    check_subarea_sums(result, _short(parts, "n", key, 0.009))
+    for km in (0.02, -0.02, 0.012):  # 0.012 km is about 0.3 %: a relative rule would pass it
+        with pytest.raises(SubareaSumError, match="'A'"):
+            check_subarea_sums(result, _short(parts, "n", key, km))

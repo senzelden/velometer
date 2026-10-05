@@ -806,3 +806,35 @@ def test_subarea_series_skips_runs_without_rows(db, tmp_path):
     with open_db(db[0]) as conn:
         out = T.subarea_series(conn, "berlin", sel, db[1])
     assert [p.label for p in out["west"]] == ["2020", "2021"]
+
+
+def test_subarea_series_and_flag_leave_out_the_remainder(db, tmp_path):
+    from tests.report_fixture import add_remainder, add_subareas
+    from velometer.selection import run_selector
+
+    with sqlite3.connect(db[0]) as conn:
+        runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
+    add_subareas(db[0], db[2], runs)
+    add_remainder(db[0], runs)
+    with open_db(db[0]) as conn:
+        assert set(T.subarea_series(conn, "berlin", run_selector(db[2], "v1"), db[1])) == {
+            "west",
+            "east",
+        }
+    res = _ts(db, _report(tmp_path), "--subareas")
+    assert res.exit_code == 0, res.output
+    assert "remainder" not in res.output and "Outside" not in res.output
+
+
+def test_check_needs_subarea_rows_but_not_remainder_rows(db, tmp_path):
+    from tests.report_fixture import add_remainder, add_subareas
+
+    with sqlite3.connect(db[0]) as conn:
+        runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
+    report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
+    add_subareas(db[0], db[2], runs[1:])  # no remainder rows on these: an empty remainder
+    add_remainder(db[0], runs[:1])  # the first run has remainder rows only
+    res = _ts(db, report, "--check")
+    assert res.exit_code == 1
+    assert f"berlin/{runs[0]}" in res.output
+    assert not any(f"berlin/{r}" in res.output for r in runs[1:])

@@ -58,6 +58,26 @@ class PopulationOverride(_Strict):
         return v
 
 
+# The derived "outside the subareas" row: city boundary minus the union of the subarea polygons
+# (Berlin: the generalised LAU edge the 12 OSM Bezirke do not reach). Not a configured relation.
+REMAINDER_ID = "remainder"
+REMAINDER_NAME = "Outside the subareas (boundary edge)"
+SUBAREA_SECTION = "Bezirke"  # the subarea section title of the app, CSV and change page
+REMAINDER_LABELS = {"Bezirke": "Outside the {n} Bezirke (LAU edge)"}  # by section title
+
+
+def remainder_label(n_subareas: int, section: str = SUBAREA_SECTION) -> str:
+    """The remainder row's display name for a city with `n_subareas` configured relations."""
+    return REMAINDER_LABELS.get(section, REMAINDER_NAME).format(n=n_subareas)
+
+
+def subarea_display_name(names: dict[str, str], subarea_id: str, n_subareas: int) -> str:
+    """A subarea's name from `names` (id -> name), the remainder's label, or the id itself."""
+    if subarea_id == REMAINDER_ID:
+        return remainder_label(n_subareas)
+    return names.get(subarea_id, subarea_id)
+
+
 class SubareaRelation(_Strict):
     id: int = Field(gt=0)
     name: str
@@ -78,6 +98,11 @@ class SubareasConfig(_Strict):
             dup = sorted({v for v in values if values.count(v) > 1}, key=str)
             if dup:
                 raise ValueError(f"subareas.relations: duplicate {field} {dup}")
+        if any(r.slug == REMAINDER_ID for r in self.relations):
+            raise ValueError(
+                f"subareas.relations: slug {REMAINDER_ID!r} is reserved for the derived "
+                "outside-the-subareas row"
+            )
         return self
 
 

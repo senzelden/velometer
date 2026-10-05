@@ -8,6 +8,7 @@ from shapely import box
 from tests.fake_subareas import config_subareas, without_subareas
 from velometer import run as R
 from velometer.config import (
+    REMAINDER_ID,
     SubareaRelation,
     SubareasConfig,
     default_config_dir,
@@ -561,8 +562,14 @@ def test_history_missing_subarea_file_fails_each_year(conn, tmp_path):
     assert all("FileNotFoundError" in o.error for o in outs)
 
 
-def test_history_sum_error_fails_the_year(conn, tmp_path):
+def test_history_sum_error_fails_the_year(conn, tmp_path, monkeypatch):
     small = [SubareaPolygon("a", "A", 1, box(0, 0, 1, 1), SUB_SHA)]
+    real = R.attribute_subareas
+
+    def drop_remainder(*a):  # a dropped part, as a bug in the attribution would leave
+        return {k: v for k, v in real(*a).items() if k != REMAINDER_ID}
+
+    monkeypatch.setattr(R, "attribute_subareas", drop_remainder)
     outs = _sub_history(conn, tmp_path, load=lambda c, d: small)
     assert [o.status for o in outs] == ["failed", "failed"]
     assert all("SubareaSumError" in o.error for o in outs)

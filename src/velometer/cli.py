@@ -770,7 +770,9 @@ SUBAREA_COLUMNS = (
 
 
 def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
-    """`results --subareas`: one row per subarea of the city's latest done run (exit 1 if none)."""
+    """`results --subareas`: one row per subarea of the city's latest done run (exit 1 if none),
+    then the remainder outside every subarea (if the run has one) after a separator line."""
+    from velometer.config import REMAINDER_ID, subarea_display_name
     from velometer.db import fetch_run, subarea_names, subarea_rows
     from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 
@@ -795,8 +797,11 @@ def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
     if not parts:
         typer.echo(f"error: run {run_id} of {city_id} has no subarea rows: rerun it", err=True)
         raise typer.Exit(1)
+    n_subareas = len(city.subareas.relations)
+    order = sorted(parts, key=lambda sid: (sid == REMAINDER_ID, names.get(sid, sid)))
     rows = []
-    for sid, (tiers, roads) in sorted(parts.items(), key=lambda kv: names.get(kv[0], kv[0])):
+    for sid in order:
+        tiers, roads = parts[sid]
         metrics = compute_metrics(SubareaMeasure(tiers, roads), sel.presets.presets)
         head, ecf, clean = (
             select_metric(metrics, p, sel.presets)
@@ -809,7 +814,8 @@ def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
         ab = km["A"] + km["B"]
         main = next((x.length_km for x in roads if x.road_class == "main_excl_motorway"), None)
         rows.append(
-            [names.get(sid, sid), fmt(head and head.value), fmt(ecf and ecf.value)]
+            [subarea_display_name(names, sid, n_subareas)]
+            + [fmt(head and head.value), fmt(ecf and ecf.value)]
             + [fmt(clean and clean.value)]
             + [fmt(km[t]) for t in "ABCDE"]
             + [fmt(100 * km["A"] / ab if ab else None), fmt(main)]
@@ -818,7 +824,9 @@ def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
     typer.echo(_presets_line(sel.presets))
     widths = [max(len(h), *(len(r[i]) for r in rows)) for i, h in enumerate(SUBAREA_COLUMNS)]
     typer.echo("  ".join(h.ljust(w) for h, w in zip(SUBAREA_COLUMNS, widths, strict=True)).rstrip())
-    for r in rows:
+    for sid, r in zip(order, rows, strict=True):
+        if sid == REMAINDER_ID:
+            typer.echo("-" * (sum(widths) + 2 * (len(widths) - 1)))
         typer.echo("  ".join(v.ljust(w) for v, w in zip(r, widths, strict=True)).rstrip())
     typer.echo("per 100k: not available per subarea (no subarea population)")
 

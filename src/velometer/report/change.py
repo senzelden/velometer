@@ -33,12 +33,12 @@ from shapely import STRtree, unary_union  # noqa: E402
 from shapely.geometry.base import BaseGeometry  # noqa: E402
 from shapely.prepared import prep  # noqa: E402
 
-from velometer.config import ClassifierConfig  # noqa: E402
+from velometer.config import REMAINDER_ID, ClassifierConfig, remainder_label  # noqa: E402
 from velometer.db import fetch_run  # noqa: E402
 from velometer.pipeline.classify import classify_ways  # noqa: E402
 from velometer.pipeline.dedupe import share_within  # noqa: E402
 from velometer.pipeline.geometry import Projector  # noqa: E402
-from velometer.pipeline.measure import clipped_length_km  # noqa: E402
+from velometer.pipeline.measure import clipped_length_km, remainder_polygon  # noqa: E402
 from velometer.pipeline.types import Classified, WayRecord  # noqa: E402
 from velometer.report.charts import INK_2, TIER_COLOURS  # noqa: E402
 from velometer.report.maps import (  # noqa: E402
@@ -105,8 +105,9 @@ class _Side:
 
 
 class _Clip:
-    """Clipped lengths in the city EPSG: the boundary (as `measure`) and each subarea ∩ boundary,
-    scaled on a shared edge (as `measure.attribute_subareas`)."""
+    """Clipped lengths in the city EPSG: the boundary (as `measure`), each subarea ∩ boundary
+    and the remainder outside every subarea, scaled on a shared edge (as
+    `measure.attribute_subareas`)."""
 
     def __init__(self, boundary: BaseGeometry, subareas) -> None:
         self.boundary, self.prepared = boundary, prep(boundary)
@@ -114,6 +115,10 @@ class _Clip:
         for s in subareas:
             area = s.polygon.intersection(boundary)
             self.areas.append((s.subarea_id, area, prep(area)))
+        if subareas:
+            rest = remainder_polygon(boundary, list(subareas))
+            if not rest.is_empty:
+                self.areas.append((REMAINDER_ID, rest, prep(rest)))
 
     def km(self, line) -> float:
         return clipped_length_km(line, self.prepared, self.boundary)
@@ -373,7 +378,8 @@ def render_markdown(
 ) -> str:
     """The change review page: header, per-Bezirk mapped km per category, top rows per category.
 
-    `run_from`/`run_to` are run rows (`db.fetch_run`); `names` maps subarea id -> name.
+    `run_from`/`run_to` are run rows (`db.fetch_run`); `names` maps subarea id -> name. Rows
+    with km outside every subarea add the remainder as the table's last Bezirk-level row.
     """
     lines = [
         f"# {city}: mapped cycling infrastructure change",
@@ -405,6 +411,12 @@ def render_markdown(
         for sid, name in sorted(names.items(), key=lambda kv: kv[1]):
             cells = [_km(sum(r.km_by_subarea.get(sid, 0.0) for r in by_cat[c])) for c in CATEGORIES]
             lines.append(f"| {name} | " + " | ".join(cells) + " |")
+        if any(REMAINDER_ID in r.km_by_subarea for r in result.rows):
+            cells = [
+                _km(sum(r.km_by_subarea.get(REMAINDER_ID, 0.0) for r in by_cat[c]))
+                for c in CATEGORIES
+            ]
+            lines.append(f"| {remainder_label(len(names))} | " + " | ".join(cells) + " |")
     total = [_km(sum(r.km for r in by_cat[c])) for c in CATEGORIES]
     lines.append(f"| **{city}** | " + " | ".join(total) + " |")
     for c in CATEGORIES:

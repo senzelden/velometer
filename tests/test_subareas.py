@@ -62,7 +62,8 @@ def test_a_generalised_lau_edge_is_reported_but_not_refused():
     # Berlin: the Bezirke union equals the OSM city relation, while the generalised GISCO LAU
     # differs from it by 1.45 % symmetric difference and 0.19 % by area. The spec's rule is the
     # area one ("the union is within 1 % of the LAU area"), as for boundaries in ADR 0004; the
-    # binding sliver guard is the 0.5 % per-tier sum check at run time.
+    # binding guard is the per-tier sum check at run time, with the LAU edge outside the union
+    # attributed to the explicit remainder row.
     notch = box(X0, Y0, X0 + SIDE * 0.0075, Y0 + SIDE)  # 0.75 % of the LAU cut off on the left
     bulge = box(X0 + SIDE, Y0, X0 + SIDE * 1.0075, Y0 + SIDE)  # and 0.75 % added on the right
     union = _lau().difference(notch).union(bulge)

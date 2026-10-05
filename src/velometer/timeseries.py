@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from velometer.config import ActivityConfig, CityConfig
+from velometer.config import REMAINDER_ID, ActivityConfig, CityConfig
 from velometer.db import (
     fetch_activity,
     fetch_diagnostics,
@@ -166,12 +166,15 @@ def subarea_series(
 ) -> dict[str, list[SubareaPoint]]:
     """The yearly points of each subarea (LAU runs of the selector), by subarea_id.
 
-    A run without subarea rows adds no point. No flags are computed per subarea.
+    A run without subarea rows adds no point. No flags are computed per subarea. The derived
+    remainder (outside every subarea) is no subarea: it has no series here.
     """
     out: dict[str, list[SubareaPoint]] = {}
     for label, run_id in _series_runs(conn, city_id, "lau", selector, history_set_md5):
         ts = fetch_run(conn, run_id)["osm_timestamp"]
         for sid, (tiers, roads) in subarea_rows(conn, run_id).items():
+            if sid == REMAINDER_ID:
+                continue
             metrics = compute_metrics(SubareaMeasure(tiers, roads), selector.presets.presets)
             metric = select_metric(metrics, "ours_headline", selector.presets)
             out.setdefault(sid, []).append(
@@ -195,7 +198,8 @@ def subarea_series(
 
 def missing_subarea_runs(conn, cities: list[CityConfig], selector) -> list[str]:
     """`<city>/<run_id>` of each report-classifier LAU run (the latest history set's runs and the
-    latest current run) of a city with `subareas` that has no subarea rows."""
+    latest current run) of a city with `subareas` that has no subarea rows. Remainder rows are
+    not demanded (an empty remainder writes none) and do not count as subarea rows."""
     out = []
     for c in cities:
         if c.subareas is None:
@@ -214,7 +218,8 @@ def missing_subarea_runs(conn, cities: list[CityConfig], selector) -> list[str]:
             ids.append(current)
         for run_id in sorted(ids):
             if not conn.execute(
-                "SELECT 1 FROM subarea_tier_lengths WHERE run_id=? LIMIT 1", (run_id,)
+                "SELECT 1 FROM subarea_tier_lengths WHERE run_id=? AND subarea_id!=? LIMIT 1",
+                (run_id, REMAINDER_ID),
             ).fetchone():
                 out.append(f"{c.id}/{run_id}")
     return out

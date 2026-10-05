@@ -4,10 +4,18 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+import shapely
 from shapely.geometry.base import BaseGeometry
 from shapely.prepared import prep
 
-from velometer.config import BASES, ClassifierConfig, Preset, PresetsConfig, RoadClasses
+from velometer.config import (
+    BASES,
+    REMAINDER_ID,
+    ClassifierConfig,
+    Preset,
+    PresetsConfig,
+    RoadClasses,
+)
 from velometer.models import Completeness, Metric, RoadLength, TierLength
 from velometer.pipeline.classify import classify, classify_ways
 from velometer.pipeline.dedupe import flag_parallel_duplicates, pair_dual_carriageways
@@ -237,7 +245,22 @@ class SubareaMeasure:
 
 
 class SubareaSumError(ValueError):
-    """The subarea parts do not add up to the city totals within tolerance."""
+    """The subarea parts (with the remainder) do not add up to the city totals."""
+
+
+SUM_TOLERANCE_KM = 0.01
+
+
+def remainder_polygon(
+    city_boundary: BaseGeometry, subareas: list["SubareaPolygon"]
+) -> BaseGeometry:
+    """The part of the city boundary outside the union of the subareas, in the same EPSG.
+
+    Berlin: its 12 OSM Bezirke cover the OSM city relation, but the generalised GISCO LAU
+    (1:1M) the run clips to reaches about 7 km² beyond their union, mostly along the
+    Brandenburg edge (ADR 0004). Empty where the subareas cover the boundary.
+    """
+    return city_boundary.difference(shapely.union_all([s.polygon for s in subareas]))
 
 
 def attribute_subareas(
@@ -248,26 +271,28 @@ def attribute_subareas(
     city_boundary: BaseGeometry,
     subareas: list["SubareaPolygon"],
 ) -> dict[str, SubareaMeasure]:
-    """Split `result` by subarea, each clipped to `subarea.polygon ∩ city_boundary`.
+    """Split `result` by subarea, each clipped to `subarea.polygon ∩ city_boundary`, plus the
+    remainder `city_boundary − union(subareas)` under `REMAINDER_ID` (absent if it is empty).
 
     Reuses the city's classification and dual-carriageway factors (ADR 0003), so a pair halved
-    in the city stays halved in its subarea. A way crossing two subareas counts in the n_ways of
-    both; a way outside every subarea counts in none. A way lying on a shared edge has its
-    length split in proportion, so the parts never exceed the city length.
+    in the city stays halved in its subarea. A way crossing two areas counts in the n_ways of
+    both. A way lying on a shared edge (of two subareas, or a subarea and the remainder) has
+    its length split in proportion, so the parts never exceed the city length.
     """
     proj = Projector(epsg)
     public = _public_roads(ways, cfg)
     relevant = {c.side.way_id for c in result.classified if c.tier is not None}
     relevant |= {w.id for w in public}
     lines = {w.id: proj.line(w.coords) for w in ways if w.id in relevant}
+    areas = [(sub.subarea_id, sub.polygon.intersection(city_boundary)) for sub in subareas]
+    remainder = remainder_polygon(city_boundary, subareas)
+    if not remainder.is_empty:
+        areas.append((REMAINDER_ID, remainder))
     per_sub = {}
-    for sub in subareas:
-        area = sub.polygon.intersection(city_boundary)
+    for sid, area in areas:
         prepared = prep(area)
-        per_sub[sub.subarea_id] = {
-            i: clipped_length_km(line, prepared, area) for i, line in lines.items()
-        }
-    # A way on the shared edge of two (closed) subareas is clipped in full into both: scale its
+        per_sub[sid] = {i: clipped_length_km(line, prepared, area) for i, line in lines.items()}
+    # A way on the shared edge of two (closed) areas is clipped in full into both: scale its
     # parts so they never add up to more than its city-clipped length.
     for i in lines:
         total = sum(lengths[i] for lengths in per_sub.values())
@@ -285,10 +310,16 @@ def attribute_subareas(
 
 
 def check_subarea_sums(
-    result: MeasureResult, parts: dict[str, SubareaMeasure], tol: float = 0.005
+    result: MeasureResult, parts: dict[str, SubareaMeasure], tol_km: float = SUM_TOLERANCE_KM
 ) -> None:
-    """Every city tier row and road class above 0.01 km is matched by the sum of its parts to
-    within `tol` (relative); the slack covers LAU area the subareas leave uncovered."""
+    """Every city tier row (tier, subtype, basis) and road class equals the sum of its parts to
+    within `tol_km` km, absolute; a row only the parts have counts as 0 km in the city.
+
+    `parts` must include the remainder (`attribute_subareas` adds it), so the subareas and the
+    remainder partition the city boundary and the sums agree up to floating-point noise: no
+    uncovered-area slack and no relative tolerance. An absolute rule needs no skip for tiny
+    city rows, and on a long row it still catches a dropped part of a few metres.
+    """
     tier_sums: dict[tuple, float] = defaultdict(float)
     road_sums: dict[str, float] = defaultdict(float)
     for p in parts.values():
@@ -296,16 +327,16 @@ def check_subarea_sums(
             tier_sums[(t.tier, t.subtype, t.length_basis)] += t.length_km
         for r in p.road_lengths:
             road_sums[r.road_class] += r.length_km
-    pairs = [
-        ((t.tier, t.subtype, t.length_basis), tier_sums, t.length_km) for t in result.tier_lengths
-    ] + [(r.road_class, road_sums, r.length_km) for r in result.road_lengths]
-    for key, sums, c in pairs:
-        if c <= 0.01:
-            continue
-        s = sums[key]
-        pct = 100 * abs(s - c) / c
-        if abs(s - c) / c > tol:
-            raise SubareaSumError(f"{key}: subareas {s:.3f} km vs city {c:.3f} km ({pct:.2f} %)")
+    city_tiers = {(t.tier, t.subtype, t.length_basis): t.length_km for t in result.tier_lengths}
+    city_roads = {r.road_class: r.length_km for r in result.road_lengths}
+    for city, sums in ((city_tiers, tier_sums), (city_roads, road_sums)):
+        for key in sorted({*city, *sums}, key=str):
+            c, s = city.get(key, 0.0), sums.get(key, 0.0)
+            if abs(s - c) > tol_km:
+                raise SubareaSumError(
+                    f"{key}: subareas + remainder {s:.3f} km vs city {c:.3f} km "
+                    f"(off by {s - c:+.3f} km, limit {tol_km:g} km)"
+                )
 
 
 def road_length(result: MeasureResult, road_class: str) -> float:

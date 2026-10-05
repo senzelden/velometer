@@ -453,6 +453,7 @@ def test_subareas_load(tmp_path: Path):
         ([_rel(5, "a"), _rel(5, "b")], "duplicate id"),
         ([], "at least 1"),
         ([_rel(5, "Bad-Slug")], "slug"),
+        ([_rel(5, "a"), _rel(6, "remainder")], "'remainder' is reserved"),
     ],
 )
 def test_bad_subareas_are_a_config_error(tmp_path: Path, relations: list[dict], message: str):

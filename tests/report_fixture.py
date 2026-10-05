@@ -223,8 +223,32 @@ def add_subareas(db_path: Path, cfg: Path, run_ids: list[int]) -> None:
         conn.commit()
 
 
+REMAINDER_A_KM = 0.5  # the remainder rows of `add_remainder`
+
+
+def add_remainder(db_path: Path, run_ids: list[int]) -> None:
+    """Store berlin `remainder` rows (outside both subareas) on `run_ids`: A 0.5 km per side
+    (every basis) and 10 km of every road class, so its headline would be 5 %."""
+    from velometer.config import BASES, REMAINDER_ID
+
+    with open_db(db_path) as conn:
+        for run_id in run_ids:
+            for basis in BASES:
+                conn.execute(
+                    "INSERT INTO subarea_tier_lengths VALUES (?,?,?,?,?,?,?,?)",
+                    (run_id, "berlin", REMAINDER_ID, "A", "", basis, REMAINDER_A_KM, 1),
+                )
+            for road in ("main_excl_motorway", "main_incl_motorway_raw", "all_public"):
+                conn.execute(
+                    "INSERT INTO subarea_road_lengths VALUES (?,?,?,?,?)",
+                    (run_id, "berlin", REMAINDER_ID, road, 10.0),
+                )
+        conn.commit()
+
+
 def build_report_fixture_subareas(tmp_path: Path) -> tuple[Path, Path]:
-    """`build_report_fixture` with berlin's two subareas on every berlin LAU run."""
+    """`build_report_fixture` with berlin's two subareas, and a remainder outside both, on
+    every berlin LAU run."""
     db_path, cfg = build_report_fixture(tmp_path)
     with open_db(db_path) as conn:
         runs = [
@@ -235,4 +259,5 @@ def build_report_fixture_subareas(tmp_path: Path) -> tuple[Path, Path]:
             )
         ]
     add_subareas(db_path, cfg, runs)
+    add_remainder(db_path, runs)
     return db_path, cfg

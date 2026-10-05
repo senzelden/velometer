@@ -8,10 +8,17 @@ from shapely import box
 
 from tests.fake_subareas import config_subareas, without_subareas
 from velometer import run as R
-from velometer.config import SubareaRelation, SubareasConfig, default_config_dir, load_cities
+from velometer.config import (
+    REMAINDER_ID,
+    SubareaRelation,
+    SubareasConfig,
+    default_config_dir,
+    load_cities,
+)
 from velometer.db import (
     create_schema,
     fetch_run,
+    fetch_run_results,
     open_db,
     subarea_rows,
     subarea_shas,
@@ -698,9 +705,32 @@ def test_missing_subarea_file_fails_the_run_with_the_reason(conn, tmp_path):
     assert _sub_state(conn, out.run_id)[1] == 0
 
 
-def test_subarea_sum_error_fails_the_run(conn, tmp_path):
-    small = [SubareaPolygon("a", "A", 1, box(0, 0, 1, 1), SUB_SHA)]  # covers none of the city
-    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, load=lambda c, d: small))
+SMALL = [SubareaPolygon("a", "A", 1, box(0, 0, 1, 1), SUB_SHA)]  # covers none of the city
+
+
+def test_city_km_outside_every_subarea_land_in_the_remainder_rows(conn, tmp_path):
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, load=lambda c, d: SMALL))
+    assert out.status == "done", out.error
+    parts = subarea_rows(conn, out.run_id)
+    assert set(parts) == {"a", REMAINDER_ID}
+    tiers, roads = parts[REMAINDER_ID]
+    city = fetch_run_results(conn, out.run_id)
+    key = lambda t: (t.tier, t.subtype, t.length_basis)  # noqa: E731
+    assert city.tier_lengths  # not vacuous
+    assert {key(t): t.length_km for t in tiers} == pytest.approx(
+        {key(t): t.length_km for t in city.tier_lengths}, abs=1e-9
+    )
+    assert parts["a"][0] == []
+
+
+def test_subarea_sum_error_fails_the_run(conn, tmp_path, monkeypatch):
+    real = R.attribute_subareas
+
+    def drop_remainder(*a):  # a dropped part, as a bug in the attribution would leave
+        return {k: v for k, v in real(*a).items() if k != REMAINDER_ID}
+
+    monkeypatch.setattr(R, "attribute_subareas", drop_remainder)
+    out = _sub_run(conn, tmp_path, _sub_deps(tmp_path, load=lambda c, d: SMALL))
     assert out.status == "failed" and _status(conn, out.run_id) == "failed"
     assert SubareaSumError.__name__ in out.error
 

@@ -248,7 +248,9 @@ class SubareaStaleError(ValueError):
 
 
 def _attribute_subareas(conn, city, boundary_kind, data_dir, deps, ways, result, cfg, polygon):
-    """Per-subarea lengths and the set sha, or (None, None) where the city has none.
+    """Per-subarea lengths (with the derived `remainder` outside every subarea, if non-empty)
+    and the set sha, or (None, None) where the city has none. The sha covers the subarea files
+    only; the remainder is derived from them and the boundary.
 
     Only the LAU run is split. A subarea file whose sha256 differs from (or has no) `subareas`
     row was written without passing the union/overlap checks, so the run fails.

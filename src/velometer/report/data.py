@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict
 from velometer import reconcile as rc
 from velometer import timeseries as ts
 from velometer.config import (
+    REMAINDER_ID,
     ConfigError,
     ExternalRanking,
     ExternalRatioRanking,
@@ -23,6 +24,7 @@ from velometer.config import (
     load_cities,
     load_history,
     load_report,
+    remainder_label,
 )
 from velometer.db import (
     SCHEMA_VERSION,
@@ -153,6 +155,7 @@ class SubareaRow(_Frozen):
     headline: float | None  # ours_headline on the subarea's own road lengths
     tier_km: dict[str, float]  # per_side km of tiers A-E
     a_share_of_ab: float | None  # tier A's share of A+B in percent; None without A+B km
+    remainder: bool = False  # the derived row outside every subarea, never a Bezirk
 
 
 def _fmt(v: float | None) -> str:
@@ -395,21 +398,27 @@ class ReportData:
             return False
         return bool(self.city_fields().get(city_id, {}).get("subareas"))
 
+    def _subarea_names(self, city_id: str) -> dict[str, str]:
+        """Display name by subarea_id, including the remainder's label (`remainder_label`)."""
+        n = len(self.city_fields()[city_id]["subareas"]["relations"])
+        names = subarea_names(self.conn, city_id)
+        return {**names, REMAINDER_ID: remainder_label(n)}
+
     def _headline(self, tiers, roads) -> float | None:
         metrics = compute_metrics(SubareaMeasure(tiers, roads), self.selector.presets.presets)
         metric = select_metric(metrics, "ours_headline", self.selector.presets)
         return None if metric is None else metric.value
 
     def subareas(self, city_id: str) -> list[SubareaRow] | None:
-        """The latest current LAU run's subarea rows by name; None for a city without subareas,
-        an untrusted city, or a run without subarea rows."""
+        """The latest current LAU run's subarea rows by name, then the remainder (if the run has
+        one); None for a city without subareas, an untrusted city, or a run without rows."""
         if not self._has_subareas(city_id):
             return None
         run_id = self.selector.latest(self.conn, city_id, "lau")
         parts = {} if run_id is None else subarea_rows(self.conn, run_id)
         if not parts:
             return None
-        names = subarea_names(self.conn, city_id)
+        names = self._subarea_names(city_id)
         rows = []
         for sid, (tiers, roads) in parts.items():
             km = {
@@ -424,13 +433,14 @@ class ReportData:
                     headline=self._headline(tiers, roads),
                     tier_km=km,
                     a_share_of_ab=100 * km["A"] / ab if ab else None,
+                    remainder=sid == REMAINDER_ID,
                 )
             )
-        return sorted(rows, key=lambda r: (r.name, r.subarea_id))
+        return sorted(rows, key=lambda r: (r.remainder, r.name, r.subarea_id))
 
     def subarea_series(self, city_id: str) -> dict[str, list[ts.SubareaPoint]]:
-        """The yearly headline and tier km of each subarea, by subarea_id ({} where `subareas`
-        is None, or the city has no history set)."""
+        """The yearly headline and tier km of each subarea, by subarea_id, never the remainder
+        ({} where `subareas` is None, or the city has no history set)."""
         if not self._has_subareas(city_id):
             return {}
         cs = self.series(city_id, "lau")
@@ -440,18 +450,22 @@ class ReportData:
 
     def subarea_csv_rows(self, city_id: str) -> list[dict[str, str]]:
         """One row per (run, subarea, tier, length basis) over the series runs and the latest
-        current run: tier km summed over subtypes, with each run's own provenance."""
+        current run: tier km summed over subtypes, with each run's own provenance. Each run's
+        remainder rows come after its subareas', named by `remainder_label`."""
         run_ids = {p.run_id for pts in self.subarea_series(city_id).values() for p in pts}
         if not self._has_subareas(city_id):
             return []
         current = self.selector.latest(self.conn, city_id, "lau")
         if current is not None:
             run_ids.add(current)
-        names = subarea_names(self.conn, city_id)
+        names = self._subarea_names(city_id)
         out = []
         for run_id in sorted(run_ids):
             run = fetch_run(self.conn, run_id)
-            for sid, (tiers, _roads) in sorted(subarea_rows(self.conn, run_id).items()):
+            parts = subarea_rows(self.conn, run_id)
+            for sid, (tiers, _roads) in sorted(
+                parts.items(), key=lambda kv: (kv[0] == REMAINDER_ID, kv[0])
+            ):
                 km: dict[tuple[str, str], float] = {}
                 for t in tiers:
                     key = (t.tier, t.length_basis)
