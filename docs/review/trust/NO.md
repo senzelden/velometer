@@ -35,15 +35,15 @@ Re-checked on classifier v3 (Task 14, run 280, 2026-10-03): 5.31 %, unchanged (s
 <!-- trust:begin -->
 ## Diagnostics NO (generated)
 
-Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v4, config 22238ca57b73. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| oslo | 280 | 4911.6 | 0.00% | 9.3% | 82.1% | 5.3% | b_share_of_ab, boundary_diff_pct |
+| oslo | 702 | 4914.4 | 0.00% | 27.2% | 82.5% | 5.3% | b_share_of_ab, boundary_diff_pct |
 
-### oslo: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
+### oslo: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 
 - none
 

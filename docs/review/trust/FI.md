@@ -21,15 +21,15 @@ Re-checked on classifier v3 (Task 14, run 281, 2026-10-03): 69.09 %, unchanged (
 <!-- trust:begin -->
 ## Diagnostics FI (generated)
 
-Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v4, config 22238ca57b73. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| helsinki | 281 | 5224.8 | 0.00% | 26.3% | 53.6% | 69.1% | boundary_diff_pct |
+| helsinki | 703 | 5226.6 | 0.00% | 36.8% | 73.7% | 69.1% | boundary_diff_pct |
 
-### helsinki: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
+### helsinki: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 
 - none
 

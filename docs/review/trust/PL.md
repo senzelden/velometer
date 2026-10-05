@@ -21,32 +21,32 @@ Re-checked on classifier v3 (Task 14, run 286, 2026-10-03): 0.7843, unchanged; v
 <!-- trust:begin -->
 ## Diagnostics PL (generated)
 
-Classifier v3, config 0237b5b5c432. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
+Classifier v4, config 22238ca57b73. Km are OSM mapped km (ADR 0006); shares are of cycling km, the per-side km of sides whose way carries cycling tags.
 
 Limits: unrecognised 0.10%, excluded 60.7%, B of A+B 78.4%, boundary diff 5%.
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| wroclaw | 274 | 4015.7 | 0.00% | 8.8% | 62.8% | 0.4% | none |
-| warsaw | 285 | 10895.9 | 0.01% | 23.1% | 33.4% | 0.0% | none |
-| krakow | 286 | 5238.9 | 0.00% | 33.1% | 78.4% | 0.0% | b_share_of_ab |
+| wroclaw | 696 | 4015.9 | 0.00% | 9.0% | 35.3% | 0.4% | none |
+| warsaw | 707 | 10898.7 | 0.01% | 23.4% | 21.6% | 0.0% | none |
+| krakow | 708 | 5240.3 | 0.00% | 33.6% | 35.3% | 0.0% | none |
 
 ### Pilot comparison
 
 | city | run | cycling km | unrecognised | excluded | B of A+B | boundary diff | over limit |
 |---|---|---|---|---|---|---|---|
-| wroclaw | 274 | 4015.7 | 0.00% | 8.8% | 62.8% | 0.4% | none |
+| wroclaw | 696 | 4015.9 | 0.00% | 9.0% | 35.3% | 0.4% | none |
 
-### wroclaw: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
+### wroclaw: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 
 - none
 
-### warsaw: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
+### warsaw: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 
 - `cycleway:right=sidepath;highway=tertiary`: 0.99 km
 - `cycleway=highway;highway=secondary`: 0.12 km
 
-### krakow: top unmatched tag signatures (OSM 2026-10-02T20:21:34Z)
+### krakow: top unmatched tag signatures (OSM 2026-10-03T20:20:50Z)
 
 - none
 
