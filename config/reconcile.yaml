@@ -23,13 +23,15 @@ comparisons:
     required: true
   - id: qecio_tracks_km
     external: {source: qecio_v2_10, metric_name: cycle_tracks_km}
-    ours: {tiers: [A, B/segregated], basis: qecio_weighted}
+    # M6 spec decision 11: under v4 segregated shared paths are A, so QECIO tracks = A alone
+    ours: {tiers: [A], basis: qecio_weighted}
   - id: qecio_lanes_km
     external: {source: qecio_v2_10, metric_name: cycle_lanes_km}
     ours: {tiers: [C, D], basis: qecio_weighted}
   - id: qecio_shared_km
     external: {source: qecio_v2_10, metric_name: shared_pedestrians_km}
-    ours: {tiers: [B], exclude: [B/segregated], basis: qecio_weighted}
+    # M6 spec decision 11: the B/segregated subtype is gone with B_path_segregated
+    ours: {tiers: [B], basis: qecio_weighted}
   - id: qecio_total_km
     external: {source: qecio_v2_10, metric_name: total_cycle_infra_km}
     ours: {tiers: [A, B, C, D], basis: qecio_weighted}

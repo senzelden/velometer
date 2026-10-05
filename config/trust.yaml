@@ -17,51 +17,54 @@ thresholds:
   # pilots: berlin 0.19, paris 0.03, vienna 0.18, copenhagen 0.43, wroclaw 0.38 (%); spec 3.1
   boundary_diff_pct_max: 5.0
 # basis_de: the German wording of basis, shown in docs/methodology.de.md (falls back to basis)
+# classifier_reviewed v4 on all 14 countries (M6 Task 15, 2026-10-05): the user accepted the
+# v4 impact (docs/review/trust/v4-impact.md) and re-signed the 6 retiered golden samples
+# (docs/review/trust/v4-changes.md); the R18 zero-km shortcut does not apply to v4
 # classifier_reviewed v3 on DE FR AT DK PL (Task 14, 2026-10-03): v3 changes no golden way of
 # theirs (Berlin 48/48 match v3) and moves no tier km of their cities (the v3 rules only match
 # soft_lane and advisory as cycleway values)
 countries:
   DE: {status: trusted, basis: "Berlin golden set (M1)",
-       basis_de: "Berliner Referenzstichprobe (M1)", classifier_reviewed: v3}
+       basis_de: "Berliner Referenzstichprobe (M1)", classifier_reviewed: v4}
   FR: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: paris,
-       classifier_reviewed: v3}
+       classifier_reviewed: v4}
   AT: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: vienna,
-       classifier_reviewed: v3}
+       classifier_reviewed: v4}
   DK: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: copenhagen,
-       classifier_reviewed: v3}
+       classifier_reviewed: v4}
   PL: {status: trusted, basis: "M2 reconciliation",
        basis_de: "Abgleich mit veröffentlichten Zahlen (M2)", pilot: wroclaw,
-       classifier_reviewed: v3}
+       classifier_reviewed: v4}
   # M5 countries (Task 13, 2026-10-03), signed off in Task 14 (2026-10-03): golden sample fully
   # confirmed and matching classifier v3, diagnostics re-run on the v3 runs 270-290
   NL: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/nl,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   ES: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/es,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   SE: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/se,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   "NO": {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
          basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/no,
-         classifier_reviewed: v3, signed_off: 2026-10-03}
+         classifier_reviewed: v4, signed_off: 2026-10-03}
   FI: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/fi,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   HU: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/hu,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   CZ: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/cz,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   # SK: Bratislava, configured in Task 13c as the union of its 17 borough LAU (cities.yaml)
   SK: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/sk,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}
   SI: {status: trusted, basis: "Golden sample and tagging diagnostics (M5)",
        basis_de: "Referenzstichprobe und Tagging-Diagnose (M5)", golden: tests/fixtures/golden/si,
-       classifier_reviewed: v3, signed_off: 2026-10-03}
+       classifier_reviewed: v4, signed_off: 2026-10-03}

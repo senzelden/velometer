@@ -167,7 +167,10 @@ def test_rules_table_lists_every_rule_of_the_report_classifier(facts, fixture_db
     for lang in LANGS:
         text = render(facts, lang)
         for r in rules:
-            assert re.search(rf"^\| `{r.id}` \| `{r.tier}` \|", text, re.M), (lang, r.id)
+            # a rule new since the previous classifier carries its "changed from vN" marker
+            marker = r"(?: \((?:changed from|geändert gegenüber) v\d+\))?"
+            row = rf"^\| `{r.id}`{marker} \| `{r.tier}` \|"
+            assert re.search(row, text, re.M), (lang, r.id)
 
 
 def test_rules_follow_report_yaml(fixture_db):

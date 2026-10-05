@@ -449,9 +449,9 @@ def test_cli_diagnose_unknown_country_exits_2(fixture_db, tmp_path):
 ACT = load_activity(default_config_dir() / "activity.yaml")
 
 
-def _trust_city_sample_inputs():
+def _trust_city_sample_inputs(version: str = "v2"):
     ways = read_ways(TRUST_CITY).ways
-    cfg = load_classifier(default_config_dir() / "classifier" / "v2.yaml")
+    cfg = load_classifier(default_config_dir() / "classifier" / f"{version}.yaml")
     result = measure(ways, cfg, 25833)
     return result.classified, result.way_lengths, {w.id: w.tags for w in ways}
 
@@ -561,8 +561,12 @@ def test_cli_sample_writes_fixtures_and_review_sheet(diag_env, tmp_path, fake_os
     assert res.exit_code == 0, res.output
     golden = tests_dir / "fixtures" / "golden"
     doc = yaml.safe_load((golden / "de.yaml").read_text())
+    # groups are the report classifier's rule ids (ways 2 and 3 are renamed from v4 on)
+    report_cfg = load_classifier(default_config_dir() / "classifier" / f"{CLASSIFIER}.yaml")
+    observed = tr.observed_tiers(read_ways(TRUST_CITY).ways, report_cfg)
+    (r2,), (r3,) = ({rule for _, _, rule in observed[w]} for w in (2, 3))
     assert [(w["way_id"], w["group"]) for w in doc["ways"]] == [
-        (1, "A_track_side"), (4, "D_lane"), (2, "A_cycleway"), (3, "B_path"),
+        (1, "A_track_side"), (4, "D_lane"), (2, r2), (3, r3),
         (9, "X_shoulder"), (8, "unmatched:1"), (5, "extra"),
     ]  # fmt: skip
     assert doc["ways"][-1]["proposed"] == [] and not any(w["confirmed"] for w in doc["ways"])
@@ -697,7 +701,7 @@ def _check_env(tmp_path, report_db_with_trust, *, golden=True, **country):
     gdir = tests_dir / "fixtures" / "golden"
     gdir.mkdir(parents=True)
     shutil.copy(TRUST_CITY, gdir / "de.osm")
-    classified, lengths, tags = _trust_city_sample_inputs()
+    classified, lengths, tags = _trust_city_sample_inputs(CLASSIFIER)
     samples = tr.sample_ways(classified, lengths, tags, activity_cfg=ACT, city_id="berlin")
     doc = tr.golden_doc(samples, "t", CLASSIFIER)
     for w in doc["ways"]:

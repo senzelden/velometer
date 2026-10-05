@@ -69,9 +69,25 @@ def test_ours_value_sums_tiers_with_subtype_and_exclude():
     assert (
         RC.ours_value(r, comps["cc_km"].ours, PRESETS) == 1000
     )  # A 600 + B 300 + B/segregated 100
-    assert RC.ours_value(r, comps["qecio_tracks_km"].ours, PRESETS) == 400  # A 300 + B/seg 100
-    assert RC.ours_value(r, comps["qecio_shared_km"].ours, PRESETS) == 150  # B minus B/segregated
+    tracks = {"tiers": ["A", "B/segregated"], "basis": "qecio_weighted"}
+    assert RC.ours_value(r, tracks, PRESETS) == 400  # A 300 + B/seg 100
+    shared = {"tiers": ["B"], "exclude": ["B/segregated"], "basis": "qecio_weighted"}
+    assert RC.ours_value(r, shared, PRESETS) == 150  # B minus B/segregated
     assert RC.ours_value(r, comps["cc_ratio"].ours, PRESETS) == 20.0
+
+
+def test_comparisons_name_only_subtypes_the_report_classifier_produces():
+    # a tier/subtype the report classifier never emits would sum to 0 km silently (M6 decision
+    # 11: v4 drops B/segregated, so QECIO tracks became A alone)
+    from velometer.config import load_report
+
+    version = load_report(CFG.parent / "report.yaml", CFG.parent / "presets.yaml").report_classifier
+    rules = load_classifier(CFG.parent / "classifier" / f"{version}.yaml").rules
+    produced = {f"{r.tier}/{r.subtype}" for r in rules if r.subtype}
+    for c in RC.load_comparisons(CFG):
+        ours = c.ours if isinstance(c.ours, dict) else {}
+        named = {t for t in [*ours.get("tiers", []), *ours.get("exclude", [])] if "/" in t}
+        assert named <= produced, (c.id, named - produced)
 
 
 def test_gaps_flag_over_threshold_and_tag_date_gap():

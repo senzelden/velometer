@@ -28,7 +28,7 @@ Two lengths are stored for every way side. On the **`per_side`** basis each road
 The rules are data, not code. A rule change is a new classifier version, and every run records the version it used [ADR 0005].
 
 <!-- generated:classifier -->
-- Report classifier: **v3** (`config/classifier/v3.yaml`)
+- Report classifier: **v4** (`config/classifier/v4.yaml`)
 - Parameter `plain_cycleway_on_oneway`: `traffic_side`
 - Value separators: `;`, `,`
 <!-- /generated:classifier -->
@@ -48,14 +48,14 @@ The rules apply in the order listed; the first rule that matches decides. `road_
 | `X_road_private` | `excluded` | private | road_side | `road:access in [private, no] and road:bicycle not in [yes, designated, permissive]` |
 | `X_road_construction` | `excluded` | lifecycle | road_side | `(road:construction=yes or cycleway in [construction, proposed])` |
 | `X_bicycle_no` | `excluded` | bicycle_no | standalone | `bicycle in [no, dismount]` |
+| `X_mtb_trail` (changed from v3) | `excluded` | mtb | standalone | `highway in [path, cycleway, footway] and (mtb:scale* present or mtb in [yes, designated, permissive] or mtb:type present or cycling=mtb)` |
 | `X_separate` | `excluded` | separate | road_side | `cycleway=separate` |
-| `A_cycleway` | `A` |  | standalone | `highway=cycleway and (foot not in [designated] or segregated=yes)` |
 | `B_track_shared` | `B` | shared | road_side | `cycleway=track and cycleway:segregated=no` |
 | `A_track_side` | `A` |  | road_side | `cycleway=track` |
-| `B_cycleway_foot` | `B` |  | standalone | `highway=cycleway and foot=designated` |
-| `A_path_cycle_only` | `A` |  | standalone | `highway=path and bicycle=designated and foot in [no]` |
-| `B_path_segregated` | `B` | segregated | standalone | `highway in [path, footway, pedestrian] and bicycle=designated and segregated=yes` |
-| `B_path` | `B` |  | standalone | `highway in [path, footway, pedestrian] and bicycle=designated` |
+| `B_crossing` (changed from v3) | `B` |  | standalone | `highway=footway and footway=crossing and bicycle=designated` |
+| `A_segregated` (changed from v3) | `A` |  | standalone | `segregated=yes and (highway=cycleway or highway in [path, footway, pedestrian] and bicycle=designated)` |
+| `B_shared` (changed from v3) | `B` |  | standalone | `(highway=cycleway and foot in [designated, yes, permissive] or highway in [path, footway, pedestrian] and bicycle=designated and foot not in [no])` |
+| `A_cycle_only` (changed from v3) | `A` |  | standalone | `(highway=cycleway or highway in [path, footway, pedestrian] and bicycle=designated and foot in [no])` |
 | `B_sidewalk_designated` | `B` | sidewalk | road_side | `sidewalk_bicycle=designated and cycleway not in [lane, share_busway]` |
 | `B_share_sidewalk` | `B` | sidewalk | road_side | `cycleway=share_sidewalk` |
 | `C_lane_physical` | `C` |  | road_side | `cycleway=lane and cycleway:separation:traffic in <physical_separation>` |
@@ -72,6 +72,8 @@ The rules apply in the order listed; the first rule that matches decides. `road_
 | `X_shoulder` | `excluded` | shoulder | road_side | `cycleway=shoulder` |
 | `X_crossing` | `excluded` | crossing | road_side | `cycleway=crossing` |
 | `X_untyped` | `excluded` | untyped | road_side | `cycleway=yes` |
+
+Removed since v3: `A_cycleway`, `A_path_cycle_only`, `B_cycleway_foot`, `B_path` and `B_path_segregated`.
 <!-- /generated:rules -->
 
 ## Headline and presets
@@ -108,48 +110,48 @@ The table lists, per city and boundary, the OSM timestamps of the runs this repo
 <!-- generated:cities -->
 | City | Boundary | Current run (OSM timestamp) | History set | History snapshots (OSM timestamp) | Population (year) |
 |---|---|---|---|---|---|
-| Amsterdam | `lau` | 2026-10-02T20:21:34Z | `2a652dc280f7` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 931,298 (2024) |
-| Amsterdam | `fua` | 2026-10-02T20:21:34Z | `3ba1483e25bf` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Barcelona | `lau` | 2026-10-02T20:21:34Z | `9a77f00a5c1c` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1,731,649 (2025) |
-| Barcelona | `fua` | 2026-10-02T20:21:34Z | `9a77f00a5c1c` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Berlin | `lau` | 2026-10-02T20:21:34Z | `c3335f42f17f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3,782,202 (2024) |
-| Berlin | `fua` | 2026-10-02T20:21:34Z | `1308e2c9638e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Bordeaux | `lau` | 2026-10-02T20:21:34Z | `cb15813480d4` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 267,991 (2023) |
-| Bordeaux | `fua` | 2026-10-02T20:21:34Z | `5f5d0d9f2e4f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Bratislava | `lau` | 2026-10-02T20:21:34Z | `2e7369e09a0d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 478,040 (2024) |
-| Bratislava | `fua` | 2026-10-02T20:21:34Z | `2e7369e09a0d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Budapest | `lau` | 2026-10-02T20:21:34Z | `0a58443e8e3f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1,686,222 (2024) |
-| Budapest | `fua` | 2026-10-02T20:21:34Z | `0a58443e8e3f` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| København | `lau` | 2026-10-02T20:21:34Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 659,350 (2024) |
-| København | `fua` | 2026-10-02T20:21:34Z | `be41de5bf657` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Helsinki | `lau` | 2026-10-02T20:21:34Z | `78321316cf46` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 674,500 (2024) |
-| Helsinki | `fua` | 2026-10-02T20:21:34Z | `78321316cf46` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Kraków | `lau` | 2026-10-02T20:21:34Z | `81a148c253e9` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 806,201 (2024) |
-| Kraków | `fua` | 2026-10-02T20:21:34Z | `81a148c253e9` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Ljubljana | `lau` | 2026-10-02T20:21:34Z | `81ef23ad74c1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 297,575 (2024) |
-| Ljubljana | `fua` | 2026-10-02T20:21:34Z | `81ef23ad74c1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Lyon | `lau` | 2026-10-02T20:21:34Z | `1404a50e78ba` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 519,127 (2023) |
-| Lyon | `fua` | 2026-10-02T20:21:34Z | `1404a50e78ba` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Madrid | `lau` | 2026-10-02T20:21:34Z | `323b467bcce8` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 3,506,730 (2025) |
-| Madrid | `fua` | 2026-10-02T20:21:34Z | `f0e3c8ec3ba7` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Oslo | `lau` | 2026-10-02T20:21:34Z | `47a4f74ce955` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 717,710 (2024) |
-| Oslo | `fua` | 2026-10-02T20:21:34Z | `47a4f74ce955` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Paris | `lau` | 2026-10-02T20:21:34Z | `7db1f306301e` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,084,894 (2024) |
-| Paris | `fua` | 2026-10-02T20:21:34Z | `df7be7ff6768` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Praha | `lau` | 2026-10-02T20:21:34Z | `6d1585485eb4` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1,384,732 (2024) |
-| Praha | `fua` | 2026-10-02T20:21:34Z | `678529b28752` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Stockholm | `lau` | 2026-10-02T20:21:34Z | `149b52577e9b` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 988,943 (2024) |
-| Stockholm | `fua` | 2026-10-02T20:21:34Z | `149b52577e9b` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Strasbourg | `lau` | 2026-10-02T20:21:34Z | `9c8283eccd88` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 293,771 (2023) |
-| Strasbourg | `fua` | 2026-10-02T20:21:34Z | `8bfe6202deab` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Utrecht | `lau` | 2026-10-02T20:21:34Z | `b0b39792e1fd` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 374,238 (2024) |
-| Utrecht | `fua` | 2026-10-02T20:21:34Z | `b37cd68d61fb` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Wien | `lau` | 2026-10-02T20:21:34Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 2,005,760 (2024) |
-| Wien | `fua` | 2026-10-02T20:21:34Z | `1254c077e90d` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Warszawa | `lau` | 2026-10-02T20:21:34Z | `e910fce2f1b6` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 1,861,599 (2024) |
-| Warszawa | `fua` | 2026-10-02T20:21:34Z | `72a9a41ebdf0` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
-| Wrocław | `lau` | 2026-10-02T20:21:34Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | 673,743 (2024) |
-| Wrocław | `fua` | 2026-10-02T20:21:34Z | `fda036caffd1` | 2018-01-01T00:00:00Z, 2019-01-01T00:00:00Z, 2020-01-01T00:00:00Z, 2021-01-01T00:00:00Z, 2022-01-01T00:00:00Z, 2023-01-01T00:00:00Z, 2024-01-01T00:00:00Z, 2025-01-01T00:00:00Z, 2026-01-01T00:00:00Z | none, no per-100k figure |
+| Amsterdam | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 931,298 (2024) |
+| Amsterdam | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Barcelona | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 1,731,649 (2025) |
+| Barcelona | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Berlin | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 3,782,202 (2024) |
+| Berlin | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Bordeaux | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 267,991 (2023) |
+| Bordeaux | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Bratislava | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 478,040 (2024) |
+| Bratislava | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Budapest | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 1,686,222 (2024) |
+| Budapest | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| København | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 659,350 (2024) |
+| København | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Helsinki | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 674,500 (2024) |
+| Helsinki | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Kraków | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 806,201 (2024) |
+| Kraków | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Ljubljana | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 297,575 (2024) |
+| Ljubljana | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Lyon | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 519,127 (2023) |
+| Lyon | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Madrid | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 3,506,730 (2025) |
+| Madrid | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Oslo | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 717,710 (2024) |
+| Oslo | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Paris | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 2,084,894 (2024) |
+| Paris | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Praha | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 1,384,732 (2024) |
+| Praha | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Stockholm | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 988,943 (2024) |
+| Stockholm | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Strasbourg | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 293,771 (2023) |
+| Strasbourg | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Utrecht | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 374,238 (2024) |
+| Utrecht | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Wien | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 2,005,760 (2024) |
+| Wien | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Warszawa | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 1,861,599 (2024) |
+| Warszawa | `fua` | no current run | none | no history runs | none, no per-100k figure |
+| Wrocław | `lau` | 2026-10-03T20:20:50Z | none | no history runs | 673,743 (2024) |
+| Wrocław | `fua` | no current run | none | no history runs | none, no per-100k figure |
 <!-- /generated:cities -->
 
 The trust gate (see below) compares the area of the GISCO LAU polygon with that of the city's OSM administrative relation. Where the two differ by more than the threshold in `config/trust.yaml`, the city can be switched to the OSM relation, and `admin_boundary` in `config/cities.yaml` records that choice [M5 spec §3.1]. The next table lists, per city, the source of the admin boundary and of the population figure, as stored with the boundary and the runs.
@@ -158,7 +160,7 @@ The trust gate (see below) compares the area of the GISCO LAU polygon with that 
 | City | Admin boundary (LAU) | Population source |
 |---|---|---|
 | Amsterdam | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
-| Barcelona | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2861) |
+| Barcelona | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/2861?nult=1) |
 | Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
 | Bratislava | Eurostat GISCO LAU 2024 (1:1M), union of 17 LAU | GISCO LAU 2024 POP_2024 (sum of 17 LAU) |
@@ -168,7 +170,7 @@ The trust gate (see below) compares the area of the GISCO LAU polygon with that 
 | Kraków | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Ljubljana | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Lyon | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-69123) |
-| Madrid | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://www.ine.es/jaxiT3/Tabla.htm?t=2881) |
+| Madrid | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/2881?nult=1) |
 | Oslo | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Paris | Eurostat GISCO LAU 2024 (1:1M) | Eurostat demo_r_pjangrp3 FR101 2024 |
 | Praha | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
@@ -200,20 +202,20 @@ Germany needs no diagnostics file: it rests on the Berlin golden set of M1, whic
 <!-- generated:trust -->
 | Country | Status | Basis | Classifier reviewed | Signed off | Golden ways confirmed |
 |---|---|---|---|---|---|
-| AT | trusted | M2 reconciliation | v3 | – | none |
-| CZ | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
-| DE | trusted | Berlin golden set (M1) | v3 | – | none |
-| DK | trusted | M2 reconciliation | v3 | – | none |
-| ES | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 11 of 11 |
-| FI | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
-| FR | trusted | M2 reconciliation | v3 | – | none |
-| HU | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
-| NL | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
-| NO | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 11 of 11 |
-| PL | trusted | M2 reconciliation | v3 | – | none |
-| SE | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 12 of 12 |
-| SI | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 10 of 10 |
-| SK | trusted | Golden sample and tagging diagnostics (M5) | v3 | 2026-10-03 | 13 of 13 |
+| AT | trusted | M2 reconciliation | v4 | – | none |
+| CZ | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 12 of 12 |
+| DE | trusted | Berlin golden set (M1) | v4 | – | none |
+| DK | trusted | M2 reconciliation | v4 | – | none |
+| ES | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 11 of 11 |
+| FI | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 10 of 10 |
+| FR | trusted | M2 reconciliation | v4 | – | none |
+| HU | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 10 of 10 |
+| NL | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 12 of 12 |
+| NO | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 11 of 11 |
+| PL | trusted | M2 reconciliation | v4 | – | none |
+| SE | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 12 of 12 |
+| SI | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 10 of 10 |
+| SK | trusted | Golden sample and tagging diagnostics (M5) | v4 | 2026-10-03 | 13 of 13 |
 <!-- /generated:trust -->
 
 ## History snapshots
