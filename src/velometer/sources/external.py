@@ -45,10 +45,10 @@ def load_figures_csv(path: Path) -> list[ExternalFigure]:
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     for n, r in enumerate(rows, start=2):
-        url = (r.get("source_url") or "").strip()
+        url = r["source_url"] = (r.get("source_url") or "").strip()  # stored as validated
         if not url:
             raise ConfigError(f"row {n}: source_url is required")
-        if not url.startswith(("http://", "https://")):
+        if not url.lower().startswith(("http://", "https://")):
             raise ConfigError(f"row {n}: source_url must be http(s)")
     return [
         ExternalFigure.model_validate({**r, "reference_date": r["reference_date"] or None})

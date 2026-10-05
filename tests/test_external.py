@@ -70,6 +70,13 @@ def test_a_curated_source_url_that_is_not_http_is_refused(tmp_path, url):
         X.load_figures_csv(_curated_with_url(tmp_path, url))
 
 
+@pytest.mark.parametrize("url", ["  https://example.org/x ", "HTTPS://example.org/x"])
+def test_a_curated_source_url_is_stored_as_validated(tmp_path, url):
+    # the stripped value is checked and stored; the scheme is case-insensitive
+    figs = X.load_figures_csv(_curated_with_url(tmp_path, url))
+    assert figs[1].source_url == url.strip()
+
+
 def test_curated_clean_cities_rows_follow_the_rules():
     figs = [f for f in X.load_figures_csv(CURATED) if f.source == "clean_cities_2025"]
     keys = [(f.city_id, f.source, f.metric_name, f.network_scope) for f in figs]

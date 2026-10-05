@@ -1239,6 +1239,15 @@ def test_non_http_source_url_is_never_a_link(setup):
     assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
 
 
+def test_an_upper_case_http_scheme_is_a_link(setup):
+    db_path, cfg, maps, docs = setup
+    _add_reported(db_path, source_url="HTTPS://example.org/report")
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin").text
+    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    assert 'href="HTTPS://example.org/report"' in section
+
+
 def test_reported_figure_note_gets_its_own_full_width_row(setup):
     # A long source note in the link cell squeezed that column to a word per line (M6 render).
     db_path, cfg, maps, docs = setup
