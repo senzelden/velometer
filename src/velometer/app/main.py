@@ -146,12 +146,22 @@ def _num(v: float | int | None, spec: str = ",.1f") -> str:
 ALIGN_STYLE = re.compile(r' style="text-align: (left|right|center);"')
 
 
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+
+
+class _DropComments(markdown.preprocessors.Preprocessor):
+    def run(self, lines):
+        return HTML_COMMENT.sub("", "\n".join(lines)).split("\n")
+
+
 class _EscapeHtml(markdown.Extension):
-    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted."""
+    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted.
+    HTML comments (the `<!-- generated:... -->` markers of docs/methodology*.md) are dropped."""
 
     def extendMarkdown(self, md):
         md.preprocessors.deregister("html_block")
         md.inlinePatterns.deregister("html")
+        md.preprocessors.register(_DropComments(md), "drop_comments", 30)
 
 
 def _md(text: str) -> Markup:

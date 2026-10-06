@@ -1065,3 +1065,15 @@ def test_story_js_draws_the_server_state_and_honours_reduced_motion():
     css = (STATIC / "app.css").read_text()
     block = css[css.index("@media (prefers-reduced-motion: reduce)") :]
     assert "animation: none" in block and "transition: none" in block
+
+
+def test_the_real_methodology_pages_keep_their_generated_blocks(setup):  # noqa: F811
+    docs_real = Path(__file__).parents[1] / "docs"
+    db_path, cfg, maps, _docs_unused = setup
+    with _client(create_app(db_path, cfg, maps, docs_real)) as c:
+        for path in ("/methodology", "/methodology/de"):
+            html = c.get(path).text
+            assert "&lt;!--" not in html and "<!--" not in html, path
+            assert "<table>" in html, path  # the generated rules table
+            assert not re.search(r"^\s*(\| |- )", html.split("<main>")[1], re.M), path  # raw markup
+            assert "generated:rules" not in html, path

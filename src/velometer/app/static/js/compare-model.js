@@ -135,5 +135,8 @@ export function plainText(md) {
     .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
     .replace(/`([^`]*)`/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^\s*>\s?/gm, "");
+    .replace(/^\s*>\s?/gm, "")
+    // a single newline is a soft wrap of the source: join it, keep paragraph and list breaks
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/(?<!\n)\n(?!\n|[ \t]*(?:[-*]|\d+\.)\s)[ \t]*/g, " ");
 }

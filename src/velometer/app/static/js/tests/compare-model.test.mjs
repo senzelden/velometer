@@ -130,3 +130,9 @@ test("plainText strips Markdown markers", () => {
     "campaign (re-mapping) of highway=path see way 1.");
   assert.equal(plainText("a *b* c and snake_case_name"), "a b c and snake_case_name");
 });
+
+test("plainText joins soft-wrapped lines but keeps paragraphs and list items", () => {
+  assert.equal(plainText("only part of\nthe separate ways"), "only part of the separate ways");
+  assert.equal(plainText("one\n\ntwo"), "one\n\ntwo");
+  assert.equal(plainText("intro\n- a\n- b"), "intro\n- a\n- b");
+});

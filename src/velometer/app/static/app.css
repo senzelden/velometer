@@ -340,7 +340,7 @@ dl.drivers dd { margin: 0; color: var(--ink-2); }
 .chip i.dot-off { background: var(--ctx); }
 .chip[aria-pressed="true"] { border-color: var(--ink); font-weight: 600; }
 .sm-controls { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--ink-2); }
-.flag-note { position: relative; border-left: 3px solid var(--flag); background: var(--surface); padding: 0.4rem 2rem 0.4rem 0.9rem; margin: 0 0 1rem; font-size: 0.92rem; white-space: pre-line; }
+.flag-note { position: relative; border-left: 3px solid var(--flag); background: var(--surface); padding: 0.4rem 2rem 0.4rem 0.9rem; margin: 0 0 1rem; font-size: 0.92rem; }
 .flag-note h3 { margin: 0 0 0.3rem; }
 .flag-note p { margin: 0.3rem 0; }
 .flag-close { position: absolute; top: 0.2rem; right: 0.4rem; font: 1.2rem/1 system-ui; border: 0; background: none; cursor: pointer; color: var(--ink-2); }
