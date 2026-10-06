@@ -1,0 +1,90 @@
+city_id: oslo
+title: "Oslo: a retag in 2020, then steady mapping"
+dek: >-
+  The headline rose from 53.1 to 70.8 between 2018 and October 2026; its one large step came
+  from footways retagged as combined foot and cycle paths.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        In Oslo kommune (LAU) mapped A+B rose from 261 km in 2018 to 341 km in October 2026, and
+        the headline from 53.1 to 70.8 km of A+B per 100 km of main roads [#ts-oslo]. The one
+        flagged step is the 2021 point, when A+B went from 264 to 298 km. Most of it is tag
+        drift: during 2020 existing footways were retagged as combined foot and cycle paths, the
+        way Norway's standard gang- og sykkelvei is mapped, and newly drawn ways added the rest
+        [#ts-oslo-2021]. Retagging is not new infrastructure.
+      - >-
+        Shared paths (tier B) dominate throughout, 222 → 282 km, against 38 → 60 km of separated
+        tracks (tier A). Painted lanes (tier D) rose from 111 to 161 km, most of it at the 2023
+        point (128 → 160 km). An evaluation commissioned by the city describes the network as
+        mainly marked lanes [@oslo-ey-evaluering-2024]; in the mapped data shared paths are the
+        largest group.
+      - >-
+        The functional urban area (FUA) grew more, A+B 1,546 → 2,071 km, with its own flagged
+        step in 2021: combined foot and cycle paths newly drawn in the surrounding
+        municipalities, plus retagging [#ts-oslo-fua-2021]. Tier A there fell from 268 to 161 km,
+        in part because cycleways gained foot tags and moved to B.
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities counts 307 km of protected infrastructure for Oslo [@cc2025-report]; our
+        A+B is 341 km per side, 11% above [#recon-oslo-cc-ratio]. Its data date from early 2025,
+        ours from October 2026, and whether the city or OpenStreetMap supplied it is not stated.
+        The city's own network figure, quoted below, includes shared paths, painted lanes and
+        cycle tracks [@oslo-sykkelkart], so its scope is our tiers A, B and D; its length basis
+        and method are not stated by the source. QECIO's region here is the city itself, and its
+        total of 413 km of cycle infrastructure matches our 414 km counted on its half-length
+        rule [#recon-oslo-qecio-tracks].
+quotes:
+  - {excerpt: oslo-ey-evaluering-2024/mostly-lanes, after: 1}
+  - {excerpt: oslo-sykkelkart/network-290, after: 3}
+  - {excerpt: oslo-sykkelkart/map-contents, after: 3}
+facts:
+  - {id: ab-2018, expr: series.oslo.lau.2018.ab_km, printed: "261"}
+  - {id: ab-current, expr: series.oslo.lau.current.ab_km, printed: "341"}
+  - {id: head-2018, expr: series.oslo.lau.2018.headline, printed: "53.1"}
+  - {id: head-current, expr: series.oslo.lau.current.headline, printed: "70.8"}
+  - {id: ab-2020, expr: series.oslo.lau.2020.ab_km, printed: "264"}
+  - {id: ab-2021, expr: series.oslo.lau.2021.ab_km, printed: "298"}
+  - {id: b-2018, expr: series.oslo.lau.2018.B, printed: "222"}
+  - {id: b-current, expr: series.oslo.lau.current.B, printed: "282"}
+  - {id: a-2018, expr: series.oslo.lau.2018.A, printed: "38"}
+  - {id: a-current, expr: series.oslo.lau.current.A, printed: "60"}
+  - {id: d-2018, expr: series.oslo.lau.2018.D, printed: "111"}
+  - {id: d-current, expr: series.oslo.lau.current.D, printed: "161"}
+  - {id: d-2022, expr: series.oslo.lau.2022.D, printed: "128"}
+  - {id: d-2023, expr: series.oslo.lau.2023.D, printed: "160"}
+  - {id: fua-ab-2018, expr: series.oslo.fua.2018.ab_km, printed: "1,546"}
+  - {id: fua-ab-current, expr: series.oslo.fua.current.ab_km, printed: "2,071"}
+  - {id: fua-a-2018, expr: series.oslo.fua.2018.A, printed: "268"}
+  - {id: fua-a-current, expr: series.oslo.fua.current.A, printed: "161"}
+  - {id: cc-km, expr: gap.oslo.cc_km.theirs, printed: "307"}
+  - {id: cc-ours, expr: gap.oslo.cc_km.ours, printed: "341"}
+  - {id: cc-gap, expr: gap.oslo.cc_km.gap_pct, printed: "+11%"}
+  - {id: qecio-total-theirs, expr: gap.oslo.qecio_total_km.theirs, printed: "413"}
+  - {id: qecio-total-ours, expr: gap.oslo.qecio_total_km.ours, printed: "414"}
+data_refs:
+  - id: ts-oslo
+    label: "velometer time series, oslo LAU and FUA (mapped km)"
+    file: docs/review/m3_timeseries.md
+    locator: "#### oslo/lau"
+    route: /city/oslo/time
+  - id: ts-oslo-2021
+    label: "velometer time-series explanation, oslo/lau/2021"
+    file: docs/review/m3_timeseries.md
+    locator: "### oslo/lau/2021"
+  - id: ts-oslo-fua-2021
+    label: "velometer time-series explanation, oslo/fua/2021"
+    file: docs/review/m3_timeseries.md
+    locator: "### oslo/fua/2021"
+  - id: recon-oslo-cc-ratio
+    label: "velometer reconciliation, oslo/cc_ratio"
+    file: docs/reconciliation.md
+    locator: "### oslo/cc_ratio"
+    route: /city/oslo/figures
+  - id: recon-oslo-qecio-tracks
+    label: "velometer reconciliation, oslo/qecio_tracks_km"
+    file: docs/reconciliation.md
+    locator: "### oslo/qecio_tracks_km"
+literals: ["100 km"]

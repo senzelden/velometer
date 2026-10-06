@@ -1,0 +1,86 @@
+city_id: copenhagen
+title: "Copenhagen: kerbed tracks carry the gain"
+dek: >-
+  Mapped A+B rose from 530 to 582 km between 2018 and October 2026, almost all of it in
+  separated tracks; the 2025 dip in shared paths was retagging.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        In Copenhagen's city proper (LAU) the headline went from 213.9 km of A+B per 100 km of
+        main roads in 2018 to 237.9 in October 2026, third of the 21 cities. Mapped A+B rose
+        from 530 to 582 km (+10%), and separated tracks (tier A) carry almost all of the gain,
+        447 → 493 km [#ts-copenhagen]. Painted lanes (tier D) slipped from 40.2 to 36.5 km. The
+        city's design guidance advises against painted lanes in new schemes
+        [@copenhagen-cykelfokus-2024].
+      - >-
+        The one irregular year is 2025. Shared paths (tier B) dipped from 88.8 to 74.0 km and
+        were back at 86.5 km on the 2026 snapshot, and the headline dipped with them (234.5 →
+        227.9). That is tag drift: during 2024 gravel paths lost their foot-and-cycle
+        designation and left the tiers, and during 2025 most of them were retagged as shared
+        cycleways and returned to B [#shift-copenhagen-2025]. Retagging is not new or lost
+        infrastructure.
+      - >-
+        The functional urban area (FUA) grew a little faster, A+B 4,632 → 5,234 km (+13%), but
+        there the split moved the other way: tier A fell from 2,903 to 2,689 km while tier B
+        rose from 1,729 to 2,545 km, most of it between 2019 and 2020 [#ts-copenhagen]. No
+        investigation covers that step yet.
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city counts 401 km of cykelsti for 2025 [@copenhagen-mobilitetsredegorelse-2026] and
+        Clean Cities 397 km of protected infrastructure [@cc2025-report]; our A+B is 582 km.
+        Scope: a cykelsti is a kerbed track, painted lanes are a separate row, and our A+B also
+        holds shared paths. Length: Copenhagen's tracks are mostly one-way pairs, one per road
+        side; on the centreline ours is 359 km (−9% against Clean Cities)
+        [#recon-copenhagen-cc-km]. Kind and date: theirs are existing km counted for 2025, ours
+        mapped km in October 2026. Area: both are the municipality. Method: the city's own
+        count against OpenStreetMap; whether Clean Cities used the city's figure is not stated.
+quotes:
+  - {excerpt: copenhagen-cykelfokus-2024/cykelbaner-fraraades, after: 0}
+  - {excerpt: copenhagen-mobilitetsredegorelse-2026/cykelsti-2025, after: 3}
+  - {excerpt: copenhagen-cykelfokus-2024/cykelsti-definition, after: 3}
+facts:
+  - {id: head-2018, expr: series.copenhagen.lau.2018.headline, printed: "213.9"}
+  - {id: head-current, expr: series.copenhagen.lau.current.headline, printed: "237.9"}
+  - {id: rank-current, expr: rank.copenhagen.lau.current.headline, printed: "3"}
+  - {id: ab-2018, expr: series.copenhagen.lau.2018.ab_km, printed: "530"}
+  - {id: ab-current, expr: series.copenhagen.lau.current.ab_km, printed: "582"}
+  - {id: ab-pct, expr: pct.copenhagen.lau.2018.current.ab_km, printed: "+10%"}
+  - {id: a-2018, expr: series.copenhagen.lau.2018.A, printed: "447"}
+  - {id: a-current, expr: series.copenhagen.lau.current.A, printed: "493"}
+  - {id: d-2018, expr: series.copenhagen.lau.2018.D, printed: "40.2"}
+  - {id: d-current, expr: series.copenhagen.lau.current.D, printed: "36.5"}
+  - {id: b-2024, expr: series.copenhagen.lau.2024.B, printed: "88.8"}
+  - {id: b-2025, expr: series.copenhagen.lau.2025.B, printed: "74.0"}
+  - {id: b-2026, expr: series.copenhagen.lau.2026.B, printed: "86.5"}
+  - {id: head-2024, expr: series.copenhagen.lau.2024.headline, printed: "234.5"}
+  - {id: head-2025, expr: series.copenhagen.lau.2025.headline, printed: "227.9"}
+  - {id: fua-ab-2018, expr: series.copenhagen.fua.2018.ab_km, printed: "4,632"}
+  - {id: fua-ab-current, expr: series.copenhagen.fua.current.ab_km, printed: "5,234"}
+  - {id: fua-ab-pct, expr: pct.copenhagen.fua.2018.current.ab_km, printed: "+13%"}
+  - {id: fua-a-2018, expr: series.copenhagen.fua.2018.A, printed: "2,903"}
+  - {id: fua-a-current, expr: series.copenhagen.fua.current.A, printed: "2,689"}
+  - {id: fua-b-2018, expr: series.copenhagen.fua.2018.B, printed: "1,729"}
+  - {id: fua-b-current, expr: series.copenhagen.fua.current.B, printed: "2,545"}
+  - {id: official-cykelsti, expr: figure.copenhagen.official.cycle_track_km.cykelsti, printed: "401"}
+  - {id: cc-km, expr: gap.copenhagen.cc_km.theirs, printed: "397"}
+  - {id: cc-ours-centreline, expr: gap.copenhagen.cc_km~qecio_weighted.ours, printed: "359"}
+  - {id: cc-gap-centreline, expr: gap.copenhagen.cc_km~qecio_weighted.gap_pct, printed: "−9%"}
+data_refs:
+  - id: ts-copenhagen
+    label: "velometer time series, copenhagen LAU and FUA (mapped km)"
+    file: docs/review/m3_timeseries.md
+    locator: "#### copenhagen/lau"
+    route: /city/copenhagen/time
+  - id: shift-copenhagen-2025
+    label: "velometer shift investigation, copenhagen/lau/2025"
+    file: docs/review/shifts.md
+    locator: "### copenhagen/lau/2025"
+  - id: recon-copenhagen-cc-km
+    label: "velometer reconciliation, copenhagen/cc_km"
+    file: docs/reconciliation.md
+    locator: "### copenhagen/cc_km"
+    route: /city/copenhagen/figures
+literals: ["100 km", "21"]

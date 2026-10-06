@@ -1,0 +1,80 @@
+city_id: stockholm
+title: "Stockholm: a steady total, with tracks overtaking shared paths"
+dek: >-
+  The headline moved only from 257.9 to 261.0 between 2018 and October 2026, while years of
+  small retags moved km from shared paths to separated tracks.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Stockholm stays near the top of the 21 cities throughout. In the city proper (LAU)
+        mapped A+B went from 944 km in 2018 to 991 km in October 2026 (+5%), and the headline
+        from 257.9 to 261.0 km of A+B per 100 km of main roads, never below 249.7 or above 262.5
+        [#ts-stockholm]. No year is flagged.
+      - >-
+        Inside that steady total the split moved. Separated tracks (tier A) rose from 315 to
+        415 km, while shared foot and cycle paths (tier B) fell from 629 to 577 km. This is
+        gradual tag drift alongside newly drawn ways, not one sweep [#shift-stockholm]: shared
+        paths gained `segregated=yes` and moved to A, other cycleways gained foot tags and moved
+        to B, and some cycleways became footways and left the tiers. The largest steps fell
+        between 2020 and 2021 and between 2022 and 2023, each spread over many contributors.
+        Retagging is not new infrastructure. Painted lanes (tier D) stay small, 38 → 48 km.
+      - >-
+        The functional urban area (FUA) tells a growth story the city does not: A+B rose from
+        3,272 to 3,906 km (+19%), most of it in tier B (2,022 → 2,635 km), so most of the newly
+        mapped km lie outside the city [#ts-stockholm].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city's own network figure, quoted below, counts separate cycle tracks, shared walking
+        and cycling paths and painted lanes together [@stockholm-cykelvagar]. Scope: that is our
+        tiers A, B and D, 991 km of A+B plus 48 km of lanes. Its length basis, date and method
+        are not stated by the source; ours are per road side, October 2026 and OpenStreetMap.
+        Area: QECIO reports Stockholms län, a county far larger than the city, with 4,946 km of
+        main roads against our 667 km [#recon-stockholm-qecio-main], so its figures are no
+        check on the city. BikeNetKit, also based on OpenStreetMap, counts 1,102 km against our
+        995 km of tiers A, B and E (−10%) [@bikenetkit-zenodo].
+quotes:
+  - {excerpt: stockholm-cykelvagar/network-117-mil, after: 3}
+facts:
+  - {id: rank-current, expr: rank.stockholm.lau.current.headline, printed: "2"}
+  - {id: ab-2018, expr: series.stockholm.lau.2018.ab_km, printed: "944"}
+  - {id: ab-current, expr: series.stockholm.lau.current.ab_km, printed: "991"}
+  - {id: ab-pct, expr: pct.stockholm.lau.2018.current.ab_km, printed: "+5%"}
+  - {id: head-2018, expr: series.stockholm.lau.2018.headline, printed: "257.9"}
+  - {id: head-current, expr: series.stockholm.lau.current.headline, printed: "261.0"}
+  - {id: head-min, expr: series.stockholm.lau.2023.headline, printed: "249.7"}
+  - {id: head-max, expr: series.stockholm.lau.2020.headline, printed: "262.5"}
+  - {id: a-2018, expr: series.stockholm.lau.2018.A, printed: "315"}
+  - {id: a-current, expr: series.stockholm.lau.current.A, printed: "415"}
+  - {id: b-2018, expr: series.stockholm.lau.2018.B, printed: "629"}
+  - {id: b-current, expr: series.stockholm.lau.current.B, printed: "577"}
+  - {id: d-2018, expr: series.stockholm.lau.2018.D, printed: "38"}
+  - {id: d-current, expr: series.stockholm.lau.current.D, printed: "48"}
+  - {id: fua-ab-2018, expr: series.stockholm.fua.2018.ab_km, printed: "3,272"}
+  - {id: fua-ab-current, expr: series.stockholm.fua.current.ab_km, printed: "3,906"}
+  - {id: fua-ab-pct, expr: pct.stockholm.fua.2018.current.ab_km, printed: "+19%"}
+  - {id: fua-b-2018, expr: series.stockholm.fua.2018.B, printed: "2,022"}
+  - {id: fua-b-current, expr: series.stockholm.fua.current.B, printed: "2,635"}
+  - {id: qecio-main-theirs, expr: gap.stockholm.qecio_main_km.theirs, printed: "4,946"}
+  - {id: qecio-main-ours, expr: gap.stockholm.qecio_main_km.ours, printed: "667"}
+  - {id: bnk-theirs, expr: gap.stockholm.bnk_network_km.theirs, printed: "1,102"}
+  - {id: bnk-ours, expr: gap.stockholm.bnk_network_km.ours, printed: "995"}
+  - {id: bnk-gap, expr: gap.stockholm.bnk_network_km.gap_pct, printed: "−10%"}
+data_refs:
+  - id: ts-stockholm
+    label: "velometer time series, stockholm LAU and FUA (mapped km)"
+    file: docs/review/m3_timeseries.md
+    locator: "#### stockholm/lau"
+    route: /city/stockholm/time
+  - id: shift-stockholm
+    label: "velometer shift investigation, stockholm/lau/2018-current"
+    file: docs/review/shifts.md
+    locator: "### stockholm/lau/2018-current"
+  - id: recon-stockholm-qecio-main
+    label: "velometer reconciliation, stockholm/qecio_main_km"
+    file: docs/reconciliation.md
+    locator: "### stockholm/qecio_main_km"
+    route: /city/stockholm/figures
+literals: ["100 km", "21"]

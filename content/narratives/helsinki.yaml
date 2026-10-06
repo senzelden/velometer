@@ -1,0 +1,86 @@
+city_id: helsinki
+title: "Helsinki: a flat map at the top"
+dek: >-
+  Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026; the headline fell from 276.2 to
+  262.3 because more streets were tagged as main roads, not because cycle paths went missing.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Helsinki has the highest headline of the 21 cities, and its city map barely moved.
+        Mapped A+B in the city proper (LAU) was 1,283 km in 2018 and 1,279 km in October 2026
+        [#ts-helsinki]. The headline still fell, from 276.2 to 262.3 km of A+B per 100 km of
+        main roads, most of it between the 2024 and 2025 points (274.4 → 264.7).
+      - >-
+        That fall is a denominator change, not a loss of cycle paths. A+B stayed at 1,282 km
+        across both points, while mapped main roads rose from 467 to 484 km, because during 2024
+        hundreds of residential streets were reclassified as tertiary roads
+        [#shift-helsinki-2025]. On the 2024 main-road km the 2025 headline would have stayed
+        level.
+      - >-
+        Most of the city's network is shared foot and cycle paths: 943 of the 1,279 km are tier
+        B, against 336 km of separated tracks (tier A). Painted lanes (tier D) are small but
+        growing, 14 → 38 km.
+      - >-
+        The functional urban area (FUA) tells a different story. A+B rose from 5,018 to
+        5,742 km, while tier A fell from 909 to 589 km. Part of that fall is retagging: since
+        2024 cycleways outside the city gained foot tags and moved from A to B
+        [#recon-helsinki-qecio-tracks].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities counts 783 km of protected infrastructure for Helsinki [@cc2025-report];
+        our A+B is 1,279 km per side (+63%). Length is not the cause: most of the city's paths
+        are two-way [@helsinki-priorisointiohjelma-2021], so the centreline barely changes ours.
+        Scope is: their figure lies between our tier A and A+B, so it counts fewer shared paths,
+        though which ones is not stated [#recon-helsinki-cc-km]. The city's own figure for
+        separate cycleways, quoted below, is close to our A+B; its date and method are not
+        stated. QECIO reports the Helsinki-Uusimaa region, not the city. Baana figures count
+        completed high-quality routes, a kind of km we do not measure.
+quotes:
+  - {excerpt: helsinki-priorisointiohjelma-2021/network-1200, after: 4}
+  - {excerpt: helsinki-yle-2026/baana-33, after: 4}
+facts:
+  - {id: rank-current, expr: rank.helsinki.lau.current.headline, printed: "1"}
+  - {id: ab-2018, expr: series.helsinki.lau.2018.ab_km, printed: "1,283"}
+  - {id: ab-current, expr: series.helsinki.lau.current.ab_km, printed: "1,279"}
+  - {id: ab-max, expr: series.helsinki.lau.2019.ab_km, printed: "1,292"}
+  - {id: head-2018, expr: series.helsinki.lau.2018.headline, printed: "276.2"}
+  - {id: head-current, expr: series.helsinki.lau.current.headline, printed: "262.3"}
+  - {id: head-2024, expr: series.helsinki.lau.2024.headline, printed: "274.4"}
+  - {id: head-2025, expr: series.helsinki.lau.2025.headline, printed: "264.7"}
+  - {id: ab-2024, expr: series.helsinki.lau.2024.ab_km, printed: "1,282"}
+  - {id: ab-2025, expr: series.helsinki.lau.2025.ab_km, printed: "1,282"}
+  - {id: roads-2024, expr: denominator.helsinki.lau.2024, printed: "467"}
+  - {id: roads-2025, expr: denominator.helsinki.lau.2025, printed: "484"}
+  - {id: b-current, expr: series.helsinki.lau.current.B, printed: "943"}
+  - {id: a-current, expr: series.helsinki.lau.current.A, printed: "336"}
+  - {id: d-2018, expr: series.helsinki.lau.2018.D, printed: "14"}
+  - {id: d-current, expr: series.helsinki.lau.current.D, printed: "38"}
+  - {id: fua-ab-2018, expr: series.helsinki.fua.2018.ab_km, printed: "5,018"}
+  - {id: fua-ab-current, expr: series.helsinki.fua.current.ab_km, printed: "5,742"}
+  - {id: fua-a-2018, expr: series.helsinki.fua.2018.A, printed: "909"}
+  - {id: fua-a-current, expr: series.helsinki.fua.current.A, printed: "589"}
+  - {id: cc-km, expr: gap.helsinki.cc_km.theirs, printed: "783"}
+  - {id: cc-gap, expr: gap.helsinki.cc_km.gap_pct, printed: "+63%"}
+data_refs:
+  - id: ts-helsinki
+    label: "velometer time series, helsinki LAU and FUA (mapped km)"
+    file: docs/review/m3_timeseries.md
+    locator: "#### helsinki/lau"
+    route: /city/helsinki/time
+  - id: shift-helsinki-2025
+    label: "velometer shift investigation, helsinki/lau/2025"
+    file: docs/review/shifts.md
+    locator: "### helsinki/lau/2025"
+  - id: recon-helsinki-cc-km
+    label: "velometer reconciliation, helsinki/cc_km"
+    file: docs/reconciliation.md
+    locator: "### helsinki/cc_km"
+    route: /city/helsinki/figures
+  - id: recon-helsinki-qecio-tracks
+    label: "velometer reconciliation, helsinki/qecio_tracks_km"
+    file: docs/reconciliation.md
+    locator: "### helsinki/qecio_tracks_km"
+literals: ["100 km", "21"]

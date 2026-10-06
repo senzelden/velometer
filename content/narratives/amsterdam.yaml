@@ -1,0 +1,86 @@
+city_id: amsterdam
+title: "Amsterdam: a full map that barely moves"
+dek: >-
+  The headline went from 205.6 in 2018 to 203.0 in October 2026; the one visible shift, from
+  tracks to shared paths in 2025, was a retag.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Amsterdam's map is dense and changes little. In the city proper (LAU) the headline was
+        205.6 km of A+B per 100 km of main roads in 2018 and 203.0 in October 2026, and mapped
+        A+B stayed between 852 and 867 km throughout [#ts-amsterdam].
+      - >-
+        What moved is the split inside it. Between the 2024 and 2025 points separated tracks
+        (tier A) fell from 704 to 660 km and shared paths (tier B) rose from 160 to 207 km, with
+        A+B flat. That is tag drift: in September 2024 hundreds of cycle paths that carry their
+        footway on the same line lost `segregated=yes`, mostly in one contributor's edits, so
+        the classifier now reads them as shared with pedestrians [#shift-amsterdam-2025].
+        Retagging is not a change on the street. Painted lanes (tier D, 76 → 90 km) and cycle
+        streets (tier E, 0.2 → 9.0 km) grew slowly.
+      - >-
+        The functional urban area (FUA) shows the same slow rise, 134.1 → 138.6. Its one flagged
+        year, 2022, was contraflow retagging that touched painted lanes only
+        [#ts-amsterdam-fua-2022].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities counts 919 km of protected infrastructure [@cc2025-report]; our A+B is
+        862 km per side (−6%). The city publishes no total, but its own definition of a fietspad,
+        quoted below, matches that scope [@amsterdam-maps-fietsnetten]. The gap is in the road
+        network: Clean Cities divides by 2,700 km, we by 2,041 km (−24%), so its ratio is 34%
+        against our 42.2% [#recon-amsterdam-cc-ratio]. Which roads its network includes, and
+        whether the city or OpenStreetMap supplied the data, is not stated. Their data date
+        from early 2025, ours from October 2026. QECIO reports Groot-Amsterdam, a region larger
+        than the city [#recon-amsterdam-qecio-main].
+quotes:
+  - {excerpt: amsterdam-maps-fietsnetten/fietspad-definition, after: 3}
+  - {excerpt: cc2025-annexes/road-network-area, after: 3}
+facts:
+  - {id: head-2018, expr: series.amsterdam.lau.2018.headline, printed: "205.6"}
+  - {id: head-current, expr: series.amsterdam.lau.current.headline, printed: "203.0"}
+  - {id: ab-min, expr: series.amsterdam.lau.2018.ab_km, printed: "852"}
+  - {id: ab-max, expr: series.amsterdam.lau.2025.ab_km, printed: "867"}
+  - {id: a-2024, expr: series.amsterdam.lau.2024.A, printed: "704"}
+  - {id: a-2025, expr: series.amsterdam.lau.2025.A, printed: "660"}
+  - {id: b-2024, expr: series.amsterdam.lau.2024.B, printed: "160"}
+  - {id: b-2025, expr: series.amsterdam.lau.2025.B, printed: "207"}
+  - {id: d-2018, expr: series.amsterdam.lau.2018.D, printed: "76"}
+  - {id: d-current, expr: series.amsterdam.lau.current.D, printed: "90"}
+  - {id: e-2018, expr: series.amsterdam.lau.2018.E, printed: "0.2"}
+  - {id: e-current, expr: series.amsterdam.lau.current.E, printed: "9.0"}
+  - {id: fua-head-2018, expr: series.amsterdam.fua.2018.headline, printed: "134.1"}
+  - {id: fua-head-current, expr: series.amsterdam.fua.current.headline, printed: "138.6"}
+  - {id: cc-km, expr: gap.amsterdam.cc_km.theirs, printed: "919"}
+  - {id: cc-ours, expr: gap.amsterdam.cc_km.ours, printed: "862"}
+  - {id: cc-gap, expr: gap.amsterdam.cc_km.gap_pct, printed: "−6%"}
+  - {id: cc-net-theirs, expr: gap.amsterdam.cc_network_km.theirs, printed: "2,700"}
+  - {id: cc-net-ours, expr: gap.amsterdam.cc_network_km.ours, printed: "2,041"}
+  - {id: cc-net-gap, expr: gap.amsterdam.cc_network_km.gap_pct, printed: "−24%"}
+  - {id: cc-ratio-theirs, expr: gap.amsterdam.cc_ratio.theirs, printed: "34%"}
+  - {id: cc-ratio-ours, expr: gap.amsterdam.cc_ratio.ours, printed: "42.2%"}
+data_refs:
+  - id: ts-amsterdam
+    label: "velometer time series, amsterdam LAU and FUA (mapped km)"
+    file: docs/review/m3_timeseries.md
+    locator: "#### amsterdam/lau"
+    route: /city/amsterdam/time
+  - id: shift-amsterdam-2025
+    label: "velometer shift investigation, amsterdam/lau/2025"
+    file: docs/review/shifts.md
+    locator: "### amsterdam/lau/2025"
+  - id: ts-amsterdam-fua-2022
+    label: "velometer time-series explanation, amsterdam/fua/2022"
+    file: docs/review/m3_timeseries.md
+    locator: "### amsterdam/fua/2022"
+  - id: recon-amsterdam-cc-ratio
+    label: "velometer reconciliation, amsterdam/cc_ratio and amsterdam/cc_network_km"
+    file: docs/reconciliation.md
+    locator: "### amsterdam/cc_ratio"
+    route: /city/amsterdam/figures
+  - id: recon-amsterdam-qecio-main
+    label: "velometer reconciliation, amsterdam/qecio_main_km"
+    file: docs/reconciliation.md
+    locator: "### amsterdam/qecio_main_km"
+literals: ["100 km"]
