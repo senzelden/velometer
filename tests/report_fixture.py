@@ -48,9 +48,6 @@ def _config_dir(tmp_path: Path) -> Path:
     shutil.copytree(CFG_DIR, d)
     text = (CFG_DIR / "history.yaml").read_text()
     (d / "history.yaml").write_text(re.sub(r'years: "[^"]*"', 'years: "2024-2026"', text))
-    # the shipped differences.yaml names six explainer dimensions; tests of `content --check`
-    # write their own, so the copy must not carry the real one
-    (d / "differences.yaml").unlink(missing_ok=True)
     return strip_subareas(d)  # berlin's subareas come only from add_subareas
 
 

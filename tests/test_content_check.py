@@ -6,7 +6,9 @@ import yaml
 from typer.testing import CliRunner
 
 from velometer.cli import app
+from velometer.config import DIFFERENCE_DIMENSIONS, default_config_dir, load_differences
 from velometer.content.check import (
+    _dimension_ids,
     _full,
     check_content,
     check_online,
@@ -82,6 +84,8 @@ def content(fixture_db, tmp_path):
     _write(root / "narratives" / "paris.yaml", {**_berlin(value), "city_id": "paris"})
     _write(root / "narratives" / "combined.yaml", _combined())
     _write(root / "explainer.yaml", {"title": "Explainer", "intro": ["Intro."], "sections": []})
+    # these tests own their dimension list (the shipped one: test_shipped_dimensions_*)
+    (_cfg / "differences.yaml").unlink(missing_ok=True)
     return root, data, tmp_path
 
 
@@ -389,3 +393,30 @@ def test_cli_check_missing_db(content, fixture_db, tmp_path):
     res = CliRunner().invoke(app, args)
     assert res.exit_code == 1
     assert res.stderr.startswith("error:")
+
+
+def _explainer(dims) -> dict:
+    return {
+        "title": "Explainer",
+        "intro": ["Intro."],
+        "sections": [{"dimension": d, "heading": d.title(), "paragraphs": ["Text."]} for d in dims],
+    }
+
+
+def test_shipped_dimensions_match_the_config_model(content):
+    _root, data, _tmp = content
+    shipped = default_config_dir() / "differences.yaml"
+    assert tuple(_dimension_ids(shipped)) == DIFFERENCE_DIMENSIONS
+    assert [d.id for d in load_differences(shipped).dimensions] == list(DIFFERENCE_DIMENSIONS)
+
+
+def test_explainer_needs_one_section_per_shipped_dimension(content):
+    root, data, tmp = content
+    shipped = default_config_dir() / "differences.yaml"
+    (data.config_dir / "differences.yaml").write_text(shipped.read_text(encoding="utf-8"))
+    _write(root / "explainer.yaml", _explainer(DIFFERENCE_DIMENSIONS))
+    assert _problems(root, data, tmp) == []
+    _write(root / "explainer.yaml", _explainer(DIFFERENCE_DIMENSIONS[:-1]))
+    assert _problems(root, data, tmp) == [
+        f"explainer.yaml: dimension {DIFFERENCE_DIMENSIONS[-1]} has 0 sections, expected 1"
+    ]

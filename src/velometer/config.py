@@ -631,6 +631,11 @@ class Dimension(_Strict):
     label: str
 
 
+class SourceLength(_Strict):
+    theirs: str
+    matches: list[str]  # our bases (`bases` keys) that already are the source's
+
+
 class DifferencesConfig(_Strict):
     """config/differences.yaml: why a published figure differs from our mapped km."""
 
@@ -639,6 +644,8 @@ class DifferencesConfig(_Strict):
     metric_kinds: dict[str, str]
     source_methods: dict[str, str]
     length_bases: dict[str, str]
+    bases: dict[str, str]  # our basis id -> words
+    source_length_bases: dict[str, SourceLength]  # "<source>/<metric>" -> the source's basis
     labels: dict[str, str]  # metric_name -> what it counts
     areas: dict[str, str]  # source id (or "default") -> the area it covers
 
@@ -650,6 +657,10 @@ class DifferencesConfig(_Strict):
         unknown = sorted(set(self.ours) - set(ids))
         if unknown:
             raise ValueError(f"ours names unknown dimensions: {unknown}")
+        for key, sl in self.source_length_bases.items():
+            bad = sorted(set(sl.matches) - set(self.bases))
+            if bad:
+                raise ValueError(f"source_length_bases {key!r} matches unknown bases: {bad}")
         return self
 
 

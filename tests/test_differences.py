@@ -1,4 +1,6 @@
 import csv
+from dataclasses import replace
+from datetime import date
 
 import pytest
 
@@ -38,7 +40,7 @@ def test_wrong_dimensions_are_rejected(tmp_path):
         load_differences(bad)
 
 
-def _shipped_metrics_and_sources():
+def _shipped():
     with (CFG / "external" / "figures.csv").open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     comps = rc.load_comparisons(CFG / "reconcile.yaml")
@@ -47,23 +49,29 @@ def _shipped_metrics_and_sources():
     return metrics, sources, {r["length_basis"] for r in rows}
 
 
+def missing_entries(cfg) -> list[str]:
+    """Every shipped metric, source and length basis that cfg has no entry for."""
+    metrics, sources, bases = _shipped()
+    return (
+        [f"label:{m}" for m in sorted(metrics - set(cfg.labels))]
+        + [f"source:{s}" for s in sorted(sources - set(cfg.source_methods))]
+        + [f"basis:{b}" for b in sorted(bases - set(cfg.length_bases))]
+    )
+
+
 def test_every_shipped_metric_source_and_basis_has_an_entry():
     cfg = _cfg()
-    metrics, sources, bases = _shipped_metrics_and_sources()
-    assert metrics <= set(cfg.labels), sorted(metrics - set(cfg.labels))
-    assert sources <= set(cfg.source_methods), sorted(sources - set(cfg.source_methods))
-    assert bases <= set(cfg.length_bases)
-    assert set(cfg.metric_kinds) <= metrics
+    assert missing_entries(cfg) == []
+    assert set(cfg.metric_kinds) <= _shipped()[0]
     assert "default" in cfg.areas
 
 
 def test_coverage_check_fails_when_an_entry_is_missing():
     cfg = _cfg()
-    metrics, sources, _ = _shipped_metrics_and_sources()
     labels = {k: v for k, v in cfg.labels.items() if k != "vorrangnetz_target_km"}
     methods = {k: v for k, v in cfg.source_methods.items() if k != "changing_cities"}
-    assert not metrics <= set(labels)
-    assert not sources <= set(methods)
+    broken = cfg.model_copy(update={"labels": labels, "source_methods": methods})
+    assert missing_entries(broken) == ["label:vorrangnetz_target_km", "source:changing_cities"]
 
 
 @pytest.fixture
@@ -80,8 +88,13 @@ def rows(fixture_db):
 
 def test_one_row_per_gap_plus_one_per_reported_figure(rows):
     data, out = rows
-    assert len(out) == len(data.reconcile("berlin").gaps) + len(data.reported_figures("berlin"))
-    n_gaps = len(data.reconcile("berlin").gaps)
+    gaps = data.reconcile("berlin").gaps
+    reported = data.reported_figures("berlin")
+    # the changing_cities gap (ours None) is the reported figure again: one row, not two
+    dropped = [g for g in gaps if g.ours is None]
+    assert len(dropped) == 1
+    n_gaps = len(gaps) - len(dropped)
+    assert len(out) == n_gaps + len(reported)
     assert all(r.ours is None for r in out[n_gaps:])
     assert {r.source for r in out[n_gaps:]} == {"official", "changing_cities"}
 
@@ -100,34 +113,54 @@ def test_unknown_basis_is_stated_as_not_stated(rows):
     assert _drivers(row)["length"].theirs == "basis not stated by the source"
 
 
-def test_qecio_gap_gets_an_area_driver_and_a_clean_cities_gap_does_not(rows):
+def test_area_driver_only_for_boundary_mismatch_gaps(rows):
+    data, out = rows
+    gaps = {g.key: g for g in data.reconcile("berlin").gaps}
+    q = [r for r in out if r.source == "qecio_v2_10"]
+    assert q and all("boundary_mismatch" not in g.tags for g in gaps.values())  # berlin = NUTS3
+    assert all("area" not in _drivers(r) for r in out)
+    # a city whose NUTS3 differs (here: forced) gets the QECIO area
+    forced = replace(
+        next(g for g in gaps.values() if g.source == "qecio_v2_10"), tags=("boundary_mismatch",)
+    )
+    report = data.reconcile("berlin")
+    data.reconcile = lambda _c: replace(report, gaps=[forced])
+    (row,) = [r for r in difference_rows(data, "berlin", _cfg()) if r.source == "qecio_v2_10"]
+    assert Driver("area", "city proper (LAU)", "NUTS3 region") in row.drivers
+
+
+def test_no_gap_repeats_a_reported_figure(rows):
+    data, out = rows
+    keys = [(r.source, r.metric, r.theirs, r.reference_date) for r in out if r.ours is None]
+    assert len(keys) == len(set(keys))
+    assert keys.count(("changing_cities", "new_cycle_infra_km", 25.2, date(2025, 1, 1))) == 1
+
+
+def test_variant_gaps_are_distinguishable(rows):
     _, out = rows
-    q = next(r for r in out if r.source == "qecio_v2_10")
-    assert Driver("area", "city proper (LAU)", "NUTS3 region") in q.drivers
-    cc = next(r for r in out if r.source == "clean_cities_2025")
-    assert "area" not in _drivers(cc)
+    cc = [r for r in out if r.source == "clean_cities_2025" and r.ours is not None]
+    ids = [(r.metric, r.theirs, r.basis, r.ours_label) for r in cc]
+    assert len(ids) == len(set(ids))
+    assert {r.basis for r in cc} == {"per_side", "qecio_weighted"}
+    w = next(r for r in out if r.metric == "cycle_tracks_km")
+    assert w.basis == "qecio_weighted" and "length" not in _drivers(w)  # already QECIO's basis
 
 
-def test_a_dimension_equal_to_ours_has_no_driver():
-    cfg = _cfg()
-    same = cfg.model_copy(
-        update={"length_bases": {**cfg.length_bases, "unknown": cfg.ours["length"]}}
+def test_gap_on_another_basis_than_the_source_gets_a_length_driver(rows):
+    data, _ = rows
+    report = data.reconcile("berlin")
+    g = next(g for g in report.gaps if g.comparison == "qecio_tracks_km")
+    data.reconcile = lambda _c: replace(report, gaps=[replace(g, key=g.key + "~per_side")])
+    (row,) = difference_rows(data, "berlin", _cfg())[:1]
+    assert row.basis == "per_side"
+    assert (
+        Driver(
+            "length",
+            "per road side",
+            "unidirectional cycling infrastructure counted at half length",
+        )
+        in row.drivers
     )
-    from velometer.report.differences import _drivers as drivers
-
-    kwargs = dict(
-        source="official",
-        metric="new_cycle_infra_km",
-        snapshot=None,
-        reference_date=None,
-        date_gap_days=365,
-        length_basis="unknown",
-        scope_differs=False,
-        boundary_differs=False,
-        date_differs=False,
-    )
-    assert "length" not in {d.dimension for d in drivers(same, **kwargs)}
-    assert "length" in {d.dimension for d in drivers(cfg, **kwargs)}
 
 
 def test_date_driver_follows_the_gap_tag(rows):

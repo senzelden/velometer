@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from velometer import reconcile as rc
-from velometer.config import DifferencesConfig
+from velometer.config import BasisRef, DifferencesConfig
 from velometer.db import fetch_external_figures
 from velometer.models import ExternalFigure
 from velometer.report.data import ROAD_CLASS_TEXT, ReportData
@@ -34,6 +34,7 @@ class DifferenceRow:
     reference_date: date | None
     url: str | None
     drivers: list[Driver]
+    basis: str | None = None  # our length basis of a gap row ("per_side", "qecio_weighted", ...)
 
 
 def _ours_label(data: ReportData, spec: dict | None) -> str | None:
@@ -47,6 +48,23 @@ def _ours_label(data: ReportData, spec: dict | None) -> str | None:
     return f"our tiers {tiers} km" if tiers else None
 
 
+def _basis(data: ReportData, spec: dict | None, key: str) -> str | None:
+    """Our length basis of a gap row: the `~<basis>` variant of its key, else the selected one."""
+    if "~" in key:
+        return key.rsplit("~", 1)[1]
+    if not spec:
+        return None
+    presets = data.selector.presets
+    basis = presets.preset(spec["preset"]).basis if "preset" in spec else spec.get("basis")
+    if isinstance(basis, dict):
+        basis = BasisRef.model_validate(basis)
+    if isinstance(basis, BasisRef):
+        return getattr(presets.parameters, basis.parameter)
+    if isinstance(basis, str):
+        return basis
+    return "road_class" if "road_class" in spec else None
+
+
 def _drivers(
     cfg: DifferencesConfig,
     *,
@@ -56,6 +74,7 @@ def _drivers(
     reference_date: date | None,
     date_gap_days: int,
     length_basis: str | None,
+    our_basis: str | None = None,
     scope_differs: bool,
     boundary_differs: bool,
     date_differs: bool | None,
@@ -69,6 +88,10 @@ def _drivers(
         out.append(Driver("kind", ours["kind"], cfg.metric_kinds[metric]))
     if length_basis is not None and cfg.length_bases[length_basis] != ours["length"]:
         out.append(Driver("length", ours["length"], cfg.length_bases[length_basis]))
+    source_length = cfg.source_length_bases.get(f"{source}/{metric}")
+    if source_length is not None and our_basis not in source_length.matches:
+        ours_length = cfg.bases.get(our_basis, ours["length"]) if our_basis else ours["length"]
+        out.append(Driver("length", ours_length, source_length.theirs))
     if date_differs is None:
         date_differs = (
             snapshot is not None
@@ -83,9 +106,8 @@ def _drivers(
                 reference_date.isoformat(),
             )
         )
-    area = cfg.areas.get(source) or (cfg.areas["default"] if boundary_differs else None)
-    if area is not None and area != ours["area"]:
-        out.append(Driver("area", ours["area"], area))
+    if boundary_differs:
+        out.append(Driver("area", ours["area"], cfg.areas.get(source, cfg.areas["default"])))
     method = cfg.source_methods.get(source)
     if method is not None and method != ours["method"]:
         out.append(Driver("method", ours["method"], method))
@@ -114,8 +136,17 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
     figures = fetch_external_figures(data.conn, city_id)
     rows: list[DifferenceRow] = []
     report = data.reconcile(city_id)
+    reported = data.reported_figures(city_id)
+    shown = {(f.source, f.metric_name, f.value, f.reference_date) for f in reported}
     for g in report.gaps if report else []:
         comp = comparisons[g.comparison]
+        # an informational gap without our value is the reported figure again: keep that row
+        if g.ours is None and (g.source, comp.metric_name, g.theirs, g.reference_date) in shown:
+            continue
+        basis = _basis(data, comp.ours, g.key)
+        label = _ours_label(data, comp.ours)
+        if label and basis in ("per_side", "qecio_weighted"):
+            label = f"{label}, {cfg.bases[basis]}"
         rows.append(
             DifferenceRow(
                 source=g.source,
@@ -123,10 +154,11 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                 theirs=g.theirs,
                 unit=g.unit,
                 ours=g.ours,
-                ours_label=_ours_label(data, comp.ours),
+                ours_label=label,
                 gap_pct=g.gap_pct,
                 reference_date=g.reference_date,
                 url=_url(figures, g.source, comp.metric_name, g.theirs),
+                basis=basis,
                 drivers=_drivers(
                     cfg,
                     source=g.source,
@@ -135,13 +167,14 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                     reference_date=g.reference_date,
                     date_gap_days=date_gap_days,
                     length_basis=None,
+                    our_basis=basis,
                     scope_differs=bool(_SCOPE_TAGS & set(g.tags)),
                     boundary_differs="boundary_mismatch" in g.tags,
                     date_differs="date_gap" in g.tags,
                 ),
             )
         )
-    for f in data.reported_figures(city_id):
+    for f in reported:
         rows.append(
             DifferenceRow(
                 source=f.source,

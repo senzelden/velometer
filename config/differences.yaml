@@ -25,7 +25,24 @@ metric_kinds:
   radverkehrsnetz_target_km: planned network
   radverkehrsnetz_completed_share_pct: share of the planned network completed
   radwegeausbau_started_km: projects started in the year, not completed
-  cycle_track_km: existing cycle track in the year
+  cycle_track_km: existing cycle track counted for the year 2025
+# How we count our own length when a comparison names a basis (our side of the length dimension).
+bases:
+  per_side: per road side
+  qecio_weighted: unidirectional infrastructure at half length, as QECIO counts
+  road_class: length of the road network
+# How a source measures length, where it states it (cc2025-annexes road-lanes; qecio-methodology
+# directionality). `matches`: our bases that are already the source's; no driver for those.
+source_length_bases:
+  clean_cities_2025/network_km:
+    theirs: road network length; the number of lanes or directions does not change it
+    matches: [road_class]
+  qecio_v2_10/cycle_tracks_km: &qecio_length
+    theirs: unidirectional cycling infrastructure counted at half length
+    matches: [qecio_weighted]
+  qecio_v2_10/cycle_lanes_km: *qecio_length
+  qecio_v2_10/shared_pedestrians_km: *qecio_length
+  qecio_v2_10/total_cycle_infra_km: *qecio_length
 # What each metric counts, in the source's own terms (the "scope" dimension).
 labels:
   protected_km: protected cycling infrastructure (physically separated by a barrier, height difference or distance)
@@ -49,14 +66,15 @@ source_methods:
   clean_cities_2025: figures submitted by the city, OSM as fallback
   qecio_v2_10: OpenStreetMap, QECIO method
   bikenetkit_v1: OpenStreetMap, BikeNetKit method
-  official: the administration's own records
+  official: the administration's published figures; method not stated by the source
   changing_cities: an NGO's own measurement
-  mobilitaetsagentur_wien: the city's mobility agency
+  mobilitaetsagentur_wien: Mobilitätsagentur Wien; counts projects started in the year
 length_bases:
   streckenlaenge: route length (Streckenlänge)
   reallaenge: real length
   unknown: basis not stated by the source
+# The area a source covers; shown as a driver only where the comparison is tagged boundary_mismatch.
 areas:
   qecio_v2_10: NUTS3 region
-  bikenetkit_v1: city boundary files of European cities above 100,000 inhabitants
+  bikenetkit_v1: a city boundary file (which boundary is not stated by the source)
   default: the city as the source defines it
