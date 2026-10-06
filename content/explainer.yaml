@@ -1,0 +1,171 @@
+title: Why the figures differ
+intro:
+  - >-
+    A published figure and ours can both be correct and still be far apart, because they
+    measure different things. Each comparison on a city's Figures tab is read along six
+    dimensions: what is counted, what kind of km, how length is measured, when, where, and who
+    measured. This page takes them once, each with an example from the 21 cities and, where the
+    source states one, the source's own definition.
+  - >-
+    Our side is always the same: mapped km in OpenStreetMap, classified into tiers A to E, per
+    road side, in the city proper (LAU), at a snapshot date. A rise on the map can be new
+    infrastructure, catch-up mapping or retagging, so a match with a published figure does not
+    prove either right, and a gap does not prove either wrong.
+sections:
+  - dimension: scope
+    heading: What is counted
+    paragraphs:
+      - >-
+        Every figure counts a chosen set of facilities. Our headline takes tiers A and B,
+        separated tracks and shared foot and cycle paths; painted lanes (D) and cycle streets
+        and bus lanes (E) are measured but left out of it. Clean Cities 2025 counts protected
+        infrastructure, quoted below: shared paths and pedestrian streets in, painted lanes and
+        cycle streets out [@cc2025-annexes]. QECIO keeps cycle tracks, cycle lanes and shared
+        paths as separate classes, each with its own definition [@qecio-methodology].
+      - >-
+        Copenhagen shows how far scope alone goes. The city counts 401 km of cykelsti for 2025,
+        kerbed tracks, with painted lanes in a separate row
+        [@copenhagen-mobilitetsredegorelse-2026]; our A+B of 582 km also holds shared paths.
+        Scope can change after publication, too: in July 2025 Clean Cities raised Vienna from
+        384 to 625.1 km once traffic-calmed roads with restricted motor access were counted
+        [@cc2025-cycling-table]. Against that wider scope our A+B is +6.5% from theirs
+        [#recon-vienna-cc-km].
+      - >-
+        A ratio has a second scope: the road network it divides by. Our headline divides by
+        main roads. Clean Cities divides by the entire public road network
+        [@cc2025-annexes], and for that comparison we divide by all public roads as well; even
+        then the networks differ, 2,700 km in theirs against 2,041 km in ours for Amsterdam
+        [#recon-amsterdam-cc-network].
+  - dimension: kind
+    heading: What kind of km
+    paragraphs:
+      - >-
+        Our km are mapped km: what is in OpenStreetMap at the snapshot date, whenever mappers
+        recorded it. Official series often count another kind of km. Berlin's Senate reports
+        21.2 km of route that projects completed or improved in 2025, from a project database at
+        year end [@berlin-fortschrittsbericht-2025]. Its priority network is a planned network of
+        about 870 km, of which 78.2 km had been implemented by May 2026 [@berlin-drs-19-25987].
+        Vienna's 20.4 km for 2025 counts projects started that year, not finished ones, quoted
+        below [@vienna-radwegeausbau-bilanz-2025].
+      - >-
+        Mapped change is a different quantity again. From 2023 to October 2026 Berlin's map
+        gained 442 km of newly mapped way-sides and redrew 656 km, while A+B rose 35.6 km net
+        [#berlin-change]. Completed km, started km, planned km and mapped km answer different
+        questions; none of them confirms or refutes another.
+  - dimension: length
+    heading: How length is measured
+    paragraphs:
+      - >-
+        We count each side of a road: a street with a one-way track on both sides contributes
+        twice its length. Clean Cities measures the road itself, however many lanes or
+        directions it has, quoted below [@cc2025-annexes], and QECIO counts one-way
+        infrastructure at half length [@qecio-methodology]. Vienna's own network total counts
+        facilities on both sides of a street, as we do [@vienna-radverkehrsnetz-fakten]. On
+        two-sided streets the centreline roughly halves our km.
+      - >-
+        Berlin is the clearest case. Our A+B is 1,550.7 km per side and 913.5 km on the
+        centreline basis; Clean Cities gives 925 km [#recon-berlin-cc-km]. In Oslo, where
+        QECIO's region is the city, its total of 413 km of cycle infrastructure matches our
+        414 km counted on its half-length rule [#recon-oslo]. Many official figures state no
+        basis at all; the Figures tab then says "basis not stated by the source".
+  - dimension: date
+    heading: When
+    paragraphs:
+      - >-
+        Our side is the OpenStreetMap snapshot of October 2026, with yearly points from January
+        2018. Clean Cities collected its data from December 2024 to February 2025 and took
+        updates until April 2025, quoted below [@cc2025-report]; QECIO rests on data downloaded
+        in January 2024 [@qecio-metadata]. Where the map moved fast, a year or more between the
+        two dates matters: Warsaw's mapped A+B went from 528 km in 2018 to 763 km now.
+      - >-
+        Our own yearly points move for reasons other than cycling, too. Warsaw's mapped main
+        roads fell from 1,039 to 946 km between the 2024 and 2025 points, when expressways were
+        retagged as motorways [#shift-warsaw-2025], so which of our dates a ratio is set against
+        changes it. And a mapping date is not a completion date: a path drawn in 2026 may have
+        existed for years, and a retag dates the edit, not the path.
+  - dimension: area
+    heading: Where
+    paragraphs:
+      - >-
+        We measure the city proper (LAU) and, where it tells a different story, the functional
+        urban area. Clean Cities refers to the municipality [@cc2025-report]. QECIO reports by
+        NUTS3 region and clips each way at the region's boundary, quoted below
+        [@qecio-methodology]. BikeNetKit cuts with a city boundary file whose source it does
+        not state [@bikenetkit-export-notebook].
+      - >-
+        Where the NUTS3 region is the city, the main roads agree closely: 2,153 km in ours
+        against 2,150 km in theirs for Berlin [#recon-berlin], and −0.6% for Warsaw
+        [#recon-warsaw]. Where the region is larger, QECIO's km describe another place:
+        Stockholms län has 4,946 km of main roads against our 667 km for the city
+        [#recon-stockholm-qecio-main].
+  - dimension: method
+    heading: Who measured
+    paragraphs:
+      - >-
+        Our km come from OpenStreetMap through the velometer classifier. Clean Cities asked the
+        city administrations for data and used public sources, OpenStreetMap among them, where
+        none came, quoted below [@cc2025-report]; for a single city it does not say which
+        applied [@cc2025-annexes]. QECIO and BikeNetKit read OpenStreetMap with their own rules
+        [@qecio-methodology] [@bikenetkit-zenodo].
+      - >-
+        A figure derived from OpenStreetMap cannot confirm ours. Paris's official cycle-route
+        series is an extract of OpenStreetMap, quoted below [@paris-opendata-lineaire-km], the
+        map we read, so a match would only show the same source twice. Strasbourg's open data
+        are drawn on the city's own road centreline network [@strasbourg-opendata-bnac], a
+        measure independent of ours. Clean Cities' 822 km for Paris exceeds everything we map
+        there across all tiers and cannot be reproduced from OpenStreetMap
+        [#recon-paris-cc-km].
+quotes:
+  - {excerpt: cc2025-annexes/included, after: 0}
+  - {excerpt: cc2025-cycling-table/vienna-why, after: 1}
+  - {excerpt: vienna-radwegeausbau-bilanz-2025/started-not-completed, after: 3}
+  - {excerpt: cc2025-annexes/road-lanes, after: 5}
+  - {excerpt: qecio-methodology/directionality, after: 5}
+  - {excerpt: cc2025-report/collection-dates, after: 7}
+  - {excerpt: qecio-metadata/data-date, after: 7}
+  - {excerpt: qecio-methodology/clip, after: 9}
+  - {excerpt: cc2025-report/city-data, after: 11}
+  - {excerpt: paris-opendata-lineaire-km/osm-basis, after: 12}
+facts:
+  - {id: copenhagen-cykelsti, expr: figure.copenhagen.official.cycle_track_km.cykelsti, printed: "401"}
+  - {id: copenhagen-ab, expr: series.copenhagen.lau.current.ab_km, printed: "582"}
+  - {id: cc-vienna-first, expr: gap.vienna.cc_km.theirs, printed: "384"}
+  - {id: cc-vienna-update, expr: gap.vienna.cc_km@incl_traffic_calmed_restricted_access.theirs, printed: "625.1"}
+  - {id: cc-vienna-gap, expr: gap.vienna.cc_km@incl_traffic_calmed_restricted_access.gap_pct, printed: "+6.5%"}
+  - {id: cc-amsterdam-net-theirs, expr: gap.amsterdam.cc_network_km.theirs, printed: "2,700"}
+  - {id: cc-amsterdam-net-ours, expr: gap.amsterdam.cc_network_km.ours, printed: "2,041"}
+  - {id: senate-2025, expr: figure.berlin.official.new_cycle_infra_km.whole_network.21.2, printed: "21.2"}
+  - {id: vrn-target, expr: figure.berlin.official.vorrangnetz_target_km.vorrangnetz, printed: "870"}
+  - {id: vrn-implemented, expr: figure.berlin.official.vorrangnetz_implemented_km.vorrangnetz, printed: "78.2"}
+  - {id: vienna-started, expr: figure.vienna.mobilitaetsagentur_wien.radwegeausbau_started_km.hauptradverkehrsnetz, printed: "20.4"}
+  - {id: chg-gained, expr: change.berlin.gained, printed: "442"}
+  - {id: chg-redrawn, expr: change.berlin.redrawn, printed: "656"}
+  - {id: chg-net-ab, expr: delta.berlin.lau.2023.current.ab_km, printed: "35.6"}
+  - {id: cc-berlin-ours, expr: gap.berlin.cc_km.ours, printed: "1,550.7"}
+  - {id: cc-berlin-centreline, expr: gap.berlin.cc_km~qecio_weighted.ours, printed: "913.5"}
+  - {id: cc-berlin-theirs, expr: gap.berlin.cc_km.theirs, printed: "925"}
+  - {id: qecio-oslo-theirs, expr: gap.oslo.qecio_total_km.theirs, printed: "413"}
+  - {id: qecio-oslo-ours, expr: gap.oslo.qecio_total_km.ours, printed: "414"}
+  - {id: ab-warsaw-2018, expr: series.warsaw.lau.2018.ab_km, printed: "528"}
+  - {id: ab-warsaw-cur, expr: series.warsaw.lau.current.ab_km, printed: "763"}
+  - {id: roads-warsaw-2024, expr: denominator.warsaw.lau.2024, printed: "1,039"}
+  - {id: roads-warsaw-2025, expr: denominator.warsaw.lau.2025, printed: "946"}
+  - {id: qecio-berlin-main-ours, expr: gap.berlin.qecio_main_km.ours, printed: "2,153"}
+  - {id: qecio-berlin-main-theirs, expr: gap.berlin.qecio_main_km.theirs, printed: "2,150"}
+  - {id: qecio-warsaw-main-gap, expr: gap.warsaw.qecio_main_km.gap_pct, printed: "−0.6%"}
+  - {id: qecio-stockholm-main-theirs, expr: gap.stockholm.qecio_main_km.theirs, printed: "4,946"}
+  - {id: qecio-stockholm-main-ours, expr: gap.stockholm.qecio_main_km.ours, printed: "667"}
+  - {id: cc-paris, expr: gap.paris.cc_km.theirs, printed: "822"}
+data_refs:
+  - {id: recon-vienna-cc-km, label: "velometer reconciliation, vienna/cc_km", file: docs/reconciliation.md, locator: "### vienna/cc_km", route: /city/vienna/figures}
+  - {id: recon-amsterdam-cc-network, label: "velometer reconciliation, amsterdam/cc_network_km", file: docs/reconciliation.md, locator: "### amsterdam/cc_network_km", route: /city/amsterdam/figures}
+  - {id: berlin-change, label: "velometer mapped change, Berlin, 2023-01-01 to current", file: docs/review/berlin_change_2023-01-01_current.md, locator: "Mapped km per category", route: /city/berlin/bezirke}
+  - {id: recon-berlin-cc-km, label: "velometer reconciliation, berlin/cc_km", file: docs/reconciliation.md, locator: "### berlin/cc_km", route: /city/berlin/figures}
+  - {id: recon-oslo, label: "velometer reconciliation, oslo (qecio_total_km row)", file: docs/reconciliation.md, locator: "#### oslo", route: /city/oslo/figures}
+  - {id: shift-warsaw-2025, label: "velometer shift investigation, warsaw/lau/2025", file: docs/review/shifts.md, locator: "### warsaw/lau/2025"}
+  - {id: recon-berlin, label: "velometer reconciliation, berlin (qecio_main_km row)", file: docs/reconciliation.md, locator: "#### berlin", route: /city/berlin/figures}
+  - {id: recon-warsaw, label: "velometer reconciliation, warsaw (qecio_main_km row)", file: docs/reconciliation.md, locator: "#### warsaw", route: /city/warsaw/figures}
+  - {id: recon-stockholm-qecio-main, label: "velometer reconciliation, stockholm/qecio_main_km", file: docs/reconciliation.md, locator: "### stockholm/qecio_main_km", route: /city/stockholm/figures}
+  - {id: recon-paris-cc-km, label: "velometer reconciliation, paris/cc_km", file: docs/reconciliation.md, locator: "### paris/cc_km", route: /city/paris/figures}
+literals:
+  - 21 cities
