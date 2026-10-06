@@ -1,15 +1,16 @@
 city_id: helsinki
 title: "Helsinki: a flat map at the top"
 dek: >-
-  Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026; the headline fell from 276.2 to
-  262.3 because more streets were tagged as main roads, not because cycle paths went missing.
+  Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026; the headline fell from
+  276.2 to 262.3 because more streets were tagged as main roads, not because cycle paths went
+  missing.
 sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        Helsinki has the highest headline of the 21 cities, and its city map barely moved.
-        Mapped A+B in the city proper (LAU) was 1,283 km in 2018 and 1,279 km in October 2026
-        [#ts-helsinki]. The headline still fell, from 276.2 to 262.3 km of A+B per 100 km of
+        Helsinki has the highest headline of the 21 cities, and its city map barely moved. Mapped
+        A+B in the city proper (LAU) was 1,283 km in 2018 and 1,279 km in October 2026
+        [#ts-helsinki]. The headline still fell, from 276.2 to 262.3 mapped A+B km per 100 km of
         main roads, most of it between the 2024 and 2025 points (274.4 → 264.7).
       - >-
         That fall is a denominator change, not a loss of cycle paths. A+B stayed at 1,282 km

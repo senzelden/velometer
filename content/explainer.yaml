@@ -16,12 +16,12 @@ sections:
     heading: What is counted
     paragraphs:
       - >-
-        Every figure counts a chosen set of facilities. Our headline takes tiers A and B,
-        separated tracks and shared foot and cycle paths; painted lanes (D) and cycle streets
-        and bus lanes (E) are measured but left out of it. Clean Cities 2025 counts protected
-        infrastructure, quoted below: shared paths and pedestrian streets in, painted lanes and
-        cycle streets out [@cc2025-annexes]. QECIO keeps cycle tracks, cycle lanes and shared
-        paths as separate classes, each with its own definition [@qecio-methodology].
+        Every figure counts a chosen set of facilities. Our headline, mapped A+B km per 100 km of
+        main roads, takes tiers A and B, separated tracks and shared foot and cycle paths; painted
+        lanes (D) and cycle streets and bus lanes (E) are measured but left out of it. Clean Cities
+        2025 counts protected infrastructure, quoted below: shared paths and pedestrian streets in,
+        painted lanes and cycle streets out [@cc2025-annexes]. QECIO keeps cycle tracks, cycle lanes
+        and shared paths as separate classes, each with its own definition [@qecio-methodology].
       - >-
         Copenhagen shows how far scope alone goes. The city counts 401 km of cykelsti for 2025,
         kerbed tracks, with painted lanes in a separate row
@@ -57,17 +57,19 @@ sections:
     paragraphs:
       - >-
         We count each side of a road: a street with a one-way track on both sides contributes
-        twice its length. Clean Cities measures the road itself, however many lanes or
-        directions it has, quoted below [@cc2025-annexes], and QECIO counts one-way
-        infrastructure at half length [@qecio-methodology]. Vienna's own network total counts
-        facilities on both sides of a street, as we do [@vienna-radverkehrsnetz-fakten]. On
-        two-sided streets the centreline roughly halves our km.
+        twice its length. Clean Cities counts each road once in the road network it divides by,
+        however many lanes or directions it has, quoted below [@cc2025-annexes], but gives no
+        rule for its cycling km. QECIO counts one-way infrastructure at half length
+        [@qecio-methodology]. Vienna's own network total counts facilities on both sides of a
+        street, as we do [@vienna-radverkehrsnetz-fakten]. On two-sided streets the centreline
+        roughly halves our km.
       - >-
-        Berlin is the clearest case. Our A+B is 1,550.7 km per side and 913.5 km on the
-        centreline basis; Clean Cities gives 925 km [#recon-berlin-cc-km]. In Oslo, where
-        QECIO's region is the city, its total of 413 km of cycle infrastructure matches our
-        414 km counted on its half-length rule [#recon-oslo]. Many official figures state no
-        basis at all; the Figures tab then says "basis not stated by the source".
+        Clean Cities' figures use both bases: Berlin's 925 km sits by our centreline 913.5 km,
+        not our 1,550.7 km per side [#recon-berlin-cc-km], and Ljubljana's 251 km by our
+        per-side 245 km [#recon-ljubljana-cc-ratio]. In Oslo, where QECIO's region is the city,
+        its total of 413 km of cycle infrastructure matches our 414 km counted on its
+        half-length rule [#recon-oslo]. Many official figures state no basis at all; the
+        Figures tab then says "basis not stated by the source".
   - dimension: date
     heading: When
     paragraphs:
@@ -76,7 +78,7 @@ sections:
         2018. Clean Cities collected its data from December 2024 to February 2025 and took
         updates until April 2025, quoted below [@cc2025-report]; QECIO rests on data downloaded
         in January 2024 [@qecio-metadata]. Where the map moved fast, a year or more between the
-        two dates matters: Warsaw's mapped A+B went from 528 km in 2018 to 763 km now.
+        two dates matters: Warsaw's mapped A+B went from 735 km in January 2025 to 763 km now.
       - >-
         Our own yearly points move for reasons other than cycling, too. Warsaw's mapped main
         roads fell from 1,039 to 946 km between the 2024 and 2025 points, when expressways were
@@ -146,7 +148,9 @@ facts:
   - {id: cc-berlin-theirs, expr: gap.berlin.cc_km.theirs, printed: "925"}
   - {id: qecio-oslo-theirs, expr: gap.oslo.qecio_total_km.theirs, printed: "413"}
   - {id: qecio-oslo-ours, expr: gap.oslo.qecio_total_km.ours, printed: "414"}
-  - {id: ab-warsaw-2018, expr: series.warsaw.lau.2018.ab_km, printed: "528"}
+  - {id: ab-warsaw-2025, expr: series.warsaw.lau.2025.ab_km, printed: "735"}
+  - {id: cc-ljubljana-theirs, expr: gap.ljubljana.cc_km.theirs, printed: "251"}
+  - {id: cc-ljubljana-ours, expr: gap.ljubljana.cc_km.ours, printed: "245"}
   - {id: ab-warsaw-cur, expr: series.warsaw.lau.current.ab_km, printed: "763"}
   - {id: roads-warsaw-2024, expr: denominator.warsaw.lau.2024, printed: "1,039"}
   - {id: roads-warsaw-2025, expr: denominator.warsaw.lau.2025, printed: "946"}
@@ -167,5 +171,7 @@ data_refs:
   - {id: recon-warsaw, label: "velometer reconciliation, warsaw (qecio_main_km row)", file: docs/reconciliation.md, locator: "#### warsaw", route: /city/warsaw/figures}
   - {id: recon-stockholm-qecio-main, label: "velometer reconciliation, stockholm/qecio_main_km", file: docs/reconciliation.md, locator: "### stockholm/qecio_main_km", route: /city/stockholm/figures}
   - {id: recon-paris-cc-km, label: "velometer reconciliation, paris/cc_km", file: docs/reconciliation.md, locator: "### paris/cc_km", route: /city/paris/figures}
+  - {id: recon-ljubljana-cc-ratio, label: "velometer reconciliation, ljubljana/cc_ratio", file: docs/reconciliation.md, locator: "### ljubljana/cc_ratio", route: /city/ljubljana/figures}
 literals:
   - 21 cities
+  - 100 km

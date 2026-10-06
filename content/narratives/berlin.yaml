@@ -7,7 +7,7 @@ sections:
   - heading: Since 2018
     paragraphs:
       - >-
-        Berlin's headline, mapped A+B km per side per 100 km of main roads, was 113.7 in 2018 and
+        Berlin's headline, mapped A+B km per 100 km of main roads, was 113.7 in 2018 and
         109.1 in October 2026; mapped A+B went from 1,640 to 1,551 km [#ts-lau]. The fall is one
         step, not a trend. The headline peaked at 117.0 in 2021 and stood at 104.3 in January
         2022, after mappers redrew road-side tracks as separate ways and retagged many shared paths
@@ -29,10 +29,11 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The Senate's figures answer a different question [@berlin-fortschrittsbericht-2025]. Its 21.2 km for 2025 are km of route that projects completed or improved, taken from a project
-        database at year end. The 20.5 km was a preliminary figure the administration called possibly incomplete
-        [@berlin-tagesspiegel-dpa-2025-12]; the 9.8 km covers the Vorrangnetz alone
-        [@berlin-drs-19-25987], for which the progress report itself gives a smaller figure.
+        The Senate's figures answer a different question [@berlin-fortschrittsbericht-2025]. Its
+        21.2 km for 2025 are km of route that projects completed or improved, taken from a project
+        database at year end. The 20.5 km was a preliminary figure the administration called
+        possibly incomplete [@berlin-tagesspiegel-dpa-2025-12]; the 9.8 km covers the Vorrangnetz
+        alone [@berlin-drs-19-25987], for which the progress report itself gives a smaller figure.
       - >-
         We count all mapped infrastructure per road side, whenever mappers record it. From 2023 to
         October 2026, 442 km of way-sides were newly mapped and 656 km redrawn, and A+B rose by

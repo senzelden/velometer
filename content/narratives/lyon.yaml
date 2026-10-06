@@ -2,13 +2,13 @@ city_id: lyon
 title: "Lyon: flat until 2020, then a rise that sped up"
 dek: >-
   Mapped A+B rose from 64 to 113 km between 2018 and October 2026, and the headline
-  from 31.0 to 52.3 A+B km per 100 km of main roads.
+  from 31.0 to 52.3 mapped A+B km per 100 km of main roads.
 sections:
   - heading: Since 2018
     paragraphs:
       - >-
         Lyon's map barely moved at first: A+B stayed between 61 and 64 km from 2018 to 2020, and
-        the headline (A+B km per 100 km of main roads) slipped from 31.0 to 28.4. It then
+        the headline (mapped A+B km per 100 km of main roads) slipped from 31.0 to 28.4. It then
         rose, slowly until 2023 and faster since: from 74 km in 2023 to 113 km now, with the
         headline from 33.9 to 52.3. Separated tracks (tier A) more than doubled, from 40 to 93
         km. Painted lanes (tier D) are still the largest tier, up from 110 to 173 km.
@@ -31,10 +31,10 @@ sections:
         [@cc2025-report]. Our 17.7% counts each side of a road. On the centreline basis the gap
         shrinks to +7.6%, and against Clean Cities' own road network it matches their figure
         [#rc-lyon-cc_ratio]. Both refer to the commune; their data were collected by early 2025,
-        ours come from the October 2026 map. The Métropole's own total covers the whole Métropole and adds
-        contraflow streets, greenways and paved shoulders [@lyon-plan-velo-2024], so it differs
-        in area and scope. QECIO reports the Rhône département; measured on that area, the main
-        roads agree [#rc-lyon-qecio_main_km].
+        ours come from the October 2026 map. The Métropole's own total covers the whole Métropole
+        and adds contraflow streets, greenways and paved shoulders [@lyon-plan-velo-2024], so it
+        differs in area and scope. QECIO reports the Rhône département; measured on that area, the
+        main roads agree [#rc-lyon-qecio_main_km].
 quotes:
   - excerpt: lyon-lavilleavelo-bilan-vl/delivered
     after: 1

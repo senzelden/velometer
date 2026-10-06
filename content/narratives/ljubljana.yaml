@@ -2,7 +2,7 @@ city_id: ljubljana
 title: "Ljubljana: sidepaths redrawn, then a steady climb"
 dek: >-
   The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads between 2018 and
-  October 2026; its largest step is the same paths mapped a new way.
+  October 2026; its largest step is mostly the same paths mapped a new way.
 sections:
   - heading: From 2018 to now
     paragraphs:
@@ -28,7 +28,7 @@ sections:
     role: figures
     paragraphs:
       - >-
-        Ljubljana's own figures disagree with one another and state no length basis or counting
+        Ljubljana's own figure states no length basis or counting
         date: the city's web page counts lanes on footways and carriageways together with
         separated tracks and shared paths [@ljubljana-mol-hoja-in-kolesarjenje], while our
         headline leaves lanes out. Clean Cities 2025 counts protected infrastructure only

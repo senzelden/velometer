@@ -7,9 +7,9 @@ sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        Amsterdam's map is dense and changes little. In the city proper (LAU) the headline was
-        205.6 km of A+B per 100 km of main roads in 2018 and 203.0 in October 2026, and mapped
-        A+B stayed between 852 and 867 km throughout [#ts-amsterdam].
+        Amsterdam's map is dense and changes little. In the city proper (LAU) the headline (mapped
+        A+B km per 100 km of main roads) was 205.6 in 2018 and 203.0 in October 2026, and mapped A+B
+        stayed between 852 and 867 km throughout [#ts-amsterdam].
       - >-
         What moved is the split inside it. Between the 2024 and 2025 points separated tracks
         (tier A) fell from 704 to 660 km and shared paths (tier B) rose from 160 to 207 km, with
@@ -19,21 +19,21 @@ sections:
         Retagging is not a change on the street. Painted lanes (tier D, 76 → 90 km) and cycle
         streets (tier E, 0.2 → 9.0 km) grew slowly.
       - >-
-        The functional urban area (FUA) shows the same slow rise, 134.1 → 138.6. Its one flagged
+        The functional urban area (FUA) rose slowly, 134.1 → 138.6. Its one flagged
         year, 2022, was contraflow retagging that touched painted lanes only
         [#ts-amsterdam-fua-2022].
   - heading: Why the figures differ
     role: figures
     paragraphs:
       - >-
-        Clean Cities counts 919 km of protected infrastructure [@cc2025-report]; our A+B is
-        862 km per side (−6%). The city publishes no total, but its own definition of a fietspad,
-        quoted below, matches that scope [@amsterdam-maps-fietsnetten]. The gap is in the road
-        network: Clean Cities divides by 2,700 km, we by 2,041 km (−24%), so its ratio is 34%
-        against our 42.2% [#recon-amsterdam-cc-ratio]. Which roads its network includes, and
-        whether the city or OpenStreetMap supplied the data, is not stated. Their data date
-        from early 2025, ours from October 2026. QECIO reports Groot-Amsterdam, a region larger
-        than the city [#recon-amsterdam-qecio-main].
+        Clean Cities counts 919 km of protected infrastructure [@cc2025-report]; our A+B is 862 km
+        per side (−6%). We found no published city total, but the city's own definition of a
+        fietspad, quoted below, matches that scope [@amsterdam-maps-fietsnetten]. The gap is in the
+        road network: Clean Cities divides by 2,700 km, we by 2,041 km (−24%), so its ratio is 34%
+        against our 42.2% [#recon-amsterdam-cc-ratio]. Which roads its network includes, and whether
+        the city or OpenStreetMap supplied the data, is not stated. Their data date from early 2025,
+        ours from October 2026. QECIO reports Groot-Amsterdam, a region larger than the city
+        [#recon-amsterdam-qecio-main].
 quotes:
   - {excerpt: amsterdam-maps-fietsnetten/fietspad-definition, after: 3}
   - {excerpt: cc2025-annexes/road-network-area, after: 3}

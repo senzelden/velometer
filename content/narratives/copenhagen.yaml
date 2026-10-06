@@ -7,12 +7,10 @@ sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        In Copenhagen's city proper (LAU) the headline went from 213.9 km of A+B per 100 km of
-        main roads in 2018 to 237.9 in October 2026, third of the 21 cities. Mapped A+B rose
-        from 530 to 582 km (+10%), and separated tracks (tier A) carry almost all of the gain,
-        447 → 493 km [#ts-copenhagen]. Painted lanes (tier D) slipped from 40.2 to 36.5 km. The
-        city's design guidance advises against painted lanes in new schemes
-        [@copenhagen-cykelfokus-2024].
+        In Copenhagen's city proper (LAU) the headline (mapped A+B km per 100 km of main roads) went
+        from 213.9 in 2018 to 237.9 in October 2026, third of the 21 cities. Mapped A+B rose from
+        530 to 582 km (+10%), and separated tracks (tier A) carry almost all of the gain, 447 → 493
+        km [#ts-copenhagen]. Painted lanes (tier D) slipped from 40.2 to 36.5 km.
       - >-
         The one irregular year is 2025. Shared paths (tier B) dipped from 88.8 to 74.0 km and
         were back at 86.5 km on the 2026 snapshot, and the headline dipped with them (234.5 →
@@ -30,17 +28,18 @@ sections:
     paragraphs:
       - >-
         The city counts 401 km of cykelsti for 2025 [@copenhagen-mobilitetsredegorelse-2026] and
-        Clean Cities 397 km of protected infrastructure [@cc2025-report]; our A+B is 582 km.
-        Scope: a cykelsti is a kerbed track, painted lanes are a separate row, and our A+B also
-        holds shared paths. Length: Copenhagen's tracks are mostly one-way pairs, one per road
-        side; on the centreline ours is 359 km (−9% against Clean Cities)
+        Clean Cities 397 km of protected infrastructure [@cc2025-report]; our A+B is 582 km. Scope:
+        a cykelsti is a kerbed track, painted lanes are a separate row, and our A+B also holds
+        shared paths. The city's design guidance advises against painted lanes in new schemes
+        [@copenhagen-cykelfokus-2024]. Length: Copenhagen's tracks are mostly one-way pairs, one per
+        road side; on the centreline ours is 359 km (−9% against Clean Cities)
         [#recon-copenhagen-cc-km]. Kind and date: theirs are existing km counted for 2025, ours
-        mapped km in October 2026. Area: both are the municipality. Method: the city's own
-        count against OpenStreetMap; whether Clean Cities used the city's figure is not stated.
+        mapped km in October 2026. Area: both are the municipality. Method: the city's own count
+        against OpenStreetMap; whether Clean Cities used the city's figure is not stated.
 quotes:
-  - {excerpt: copenhagen-cykelfokus-2024/cykelbaner-fraraades, after: 0}
   - {excerpt: copenhagen-mobilitetsredegorelse-2026/cykelsti-2025, after: 3}
   - {excerpt: copenhagen-cykelfokus-2024/cykelsti-definition, after: 3}
+  - {excerpt: copenhagen-cykelfokus-2024/cykelbaner-fraraades, after: 3}
 facts:
   - {id: head-2018, expr: series.copenhagen.lau.2018.headline, printed: "213.9"}
   - {id: head-current, expr: series.copenhagen.lau.current.headline, printed: "237.9"}

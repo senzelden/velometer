@@ -27,11 +27,11 @@ sections:
     paragraphs:
       - >-
         The road authority ZDM counts a network that includes cycle lanes and contraflow lanes,
-        which we keep in tier D outside the headline, and its yearly summaries report km added in
-        the year, a different kind of km from ours. Clean Cities 2025 counts protected
-        infrastructure [@cc2025-annexes]; our per-side A+B is 20.9% above its 631 km. Every OSM
-        count near its date is higher, which suggests it leaves out shared foot and cycle
-        paths, though that is an inference [#rec_cc_km]. Its road network of 4,300 km is wider
+        which we keep in tier D outside the headline [@warsaw-zdm-sezon-2018], and its yearly
+        summaries report km added in the year, a different kind of km from ours. Clean Cities 2025
+        counts protected infrastructure [@cc2025-annexes]; our per-side A+B is 20.9% above its 631
+        km. Every OSM count near its date is higher, which suggests it leaves out shared foot and
+        cycle paths, though that is an inference [#rec_cc_km]. Its road network of 4,300 km is wider
         than our 3,386 km, so its ratio is 15% against our 22.5%.
 quotes:
   - excerpt: warsaw-zdm-sezon-2018/composition-544km

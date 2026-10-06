@@ -8,15 +8,16 @@ sections:
     paragraphs:
       - >-
         Prague's mapped A+B rose from 182 km in 2018 to 289 km in October 2026, and its headline,
-        mapped A+B km per side per 100 km of main roads, from 18.7 to 29.6, 20th of the 21 cities
+        mapped A+B km per 100 km of main roads, from 18.7 to 29.6, 20th of the 21 cities
         [#ts-lau]. Most of the map's change is on the road: painted lanes (D) went from 56 to 190
         km per side, cycle streets and bus lanes (E) from 20 to 42 km.
       - >-
         The one flagged jump, in 2020, is mostly retagging. In early 2019 mappers turned park and
-        riverside footways where cycling was allowed into cycleways that pedestrians may still
-        use, and added some new cycleways [#expl-lau-2020]. Because pedestrians are permitted on
-        them, the classifier rates those ways tier B. That is why tier B (245 km) is more than
-        five times tier A (45 km) [#ts-lau].
+        riverside footways where cycling was allowed into cycleways that pedestrians may still use,
+        and added some new cycleways [#expl-lau-2020]. Pedestrians are permitted on those ways, so
+        the classifier rates them tier B, as it does most of Prague's mapped cycleways: tier B (245
+        km) is more than five times tier A (45 km), and was already over four times A in 2018
+        [#ts-lau].
       - >-
         The functional urban area follows the same pattern: A+B rose from 325 to 540 km, most of
         it in tier B, and its 2020 step is the same retagging plus new suburban cycleways
@@ -28,9 +29,9 @@ sections:
         Clean Cities 2025 puts Prague at 248 km of protected infrastructure and 6% of the road
         network [@cc2025-report]. On its method we get 8.5%: our A+B is 17% higher and our road
         network is 3,423 km against its 4,093 km, and the two gaps compound [#recon]. The length
-        basis is not the cause, and the date gap does not explain the km: we already had more at
-        the start of 2025. The city does not publish a total for cycling facilities; its familiar
-        figure counts signed routes, which need not carry any facility
+        basis is not the cause, and the date gap does not explain the km: we already had more at the
+        start of 2025. We found no published city total for cycling facilities; the city's route
+        system counts routes, which need not be signed or carry any facility
         [@prague-ipr-system-cyklotras-2021].
 quotes:
   - {excerpt: cc2025-annexes/included, after: 3}

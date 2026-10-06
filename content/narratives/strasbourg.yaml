@@ -2,20 +2,20 @@ city_id: strasbourg
 title: "Strasbourg: high from the start, reshuffled between A and B"
 dek: >-
   Mapped A+B rose from 184 to 241 km between 2018 and October 2026; already in 2018 the headline
-  was 123.2 A+B km per 100 km of main roads.
+  was 123.2 mapped A+B km per 100 km of main roads.
 sections:
   - heading: Since 2018
     paragraphs:
       - >-
         Strasbourg starts far ahead of the other French cities: in 2018 the map already held more
         A+B km than main-road km. A+B grew slowly and steadily, from 184 to 241 km, and the
-        headline (A+B km per 100 km of main roads) from 123.2 to 136.1. The headline dipped
+        headline (mapped A+B km per 100 km of main roads) from 123.2 to 136.1. The headline dipped
         from 132.6 to 116.9 in 2021 although A+B rose, because the main-road length it divides
         by went from 150 to 176 mapped km that year. The year was not flagged, so no cause is
         recorded.
       - >-
         The larger change is inside A+B. Tier B, shared foot and cycle paths, rose from 28 to 69
-        km while tier A stayed between 156 and 172 km. Much of that is tagging, not new paths: in
+        km while tier A stayed between 156 and 172 km. Part of that is tagging, not new paths: in
         spring 2024 mappers swept the city's cycle paths, adding segregation and designation tags
         and turning some cycleways into shared paths [#ts-strasbourg-2025]. Tier A fell and tier
         B rose that year while their sum moved normally. A 2022 footway campaign shows in the

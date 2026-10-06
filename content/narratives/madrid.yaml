@@ -2,16 +2,16 @@ city_id: madrid
 title: "Madrid: slow growth under three years of footway mapping"
 dek: >-
   Mapped A+B rose from 282 to 353 km between 2018 and October 2026, while the headline moved
-  only from 38.1 to 42.5 A+B km per 100 km of main roads.
+  only from 38.1 to 42.5 mapped A+B km per 100 km of main roads.
 sections:
   - heading: Since 2018
     paragraphs:
       - >-
         Madrid's mapped A+B was flat from 2018 to 2020, at 282 and then 278 km, and has risen a
-        little every year since, to 353 km now. The headline (A+B km per 100 km of main roads)
-        went from 38.1 to 42.5. Inside the total the map shifted between tiers: in 2021 tier A
-        rose from 186 to 225 km while tier B fell from 93 to 63 km. That year was not flagged
-        and has no recorded explanation.
+        little every year since, to 353 km now. The headline (mapped A+B km per 100 km of main
+        roads) went from 38.1 to 42.5. Inside the total the map shifted between tiers: in 2021 tier
+        A rose from 186 to 225 km while tier B fell from 93 to 63 km. That year was not flagged and
+        has no recorded explanation.
       - >-
         From 2024 on, Madrid's activity flags are a pedestrian campaign. Mappers added tens of
         thousands of sidewalks and crossings, and the crossings split existing cycleways into
@@ -28,12 +28,12 @@ sections:
     paragraphs:
       - >-
         The city's network figure, as the press reported it from the city's mobility department
-        [@madrid-ultimahora-1167km], is more than three times our A+B. The official release
-        behind it was not found, so the figure is secondary. It includes ciclocarriles, lanes
-        shared with motor traffic [@madrid-opendata-infraestructura-ciclista]; our tiers leave
-        such shared lanes out. Clean Cities' 8% protected sits close to our 7.7%, both against the whole
-        road network of the municipio; their data were collected by early 2025 [@cc2025-report].
-        BikeNetKit's network is longer than ours (−26.3%) because it includes living streets
+        [@madrid-ultimahora-1167km], is more than three times our A+B. The official release behind
+        it was not found, so the figure is secondary. It includes ciclocarriles, lanes shared with
+        motor traffic [@madrid-opendata-infraestructura-ciclista]; our tiers leave such shared lanes
+        out. Clean Cities' 8% protected sits close to our 7.7%, both against the whole road network
+        of the municipio; their data were collected by early 2025 [@cc2025-report]. BikeNetKit's
+        network is longer than ours (−26.3%) because it includes living streets
         [#rc-madrid-bnk_network_km]. QECIO reports the whole Comunidad de Madrid
         [#rc-madrid-qecio_main_km].
 quotes:

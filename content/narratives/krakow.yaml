@@ -17,7 +17,7 @@ sections:
         2022, is a tag change on contraflow lanes that leaves A+B on its normal course
         [#ts_lau_2022].
       - >-
-        The functional urban area grew from 202 to 541 mapped km. Its early jumps came from
+        The functional urban area grew from 202 to 541 mapped km. Its early jumps came largely from
         mappers adding long regional routes east of the city, the Wiślana Trasa Rowerowa in
         2019 and Velo Raba in 2020 [#ts_fua_2019].
   - heading: Why the figures differ
@@ -25,12 +25,12 @@ sections:
     paragraphs:
       - >-
         The city's own totals use a broad definition that also counts footways where cycling is
-        allowed and contraflow cycling in calmed streets, both outside our A+B, and they give
-        neither a length basis nor a counting method. Clean Cities 2025 counts protected
-        infrastructure [@cc2025-annexes]: its 229 km is below every OSM count near its date,
-        and our per-side A+B is 29.3% above it. As for Warsaw, the reason may be that shared
-        foot and cycle paths are left out, but that is an inference [#rec_cc_km]. Its road
-        network of 2,128 km is wider than our 1,718 km, so its ratio is 11% against our 17.2%.
+        allowed and contraflow cycling in calmed streets, both outside our A+B [@krakow-250km-2022],
+        and they give neither a length basis nor a counting method. Clean Cities 2025 counts
+        protected infrastructure [@cc2025-annexes]: its 229 km is below every OSM count near its
+        date, and our per-side A+B is 29.3% above it. As for Warsaw, the reason may be that shared
+        foot and cycle paths are left out, but that is an inference [#rec_cc_km]. Its road network
+        of 2,128 km is wider than our 1,718 km, so its ratio is 11% against our 17.2%.
 quotes:
   - excerpt: krakow-250km-2022/definition
     after: 3

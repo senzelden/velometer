@@ -2,16 +2,16 @@ city_id: barcelona
 title: "Barcelona: almost all tracks, growth until 2024"
 dek: >-
   Mapped A+B rose from 161 to 244 km between 2018 and October 2026, and the headline
-  from 34.6 to 55.1 A+B km per 100 km of main roads.
+  from 34.6 to 55.1 mapped A+B km per 100 km of main roads.
 sections:
   - heading: Since 2018
     paragraphs:
       - >-
-        Barcelona's map is nearly all one tier: separated tracks (tier A) hold 231 of the 244
-        mapped A+B km, and painted lanes barely appear, because the city's cycle infrastructure
-        is mapped as cycleways [#rc-barcelona-qecio_lanes_km]. A+B rose every year from 2018 to
-        2024, from 161 to 239 km, and has been nearly flat since. The headline (A+B km per 100 km
-        of main roads) went from 34.6 to 55.1.
+        Barcelona's map is nearly all one tier: separated tracks (tier A) hold 231 of the 244 mapped
+        A+B km, and painted lanes barely appear, because the city's cycle infrastructure is mapped
+        as cycleways [#rc-barcelona-qecio_lanes_km]. A+B rose every year from 2018 to 2024, from 161
+        to 239 km, and has been nearly flat since. The headline (mapped A+B km per 100 km of main
+        roads) went from 34.6 to 55.1.
       - >-
         The 2021 and 2022 points are flagged for a footway campaign led by one mapper, mostly in
         December 2020 and early 2021. Footways carry no tier. The cycling gain of 2021, 24.8 km,
@@ -27,13 +27,13 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The Ajuntament's bike-lane network [@barcelona-premsa-42km-2025] and Clean Cities' 264 km
-        of protected infrastructure both sit close to our A+B; ours is −7.7% from Clean Cities'.
+        The Ajuntament's bike-lane network [@barcelona-premsa-42km-2025] and Clean Cities' 264 km of
+        protected infrastructure both sit close to our A+B; ours is −7.7% from Clean Cities'.
         Neither says whether a two-sided street counts once or twice, and Clean Cities' data were
         collected by early 2025 [@cc2025-report]. A wider count of cycle routes, reported in the
         press, adds traffic-calmed streets with low speed limits [@barcelona-ara-32km-2021], a
-        category our tiers leave out. BikeNetKit counts more (−43.1%) because it includes living streets
-        [#rc-barcelona-bnk_network_km], and QECIO reports the whole province
+        category our tiers leave out. BikeNetKit counts more (−43.1%) because it includes living
+        streets [#rc-barcelona-bnk_network_km], and QECIO reports the whole province
         [#rc-barcelona-qecio_main_km].
 quotes:
   - excerpt: barcelona-premsa-42km-2025/network-268

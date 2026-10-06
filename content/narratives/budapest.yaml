@@ -8,15 +8,15 @@ sections:
     paragraphs:
       - >-
         Budapest's map grew slowly and without flags. Mapped A+B in the city went from 196 km in
-        2018 to 231 km in October 2026, and the headline, mapped A+B km per side per 100 km of main
+        2018 to 231 km in October 2026, and the headline, mapped A+B km per 100 km of main
         roads, from 19.4 to 22.3, the lowest of the 21 cities [#ts-lau]. Tier A carried the gain,
         from 126 to 162 km; tier B stayed between 66 and 76 km.
       - >-
-        The larger change is outside A+B. Painted lanes (D) rose from 72 to 161 km, with the
-        biggest step between the 2023 and 2024 points, from 118 to 153 km. That step is lane tags
-        added to existing roads, most of them last edited in late 2023; whether the markings were new or
-        existing ones mapped late cannot be told from the data [#shift-lau-2024]. Bus lanes open
-        to cycles (E) rose from 20 to 29 km. The headline counts neither tier.
+        The larger change is outside A+B. Painted lanes (D) rose from 72 to 161 km, with the biggest
+        step between the 2023 and 2024 points, from 118 to 153 km. That step is lane tags added to
+        existing roads, most of them last edited in late 2023; whether the markings were new or
+        existing ones mapped late cannot be told from the data [#shift-lau-2024]. Bus lanes open to
+        cycles (E) rose from 20 to 29 km. The headline counts neither tier.
       - >-
         The functional urban area grew faster than the city: A+B rose from 408 to 550 km, +35%
         against the city's +18% [#ts-fua].
@@ -24,13 +24,15 @@ sections:
     role: figures
     paragraphs:
       - >-
-        External figures agree closely where they measure the same thing. QECIO's region is the city itself,
-        and our main roads, tracks, lanes and shared paths are each within 6% of its numbers
+        External figures agree closely where they measure the same thing. QECIO's region is the city
+        itself, and our main roads, tracks, lanes and shared paths are each within 6% of its numbers
         [#recon]. Clean Cities' 212 km sits near our 231 km; its 4% is rounded to a whole percent
         from its own km [#recon-cc]. BikeNetKit counts 588 km, more than twice our 260 km of tiers
-        A, B and E, because it includes living streets, which no tier here counts [#recon-bnk].
-        City figures count other things, such as a city-managed inventory or a planned main
-        network [@budapest-bkk-kfht-helyzetertekeles-2022].
+        A, B and E, because it includes living streets, which no tier here counts [#recon-bnk]. City
+        figures count other things, such as a city-managed inventory or a planned main network
+        [@budapest-bkk-kfht-helyzetertekeles-2022]. A 2024 press analysis called km a poor indicator
+        and set an OpenStreetMap-based count against the statistics office's figure
+        [@budapest-telex-g7-2024].
 quotes:
   - {excerpt: budapest-telex-g7-2024/km-poor-indicator, after: 3}
   - {excerpt: budapest-telex-g7-2024/osm-vs-ksh, after: 3}

@@ -7,7 +7,7 @@ sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        Utrecht's headline rose from 179.7 km of A+B per 100 km of main roads in 2018 to 193.6
+        Utrecht's headline (mapped A+B km per 100 km of main roads) rose from 179.7 in 2018 to 193.6
         in October 2026; mapped A+B rose more modestly, from 341 to 360 km [#ts-utrecht]. The
         rest is the denominator: mapped main roads in the city fell slightly, from 190 to 186 km.
       - >-
@@ -25,12 +25,12 @@ sections:
     role: figures
     paragraphs:
       - >-
-        No current official total was found for the city. A historical-society article gives
-        older figures that keep cycle paths apart from painted lanes, quoted below
-        [@utrecht-oud-utrecht-fietsstad]; that is roughly our tiers A and B against tier D, but the date
-        is 2012 and the source is secondary. The city grits a main cycle path network
-        [@utrecht-actieplan-fietst-2015], a maintenance scope, not a total. Area: QECIO reports
-        the whole province, with 2,324 km of main roads against our 423 km for the city
+        No current official total was found for the city. A historical-society article gives older
+        figures that keep cycle paths apart from painted lanes, quoted below
+        [@utrecht-oud-utrecht-fietsstad]; that is roughly our tiers A and B against tier D, but the
+        date is 2012 and the source is secondary. The city grits a main cycle path network
+        [@utrecht-actieplan-fietst-2015], a maintenance scope, not a total. Area: QECIO reports the
+        whole province, with 2,324 km of main roads against our 423 km for the city
         [#recon-utrecht-qecio-main], so it is no benchmark. BikeNetKit, also from OpenStreetMap,
         counts 420 km against our 387 km of tiers A, B and E (−8%) [@bikenetkit-zenodo]; which
         boundary it uses is not stated by the source.

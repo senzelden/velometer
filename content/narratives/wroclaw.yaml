@@ -7,10 +7,10 @@ sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        Wrocław's map shows an even climb. Mapped A+B km in the city proper rose from 261 in 2018 to 399 in October 2026,
-        higher at every yearly point, and the headline went from 62.0 to 95.3. Separated tracks
-        (tier A) grew from 178 to 258 km and shared foot and cycle paths (tier B) from 83 to 141
-        km. Painted lanes stay minor, 22 to 32 km.
+        Wrocław's map shows an even climb. Mapped A+B km in the city proper rose from 261 in 2018 to
+        399 in October 2026, higher at every yearly point, and the headline went from 62.0 to 95.3.
+        Separated tracks (tier A) grew from 178 to 258 km and shared foot and cycle paths (tier B)
+        from 83 to 141 km. Painted lanes stay minor, 22 to 32 km.
       - >-
         The only flag on the city series sits on the 2018 starting point: in 2017 a single
         mapper drew much of the pedestrian network, footways rather than cycleways
@@ -25,12 +25,12 @@ sections:
     paragraphs:
       - >-
         The city hall's figures count wider networks than ours: its "cyclist-friendly routes"
-        include contraflow lanes and traffic-calmed zones, which our headline does not count,
-        and its other totals give no definition or length basis. Clean Cities 2025 counts
-        protected infrastructure, shared foot and cycle paths included [@cc2025-annexes]. Our
-        per-side A+B of 399 km is 12.3% above its 355 km, and 6.8% above on the centreline
-        basis, with a year and a half between the two dates [#rec_cc_ratio]. The ratio differs
-        more: its road network of 1,769 km is wider than our 1,340 km
+        include contraflow lanes and traffic-calmed zones, which our headline does not count
+        [@wroclaw-wroclife-nik-2023], and its other totals give no definition or length basis. Clean
+        Cities 2025 counts protected infrastructure, shared foot and cycle paths included
+        [@cc2025-annexes]. Our per-side A+B of 399 km is 12.3% above its 355 km, and 6.8% above on
+        the centreline basis, with a year and a half between the two dates [#rec_cc_ratio]. The
+        ratio differs more: its road network of 1,769 km is wider than our 1,340 km
         [#rec_cc_network], so its 20% stands against our 29.8%.
 quotes:
   - excerpt: wroclaw-wroclife-nik-2023/friendly-routes

@@ -8,7 +8,7 @@ sections:
     paragraphs:
       - >-
         Bratislava's mapped A+B went from 124 km in 2018 to 172 km in October 2026, and its
-        headline, mapped A+B km per side per 100 km of main roads, from 43.5 to 58.7 [#ts-lau]. The
+        headline, mapped A+B km per 100 km of main roads, from 43.5 to 58.7 [#ts-lau]. The
         path was not smooth. A+B fell from 132 km in 2019 to 113 km in 2020 and passed its 2019
         level again only in 2024. That fall was retagging during 2019: ways left the cycling tiers,
         the largest a long embankment path retagged as a footway, which was a cycleway again by
@@ -19,8 +19,9 @@ sections:
         no cycleway tag [#recon-lanes]. The activity flag on the current point is a pedestrian
         mapping campaign of sidewalks and crossings; A+B moved normally [#expl-lau-current].
       - >-
-        The functional urban area grew faster than the city, A+B from 284 to 443 km. Its 2022 jump is mostly newly mapped cycleways; the city's share of
-        it was 15.5 km [#ts-fua] [#expl-fua-2022].
+        The functional urban area grew faster than the city, A+B from 284 to 443 km. Its 2022 jump
+        is mostly newly mapped cycleways; the city's share of it was 15.5 km [#ts-fua]
+        [#expl-fua-2022].
   - heading: Why the figures differ
     role: figures
     paragraphs:
@@ -28,9 +29,10 @@ sections:
         Clean Cities 2025 and our figures roughly agree: it reports 186 km of protected
         infrastructure and 12% of the road network [@cc2025-report], against our 172 km and 13.2%
         [#recon]. QECIO measured the whole Bratislava region, more than five times the city's area,
-        so its km are not the city's [#recon-qecio]. The city reports km added by type, advisory lanes among them, and a
-        total of its own without a stated length basis [@bratislava-city-infra-2025]; the local
-        cycling NGO adds up both sides of a road, as we do [@bratislava-cyklokoalicia-2025].
+        so its km are not the city's [#recon-qecio]. The city reports km added by type, advisory
+        lanes among them, and a total of its own without a stated length basis
+        [@bratislava-city-infra-2025]; the local cycling NGO counted a new path on both sides of the
+        road, as we do [@bratislava-cyklokoalicia-2025].
 quotes:
   - {excerpt: bratislava-city-infra-2025/breakdown-total, after: 3}
   - {excerpt: bratislava-cyklokoalicia-2025/both-sides, after: 3}
