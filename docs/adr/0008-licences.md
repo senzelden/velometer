@@ -9,3 +9,4 @@
 - **Derived data:** ODbL 1.0, with the attribution "© OpenStreetMap contributors". This covers our tier lengths, metrics, exports and the app's CSV. BikeNetKit (Zenodo 22271229) is also ODbL, so its obligations are the same.
 - **External comparison numbers** are stored with source URL and retrieval date. Examples: Clean Cities, Copenhagenize, QECIO (no licence stated) and official city figures. They are cited, not redistributed beyond what citation allows.
 - **Test fixtures** containing real OSM data (the Berlin golden set) are ODbL. Each carries an attribution note.
+- **M7 narratives and quotations:** narratives quote external sources only, as short excerpts (at most 60 words) with attribution, publisher, title, date and link. Full texts are never stored. Excerpts and their English glosses live in `content/sources/*.yaml`; project documents are cited as data, not quoted.
