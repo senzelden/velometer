@@ -1842,3 +1842,58 @@ def serve(
     from velometer.app.main import create_app
 
     uvicorn.run(create_app(db, config_dir, maps, docs), host=host, port=port)
+
+
+@app.command()
+def content(
+    check: bool = typer.Option(
+        False, "--check", help="Validate quotes, facts, numbers and wording; exit 1 on problems."
+    ),
+    online: bool = typer.Option(
+        False, "--online", help="With --check: also fetch each source URL and find its excerpts."
+    ),
+    content_dir: Path = typer.Option(Path("content"), "--content", help="Content directory."),  # noqa: B008
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+    docs: Path = DOCS_OPT,
+) -> None:
+    """The narrative and source content the reader app renders: summary, or --check it."""
+    from velometer.content import check as ck
+    from velometer.content.loader import load_sources
+    from velometer.content.models import ContentError
+
+    if not check:
+        try:
+            n, s, k = ck.counts(content_dir)
+        except ContentError as e:
+            typer.echo(f"error: {e}", err=True)
+            raise typer.Exit(1) from e
+        typer.echo(f"{n} narratives, {s} sources, {k} excerpts")
+        return
+
+    from velometer.report.data import ReportData, open_readonly
+
+    try:
+        conn = open_readonly(db)
+    except (FileNotFoundError, SchemaError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        problems = ck.check_content(content_dir, ReportData(conn, config_dir), docs)
+    except ConfigError as e:
+        raise _config_error(e) from e
+    except sqlite3.Error as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    finally:
+        conn.close()
+    if online and not problems:
+        try:
+            problems = ck.check_online(load_sources(content_dir / "sources"))
+        except ContentError as e:
+            problems = [str(e)]
+    for p in problems:
+        typer.echo(p, err=True)
+    if problems:
+        raise typer.Exit(1)
+    typer.echo("ok")
