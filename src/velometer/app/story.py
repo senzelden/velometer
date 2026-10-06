@@ -48,8 +48,8 @@ def _first_last_km(payload: dict, city_id: str) -> tuple[float | None, float | N
 
 def _growth_highlights(payload: dict) -> list[str]:
     """The cities a growth story talks about, by data rules, at most MAX_HIGHLIGHTED in this
-    priority: the largest A+B km gain, the four fastest risers by index, then every city below its
-    first-year level (the lowest index first)."""
+    priority: the five largest A+B km gains, the four fastest risers by index, then every city
+    below its first-year level (the lowest index first). A city in two groups counts once."""
     ids = list(payload["cities"])
     gain = {}
     for i in ids:
@@ -58,7 +58,7 @@ def _growth_highlights(payload: dict) -> list[str]:
     index = {i: _growth(payload, i) for i in ids}
     below = [i for i in ids if index[i] is not None and index[i] < 100]
     below.sort(key=lambda i: (index[i], payload["cities"][i]["name"]))
-    order = _top(gain, payload, True)[:1] + _top(index, payload, True)[: TOP_N - 1] + below
+    order = _top(gain, payload, True) + _top(index, payload, True)[: TOP_N - 1] + below
     return list(dict.fromkeys(order))[: cmp.MAX_HIGHLIGHTED]
 
 

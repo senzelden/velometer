@@ -84,8 +84,9 @@
         if (cfg.colours[c]) counts[c] = (counts[c] || 0) + 1;
       });
       say(
+        "Way-sides: " +
         Object.keys(cfg.colours)
-          .map(function (c) { return (counts[c] || 0) + " " + cfg.labels[c]; })
+          .map(function (c) { return (counts[c] || 0).toLocaleString("en-GB") + " " + cfg.labels[c]; })
           .join(" · ") + ". Click a way-side for its way and mapped km."
       );
     })

@@ -1164,3 +1164,134 @@ def test_the_jumps_step_rings_only_km_jumps_and_the_phone_keeps_the_mapped_km_no
     assert "data-story-short" in html and config["jumps"]["short"].startswith(
         "Mapped km in OpenStreetMap"
     )
+
+
+# ---------- Task 14 render check: what a reader sees ----------
+
+
+def _diffs_rows(db_path, cfg, maps, docs, figures) -> list[str]:
+    from velometer.db import open_db, replace_external_figures
+
+    with open_db(db_path) as w:
+        replace_external_figures(w, "official", figures)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/figures").text
+    table = html[html.index('<table class="diffs">') :].split("</table>")[0]
+    return [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
+
+
+def test_figures_rows_show_the_metric_label_not_its_id(setup):  # noqa: F811
+    from tests.report_fixture import _figure
+
+    rows = _diffs_rows(*setup, [_figure("berlin", "official", "new_cycle_infra_km", 21.2)])
+    cell = re.search(r'<td data-label="Figure"([^>]*)>(.*?)</td>', rows[0], re.S)
+    assert _text(cell.group(2)).strip() == "newly created cycle infrastructure"
+    assert 'title="new_cycle_infra_km"' in cell.group(1)  # the id stays reachable on hover
+
+
+def test_figures_rows_say_when_a_source_states_no_reference_date(setup):  # noqa: F811
+    from tests.report_fixture import _figure
+
+    fig = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    rows = _diffs_rows(*setup, [fig.model_copy(update={"reference_date": None})])
+    assert "reference date not stated" in _text(rows[0])
+    assert "reference date ?" not in _text(rows[0])
+
+
+@pytest.mark.parametrize(
+    ("note", "shown", "hidden"),
+    [
+        ("primary; Drucksache 19/25987", "primary source", ">primary<"),
+        ("secondary; dpa text", "secondary source", ">secondary<"),
+        ("primary-by-agency (owner unverified); x", "primary source, published by the agency",
+         "primary-by-agency"),
+    ],
+)  # fmt: skip
+def test_figures_notes_never_show_a_raw_csv_prefix(setup, note, shown, hidden):  # noqa: F811
+    from tests.report_fixture import _figure
+
+    fig = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    rows = _diffs_rows(*setup, [fig.model_copy(update={"note": note})])
+    assert shown in _text(rows[0]) and hidden not in rows[0]
+
+
+def test_the_reported_and_comparison_tables_say_not_stated_for_a_missing_date(setup):  # noqa: F811
+    from tests.report_fixture import _figure
+    from velometer.db import open_db, replace_external_figures
+
+    db_path, cfg, maps, docs = setup
+    fig = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    with open_db(db_path) as w:
+        replace_external_figures(w, "official", [fig.model_copy(update={"reference_date": None})])
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/figures").text
+    reported = html[html.index("Official and reported figures") :]
+    assert "not stated" in reported and ">?<" not in reported and "(?)" not in html
+    assert '<td class="date">not stated</td>' in reported  # a date cell never wraps
+
+
+def test_the_figures_ours_column_is_wide_enough_to_read():
+    from tests.test_app import _css_rules
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    ours = [d for sels, d in rules if "table.diffs td:nth-child(4)" in sels]
+    assert ours and float(ours[0]["min-width"].removesuffix("rem")) >= 11  # [0]: desktop rule
+
+
+def test_the_methodology_page_drops_the_generated_file_note(setup):  # noqa: F811
+    """The docs file starts with a maintainer note ("Do not edit by hand") and a link to the
+    German .md file, which is a 404 in the app; the page has its own English/Deutsch switch."""
+    docs_real = Path(__file__).parents[1] / "docs"
+    db_path, cfg, maps, _docs_unused = setup
+    with _client(create_app(db_path, cfg, maps, docs_real)) as c:
+        for path in ("/methodology", "/methodology/de"):
+            html = c.get(path).text
+            assert "methodology.de.md" not in html and "methodology.md" not in html, path
+            assert "<h1>" in html, path
+
+
+def test_growth_highlights_include_every_one_of_the_largest_km_gains():
+    """The growth text names the largest km gains as well as the fastest risers; a city with a
+    large km gain but an ordinary index must be coloured too (Wrocław in the real data)."""
+    payload = _growth_payload()
+    # w: second-largest km gain (+150 after g's +200), but an index of only 115: not a fast riser
+    payload["cities"]["w"] = {"name": "W"}
+    payload["series"]["w/lau"] = [
+        {"label": "2018", "ab_km": 1000, "flags": ""},
+        {"label": "current", "ab_km": 1150, "flags": "", "osm": "2026-10-01"},
+    ]
+    hl = story.pick(payload, "growth")
+    assert "w" in hl and hl[:2] == ["g", "w"] and len(hl) <= 8
+    assert {"b1", "b2"} <= set(hl)  # the cities below their first year stay highlighted
+
+
+def test_a_kicker_sits_on_the_heading_it_labels():
+    from tests.test_app import _css_rules
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    h2 = [d for sels, d in rules if ".kicker + h2" in sels]
+    assert h2 and float(h2[-1]["margin-top"].removesuffix("rem")) < 0.5
+
+
+def test_the_change_map_has_a_legend_for_each_colour(subarea_setup):  # noqa: F811
+    from tests.test_app import _write_change
+    from velometer.report.change import CATEGORY_COLOURS
+
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/bezirke").text
+    section = html.split('id="changemap"')[1].split("</section>")[0]
+    legend = re.search(r'<ul class="changemap-legend"[^>]*>(.*?)</ul>', section, re.S)
+    assert legend, "the change map's colours need a key"
+    for category, colour in CATEGORY_COLOURS.items():
+        assert re.search(rf'fill="{colour}".*?mapped {category}', legend.group(1), re.S)
+
+
+def test_a_narrative_backtick_tag_renders_as_code_and_stays_escaped():
+    from velometer.app.narrative import _Numbering
+
+    html = str(_Numbering({}, {}).paragraph("paths gained `segregated=yes` and `<b>x</b>`, a & b"))
+    assert "`" not in html
+    assert "<code>segregated=yes</code>" in html
+    assert "<code>&lt;b&gt;x&lt;/b&gt;</code>" in html and "a &amp; b" in html

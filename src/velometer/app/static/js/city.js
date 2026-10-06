@@ -7,6 +7,7 @@ import { formatValue } from "./chart-core.js";
 import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
+const BOUNDARY_SHORT = { lau: "City proper", fua: "Metro area" }; // end labels of narrow charts
 const UNIT = "per 100 km of main roads";
 
 function headline(el, D) {
@@ -20,6 +21,7 @@ function headline(el, D) {
     series: kinds.map((k, i) => ({
       id: k,
       name: BOUNDARY[k],
+      short: BOUNDARY_SHORT[k],
       colour: PALETTE[i],
       points: pointsOn(lists[i], labels, "headline"),
     })),

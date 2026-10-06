@@ -108,6 +108,7 @@ th, td { padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--grid); text-ali
 th, td, th *, td * { overflow-wrap: normal; }
 th { color: var(--ink-2); font-weight: 600; white-space: nowrap; }
 td code { white-space: nowrap; }
+td.date { white-space: nowrap; } /* 2025-12-31 never breaks at its hyphens */
 .align-center { text-align: center; }
 .align-left { text-align: left; }
 th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -144,6 +145,8 @@ td.down { color: var(--down); }
 }
 .card:hover, .card:focus-visible { border-color: var(--grid-2); box-shadow: 0 4px 16px rgb(0 0 0 / 0.06); }
 .kicker { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+p.kicker { margin: 2rem 0 0; }
+.kicker + h2 { margin-top: 0.15rem; } /* the kicker labels the heading under it */
 .card-title { font-family: var(--serif); font-weight: 600; font-size: 1.1rem; }
 .card-text { color: var(--ink-2); font-size: 0.9rem; }
 .card .more { margin-top: auto; padding-top: 0.4rem; color: var(--accent); font-size: 0.88rem; }
@@ -215,6 +218,7 @@ footer p { margin: 0.25rem 0; }
 .tiermap-controls legend { float: left; margin-right: 0.5rem; color: var(--ink-2); font-weight: 600; font-size: 0.9rem; }
 .tiermap-controls label { white-space: nowrap; font-size: 0.9rem; }
 .swatch { display: inline-block; vertical-align: middle; border: 0; }
+.changemap-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.4rem 0 0; padding: 0; font-size: 0.9rem; color: var(--ink-2); }
 /* Standard OSM draws main roads orange/red, which reads as tiers B and D: grey the tiles out
    and fade them. Only the tile layer's class: the tier lines (vector canvas) keep their colours. */
 .tiermap-tiles { filter: grayscale(1) contrast(0.8) brightness(1.08); opacity: 0.7; }
@@ -272,6 +276,8 @@ footer p { margin: 0.25rem 0; }
 
 /* ---------- figures: why they differ ---------- */
 table.diffs td { min-width: 7rem; }
+table.diffs td.num { min-width: 0; white-space: nowrap; }
+table.diffs td:nth-child(4) { min-width: 12rem; } /* Ours: the value and what it counts */
 table.diffs td:last-child { min-width: 16rem; }
 dl.drivers { margin: 0; font-size: 0.88rem; }
 dl.drivers div { margin-bottom: 0.35rem; }
@@ -291,9 +297,9 @@ dl.drivers dd { margin: 0; color: var(--ink-2); }
 @media (max-width: 600px) {
   table.diffs, .diffs tbody { display: block; }
   .diffs thead { display: none; }
-  .diffs tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
+  .diffs tr { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr) minmax(0, 0.7fr); gap: 0.25rem 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
   .diffs td { display: block; border: 0; padding: 0; min-width: 0; }
-  table.diffs td, table.diffs td:last-child { min-width: 0; }
+  table.diffs td, table.diffs td:nth-child(4), table.diffs td:last-child { min-width: 0; }
   .diffs td:nth-child(1), .diffs td:nth-child(2), .diffs td:nth-child(6) { grid-column: 1 / -1; }
   .diffs td[data-label]:nth-child(n+3):nth-child(-n+5)::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
   .diffs td.num { text-align: left; }

@@ -89,3 +89,18 @@ test("renderTiers and renderSparkline carry accessible names", () => {
   renderSparkline(sp, labels.map((label, i) => ({ label, value: i })));
   assert.ok(sp.children[0].attrs["aria-label"]);
 });
+
+test("renderLines uses a series' short name when the full end label would be cut", () => {
+  const el = new Node("div");
+  const s = (id, name, short, v) => ({ ...mk(id, name, v, "#111"), short });
+  renderLines(el, { labels, series: [
+    s("lau", "City proper (LAU)", "City proper", [1, 2, 3]),
+    s("fua", "Metro area (FUA)", "Metro area", [3, 2, 1]),
+  ] }, { height: 200, width: 320 });
+  const ends = el.children[0].find("text").filter((t) => t.attrs.class === "el").map((t) => t.textContent);
+  assert.deepEqual(ends.sort(), ["City proper", "Metro area"]);
+  const wide = new Node("div");
+  renderLines(wide, { labels, series: [s("lau", "City proper (LAU)", "City proper", [1, 2, 3])] },
+    { height: 200, width: 900 });
+  assert.ok(wide.children[0].find("text").some((t) => t.textContent === "City proper (LAU)"));
+});

@@ -61,6 +61,9 @@ CHANGE_NAME = re.compile(
 )
 EXPLANATIONS = Path("review") / "m3_timeseries.md"
 METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
+# The docs file opens with a maintainer note (a blockquote: "generated, do not edit", a link to
+# the other language's .md file). The page has its own language switch and drops it.
+GENERATED_NOTE = re.compile(r"\A(?:>[^\n]*\n)+\s*")
 # The Host headers the app answers: the loopback names `velometer serve` binds to. Any other
 # Host (a DNS-rebinding page pointing its own name at 127.0.0.1) gets a 400.
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
@@ -185,6 +188,26 @@ def _clause(note: str, limit: int = 90) -> str:
     return first if len(first) <= limit else first[: limit - 1].rstrip() + "…"
 
 
+# The provenance prefix of an external figure's CSV note and how a reader is told it.
+NOTE_PREFIX = re.compile(r"^\s*(primary-by-agency|primary|secondary)\b\s*(\([^)]*\))?\s*[;:]?\s*")
+NOTE_PREFIX_TEXT = {
+    "primary": "primary source",
+    "secondary": "secondary source",
+    "primary-by-agency": "primary source, published by the agency",
+}
+
+
+def _note_clause(note: str) -> str:
+    """A figure's note as the Figures tab shows it: the CSV provenance prefix (`primary`,
+    `secondary`, `primary-by-agency`) in words, then the first clause of the rest."""
+    m = NOTE_PREFIX.match(note or "")
+    if not m:
+        return _clause(note or "")
+    head = NOTE_PREFIX_TEXT[m.group(1)] + (f" {m.group(2)}" if m.group(2) else "")
+    rest = note[m.end() :]
+    return f"{head}: {_clause(rest)}" if rest.strip() else head
+
+
 def _when(label: str, osm_timestamp: str | None = None) -> str:
     """A series label as the reader sees it: a year is "Jan <year>" (1 January snapshots), the
     current run its snapshot month ("Oct 2026")."""
@@ -241,11 +264,11 @@ def create_app(
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
     templates.env.filters["when"] = _when
-    # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
     templates.env.filters["http_url"] = safe_url
     templates.env.filters["host"] = _host
-    templates.env.filters["clause"] = _clause
+    templates.env.filters["clause"] = _note_clause
     templates.env.filters["unit"] = lambda u: UNITS.get(u, u)
+    # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
     templates.env.filters["strip_ours"] = lambda v: OURS_PREFIX.sub("", v or "")
 
     cache = PageCache()
@@ -780,7 +803,7 @@ def create_app(
     def methodology(request: Request, data: ReportData, lang: str) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[lang]
         try:
-            body = _md(path.read_text(encoding="utf-8"))
+            body = _md(GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")))
         except OSError:
             body = None
         return page(

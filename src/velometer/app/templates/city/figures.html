@@ -14,8 +14,8 @@
 <tbody>
 {% for r in differences %}
 <tr>
-  <td data-label="Source">{{ source_names.get(r.source, r.source) }}<br><span class="meta">reference date {{ r.reference_date or "?" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
-  <td data-label="Figure"><code>{{ r.metric }}</code>{% if metric_labels.get(r.metric) %}<br><span class="meta">{{ metric_labels[r.metric] }}</span>{% endif %}</td>
+  <td data-label="Source">{{ source_names.get(r.source, r.source) }}<br><span class="meta">reference date {{ r.reference_date or "not stated" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
+  <td data-label="Figure" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
   <td class="num" data-label="Theirs">{{ r.theirs | num }} {{ r.unit | unit }}</td>
   <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
   <td class="num" data-label="Gap">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
@@ -60,7 +60,7 @@
   <td class="num">{{ g.theirs | num }}</td>
   <td class="num">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
   <td>{% if g.informational %}info{% elif g.flagged %}yes{% else %}no{% endif %}</td>
-  <td>{{ g.source }} ({{ g.reference_date or "?" }})</td>
+  <td>{{ g.source }} ({{ g.reference_date or "date not stated" }})</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -87,7 +87,7 @@
   <td>{{ f.unit }}</td>
   <td>{{ f.network_scope }}</td>
   <td>{{ f.length_basis }}</td>
-  <td>{{ f.reference_date or "?" }}</td>
+  <td class="date">{{ f.reference_date or "not stated" }}</td>
   <td>{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}</td>
 </tr>
 {% if f.note %}<tr class="note-row"><td colspan="8" class="meta">{{ f.note }}</td></tr>{% endif %}

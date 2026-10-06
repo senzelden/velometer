@@ -18,6 +18,9 @@ const fit = (t, px) => {
   return t.length > max ? t.slice(0, max - 1) + "…" : t;
 };
 
+// a series may carry a `short` name for an end label that has no room for the full one
+const endName = (s, px) => (s.short && fit(s.name, px) !== s.name ? s.short : s.name);
+
 function emptyNote(el, message = "No values for this selection.") {
   const p = document.createElement("p");
   p.className = "empty";
@@ -178,7 +181,7 @@ export function renderLines(el, model, opts = {}) {
     }
     g.appendChild(
       svgEl("text", { class: "el", x: it.x0 + 8, y: y + 3.5, "text-anchor": "start",
-        fill: it.s.colour ?? null }, fit(it.s.name, mr - 10)),
+        fill: it.s.colour ?? null }, fit(endName(it.s, mr - 10), mr - 10)),
     );
   }
 

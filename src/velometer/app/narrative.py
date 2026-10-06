@@ -1,10 +1,11 @@
 """Narratives and the explainer as HTML: paragraphs with numbered citations and pull-quotes.
 
 The text is external content. Every paragraph, quote and caption is HTML-escaped first and only
-then are the `[@source_id]` and `[#data_ref]` markers turned into links, so nothing a content
-file contains reaches the page as markup. Citations are numbered in first-use order over the
-whole document; a tab that shows part of it lists the sources and data it cites under those same
-numbers. A marker or quote naming something the registry lacks renders as a note, never an error.
+then are `code` spans marked and the `[@source_id]` and `[#data_ref]` markers turned into links,
+so nothing a content file contains reaches the page as markup. Citations are numbered in
+first-use order over the whole document; a tab that shows part of it lists the sources and data
+it cites under those same numbers. A marker or quote naming something the registry lacks renders
+as a note, never an error.
 """
 
 import re
@@ -16,6 +17,7 @@ from velometer.content.models import DataRef, Explainer, Narrative, Quote, Sourc
 
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
+CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
 MISSING = Markup('<span class="note">source missing</span>')
 MISSING_REF = Markup('<span class="note">data reference missing</span>')
 
@@ -77,6 +79,7 @@ class _Numbering:
             return f'<sup class="dref"><a href="#ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
+        body = CODE_MARK.sub(r"<code>\1</code>", body)
         return Markup(f"<p>{REF_MARK.sub(ref, SOURCE_MARK.sub(source, body))}</p>")
 
 
