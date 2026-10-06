@@ -30,7 +30,11 @@ from markupsafe import Markup
 from velometer import timeseries as ts
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
+from velometer.app.narrative import render_explainer, render_narrative
 from velometer.app.series import series_payload
+from velometer.config import ConfigError, load_differences
+from velometer.content.loader import load_explainer, load_narratives, load_sources
+from velometer.content.models import ContentError
 from velometer.db import SchemaError, subarea_names
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
@@ -41,6 +45,7 @@ from velometer.report.csvexport import (
     csv_table,
 )
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, open_readonly
+from velometer.report.differences import difference_rows
 from velometer.run import git_commit
 from velometer.selection import report_selector
 
@@ -72,6 +77,15 @@ CSP = (
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
+# The city page's tabs: key, label, path suffix. Bezirke only for a city with subareas.
+TABS = [
+    ("story", "Story", ""),
+    ("time", "Over time", "/time"),
+    ("tiers", "Tiers", "/tiers"),
+    ("figures", "Figures", "/figures"),
+    ("bezirke", "Bezirke", "/bezirke"),
+]
+OURS_PREFIX = re.compile(r"^\s*ours:\s*", re.I)
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
@@ -179,6 +193,8 @@ def create_app(
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
     templates.env.filters["when"] = _when
+    # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
+    templates.env.filters["strip_ours"] = lambda v: OURS_PREFIX.sub("", v or "")
 
     cache = PageCache()
 
@@ -363,13 +379,122 @@ def create_app(
         )
         return JSONResponse(payload)
 
+    def content():
+        """(narratives, sources, explainer, error) of the content dir; an unreadable file is an
+        error string shown as a note, never a 500."""
+
+        def build():
+            try:
+                sources = load_sources(content_dir / "sources")
+                narratives = load_narratives(content_dir / "narratives")
+                explainer = load_explainer(content_dir / "explainer.yaml")
+            except ContentError as e:
+                return {}, {}, None, str(e)
+            return narratives, sources, explainer, None
+
+        return build
+
+    def narrative_of(request: Request, city_id: str):
+        """The city's rendered narrative (None without one) and a note about unreadable content."""
+        narratives, sources, _, error = cache.get("content", fp(request), content())
+
+        def build():
+            n = narratives.get(city_id)
+            return None if n is None else render_narrative(n, sources)
+
+        return cache.get(f"narrative:{city_id}", fp(request), build), error
+
+    def figures_context(data: ReportData, city_id: str) -> dict:
+        try:
+            cfg = load_differences(config_dir / "differences.yaml")
+            rows = difference_rows(data, city_id, cfg)
+        except (ConfigError, OSError):
+            return {
+                "differences": None,
+                "dimensions": [],
+                "dimension_labels": {},
+                "metric_labels": {},
+            }
+        return {
+            "differences": rows,
+            "dimensions": cfg.dimensions,
+            "dimension_labels": {d.id: d.label for d in cfg.dimensions},
+            "metric_labels": cfg.labels,
+        }
+
+    def city_page(request: Request, city_id: str, tab: str, data: ReportData) -> HTMLResponse:
+        ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
+        if tab == "bezirke" and not ctx["bezirke"]:
+            raise HTTPException(404, f"{city_id!r} has no Bezirke")
+        extra: dict = {}
+        if tab == "figures":
+            extra = cache.get(
+                f"figures:{city_id}", fp(request), lambda: figures_context(data, city_id)
+            )
+        nar, note = narrative_of(request, city_id)
+        role = {"story": "story", "figures": "figures"}.get(tab)
+        cited_sources, cited_refs = nar.cited(nar.of_role(role)) if nar and role else ([], [])
+        label = next(t[1] for t in TABS if t[0] == tab)
+        tabs = [
+            {"key": k, "label": lbl, "href": f"/city/{city_id}{suffix}"}
+            for k, lbl, suffix in TABS
+            if k != "bezirke" or ctx["bezirke"]
+        ]
+        return page(
+            request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
+            tabs=tabs, nar=nar, content_error=note, cited_sources=cited_sources,
+            cited_refs=cited_refs,
+        )  # fmt: skip
+
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):
-        def build() -> dict:
-            return city_context(data, city_id)
+        return city_page(request, city_id, "story", data)
 
-        ctx = cache.get(f"city:{city_id}", fp(request), build)
-        return page(request, "city.html", "city", data, **ctx)
+    @app.get("/city/{city_id}/{tab}", response_class=HTMLResponse)
+    async def city_tab(request: Request, city_id: str, tab: str, data: Data):
+        if tab not in {k for k, _, suffix in TABS if suffix}:
+            raise HTTPException(404, f"unknown tab {tab!r}")
+        return city_page(request, city_id, tab, data)
+
+    @app.get("/differences", response_class=HTMLResponse)
+    async def differences(request: Request, data: Data):
+        _, sources, explainer, error = cache.get("content", fp(request), content())
+
+        def build():
+            return None if explainer is None else render_explainer(explainer, sources)
+
+        doc = cache.get("differences", fp(request), build)
+        try:
+            cfg = load_differences(config_dir / "differences.yaml")
+            labels = {d.id: d.label for d in cfg.dimensions}
+        except (ConfigError, OSError):
+            labels = {}
+        sources = [] if doc is None else sorted(doc.sources.items())
+        refs = [] if doc is None else sorted(doc.refs.items())
+        cities = [c for g in by_country(data) for c in g["cities"]]
+        return page(
+            request, "differences.html", "differences", data, doc=doc, content_error=error,
+            cited_sources=sources, cited_refs=refs, nar=doc, dimension_labels=labels,
+            cities=cities,
+        )  # fmt: skip
+
+    def keynums(summary: dict, fua, fua_now: float | None, flagged: int) -> list[dict]:
+        """The five numbers of the city header's `.keynums` row (LAU unless it says FUA)."""
+        point, change = summary["point"], summary["change"]
+        return [
+            {"label": f"Headline, {summary['now_label'] or 'now'}", "value": _num(summary["now"]),
+             "sub": "per 100 km of main roads"},
+            {"label": f"Since {summary['first_label'] or 'the first year'}",
+             "value": "n/a" if change is None else f"{change:+.1f}".replace("-", "\u2212"),
+             "tone": None if change is None else ("up" if change >= 0 else "down"),
+             "sub": "n/a" if summary["first"] is None else f"from {_num(summary['first'])}"},
+            {"label": "A+B mapped km",
+             "value": "n/a" if point is None else _num(point.ab_km, ",.0f"),
+             "sub": "per side" + (f", {summary['now_label']}" if point else "")},
+            {"label": "Metro area (FUA)", "value": _num(fua_now),
+             "sub": "headline" + (f", {_when(ts.CURRENT, fua.osm_timestamp)}" if fua else "")},
+            {"label": "Flagged years", "value": str(flagged), "sub": "LAU, with explanations"},
+        ]  # fmt: skip
 
     def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
@@ -416,9 +541,23 @@ def create_app(
             "outline": charts.OUTLINE,
             "kinds": map_kinds,
         }
+        summary = city_summary(data, c)
+        lau = summary["point"]
+        fua = data.current(city_id, "fua")
         return {
             "city": c,
             "country": country_name(c.country_iso2),
+            "residents": lau.population_value if lau else None,
+            "keynums": keynums(
+                summary,
+                fua,
+                headline_of(fua),
+                len(next(k for k in kinds if k["kind"] == "lau")["flags"]),
+            ),
+            "compare_groups": [
+                {**g, "cities": [o for o in g["cities"] if o.id != city_id]}
+                for g in by_country(data)
+            ],
             "bezirke": bezirke_context(data, city_id),
             "kinds": kinds,
             "yearly": yearly,

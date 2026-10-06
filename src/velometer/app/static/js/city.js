@@ -1,5 +1,5 @@
-// City page charts: headline over time (LAU and FUA), tier composition per boundary and the
-// Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
+// City page charts (Story, Over time, Tiers and Bezirke tabs): headline over time (LAU and FUA),
+// tier composition per boundary and the Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
 // mounts. Every value is also in a table on the page.
 import { renderLines, renderSmallMultiples, renderTiers } from "./chart.js";
 import { formatValue } from "./chart-core.js";
@@ -25,7 +25,7 @@ function headline(el, D) {
   };
   mount(el, () =>
     renderLines(el, model, {
-      height: 300,
+      height: Number(el.dataset.height) || 300,
       zero: true,
       label: `Line chart: headline over time, ${D.cities[id]?.name ?? id}, LAU and FUA`,
       tip: (s, p, label) =>

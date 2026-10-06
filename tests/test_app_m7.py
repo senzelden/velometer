@@ -8,10 +8,12 @@ from fastapi.testclient import TestClient
 
 from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtures
     BASE_URL,
+    EXPLANATION,
     ROUTES,
     _client,
     _text,
     setup,
+    subarea_client,
     subarea_setup,
 )
 from velometer.app.cache import fingerprint
@@ -243,7 +245,7 @@ def test_bezirk_change_table_has_no_inline_style(subarea_setup):  # noqa: F811
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
+        html = c.get("/city/berlin/bezirke").text
     assert "Mapped change" in html and "<td>West</td>" in html
     assert not re.search(r"\sstyle=", html)
 
@@ -270,3 +272,318 @@ def test_a_city_without_a_headline_year_shows_na_not_a_zero_change(setup, monkey
     assert "+0.0" not in row
     assert row.count("n/a") >= 2  # first year and change
     assert 'class="num up"' not in row and 'class="num down"' not in row
+
+
+# ---------------------------------------------------------------------------------------------
+# Task 11: city tabs, narratives, Figures, the explainer
+# ---------------------------------------------------------------------------------------------
+SOURCE_YAML = """\
+sources:
+- id: berlin-src
+  publisher: Senat Berlin
+  title: Fortschrittsbericht 2025
+  url: https://example.org/report
+  published: '2026-05-20'
+  accessed: '2026-10-06'
+  language: de
+  kind: official
+  excerpts:
+  - id: q1
+    text: Insgesamt sind 78,2 km umgesetzt worden.
+    gloss_en: In total 78.2 km have been implemented.
+    locator: p. 1
+- id: en-src
+  publisher: Example NGO
+  title: Index
+  url: https://example.org/index
+  accessed: '2026-10-06'
+  language: en
+  kind: ngo
+  excerpts:
+  - id: e1
+    text: Protected means separated.
+    locator: p. 2
+"""
+NARRATIVE_YAML = """\
+city_id: berlin
+title: "Berlin <b>story</b>"
+dek: A dek.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        First paragraph [@berlin-src] and again [@berlin-src] with data [#ts]
+        <script>alert(1)</script>.
+      - Second paragraph [@en-src], an unknown [@nope] and an odd ref [#bad].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - Figures paragraph [@en-src].
+quotes:
+  - {excerpt: berlin-src/q1, after: 0}
+  - {excerpt: berlin-src/missing, after: 1}
+  - {excerpt: en-src/e1, after: 2}
+data_refs:
+  - id: ts
+    label: velometer series
+    file: docs/review/m3_timeseries.md
+    route: /city/berlin/time
+  - {id: bad, label: "bad route", route: "javascript:alert(1)"}
+"""
+EXPLAINER_YAML = (
+    """\
+title: Why the figures differ
+intro:
+  - Intro paragraph [@en-src].
+sections:
+"""
+    + "".join(
+        f"  - dimension: {d}\n    heading: Heading {d}\n    paragraphs:\n      - Text of {d}.\n"
+        for d in ["scope", "kind", "length", "date", "area", "method"]
+    )
+    + """\
+quotes:
+  - {excerpt: en-src/e1, after: 2}
+"""
+)
+
+
+@pytest.fixture
+def content(tmp_path):
+    root = tmp_path / "content"
+    (root / "sources").mkdir(parents=True)
+    (root / "narratives").mkdir()
+    (root / "sources" / "x.yaml").write_text(SOURCE_YAML)
+    (root / "narratives" / "berlin.yaml").write_text(NARRATIVE_YAML)
+    return root
+
+
+@pytest.fixture
+def cclient(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        yield c
+
+
+def test_story_tab_shows_title_quote_citations_and_sources(cclient):
+    html = cclient.get("/city/berlin").text
+    assert '<h2 class="story-title">Berlin &lt;b&gt;story&lt;/b&gt;</h2>' in html
+    assert '<blockquote lang="de">Insgesamt sind 78,2 km umgesetzt worden.</blockquote>' in html
+    assert '<sup><a href="#src-1">1</a></sup>' in html
+    assert '<li id="src-1" value="1">Senat Berlin, <cite>Fortschrittsbericht 2025</cite>' in html
+    assert 'href="https://example.org/report"' in html
+    caption = re.search(r"<figcaption>(.*?)</figcaption>", html, re.S).group(1)
+    assert "Senat Berlin" in caption and "2026-05-20" in caption and "In total 78.2" in caption
+    assert 'href="https://example.org/report"' in caption
+
+
+def test_citations_are_numbered_in_first_use_order_with_a_separate_data_list(cclient):
+    html = cclient.get("/city/berlin").text
+    first = html.index("First paragraph")
+    assert html.index('href="#src-1"', first) < html.index('href="#src-2"', first)
+    assert html.count('href="#src-1"') == 2  # cited twice, numbered once
+    assert '<li id="src-2" value="2">Example NGO' in html
+    assert (
+        '<a href="#ref-1">1</a>' in html
+        and '<li id="ref-1" value="1"><a href="/city/berlin/time">' in html
+    )
+
+
+def test_content_is_escaped_never_raw_html(cclient):
+    html = cclient.get("/city/berlin").text
+    assert "<script>alert(1)</script>" not in html and "<b>story</b>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+
+
+def test_a_data_ref_with_a_non_path_route_is_not_a_link(cclient):
+    html = cclient.get("/city/berlin").text
+    assert "javascript:" not in html and "bad route" in html
+
+
+def test_a_city_without_a_narrative_says_so(cclient):
+    assert "no narrative yet" in _text(cclient.get("/city/paris").text)
+
+
+def test_unknown_source_and_excerpt_render_as_source_missing_not_500(cclient):
+    r = cclient.get("/city/berlin")
+    assert r.status_code == 200
+    # the unknown [@nope] marker and the unknown excerpt of the second quote
+    assert r.text.count("source missing") == 2
+
+
+def test_quotes_follow_their_paragraph_and_the_figures_quote_is_on_its_tab(cclient):
+    story = cclient.get("/city/berlin").text
+    assert story.count('<figure class="pullquote">') == 1  # q1 after the first paragraph
+    assert story.index("Insgesamt") < story.index("Second paragraph")
+    assert "Protected means separated." not in story
+    assert "Figures paragraph" not in story  # the figures section is on its own tab
+    figures = cclient.get("/city/berlin/figures").text
+    assert figures.index("Figures paragraph") < figures.index("Protected means separated.")
+    assert "Second paragraph" not in figures
+
+
+def test_render_narrative_clamps_an_out_of_range_quote_to_the_end_of_the_document(content):
+    """The model checks `after` for narratives, but the renderer must not rely on it."""
+    from velometer.app.narrative import render_narrative
+    from velometer.content.loader import load_narratives, load_sources
+    from velometer.content.models import Quote
+
+    n = load_narratives(content / "narratives")["berlin"]
+    wild = [Quote(excerpt="en-src/e1", after=99), Quote(excerpt="en-src/e1", after=-3)]
+    n = n.model_copy(update={"quotes": wild})  # model_copy skips the validator
+    rendered = render_narrative(n, load_sources(content / "sources"))
+    last = rendered.sections[-1].items
+    assert ["pullquote" in str(i) for i in last] == [False, True, True]
+    assert not any("pullquote" in str(i) for i in rendered.sections[0].items)
+
+
+def test_an_explainer_quote_out_of_range_renders_at_the_end_not_a_crash(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "explainer.yaml").write_text(EXPLAINER_YAML.replace("after: 2", "after: 99"))
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        r = c.get("/differences")
+    assert r.status_code == 200
+    body = r.text
+    assert body.rindex("Protected means separated.") > body.rindex("Text of method.")
+
+
+def test_explainer_quote_counts_section_paragraphs_without_the_intro(content):
+    import yaml
+
+    from velometer.app.narrative import render_explainer
+    from velometer.content.loader import load_sources
+    from velometer.content.models import Explainer
+
+    e = Explainer.model_validate(yaml.safe_load(EXPLAINER_YAML))
+    rendered = render_explainer(e, load_sources(content / "sources"))
+    flat = [i for s in rendered.sections for i in s.items]
+    assert ["pullquote" in str(i) for i in flat] == [False, False, False, True, False, False, False]
+    assert len(rendered.intro) == 1 and "pullquote" not in str(rendered.intro[0])
+
+
+def test_tab_routes_and_the_current_tab_mark(subarea_client):  # noqa: F811 - the fixture
+    for tab, label in [("", "Story"), ("/time", "Over time"), ("/tiers", "Tiers"),
+                       ("/figures", "Figures"), ("/bezirke", "Bezirke")]:  # fmt: skip
+        r = subarea_client.get(f"/city/berlin{tab}")
+        assert r.status_code == 200, tab
+        tabs = re.search(r'<nav class="tabs".*?</nav>', r.text, re.S).group(0)
+        assert re.findall(r'<a [^>]*aria-current="page"[^>]*>(.*?)</a>', tabs) == [label]
+        assert len(re.findall(r"<li><a ", tabs)) == 5
+    assert subarea_client.get("/city/berlin/nope").status_code == 404
+    assert subarea_client.get("/city/paris/bezirke").status_code == 404
+    assert subarea_client.get("/city/nowhere/time").status_code == 404
+
+
+def test_a_city_without_subareas_has_four_tabs(client):
+    tabs = re.search(r'<nav class="tabs".*?</nav>', client.get("/city/berlin").text, re.S).group(0)
+    assert re.findall(r"<li><a [^>]*>(.*?)</a>", tabs) == ["Story", "Over time", "Tiers", "Figures"]
+    assert client.get("/city/berlin/bezirke").status_code == 404
+
+
+def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup):  # noqa: F811
+    from tests.report_fixture import _figure
+    from velometer.db import open_db, replace_external_figures
+
+    db_path, cfg, maps, docs = setup
+    fig = _figure("berlin", "official", "vorrangnetz_target_km", 870.0, "vorrangnetz")
+    fig = fig.model_copy(update={"length_basis": "streckenlaenge"})
+    with open_db(db_path) as w:
+        replace_external_figures(w, "official", [fig])
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/figures").text
+    table = html[html.index('<table class="diffs">') :].split("</table>")[0]
+    assert '<div data-dimension="length"><dt>How length is measured</dt>' in table
+    assert "route length (Streckenlänge)" in table
+    row = next(r for r in table.split("<tr>") if "vorrangnetz_target_km" in r)
+    assert "reference date 2025-01-01" in row and 'href="https://example.invalid/fixture"' in row
+    assert "Ours:" not in _text(table)  # preset labels read "Ours: ..."; the column says it
+
+
+def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # noqa: F811
+    from datetime import date
+
+    from tests.report_fixture import _figure
+    from velometer.db import open_db, replace_external_figures
+
+    db_path, cfg, maps, docs = setup
+    a = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    b = a.model_copy(update={"value": 20.5, "reference_date": date(2024, 12, 31),
+                             "source_url": "https://example.org/other"})  # fmt: skip
+    with open_db(db_path) as w:
+        replace_external_figures(w, "official", [a, b])
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/figures").text
+    table = html[html.index('<table class="diffs">') :].split("</table>")[0]
+    rows = [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
+    assert len(rows) == 2
+    assert {("2025-01-01" in r, "2024-12-31" in r) for r in rows} == {(True, False), (False, True)}
+    assert any("https://example.org/other" in r for r in rows)
+
+
+def test_figures_tab_keeps_the_reconciliation_and_reported_tables(cclient):
+    text = _text(cclient.get("/city/berlin/figures").text)
+    for h in ["Why the figures differ", "Comparison with published figures",
+              "Official and reported figures"]:  # fmt: skip
+        assert h in text
+
+
+def test_differences_page_has_one_section_per_dimension(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "explainer.yaml").write_text(EXPLAINER_YAML)
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        html = c.get("/differences").text
+    ids = re.findall(r'<section class="narrative prose" id="dim-(\w+)">', html)
+    assert ids == ["scope", "kind", "length", "date", "area", "method"]
+    assert "Intro paragraph" in html and "Protected means separated." in html
+    assert '<a href="/city/berlin/figures">Berlin</a>' in html
+
+
+def test_differences_page_without_an_explainer_is_a_note(cclient):
+    r = cclient.get("/differences")
+    assert r.status_code == 200 and "no explainer yet" in _text(r.text)
+
+
+def test_unreadable_content_is_a_note_not_a_500(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "narratives" / "berlin.yaml").write_text("title: [unclosed\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        for path in ["/city/berlin", "/city/berlin/figures", "/differences"]:
+            assert c.get(path).status_code == 200, path
+        assert "no narrative yet" in _text(c.get("/city/berlin").text)
+
+
+def test_over_time_tab_has_the_yearly_table_and_flag_explanations_without_js(client):
+    html = client.get("/city/berlin/time").text
+    assert '<table class="yearly">' in html and "⚑" in html
+    assert EXPLANATION in html
+
+
+@pytest.mark.parametrize("tab", ["", "/time", "/tiers", "/figures"])
+def test_every_tab_has_the_compare_form_that_works_without_js(client, tab):
+    html = client.get(f"/city/berlin{tab}").text
+    form = re.search(r'<form class="compare-form" action="/compare"[^>]*>(.*?)</form>', html, re.S)
+    assert form and 'method="get"' in form.group(0)
+    body = form.group(1)
+    assert '<input type="hidden" name="c" value="berlin">' in body
+    assert re.search(r'<select [^>]*name="c"[^>]* multiple', body)
+    assert '<option value="paris">Paris</option>' in body
+    assert '<option value="berlin">' not in body  # not itself
+    assert '<button type="submit">' in body
+
+
+def test_header_key_numbers_sit_in_one_scrolling_row(client, fixture_db):
+    _db, _cfg, _conn, data = fixture_db
+    html = client.get("/city/berlin").text
+    assert html.count('class="keynums"') == 1
+    row = html[html.index('class="keynums"') :].split("</div>\n<nav")[0]
+    assert row.count('class="kn"') == 5
+    headline = next(p.value for p in data.current("berlin", "lau").presets
+                    if p.preset == "ours_headline")  # fmt: skip
+    assert f"{headline:,.1f}" in row
+    from tests.test_app import _css_rules
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    decl = {k: v for sels, d in rules if ".keynums" in sels for k, v in d.items()}
+    assert decl.get("overflow-x") == "auto" and decl.get("display") == "flex"
+    css = (STATIC / "app.css").read_text()
+    assert "@media (max-width: 480px)" in css  # the row scrolls, the page does not

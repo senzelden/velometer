@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}velometer · Why the figures differ{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Why the figures differ</span></nav>{% endblock %}
+{% block content %}
+{% if doc %}
+<h1>{{ doc.title }}</h1>
+<div class="narrative prose">
+{% for p in doc.intro %}{{ p }}
+{% endfor %}
+</div>
+<nav class="dim-index" aria-label="The six dimensions"><ol>
+{% for s in doc.sections %}<li><a href="#dim-{{ s.role }}">{{ dimension_labels.get(s.role, s.heading) }}</a></li>
+{% endfor %}</ol></nav>
+{% for s in doc.sections %}
+<section class="narrative prose" id="dim-{{ s.role }}">
+<p class="kicker">Dimension {{ loop.index }} of {{ doc.sections | length }}</p>
+<h2>{{ s.heading }}</h2>
+{% for item in s.items %}{{ item }}
+{% endfor %}
+</section>
+{% endfor %}
+<section class="prose">
+{% include "city/_cited.html" %}
+</section>
+{% else %}
+<h1>Why the figures differ</h1>
+<p class="note">{% if content_error %}The explainer could not be read: {{ content_error }}{% else %}no explainer yet (content/explainer.yaml){% endif %}</p>
+{% endif %}
+<section>
+<h2>Each city's figures</h2>
+<ul class="city-links">
+{% for c in cities %}<li><a href="/city/{{ c.id }}/figures">{{ c.name }}</a></li>
+{% endfor %}</ul>
+</section>
+{% endblock %}

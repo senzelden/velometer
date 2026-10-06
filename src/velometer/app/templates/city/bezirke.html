@@ -1,0 +1,69 @@
+{% extends "city/_page.html" %}
+{% block head %}{% if bezirke.change_map %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block tab %}
+<section>
+<h2>Bezirke</h2>
+<p class="meta">Latest current LAU run, per subarea. Headline: {{ headline_unit }}. Tier A share is A of A+B per-side mapped km.</p>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>Bezirk</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A share of A+B</th>
+  {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for r in bezirke.rows %}
+<tr{% if r.remainder %} class="remainder"{% endif %}>
+  <td>{{ r.name }}</td>
+  <td class="num">{{ r.headline | num }}</td>
+  <td class="num">{% if r.a_share_of_ab is none %}n/a{% else %}{{ r.a_share_of_ab | num }} %{% endif %}</td>
+  {% for t in tiers %}<td class="num">{{ r.tier_km[t] | num }}</td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if bezirke.rows | selectattr("remainder") | list %}
+<p class="meta">Road and path km inside the city's LAU boundary but outside every Bezirk polygon; the LAU is generalised at 1:1M (ADR 0004).</p>
+{% endif %}
+<h3>Over time</h3>
+{% if bezirke.series.rows %}
+<div class="chart" data-chart="bezirke" data-city="{{ city.id }}" role="group" aria-label="Headline per Bezirk over time, {{ city.name }}"></div>
+<details class="table-details"><summary>Table: headline per Bezirk and snapshot</summary>
+<div class="scroll">
+<table>
+<thead><tr><th>Bezirk</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in bezirke.series.rows %}
+<tr><td>{{ r.name }}</td>{% for l in bezirke.series.labels %}<td class="num">{{ r["values"].get(l.label) | num }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% else %}
+<p class="note">no Bezirk history</p>
+{% endif %}
+<h3>Mapped change {{ bezirke.window }}</h3>
+{% if bezirke.change_runs %}
+<p class="meta">Run {{ bezirke.change_runs[0] }} → run {{ bezirke.change_runs[1] }}</p>
+{% endif %}
+{% if bezirke.change_stale %}
+<p class="note">This change map {% if bezirke.change_runs %}ends at run {{ bezirke.change_runs[1] }}, not at the run {{ bezirke.latest_run }} of the figures above{% else %}does not name its runs, so it may not match the figures above{% endif %}. Regenerate it with <code>velometer report change --city {{ city.id }}</code>.</p>
+{% endif %}
+{% if bezirke.change_map %}
+<div id="changemap" class="tiermap" role="region" aria-label="Interactive change map, {{ city.name }}"></div>
+<p class="meta tiermap-note" id="changemap-status">Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.</p>
+<script type="application/json" id="changemap-config">{{ bezirke.change_map | tojson }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/changemap.js"></script>
+{% endif %}
+{% if bezirke.change_table %}
+<div class="scroll">{{ bezirke.change_table | md }}</div>
+<p class="meta">Mapped km per Bezirk and category, from the change page <code>docs/review</code>; "geometry" is the signed length change of a same-tier way-side.</p>
+{% endif %}
+{% if not bezirke.change_map and not bezirke.change_table %}
+<p class="note">No change map generated yet (<code>velometer report change --city {{ city.id }}</code>)</p>
+{% endif %}
+</section>
+{% endblock %}

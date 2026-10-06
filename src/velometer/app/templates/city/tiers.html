@@ -1,0 +1,81 @@
+{% extends "city/_page.html" %}
+{% block head %}{% if tiermap %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block tab %}
+<section>
+<h2>Tier composition</h2>
+<p class="meta">Per-side mapped km by tier.</p>
+{% for k in kinds %}
+<h3>{{ k.kind | upper }}</h3>
+{% if k.series %}
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+<details class="table-details"><summary>Table: mapped km by tier ({{ k.kind | upper }})</summary>
+<div class="scroll">
+<table>
+<thead><tr><th>Snapshot</th>{% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}</tr></thead>
+<tbody>
+{% for p in k.series.points %}
+<tr><td>{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
+{% endfor %}
+</section>
+
+<section>
+<h2>LAU vs FUA</h2>
+<p class="meta">Headline: {{ headline_unit }}.</p>
+<div class="scroll">
+<table>
+<thead><tr>
+  <th>Boundary</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A+B km</th>
+  {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
+</tr></thead>
+<tbody>
+{% for k in kinds %}
+<tr>
+  <td>{{ k.kind | upper }}</td>
+  {% if k.point %}
+  <td class="num">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
+  <td class="num">{{ k.point.ab_km | num }}</td>
+  {% for t in tiers %}<td class="num">{{ k.point.tiers_km[t] | num }}</td>{% endfor %}
+  {% else %}
+  <td class="note" colspan="{{ tiers | length + 2 }}">no run ({{ k.kind | upper }} current)</td>
+  {% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<h2>Tier map</h2>
+{% if tiermap %}
+<div class="tiermap-controls">
+<fieldset class="kinds"><legend>Boundary</legend>
+{% for m in tiermap.kinds %}<label><input type="radio" name="kind" value="{{ m.kind }}"{% if loop.first %} checked{% endif %}> {{ m.label }}</label>
+{% endfor %}</fieldset>
+<fieldset class="tiers"><legend>Tiers</legend>
+{% for t, colour in tiermap.colours.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <svg class="swatch" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2" fill="{{ colour }}"></rect></svg> {{ tiermap.labels[t] }}</label>
+{% endfor %}</fieldset>
+</div>
+<div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
+<p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
+<script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/map.js"></script>
+{% endif %}
+<ul class="tiermap-files">
+{% for k in kinds %}
+<li><strong>{{ k.kind | upper }}:</strong>
+{% if k.point is none %}<span class="note">no run ({{ k.kind | upper }} current)</span>
+{% elif not k.geojson %}<span class="note">map not generated (<code>velometer report maps</code>)</span>{% endif %}
+{% if k.map %}<a href="/maps/{{ k.map }}">{{ k.kind | upper }} static image</a> (PNG){% endif %}</li>
+{% endfor %}
+</ul>
+</section>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}velometer · {{ city.name }}{% if tab != "story" %} · {{ tab_label }}{% endif %}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><a href="/cities">Cities</a><span class="sep" aria-hidden="true">›</span><a href="/cities#{{ city.country_iso2 | lower }}">{{ country }}</a><span class="sep" aria-hidden="true">›</span><a href="/city/{{ city.id }}">{{ city.name }}</a>{% if tab != "story" %}<span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ tab_label }}</span>{% else %}<span class="sep" aria-hidden="true">›</span><span aria-current="page">Story</span>{% endif %}</nav>{% endblock %}
+{% block content %}
+{% include "city/_header.html" %}
+{% block tab %}{% endblock %}
+{% endblock %}

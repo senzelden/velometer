@@ -126,9 +126,10 @@ def test_unknown_city_is_404(client):
 
 def test_city_without_current_run_renders_no_run(client):
     # paris has history but no current run (LAU) and nothing at all for FUA
-    r = client.get("/city/paris")
-    assert r.status_code == 200
-    text = _text(r.text)
+    pages = [client.get(f"/city/paris/{tab}") for tab in ("time", "tiers", "figures")]
+    assert [r.status_code for r in pages] == [200, 200, 200]
+    assert client.get("/city/paris").status_code == 200
+    text = _text(" ".join(r.text for r in pages))
     assert "no run (LAU current)" in text  # headline, LAU vs FUA, comparison, map
     assert "no run (FUA history)" in text  # tier composition, flagged years
     assert "no run (LAU current) to compare" in text
@@ -144,31 +145,30 @@ def test_index_lists_cities_with_links_and_charts(client):
     assert row and "no run" in row.group(0)
 
 
-def test_city_page_sections_in_order(client):
-    text = _text(client.get("/city/berlin").text)
-    order = [
-        "Headline and presets",
-        "Over time",
-        "Tier composition",
-        "LAU vs FUA",
-        "Flagged years",
-        "Comparison with published figures",
-        "Official and reported figures",
-        "Tier map",
-        "Provenance",
-    ]
-    positions = [text.find(h) for h in order]
-    assert -1 not in positions, dict(zip(order, positions, strict=True))
-    assert positions == sorted(positions)
+def test_city_tabs_have_their_sections_in_order(client):
+    tabs = {
+        "time": ["Over time", "Flagged years", "Headline and presets", "Provenance"],
+        "tiers": ["Tier composition", "LAU vs FUA", "Tier map"],
+        "figures": ["Why the figures differ", "Comparison with published figures",
+                    "Official and reported figures"],
+    }  # fmt: skip
+    for tab, order in tabs.items():
+        text = _text(client.get(f"/city/berlin/{tab}").text)
+        positions = [text.find(h) for h in order]
+        assert -1 not in positions, (tab, dict(zip(order, positions, strict=True)))
+        assert positions == sorted(positions), tab
 
 
 def test_city_page_mounts_the_headline_with_lau_and_fua_and_tabulates_it(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
-    html = client.get("/city/berlin").text
+    html = client.get("/city/berlin/time").text
+    tiers_html = client.get("/city/berlin/tiers").text
     mount = '<div class="chart" data-chart="city-headline" data-city="berlin"'
     assert mount in html
-    assert html.index(mount) < html.index('data-chart="city-tiers"')  # above the tier charts
-    assert re.findall(r'data-chart="city-tiers" data-city="berlin" data-kind="(\w+)"', html) == [
+    assert 'data-chart="city-tiers"' not in html  # the tier charts are on the Tiers tab
+    assert re.findall(
+        r'data-chart="city-tiers" data-city="berlin" data-kind="(\w+)"', tiers_html
+    ) == [
         "lau",
         "fua",
     ]
@@ -188,8 +188,8 @@ def test_city_page_mounts_the_headline_with_lau_and_fua_and_tabulates_it(client,
 def test_city_page_shows_current_numbers(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
     point = data.current("berlin", "lau")
-    text = _text(client.get("/city/berlin").text)
-    section = text[text.find("Headline and presets") : text.find("Tier composition")]
+    text = _text(client.get("/city/berlin/time").text)
+    section = text[text.find("Headline and presets") : text.find("Provenance")]
     headline = next(p for p in point.presets if p.preset == "ours_headline")
     label = data.preset_labels()["ours_headline"]
     unit = data.preset_units()["ours_headline"]
@@ -202,7 +202,7 @@ def test_city_page_shows_current_numbers(client, fixture_db):
 
 
 def test_flag_explanation_text_on_city_page(client):
-    html = client.get("/city/berlin").text
+    html = client.get("/city/berlin/time").text
     assert "berlin/lau/2025" in html
     assert "activity_spike" in html
     assert EXPLANATION in html
@@ -214,7 +214,7 @@ def test_flag_without_explanation_says_so(setup):
     db_path, cfg, maps, docs = setup
     (docs / "review" / "m3_timeseries.md").write_text("# empty\n")
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        r = c.get("/city/berlin")
+        r = c.get("/city/berlin/time")
     assert r.status_code == 200
     assert "no explanation" in _text(r.text)
 
@@ -222,8 +222,10 @@ def test_flag_without_explanation_says_so(setup):
 def test_reconcile_rows_on_city_page(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
     gaps = data.reconcile("berlin").gaps
-    html = client.get("/city/berlin").text
-    section = html[html.find("Comparison with published figures") : html.find("Tier map")]
+    html = client.get("/city/berlin/figures").text
+    section = html[
+        html.find("Comparison with published figures") : html.find("Official and reported figures")
+    ]
     flagged = next(g for g in gaps if g.flagged)
     assert flagged.key.split("/", 1)[1] in section
     assert f"{flagged.gap_pct * 100:+.1f}%" in section
@@ -247,7 +249,7 @@ def test_map_route_serves_png(client):
 
 
 def _map_section(html: str) -> str:
-    return html[html.index("<h2>Tier map</h2>") : html.index("<h2>Provenance</h2>")]
+    return html[html.index("<h2>Tier map</h2>") : html.index("</main>")]
 
 
 def _map_config(html: str) -> dict | None:
@@ -256,7 +258,7 @@ def _map_config(html: str) -> dict | None:
 
 
 def test_city_page_interactive_map_with_png_link_and_hint(client):
-    html = client.get("/city/berlin").text
+    html = client.get("/city/berlin/tiers").text
     section = _map_section(html)
     assert '<div id="tiermap"' in section
     scripts = re.findall(r'<script[^>]+src="([^"]+)"', section)
@@ -287,7 +289,7 @@ def test_city_page_without_any_geojson_loads_no_map(setup):
     db_path, cfg, maps, docs = setup
     (maps / "berlin_lau.geojson").unlink()
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        section = _map_section(c.get("/city/berlin").text)
+        section = _map_section(c.get("/city/berlin/tiers").text)
     assert '<div id="tiermap"' not in section and "<script" not in section
     assert section.count("map not generated (<code>velometer report maps</code>)") == 2
     assert '<a href="/maps/berlin_lau.png">' in section  # the static image is still there
@@ -307,7 +309,15 @@ def _loaded_hosts(html: str) -> set[str]:
 
 def test_pages_load_only_static_assets_and_osm_tiles(client):
     """The one external host a page loads from is the OSM tile server; scripts and CSS are ours."""
-    for path in ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]:
+    for path in [
+        "/",
+        "/city/berlin",
+        "/city/berlin/time",
+        "/city/berlin/figures",
+        "/city/paris",
+        "/methodology",
+        "/methodology/de",
+    ]:
         html = client.get(path).text
         scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
         assert scripts and all(s.startswith("/static/") for s in scripts), path
@@ -316,7 +326,7 @@ def test_pages_load_only_static_assets_and_osm_tiles(client):
         assert all(i.startswith("/") and not i.startswith("//")
                    for i in re.findall(r'<img[^>]+src="([^"]+)"', html)), path  # fmt: skip
         assert _loaded_hosts(html) <= {OSM_TILES}, path
-    city = client.get("/city/berlin").text
+    city = client.get("/city/berlin/tiers").text
     assert _loaded_hosts(city) == {OSM_TILES}
     cfg = _map_config(city)
     assert urlparse(cfg["tiles"]).hostname == OSM_TILES
@@ -352,7 +362,7 @@ def test_protocol_relative_urls_count_as_loads():
 def test_osm_tiles_are_muted_and_tier_lines_readable(client):
     """Standard OSM draws main roads orange/red, clashing with tiers B and D: the tile layer
     (only it, not the vector canvas) is greyed and faded; the tier lines stay ~3 px."""
-    cfg = _map_config(client.get("/city/berlin").text)
+    cfg = _map_config(client.get("/city/berlin/tiers").text)
     cls = cfg["tile_class"]
     assert cls and cls != "leaflet-tile-pane"
     rules = _css_rules((STATIC / "app.css").read_text())
@@ -400,8 +410,12 @@ def test_pages_load_our_chart_modules(client):
     pages = {
         "/": ["/static/js/nav.js", "/static/js/overview.js"],
         "/cities": ["/static/js/nav.js", "/static/js/overview.js"],
-        "/city/berlin": ["/static/js/nav.js", "/static/js/city-charts.js",
-                         "/static/vendor/leaflet.js", "/static/map.js"],
+        "/city/berlin": ["/static/js/nav.js", "/static/js/city.js"],
+        "/city/berlin/time": ["/static/js/nav.js", "/static/js/city.js"],
+        "/city/berlin/tiers": ["/static/js/nav.js", "/static/js/city.js",
+                               "/static/vendor/leaflet.js", "/static/map.js"],
+        "/city/berlin/figures": ["/static/js/nav.js"],
+        "/differences": ["/static/js/nav.js"],
         "/methodology": ["/static/js/nav.js"],
     }  # fmt: skip
     for path, expected in pages.items():
@@ -482,13 +496,15 @@ def test_csv_route_is_attachment_with_attribution(client, fixture_db):
 
 def test_templates_and_static_ship_in_the_package():
     root = importlib.resources.files("velometer.app")
-    for name in ["base.html", "_nav.html", "index.html", "cities.html", "city.html",
-                 "methodology.html"]:  # fmt: skip
+    for name in ["base.html", "_nav.html", "index.html", "cities.html", "differences.html",
+                 "methodology.html", "city/_page.html", "city/_header.html",
+                 "city/story.html", "city/time.html", "city/tiers.html", "city/figures.html",
+                 "city/bezirke.html"]:  # fmt: skip
         assert (root / "templates" / name).is_file()
     assert (root / "static" / "app.css").is_file()
     assert (root / "static" / "map.js").is_file()
     for name in ["chart.js", "chart-core.js", "state.js", "data.js", "nav.js", "overview.js",
-                 "city-charts.js"]:  # fmt: skip
+                 "city.js"]:  # fmt: skip
         assert (root / "static" / "js" / name).is_file()
     for name in ["leaflet.js", "leaflet.css", "leaflet.LICENSE"]:
         assert (root / "static" / "vendor" / name).is_file()
@@ -590,14 +606,14 @@ def test_preset_labels_follow_report_yaml(setup):
     path.write_text(path.read_text().replace("Ours: QECIO method", "Ours: QECIO test label"))
     with _client(create_app(db_path, cfg, maps, docs)) as c:
         assert "Ours: QECIO test label" in _headers(c.get("/").text)
-        assert "Ours: QECIO test label" in _text(c.get("/city/berlin").text)
+        assert "Ours: QECIO test label" in _text(c.get("/city/berlin/time").text)
 
 
 def test_app_follows_report_classifier_of_the_config(setup):
     """Spec section 5: the app defaults to config/report.yaml, red-proofed in a copied config."""
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        before = c.get("/city/berlin").text
+        before = c.get("/city/berlin/time").text
     assert f"Classifier {CLASSIFIER}" in _text(before)
     assert "no run (LAU current)" not in _text(before)
     path = cfg / "report.yaml"
@@ -605,7 +621,7 @@ def test_app_follows_report_classifier_of_the_config(setup):
         path.read_text().replace(f"report_classifier: {CLASSIFIER}", "report_classifier: v1")
     )
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        after = _text(c.get("/city/berlin").text)
+        after = _text(c.get("/city/berlin/time").text)
     assert "Classifier v1" in after and f"Classifier {CLASSIFIER}" not in after
     assert "no run (LAU current)" in after  # the fixture's runs are on CLASSIFIER only
 
@@ -665,7 +681,7 @@ def test_city_with_current_run_but_no_history(setup):
             "AND source='history'"
         )
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        r = c.get("/city/berlin")
+        r = c.get("/city/berlin/tiers")
         assert r.status_code == 200
         text = _text(r.text)
         assert "no run (FUA history)" in text
@@ -778,14 +794,14 @@ def test_config_change_invalidates(client_21, setup_21, cities_calls):
 
 def test_docs_and_maps_change_invalidates(client_21, setup_21, cities_calls):
     _db, _cfg, maps, docs = setup_21
-    client_21.get("/city/berlin")
+    client_21.get("/city/berlin/tiers")
     first = cities_calls["q"]
     (maps / "berlin_lau.geojson").write_bytes(GEOJSON)  # a new map file
-    assert "/maps/berlin_lau.geojson" in client_21.get("/city/berlin").text
+    assert "/maps/berlin_lau.geojson" in client_21.get("/city/berlin/tiers").text
     assert cities_calls["q"] > first
     second = cities_calls["q"]
     (docs / "review" / "m3_timeseries.md").write_text("# changed\n")
-    client_21.get("/city/berlin")
+    client_21.get("/city/berlin/tiers")
     assert cities_calls["q"] > second
 
 
@@ -997,7 +1013,7 @@ def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM, **kw) -> None
 
 
 def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
-    html = subarea_client.get("/city/berlin").text
+    html = subarea_client.get("/city/berlin/bezirke").text
     assert "<h2>Bezirke</h2>" in html
     bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
@@ -1009,7 +1025,7 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
 
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
-    html = subarea_client.get("/city/berlin").text
+    html = subarea_client.get("/city/berlin/bezirke").text
     bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h3>")[0]
     body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
     rows = body.split("<tr")[1:]
@@ -1026,15 +1042,17 @@ def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
 
 def test_city_without_subareas_has_no_bezirke(client):
     html = client.get("/city/berlin").text  # the plain fixture: no subareas in config
-    assert "Bezirke" not in html and "_subareas.csv" not in html
+    assert "Bezirke</a></li>" not in html and "_subareas.csv" not in html  # no tab, no CSV
+    assert client.get("/city/berlin/bezirke").status_code == 404
 
 
 def test_other_city_of_a_subarea_config_has_no_bezirke(subarea_client):
-    assert "Bezirke" not in subarea_client.get("/city/paris").text
+    assert "Bezirke</a></li>" not in subarea_client.get("/city/paris").text
+    assert subarea_client.get("/city/paris/bezirke").status_code == 404
 
 
 def test_bezirke_without_a_change_file_says_so_and_loads_no_change_map(subarea_client):
-    html = subarea_client.get("/city/berlin").text
+    html = subarea_client.get("/city/berlin/bezirke").text
     assert "No change map generated yet" in html
     assert "changemap" not in html.replace("No change map", "")
 
@@ -1043,7 +1061,7 @@ def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
+        html = c.get("/city/berlin/bezirke").text
         assert "No change map generated yet" not in html
         assert f"/maps/{CHANGE_STEM}.geojson" in html
         assert "/static/changemap.js" in html and "/static/vendor/leaflet.js" in html
@@ -1058,7 +1076,7 @@ def test_change_section_names_its_runs_and_is_not_stale_on_the_latest_run(subare
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest)
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        section = c.get("/city/berlin").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
     assert f"Run 1 → run {latest}" in section
     assert "older than" not in section and "Regenerate it" not in section
 
@@ -1068,7 +1086,7 @@ def test_change_section_says_when_the_change_map_is_older_than_the_figures(subar
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest - 1)
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        section = c.get("/city/berlin").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
     assert f"Run 1 → run {latest - 1}" in section
     assert f"ends at run {latest - 1}, not at the run {latest} of the figures above" in section
     assert "<code>velometer report change --city berlin</code>" in section
@@ -1083,7 +1101,9 @@ def test_change_table_never_passes_raw_html(subarea_setup):
     # a hand-edited page with raw HTML in the table is escaped by the app too
     md.write_text(md.read_text().replace("| East |", "| <i>East</i> |"))
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        section = c.get("/city/berlin").text.split("<h3>Mapped change")[1].split("</table>")[0]
+        section = (
+            c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1].split("</table>")[0]
+        )
     assert "<b>" not in section and "<i>" not in section
     assert "&lt;b&gt;West&lt;/b&gt;" in section and "&lt;i&gt;East&lt;/i&gt;" in section
 
@@ -1204,8 +1224,8 @@ def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, length_basis="unknown")
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
-        other = c.get("/city/paris").text
+        html = c.get("/city/berlin/figures").text
+        other = c.get("/city/paris/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert (
         section.count("<td>new_cycle_infra_km") == 0
@@ -1232,7 +1252,7 @@ def test_non_http_source_url_is_never_a_link(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, source_url="javascript:alert(1)")
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
+        html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="javascript:' not in html and "javascript:" not in section
     assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
@@ -1242,7 +1262,7 @@ def test_an_upper_case_http_scheme_is_a_link(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, source_url="HTTPS://example.org/report")
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
+        html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="HTTPS://example.org/report"' in section
 
@@ -1252,7 +1272,7 @@ def test_reported_figure_note_gets_its_own_full_width_row(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
     with _client(create_app(db_path, cfg, maps, docs)) as c:
-        html = c.get("/city/berlin").text
+        html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]
     assert "Drucksache" not in link_cell

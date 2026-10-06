@@ -1,0 +1,91 @@
+{% extends "city/_page.html" %}
+{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block tab %}
+<section>
+<h2>Over time</h2>
+<p class="meta">Headline: {{ headline_unit }}, city proper (LAU) and metro area (FUA). Mapped km in OpenStreetMap, not built km.</p>
+{% if yearly %}
+<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<div class="scroll">
+<table class="yearly">
+<thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in yearly %}
+<tr>
+  <td>{{ row.label | when(row.osm) }}</td>
+  {% for k in kinds %}{% set p = row.get(k.kind) %}
+  <td class="num">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>
+  <td class="num">{% if p %}{{ p.ab_km | num }}{% else %}n/a{% endif %}</td>
+  {% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p class="meta">⚑ flagged year (automatic check); its explanation is in the section on flagged years below.</p>
+{% else %}
+<p class="note">no run (history)</p>
+{% endif %}
+</section>
+
+<section>
+<h2>Flagged years</h2>
+{% for k in kinds %}
+<h3>{{ k.kind | upper }}</h3>
+{% if k.series is none %}
+<p class="note">no run ({{ k.kind | upper }} history)</p>
+{% elif not k.flags %}
+<p class="note">no flagged years</p>
+{% else %}
+{% for f in k.flags %}
+<article class="flag">
+<h4><code>{{ f.flag.key }}</code> · {{ f.flag.rules | join(", ") }}</h4>
+<p class="meta">{{ f.flag.detail }}</p>
+{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>
+{% else %}<p class="note">no explanation in <code>docs/review/m3_timeseries.md</code></p>{% endif %}
+</article>
+{% endfor %}
+{% endif %}
+{% endfor %}
+</section>
+
+<section>
+<h2>Headline and presets</h2>
+<div class="pair">
+{% for k in kinds %}
+<div>
+<h3>{{ k.kind | upper }}</h3>
+{% if k.point %}
+<div class="scroll">
+<table>
+<thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents</th></tr></thead>
+<tbody>
+{% for p in k.point.presets %}
+<tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td>{{ preset_unit.get(p.preset, "") }}</td><td class="num">{{ p.per_100k | num }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p class="meta">A+B km {{ k.point.ab_km | num }} · OSM {{ k.point.osm_timestamp }}
+· population {% if k.point.population_value %}{{ k.point.population_value | num(",d") }} ({{ k.point.population_year }}){% else %}n/a{% endif %}</p>
+{% else %}
+<p class="note">no run ({{ k.kind | upper }} current)</p>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section>
+<h2>Provenance</h2>
+<ul class="provenance">
+{% for k in kinds %}
+<li><strong>{{ k.kind | upper }} current:</strong>
+{% if k.point %}run {{ k.point.run_id }} · OSM {{ k.point.osm_timestamp }} · classifier {{ k.point.classifier_version }} · config <code>{{ k.point.config_sha256[:12] }}</code>{% else %}no run{% endif %}</li>
+<li><strong>{{ k.kind | upper }} history:</strong>
+{% if k.series %}{{ k.series.provenance | md }}{% else %}no run{% endif %}</li>
+{% endfor %}
+{% if reconcile %}<li><strong>Comparison:</strong> {{ reconcile.provenance | md }}</li>{% endif %}
+</ul>
+</section>
+{% endblock %}
