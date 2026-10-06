@@ -1,0 +1,73 @@
+city_id: vienna
+title: "Vienna: a late, steady rise"
+dek: >-
+  Mapped A+B km per 100 km of main roads rose from 74.6 in 2018 to 89.1 in October 2026, most of
+  it since 2024.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Vienna's headline, mapped A+B km per side per 100 km of main roads, went from 74.6 in 2018
+        to 89.1 in October 2026, and mapped A+B from 558 to 666 km [#ts-lau]. Until 2024 it stayed
+        between 73.8 and 79.7; since then it has risen every year, to 83.0 in 2025 and 87.3 in
+        2026. Mapped separated tracks (tier A) carry most of the gain, from 239 to 314 km. Shared
+        foot and cycle paths (B) rose from 320 to 352 km, cycle streets and bus lanes (E) from 18
+        to 41 km.
+      - >-
+        The one flagged year, 2025, is tag drift, not new infrastructure: mappers replaced the old
+        contraflow tag `cycleway=opposite_lane` on one-way streets [#expl-lau-2025]. That touched
+        painted lanes (D) only, which have stayed between 252 and 285 km since 2018 [#ts-lau].
+      - >-
+        The functional urban area rose more evenly, from 18.1 to 22.8, with a different mix: there
+        tier A shrank from 603 to 512 km while tier B grew from 683 to 1,105 km [#ts-fua].
+  - heading: Why the city's figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Vienna's own network total counts every facility type on both sides of a street, including
+        contraflow streets, traffic-calmed areas and signed routes [@vienna-radverkehrsnetz-fakten],
+        so it covers far more than A+B. The 2025 tally of 20.4 km counts projects in the main
+        network that started that year, not finished ones [@vienna-radwegeausbau-bilanz-2025].
+        Clean Cities first printed 14%; in July 2025 it raised Vienna to 22.0% after the city added
+        traffic-calmed roads with restricted motor access [@cc2025-cycling-table]. On Clean Cities'
+        method our ratio is 22.7%, +3% against the corrected figure, and the road networks agree
+        [#recon].
+quotes:
+  - {excerpt: vienna-radverkehrsnetz-fakten/definition, after: 3}
+  - {excerpt: vienna-radwegeausbau-bilanz-2025/started-not-completed, after: 3}
+  - {excerpt: cc2025-cycling-table/vienna-why, after: 3}
+facts:
+  - {id: h-2018, expr: series.vienna.lau.2018.headline, printed: "74.6"}
+  - {id: h-cur, expr: series.vienna.lau.current.headline, printed: "89.1"}
+  - {id: h-2020, expr: series.vienna.lau.2020.headline, printed: "73.8"}
+  - {id: h-2024, expr: series.vienna.lau.2024.headline, printed: "79.7"}
+  - {id: h-2025, expr: series.vienna.lau.2025.headline, printed: "83.0"}
+  - {id: h-2026, expr: series.vienna.lau.2026.headline, printed: "87.3"}
+  - {id: ab-2018, expr: series.vienna.lau.2018.ab_km, printed: "558"}
+  - {id: ab-cur, expr: series.vienna.lau.current.ab_km, printed: "666"}
+  - {id: a-2018, expr: series.vienna.lau.2018.A, printed: "239"}
+  - {id: a-cur, expr: series.vienna.lau.current.A, printed: "314"}
+  - {id: b-2018, expr: series.vienna.lau.2018.B, printed: "320"}
+  - {id: b-cur, expr: series.vienna.lau.current.B, printed: "352"}
+  - {id: e-2018, expr: series.vienna.lau.2018.E, printed: "18"}
+  - {id: e-cur, expr: series.vienna.lau.current.E, printed: "41"}
+  - {id: d-min, expr: series.vienna.lau.2018.D, printed: "252"}
+  - {id: d-max, expr: series.vienna.lau.2022.D, printed: "285"}
+  - {id: fua-h-2018, expr: series.vienna.fua.2018.headline, printed: "18.1"}
+  - {id: fua-h-cur, expr: series.vienna.fua.current.headline, printed: "22.8"}
+  - {id: fua-a-2018, expr: series.vienna.fua.2018.A, printed: "603"}
+  - {id: fua-a-cur, expr: series.vienna.fua.current.A, printed: "512"}
+  - {id: fua-b-2018, expr: series.vienna.fua.2018.B, printed: "683"}
+  - {id: fua-b-cur, expr: series.vienna.fua.current.B, printed: "1,105"}
+  - {id: started-2025, expr: figure.vienna.mobilitaetsagentur_wien.radwegeausbau_started_km.hauptradverkehrsnetz, printed: "20.4"}
+  - {id: cc-pdf, expr: gap.vienna.cc_ratio.theirs, printed: "14"}
+  - {id: cc-corrected, expr: gap.vienna.cc_ratio@incl_traffic_calmed_restricted_access.theirs, printed: "22.0"}
+  - {id: cc-ours, expr: gap.vienna.cc_ratio@incl_traffic_calmed_restricted_access.ours, printed: "22.7"}
+  - {id: cc-gap, expr: gap.vienna.cc_ratio@incl_traffic_calmed_restricted_access.gap_pct, printed: "+3%"}
+data_refs:
+  - {id: ts-lau, label: "velometer time series, vienna/lau (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### vienna/lau", route: /city/vienna/time}
+  - {id: ts-fua, label: "velometer time series, vienna/fua (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### vienna/fua", route: /city/vienna/time}
+  - {id: expl-lau-2025, label: "velometer time-series explanation, vienna/lau/2025", file: docs/review/m3_timeseries.md, locator: "### vienna/lau/2025"}
+  - {id: recon, label: "velometer reconciliation, vienna (cc_ratio, cc_network_km)", file: docs/reconciliation.md, locator: "### vienna/cc_ratio", route: /city/vienna/figures}
+literals:
+  - 100 km

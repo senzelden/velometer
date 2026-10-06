@@ -1,0 +1,66 @@
+city_id: prague
+title: "Prague: shared paths and painted lanes"
+dek: >-
+  The headline rose from 18.7 in 2018 to 29.6 in October 2026, while mapped painted-lane km more
+  than tripled.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Prague's mapped A+B rose from 182 km in 2018 to 289 km in October 2026, and its headline,
+        mapped A+B km per side per 100 km of main roads, from 18.7 to 29.6, 20th of the 21 cities
+        [#ts-lau]. Most of the map's change is on the road: painted lanes (D) went from 56 to 190
+        km per side, cycle streets and bus lanes (E) from 20 to 42 km.
+      - >-
+        The one flagged jump, in 2020, is mostly retagging. In early 2019 mappers turned park and
+        riverside footways where cycling was allowed into cycleways that pedestrians may still
+        use, and added some new cycleways [#expl-lau-2020]. Because pedestrians are permitted on
+        them, the classifier rates those ways tier B. That is why tier B (245 km) is more than
+        five times tier A (45 km) [#ts-lau].
+      - >-
+        The functional urban area follows the same pattern: A+B rose from 325 to 540 km, most of
+        it in tier B, and its 2020 step is the same retagging plus new suburban cycleways
+        [#ts-fua] [#expl-fua-2020].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities 2025 puts Prague at 248 km of protected infrastructure and 6% of the road
+        network [@cc2025-report]. On its method we get 8.5%: our A+B is 17% higher and our road
+        network is 3,423 km against its 4,093 km, and the two gaps compound [#recon]. The length
+        basis is not the cause, and the date gap does not explain the km: we already had more at
+        the start of 2025. The city does not publish a total for cycling facilities; its familiar
+        figure counts signed routes, which need not carry any facility
+        [@prague-ipr-system-cyklotras-2021].
+quotes:
+  - {excerpt: cc2025-annexes/included, after: 3}
+  - {excerpt: prague-ipr-system-cyklotras-2021/routes-not-facilities, after: 3}
+facts:
+  - {id: ab-2018, expr: series.prague.lau.2018.ab_km, printed: "182"}
+  - {id: ab-cur, expr: series.prague.lau.current.ab_km, printed: "289"}
+  - {id: h-2018, expr: series.prague.lau.2018.headline, printed: "18.7"}
+  - {id: h-cur, expr: series.prague.lau.current.headline, printed: "29.6"}
+  - {id: rank-cur, expr: rank.prague.lau.current.headline, printed: "20"}
+  - {id: d-2018, expr: series.prague.lau.2018.D, printed: "56"}
+  - {id: d-cur, expr: series.prague.lau.current.D, printed: "190"}
+  - {id: e-2018, expr: series.prague.lau.2018.E, printed: "20"}
+  - {id: e-cur, expr: series.prague.lau.current.E, printed: "42"}
+  - {id: b-cur, expr: series.prague.lau.current.B, printed: "245"}
+  - {id: a-cur, expr: series.prague.lau.current.A, printed: "45"}
+  - {id: fua-ab-2018, expr: series.prague.fua.2018.ab_km, printed: "325"}
+  - {id: fua-ab-cur, expr: series.prague.fua.current.ab_km, printed: "540"}
+  - {id: cc-km, expr: gap.prague.cc_km.theirs, printed: "248"}
+  - {id: cc-share, expr: gap.prague.cc_ratio.theirs, printed: "6"}
+  - {id: cc-ours, expr: gap.prague.cc_ratio.ours, printed: "8.5"}
+  - {id: cc-km-gap, expr: gap.prague.cc_km.gap_pct, printed: "+17%"}
+  - {id: cc-net-ours, expr: gap.prague.cc_network_km.ours, printed: "3,423"}
+  - {id: cc-net-theirs, expr: gap.prague.cc_network_km.theirs, printed: "4,093"}
+data_refs:
+  - {id: ts-lau, label: "velometer time series, prague/lau (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### prague/lau", route: /city/prague/time}
+  - {id: ts-fua, label: "velometer time series, prague/fua (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### prague/fua", route: /city/prague/time}
+  - {id: expl-lau-2020, label: "velometer time-series explanation, prague/lau/2020", file: docs/review/m3_timeseries.md, locator: "### prague/lau/2020"}
+  - {id: expl-fua-2020, label: "velometer time-series explanation, prague/fua/2020", file: docs/review/m3_timeseries.md, locator: "### prague/fua/2020"}
+  - {id: recon, label: "velometer reconciliation, prague/cc_ratio", file: docs/reconciliation.md, locator: "### prague/cc_ratio", route: /city/prague/figures}
+literals:
+  - 100 km
+  - 21 cities

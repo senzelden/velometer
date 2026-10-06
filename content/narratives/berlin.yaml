@@ -1,0 +1,83 @@
+city_id: berlin
+title: "Berlin: one re-mapping campaign, then a slow climb"
+dek: >-
+  Mapped A+B km per 100 km of main roads went from 113.7 in 2018 to 109.1 in October 2026: one
+  step down in a 2022 re-mapping campaign, a slow climb since.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Berlin's headline, mapped A+B km per side per 100 km of main roads, was 113.7 in 2018 and
+        109.1 in October 2026; mapped A+B went from 1,640 to 1,551 km [#ts-lau]. The fall is one
+        step, not a trend. The headline peaked at 117.0 in 2021 and stood at 104.3 in January
+        2022, after mappers redrew road-side tracks as separate ways and retagged many shared paths
+        as footways where cycling is only allowed. That was a mapping campaign, not lost
+        infrastructure [#expl-lau-2022]. Since then the headline has risen in every year but 2024.
+      - >-
+        Outside A+B the map gained too. Painted lanes (tier D) went from 403 to 461 km, cycle
+        streets and bus lanes (E) from 53 to 117 km, and lanes mapped with a physical buffer (C),
+        absent in 2018, now come to 29 km [#ts-lau]. The functional urban area fell with the same
+        campaign, which reached into Brandenburg, from 71.5 in 2021 to 64.7 in 2022, and is at
+        64.5 now [#ts-fua] [#expl-fua-2022].
+  - heading: The 12 Bezirke
+    paragraphs:
+      - >-
+        The 12 Bezirke diverge [#bezirke]. Neukölln maps densest (164.3), Pankow thinnest (62.8).
+        Since 2018 Mitte (75.2 to 90.7) and Tempelhof-Schöneberg (123.9 to 138.3) gained most;
+        Spandau fell most (149.3 to 109.8), the largest part of it in 2022.
+  - heading: Why the Senate's figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The Senate's figures answer a different question [@berlin-fortschrittsbericht-2025]. Its 21.2 km for 2025 are km of route that projects completed or improved, taken from a project
+        database at year end. The 20.5 km was a preliminary figure the administration called possibly incomplete
+        [@berlin-tagesspiegel-dpa-2025-12]; the 9.8 km covers the Vorrangnetz alone
+        [@berlin-drs-19-25987], for which the progress report itself gives a smaller figure.
+      - >-
+        We count all mapped infrastructure per road side, whenever mappers record it. From 2023 to
+        October 2026, 442 km of way-sides were newly mapped and 656 km redrawn, and A+B rose by
+        35.6 km net [#change]. The report's Vorrangnetz inventory used OpenStreetMap too, but only
+        within that network. Neither set confirms or refutes the other.
+quotes:
+  - {excerpt: berlin-fortschrittsbericht-2025/total-2025, after: 3}
+  - {excerpt: berlin-fortschrittsbericht-2025/data-basis, after: 3}
+  - {excerpt: berlin-fortschrittsbericht-2025/osm-survey, after: 4}
+facts:
+  - {id: h-2018, expr: series.berlin.lau.2018.headline, printed: "113.7"}
+  - {id: h-cur, expr: series.berlin.lau.current.headline, printed: "109.1"}
+  - {id: h-2021, expr: series.berlin.lau.2021.headline, printed: "117.0"}
+  - {id: h-2022, expr: series.berlin.lau.2022.headline, printed: "104.3"}
+  - {id: ab-2018, expr: series.berlin.lau.2018.ab_km, printed: "1,640"}
+  - {id: ab-cur, expr: series.berlin.lau.current.ab_km, printed: "1,551"}
+  - {id: d-2018, expr: series.berlin.lau.2018.D, printed: "403"}
+  - {id: d-cur, expr: series.berlin.lau.current.D, printed: "461"}
+  - {id: e-2018, expr: series.berlin.lau.2018.E, printed: "53"}
+  - {id: e-cur, expr: series.berlin.lau.current.E, printed: "117"}
+  - {id: c-cur, expr: series.berlin.lau.current.C, printed: "29"}
+  - {id: fua-2021, expr: series.berlin.fua.2021.headline, printed: "71.5"}
+  - {id: fua-2022, expr: series.berlin.fua.2022.headline, printed: "64.7"}
+  - {id: fua-cur, expr: series.berlin.fua.current.headline, printed: "64.5"}
+  - {id: bz-neukoelln, expr: bezirk.berlin.neukoelln.current.headline, printed: "164.3"}
+  - {id: bz-pankow, expr: bezirk.berlin.pankow.current.headline, printed: "62.8"}
+  - {id: bz-mitte-2018, expr: bezirk.berlin.mitte.2018.headline, printed: "75.2"}
+  - {id: bz-mitte-cur, expr: bezirk.berlin.mitte.current.headline, printed: "90.7"}
+  - {id: bz-ts-2018, expr: bezirk.berlin.tempelhof_schoeneberg.2018.headline, printed: "123.9"}
+  - {id: bz-ts-cur, expr: bezirk.berlin.tempelhof_schoeneberg.current.headline, printed: "138.3"}
+  - {id: bz-spandau-2018, expr: bezirk.berlin.spandau.2018.headline, printed: "149.3"}
+  - {id: bz-spandau-cur, expr: bezirk.berlin.spandau.current.headline, printed: "109.8"}
+  - {id: senate-2025, expr: figure.berlin.official.new_cycle_infra_km.whole_network.21.2, printed: "21.2"}
+  - {id: senate-prelim, expr: figure.berlin.official.new_cycle_infra_km.whole_network.20.5, printed: "20.5"}
+  - {id: senate-vrn-2025, expr: figure.berlin.official.new_cycle_infra_km.vorrangnetz, printed: "9.8"}
+  - {id: chg-gained, expr: change.berlin.gained, printed: "442"}
+  - {id: chg-redrawn, expr: change.berlin.redrawn, printed: "656"}
+  - {id: chg-net-ab, expr: delta.berlin.lau.2023.current.ab_km, printed: "35.6"}
+data_refs:
+  - {id: ts-lau, label: "velometer time series, berlin/lau (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### berlin/lau", route: /city/berlin/time}
+  - {id: ts-fua, label: "velometer time series, berlin/fua (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### berlin/fua", route: /city/berlin/time}
+  - {id: expl-lau-2022, label: "velometer time-series explanation, berlin/lau/2022", file: docs/review/m3_timeseries.md, locator: "### berlin/lau/2022"}
+  - {id: expl-fua-2022, label: "velometer time-series explanation, berlin/fua/2022", file: docs/review/m3_timeseries.md, locator: "### berlin/fua/2022"}
+  - {id: bezirke, label: "velometer Bezirk series (12 Bezirke, classifier v4)", route: /city/berlin/bezirke}
+  - {id: change, label: "velometer mapped change, Berlin, 2023-01-01 to current", file: docs/review/berlin_change_2023-01-01_current.md, locator: "Mapped km per category", route: /city/berlin/bezirke}
+literals:
+  - 100 km
+  - 12 Bezirke

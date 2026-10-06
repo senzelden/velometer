@@ -1,0 +1,88 @@
+city_id: ljubljana
+title: "Ljubljana: sidepaths redrawn, then a steady climb"
+dek: >-
+  The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads between 2018 and
+  October 2026; its largest step is the same paths mapped a new way.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Mapped A+B km in Ljubljana's city proper rose from 128 in 2018 to 245 in October 2026,
+        and the headline from 46.5 to 73.5. The largest step sits at the 2021 point, 138 → 194
+        km. Our explanation finds a mapping campaign in late 2020: road sides lost their
+        cycle-track tags and the sidepaths beside them were drawn as separate ways [#ts_lau_2021].
+        Much of that step is existing paths mapped in a new way, not new infrastructure.
+      - >-
+        In 2022 and 2023 the same sidepaths were retagged from cycleway to path, which under
+        classifier v4 moves almost nothing between tiers [#ts_lau_2022]. Mapped painted lanes
+        (tier D) went from 37 to 102 km. Since the January 2026 snapshot A+B rose again, from
+        228 to 245 km, as side paths were drawn as separate ways along a few roads at the city
+        edge [#shift_current]. Whether those paths are new on the ground cannot be told from the
+        data.
+      - >-
+        The functional urban area nearly tripled, from 211 to 617 mapped km. After 2021 its
+        flagged jumps come mostly from mapping outside the city; for 2025 the explanation infers
+        from the tags of two ways that some of the new km is probably new infrastructure
+        [#ts_fua_2025].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Ljubljana's own figures disagree with one another and state no length basis or counting
+        date: the city's web page counts lanes on footways and carriageways together with
+        separated tracks and shared paths [@ljubljana-mol-hoja-in-kolesarjenje], while our
+        headline leaves lanes out. Clean Cities 2025 counts protected infrastructure only
+        [@cc2025-annexes]. Its 251 km is close to our per-side A+B of 245 km (−2.4%), though the
+        report does not say whether the city submitted it. Its road network of 1,649 km is wider
+        than our 1,172 km, so its ratio is 15% against our 20.9% [#rec_cc_ratio]. QECIO counts
+        the whole NUTS3 region around the city, not the municipality [#rec_qecio_main].
+quotes:
+  - excerpt: ljubljana-mol-hoja-in-kolesarjenje/over-350km
+    after: 3
+  - excerpt: cc2025-annexes/included
+    after: 3
+facts:
+  - {id: hl_2018, expr: series.ljubljana.lau.2018.headline, printed: "46.5"}
+  - {id: hl_cur, expr: series.ljubljana.lau.current.headline, printed: "73.5"}
+  - {id: ab_2018, expr: series.ljubljana.lau.2018.ab_km, printed: "128"}
+  - {id: ab_cur, expr: series.ljubljana.lau.current.ab_km, printed: "245"}
+  - {id: ab_2020, expr: series.ljubljana.lau.2020.ab_km, printed: "138"}
+  - {id: ab_2021, expr: series.ljubljana.lau.2021.ab_km, printed: "194"}
+  - {id: d_2018, expr: series.ljubljana.lau.2018.D, printed: "37"}
+  - {id: d_cur, expr: series.ljubljana.lau.current.D, printed: "102"}
+  - {id: ab_2026, expr: series.ljubljana.lau.2026.ab_km, printed: "228"}
+  - {id: fua_2018, expr: series.ljubljana.fua.2018.ab_km, printed: "211"}
+  - {id: fua_cur, expr: series.ljubljana.fua.current.ab_km, printed: "617"}
+  - {id: cc_km_theirs, expr: gap.ljubljana.cc_km.theirs, printed: "251"}
+  - {id: cc_km_gap, expr: gap.ljubljana.cc_km.gap_pct, printed: "−2.4%"}
+  - {id: cc_net_theirs, expr: gap.ljubljana.cc_network_km.theirs, printed: "1,649"}
+  - {id: cc_net_ours, expr: gap.ljubljana.cc_network_km.ours, printed: "1,172"}
+  - {id: cc_ratio_theirs, expr: gap.ljubljana.cc_ratio.theirs, printed: "15%"}
+  - {id: cc_ratio_ours, expr: gap.ljubljana.cc_ratio.ours, printed: "20.9%"}
+data_refs:
+  - id: ts_lau_2021
+    label: velometer time-series explanation, ljubljana/lau/2021
+    file: docs/review/m3_timeseries.md
+    locator: "### ljubljana/lau/2021"
+  - id: ts_lau_2022
+    label: velometer time-series explanation, ljubljana/lau/2022
+    file: docs/review/m3_timeseries.md
+    locator: "### ljubljana/lau/2022"
+  - id: shift_current
+    label: velometer shift investigation, ljubljana/lau/current
+    file: docs/review/shifts.md
+    locator: "### ljubljana/lau/current"
+  - id: ts_fua_2025
+    label: velometer time-series explanation, ljubljana/fua/2025
+    file: docs/review/m3_timeseries.md
+    locator: "### ljubljana/fua/2025"
+  - id: rec_cc_ratio
+    label: velometer reconciliation, ljubljana/cc_ratio
+    file: docs/reconciliation.md
+    locator: "### ljubljana/cc_ratio"
+  - id: rec_qecio_main
+    label: velometer reconciliation, ljubljana/qecio_main_km
+    file: docs/reconciliation.md
+    locator: "### ljubljana/qecio_main_km"
+literals:
+  - "100 km"

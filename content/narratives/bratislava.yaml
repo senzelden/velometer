@@ -1,0 +1,65 @@
+city_id: bratislava
+title: "Bratislava: a dip, then a steady climb"
+dek: >-
+  The headline rose from 43.5 in 2018 to 58.7 in October 2026, after a fall in 2020 that was a
+  retagging clean-up, not lost paths.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Bratislava's mapped A+B went from 124 km in 2018 to 172 km in October 2026, and its
+        headline, mapped A+B km per side per 100 km of main roads, from 43.5 to 58.7 [#ts-lau]. The
+        path was not smooth. A+B fell from 132 km in 2019 to 113 km in 2020 and passed its 2019
+        level again only in 2024. That fall was retagging during 2019: ways left the cycling tiers,
+        the largest a long embankment path retagged as a footway, which was a cycleway again by
+        late 2024 [#shift-lau-2020]. From 2024 tier A rose fastest, from 63 to 90 km.
+      - >-
+        Painted lanes (D) more than tripled on the map, from 17 to 55 km per side. Since 2024 part
+        of that is retagging of shared lanes into proper lanes, alongside lanes on roads that had
+        no cycleway tag [#recon-lanes]. The activity flag on the current point is a pedestrian
+        mapping campaign of sidewalks and crossings; A+B moved normally [#expl-lau-current].
+      - >-
+        The functional urban area grew faster than the city, A+B from 284 to 443 km. Its 2022 jump is mostly newly mapped cycleways; the city's share of
+        it was 15.5 km [#ts-fua] [#expl-fua-2022].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities 2025 and our figures roughly agree: it reports 186 km of protected
+        infrastructure and 12% of the road network [@cc2025-report], against our 172 km and 13.2%
+        [#recon]. QECIO measured the whole Bratislava region, more than five times the city's area,
+        so its km are not the city's [#recon-qecio]. The city reports km added by type, advisory lanes among them, and a
+        total of its own without a stated length basis [@bratislava-city-infra-2025]; the local
+        cycling NGO adds up both sides of a road, as we do [@bratislava-cyklokoalicia-2025].
+quotes:
+  - {excerpt: bratislava-city-infra-2025/breakdown-total, after: 3}
+  - {excerpt: bratislava-cyklokoalicia-2025/both-sides, after: 3}
+facts:
+  - {id: ab-2018, expr: series.bratislava.lau.2018.ab_km, printed: "124"}
+  - {id: ab-cur, expr: series.bratislava.lau.current.ab_km, printed: "172"}
+  - {id: h-2018, expr: series.bratislava.lau.2018.headline, printed: "43.5"}
+  - {id: h-cur, expr: series.bratislava.lau.current.headline, printed: "58.7"}
+  - {id: ab-2019, expr: series.bratislava.lau.2019.ab_km, printed: "132"}
+  - {id: ab-2020, expr: series.bratislava.lau.2020.ab_km, printed: "113"}
+  - {id: a-2024, expr: series.bratislava.lau.2024.A, printed: "63"}
+  - {id: a-cur, expr: series.bratislava.lau.current.A, printed: "90"}
+  - {id: d-2018, expr: series.bratislava.lau.2018.D, printed: "17"}
+  - {id: d-cur, expr: series.bratislava.lau.current.D, printed: "55"}
+  - {id: fua-ab-2018, expr: series.bratislava.fua.2018.ab_km, printed: "284"}
+  - {id: fua-ab-cur, expr: series.bratislava.fua.current.ab_km, printed: "443"}
+  - {id: lau-2022-step, expr: delta.bratislava.lau.2021.2022.ab_km, printed: "15.5"}
+  - {id: cc-km, expr: gap.bratislava.cc_km.theirs, printed: "186"}
+  - {id: cc-share, expr: gap.bratislava.cc_ratio.theirs, printed: "12"}
+  - {id: cc-ours-km, expr: gap.bratislava.cc_km.ours, printed: "172"}
+  - {id: cc-ours, expr: gap.bratislava.cc_ratio.ours, printed: "13.2"}
+data_refs:
+  - {id: ts-lau, label: "velometer time series, bratislava/lau (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### bratislava/lau", route: /city/bratislava/time}
+  - {id: ts-fua, label: "velometer time series, bratislava/fua (classifier v4)", file: docs/review/m3_timeseries.md, locator: "#### bratislava/fua", route: /city/bratislava/time}
+  - {id: shift-lau-2020, label: "velometer shift investigation, bratislava/lau/2020", file: docs/review/shifts.md, locator: "### bratislava/lau/2020"}
+  - {id: expl-lau-current, label: "velometer time-series explanation, bratislava/lau/current", file: docs/review/m3_timeseries.md, locator: "### bratislava/lau/current"}
+  - {id: expl-fua-2022, label: "velometer time-series explanation, bratislava/fua/2022", file: docs/review/m3_timeseries.md, locator: "### bratislava/fua/2022"}
+  - {id: recon-lanes, label: "velometer reconciliation, bratislava/qecio_lanes_km", file: docs/reconciliation.md, locator: "### bratislava/qecio_lanes_km"}
+  - {id: recon-qecio, label: "velometer reconciliation, bratislava/qecio_main_km", file: docs/reconciliation.md, locator: "### bratislava/qecio_main_km"}
+  - {id: recon, label: "velometer reconciliation, bratislava (cc_ratio, cc_km)", file: docs/reconciliation.md, locator: "#### bratislava", route: /city/bratislava/figures}
+literals:
+  - 100 km

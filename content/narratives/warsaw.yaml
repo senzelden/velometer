@@ -1,0 +1,81 @@
+city_id: warsaw
+title: "Warsaw: steady tracks, and a shorter yardstick in 2025"
+dek: >-
+  The headline rose from 53.4 to 82.3 mapped A+B km per 100 km of main roads between 2018 and
+  October 2026; its biggest step came from retagged expressways, not from cycle paths.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Inside the city, Warsaw's mapped A+B km rose from 528 in 2018 to 763 in October 2026,
+        and the headline from 53.4 to 82.3. Almost all of it is separated track: tier A went
+        from 395 to 598 km, while shared paths (tier B) moved from 134 to 165 km. Painted lanes
+        grew from 46 to 65 km. No year in the city series is flagged.
+      - >-
+        The largest headline step, 67.9 to 77.8 in 2025, is not a cycling change. A+B rose by a
+        normal 4% that year, but the main roads the headline divides by fell from 1,039 to 946
+        km: expressways that had been mapped as trunk roads were retagged as motorways in late
+        2024, and motorways are not in the denominator [#shift_2025]. Most of that step is a
+        shorter yardstick, not more mapped cycle km.
+      - >-
+        The functional urban area grew much faster, from 833 to 2,033 mapped km. Its flagged
+        jumps of 2019 to 2021 were ordinary mapping activity spread over the suburban gminas,
+        with no campaign or import, partly ways retagged from construction to cycleway, which
+        dates the mapping rather than the path [#ts_fua_2019].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The road authority ZDM counts a network that includes cycle lanes and contraflow lanes,
+        which we keep in tier D outside the headline, and its yearly summaries report km added in
+        the year, a different kind of km from ours. Clean Cities 2025 counts protected
+        infrastructure [@cc2025-annexes]; our per-side A+B is 20.9% above its 631 km. Every OSM
+        count near its date is higher, which suggests it leaves out shared foot and cycle
+        paths, though that is an inference [#rec_cc_km]. Its road network of 4,300 km is wider
+        than our 3,386 km, so its ratio is 15% against our 22.5%.
+quotes:
+  - excerpt: warsaw-zdm-sezon-2018/composition-544km
+    after: 3
+  - excerpt: warsaw-zdm-podsumowanie-2025/plus-55km
+    after: 3
+  - excerpt: cc2025-annexes/included
+    after: 3
+facts:
+  - {id: hl_2018, expr: series.warsaw.lau.2018.headline, printed: "53.4"}
+  - {id: hl_cur, expr: series.warsaw.lau.current.headline, printed: "82.3"}
+  - {id: ab_2018, expr: series.warsaw.lau.2018.ab_km, printed: "528"}
+  - {id: ab_cur, expr: series.warsaw.lau.current.ab_km, printed: "763"}
+  - {id: a_2018, expr: series.warsaw.lau.2018.A, printed: "395"}
+  - {id: a_cur, expr: series.warsaw.lau.current.A, printed: "598"}
+  - {id: b_2018, expr: series.warsaw.lau.2018.B, printed: "134"}
+  - {id: b_cur, expr: series.warsaw.lau.current.B, printed: "165"}
+  - {id: d_2018, expr: series.warsaw.lau.2018.D, printed: "46"}
+  - {id: d_cur, expr: series.warsaw.lau.current.D, printed: "65"}
+  - {id: hl_2024, expr: series.warsaw.lau.2024.headline, printed: "67.9"}
+  - {id: hl_2025, expr: series.warsaw.lau.2025.headline, printed: "77.8"}
+  - {id: ab_pct_2025, expr: pct.warsaw.lau.2024.2025.ab_km, printed: "4%"}
+  - {id: den_2024, expr: denominator.warsaw.lau.2024, printed: "1,039"}
+  - {id: den_2025, expr: denominator.warsaw.lau.2025, printed: "946"}
+  - {id: fua_2018, expr: series.warsaw.fua.2018.ab_km, printed: "833"}
+  - {id: fua_cur, expr: series.warsaw.fua.current.ab_km, printed: "2,033"}
+  - {id: cc_km_gap, expr: gap.warsaw.cc_km.gap_pct, printed: "20.9%"}
+  - {id: cc_km_theirs, expr: gap.warsaw.cc_km.theirs, printed: "631"}
+  - {id: cc_net_theirs, expr: gap.warsaw.cc_network_km.theirs, printed: "4,300"}
+  - {id: cc_net_ours, expr: gap.warsaw.cc_network_km.ours, printed: "3,386"}
+  - {id: cc_ratio_theirs, expr: gap.warsaw.cc_ratio.theirs, printed: "15%"}
+  - {id: cc_ratio_ours, expr: gap.warsaw.cc_ratio.ours, printed: "22.5%"}
+data_refs:
+  - id: shift_2025
+    label: velometer shift investigation, warsaw/lau/2025
+    file: docs/review/shifts.md
+    locator: "### warsaw/lau/2025"
+  - id: ts_fua_2019
+    label: velometer time-series explanation, warsaw/fua/2019
+    file: docs/review/m3_timeseries.md
+    locator: "### warsaw/fua/2019"
+  - id: rec_cc_km
+    label: velometer reconciliation, warsaw/cc_km
+    file: docs/reconciliation.md
+    locator: "### warsaw/cc_km"
+literals:
+  - "100 km"

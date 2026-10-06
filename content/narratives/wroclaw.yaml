@@ -1,0 +1,80 @@
+city_id: wroclaw
+title: "Wrocław: mapped km up at every point"
+dek: >-
+  The headline rose from 62.0 to 95.3 mapped A+B km per 100 km of main roads between 2018 and
+  October 2026, with no unexplained jump on the way.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Wrocław's map shows an even climb. Mapped A+B km in the city proper rose from 261 in 2018 to 399 in October 2026,
+        higher at every yearly point, and the headline went from 62.0 to 95.3. Separated tracks
+        (tier A) grew from 178 to 258 km and shared foot and cycle paths (tier B) from 83 to 141
+        km. Painted lanes stay minor, 22 to 32 km.
+      - >-
+        The only flag on the city series sits on the 2018 starting point: in 2017 a single
+        mapper drew much of the pedestrian network, footways rather than cycleways
+        [#ts_lau_2018]. Because 2018 is the first point, no change in km is attributed to it.
+      - >-
+        The functional urban area grew faster, from 332 to 701 mapped km. Its flagged steps of
+        2020, 2022 and 2023 were mapping activity in the suburban gminas, partly ways retagged
+        from construction to cycleway. Such a retag dates the mapping, not the path on the
+        ground [#ts_fua_2023].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city hall's figures count wider networks than ours: its "cyclist-friendly routes"
+        include contraflow lanes and traffic-calmed zones, which our headline does not count,
+        and its other totals give no definition or length basis. Clean Cities 2025 counts
+        protected infrastructure, shared foot and cycle paths included [@cc2025-annexes]. Our
+        per-side A+B of 399 km is 12.3% above its 355 km, and 6.8% above on the centreline
+        basis, with a year and a half between the two dates [#rec_cc_ratio]. The ratio differs
+        more: its road network of 1,769 km is wider than our 1,340 km
+        [#rec_cc_network], so its 20% stands against our 29.8%.
+quotes:
+  - excerpt: wroclaw-wroclife-nik-2023/friendly-routes
+    after: 3
+  - excerpt: wroclaw-portal-samorzadowy-2026/wroclaw-428km
+    after: 3
+  - excerpt: cc2025-annexes/included
+    after: 3
+facts:
+  - {id: hl_2018, expr: series.wroclaw.lau.2018.headline, printed: "62.0"}
+  - {id: hl_cur, expr: series.wroclaw.lau.current.headline, printed: "95.3"}
+  - {id: ab_2018, expr: series.wroclaw.lau.2018.ab_km, printed: "261"}
+  - {id: ab_cur, expr: series.wroclaw.lau.current.ab_km, printed: "399"}
+  - {id: a_2018, expr: series.wroclaw.lau.2018.A, printed: "178"}
+  - {id: a_cur, expr: series.wroclaw.lau.current.A, printed: "258"}
+  - {id: b_2018, expr: series.wroclaw.lau.2018.B, printed: "83"}
+  - {id: b_cur, expr: series.wroclaw.lau.current.B, printed: "141"}
+  - {id: d_2018, expr: series.wroclaw.lau.2018.D, printed: "22"}
+  - {id: d_cur, expr: series.wroclaw.lau.current.D, printed: "32"}
+  - {id: fua_2018, expr: series.wroclaw.fua.2018.ab_km, printed: "332"}
+  - {id: fua_cur, expr: series.wroclaw.fua.current.ab_km, printed: "701"}
+  - {id: cc_km_theirs, expr: gap.wroclaw.cc_km.theirs, printed: "355"}
+  - {id: cc_km_gap, expr: gap.wroclaw.cc_km.gap_pct, printed: "12.3%"}
+  - {id: cc_km_gap_cl, expr: "gap.wroclaw.cc_km~qecio_weighted.gap_pct", printed: "6.8%"}
+  - {id: cc_net_theirs, expr: gap.wroclaw.cc_network_km.theirs, printed: "1,769"}
+  - {id: cc_net_ours, expr: gap.wroclaw.cc_network_km.ours, printed: "1,340"}
+  - {id: cc_ratio_theirs, expr: gap.wroclaw.cc_ratio.theirs, printed: "20%"}
+  - {id: cc_ratio_ours, expr: gap.wroclaw.cc_ratio.ours, printed: "29.8%"}
+data_refs:
+  - id: ts_lau_2018
+    label: velometer time-series explanation, wroclaw/lau/2018
+    file: docs/review/m3_timeseries.md
+    locator: "### wroclaw/lau/2018"
+  - id: ts_fua_2023
+    label: velometer time-series explanation, wroclaw/fua/2023
+    file: docs/review/m3_timeseries.md
+    locator: "### wroclaw/fua/2023"
+  - id: rec_cc_ratio
+    label: velometer reconciliation, wroclaw/cc_ratio
+    file: docs/reconciliation.md
+    locator: "### wroclaw/cc_ratio"
+  - id: rec_cc_network
+    label: velometer reconciliation, wroclaw/cc_network_km
+    file: docs/reconciliation.md
+    locator: "### wroclaw/cc_network_km"
+literals:
+  - "100 km"

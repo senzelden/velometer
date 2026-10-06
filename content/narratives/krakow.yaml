@@ -1,0 +1,79 @@
+city_id: krakow
+title: "Kraków: mapped km nearly doubled, and half of one jump is retagging"
+dek: >-
+  The headline rose from 40.2 to 72.6 mapped A+B km per 100 km of main roads between 2018 and
+  October 2026, the steepest relative climb of the three Polish cities.
+sections:
+  - heading: From 2018 to now
+    paragraphs:
+      - >-
+        Kraków's mapped A+B km in the city proper rose from 161 in 2018 to 296 in October 2026,
+        up 84%, and the headline from 40.2 to 72.6. Tier A went from 112 to 192 km and tier B
+        from 49 to 105 km; painted lanes stayed small, at 22 km now.
+      - >-
+        The largest step is the 2024 point, +33 km of A+B. About half of it is new ways and half
+        is existing footways and paths retagged as designated cycle paths [#ts_lau_2024], so
+        part of that jump is a change of tags, not new infrastructure. The earlier flag, on
+        2022, is a tag change on contraflow lanes that leaves A+B on its normal course
+        [#ts_lau_2022].
+      - >-
+        The functional urban area grew from 202 to 541 mapped km. Its early jumps came from
+        mappers adding long regional routes east of the city, the Wiślana Trasa Rowerowa in
+        2019 and Velo Raba in 2020 [#ts_fua_2019].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city's own totals use a broad definition that also counts footways where cycling is
+        allowed and contraflow cycling in calmed streets, both outside our A+B, and they give
+        neither a length basis nor a counting method. Clean Cities 2025 counts protected
+        infrastructure [@cc2025-annexes]: its 229 km is below every OSM count near its date,
+        and our per-side A+B is 29.3% above it. As for Warsaw, the reason may be that shared
+        foot and cycle paths are left out, but that is an inference [#rec_cc_km]. Its road
+        network of 2,128 km is wider than our 1,718 km, so its ratio is 11% against our 17.2%.
+quotes:
+  - excerpt: krakow-250km-2022/definition
+    after: 3
+  - excerpt: krakow-portal-samorzadowy-2026/krakow-316km
+    after: 3
+  - excerpt: cc2025-annexes/included
+    after: 3
+facts:
+  - {id: hl_2018, expr: series.krakow.lau.2018.headline, printed: "40.2"}
+  - {id: hl_cur, expr: series.krakow.lau.current.headline, printed: "72.6"}
+  - {id: ab_2018, expr: series.krakow.lau.2018.ab_km, printed: "161"}
+  - {id: ab_cur, expr: series.krakow.lau.current.ab_km, printed: "296"}
+  - {id: ab_pct, expr: pct.krakow.lau.2018.current.ab_km, printed: "84%"}
+  - {id: a_2018, expr: series.krakow.lau.2018.A, printed: "112"}
+  - {id: a_cur, expr: series.krakow.lau.current.A, printed: "192"}
+  - {id: b_2018, expr: series.krakow.lau.2018.B, printed: "49"}
+  - {id: b_cur, expr: series.krakow.lau.current.B, printed: "105"}
+  - {id: d_cur, expr: series.krakow.lau.current.D, printed: "22"}
+  - {id: step_2024, expr: delta.krakow.lau.2023.2024.ab_km, printed: "+33"}
+  - {id: fua_2018, expr: series.krakow.fua.2018.ab_km, printed: "202"}
+  - {id: fua_cur, expr: series.krakow.fua.current.ab_km, printed: "541"}
+  - {id: cc_km_theirs, expr: gap.krakow.cc_km.theirs, printed: "229"}
+  - {id: cc_km_gap, expr: gap.krakow.cc_km.gap_pct, printed: "29.3%"}
+  - {id: cc_net_theirs, expr: gap.krakow.cc_network_km.theirs, printed: "2,128"}
+  - {id: cc_net_ours, expr: gap.krakow.cc_network_km.ours, printed: "1,718"}
+  - {id: cc_ratio_theirs, expr: gap.krakow.cc_ratio.theirs, printed: "11%"}
+  - {id: cc_ratio_ours, expr: gap.krakow.cc_ratio.ours, printed: "17.2%"}
+data_refs:
+  - id: ts_lau_2024
+    label: velometer time-series explanation, krakow/lau/2024
+    file: docs/review/m3_timeseries.md
+    locator: "### krakow/lau/2024"
+  - id: ts_lau_2022
+    label: velometer time-series explanation, krakow/lau/2022
+    file: docs/review/m3_timeseries.md
+    locator: "### krakow/lau/2022"
+  - id: ts_fua_2019
+    label: velometer time-series explanation, krakow/fua/2019
+    file: docs/review/m3_timeseries.md
+    locator: "### krakow/fua/2019"
+  - id: rec_cc_km
+    label: velometer reconciliation, krakow/cc_km
+    file: docs/reconciliation.md
+    locator: "### krakow/cc_km"
+literals:
+  - "100 km"
