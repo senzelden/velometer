@@ -85,7 +85,7 @@ Provenance: run 713 · OSM 2026-10-03T20:20:50Z · classifier v4 `{"plain_cyclew
 | `berlin/bnk_network_km` | 1,667.6 | 1,793.2 | -7.0% | ok | definition_mismatch, boundary_mismatch | bikenetkit_v1 (?) |
 | `berlin/official_new_km#official:21.2` | n/a | 21.2 | n/a | info |  | official (2025-12-31) |
 | `berlin/official_new_km#official:20.5` | n/a | 20.5 | n/a | info |  | official (2025-12-31) |
-| `berlin/official_new_km@vorrangnetz#official:7.5` | n/a | 7.5 | n/a | info | scope_mismatch | official (2025-12-31) |
+| `berlin/official_new_km@vorrangnetz#official:9.8` | n/a | 9.8 | n/a | info | scope_mismatch | official (2025-12-31) |
 | `berlin/official_new_km#changing_cities:25.2` | n/a | 25.2 | n/a | info |  | changing_cities (2025-12-31) |
 
 #### bordeaux

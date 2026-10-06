@@ -79,9 +79,9 @@ Common fields: retrieved_at 2026-10-05. `source` proposals: `official` where a S
 
 ### C1c. Vorrangnetz km implemented in 2025 (optional, same Drucksache)
 
-- city_id berlin; source `official`; metric_name `new_cycle_infra_km`; value 7.5; unit km; reference_date 2025-12-31; network_scope `vorrangnetz`; length_basis `unknown`
+- city_id berlin; source `official`; metric_name `new_cycle_infra_km`; value 9.8 (corrected 2026-10-06, was 7.5); unit km; reference_date 2025-12-31; network_scope `vorrangnetz`; length_basis `unknown`
 - source_url same Drucksache; PRIMARY
-- Source is the table in Antwort zu 17, row "Summe": "Summe 10,1 5,1 9,6 7,5" (2022, 2023, 2024, 2025 in km). The table carries no sentence form; the row label text is the quote.
+- Source is the table in Antwort zu 17, row "Summe": "Summe 14,3 13,6 10,9 9,8" (2022, 2023, 2024, 2025 in km). Correction 2026-10-06: the earlier extraction took "Summe 10,1 5,1 9,6 7,5", which is the sum row of the following Ergänzungsnetz table; the Vorrangnetz table continues onto p. 8 and its sum row is 14,3 13,6 10,9 9,8 (found during M7 source research, checked against the PDF text). The table carries no sentence form; the row label text is the quote.
 - Confidence: high for the extraction; the table header reads "Vorrangnetz [Km]".
 - Verdict: loaded (user verdict 2026-10-05), config/external/figures.csv.
 
