@@ -30,7 +30,7 @@
 {% endif %}
 </section>
 
-{% if content_error %}<p class="note">narratives could not be loaded (see the server log)</p>{% endif %}
+{% if content_error %}<p class="note">the narrative for this city could not be loaded (see the server log)</p>{% endif %}
 {% if nar %}{% for s in nar.of_role("figures") %}
 <section class="narrative">
 {% if s.heading and s.heading | lower != "why the figures differ" %}<h2>{{ s.heading }}</h2>{% endif %}

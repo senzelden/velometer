@@ -571,7 +571,10 @@ def test_unreadable_content_is_a_note_not_a_500(setup, content):  # noqa: F811
             assert c.get(path).status_code == 200, path
         for path in ["/city/berlin", "/city/berlin/figures"]:
             text = _text(c.get(path).text)
-            assert "narratives could not be loaded" in text and "no narrative yet" not in text
+            assert (
+                "the narrative for this city could not be loaded" in text
+                and "no narrative yet" not in text
+            )
 
 
 def test_over_time_tab_has_the_yearly_table_and_flag_explanations_without_js(client):
@@ -628,7 +631,7 @@ def test_one_broken_narrative_leaves_the_others_readable(setup, content):  # noq
     (content / "narratives" / "berlin.yaml").write_text("title: [unclosed\n")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
         berlin, paris_page = _text(c.get("/city/berlin").text), _text(c.get("/city/paris").text)
-    assert "narratives could not be loaded" in berlin
+    assert "the narrative for this city could not be loaded" in berlin
     assert "Paris story" in paris_page and "could not be loaded" not in paris_page
 
 
@@ -636,7 +639,9 @@ def test_a_broken_registry_still_blanks_every_narrative(setup, content):  # noqa
     db_path, cfg, maps, docs = setup
     (content / "sources" / "x.yaml").write_text("sources: [unclosed\n")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
-        assert "narratives could not be loaded" in _text(c.get("/city/berlin").text)
+        assert "the narrative for this city could not be loaded" in _text(
+            c.get("/city/berlin").text
+        )
         assert "could not be loaded" in _text(c.get("/differences").text)
 
 
