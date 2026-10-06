@@ -621,3 +621,38 @@ class TrustConfig(_Strict):
 def load_trust(path: Path) -> TrustConfig:
     """config/trust.yaml; ConfigError when it is missing or invalid."""
     return _parse(path, TrustConfig.model_validate)
+
+
+DIFFERENCE_DIMENSIONS = ("scope", "kind", "length", "date", "area", "method")
+
+
+class Dimension(_Strict):
+    id: str
+    label: str
+
+
+class DifferencesConfig(_Strict):
+    """config/differences.yaml: why a published figure differs from our mapped km."""
+
+    dimensions: list[Dimension]
+    ours: dict[str, str]  # our side of each dimension (date: the run's snapshot, not listed)
+    metric_kinds: dict[str, str]
+    source_methods: dict[str, str]
+    length_bases: dict[str, str]
+    labels: dict[str, str]  # metric_name -> what it counts
+    areas: dict[str, str]  # source id (or "default") -> the area it covers
+
+    @model_validator(mode="after")
+    def _dimensions(self):
+        ids = tuple(d.id for d in self.dimensions)
+        if ids != DIFFERENCE_DIMENSIONS:
+            raise ValueError(f"dimension ids must be {DIFFERENCE_DIMENSIONS}, got {ids}")
+        unknown = sorted(set(self.ours) - set(ids))
+        if unknown:
+            raise ValueError(f"ours names unknown dimensions: {unknown}")
+        return self
+
+
+def load_differences(path: Path) -> DifferencesConfig:
+    """config/differences.yaml; ConfigError when it is missing or invalid."""
+    return _parse(path, DifferencesConfig.model_validate)

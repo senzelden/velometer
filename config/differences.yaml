@@ -1,0 +1,62 @@
+# Why a published figure differs from our mapped km, along six dimensions (spec §5).
+# Read by `velometer content --check` (dimension ids) and by report/differences.py.
+# `ours` is our side of each dimension (the date is the run's OSM snapshot). Everything that
+# states a source's definition follows content/sources/*.yaml; where the source does not say,
+# the value is "not stated by the source".
+dimensions:
+  - {id: scope, label: What is counted}
+  - {id: kind, label: What kind of km}
+  - {id: length, label: How length is measured}
+  - {id: date, label: When}
+  - {id: area, label: Where}
+  - {id: method, label: Who measured}
+ours:
+  scope: all mapped cycling infrastructure, tiers A–E (headline A+B)
+  kind: mapped in OpenStreetMap at the snapshot date
+  length: per road side
+  area: city proper (LAU)
+  method: OpenStreetMap, velometer classifier
+# What a figure's km are: the metric's own kind. Only metrics whose kind differs from ours.
+metric_kinds:
+  new_cycle_infra_km: completed in the year
+  vorrangnetz_implemented_km: completed to date
+  vorrangnetz_target_km: planned network
+  radverkehrsnetz_completed_km: completed to date
+  radverkehrsnetz_target_km: planned network
+  radverkehrsnetz_completed_share_pct: share of the planned network completed
+  radwegeausbau_started_km: projects started in the year, not completed
+  cycle_track_km: existing cycle track in the year
+# What each metric counts, in the source's own terms (the "scope" dimension).
+labels:
+  protected_km: protected cycling infrastructure (physically separated by a barrier, height difference or distance)
+  network_km: the entire public road network within the city area
+  protected_share_pct: protected cycling infrastructure as a ratio to the road network
+  main_roads_km: main roads
+  cycle_tracks_km: cycle tracks (separated from motorised traffic by physical infrastructure)
+  cycle_lanes_km: cycle lanes (marked on the carriageway, no physical separation)
+  shared_pedestrians_km: cycle and pedestrian tracks (signed for pedestrians and cyclists)
+  total_cycle_infra_km: QECIO's total of its cycle infrastructure classes
+  bike_network_km: BikeNetKit's bicycle network (simplified OpenStreetMap network)
+  new_cycle_infra_km: newly created cycle infrastructure
+  vorrangnetz_implemented_km: priority cycle network (Radvorrangnetz)
+  vorrangnetz_target_km: priority cycle network (Radvorrangnetz)
+  radverkehrsnetz_completed_km: planned Radverkehrsnetz
+  radverkehrsnetz_target_km: planned Radverkehrsnetz
+  radverkehrsnetz_completed_share_pct: planned Radverkehrsnetz
+  cycle_track_km: cycle track (Cykelsti), municipal definition not stated by the source
+  radwegeausbau_started_km: projects of the Radwegoffensive in the main cycle network
+source_methods:
+  clean_cities_2025: figures submitted by the city, OSM as fallback
+  qecio_v2_10: OpenStreetMap, QECIO method
+  bikenetkit_v1: OpenStreetMap, BikeNetKit method
+  official: the administration's own records
+  changing_cities: an NGO's own measurement
+  mobilitaetsagentur_wien: the city's mobility agency
+length_bases:
+  streckenlaenge: route length (Streckenlänge)
+  reallaenge: real length
+  unknown: basis not stated by the source
+areas:
+  qecio_v2_10: NUTS3 region
+  bikenetkit_v1: city boundary files of European cities above 100,000 inhabitants
+  default: the city as the source defines it
