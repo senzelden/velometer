@@ -3,7 +3,7 @@
 // this file draws that state and never recomputes the selection, so the chart, the section's
 // "Explore this chart" link and its table always describe the same thing. Without this file the
 // page is the article with a table per step.
-import { renderLines } from "./chart.js";
+import { renderLines, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { buildModel, colourPlan } from "./compare-model.js";
 import { PALETTE, displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
@@ -15,6 +15,7 @@ const out = {
   eyebrow: box.querySelector("[data-story-eyebrow]"),
   title: box.querySelector("[data-story-title]"),
   note: box.querySelector("[data-story-note]"),
+  short: box.querySelector("[data-story-short]"),
   link: box.querySelector("[data-story-link]"),
 };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -29,16 +30,22 @@ function linesModel(spec) {
   const model = buildModel(D, state);
   const colours = colourPlan(state, {});
   const lists = model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []);
+  // a step may ring only one kind of flag (jumps: the km jumps its text discusses)
+  const only = (flags) => (spec.ring ? flags.filter((f) => f === spec.ring) : flags);
   const series = model.series
     .filter((s) => s.points.some((p) => p.value != null))
-    .map((s) => ({ ...s, colour: colours[s.id] }));
+    .map((s) => ({
+      ...s,
+      colour: colours[s.id],
+      points: s.points.map((p) => ({ ...p, flags: only(p.flags ?? []) })),
+    }));
   const abs = state.mode === "abs";
   const tip = (s, p, label) =>
     `${s.name} · ${label}: ${abs ? "" : "index "}${formatValue(p.value)}` +
     (p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : "");
   return {
     model: { labels: displayLabels(model.labels, lists), series },
-    opts: { zero: abs, tip, label: `Line chart: ${spec.title}` },
+    opts: { zero: abs, tip, label: `Line chart: ${spec.title}`, small: state.view === "small" },
   };
 }
 
@@ -66,7 +73,13 @@ function draw() {
   if (!D || !spec) return;
   try {
     const { model, opts } = spec.kind === "bezirke" ? bezirkeModel(spec) : linesModel(spec);
-    renderLines(plot, model, { ...opts, height: window.innerWidth < 560 ? 230 : 440 });
+    if (opts.small) {
+      // each city on its own y scale: the small steps are as visible as the large ones
+      const narrow = window.innerWidth < 560;
+      renderSmallMultiples(plot, model, { shared: false, tip: opts.tip, height: narrow ? 80 : 130 });
+    } else {
+      renderLines(plot, model, { ...opts, height: window.innerWidth < 560 ? 230 : 440 });
+    }
   } catch (err) {
     failed(plot, err);
   }
@@ -80,6 +93,7 @@ function show(step) {
   out.eyebrow.textContent = `Step ${spec.n} of ${spec.of} · ${spec.heading}`;
   out.title.textContent = spec.title;
   out.note.textContent = spec.note;
+  out.short.textContent = spec.short ?? "";
   out.link.href = spec.href;
   draw();
   if (reduced) return;
@@ -103,6 +117,8 @@ const observer = new IntersectionObserver(
     for (const e of entries) (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target));
     const first = sections.find((s) => seen.has(s));
     if (first) mark(first.dataset.step);
+    // above the first section (the band sits behind the pinned chart on phones): the first step
+    else if (sections[0].getBoundingClientRect().top > 0) mark(sections[0].dataset.step);
   },
   { rootMargin: "-30% 0px -60% 0px" },
 );

@@ -10,9 +10,9 @@
 {% for n in t.notes %}<p class="note">{{ n }}</p>
 {% endfor %}
 <div class="scroll"><table class="step-table">
-<thead><tr><th scope="col">{{ t.row_head }}</th><th scope="col" class="num">{{ t.columns[0] }}</th><th scope="col" class="num">{{ t.columns[1] }}</th>{% if t.flags %}<th scope="col">Flagged</th>{% endif %}</tr></thead>
+<thead><tr><th scope="col">{{ t.row_head }}</th>{% for h in t.head %}<th scope="col"{% if t.rows[0].cells[loop.index0] is not string %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for r in t.rows %}<tr><th scope="row">{% if t.linked %}<a href="/city/{{ r.id }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th><td class="num">{{ r.first | num }}</td><td class="num">{{ r.last | num }}</td>{% if t.flags %}<td>{{ r.flagged | join(", ") }}</td>{% endif %}</tr>
+{% for r in t.rows %}<tr><th scope="row">{% if t.linked %}<a href="/city/{{ r.id }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td>{{ c }}</td>{% else %}<td class="num">{{ c | num }}</td>{% endif %}{% endfor %}</tr>
 {% endfor %}</tbody>
 </table></div>
 </details>
@@ -27,7 +27,8 @@
     <p class="eyebrow" data-story-eyebrow></p>
     <h2 data-story-title></h2>
     <div class="chart story-plot" data-story-plot role="group" aria-label="Chart of the current step"></div>
-    <p class="meta" data-story-note></p>
+    <p class="meta story-note-long" data-story-note></p>
+    <p class="meta story-note-short" data-story-short></p>
     <p class="meta"><a data-story-link href="/compare">Explore this chart →</a></p>
   </aside>
   <article class="narrative story-text">

@@ -3,6 +3,7 @@
 import json
 import re
 from pathlib import Path
+from urllib.parse import parse_qs
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,11 +15,14 @@ from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtur
     _client,
     _text,
     setup,
+    setup_21,
     subarea_client,
     subarea_setup,
 )
+from velometer.app import story
 from velometer.app.cache import fingerprint
 from velometer.app.main import create_app
+from velometer.content.models import STORY_STEPS
 
 CSP = (
     "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
@@ -846,11 +850,6 @@ def test_a_dropped_metric_survives_a_no_js_resubmit(client):
 # ---------------------------------------------------------------------------------------------
 # Task 13: Stories
 # ---------------------------------------------------------------------------------------------
-from urllib.parse import parse_qs  # noqa: E402
-
-from tests.test_app import client_21, setup_21  # noqa: E402, F401 - `client_21`'s fixtures
-from velometer.content.models import STORY_STEPS  # noqa: E402
-
 STORY_YAML = (
     """\
 city_id: combined
@@ -946,11 +945,10 @@ def test_each_step_has_an_explore_link_with_its_compare_query(story_client):
     assert q["c"] == [",".join(sorted(head, key=lambda i: (head[i], i))[:5])] and "m" not in q
     path, q = _explore(secs["jumps"])  # no km-jump flag in the fixture: every city
     assert path == "/compare" and q["c"] == [",".join(ids)] and q["m"] == ["ab_km"]
+    assert q["view"] == ["small"]  # each city on its own scale: the chart's view
 
 
 def test_flagged_cities_are_those_with_a_km_jump_year_not_every_flag():
-    from velometer.app import story
-
     def pts(*flags):
         return [{"label": str(2020 + i), "flags": f} for i, f in enumerate(flags)]
 
@@ -1036,7 +1034,7 @@ def test_stories_works_without_javascript(story_client):
     assert re.search(r"<aside[^>]*data-story-chart[^>]*\shidden", html)
     assert "data-chart=" not in html
     secs = _sections(html)
-    for step in ("all", "leaders", "tail", "growth", "jumps"):
+    for step in ("all", "leaders", "tail", "growth"):  # jumps: no km_jump in the fixture
         assert '<details class="step-values" open>' in secs[step], step
         assert '<table class="step-table">' in secs[step], step
     assert "Text of leaders" in secs["leaders"]
@@ -1077,3 +1075,92 @@ def test_the_real_methodology_pages_keep_their_generated_blocks(setup):  # noqa:
             assert "<table>" in html, path  # the generated rules table
             assert not re.search(r"^\s*(\| |- )", html.split("<main>")[1], re.M), path  # raw markup
             assert "generated:rules" not in html, path
+
+
+def _growth_payload():
+    """Eight cities: g (largest km gain), r1-r4 (fastest by index), b1/b2 (below their first
+    year), q (neither)."""
+    first = {
+        "g": 1000,
+        "r1": 100,
+        "r2": 100,
+        "r3": 100,
+        "r4": 100,
+        "r5": 100,
+        "b1": 500,
+        "b2": 500,
+        "q": 50,
+    }
+    now = {
+        "g": 1200,
+        "r1": 190,
+        "r2": 180,
+        "r3": 170,
+        "r4": 160,
+        "r5": 150,
+        "b1": 480,
+        "b2": 495,
+        "q": 55,
+    }
+    cities = {i: {"name": i.upper()} for i in first}
+    series = {
+        f"{i}/lau": [
+            {"label": "2018", "ab_km": first[i], "flags": ""},
+            {"label": "current", "ab_km": now[i], "flags": "", "osm": "2026-10-01"},
+        ]
+        for i in first
+    }
+    return {"cities": cities, "series": series, "headline_unit": "u"}
+
+
+def test_growth_highlights_are_the_largest_gain_the_fastest_risers_and_those_below_2018():
+    payload = _growth_payload()
+    assert story.pick(payload, "growth") == ["g", "r1", "r2", "r3", "r4", "b1", "b2"]
+    state = story.step_state(payload, {"c": "all", "hl": "growth", "m": "ab_km", "mode": "index"})
+    assert state.hl == ["g", "r1", "r2", "r3", "r4", "b1", "b2"] and "r5" not in state.hl
+    assert state.hl != story.pick(payload, "risers")  # not the plain top five by index
+
+
+def test_growth_highlights_never_exceed_the_colour_slots():
+    payload = _growth_payload()
+    for i in ("q", "r5", "r4"):  # push more cities below their first year
+        payload["series"][f"{i}/lau"][1]["ab_km"] = 1
+    assert len(story.pick(payload, "growth")) == 8
+
+
+def test_the_jumps_table_lists_only_km_jump_city_years_with_before_and_after(story_client):
+    payload = {
+        "cities": {"a": {"name": "A"}, "b": {"name": "B"}},
+        "series": {
+            "a/lau": [
+                {"label": "2021", "ab_km": 1677.0, "flags": "tag_drift"},
+                {"label": "2022", "ab_km": 1494.0, "flags": "km_jump;single_mapper"},
+                {"label": "2023", "ab_km": 1500.0, "flags": "activity_spike"},
+            ],
+            "b/lau": [{"label": "2021", "ab_km": 1.0, "flags": "activity_spike"}],
+        },
+        "headline_unit": "u",
+    }
+    state = story.step_state(payload, {"c": "flagged", "m": "ab_km", "view": "small"})
+    table = story._jump_table(payload, state)
+    assert [(r["name"], r["cells"]) for r in table["rows"]] == [
+        ("A", ["Jan 2022", 1677.0, 1494.0, -183.0])
+    ]
+    assert state.view == "small" and state.c == ["a"]
+
+
+def test_the_growth_table_shows_km_and_the_change_beside_the_index(story_client):
+    html = story_client.get("/stories").text
+    table = re.search(r'<table class="step-table">.*?</table>', _sections(html)["growth"], re.S)[0]
+    assert (
+        "A+B km Jan 2024" in table and "Change, km" in table and "Index, first year = 100" in table
+    )
+
+
+def test_the_jumps_step_rings_only_km_jumps_and_the_phone_keeps_the_mapped_km_note(story_client):
+    html = story_client.get("/stories").text
+    config = json.loads(re.search(r'id="story-config">(.*?)</script>', html, re.S).group(1))
+    assert config["jumps"]["ring"] == "km_jump" and config["jumps"]["state"]["view"] == "small"
+    assert "data-story-short" in html and config["jumps"]["short"].startswith(
+        "Mapped km in OpenStreetMap"
+    )

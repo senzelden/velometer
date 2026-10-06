@@ -83,8 +83,8 @@ STEP_COMPARE = {
     "all": {"c": "all", "hl": "leaders"},
     "leaders": {"c": "leaders"},
     "tail": {"c": "tail"},
-    "growth": {"c": "all", "hl": "risers", "m": "ab_km", "mode": "index"},
-    "jumps": {"c": "flagged", "m": "ab_km"},
+    "growth": {"c": "all", "hl": "growth", "m": "ab_km", "mode": "index"},
+    "jumps": {"c": "flagged", "m": "ab_km", "view": "small", "table": "jumps", "ring": "km_jump"},
     "bezirke": {"href": f"/city/{STORY_CITY}/bezirke"},
 }
 # No inline script or style, no third-party host except the OSM tiles (images), no framing.
