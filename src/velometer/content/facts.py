@@ -12,6 +12,7 @@ from pathlib import Path
 
 from velometer.report import change as change_report
 from velometer.report.data import ReportData, rank_values
+from velometer.timeseries import YearPoint
 
 FIELDS = ("headline", "ab_km", "A", "B", "C", "D", "E")
 TIER_FIELDS = ("A", "B", "C", "D", "E")
@@ -45,7 +46,7 @@ def _field(expr: str, field: str, allowed: tuple[str, ...] = FIELDS) -> str:
     return field
 
 
-def _points(expr: str, data: ReportData, city: str, kind: str) -> dict:
+def _points(expr: str, data: ReportData, city: str, kind: str) -> dict[str, YearPoint]:
     _kind(expr, kind)
     series = data.series(city, kind)
     if series is None:
@@ -53,7 +54,7 @@ def _points(expr: str, data: ReportData, city: str, kind: str) -> dict:
     return {p.label: p for p in series.points}
 
 
-def _point(expr: str, points: dict, label: str):
+def _point(expr: str, points: dict[str, YearPoint], label: str) -> YearPoint:
     if label not in points:
         raise _err(expr, f"no point labelled {label!r} (have {', '.join(points)})")
     return points[label]
@@ -73,7 +74,7 @@ def _series(expr, args, data, docs_dir):
     return _pick(expr, _point(expr, pts, label), _field(expr, field))
 
 
-def _first_label(pts: dict) -> str:
+def _first_label(pts: dict[str, YearPoint]) -> str:
     return min(pts, key=lambda lab: (lab == "current", lab))
 
 
@@ -118,8 +119,8 @@ def _denominator(expr, args, data, docs_dir):
     return p.ab_km / p.headline * 100
 
 
-def _trusted_points(data: ReportData, kind: str, label: str) -> dict[str, object]:
-    out = {}
+def _trusted_points(data: ReportData, kind: str, label: str) -> dict[str, YearPoint]:
+    out: dict[str, YearPoint] = {}
     for c in data.cities():
         s = data.series(c.id, kind)
         point = None if s is None else next((p for p in s.points if p.label == label), None)
@@ -170,8 +171,11 @@ def _bezirk(expr, args, data, docs_dir):
 
 
 def _gap(expr, args, data, docs_dir):
-    _arity(expr, args, 3, "<city>.<gap key>.<ours|theirs|gap_pct>")
-    city, comparison, field = args
+    # The city is the first segment, the field the last; the middle is the gap key without its
+    # `<city>/` prefix and may itself contain dots (`official_new_km#official:21.2`).
+    if len(args) < 3:
+        raise _err(expr, f"expected <city>.<gap key>.<ours|theirs|gap_pct>, got {len(args)} parts")
+    city, comparison, field = args[0], ".".join(args[1:-1]), args[-1]
     _field(expr, field, GAP_FIELDS)
     report = data.reconcile(city)
     if report is None:
@@ -185,7 +189,10 @@ def _gap(expr, args, data, docs_dir):
         have = sorted({g.key.removeprefix(f"{city}/") for g in report.gaps})
         raise _err(expr, f"no comparison {comparison!r} for {city!r} (have {', '.join(have)})")
     if len(gaps) > 1:
-        raise _err(expr, f"{len(gaps)} gaps for comparison {comparison!r}: use a gap key")
+        keys = ", ".join(sorted(g.key.removeprefix(f"{city}/") for g in gaps))
+        raise _err(
+            expr, f"{len(gaps)} gaps for comparison {comparison!r}: use a gap key (one of {keys})"
+        )
     v = getattr(gaps[0], field)
     if v is None:
         raise _err(expr, f"{field} is missing")
@@ -193,8 +200,17 @@ def _gap(expr, args, data, docs_dir):
 
 
 def _figure(expr, args, data, docs_dir):
-    _arity(expr, args, 4, "<city>.<source>.<metric_name>.<network_scope>")
-    city, source, metric, scope = args
+    # An optional last selector picks one of several matches: the figure's reference date
+    # (ISO) or, when figures share a date, its value as `{value:g}` (as in gap keys, so it
+    # may contain a dot).
+    if len(args) < 4:
+        raise _err(
+            expr,
+            "expected <city>.<source>.<metric_name>.<network_scope>[.<reference_date|value>], "
+            f"got {len(args)} parts after the family",
+        )
+    city, source, metric, scope = args[:4]
+    selector = ".".join(args[4:])
     found = [
         f
         for f in data.reported_figures(city)
@@ -202,8 +218,26 @@ def _figure(expr, args, data, docs_dir):
     ]
     if not found:
         raise _err(expr, f"no reported figure {source}/{metric}/{scope} for {city!r}")
+    have = ", ".join(
+        f"{f.reference_date.isoformat() if f.reference_date else 'undated'} ({f.value:g})"
+        for f in found
+    )
+    if selector:
+        found = [
+            f
+            for f in found
+            if selector in (f.reference_date and f.reference_date.isoformat(), f"{f.value:g}")
+        ]
+        if not found:
+            raise _err(
+                expr, f"no figure {source}/{metric}/{scope} matching {selector!r} (have {have})"
+            )
     if len(found) > 1:
-        raise _err(expr, f"{len(found)} figures match: not unique")
+        raise _err(
+            expr,
+            f"{len(found)} figures match: not unique; add a reference date or value segment "
+            f"(have {have})",
+        )
     return float(found[0].value)
 
 

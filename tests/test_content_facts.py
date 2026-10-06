@@ -1,4 +1,5 @@
 import math
+from datetime import date
 
 import pytest
 
@@ -170,3 +171,95 @@ def test_unknown_paths_raise(fixture_db, tmp_path, expr):
 
 def test_families_listed():
     assert "series" in FAMILIES and "change" in FAMILIES and len(FAMILIES) == 12
+
+
+def _add_figures(db_path, source, figures):
+    with open_db(db_path) as w:
+        replace_external_figures(w, source, figures)
+
+
+def _dated(city, source, metric, value, when, scope="whole_network"):
+    return _figure(city, source, metric, value, scope).model_copy(update={"reference_date": when})
+
+
+def test_gap_keys_with_dots_and_several_fields(fixture_db, tmp_path):
+    db_path, _cfg, _conn, _data = fixture_db
+    _add_figures(
+        db_path,
+        "official",
+        [
+            _figure("berlin", "official", "new_cycle_infra_km", 21.2),
+            _figure("berlin", "official", "new_cycle_infra_km", 20.5),
+            _figure("berlin", "official", "new_cycle_infra_km", 7.5, scope="vorrangnetz"),
+        ],
+    )
+    data = ReportData(open_readonly(db_path), _cfg)
+    keys = {g.key for g in data.reconcile("berlin").gaps}
+    assert "berlin/official_new_km#official:21.2" in keys  # the dotted key really exists
+    for key, theirs in (
+        ("official_new_km#official:21.2", 21.2),
+        ("official_new_km#official:20.5", 20.5),
+        ("official_new_km@vorrangnetz#official:7.5", 7.5),
+    ):
+        assert evaluate(f"gap.berlin.{key}.theirs", data, tmp_path) == theirs
+    # the same dotted key with another field (ours is None for an informational comparison)
+    with pytest.raises(FactError, match="ours is missing"):
+        evaluate("gap.berlin.official_new_km#official:21.2.ours", data, tmp_path)
+
+
+def test_ambiguous_bare_comparison_lists_the_gap_keys(fixture_db, tmp_path):
+    db_path, cfg, _conn, _data = fixture_db
+    _add_figures(
+        db_path,
+        "official",
+        [
+            _figure("berlin", "official", "new_cycle_infra_km", 21.2),
+            _figure("berlin", "official", "new_cycle_infra_km", 20.5),
+        ],
+    )
+    data = ReportData(open_readonly(db_path), cfg)
+    with pytest.raises(FactError) as e:
+        evaluate("gap.berlin.official_new_km.theirs", data, tmp_path)
+    msg = str(e.value)
+    assert "official_new_km#official:21.2" in msg and "official_new_km#official:20.5" in msg
+
+
+def test_duplicate_figures_need_a_reference_date(fixture_db, tmp_path):
+    db_path, cfg, _conn, _data = fixture_db
+    _add_figures(
+        db_path,
+        "official",
+        [
+            _dated("berlin", "official", "new_cycle_infra_km", 21.2, date(2024, 12, 31)),
+            _dated("berlin", "official", "new_cycle_infra_km", 20.5, date(2025, 12, 31)),
+        ],
+    )
+    data = ReportData(open_readonly(db_path), cfg)
+    base = "figure.berlin.official.new_cycle_infra_km.whole_network"
+    with pytest.raises(FactError, match="not unique") as e:
+        evaluate(base, data, tmp_path)
+    assert "2024-12-31" in str(e.value) and "2025-12-31" in str(e.value)
+    assert evaluate(f"{base}.2024-12-31", data, tmp_path) == 21.2
+    assert evaluate(f"{base}.2025-12-31", data, tmp_path) == 20.5
+    with pytest.raises(FactError, match="2024-12-31"):
+        evaluate(f"{base}.1999-01-01", data, tmp_path)
+
+
+def test_duplicate_figures_on_one_date_are_picked_by_value(fixture_db, tmp_path):
+    db_path, cfg, _conn, _data = fixture_db
+    same = date(2025, 12, 31)
+    _add_figures(
+        db_path,
+        "official",
+        [
+            _dated("berlin", "official", "new_cycle_infra_km", 21.2, same),
+            _dated("berlin", "official", "new_cycle_infra_km", 20.5, same),
+        ],
+    )
+    data = ReportData(open_readonly(db_path), cfg)
+    base = "figure.berlin.official.new_cycle_infra_km.whole_network"
+    with pytest.raises(FactError, match="not unique") as e:
+        evaluate(f"{base}.2025-12-31", data, tmp_path)
+    assert "21.2" in str(e.value) and "20.5" in str(e.value)
+    assert evaluate(f"{base}.21.2", data, tmp_path) == 21.2
+    assert evaluate(f"{base}.20.5", data, tmp_path) == 20.5
