@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from velometer.cli import app
 from velometer.content.check import (
+    _full,
     check_content,
     check_online,
     construction_verbs,
@@ -168,6 +169,56 @@ def test_load_error_is_one_problem(content):
     assert len(problems) == 1 and "berlin.yaml" in problems[0]
 
 
+@pytest.mark.parametrize(
+    "mutate,expected",
+    [
+        (lambda n: n["sections"][0].__setitem__("heading", "Opened 40 km"), "construction verb"),
+        (lambda n: n["sections"][0].__setitem__("heading", "Opened 40 km"), "undeclared number 40"),
+        (lambda n: n.__setitem__("title", "Berlin built 41 km"), "construction verb 'built'"),
+        (lambda n: n.__setitem__("title", "Berlin built 41 km"), "undeclared number 41"),
+        (lambda n: n.__setitem__("dek", "Removed 42 km"), "undeclared number 42"),
+        (lambda n: n["literals"].__setitem__(0, "6 m"), "undeclared number 5"),
+    ],
+)
+def test_headings_titles_and_exact_literals(content, mutate, expected):
+    root, data, tmp = content
+    path = root / "narratives" / "berlin.yaml"
+    n = yaml.safe_load(path.read_text())
+    n["sections"][0]["paragraphs"].append("A lane of 5 m.")
+    mutate(n)
+    _write(path, n)
+    assert any(expected in p for p in _problems(root, data, tmp)), _problems(root, data, tmp)
+
+
+def test_explainer_title_and_headings_are_scanned(content):
+    root, data, tmp = content
+    cfg = data.config_dir
+    (cfg / "differences.yaml").write_text(yaml.safe_dump({"dimensions": [{"id": "d1"}]}))
+    ex = {
+        "title": "Built 11 things",
+        "intro": ["Intro."],
+        "sections": [{"dimension": "d1", "heading": "Opened 12", "paragraphs": ["Fine."]}],
+    }
+    _write(root / "explainer.yaml", ex)
+    problems = _problems(root, data, tmp)
+    for expected in ("number 11", "'built'", "number 12", "'opened'"):
+        assert any(expected in p for p in problems), problems
+
+
+def test_fact_mismatch_prints_all_digits(content):
+    root, data, tmp = content
+    path = root / "narratives" / "berlin.yaml"
+    n = yaml.safe_load(path.read_text())
+    n["facts"][0]["printed"] = "1.0"
+    _write(path, n)
+    value = evaluate(EXPR, data, tmp)
+    shown = f"{value:.6f}".rstrip("0").rstrip(".")
+    assert any(f"is {shown}, printed 1.0" in p for p in _problems(root, data, tmp))
+    assert _full(1234567.5) == "1234567.5"
+    assert _full(1234567.0) == "1234567"
+    assert _full(0.25) == "0.25"
+
+
 def test_german_excerpt_numbers_in_registry_are_not_checked(content):
     root, data, tmp = content
     assert "78,2" in load_sources(root / "sources")["src"].excerpts[0].text
@@ -193,15 +244,30 @@ def test_explainer_rules_and_dimensions(content):
 
 
 def test_years_ordinals_literals_and_declared_pass():
-    allowed = {"109.1", "5 m"}
+    allowed = {"109.1"}
     assert (
         undeclared_numbers(
-            "In 2024-2026 the 3rd, +109.1 and 109.1% 5 m [@a1] `42` [x](http://a/9)", allowed
+            "In 2024-2026 the 3rd, +109.1 and 109.1% 5 m [@a1] `42` [x](http://a/9)",
+            allowed,
+            ["5 m"],
         )
         == []
     )
     assert undeclared_numbers("About 1,551 and −4.6%.", {"1,551"}) == ["−4.6%"]
     assert undeclared_numbers("In 1999 and 2100.", set()) == ["1999", "2100"]
+
+
+def test_literal_allows_only_its_exact_text():
+    assert undeclared_numbers("A 5 m lane, then 5 more.", set(), ["5 m"]) == ["5"]
+    assert undeclared_numbers("A 5 m lane and a 45 m one.", set(), ["5 m"]) == ["45"]
+    assert undeclared_numbers("A 5\u00a0m lane.", set(), ["5 m"]) == []
+
+
+@pytest.mark.parametrize("sep", [" ", "\u202f", "\u00a0"])
+def test_space_grouped_thousands_are_one_number(sep):
+    assert undeclared_numbers(f"About 1{sep}551 km.", {"1,551"}) == []
+    assert undeclared_numbers(f"About 1{sep}551 km.", set()) == [f"1{sep}551"]
+    assert undeclared_numbers("Counts 12 and 345.", set()) == ["12", "345"]
 
 
 def test_construction_verbs():
@@ -265,3 +331,61 @@ def test_cli_summary(content):
     res = CliRunner().invoke(app, ["content", "--content", str(root)])
     assert res.exit_code == 0
     assert res.output.strip() == "3 narratives, 1 sources, 1 excerpts"
+
+
+def _check_args(content, fixture_db, *extra):
+    root, _data, tmp = content
+    db, cfg, _conn, _d = fixture_db
+    return [
+        "content",
+        "--check",
+        *extra,
+        "--content",
+        str(root),
+        "--db",
+        str(db),
+        "--config-dir",
+        str(cfg),
+        "--docs",
+        str(tmp),
+    ]
+
+
+def test_cli_online_uses_fetcher_only_when_offline_clean(content, fixture_db, monkeypatch):
+    import velometer.content.check as ck
+
+    root = content[0]
+    calls: list[str] = []
+
+    def fake(url):
+        calls.append(url)
+        return "<p>unrelated</p>"
+
+    real = ck.check_online
+    monkeypatch.setattr(ck, "check_online", lambda sources: real(sources, fetch=fake))
+    res = CliRunner().invoke(app, _check_args(content, fixture_db, "--online"))
+    assert res.exit_code == 1
+    assert "sources/src: excerpt not found online: e1" in res.stderr
+    assert calls == ["https://example.org/radverkehr"]
+
+    monkeypatch.setattr(
+        ck,
+        "check_online",
+        lambda sources: real(sources, fetch=lambda u: "Das Netz ist 78,2 km lang."),
+    )
+    ok = CliRunner().invoke(app, _check_args(content, fixture_db, "--online"))
+    assert ok.exit_code == 0 and ok.output.strip() == "ok"
+
+    calls.clear()
+    monkeypatch.setattr(ck, "check_online", lambda sources: real(sources, fetch=fake))
+    (root / "narratives" / "paris.yaml").unlink()
+    bad = CliRunner().invoke(app, _check_args(content, fixture_db, "--online"))
+    assert bad.exit_code == 1 and calls == []  # offline problems stop before any fetch
+
+
+def test_cli_check_missing_db(content, fixture_db, tmp_path):
+    args = _check_args(content, fixture_db)
+    args[args.index("--db") + 1] = str(tmp_path / "absent.sqlite")
+    res = CliRunner().invoke(app, args)
+    assert res.exit_code == 1
+    assert res.stderr.startswith("error:")

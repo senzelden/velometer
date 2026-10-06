@@ -3,7 +3,7 @@ registry and the report data (spec §4.4). Every problem is one `"<file>: <messa
 
 import html
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
 import httpx
@@ -24,7 +24,10 @@ from velometer.content.models import (
 from velometer.report.data import ReportData
 
 COMBINED = "combined"
-_NUMBER_TOKEN = re.compile(r"(?<!\w)[+−-]?\d[\d,]*(?:\.\d+)?%?")
+_GROUP_SPACE = "[ \u202f\u00a0]"  # space, narrow no-break space, no-break space
+_NUMBER_TOKEN = re.compile(
+    rf"(?<!\w)[+−-]?(?:\d{{1,3}}(?:{_GROUP_SPACE}\d{{3}})+(?!\d)(?:\.\d+)?|\d[\d,]*(?:\.\d+)?)%?"
+)
 _ORDINAL = re.compile(r"\b\d+(?:st|nd|rd|th)\b", re.IGNORECASE)
 _SOURCE_REF = re.compile(r"\[@([^\]\s]+)\]")
 _DATA_REF = re.compile(r"\[#([^\]\s]+)\]")
@@ -34,19 +37,29 @@ _VERBS = re.compile(r"\b(built|constructed|opened|removed)\b", re.IGNORECASE)
 
 def normalise_number(text: str) -> str:
     """A printed number at its printed precision, without sign prefix, commas or percent."""
+    squeezed = re.sub(_GROUP_SPACE, "", text)  # "1 000" is the number 1000
     try:
-        value, decimals = parse_printed(text)
+        value, decimals = parse_printed(squeezed)
     except FactError:
         return text.strip()
     return f"{value:.{decimals}f}"
 
 
-def undeclared_numbers(paragraph: str, allowed: set[str]) -> list[str]:
-    """Numbers in the prose that are neither declared (facts, literals) nor a year or ordinal."""
+def _literal_pattern(literal: str) -> re.Pattern[str]:
+    words = [re.escape(w) for w in literal.split()]
+    return re.compile(r"(?<!\w)" + r"[\s\u202f\u00a0]+".join(words) + r"(?!\w)")
+
+
+def undeclared_numbers(
+    paragraph: str, allowed: set[str], literals: Iterable[str] = ()
+) -> list[str]:
+    """Numbers in the prose that are neither declared (facts), inside a declared literal's exact
+    text, nor a year or ordinal."""
     ok = {normalise_number(a) for a in allowed} | set(allowed)
-    for a in allowed:  # a literal such as "5 m" declares the number inside it
-        ok |= {normalise_number(m.group(0).rstrip(",")) for m in _NUMBER_TOKEN.finditer(a)}
-    text = _ORDINAL.sub(" ", _STRIPPED.sub(" ", paragraph))
+    text = _STRIPPED.sub(" ", paragraph)
+    for lit in sorted({x for x in literals if x.split()}, key=len, reverse=True):
+        text = _literal_pattern(lit).sub(" ", text)
+    text = _ORDINAL.sub(" ", text)
     found: list[str] = []
     for m in _NUMBER_TOKEN.finditer(text):
         raw = m.group(0).rstrip(",")
@@ -58,6 +71,11 @@ def undeclared_numbers(paragraph: str, allowed: set[str]) -> list[str]:
         if raw not in found:
             found.append(raw)
     return found
+
+
+def _full(value: float) -> str:
+    """Every digit of a value (no exponent, no 6-significant-digit truncation)."""
+    return f"{value:.6f}".rstrip("0").rstrip(".")
 
 
 def construction_verbs(paragraph: str) -> list[str]:
@@ -91,12 +109,12 @@ def _check_document(
         if q.excerpt not in excerpt_ids:
             add(f"unknown excerpt {q.excerpt}")
 
-    allowed = set(literals)
+    allowed: set[str] = set()
     for f in facts:
         try:
             value = evaluate(f.expr, data, docs_dir)
             if not printed_matches(value, f.printed):
-                add(f"fact {f.id}: {f.expr} is {value:g}, printed {f.printed}")
+                add(f"fact {f.id}: {f.expr} is {_full(value)}, printed {f.printed}")
         except FactError as e:
             add(f"fact {f.id}: {e}")
         allowed.add(normalise_number(f.printed))
@@ -109,7 +127,7 @@ def _check_document(
         for rid in _DATA_REF.findall(p):
             if rid not in ref_ids:
                 add(f"unknown data ref {rid}")
-        for n in undeclared_numbers(p, allowed):
+        for n in undeclared_numbers(p, allowed, literals):
             add(f"undeclared number {n}")
         for v in construction_verbs(p):
             add(f"construction verb {v!r}")
@@ -124,9 +142,13 @@ def _dimension_ids(path: Path) -> list[str]:
     return [str(d["id"]) for d in dims or []]
 
 
-def _check_explainer(explainer: Explainer, sources, data, docs_dir) -> list[str]:
+def _check_explainer(
+    explainer: Explainer, sources: dict[str, Source], data: ReportData, docs_dir: Path
+) -> list[str]:
     label = "explainer.yaml"
-    prose = list(explainer.intro) + [p for s in explainer.sections for p in s.paragraphs]
+    prose = [explainer.title, *explainer.intro]
+    for sec in explainer.sections:
+        prose += [sec.heading, *sec.paragraphs]
     problems = _check_document(
         label,
         prose,
@@ -163,6 +185,13 @@ def _check_combined_steps(narrative: Narrative) -> list[str]:
     ]
 
 
+def _narrative_prose(n: Narrative) -> list[str]:
+    out: list[str] = []
+    for sec in n.sections:
+        out += ([sec.heading] if sec.heading else []) + sec.paragraphs
+    return out
+
+
 def check_content(content_dir: Path, data: ReportData, docs_dir: Path) -> list[str]:
     """Every problem of the content directory; a load error is one problem and stops."""
     content_dir = Path(content_dir)
@@ -186,7 +215,7 @@ def check_content(content_dir: Path, data: ReportData, docs_dir: Path) -> list[s
         label = f"narratives/{cid}.yaml"
         problems += _check_document(
             label,
-            [n.dek, *n.paragraphs],
+            [n.title, n.dek, *_narrative_prose(n)],
             n.quotes,
             n.facts,
             n.data_refs,
