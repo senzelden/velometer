@@ -30,6 +30,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from velometer import timeseries as ts
+from velometer.app import compare as cmp
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import render_explainer, render_narrative, safe_url
@@ -469,6 +470,41 @@ def create_app(
             tabs=tabs, nar=nar, content_error=note, cited_sources=cited_sources,
             cited_refs=cited_refs,
         )  # fmt: skip
+
+    @app.get("/compare", response_class=HTMLResponse)
+    async def compare(request: Request, data: Data):
+        payload = cache.get(
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+        )
+        known_ids = list(payload["cities"])
+        state = cmp.parse_compare(request.url.query, known_ids, cmp.METRICS)
+        table = cmp.table_model(payload, state)
+        quick = [
+            {"key": k, "label": label, "ids": cmp.quick_set_ids(k, known_ids)}
+            for k, label in cmp.QUICK_LABELS.items()
+        ]
+        info = cmp.metric_info(HEADLINE_UNIT, data.preset_units())
+        config = {
+            "cities": known_ids,
+            "metric_order": list(cmp.METRICS),  # tojson sorts the keys of `metrics`
+            "metrics": info,
+            "quick": cmp.QUICK_SETS,
+            "views": cmp.VIEW_LABELS,
+            "headline_unit": HEADLINE_UNIT,
+        }
+        return page(
+            request, "compare.html", "compare", data, state=state, table=table, quick=quick,
+            groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
+            href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
+            headline_unit=HEADLINE_UNIT,
+        )  # fmt: skip
+
+    @app.get("/city/{city_id}/panel", response_class=HTMLResponse)
+    async def city_panel(request: Request, city_id: str, data: Data):
+        """The Compare slide-over: a fragment (no layout), fetched by panel.js. A direct visit
+        shows the same fragment; the full page is /city/<id>."""
+        ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
+        return templates.TemplateResponse(request, "city/panel.html", ctx)
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):

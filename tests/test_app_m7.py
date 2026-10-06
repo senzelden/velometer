@@ -24,7 +24,7 @@ CSP = (
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
-M7_ROUTES = ROUTES + ["/cities", "/data/series.json"]
+M7_ROUTES = ROUTES + ["/cities", "/data/series.json", "/compare", "/city/berlin/panel"]
 # an inline <script> with a body; JSON data blocks are not executed and are allowed under the CSP
 INLINE_SCRIPT = re.compile(
     r"<script(?![^>]*\bsrc=)(?![^>]*\btype=\"application/json\")[^>]*>\s*\S", re.I
@@ -690,3 +690,132 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
         "Official", ""
     )
     assert "9.8 %" in _text(table) and "9.8 pct" not in _text(table)
+
+
+# --- Compare and the slide-over (Task 12) ----------------------------------------------------
+
+
+def _table(html: str) -> str:
+    return html[html.index('<table class="compare-table"') : html.index("</table>")]
+
+
+def _rows(html: str) -> list[str]:
+    return re.findall(r'<th scope="row"><a href="/city/([^"]+)"', _table(html))
+
+
+def test_default_compare_lists_the_pilot_cities_of_the_data_in_the_table(client):
+    r = client.get("/compare")
+    assert r.status_code == 200
+    assert _rows(r.text) == ["berlin", "paris"]  # the Pilot 5 that the fixture has
+    assert 'aria-current="page">Compare</a>' in _nav(r.text)
+
+
+def test_compare_keeps_only_known_cities(client):
+    assert _rows(client.get("/compare?c=berlin,atlantis").text) == ["berlin"]
+
+
+def test_compare_takes_repeated_c_from_the_no_js_city_form(client):
+    assert _rows(client.get("/compare?c=paris&c=berlin").text) == ["paris", "berlin"]
+    assert _rows(client.get("/compare?c=paris,berlin&c=berlin").text) == ["paris", "berlin"]
+
+
+def test_an_unknown_metric_falls_back_to_the_headline(client):
+    html = client.get("/compare?m=nope").text
+    assert re.search(r'<option value="headline" selected>', html)
+    assert "<h2>Headline · City proper (LAU)</h2>" in html
+
+
+def test_the_filter_sheet_is_a_real_get_form_with_the_cities_and_quick_sets(client):
+    html = client.get("/compare").text
+    assert re.search(r'<form class="filters-sheet"[^>]*action="/compare" method="get"', html)
+    assert 'name="c" value="berlin" checked' in html
+    assert 'name="c" value="paris" checked' in html
+    for key in ("all", "pilot5", "nordic", "dach", "west", "central"):
+        assert f'data-quick="{key}"' in html
+    assert 'href="/compare?c=berlin,vienna"' not in html  # only known cities in a set
+    assert 'data-quick="dach" href="/compare?c=berlin"' in html
+
+
+def test_index_mode_notes_a_city_whose_first_year_is_zero(client):
+    html = client.get("/compare?mode=index&m=C&c=berlin").text  # tier C is 0 in berlin
+    assert "Berlin: no index: first year is 0 or missing" in html
+    assert "no index" not in client.get("/compare?mode=index&c=berlin").text
+
+
+def test_index_mode_rebases_the_first_year_to_100(client):
+    cells = re.findall(
+        r'<td class="num">([^<]*)', _table(client.get("/compare?mode=index&c=berlin").text)
+    )
+    assert [c.strip() for c in cells[:3]] == ["100.0", "100.0", "100.0"]
+
+
+def test_the_lau_only_metric_is_dropped_for_the_metro_area_with_a_visible_note(client):
+    html = client.get("/compare?b=fua&m=ab_per_100k&c=berlin").text
+    assert "exists for the city proper (LAU) only" in html
+    assert "<h2>Headline · Metro area (FUA)</h2>" in html
+    assert "exists for the city proper" not in client.get("/compare?m=ab_per_100k&c=berlin").text
+
+
+def test_the_table_marks_flagged_years(client):
+    assert "flagged" in _table(client.get("/compare?c=berlin").text)  # berlin 2025 is flagged
+
+
+def test_compare_never_echoes_query_text(client):
+    html = client.get(
+        "/compare?c=%3Cscript%3Ex%3C/script%3E&m=%3Cb%3E&view=%3Ci%3E&hl=%3Cu%3E"
+    ).text
+    assert "<script>x" not in html and "<b>" not in html and "<i>" not in html
+
+
+def test_compare_config_block_is_json_and_the_only_script_besides_the_modules(client):
+    import json
+
+    html = client.get("/compare").text
+    block = re.search(
+        r'<script type="application/json" id="compare-config">(.*?)</script>', html, re.S
+    )
+    cfg = json.loads(block.group(1))
+    assert cfg["cities"] == ["berlin", "paris"]
+    assert cfg["metric_order"] == list(
+        ["headline", "ab_km", "A", "B", "C", "D", "E", "ecf_qecio", "clean_cities", "ab_per_100k"]
+    )
+    assert cfg["quick"]["all"] is None
+    assert '<script type="module" src="/static/js/compare.js">' in html
+
+
+def test_the_panel_is_a_fragment_that_links_to_the_city(client):
+    r = client.get("/city/berlin/panel")
+    assert r.status_code == 200
+    assert "<nav" not in r.text and "<html" not in r.text and "<body" not in r.text
+    assert 'href="/city/berlin"' in r.text
+    assert "Berlin" in r.text and 'data-chart="city-tiers"' in r.text
+    assert r.headers["content-security-policy"] == CSP
+
+
+def test_the_panel_lists_flagged_years_with_their_explanations(client):
+    text = _text(client.get("/city/berlin/panel").text)
+    assert "Flagged years" in text and "activity_spike" in text
+    assert EXPLANATION.split(".")[0] in text
+
+
+def test_the_panel_of_a_city_without_flags_says_so_and_unknown_is_404(client):
+    assert "no flagged years" in client.get("/city/paris/panel").text
+    assert client.get("/city/nowhere/panel").status_code == 404
+
+
+def test_the_panel_escapes_city_names(setup, monkeypatch):  # noqa: F811
+    from velometer.report.data import ReportData
+
+    real = ReportData.cities
+
+    def cities(self):
+        return [
+            c.model_copy(update={"name": "<b>Evil</b>"}) if c.id == "berlin" else c
+            for c in real(self)
+        ]
+
+    monkeypatch.setattr(ReportData, "cities", cities)
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/panel").text
+    assert "<b>Evil</b>" not in html and "&lt;b&gt;Evil&lt;/b&gt;" in html

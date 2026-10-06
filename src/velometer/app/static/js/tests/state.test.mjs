@@ -70,3 +70,36 @@ test("default metric is checked against known.metrics", () => {
   assert.equal(parseState("", k).m, "ab_km");
   assert.equal(parseState("m=qecio", k).m, "qecio");
 });
+
+// ---- the cases table shared with the Python suite (tests/test_compare.py) ----
+import { readFileSync } from "node:fs";
+import { QUICK_SETS, METRICS, droppedMetric } from "../state.js";
+
+const shared = JSON.parse(
+  readFileSync(new URL("../../../../../../tests/compare_cases.json", import.meta.url), "utf8"),
+);
+
+for (const c of shared.cases) {
+  test(`shared case: ${c.name}`, () => {
+    const state = parseState(c.query, shared.known);
+    assert.deepEqual(state, c.expect);
+    assert.equal(droppedMetric(c.query, state), c.dropped_metric);
+  });
+}
+
+test("the shared cases know exactly the page's metrics", () => {
+  assert.deepEqual(shared.known.metrics, METRICS);
+});
+
+test("quick sets: all is every city, the others list ids", () => {
+  assert.equal(QUICK_SETS.all, null);
+  assert.deepEqual(QUICK_SETS.pilot5, PILOT5);
+  for (const [key, ids] of Object.entries(QUICK_SETS)) {
+    if (key !== "all") assert.ok(ids.length >= 2 && new Set(ids).size === ids.length, key);
+  }
+});
+
+test("a repeated c round-trips as a comma list", () => {
+  const state = parseState("c=berlin&c=oslo", known);
+  assert.equal(serializeState(state), "c=berlin,oslo");
+});

@@ -1,9 +1,10 @@
 // City page charts (Story, Over time, Tiers and Bezirke tabs): headline over time (LAU and FUA),
 // tier composition per boundary and the Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
 // mounts. Every value is also in a table on the page.
-import { renderLines, renderSmallMultiples, renderTiers } from "./chart.js";
+import { renderLines, renderSmallMultiples } from "./chart.js";
+import { drawTiers } from "./tier-chart.js";
 import { formatValue } from "./chart-core.js";
-import { PALETTE, TIER_NAMES, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
+import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
 const UNIT = "per 100 km of main roads";
@@ -35,24 +36,6 @@ function headline(el, D) {
   );
 }
 
-function tiers(el, D) {
-  const id = el.dataset.city;
-  const pts = D.series[`${id}/${el.dataset.kind}`] ?? [];
-  const labels = labelsOf([pts]);
-  const model = {
-    labels: displayLabels(labels, [pts]),
-    layers: Object.keys(TIER_NAMES).map((t) => ({
-      key: t,
-      name: TIER_NAMES[t],
-      values: pointsOn(pts, labels, t).map((p) => p.value),
-    })),
-  };
-  const where = `${D.cities[id]?.name ?? id} ${el.dataset.kind.toUpperCase()}`;
-  mount(el, () =>
-    renderTiers(el, model, { label: `Stacked area chart: mapped km by tier, ${where}` }),
-  );
-}
-
 function bezirke(el, D) {
   const id = el.dataset.city;
   const subareas = Object.values(D.bezirke[id] ?? {}).sort((a, b) => a.name.localeCompare(b.name));
@@ -75,4 +58,4 @@ function bezirke(el, D) {
   );
 }
 
-drawAll({ "city-headline": headline, "city-tiers": tiers, bezirke });
+drawAll({ "city-headline": headline, "city-tiers": drawTiers, bezirke });

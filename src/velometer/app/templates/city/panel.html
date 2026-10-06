@@ -1,0 +1,36 @@
+<div class="panel-frag">
+<header class="panel-head">
+<div>
+<h2>{{ city.name }}</h2>
+<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %}</p>
+</div>
+<a class="panel-full" href="/city/{{ city.id }}">Open full page →</a>
+</header>
+<div class="keynums" role="list" aria-label="Key numbers">
+{% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
+{% endfor %}</div>
+{% for k in kinds if k.kind == "lau" and k.series %}
+<h3>Tier composition over time ({{ k.kind | upper }})</h3>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+{% endfor %}
+<h3>Tiers, mapped km now</h3>
+<div class="scroll">
+<table class="panel-tiers">
+<thead><tr><th>Boundary</th>{% for t in tiers %}<th class="num">{{ t }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for k in kinds %}<tr><td>{{ k.kind | upper }}</td>
+{% if k.point %}{% for t in tiers %}<td class="num">{{ k.point.tiers_km[t] | num(",.0f") }}</td>{% endfor %}
+{% else %}<td class="note" colspan="{{ tiers | length }}">no run</td>{% endif %}</tr>
+{% endfor %}</tbody>
+</table>
+</div>
+<h3>Flagged years</h3>
+{% set shown = namespace(n=0) %}
+{% for k in kinds %}{% for f in k.flags %}{% set shown.n = shown.n + 1 %}
+<details class="flag-item"><summary>{{ f.flag.label | when }} · {{ k.kind | upper }} <span class="rule">{{ f.flag.rules | join(", ") }}</span></summary>
+{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>{% else %}<p class="note">no explanation recorded</p>{% endif %}
+</details>
+{% endfor %}{% endfor %}
+{% if not shown.n %}<p class="note">no flagged years</p>{% endif %}
+<p class="meta">Mapped km in OpenStreetMap, not built km.</p>
+</div>

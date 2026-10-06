@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}velometer · Compare{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/compare.js"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Compare</span></nav>{% endblock %}
+{% block content %}
+<h1>Compare cities</h1>
+<p class="lede">Pick cities, a metric and a boundary; the views show the same numbers four ways. Without JavaScript the form reloads the page and the table below holds the values.</p>
+
+<form class="filters-sheet" id="compare-filters" action="/compare" method="get">
+<div class="filters-top">
+  <span class="filters-summary" data-filters-summary>{{ metrics[state.m].label }} · {{ state.b | upper }} · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }} · {{ "indexed" if state.mode == "index" else "absolute" }}</span>
+  <button type="button" class="filters-toggle" hidden aria-expanded="false" aria-controls="filters-body">Filters</button>
+</div>
+<div class="filters-body" id="filters-body">
+  <fieldset class="f-cities"><legend>Cities</legend>
+    <p class="quick" aria-label="Quick sets">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ href(c=q.ids) }}">{{ q.label }}</a>{% endfor %}</p>
+    <div class="country-grid">
+    {% for g in groups %}<div class="country"><h4>{{ g.country }}</h4>
+      {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ c.name }}</label>
+      {% endfor %}</div>
+    {% endfor %}</div>
+  </fieldset>
+  <div class="f-row">
+    <label class="f-metric">Metric
+      <select name="m">{% for key, info in metrics.items() %}<option value="{{ key }}"{% if key == state.m %} selected{% endif %}>{{ info.label }}{% if key == "ab_per_100k" %} (LAU only){% endif %}</option>
+      {% endfor %}</select></label>
+    <fieldset class="seg"><legend>Boundary</legend>
+      <label><input type="radio" name="b" value="lau"{% if state.b == "lau" %} checked{% endif %}> City proper (LAU)</label>
+      <label><input type="radio" name="b" value="fua"{% if state.b == "fua" %} checked{% endif %}> Metro area (FUA)</label></fieldset>
+    <fieldset class="seg"><legend>Scale</legend>
+      <label><input type="radio" name="mode" value="abs"{% if state.mode == "abs" %} checked{% endif %}> Absolute</label>
+      <label><input type="radio" name="mode" value="index"{% if state.mode == "index" %} checked{% endif %}> Index, first year = 100</label></fieldset>
+    <input type="hidden" name="view" value="{{ state.view }}">
+    {% if state.hl %}<input type="hidden" name="hl" value="{{ state.hl | join(',') }}">{% endif %}
+    <button type="submit" class="apply">Apply</button>
+  </div>
+</div>
+</form>
+
+<nav class="view-tabs" aria-label="Views"><ul>
+{% for key, label in views.items() %}<li><a href="{{ href(view=key) }}" data-view="{{ key }}"{% if key == state.view %} aria-current="page"{% endif %}>{{ label }}</a></li>
+{% endfor %}</ul></nav>
+
+<section class="compare-out">
+<div data-compare-title>
+<h2>{{ metrics[state.m].label }} · {{ "City proper (LAU)" if state.b == "lau" else "Metro area (FUA)" }}{% if state.mode == "index" %} · index, first year = 100{% endif %}</h2>
+<p class="meta">{{ metrics[state.m].unit }}. Mapped km in OpenStreetMap, not built km.</p>
+</div>
+<div data-compare-notes>{% for n in table.notes %}<p class="note">{{ n }}</p>
+{% endfor %}</div>
+<div class="chips" data-compare-chips hidden></div>
+<div class="chart" data-compare-chart role="group" aria-label="Chart of the selected cities" hidden></div>
+<div class="flag-note" data-flag-note hidden></div>
+<div class="scroll" data-compare-table>
+<table class="compare-table">
+<caption class="sr-only">{{ metrics[state.m].label }} per city and snapshot</caption>
+<thead><tr><th scope="col">City</th>{% for col in table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in table.rows %}<tr><th scope="row"><a href="/city/{{ row.id }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num">{{ v | num }}{% if table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}</td>{% endfor %}</tr>
+{% endfor %}</tbody>
+</table>
+</div>
+{% if not table.rows %}<p class="note">No city selected.</p>{% endif %}
+<p class="meta" data-compare-foot>⚑ flagged year (automatic check). Headline: {{ headline_unit }}. Ranks in the Rank view depend on the cities selected.</p>
+</section>
+
+<aside class="slideover" id="city-panel" role="dialog" aria-label="City panel" aria-modal="false" hidden>
+<button type="button" class="slideover-close" aria-label="Close panel">×</button>
+<div class="slideover-body"></div>
+</aside>
+<script type="application/json" id="compare-config">{{ config | tojson }}</script>
+{% endblock %}

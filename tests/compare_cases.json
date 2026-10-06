@@ -1,0 +1,417 @@
+{
+ "known": {
+  "cities": [
+   "berlin",
+   "paris",
+   "vienna",
+   "copenhagen",
+   "wroclaw",
+   "amsterdam",
+   "oslo",
+   "madrid",
+   "prague",
+   "lyon",
+   "warsaw",
+   "krakow",
+   "utrecht",
+   "stockholm",
+   "helsinki"
+  ],
+  "metrics": [
+   "headline",
+   "ab_km",
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "ecf_qecio",
+   "clean_cities",
+   "ab_per_100k"
+  ]
+ },
+ "cases": [
+  {
+   "name": "empty query gives the defaults",
+   "query": "",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "leading ? is ignored",
+   "query": "?m=ab_km",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "ab_km",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "comma separated c",
+   "query": "c=berlin,oslo,paris",
+   "expect": {
+    "c": [
+     "berlin",
+     "oslo",
+     "paris"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "repeated c (the no-JS Compare form)",
+   "query": "c=berlin&c=paris&c=oslo",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "oslo"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "repeated and comma separated c merge",
+   "query": "c=berlin,paris&c=oslo&c=paris",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "oslo"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "unknown city dropped",
+   "query": "c=berlin,atlantis",
+   "expect": {
+    "c": [
+     "berlin"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "all cities unknown falls back to the default set",
+   "query": "c=atlantis",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "empty c falls back to the default set",
+   "query": "c=",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "unknown metric falls back to headline",
+   "query": "m=nope",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "every metric is kept",
+   "query": "m=E",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "E",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "LAU-only metric is kept for lau",
+   "query": "m=ab_per_100k&b=lau",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "ab_per_100k",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "LAU-only metric is dropped for fua",
+   "query": "m=ab_per_100k&b=fua",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "fua",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": "ab_per_100k"
+  },
+  {
+   "name": "unknown boundary, mode and view fall back",
+   "query": "b=xx&mode=yy&view=zz",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "mode, view and boundary are kept",
+   "query": "b=fua&mode=index&view=rank",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "headline",
+    "b": "fua",
+    "mode": "index",
+    "view": "rank",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "hl outside c dropped",
+   "query": "c=berlin,paris&hl=berlin,oslo",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": [
+     "berlin"
+    ]
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "hl repeated and comma separated",
+   "query": "c=berlin,paris,oslo&hl=oslo&hl=berlin,oslo",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "oslo"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": [
+     "oslo",
+     "berlin"
+    ]
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "hl truncated to 8 and de-duplicated",
+   "query": "c=berlin,paris,vienna,copenhagen,wroclaw,amsterdam,oslo,madrid,prague,lyon&hl=berlin,paris,vienna,copenhagen,wroclaw,amsterdam,oslo,madrid,prague,lyon,berlin",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw",
+     "amsterdam",
+     "oslo",
+     "madrid",
+     "prague",
+     "lyon"
+    ],
+    "m": "headline",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw",
+     "amsterdam",
+     "oslo",
+     "madrid"
+    ]
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "full round trip state",
+   "query": "c=berlin,oslo,paris&m=ab_km&b=fua&mode=index&view=rank&hl=oslo,berlin",
+   "expect": {
+    "c": [
+     "berlin",
+     "oslo",
+     "paris"
+    ],
+    "m": "ab_km",
+    "b": "fua",
+    "mode": "index",
+    "view": "rank",
+    "hl": [
+     "oslo",
+     "berlin"
+    ]
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "percent-encoded values are decoded",
+   "query": "c=berlin%2Coslo&m=ab%5Fkm",
+   "expect": {
+    "c": [
+     "berlin",
+     "oslo"
+    ],
+    "m": "ab_km",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "first value wins for scalar params",
+   "query": "m=ab_km&m=A&view=table&view=rank",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "ab_km",
+    "b": "lau",
+    "mode": "abs",
+    "view": "table",
+    "hl": []
+   },
+   "dropped_metric": null
+  }
+ ]
+}
