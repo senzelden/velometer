@@ -4,7 +4,7 @@
 import { renderLines, renderSparkline } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { PILOT5 } from "./state.js";
-import { PALETTE, displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
+import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 
 function overviewLines(el, D) {
   const ids = Object.keys(D.cities).sort((a, b) => D.cities[a].name.localeCompare(D.cities[b].name));
@@ -48,18 +48,4 @@ function sparkline(el, D) {
   renderSparkline(el, points, { width: 140, height: 30, label });
 }
 
-const mounts = [...document.querySelectorAll("[data-chart]")];
-if (mounts.length) {
-  loadSeries()
-    .then((D) => {
-      for (const el of mounts) {
-        try {
-          if (el.dataset.chart === "overview-lines") overviewLines(el, D);
-          else if (el.dataset.chart === "sparkline") sparkline(el, D);
-        } catch (err) {
-          failed(el, err);
-        }
-      }
-    })
-    .catch((err) => mounts.forEach((el) => failed(el, err)));
-}
+drawAll({ "overview-lines": overviewLines, sparkline });

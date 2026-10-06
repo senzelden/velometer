@@ -74,3 +74,23 @@ export function failed(el, err) {
   el.replaceChildren(p);
   console.warn(err);
 }
+
+/**
+ * Draw every [data-chart] mount that has a drawer in `draw` ({name: (el, D) => void}) from the
+ * one series payload; a mount that throws, or a failed load, shows the table-fallback note.
+ */
+export function drawAll(draw) {
+  const mounts = [...document.querySelectorAll("[data-chart]")].filter((el) => draw[el.dataset.chart]);
+  if (!mounts.length) return;
+  loadSeries()
+    .then((D) => {
+      for (const el of mounts) {
+        try {
+          draw[el.dataset.chart](el, D);
+        } catch (err) {
+          failed(el, err);
+        }
+      }
+    })
+    .catch((err) => mounts.forEach((el) => failed(el, err)));
+}

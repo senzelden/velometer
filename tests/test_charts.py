@@ -8,10 +8,8 @@ from velometer.report.charts import (
     ATTRIBUTION,
     GREY,
     PICK_COLOUR,
-    headline_city,
     headline_over_time,
     rankings_flip,
-    tier_composition,
     tiers_small_multiples,
     write_pngs,
 )
@@ -53,8 +51,6 @@ def _keys(node):
 def _all_specs(data):
     return [
         headline_over_time(data),
-        headline_city(data, "berlin"),
-        tier_composition(data, "berlin"),
         tiers_small_multiples(data),
         rankings_flip(data),
     ]
@@ -81,29 +77,6 @@ def test_headline_spec_has_ring_layer_and_now_labels(fixture_data):
     assert '"flagged"' in text
     assert "now" in text
     assert '"strokeDash"' not in text
-
-
-def test_headline_city_has_both_kinds_lau_solid_fua_dashed(fixture_data):
-    spec = headline_city(fixture_data, "berlin")
-    rows = _data_rows(spec)
-    assert {(r["kind"], r["label"]) for r in rows} == {
-        (k, y) for k in ("lau", "fua") for y in ("2024", "2025", "2026", "now")
-    }
-    assert {r["city"] for r in rows} == {"Berlin"}
-    text = json.dumps(spec)
-    assert '"strokeDash"' in text and '"flagged"' in text
-    assert {r["label"] for r in rows if r["flagged"]} == {"2025"}
-    assert "url" not in set(_keys(spec))
-
-
-def test_tier_composition_has_five_tiers_per_label_in_m3_colours(fixture_data):
-    spec = tier_composition(fixture_data, "berlin")
-    rows = _data_rows(spec)
-    assert {r["tier"] for r in rows} == set("ABCDE")
-    assert {r["label"] for r in rows} == {"2024", "2025", "2026", "now"}
-    assert len(rows) == 5 * 4
-    colours = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]
-    assert json.dumps(colours) in json.dumps(spec).replace(", ", ", ")
 
 
 def test_tier_small_multiples_cover_every_city_lau(fixture_data):
@@ -533,28 +506,3 @@ def test_spread_labels_never_go_below_the_floor_and_keep_order_and_gap():
     ys = sorted(out.values())
     assert all(b - a >= 5.0 - 1e-9 for a, b in zip(ys, ys[1:], strict=False))
     assert out["d"] == 0.0  # the lowest label sits on the floor, not above it
-
-
-def test_headline_subareas_is_one_facet_per_subarea_on_a_shared_y(tmp_path):
-    from tests.report_fixture import build_report_fixture_subareas
-    from velometer.report.charts import headline_subareas
-    from velometer.report.data import open_readonly
-
-    db_path, cfg = build_report_fixture_subareas(tmp_path)
-    conn = open_readonly(db_path)
-    try:
-        spec = headline_subareas(ReportData(conn, cfg), "berlin")
-    finally:
-        conn.close()
-    rows = _data_rows(spec)
-    assert {r["name"] for r in rows} == {"West", "East"}
-    assert {(r["name"], r["label"]) for r in rows} == {
-        (n, y) for n in ("West", "East") for y in ("2024", "2025", "2026", "now")
-    }
-    assert {r["headline"] for r in rows if r["name"] == "West"} == {4.0}
-    assert spec["facet"]["field"] == "name"
-    assert spec["resolve"]["scale"]["y"] == "shared"
-    labels = spec["spec"]["encoding"]["x"]["axis"]["values"]
-    assert len(labels) <= 4  # R32: at most four year labels per panel
-    assert ATTRIBUTION in json.dumps(spec, ensure_ascii=False)
-    assert "url" not in set(_keys(spec))

@@ -134,7 +134,8 @@ th.bar-col, td.bar-col { width: 40%; min-width: 8rem; }
 .dumbbell .now { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
 td.up { color: var(--up); }
 td.down { color: var(--down); }
-@media (max-width: 600px) { th.bar-col, td.bar-col, .cc, table.ranking .sub { display: none; } }
+/* narrow: the dot plot and the first-year column go, so the Change column stays in view */
+@media (max-width: 600px) { th.bar-col, td.bar-col, th.first-col, td.first-col, .cc, table.ranking .sub { display: none; } }
 .chartnote .ring { flex: none; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin: 0.75rem 0 1rem; }
 .card {
@@ -198,7 +199,9 @@ img { max-width: 100%; height: auto; border: 1px solid var(--grid); }
 .provenance { padding-left: 1.25rem; font-size: 0.9rem; }
 .provenance p { display: inline; margin: 0; }
 .prose { max-width: 48rem; }
-.prose table { font-size: 0.9rem; display: block; overflow-x: auto; }
+.prose table { font-size: 0.9rem; display: block; overflow-x: auto; width: max-content; max-width: 100%; }
+/* wide tables break out of the 48rem reading column up to the page width (main is 72rem) */
+@media (min-width: 52rem) { .prose table { max-width: min(70rem, calc(100vw - 2rem - 17px)); } }
 
 footer {
   margin-top: 3rem; padding-top: 0.75rem; padding-bottom: 2rem;

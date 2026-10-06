@@ -124,3 +124,28 @@ export function tickLabel(v) {
 export function formatValue(v) {
   return v.toLocaleString("en-GB", { maximumFractionDigits: 1 });
 }
+
+/** Estimated rendered width of axis text, px (the axis font is small and proportional). */
+export const textWidth = (text, charW = 6.2) => String(text).length * charW;
+
+/**
+ * Which x-axis labels to draw: the last one always (it is the newest run), then every `stride`-th
+ * going back, with the smallest stride at which no two neighbouring labels come closer than
+ * `gap` px (widths estimated from the text; `step` is the px between neighbouring points).
+ * Returns ascending indices.
+ */
+export function tickIndices(texts, step, gap = 8) {
+  const n = texts.length;
+  if (n === 0) return [];
+  for (let stride = 1; stride < n; stride++) {
+    const idx = [];
+    for (let i = n - 1; i >= 0; i -= stride) idx.unshift(i);
+    const fits = idx.every(
+      (i, k) =>
+        k === 0 ||
+        (i - idx[k - 1]) * step >= textWidth(texts[i]) / 2 + textWidth(texts[idx[k - 1]]) / 2 + gap,
+    );
+    if (fits) return idx;
+  }
+  return [n - 1];
+}

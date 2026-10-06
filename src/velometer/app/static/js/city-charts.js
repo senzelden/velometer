@@ -3,7 +3,7 @@
 // mounts. Every value is also in a table on the page.
 import { renderLines, renderSmallMultiples, renderTiers } from "./chart.js";
 import { formatValue } from "./chart-core.js";
-import { PALETTE, TIER_NAMES, displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
+import { PALETTE, TIER_NAMES, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
 const UNIT = "per 100 km of main roads";
@@ -75,18 +75,4 @@ function bezirke(el, D) {
   );
 }
 
-const DRAW = { "city-headline": headline, "city-tiers": tiers, bezirke };
-const mounts = [...document.querySelectorAll("[data-chart]")].filter((el) => DRAW[el.dataset.chart]);
-if (mounts.length) {
-  loadSeries()
-    .then((D) => {
-      for (const el of mounts) {
-        try {
-          DRAW[el.dataset.chart](el, D);
-        } catch (err) {
-          failed(el, err);
-        }
-      }
-    })
-    .catch((err) => mounts.forEach((el) => failed(el, err)));
-}
+drawAll({ "city-headline": headline, "city-tiers": tiers, bezirke });

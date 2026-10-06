@@ -9,6 +9,7 @@ import {
   assignColours,
   xLabels,
   formatValue,
+  tickIndices,
 } from "../chart-core.js";
 
 test("scaleLinear maps domain to range, including inverted ranges", () => {
@@ -105,4 +106,27 @@ test("niceTicks ignores non-finite input instead of returning garbage", () => {
 test("formatValue is exact to one decimal and never abbreviates", () => {
   assert.equal(formatValue(12345.678), "12,345.7");
   assert.equal(formatValue(42), "42");
+});
+
+test("tickIndices keeps every label when they fit and always ends on the last", () => {
+  const years = ["2018", "2019", "2020", "2021"];
+  assert.deepEqual(tickIndices(years, 60), [0, 1, 2, 3]);
+  assert.deepEqual(tickIndices([], 60), []);
+});
+
+test("tickIndices never lets the last year and the wide snapshot label collide", () => {
+  const labels = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026", "Oct 2026"];
+  const idx = tickIndices(labels, 36);
+  assert.equal(idx.at(-1), 9);
+  assert.ok(!idx.includes(8), "2026 sits on top of Oct 2026");
+  const w = (t) => t.length * 6.2;
+  for (let k = 1; k < idx.length; k++) {
+    assert.ok((idx[k] - idx[k - 1]) * 36 >= w(labels[idx[k]]) / 2 + w(labels[idx[k - 1]]) / 2);
+  }
+});
+
+test("tickIndices thins to every other label at narrow widths, regularly", () => {
+  const years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"];
+  assert.deepEqual(tickIndices(years, 24), [0, 2, 4, 6, 8]);
+  assert.deepEqual(tickIndices(["a-long-label", "b-long-label"], 1), [1]);
 });

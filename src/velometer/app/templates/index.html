@@ -24,7 +24,7 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 <table class="ranking">
 <thead><tr>
   <th class="num">#</th><th>City</th><th class="bar-col"><span class="sr-only">First year to current run</span></th>
-  <th class="num">First year</th><th class="num">Current</th><th class="num">Change</th>
+  <th class="num first-col">First year</th><th class="num">Current</th><th class="num">Change</th>
 </tr></thead>
 <tbody>
 {% for s in ranking %}
@@ -41,9 +41,9 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
   {% if s.now is none %}
   <td class="note" colspan="3">no run (LAU current)</td>
   {% else %}
-  <td class="num">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
+  <td class="num first-col">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
   <td class="num"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
-  <td class="num {% if s.change is not none and s.change < 0 %}down{% else %}up{% endif %}">{% if s.change is none %}n/a{% else %}{{ "%+.1f" | format(s.change) }}{% endif %}</td>
+  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}">{% if s.change is none %}n/a{% else %}{{ "%+.1f" | format(s.change) }}{% endif %}</td>
   {% endif %}
 </tr>
 {% endfor %}

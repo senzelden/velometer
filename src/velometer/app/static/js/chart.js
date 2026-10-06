@@ -1,6 +1,6 @@
 // Hand-rolled SVG charts. Layout maths lives in chart-core.js; this file only draws.
 // Everything is built with createElementNS / textContent: nothing from data reaches innerHTML.
-import { scaleLinear, niceTicks, placeLabels, tickLabel, formatValue } from "./chart-core.js";
+import { scaleLinear, niceTicks, placeLabels, tickLabel, formatValue, textWidth, tickIndices } from "./chart-core.js";
 
 const NS = "http://www.w3.org/2000/svg";
 export const TIER_COLOURS = { A: "#1f5fae", B: "#6fa5e6", C: "#1a9e77", D: "#eb9a54", E: "#a59fc9" };
@@ -89,7 +89,15 @@ export function renderLines(el, model, opts = {}) {
 
   const labelled = compact ? [] : narrow && live.length > 8 ? coloured : live;
   const longest = Math.max(0, ...labelled.map((s) => s.name.length));
-  const mr = labelled.length ? Math.min(narrow ? 82 : 130, longest * 6.4 + 22) : compact ? 6 : 16;
+  const axisTexts = labels.map((l) =>
+    compact && /\d{4}$/.test(l) && l.length > 4 ? l.replace(/ \d{2}(\d{2})$/, " $1") : l,
+  );
+  // the last x label is centred on the last point: leave room for its right half
+  const lastHalf = Math.ceil(textWidth(axisTexts.at(-1) ?? "") / 2) + 2;
+  const mr = Math.max(
+    labelled.length ? Math.min(narrow ? 82 : 130, longest * 6.4 + 22) : compact ? 6 : 16,
+    lastHalf,
+  );
   const ml = compact ? 30 : 44;
   const mt = compact ? 6 : 14;
   const mb = compact ? 18 : 30;
@@ -109,15 +117,12 @@ export function renderLines(el, model, opts = {}) {
         opts.intTicks ? `#${t}` : tickLabel(t)),
     );
   }
-  const every = step < 22 ? 3 : step < 36 ? 2 : 1;
-  labels.forEach((l, i) => {
-    if ((n - 1 - i) % every !== 0) return;
-    const text = compact && /\d{4}$/.test(l) && l.length > 4 ? l.replace(/ \d{2}(\d{2})$/, " $1") : l;
+  for (const i of tickIndices(axisTexts, step)) {
     svg.appendChild(
       svgEl("text", { class: "axis-t", x: x(i), y: H - mb + (compact ? 13 : 17),
-        "text-anchor": "middle" }, text),
+        "text-anchor": "middle" }, axisTexts[i]),
     );
-  });
+  }
   if (model.yTitle && !compact) {
     svg.appendChild(svgEl("text", { class: "ylab", x: ml, y: mt - 4 }, model.yTitle));
   }
@@ -328,7 +333,8 @@ export function renderTiers(el, model, opts = {}) {
   const W = widthOf(el, opts);
   const H = opts.height ?? 220;
   const n = model.labels.length;
-  const ml = 46, mr = 22, mt = 10, mb = 26;
+  const ml = 46, mt = 10, mb = 26;
+  const mr = Math.max(22, Math.ceil(textWidth(model.labels.at(-1) ?? "") / 2) + 2);
   const iw = W - ml - mr;
   const ih = H - mt - mb;
   const step = iw / Math.max(1, n - 1);
@@ -343,12 +349,9 @@ export function renderTiers(el, model, opts = {}) {
     svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: y(t), y2: y(t) }));
     svg.appendChild(svgEl("text", { class: "axis-t", x: ml - 6, y: y(t) + 3.5, "text-anchor": "end" }, tickLabel(t)));
   }
-  const every = step < 22 ? 3 : step < 36 ? 2 : 1;
-  model.labels.forEach((l, i) => {
-    if ((n - 1 - i) % every === 0) {
-      svg.appendChild(svgEl("text", { class: "axis-t", x: x(i), y: H - 8, "text-anchor": "middle" }, l));
-    }
-  });
+  for (const i of tickIndices(model.labels, step)) {
+    svg.appendChild(svgEl("text", { class: "axis-t", x: x(i), y: H - 8, "text-anchor": "middle" }, model.labels[i]));
+  }
   const base = model.labels.map(() => 0);
   for (const layer of model.layers) {
     const top = base.map((b, i) => b + (layer.values[i] ?? 0));

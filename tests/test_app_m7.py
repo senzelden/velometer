@@ -4,8 +4,10 @@ import re
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtures
+    BASE_URL,
     ROUTES,
     _client,
     _text,
@@ -64,6 +66,20 @@ def test_errors_and_static_files_carry_the_csp_too(client):
     assert refused.headers["content-security-policy"] == CSP
 
 
+def test_an_unhandled_exception_500_carries_the_csp_too(setup):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    app = create_app(db_path, cfg, maps, docs)
+
+    @app.get("/boom")
+    async def boom():
+        raise RuntimeError("boom")
+
+    with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as c:
+        r = c.get("/boom")
+    assert r.status_code == 500
+    assert r.headers["content-security-policy"] == CSP
+
+
 @pytest.mark.parametrize("path", M7_ROUTES)
 def test_no_inline_script_with_a_body(client, path):
     assert not INLINE_SCRIPT.search(client.get(path).text), path
@@ -76,10 +92,32 @@ def test_the_inline_script_pattern_catches_inline_code_and_spares_json():
     assert not INLINE_SCRIPT.search('<script type="application/json" id="c">{"a": 1}</script>')
 
 
+# what the CSP blocks in markup: style attributes, event-handler attributes, javascript: URLs
+INLINE_CODE = re.compile(
+    r"""\sstyle=|\son[a-z]+\s*=|(?:href|src|action)\s*=\s*["']?\s*javascript:""", re.I
+)
+
+
+@pytest.mark.parametrize("path", M7_ROUTES)
+def test_no_rendered_page_has_inline_style_handlers_or_javascript_urls(client, path):
+    assert not INLINE_CODE.search(client.get(path).text), path
+
+
+def test_the_inline_code_pattern_catches_each_kind_and_spares_prose():
+    for bad in [
+        '<p style="color: red">',
+        '<a onclick="x()">',
+        "<img src=a onerror = x>",
+        '<a href="javascript:alert(1)">',
+    ]:
+        assert INLINE_CODE.search(bad), bad
+    assert not INLINE_CODE.search('<p class="once">on = 3, the front</p><a href="/online">')
+
+
 def test_no_template_has_inline_style_attributes():
-    """`style-src 'self'` blocks style="..." attributes in markup."""
+    """The source guard behind the rendered check: no template writes style=/on*= itself."""
     for path in TEMPLATES.rglob("*.html"):
-        assert not re.search(r"\sstyle=", path.read_text()), path.name
+        assert not INLINE_CODE.search(path.read_text()), path.name
 
 
 def test_series_json_has_the_spike_keys_and_ends_each_series_at_current(client, fixture_db):
@@ -208,3 +246,27 @@ def test_bezirk_change_table_has_no_inline_style(subarea_setup):  # noqa: F811
         html = c.get("/city/berlin").text
     assert "Mapped change" in html and "<td>West</td>" in html
     assert not re.search(r"\sstyle=", html)
+
+
+def test_a_city_without_a_headline_year_shows_na_not_a_zero_change(setup, monkeypatch):  # noqa: F811
+    from dataclasses import replace
+
+    from velometer.report.data import ReportData
+
+    real = ReportData.series
+
+    def only_current(self, city_id, kind):
+        cs = real(self, city_id, kind)
+        if cs is None:
+            return None
+        return replace(cs, points=[p for p in cs.points if p.label == "current"])
+
+    monkeypatch.setattr(ReportData, "series", only_current)
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/").text
+    row = html[html.index('<table class="ranking"') :]
+    row = row[row.index('href="/city/berlin"') :].split("</tr>")[0]
+    assert "+0.0" not in row
+    assert row.count("n/a") >= 2  # first year and change
+    assert 'class="num up"' not in row and 'class="num down"' not in row

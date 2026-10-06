@@ -8,33 +8,13 @@ explanations of flagged years. Values are the CSV export's (mapped km, ADR 0006)
 from pathlib import Path
 
 from velometer import timeseries as ts
+from velometer.app.names import country_name
 from velometer.db import subarea_names
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData
 
-# English country names for the ISO codes in config/cities.yaml (navigation and the Cities page)
-COUNTRY_NAMES = {
-    "AT": "Austria",
-    "CZ": "Czechia",
-    "DE": "Germany",
-    "DK": "Denmark",
-    "ES": "Spain",
-    "FI": "Finland",
-    "FR": "France",
-    "HU": "Hungary",
-    "NL": "Netherlands",
-    "NO": "Norway",
-    "PL": "Poland",
-    "SE": "Sweden",
-    "SI": "Slovenia",
-    "SK": "Slovakia",
-}
 # CSV column -> payload key (the spike's names)
 PRESET_KEYS = {"ours_headline": "headline", "ecf_qecio": "ecf_qecio"}
 PRESET_KEYS["clean_cities_2025"] = "clean_cities"
-
-
-def country_name(iso2: str) -> str:
-    return COUNTRY_NAMES.get(iso2, iso2)
 
 
 def _num(text: str) -> float | None:

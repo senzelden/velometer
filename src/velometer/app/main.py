@@ -29,7 +29,8 @@ from markupsafe import Markup
 
 from velometer import timeseries as ts
 from velometer.app.cache import PageCache, fingerprint
-from velometer.app.series import country_name, series_payload
+from velometer.app.names import country_name
+from velometer.app.series import series_payload
 from velometer.db import SchemaError, subarea_names
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
@@ -93,6 +94,14 @@ class CSPMiddleware:
             await send(message)
 
         await self.app(scope, receive, with_csp)
+
+
+class VelometerApp(FastAPI):
+    """FastAPI with the CSP wrapped around the whole stack, ServerErrorMiddleware included, so
+    the 500 of an unhandled exception carries the policy as well."""
+
+    def build_middleware_stack(self):
+        return CSPMiddleware(super().build_middleware_stack())
 
 
 def _num(v: float | int | None, spec: str = ",.1f") -> str:
@@ -162,10 +171,9 @@ def create_app(
 ) -> FastAPI:
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
-    app = FastAPI(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
+    app = VelometerApp(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=GZIP_LEVEL)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
-    app.add_middleware(CSPMiddleware)  # outermost: refusals and errors carry the policy too
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.filters["num"] = _num
@@ -242,7 +250,11 @@ def create_app(
         """A city's LAU headline now and at the first series year (Overview, Cities)."""
         point = data.current(c.id, "lau")
         cs = data.series(c.id, "lau")
-        first = next((p for p in cs.points if p.headline is not None), None) if cs else None
+        first = (
+            next((p for p in cs.points if p.headline is not None and p.label != ts.CURRENT), None)
+            if cs
+            else None
+        )
         now = headline_of(point)
         return {
             "city": c,
