@@ -1851,7 +1851,10 @@ def content(
         False, "--check", help="Validate quotes, facts, numbers and wording; exit 1 on problems."
     ),
     online: bool = typer.Option(
-        False, "--online", help="With --check: also fetch each source URL and find its excerpts."
+        False,
+        "--online",
+        help="Implies --check; once the offline check passes, also fetch each source URL and "
+        "find its excerpts.",
     ),
     content_dir: Path = typer.Option(Path("content"), "--content", help="Content directory."),  # noqa: B008
     db: Path = DB_OPT,
@@ -1863,6 +1866,7 @@ def content(
     from velometer.content.loader import load_sources
     from velometer.content.models import ContentError
 
+    check = check or online  # --online alone means --check --online
     if not check:
         try:
             n, s, k = ck.counts(content_dir)

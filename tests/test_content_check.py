@@ -387,6 +387,22 @@ def test_cli_online_uses_fetcher_only_when_offline_clean(content, fixture_db, mo
     assert bad.exit_code == 1 and calls == []  # offline problems stop before any fetch
 
 
+def test_cli_online_alone_implies_check(content, fixture_db, monkeypatch):
+    import velometer.content.check as ck
+
+    calls: list[str] = []
+    real = ck.check_online
+    monkeypatch.setattr(
+        ck, "check_online", lambda sources: real(sources, fetch=lambda u: calls.append(u) or "")
+    )
+    args = _check_args(content, fixture_db, "--online")
+    args.remove("--check")
+    res = CliRunner().invoke(app, args)
+    assert res.exit_code == 1 and "excerpt not found online: e1" in res.stderr
+    assert calls == ["https://example.org/radverkehr"]
+    assert "Implies --check" in CliRunner().invoke(app, ["content", "--help"]).output
+
+
 def test_cli_check_missing_db(content, fixture_db, tmp_path):
     args = _check_args(content, fixture_db)
     args[args.index("--db") + 1] = str(tmp_path / "absent.sqlite")

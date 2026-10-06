@@ -57,6 +57,8 @@ LEAFLET_NON_LOAD_HOSTS = {"leafletjs.com", "www.w3.org"}
 # The app answers loopback Host headers only (DNS rebinding, see ALLOWED_HOSTS), so tests talk
 # to it as a browser on the served address does, instead of TestClient's default `testserver`.
 BASE_URL = "http://127.0.0.1"
+# the shipped narratives, found from this file (never the cwd-relative default of create_app)
+CONTENT = Path(__file__).parents[1] / "content"
 
 
 def _client(app) -> TestClient:
@@ -98,7 +100,7 @@ def setup(fixture_db, tmp_path):
 @pytest.fixture
 def client(setup):
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         yield c
 
 
@@ -213,7 +215,7 @@ def test_flag_explanation_text_on_city_page(client):
 def test_flag_without_explanation_says_so(setup):
     db_path, cfg, maps, docs = setup
     (docs / "review" / "m3_timeseries.md").write_text("# empty\n")
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         r = c.get("/city/berlin/time")
     assert r.status_code == 200
     assert "no explanation" in _text(r.text)
@@ -288,7 +290,7 @@ def test_city_page_interactive_map_with_png_link_and_hint(client):
 def test_city_page_without_any_geojson_loads_no_map(setup):
     db_path, cfg, maps, docs = setup
     (maps / "berlin_lau.geojson").unlink()
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = _map_section(c.get("/city/berlin/tiers").text)
     assert '<div id="tiermap"' not in section and "<script" not in section
     assert section.count("map not generated (<code>velometer report maps</code>)") == 2
@@ -453,7 +455,7 @@ def test_methodology_rendered_with_tables_and_language_links(client):
 def test_missing_methodology_is_a_note_not_an_error(setup):
     db_path, cfg, maps, docs = setup
     (docs / "methodology.md").unlink()
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         r = c.get("/methodology")
     assert r.status_code == 200
     assert "methodology not generated" in _text(r.text)
@@ -461,7 +463,9 @@ def test_missing_methodology_is_a_note_not_an_error(setup):
 
 def test_missing_db_at_request_time_is_503_not_500(setup):
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path.with_name("gone.sqlite"), cfg, maps, docs)) as c:
+    with _client(
+        create_app(db_path.with_name("gone.sqlite"), cfg, maps, docs, content_dir=CONTENT)
+    ) as c:
         assert c.get("/").status_code == 503
         assert c.get("/city/berlin").status_code == 503
 
@@ -604,7 +608,7 @@ def test_preset_labels_follow_report_yaml(setup):
     db_path, cfg, maps, docs = setup
     path = cfg / "report.yaml"
     path.write_text(path.read_text().replace("Ours: QECIO method", "Ours: QECIO test label"))
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         assert "Ours: QECIO test label" in _headers(c.get("/").text)
         assert "Ours: QECIO test label" in _text(c.get("/city/berlin/time").text)
 
@@ -612,7 +616,7 @@ def test_preset_labels_follow_report_yaml(setup):
 def test_app_follows_report_classifier_of_the_config(setup):
     """Spec section 5: the app defaults to config/report.yaml, red-proofed in a copied config."""
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         before = c.get("/city/berlin/time").text
     assert f"Classifier {CLASSIFIER}" in _text(before)
     assert "no run (LAU current)" not in _text(before)
@@ -620,7 +624,7 @@ def test_app_follows_report_classifier_of_the_config(setup):
     path.write_text(
         path.read_text().replace(f"report_classifier: {CLASSIFIER}", "report_classifier: v1")
     )
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         after = _text(c.get("/city/berlin/time").text)
     assert "Classifier v1" in after and f"Classifier {CLASSIFIER}" not in after
     assert "no run (LAU current)" in after  # the fixture's runs are on CLASSIFIER only
@@ -646,7 +650,7 @@ def test_db_on_another_schema_version_is_503(setup, tmp_path):
     shutil.copy(db_path, old)
     with sqlite3.connect(old) as c:
         c.execute("PRAGMA user_version = 5")
-    with _client(create_app(old, cfg, maps, docs)) as c:
+    with _client(create_app(old, cfg, maps, docs, content_dir=CONTENT)) as c:
         for path in ["/", "/city/berlin", "/data/all.csv"]:
             r = c.get(path)
             assert r.status_code == 503, path
@@ -680,7 +684,7 @@ def test_city_with_current_run_but_no_history(setup):
             "UPDATE runs SET status='failed' WHERE city_id='berlin' AND boundary_kind='fua' "
             "AND source='history'"
         )
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         r = c.get("/city/berlin/tiers")
         assert r.status_code == 200
         text = _text(r.text)
@@ -724,7 +728,7 @@ def test_untrusted_city_page_is_404(report_db_with_trust, tmp_path):
     db_path, cfg = report_db_with_trust(countries={"DE": {"status": "trusted", "basis": "t"}})
     maps = tmp_path / "maps2"
     maps.mkdir()
-    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d2"))) as c:
+    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d2"), content_dir=CONTENT)) as c:
         assert c.get("/city/berlin").status_code == 200
         assert c.get("/city/paris").status_code == 404
         assert "/city/paris" not in c.get("/").text
@@ -744,7 +748,7 @@ def setup_21(report_db_21, tmp_path):
 
 @pytest.fixture
 def client_21(setup_21):
-    with _client(create_app(*setup_21)) as c:
+    with _client(create_app(*setup_21, content_dir=CONTENT)) as c:
         yield c
 
 
@@ -910,7 +914,7 @@ def test_the_fingerprint_is_computed_once_per_request(setup, monkeypatch):
         return fingerprint(*args)
 
     monkeypatch.setattr(main, "fingerprint", counting)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         for path in ["/", "/city/berlin", "/data/berlin.csv", "/methodology"]:
             calls.clear()
             assert c.get(path).status_code == 200
@@ -955,7 +959,7 @@ def test_maps_of_an_untrusted_city_are_404(report_db_with_trust, tmp_path):
     for city in ("berlin", "paris"):  # both have files; only Berlin's country is trusted
         (maps / f"{city}_lau.png").write_bytes(PNG)
         (maps / f"{city}_lau.geojson").write_bytes(GEOJSON)
-    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d3"))) as c:
+    with _client(create_app(db_path, cfg, maps, _docs(tmp_path / "d3"), content_dir=CONTENT)) as c:
         assert c.get("/maps/berlin_lau.png").status_code == 200
         assert c.get("/maps/berlin_lau.geojson").status_code == 200
         assert c.get("/maps/paris_lau.png").status_code == 404
@@ -1003,7 +1007,7 @@ def subarea_setup(tmp_path):
 
 @pytest.fixture
 def subarea_client(subarea_setup):
-    with _client(create_app(*subarea_setup)) as c:
+    with _client(create_app(*subarea_setup, content_dir=CONTENT)) as c:
         yield c
 
 
@@ -1060,7 +1064,7 @@ def test_bezirke_without_a_change_file_says_so_and_loads_no_change_map(subarea_c
 def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea_setup):
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/bezirke").text
         assert "No change map generated yet" not in html
         assert f"/maps/{CHANGE_STEM}.geojson" in html
@@ -1075,7 +1079,7 @@ def test_change_section_names_its_runs_and_is_not_stale_on_the_latest_run(subare
     db_path, cfg, maps, docs = subarea_setup
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
     assert f"Run 1 → run {latest}" in section
     assert "older than" not in section and "Regenerate it" not in section
@@ -1085,7 +1089,7 @@ def test_change_section_says_when_the_change_map_is_older_than_the_figures(subar
     db_path, cfg, maps, docs = subarea_setup
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest - 1)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
     assert f"Run 1 → run {latest - 1}" in section
     assert f"ends at run {latest - 1}, not at the run {latest} of the figures above" in section
@@ -1100,7 +1104,7 @@ def test_change_table_never_passes_raw_html(subarea_setup):
     assert "&lt;b&gt;West&lt;/b&gt;" in md.read_text()  # render_markdown escapes the name
     # a hand-edited page with raw HTML in the table is escaped by the app too
     md.write_text(md.read_text().replace("| East |", "| <i>East</i> |"))
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = (
             c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1].split("</table>")[0]
         )
@@ -1112,7 +1116,7 @@ def test_change_geojson_route_refuses_unknown_and_missing_files(subarea_setup):
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
     (maps / "paris_change_2023-01-01_current.geojson").write_bytes(GEOJSON)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         assert c.get("/maps/berlin_change_2022-01-01_current.geojson").status_code == 404
         assert c.get("/maps/berlin_change_x_y.geojson").status_code == 404
         assert c.get("/maps/nowhere_change_2023-01-01_current.geojson").status_code == 404
@@ -1172,7 +1176,9 @@ def test_pending_country_hides_bezirke_csv_and_change_geojson(subarea_setup):
 
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:  # control: DE is trusted
+    with _client(
+        create_app(db_path, cfg, maps, docs, content_dir=CONTENT)
+    ) as c:  # control: DE is trusted
         assert c.get("/city/berlin").status_code == 200
         assert c.get("/data/berlin_subareas.csv").status_code == 200
         assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 200
@@ -1180,7 +1186,7 @@ def test_pending_country_hides_bezirke_csv_and_change_geojson(subarea_setup):
     trust["countries"] = {k: v for k, v in trust["countries"].items() if k != "DE"}
     trust["countries"]["FR"] = {"status": "trusted", "basis": "t"}
     (cfg / "trust.yaml").write_text(yaml.safe_dump(trust))
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         assert c.get("/city/berlin").status_code == 404
         assert c.get("/data/berlin_subareas.csv").status_code == 404
         assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 404
@@ -1223,7 +1229,7 @@ def test_reported_figures_skip_the_comparison_layers_and_sort_by_date(fixture_db
 def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, length_basis="unknown")
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
         other = c.get("/city/paris/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
@@ -1251,7 +1257,7 @@ def test_fingerprint_follows_the_external_figures_csv(setup):
 def test_non_http_source_url_is_never_a_link(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, source_url="javascript:alert(1)")
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="javascript:' not in html and "javascript:" not in section
@@ -1261,7 +1267,7 @@ def test_non_http_source_url_is_never_a_link(setup):
 def test_an_upper_case_http_scheme_is_a_link(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, source_url="HTTPS://example.org/report")
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="HTTPS://example.org/report"' in section
@@ -1271,7 +1277,7 @@ def test_reported_figure_note_gets_its_own_full_width_row(setup):
     # A long source note in the link cell squeezed that column to a word per line (M6 render).
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]

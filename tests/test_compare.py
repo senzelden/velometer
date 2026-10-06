@@ -107,3 +107,11 @@ def test_table_model_ab_per_100k_uses_the_residents():
     t = compare.table_model(payload, state)
     assert t["rows"][0]["values"] == [25.0, 50.0]
     assert [c["text"] for c in t["columns"]] == ["Jan 2018", "Oct 2026"]
+
+
+def test_the_per_100k_unit_names_the_population_it_divides_by():
+    assert "each city's 2024 population, held for every year" in compare.per_100k_unit([2024])
+    assert "2023–2025 population" in compare.per_100k_unit([2025, 2023, 2024, 2024])
+    assert "each city's population, held for every year" in compare.per_100k_unit([])
+    info = compare.metric_info("u", {}, [2024])
+    assert info["ab_per_100k"]["unit"] == compare.per_100k_unit([2024])

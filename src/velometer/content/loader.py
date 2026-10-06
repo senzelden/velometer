@@ -38,20 +38,33 @@ def load_sources(dir: Path) -> dict[str, Source]:
     return out
 
 
-def load_narratives(dir: Path) -> dict[str, Narrative]:
-    """Load `<city_id>.yaml` files; the file stem must equal the narrative's `city_id`."""
+def load_narratives(dir: Path, errors: dict[str, str] | None = None) -> dict[str, Narrative]:
+    """Load `<city_id>.yaml` files; the file stem must equal the narrative's `city_id`.
+
+    Without `errors` the first bad file raises. With it, each bad file's message is recorded
+    under its stem and the file is skipped, so one broken narrative leaves the others readable.
+    """
     out: dict[str, Narrative] = {}
     for path in sorted(dir.glob("*.yaml")):
         try:
-            narrative = Narrative.model_validate(_read(path))
-        except ValidationError as e:
-            raise ContentError(f"{path}: {e}") from e
-        if narrative.city_id != path.stem:
-            raise ContentError(
-                f"{path}: file stem must equal city_id, but city_id is {narrative.city_id}"
-            )
-        out[narrative.city_id] = narrative
+            out[path.stem] = _narrative(path)
+        except ContentError as e:
+            if errors is None:
+                raise
+            errors[path.stem] = str(e)
     return out
+
+
+def _narrative(path: Path) -> Narrative:
+    try:
+        narrative = Narrative.model_validate(_read(path))
+    except ValidationError as e:
+        raise ContentError(f"{path}: {e}") from e
+    if narrative.city_id != path.stem:
+        raise ContentError(
+            f"{path}: file stem must equal city_id, but city_id is {narrative.city_id}"
+        )
+    return narrative
 
 
 def load_explainer(path: Path) -> Explainer | None:

@@ -183,6 +183,22 @@ def test_an_unmapped_length_basis_or_unknown_source_and_metric_never_raise(rows,
     assert row.scope == "vorrangnetz"
 
 
+def test_a_length_basis_equal_to_ours_produces_no_length_driver(rows):
+    data, _ = rows
+    cfg = _cfg()
+    same = cfg.model_copy(
+        update={
+            "length_bases": {**cfg.length_bases, "streckenlaenge": cfg.ours["length"]},
+            "source_length_bases": {},
+        }
+    )
+    row = next(
+        r for r in difference_rows(data, "berlin", same) if r.metric == "vorrangnetz_target_km"
+    )
+    assert "length" not in _drivers(row)
+    assert "kind" in _drivers(row)  # the other dimensions still differ
+
+
 def test_reported_rows_carry_scope_and_note(rows):
     _, out = rows
     row = next(r for r in out if r.metric == "vorrangnetz_target_km")

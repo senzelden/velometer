@@ -96,9 +96,11 @@ def _check_document(
     data_refs: list[DataRef],
     literals: list[str],
     sources: dict[str, Source],
-    data: ReportData,
-    docs_dir: Path,
+    data: ReportData | None,
+    docs_dir: Path | None,
 ) -> list[str]:
+    """The document's problems; without `data` the facts are not evaluated (their printed
+    values still declare numbers)."""
     problems: list[str] = []
 
     def add(msg: str) -> None:
@@ -111,12 +113,13 @@ def _check_document(
 
     allowed: set[str] = set()
     for f in facts:
-        try:
-            value = evaluate(f.expr, data, docs_dir)
-            if not printed_matches(value, f.printed):
-                add(f"fact {f.id}: {f.expr} is {_full(value)}, printed {f.printed}")
-        except FactError as e:
-            add(f"fact {f.id}: {e}")
+        if data is not None and docs_dir is not None:
+            try:
+                value = evaluate(f.expr, data, docs_dir)
+                if not printed_matches(value, f.printed):
+                    add(f"fact {f.id}: {f.expr} is {_full(value)}, printed {f.printed}")
+            except FactError as e:
+                add(f"fact {f.id}: {e}")
         allowed.add(normalise_number(f.printed))
 
     ref_ids = {d.id for d in data_refs}
@@ -143,7 +146,11 @@ def _dimension_ids(path: Path) -> list[str]:
 
 
 def _check_explainer(
-    explainer: Explainer, sources: dict[str, Source], data: ReportData, docs_dir: Path
+    explainer: Explainer,
+    sources: dict[str, Source],
+    data: ReportData | None,
+    docs_dir: Path | None,
+    config_dir: Path,
 ) -> list[str]:
     label = "explainer.yaml"
     prose = [explainer.title, *explainer.intro]
@@ -160,7 +167,7 @@ def _check_explainer(
         data,
         docs_dir,
     )
-    diff = Path(data.config_dir) / "differences.yaml"
+    diff = Path(config_dir) / "differences.yaml"
     if diff.is_file():
         try:
             dims = _dimension_ids(diff)
@@ -193,21 +200,46 @@ def _narrative_prose(n: Narrative) -> list[str]:
 
 
 def check_content(content_dir: Path, data: ReportData, docs_dir: Path) -> list[str]:
-    """Every problem of the content directory; a load error is one problem and stops."""
+    """Every problem of the content directory, facts evaluated against the report data."""
+    return _check(content_dir, Path(data.config_dir), data, docs_dir)
+
+
+def check_content_offline(
+    content_dir: Path, config_dir: Path, city_ids: Iterable[str] = ()
+) -> list[str]:
+    """Every problem that needs no database: schema, ids, quotes, references, steps,
+    explainer dimensions, undeclared numbers and construction verbs, and a narrative for each
+    of `city_ids`. Facts are not evaluated."""
+    return _check(content_dir, Path(config_dir), None, None, city_ids)
+
+
+def _check(
+    content_dir: Path,
+    config_dir: Path,
+    data: ReportData | None,
+    docs_dir: Path | None,
+    city_ids: Iterable[str] = (),
+) -> list[str]:
     content_dir = Path(content_dir)
     try:
         sources = load_sources(content_dir / "sources")
-        narratives = load_narratives(content_dir / "narratives")
-        explainer = load_explainer(content_dir / "explainer.yaml")
     except ContentError as e:
         return [str(e)]
+    load_errors: dict[str, str] = {}
+    narratives = load_narratives(content_dir / "narratives", errors=load_errors)
+    problems: list[str] = list(load_errors.values())
+    try:
+        explainer = load_explainer(content_dir / "explainer.yaml")
+    except ContentError as e:
+        return problems + [str(e)]
 
-    problems: list[str] = []
-    for city in data.cities():
-        if city.id not in narratives:
-            problems.append(f"narratives/{city.id}.yaml: missing narrative: {city.id}")
+    expected = [c.id for c in data.cities()] if data is not None else list(city_ids)
+    for cid in expected:
+        if cid not in narratives and cid not in load_errors:
+            problems.append(f"narratives/{cid}.yaml: missing narrative: {cid}")
     if COMBINED not in narratives:
-        problems.append(f"narratives/{COMBINED}.yaml: missing narrative: {COMBINED}")
+        if COMBINED not in load_errors:
+            problems.append(f"narratives/{COMBINED}.yaml: missing narrative: {COMBINED}")
     elif explainer is None:
         problems.append("explainer.yaml: missing explainer")
 
@@ -230,7 +262,7 @@ def check_content(content_dir: Path, data: ReportData, docs_dir: Path) -> list[s
             problems.append(f"{label}: no figures section")
 
     if explainer is not None:
-        problems += _check_explainer(explainer, sources, data, docs_dir)
+        problems += _check_explainer(explainer, sources, data, docs_dir, config_dir)
     return problems
 
 

@@ -41,7 +41,9 @@ globalThis.document = {
   createElement: (tag) => new Node(tag),
   createTextNode: (t) => Object.assign(new Node("#text"), { _text: t }),
 };
-const { renderLines, renderTiers, renderSparkline } = await import("../chart.js");
+const { renderLines, renderTiers, renderSparkline, renderSmallMultiples } = await import(
+  "../chart.js"
+);
 
 const labels = ["2018", "2019", "2020"];
 const mk = (id, name, values, colour) => ({
@@ -103,4 +105,33 @@ test("renderLines uses a series' short name when the full end label would be cut
   renderLines(wide, { labels, series: [s("lau", "City proper (LAU)", "City proper", [1, 2, 3])] },
     { height: 200, width: 900 });
   assert.ok(wide.children[0].find("text").some((t) => t.textContent === "City proper (LAU)"));
+});
+
+/** Every attribute value and text of a stub tree. */
+const strings = (n, out = []) => {
+  out.push(...Object.values(n.attrs ?? {}), n._text ?? "");
+  for (const c of n.children ?? []) strings(c, out);
+  return out;
+};
+
+test("renderSmallMultiples' shared y domain ignores NaN and Infinity", () => {
+  const el = new Node("div");
+  renderSmallMultiples(el, {
+    labels,
+    series: [mk("a", "A", [1, NaN, 3]), mk("b", "B", [2, Infinity, 4])],
+  }, { shared: true });
+  const all = strings(el);
+  assert.ok(el.find("path").length >= 2);
+  assert.ok(!all.some((v) => /NaN|Infinity/.test(v)), all.filter((v) => /NaN|Infinity/.test(v)));
+});
+
+test("renderTiers stacks a non-finite tier value as 0, never NaN", () => {
+  const el = new Node("div");
+  renderTiers(el, { labels, layers: [
+    { key: "A", name: "A", values: [1, NaN, 3] },
+    { key: "B", name: "B", values: [2, 2, Infinity] },
+  ] });
+  const all = strings(el);
+  assert.ok(el.find("path").length === 2);
+  assert.ok(!all.some((v) => /NaN|Infinity/.test(v)), all.filter((v) => /NaN|Infinity/.test(v)));
 });

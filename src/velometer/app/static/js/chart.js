@@ -263,7 +263,7 @@ export function renderSmallMultiples(el, model, opts = {}) {
   const grid = document.createElement("div");
   grid.className = "sm-grid";
   el.replaceChildren(grid);
-  const all = model.series.flatMap((s) => s.points.map((p) => p.value)).filter((v) => v != null);
+  const all = model.series.flatMap((s) => s.points.map((p) => p.value)).filter(Number.isFinite);
   const yDomain = opts.shared && all.length ? [Math.min(0, ...all), Math.max(...all)] : null;
   for (const s of model.series) {
     const card = document.createElement("figure");
@@ -343,7 +343,8 @@ export function renderTiers(el, model, opts = {}) {
   const iw = W - ml - mr;
   const ih = H - mt - mb;
   const step = iw / Math.max(1, n - 1);
-  const totals = model.labels.map((_, i) => model.layers.reduce((a, l) => a + (l.values[i] ?? 0), 0));
+  const km = (v) => (Number.isFinite(v) ? v : 0); // a missing or non-finite tier value stacks as 0
+  const totals = model.labels.map((_, i) => model.layers.reduce((a, l) => a + km(l.values[i]), 0));
   const ticks = niceTicks(0, Math.max(...totals, 1), 4);
   const y = scaleLinear([0, ticks.at(-1)], [mt + ih, mt]);
   const x = (i) => ml + i * step;
@@ -359,7 +360,7 @@ export function renderTiers(el, model, opts = {}) {
   }
   const base = model.labels.map(() => 0);
   for (const layer of model.layers) {
-    const top = base.map((b, i) => b + (layer.values[i] ?? 0));
+    const top = base.map((b, i) => b + km(layer.values[i]));
     const up = top.map((v, i) => `${x(i)},${y(v)}`).join("L");
     const down = base.map((v, i) => `${x(i)},${y(v)}`).reverse().join("L");
     svg.appendChild(svgEl("path", { class: `tier tier-${layer.key}`, d: `M${up}L${down}Z`,
@@ -388,7 +389,7 @@ export function renderTiers(el, model, opts = {}) {
     hx.setAttribute("x1", x(i));
     hx.setAttribute("x2", x(i));
     hx.setAttribute("visibility", "visible");
-    const fmt = (v) => (v ?? 0).toLocaleString("en-GB", { maximumFractionDigits: 0 });
+    const fmt = (v) => km(v).toLocaleString("en-GB", { maximumFractionDigits: 0 });
     tip.textContent = [`${model.labels[i]} · mapped km`,
       ...[...model.layers].reverse().map((l) => `${l.key}: ${fmt(l.values[i])}`),
       `Total ${fmt(totals[i])}`].join("\n");

@@ -247,6 +247,11 @@ class LazyData:
             self._conn.close()
 
 
+def population_years(data: ReportData) -> list[int]:
+    """The years of the city populations the per-100k metric divides by."""
+    return [c.population.year for c in data.cities() if c.population]
+
+
 def create_app(
     db_path: Path,
     config_dir: Path,
@@ -455,30 +460,42 @@ def create_app(
         return JSONResponse(payload)
 
     def content():
-        """(narratives, sources, explainer, error) of the content dir; an unreadable file is an
-        error string shown as a note, never a 500."""
+        """(narratives, sources, explainer, errors) of the content dir. `errors` maps what could
+        not be read to its message: "*" for the source registry (nothing renders without it),
+        "explainer", or a narrative's file stem. Each is logged and shown as a note, never a 500;
+        one broken narrative leaves the others readable."""
 
         def build():
             try:
                 sources = load_sources(content_dir / "sources")
-                narratives = load_narratives(content_dir / "narratives")
-                explainer = load_explainer(content_dir / "explainer.yaml")
             except ContentError as e:
                 log.error("content could not be loaded: %s", e)
-                return {}, {}, None, str(e)
-            return narratives, sources, explainer, None
+                return {}, {}, None, {"*": str(e)}
+            errors: dict[str, str] = {}
+            narratives = load_narratives(content_dir / "narratives", errors=errors)
+            try:
+                explainer = load_explainer(content_dir / "explainer.yaml")
+            except ContentError as e:
+                explainer, errors["explainer"] = None, str(e)
+            for msg in errors.values():
+                log.error("content could not be loaded: %s", msg)
+            return narratives, sources, explainer, errors
 
         return build
 
+    def content_error(errors: dict[str, str], key: str) -> str | None:
+        """The load error that blanks `key` (a narrative stem or "explainer"), if any."""
+        return errors.get("*") or errors.get(key)
+
     def narrative_of(request: Request, city_id: str):
         """The city's rendered narrative (None without one) and a note about unreadable content."""
-        narratives, sources, _, error = cache.get("content", fp(request), content())
+        narratives, sources, _, errors = cache.get("content", fp(request), content())
 
         def build():
             n = narratives.get(city_id)
             return None if n is None else render_narrative(n, sources)
 
-        return cache.get(f"narrative:{city_id}", fp(request), build), error
+        return cache.get(f"narrative:{city_id}", fp(request), build), content_error(errors, city_id)
 
     def figures_context(data: ReportData, city_id: str) -> dict:
         try:
@@ -537,7 +554,7 @@ def create_app(
             {"key": k, "label": label, "ids": cmp.quick_set_ids(k, known_ids)}
             for k, label in cmp.QUICK_LABELS.items()
         ]
-        info = cmp.metric_info(HEADLINE_UNIT, data.preset_units())
+        info = cmp.metric_info(HEADLINE_UNIT, data.preset_units(), population_years(data))
         config = {
             "cities": known_ids,
             "metric_order": list(cmp.METRICS),  # tojson sorts the keys of `metrics`
@@ -575,7 +592,7 @@ def create_app(
     def story_context(data: ReportData, payload: dict, n, sources) -> dict:
         """The Stories page: the combined narrative's sections with the chart step each names."""
         nar = render_narrative(n, sources)
-        metrics = cmp.metric_info(HEADLINE_UNIT, data.preset_units())
+        metrics = cmp.metric_info(HEADLINE_UNIT, data.preset_units(), population_years(data))
         steps = {}
         for step, spec in STEP_COMPARE.items():
             built = (
@@ -595,7 +612,10 @@ def create_app(
         config = {
             step: {k: v for k, v in built.items() if k != "table"}
             | {
-                "heading": next(s["sec"].heading for s in story if s["step"] == step),
+                # a step section may have no heading: the eyebrow then names the chart
+                "heading": next(s["sec"].heading for s in story if s["step"] == step)
+                or built.get("title")
+                or "",
                 "n": order.index(step) + 1,
                 "of": len(order),
             }
@@ -613,7 +633,8 @@ def create_app(
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
         )
-        narratives, sources, _, error = cache.get("content", fp(request), content())
+        narratives, sources, _, errors = cache.get("content", fp(request), content())
+        error = content_error(errors, "combined")
 
         def build():
             n = narratives.get("combined")
@@ -624,7 +645,8 @@ def create_app(
 
     @app.get("/differences", response_class=HTMLResponse)
     async def differences(request: Request, data: Data):
-        _, sources, explainer, error = cache.get("content", fp(request), content())
+        _, sources, explainer, errors = cache.get("content", fp(request), content())
+        error = content_error(errors, "explainer")
 
         def build():
             return None if explainer is None else render_explainer(explainer, sources)
@@ -659,7 +681,8 @@ def create_app(
              "sub": "per side" + (f", {summary['now_label']}" if point else "")},
             {"label": "Metro area (FUA)", "value": _num(fua_now),
              "sub": "headline" + (f", {_when(ts.CURRENT, fua.osm_timestamp)}" if fua else "")},
-            {"label": "Flagged years", "value": str(flagged), "sub": "LAU, with explanations"},
+            {"label": "Flagged years", "value": str(flagged),
+             "sub": "LAU, with explanations" if flagged else "LAU, none flagged"},
         ]  # fmt: skip
 
     def city_context(data: ReportData, city_id: str) -> dict:

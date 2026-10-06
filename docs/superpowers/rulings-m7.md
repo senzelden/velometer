@@ -132,8 +132,27 @@ The 13 judgement calls listed in the review document stand as written there.
 - Parked: the jumps step's Explore link opens shared-scale small multiples (disclosed), and the
   observer band edge sits at 30-35 %.
 
+## Final review fixes
+
+- `tests/test_content_real.py` runs every DB-free content check (`check_content_offline`) over the
+  real `content/` on each gate; facts are evaluated only by `content --check`, which needs the DB.
+  App test fixtures pass `content_dir` explicitly. Why: a fresh checkout has no `velometer.sqlite`,
+  so `content --check` alone never guarded the gate.
+- Content loads per file: a broken narrative blanks only its own city (or `/stories` for
+  `combined`), a broken explainer only `/differences`; a broken source registry still blanks all
+  narratives (they cannot cite without it). Load errors are logged; pages show the standard note.
+- `content --online` alone implies `--check` (stated in `--help`).
+- The per-100k unit names the population years it divides by and that one population is held for
+  every year; the Over-time preset table names the run's population year.
+- Closed from the parked lists: shared small-multiple y domain and tier totals ignore non-finite
+  values; `length_bases` equal to ours gives no driver (tested again); the header reads "LAU, none
+  flagged" for a city without flags.
+
 ## Follow-ups
 
+- Spelled-out and comparative claims in narratives ("seven city years", "top seven", "lowest of the
+  21", "more than twice", "tripled") are not machine-checked; `content --check` covers digits only,
+  so these may go stale after a rerun and need a read-through (or a declared rank/count fact kind).
 - Denominator-change flag: Warsaw and Helsinki main-road reclassification in OSM changes the
   headline (km per 100 km of main roads) without any change in cycling km. A flag for denominator
   jumps, parallel to the km-jump flag, would let the stories and the Figures tab say so.

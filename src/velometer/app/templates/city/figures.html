@@ -17,7 +17,7 @@
   <td data-label="Source">{{ source_names.get(r.source, r.source) }}<br><span class="meta">reference date {{ r.reference_date or "not stated" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
   <td data-label="Figure" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
   <td class="num" data-label="Theirs">{{ r.theirs | num }} {{ r.unit | unit }}</td>
-  <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
+  <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }} {{ r.unit | unit }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
   <td class="num" data-label="Gap">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
   <td class="drivers-cell" data-label="Where it differs">{% if r.drivers %}<dl class="drivers">
 {% for d in r.drivers %}<div data-dimension="{{ d.dimension }}"><dt>{{ dimension_labels.get(d.dimension, d.dimension) }}</dt><dd>ours: {{ d.ours }}; theirs: {{ d.theirs }}</dd></div>

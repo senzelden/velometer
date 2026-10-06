@@ -90,7 +90,8 @@ function show(step) {
   box.hidden = !spec;
   if (!spec || step === current) return;
   current = step;
-  out.eyebrow.textContent = `Step ${spec.n} of ${spec.of} · ${spec.heading}`;
+  const step_n = `Step ${spec.n} of ${spec.of}`;
+  out.eyebrow.textContent = spec.heading ? `${step_n} · ${spec.heading}` : step_n;
   out.title.textContent = spec.title;
   out.note.textContent = spec.note;
   out.short.textContent = spec.short ?? "";

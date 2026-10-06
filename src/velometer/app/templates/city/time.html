@@ -58,7 +58,7 @@
 {% if k.point %}
 <div class="scroll">
 <table>
-<thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents</th></tr></thead>
+<thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents{% if k.point.population_year %} ({{ k.point.population_year }} population){% endif %}</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}
 <tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td>{{ preset_unit.get(p.preset, "") }}</td><td class="num">{{ p.per_100k | num }}</td></tr>

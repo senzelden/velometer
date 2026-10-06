@@ -6,7 +6,7 @@ The Table view is rendered here from the `/data/series.json` payload so the page
 JavaScript; compare.js draws the charts and re-renders the table from the same payload.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from urllib.parse import parse_qs, quote
 
@@ -135,15 +135,28 @@ def quick_set_ids(key: str, known: Sequence[str]) -> list[str]:
     return list(known) if ids is None else [i for i in ids if i in known]
 
 
-def metric_info(headline_unit: str, preset_units: dict[str, str]) -> dict[str, dict[str, str]]:
-    """Label and unit text per metric (the Table and chart subtitles, and compare.js's config)."""
+def per_100k_unit(population_years: Iterable[int] = ()) -> str:
+    """The per-100k unit, naming the population it divides by: each city's one configured
+    population (of the years given), held for every year of the series."""
+    years = sorted(set(population_years))
+    span = "" if not years else f"{years[0]} " if len(years) == 1 else f"{years[0]}–{years[-1]} "
+    return (
+        f"A+B mapped km per 100,000 residents (each city's {span}population, held for every year)"
+    )
+
+
+def metric_info(
+    headline_unit: str, preset_units: dict[str, str], population_years: Iterable[int] = ()
+) -> dict[str, dict[str, str]]:
+    """Label and unit text per metric (the Table and chart subtitles, and compare.js's config).
+    `population_years`: the years of the populations the per-100k metric divides by."""
     unit = {
         "headline": headline_unit,
         "ab_km": "A+B mapped km, per side",
         **{t: f"mapped km of tier {t}, per side" for t in ts.TIERS},
         "ecf_qecio": preset_units.get("ecf_qecio", ""),
         "clean_cities": preset_units.get("clean_cities_2025", ""),
-        "ab_per_100k": "A+B mapped km per 100,000 residents",
+        "ab_per_100k": per_100k_unit(population_years),
     }
     return {m: {"label": METRIC_LABELS[m], "unit": unit[m]} for m in METRICS}
 

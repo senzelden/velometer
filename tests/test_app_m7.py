@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtures
     BASE_URL,
+    CONTENT,
     EXPLANATION,
     ROUTES,
     _client,
@@ -47,7 +48,7 @@ TEMPLATES = STATIC.parent / "templates"
 @pytest.fixture
 def client(setup):  # noqa: F811 - the imported fixture
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         yield c
 
 
@@ -81,7 +82,7 @@ def test_errors_and_static_files_carry_the_csp_too(client):
 
 def test_an_unhandled_exception_500_carries_the_csp_too(setup):  # noqa: F811
     db_path, cfg, maps, docs = setup
-    app = create_app(db_path, cfg, maps, docs)
+    app = create_app(db_path, cfg, maps, docs, content_dir=CONTENT)
 
     @app.get("/boom")
     async def boom():
@@ -255,7 +256,7 @@ def test_bezirk_change_table_has_no_inline_style(subarea_setup):  # noqa: F811
 
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/bezirke").text
     assert "Mapped change" in html and "<td>West</td>" in html
     assert not re.search(r"\sstyle=", html)
@@ -276,7 +277,7 @@ def test_a_city_without_a_headline_year_shows_na_not_a_zero_change(setup, monkey
 
     monkeypatch.setattr(ReportData, "series", only_current)
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/").text
     row = html[html.index('<table class="ranking"') :]
     row = row[row.index('href="/city/berlin"') :].split("</tr>")[0]
@@ -508,7 +509,7 @@ def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup
     fig = fig.model_copy(update={"length_basis": "streckenlaenge"})
     with open_db(db_path) as w:
         replace_external_figures(w, "official", [fig])
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs">') :].split("</table>")[0]
     assert '<div data-dimension="length"><dt>How length is measured</dt>' in table
@@ -530,7 +531,7 @@ def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # n
                              "source_url": "https://example.org/other"})  # fmt: skip
     with open_db(db_path) as w:
         replace_external_figures(w, "official", [a, b])
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs">') :].split("</table>")[0]
     rows = [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
@@ -618,6 +619,39 @@ def test_unreadable_content_is_logged(setup, content, caplog):  # noqa: F811
     assert "content could not be loaded" in caplog.text
 
 
+def test_one_broken_narrative_leaves_the_others_readable(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    paris = NARRATIVE_YAML.replace("city_id: berlin", "city_id: paris").replace(
+        "Berlin <b>story</b>", "Paris story"
+    )
+    (content / "narratives" / "paris.yaml").write_text(paris)
+    (content / "narratives" / "berlin.yaml").write_text("title: [unclosed\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        berlin, paris_page = _text(c.get("/city/berlin").text), _text(c.get("/city/paris").text)
+    assert "narratives could not be loaded" in berlin
+    assert "Paris story" in paris_page and "could not be loaded" not in paris_page
+
+
+def test_a_broken_registry_still_blanks_every_narrative(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "sources" / "x.yaml").write_text("sources: [unclosed\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        assert "narratives could not be loaded" in _text(c.get("/city/berlin").text)
+        assert "could not be loaded" in _text(c.get("/differences").text)
+
+
+def test_an_unreadable_explainer_is_the_standard_note_not_the_raw_error(setup, content, caplog):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "explainer.yaml").write_text("title: x\nintro: 3\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        text = _text(c.get("/differences").text)
+        story = _text(c.get("/city/berlin").text)
+    assert "the explainer could not be loaded (see the server log)" in text
+    assert "explainer.yaml" not in text and "validation error" not in text
+    assert "explainer.yaml" in caplog.text  # the detail goes to the log
+    assert "could not be loaded" not in story  # the narratives are unaffected
+
+
 def test_pull_quote_language_attribute_is_escaped(setup, content):  # noqa: F811
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
@@ -684,7 +718,7 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
     ]  # fmt: skip
     with open_db(db_path) as w:
         replace_external_figures(w, "official", rows)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs">') :].split("</table>")[0]
     cells = [
@@ -827,7 +861,7 @@ def test_the_panel_escapes_city_names(setup, monkeypatch):  # noqa: F811
 
     monkeypatch.setattr(ReportData, "cities", cities)
     db_path, cfg, maps, docs = setup
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/panel").text
     assert "<b>Evil</b>" not in html and "&lt;b&gt;Evil&lt;/b&gt;" in html
 
@@ -1068,7 +1102,7 @@ def test_story_js_draws_the_server_state_and_honours_reduced_motion():
 def test_the_real_methodology_pages_keep_their_generated_blocks(setup):  # noqa: F811
     docs_real = Path(__file__).parents[1] / "docs"
     db_path, cfg, maps, _docs_unused = setup
-    with _client(create_app(db_path, cfg, maps, docs_real)) as c:
+    with _client(create_app(db_path, cfg, maps, docs_real, content_dir=CONTENT)) as c:
         for path in ("/methodology", "/methodology/de"):
             html = c.get(path).text
             assert "&lt;!--" not in html and "<!--" not in html, path
@@ -1174,7 +1208,7 @@ def _diffs_rows(db_path, cfg, maps, docs, figures) -> list[str]:
 
     with open_db(db_path) as w:
         replace_external_figures(w, "official", figures)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs">') :].split("</table>")[0]
     return [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
@@ -1223,7 +1257,7 @@ def test_the_reported_and_comparison_tables_say_not_stated_for_a_missing_date(se
     fig = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
     with open_db(db_path) as w:
         replace_external_figures(w, "official", [fig.model_copy(update={"reference_date": None})])
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     reported = html[html.index("Official and reported figures") :]
     assert "not stated" in reported and ">?<" not in reported and "(?)" not in html
@@ -1243,7 +1277,7 @@ def test_the_methodology_page_drops_the_generated_file_note(setup):  # noqa: F81
     German .md file, which is a 404 in the app; the page has its own English/Deutsch switch."""
     docs_real = Path(__file__).parents[1] / "docs"
     db_path, cfg, maps, _docs_unused = setup
-    with _client(create_app(db_path, cfg, maps, docs_real)) as c:
+    with _client(create_app(db_path, cfg, maps, docs_real, content_dir=CONTENT)) as c:
         for path in ("/methodology", "/methodology/de"):
             html = c.get(path).text
             assert "methodology.de.md" not in html and "methodology.md" not in html, path
@@ -1279,7 +1313,7 @@ def test_the_change_map_has_a_legend_for_each_colour(subarea_setup):  # noqa: F8
 
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
-    with _client(create_app(db_path, cfg, maps, docs)) as c:
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/bezirke").text
     section = html.split('id="changemap"')[1].split("</section>")[0]
     legend = re.search(r'<ul class="changemap-legend"[^>]*>(.*?)</ul>', section, re.S)
@@ -1295,3 +1329,58 @@ def test_a_narrative_backtick_tag_renders_as_code_and_stays_escaped():
     assert "`" not in html
     assert "<code>segregated=yes</code>" in html
     assert "<code>&lt;b&gt;x&lt;/b&gt;</code>" in html and "a &amp; b" in html
+
+
+def test_a_step_without_a_heading_names_its_chart_not_null(setup_21, tmp_path):  # noqa: F811
+    db_path, cfg, maps, docs = setup_21
+    story = STORY_YAML.replace("  - heading: Heading leaders\n", "  -\n")
+    assert story != STORY_YAML
+    content = _story_content(tmp_path / "content", story=story)
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        html = c.get("/stories").text
+    config = json.loads(re.search(r'id="story-config">(.*?)</script>', html, re.S).group(1))
+    assert config["leaders"]["heading"] == config["leaders"]["title"]
+    assert all(isinstance(v["heading"], str) and v["heading"] for v in config.values())
+    js = (STATIC / "js" / "story.js").read_text()
+    assert "spec.heading ? `${step_n} · ${spec.heading}` : step_n" in js
+
+
+def test_every_story_step_has_a_compare_spec():
+    from velometer.app.main import STEP_COMPARE
+
+    assert tuple(STEP_COMPARE) == STORY_STEPS
+
+
+def test_the_per_100k_metric_says_which_population_it_divides_by(client):
+    html = client.get("/compare?m=ab_per_100k").text
+    assert "2024 population, held for every year" in html  # the unit, in page and config
+    time = _text(client.get("/city/berlin/time").text)
+    assert "km per 100k residents (2024 population)" in time
+
+
+def test_the_figures_ours_cell_shows_the_same_unit_as_theirs(setup, monkeypatch):  # noqa: F811
+    from velometer.app import main
+    from velometer.report.differences import DifferenceRow
+
+    row = DifferenceRow(source="official", metric="cc_share", theirs=27.6, unit="pct",
+                        ours=17.0, ours_label="Ours: share", gap_pct=-0.38, reference_date=None,
+                        url=None, drivers=[])  # fmt: skip
+    monkeypatch.setattr(main, "difference_rows", lambda data, city_id, cfg: [row])
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
+        html = c.get("/city/berlin/figures").text
+    theirs = re.search(r'<td class="num" data-label="Theirs">(.*?)</td>', html, re.S).group(1)
+    ours = re.search(r'<td data-label="Ours">(.*?)<br>', html, re.S).group(1)
+    unit = _text(theirs).removeprefix("27.6").strip()
+    assert unit and _text(ours).strip() == f"17.0 {unit}", (theirs, ours)
+
+
+def test_the_header_says_none_flagged_for_a_city_without_flags(client):
+    def flagged_cell(city: str) -> str:
+        html = client.get(f"/city/{city}").text
+        row = html[html.index('class="keynums"') :].split("</div>\n<nav")[0]
+        return _text(row[row.index("Flagged years") :])
+
+    assert "LAU, none flagged" in flagged_cell("paris")
+    assert "with explanations" not in flagged_cell("paris")
+    assert "LAU, with explanations" in flagged_cell("berlin")
