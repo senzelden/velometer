@@ -1,0 +1,409 @@
+# Cross-city sources: definitions and methods of the external benchmarks.
+# Research log: docs/review/m7-sources-cross.md
+sources:
+  - id: cc2025-report
+    publisher: Clean Cities Campaign
+    title: "Streets for Kids, Cities for All: City Ranking 2025 (report)"
+    url: https://cleancitiescampaign.org/wp-content/uploads/2025/05/Report-Streets-For-Kids-Cities-For-All.pdf
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260224120420/https://cleancitiescampaign.org/wp-content/uploads/2025/05/Report-Streets-For-Kids-Cities-For-All.pdf
+    excerpts:
+      - id: metric
+        text: >-
+          Ratio of protected (i.e. physically separated through a barrier, height difference or
+          distance from motorised traffic) cycling infrastructure total vs road network (in km)
+        locator: "Table 1, Indicator 3, metric used; PDF p.10 (report p.18)"
+      - id: city-data
+        text: >-
+          Each city administration was invited to provide local data and offer feedback on any
+          missing or incomplete information. 34 out of the 36 cities provided data for this
+          ranking. For the two cities which did not provide data and for any incomplete data,
+          public data sources were used instead.
+        locator: "§2 How was this ranking compiled?; PDF p.9 (report p.17)"
+      - id: supplemented
+        text: >-
+          Where needed, we supplemented this with publicly available data from cities,
+          government bodies, the European Cyclists’ Federation, and Openstreetmap. In cases where
+          only estimates were available, this is clearly indicated. Each city's data quality was
+          rated on a scale from poor to high to highlight potential uncertainties.
+        locator: "Data sources and quality; PDF p.10 (report p.19)"
+      - id: area
+        text: >-
+          Unless otherwise specified, each city refers to the municipality of the same name. We
+          have chosen to focus on the area under the control of local authorities, particularly
+          mayors.
+        locator: "City selection; PDF p.10 (report p.19)"
+      - id: collection-dates
+        text: >-
+          Data collection took place from December 2024 to February 7, 2025, using the most
+          up-to-date information
+        locator: "Pull quote, §3; PDF p.11 (report p.20)"
+      - id: cutoff
+        text: >-
+          Any significant updates were incorporated only if new data was provided by cities or
+          partners before April 4, 2025. More recent changes or updates were not taken into
+          account.
+        locator: "Data sources and quality (continued); PDF p.11 (report p.20)"
+      - id: average
+        text: >-
+          On average, protected cycling infrastructure only amounts to the equivalent of 17% of
+          the road network.
+        locator: "Indicator 3: Protected cycling infrastructure; PDF p.15 (report pp.28-29)"
+      - id: shared-paths
+        text: >-
+          Shared foot and bike paths, while not ideal, still offer protection from motorised
+          traffic, helping certain cities perform relatively well. These types of infrastructure
+          are common in countries like Germany, Poland and Finland.
+        locator: "Indicator 3: Protected cycling infrastructure; PDF p.15 (report pp.28-29)"
+
+  - id: cc2025-annexes
+    publisher: Clean Cities Campaign
+    title: "Streets for Kids, Cities for All: City Ranking 2025, Annexes (methodology)"
+    url: https://cleancitiescampaign.org/wp-content/uploads/2025/05/Annexes_City-Ranking_Streets-For-Kids-Cities-for-All.pdf
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260515233944/https://cleancitiescampaign.org/wp-content/uploads/2025/05/Annexes_City-Ranking_Streets-For-Kids-Cities-for-All.pdf
+    excerpts:
+      - id: protected-def
+        text: >-
+          Protected cycling infrastructure is defined as any cycling infrastructure that is
+          physically segregated (by a barrier, height difference or distance) and thus provides
+          protection from motorised traffic, increasing actual and perceived safety.
+        locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
+      - id: included
+        text: >-
+          This includes cycle tracks but also shared foot and bike paths, pedestrian streets or
+          greenways. It doesn't include cycle lanes that are painted on the road, nor cycle
+          streets, nor living streets or shared spaces, nor shared bus lanes.
+        locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
+      - id: osm-fallback
+        text: >-
+          In absence of official city data, OSM data compiled by the European Cyclists’
+          Federation (ECF) was used, following ECF's cycling infrastructure tracker methodology
+          selecting OSM objects with key highways and the following values:
+        locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
+      - id: ratio-not-share
+        text: >-
+          The figure calculated is a ratio and is comparable to, but not equivalent to, the share
+          of the road network that is equipped with protected cycling infrastructure, as not all
+          cycling infrastructure is necessarily adjacent to a road.
+        locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
+      - id: city-definitions
+        text: >-
+          Differences in definitions or methodologies for counting different cycling
+          infrastructure types across cities can influence the figures provided by cities.
+        locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
+      - id: osm-missing
+        text: >-
+          Missing OSM data might distort city figures, OSM tagging guidelines might not have been
+          applied correctly when mapping.
+        locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
+      - id: road-network-area
+        text: >-
+          For this indicator, the entire public road network within the city area has been
+          considered.
+        locator: "Annex 2, Safe speeds, Additional information (applied to Indicator 3); PDF p.3"
+      - id: road-lanes
+        text: >-
+          The number of lanes or directions on a road does not affect the road network length,
+          .i.e. a road with 3 lanes counts for the same as a single-lane road, a two-way street
+          the same as a one-way street.
+        locator: "Annex 2, Safe speeds, Additional information (applied to Indicator 3); PDF p.3"
+
+  - id: cc2025-cycling-table
+    publisher: Clean Cities Campaign
+    title: "City Ranking 2025: Protected cycling infrastructure table"
+    url: https://cleancitiescampaign.org/city-ranking-2025-cycling-infrastructure/
+    published: 2025-05-14
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260728092404/https://cleancitiescampaign.org/city-ranking-2025-cycling-infrastructure/
+    excerpts:
+      - id: page-def
+        text: >-
+          In this table, we have ranked cities based on the extent of their protected cycling
+          infrastructure – dedicated bike lanes that are physically separated from motor traffic
+          to ensure safe and accessible routes for cyclists of all ages.
+        locator: "Introduction above the table"
+      - id: vienna-update
+        text: >-
+          625.1 km (previously: 384.1 km) of protected cycling infrastructure for a road network
+          of 2,844 km
+        locator: "UPDATE (JULY 2025), City of Vienna"
+      - id: vienna-why
+        text: >-
+          Explanation: A more detailed breakdown of traffic-calmed areas revealed roads with
+          restricted motor vehicle access that are part of the cycling network. These have now
+          been included.
+        locator: "UPDATE (JULY 2025), City of Vienna"
+
+  - id: qecio-methodology
+    publisher: European Cyclists' Federation (ECF)
+    title: "Quantifying Europe's Cycling Infrastructure using OSM (QECIO 2.1): Our Methodology (v2.10)"
+    url: https://european-cyclists-federation.github.io/Documents/Methodology.pdf
+    published: 2024-01-11
+    accessed: 2026-10-06
+    language: en
+    kind: index
+    excerpts:
+      - id: no-official
+        text: >-
+          There is a great demand for data on cycling infrastructure, but as for now, no official
+          source provides this kind of information on a European scale.
+        locator: "Abstract, p.2"
+      - id: nuts3
+        text: >-
+          We researched 37 European countries, including all 27 EU member states, and the
+          information was gathered at NUTS 3 level (Nomenclature of territorial units for
+          statistics).
+        locator: "Abstract, p.2"
+      - id: clip
+        text: >-
+          The analysis was performed at NUTS-3 level, clipping the highway per NUTS-3
+          administrative boundary.
+        locator: "Methodology, Technical details, step 1, p.4"
+      - id: directionality
+        text: >-
+          In some cases, we translated a single highway feature into two cycling infrastructure
+          features (for example when cycleway:both is used or cycleway:left and cycleway:right on
+          the same highway). For the length calculations, we divided the length of the
+          unidirectional cycling infrastructure by two.
+        locator: "Methodology, Technical details, step 4, p.5"
+      - id: segregated-set
+        text: >-
+          The segregated cycling infrastructures considered are cycle tracks, cycle and
+          pedestrian tracks and cycle lanes.
+        locator: "Explanation of the indicators, Ratio of segregated cycling infrastructure to the main road network, p.5"
+      - id: ratio-100
+        text: >-
+          About the interpretation of the ratios: ratio of 100 can be roughly interpreted as 100%
+          of main roads having bidirectional cycling infrastructure.
+        locator: "Explanation of the indicators, p.5"
+      - id: track-def
+        text: >-
+          Cycle infrastructure that is separated from motorised traffic by physical
+          infrastructure (curbs, grass, etc.) and reserved for exclusive use for cycles.
+        locator: "Annex II, Table 2, Cycle tracks, Definition, p.15"
+      - id: lane-def
+        text: >-
+          Cycle infrastructure that is an inherent part of the carriageway, set aside for the use
+          of bicycles by paint or other markings but without a physical separation from motorised
+          traffic.
+        locator: "Annex II, Table 2, Cycle lanes, Definition, p.15"
+      - id: shared-def
+        text: Track designated (signed) for use by pedestrian and cyclists.
+        locator: "Annex II, Table 2, Cycle and pedestrian tracks, Definition, p.15"
+      - id: disclaimer
+        text: >-
+          The data featured in this dashboard only represents OSM contributions. The lower
+          numbers may therefore reflect missing OSM data rather than the actual absence of
+          cycling infrastructure in each area.
+        locator: "Disclaimer, p.8"
+
+  - id: qecio-metadata
+    publisher: European Cyclists' Federation (ECF)
+    title: "Quantifying Europe's Cycling Infrastructure using OSM (QECIO 2.1): Metadata"
+    url: https://european-cyclists-federation.github.io/Documents/Metadata.pdf
+    published: 2024-01-11
+    accessed: 2026-10-06
+    language: en
+    kind: index
+    archive_url: https://web.archive.org/web/20231212194730/https://european-cyclists-federation.github.io/Documents/Metadata.pdf
+    excerpts:
+      - id: data-date
+        text: PBF files downloaded 10-11 January 2024 from Geofabrik.
+        locator: "General Information, Date of data collection, p.1"
+      - id: units
+        text: >-
+          The units for the data sets are either in kilometres (km) for lengths or percentages
+          (%) for ratios.
+        locator: "Data and files overview, Units of measure, p.2"
+
+  - id: bikenetkit-zenodo
+    publisher: Zenodo (M. Szell, M. Pessoa; IT University of Copenhagen)
+    title: "Bicycle networks, street networks, and POIs for 403 European cities for BikeNetKit"
+    url: https://zenodo.org/records/22271229
+    published: 2026-09-03
+    accessed: 2026-10-06
+    language: en
+    kind: index
+    excerpts:
+      - id: description
+        text: >-
+          OpenStreetMap data sets from 403 European cities to import into BikeNetKit for running
+          its tools locally.
+        locator: "Description"
+      - id: bike-networks
+        text: "bike_networks: Bicycle networks, simplified and some tags removed"
+        locator: "Description, list of data sets"
+      - id: collected
+        text: >-
+          The 403 cities and their data were selected, collected, and processed over the summer
+          of 2026.
+        locator: "Description"
+
+  - id: bikenetkit-export-notebook
+    publisher: BikeNetKit (GitHub, IT University of Copenhagen)
+    title: "BikeNetKit dataexport: create_city_networks_from_pbf.ipynb (commit e2a5bcf)"
+    url: https://github.com/BikeNetKit/dataexport/blob/e2a5bcff53a941bac757abc01a27d1ea54650fdd/scripts/create_city_networks_from_pbf.ipynb
+    accessed: 2026-10-06
+    language: en
+    kind: index
+    excerpts:
+      - id: method
+        text: >-
+          This notebook loads pbf files of single European countries via pyrosm, then uses city
+          boundary geojson files of all European cities (above 100k population) to create local
+          city pbfs
+        locator: "Markdown cell 1"
+
+  - id: bikenetkit-pbi-filter
+    publisher: BikeNetKit (GitHub, IT University of Copenhagen)
+    title: "GrowBikeNet constants.py: PBI_CUSTOM_FILTER (commit 8820875)"
+    url: https://github.com/BikeNetKit/growbikenet/blob/8820875fcb1f363a743f2ce512e231a06a2337d9/growbikenet/constants.py
+    accessed: 2026-10-06
+    language: en
+    kind: index
+    excerpts:
+      - id: pbi
+        text: "PBI_CUSTOM_FILTER : list[str] Custom filter for protected bicycle infrastructure (pbi)."
+        locator: "Module docstring, lines 5-6"
+      - id: filter-head
+        text: >-
+          '["highway"~"cycleway|living_street"]',
+          '["highway"~"path|pedestrian|footway"]["bicycle"~"designated|yes|permissive"]["access"!~"private"]',
+        locator: "PBI_CUSTOM_FILTER, lines 80-81"
+
+  - id: eu-c2026-4676-act
+    publisher: European Commission
+    title: "Commission Implementing Regulation C(2026) 4676 on urban mobility data per urban node"
+    url: https://transport.ec.europa.eu/system/files/2026-07/C_2026_4676_1_EN_ACT_part1_v5_0.pdf
+    published: 2026-07-09
+    accessed: 2026-10-06
+    language: en
+    kind: official
+    excerpts:
+      - id: deadline
+        text: >-
+          By 31 December 2027, and by 31 December of every fourth year afterwards, the Member
+          State shall submit data for the indicators set out in the Annex in accordance with the
+          data collection methods set out therein.
+        locator: "Article 5(1), p.5"
+      - id: lau
+        text: >-
+          The geographical coverage shall align with the boundaries of the identified LAU. The
+          geographical coverage of an individual urban node may be composed of one or several
+          LAUs.
+        locator: "Article 6(1), pp.5-6"
+
+  - id: eu-c2026-4676-annex
+    publisher: European Commission
+    title: "Annex to Commission Implementing Regulation C(2026) 4676: urban mobility indicators"
+    url: https://transport.ec.europa.eu/system/files/2026-07/C_2026_4676_1_EN_annexe_acte_autonome_part1_v2.pdf
+    published: 2026-07-09
+    accessed: 2026-10-06
+    language: en
+    kind: official
+    excerpts:
+      - id: su1
+        text: >-
+          SU.1 Number of trips in the geographical area taken per day, broken down by the
+          following five travel modes: walking, cycling, individual motorised transport, public
+          transport, and other [# trips].
+        locator: "Annex, §2 Indicators in the area of sustainability aspects, (4), p.2"
+      - id: su1-method
+        text: >-
+          Data collection method: the Member State shall use a survey, mobile phone data, a
+          transport model or other big data sources to collect the data.
+        locator: "Annex, §2, (4) SU.1, p.2"
+
+  - id: eu-umi-news
+    publisher: European Commission, DG Mobility and Transport
+    title: "Commission adopts Implementing Regulation to strengthen sustainable urban mobility through harmonised indicators"
+    url: https://transport.ec.europa.eu/news-events/news/commission-adopts-implementing-regulation-strengthen-sustainable-urban-mobility-through-harmonised-2026-07-09_en
+    published: 2026-07-09
+    accessed: 2026-10-06
+    language: en
+    kind: official
+    archive_url: https://web.archive.org/web/20260926105812/https://transport.ec.europa.eu/news-events/news/commission-adopts-implementing-regulation-strengthen-sustainable-urban-mobility-through-harmonised-2026-07-09_en
+    excerpts:
+      - id: next-steps
+        text: >-
+          Member States are required to submit the first set of data by the end of 2027, with
+          updates to follow every four years thereafter.
+        locator: "Next steps"
+
+  - id: osm-wiki-key-cycleway
+    publisher: OpenStreetMap Wiki
+    title: "Key:cycleway"
+    url: https://wiki.openstreetmap.org/wiki/Key:cycleway
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    excerpts:
+      - id: inherent
+        text: >-
+          The cycleway=* tagging is used on linear features tagged with highway=* to map cycling
+          infrastructure that is an inherent part of the road.
+        locator: "Introduction"
+      - id: sides
+        text: >-
+          It is advisable to use cycleway tags in combination with side attributes, i.e.
+          cycleway:left=*, cycleway:right=* or cycleway:both=* (instead of a simple cycleway=*).
+          This clearly indicates which side of the road an infrastructure specification refers
+          to.
+        locator: "§3 Bicycle infrastructure in one-way roads"
+
+  - id: osm-wiki-cycleway-lane
+    publisher: OpenStreetMap Wiki
+    title: "Tag:cycleway=lane"
+    url: https://wiki.openstreetmap.org/wiki/Tag:cycleway%3Dlane
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260823021352/https://wiki.openstreetmap.org/wiki/Tag:cycleway%3Dlane
+    excerpts:
+      - id: def
+        text: >-
+          A cycle lane is bicycle infrastructure that is an inherent part of the road, but set
+          aside for the exclusive use of bicycles, whilst being separated only by paint or other
+          markings, and without a physical separation from vehicles.
+        locator: "Introduction"
+      - id: both-sides
+        text: >-
+          cycleway=lane is used to tag two-way streets where there are cycle lanes on both sides
+          of the road, or sometimes for one-way streets where there is only a lane operating in
+          the direction of main traffic flow
+        locator: "Introduction"
+
+  - id: osm-wiki-cycleway-track
+    publisher: OpenStreetMap Wiki
+    title: "Tag:cycleway=track"
+    url: https://wiki.openstreetmap.org/wiki/Tag:cycleway%3Dtrack
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260819002241/https://wiki.openstreetmap.org/wiki/Tag:cycleway%3Dtrack
+    excerpts:
+      - id: def
+        text: >-
+          A cycle track is separated from the road by curbs, parking lots, grass verges, trees or
+          another physical barrier, but is running parallel to and next to the road.
+        locator: "Introduction"
+
+  - id: osm-wiki-highway-cycleway
+    publisher: OpenStreetMap Wiki
+    title: "Tag:highway=cycleway"
+    url: https://wiki.openstreetmap.org/wiki/Tag:highway%3Dcycleway
+    accessed: 2026-10-06
+    language: en
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260907193524/https://wiki.openstreetmap.org/wiki/Tag:highway%3Dcycleway
+    excerpts:
+      - id: def
+        text: The highway=cycleway tag indicates a separate way for the use of cyclists.
+        locator: "Introduction"
