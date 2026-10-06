@@ -7,7 +7,7 @@
 <input type="hidden" name="c" value="{{ city.id }}">
 <label for="compare-with">Compare this city with…</label>
 <div class="compare-row">
-<select id="compare-with" name="c" multiple size="4">
+<select id="compare-with" name="c" multiple size="8">
 {% for g in compare_groups %}<optgroup label="{{ g.country }}">
 {% for o in g.cities %}<option value="{{ o.id }}">{{ o.name }}</option>
 {% endfor %}</optgroup>

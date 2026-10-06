@@ -279,3 +279,23 @@ dl.drivers dt { font-weight: 600; }
 dl.drivers dd { margin: 0; color: var(--ink-2); }
 .dim-index ol { display: flex; flex-wrap: wrap; gap: 0.25rem 1.75rem; padding-left: 1.5rem; }
 .city-links { columns: 3 10rem; list-style: none; padding: 0; }
+
+/* ---------- fix round: data citations, tabs, narrow Figures ---------- */
+.narrative sup.dref a { color: var(--down); }
+.citations.drefs { list-style: none; padding-left: 0; }
+.citations .dnum { display: inline-block; min-width: 1.8rem; color: var(--down); font-weight: 600; }
+.compare-form select { width: 15rem; }
+.tabs ul { flex-wrap: nowrap; overflow-x: auto; }
+.tabs li { flex: none; }
+.tabs a { white-space: nowrap; }
+@media (max-width: 600px) {
+  table.diffs, .diffs tbody { display: block; }
+  .diffs thead { display: none; }
+  .diffs tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
+  .diffs td { display: block; border: 0; padding: 0; min-width: 0; }
+  table.diffs td, table.diffs td:last-child { min-width: 0; }
+  .diffs td:nth-child(1), .diffs td:nth-child(2), .diffs td:nth-child(6) { grid-column: 1 / -1; }
+  .diffs td[data-label]:nth-child(n+3):nth-child(-n+5)::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
+  .diffs td.num { text-align: left; }
+  .diffs td:nth-child(6) { margin-top: 0.3rem; }
+}

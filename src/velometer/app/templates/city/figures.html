@@ -14,12 +14,12 @@
 <tbody>
 {% for r in differences %}
 <tr>
-  <td>{{ r.source }}<br><span class="meta">reference date {{ r.reference_date or "?" }}</span>{% if r.url and r.url.lower().startswith(('http://', 'https://')) %}<br><a href="{{ r.url }}" rel="noopener noreferrer">source link</a>{% endif %}</td>
-  <td><code>{{ r.metric }}</code>{% if metric_labels.get(r.metric) %}<br><span class="meta">{{ metric_labels[r.metric] }}</span>{% endif %}</td>
-  <td class="num">{{ r.theirs | num }} {{ r.unit }}</td>
-  <td>{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
-  <td class="num">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
-  <td>{% if r.drivers %}<dl class="drivers">
+  <td data-label="Source">{{ source_names.get(r.source, r.source) }}<br><span class="meta">reference date {{ r.reference_date or "?" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
+  <td data-label="Figure"><code>{{ r.metric }}</code>{% if metric_labels.get(r.metric) %}<br><span class="meta">{{ metric_labels[r.metric] }}</span>{% endif %}</td>
+  <td class="num" data-label="Theirs">{{ r.theirs | num }} {{ r.unit | unit }}</td>
+  <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
+  <td class="num" data-label="Gap">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
+  <td class="drivers-cell" data-label="Where it differs">{% if r.drivers %}<dl class="drivers">
 {% for d in r.drivers %}<div data-dimension="{{ d.dimension }}"><dt>{{ dimension_labels.get(d.dimension, d.dimension) }}</dt><dd>ours: {{ d.ours }}; theirs: {{ d.theirs }}</dd></div>
 {% endfor %}</dl>{% else %}<span class="note">no difference recorded</span>{% endif %}</td>
 </tr>
@@ -30,9 +30,10 @@
 {% endif %}
 </section>
 
+{% if content_error %}<p class="note">narratives could not be loaded (see the server log)</p>{% endif %}
 {% if nar %}{% for s in nar.of_role("figures") %}
 <section class="narrative">
-{% if s.heading %}<h2>{{ s.heading }}</h2>{% endif %}
+{% if s.heading and s.heading | lower != "why the figures differ" %}<h2>{{ s.heading }}</h2>{% endif %}
 {% for item in s.items %}{{ item }}
 {% endfor %}
 </section>

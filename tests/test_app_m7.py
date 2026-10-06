@@ -280,8 +280,8 @@ def test_a_city_without_a_headline_year_shows_na_not_a_zero_change(setup, monkey
 SOURCE_YAML = """\
 sources:
 - id: berlin-src
-  publisher: Senat Berlin
-  title: Fortschrittsbericht 2025
+  publisher: Senat <i>Berlin</i>
+  title: Fortschrittsbericht <u>2025</u>
   url: https://example.org/report
   published: '2026-05-20'
   accessed: '2026-10-06'
@@ -289,19 +289,20 @@ sources:
   kind: official
   excerpts:
   - id: q1
-    text: Insgesamt sind 78,2 km umgesetzt worden.
-    gloss_en: In total 78.2 km have been implemented.
+    text: Insgesamt sind <b>78,2</b> km & mehr umgesetzt worden.
+    gloss_en: In total <script>78.2</script> km have been implemented.
     locator: p. 1
 - id: en-src
   publisher: Example NGO
   title: Index
   url: https://example.org/index
   accessed: '2026-10-06'
-  language: en
+  language: 'en" onclick="x'
   kind: ngo
   excerpts:
   - id: e1
     text: Protected means separated.
+    gloss_en: Gloss <em>x</em>
     locator: p. 2
 """
 NARRATIVE_YAML = """\
@@ -368,12 +369,19 @@ def cclient(setup, content):  # noqa: F811
 def test_story_tab_shows_title_quote_citations_and_sources(cclient):
     html = cclient.get("/city/berlin").text
     assert '<h2 class="story-title">Berlin &lt;b&gt;story&lt;/b&gt;</h2>' in html
-    assert '<blockquote lang="de">Insgesamt sind 78,2 km umgesetzt worden.</blockquote>' in html
+    assert (
+        '<blockquote lang="de">Insgesamt sind &lt;b&gt;78,2&lt;/b&gt; km &amp; mehr '
+        "umgesetzt worden.</blockquote>" in html
+    )
     assert '<sup><a href="#src-1">1</a></sup>' in html
-    assert '<li id="src-1" value="1">Senat Berlin, <cite>Fortschrittsbericht 2025</cite>' in html
+    assert (
+        '<li id="src-1" value="1">Senat &lt;i&gt;Berlin&lt;/i&gt;, '
+        "<cite>Fortschrittsbericht &lt;u&gt;2025&lt;/u&gt;</cite>" in html
+    )
     assert 'href="https://example.org/report"' in html
     caption = re.search(r"<figcaption>(.*?)</figcaption>", html, re.S).group(1)
-    assert "Senat Berlin" in caption and "2026-05-20" in caption and "In total 78.2" in caption
+    assert "Senat &lt;i&gt;Berlin&lt;/i&gt;" in caption and "2026-05-20" in caption
+    assert "In total &lt;script&gt;78.2&lt;/script&gt; km" in caption
     assert 'href="https://example.org/report"' in caption
 
 
@@ -384,8 +392,8 @@ def test_citations_are_numbered_in_first_use_order_with_a_separate_data_list(ccl
     assert html.count('href="#src-1"') == 2  # cited twice, numbered once
     assert '<li id="src-2" value="2">Example NGO' in html
     assert (
-        '<a href="#ref-1">1</a>' in html
-        and '<li id="ref-1" value="1"><a href="/city/berlin/time">' in html
+        '<a href="#ref-1">d1</a>' in html
+        and '<li id="ref-1"><span class="dnum">d1</span> <a href="/city/berlin/time">' in html
     )
 
 
@@ -549,7 +557,9 @@ def test_unreadable_content_is_a_note_not_a_500(setup, content):  # noqa: F811
     with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
         for path in ["/city/berlin", "/city/berlin/figures", "/differences"]:
             assert c.get(path).status_code == 200, path
-        assert "no narrative yet" in _text(c.get("/city/berlin").text)
+        for path in ["/city/berlin", "/city/berlin/figures"]:
+            text = _text(c.get(path).text)
+            assert "narratives could not be loaded" in text and "no narrative yet" not in text
 
 
 def test_over_time_tab_has_the_yearly_table_and_flag_explanations_without_js(client):
@@ -587,3 +597,96 @@ def test_header_key_numbers_sit_in_one_scrolling_row(client, fixture_db):
     assert decl.get("overflow-x") == "auto" and decl.get("display") == "flex"
     css = (STATIC / "app.css").read_text()
     assert "@media (max-width: 480px)" in css  # the row scrolls, the page does not
+
+
+def test_unreadable_content_is_logged(setup, content, caplog):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    (content / "narratives" / "berlin.yaml").write_text("title: [unclosed\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        c.get("/city/berlin")
+    assert "content could not be loaded" in caplog.text
+
+
+def test_pull_quote_language_attribute_is_escaped(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        html = c.get("/city/berlin/figures").text
+    assert '<blockquote lang="en&#34; onclick=&#34;x">' in html
+    assert "Gloss &lt;em&gt;x&lt;/em&gt;" in html and "<em>x</em>" not in html
+
+
+def test_renderer_emits_only_http_urls(content):
+    from velometer.app.narrative import pullquote, safe_url
+    from velometer.content.loader import load_sources
+
+    assert safe_url("javascript:alert(1)") is None and safe_url("//evil.example/x") is None
+    assert safe_url("HTTPS://example.org/a") == "HTTPS://example.org/a"
+    src = load_sources(content / "sources")
+    bad = {**src, "berlin-src": src["berlin-src"].model_copy(update={"url": "javascript:alert(1)"})}
+    assert "javascript:" not in pullquote(bad, "berlin-src/q1")
+
+
+def test_data_citations_read_d_numbers_and_sources_plain_numbers(cclient):
+    html = cclient.get("/city/berlin").text
+    assert '<sup><a href="#src-1">1</a></sup>' in html
+    assert '<sup class="dref"><a href="#ref-1">d1</a></sup>' in html
+
+
+def test_data_list_shows_the_label_and_a_file_line_only_without_a_route(setup, content):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+
+    def ref_item(yaml_text: str) -> str:
+        (content / "narratives" / "berlin.yaml").write_text(yaml_text)
+        with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+            html = c.get("/city/berlin").text
+        return html[html.index('<li id="ref-1">') :].split("</li>")[0]
+
+    routed = ref_item(NARRATIVE_YAML)
+    assert "docs/review" not in routed and 'href="/city/berlin/time">velometer series' in routed
+    plain = ref_item(
+        NARRATIVE_YAML.replace("    route: /city/berlin/time", "    locator: '#### berlin/lau'")
+    )
+    assert "<code>docs/review/m3_timeseries.md</code>" in plain and "· berlin/lau" in plain
+    assert "####" not in plain and "<a " not in plain
+
+
+def test_compare_picker_is_tall_and_drops_a_group_that_would_be_empty(client):
+    html = client.get("/city/paris").text
+    form = html[html.index('class="compare-form"') :].split("</form>")[0]
+    assert 'size="8"' in form
+    assert '<optgroup label="France">' not in form  # Paris is France's only fixture city
+    assert '<optgroup label="Germany">' in form
+
+
+def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(setup):  # noqa: F811
+    from tests.report_fixture import _figure
+    from velometer.db import open_db, replace_external_figures
+
+    db_path, cfg, maps, docs = setup
+    base = _figure("berlin", "official", "new_cycle_infra_km", 21.2)
+    rows = [
+        base.model_copy(update={"source_url": "https://www.nordkurier.de/a",
+                                "note": "Senate; final"}),
+        base.model_copy(update={"value": 9.8, "network_scope": "vorrangnetz", "unit": "pct",
+                                "source_url": "https://parlament-berlin.de/b",
+                                "note": "Drucksache 19/25987: Vorrangnetz only"}),
+    ]  # fmt: skip
+    with open_db(db_path) as w:
+        replace_external_figures(w, "official", rows)
+    with _client(create_app(db_path, cfg, maps, docs)) as c:
+        html = c.get("/city/berlin/figures").text
+    table = html[html.index('<table class="diffs">') :].split("</table>")[0]
+    cells = [
+        re.sub(r"<(?:dl|div|dt|dd)\b.*", "", r.split("</td>")[0], flags=re.S)
+        for r in table.split("<tr>")
+        if "new_cycle_infra_km" in r
+    ]
+    texts = [_text(c) for c in cells]
+    assert len(texts) == 2 and texts[0] != texts[1]
+    assert "nordkurier.de" in texts[0] and "scope: whole network" in texts[0]
+    assert "Senate" in texts[0] and "final" not in texts[0]  # the first clause only
+    assert "parlament-berlin.de" in texts[1] and "scope: vorrangnetz" in texts[1]
+    assert "Official / press figures" in texts[0] and "official" not in texts[0].replace(
+        "Official", ""
+    )
+    assert "9.8 %" in _text(table) and "9.8 pct" not in _text(table)

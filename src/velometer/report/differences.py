@@ -12,6 +12,7 @@ from velometer.models import ExternalFigure
 from velometer.report.data import ROAD_CLASS_TEXT, ReportData
 
 # Comparison tags that say the definition or scope of the source's figure is not ours.
+NOT_STATED = "basis not stated by the source"
 _SCOPE_TAGS = frozenset({"definition_mismatch", "scope_mismatch"})
 
 
@@ -35,6 +36,8 @@ class DifferenceRow:
     url: str | None
     drivers: list[Driver]
     basis: str | None = None  # our length basis of a gap row ("per_side", "qecio_weighted", ...)
+    scope: str | None = None  # a reported figure's network scope ("whole_network", "vorrangnetz")
+    note: str = ""  # the figure's own note (reported) or the comparison's (gap)
 
 
 def _ours_label(data: ReportData, spec: dict | None) -> str | None:
@@ -86,8 +89,10 @@ def _drivers(
         out.append(Driver("scope", ours["scope"], label))
     if metric in cfg.metric_kinds:
         out.append(Driver("kind", ours["kind"], cfg.metric_kinds[metric]))
-    if length_basis is not None and cfg.length_bases[length_basis] != ours["length"]:
-        out.append(Driver("length", ours["length"], cfg.length_bases[length_basis]))
+    if length_basis is not None:
+        theirs = cfg.length_bases.get(length_basis, NOT_STATED)
+        if theirs != ours["length"]:
+            out.append(Driver("length", ours["length"], theirs))
     source_length = cfg.source_length_bases.get(f"{source}/{metric}")
     if source_length is not None and our_basis not in source_length.matches:
         ours_length = cfg.bases.get(our_basis, ours["length"]) if our_basis else ours["length"]
@@ -146,7 +151,7 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
         basis = _basis(data, comp.ours, g.key)
         label = _ours_label(data, comp.ours)
         if label and basis in ("per_side", "qecio_weighted"):
-            label = f"{label}, {cfg.bases[basis]}"
+            label = f"{label}, {cfg.bases.get(basis, basis)}"
         rows.append(
             DifferenceRow(
                 source=g.source,
@@ -159,6 +164,7 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                 reference_date=g.reference_date,
                 url=_url(figures, g.source, comp.metric_name, g.theirs),
                 basis=basis,
+                note=g.note,
                 drivers=_drivers(
                     cfg,
                     source=g.source,
@@ -186,6 +192,8 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                 gap_pct=None,
                 reference_date=f.reference_date,
                 url=f.source_url,
+                scope=f.network_scope,
+                note=f.note,
                 drivers=_drivers(
                     cfg,
                     source=f.source,

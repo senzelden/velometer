@@ -648,6 +648,7 @@ class DifferencesConfig(_Strict):
     source_length_bases: dict[str, SourceLength]  # "<source>/<metric>" -> the source's basis
     labels: dict[str, str]  # metric_name -> what it counts
     areas: dict[str, str]  # source id (or "default") -> the area it covers
+    source_names: dict[str, str] = {}  # source id -> the name a reader knows it by
 
     @model_validator(mode="after")
     def _dimensions(self):

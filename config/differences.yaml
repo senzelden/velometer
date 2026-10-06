@@ -78,3 +78,11 @@ areas:
   qecio_v2_10: NUTS3 region
   bikenetkit_v1: a city boundary file (which boundary is not stated by the source)
   default: the city as the source defines it
+# What a reader calls each source (the Figures tab; an id not listed is shown as it is).
+source_names:
+  clean_cities_2025: Clean Cities Campaign, Cycling Ranking 2025
+  qecio_v2_10: ECF QECIO v2.10
+  bikenetkit_v1: BikeNetKit
+  official: Official / press figures
+  changing_cities: Changing Cities
+  mobilitaetsagentur_wien: Mobilitätsagentur Wien

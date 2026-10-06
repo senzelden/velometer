@@ -11,12 +11,14 @@ tiles come from the public OSM tile server, the one external host a page loads f
 decision, 2026-10-02). Every response carries a Content-Security-Policy that allows exactly that.
 """
 
+import logging
 import re
 import sqlite3
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import urlparse
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -30,7 +32,7 @@ from markupsafe import Markup
 from velometer import timeseries as ts
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
-from velometer.app.narrative import render_explainer, render_narrative
+from velometer.app.narrative import render_explainer, render_narrative, safe_url
 from velometer.app.series import series_payload
 from velometer.config import ConfigError, load_differences
 from velometer.content.loader import load_explainer, load_narratives, load_sources
@@ -85,6 +87,9 @@ TABS = [
     ("figures", "Figures", "/figures"),
     ("bezirke", "Bezirke", "/bezirke"),
 ]
+UNITS = {"pct": "%"}
+CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
+log = logging.getLogger(__name__)
 OURS_PREFIX = re.compile(r"^\s*ours:\s*", re.I)
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -135,6 +140,17 @@ def _md(text: str) -> Markup:
             html,
         )
     )
+
+
+def _host(url: str) -> str:
+    host = urlparse(url).hostname or url
+    return host.removeprefix("www.")
+
+
+def _clause(note: str, limit: int = 90) -> str:
+    """The first clause of a figure's note: what tells rows of one source apart."""
+    first = CLAUSE_END.split(note.strip(), 1)[0].strip()
+    return first if len(first) <= limit else first[: limit - 1].rstrip() + "…"
 
 
 def _when(label: str, osm_timestamp: str | None = None) -> str:
@@ -194,6 +210,10 @@ def create_app(
     templates.env.filters["md"] = _md
     templates.env.filters["when"] = _when
     # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
+    templates.env.filters["http_url"] = safe_url
+    templates.env.filters["host"] = _host
+    templates.env.filters["clause"] = _clause
+    templates.env.filters["unit"] = lambda u: UNITS.get(u, u)
     templates.env.filters["strip_ours"] = lambda v: OURS_PREFIX.sub("", v or "")
 
     cache = PageCache()
@@ -389,6 +409,7 @@ def create_app(
                 narratives = load_narratives(content_dir / "narratives")
                 explainer = load_explainer(content_dir / "explainer.yaml")
             except ContentError as e:
+                log.error("content could not be loaded: %s", e)
                 return {}, {}, None, str(e)
             return narratives, sources, explainer, None
 
@@ -408,18 +429,21 @@ def create_app(
         try:
             cfg = load_differences(config_dir / "differences.yaml")
             rows = difference_rows(data, city_id, cfg)
-        except (ConfigError, OSError):
+        except (ConfigError, OSError, KeyError) as e:
+            log.error("figures for %s could not be built: %r", city_id, e)
             return {
                 "differences": None,
                 "dimensions": [],
                 "dimension_labels": {},
                 "metric_labels": {},
+                "source_names": {},
             }
         return {
             "differences": rows,
             "dimensions": cfg.dimensions,
             "dimension_labels": {d.id: d.label for d in cfg.dimensions},
             "metric_labels": cfg.labels,
+            "source_names": cfg.source_names,
         }
 
     def city_page(request: Request, city_id: str, tab: str, data: ReportData) -> HTMLResponse:
@@ -555,8 +579,9 @@ def create_app(
                 len(next(k for k in kinds if k["kind"] == "lau")["flags"]),
             ),
             "compare_groups": [
-                {**g, "cities": [o for o in g["cities"] if o.id != city_id]}
+                {**g, "cities": others}
                 for g in by_country(data)
+                if (others := [o for o in g["cities"] if o.id != city_id])
             ],
             "bezirke": bezirke_context(data, city_id),
             "kinds": kinds,

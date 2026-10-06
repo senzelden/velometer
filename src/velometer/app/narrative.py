@@ -74,7 +74,7 @@ class _Numbering:
                 return str(MISSING_REF)
             n = self.ref_no.setdefault(rid, len(self.ref_no) + 1)
             self.used_refs.append(n)
-            return f'<sup><a href="#ref-{n}">{n}</a></sup>'
+            return f'<sup class="dref"><a href="#ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
         return Markup(f"<p>{REF_MARK.sub(ref, SOURCE_MARK.sub(source, body))}</p>")
@@ -92,10 +92,9 @@ def pullquote(sources: dict[str, Source], excerpt_ref: str) -> Markup:
     if source is None or excerpt is None:
         return Markup('<p class="note">source missing</p>')
     head = ", ".join(escape(p) for p in [source.publisher, source.title, _date(source)] if p)
-    caption = [
-        Markup(head),
-        Markup(f'<a href="{escape(source.url)}" rel="noopener noreferrer">source</a>'),
-    ]
+    caption = [Markup(head)]
+    if url := safe_url(source.url):
+        caption.append(Markup(f'<a href="{escape(url)}" rel="noopener noreferrer">source</a>'))
     if excerpt.gloss_en and source.language != "en":
         caption.append(Markup(f'<span class="gloss">{escape(excerpt.gloss_en)}</span>'))
     return Markup(
@@ -106,11 +105,14 @@ def pullquote(sources: dict[str, Source], excerpt_ref: str) -> Markup:
     )
 
 
-def _route(base: str, route: str | None) -> str | None:
-    """A data reference's link: only a site-relative path (never a scheme) joined to the base."""
-    if route and route.startswith("/") and not route.startswith("//"):
-        return base.rstrip("/") + route
-    return None
+def safe_url(url: str | None) -> str | None:
+    """The URL if it is http(s), else None: the renderer never emits any other scheme."""
+    return url if url and url.lower().startswith(("http://", "https://")) else None
+
+
+def _route(route: str | None) -> str | None:
+    """A data reference's link: only a site-relative path, never a scheme or `//host`."""
+    return route if route and route.startswith("/") and not route.startswith("//") else None
 
 
 def _build(
@@ -118,7 +120,6 @@ def _build(
     quotes: list[Quote],
     sources: dict[str, Source],
     data_refs: list[DataRef],
-    base: str,
     intro: list[str] = (),
 ) -> tuple[list[Markup], list[RenderedSection], _Numbering]:
     """Render the intro and the (heading, role, paragraphs) groups. A quote follows the
@@ -144,29 +145,19 @@ def _build(
     return intro_html, sections, num
 
 
-def render_narrative(
-    n: Narrative,
-    sources: dict[str, Source],
-    data_refs_base: str = "",
-) -> RenderedNarrative:
+def render_narrative(n: Narrative, sources: dict[str, Source]) -> RenderedNarrative:
     groups = [(s.heading, s.role, s.paragraphs) for s in n.sections]
-    _, sections, num = _build(groups, n.quotes, sources, n.data_refs, data_refs_base)
-    return _finish(n.title, n.dek, [], sections, num, sources, n.data_refs, data_refs_base)
+    _, sections, num = _build(groups, n.quotes, sources, n.data_refs)
+    return _finish(n.title, n.dek, [], sections, num, sources, n.data_refs)
 
 
-def render_explainer(
-    e: Explainer,
-    sources: dict[str, Source],
-    data_refs_base: str = "",
-) -> RenderedNarrative:
+def render_explainer(e: Explainer, sources: dict[str, Source]) -> RenderedNarrative:
     groups = [(s.heading, s.dimension, s.paragraphs) for s in e.sections]
-    intro, sections, num = _build(
-        groups, e.quotes, sources, e.data_refs, data_refs_base, intro=e.intro
-    )
-    return _finish(e.title, None, intro, sections, num, sources, e.data_refs, data_refs_base)
+    intro, sections, num = _build(groups, e.quotes, sources, e.data_refs, intro=e.intro)
+    return _finish(e.title, None, intro, sections, num, sources, e.data_refs)
 
 
-def _finish(title, dek, intro, sections, num, sources, data_refs, base) -> RenderedNarrative:
+def _finish(title, dek, intro, sections, num, sources, data_refs) -> RenderedNarrative:
     by_ref = {d.id: d for d in data_refs}
     return RenderedNarrative(
         title=title,
@@ -175,5 +166,5 @@ def _finish(title, dek, intro, sections, num, sources, data_refs, base) -> Rende
         sections=sections,
         sources={n: sources[sid] for sid, n in num.source_no.items()},
         refs={n: by_ref[rid] for rid, n in num.ref_no.items()},
-        ref_links={n: _route(base, by_ref[rid].route) for rid, n in num.ref_no.items()},
+        ref_links={n: _route(by_ref[rid].route) for rid, n in num.ref_no.items()},
     )

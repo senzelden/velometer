@@ -169,3 +169,21 @@ def test_date_driver_follows_the_gap_tag(rows):
     for row, gap in zip(out, gaps, strict=False):
         assert ("date" in _drivers(row)) == ("date_gap" in gap.tags)
     assert any("date_gap" in g.tags for g in gaps)  # the fixture's 2025-01-01 figures
+
+
+def test_an_unmapped_length_basis_or_unknown_source_and_metric_never_raise(rows, fixture_db):
+    data, _ = rows
+    cfg = _cfg()
+    thin = cfg.model_copy(
+        update={"length_bases": {}, "source_methods": {}, "bases": {}, "areas": {"default": "x"}}
+    )
+    out = difference_rows(data, "berlin", thin)
+    row = next(r for r in out if r.metric == "vorrangnetz_target_km")
+    assert _drivers(row)["length"].theirs == "basis not stated by the source"
+    assert row.scope == "vorrangnetz"
+
+
+def test_reported_rows_carry_scope_and_note(rows):
+    _, out = rows
+    row = next(r for r in out if r.metric == "vorrangnetz_target_km")
+    assert row.scope == "vorrangnetz" and row.note == ""

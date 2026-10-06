@@ -2,12 +2,12 @@
 {% if cited_sources %}
 <h3>Sources</h3>
 <ol class="citations">
-{% for n, s in cited_sources %}<li id="src-{{ n }}" value="{{ n }}">{{ s.publisher }}, <cite>{{ s.title }}</cite>{% if s.published %} ({{ s.published.isoformat() }}){% endif %} · <a href="{{ s.url }}" rel="noopener noreferrer">source</a>{% if s.archive_url %} · <a href="{{ s.archive_url }}" rel="noopener noreferrer">archived</a>{% endif %}</li>
+{% for n, s in cited_sources %}<li id="src-{{ n }}" value="{{ n }}">{{ s.publisher }}, <cite>{{ s.title }}</cite>{% if s.published %} ({{ s.published.isoformat() }}){% endif %}{% if s.url | http_url %} · <a href="{{ s.url | http_url }}" rel="noopener noreferrer">source</a>{% endif %}{% if s.archive_url | http_url %} · <a href="{{ s.archive_url | http_url }}" rel="noopener noreferrer">archived</a>{% endif %}</li>
 {% endfor %}</ol>
 {% endif %}
 {% if cited_refs %}
 <h3>velometer data</h3>
-<ol class="citations">
-{% for n, r in cited_refs %}<li id="ref-{{ n }}" value="{{ n }}">{% if nar.ref_links[n] %}<a href="{{ nar.ref_links[n] }}">{{ r.label }}</a>{% else %}{{ r.label }}{% endif %}{% if r.file %} · <code>{{ r.file }}</code>{% if r.locator %} <code>{{ r.locator }}</code>{% endif %}{% endif %}</li>
+<ol class="citations drefs">
+{% for n, r in cited_refs %}<li id="ref-{{ n }}"><span class="dnum">d{{ n }}</span> {% if nar.ref_links[n] %}<a href="{{ nar.ref_links[n] }}">{{ r.label }}</a>{% else %}{{ r.label }}{% if r.file %}<br><span class="meta"><code>{{ r.file }}</code>{% if r.locator %} · {{ r.locator | trim("# ") }}{% endif %}</span>{% endif %}{% endif %}</li>
 {% endfor %}</ol>
 {% endif %}
