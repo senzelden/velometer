@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}velometer · cities{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/overview.js"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Cities</span></nav>{% endblock %}
+{% block content %}
+<h1>Cities</h1>
+<p class="dek">{{ n }} cities in {{ groups | length }} countries. Headline for the city proper (LAU), current run:
+{{ headline_unit }}, in mapped km.</p>
+{% for g in groups %}
+<h2 id="{{ g.iso2 | lower }}">{{ g.country }}</h2>
+<div class="cards">
+{% for s in g.cities %}
+  <a class="card city-card" href="/city/{{ s.city.id }}">
+    <span class="card-title">{{ s.city.name }}</span>
+    {% if s.now is not none %}
+    <span class="bignum">{{ s.now | num }}</span> <span class="sub">per 100 km of main roads, {{ s.now_label }}</span>
+    <span class="spark-mount" data-chart="sparkline" data-city="{{ s.city.id }}"></span>
+    <span class="card-text">{% if s.first is not none %}{{ s.first_label }}: {{ s.first | num }} · {{ "%+.1f" | format(s.change) }} · {% endif %}rank {{ rank[s.city.id] }} of {{ rank | length }}</span>
+    {% else %}
+    <span class="note">no run (LAU current)</span>
+    {% endif %}
+    <span class="more">Open {{ s.city.name }} →</span>
+  </a>
+{% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

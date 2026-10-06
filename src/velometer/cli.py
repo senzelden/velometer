@@ -1825,6 +1825,7 @@ def serve(
     config_dir: Path = CONFIG_OPT,
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
+    content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
 ) -> None:
     """The private, read-only web app on a loopback address (never exposed to the network)."""
     if host not in LOOPBACK_HOSTS:
@@ -1841,7 +1842,7 @@ def serve(
 
     from velometer.app.main import create_app
 
-    uvicorn.run(create_app(db, config_dir, maps, docs), host=host, port=port)
+    uvicorn.run(create_app(db, config_dir, maps, docs, content_dir), host=host, port=port)
 
 
 @app.command()

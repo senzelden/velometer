@@ -14,7 +14,6 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urlparse
 
-import altair as alt
 import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
@@ -139,7 +138,8 @@ def test_city_without_current_run_renders_no_run(client):
 def test_index_lists_cities_with_links_and_charts(client):
     html = client.get("/").text
     assert 'href="/city/berlin"' in html and 'href="/city/paris"' in html
-    assert html.count("vegaEmbed('#") == 2  # headline over time, rankings flip
+    assert html.count('data-chart="overview-lines"') == 1  # drawn by /static/js/overview.js
+    assert "<h2" in html and "Rankings by source" in html  # the old flip chart, as a table
     row = re.search(r'<tr[^>]*>\s*<td[^>]*><a href="/city/paris">.*?</tr>', html, re.S)
     assert row and "no run" in row.group(0)
 
@@ -162,13 +162,27 @@ def test_city_page_sections_in_order(client):
     assert positions == sorted(positions)
 
 
-def test_city_page_embeds_the_headline_with_lau_and_fua(client):
+def test_city_page_mounts_the_headline_with_lau_and_fua_and_tabulates_it(client, fixture_db):
+    _db, _cfg, _conn, data = fixture_db
     html = client.get("/city/berlin").text
-    spec = re.search(r"vegaEmbed\('#c0', (\{.*?\}), \{actions", html, re.S)
-    assert spec, "the headline chart is embedded as c0"
-    kinds = {r["kind"] for r in json.loads(spec.group(1))["data"]["values"]}
-    assert kinds == {"lau", "fua"}
-    assert html.index("vegaEmbed('#c0'") < html.index("vegaEmbed('#c1'")  # above the tier charts
+    mount = '<div class="chart" data-chart="city-headline" data-city="berlin"'
+    assert mount in html
+    assert html.index(mount) < html.index('data-chart="city-tiers"')  # above the tier charts
+    assert re.findall(r'data-chart="city-tiers" data-city="berlin" data-kind="(\w+)"', html) == [
+        "lau",
+        "fua",
+    ]
+    table = html[html.index('<table class="yearly">') :]
+    table = table[: table.index("</table>")]
+    assert _headers(table)[1:] == ["LAU headline", "LAU A+B km", "FUA headline", "FUA A+B km"]
+    lau = data.series("berlin", "lau").points
+    rows = re.findall(r"<tr>\s*<td>(.*?)</td>", table.split("<tbody>")[1])
+    labels = {
+        p.label for k in ("lau", "fua") if (cs := data.series("berlin", k)) for p in cs.points
+    }
+    assert len(rows) == len(labels) and rows[-1].startswith(("Jan", "Feb", "Mar", "Apr", "May",
+        "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))  # fmt: skip
+    assert f"{lau[0].headline:,.1f}" in table and "⚑" in table  # the 2025 LAU flag
 
 
 def test_city_page_shows_current_numbers(client, fixture_db):
@@ -257,7 +271,7 @@ def test_city_page_interactive_map_with_png_link_and_hint(client):
     for t, colour in zip("ABCDE", charts.TIER_COLOURS, strict=True):  # the tier checkboxes
         box = re.search(
             rf'<input type="checkbox" name="tier" value="{t}"[^>]*>'
-            rf'\s*<span class="swatch" style="background: ([^"]+)">',
+            rf'\s*<svg class="swatch"[^>]*><rect [^>]*fill="([^"]+)"',
             section,
         )
         assert box and box.group(1) == colour, t
@@ -382,16 +396,23 @@ def test_responses_are_gzipped_when_the_client_accepts_it(client):
     assert gzip.decompress(gzip.compress(GEOJSON)) == GEOJSON
 
 
-def test_scripts_load_vega_then_lite_then_embed(client):
-    html = client.get("/").text
-    srcs = re.findall(r'<script[^>]+src="([^"]+)"', html)
-    assert srcs == [
-        "/static/vendor/vega.min.js",
-        "/static/vendor/vega-lite.min.js",
-        "/static/vendor/vega-embed.min.js",
-    ]
-    for s in srcs:
-        assert client.get(s).status_code == 200
+def test_pages_load_our_chart_modules(client):
+    pages = {
+        "/": ["/static/js/nav.js", "/static/js/overview.js"],
+        "/cities": ["/static/js/nav.js", "/static/js/overview.js"],
+        "/city/berlin": ["/static/js/nav.js", "/static/js/city-charts.js",
+                         "/static/vendor/leaflet.js", "/static/map.js"],
+        "/methodology": ["/static/js/nav.js"],
+    }  # fmt: skip
+    for path, expected in pages.items():
+        srcs = re.findall(r'<script[^>]+src="([^"]+)"', client.get(path).text)
+        assert srcs == expected, path
+        for s in srcs:
+            assert client.get(s).status_code == 200
+    # the modules import only our own files, by relative path
+    for js in (STATIC / "js").glob("*.js"):
+        for spec in re.findall(r'^import .*? from "([^"]+)"', js.read_text(), re.M):
+            assert spec.startswith("./") and (STATIC / "js" / spec).is_file(), (js.name, spec)
 
 
 def test_footer_on_every_page(client, fixture_db):
@@ -459,24 +480,16 @@ def test_csv_route_is_attachment_with_attribution(client, fixture_db):
     assert len(every) == len(data.csv_rows())
 
 
-def test_charts_are_inline_specs_without_remote_urls(client):
-    html = client.get("/city/berlin").text
-    specs = re.findall(r"vegaEmbed\('#(c\d+)', (\{.*?\}), \{actions", html, re.S)
-    assert specs
-    for div_id, spec in specs:
-        assert f'<div id="{div_id}"' in html
-        assert '"url"' not in spec and "$schema" not in spec
-
-
 def test_templates_and_static_ship_in_the_package():
     root = importlib.resources.files("velometer.app")
-    for name in ["base.html", "index.html", "city.html", "methodology.html"]:
+    for name in ["base.html", "_nav.html", "index.html", "cities.html", "city.html",
+                 "methodology.html"]:  # fmt: skip
         assert (root / "templates" / name).is_file()
     assert (root / "static" / "app.css").is_file()
     assert (root / "static" / "map.js").is_file()
-    for pkg in ["vega", "vega-lite", "vega-embed"]:
-        assert (root / "static" / "vendor" / f"{pkg}.min.js").is_file()
-        assert (root / "static" / "vendor" / f"{pkg}.LICENSE").is_file()
+    for name in ["chart.js", "chart-core.js", "state.js", "data.js", "nav.js", "overview.js",
+                 "city-charts.js"]:  # fmt: skip
+        assert (root / "static" / "js" / name).is_file()
     for name in ["leaflet.js", "leaflet.css", "leaflet.LICENSE"]:
         assert (root / "static" / "vendor" / name).is_file()
 
@@ -501,26 +514,6 @@ def test_vendor_leaflet_is_the_recorded_1_9_release():
     )
     assert "BSD 2-Clause" in (VENDOR / "leaflet.LICENSE").read_text()
     assert "cdn.jsdelivr" not in js and "unpkg.com" not in js
-
-
-def test_vendor_versions_match_altair():
-    expected = {
-        "vega": alt.VEGA_VERSION,
-        "vega-lite": alt.VEGALITE_VERSION,
-        "vega-embed": alt.VEGAEMBED_VERSION,
-    }
-    rows = [r for pkg, r in _versions().items() if pkg != "leaflet"]  # leaflet is not altair's
-    assert {r[0]: r[1] for r in rows} == expected
-    for pkg, _constant, resolved in rows:
-        assert resolved.split(".")[0] == expected[pkg].split(".")[0]
-        assert resolved.startswith(expected[pkg])
-        bundle = (VENDOR / f"{pkg}.min.js").read_text()
-        assert f'"{resolved}"' in bundle  # the bundle is the resolved release
-        assert "cdn.jsdelivr" not in bundle and "unpkg.com" not in bundle
-        assert (
-            "BSD" in (VENDOR / f"{pkg}.LICENSE").read_text()
-            or "Redistribution" in (VENDOR / f"{pkg}.LICENSE").read_text()
-        )
 
 
 @pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.10", "example.com", "::", "127.0.0.2"])
@@ -574,7 +567,10 @@ def test_index_preset_columns_are_labelled_ours(client, fixture_db):
     for preset in ("ecf_qecio", "clean_cities_2025"):
         label = data.preset_labels()[preset]
         assert label.startswith("Ours") and label in headers
-    assert all(h.startswith("Ours") for h in headers if "QECIO" in h or "Clean Cities" in h)
+    # a publisher's name heads only our values ("Ours: ...") or its own published ranking
+    named = [h for h in headers if "QECIO" in h or "Clean Cities" in h]
+    assert all(h.startswith("Ours") or "(published)" in h for h in named)
+    assert any("(published)" in h for h in named)  # the rankings-by-source table
     for path in ["/", "/city/berlin"]:
         for h in _headers(client.get(path).text):
             assert "%" not in h and "share" not in h.lower(), (path, h)
@@ -1006,7 +1002,10 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
     bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
     assert "4.0" in bezirke  # West's headline, 4 %
-    assert "facet" in bezirke  # the small-multiples spec is embedded
+    assert '<div class="chart" data-chart="bezirke" data-city="berlin"' in bezirke
+    # the small multiples' values, without JavaScript: a row per Bezirk, a column per snapshot
+    table = bezirke.split("Table: headline per Bezirk")[1].split("</table>")[0]
+    assert re.findall(r"<tr><td>(\w+)</td>", table) == ["East", "West"]
 
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):

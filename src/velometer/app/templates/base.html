@@ -4,23 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}velometer{% endblock %}</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/app.css">
 {% block head %}{% endblock %}
-<script src="/static/vendor/vega.min.js"></script>
-<script src="/static/vendor/vega-lite.min.js"></script>
-<script src="/static/vendor/vega-embed.min.js"></script>
+<script type="module" src="/static/js/nav.js"></script>
+{% block scripts %}{% endblock %}
 </head>
 <body>
 <header class="site">
-  <a class="brand" href="/">velometer</a>
-  <nav><a href="/">Cities</a> <a href="/methodology">Methodology</a> <a href="/data/all.csv">CSV</a></nav>
+  <div class="bar">
+    <a class="brand" href="/">velo<span>meter</span></a>
+    <button class="menu-toggle" type="button" hidden aria-expanded="false" aria-controls="site-nav">Menu</button>
+    {% include "_nav.html" %}
+  </div>
 </header>
 <main>
+{% block crumbs %}{% endblock %}
 {% block content %}{% endblock %}
 </main>
 <footer>
   <p>Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors, ODbL 1.0</a>
-  · OSM mapped km, not built km (ADR 0006) · <a href="/methodology">Methodology</a></p>
+  · OSM mapped km, not built km (ADR 0006) · <a href="/methodology">Methodology</a> · <a href="/data/all.csv">CSV (all cities)</a></p>
   <p>Classifier {{ footer.classifier }} · config <code>{{ footer.config }}</code></p>
 </footer>
 </body>

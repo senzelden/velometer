@@ -1,0 +1,33 @@
+{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Methodology. `active` names the
+    current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
+{%- macro item(key, href, label) -%}
+<li><a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
+{%- endmacro %}
+<nav class="site-nav" id="site-nav" aria-label="Main">
+<ul>
+  {{ item("overview", "/", "Overview") }}
+  {{ item("compare", "/compare", "Compare") }}
+  <li class="cities-item">
+    <details class="cities-menu">
+      <summary{% if active == "cities" %} aria-current="page"{% elif active == "city" %} aria-current="true"{% endif %}>Cities ▾</summary>
+      <div class="cities-panel">
+        <input type="search" class="city-filter" hidden placeholder="Filter cities or countries" aria-label="Filter cities">
+        {% if nav_groups %}
+        <div class="groups">
+        {% for g in nav_groups %}
+          <div class="grp" data-country="{{ g.country }}">
+            <h4>{{ g.country }}</h4>
+            <ul>{% for c in g.cities %}<li><a href="/city/{{ c.id }}">{{ c.name }}</a></li>{% endfor %}</ul>
+          </div>
+        {% endfor %}
+        </div>
+        <p class="no-match" hidden>No city matches.</p>
+        {% endif %}
+        <a class="all" href="/cities">All cities, with headline values →</a>
+      </div>
+    </details>
+  </li>
+  {{ item("stories", "/stories", "Stories") }}
+  {{ item("methodology", "/methodology", "Methodology") }}
+</ul>
+</nav>

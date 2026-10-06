@@ -1,12 +1,14 @@
-"""FastAPI + Jinja app over the report query layer: index, city pages, methodology, maps, CSV.
+"""FastAPI + Jinja app over the report query layer: overview, cities, city pages, methodology,
+maps, CSV and the chart data.
 
 Read-only: a request that must build a page opens its own `mode=ro` connection (lazily) and
-closes it; built pages are cached per DB/config/docs fingerprint (`app/cache.py`).
+closes it; built pages are cached per DB/config/docs/maps/content fingerprint (`app/cache.py`).
 Missing data is a note on the page ("no run ...", "map not generated ..."), never a 500; an
-unknown city is a 404. Charts are Vega-Lite specs with inline data, drawn by the vendored
-vega / vega-lite / vega-embed bundles under /static. The city page's tier map is the vendored
-Leaflet over the run's GeoJSON (`velometer report maps`); its background tiles come from the
-public OSM tile server, the one external host a page loads from (the user's decision, 2026-10-02).
+unknown city is a 404. Every page is server-rendered and readable without JavaScript (tables);
+charts are drawn by our own ES modules under /static/js from `/data/series.json`. The city page's
+tier map is the vendored Leaflet over the run's GeoJSON (`velometer report maps`); its background
+tiles come from the public OSM tile server, the one external host a page loads from (the user's
+decision, 2026-10-02). Every response carries a Content-Security-Policy that allows exactly that.
 """
 
 import re
@@ -20,14 +22,15 @@ import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from velometer import timeseries as ts
 from velometer.app.cache import PageCache, fingerprint
-from velometer.db import SchemaError
+from velometer.app.series import country_name, series_payload
+from velometer.db import SchemaError, subarea_names
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
 from velometer.report import charts
@@ -62,20 +65,63 @@ OSM_LINKS = {
     "copyright": "https://www.openstreetmap.org/copyright",
     "way": "https://www.openstreetmap.org/way/",
 }
+# No inline script or style, no third-party host except the OSM tiles (images), no framing.
+CSP = (
+    "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
+    "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
+    "base-uri 'none'; form-action 'self'"
+)
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+class CSPMiddleware:
+    """Adds the Content-Security-Policy header to every HTTP response, errors included."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def with_csp(message):
+            if message["type"] == "http.response.start":
+                headers = [(k, v) for k, v in message.get("headers", [])
+                           if k.lower() != b"content-security-policy"]  # fmt: skip
+                headers.append((b"content-security-policy", CSP.encode()))
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, with_csp)
 
 
 def _num(v: float | int | None, spec: str = ",.1f") -> str:
     return "n/a" if v is None else format(v, spec)
 
 
+# the tables extension aligns columns with style="text-align: ..."; the CSP allows no inline
+# style, so alignment becomes a class (app.css: .num right-aligns, .align-* the others)
+ALIGN_STYLE = re.compile(r' style="text-align: (left|right|center);"')
+
+
 def _md(text: str) -> Markup:
-    return Markup(markdown.markdown(text, extensions=["tables", "fenced_code"]))
+    html = markdown.markdown(text, extensions=["tables", "fenced_code"])
+    return Markup(
+        ALIGN_STYLE.sub(
+            lambda m: ' class="num"' if m.group(1) == "right" else f' class="align-{m.group(1)}"',
+            html,
+        )
+    )
 
 
-def _embed(spec: dict) -> dict:
-    """The spec as embedded: `$schema` (a remote URL, never fetched) is dropped; vega-embed is
-    told the mode instead."""
-    return {k: v for k, v in spec.items() if k != "$schema"}
+def _when(label: str, osm_timestamp: str | None = None) -> str:
+    """A series label as the reader sees it: a year is "Jan <year>" (1 January snapshots), the
+    current run its snapshot month ("Oct 2026")."""
+    if label != ts.CURRENT:
+        return f"Jan {label}"
+    if osm_timestamp and re.match(r"^\d{4}-\d{2}", osm_timestamp):
+        return f"{MONTHS[int(osm_timestamp[5:7]) - 1]} {osm_timestamp[:4]}"
+    return "current"
 
 
 class LazyData:
@@ -107,24 +153,33 @@ class LazyData:
             self._conn.close()
 
 
-def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) -> FastAPI:
+def create_app(
+    db_path: Path,
+    config_dir: Path,
+    maps_dir: Path,
+    docs_dir: Path,
+    content_dir: Path = Path("content"),
+) -> FastAPI:
     db_path, config_dir = Path(db_path), Path(config_dir)
-    maps_dir, docs_dir = Path(maps_dir), Path(docs_dir)
+    maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     app = FastAPI(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=GZIP_LEVEL)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)  # outermost
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+    app.add_middleware(CSPMiddleware)  # outermost: refusals and errors carry the policy too
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
-    templates.env.filters["embed"] = _embed
+    templates.env.filters["when"] = _when
 
     cache = PageCache()
 
     def fp(request: Request) -> tuple:
         """The request's fingerprint, computed on first use and kept on `request.state`."""
         if not hasattr(request.state, "fingerprint"):
-            request.state.fingerprint = fingerprint(db_path, config_dir, docs_dir, maps_dir)
+            request.state.fingerprint = fingerprint(
+                db_path, config_dir, docs_dir, maps_dir, content_dir
+            )
         return request.state.fingerprint
 
     # async: the connection is made, used and closed on the event-loop thread (sqlite3
@@ -138,13 +193,37 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
 
     Data = Annotated[ReportData, Depends(report_data)]
 
-    def page(request: Request, name: str, **ctx) -> HTMLResponse:
+    def by_country(data: ReportData) -> list[dict]:
+        """The trusted cities grouped by country name, both sorted by name."""
+        groups: dict[str, list] = {}
+        for c in data.cities():
+            groups.setdefault(country_name(c.country_iso2), []).append(c)
+        return [
+            {
+                "country": name,
+                "iso2": cs[0].country_iso2,
+                "cities": sorted(cs, key=lambda c: c.name),
+            }
+            for name, cs in sorted(groups.items())
+        ]
+
+    def page(
+        request: Request, name: str, active: str, data: ReportData | None = None, **ctx
+    ) -> HTMLResponse:
         def build_footer() -> dict:
             sel = report_selector(config_dir)  # config only: the footer needs no database
             return {"classifier": sel.version, "config": sel.short_sha}
 
         footer = cache.get("footer", fp(request), build_footer)
-        return templates.TemplateResponse(request, name, {"footer": footer, **ctx})
+        nav = None  # the Cities menu; a page without a database still renders, linking /cities
+        if data is not None:
+            try:
+                nav = cache.get("nav", fp(request), lambda: by_country(data))
+            except HTTPException:
+                nav = None
+        return templates.TemplateResponse(
+            request, name, {"footer": footer, "nav_groups": nav, "active": active, **ctx}
+        )
 
     def known(data: ReportData, city_id: str):
         city = next((c for c in data.cities() if c.id == city_id), None)
@@ -152,12 +231,74 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             raise HTTPException(404, f"unknown city {city_id!r}")
         return city
 
+    def headline_of(point) -> float | None:
+        return (
+            None
+            if point is None
+            else {p.preset: p.value for p in point.presets}.get("ours_headline")
+        )
+
+    def city_summary(data: ReportData, c) -> dict:
+        """A city's LAU headline now and at the first series year (Overview, Cities)."""
+        point = data.current(c.id, "lau")
+        cs = data.series(c.id, "lau")
+        first = next((p for p in cs.points if p.headline is not None), None) if cs else None
+        now = headline_of(point)
+        return {
+            "city": c,
+            "country": country_name(c.country_iso2),
+            "point": point,
+            "now": now,
+            "now_label": _when(ts.CURRENT, point.osm_timestamp) if point else None,
+            "first": None if first is None else first.headline,
+            "first_label": None if first is None else _when(first.label, first.osm_timestamp),
+            "change": None if now is None or first is None else now - first.headline,
+        }
+
+    def rankings_table(data: ReportData) -> dict | None:
+        """The rankings by source as one table: a row per city, a column per source (report.yaml
+        order), each cell the rank and value or "not published"."""
+        rows = data.ranking_rows()
+        if not data.ranks():
+            return None
+        nuts3 = {
+            r.id
+            for r in data.report_config.rankings
+            if r.kind == "external_ratio" and r.scope.startswith("nuts3_")
+        }
+        region_only = {i for i, f in data.city_fields().items() if f.get("nuts3_is_city") is False}
+        columns = {}
+        for r in rows:
+            columns.setdefault(r.source_id, f"{r.source_label} (n={r.n_ranked})")
+        cells: dict[str, dict] = {}
+        for r in rows:
+            cells.setdefault(r.city_id, {})[r.source_id] = {
+                "rank": r.rank,
+                "value": r.value,
+                "dagger": r.source_id in nuts3 and r.city_id in region_only,
+            }
+        names = {c.id: c.name for c in data.cities()}
+        first = next(iter(columns))
+        order = sorted(cells, key=lambda i: (cells[i].get(first, {}).get("rank") or 10**6, i))
+        return {
+            "columns": columns,
+            "rows": [{"id": i, "name": names.get(i, i), "cells": cells[i]} for i in order],
+            "notes": [
+                f"{r.label}: {n}"
+                for r in data.report_config.rankings
+                if (n := getattr(r, "note", None))
+            ],
+            "dagger": any(c["dagger"] for row in cells.values() for c in row.values()),
+        }
+
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request, data: Data):
         def build() -> dict:
-            rows = []
+            rows, summaries = [], []
             for c in data.cities():
-                point = data.current(c.id, "lau")
+                summary = city_summary(data, c)
+                summaries.append(summary)
+                point = summary["point"]
                 presets = {} if point is None else {p.preset: p.value for p in point.presets}
                 rows.append(
                     {
@@ -167,23 +308,56 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                         "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
                     }
                 )
+            ranked = sorted(
+                summaries, key=lambda s: (s["now"] is None, -(s["now"] or 0), s["city"].name)
+            )
+            values = [v for s in summaries for v in (s["now"], s["first"]) if v is not None]
+            top = max(values, default=0.0)
             return {
                 "rows": rows,
+                "ranking": ranked,
+                "scale_max": (int(top // 50) + 1) * 50 if top else 1,
+                "countries": len({c.country_iso2 for c in data.cities()}),
+                "years": data.years,
                 "preset_label": data.preset_labels(),
                 "preset_unit": data.preset_units(),
                 "headline_unit": HEADLINE_UNIT,
-                "headline": charts.headline_over_time(data),
-                "rankings": charts.rankings_flip(data) if data.ranks() else None,
+                "rankings": rankings_table(data),
             }
 
-        return page(request, "index.html", **cache.get("index", fp(request), build))
+        ctx = cache.get("index", fp(request), build)
+        return page(request, "index.html", "overview", data, **ctx)
+
+    @app.get("/cities", response_class=HTMLResponse)
+    async def cities(request: Request, data: Data):
+        def build() -> dict:
+            summaries = {c.id: city_summary(data, c) for c in data.cities()}
+            groups = [
+                {**g, "cities": [summaries[c.id] for c in g["cities"]]} for g in by_country(data)
+            ]
+            ranked = sorted((s for s in summaries.values() if s["now"] is not None),
+                            key=lambda s: -s["now"])  # fmt: skip
+            rank = {s["city"].id: i + 1 for i, s in enumerate(ranked)}
+            return {"groups": groups, "rank": rank, "n": len(summaries),
+                    "headline_unit": HEADLINE_UNIT}  # fmt: skip
+
+        ctx = cache.get("cities", fp(request), build)
+        return page(request, "cities.html", "cities", data, **ctx)
+
+    @app.get("/data/series.json")
+    async def series_json(request: Request, data: Data):
+        payload = cache.get(
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+        )
+        return JSONResponse(payload)
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):
         def build() -> dict:
             return city_context(data, city_id)
 
-        return page(request, "city.html", **cache.get(f"city:{city_id}", fp(request), build))
+        ctx = cache.get(f"city:{city_id}", fp(request), build)
+        return page(request, "city.html", "city", data, **ctx)
 
     def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
@@ -204,14 +378,21 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
                     "kind": kind,
                     "point": data.current(city_id, kind),
                     "series": series,
-                    "tiers": None
-                    if series is None
-                    else charts.tier_composition(data, city_id, kind),
+                    "flagged": {f["flag"].label: f["flag"] for f in flags},
                     "flags": flags,
                     "map": map_name if (maps_dir / map_name).is_file() else None,
                     "geojson": (maps_dir / geojson).is_file(),
                 }
             )
+        # the yearly headline table under the chart: one row per label of either boundary
+        by_label: dict[str, dict] = {}
+        for k in kinds:
+            for p in k["series"].points if k["series"] else []:
+                row = by_label.setdefault(p.label, {"label": p.label, "osm": p.osm_timestamp})
+                row[k["kind"]] = p
+        years = sorted((r for r in by_label.values() if r["label"] != ts.CURRENT),
+                       key=lambda r: r["label"])  # fmt: skip
+        yearly = years + ([by_label[ts.CURRENT]] if ts.CURRENT in by_label else [])
         colours = dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
         tiermap = {
             "tiles": OSM_TILES,
@@ -225,9 +406,10 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         }
         return {
             "city": c,
+            "country": country_name(c.country_iso2),
             "bezirke": bezirke_context(data, city_id),
             "kinds": kinds,
-            "headline": charts.headline_city(data, city_id),
+            "yearly": yearly,
             "reconcile": data.reconcile(city_id),
             "reported": data.reported_figures(city_id),
             "preset_label": data.preset_labels(),
@@ -235,6 +417,25 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             "headline_unit": HEADLINE_UNIT,
             "tiers": ts.TIERS,
             "tiermap": tiermap if map_kinds else None,
+        }
+
+    def bezirk_series(data: ReportData, city_id: str) -> dict:
+        """Each subarea's headline per series label, the table under the small multiples."""
+        series = data.subarea_series(city_id)
+        names = subarea_names(data.conn, city_id)
+        labels: list[str] = []
+        for points in series.values():
+            labels += [p.label for p in points if p.label not in labels]
+        years = sorted(lbl for lbl in labels if lbl != ts.CURRENT)
+        labels = years + ([ts.CURRENT] if ts.CURRENT in labels else [])
+        osm = {p.label: p.osm_timestamp for points in series.values() for p in points}
+        rows = [
+            {"name": names.get(sid, sid), "values": {p.label: p.headline for p in points}}
+            for sid, points in series.items()
+        ]
+        return {
+            "labels": [{"label": lbl, "text": _when(lbl, osm.get(lbl))} for lbl in labels],
+            "rows": sorted(rows, key=lambda r: r["name"]),
         }
 
     def bezirke_context(data: ReportData, city_id: str) -> dict | None:
@@ -261,7 +462,7 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
         latest = data.selector.latest(data.conn, city_id, "lau")
         return {
             "rows": rows,
-            "series": charts.headline_subareas(data, city_id),
+            "series": bezirk_series(data, city_id),
             "window": f"{label_from} to {label_to}",
             "change_runs": runs,
             # the change page does not end at the run the Bezirk table above shows
@@ -281,21 +482,23 @@ def create_app(db_path: Path, config_dir: Path, maps_dir: Path, docs_dir: Path) 
             else None,
         }
 
-    def methodology(request: Request, lang: str) -> HTMLResponse:
+    def methodology(request: Request, data: ReportData, lang: str) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[lang]
         try:
             body = _md(path.read_text(encoding="utf-8"))
         except OSError:
             body = None
-        return page(request, "methodology.html", lang=lang, body=body, file=path.name)
+        return page(
+            request, "methodology.html", "methodology", data, lang=lang, body=body, file=path.name
+        )
 
     @app.get("/methodology", response_class=HTMLResponse)
-    async def methodology_en(request: Request):
-        return methodology(request, "en")
+    async def methodology_en(request: Request, data: Data):
+        return methodology(request, data, "en")
 
     @app.get("/methodology/de", response_class=HTMLResponse)
-    async def methodology_de(request: Request):
-        return methodology(request, "de")
+    async def methodology_de(request: Request, data: Data):
+        return methodology(request, data, "de")
 
     def map_file(data: ReportData, name: str, suffix: str) -> Path:
         """The map file of a trusted city's run, else 404 (the city page and CSV do the same)."""

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% from "macros.html" import chart %}
 {% block title %}velometer · {{ city.name }}{% endblock %}
 {% block head %}{% if tiermap or (bezirke and bezirke.change_map) %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/city-charts.js"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><a href="/cities">Cities</a><span class="sep" aria-hidden="true">›</span><a href="/cities#{{ city.country_iso2 | lower }}">{{ country }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ city.name }}</span></nav>{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="/">Cities</a> / {{ city.name }} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}</p>
 <h1>{{ city.name }}</h1>
+<p class="meta">{{ country }} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}</p>
 
 <section>
 <h2>Headline and presets</h2>
@@ -35,13 +36,51 @@
 
 <section>
 <h2>Over time</h2>
-{{ chart("c0", headline) }}
+<p class="meta">Headline: {{ headline_unit }}, city proper (LAU) and metro area (FUA). Mapped km in OpenStreetMap, not built km.</p>
+{% if yearly %}
+<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<div class="scroll">
+<table class="yearly">
+<thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in yearly %}
+<tr>
+  <td>{{ row.label | when(row.osm) }}</td>
+  {% for k in kinds %}{% set p = row.get(k.kind) %}
+  <td class="num">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>
+  <td class="num">{% if p %}{{ p.ab_km | num }}{% else %}n/a{% endif %}</td>
+  {% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p class="meta">⚑ flagged year (automatic check); its explanation is in the section on flagged years below.</p>
+{% else %}
+<p class="note">no run (history)</p>
+{% endif %}
 </section>
 
 <section>
 <h2>Tier composition</h2>
+<p class="meta">Per-side mapped km by tier.</p>
 {% for k in kinds %}
-{% if k.tiers %}{{ chart("c" ~ loop.index, k.tiers) }}{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
+<h3>{{ k.kind | upper }}</h3>
+{% if k.series %}
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+<details class="table-details"><summary>Table: mapped km by tier ({{ k.kind | upper }})</summary>
+<div class="scroll">
+<table>
+<thead><tr><th>Snapshot</th>{% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}</tr></thead>
+<tbody>
+{% for p in k.series.points %}
+<tr><td>{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
 {% endfor %}
 </section>
 
@@ -98,7 +137,23 @@
 <p class="meta">Road and path km inside the city's LAU boundary but outside every Bezirk polygon; the LAU is generalised at 1:1M (ADR 0004).</p>
 {% endif %}
 <h3>Over time</h3>
-{{ chart("cb", bezirke.series) }}
+{% if bezirke.series.rows %}
+<div class="chart" data-chart="bezirke" data-city="{{ city.id }}" role="group" aria-label="Headline per Bezirk over time, {{ city.name }}"></div>
+<details class="table-details"><summary>Table: headline per Bezirk and snapshot</summary>
+<div class="scroll">
+<table>
+<thead><tr><th>Bezirk</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for r in bezirke.series.rows %}
+<tr><td>{{ r.name }}</td>{% for l in bezirke.series.labels %}<td class="num">{{ r["values"].get(l.label) | num }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% else %}
+<p class="note">no Bezirk history</p>
+{% endif %}
 <h3>Mapped change {{ bezirke.window }}</h3>
 {% if bezirke.change_runs %}
 <p class="meta">Run {{ bezirke.change_runs[0] }} → run {{ bezirke.change_runs[1] }}</p>
@@ -208,7 +263,7 @@
 {% for m in tiermap.kinds %}<label><input type="radio" name="kind" value="{{ m.kind }}"{% if loop.first %} checked{% endif %}> {{ m.label }}</label>
 {% endfor %}</fieldset>
 <fieldset class="tiers"><legend>Tiers</legend>
-{% for t, colour in tiermap.colours.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <span class="swatch" style="background: {{ colour }}"></span> {{ tiermap.labels[t] }}</label>
+{% for t, colour in tiermap.colours.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <svg class="swatch" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2" fill="{{ colour }}"></rect></svg> {{ tiermap.labels[t] }}</label>
 {% endfor %}</fieldset>
 </div>
 <div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>

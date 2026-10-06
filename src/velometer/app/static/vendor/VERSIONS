@@ -1,13 +1,8 @@
-# package  altair-constant  resolved
-# Versions are altair 6.3.0's VEGA_VERSION, VEGALITE_VERSION and VEGAEMBED_VERSION. Each bundle was
-# fetched once on 2026-10-02 from https://cdn.jsdelivr.net/npm/<package>@<constant>/build/<package>.min.js
-# (LICENSE from .../npm/<package>@<constant>/LICENSE); jsdelivr resolved the constant to the release
-# in the last column. All three are BSD-3-Clause (University of Washington Interactive Data Lab).
-vega 6 6.4.0
-vega-lite 6.4.1 6.4.1
-vega-embed 7 7.3.0
-# leaflet is not an altair constant: the requested range is "1.9" (latest 1.9.x). leaflet.js and
-# leaflet.css were fetched once on 2026-10-02 from https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/
-# (LICENSE from .../npm/leaflet@1.9/LICENSE, BSD-2-Clause). The images/ the CSS references (layers
-# control, default marker) are not vendored: the tier map uses neither.
+# package  requested  resolved
+# leaflet: the requested range is "1.9" (latest 1.9.x). leaflet.js and leaflet.css were fetched once
+# on 2026-10-02 from https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/ (LICENSE from
+# .../npm/leaflet@1.9/LICENSE, BSD-2-Clause). The images/ the CSS references (layers control,
+# default marker) are not vendored: the tier map uses neither.
+# The vega, vega-lite and vega-embed bundles left the app in M7 (charts are static/js/chart.js);
+# altair still renders the PNG charts in docs/review on the Python side.
 leaflet 1.9 1.9.4

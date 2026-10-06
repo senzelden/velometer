@@ -1,5 +1,0 @@
-{# Shared template macros. #}
-{%- macro chart(id, spec) -%}
-<div id="{{ id }}" class="chart"></div>
-<script>vegaEmbed('#{{ id }}', {{ spec | embed | tojson }}, {actions: false, mode: "vega-lite"})</script>
-{%- endmacro %}
