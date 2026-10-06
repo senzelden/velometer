@@ -1,33 +1,45 @@
 // The Compare slide-over: fetches /city/<id>/panel (a server-rendered, escaped fragment), shows it
-// beside the chart and draws its tier chart. Escape and the browser's Back close it; opening one
-// adds a history entry, switching cities inside the panel replaces it.
+// beside the chart and draws its tier chart. Escape and the close button close it; history
+// decisions are the pure functions of compare-model.js, and compare.js owns `popstate`.
+// On phones the panel covers the page: it is modal there (aria-modal, inert background, Tab
+// stays inside); on wide screens it is a side panel and the page stays usable.
 import { loadSeries } from "./data.js";
+import { closeAction, openAction } from "./compare-model.js";
 import { drawTiers } from "./tier-chart.js";
 
-/** @param {HTMLElement} root the <aside>, with a .slideover-close button and a .slideover-body */
-export function createPanel(root) {
+const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * @param {HTMLElement} root the <aside>, with a .slideover-close button and a .slideover-body
+ * @param {{fallbackFocus?: (id: string) => HTMLElement | null}} [opts] where focus goes on close
+ *   when the element that opened the panel is gone (the page was redrawn meanwhile)
+ */
+export function createPanel(root, opts = {}) {
   const body = root.querySelector(".slideover-body");
   const closeBtn = root.querySelector(".slideover-close");
+  const phone = window.matchMedia("(max-width: 700px)");
+  document.body.append(root); // a sibling of header, main and footer, so they can be made inert
   let current = null;
   let returnTo = null;
   let token = 0; // a slow answer must not replace a newer one
 
-  const hide = () => {
-    token++;
-    root.hidden = true;
-    document.body.classList.remove("panel-open");
-    current = null;
-    returnTo?.focus?.();
-    returnTo = null;
-  };
+  const background = () => [...document.body.children].filter((e) => e !== root && e.tagName !== "SCRIPT");
+  const modal = () => !root.hidden && phone.matches;
+  function applyModal() {
+    const on = modal();
+    root.setAttribute("aria-modal", String(on));
+    for (const e of background()) e.inert = on;
+  }
+  phone.addEventListener("change", applyModal);
 
+  /** Show the panel for a city without touching history (compare.js does that on popstate). */
   async function show(id) {
     const mine = ++token;
-    const wasOpen = !root.hidden;
-    if (!wasOpen) returnTo = document.activeElement;
+    if (root.hidden) returnTo = document.activeElement;
     current = id;
     root.hidden = false;
     document.body.classList.add("panel-open");
+    applyModal();
     body.replaceChildren(Object.assign(document.createElement("p"), { className: "empty", textContent: "Loading…" }));
     closeBtn.focus();
     try {
@@ -48,18 +60,36 @@ export function createPanel(root) {
     }
   }
 
+  /** Hide it without touching history; focus goes back to the opener, or to its replacement. */
+  function hide() {
+    const id = current;
+    token++;
+    root.hidden = true;
+    document.body.classList.remove("panel-open");
+    current = null;
+    applyModal();
+    const target = returnTo?.offsetParent && returnTo !== document.body ? returnTo : opts.fallbackFocus?.(id);
+    returnTo = null;
+    target?.focus?.();
+  }
+
   /** Open the panel for a city (a history entry the first time, replaced afterwards). */
-  function open(id) {
+  function open(id, opener) {
     if (id === current && !root.hidden) return;
-    if (root.hidden) history.pushState({ panel: id }, "", location.href);
-    else history.replaceState({ ...history.state, panel: id }, "", location.href);
+    if (opener) returnTo = opener;
+    const action = openAction(!root.hidden);
+    const state = { ...history.state, panel: id };
+    if (action === "push") history.pushState(state, "", location.href);
+    else history.replaceState(state, "", location.href);
+    const keep = returnTo;
     show(id);
+    if (action === "push" && opener) returnTo = keep;
   }
 
   /** Close it, through history so Back and the close button agree. */
   function close() {
     if (root.hidden) return;
-    if (history.state?.panel) history.back();
+    if (closeAction(history.state) === "back") history.back();
     else hide();
   }
 
@@ -68,13 +98,29 @@ export function createPanel(root) {
 
   closeBtn.addEventListener("click", close);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !root.hidden) close();
-  });
-  window.addEventListener("popstate", (e) => {
-    const id = e.state?.panel;
-    if (id) show(id);
-    else if (!root.hidden) hide();
+    if (root.hidden) return;
+    if (e.key === "Escape") return close();
+    if (e.key === "Tab" && modal()) {
+      const items = [...root.querySelectorAll(FOCUSABLE)].filter((x) => !x.closest("[hidden]"));
+      if (!items.length) return;
+      const first = items[0];
+      const last = items.at(-1);
+      if (!root.contains(document.activeElement)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   });
 
-  return { open, close, get current() { return current; } };
+  return {
+    open, close, show, hide,
+    get isOpen() { return !root.hidden; },
+    get current() { return current; },
+  };
 }

@@ -1,7 +1,7 @@
 // Compare page data model: what the views draw, computed from the series payload and the URL
 // state. Pure (no DOM); app/compare.py computes the same Table for the no-JS page.
 import { assignColours, indexSeries, ranks } from "./chart-core.js";
-import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED } from "./state.js";
+import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
 import { PALETTE, labelsOf } from "./data.js";
 
 export const NO_INDEX = "no index: first year is 0 or missing";
@@ -90,4 +90,50 @@ export function sortRows(series, labels, sort) {
 export function nextSort(sort, key) {
   if (sort?.key === key) return { key, dir: -sort.dir };
   return { key, dir: key === "name" ? 1 : -1 };
+}
+
+// ---- history: what the URL must say, whatever the panel did ----
+
+/** The normalised query (what the page shows) of a search string. */
+export const queryOf = (search, known) => serializeState(parseState(search, known));
+
+/** Opening the panel adds one history entry; switching city inside it replaces that entry. */
+export const openAction = (panelOpen) => (panelOpen ? "replace" : "push");
+
+/** Closing goes through history only when the top entry is the panel's own. */
+export const closeAction = (historyState) => (historyState?.panel ? "back" : "hide");
+
+/**
+ * What to do on `popstate`. `popState` is the state of the entry landed on, `shownQuery` the
+ * query of the state the page shows, `urlQuery` the normalised query of the landed-on URL.
+ * Landing on or leaving a panel entry never changes the page: the panel opens or closes and a
+ * stale URL is rewritten to `restore`. Landing anywhere else with a different query re-reads
+ * the URL and redraws (`rerender`).
+ */
+export function popPlan({ popState, panelOpen, shownQuery, urlQuery }) {
+  const panel = popState?.panel ?? null;
+  const stale = urlQuery !== shownQuery;
+  if (panel || panelOpen) return { panel, restore: stale ? shownQuery : null, rerender: false };
+  return { panel: null, restore: null, rerender: stale };
+}
+
+/**
+ * City order of a form submission: the cities already selected keep their place, newly checked
+ * ones follow in form order.
+ */
+export function orderCities(current, checked) {
+  const set = new Set(checked);
+  return [...current.filter((id) => set.has(id)), ...checked.filter((id) => !current.includes(id))];
+}
+
+/** Explanation text without Markdown markers (the note shows plain text). */
+export function plainText(md) {
+  return String(md)
+    .replace(/```[a-z]*\n?/g, "")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*>\s?/gm, "");
 }

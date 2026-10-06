@@ -819,3 +819,18 @@ def test_the_panel_escapes_city_names(setup, monkeypatch):  # noqa: F811
     with _client(create_app(db_path, cfg, maps, docs)) as c:
         html = c.get("/city/berlin/panel").text
     assert "<b>Evil</b>" not in html and "&lt;b&gt;Evil&lt;/b&gt;" in html
+
+
+def test_the_md_filter_escapes_raw_html_everywhere():
+    from velometer.app.main import _md
+
+    html = str(_md("a <b>bold</b> and <img src=x onerror=alert(1)>\n\n<div>block</div>\n\n**ok**"))
+    assert "<b>" not in html and "<img" not in html and "<div>" not in html
+    assert "&lt;b&gt;" in html and "<strong>ok</strong>" in html
+
+
+def test_a_dropped_metric_survives_a_no_js_resubmit(client):
+    html = client.get("/compare?b=fua&m=ab_per_100k&c=berlin").text
+    assert re.search(r'<option value="ab_per_100k" selected>', html)
+    assert not re.search(r'<option value="headline" selected>', html)
+    assert "exists for the city proper (LAU) only" in html

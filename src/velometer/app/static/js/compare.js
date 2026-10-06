@@ -6,7 +6,8 @@ import { renderLines, renderRank, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import {
-  buildModel, colourPlan, colouredIds, nextSort, rankSeries, sortRows,
+  buildModel, colourPlan, colouredIds, nextSort, orderCities, plainText, popPlan, queryOf, rankSeries,
+  sortRows,
 } from "./compare-model.js";
 import { createPanel } from "./panel.js";
 import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
@@ -35,7 +36,12 @@ let colours = {};
 let sort = null;
 let sharedScale = true;
 let sheetOpen = false;
-const panel = createPanel($("#city-panel"));
+document.documentElement.classList.add("compare-js");
+const CONTEXT = "#8f8d86"; // grey cities in small multiples, as their chips
+out.chart.tabIndex = -1; // the last resort for focus: the chart itself
+const cityEl = (id) =>
+  [...document.querySelectorAll(`[data-city="${CSS.escape(id)}"]`)].find((e) => e.offsetParent) ?? out.chart;
+const panel = createPanel($("#city-panel"), { fallbackFocus: cityEl });
 
 const el = (tag, attrs = {}, text) => {
   const e = document.createElement(tag);
@@ -62,7 +68,7 @@ function apply(search) {
 function formSearch() {
   const q = new URLSearchParams();
   const data = new FormData(form);
-  q.set("c", data.getAll("c").join(","));
+  q.set("c", orderCities(state.c, data.getAll("c")).join(","));
   for (const k of ["m", "b", "mode"]) q.set(k, data.get(k));
   q.set("view", state.view);
   const hl = state.hl.filter((id) => data.getAll("c").includes(id));
@@ -72,8 +78,7 @@ function formSearch() {
 
 function syncForm() {
   for (const box of form.querySelectorAll('input[name="c"]')) box.checked = state.c.includes(box.value);
-  form.elements.m.value = state.m;
-  for (const o of form.elements.m.options) o.disabled = o.value === "ab_per_100k" && state.b === "fua";
+  form.elements.m.value = dropped ?? state.m; // the page says so: see the note
   for (const r of form.elements.b) r.checked = r.value === state.b;
   for (const r of form.elements.mode) r.checked = r.value === state.mode;
   form.elements.view.value = state.view;
@@ -110,9 +115,30 @@ for (const a of form.querySelectorAll("a[data-quick]")) {
   });
 }
 
+// Back / Forward: the panel opens or closes, the URL always says what the page shows
+window.addEventListener("popstate", (e) => {
+  const plan = popPlan({
+    popState: e.state,
+    panelOpen: panel.isOpen,
+    shownQuery: serializeState(state),
+    urlQuery: queryOf(location.search, known),
+  });
+  if (plan.panel) panel.show(plan.panel);
+  else if (panel.isOpen) panel.hide();
+  if (plan.restore !== null) {
+    history.replaceState(e.state, "", plan.restore ? `/compare?${plan.restore}` : "/compare");
+  }
+  if (plan.rerender) {
+    state = parseState(location.search, known);
+    dropped = droppedMetric(location.search, state);
+    sort = null;
+    render();
+  }
+});
+
 // the filter sheet on phones: collapsed behind a button
 const toggle = $(".filters-toggle");
-toggle.hidden = false;
+toggle.hidden = false; // aria-expanded=false is how the template renders it, and the sheet starts closed
 const setSheet = (open) => {
   sheetOpen = open;
   form.classList.toggle("open", open);
@@ -131,10 +157,11 @@ const tipFor = (model) => (s, p, label) => {
 
 function showFlag(id, label, rawLabel) {
   const key = `${id}/${state.b}/${rawLabel}`;
-  const text = D.explanations?.timeseries?.[key];
+  const raw = D.explanations?.timeseries?.[key];
+  const text = raw ? plainText(raw) : null;
   const box = out.flag;
   box.replaceChildren();
-  const head = el("h3", {}, `${D.cities[id].name} · ${label} · flagged year`);
+  const head = el("h3", { tabindex: "-1" }, `${D.cities[id].name} · ${label} · flagged year`);
   const close = el("button", { type: "button", class: "flag-close", "aria-label": "Dismiss" }, "×");
   close.addEventListener("click", () => (box.hidden = true));
   box.append(close, head);
@@ -147,6 +174,8 @@ function showFlag(id, label, rawLabel) {
   more.append(el("a", { href: `/city/${encodeURIComponent(id)}/time` }, "Over time tab →"));
   box.append(more);
   box.hidden = false;
+  box.scrollIntoView({ block: "nearest" });
+  head.focus({ preventScroll: true });
 }
 
 function drawChips(model) {
@@ -158,14 +187,14 @@ function drawChips(model) {
     out.chips.append(el("span", { class: "chips-label" }, `Highlight (max ${MAX_HIGHLIGHTED}):`));
   }
   for (const s of model.series) {
-    const b = el("button", { type: "button", class: "chip", "aria-pressed": many ? String(state.hl.includes(s.id)) : "false" });
+    const b = el("button", { type: "button", class: "chip", "data-city": s.id, "aria-pressed": many ? String(state.hl.includes(s.id)) : "false" });
     const dot = el("i");
     dot.style.background = coloured.has(s.id) ? colours[s.id] : "";
     dot.className = coloured.has(s.id) ? "dot-on" : "dot-off";
     b.append(dot, document.createTextNode(s.name));
     b.title = many ? "Highlight this city" : "Open the city panel";
     b.addEventListener("click", () => {
-      if (!many) return panel.open(s.id);
+      if (!many) return panel.open(s.id, b);
       const on = state.hl.includes(s.id);
       const hl = on ? state.hl.filter((i) => i !== s.id) : [...state.hl, s.id].slice(-MAX_HIGHLIGHTED);
       apply(serializeState({ ...state, hl }) || "");
@@ -181,7 +210,10 @@ function drawChart(model) {
   // the axis names the snapshot month of the first list that has a current run
   const lists = model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []);
   const axis = displayLabels(model.labels, lists);
-  const series = present.map((s) => ({ ...s, colour: colours[s.id] }));
+  const series = present.map((s) => ({
+    ...s,
+    colour: colours[s.id] ?? (state.view === "small" ? CONTEXT : undefined),
+  }));
   const onPick = (id, flagLabel) => {
     if (flagLabel) {
       const i = axis.indexOf(flagLabel);
@@ -235,11 +267,11 @@ function drawTable(model) {
   for (const r of rows) {
     const tr = el("tr");
     const name = el("th", { scope: "row" });
-    const a = el("a", { href: `/city/${encodeURIComponent(r.id)}` }, r.name);
+    const a = el("a", { href: `/city/${encodeURIComponent(r.id)}`, "data-city": r.id }, r.name);
     a.addEventListener("click", (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
       e.preventDefault();
-      panel.open(r.id);
+      panel.open(r.id, a);
     });
     name.append(a);
     tr.append(name);
@@ -288,7 +320,7 @@ function extras() {
   }
 }
 
-function render() {
+function render(keepFlag = false) {
   syncForm();
   if (!D) return;
   try {
@@ -298,7 +330,7 @@ function render() {
     out.table.hidden = !table;
     out.chart.hidden = table;
     out.chips.hidden = table;
-    out.flag.hidden = true;
+    if (!keepFlag) out.flag.hidden = true;
     extras();
     if (table) {
       drawTable(model);
@@ -321,13 +353,12 @@ new ResizeObserver(() => {
   if (!w || w === lastWidth) return;
   lastWidth = w;
   clearTimeout(timer);
-  timer = setTimeout(render, 120);
+  timer = setTimeout(() => render(true), 120);
 }).observe(out.chart);
 
 loadSeries()
   .then((data) => {
     D = data;
-    document.documentElement.classList.add("compare-js");
     render();
   })
   .catch((err) => {

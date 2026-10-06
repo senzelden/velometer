@@ -133,8 +133,16 @@ def _num(v: float | int | None, spec: str = ",.1f") -> str:
 ALIGN_STYLE = re.compile(r' style="text-align: (left|right|center);"')
 
 
+class _EscapeHtml(markdown.Extension):
+    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted."""
+
+    def extendMarkdown(self, md):
+        md.preprocessors.deregister("html_block")
+        md.inlinePatterns.deregister("html")
+
+
 def _md(text: str) -> Markup:
-    html = markdown.markdown(text, extensions=["tables", "fenced_code"])
+    html = markdown.markdown(text, extensions=["tables", "fenced_code", _EscapeHtml()])
     return Markup(
         ALIGN_STYLE.sub(
             lambda m: ' class="num"' if m.group(1) == "right" else f' class="align-{m.group(1)}"',

@@ -83,3 +83,50 @@ test("nextSort toggles the direction of the same column", () => {
   assert.deepEqual(nextSort({ key: "2018", dir: -1 }, "2018"), { key: "2018", dir: 1 });
   assert.deepEqual(nextSort({ key: "2018", dir: 1 }, "name"), { key: "name", dir: 1 });
 });
+
+import { closeAction, openAction, orderCities, plainText, popPlan, queryOf } from "../compare-model.js";
+
+test("openAction pushes once, then replaces; closeAction goes back only from a panel entry", () => {
+  assert.equal(openAction(false), "push");
+  assert.equal(openAction(true), "replace");
+  assert.equal(closeAction({ panel: "berlin" }), "back");
+  assert.equal(closeAction(null), "hide");
+  assert.equal(closeAction({}), "hide");
+});
+
+test("popPlan: closing the panel after a view change keeps the page and rewrites the stale URL", () => {
+  // the entry landed on is the pre-panel one (?view=table); the page shows ?view=rank
+  const plan = popPlan({ popState: null, panelOpen: true, shownQuery: "view=rank", urlQuery: "view=table" });
+  assert.deepEqual(plan, { panel: null, restore: "view=rank", rerender: false });
+});
+
+test("popPlan: an unchanged state needs no restore", () => {
+  const plan = popPlan({ popState: null, panelOpen: true, shownQuery: "view=rank", urlQuery: "view=rank" });
+  assert.deepEqual(plan, { panel: null, restore: null, rerender: false });
+});
+
+test("popPlan: Forward onto a panel entry opens it and fixes its URL", () => {
+  const plan = popPlan({ popState: { panel: "paris" }, panelOpen: false, shownQuery: "m=ab_km", urlQuery: "" });
+  assert.deepEqual(plan, { panel: "paris", restore: "m=ab_km", rerender: false });
+});
+
+test("popPlan: with no panel involved a different URL is re-read and redrawn", () => {
+  assert.equal(popPlan({ popState: null, panelOpen: false, shownQuery: "", urlQuery: "m=A" }).rerender, true);
+  assert.equal(popPlan({ popState: null, panelOpen: false, shownQuery: "m=A", urlQuery: "m=A" }).rerender, false);
+});
+
+test("queryOf normalises through parseState", () => {
+  const known = { cities: ["berlin", "paris"], metrics: ["headline", "A"] };
+  assert.equal(queryOf("?m=nope&c=berlin&c=atlantis&view=table", known), "c=berlin&view=table");
+});
+
+test("orderCities keeps the user's order and appends new cities", () => {
+  assert.deepEqual(orderCities(["oslo", "berlin"], ["berlin", "paris", "oslo"]), ["oslo", "berlin", "paris"]);
+  assert.deepEqual(orderCities([], ["a", "b"]), ["a", "b"]);
+});
+
+test("plainText strips Markdown markers", () => {
+  assert.equal(plainText("**campaign** (re-mapping) of `highway=path` see [way 1](https://x.org/1)."),
+    "campaign (re-mapping) of highway=path see way 1.");
+  assert.equal(plainText("a *b* c and snake_case_name"), "a b c and snake_case_name");
+});

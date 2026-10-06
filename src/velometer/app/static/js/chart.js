@@ -112,6 +112,8 @@ export function renderLines(el, model, opts = {}) {
   for (const t of ticks) {
     const ty = yScale(t);
     svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: ty, y2: ty }));
+    // compact cards: the lowest y label would sit on the first x label
+    if (compact && ticks.length > 1 && t === ticks[0]) continue;
     svg.appendChild(
       svgEl("text", { class: "axis-t", x: ml - 6, y: ty + 3.5, "text-anchor": "end" },
         opts.intTicks ? `#${t}` : tickLabel(t)),

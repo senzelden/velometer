@@ -22,7 +22,7 @@
   </fieldset>
   <div class="f-row">
     <label class="f-metric">Metric
-      <select name="m">{% for key, info in metrics.items() %}<option value="{{ key }}"{% if key == state.m %} selected{% endif %}>{{ info.label }}{% if key == "ab_per_100k" %} (LAU only){% endif %}</option>
+      <select name="m">{% for key, info in metrics.items() %}<option value="{{ key }}"{% if key == (state.dropped_metric or state.m) %} selected{% endif %}>{{ info.label }}{% if key == "ab_per_100k" %} (LAU only){% endif %}</option>
       {% endfor %}</select></label>
     <fieldset class="seg"><legend>Boundary</legend>
       <label><input type="radio" name="b" value="lau"{% if state.b == "lau" %} checked{% endif %}> City proper (LAU)</label>
