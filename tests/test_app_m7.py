@@ -1,5 +1,6 @@
 """M7 app foundation: navigation, CSP, the series endpoint, Overview and Cities (Task 10)."""
 
+import json
 import re
 from pathlib import Path
 
@@ -24,7 +25,13 @@ CSP = (
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
-M7_ROUTES = ROUTES + ["/cities", "/data/series.json", "/compare", "/city/berlin/panel"]
+M7_ROUTES = ROUTES + [
+    "/cities",
+    "/data/series.json",
+    "/compare",
+    "/city/berlin/panel",
+    "/stories",
+]
 # an inline <script> with a body; JSON data blocks are not executed and are allowed under the CSP
 INLINE_SCRIPT = re.compile(
     r"<script(?![^>]*\bsrc=)(?![^>]*\btype=\"application/json\")[^>]*>\s*\S", re.I
@@ -834,3 +841,227 @@ def test_a_dropped_metric_survives_a_no_js_resubmit(client):
     assert re.search(r'<option value="ab_per_100k" selected>', html)
     assert not re.search(r'<option value="headline" selected>', html)
     assert "exists for the city proper (LAU) only" in html
+
+
+# ---------------------------------------------------------------------------------------------
+# Task 13: Stories
+# ---------------------------------------------------------------------------------------------
+from urllib.parse import parse_qs  # noqa: E402
+
+from tests.test_app import client_21, setup_21  # noqa: E402, F401 - `client_21`'s fixtures
+from velometer.content.models import STORY_STEPS  # noqa: E402
+
+STORY_YAML = (
+    """\
+city_id: combined
+title: "All <b>cities</b>"
+dek: One yardstick.
+sections:
+"""
+    + "".join(
+        f"  - heading: Heading {step}\n    step: {step}\n    paragraphs:\n"
+        f"      - Text of {step} [@en-src] and data [#ts].\n"
+        for step in STORY_STEPS
+    )
+    + """\
+  - heading: Against published figures
+    role: figures
+    paragraphs:
+      - Figures text [@en-src].
+quotes:
+  - {excerpt: en-src/e1, after: 6}
+data_refs:
+  - {id: ts, label: velometer series, route: /city/berlin/time}
+"""
+)
+
+
+def _story_content(root: Path, story: str | None = STORY_YAML) -> Path:
+    (root / "sources").mkdir(parents=True)
+    (root / "narratives").mkdir()
+    (root / "sources" / "x.yaml").write_text(SOURCE_YAML)
+    if story is not None:
+        (root / "narratives" / "combined.yaml").write_text(story)
+    return root
+
+
+@pytest.fixture
+def story_client(setup_21, tmp_path):  # noqa: F811
+    db_path, cfg, maps, docs = setup_21
+    app = create_app(db_path, cfg, maps, docs, content_dir=_story_content(tmp_path / "content"))
+    with _client(app) as c:
+        yield c
+
+
+def _sections(html: str) -> dict[str, str]:
+    """The html of each `<section data-step=...>`, by step, in page order."""
+    found = re.findall(r'<section class="story-step" data-step="([a-z]+)".*?</section>', html, re.S)
+    bodies = re.findall(
+        r'(<section class="story-step" data-step="[a-z]+".*?</section>)', html, re.S
+    )
+    return dict(zip(found, bodies, strict=True))
+
+
+def _explore(section: str) -> tuple[str, dict[str, list[str]]]:
+    href = (
+        re.search(r'<p class="explore"><a href="([^"]+)"', section).group(1).replace("&amp;", "&")
+    )
+    path, _, query = href.partition("?")
+    return path, parse_qs(query)
+
+
+def _headlines(client) -> dict[str, float]:
+    D = client.get("/data/series.json").json()
+    out = {}
+    for cid in D["cities"]:
+        cur = [p for p in D["series"][f"{cid}/lau"] if p["label"] == "current"]
+        if cur and cur[0]["headline"] is not None:
+            out[cid] = cur[0]["headline"]
+    return out
+
+
+def test_stories_has_one_section_per_step_in_order_and_the_figures_after_them(story_client):
+    html = story_client.get("/stories").text
+    assert re.findall(r'data-step="([a-z]+)"', html) == list(STORY_STEPS)
+    assert list(_sections(html)) == list(STORY_STEPS)
+    steps_end = html.rindex('data-step="')
+    assert html.index("Against published figures") > steps_end  # no step, so no sticky chart
+    assert "Figures text" in html
+    assert 'aria-current="page">Stories</a>' in _nav(html)
+
+
+def test_each_step_has_an_explore_link_with_its_compare_query(story_client):
+    html = story_client.get("/stories").text
+    secs = _sections(html)
+    head = _headlines(story_client)
+    ids = list(story_client.get("/data/series.json").json()["cities"])
+    assert len(ids) == 21 and len(head) == 20  # paris has no current run, so no rank
+    by_rank = sorted(head, key=lambda i: (-head[i], i))  # names of the fixture sort like ids
+
+    path, q = _explore(secs["all"])
+    assert path == "/compare" and q["c"] == [",".join(ids)] and "m" not in q and "mode" not in q
+    path, q = _explore(secs["leaders"])
+    assert q["c"] == [",".join(by_rank[:5])] and "m" not in q
+    path, q = _explore(secs["tail"])
+    assert q["c"] == [",".join(sorted(head, key=lambda i: (head[i], i))[:5])] and "m" not in q
+    path, q = _explore(secs["jumps"])  # no km-jump flag in the fixture: every city
+    assert path == "/compare" and q["c"] == [",".join(ids)] and q["m"] == ["ab_km"]
+
+
+def test_flagged_cities_are_those_with_a_km_jump_year_not_every_flag():
+    from velometer.app import story
+
+    def pts(*flags):
+        return [{"label": str(2020 + i), "flags": f} for i, f in enumerate(flags)]
+
+    payload = {
+        "cities": {i: {"name": i.title()} for i in ["a", "b", "c", "d"]},
+        "series": {
+            "a/lau": pts("", "km_jump;single_mapper"),
+            "b/lau": pts("activity_spike", "tag_drift"),
+            "c/lau": pts("km_jump"),
+            "d/lau": pts(""),
+        },
+    }
+    assert story.pick(payload, "flagged") == ["a", "c"]
+    state = story.step_state(payload, {"c": "flagged", "m": "ab_km"})
+    assert state.c == ["a", "c"] and state.hl == []  # both are drawn in colour anyway
+
+
+def test_a_panel_visit_does_not_break_the_city_tabs(client):
+    """The panel used to put `request` into the cached city context, and the next tab 500ed."""
+    assert client.get("/city/berlin/panel").status_code == 200
+    for tab in ["", "/time", "/tiers", "/figures"]:
+        assert client.get(f"/city/berlin{tab}").status_code == 200, tab
+
+
+def test_growth_chart_and_link_use_the_same_metric_and_scale(story_client):
+    """The spike drew the headline under a text about A+B km: one state now drives both."""
+    html = story_client.get("/stories").text
+    href = re.search(r'<a href="([^"]+)">Explore this chart', _sections(html)["growth"]).group(1)
+    assert "m=ab_km&amp;mode=index" in href
+    config = json.loads(re.search(r'id="story-config">(.*?)</script>', html, re.S).group(1))
+    state = config["growth"]["state"]
+    assert (state["m"], state["mode"]) == ("ab_km", "index")
+    assert "ab_km" in config["growth"]["title"] or "A+B km" in config["growth"]["title"]
+    assert "index" in config["growth"]["title"]
+
+
+def test_the_bezirke_step_links_to_the_bezirk_tab_when_the_city_has_bezirke(
+    subarea_setup,  # noqa: F811
+    tmp_path,
+):
+    db_path, cfg, maps, docs = subarea_setup
+    app = create_app(db_path, cfg, maps, docs, content_dir=_story_content(tmp_path / "content"))
+    with _client(app) as c:
+        html = c.get("/stories").text
+        assert _explore(_sections(html)["bezirke"]) == ("/city/berlin/bezirke", {})
+        assert c.get("/city/berlin/bezirke").status_code == 200  # the link is not dead
+        cfg_json = json.loads(re.search(r'id="story-config">(.*?)</script>', html, re.S).group(1))
+        assert cfg_json["bezirke"]["kind"] == "bezirke" and cfg_json["bezirke"]["hl"]
+
+
+def test_a_step_without_data_has_no_explore_link_and_no_chart_config(story_client):
+    """The fixture has no Bezirke: no dead link to a 404 tab, and nothing for story.js to draw."""
+    html = story_client.get("/stories").text
+    sec = _sections(html)["bezirke"]
+    assert "Explore this chart" not in sec
+    assert "bezirke" not in json.loads(
+        re.search(r'id="story-config">(.*?)</script>', html, re.S).group(1)
+    )
+
+
+def test_stories_without_combined_yaml_says_the_story_is_not_written_yet(setup, tmp_path):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    content = _story_content(tmp_path / "content", story=None)
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        r = c.get("/stories")
+    assert r.status_code == 200 and "story not written yet" in r.text
+    assert "data-story-chart" not in r.text and "story.js" not in r.text
+
+
+def test_stories_with_unreadable_content_says_so_instead_of_failing(setup, tmp_path):  # noqa: F811
+    db_path, cfg, maps, docs = setup
+    content = _story_content(tmp_path / "content", story="city_id: [unclosed\n")
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
+        r = c.get("/stories")
+    assert r.status_code == 200 and "narratives could not be loaded" in r.text
+    assert "story not written yet" not in r.text
+
+
+def test_stories_works_without_javascript(story_client):
+    """The article, a table per step and the citations are all in the HTML; the chart box is
+    hidden until story.js shows it, so there is no empty chart without JavaScript."""
+    html = story_client.get("/stories").text
+    assert re.search(r"<aside[^>]*data-story-chart[^>]*\shidden", html)
+    assert "data-chart=" not in html
+    secs = _sections(html)
+    for step in ("all", "leaders", "tail", "growth", "jumps"):
+        assert '<details class="step-values" open>' in secs[step], step
+        assert '<table class="step-table">' in secs[step], step
+    assert "Text of leaders" in secs["leaders"]
+    assert '<sup><a href="#src-1">1</a></sup>' in html and '<sup class="dref">' in html
+    assert 'id="src-1"' in html and 'id="ref-1"' in html  # the lists the numbers point at
+    figures = html[html.index('<section class="narrative story-figures">') :]
+    assert '<figure class="pullquote">' in figures.split("</section>")[0]  # `after: 6`: its text
+
+
+def test_stories_escapes_the_narrative(story_client):
+    html = story_client.get("/stories").text
+    assert "<b>cities</b>" not in html and "All &lt;b&gt;cities&lt;/b&gt;" in html
+
+
+def test_the_story_table_has_a_row_per_city_with_first_and_current_values(story_client):
+    html = story_client.get("/stories").text
+    table = re.search(r'<table class="step-table">.*?</table>', _sections(html)["all"], re.S)[0]
+    assert len(re.findall(r"<tr>", table)) == 21 + 1  # and the header row
+    assert "Jan 2024" in table and re.search(r">[A-Z][a-z]{2} 2026<", table)  # the snapshot month
+    assert 'href="/city/berlin"' in table
+
+
+def test_story_js_draws_the_server_state_and_honours_reduced_motion():
+    js = (STATIC / "js" / "story.js").read_text()
+    assert "IntersectionObserver" in js and "prefers-reduced-motion" in js
+    css = (STATIC / "app.css").read_text()
+    block = css[css.index("@media (prefers-reduced-motion: reduce)") :]
+    assert "animation: none" in block and "transition: none" in block

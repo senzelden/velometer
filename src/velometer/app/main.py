@@ -31,6 +31,7 @@ from markupsafe import Markup
 
 from velometer import timeseries as ts
 from velometer.app import compare as cmp
+from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import render_explainer, render_narrative, safe_url
@@ -73,6 +74,18 @@ OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 OSM_LINKS = {
     "copyright": "https://www.openstreetmap.org/copyright",
     "way": "https://www.openstreetmap.org/way/",
+}
+# The Stories page: what each chart step shows. `c` and `hl` are selection rules (story.pick;
+# `hl: "c"` highlights every selected city), `m` and `mode` the Compare metric and scale; `href`
+# is a fixed destination (the Bezirk tab). The Explore link and the sticky chart both come from it.
+STORY_CITY = "berlin"
+STEP_COMPARE = {
+    "all": {"c": "all", "hl": "leaders"},
+    "leaders": {"c": "leaders"},
+    "tail": {"c": "tail"},
+    "growth": {"c": "all", "hl": "risers", "m": "ab_km", "mode": "index"},
+    "jumps": {"c": "flagged", "m": "ab_km"},
+    "bezirke": {"href": f"/city/{STORY_CITY}/bezirke"},
 }
 # No inline script or style, no third-party host except the OSM tiles (images), no framing.
 CSP = (
@@ -512,7 +525,9 @@ def create_app(
         """The Compare slide-over: a fragment (no layout), fetched by panel.js. A direct visit
         shows the same fragment; the full page is /city/<id>."""
         ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
-        return templates.TemplateResponse(request, "city/panel.html", ctx)
+        # a copy: TemplateResponse adds `request` to the dict it is given, and this one is cached
+        # (a tab page spreads it next to its own `request=`)
+        return templates.TemplateResponse(request, "city/panel.html", {**ctx})
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):
@@ -523,6 +538,56 @@ def create_app(
         if tab not in {k for k, _, suffix in TABS if suffix}:
             raise HTTPException(404, f"unknown tab {tab!r}")
         return city_page(request, city_id, tab, data)
+
+    def story_context(data: ReportData, payload: dict, n, sources) -> dict:
+        """The Stories page: the combined narrative's sections with the chart step each names."""
+        nar = render_narrative(n, sources)
+        metrics = cmp.metric_info(HEADLINE_UNIT, data.preset_units())
+        steps = {}
+        for step, spec in STEP_COMPARE.items():
+            built = (
+                story_model.bezirke_step(payload, STORY_CITY, spec["href"])
+                if "href" in spec
+                else story_model.lines_step(payload, spec, metrics)
+            )
+            if built:
+                steps[step] = built
+        story, figures = [], []
+        for raw, sec in zip(n.sections, nar.sections, strict=True):
+            if sec.role == "figures":
+                figures.append(sec)
+            else:
+                story.append({"step": raw.step, "sec": sec})
+        order = [s["step"] for s in story if s["step"] in steps]
+        config = {
+            step: {k: v for k, v in built.items() if k != "table"}
+            | {
+                "heading": next(s["sec"].heading for s in story if s["step"] == step),
+                "n": order.index(step) + 1,
+                "of": len(order),
+            }
+            for step, built in steps.items()
+            if step in order
+        }
+        sources_cited, refs_cited = nar.cited(nar.sections)
+        return {
+            "nar": nar, "story": story, "figures": figures, "steps": steps, "config": config,
+            "cited_sources": sources_cited, "cited_refs": refs_cited,
+        }  # fmt: skip
+
+    @app.get("/stories", response_class=HTMLResponse)
+    async def stories(request: Request, data: Data):
+        payload = cache.get(
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+        )
+        narratives, sources, _, error = cache.get("content", fp(request), content())
+
+        def build():
+            n = narratives.get("combined")
+            return None if n is None else story_context(data, payload, n, sources)
+
+        ctx = cache.get("stories", fp(request), build) or {}
+        return page(request, "stories.html", "stories", data, content_error=error, **ctx)
 
     @app.get("/differences", response_class=HTMLResponse)
     async def differences(request: Request, data: Data):

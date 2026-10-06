@@ -367,3 +367,46 @@ table.compare-table th[scope="row"] { font-weight: 400; white-space: nowrap; col
 .flag-item summary { cursor: pointer; }
 .flag-item .rule { font-size: 0.78rem; background: var(--panel); border-radius: 4px; padding: 0.05rem 0.4rem; margin-left: 0.4rem; color: var(--ink-2); }
 .flag-item .explanation { font-size: 0.88rem; }
+
+/* ---------- stories: the sticky chart ---------- */
+.stories { display: block; }
+.story-sticky[hidden] { display: none; }
+.story-text { max-width: 44rem; }
+.story-step { margin: 0 0 2.5rem; }
+.story-step h2 { font-family: var(--serif); font-size: 1.4rem; border: 0; margin: 0 0 0.5rem; padding: 0; }
+.story-step { position: relative; }
+.story-step.is-active::before { content: ""; position: absolute; left: -0.8rem; top: 0.2rem; bottom: 0; width: 3px; background: var(--accent); border-radius: 2px; }
+.story-step .explore { font: 0.92rem system-ui, sans-serif; margin: 0.75rem 0 0; }
+.step-values { margin: 0.75rem 0 0; font: 0.88rem/1.4 system-ui, sans-serif; }
+.step-values > summary { cursor: pointer; color: var(--ink-2); }
+.step-table { font-size: 0.86rem; }
+.story-figures, .story-cited { margin-top: 1rem; }
+.story-sticky .eyebrow { margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 600; }
+.story-sticky h2 { border: 0; margin: 0.15rem 0 0; padding: 0; font-size: 1.05rem; }
+.story-sticky .chart { margin: 0.4rem 0; }
+.story-sticky .meta { margin: 0.2rem 0; }
+.story-plot.fade-in { animation: story-fade 0.3s ease-out; }
+@keyframes story-fade { from { opacity: 0; } to { opacity: 1; } }
+/* with JS: the chart is pinned while the sections scroll past it */
+@media (max-width: 61.99rem) {
+  .story-js .story-sticky {
+    position: sticky; top: 0; z-index: 10; background: var(--paper); padding: 0.4rem 0 0.2rem;
+    border-bottom: 1px solid var(--grid); margin: 0 0 1rem;
+  }
+  .story-js .story-sticky .meta { display: none; }
+  .story-js .story-sticky .meta:last-child { display: block; }
+}
+@media (min-width: 62rem) {
+  .story-js .stories { display: grid; grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); gap: 0 2.5rem; align-items: start; }
+  .story-js .story-sticky {
+    grid-column: 2; grid-row: 1; position: sticky; top: 1rem; background: var(--surface);
+    border: 1px solid var(--grid); border-radius: 8px; padding: 0.8rem 1rem 0.5rem;
+  }
+  .story-js .story-text { grid-column: 1; grid-row: 1; }
+  .story-js .story-step { min-height: 26rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-plot.fade-in { animation: none; }
+  .s { transition: none; }
+  html { scroll-behavior: auto; }
+}
