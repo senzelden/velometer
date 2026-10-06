@@ -10,6 +10,7 @@ export function scaleLinear([d0, d1], [r0, r1]) {
 
 /** "Nice" tick values that cover [min, max], about `count` of them. */
 export function niceTicks(min, max, count = 5) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [];
   let lo = min;
   let hi = max;
   if (hi === lo) hi = lo + 1;
@@ -48,6 +49,8 @@ export function ranks(valuesByCity) {
  * [top, bottom]. Returns {id: y}.
  */
 export function placeLabels(items, minGap, top, bottom) {
+  // Too many labels for the range: compress the gap so everything still fits.
+  if (items.length > 1) minGap = Math.min(minGap, (bottom - top) / (items.length - 1));
   const sorted = items
     .map((it, i) => ({ id: it.id, y: it.y, i }))
     .sort((a, b) => a.y - b.y || a.i - b.i);
@@ -115,4 +118,9 @@ export function tickLabel(v) {
   const a = Math.abs(v);
   if (a >= 10000) return (v / 1000).toLocaleString("en-GB", { maximumFractionDigits: 0 }) + "k";
   return v.toLocaleString("en-GB", { maximumFractionDigits: a < 10 && v % 1 ? 1 : 0 });
+}
+
+/** Exact value for tooltips: thousands separators, at most one decimal, never "12k". */
+export function formatValue(v) {
+  return v.toLocaleString("en-GB", { maximumFractionDigits: 1 });
 }

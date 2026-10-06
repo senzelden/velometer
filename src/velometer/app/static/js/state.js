@@ -23,7 +23,13 @@ export function parseState(search, known) {
   const q = new URLSearchParams(search);
   let c = dedupe(list(q.get("c"))).filter((id) => known.cities.includes(id));
   if (!c.length) c = [...DEFAULTS.c];
-  const m = known.metrics.includes(q.get("m")) ? q.get("m") : DEFAULTS.m;
+  const wanted = q.get("m");
+  // The default is checked too: if the known list lacks it, fall back to its first entry.
+  const m = known.metrics.includes(wanted)
+    ? wanted
+    : known.metrics.includes(DEFAULTS.m)
+      ? DEFAULTS.m
+      : (known.metrics[0] ?? DEFAULTS.m);
   const hl = dedupe(list(q.get("hl")))
     .filter((id) => c.includes(id))
     .slice(0, MAX_HIGHLIGHTED);

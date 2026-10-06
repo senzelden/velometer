@@ -8,6 +8,7 @@ import {
   placeLabels,
   assignColours,
   xLabels,
+  formatValue,
 } from "../chart-core.js";
 
 test("scaleLinear maps domain to range, including inverted ranges", () => {
@@ -86,4 +87,22 @@ test("niceTicks covers the range", () => {
 test("xLabels turns current into the snapshot month", () => {
   assert.deepEqual(xLabels(["2018", "2025", "current"], "2026-10-03"), ["2018", "2025", "Oct 2026"]);
   assert.deepEqual(xLabels(["current"], new Date(Date.UTC(2027, 0, 5))), ["Jan 2027"]);
+});
+
+test("placeLabels compresses the gap when labels exceed the range", () => {
+  const items = Array.from({ length: 21 }, (_, i) => ({ id: `c${i}`, y: 100 + (i % 3) }));
+  const y = placeLabels(items, 12, 0, 200);
+  const ys = items.map((it) => y[it.id]).sort((a, b) => a - b);
+  for (let i = 1; i < ys.length; i++) assert.ok(ys[i] - ys[i - 1] >= 10 - 1e-9);
+  assert.ok(Math.min(...ys) >= 0 && Math.max(...ys) <= 200);
+});
+
+test("niceTicks ignores non-finite input instead of returning garbage", () => {
+  assert.deepEqual(niceTicks(NaN, 10), []);
+  assert.deepEqual(niceTicks(0, Infinity), []);
+});
+
+test("formatValue is exact to one decimal and never abbreviates", () => {
+  assert.equal(formatValue(12345.678), "12,345.7");
+  assert.equal(formatValue(42), "42");
 });

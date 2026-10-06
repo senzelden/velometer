@@ -64,3 +64,9 @@ test("parseState never mutates DEFAULTS", () => {
   s.c.push("x");
   assert.equal(DEFAULTS.c.length, 5);
 });
+
+test("default metric is checked against known.metrics", () => {
+  const k = { cities: known.cities, metrics: ["ab_km", "qecio"] };
+  assert.equal(parseState("", k).m, "ab_km");
+  assert.equal(parseState("m=qecio", k).m, "qecio");
+});

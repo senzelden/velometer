@@ -1,6 +1,6 @@
 // Hand-rolled SVG charts. Layout maths lives in chart-core.js; this file only draws.
 // Everything is built with createElementNS / textContent: nothing from data reaches innerHTML.
-import { scaleLinear, niceTicks, placeLabels, tickLabel } from "./chart-core.js";
+import { scaleLinear, niceTicks, placeLabels, tickLabel, formatValue } from "./chart-core.js";
 
 const NS = "http://www.w3.org/2000/svg";
 export const TIER_COLOURS = { A: "#1f5fae", B: "#6fa5e6", C: "#1a9e77", D: "#eb9a54", E: "#a59fc9" };
@@ -23,6 +23,11 @@ function emptyNote(el, message = "No values for this selection.") {
   p.className = "empty";
   p.textContent = message;
   el.replaceChildren(p);
+}
+
+function nameSvg(svg, label) {
+  svg.setAttribute("aria-label", label);
+  svg.insertBefore(svgEl("title", {}, label), svg.firstChild);
 }
 
 function makeTip(el) {
@@ -64,7 +69,9 @@ export function renderLines(el, model, opts = {}) {
   const n = labels.length;
   const live = model.series.filter((s) => !s.ghost);
   const coloured = live.filter((s) => s.colour);
-  const values = model.series.flatMap((s) => s.points.map((p) => p.value)).filter((v) => v != null);
+  const values = model.series
+    .flatMap((s) => s.points.map((p) => p.value))
+    .filter(Number.isFinite);
   if (!values.length) return emptyNote(el);
 
   let [lo, hi] = opts.yDomain ?? [Math.min(...values), Math.max(...values)];
@@ -93,7 +100,7 @@ export function renderLines(el, model, opts = {}) {
   const yScale = scaleLinear([lo, hi], opts.invert ? [mt, mt + ih] : [mt + ih, mt]);
 
   const svg = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  if (opts.label) svg.setAttribute("aria-label", opts.label);
+  nameSvg(svg, opts.label ?? (model.yTitle ? `Line chart: ${model.yTitle}` : "Line chart"));
   for (const t of ticks) {
     const ty = yScale(t);
     svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: ty, y2: ty }));
@@ -124,7 +131,7 @@ export function renderLines(el, model, opts = {}) {
   const groups = {};
   const endItems = [];
   for (const s of order) {
-    const pts = s.points.map((p, i) => (p.value == null ? null : [x(i), yScale(p.value)]));
+    const pts = s.points.map((p, i) => (Number.isFinite(p.value) ? [x(i), yScale(p.value)] : null));
     geo[s.id] = pts;
     let d = "";
     let pen = false;
@@ -142,6 +149,9 @@ export function renderLines(el, model, opts = {}) {
         if (p.flags?.length) {
           g.appendChild(svgEl("circle", { class: "flag", cx: pts[i][0], cy: pts[i][1],
             r: compact ? 3 : s.colour ? 4.5 : 3.5 }));
+        } else if (!s.ghost && !pts[i - 1] && !pts[i + 1]) {
+          // isolated point between gaps: a line would be invisible, so draw a dot
+          g.appendChild(svgEl("circle", { cx: pts[i][0], cy: pts[i][1], r: 2.4, fill: s.colour ?? "#8a8a8a" }));
         } else if (s.colour && !compact && n <= 12) {
           g.appendChild(svgEl("circle", { cx: pts[i][0], cy: pts[i][1], r: 2.2, fill: s.colour }));
         }
@@ -221,7 +231,7 @@ export function renderLines(el, model, opts = {}) {
     hp.setAttribute("cy", pts[i][1]);
     hp.setAttribute("visibility", "visible");
     const p = s.points[i];
-    tip.textContent = opts.tip ? opts.tip(s, p, labels[i]) : `${s.name} · ${labels[i]}: ${tickLabel(p.value)}`;
+    tip.textContent = opts.tip ? opts.tip(s, p, labels[i]) : `${s.name} · ${labels[i]}: ${formatValue(p.value)}`;
     placeTip(tip, pts[i][0], pts[i][1], W);
   };
   hit.addEventListener("pointermove", show);
@@ -288,7 +298,7 @@ export function renderRank(el, model, opts = {}) {
 export function renderSparkline(el, points, opts = {}) {
   const W = opts.width ?? 120;
   const H = opts.height ?? 28;
-  const vals = points.map((p) => p.value).filter((v) => v != null);
+  const vals = points.map((p) => p.value).filter(Number.isFinite);
   if (!vals.length) return emptyNote(el, "No data");
   const lo = Math.min(...vals);
   const hi = Math.max(...vals);
@@ -298,13 +308,13 @@ export function renderSparkline(el, points, opts = {}) {
   let pen = false;
   let last = null;
   points.forEach((p, i) => {
-    if (p.value == null) { pen = false; return; }
+    if (!Number.isFinite(p.value)) { pen = false; return; }
     last = [x(i), y(p.value)];
     d += `${pen ? "L" : "M"}${last[0].toFixed(1)},${last[1].toFixed(1)}`;
     pen = true;
   });
   const svg = svgEl("svg", { class: "spark", width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  if (opts.label) svg.setAttribute("aria-label", opts.label);
+  nameSvg(svg, opts.label ?? "Sparkline");
   svg.appendChild(svgEl("path", { class: "line", d, fill: "none", stroke: "currentColor", "stroke-width": 1.5 }));
   svg.appendChild(svgEl("circle", { cx: last[0], cy: last[1], r: 2.2, fill: "currentColor" }));
   el.replaceChildren(svg);
@@ -328,7 +338,7 @@ export function renderTiers(el, model, opts = {}) {
   const x = (i) => ml + i * step;
 
   const svg = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  if (opts.label) svg.setAttribute("aria-label", opts.label);
+  nameSvg(svg, opts.label ?? "Stacked area chart: mapped km by tier");
   for (const t of ticks) {
     svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: y(t), y2: y(t) }));
     svg.appendChild(svgEl("text", { class: "axis-t", x: ml - 6, y: y(t) + 3.5, "text-anchor": "end" }, tickLabel(t)));
@@ -375,6 +385,7 @@ export function renderTiers(el, model, opts = {}) {
       ...[...model.layers].reverse().map((l) => `${l.key}: ${fmt(l.values[i])}`),
       `Total ${fmt(totals[i])}`].join("\n");
     tip.style.whiteSpace = "pre";
+    tip.hidden = false; // measure only once visible
     placeTip(tip, x(i), mt + tip.offsetHeight + 10, W);
   };
   hit.addEventListener("pointermove", move);
