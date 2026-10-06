@@ -1,0 +1,82 @@
+city_id: madrid
+title: "Madrid: slow growth under three years of footway mapping"
+dek: >-
+  Mapped A+B rose from 282 to 353 km between 2018 and October 2026, while the headline moved
+  only from 38.1 to 42.5 A+B km per 100 km of main roads.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Madrid's mapped A+B was flat from 2018 to 2020, at 282 and then 278 km, and has risen a
+        little every year since, to 353 km now. The headline (A+B km per 100 km of main roads)
+        went from 38.1 to 42.5. Inside the total the map shifted between tiers: in 2021 tier A
+        rose from 186 to 225 km while tier B fell from 93 to 63 km. That year was not flagged
+        and has no recorded explanation.
+      - >-
+        From 2024 on, Madrid's activity flags are a pedestrian campaign. Mappers added tens of
+        thousands of sidewalks and crossings, and the crossings split existing cycleways into
+        pieces, so the number of tiered ways nearly doubled while A+B grew by only 8.5 km
+        [#ts-madrid-2025]. Some cycleways also gained foot-access tags and moved from tier A to
+        B. The current point is the same mapping continuing, not a new event
+        [#ts-madrid-current]. The headline slipped from 43.1 to 42.5 during 2026 even as A+B
+        rose, because more main-road km were mapped.
+      - >-
+        The wider urban area (FUA) rose from 973 to 1,196 km of A+B by 2026 and has slipped to
+        1,182 km since; that last change was not flagged and has no recorded explanation.
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city's network figure, as the press reported it from the city's mobility department
+        [@madrid-ultimahora-1167km], is more than three times our A+B. The official release
+        behind it was not found, so the figure is secondary. It includes ciclocarriles, lanes
+        shared with motor traffic [@madrid-opendata-infraestructura-ciclista]; our tiers leave
+        such shared lanes out. Clean Cities' 8% protected sits close to our 7.7%, both against the whole
+        road network of the municipio; their data were collected by early 2025 [@cc2025-report].
+        BikeNetKit's network is longer than ours (−26.3%) because it includes living streets
+        [#rc-madrid-bnk_network_km]. QECIO reports the whole Comunidad de Madrid
+        [#rc-madrid-qecio_main_km].
+quotes:
+  - excerpt: madrid-ultimahora-1167km/network-1167
+    after: 3
+  - excerpt: madrid-opendata-infraestructura-ciclista/ciclocarril
+    after: 3
+  - excerpt: cc2025-report/metric
+    after: 3
+facts:
+  - {id: ab-2018, expr: series.madrid.lau.2018.ab_km, printed: "282"}
+  - {id: ab-2020, expr: series.madrid.lau.2020.ab_km, printed: "278"}
+  - {id: ab-now, expr: series.madrid.lau.current.ab_km, printed: "353"}
+  - {id: hl-2018, expr: series.madrid.lau.2018.headline, printed: "38.1"}
+  - {id: hl-now, expr: series.madrid.lau.current.headline, printed: "42.5"}
+  - {id: hl-2026, expr: series.madrid.lau.2026.headline, printed: "43.1"}
+  - {id: a-2020, expr: series.madrid.lau.2020.A, printed: "186"}
+  - {id: a-2021, expr: series.madrid.lau.2021.A, printed: "225"}
+  - {id: b-2020, expr: series.madrid.lau.2020.B, printed: "93"}
+  - {id: b-2021, expr: series.madrid.lau.2021.B, printed: "63"}
+  - {id: ab-gain-2025, expr: delta.madrid.lau.2024.2025.ab_km, printed: "8.5"}
+  - {id: fua-ab-2018, expr: series.madrid.fua.2018.ab_km, printed: "973"}
+  - {id: fua-ab-2026, expr: series.madrid.fua.2026.ab_km, printed: "1,196"}
+  - {id: fua-ab-now, expr: series.madrid.fua.current.ab_km, printed: "1,182"}
+  - {id: cc-ratio, expr: gap.madrid.cc_ratio.theirs, printed: "8%"}
+  - {id: our-ratio, expr: gap.madrid.cc_ratio.ours, printed: "7.7%"}
+  - {id: bnk-gap, expr: gap.madrid.bnk_network_km.gap_pct, printed: "−26.3%"}
+literals:
+  - 100 km
+data_refs:
+  - id: ts-madrid-2025
+    label: velometer time-series explanation, madrid/lau/2025
+    file: docs/review/m3_timeseries.md
+    locator: "### madrid/lau/2025"
+  - id: ts-madrid-current
+    label: velometer time-series explanation, madrid/lau/current
+    file: docs/review/m3_timeseries.md
+    locator: "### madrid/lau/current"
+  - id: rc-madrid-bnk_network_km
+    label: velometer reconciliation explanation, madrid/bnk_network_km
+    file: docs/reconciliation.md
+    locator: "### madrid/bnk_network_km"
+  - id: rc-madrid-qecio_main_km
+    label: velometer reconciliation explanation, madrid/qecio_main_km
+    file: docs/reconciliation.md
+    locator: "### madrid/qecio_main_km"

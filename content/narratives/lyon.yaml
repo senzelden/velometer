@@ -1,0 +1,81 @@
+city_id: lyon
+title: "Lyon: flat until 2020, then a rise that sped up"
+dek: >-
+  Mapped A+B rose from 64 to 113 km between 2018 and October 2026, and the headline
+  from 31.0 to 52.3 A+B km per 100 km of main roads.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Lyon's map barely moved at first: A+B stayed between 61 and 64 km from 2018 to 2020, and
+        the headline (A+B km per 100 km of main roads) slipped from 31.0 to 28.4. It then
+        rose, slowly until 2023 and faster since: from 74 km in 2023 to 113 km now, with the
+        headline from 33.9 to 52.3. Separated tracks (tier A) more than doubled, from 40 to 93
+        km. Painted lanes (tier D) are still the largest tier, up from 110 to 173 km.
+      - >-
+        The 2025 point is flagged for activity, but the spike was a July 2024 sidewalk and
+        crossing campaign. Footways carry no tier, and that year's cycling gain came mostly from
+        cycleways drawn beside roads [#ts-lyon-2025]. How much of the rise is new on the ground
+        the map cannot say; the local cycling association's review of the Voies Lyonnaises
+        programme gives its own count [@lyon-lavilleavelo-bilan-vl].
+      - >-
+        In the wider urban area (FUA) A+B rose from 543 to 894 km. Its 2026 step is ordinary
+        mapping by many mappers, but part of it is retagging: mapped footways and tracks that
+        became designated paths [#ts-lyon-fua-2026]. That is a change in the map, not new
+        infrastructure.
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        Clean Cities gives Lyon 14% protected, a ratio of protected km to the whole road network
+        [@cc2025-report]. Our 17.7% counts each side of a road. On the centreline basis the gap
+        shrinks to +7.6%, and against Clean Cities' own road network it matches their figure
+        [#rc-lyon-cc_ratio]. Both refer to the commune; their data were collected by early 2025,
+        ours come from the October 2026 map. The Métropole's own total covers the whole Métropole and adds
+        contraflow streets, greenways and paved shoulders [@lyon-plan-velo-2024], so it differs
+        in area and scope. QECIO reports the Rhône département; measured on that area, the main
+        roads agree [#rc-lyon-qecio_main_km].
+quotes:
+  - excerpt: lyon-lavilleavelo-bilan-vl/delivered
+    after: 1
+  - excerpt: cc2025-report/metric
+    after: 3
+  - excerpt: lyon-plan-velo-2024/breakdown-2023
+    after: 3
+facts:
+  - {id: ab-2018, expr: series.lyon.lau.2018.ab_km, printed: "64"}
+  - {id: ab-2020, expr: series.lyon.lau.2020.ab_km, printed: "61"}
+  - {id: ab-2023, expr: series.lyon.lau.2023.ab_km, printed: "74"}
+  - {id: ab-now, expr: series.lyon.lau.current.ab_km, printed: "113"}
+  - {id: hl-2018, expr: series.lyon.lau.2018.headline, printed: "31.0"}
+  - {id: hl-2020, expr: series.lyon.lau.2020.headline, printed: "28.4"}
+  - {id: hl-2023, expr: series.lyon.lau.2023.headline, printed: "33.9"}
+  - {id: hl-now, expr: series.lyon.lau.current.headline, printed: "52.3"}
+  - {id: a-2018, expr: series.lyon.lau.2018.A, printed: "40"}
+  - {id: a-now, expr: series.lyon.lau.current.A, printed: "93"}
+  - {id: d-2018, expr: series.lyon.lau.2018.D, printed: "110"}
+  - {id: d-now, expr: series.lyon.lau.current.D, printed: "173"}
+  - {id: fua-ab-2018, expr: series.lyon.fua.2018.ab_km, printed: "543"}
+  - {id: fua-ab-now, expr: series.lyon.fua.current.ab_km, printed: "894"}
+  - {id: cc-ratio, expr: gap.lyon.cc_ratio.theirs, printed: "14%"}
+  - {id: our-ratio, expr: gap.lyon.cc_ratio.ours, printed: "17.7%"}
+  - {id: cl-gap, expr: gap.lyon.cc_ratio~qecio_weighted.gap_pct, printed: "+7.6%"}
+literals:
+  - 100 km
+data_refs:
+  - id: ts-lyon-2025
+    label: velometer time-series explanation, lyon/lau/2025
+    file: docs/review/m3_timeseries.md
+    locator: "### lyon/lau/2025"
+  - id: ts-lyon-fua-2026
+    label: velometer time-series explanation, lyon/fua/2026
+    file: docs/review/m3_timeseries.md
+    locator: "### lyon/fua/2026"
+  - id: rc-lyon-cc_ratio
+    label: velometer reconciliation explanation, lyon/cc_ratio
+    file: docs/reconciliation.md
+    locator: "### lyon/cc_ratio"
+  - id: rc-lyon-qecio_main_km
+    label: velometer reconciliation explanation, lyon/qecio_main_km
+    file: docs/reconciliation.md
+    locator: "### lyon/qecio_main_km"

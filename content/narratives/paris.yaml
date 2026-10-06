@@ -1,0 +1,86 @@
+city_id: paris
+title: "Paris: two fast years, then a steady climb"
+dek: >-
+  Mapped A+B rose from 209 to 357 km between 2018 and October 2026, and the headline
+  from 34.8 to 63.1 A+B km per 100 km of main roads.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Most of Paris's rise falls in two years. Between 2019 and 2021 mapped A+B went from 224 to
+        306 km, and the headline (A+B km per 100 km of main roads) from 37.5 to 51.9. The
+        2020 step is cycleways that mappers drew during 2019, while the city's Plan Vélo ran; no
+        official figure for what was finished that year is cited [#ts-paris-2020]. The 2021 step
+        is the temporary coronapistes of 2020 as mappers recorded them [#ts-paris-2021]. In the
+        same years contraflow lanes were retagged, which moved a diagnostic count, not the tiers.
+      - >-
+        After a flat 2022 and 2023, the 2024 and 2025 points are flagged for activity, but that
+        activity was pedestrian: tens of thousands of new footways, which carry no tier
+        [#ts-paris-2024]. Cycling A+B kept its usual pace, to 346 km in 2025 and 357 km now.
+        Separated tracks (tier A, 181 to 332 km) carry almost all of the gain; painted lanes
+        (tier D) went from 127 to 147 km.
+      - >-
+        The wider urban area (FUA) grew more evenly, from 2,326 to 3,726 mapped km of A+B. Its one
+        flagged year, 2019, was ordinary catch-up mapping by many hands, not a campaign or an
+        import [#ts-paris-fua-2019].
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The city's yearly cycle-route length counts much more than our A+B: lanes, bus lanes open
+        to bikes, pedestrian streets and contraflow cycling as well as tracks
+        [@paris-opendata-lineaire-km]. It is dated to the start of each year; we read the October 2026 map. It
+        is also not independent of ours: the city extracts it from OSM, the map we read, so it
+        cannot confirm or refute our km. Clean Cities' 822 km of protected infrastructure (48% of
+        the road network) exceeds everything we map in Paris across all tiers [#rc-paris-cc_km];
+        Clean Cities took most cities' figures from the cities themselves [@cc2025-report]. QECIO,
+        also measuring OSM, lands within +9.3% of our tracks.
+quotes:
+  - excerpt: paris-parisenselle-observatoire/plan-2021-2026
+    after: 0
+  - excerpt: paris-opendata-lineaire-km/definition
+    after: 3
+  - excerpt: paris-opendata-lineaire-km/osm-basis
+    after: 3
+facts:
+  - {id: ab-2018, expr: series.paris.lau.2018.ab_km, printed: "209"}
+  - {id: ab-now, expr: series.paris.lau.current.ab_km, printed: "357"}
+  - {id: hl-2018, expr: series.paris.lau.2018.headline, printed: "34.8"}
+  - {id: hl-now, expr: series.paris.lau.current.headline, printed: "63.1"}
+  - {id: ab-2019, expr: series.paris.lau.2019.ab_km, printed: "224"}
+  - {id: ab-2021, expr: series.paris.lau.2021.ab_km, printed: "306"}
+  - {id: hl-2019, expr: series.paris.lau.2019.headline, printed: "37.5"}
+  - {id: hl-2021, expr: series.paris.lau.2021.headline, printed: "51.9"}
+  - {id: ab-2025, expr: series.paris.lau.2025.ab_km, printed: "346"}
+  - {id: a-2018, expr: series.paris.lau.2018.A, printed: "181"}
+  - {id: a-now, expr: series.paris.lau.current.A, printed: "332"}
+  - {id: d-2018, expr: series.paris.lau.2018.D, printed: "127"}
+  - {id: d-now, expr: series.paris.lau.current.D, printed: "147"}
+  - {id: fua-ab-2018, expr: series.paris.fua.2018.ab_km, printed: "2,326"}
+  - {id: fua-ab-now, expr: series.paris.fua.current.ab_km, printed: "3,726"}
+  - {id: cc-km, expr: gap.paris.cc_km.theirs, printed: "822"}
+  - {id: cc-ratio, expr: gap.paris.cc_ratio.theirs, printed: "48%"}
+  - {id: qecio-tracks-gap, expr: gap.paris.qecio_tracks_km.gap_pct, printed: "+9.3%"}
+literals:
+  - 100 km
+data_refs:
+  - id: ts-paris-2020
+    label: velometer time-series explanation, paris/lau/2020
+    file: docs/review/m3_timeseries.md
+    locator: "### paris/lau/2020"
+  - id: ts-paris-2021
+    label: velometer time-series explanation, paris/lau/2021
+    file: docs/review/m3_timeseries.md
+    locator: "### paris/lau/2021"
+  - id: ts-paris-2024
+    label: velometer time-series explanation, paris/lau/2024
+    file: docs/review/m3_timeseries.md
+    locator: "### paris/lau/2024"
+  - id: ts-paris-fua-2019
+    label: velometer time-series explanation, paris/fua/2019
+    file: docs/review/m3_timeseries.md
+    locator: "### paris/fua/2019"
+  - id: rc-paris-cc_km
+    label: velometer reconciliation explanation, paris/cc_km
+    file: docs/reconciliation.md
+    locator: "### paris/cc_km"

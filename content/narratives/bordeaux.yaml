@@ -1,0 +1,70 @@
+city_id: bordeaux
+title: "Bordeaux: a painted-lane city, slow on separated paths"
+dek: >-
+  Mapped A+B rose from 53 to 65 km between 2018 and October 2026, and the headline
+  from 31.8 to 40.3 A+B km per 100 km of main roads.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Within the commune, Bordeaux has the smallest change of the French cities here. Mapped A+B
+        moved between 51 and 57 km from 2018 to 2024 and only then rose, to 65 km now; the
+        headline (A+B km per 100 km of main roads) went from 31.8 to 40.3. Painted lanes
+        (tier D) dominate the map and stayed near 107 km. The tier that grew is E, bus lanes and
+        cycle streets, from 21 to 49 mapped km. The 2021 dip in tier B, from 17 to 10 km, was not
+        flagged and has no recorded explanation.
+      - >-
+        The wider urban area (FUA) tells a busier story: A+B rose from 850 to 1,278 km. Its 2019
+        step was led by one mapper drawing cycleways beside roads that were already on the map.
+        In the same year a long cycle path, the Piste Roger Lapébie, dropped out of every tier
+        through a retag and was back a year later [#ts-bordeaux-fua-2019]. That is a change in
+        the map, not on the ground. Since 2019 the FUA has grown every year, mostly in shared
+        paths (tier B, from 218 to 515 km).
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The Ville de Bordeaux's own figure includes bus lanes [@bordeaux-ville-circuler-a-velo]
+        and does not say how length is measured or whether a two-sided street counts twice. The
+        Métropole's figures cover all its communes and include traffic-calmed and pedestrian
+        streets [@bordeaux-plan-velo-2021-2026], which none of our tiers counts; the regional
+        audit chamber describes the same series as all types combined [@bordeaux-crc-plan-velo-2025].
+        Bordeaux is not in the Clean Cities ranking. QECIO reports the Gironde département,
+        hence its −97.6% gap on main roads; on that area the main roads agree, and the commune
+        has more painted lanes and fewer separate tracks than the rest of Gironde
+        [#rc-bordeaux-qecio_main_km].
+quotes:
+  - excerpt: bordeaux-ville-circuler-a-velo/city-378
+    after: 2
+  - excerpt: bordeaux-plan-velo-2021-2026/network-2021
+    after: 2
+  - excerpt: bordeaux-crc-plan-velo-2025/network-basis
+    after: 2
+facts:
+  - {id: ab-2018, expr: series.bordeaux.lau.2018.ab_km, printed: "53"}
+  - {id: ab-now, expr: series.bordeaux.lau.current.ab_km, printed: "65"}
+  - {id: hl-2018, expr: series.bordeaux.lau.2018.headline, printed: "31.8"}
+  - {id: hl-now, expr: series.bordeaux.lau.current.headline, printed: "40.3"}
+  - {id: ab-2021, expr: series.bordeaux.lau.2021.ab_km, printed: "51"}
+  - {id: ab-2020, expr: series.bordeaux.lau.2020.ab_km, printed: "57"}
+  - {id: d-now, expr: series.bordeaux.lau.current.D, printed: "107"}
+  - {id: e-2018, expr: series.bordeaux.lau.2018.E, printed: "21"}
+  - {id: e-now, expr: series.bordeaux.lau.current.E, printed: "49"}
+  - {id: b-2020, expr: series.bordeaux.lau.2020.B, printed: "17"}
+  - {id: b-2021, expr: series.bordeaux.lau.2021.B, printed: "10"}
+  - {id: fua-ab-2018, expr: series.bordeaux.fua.2018.ab_km, printed: "850"}
+  - {id: fua-ab-now, expr: series.bordeaux.fua.current.ab_km, printed: "1,278"}
+  - {id: fua-b-2019, expr: series.bordeaux.fua.2019.B, printed: "218"}
+  - {id: fua-b-now, expr: series.bordeaux.fua.current.B, printed: "515"}
+  - {id: qecio-main-gap, expr: gap.bordeaux.qecio_main_km.gap_pct, printed: "−97.6%"}
+literals:
+  - 100 km
+data_refs:
+  - id: ts-bordeaux-fua-2019
+    label: velometer time-series explanation, bordeaux/fua/2019
+    file: docs/review/m3_timeseries.md
+    locator: "### bordeaux/fua/2019"
+  - id: rc-bordeaux-qecio_main_km
+    label: velometer reconciliation explanation, bordeaux/qecio_main_km
+    file: docs/reconciliation.md
+    locator: "### bordeaux/qecio_main_km"

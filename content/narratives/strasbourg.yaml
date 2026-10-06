@@ -1,0 +1,79 @@
+city_id: strasbourg
+title: "Strasbourg: high from the start, reshuffled between A and B"
+dek: >-
+  Mapped A+B rose from 184 to 241 km between 2018 and October 2026; already in 2018 the headline
+  was 123.2 A+B km per 100 km of main roads.
+sections:
+  - heading: Since 2018
+    paragraphs:
+      - >-
+        Strasbourg starts far ahead of the other French cities: in 2018 the map already held more
+        A+B km than main-road km. A+B grew slowly and steadily, from 184 to 241 km, and the
+        headline (A+B km per 100 km of main roads) from 123.2 to 136.1. The headline dipped
+        from 132.6 to 116.9 in 2021 although A+B rose, because the main-road length it divides
+        by went from 150 to 176 mapped km that year. The year was not flagged, so no cause is
+        recorded.
+      - >-
+        The larger change is inside A+B. Tier B, shared foot and cycle paths, rose from 28 to 69
+        km while tier A stayed between 156 and 172 km. Much of that is tagging, not new paths: in
+        spring 2024 mappers swept the city's cycle paths, adding segregation and designation tags
+        and turning some cycleways into shared paths [#ts-strasbourg-2025]. Tier A fell and tier
+        B rose that year while their sum moved normally. A 2022 footway campaign shows in the
+        activity flags but not in the tiers [#ts-strasbourg-2023]. Mapped painted lanes fell
+        from 58 to 45 km.
+      - >-
+        The wider urban area (FUA) shows the same shift: tier B grew from 201 to 426 km and now
+        nearly equals tier A at 428 km.
+  - heading: Why the figures differ
+    role: figures
+    paragraphs:
+      - >-
+        The official network figure [@strasbourg-a-velo] is more than twice our A+B. The page
+        does not say whether it covers the commune or the whole Eurométropole, which facilities
+        it counts, how length is measured or at what date. The city's open data are drawn on its
+        own road centreline network in the national BNAC schema [@strasbourg-opendata-bnac], not
+        taken from OSM, so they are a measure independent of ours. Strasbourg is not in the Clean
+        Cities ranking. QECIO reports the Bas-Rhin département, which is why its main-road km sit
+        −95.3% away from ours; measured on that area, the main roads agree
+        [#rc-strasbourg-qecio_main_km].
+quotes:
+  - excerpt: strasbourg-a-velo/network-600
+    after: 3
+  - excerpt: strasbourg-opendata-bnac/basis
+    after: 3
+  - excerpt: qecio-methodology/nuts3
+    after: 3
+facts:
+  - {id: ab-2018, expr: series.strasbourg.lau.2018.ab_km, printed: "184"}
+  - {id: ab-now, expr: series.strasbourg.lau.current.ab_km, printed: "241"}
+  - {id: hl-2018, expr: series.strasbourg.lau.2018.headline, printed: "123.2"}
+  - {id: hl-now, expr: series.strasbourg.lau.current.headline, printed: "136.1"}
+  - {id: hl-2020, expr: series.strasbourg.lau.2020.headline, printed: "132.6"}
+  - {id: hl-2021, expr: series.strasbourg.lau.2021.headline, printed: "116.9"}
+  - {id: roads-2020, expr: denominator.strasbourg.lau.2020, printed: "150"}
+  - {id: roads-2021, expr: denominator.strasbourg.lau.2021, printed: "176"}
+  - {id: b-2018, expr: series.strasbourg.lau.2018.B, printed: "28"}
+  - {id: b-now, expr: series.strasbourg.lau.current.B, printed: "69"}
+  - {id: a-2018, expr: series.strasbourg.lau.2018.A, printed: "156"}
+  - {id: a-now, expr: series.strasbourg.lau.current.A, printed: "172"}
+  - {id: d-2018, expr: series.strasbourg.lau.2018.D, printed: "58"}
+  - {id: d-now, expr: series.strasbourg.lau.current.D, printed: "45"}
+  - {id: fua-b-2018, expr: series.strasbourg.fua.2018.B, printed: "201"}
+  - {id: fua-b-now, expr: series.strasbourg.fua.current.B, printed: "426"}
+  - {id: fua-a-now, expr: series.strasbourg.fua.current.A, printed: "428"}
+  - {id: qecio-main-gap, expr: gap.strasbourg.qecio_main_km.gap_pct, printed: "−95.3%"}
+literals:
+  - 100 km
+data_refs:
+  - id: ts-strasbourg-2025
+    label: velometer time-series explanation, strasbourg/lau/2025
+    file: docs/review/m3_timeseries.md
+    locator: "### strasbourg/lau/2025"
+  - id: ts-strasbourg-2023
+    label: velometer time-series explanation, strasbourg/lau/2023
+    file: docs/review/m3_timeseries.md
+    locator: "### strasbourg/lau/2023"
+  - id: rc-strasbourg-qecio_main_km
+    label: velometer reconciliation explanation, strasbourg/qecio_main_km
+    file: docs/reconciliation.md
+    locator: "### strasbourg/qecio_main_km"
