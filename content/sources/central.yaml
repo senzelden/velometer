@@ -1,0 +1,784 @@
+sources:
+  # -------------------------------------------------------------------- berlin
+  - id: berlin-drs-19-25987
+    publisher: Abgeordnetenhaus Berlin (answer of the Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)
+    title: "Schriftliche Anfrage 19/25987: Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und Wirklichkeit im Radverkehr (answer of 20 May 2026)"
+    url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-25987.pdf
+    published: 2026-05-20
+    accessed: 2026-10-06
+    language: de
+    kind: parliament
+    excerpts:
+      - id: vorrangnetz-target
+        text: "Das Radvorrangnetz umfasst als planerisches Zielnetz ca. 870 km Streckenlänge."
+        gloss_en: "As a planned target network, the priority cycle network (Radvorrangnetz) comprises approx. 870 km of route length."
+        locator: "PDF p. 9 (printed p. 8), Antwort zu 14"
+      - id: vorrangnetz-split
+        text: "Es verlaufen ca. 350 km des Radvorrangnetzes auf Hauptverkehrsstraßen und mehr als 500 km im Nebennetz."
+        gloss_en: "Approx. 350 km of the priority cycle network run along main roads and more than 500 km in the minor street network."
+        locator: "PDF p. 9 (printed p. 8), Antwort zu 15"
+      - id: vorrangnetz-sum-row
+        text: "Summe 14,3 13,6 10,9 9,8"
+        gloss_en: "Total 14.3 13.6 10.9 9.8 (km of the priority network implemented in 2022, 2023, 2024, 2025)."
+        locator: "PDF p. 10 (printed p. 9), Antwort zu 17, table 'Vorrangnetz', columns 2022 [Km] to 2025 [Km], row Summe"
+      - id: ergaenzungsnetz-sum-row
+        text: "Summe 10,1 5,1 9,6 7,5"
+        gloss_en: "Total 10.1 5.1 9.6 7.5 (km of the supplementary network implemented in 2022, 2023, 2024, 2025)."
+        locator: "PDF p. 10 (printed p. 9), Antwort zu 17, table 'Ergänzungsnetz', columns 2022 [Km] to 2025 [Km], row Summe"
+      - id: no-road-type-split
+        text: "Eine Aufstellung nach Nebenstraßen und Hauptverkehrsstraßen liegt aktuell nicht vor."
+        gloss_en: "A breakdown by minor streets and main roads is not currently available."
+        locator: "PDF p. 10 (printed p. 9), Antwort zu 17, below the tables"
+      - id: vorrangnetz-implemented
+        text: "Insgesamt sind 78,2 km des Radvorrangnetzes umgesetzt worden."
+        gloss_en: "In total, 78.2 km of the priority cycle network have been implemented."
+        locator: "PDF p. 10 (printed p. 9), Antwort zu 18"
+  - id: berlin-fortschrittsbericht-2025
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
+    title: "Fahrrad Berlin – Fortschrittsbericht 2025 (Anlage 1 to Hauptausschuss report rote Nr. 1733 E of 12 August 2026; scanned PDF, excerpts transcribed from the page images)"
+    url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.E-v.pdf
+    published: 2026-08-12
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    excerpts:
+      - id: data-basis
+        text: "Die in diesem Bericht für das Jahr 2025 dargestellten Analysen zum Ausbau des Radnetzes Berlin basieren überwiegend auf einer verwaltungsübergreifenden, von der GB infraVelo GmbH (infraVelo) betriebenen Projekt-Datenbank „Radverkehr“. Alle Tabellen und Grafiken beziehen sich auf den Stichtag 31.12.2025."
+        gloss_en: "The analyses of the expansion of Berlin's cycle network presented in this report for 2025 are based mainly on a cross-administration project database 'Radverkehr' operated by GB infraVelo GmbH. All tables and charts refer to the reference date 31 Dec 2025."
+        locator: "PDF p. 8 (report p. 6), 2.1.1 Einführende Erläuterungen, Datenquellen und Stand der dargestellten Informationen"
+      - id: scope
+        text: "Die für das Jahr 2025 in den folgenden Tabellen, Grafiken und Texten dargestellten Informationen beziehen sich, wenn nicht anders beschrieben, auf die Gesamtheit der umgesetzten bzw. geplanten Radverkehrsmaßnahmen – unabhängig beispielsweise von der Baulastträgerschaft oder der Art der Finanzierung."
+        gloss_en: "Unless stated otherwise, the 2025 information in the following tables, charts and texts refers to all implemented or planned cycling measures, regardless of, for example, which authority is responsible for the road or how the measure is financed."
+        locator: "PDF p. 8 (report p. 6), 2.1.1, Datenquellen und Stand der dargestellten Informationen"
+      - id: revisions
+        text: "Es ist in Einzelfällen möglich, dass in der Datenbank Projektinformationen nachträglich korrigiert oder ergänzt werden, so dass die Zahlen im vorliegenden Bericht gegenüber den vorangegangenen Berichten geringfügig abweichen können."
+        gloss_en: "In individual cases project information in the database may be corrected or supplemented after the fact, so the figures in this report may differ slightly from those in previous reports."
+        locator: "PDF p. 8 (report p. 6), 2.1.1, Datenquellen und Stand der dargestellten Informationen"
+      - id: total-2025
+        text: "In 2025 wurden insgesamt 21,2 Kilometer Strecke neu gebaut oder verbessert. Zum Jahresende 2025 befanden sich weitere 17,1 Kilometer in Bau/Bauvorbereitung sowie 67,2 Kilometer in Planung."
+        gloss_en: "In 2025 a total of 21.2 km of route were newly built or improved. At the end of 2025 a further 17.1 km were under construction or in preparation for construction and 67.2 km were being planned."
+        locator: "PDF p. 9 (report p. 7), 2.1.2 Umsetzung des Berliner Radverkehrsnetzes, Gesamtüberblick"
+      - id: network-share
+        text: "Wie in Tabelle 2 dargestellt wurden von den ca. 870 Kilometern Strecke, die aktuell im Vorrangnetz vorgesehen sind, in 2025 ca. 1 % fertiggestellt, seit 2017 insgesamt knapp 9%. Im aktuellen Ergänzungsnetz sind ca. 1.528 Kilometer Strecke vorgesehen, hiervon konnten in 2025 knapp 0,5% der Strecken fertiggestellt werden, seit 2017 insgesamt ca. 4%."
+        gloss_en: "As shown in Table 2, of the approx. 870 km of route currently planned in the priority network, approx. 1% was completed in 2025 and just under 9% in total since 2017. Approx. 1,528 km of route are planned in the current supplementary network; just under 0.5% was completed in 2025 and approx. 4% in total since 2017."
+        locator: "PDF pp. 10–11 (report pp. 8–9), 2.1.2, text above Tabelle 2"
+      - id: table2-vorrangnetz-row
+        text: "Vorrangnetz 870,5 8,6 0,99% 78,2 8,99%"
+        gloss_en: "Priority network: 870.5 km in total; 8.6 km (0.99%) completed in 2025; 78.2 km (8.99%) completed 2017 to 2025."
+        locator: "PDF p. 11 (report p. 9), Tabelle 2 'In 2025 fertiggestellte Strecken differenziert nach der Zuordnung im Berliner Radverkehrsnetz in Kilometer', row Vorrangnetz (columns Gesamt; Fertiggestellt 2025 km, %; Fertiggestellt 2017 bis 2025 km, %)"
+      - id: table2-radverkehrsnetz-row
+        text: "Radverkehrsnetz 2.398,3 16,1 0,67% 140,1 5,84%"
+        gloss_en: "Cycle network (priority plus supplementary): 2,398.3 km in total; 16.1 km (0.67%) completed in 2025; 140.1 km (5.84%) completed 2017 to 2025."
+        locator: "PDF p. 11 (report p. 9), Tabelle 2, row Radverkehrsnetz"
+      - id: table2-summe-row
+        text: "Summe 2.948,3 21,2 0,72% 173,9 5,90%"
+        gloss_en: "Total (cycle network, main roads outside it and other routes): 2,948.3 km; 21.2 km (0.72%) completed in 2025; 173.9 km (5.90%) completed 2017 to 2025."
+        locator: "PDF p. 11 (report p. 9), Tabelle 2, row Summe"
+      - id: osm-survey
+        text: "Diese Bestandserhebung der Radinfrastruktur im Vorrangnetz wurde auf Grundlage von Open Street Maps-Daten durchgeführt und lag der Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU) zum Jahreswechsel 2025/2026 vor."
+        gloss_en: "This inventory survey of the cycling infrastructure in the priority network was carried out on the basis of OpenStreetMap data and was available to the Senate Department (SenMVKU) at the turn of 2025/2026."
+        locator: "PDF p. 11 (report p. 9), 2.1.2, Priorisierungskonzept"
+  - id: berlin-fortschrittsbericht-2024
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
+    title: "Fahrrad Berlin – Fortschrittsbericht 2024 (sent to the Hauptausschuss on 24 June 2025, rote Nr. 1733 C)"
+    url: https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/fortschrittsbericht-fahrrad-2024.pdf
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    excerpts:
+      - id: reference-date
+        text: "Alle Tabellen und Grafiken beziehen sich auf den Stichtag 31. Dezember 2024. Im Jahr 2025 abgeschlossene oder begonnene Maßnahmen sind nicht berücksichtigt."
+        gloss_en: "All tables and charts refer to the reference date 31 December 2024. Measures completed or started in 2025 are not included."
+        locator: "p. 5, 2.1.1 Einführende Erläuterungen, Datenquellen und Stand der dargestellten Informationen"
+      - id: total-2024
+        text: "In 2024 wurden insgesamt 23,6 Kilometer Strecke neu gebaut oder verbessert. Zum Jahresende 2024 befanden sich weitere 24,3 Kilometer in Bau/Bauvorbereitung sowie 84,9 Kilometer in Planung."
+        gloss_en: "In 2024 a total of 23.6 km of route were newly built or improved. At the end of 2024 a further 24.3 km were under construction or in preparation for construction and 84.9 km were being planned."
+        locator: "p. 5, 2.1.2 Umsetzung des Berliner Radverkehrsnetzes"
+      - id: network-share
+        text: "Wie in Tabelle 2 dargestellt wurden von den 872 Kilometern Strecke, die im Vorrangnetz vorgesehen sind, in 2024 circa 1,2 Prozent fertiggestellt, seit 2022 insgesamt 4,5 Prozent. Im Ergänzungsnetz sind 1.507 Kilometer Strecke vorgesehen, hiervon konnten in 2024 0,6 Prozent der Strecken fertiggestellt werden, seit 2022 insgesamt 1,5 Prozent."
+        gloss_en: "As shown in Table 2, of the 872 km of route planned in the priority network, about 1.2 percent was completed in 2024 and 4.5 percent in total since 2022. The supplementary network plans 1,507 km of route; 0.6 percent of it was completed in 2024 and 1.5 percent in total since 2022."
+        locator: "p. 7, 2.1.2, text above Tabelle 2"
+      - id: quality-standards
+        text: "Im Ergebnis zeigt sich, dass von den 2024 im Vorrangnetz (ohne Berliner Stadtgrün) umgesetzten Strecken bei 78 Prozent der Streckenlänge (8,4 von 10,8 Kilometern) die Qualitätsstandards des Radverkehrsplans eingehalten werden konnten."
+        gloss_en: "The result shows that of the routes implemented in the priority network in 2024 (excluding Berlin's green spaces), the quality standards of the cycling plan were met on 78 percent of the route length (8.4 of 10.8 km)."
+        locator: "p. 11, 2.2.3 Qualitätsstandards"
+  - id: berlin-radverkehrsplan-2021
+    publisher: Senatsverwaltung für Umwelt, Mobilität, Verbraucher- und Klimaschutz
+    title: Radverkehrsplan des Landes Berlin (2021)
+    url: https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radverkehrsplan/radverkehrsplan.pdf
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260104153351/https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radverkehrsplan/radverkehrsplan.pdf
+    excerpts:
+      - id: not-in-table-3
+        text: "In Tabelle 3 nicht dargestellt sind 553 Kilometer Hauptverkehrsstraßen (Stufen I–III) außerhalb des Berliner Radverkehrsnetzes, die gemäß § 43 MobG BE ebenfalls mit sicheren Radverkehrsanlagen ausgestattet werden sollen. Weiterhin nicht dargestellt sind rund 388 Kilometer Radfernwege (inklusive Berliner Mauerweg)."
+        gloss_en: "Not shown in Table 3 are 553 km of main roads (levels I–III) outside the Berlin cycle network, which under § 43 of the Mobility Act are also to be equipped with safe cycling facilities. Also not shown are around 388 km of long-distance cycle routes (including the Berlin Wall Trail)."
+        locator: "PDF p. 13, below Tabelle 3 'Übersicht der Netzelemente des Radverkehrsnetzes Berlin mit den ermittelten Längen' (Radvorrangnetz 865, Ergänzungsnetz 1.506, Gesamtlänge 2.371 km)"
+      - id: vorrangnetz-865
+        text: "Das Ergebnis ist ein Radvorrangnetz (Entwurfsstand 07. Juni 2021), welches bei einer Länge von 865 Kilometern 80 Prozent der Bevölkerung sowie Arbeits- und Ausbildungsplätze im 400-Meter-Einzugsbereich erreicht."
+        gloss_en: "The result is a priority cycle network (draft of 7 June 2021) which, at a length of 865 km, reaches 80 percent of the population and of workplaces and training places within a 400-metre catchment."
+        locator: "PDF p. 16, derivation of the Radvorrangnetz"
+      - id: deadline-2030
+        text: "Das Radverkehrsnetz Berlin soll gemäß § 41 Absatz 4 MobG BE bis 2030 realisiert werden."
+        gloss_en: "Under § 41(4) of the Berlin Mobility Act, the Berlin cycle network is to be realised by 2030."
+        locator: "PDF p. 19, 2.3.4 Umsetzung des Radverkehrsnetzes Berlin"
+  - id: berlin-radverkehrsplan-page
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
+    title: Radverkehrsplan (berlin.de web page)
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsplan/
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260920192813/https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsplan/
+    excerpts:
+      - id: network-length
+        text: "Unter anderem definiert der Plan ein engmaschiges Radverkehrsnetz mit einer Länge von insgesamt 2.371 Kilometern, davon 865 Kilometern Vorrangnetz, mit entsprechenden Qualitätsstandards."
+        gloss_en: "Among other things, the plan defines a close-meshed cycle network with a total length of 2,371 km, of which 865 km is priority network, with corresponding quality standards."
+        locator: "main text, second paragraph"
+      - id: modal-share-target
+        text: "Der Radverkehrsanteil soll bis 2030 von 18 Prozent im Jahr 2018 auf mindestens 23 Prozent steigen."
+        gloss_en: "Cycling's share of trips is to rise from 18 percent in 2018 to at least 23 percent by 2030."
+        locator: "main text, fourth paragraph"
+  - id: berlin-radverkehrsnetz-page
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
+    title: Radverkehrsnetz (berlin.de web page)
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsnetz/
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260812123359/https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsnetz/
+    excerpts:
+      - id: deadline-2030
+        text: "Das Radverkehrsnetz soll bis 2030 umgesetzt werden. Es ersetzt nicht die erforderliche Planungsarbeit der Baubehörden, sondern bildet deren konzeptionelle Grundlage."
+        gloss_en: "The cycle network is to be implemented by 2030. It does not replace the necessary planning work of the construction authorities but forms its conceptual basis."
+        locator: "intro text, fourth paragraph (page still states 2030 for the whole network on 2026-10-06)"
+      - id: target-network
+        text: "Die interaktive Karte zeigt den straßenscharfen Verlauf des planerischen Zielnetzes."
+        gloss_en: "The interactive map shows the street-accurate course of the planned target network."
+        locator: "section Netzumfang und Karte"
+  - id: berlin-mobg-amendment-2026
+    publisher: Land Berlin, Gesetz- und Verordnungsblatt für Berlin
+    title: "Drittes Gesetz zur Änderung des Berliner Mobilitätsgesetzes vom 9. Juli 2026 (GVBl. 82. Jg., Nr. 25, 22 July 2026, p. 713)"
+    url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/gvbl/g26250713.pdf
+    published: 2026-07-22
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    excerpts:
+      - id: deadline-2030-2035
+        text: "„(4) Die Herstellung des Radvorrangnetzes und dessen Beschilderung soll bis zum Jahr 2030 und die des Nebennetzes bis 2035 erfolgen.“"
+        gloss_en: "'(4) The priority cycle network and its signage are to be completed by 2030, and the secondary network by 2035.'"
+        locator: "p. 714, Artikel 1 Nr. 16 b) (new wording of § 41 Absatz 4 MobG)"
+      - id: main-roads-exception
+        text: "Von der Einrichtung einer Radverkehrsanlage kann ganz abgesehen werden, soweit sie aus örtlichen Gegebenheiten und unter Berücksichtigung des § 25 Absatz 2 nicht sachgerecht eingerichtet werden kann, oder eine qualifizierte alternative Strecken- oder Wegeführung auf Nebenstraßen im unmittelbaren Umfeld vorhanden ist."
+        gloss_en: "A cycling facility may be dispensed with entirely where, given local conditions and taking § 25(2) into account, it cannot properly be provided, or where a qualified alternative route on minor streets exists in the immediate vicinity."
+        locator: "p. 714, Artikel 1 Nr. 18 (new wording of § 43 Absatz 1 MobG, on main roads)"
+  - id: berlin-dpa-fortschrittsbericht-2025
+    publisher: Nordkurier (dpa)
+    title: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa report on the Senate's Fahrrad-Fortschrittsbericht 2025)"
+    url: https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
+    published: 2026-09-08
+    accessed: 2026-10-06
+    language: de
+    kind: press
+    archive_url: https://web.archive.org/web/20260917224849/https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
+    excerpts:
+      - id: km-2025
+        text: "Das hatte zur Folge, dass mit 21,2 Kilometern deutlich weniger neue Fahrradwege fertiggestellt wurden als in den Vorjahren. 2022 waren es noch 32,4 Kilometer, seither ist die Länge jedes Jahr gesunken."
+        gloss_en: "As a result, at 21.2 km, significantly fewer new cycle paths were completed than in previous years. In 2022 it was still 32.4 km, and the length has fallen every year since."
+        locator: "article body, fourth paragraph"
+      - id: network-share
+        text: "Von den 2.400 Kilometern Strecke, die aktuell im Berliner Radverkehrsnetz vorgesehen sind, wurden zwischen 2017 und 2025 lediglich gut 140 Kilometer oder rund 5,8 Prozent fertiggestellt."
+        gloss_en: "Of the 2,400 km of route currently planned in the Berlin cycle network, only a good 140 km, or around 5.8 percent, were completed between 2017 and 2025."
+        locator: "article body, sixth paragraph"
+  - id: berlin-tagesspiegel-dpa-2025-12
+    publisher: Der Tagesspiegel (dpa)
+    title: "Senat verfehlt eigenes Ziel: In diesem Jahr wurden nur 20,5 Kilometer neue Radwege in Berlin gebaut (dpa; Senate figure given on request, before year end)"
+    url: https://www.tagesspiegel.de/berlin/senat-hangt-eigenem-ziel-hinterher-205-kilometer-neue-radwege-in-berlin-gebaut-15065944.html
+    published: 2025-12-19
+    accessed: 2026-10-06
+    language: de
+    kind: press
+    archive_url: https://web.archive.org/web/20260212055904/https://www.tagesspiegel.de/berlin/senat-hangt-eigenem-ziel-hinterher-205-kilometer-neue-radwege-in-berlin-gebaut-15065944.html
+    excerpts:
+      - id: preliminary-2025
+        text: "Im laufenden Jahr wurden 35 Radwege-Projekte mit einer Gesamtlänge von 20,5 Kilometern gebaut, teilte die Senatsverwaltung für Verkehr auf Anfrage der Deutschen Presse-Agentur mit."
+        gloss_en: "This year, 35 cycle path projects with a total length of 20.5 km were built, the Senate transport department told the German Press Agency on request."
+        locator: "article body, first paragraph"
+      - id: incomplete-caveat
+        text: "Allerdings weist die Verwaltung darauf hin, dass in der Bilanz möglicherweise noch nicht alle tatsächlich umgesetzten Baumaßnahmen berücksichtigt sind."
+        gloss_en: "However, the administration points out that the tally may not yet include all construction measures actually carried out."
+        locator: "article body, second paragraph"
+      - id: km-2022
+        text: "Im Jahr 2022 waren unter der grünen Verkehrssenatorin Bettina Jarasch rund 26,5 Kilometer Radwege hinzugebaut worden."
+        gloss_en: "In 2022, under the Green transport senator Bettina Jarasch, around 26.5 km of cycle paths had been added."
+        locator: "section Senat verpasst eigenes Ziel erneut"
+  - id: berlin-changing-cities-monitor
+    publisher: Changing Cities e.V.
+    title: Verkehrswende-Monitor (Radnetz monitoring, as of 31 Dec 2025)
+    url: https://changing-cities.org/kampagnen/verkehrswende-monitor/
+    accessed: 2026-10-06
+    language: de
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260803122927/https://changing-cities.org/kampagnen/verkehrswende-monitor/
+    excerpts:
+      - id: target-network
+        text: "2.699,8 Kilometer: So lang soll das Berliner Radnetz bis 2030 sein."
+        gloss_en: "2,699.8 km: that is how long the Berlin cycle network is to be by 2030."
+        locator: "section Das Radnetz, counter tile"
+      - id: built-since-2018
+        text: "183,6 Kilometer wurden seit 2018 gebaut. Das sind 6,8 % des Gesamtnetzes."
+        gloss_en: "183.6 km have been built since 2018. That is 6.8% of the total network."
+        locator: "section Das Radnetz, counter tile"
+      - id: own-measurement
+        text: "Wir messen selbst nach! Diese Zahl bezieht sich auf den Stichtag 31.12.2025."
+        gloss_en: "We measure it ourselves! This figure refers to the reference date 31 Dec 2025."
+        locator: "section Das Radnetz, counter tile note"
+      - id: km-2025
+        text: "25,2 Kilometer wurden 2025 neu geschaffen. Der Radnetzausbau stagniert auf niedrigem Niveau."
+        gloss_en: "25.2 km were newly created in 2025. The expansion of the cycle network is stagnating at a low level."
+        locator: "section Das Radnetz, counter tile"
+
+  # -------------------------------------------------------------------- vienna
+  - id: vienna-radverkehrsnetz-fakten
+    publisher: Stadt Wien – Verkehrsorganisation und technische Verkehrsangelegenheiten
+    title: Zahlen und Fakten zum Wiener Radverkehrsnetz
+    url: https://www.wien.gv.at/verkehr/radverkehrsnetz-radwege-statistiken
+    published: 2026-01-21
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260608054721/https://www.wien.gv.at/verkehr/radverkehrsnetz-radwege-statistiken
+    excerpts:
+      - id: definition
+        text: "Das Radverkehrsnetz umfasst sämtliche Radverkehrsanlagen in Wien. Seit dem Jahr 2018 werden die tatsächlichen Längen der verschiedenen Anlagearten gezählt, womit auch (unterschiedliche) Anlagen auf beiden Seiten einer Straße erfasst werden. Derzeit beträgt die Länge des Radverkehrsnetzes in Wien circa 1.811 Kilometer."
+        gloss_en: "The cycle network comprises all cycling facilities in Vienna. Since 2018 the actual lengths of the different facility types have been counted, so that (different) facilities on both sides of a street are also recorded. The cycle network in Vienna is currently about 1,811 km long."
+        locator: "section Netzlänge (page last updated 21.01.2026)"
+      - id: types-separate
+        text: "Radwege: 211,1 Kilometer Getrennte Geh- und Radwege: 47,7 Kilometer Gemischte Geh- und Radwege: 128,2 Kilometer Radfahrstreifen: 43,5 Kilometer Mehrzweckstreifen: 134,6 Kilometer"
+        gloss_en: "Cycle tracks: 211.1 km; separated footpath/cycle tracks: 47.7 km; shared footpath/cycle tracks: 128.2 km; cycle lanes: 43.5 km; advisory (multi-purpose) lanes: 134.6 km."
+        locator: "section Anlagearten, list items 1–5"
+      - id: types-mixed
+        text: "Radfahren gegen die Einbahn: 365,8 Kilometer Radfahren auf der Busspur: 20,1 Kilometer Radroute: 259,7 Kilometer"
+        gloss_en: "Contraflow cycling in one-way streets: 365.8 km; cycling in bus lanes: 20.1 km; cycle route: 259.7 km."
+        locator: "section Anlagearten, list items 8–10"
+      - id: types-calmed
+        text: "Wohnstraße: 44,8 Kilometer Verkehrsberuhigter Bereich: 411,3 Kilometer Radfahren im Gelände: 81,5 Kilometer"
+        gloss_en: "Residential street: 44.8 km; traffic-calmed area: 411.3 km; cycling off-road: 81.5 km."
+        locator: "section Anlagearten, list items 12–14"
+  - id: vienna-radwegeausbau-bilanz-2025
+    publisher: Mobilitätsagentur Wien GmbH (fahrradwien.at)
+    title: Bilanz Radwegeausbau 2025 (Radwegoffensive 2025)
+    url: https://www.fahrradwien.at/wp-content/uploads/sites/2/2026/01/Radwegoffensive_2025_Bilanz.pdf
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260209232301/https://www.fahrradwien.at/wp-content/uploads/sites/2/2026/01/Radwegoffensive_2025_Bilanz.pdf
+    excerpts:
+      - id: header
+        text: "Bilanz Radwegeausbau 2025 53 Projekte 20.447 m Länge"
+        gloss_en: "Cycle path expansion tally 2025: 53 projects, 20,447 m length."
+        locator: "p. 1, document header"
+      - id: started-not-completed
+        text: "Die Bilanz zum Radwegeausbau 2025 enthält 53 Radinfrastrukturprojekte im Hauptradverkehrsnetz, mit deren Realisierung im Jahr 2025 begonnen wurde. Es handelt sich um 20,4 Kilometer, die im Jahr 2025 gestartet wurden."
+        gloss_en: "The 2025 cycle path tally contains 53 cycling infrastructure projects in the main cycle network whose realisation began in 2025. They amount to 20.4 km started in 2025."
+        locator: "p. 1, Erläuterungen zur Methodik"
+      - id: all-types
+        text: "Es werden alle Typen von Radverkehrsanlagen gezählt, d.h. baulich getrennte Radwege, Geh- und Radwege, Fahrradstraßen etc."
+        gloss_en: "All types of cycling facility are counted, i.e. physically separated cycle tracks, footpath/cycle tracks, cycle streets etc."
+        locator: "p. 1, Erläuterungen zur Methodik"
+      - id: measurement
+        text: "Die Längen der Projekte werden im digitalen Stadtplan der Stadt Wien gemessen. Die Messung der Radfahranlagen erfolgt von Beginn bis Endpunkt, dabei wird jede Radfahranlage für sich gezählt. Projekte zur Verbesserung von Kreuzungen fließen im Sinne eines Knotenpunktes mit einem Meter in die Bilanz mit ein."
+        gloss_en: "Project lengths are measured in the City of Vienna's digital city map. Cycling facilities are measured from start to end point, and each facility is counted separately. Projects improving junctions enter the tally as a node with one metre."
+        locator: "p. 1, Erläuterungen zur Methodik"
+      - id: excluded
+        text: "Sanierungsarbeiten im Bestand, wie etwa Belagsverbesserungen, werden in der Bilanz nicht gezählt."
+        gloss_en: "Renovation of existing facilities, such as surface improvements, is not counted in the tally."
+        locator: "p. 1, Erläuterungen zur Methodik"
+  - id: vienna-orf-radwegenetz-2025
+    publisher: ORF Wien (wien.ORF.at)
+    title: Radwegenetz soll heuer um 24 Kilometer wachsen
+    url: https://wien.orf.at/stories/3296850/
+    published: 2025-03-13
+    accessed: 2026-10-06
+    language: de
+    kind: press
+    archive_url: https://web.archive.org/web/20260706134018/https://wien.orf.at/stories/3296850/
+    excerpts:
+      - id: plan-2025
+        text: "Mehr als 50 Projekten will man sich 2025 widmen, wobei bei einigen erst der Auftakt erfolgt, andere hingegen schon abgeschlossen werden. Insgesamt soll es rund 24 Kilometer neue Radwege geben."
+        gloss_en: "More than 50 projects are to be tackled in 2025; some will only be started, others completed. In total there are to be around 24 km of new cycle paths."
+        locator: "lead paragraph"
+      - id: legislature-100km
+        text: "Insgesamt, so wurde heute hervorgehoben, wurden in dieser – demnächst endenden – Legislaturperiode rund 100 Kilometer neue Radinfrastruktur auf den Weg gebracht."
+        gloss_en: "In total, it was emphasised today, around 100 km of new cycling infrastructure were set in motion in this legislative period, which is about to end."
+        locator: "article body, penultimate section"
+  - id: vienna-mobilitaetsagentur-2026
+    publisher: Mobilitätsagentur Wien GmbH
+    title: "Radverkehrsplanung (Radwegoffensive page; fahrradwien.at/radwegoffensive-2025/ now redirects here)"
+    url: https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
+    accessed: 2026-10-06
+    language: de
+    kind: official
+    archive_url: https://web.archive.org/web/20260929142437/https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
+    excerpts:
+      - id: programme-2026
+        text: "Allein im Hauptradwegenetz wurden in den vergangenen Jahren bereits mehr als 100 Kilometer neue Radinfrastruktur geschaffen. Auch 2026 wird konsequent weitergebaut: 33 neue Projekte und rund 12,5 Kilometer neue Radwege erweitern das Netz der Wiener Radwege."
+        gloss_en: "In the main cycle network alone, more than 100 km of new cycling infrastructure have been created in recent years. Construction continues in 2026: 33 new projects and around 12.5 km of new cycle paths extend Vienna's cycle path network."
+        locator: "section Radweg-Projekte"
+
+  # -------------------------------------------------------------------- prague
+  - id: prague-tsk-cyklostezky
+    publisher: Technická správa komunikací hl. m. Prahy, a.s. (TSK)
+    title: Myslíme na cyklisty (cyklostezky)
+    url: https://www.tsk-praha.cz/nase-cinnosti/cyklostezky/
+    accessed: 2026-10-06
+    language: cs
+    kind: official
+    archive_url: https://web.archive.org/web/20260924032010/https://www.tsk-praha.cz/nase-cinnosti/cyklostezky/
+    excerpts:
+      - id: maintained-lengths
+        text: "Pečujeme o 549 km značených cyklotras 74 km vyhrazených cyklopruhů 40 km cyklopruhů společných i pro bus a taxi"
+        gloss_en: "We look after 549 km of signed cycle routes, 74 km of reserved cycle lanes, 40 km of cycle lanes shared with buses and taxis."
+        locator: "section Popis a rozsah činnosti, figures panel"
+  - id: prague-tsk-rocenka-2024
+    publisher: Technická správa komunikací hl. m. Prahy, a.s. (TSK)
+    title: Ročenka dopravy 2024 (Praha)
+    url: https://cdn.tsk-praha.cz/portal/2025/06/TSK-Rocenka-dopravy-za-rok-2024.pdf
+    accessed: 2026-10-06
+    language: cs
+    kind: official
+    archive_url: https://web.archive.org/web/20260517095423/https://cdn.tsk-praha.cz/portal/2025/06/TSK-Rocenka-dopravy-za-rok-2024.pdf
+    excerpts:
+      - id: signed-routes
+        text: "Celková délka značených cyklotras 549 km"
+        gloss_en: "Total length of signed cycle routes: 549 km."
+        locator: "p. 28, chapter 4 Cyklistická doprava, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
+      - id: protected-routes
+        text: "Celková délka chráněných značených a doporučovaných cyklotras 256 km"
+        gloss_en: "Total length of protected signed and recommended cycle routes: 256 km."
+        locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
+      - id: lanes
+        text: "Cyklopruhy vyhrazené / ochranné 74,2 km / 80,1 km"
+        gloss_en: "Cycle lanes, reserved / advisory (protective): 74.2 km / 80.1 km."
+        locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
+      - id: new-2024-lanes
+        text: "Cyklopruhy (V14 / V14–ochranný) 0 km / 6,6 km"
+        gloss_en: "Cycle lanes (V14 reserved / V14 advisory) built in 2024: 0 km / 6.6 km."
+        locator: "p. 28, table 'Nové prvky cyklistické infrastruktury realizované v roce 2024' (row)"
+      - id: new-2024-contraflow
+        text: "Cykloobousměrky 16,4 km"
+        gloss_en: "Contraflow cycling in one-way streets added in 2024: 16.4 km."
+        locator: "p. 28, table 'Nové prvky cyklistické infrastruktury realizované v roce 2024' (row)"
+  - id: prague-ipr-system-cyklotras-2021
+    publisher: Institut plánování a rozvoje hl. m. Prahy (IPR Praha)
+    title: "Systém celoměstských cyklotras hlavního města Prahy, Aktualizace 10/2021, průvodní zpráva (Příloha č. 1 k usnesení Rady HMP č. 418 ze dne 7. 3. 2022)"
+    url: https://iprpraha.cz/assets/files/files/506ba6ec042dbcfbd30a0ebf0f4dbf87.pdf
+    published: 2022-03-07
+    accessed: 2026-10-06
+    language: cs
+    kind: official
+    archive_url: https://web.archive.org/web/20251202041338/https://iprpraha.cz/assets/files/files/506ba6ec042dbcfbd30a0ebf0f4dbf87.pdf
+    excerpts:
+      - id: routes-not-facilities
+        text: "Trasy mohou a nemusí být opatřeny orientačním značením v terénu, trasa může být realizována také za pomoci vhodných cykloopatření."
+        gloss_en: "Routes may or may not carry wayfinding signs on the ground; a route can also be realised by means of suitable cycling measures."
+        locator: "p. 1, Shrnutí"
+      - id: expansion-goal
+        text: "rozšíření základní sítě pražských cyklotras (dle 2. podpůrného cíle v Koncepci rozvoje cyklistické dopravy pro období 2010-20 o dalších 300-400 km),"
+        gloss_en: "expansion of the basic network of Prague cycle routes (under the 2nd supporting goal of the Cycling Development Concept 2010–20, by a further 300–400 km),"
+        locator: "p. 1, Shrnutí, first requirement listed"
+  - id: prague-mestem-na-kole-2025
+    publisher: Městem na kole
+    title: "Rok 2025 v Praze: kolik přinesl nových cyklostezek a cyklopruhů?"
+    url: https://mestemnakole.cz/2026/01/rok-2025-v-praze-kolik-prinesl-novych-cyklostezek-a-cyklopruhu/
+    published: 2026-01-26
+    accessed: 2026-10-06
+    language: cs
+    kind: press
+    archive_url: https://web.archive.org/web/20260614132549/https://mestemnakole.cz/2026/01/rok-2025-v-praze-kolik-prinesl-novych-cyklostezek-a-cyklopruhu/
+    excerpts:
+      - id: slow-2025
+        text: "Rok 2025 se v Praze opět nesl ve znamení pomalého rozvoje cyklistické infrastruktury. Přibyly jen jednotky kilometrů stezek, legalizovaných chodníků a cyklopruhů a tempo zůstalo výrazně nižší než v letech 2021–2023."
+        gloss_en: "In Prague, 2025 was again marked by slow development of cycling infrastructure. Only a few kilometres of paths, legalised footways and cycle lanes were added, and the pace remained well below 2021–2023."
+        locator: "lead paragraph"
+      - id: lanes-2025
+        text: "Vyhrazených cyklopruhů byl vyznačen 1,1 kilometr, ochranných 6,5 kilometrů."
+        gloss_en: "1.1 km of reserved cycle lanes and 6.5 km of advisory (protective) lanes were marked."
+        locator: "article body, paragraph on cycle lanes"
+      - id: own-monitoring
+        text: "Data prezentovaná v tomto přehledovém článku vycházejí z našeho redakčního monitoringu nové infrastruktury. Je možné, že skutečné počty se mohou mírně lišit."
+        gloss_en: "The data in this overview article come from our editorial monitoring of new infrastructure. Actual numbers may differ slightly."
+        locator: "closing note"
+
+  # ---------------------------------------------------------------- bratislava
+  - id: bratislava-city-infra-2025
+    publisher: Hlavné mesto Slovenskej republiky Bratislava
+    title: Cyklistická infraštruktúra v Bratislave sa rozširuje
+    url: https://bratislava.sk/spravy/cyklisticka-infrastruktura-v-bratislave-sa-rozsiruje
+    published: 2025-12-03
+    accessed: 2026-10-06
+    language: sk
+    kind: official
+    archive_url: https://web.archive.org/web/20260429001923/https://www.bratislava.sk/spravy/cyklisticka-infrastruktura-v-bratislave-sa-rozsiruje
+    excerpts:
+      - id: built-2025
+        text: "Mesto investovalo v roku 2025 aj do ďalšieho rozvoja cyklodopravy na svojom území. Vybudovalo 14,2 kilometra novej cyklistickej infraštruktúry vrátane významných projektov popri predĺženej električkovej trati v Petržalke alebo na Dunajskej ulici."
+        gloss_en: "In 2025 the city also invested in further development of cycling on its territory. It built 14.2 km of new cycling infrastructure, including major projects along the extended tram line in Petržalka and on Dunajská street."
+        locator: "lead paragraph"
+      - id: breakdown-total
+        text: "Z vyše štrnástich kilometrov, o ktoré sa sieť rozšírila, je 6,9 kilometra samostatných cyklistických komunikácií, 2,2 kilometra ochranných pruhov, 3,6 kilometra spoločného chodníka pre chodcov a cyklistov a 1,5 kilometra bicyklovej cesty. Cyklistická infraštruktúra v meste celkovo meria viac než 205 kilometrov."
+        gloss_en: "Of the more than fourteen kilometres by which the network grew, 6.9 km are separate cycle tracks, 2.2 km advisory lanes, 3.6 km shared footpaths for pedestrians and cyclists and 1.5 km bicycle road. Cycling infrastructure in the city measures more than 205 km in total."
+        locator: "article body, second paragraph"
+      - id: connected-network
+        text: "Týmto prvkom vznikla ucelená sieť s minimálnou dĺžkou deväťdesiat kilometrov."
+        gloss_en: "This element created a connected network at least ninety kilometres long."
+        locator: "closing paragraph, quote of Stanislav Skýva (city department of walking and cycling)"
+  - id: bratislava-sita-akcny-plan-2025
+    publisher: SITA (Slovenská tlačová agentúra)
+    title: "Bratislava plánuje vybudovať kilometre cyklotrás, chce vytvoriť ucelenú mestskú sieť"
+    url: https://sita.sk/nasadoprava/bratislava-planuje-vybudovat-kilometre-cyklotras-a-vytvorit-ucelenu-mestsku-siet/
+    published: 2025-04-02
+    accessed: 2026-10-06
+    language: sk
+    kind: press
+    archive_url: https://web.archive.org/web/20260120113357/https://sita.sk/nasadoprava/bratislava-planuje-vybudovat-kilometre-cyklotras-a-vytvorit-ucelenu-mestsku-siet/
+    excerpts:
+      - id: since-2019
+        text: "Bratislava od roku 2019 vybudovala približne 50 km nových cyklotrás. Magistrát deklaruje, že len tento rok pribudne ďalších 10 km technicky alebo stavebne oddelených trás, plus ďalšie kilometre vyznačených cyklopruhov."
+        gloss_en: "Since 2019 Bratislava has built approximately 50 km of new cycle routes. The city hall says that this year alone a further 10 km of technically or physically separated routes will be added, plus further kilometres of marked cycle lanes."
+        locator: "article body, second paragraph"
+      - id: target-2030
+        text: "Cieľom stanoveným v dokumente Bratislava 2030 je vytvorenie hlavných mestských cyklotrás tak ako sú zadefinované v Územnom genereli dopravy. „Do roku 2030 by malo byť vybudovaných 180 kilometrov hlavných mestských cyklotrás,“ dodáva magistrát."
+        gloss_en: "The goal set in the Bratislava 2030 document is to create the main city cycle routes as defined in the Transport Master Plan. 'By 2030, 180 km of main city cycle routes should be built,' the city hall adds."
+        locator: "article body, closing paragraph"
+      - id: not-only-km
+        text: "„Rozvoj novej cykloinfraštruktúry nie je len o novopostavených kilometroch. Niekedy dôležitejšie než počet kilometrov je vybudovanie aj relatívne krátkeho nového úseku, ktorý priamo prepojí už existujúce frekventované cyklotrasy,“ poznamenalo mesto"
+        gloss_en: "'Developing new cycling infrastructure is not only about newly built kilometres. Sometimes more important than the number of kilometres is building even a relatively short new section that directly connects existing busy cycle routes,' the city noted"
+        locator: "article body, third paragraph"
+  - id: bratislava-cyklokoalicia-2025
+    publisher: Cyklokoalícia
+    title: "Bratislava: Čo pribudlo v roku 2025"
+    url: https://cyklokoalicia.sk/2026/04/bratislava-co-pribudlo-v-roku-2025/
+    published: 2026-04-10
+    accessed: 2026-10-06
+    language: sk
+    kind: ngo
+    archive_url: https://web.archive.org/web/20260517032821/https://cyklokoalicia.sk/2026/04/bratislava-co-pribudlo-v-roku-2025/
+    excerpts:
+      - id: hundreds-of-metres
+        text: "Pri pohľade na zoznam za rok 2025 vidíme prírastky v stovkách metrov, nie v kilometroch."
+        gloss_en: "Looking at the list for 2025, we see additions in hundreds of metres, not in kilometres."
+        locator: "concluding section"
+      - id: both-sides
+        text: "V katastri Vrakune pribudla nová zmiešaná cestička pre chodcov a cyklistov. Pred jej výstavbou tu chýbali dokonca aj chodníky. Spolu má dĺžku necelý kilometer (na jednej aj druhej strane)."
+        gloss_en: "In the Vrakuňa district a new shared path for pedestrians and cyclists was added. Before it was built there were not even footways here. In total it is just under a kilometre long (on one side and the other)."
+        locator: "article body, Vrakuňa item"
+
+  # ------------------------------------------------------------------ budapest
+  - id: budapest-bkk-kfht-helyzetertekeles-2022
+    publisher: BKK Budapesti Közlekedési Központ Zrt.
+    title: "Kerékpárforgalmi Főhálózati Terv, 2. melléklet – Helyzetértékelés (7 October 2022; document of the Fővárosi Közgyűlés)"
+    url: "https://einfoszab.budapest.hu/File/DownloadDvD/118717?filename=f02_KFHT_helyzetert.pdf&prevcont=Session&prevaction=DvdItem&path=Tev%C3%A9kenys%C3%A9gre,+m%C5%B1k%C3%B6d%C3%A9sre+vonatkoz%C3%B3+adatok+/+D%C3%B6nt%C3%A9shozatal,+%C3%BCl%C3%A9sek+/+A+F%C5%91v%C3%A1rosi+K%C3%B6zgy%C5%B1l%C3%A9s+%C3%BCl%C3%A9sei&type=5&key=fovarosi-kozgyules-nyilvanos-ulesei&fileId=191823&sessionType=1&organizationtype=2&parentId=16335&parenttype=2"
+    published: 2022-10-07
+    accessed: 2026-10-06
+    language: hu
+    kind: official
+    excerpts:
+      - id: main-network-800km
+        text: "A kerékpárral megtett utazások számának jelentős növeléséhez a teljes budapesti közúthálózatot (alaphálózat, kb. 5500 km) biztonságosan kerékpározhatóvá kell tenni, ezen belül megfelelő sűrűségű és komfortú főhálózat (kb. 800 km) szükséges."
+        gloss_en: "To significantly increase the number of trips made by bicycle, the whole Budapest road network (base network, approx. 5,500 km) must be made safely cyclable, and within it a main network of adequate density and comfort (approx. 800 km) is needed."
+        locator: "PDF p. 5, summary findings"
+      - id: city-managed-235km
+        text: "A Budapest Közút Zrt. által végzett kerékpáros útellenőrzési munka jelenleg 279 fővárosi kezelésű kerékpárútszakaszon és 206 fővárosi kezelésű kerékpársávszakaszon zajlik, melyek összesített hossza 235 kilométer."
+        gloss_en: "The cycle-route inspection work carried out by Budapest Közút Zrt. currently covers 279 city-managed cycle track sections and 206 city-managed cycle lane sections, with a combined length of 235 km."
+        locator: "PDF p. 27, 1.5.1 Útállapot szerinti minősítés (önálló kerékpárforgalmi létesítmények)"
+  - id: budapest-telex-g7-2024
+    publisher: Telex (G7)
+    title: "Nem látszik, hogy ellenzéki vezetés alatt dübörögne a budapesti kerékpáros fejlesztés"
+    url: https://telex.hu/g7/adat/2024/04/12/nem-latszik-hogy-ellenzeki-vezetes-alatt-duborogne-a-budapesti-kerekparos-fejlesztes
+    published: 2024-04-12
+    accessed: 2026-10-06
+    language: hu
+    kind: press
+    archive_url: https://web.archive.org/web/20260218115808/https://telex.hu/g7/adat/2024/04/12/nem-latszik-hogy-ellenzeki-vezetes-alatt-duborogne-a-budapesti-kerekparos-fejlesztes
+    excerpts:
+      - id: km-poor-indicator
+        text: "A hálózat kilométerben kifejezett hossza pedig valójában nem túl jó mutató, mert például a fővárosban sok helyen egyszerűen a járdára húztak egy-egy sárga vonalat, és ebből lett a kerékpárút, de ez nem nagyon tekinthető minőségi, modern megoldásnak."
+        gloss_en: "The length of the network in kilometres is actually not a very good indicator, because in many places in the capital a yellow line was simply painted on the footway and that became the cycle path, which can hardly be considered a quality, modern solution."
+        locator: "article body, paragraph on data availability"
+      - id: kfht-targets
+        text: "Ebből az is megtudható, hogy a fővárosban 2022-ben csupán 139 kilométernyi elfogadható színvonalú kerékpárút volt, és ezt szeretnék 2027-ig 292 km-re, majd 2030-ra 504 km-re növelni. További 395 km-t 2030 után valósítanának meg."
+        gloss_en: "It also shows that in 2022 the capital had only 139 km of cycle paths of acceptable standard, which they want to increase to 292 km by 2027 and then to 504 km by 2030. A further 395 km would be built after 2030."
+        locator: "article body, paragraph on the Kerékpárforgalmi főhálózati terv"
+      - id: osm-vs-ksh
+        text: "E szerint Budapesten 307 km kerékpárút volt 2024 januárjában, minden formát beleértve. Ez az adat harmadával magasabb, mint a KSH által 2022-ben nyilvántartott 210 km, az eltérés oka abban lehet, hogy az eltérő típusú infrastruktúrákat melyik forrás számolja kerékpárútnak és melyik nem."
+        gloss_en: "According to this, Budapest had 307 km of cycle paths in January 2024, all forms included. That figure is a third higher than the 210 km recorded by the statistics office KSH for 2022; the difference may lie in which source counts which types of infrastructure as cycle paths."
+        locator: "article body, paragraph after the ECF city comparison ('E szerint' refers to ECF figures compiled from OpenStreetMap data)"
+      - id: bkk-main-network-built
+        text: "A 2020-2024 között (azaz a jelenlegi) ciklusban összesen 52 kilométernyi kerékpárforgalmi főhálózati elem épült, ezzel szemben 2015-2019 között (azaz az előző ciklusnak köszönhetően) mindössze 34 kilométer, de 2010-2014 közötti ciklusba is csak 42 km új főhálózat jött létre."
+        gloss_en: "In the 2020–2024 (i.e. current) term a total of 52 km of cycle main-network elements were built, against only 34 km in 2015–2019 (the previous term) and only 42 km of new main network in the 2010–2014 term."
+        locator: "Frissítés (update) section, statement sent by BKK after publication"
+
+  # ----------------------------------------------------------------- ljubljana
+  - id: ljubljana-mol-hoja-in-kolesarjenje
+    publisher: Mestna občina Ljubljana
+    title: Hoja in kolesarjenje (ljubljana.si web page)
+    url: https://www.ljubljana.si/sl/ljubljana/mobilna/hoja-in-kolesarjenje
+    accessed: 2026-10-06
+    language: sl
+    kind: official
+    archive_url: https://web.archive.org/web/20260727055243/https://www.ljubljana.si/sl/ljubljana/mobilna/hoja-in-kolesarjenje
+    excerpts:
+      - id: over-350km
+        text: "V Ljubljani je več kot 350 km urejenih kolesarskih površin v obliki kolesarskih pasov na pločniku ali vozišču, ločenih kolesarskih stez ter skupnih poti za pešce in kolesarje."
+        gloss_en: "Ljubljana has more than 350 km of designated cycling surfaces in the form of cycle lanes on the footway or carriageway, separated cycle tracks and shared paths for pedestrians and cyclists."
+        locator: "section Kolesarji z novimi pridobitvami"
+  - id: ljubljana-cps-2025-2032
+    publisher: Mestna občina Ljubljana
+    title: "Celostna prometna strategija Mestne občine Ljubljana 2025–2032 (gradivo za obravnavo na seji Mestnega sveta, oktober 2025)"
+    url: https://www.ljubljana.si/assets/Uploads/6.-tocka-Celostna-prometna-strategija-MOL.pdf
+    accessed: 2026-10-06
+    language: sl
+    kind: official
+    archive_url: https://web.archive.org/web/20260305072917/https://www.ljubljana.si/assets/Uploads/6.-tocka-Celostna-prometna-strategija-MOL.pdf
+    excerpts:
+      - id: about-400km
+        text: "Izboljšujemo in dograjujemo infrastrukturo za pešce in kolesarje, beležimo že okoli 400 km kolesarskih poti različnih tipov."
+        gloss_en: "We are improving and extending infrastructure for pedestrians and cyclists; we already record about 400 km of cycle paths of various types."
+        locator: "PDF p. 33, section Gradimo udobno in varno infrastrukturo"
+      - id: cycling-share-counts
+        text: "S štetjem prometa na izbranih lokacijah ob glavnih cestah v oktobru 2024 je bilo ugotovljeno, da je delež kolesarjev v celotni strukturi mobilnosti danes precej nizek in dosega le 4,2 %."
+        gloss_en: "Traffic counts at selected locations along main roads in October 2024 found that the share of cyclists in overall mobility is currently quite low, at only 4.2%."
+        locator: "PDF p. 57, analysis of cycling"
+  - id: ljubljana-visitljubljana-kolo
+    publisher: Turizem Ljubljana (visitljubljana.com)
+    title: S kolesom po Ljubljani
+    url: https://www.visitljubljana.com/sl/obiskovalci/znamenitosti-in-aktivnosti/aktivne-pocitnice/s-kolesom-po-ljubljani
+    accessed: 2026-10-06
+    language: sl
+    kind: official
+    archive_url: https://web.archive.org/web/20250207104611/https://www.visitljubljana.com/sl/obiskovalci/znamenitosti-in-aktivnosti/aktivne-pocitnice/s-kolesom-po-ljubljani/
+    excerpts:
+      - id: about-230km
+        text: "Ljubljana ima skupno okoli 230 kilometrov urejenih kolesarskih poti."
+        gloss_en: "Ljubljana has a total of around 230 km of designated cycle paths."
+        locator: "intro paragraph"
+
+  # ------------------------------------------------------------------- wroclaw
+  - id: wroclaw-plan-dzialan-rowerowych-2025
+    publisher: Urząd Miejski Wrocławia (wroclaw.pl)
+    title: "Plan Działań Rowerowych do 2030 roku we Wrocławiu. Inwestycje gotowe, w trakcie i zaplanowane"
+    url: https://www.wroclaw.pl/dla-mieszkanca/inwestycje-rowerowe-we-wroclawiu-podsumowanie-plan-2030
+    published: 2025-09-05
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20260711141015/https://www.wroclaw.pl/dla-mieszkanca/inwestycje-rowerowe-we-wroclawiu-podsumowanie-plan-2030
+    excerpts:
+      - id: friendly-1450km
+        text: "Wrocław ma obecnie 1450 km tras przyjaznych rowerzystom."
+        gloss_en: "Wrocław currently has 1,450 km of cyclist-friendly routes."
+        locator: "lead paragraph"
+      - id: built-since-plan
+        text: "W 2025 roku mieszkańcy korzystają z blisko 40 kilometrów tras wybudowanych od momentu przyjęcia planu."
+        gloss_en: "In 2025 residents are using nearly 40 km of routes built since the plan was adopted."
+        locator: "article body, section on current investments"
+  - id: wroclaw-portal-samorzadowy-2026
+    publisher: Portal Samorządowy
+    title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (figures supplied by city halls)"
+    url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    published: 2026-01-04
+    accessed: 2026-10-06
+    language: pl
+    kind: press
+    archive_url: https://web.archive.org/web/20260618163406/https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    excerpts:
+      - id: wroclaw-428km
+        text: "We Wrocławiu - jak podaje magistrat - taka infrastruktura liczy 428 km."
+        gloss_en: "In Wrocław, according to the city hall, such infrastructure totals 428 km."
+        locator: "section Kilkaset kilometrów tras rowerowych we Wrocławiu, Poznaniu, Krakowie, Łodzi i Katowicach"
+      - id: wroclaw-25km-2024
+        text: "2024 r. był momentem oddawania wielu inwestycji, w tym także rowerowych. Wówczas było to 25 km."
+        gloss_en: "2024 was a time when many investments were opened, including cycling ones. Back then it was 25 km."
+        locator: "same section, quote of Jolanta Urbańska-Jaworska (UM Wrocławia)"
+  - id: wroclaw-nik-2023
+    publisher: Najwyższa Izba Kontroli (NIK)
+    title: "Infrastruktura rowerowa w miastach – są strategie, ale usterek wciąż za dużo"
+    url: https://www.nik.gov.pl/aktualnosci/infrastruktura-rowerowa-w-miastach.html
+    published: 2023-04-27
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20250429082958/https://www.nik.gov.pl/aktualnosci/infrastruktura-rowerowa-w-miastach.html
+    excerpts:
+      - id: wroclaw-most-added
+        text: "W sumie przybyło 123,5 km wszystkich rodzajów tras rowerowych (najwięcej we Wrocławiu – ponad 45,5 km)."
+        gloss_en: "In total 123.5 km of all types of cycle route were added (most in Wrocław, more than 45.5 km)."
+        locator: "section Najważniejsze ustalenia kontroli (audit period 2019 to Q1 2022, ten audited cities)"
+      - id: targets-unmeasurable
+        text: "Założone w licznych dokumentach strategicznych cele związane z utrzymaniem i rozwojem miejskich sieci infrastruktury rowerowej na ogół nie zostały osiągnięte lub nie można było w istocie ustalić faktu ich zrealizowania, ponieważ nie określono terminu lub docelowej wartości przyjmowanych wskaźników."
+        gloss_en: "The goals for maintaining and developing urban cycling networks set in numerous strategy documents were generally not achieved, or it could not actually be established whether they were achieved, because no deadline or target value was set for the indicators adopted."
+        locator: "section Najważniejsze ustalenia kontroli"
+      - id: wroclaw-row
+        text: "Wrocław 84,20 km 110,63 km (wzrost 31,39%)"
+        gloss_en: "Wrocław: 84.20 km, 110.63 km (increase of 31.39%)."
+        locator: "table 'Dynamika rozwoju infrastruktury rowerowej w skontrolowanych miastach w latach 2019-2022 (I kwartał) (w km)', row Wrocław, columns Drogi dla rowerów wg stanu na 31 grudnia 2018 r. / 31 marca 2022 r."
+  - id: wroclaw-wroclife-nik-2023
+    publisher: wroclife.pl
+    title: "Raport NIK ws. ścieżek rowerowych we Wrocławiu. Miasto dumne, aktywiści mają inne wnioski"
+    url: https://wroclife.pl/artykul/2953/raport-nik-ws-sciezek-rowerowych-we-wroclawiu-miasto-dumne-aktywisci-maja-inne-wnioski
+    published: 2023-04-28
+    accessed: 2026-10-06
+    language: pl
+    kind: press
+    archive_url: https://web.archive.org/web/20230511205706/https://wroclife.pl/artykul/2953/raport-nik-ws-sciezek-rowerowych-we-wroclawiu-miasto-dumne-aktywisci-maja-inne-wnioski
+    excerpts:
+      - id: friendly-routes
+        text: "Urząd miejski w swoim oświadczeniu zaznacza, że poza ujętymi w raporcie drogami rowerowymi, ciągami pieszo-rowerowymi i rowerowymi pasami ruchu, w mieście istnieją też inne trasy „przyjazne rowerzystom”. Urzędnicy szacują ich długość na 1,4 tys. km. Chodzi tu m.in. o kontrapasy i strefy uspokojonego ruchu."
+        gloss_en: "In its statement the city hall stresses that besides the cycle tracks, shared footpath/cycle paths and cycle lanes covered by the report, there are other 'cyclist-friendly' routes in the city. Officials estimate their length at 1,400 km. These include contraflow lanes and traffic-calmed zones."
+        locator: "article body, paragraph on the city's statement"
+      - id: km-not-reality
+        text: "Urząd Miejski często chwali się rosnącą liczbą kilometrów tras rowerowych. Liczby te jednak nie oddają rzeczywistości."
+        gloss_en: "The city hall often boasts of the growing number of kilometres of cycle routes. These numbers, however, do not reflect reality."
+        locator: "article body, quote of Jakub Nowotarski (Akcja Miasto)"
+
+  # -------------------------------------------------------------------- warsaw
+  - id: warsaw-zdm-podsumowanie-2025
+    publisher: Zarząd Dróg Miejskich w Warszawie (ZDM)
+    title: Podsumowujemy 2025 rok na stołecznych ulicach
+    url: https://zdm.waw.pl/aktualnosci/podsumowujemy-2025-rok-na-stolecznych-ulicach/
+    published: 2026-01-05
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    excerpts:
+      - id: plus-55km
+        text: "Ogółem w 2025 roku sieć rowerowa w stolicy wydłużyła się o aż 55 km. W międzyczasie rozpoczęliśmy też budowę kolejnych tras, m.in. w al. „Solidarności” czy al. Jana Pawła II. Rekordowa jest też długość wyremontowanych tras – aż 20 km."
+        gloss_en: "Overall, in 2025 the cycle network in the capital grew by as much as 55 km. Meanwhile we also started building further routes, including on al. Solidarności and al. Jana Pawła II. The length of renovated routes is also a record, as much as 20 km."
+        locator: "section Droga dla rowerów na Andersa"
+  - id: warsaw-zdm-rower-2025
+    publisher: Zarząd Dróg Miejskich w Warszawie (ZDM)
+    title: "2025 rok – rower w centrum uwagi"
+    url: https://zdm.waw.pl/aktualnosci/2025-rok-rower-w-centrum-uwagi/
+    published: 2025-03-07
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20251212040500/https://zdm.waw.pl/aktualnosci/2025-rok-rower-w-centrum-uwagi/
+    excerpts:
+      - id: network-814km
+        text: "Sieć rowerowa w stolicy liczy obecnie 814 kilometrów różnego rodzaju infrastruktury."
+        gloss_en: "The cycle network in the capital currently comprises 814 km of various kinds of infrastructure."
+        locator: "lead paragraph"
+  - id: warsaw-zdm-sezon-2018
+    publisher: Zarząd Dróg Miejskich w Warszawie (ZDM)
+    title: Rekordowy sezon inwestycji rowerowych
+    url: https://zdm.waw.pl/aktualnosci/rekordowy-sezon-inwestycji-rowerowych/
+    published: 2018-07-05
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20260517092333/https://zdm.waw.pl/aktualnosci/rekordowy-sezon-inwestycji-rowerowych/
+    excerpts:
+      - id: composition-544km
+        text: "Obecnie sieć rowerowa w stolicy liczy już 544 km (w tym 406 km dróg dla rowerów, 70 km ciągów pieszo-rowerowych oraz 68 km pasów i kontrapasów). 2/3 z nich ma nawierzchnię asfaltową."
+        gloss_en: "The cycle network in the capital now totals 544 km (including 406 km of cycle tracks, 70 km of shared footpath/cycle paths and 68 km of cycle lanes and contraflow lanes). Two thirds of it has an asphalt surface."
+        locator: "closing paragraph"
+  - id: warsaw-portal-samorzadowy-2026
+    publisher: Portal Samorządowy
+    title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (citing a ZDM statement of early December 2025)"
+    url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    published: 2026-01-04
+    accessed: 2026-10-06
+    language: pl
+    kind: press
+    archive_url: https://web.archive.org/web/20260618163406/https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    excerpts:
+      - id: zdm-36-9km
+        text: "W informacji z początku grudnia ZDM wskazuje, że w roku 2025 powstało 36,9 km infrastruktury rowerowej, a w trakcie budowy lub za pomocą zmian w organizacji ruchu w trakcie wyznaczania są 23 km różnego rodzaju infrastruktury rowerowej, w tym 18,8 km dróg dla rowerów."
+        gloss_en: "In information from early December, ZDM states that 36.9 km of cycling infrastructure were created in 2025, and 23 km of various kinds of cycling infrastructure, including 18.8 km of cycle tracks, are under construction or being marked through traffic-organisation changes."
+        locator: "section 860 km na koniec roku w Warszawie"
+      - id: estimate-860km
+        text: "Wówczas nie było jeszcze wiadomo, które z realizowanych prac zakończą się do 31 grudnia, ale zdaniem zarządu szacunkowa łączna długość na koniec 2025 r. to ok. 860 km."
+        gloss_en: "At that point it was not yet known which of the works under way would be finished by 31 December, but in the authority's view the estimated total length at the end of 2025 is about 860 km."
+        locator: "section 860 km na koniec roku w Warszawie"
+  - id: warsaw-transinfo-2025
+    publisher: TransInfo (InfoBike)
+    title: "Nowe drogi dla rowerów w Warszawie. ZDM podsumowuje 2025 rok"
+    url: https://transinfo.pl/infobike/nowe-drogi-dla-rowerow-w-warszawie-zdm-podsumowuje-2025-rok/
+    published: 2026-02-28
+    accessed: 2026-10-06
+    language: pl
+    kind: press
+    archive_url: https://web.archive.org/web/20260309031434/https://transinfo.pl/infobike/nowe-drogi-dla-rowerow-w-warszawie-zdm-podsumowuje-2025-rok/
+    excerpts:
+      - id: over-873km
+        text: "Ponad 873 kilometry infrastruktury rowerowej – tyle na koniec 2025 roku mieli do dyspozycji warszawscy rowerzyści."
+        gloss_en: "More than 873 km of cycling infrastructure: that is what Warsaw's cyclists had at their disposal at the end of 2025."
+        locator: "lead paragraph"
+      - id: renovated-20-7km
+        text: "W 2025 roku wyremontowano łącznie 20,7 km infrastruktury rowerowej."
+        gloss_en: "In 2025 a total of 20.7 km of cycling infrastructure was renovated."
+        locator: "article body, paragraph on renovations"
+
+  # -------------------------------------------------------------------- krakow
+  - id: krakow-250km-2022
+    publisher: Urząd Miasta Krakowa (krakow.pl)
+    title: 250 kilometrów infrastruktury rowerowej miasta
+    url: https://krakow.pl/aktualnosci/260628,1912,komunikat,250_kilometrow_infrastruktury_rowerowej_miasta.html
+    published: 2022-05-31
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20220703023127/https://www.krakow.pl/aktualnosci/260628,1912,komunikat,250_kilometrow_infrastruktury_rowerowej_miasta.html
+    excerpts:
+      - id: from-142-to-250
+        text: "W 2014 – roku referendum – w którym krakowianie opowiedzieli się za rozbudową ścieżek rowerowych, miasto miało do dyspozycji wydzieloną infrastrukturę rowerową liczącą 142,5 km. Z biegiem lat oddawane były kolejne kilometry dróg oraz wprowadzano rozwiązania projektowe, które spowodowały, że obecnie do dyspozycji mieszkańców oddanych jest około 250 km."
+        gloss_en: "In 2014, the year of the referendum in which Kraków residents voted for expanding cycle paths, the city had 142.5 km of separated cycling infrastructure. Over the years further kilometres were opened and design solutions introduced, so that about 250 km are now available to residents."
+        locator: "article body, second paragraph"
+      - id: per-year
+        text: "W 2019 r. powstało ok. 3,7 km ścieżek, w 2020 r. – 5,7 km, w 2021 r. – 0,85 km."
+        gloss_en: "About 3.7 km of paths were built in 2019, 5.7 km in 2020 and 0.85 km in 2021."
+        locator: "article body, third paragraph"
+      - id: definition
+        text: "Na szeroko rozumianą infrastrukturę rowerową składają się: drogi dla rowerów, ciągi pieszo-rowerowe, chodniki z dopuszczonym ruchem rowerowym, pasy rowerowe, kontrapasy oraz tzw. kontraruch rowerowy, gdzie dopuszczona jest jazda rowerem „pod prąd” na ulicach jednokierunkowych w strefie uspokojonego ruchu drogowego, czyli z ograniczeniem prędkości do 30 km/h."
+        gloss_en: "Cycling infrastructure in the broad sense comprises: cycle tracks, shared footpath/cycle paths, footways where cycling is permitted, cycle lanes, contraflow lanes and so-called contraflow cycling, where riding 'against the flow' is allowed on one-way streets in traffic-calmed zones, i.e. with a 30 km/h limit."
+        locator: "article body, fourth paragraph"
+  - id: krakow-ztp-plan-2030
+    publisher: Zarząd Transportu Publicznego w Krakowie (ZTP)
+    title: "Bezpieczna infrastruktura dla pół miliona Krakowian. Zespół rowerowy przedstawia rekomendacje do 2030 roku"
+    url: https://ztp.krakow.pl/wszystkie-aktualnosci/rower/bezpieczna-infrastruktura-dla-pol-miliona-krakowian-zespol-rowerowy-przedstawia-rekomendacje-do-2030-roku.html
+    published: 2026-09-03
+    accessed: 2026-10-06
+    language: pl
+    kind: official
+    archive_url: https://web.archive.org/web/20260905192419/https://ztp.krakow.pl/wszystkie-aktualnosci/rower/bezpieczna-infrastruktura-dla-pol-miliona-krakowian-zespol-rowerowy-przedstawia-rekomendacje-do-2030-roku.html
+    excerpts:
+      - id: not-only-km
+        text: "Nie chcemy mierzyć rozwoju ruchu rowerowego wyłącznie liczbą nowych kilometrów. Najważniejsze ilu mieszkańców dzięki danej inwestycji będzie mogło przejechać swoją trasę bezpiecznie, wygodnie i bez miejsc, w których infrastruktura nagle się kończy."
+        gloss_en: "We do not want to measure the development of cycling only by the number of new kilometres. What matters most is how many residents an investment lets ride their route safely, comfortably and without places where the infrastructure suddenly ends."
+        locator: "article body, quote of Marcin Dumnicki (Kraków Miastem Rowerów), member of the city's cycling team"
+      - id: budget-0-6pct
+        text: "Propozycją zespołu jest przeznaczanie do 2030 r. na rozwój infrastruktury rowerowej równowartości co najmniej 0,6 proc. budżetu miasta rocznie"
+        gloss_en: "The team proposes allocating to cycling infrastructure, until 2030, the equivalent of at least 0.6 percent of the city budget each year"
+        locator: "section Zespół rekomenduje model finansowania, quote of Łukasz Gryga (ZTP deputy director, team chair)"
+  - id: krakow-portal-samorzadowy-2026
+    publisher: Portal Samorządowy
+    title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (figures supplied by city halls)"
+    url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    published: 2026-01-04
+    accessed: 2026-10-06
+    language: pl
+    kind: press
+    archive_url: https://web.archive.org/web/20260618163406/https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
+    excerpts:
+      - id: krakow-316km
+        text: "Nieco mniej - blisko 410 km - ma Poznań. Kraków i Gdańsk to odpowiednio ok. 316 i 311 km tras rowerowych, a Łódź 260 km."
+        gloss_en: "Somewhat less, close to 410 km, has Poznań. Kraków and Gdańsk have about 316 and 311 km of cycle routes respectively, and Łódź 260 km."
+        locator: "section Kilkaset kilometrów tras rowerowych we Wrocławiu, Poznaniu, Krakowie, Łodzi i Katowicach"
+      - id: krakow-plan-2026
+        text: "Kraków ma w planie 9,1 km nowych tras."
+        gloss_en: "Kraków plans 9.1 km of new routes."
+        locator: "section 10 km lub niewiele mniej. Oto plany Łodzi, Gdańska, Krakowa i Katowic"
