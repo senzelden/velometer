@@ -54,6 +54,11 @@ app.add_typer(trust_app, name="trust")
 plans_app = typer.Typer(no_args_is_help=True, help="Plan networks and their overlay.")
 app.add_typer(plans_app, name="plans")
 
+counters_app = typer.Typer(
+    invoke_without_command=True, help="Bike-counter context: fetch, load, --check."
+)
+app.add_typer(counters_app, name="counters")
+
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
 DOCS_OPT = typer.Option(Path("docs"), "--docs", help="Docs directory (review/trust/ inside).")
@@ -2065,3 +2070,110 @@ def content(
     if problems:
         raise typer.Exit(1)
     typer.echo("ok")
+
+
+def _counters_config(config_dir: Path):
+    from velometer.counters.model import COUNTERS_FILE, load_counters_config
+
+    try:
+        return load_counters_config(config_dir / COUNTERS_FILE)
+    except ConfigError as e:
+        raise _config_error(e) from e
+
+
+def _counter_entries(cfg, cities: list[str] | None):
+    try:
+        return [cfg.entry(c) for c in cities] if cities else list(cfg.cities)
+    except ConfigError as e:
+        raise _config_error(e) from e
+
+
+@counters_app.callback()
+def counters_main(
+    ctx: typer.Context,
+    check: bool = typer.Option(
+        False,
+        "--check",
+        help="Exit 1 unless every configured city has sites and an index year, no site is under"
+        " two cities, daily counts are non-negative and each index base year is 100.",
+    ),
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Bike-counter context (M8 spec §5): `fetch`, `load`, or `--check` the stored tables."""
+    if ctx.invoked_subcommand is not None:
+        if check:
+            typer.echo("error: --check takes no subcommand", err=True)
+            raise typer.Exit(2)
+        return
+    if not check:
+        typer.echo(ctx.get_help())
+        raise typer.Exit(0)
+    from velometer.counters.check import check_counters
+
+    cfg = _counters_config(config_dir)
+    with _open_schema(db) as conn:
+        problems = check_counters(conn, cfg)
+    for p in problems:
+        typer.echo(p)
+    if problems:
+        raise typer.Exit(1)
+    typer.echo(f"counters ok: {len(cfg.cities)} cities")
+
+
+@counters_app.command("fetch")
+def counters_fetch(
+    cities: list[str] = typer.Argument(None, help="City ids; default every configured city."),  # noqa: B008
+    data_dir: Path = DATA_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Download each city's counter files into <data>/counters/<city>/, with URL, licence and
+    retrieval time per file in retrieved.json."""
+    from velometer.counters import city_dir
+    from velometer.counters.adapters import adapter
+
+    for entry in _counter_entries(_counters_config(config_dir), cities):
+        try:
+            paths = adapter(entry.adapter).fetch(entry, city_dir(data_dir, entry.city))
+        except (KeyError, OSError, httpx.HTTPError) as e:
+            typer.echo(f"error: {entry.city}: {e}", err=True)
+            raise typer.Exit(1) from e
+        for path in paths:
+            typer.echo(f"written: {path}")
+        typer.echo(f"{entry.city}: {len(paths)} files, licence {entry.licence}")
+
+
+@counters_app.command("load")
+def counters_load(
+    cities: list[str] = typer.Argument(None, help="City ids; default every configured city."),  # noqa: B008
+    data_dir: Path = DATA_OPT,
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Parse each fetched city's files into daily totals (counter_daily, upserted), its sites
+    (counter_sites) and its chained index (counter_index). Writes only the counter_* tables."""
+    from velometer.counters import load_city
+    from velometer.counters.model import CounterFormatError
+
+    entries = _counter_entries(_counters_config(config_dir), cities)
+    with _open_schema(db) as conn:
+        for entry in entries:
+            try:
+                res = load_city(conn, entry, data_dir)
+            except FileNotFoundError as e:
+                typer.echo(
+                    f"error: {entry.city}: not fetched ({e.filename}); run "
+                    f"`velometer counters fetch {entry.city}` first",
+                    err=True,
+                )
+                raise typer.Exit(1) from e
+            except (CounterFormatError, KeyError, ValueError) as e:
+                typer.echo(f"error: {entry.city}: {e}", err=True)
+                raise typer.Exit(1) from e
+            typer.echo(
+                f"{entry.city}: {res.sites} sites, {res.days} days ({res.complete_days} complete),"
+                f" {res.first_day} to {res.last_day}"
+            )
+            for year, idx, n in res.index:
+                shown = f"{idx:.1f}" if idx is not None else "none"
+                typer.echo(f"  {year}: {shown} ({n} sites)")

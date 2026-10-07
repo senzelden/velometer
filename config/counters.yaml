@@ -1,0 +1,107 @@
+# Open bike-counter portals (M8 spec §5.1). Research and retrieval log: docs/review/m8-counters.md;
+# feasibility: docs/review/m8-feasibility.md §A. `velometer counters fetch` downloads `urls` in
+# order into data/counters/<city>/ (git-ignored; retrieved.json records URL, licence and time per
+# file); `load` reads them in that order, a later file winning on an hour both hold.
+#
+# Keys: adapter (src/velometer/counters/adapters/<adapter>.py), source (publisher, for the
+# attribution line), licence, licence_url, page (dataset page), timezone (local hours), grain,
+# base_year (index = 100, default 2019; spec §2.13), site_aliases (a portal id -> the canonical
+# site id), exclude_columns (columns that aggregate other columns of the same file).
+cities:
+  - city: berlin
+    adapter: berlin
+    source: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin
+    licence: dl-de-zero-2.0
+    licence_url: https://www.govdata.de/dl-de/zero-2-0
+    page: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/
+    urls:
+      - https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/gesamtdatei-stundenwerte.xlsx
+    timezone: Europe/Berlin
+    grain: hourly
+    # Year-sheet headers renumbered against sheet Standortdaten; each pair shares its
+    # installation date in the header (2021-12-16, 2022-10-06, 2023-11-22, 2016-05-01).
+    # Standortdaten spells 17-SK-BRE-*; the year sheets 17-SZ-BRE-* (Steglitz-Zehlendorf).
+    site_aliases:
+      02-MI-AL-W: 01-MI-AL-W
+      02-PA-SE-N: 11-PA-SE-N
+      03-SP-NO-O: 16-SP-NO-O
+      03-SP-NO-W: 16-SP-NO-W
+      17-SZ-BRE-O: 17-SK-BRE-O
+      17-SZ-BRE-W: 17-SK-BRE-W
+  - city: paris
+    adapter: paris
+    source: Ville de Paris, Direction de la Voirie et des Déplacements
+    licence: ODbL
+    licence_url: http://opendatacommons.org/licenses/odbl/
+    page: https://opendata.paris.fr/explore/dataset/comptage-velo-historique-donnees-compteurs/
+    urls:
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2016_comptage_velo_donnees_compteurs_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2017_comptage_velo_donnees_compteurs_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2018_comptage_velo_donnees_compteurs_csv_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2019_comptage_velo_donnees_compteurs_csv_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2020_comptage_velo_donnees_compteurs_csv_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2021_comptage_velo_donnees_compteurs_csv_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2022_comptage_velo_donnees_compteurs_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2023_comptage_velo_donnees_compteurs_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2024_comptage_velo_donnees_compteurs_zip
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-historique-donnees-compteurs/attachments/2025_comptage_velo_donnees_compteurs_zip
+      # rolling 13 months (comptage-velo-donnees-compteurs), labels as headers, times in UTC
+      - https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/comptage-velo-donnees-compteurs/exports/csv?select=id_compteur,nom_compteur,id,name,sum_counts,date,coordinates&use_labels=true&timezone=UTC&delimiter=%3B
+    timezone: Europe/Paris
+    grain: hourly
+  - city: vienna
+    adapter: vienna
+    source: Stadt Wien
+    licence: CC BY 4.0
+    licence_url: https://creativecommons.org/licenses/by/4.0/deed.de
+    page: https://www.data.gv.at/katalog/datasets/2e9f926c-f688-4889-856d-5e6935440c28
+    urls:
+      - https://www.wien.gv.at/gogv/l9ogdradverkehrszaehlungen
+    timezone: Europe/Vienna
+    grain: daily
+    # `Opernring` = `Opernring Innen` + `Opernring Außen` on every row of the 2026-10-07 file
+    exclude_columns: [Opernring]
+
+# Cities without an open, licensed counter series covering 2018-2025, and the portals checked
+# (feasibility log §A, 2026-10-07). Madrid, Barcelona, Helsinki and Oslo have open data and
+# are added under `cities` with their adapters.
+none:
+  - city: copenhagen
+    checked: [data.kk.dk faste-cykeltaellinger]
+    note: hourly counts 2005-2014 only, no licence stated
+  - city: amsterdam
+    checked: [data.amsterdam.nl, NDW Dexter, maps-vervoerregio.nl]
+    note: no city counter dataset found; regional counts published as maps only
+  - city: utrecht
+    checked: [open.utrecht.nl fietstellingen]
+    note: 2014-2016 only
+  - city: stockholm
+    checked: [openstreetgs.stockholm.se]
+    note: counter station points and weekday mean flows; no open count series verified
+  - city: lyon
+    checked: [data.grandlyon.com]
+    note: counting sites published; the count series not verified
+  - city: strasbourg
+    checked: [data.strasbourg.eu, data.gouv.fr]
+  - city: bordeaux
+    checked: [opendata.bordeaux-metropole.fr pc_velo_p]
+    note: rolling window from 2024-10 only
+  - city: wroclaw
+    checked: [open-data.cui.wroclaw.pl]
+  - city: warsaw
+    checked: [zdm.waw.pl counter viewer]
+    note: counts in a web viewer only, no dataset
+  - city: krakow
+    checked: [otwartedane.um.krakow.pl, bip.krakow.pl]
+    note: counter locations and survey reports only
+  - city: budapest
+    checked: [kerekparosklub.hu/szamlalo]
+    note: published by a cyclists' association, no open licence stated
+  - city: prague
+    checked: [lkod.cz/catalog/praha, api.golemio.cz]
+    note: API needs a token; bulk files after 2020 not confirmed
+  - city: ljubljana
+    checked: [podatki.gov.si pldp-stevna-mesta-kolesarji]
+    note: national counts, no site in Ljubljana
+  - city: bratislava
+    checked: [data.bratislava.sk]
