@@ -463,3 +463,28 @@ def test_png_has_four_categories_and_the_odbl_footer(result, tmp_path, monkeypat
     labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
     assert [lb.split(" ")[0] for lb in labels] == ["gained", "lost", "retiered", "redrawn"]
     assert any("© OpenStreetMap contributors, ODbL 1.0" in t.get_text() for t in fig.texts)
+
+
+# --- R4 guard: `report change` output is byte-identical across the M8 refactor -----------------
+
+GOLDEN = FIX / "golden"
+
+
+def _golden_outputs(tmp_path) -> tuple[str, bytes]:
+    """The change markdown and GeoJSON of the fixture with a west/east split leaving a remainder
+    (the subarea, redraw and split paths all run)."""
+    line = Projector(EPSG).line(next(w for w in TO if w.id == W + 3).coords)
+    x_mid = (line.coords[0][0] + line.coords[-1][0]) / 2
+    x_q = (x_mid + max(line.coords[0][0], line.coords[-1][0])) / 2
+    subs = [_sub("west", box(370_000, 5_800_000, x_mid, 5_850_000)),
+            _sub("east", box(x_mid, 5_800_000, x_q, 5_850_000))]  # fmt: skip
+    got = ch.compute_change(FROM, TO, CFG, EPSG, BOUNDARY, subs)
+    md = ch.render_markdown(got, "berlin", RUN_FROM, RUN_TO, {"west": "Westend", "east": "Ostend"})
+    path = ch.write_geojson(got, FROM, TO, tmp_path / "c.geojson", run_from=11, run_to=12)
+    return md, path.read_bytes()
+
+
+def test_change_markdown_and_geojson_match_the_golden_files(tmp_path):
+    md, geojson = _golden_outputs(tmp_path)
+    assert md == (GOLDEN / "change.md").read_text()
+    assert geojson == (GOLDEN / "change.geojson").read_bytes()
