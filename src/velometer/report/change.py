@@ -107,11 +107,13 @@ class ChangeRefused(ValueError):
 
 
 @dataclass(frozen=True)
-class _Side:
+class Side:
+    """A way-side in tiers A-E of one snapshot."""
+
     tier: str
     line: BaseGeometry  # city EPSG, unclipped
-    km: float  # clipped to the boundary
-    km_by_subarea: dict[str, float]
+    km: float  # per_side, clipped to the boundary
+    km_by_subarea: dict[str, float] = field(default_factory=dict)  # empty without subareas
 
 
 class _Clip:
@@ -147,7 +149,7 @@ class _Clip:
 
 def _sides(
     classified: list[Classified], proj: Projector, clip: _Clip
-) -> dict[tuple[int, str], _Side]:
+) -> dict[tuple[int, str], Side]:
     """Sides in A-E with a non-zero clipped length, keyed by (way id, side)."""
     out = {}
     for c in classified:
@@ -157,8 +159,17 @@ def _sides(
         km = clip.km(line)
         if km == 0:
             continue  # wholly outside the boundary: `measure` counts it nowhere either
-        out[(c.side.way_id, c.side.side)] = _Side(c.tier, line, km, clip.by_subarea(line, km))
+        out[(c.side.way_id, c.side.side)] = Side(c.tier, line, km, clip.by_subarea(line, km))
     return out
+
+
+def classified_sides(
+    ways: list[WayRecord], cfg: ClassifierConfig, epsg: int, boundary: BaseGeometry, subareas=()
+) -> dict[tuple[int, str], Side]:
+    """One snapshot's way-sides in A-E classified with `cfg`, keyed by (way id, side): lines in
+    `epsg`, per_side km clipped to `boundary` as `measure` clips them, so their tier sums are
+    the run's stored per_side totals (the overlay re-reads snapshots through this, M8 §4.3)."""
+    return _sides(classify_ways(ways, cfg), Projector(epsg), _Clip(boundary, subareas))
 
 
 def _tags_changed(a: Mapping[str, str], b: Mapping[str, str]) -> dict:
@@ -172,7 +183,7 @@ def _diff(a: dict[str, float], b: dict[str, float]) -> dict[str, float]:
     }
 
 
-def _totals(sides: dict[tuple[int, str], _Side]) -> dict[str, float]:
+def _totals(sides: dict[tuple[int, str], Side]) -> dict[str, float]:
     out: dict[str, float] = defaultdict(float)
     for s in sides.values():
         out[s.tier] += s.km
@@ -404,17 +415,23 @@ def check_totals(
 ) -> None:
     """The recomputed per_side tier totals (A-E) equal the stored ones within `tol_km`; a tier
     missing on one side counts as 0 km. Else ChangeRefused naming the tier and both values."""
-    for label, got, stored in (
-        ("from", result.totals_from, stored_from),
-        ("to", result.totals_to, stored_to),
-    ):
-        for tier in TIERS:
-            g, s = got.get(tier, 0.0), stored.get(tier, 0.0)
-            if abs(g - s) > tol_km:
-                raise ChangeRefused(
-                    f"run {label}: tier {tier} recomputed {g:.3f} km vs stored {s:.3f} km "
-                    f"(tolerance {tol_km} km)"
-                )
+    check_tier_totals("from", result.totals_from, stored_from, tol_km)
+    check_tier_totals("to", result.totals_to, stored_to, tol_km)
+
+
+def check_tier_totals(
+    label: str, got: Mapping[str, float], stored: Mapping[str, float], tol_km: float = 0.01
+) -> None:
+    """One run's recomputed per_side tier totals (A-E) equal its stored ones within `tol_km`; a
+    tier missing on one side counts as 0 km. Else ChangeRefused naming `run <label>`, the tier
+    and both values."""
+    for tier in TIERS:
+        g, s = got.get(tier, 0.0), stored.get(tier, 0.0)
+        if abs(g - s) > tol_km:
+            raise ChangeRefused(
+                f"run {label}: tier {tier} recomputed {g:.3f} km vs stored {s:.3f} km "
+                f"(tolerance {tol_km} km)"
+            )
 
 
 # --- outputs ------------------------------------------------------------------------------------

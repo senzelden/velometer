@@ -1,0 +1,312 @@
+"""Berlin plan-network fetch and overlay (M8 spec §4.2-4.3, task 5).
+
+Synthetic geometry in EPSG:25833 around (390 000, 5 820 000); no real OSM or network ids.
+"""
+
+import json
+import sqlite3
+from pathlib import Path
+
+import pytest
+from shapely import LineString, box
+from typer.testing import CliRunner
+
+from velometer.cli import app
+from velometer.config import ConfigError, default_config_dir
+from velometer.plans import berlin, overlay
+from velometer.report.change import ChangeRefused, Side, check_tier_totals
+
+CFG_DIR = default_config_dir()
+CFG = overlay.OverlayConfig(version="overlay_v1", buffer_m=12, max_angle_deg=30, min_part_m=20)
+X, Y = 390_000.0, 5_820_000.0
+BOUNDARY = box(X - 5_000, Y - 5_000, X + 5_000, Y + 5_000)
+NETWORK = [LineString([(X - 500, Y), (X + 500, Y)])]  # 1 km west-east
+
+
+def _side(coords, tier="A") -> Side:
+    line = LineString(coords)
+    return Side(tier, line, line.length / 1000)
+
+
+def _km(sides, network=NETWORK, boundary=BOUNDARY, tier="A") -> float:
+    return overlay.on_network_km(sides, network, boundary, CFG)[tier]
+
+
+# --- config -----------------------------------------------------------------------------------
+
+
+def test_overlay_v1_is_the_shipped_parameter_set():
+    cfg = overlay.load_overlay_config(CFG_DIR / "plans", "overlay_v1")
+    assert cfg == CFG
+
+
+def test_an_overlay_file_whose_version_differs_from_its_name_is_refused(tmp_path):
+    (tmp_path / "overlay_v2.yaml").write_text(
+        "version: overlay_v1\nbuffer_m: 12\nmax_angle_deg: 30\nmin_part_m: 20\n"
+    )
+    with pytest.raises(ConfigError, match="overlay_v2"):
+        overlay.load_overlay_config(tmp_path, "overlay_v2")
+
+
+# --- network lines ----------------------------------------------------------------------------
+
+
+def _feature(geometry, cls="Radvorrangnetz"):
+    return {"type": "Feature", "properties": {"ist_radvorrangnetz": cls}, "geometry": geometry}
+
+
+def test_network_lines_explode_multilines_drop_zero_length_parts_and_normalise_classes():
+    multi = {
+        "type": "MultiLineString",
+        "coordinates": [
+            [[X, Y], [X + 100, Y]],
+            [[X + 200, Y], [X + 200, Y]],  # zero-length part
+            [[X + 300, Y], [X + 400, Y]],
+        ],
+    }
+    single = {"type": "LineString", "coordinates": [[X, Y + 50], [X + 50, Y + 50]]}
+    doc = {
+        "type": "FeatureCollection",
+        "features": [_feature(multi), _feature(single, "Ergänzungsnetz")],
+    }
+    got = overlay.network_lines(doc)
+    assert sorted(got) == ["ergaenzungsnetz", "vorrangnetz"]
+    assert [ln.length for ln in got["vorrangnetz"]] == [100.0, 100.0]
+    assert [ln.length for ln in got["ergaenzungsnetz"]] == [50.0]
+
+
+def test_an_unknown_network_class_is_refused():
+    doc = {"type": "FeatureCollection",
+           "features": [_feature({"type": "LineString", "coordinates": [[X, Y], [X + 1, Y]]},
+                                 "Sonstiges")]}  # fmt: skip
+    with pytest.raises(ValueError, match="Sonstiges"):
+        overlay.network_lines(doc)
+
+
+# --- on-network km ----------------------------------------------------------------------------
+
+
+def test_a_side_parallel_at_8_m_counts_fully():
+    side = _side([(X - 200, Y + 8), (X + 200, Y + 8)])
+    assert _km({(1, "self"): side}) == pytest.approx(0.4)
+
+
+def test_a_side_parallel_at_20_m_does_not_count():
+    assert _km({(1, "self"): _side([(X - 200, Y + 20), (X + 200, Y + 20)])}) == 0.0
+
+
+def test_a_side_crossing_at_90_degrees_contributes_nothing():
+    assert _km({(1, "self"): _side([(X, Y - 200), (X, Y + 200)])}) == 0.0
+
+
+def test_a_side_at_45_degrees_contributes_nothing():
+    assert _km({(1, "self"): _side([(X - 100, Y - 100), (X + 100, Y + 100)])}) == 0.0
+
+
+def test_a_15_m_overlap_is_dropped():
+    assert _km({(1, "self"): _side([(X, Y + 5), (X + 15, Y + 5)])}) == 0.0
+
+
+def test_a_25_m_overlap_is_kept():
+    assert _km({(1, "self"): _side([(X, Y + 5), (X + 25, Y + 5)])}) == pytest.approx(0.025)
+
+
+def test_only_the_parallel_part_of_a_bent_side_counts():
+    # 300 m along the network at 5 m, then 300 m straight away from it (north)
+    side = _side([(X - 300, Y + 5), (X, Y + 5), (X, Y + 305)])
+    assert _km({(1, "self"): side}) == pytest.approx(0.3, abs=0.011)
+
+
+def test_a_multilinestring_network_feature_matches_on_each_part():
+    doc = {"type": "FeatureCollection", "features": [_feature({
+        "type": "MultiLineString",
+        "coordinates": [[[X - 500, Y], [X - 100, Y]], [[X - 100, Y], [X - 100, Y]],
+                        [[X + 100, Y], [X + 500, Y]]]})]}  # fmt: skip
+    net = overlay.network_lines(doc)["vorrangnetz"]
+    sides = {(1, "self"): _side([(X - 400, Y + 5), (X - 200, Y + 5)]),
+             (2, "self"): _side([(X + 200, Y + 5), (X + 400, Y + 5)])}  # fmt: skip
+    assert _km(sides, net) == pytest.approx(0.4)
+
+
+def test_a_side_half_outside_the_boundary_counts_its_inside_part():
+    boundary = box(X - 5_000, Y - 5_000, X, Y + 5_000)  # ends at x = X
+    side = _side([(X - 200, Y + 8), (X + 200, Y + 8)])
+    assert _km({(1, "self"): side}, boundary=boundary) == pytest.approx(0.2)
+
+
+def test_tiers_a_and_b_are_kept_apart_and_c_to_e_ignored():
+    sides = {(1, "left"): _side([(X - 200, Y + 6), (X + 200, Y + 6)], "A"),
+             (1, "right"): _side([(X - 200, Y + 6), (X + 200, Y + 6)], "A"),
+             (2, "self"): _side([(X - 100, Y - 6), (X + 100, Y - 6)], "B"),
+             (3, "self"): _side([(X - 100, Y - 3), (X + 100, Y - 3)], "C")}  # fmt: skip
+    got = overlay.on_network_km(sides, NETWORK, BOUNDARY, CFG)
+    assert got == {"A": pytest.approx(0.8), "B": pytest.approx(0.2)}  # per_side: both road sides
+
+
+def test_no_sides_or_no_network_gives_zero_for_both_tiers():
+    assert overlay.on_network_km({}, NETWORK, BOUNDARY, CFG) == {"A": 0.0, "B": 0.0}
+    side = {(1, "self"): _side([(X, Y), (X + 100, Y)])}
+    assert overlay.on_network_km(side, [], BOUNDARY, CFG) == {"A": 0.0, "B": 0.0}
+
+
+# --- totals guard -----------------------------------------------------------------------------
+
+
+def test_a_totals_mismatch_aborts_naming_the_tier_and_both_values():
+    with pytest.raises(ChangeRefused, match=r"run 7: tier B recomputed 2\.000 km vs stored 2\.500"):
+        check_tier_totals("7", {"A": 1.0, "B": 2.0}, {"A": 1.0, "B": 2.5})
+    check_tier_totals("7", {"A": 1.0}, {"A": 1.005, "C": 0.004})  # within 0.01 km
+
+
+# --- fetch ------------------------------------------------------------------------------------
+
+
+def _fc(ids):
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {"type": "Feature", "id": i, "properties": {"gisid": i},
+             "geometry": {"type": "LineString", "coordinates": [[X, Y], [X + 1, Y]]}}
+            for i in ids
+        ],
+    }  # fmt: skip
+
+
+def test_fetch_pages_each_layer_until_a_short_page_and_records_url_licence_and_time(tmp_path):
+    cfg = berlin.load_plan_sources(CFG_DIR / "plans" / "sources.yaml", "berlin")
+    cfg = cfg.model_copy(update={"page_size": 2})
+    calls = []
+
+    def fake(url, params):
+        calls.append((url, dict(params)))
+        start, count = int(params["startIndex"]), int(params["count"])
+        n = 5 if "radverkehrsnetz" in url else 2
+        return json.dumps(_fc(range(start, min(start + count, n)))).encode()
+
+    res = berlin.fetch_layers(cfg, tmp_path, fetch=fake)
+    assert sorted(res.paths) == ["radverkehrsmassnahmen", "radverkehrsnetz"]
+    netz = [p for u, p in calls if u.endswith("/radverkehrsnetz")]
+    assert [p["startIndex"] for p in netz] == ["0", "2", "4"]
+    massn = [p for u, p in calls if u.endswith("/radverkehrsmassnahmen")]
+    assert [p["startIndex"] for p in massn] == ["0", "2"]  # a full last page needs one more
+    for p in netz + massn:
+        assert p["outputFormat"] == "application/json"
+        assert p["srsName"] == "EPSG:25833"
+        assert p["request"] == "GetFeature" and p["service"] == "WFS"
+    doc = json.loads(res.paths["radverkehrsnetz"].read_text())
+    assert [f["properties"]["gisid"] for f in doc["features"]] == [0, 1, 2, 3, 4]
+    meta = json.loads((tmp_path / "retrieved.json").read_text())
+    assert meta["retrieved_at"] == res.retrieved_at and res.retrieved_at.endswith("Z")
+    assert meta["licence"] == "dl-de-zero-2.0"
+    assert meta["layers"]["radverkehrsnetz"]["url"] == (
+        "https://gdi.berlin.de/services/wfs/radverkehrsnetz"
+    )
+    assert meta["layers"]["radverkehrsnetz"]["features"] == 5
+
+
+def test_fetch_refuses_a_page_count_below_the_servers_total(tmp_path):
+    cfg = berlin.load_plan_sources(CFG_DIR / "plans" / "sources.yaml", "berlin")
+
+    def fake(url, params):
+        return json.dumps({**_fc([1]), "numberMatched": 3}).encode()
+
+    with pytest.raises(ValueError, match="numberMatched 3"):
+        berlin.fetch_layers(cfg, tmp_path, fetch=fake)
+    assert not (tmp_path / "retrieved.json").exists()
+
+
+# --- CLI ----------------------------------------------------------------------------------------
+
+needs_osmium = pytest.mark.skipif(
+    __import__("shutil").which("osmium") is None, reason="osmium-tool not installed"
+)
+
+
+def _network(data_dir: Path, vorrang_coords) -> None:
+    out = data_dir / "plans" / "berlin"
+    out.mkdir(parents=True)
+    far = [[X + 9_000, Y + 9_000], [X + 9_500, Y + 9_000]]
+    doc = {"type": "FeatureCollection", "features": [
+        _feature({"type": "MultiLineString", "coordinates": [vorrang_coords]}),
+        _feature({"type": "LineString", "coordinates": far}, "Ergänzungsnetz")]}  # fmt: skip
+    (out / "radverkehrsnetz.geojson").write_text(json.dumps(doc))
+    (out / "retrieved.json").write_text(json.dumps({"retrieved_at": "2026-10-07T10:00:00Z"}))
+
+
+def _way1_offset(m: float) -> list[list[float]]:
+    """Fixture way 9000000001 (tier A in both runs) projected to EPSG:25833, shifted north."""
+    from velometer.pipeline.geometry import Projector
+    from velometer.pipeline.read import read_ways
+
+    fix = Path(__file__).parent / "fixtures" / "change" / "to.osm"
+    way = next(w for w in read_ways(fix).ways if w.id == 9_000_000_001)
+    return [[x, y + m] for x, y in Projector(25833).line(way.coords).coords]
+
+
+def _overlay_rows(db_path):
+    c = sqlite3.connect(db_path)
+    rows = c.execute(
+        "SELECT run_id, network_class, tier, mapped_km, network_km, overlay_version, "
+        "network_retrieved_at FROM plan_overlay ORDER BY run_id, network_class, tier"
+    ).fetchall()
+    c.close()
+    return rows
+
+
+@needs_osmium
+def test_plans_overlay_checks_totals_and_stores_rows_per_run_class_and_tier(tmp_path):
+    from tests.test_cli import _change_db
+
+    db_path, cfg, data_dir, run_from, run_to = _change_db(tmp_path)
+    _network(data_dir, _way1_offset(5))
+    args = ["plans", "overlay", "berlin", "--data", str(data_dir), "--db", str(db_path),
+            "--config-dir", str(cfg)]  # fmt: skip
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 0, result.output
+    rows = _overlay_rows(db_path)
+    assert {r[0] for r in rows} == {run_from, run_to}
+    assert len(rows) == 2 * 2 * 2  # runs x classes x tiers A, B
+    by = {(r[0], r[1], r[2]): r for r in rows}
+    for run_id in (run_from, run_to):
+        assert by[run_id, "vorrangnetz", "A"][3] == pytest.approx(0.2037, abs=0.001)
+        assert by[run_id, "vorrangnetz", "B"][3] == 0.0
+        assert by[run_id, "ergaenzungsnetz", "A"][3] == 0.0
+        assert by[run_id, "vorrangnetz", "A"][4] == pytest.approx(0.2037, abs=0.001)
+        assert by[run_id, "ergaenzungsnetz", "A"][4] == pytest.approx(0.5)
+    assert {r[5] for r in rows} == {"overlay_v1"}
+    assert {r[6] for r in rows} == {"2026-10-07T10:00:00Z"}
+
+
+@needs_osmium
+def test_plans_overlay_aborts_on_a_totals_mismatch_and_writes_nothing(tmp_path):
+    from tests.test_cli import _change_db
+
+    db_path, cfg, data_dir, run_from, _ = _change_db(tmp_path)
+    _network(data_dir, _way1_offset(5))
+    c = sqlite3.connect(db_path)
+    c.execute(
+        "UPDATE tier_lengths SET length_km = length_km + 1 WHERE run_id=? AND tier='A' "
+        "AND length_basis='per_side'",
+        (run_from,),
+    )
+    c.commit()
+    c.close()
+    args = ["plans", "overlay", "berlin", "--data", str(data_dir), "--db", str(db_path),
+            "--config-dir", str(cfg)]  # fmt: skip
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 1
+    assert f"run {run_from}: tier A recomputed" in result.output
+    assert "vs stored" in result.output
+    assert _overlay_rows(db_path) == []
+
+
+@needs_osmium
+def test_plans_overlay_without_a_fetched_network_says_to_fetch(tmp_path):
+    from tests.test_cli import _change_db
+
+    db_path, cfg, data_dir, *_ = _change_db(tmp_path)
+    args = ["plans", "overlay", "berlin", "--data", str(data_dir), "--db", str(db_path),
+            "--config-dir", str(cfg)]  # fmt: skip
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 1
+    assert "velometer plans fetch berlin" in result.output

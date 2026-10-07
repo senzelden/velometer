@@ -51,6 +51,9 @@ app.add_typer(report_app, name="report")
 trust_app = typer.Typer(no_args_is_help=True, help="Per-country trust diagnostics.")
 app.add_typer(trust_app, name="trust")
 
+plans_app = typer.Typer(no_args_is_help=True, help="Plan networks and their overlay.")
+app.add_typer(plans_app, name="plans")
+
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
 DOCS_OPT = typer.Option(Path("docs"), "--docs", help="Docs directory (review/trust/ inside).")
@@ -1418,6 +1421,17 @@ def _change_run(conn, city_id: str, when: str, selector) -> int:
     return runs[ts]
 
 
+def _stored_tier_totals(conn, run_id: int) -> dict[str, float]:
+    """A run's stored per_side km per tier (A-E, untiered; `excluded` left out)."""
+    from velometer.db import fetch_run_results
+
+    totals: dict[str, float] = {}
+    for t in fetch_run_results(conn, run_id).tier_lengths:
+        if t.length_basis == "per_side" and t.tier != "excluded":
+            totals[t.tier] = totals.get(t.tier, 0.0) + t.length_km
+    return totals
+
+
 def _window_label(when) -> str:
     return when if isinstance(when, str) else when.isoformat()
 
@@ -1442,7 +1456,7 @@ def report_change(
     recomputed tier totals equal the stored run totals (to 0.01 km).
     """
     from velometer.config import load_classifier, load_report
-    from velometer.db import fetch_boundary, fetch_run, fetch_run_results
+    from velometer.db import fetch_boundary, fetch_run
     from velometer.pipeline.read import read_ways
     from velometer.report import change as ch
     from velometer.report.data import ReportData, open_readonly
@@ -1492,13 +1506,7 @@ def report_change(
         cfg = load_classifier(config_dir / "classifier" / f"{selector.version}.yaml")
         ways_from, ways_to = read_ways(snap_from).ways, read_ways(snap_to).ways
         result = ch.compute_change(ways_from, ways_to, cfg, city_cfg.epsg, boundary, subareas)
-        stored = []
-        for run_id in (run_from, run_to):
-            totals: dict[str, float] = {}
-            for t in fetch_run_results(conn, run_id).tier_lengths:
-                if t.length_basis == "per_side" and t.tier != "excluded":
-                    totals[t.tier] = totals.get(t.tier, 0.0) + t.length_km
-            stored.append(totals)
+        stored = [_stored_tier_totals(conn, run_id) for run_id in (run_from, run_to)]
         ch.check_totals(result, *stored)
         rows = fetch_run(conn, run_from), fetch_run(conn, run_to)
     except ch.ChangeRefused as e:
@@ -1527,6 +1535,151 @@ def report_change(
     )  # fmt: skip
     for p in (md, geojson, png):
         typer.echo(f"written: {p}")
+
+
+# --- plans (M8 §4.2-4.3) ------------------------------------------------------------------------
+
+
+@plans_app.command("fetch")
+def plans_fetch(
+    city: str = typer.Argument(..., help="City id with plan-network sources (berlin)."),
+    data_dir: Path = DATA_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Download the city's plan-network WFS layers into <data>/plans/<city>/ (GeoJSON, as
+    served), with URL, licence and retrieval time in retrieved.json."""
+    from velometer.plans.berlin import fetch_layers, load_plan_sources
+
+    try:
+        cfg = load_plan_sources(config_dir / "plans" / "sources.yaml", city)
+        res = fetch_layers(cfg, data_dir / "plans" / city)
+    except ConfigError as e:
+        raise _config_error(e) from e
+    except (OSError, ValueError, httpx.HTTPError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    for name, path in res.paths.items():
+        typer.echo(f"written: {path} ({name})")
+    typer.echo(f"retrieved at {res.retrieved_at}, licence {cfg.licence}")
+
+
+def _overlay_runs(conn, city_id: str, selector) -> list[int]:
+    """Every done report-classifier LAU run of the latest history set (oldest first), then the
+    latest current run."""
+    from velometer.db import history_runs, latest_history_set
+
+    kw = dict(
+        classifier_version=selector.version,
+        classifier_parameters=selector.parameters,
+        config_sha256=selector.config_sha256,
+    )
+    md5 = latest_history_set(conn, city_id, "lau", **kw)
+    runs = history_runs(conn, city_id, "lau", history_set_md5=md5, **kw) if md5 else {}
+    out = [runs[ts] for ts in sorted(runs)]
+    current = selector.latest(conn, city_id, "lau")
+    if current is not None:
+        out.append(current)
+    if not out:
+        raise ValueError(f"{city_id} has no done LAU run of config {selector.short_sha}")
+    return out
+
+
+@plans_app.command("overlay")
+def plans_overlay(
+    city: str = typer.Argument(..., help="City id with a fetched plan network (berlin)."),
+    version: str = typer.Option("overlay_v1", "--version", help="config/plans/<version>.yaml."),
+    data_dir: Path = DATA_OPT,
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_OPT,
+) -> None:
+    """Mapped A and B km on each plan-network class, for every LAU run of the report classifier.
+
+    Each run's snapshot is re-read and classified; nothing is written unless every run's
+    recomputed tier totals equal its stored totals (to 0.01 km). Rows replace the city's rows
+    of this overlay version in plan_overlay.
+    """
+    import json
+    import time
+
+    from velometer.config import load_classifier
+    from velometer.db import OverlayRow, fetch_boundary, fetch_run, replace_plan_overlay
+    from velometer.pipeline.read import read_ways
+    from velometer.plans import overlay as ov
+    from velometer.plans.berlin import NETWORK_LAYER
+    from velometer.report import change as ch
+    from velometer.run import snapshot_path_for_run
+    from velometer.sources.boundaries import load_boundary_polygon
+
+    started = time.monotonic()
+    net_dir = data_dir / "plans" / city
+    net_path, meta_path = net_dir / f"{NETWORK_LAYER}.geojson", net_dir / "retrieved.json"
+    if not (net_path.is_file() and meta_path.is_file()):
+        typer.echo(
+            f"error: no plan network in {net_dir}; run `velometer plans fetch {city}` first",
+            err=True,
+        )
+        raise typer.Exit(1)
+    selector = report_selector(config_dir)
+    try:
+        cfg = ov.load_overlay_config(config_dir / "plans", version)
+        retrieved_at = json.loads(meta_path.read_text())["retrieved_at"]
+        network = ov.network_lines(json.loads(net_path.read_text()))
+        city_cfg = next((c for c in _all_cities(config_dir) if c.id == city), None)
+        if city_cfg is None:
+            raise ValueError(f"unknown city {city!r}")
+        classifier = load_classifier(config_dir / "classifier" / f"{selector.version}.yaml")
+    except ConfigError as e:
+        raise _config_error(e) from e
+    except (OSError, ValueError, KeyError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    for cls, lines in sorted(network.items()):
+        typer.echo(f"network {cls}: {ov.network_km(lines):.1f} km ({len(lines)} lines)")
+    rows: list[OverlayRow] = []
+    with _open_schema(db) as conn:
+        try:
+            boundary_row = fetch_boundary(conn, city, "lau")
+            if boundary_row is None:
+                raise ValueError(f"{city} has no LAU boundary row")
+            boundary = load_boundary_polygon(Path(boundary_row.path), city_cfg.epsg)
+            for run_id in _overlay_runs(conn, city, selector):
+                run = fetch_run(conn, run_id)
+                if run["boundary_sha256"] != boundary_row.sha256:
+                    raise ch.ChangeRefused(
+                        f"run {run_id} was measured on boundary sha256 {run['boundary_sha256']}, "
+                        f"the {city} LAU boundary on file has {boundary_row.sha256}"
+                    )
+                ways = read_ways(snapshot_path_for_run(conn, run_id, data_dir)).ways
+                sides = ch.classified_sides(ways, classifier, city_cfg.epsg, boundary)
+                got: dict[str, float] = {}
+                for s in sides.values():
+                    got[s.tier] = got.get(s.tier, 0.0) + s.km
+                ch.check_tier_totals(str(run_id), got, _stored_tier_totals(conn, run_id))
+                parts = []
+                for cls, lines in sorted(network.items()):
+                    km = ov.on_network_km(sides, lines, boundary, cfg)
+                    net_km = ov.network_km(lines)
+                    rows += [
+                        OverlayRow(run_id, city, cls, tier, km[tier], net_km, cfg.version,
+                                   retrieved_at)
+                        for tier in ov.TIERS
+                    ]  # fmt: skip
+                    parts.append(f"{cls} A {km['A']:.1f} + B {km['B']:.1f} km")
+                typer.echo(
+                    f"run {run_id} ({run['osm_timestamp'][:10]}): totals agree (A..E); "
+                    + "; ".join(parts)
+                )
+            replace_plan_overlay(conn, city, rows)
+        except ch.ChangeRefused as e:
+            typer.echo(f"refused: {e}", err=True)
+            raise typer.Exit(1) from e
+        except (OSError, ValueError, sqlite3.Error) as e:
+            typer.echo(f"error: {e}", err=True)
+            raise typer.Exit(1) from e
+    typer.echo(
+        f"written: {len(rows)} plan_overlay rows ({cfg.version}) in "
+        f"{time.monotonic() - started:.0f} s"
+    )
 
 
 @trust_app.command("diagnose")

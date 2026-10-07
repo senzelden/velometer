@@ -1,0 +1,5 @@
+# Plan-network overlay parameters (M8 spec §4.3). A parameter change is a new version file.
+version: overlay_v1
+buffer_m: 12
+max_angle_deg: 30
+min_part_m: 20

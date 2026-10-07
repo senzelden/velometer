@@ -488,3 +488,12 @@ def test_change_markdown_and_geojson_match_the_golden_files(tmp_path):
     md, geojson = _golden_outputs(tmp_path)
     assert md == (GOLDEN / "change.md").read_text()
     assert geojson == (GOLDEN / "change.geojson").read_bytes()
+
+
+def test_classified_sides_are_the_sides_compute_change_totals(result):
+    sides = ch.classified_sides(FROM, CFG, EPSG, BOUNDARY)
+    totals: dict[str, float] = {}
+    for s in sides.values():
+        totals[s.tier] = totals.get(s.tier, 0.0) + s.km
+    assert totals == pytest.approx(result.totals_from)
+    assert all(isinstance(s, ch.Side) for s in sides.values())
