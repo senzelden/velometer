@@ -162,7 +162,7 @@ The 13 judgement calls listed in the review document stand as written there.
 - Left open (final review): tier colour palette differs between the stacked chart and the tier map;
   `differences.yaml` uses the same label for completed and target metrics; the reconcile and reported
   tables show raw keys and CSV notes; the Bezirke change table shows 3 decimals; flagged-year notes
-  are maintainer prose; the "Flagged years 0 · LAU, with explanations" wording (template).
+  are maintainer prose.
 - Parked, not fixed: Task 1 minors (`INTERNAL_HOSTS` is a literal set so 127.0.0.2, 0.0.0.0 and
   private ranges pass; mutable lists inside frozen models; duplicate id validators and `Explainer`
   untested; explainer quote `after` not validated against paragraph count).
