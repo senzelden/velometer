@@ -117,7 +117,6 @@ def _plain(paragraph: str) -> str:
 
 def test_every_profile_renders_with_its_anchor_text_and_quotes(client):
     html = client.get("/organisations").text
-    text = " ".join(html.split())
     assert ORGS  # the shipped profiles
     for org in ORGS.values():
         sec = " ".join(_section(html, org.id).split())
@@ -125,7 +124,7 @@ def test_every_profile_renders_with_its_anchor_text_and_quotes(client):
         for s in org.sections:
             assert str(escape(s.heading)) in sec, (org.id, s.heading)
             for p in s.paragraphs:
-                assert _plain(p)[:60] in text, (org.id, p[:40])
+                assert _plain(p)[:60] in sec, (org.id, p[:40])
         assert sec.count('class="pullquote"') == len(org.quotes), org.id
 
 
@@ -392,3 +391,30 @@ def test_berlin_page_renders_the_cited_text_on_why_the_series_differ(client):
         for p in s["paragraphs"]:
             assert _plain(p)[:60] in text
     assert text.count('class="pullquote"') == len(doc["quotes"])
+
+
+def test_mapped_caption_states_the_change_since_the_baseline_in_mapped_km(setup, plans_data):  # noqa: F811
+    """Spec §4.4: the mapped series is the change since 1 January of the plan's first target
+    year; the caption states it, to the latest snapshot, in mapped km."""
+    runs = _berlin_runs(setup[0])
+    jan = [ts[:10] for _rid, ts in runs if ts[5:10] == "01-01"]
+    assert jan  # the fixture has 1 January snapshots
+    base = int(jan[0][:4])
+
+    def rebase(ps):
+        for p in ps:
+            if p["city"] == "berlin":
+                for item in p["items"]:
+                    if item.get("targets"):
+                        item["targets"] = {base + k: v for k, v in enumerate([10, 20])}
+        return ps
+
+    _edit_plans(setup[1], rebase)
+    _overlay(setup[0], "overlay_v4", 50.0)  # A+B = 2 * (50 + run index)
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    first = next(i for i, (_r, ts) in enumerate(runs) if ts[:10] == f"{base}-01-01")
+    change = 2 * ((len(runs) - 1) - first)
+    sec = _text(_section(html, "item-vorrangnetz"))
+    assert f"since 1 January {base}, +{change:.1f} mapped km to the current snapshot of " in sec
+    assert runs[-1][1][:10] in sec

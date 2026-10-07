@@ -35,7 +35,7 @@ globalThis.document = {
   createElement: (tag) => new Node(tag),
 };
 
-const { planSeries, renderPlanChart } = await import("../plan-chart.js");
+const { planSeries, renderPlanChart, yDomain } = await import("../plan-chart.js");
 
 const row = (year, value, doc, current, extra = {}) => ({
   year, value, doc, doc_type: "drucksache", doc_date: "2026-01-01",
@@ -92,20 +92,42 @@ test("planSeries: empty overlay gives no mapped series; projects are sorted by y
   assert.deepEqual(planSeries({}, [], null, null).projects, []);
 });
 
-test("planSeries: mapped is the change in each year from the base year on, the last partial", () => {
+test("planSeries: mapped is the change since 1 January of the base year, one point per snapshot", () => {
   const overlay = [
-    { date: "2026-10-03", ab_km: 480 },
+    { date: "2026-10-03", ab_km: 480.4 },
     { date: "2021-01-01", ab_km: 500 },
-    { date: "2022-01-01", ab_km: 438 },
-    { date: "2023-01-01", ab_km: 450 },
-    { date: "2026-01-01", ab_km: 470 },
+    { date: "2022-01-01", ab_km: 438.3 },
+    { date: "2023-01-01", ab_km: 454.3 },
+    { date: "2024-01-01", ab_km: 450.2 },
   ];
   const s = planSeries({}, [], overlay, [], { mappedFrom: 2022 });
-  // 2021 is before the base year; 2023 -> 2026 is no single year and is not drawn
+  // 2021 lies before the baseline; the baseline itself is 0; the last point is the current snapshot
   assert.deepEqual(
-    s.mapped.map((m) => [m.year, Math.round(m.value * 10) / 10, m.to, m.partial]),
-    [[2022, 12, "2023-01-01", false], [2026, 10, "2026-10-03", true]],
+    s.mapped.map((m) => [m.date, Math.round(m.value * 10) / 10]),
+    [["2022-01-01", 0], ["2023-01-01", 16], ["2024-01-01", 11.9], ["2026-10-03", 42.1]],
   );
+  assert.equal(s.mapped.at(-1).year, 2026);
+  assert.ok(s.mapped.at(-1).at > 2026.7 && s.mapped.at(-1).at < 2026.8); // position in the year
+});
+
+test("planSeries: no baseline snapshot, no mapped series (never a change from another date)", () => {
+  const overlay = [{ date: "2023-01-01", ab_km: 450 }, { date: "2024-01-01", ab_km: 460 }];
+  assert.deepEqual(planSeries({}, [], overlay, [], { mappedFrom: 2022 }).mapped, []);
+});
+
+test("yDomain: a small negative value does not stretch the axis to a whole negative step", () => {
+  const d = yDomain([-4.1, 250, 100]);
+  assert.ok(d.lo < -4.1, "the negative value stays inside the plot");
+  assert.ok(d.lo > -50, `lowest bound ${d.lo}`);
+  assert.ok(Math.min(...d.ticks) > -50, `lowest tick ${Math.min(...d.ticks)}`);
+  assert.ok(d.ticks.includes(0));
+  assert.ok(d.hi >= 250);
+  assert.ok(d.ticks.every((t) => t >= d.lo && t <= d.hi));
+  // only non-negative values: the axis starts at 0
+  assert.equal(yDomain([3, 40]).lo, 0);
+  // only negative values still get a domain that holds them
+  const neg = yDomain([-12, -3]);
+  assert.ok(neg.lo <= -12 && neg.hi >= 0);
 });
 
 const svgOf = (el) => el.find((n) => n.tag === "svg")[0];
@@ -129,6 +151,20 @@ test("renderPlanChart: current markers filled, revisions hollow, suspect marked,
   assert.equal(marks(el, "rep-revision").length, 2);
   assert.equal(marks(el, "rep-suspect").length, 1);
   assert.equal(marks(el, "target-step").length, 1);
+});
+
+test("renderPlanChart: the mapped series is a line labelled in mapped km, its last point dated", () => {
+  const el = new Node("div");
+  const overlay = [{ date: "2022-01-01", ab_km: 438.3 }, { date: "2026-10-03", ab_km: 480.4 }];
+  const s = planSeries({ 2022: 40 }, [row(2022, 14.4, "b", true)], overlay, [], { mappedFrom: 2022 });
+  renderPlanChart(el, s, { label: "Vorrangnetz", years: [2022, 2026], unit: "km" });
+  assert.equal(marks(el, "mapped-line").length, 1);
+  const titles = el.find((n) => n.tag === "title").map((n) => n.textContent);
+  const mappedTitles = titles.filter((t) => t.startsWith("Mapped"));
+  assert.equal(mappedTitles.length, 2);
+  assert.ok(mappedTitles.every((t) => t.includes("mapped km")), mappedTitles.join(" | "));
+  const texts = el.find((n) => n.tag === "text").map((n) => n.textContent);
+  assert.ok(texts.some((t) => t.includes("2026-10-03")), "the last point is labelled with its date");
 });
 
 test("renderPlanChart: no target line for an item without a target", () => {

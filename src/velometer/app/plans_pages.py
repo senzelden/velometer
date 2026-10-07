@@ -383,7 +383,12 @@ def berlin_context(
                     {"text": text, "years": sorted(ys, key=lambda t: t[0])}
                     for (_q, _b, text), ys in sorted(series.items())
                 ],
-                "overlay": _overlay_table(overlay, base_year),
+                "overlay": (table := _overlay_table(overlay, base_year)),
+                # the spec's quantity (§4.4): the change since 1 January of the base year, to the
+                # latest snapshot
+                "mapped_change": table[-1]
+                if table and table[-1]["since_base"] is not None
+                else None,
                 "figures": sum(1 for r in rows if r.item_id == item.id),
             }
         )

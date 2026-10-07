@@ -1,6 +1,7 @@
 // The Berlin plan page's charts: per plan item, the yearly target (steps) against the reported
 // figures (one marker per document: the current figure filled, revisions hollow, suspect figures
-// ringed), the infraVelo completed projects and our mapped-on-the-network change per year.
+// ringed), the infraVelo completed projects per year and our mapped-on-the-network change since
+// 1 January of the plan's first target year (a line, one point per OSM snapshot).
 // Data: the page's <script type="application/json" id="plan-config">; every value is also in the
 // tables under each chart. Built with createElementNS / textContent only.
 import { niceTicks, scaleLinear, tickLabel, formatValue } from "./chart-core.js";
@@ -13,9 +14,10 @@ const NS = "http://www.w3.org/2000/svg";
  * reports: [{year, value, doc, quantity, current, suspect, note, ...}] (only figures for the
  * year itself are charted: cumulative and other quantities live in the tables); overlay:
  * [{date, ab_km}] snapshots of A+B mapped km on the network; projects: [{year, km}].
- * opts.mappedFrom: the first year of the mapped series (the plan's first target year).
- * mapped: the change in each year, from a 1 January snapshot to the next snapshot if that is the
- * following 1 January, or to a later snapshot within the same year (partial, the current run).
+ * opts.mappedFrom: the baseline year of the mapped series (the plan's first target year).
+ * mapped: per snapshot from 1 January of that year on, the change in A+B mapped km since the
+ * 1 January snapshot (spec §4.4: "change since 2022-01-01"); `at` is the snapshot's position in
+ * years (2026-10-03 -> 2026.75). No baseline snapshot: no series.
  */
 export function planSeries(targets, reports, overlay, projects, opts = {}) {
   const target = Object.entries(targets ?? {})
@@ -39,18 +41,43 @@ export function planSeries(targets, reports, overlay, projects, opts = {}) {
     .map((p) => ({ year: p.year, value: p.km }))
     .sort((a, b) => a.year - b.year);
   const snaps = [...(overlay ?? [])].sort((a, b) => a.date.localeCompare(b.date));
-  const from = opts.mappedFrom ?? -Infinity;
-  const mapped = [];
-  for (let i = 0; i + 1 < snaps.length; i++) {
-    const a = snaps[i];
-    const b = snaps[i + 1];
-    const year = Number(a.date.slice(0, 4));
-    if (a.date.slice(5) !== "01-01" || year < from) continue;
-    const full = b.date === `${year + 1}-01-01`;
-    if (!full && Number(b.date.slice(0, 4)) !== year) continue;
-    mapped.push({ year, value: b.ab_km - a.ab_km, to: b.date, partial: !full });
+  const from = opts.mappedFrom ?? (snaps.length ? Number(snaps[0].date.slice(0, 4)) : null);
+  const baseline = snaps.find((p) => p.date === `${from}-01-01`);
+  const mapped = baseline
+    ? snaps
+        .filter((p) => p.date >= baseline.date)
+        .map((p) => ({ date: p.date, year: Number(p.date.slice(0, 4)), at: yearPosition(p.date), value: p.ab_km - baseline.ab_km }))
+    : [];
+  return { target, reported, projects: proj, mapped, mappedFrom: baseline ? from : null };
+}
+
+/** A date's position in years: 1 January of Y is Y, 1 July about Y.5. */
+export function yearPosition(date) {
+  const y = Number(date.slice(0, 4));
+  const start = Date.UTC(y, 0, 1);
+  const days = (Date.UTC(y + 1, 0, 1) - start) / 864e5;
+  return y + (Date.parse(`${date}T00:00:00Z`) - start) / 864e5 / days;
+}
+
+/**
+ * The y domain: the step comes from the positive span (niceTicks over [0, max]); a negative
+ * minimum only adds the room it needs (5 % of the span below it), never a whole negative step.
+ * Ticks are those inside [lo, hi], 0 always among them. All values negative: niceTicks as is.
+ */
+export function yDomain(values, count = 5) {
+  const max = Math.max(0, ...values);
+  const min = Math.min(0, ...values);
+  if (max <= 0) {
+    const ticks = niceTicks(min, 0, count);
+    return { lo: ticks[0], hi: ticks.at(-1), ticks };
   }
-  return { target, reported, projects: proj, mapped };
+  const up = niceTicks(0, max, count);
+  const step = up[1] - up[0];
+  const hi = up.at(-1);
+  const lo = min < 0 ? min - 0.05 * (hi - min) : 0;
+  const ticks = [];
+  for (let t = -step; t >= lo; t -= step) ticks.unshift(+t.toFixed(10));
+  return { lo, hi, ticks: [...ticks, ...up] };
 }
 
 function el(tag, attrs = {}, text) {
@@ -67,8 +94,9 @@ const titled = (node, text) => {
 
 /**
  * Draw `series` (planSeries) into `host`: one band per year (opts.years, else every year with a
- * value), target steps across each band, project and mapped bars either side of the reported
- * markers. opts: {label, years, unit, width, height}. No values: a note instead of an svg.
+ * value), target steps across each band, completed-project bars beside the reported markers and
+ * the mapped line (positioned by snapshot date, its last point labelled with the date).
+ * opts: {label, years, unit, width, height}. No values: a note instead of an svg.
  */
 export function renderPlanChart(host, series, opts = {}) {
   const unit = opts.unit ?? "km";
@@ -85,6 +113,7 @@ export function renderPlanChart(host, series, opts = {}) {
     ...series.projects.filter(inRange),
     ...series.mapped.filter(inRange),
   ].map((p) => p.value);
+  const mapped = series.mapped.filter(inRange);
   if (!years.length || !values.length) {
     const p = document.createElement("p");
     p.className = "empty";
@@ -98,8 +127,9 @@ export function renderPlanChart(host, series, opts = {}) {
   const mr = 10;
   const mt = 14;
   const mb = 26;
-  const ticks = niceTicks(Math.min(0, ...values), Math.max(0, ...values), W < 480 ? 4 : 5);
-  const y = scaleLinear([ticks[0], ticks.at(-1)], [H - mb, mt]);
+  const dom = yDomain(values, W < 480 ? 4 : 5);
+  const ticks = dom.ticks;
+  const y = scaleLinear([dom.lo, dom.hi], [H - mb, mt]);
   const band = (W - ml - mr) / years.length;
   const x0 = (yr) => ml + years.indexOf(yr) * band;
   const mid = (yr) => x0(yr) + band / 2;
@@ -118,20 +148,38 @@ export function renderPlanChart(host, series, opts = {}) {
     if ((years.length - 1 - i) % every) return;
     svg.appendChild(el("text", { class: "axis-t", x: mid(yr), y: H - mb + 16, "text-anchor": "middle" }, String(yr)));
   });
-  svg.appendChild(el("text", { class: "ylab", x: ml, y: mt - 4 }, `${unit} per year`));
+  const ylab = mapped.length
+    ? `${unit} per year · line: mapped km since 1 Jan ${series.mappedFrom}`
+    : `${unit} per year`;
+  svg.appendChild(el("text", { class: "ylab", x: ml, y: mt - 4 }, ylab));
 
   const bars = (points, cls, dx, what) => {
     const g = el("g", { class: cls });
     for (const p of points.filter(inRange)) {
       const top = y(Math.max(0, p.value));
       const h = Math.abs(y(p.value) - y(0));
-      const text = `${what}, ${p.year}${p.partial ? ` (to ${p.to})` : ""}: ${formatValue(p.value)} ${unit}`;
-      g.appendChild(titled(el("rect", { class: p.partial ? "bar partial" : "bar", x: mid(p.year) + dx - barW / 2, y: top, width: barW, height: Math.max(1, h) }), text));
+      const text = `${what}, ${p.year}: ${formatValue(p.value)} ${unit}`;
+      g.appendChild(titled(el("rect", { class: "bar", x: mid(p.year) + dx - barW / 2, y: top, width: barW, height: Math.max(1, h) }), text));
     }
     svg.appendChild(g);
   };
   bars(series.projects, "projects", -barW * 1.6, "Completed projects");
-  bars(series.mapped, "mapped", barW * 1.6, "Mapped on the network, change in the year");
+
+  if (mapped.length) {
+    // a snapshot sits at its date: 1 January of Y on the left edge of Y's band
+    const xAt = (p) => x0(p.year) + (p.at - p.year) * band;
+    const g = el("g", { class: "mapped" });
+    const d = mapped.map((p, i) => `${i ? "L" : "M"}${xAt(p).toFixed(1)},${y(p.value).toFixed(1)}`).join("");
+    g.appendChild(el("path", { class: "mapped-line", d }));
+    for (const p of mapped) {
+      const sign = p.value > 0 ? "+" : "";
+      const text = `Mapped on the network, ${p.date}: ${sign}${formatValue(p.value)} mapped km since 1 Jan ${series.mappedFrom}`;
+      g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y(p.value), r: 3 }), text));
+    }
+    const last = mapped.at(-1);
+    g.appendChild(el("text", { class: "mapped-label", x: xAt(last) - 4, y: y(last.value) - 7, "text-anchor": "end" }, last.date));
+    svg.appendChild(g);
+  }
 
   const steps = series.target.filter(inRange);
   if (steps.length) {
