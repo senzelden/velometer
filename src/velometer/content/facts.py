@@ -13,7 +13,7 @@ Families (`<family>.<args>`):
   `figure.<city>.<source>.<metric>.<scope>[.<reference_date|value>]`, `population.<city>`,
   `change.<city>.<category>` (M7).
 - `overlay.<city>.<class>.<YYYY-MM-DD>.<ab_km|network_km>`: A+B mapped km on that plan-network
-  class at the run whose OSM snapshot has that date, or the class's network km (M8, from
+  class at the LAU run whose OSM snapshot has that date, or the class's network km (M8, from
   `plan_overlay`; the latest overlay version of the city).
 - `overlay_change.<city>.<class>.<from YYYY-MM-DD>.<to YYYY-MM-DD>`: the change of `ab_km`.
 - `plan.<plan_id>.<item_id>.<year>.<quantity>[.<doc_id with / replaced by _>]`: the current
@@ -320,7 +320,7 @@ def _overlay_at(expr: str, data: ReportData, city: str, cls: str, day: str) -> l
     dates = {
         rid: ts[:10]
         for rid, ts in data.conn.execute(
-            f"SELECT id, osm_timestamp FROM runs WHERE id IN ({marks})", ids
+            f"SELECT id, osm_timestamp FROM runs WHERE boundary_kind='lau' AND id IN ({marks})", ids
         )
     }
     at = [r for r in rows if dates.get(r.run_id) == day]
@@ -413,6 +413,9 @@ def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
     if not named:
         have = ", ".join(r.doc_id.replace("/", "_") for r in every)
         raise _err(expr, f"no document {doc!r} for this figure (have {have})")
+    distinct = sorted({r.doc_id for r in named})
+    if len(distinct) > 1:
+        raise _err(expr, f"{doc!r} is ambiguous: documents {', '.join(distinct)}")
     return named[0].value
 
 

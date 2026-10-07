@@ -45,7 +45,7 @@ _SOURCE_REF = re.compile(r"\[@([^\]\s]+)\]")
 _DATA_REF = re.compile(r"\[#([^\]\s]+)\]")
 _STRIPPED = re.compile(r"\[@[^\]]*\]|\[#[^\]]*\]|`[^`]*`|\]\([^)]*\)")
 _VERBS = re.compile(r"\b(built|constructed|opened|removed)\b", re.IGNORECASE)
-_COUNTER_WORDS = re.compile(r"\b(counter|counts?|counted|cyclists recorded)\b", re.IGNORECASE)
+_COUNTER_WORDS = re.compile(r"\b(counters?|counts?|counted|cyclists recorded)\b", re.IGNORECASE)
 _CAUSAL = re.compile(
     r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
     re.IGNORECASE,
@@ -362,8 +362,13 @@ def _plans(config_dir: Path) -> tuple[list[Plan], list[ReportRow], list[str]]:
         for i in p.items:
             if not i.unit.strip():
                 problems.append(f"{label}: item {i.id} has no unit")
+    seen: dict[tuple, int] = {}
     for n, r in enumerate(rows, start=2):
         label = f"config/plans/reports.csv:{n}"
+        key = (r.plan_id, r.item_id, r.year, r.quantity, r.doc_id)
+        if key in seen:
+            problems.append(f"{label}: duplicate of line {seen[key]} (same figure and document)")
+        seen.setdefault(key, n)
         if r.plan_id not in items:
             problems.append(f"{label}: unknown plan {r.plan_id}")
         elif r.item_id not in items[r.plan_id]:
@@ -410,23 +415,33 @@ def _check_organisation(
 
 
 def _figure_pairs(config_dir: Path) -> list[tuple[str, str]]:
+    """The (city, source) pairs of figures.csv; ContentError naming the file when malformed."""
     path = Path(config_dir) / "external" / "figures.csv"
     if not path.is_file():
         return []
-    with path.open(encoding="utf-8", newline="") as f:
-        return list(dict.fromkeys((r["city_id"], r["source"]) for r in csv.DictReader(f)))
+    try:
+        with path.open(encoding="utf-8", newline="") as f:
+            return list(dict.fromkeys((r["city_id"], r["source"]) for r in csv.DictReader(f)))
+    except (OSError, csv.Error, KeyError) as e:
+        raise ContentError(
+            f"config/external/figures.csv: cannot read (city_id, source): {e!r}"
+        ) from e
 
 
 def _reconcile_sources(config_dir: Path) -> list[str]:
+    """The external source ids of reconcile.yaml; ContentError naming the file when malformed."""
     path = Path(config_dir) / "reconcile.yaml"
     if not path.is_file():
         return []
-    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    out: list[str] = []
-    for comp in doc.get("comparisons", []):
-        src = comp["external"]["source"]
-        out += [src] if isinstance(src, str) else list(src)
-    return list(dict.fromkeys(out))
+    try:
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        out: list[str] = []
+        for comp in doc.get("comparisons", []):
+            src = comp["external"]["source"]
+            out += [src] if isinstance(src, str) else list(src)
+        return list(dict.fromkeys(out))
+    except (OSError, yaml.YAMLError, AttributeError, KeyError, TypeError) as e:
+        raise ContentError(f"config/reconcile.yaml: cannot read comparison sources: {e!r}") from e
 
 
 def _check_coverage(
@@ -445,12 +460,18 @@ def _check_coverage(
             problems.append(
                 f"{label}: {m.city}/{m.source} maps to {m.organisation}, which has no profile"
             )
-    for city, source in _figure_pairs(config_dir):
-        if not any(m.source == source and m.city in (city, "*") for m in mapping):
-            problems.append(f"{label}: no organisation for figures.csv source {city}/{source}")
-    for source in _reconcile_sources(config_dir):
-        if not any(m.source == source for m in mapping):
-            problems.append(f"{label}: no organisation for reconcile source {source}")
+    try:
+        for city, source in _figure_pairs(config_dir):
+            if not any(m.source == source and m.city in (city, "*") for m in mapping):
+                problems.append(f"{label}: no organisation for figures.csv source {city}/{source}")
+    except ContentError as e:
+        problems.append(str(e))
+    try:
+        for source in _reconcile_sources(config_dir):
+            if not any(m.source == source for m in mapping):
+                problems.append(f"{label}: no organisation for reconcile source {source}")
+    except ContentError as e:
+        problems.append(str(e))
     berlin_plans = {p.id for p in plans if p.city == BERLIN}
     for p in plans:
         if p.city == BERLIN and p.publisher not in profiles:

@@ -128,6 +128,7 @@ def test_unknown_dimension_key_and_http_url(m8):
 def test_causal_counter_wording():
     assert causal_counter_wording("Counts rose because of new lanes") == ["because of"]
     assert causal_counter_wording("Rents rose because of demand") == []
+    assert causal_counter_wording("Counters rose because of new lanes") == ["because of"]
     assert causal_counter_wording("The counter shows growth that led to, and was due to, X") == [
         "led to",
         "due to",
@@ -265,6 +266,28 @@ def test_empty_item_unit(m8):
     ]
 
 
+def test_duplicate_report_row_is_a_problem(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    path.write_text("\n".join([*lines, lines[1].replace("10.8", "10.9")]) + "\n")
+    assert _problems(m8) == [
+        "config/plans/reports.csv:5: duplicate of line 2 (same figure and document)"
+    ]
+
+
+def test_malformed_figures_csv_is_a_problem(m8):
+    path = m8[1] / "external" / "figures.csv"
+    path.write_text(path.read_text().replace("city_id,source,", "city,source,", 1))
+    [problem] = _problems(m8)
+    assert problem.startswith("config/external/figures.csv: cannot read")
+
+
+def test_malformed_reconcile_yaml_is_a_problem(m8):
+    (m8[1] / "reconcile.yaml").write_text("comparisons:\n  - id: x\n")
+    [problem] = _problems(m8)
+    assert problem.startswith("config/reconcile.yaml: cannot read")
+
+
 def test_an_unreadable_plan_file_is_one_problem(m8):
     path = m8[1] / "plans" / "reports.csv"
     path.write_text(path.read_text().replace("rote_nummer", "memo"))
@@ -305,16 +328,26 @@ def test_plan_fact_errors(fixture_db, tmp_path, expr, match):
         evaluate(expr, fixture_db[3], tmp_path, config_dir=FIXTURE / "config")
 
 
+def test_plan_fact_doc_suffix_matching_two_documents_is_ambiguous(fixture_db, tmp_path):
+    cfg = tmp_path / "cfg"
+    shutil.copytree(FIXTURE / "config", cfg)
+    path = cfg / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace("TEST/0001", "TEST_0002"))  # TEST/0002 also maps
+    with pytest.raises(FactError, match="ambiguous: documents TEST/0002, TEST_0002"):
+        evaluate(f"{PLAN_EXPR}.TEST_0002", fixture_db[3], tmp_path, config_dir=cfg)
+
+
 def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
     with pytest.raises(FactError, match="need the config directory"):
         evaluate(PLAN_EXPR, fixture_db[3], tmp_path)
 
 
-def _berlin_lau_runs(db_path: Path) -> list[tuple[int, str]]:
+def _berlin_lau_runs(db_path: Path, kind: str = "lau") -> list[tuple[int, str]]:
     with sqlite3.connect(db_path) as c:
         rows = c.execute(
-            "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind='lau' "
-            "ORDER BY osm_timestamp"
+            "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind=? "
+            "ORDER BY osm_timestamp",
+            (kind,),
         ).fetchall()
     return [(rid, ts[:10]) for rid, ts in rows]
 
@@ -338,6 +371,9 @@ def test_overlay_facts(fixture_db, tmp_path):
     rows = [row(r1, "A", 10.0), row(r1, "B", 2.5), row(r1, "C", 99.0)]
     rows += [row(r2, "A", 11.0), row(r2, "B", 4.0)]
     rows += [row(r2, "A", 500.0, "v0")]  # an older overlay version is ignored
+    (f1, fd1), *_ = _berlin_lau_runs(db_path, "fua")
+    assert fd1 == d1
+    rows += [row(f1, "A", 700.0)]  # an FUA run on the same snapshot is not an LAU overlay
     _write(db_path, lambda c: replace_plan_overlay(c, "berlin", rows))
 
     assert evaluate(f"overlay.berlin.vorrangnetz.{d1}.ab_km", data, tmp_path) == 12.5
