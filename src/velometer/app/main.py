@@ -31,6 +31,7 @@ from markupsafe import Markup
 
 from velometer import timeseries as ts
 from velometer.app import compare as cmp
+from velometer.app import counts as counts_model
 from velometer.app import plans_pages
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
@@ -106,14 +107,17 @@ CSP = (
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
-# The city page's tabs: key, label, path suffix. Bezirke only for a city with subareas.
+# The city page's tabs: key, label, path suffix. Counts only for a city with counter data
+# (ReportData.counter_cities), Bezirke only for a city with subareas.
 TABS = [
     ("story", "Story", ""),
     ("time", "Over time", "/time"),
     ("tiers", "Tiers", "/tiers"),
     ("figures", "Figures", "/figures"),
+    ("counts", "Counts", "/counts"),
     ("bezirke", "Bezirke", "/bezirke"),
 ]
+COUNTERS_TEXT = "counters.yaml"  # content/: what the counters record, under the Counts tab
 UNITS = {"pct": "%"}
 CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
@@ -563,10 +567,38 @@ def create_app(
             "org_of": org_of_sources(org_mapping(), city_id, profiles),
         }
 
+    def counts_context(request: Request, data: ReportData, city_id: str) -> dict:
+        """The Counts tab: the counter index beside the mapped-km index, the sites, the
+        attribution and content/counters.yaml (a broken text is a note, not a 500)."""
+        _, sources, _, errors = cache.get("content", fp(request), content())
+
+        def build() -> dict:
+            cfg = counts_model.counters_config(config_dir)
+            entry = next((e for e in cfg.cities if e.city == city_id), None) if cfg else None
+            lau = data.series(city_id, "lau")
+            ctx = counts_model.counts_context(data, city_id, entry, lau.points if lau else [])
+            try:
+                text, text_error = load_document(content_dir / COUNTERS_TEXT), None
+            except ContentError as e:
+                log.error("counters text could not be loaded: %s", e)
+                text, text_error = None, str(e)
+            doc = None if text is None or errors.get("*") else render_explainer(text, sources)
+            ctx["site_map"] = (
+                None
+                if ctx["site_map"] is None
+                else ctx["site_map"]
+                | {"tiles": OSM_TILES, "tile_class": TILE_CLASS, "links": OSM_LINKS}
+            )
+            return ctx | {"doc": doc, "text_error": text_error}
+
+        return cache.get(f"counts:{city_id}", fp(request), build)
+
     def city_page(request: Request, city_id: str, tab: str, data: ReportData) -> HTMLResponse:
         ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
         if tab == "bezirke" and not ctx["bezirke"]:
             raise HTTPException(404, f"{city_id!r} has no Bezirke")
+        if tab == "counts" and not ctx["has_counts"]:
+            raise HTTPException(404, f"{city_id!r} has no counter data")
         extra: dict = {}
         if tab == "figures":
             profiles = set(organisations(request)[0])
@@ -576,11 +608,16 @@ def create_app(
         nar, note = narrative_of(request, city_id)
         role = {"story": "story", "figures": "figures"}.get(tab)
         cited_sources, cited_refs = nar.cited(nar.of_role(role)) if nar and role else ([], [])
+        if tab == "counts":
+            extra = {"counts": counts_context(request, data, city_id)}
+            nar = extra["counts"]["doc"]  # the tab cites the counters text's sources
+            cited_sources = [] if nar is None else sorted(nar.sources.items())
+            cited_refs = [] if nar is None else sorted(nar.refs.items())
         label = next(t[1] for t in TABS if t[0] == tab)
         tabs = [
             {"key": k, "label": lbl, "href": f"/city/{city_id}{suffix}"}
             for k, lbl, suffix in TABS
-            if k != "bezirke" or ctx["bezirke"]
+            if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
@@ -871,6 +908,7 @@ def create_app(
                 if (others := [o for o in g["cities"] if o.id != city_id])
             ],
             "bezirke": bezirke_context(data, city_id),
+            "has_counts": city_id in data.counter_cities(),
             "kinds": kinds,
             "yearly": yearly,
             "reconcile": data.reconcile(city_id),

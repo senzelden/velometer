@@ -27,7 +27,8 @@
    "E",
    "ecf_qecio",
    "clean_cities",
-   "ab_per_100k"
+   "ab_per_100k",
+   "counter_index"
   ]
  },
  "cases": [
@@ -409,6 +410,44 @@
     "b": "lau",
     "mode": "abs",
     "view": "table",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "m=counter_index is a metric",
+   "query": "m=counter_index",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "counter_index",
+    "b": "lau",
+    "mode": "abs",
+    "view": "lines",
+    "hl": []
+   },
+   "dropped_metric": null
+  },
+  {
+   "name": "counter_index is kept for the metro area",
+   "query": "m=counter_index&b=fua&mode=index",
+   "expect": {
+    "c": [
+     "berlin",
+     "paris",
+     "vienna",
+     "copenhagen",
+     "wroclaw"
+    ],
+    "m": "counter_index",
+    "b": "fua",
+    "mode": "index",
+    "view": "lines",
     "hl": []
    },
    "dropped_metric": null

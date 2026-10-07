@@ -15,6 +15,8 @@ import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, seria
 const FUA_NOTE =
   "A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).";
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
+const COUNTER_TITLE = "counter sites"; // the counter index is the same for both boundaries
+const COUNTER_FOOT = "Counters are context: they record the bicycles passing a few sites.";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const form = $("#compare-filters");
@@ -150,6 +152,7 @@ toggle.addEventListener("click", () => setSheet(!sheetOpen));
 
 const unitOf = () => cfg.metrics[state.m].unit;
 const tipFor = (model) => (s, p, label) => {
+  if (model.counter) return `${s.name} · ${label}: index ${formatValue(p.value)}`;
   const idx = state.mode === "index" ? "index " : "";
   const flag = p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : "";
   return `${s.name} · ${label}: ${idx}${formatValue(p.value)}${state.mode === "index" ? "" : ` ${unitOf()}`}${flag}`;
@@ -222,27 +225,30 @@ function drawChart(model) {
     panel.open(id);
   };
   const base = { labels: axis, series };
-  const size = { height: window.innerWidth < 560 ? 340 : 440 };
+  const size = { height: window.innerWidth < 560 ? 340 : 440, marks: model.marks };
   const tip = tipFor(model);
   if (!present.length) {
     out.chart.replaceChildren(el("p", { class: "empty" }, "No values for this selection."));
   } else if (state.view === "small") {
-    renderSmallMultiples(out.chart, base, { shared: sharedScale, tip, onPick, height: 150 });
+    renderSmallMultiples(out.chart, base, { shared: sharedScale, tip, onPick, height: 150, marks: model.marks });
   } else if (state.view === "rank") {
     renderRank(out.chart, { labels: axis, series: rankSeries(series, model.labels) }, {
       ...size, onPick, label: "Line chart: rank per year among the selected cities",
     });
   } else {
     renderLines(out.chart, base, {
-      ...size, zero: state.mode === "abs", tip, onPick,
-      label: `Line chart: ${cfg.metrics[state.m].label}, ${BOUNDARY[state.b]}`,
+      ...size, zero: state.mode === "abs" && !model.counter, tip, onPick,
+      label: `Line chart: ${cfg.metrics[state.m].label}, ${model.counter ? COUNTER_TITLE : BOUNDARY[state.b]}`,
     });
     out.chart.dataset.series = String(series.length);
   }
 }
 
 function drawTable(model) {
-  const axis = displayLabels(model.labels, model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []));
+  const marked = new Map(model.marks.map((m) => [m.label, m.text]));
+  const axis = model.counter
+    ? model.labels.map((l) => (marked.has(l) ? `${l} (${marked.get(l)})` : l))
+    : displayLabels(model.labels, model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []));
   const rows = sortRows(model.series, model.labels, sort);
   const table = el("table", { class: "compare-table" });
   table.append(el("caption", { class: "sr-only" }, `${cfg.metrics[state.m].label} per city and snapshot`));
@@ -291,8 +297,10 @@ function drawTable(model) {
 function drawTitle(model) {
   const m = cfg.metrics[state.m];
   out.title.replaceChildren(
-    el("h2", {}, `${m.label} · ${BOUNDARY[state.b]}${state.mode === "index" ? " · index, first year = 100" : ""}`),
-    el("p", { class: "meta" }, `${m.unit}. Mapped km in OpenStreetMap, not built km.`),
+    model.counter
+      ? el("h2", {}, `${m.label} · ${COUNTER_TITLE}`)
+      : el("h2", {}, `${m.label} · ${BOUNDARY[state.b]}${state.mode === "index" ? " · index, first year = 100" : ""}`),
+    el("p", { class: "meta" }, `${m.unit}. ${model.counter ? COUNTER_FOOT : "Mapped km in OpenStreetMap, not built km."}`),
   );
   const notes = [...(dropped ? [FUA_NOTE] : []), ...model.notes];
   out.notes.replaceChildren(...notes.map((n) => el("p", { class: "note" }, n)));

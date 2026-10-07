@@ -7,6 +7,7 @@ export const VIEWS = ["lines", "small", "rank", "table"];
 export const MAX_HIGHLIGHTED = 8;
 export const METRICS = [
   "headline", "ab_km", "A", "B", "C", "D", "E", "ecf_qecio", "clean_cities", "ab_per_100k",
+  "counter_index",
 ];
 /** The metric that exists for the city proper (LAU) only. */
 export const LAU_ONLY_METRIC = "ab_per_100k";

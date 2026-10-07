@@ -19,7 +19,11 @@ MODES = ("abs", "index")
 VIEWS = ("lines", "small", "rank", "table")
 METRICS = (
     "headline", "ab_km", "A", "B", "C", "D", "E", "ecf_qecio", "clean_cities", "ab_per_100k",
+    "counter_index",
 )  # fmt: skip
+# The counter index (`series.json: counters`): calendar years, already an index (never rebased),
+# the same for both boundaries (the counter sites of the city).
+COUNTER_METRIC = "counter_index"
 DEFAULT_METRIC = "headline"
 LAU_ONLY_METRIC = "ab_per_100k"  # needs the city proper's residents; dropped for the metro area
 # `all` (None) is every known city
@@ -48,12 +52,20 @@ METRIC_LABELS = {
     "ecf_qecio": "QECIO method",
     "clean_cities": "Clean Cities method",
     "ab_per_100k": "A+B km per 100k residents",
+    "counter_index": "Counter index",
 }
 VIEW_LABELS = {"lines": "Lines", "small": "Small multiples", "rank": "Rank", "table": "Table"}
 NO_INDEX = "no index: first year is 0 or missing"
 FUA_NOTE = (
     "A+B km per 100k residents exists for the city proper (LAU) only; "
     "showing the headline for the metro area (FUA)."
+)
+NO_COUNTERS = "no open counter data"
+NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)"
+AVG_DAILY = "index of average daily intensity (monthly values), not of counts"
+COUNTER_UNIT = (
+    "index of counts recorded at counter sites (or of their average daily intensity), "
+    "2019 = 100; 2020 is the COVID year"
 )
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -157,6 +169,7 @@ def metric_info(
         "ecf_qecio": preset_units.get("ecf_qecio", ""),
         "clean_cities": preset_units.get("clean_cities_2025", ""),
         "ab_per_100k": per_100k_unit(population_years),
+        "counter_index": COUNTER_UNIT,
     }
     return {m: {"label": METRIC_LABELS[m], "unit": unit[m]} for m in METRICS}
 
@@ -178,10 +191,53 @@ def column_label(label: str, osm: str | None) -> str:
     return "current"
 
 
+def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, list[str]]:
+    """(labels, values, notes) of the counter index for `ids`: labels are the calendar years from
+    the first to the last with a value for any drawn city; values[id] one per label (None: a
+    gap, never 0). A city without counter data, or whose index is not drawn as a line, gets no
+    values and a note (compare-model.js: counterLines)."""
+    counters = payload.get("counters", {}).get("cities", {})
+    names = payload["cities"]
+    drawn = {i: counters[i] for i in ids if i in counters and counters[i]["line"]}
+    years = [p["year"] for c in drawn.values() for p in c["points"] if p["idx"] is not None]
+    labels = [str(y) for y in range(min(years), max(years) + 1)] if years else []
+    values, notes = {}, []
+    for i in ids:
+        c = counters.get(i)
+        if c is None:
+            notes.append(f"{names[i]['name']}: {NO_COUNTERS}")
+        elif not c["line"]:
+            notes.append(f"{names[i]['name']}: {NO_COUNTER_LINE}")
+        elif c["series"] == "avg_daily_intensity":
+            notes.append(f"{names[i]['name']}: {AVG_DAILY}")
+        by_year = {str(p["year"]): p["idx"] for p in c["points"]} if i in drawn else {}
+        values[i] = [by_year.get(lbl) for lbl in labels]
+    return labels, values, notes
+
+
+def _counter_table(payload: dict, ids: list[str]) -> dict:
+    labels, values, notes = counter_lines(payload, ids)
+    covid = str(payload.get("counters", {}).get("covid_year", ""))
+    names = payload["cities"]
+    return {
+        "columns": [
+            {"label": lbl, "text": f"{lbl} (COVID year)" if lbl == covid else lbl} for lbl in labels
+        ],
+        "rows": [
+            {"id": i, "name": names[i]["name"], "values": values[i], "flagged": []} for i in ids
+        ],
+        "notes": notes,
+        "index_base": None,
+    }
+
+
 def table_model(payload: dict, state: CompareState) -> dict:
     """The Table view: a row per selected city, a column per series label, the state's metric
-    (indexed to the first year = 100 in `index` mode), plus the notes the page must show."""
+    (indexed to the first year = 100 in `index` mode), plus the notes the page must show. The
+    counter index has a column per calendar year and is never rebased."""
     cities = payload["cities"]
+    if state.m == COUNTER_METRIC:
+        return _counter_table(payload, [i for i in state.c if i in cities])
     ids = [i for i in state.c if i in cities]
     lists = {i: payload["series"].get(f"{i}/{state.b}", []) for i in ids}
     labels = sorted({p["label"] for pts in lists.values() for p in pts} - {ts.CURRENT})

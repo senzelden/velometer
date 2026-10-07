@@ -826,9 +826,10 @@ def test_compare_config_block_is_json_and_the_only_script_besides_the_modules(cl
     )
     cfg = json.loads(block.group(1))
     assert cfg["cities"] == ["berlin", "paris"]
-    assert cfg["metric_order"] == list(
-        ["headline", "ab_km", "A", "B", "C", "D", "E", "ecf_qecio", "clean_cities", "ab_per_100k"]
-    )
+    assert cfg["metric_order"] == [
+        "headline", "ab_km", "A", "B", "C", "D", "E", "ecf_qecio", "clean_cities", "ab_per_100k",
+        "counter_index",
+    ]  # fmt: skip
     assert cfg["quick"]["all"] is None
     assert '<script type="module" src="/static/js/compare.js">' in html
 

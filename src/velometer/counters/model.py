@@ -67,6 +67,16 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class StepDown(_Strict):
+    """A site whose counts step down while it keeps counting, from `since` (YYYY-MM): our
+    reading of the daily data, not a sourced claim. Used only for the Counts tab's note, which
+    gives the index without the site from that year on; the stored index keeps it (spec §2.13,
+    user ruling 2026-10-07)."""
+
+    site: str
+    since: str = Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
 class CounterEntry(_Strict):
     """One city's counter portal."""
 
@@ -88,6 +98,7 @@ class CounterEntry(_Strict):
     # sites outside the city's stored boundary of this kind (data/boundaries/<city>_<kind>.geojson)
     # are dropped, with their counts (Oslo: state counters, county-wide query)
     boundary: Literal["lau"] | None = None
+    step_downs: list[StepDown] = []
 
     @field_validator("timezone")
     @classmethod

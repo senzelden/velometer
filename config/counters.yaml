@@ -85,6 +85,13 @@ cities:
       Lauttasaaren silta pohjoispuoli: Lauttasaaren silta
       Munkkiniemen silta eteläpuoli: Munkkiniemen silta
       Munkkiniemi silta pohjoispuoli: Munkkiniemen silta
+    # Our reading of the daily data (docs/review/m8-counters.md, Helsinki): these sites' counts
+    # step down while they keep counting; the data do not say why. Used only for the Counts tab
+    # note, which gives the index without them from that year on; the stored index keeps them
+    # (spec §2.13, user ruling 2026-10-07).
+    step_downs:
+      - {site: Kaivokatu, since: 2024-04}
+      - {site: Pitkäsilta länsipuoli, since: 2025-05}
   - city: madrid
     adapter: madrid
     source: Ayuntamiento de Madrid

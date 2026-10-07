@@ -1,0 +1,74 @@
+{% extends "city/_page.html" %}
+{% block head %}{% if counts.site_map %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block tab %}
+{% set c = counts %}
+<section id="counts-index">
+<h2>Counter index</h2>
+<p class="meta">Index of {{ c.label }}, {{ c.base_year }} = 100, beside the index of A+B mapped km in the city proper (1 January snapshots, {{ c.base_year }} = 100). Counters are context: they record the bicycles passing a few sites, not those elsewhere in the city. {{ c.covid_year }} is the COVID year.</p>
+{% if c.line %}
+<div class="chart" data-chart="city-counts" data-city="{{ city.id }}" role="group" aria-label="Counter index and mapped-km index over time, {{ city.name }}"></div>
+{% else %}
+<p class="note" id="counts-no-line">No index line is drawn: the counter index has a value for {{ c.index_years | join(", ") or "no year" }} only, because no other year links to a neighbouring one with three sites complete on nine days in ten.{% if c.gaps %} The files hold no counts from {% for a, b in c.gaps %}{{ a }} to {{ b }}{% if not loop.last %}, {% endif %}{% endfor %}. For the portal's account of that time, a change of detectors, see <a href="#counters-breaks">Breaks in a series</a> below.{% endif %}</p>
+{% endif %}
+{% if c.step_down %}
+<p class="note" id="counts-step-down">In our reading of the daily counts, the counts of {% for s in c.step_down.sites %}{{ s.site }} (from {{ s.since }}){% if not loop.last %} and {% endif %}{% endfor %} step down while still counting. Possibly works or diversions; the data do not say why. The index above keeps them, as the index rule counts every qualifying site. Computed here from the stored daily counts without those sites from those years on (the list is in <code>config/counters.yaml</code>), {% if c.step_down.years %}the index is {% for y in c.step_down.years %}{{ y.idx | num }} in {{ y.year }} ({{ y.sites }} sites; above: {{ y.stored | num }}){% if not loop.last %}, {% endif %}{% endfor %}{% else %}the index has no value in those years{% endif %}.</p>
+{% endif %}
+{% if c.km_base_missing %}<p class="note">No A+B mapped km snapshot for 1 January {{ c.base_year }}: no mapped-km index.</p>{% endif %}
+<div class="scroll">
+<table class="counts-table">
+<caption class="sr-only">Counter index and mapped-km index per year, {{ city.name }}</caption>
+<thead><tr><th scope="col">Year</th><th scope="col" class="num">Counter index</th><th scope="col" class="num">Qualifying sites</th><th scope="col" class="num">A+B mapped km index (1 Jan)</th></tr></thead>
+<tbody>
+{% for r in c.table %}<tr{% if r.covid %} class="covid"{% endif %}><th scope="row">{{ r.year }}{% if r.covid %} <span class="covid-mark">COVID year</span>{% endif %}</th><td class="num">{{ r.idx | num }}</td><td class="num">{% if r.idx is not none %}{{ r.sites }}{% endif %}</td><td class="num">{{ r.km | num }}</td></tr>
+{% endfor %}</tbody>
+</table>
+</div>
+<p class="meta">n/a: no value (fewer than three sites complete on nine days in ten in both years of a link, or a broken chain), not zero. A year's site count is the sites of its link with the neighbouring year towards {{ c.base_year }}.</p>
+</section>
+
+<section id="counts-sites">
+<h2>Counter sites</h2>
+{% if c.site_map %}
+<div id="countermap" class="tiermap countermap" role="region" aria-label="Map of the counter sites, {{ city.name }}"></div>
+<p class="meta tiermap-note" id="countermap-status">{{ c.site_map.sites | length }} of {{ c.sites | length }} sites have coordinates.</p>
+<script type="application/json" id="countermap-config">{{ c.site_map | tojson }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/countermap.js"></script>
+{% else %}
+<p class="meta">The portal publishes no coordinates for these sites: a list instead of a map.</p>
+{% endif %}
+<details class="table-details"{% if not c.site_map %} open{% endif %}><summary>{{ c.sites | length }} sites</summary>
+<div class="scroll">
+<table class="counter-sites">
+<thead><tr><th scope="col">Site</th><th scope="col">First day</th><th scope="col">Last day</th></tr></thead>
+<tbody>
+{% for s in c.sites %}<tr><td>{{ s.name }}</td><td class="date">{{ s.first_day or "n/a" }}</td><td class="date">{{ s.last_day or "n/a" }}</td></tr>
+{% endfor %}</tbody>
+</table>
+</div>
+</details>
+<p class="meta counts-attribution">Counter data: {% if c.entry %}<a href="{{ c.entry.page | http_url }}" rel="noopener noreferrer">{{ c.source }}</a>, licence <a href="{{ c.entry.licence_url | http_url }}" rel="noopener noreferrer">{{ c.licence }}</a>{% else %}{{ c.source }}, licence {{ c.licence }}{% endif %}{% if c.retrieved %}, retrieved {{ c.retrieved }}{% endif %}.{% if c.site_map %} Map: © <a href="{{ c.site_map.links.copyright }}" rel="noopener noreferrer">OpenStreetMap contributors</a>.{% endif %}</p>
+</section>
+
+{% if c.text_error %}<p class="note">the counters text could not be loaded (see the server log)</p>{% endif %}
+{% if c.doc %}
+<section class="counters-text" id="counters-text">
+<h2>{{ c.doc.title }}</h2>
+<div class="narrative prose">
+{% for p in c.doc.intro %}{{ p }}
+{% endfor %}
+</div>
+{% for s in c.doc.sections %}
+<div class="narrative prose" id="counters-{{ s.role }}">
+<h3>{{ s.heading }}</h3>
+{% for item in s.items %}{{ item }}
+{% endfor %}
+</div>
+{% endfor %}
+</section>
+<section class="prose">
+{% include "city/_cited.html" %}
+</section>
+{% endif %}
+{% endblock %}

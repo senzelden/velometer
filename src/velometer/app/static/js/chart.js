@@ -61,7 +61,8 @@ function segDist(px, py, ax, ay, bx, by) {
  * Lines. model: {labels: string[], series: [{id, name, colour?, ghost?, points: [{value, flags?}]}],
  * yTitle?}. Series with a colour are highlighted, without are grey context, ghost ones are
  * faint and unlabelled. opts: {height, width, compact, zero, invert, intTicks, yDomain,
- * tip(series, point, label) -> string, onPick(id, label)}.
+ * tip(series, point, label) -> string, onPick(id, label), marks: [{label, text}]} (a dashed
+ * vertical line at each mark's label, its text at the top; compact charts draw the line only).
  */
 export function renderLines(el, model, opts = {}) {
   const W = widthOf(el, opts);
@@ -130,6 +131,17 @@ export function renderLines(el, model, opts = {}) {
   }
   if (model.yTitle && !compact) {
     svg.appendChild(svgEl("text", { class: "ylab", x: ml, y: mt - 4 }, model.yTitle));
+  }
+  for (const m of opts.marks ?? []) {
+    const i = labels.indexOf(m.label);
+    if (i < 0) continue;
+    const g = svgEl("g", { class: "mark", "data-mark": m.label });
+    g.appendChild(svgEl("line", { class: "mark-line", x1: x(i), x2: x(i), y1: mt, y2: mt + ih }));
+    if (!compact) {
+      g.appendChild(svgEl("text", { class: "mark-t", x: x(i) + 4, y: mt + 10 }, m.text));
+    }
+    g.appendChild(svgEl("title", {}, `${m.label}: ${m.text}`));
+    svg.appendChild(g);
   }
 
   const order = [
@@ -278,7 +290,7 @@ export function renderSmallMultiples(el, model, opts = {}) {
     if (opts.onPick) card.addEventListener("click", () => opts.onPick(s.id, ""));
     renderLines(chart, { labels: model.labels, series: [{ ...s, colour: s.colour ?? "#1f5fae" }] },
       { height: opts.height ?? 150, compact: true, zero: !yDomain, yDomain, hoverOnly: s.id,
-        tip: opts.tip, label: s.name });
+        tip: opts.tip, label: s.name, marks: opts.marks });
   }
 }
 

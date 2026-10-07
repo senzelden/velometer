@@ -135,3 +135,13 @@ test("renderTiers stacks a non-finite tier value as 0, never NaN", () => {
   assert.ok(el.find("path").length === 2);
   assert.ok(!all.some((v) => /NaN|Infinity/.test(v)), all.filter((v) => /NaN|Infinity/.test(v)));
 });
+
+test("renderLines draws a mark at its label with its text, and skips a label not on the axis", () => {
+  const el = new Node("div");
+  renderLines(el, { labels, series: [mk("a", "A", [1, 2, 3], "#111")] },
+    { height: 200, marks: [{ label: "2019", text: "COVID year" }, { label: "1999", text: "x" }] });
+  const marks = el.children[0].find("g").filter((g) => g.attrs.class === "mark");
+  assert.equal(marks.length, 1);
+  assert.equal(marks[0].attrs["data-mark"], "2019");
+  assert.ok(marks[0].find("text").some((t) => t.textContent === "COVID year"));
+});

@@ -3,6 +3,7 @@
 import { assignColours, indexSeries, ranks } from "./chart-core.js";
 import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
 import { PALETTE, labelsOf } from "./data.js";
+import { COUNTER_METRIC, counterLines } from "./counter-model.js";
 
 export const NO_INDEX = "no index: first year is 0 or missing";
 
@@ -17,11 +18,14 @@ export function metricValue(point, metric, population) {
 
 /**
  * The selection as lines: {labels (raw: years then "current"), series: [{id, name, points:
- * [{label, value, flags}]}], notes}. `index` mode rebases every city to its first year = 100;
- * a city whose first year is 0 or missing gets no values and a note.
+ * [{label, value, flags}]}], notes, marks}. `index` mode rebases every city to its first year =
+ * 100; a city whose first year is 0 or missing gets no values and a note. The counter index
+ * (calendar years, already an index, the same for both boundaries) is never rebased and marks
+ * the COVID year.
  */
 export function buildModel(D, state) {
   const ids = state.c.filter((id) => D.cities[id]);
+  if (state.m === COUNTER_METRIC) return { ...counterLines(D, ids), counter: true };
   const lists = ids.map((id) => D.series[`${id}/${state.b}`] ?? []);
   const labels = labelsOf(lists);
   const base = labels.find((l) => l !== "current");
@@ -44,7 +48,7 @@ export function buildModel(D, state) {
     }
     return { id, name: D.cities[id].name, points };
   });
-  return { labels, series, notes };
+  return { labels, series, notes, marks: [] };
 }
 
 /** The ids drawn in colour: the highlighted ones, else the first MAX_HIGHLIGHTED selected. */

@@ -1,10 +1,12 @@
-// City page charts (Story, Over time, Tiers and Bezirke tabs): headline over time (LAU and FUA),
-// tier composition per boundary and the Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
+// City page charts (Story, Over time, Tiers, Counts and Bezirke tabs): headline over time (LAU
+// and FUA), tier composition per boundary, the counter index beside the mapped-km index and the
+// Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
 // mounts. Every value is also in a table on the page.
 import { renderLines, renderSmallMultiples } from "./chart.js";
 import { drawTiers } from "./tier-chart.js";
 import { formatValue } from "./chart-core.js";
 import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
+import { countsChart } from "./counter-model.js";
 
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
 const BOUNDARY_SHORT = { lau: "City proper", fua: "Metro area" }; // end labels of narrow charts
@@ -60,4 +62,27 @@ function bezirke(el, D) {
   );
 }
 
-drawAll({ "city-headline": headline, "city-tiers": drawTiers, bezirke });
+function counts(el, D) {
+  const id = el.dataset.city;
+  const avg = D.counters?.cities?.[id]?.series === "avg_daily_intensity";
+  const model = countsChart(D, id, {
+    counter: avg ? "Average daily intensity at counter sites" : "Counts at counter sites",
+    km: "A+B mapped km (1 Jan)",
+  });
+  if (!model) throw new Error(`no counter data for ${id}`);
+  const lines = {
+    labels: model.labels,
+    yTitle: `Index, ${model.base} = 100`,
+    series: model.series.map((s, i) => ({ ...s, colour: PALETTE[i] })),
+  };
+  mount(el, () =>
+    renderLines(el, lines, {
+      height: Number(el.dataset.height) || 300,
+      marks: model.marks,
+      label: `Line chart: counter index and A+B mapped-km index, ${D.cities[id]?.name ?? id}, ${model.base} = 100`,
+      tip: (s, p, label) => `${s.name} · ${label}: index ${formatValue(p.value)}`,
+    }),
+  );
+}
+
+drawAll({ "city-headline": headline, "city-tiers": drawTiers, "city-counts": counts, bezirke });

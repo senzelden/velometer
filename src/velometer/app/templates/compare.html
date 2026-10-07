@@ -43,8 +43,13 @@
 
 <section class="compare-out">
 <div data-compare-title>
+{% if state.m == "counter_index" %}
+<h2>{{ metrics[state.m].label }} · counter sites</h2>
+<p class="meta">{{ metrics[state.m].unit }}. Counters are context: they record the bicycles passing a few sites.</p>
+{% else %}
 <h2>{{ metrics[state.m].label }} · {{ "City proper (LAU)" if state.b == "lau" else "Metro area (FUA)" }}{% if state.mode == "index" %} · index, first year = 100{% endif %}</h2>
 <p class="meta">{{ metrics[state.m].unit }}. Mapped km in OpenStreetMap, not built km.</p>
+{% endif %}
 </div>
 <div data-compare-notes>{% for n in table.notes %}<p class="note">{{ n }}</p>
 {% endfor %}</div>

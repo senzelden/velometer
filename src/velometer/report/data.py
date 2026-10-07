@@ -28,6 +28,7 @@ from velometer.config import (
 )
 from velometer.db import (
     SCHEMA_VERSION,
+    CounterDay,
     CounterIndexYear,
     CounterSite,
     OverlayRow,
@@ -576,6 +577,16 @@ class ReportData:
             (city_id,),
         )
         return [CounterIndexYear(*r) for r in rows]
+
+    def counter_days(self, city_id: str) -> list[CounterDay]:
+        """Every stored day of the city's counter sites; `complete` False marks a day whose
+        total misses hours (or a zero-total outage day)."""
+        rows = self._optional_rows(
+            "SELECT city_id, site_id, day, count, complete FROM counter_daily WHERE city_id=? "
+            "ORDER BY site_id, day",
+            (city_id,),
+        )
+        return [CounterDay(r[0], r[1], r[2], r[3], bool(r[4])) for r in rows]
 
     def counter_cities(self) -> list[str]:
         rows = self._optional_rows("SELECT DISTINCT city_id FROM counter_sites ORDER BY city_id")

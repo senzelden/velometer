@@ -8,6 +8,7 @@ explanations of flagged years. Values are the CSV export's (mapped km, ADR 0006)
 from pathlib import Path
 
 from velometer import timeseries as ts
+from velometer.app.counts import counter_payload
 from velometer.app.names import country_name
 from velometer.db import subarea_names
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData
@@ -54,8 +55,9 @@ def _bezirke(data: ReportData, city_id: str) -> dict:
 def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
     """The chart data: `cities`, `series` ("<id>/<kind>" -> points, years then `current`),
     `bezirke` (city id -> subarea id -> name and points; cities with subareas only), `presets`,
-    `headline_unit` and `explanations.timeseries` (flag key -> text of `explanations`, the
-    time-series review page, for every flag that has one)."""
+    `headline_unit`, `explanations.timeseries` (flag key -> text of `explanations`, the
+    time-series review page, for every flag that has one) and `counters` (the counter index per
+    counter city, `app/counts.counter_payload`)."""
     cities = {
         c.id: {
             "id": c.id,
@@ -85,4 +87,5 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
         "presets": data.preset_labels(),
         "headline_unit": HEADLINE_UNIT,
         "explanations": {"timeseries": notes},
+        "counters": counter_payload(data),
     }

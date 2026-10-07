@@ -1,0 +1,185 @@
+"""The city page's Counts tab and the counter index of `/data/series.json` (M8 spec §5.5).
+
+Counters are context, not outcome (spec §2.12): every label says "recorded at counter sites",
+never "cycling in <city>", and no text links counts and km causally. The index is the stored
+chain of spec §2.13 (`counter_index`); the A+B mapped-km index beside it is rebased to the same
+base year (1 January snapshots of the city proper). 2020 is marked as the COVID year.
+
+An index line needs at least `MIN_LINE_YEARS` years with a value: Madrid's index has 2020 only,
+so it gets a note instead of a line, in the tab and in Compare (user ruling, Task 8).
+
+`step_downs` in `config/counters.yaml` lists sites whose counts step down while they keep
+counting (our reading of the daily data, never a sourced claim). They are used only for the
+tab's note, which gives the index computed here without those sites from their `since` year on;
+the stored index keeps them (user ruling, Task 8).
+"""
+
+from datetime import date, timedelta
+from pathlib import Path
+
+from velometer import timeseries as ts
+from velometer.config import ConfigError
+from velometer.counters.index import chain_index
+from velometer.counters.model import (
+    COUNTERS_FILE,
+    CounterEntry,
+    CountersConfig,
+    DayCount,
+    load_counters_config,
+)
+from velometer.report.data import ReportData
+
+COVID_YEAR = 2020
+MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line
+GAP_DAYS = 31  # a run of days without any count longer than this is named in the no-line note
+SERIES_LABEL = {
+    "counts": "counts recorded at counter sites",
+    "avg_daily_intensity": "average daily intensity recorded at counter sites",
+}
+MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June", "July", "August", "September",
+    "October", "November", "December",
+]  # fmt: skip
+
+
+def counters_config(config_dir: Path) -> CountersConfig | None:
+    try:
+        return load_counters_config(Path(config_dir) / COUNTERS_FILE)
+    except ConfigError:
+        return None
+
+
+def _round(v: float | None) -> float | None:
+    return None if v is None else round(v, 3)
+
+
+def has_line(points: list[dict]) -> bool:
+    return sum(p["idx"] is not None for p in points) >= MIN_LINE_YEARS
+
+
+def counter_payload(data: ReportData) -> dict:
+    """`counters` of series.json: the COVID year and, per counter city, its series kind, base
+    year, whether it is drawn as a line and its yearly index (None: no value, a gap)."""
+    cities = {}
+    for city_id in data.counter_cities():
+        rows = data.counter_index(city_id)
+        if not rows:
+            continue
+        points = [{"year": r.year, "idx": _round(r.index), "sites": r.sites} for r in rows]
+        cities[city_id] = {
+            "series": rows[0].series,
+            "base_year": rows[0].base_year,
+            "line": has_line(points),
+            "points": points,
+        }
+    return {"covid_year": COVID_YEAR, "cities": cities}
+
+
+def km_index(points, base_year: int) -> dict[int, float | None]:
+    """year -> A+B mapped km on 1 January of that year, base year = 100 (series points of the
+    city proper; `current` is not a year). Empty when the base year has no km."""
+    km = {int(p.label): p.ab_km for p in points if p.label != ts.CURRENT}
+    base = km.get(base_year)
+    if not base:
+        return {}
+    return {y: None if v is None else v / base * 100 for y, v in sorted(km.items())}
+
+
+def _month(since: str) -> str:
+    y, m = since.split("-")
+    return f"{MONTH_NAMES[int(m) - 1]} {y}"
+
+
+def step_down_note(
+    entry: CounterEntry, days: list[DayCount], stored: dict[int, float | None], base_year: int
+):
+    """The step-down sites (present in the data) and the index without them from their `since`
+    year on (chained from `base_year`, the stored index's), for every year from the first
+    `since` year with a value; None without step-downs."""
+    present = {d.site_id for d in days}
+    steps = [s for s in entry.step_downs if s.site in present]
+    if not steps:
+        return None
+    since = {s.site: int(s.since[:4]) for s in steps}
+    kept = [d for d in days if d.day.year < since.get(d.site_id, d.day.year + 1)]
+    first = min(since.values())
+    alt = [
+        {"year": y, "idx": v, "sites": n, "stored": stored.get(y)}
+        for y, v, n in chain_index(kept, base_year)
+        if y >= first and v is not None
+    ]
+    return {
+        "sites": [{"site": s.site, "since": _month(s.since)} for s in steps],
+        "years": alt,
+    }
+
+
+def data_gaps(days: list[DayCount]) -> list[tuple[str, str]]:
+    """Runs of more than GAP_DAYS days without a count at any site, inside the data's span."""
+    seen = sorted({d.day for d in days})
+    out = []
+    for a, b in zip(seen, seen[1:], strict=False):
+        if (b - a).days - 1 > GAP_DAYS:
+            out.append(((a + timedelta(days=1)).isoformat(), (b - timedelta(days=1)).isoformat()))
+    return out
+
+
+def _days(data: ReportData, city_id: str) -> list[DayCount]:
+    return [
+        DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
+        for d in data.counter_days(city_id)
+    ]
+
+
+def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, km_points) -> dict:
+    """The Counts tab: index rows (counter index, qualifying sites, km index per year), notes,
+    sites (a map config for those with coordinates), attribution."""
+    rows = data.counter_index(city_id)
+    series = rows[0].series if rows else "counts"
+    base = rows[0].base_year if rows else (entry.base_year if entry else 2019)
+    points = [{"year": r.year, "idx": r.index, "sites": r.sites} for r in rows]
+    line = has_line(points)
+    km = km_index(km_points, base)
+    valued = {r.year for r in rows if r.index is not None} | set(km)
+    # every year from the first to the last with a value: a year between them without one is
+    # a gap row (n/a), never left out
+    years = range(min(valued), max(valued) + 1) if valued else []
+    table = [
+        {
+            "year": y,
+            "idx": next((r.index for r in rows if r.year == y), None),
+            "sites": next((r.sites for r in rows if r.year == y), None),
+            "km": km.get(y),
+            "covid": y == COVID_YEAR,
+        }
+        for y in years
+    ]
+    # the daily rows are read only for a note that needs them (a no-line gap, a step-down)
+    wanted = series == "counts" and (not line or (entry is not None and entry.step_downs))
+    days = _days(data, city_id) if wanted else []
+    stored = {r.year: r.index for r in rows}
+    sites = data.counter_sites(city_id)
+    mapped = [s for s in sites if s.lat is not None and s.lon is not None]
+    retrieved = max((s.retrieved_at for s in sites), default=None)
+    return {
+        "label": SERIES_LABEL.get(series, series),
+        "series": series,
+        "base_year": base,
+        "line": line,
+        "index_years": [r.year for r in rows if r.index is not None],
+        "table": table,
+        "km_base_missing": not km,
+        "gaps": [] if line else data_gaps(days),
+        "step_down": None if entry is None else step_down_note(entry, days, stored, base),
+        "sites": sites,
+        "site_map": {
+            "sites": [{"name": s.name, "lat": s.lat, "lon": s.lon} for s in mapped],
+        }
+        if mapped
+        else None,
+        "entry": entry,
+        "source": entry.source if entry else (sites[0].source if sites else None),
+        "licence": entry.licence if entry else (sites[0].licence if sites else None),
+        "retrieved": None if retrieved is None else retrieved[:10],
+        "covid_year": COVID_YEAR,
+    }

@@ -472,3 +472,7 @@ table.plans td:last-child { min-width: 16rem; }
 .plan-svg .rep-suspect { stroke: var(--flag); stroke-width: 2.5; }
 .rep-status.revision { color: var(--ink-2); font-style: italic; }
 .data-sources { padding-left: 1.25rem; }
+.mark-line { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
+.mark-t { font: 10px system-ui, sans-serif; fill: var(--ink-2); }
+.counts-table tr.covid th, .counts-table tr.covid td { background: var(--panel); }
+.covid-mark { font-size: 0.75rem; color: var(--ink-2); font-weight: normal; }
