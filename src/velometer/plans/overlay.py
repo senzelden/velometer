@@ -12,7 +12,13 @@ midpoint), and consecutive kept pieces of one side merge into parts. Up to overl
 `min_part_m` test applies to each such part (`merge_scope: side`); from overlay_v3
 (`merge_scope: tier`) it applies to the extent of kept parts of one tier that touch across
 way-sides, so a way split into short OSM ways still counts, while the two road sides of one short
-way (the same extent) do not add up to a part. Either way a kept part counts its own km. Lengths
+way (the same extent) do not add up to a part. Either way a kept part counts its own km. From
+overlay_v4 (`clip_free_ends`) a piece no longer matches a network line whose free end it lies
+past (its midpoint beyond the end, along the line's direction there), so a match stops where the
+network line stops instead of running on into the crossing or continuing street by up to the
+buffer. An end is free unless another line of the class has an end within `_JOINT_M` of it and
+leaves the joint within `max_angle_deg` of the line's own direction (the network is split into
+edges at every junction; a joint into a turn of more than `max_angle_deg` is a free end). Lengths
 are per_side km in the city EPSG (ADR 0006: mapped km, not km completed to any plan standard).
 The parameters are data (`config/plans/overlay_vN.yaml`); a change is a new version.
 """
@@ -40,6 +46,7 @@ CLASSES = {"Radvorrangnetz": "vorrangnetz", "Ergänzungsnetz": "ergaenzungsnetz"
 _LOCAL_M = 1.0  # half-length of the network stretch whose direction a piece is compared with
 _EPS_M = 1e-6
 _TOUCH_M = 1e-3  # kept parts of one tier closer than this touch (shared OSM nodes)
+_JOINT_M = 1.0  # network line ends closer than this form a joint (overlay_v4)
 _VERSION_FILE = re.compile(r"overlay_v(\d+)")
 
 
@@ -55,6 +62,8 @@ class OverlayConfig(BaseModel):
     # what `min_part_m` is tested on: each way-side's kept parts (v1, v2), or kept parts of one
     # tier merged across touching way-sides (v3)
     merge_scope: Literal["side", "tier"] = "side"
+    # a piece does not match a network line whose free end it lies past (v4)
+    clip_free_ends: bool = False
 
     @property
     def separate_buffer_m(self) -> float:
@@ -122,6 +131,59 @@ def _undirected_deg(dx, dy, ex, ey):
     return np.minimum(a, 180.0 - a)
 
 
+def _end_directions(network: list[LineString]):
+    """(end points, outward unit directions), shape (2n, 2): the n lines' starts, then their
+    ends; the direction is taken over the last `_LOCAL_M` of the line."""
+    lines = np.asarray(network, dtype=object)
+    length = shapely.length(lines)
+    at_end = np.repeat([False, True], len(lines))
+    lines, length = np.tile(lines, 2), np.tile(length, 2)
+    end = shapely.get_coordinates(
+        shapely.line_interpolate_point(lines, np.where(at_end, length, 0.0))
+    )
+    inner = shapely.get_coordinates(
+        shapely.line_interpolate_point(
+            lines, np.where(at_end, np.maximum(length - _LOCAL_M, 0), np.minimum(_LOCAL_M, length))
+        )
+    )
+    out = end - inner
+    return end, out / np.hypot(out[:, 0], out[:, 1])[:, None]
+
+
+def free_ends(network: list[LineString], max_angle_deg: float) -> np.ndarray:
+    """Bool (2n,): the n lines' starts, then their ends, True where no other line has an end
+    within `_JOINT_M` that leaves the joint within `max_angle_deg` of this line's outward
+    direction (a continuation of the line)."""
+    n = len(network)
+    if n == 0:
+        return np.zeros(0, bool)
+    end, out = _end_directions(network)
+    owner = np.tile(np.arange(n), 2)
+    a, b = STRtree(shapely.points(end)).query(
+        shapely.points(end), predicate="dwithin", distance=_JOINT_M
+    )
+    other = owner[a] != owner[b]
+    a, b = a[other], b[other]
+    # line b leaves the joint against its own outward direction
+    cont = (out[a] * -out[b]).sum(axis=1) >= np.cos(np.radians(max_angle_deg)) - _EPS_M
+    free = np.ones(2 * n, bool)
+    free[a[cont]] = False
+    return free
+
+
+def _past_free_end(network, idx_net, mids, at, length, max_angle_deg) -> np.ndarray:
+    """Per (piece, network line) pair: the piece's midpoint lies past a free end of the line
+    (nearest the line at its end, and beyond the end along the line's outward direction)."""
+    n = len(network)
+    end, out = _end_directions(network)
+    free = free_ends(network, max_angle_deg)
+    at_start, at_end = at <= _EPS_M, at >= length - _EPS_M
+    i = np.where(at_end, idx_net + n, idx_net)  # the end the midpoint is nearest to
+    m = shapely.get_coordinates(mids)
+    beyond = ((m - end[i]) * out[i]).sum(axis=1) > _EPS_M
+    return (at_start | at_end) & free[i] & beyond
+
+
 def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry, cfg):
     """(pieces, tier, separate-way flag, length in m, kept mask) per piece of the A/B sides'
     clipped geometry; the mask already drops parts shorter than `min_part_m`. A piece's length
@@ -172,6 +234,8 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
     d = seg[idx_piece, 1] - seg[idx_piece, 0]
     e = p1 - p0
     ok = _undirected_deg(d[:, 0], d[:, 1], e[:, 0], e[:, 1]) <= cfg.max_angle_deg
+    if cfg.clip_free_ends:
+        ok &= ~_past_free_end(network, idx_net, mids, at, length, cfg.max_angle_deg)
     keep = np.zeros(len(seg), bool)
     keep[idx_piece[ok]] = True
     # merge consecutive kept pieces of one part; drop merged parts shorter than min_part_m

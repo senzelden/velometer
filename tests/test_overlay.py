@@ -484,6 +484,67 @@ def test_a_separate_way_split_into_short_osm_ways_counts_fully_only_under_v3():
     assert total > long_ones
 
 
+# --- overlay_v4: matches end at a free end of a network line -----------------------------------
+
+V4 = V3.model_copy(update={"version": "overlay_v4", "clip_free_ends": True})
+# the network turns at a junction: a stem from the south ends at (X, Y), an arm leaves it east;
+# the street continues west of the junction off the network
+TURN = [LineString([(X, Y - 300), (X, Y)]), LineString([(X, Y), (X + 300, Y)])]
+OVERRUN = {(1, "self"): _side([(X + 300, Y + 5), (X + 600, Y + 5)], separate=True)}
+ON_TURN = {(1, "self"): _side([(X - 100, Y + 5), (X + 200, Y + 5)], separate=True)}
+
+
+def test_overlay_v4_is_v3_with_free_ends_clipped():
+    assert overlay.load_overlay_config(CFG_DIR / "plans", "overlay_v4") == V4
+    assert not (CFG.clip_free_ends or V2.clip_free_ends or V3.clip_free_ends)
+
+
+def test_a_side_overrunning_a_free_network_end_is_clipped_at_the_end_under_v4():
+    # NETWORK ends at X + 500; 200 m of the side lie alongside it, 100 m past its end
+    assert overlay.on_network_km(OVERRUN, NETWORK, BOUNDARY, V4)["A"] == pytest.approx(0.2)
+
+
+def test_a_side_on_the_street_continuing_past_a_network_turn_counts_only_along_the_arm():
+    # the 100 m west of the junction lie on the continuing street, past the arm's start; the
+    # stem's end is no continuation of the arm (90 degrees), so the arm's start is a free end
+    assert overlay.on_network_km(ON_TURN, TURN, BOUNDARY, V4)["A"] == pytest.approx(0.2)
+    west = {(1, "self"): _side([(X - 100, Y + 5), (X - 1, Y + 5)], separate=True)}
+    assert overlay.on_network_km(west, TURN, BOUNDARY, V4)["A"] == 0.0
+
+
+_BEND = (0.9397, 0.3420)  # cos, sin of 20 degrees
+
+
+@pytest.mark.parametrize(
+    ("network", "side"),
+    [
+        # two edges with a 0.4 m gap at the joint; the piece over X + 0..10 has its midpoint in it
+        ([LineString([(X - 500, Y), (X + 4.8, Y)]), LineString([(X + 5.2, Y), (X + 500, Y)])],
+         [(X - 100, Y - 20), (X + 100, Y - 20)]),
+        # a 20 degree bend at X + 5 (within max_angle_deg), the side 20 m off on its outer side:
+        # pieces at the outer corner project past the first edge's end and before the second's
+        # start
+        ([LineString([(X - 500, Y), (X + 5, Y)]),
+          LineString([(X + 5, Y), (X + 5 + 470 * _BEND[0], Y + 470 * _BEND[1])])],
+         [(X - 96.7, Y - 20), (X + 8.527, Y - 20),
+          (X + 8.527 + 100 * _BEND[0], Y - 20 + 100 * _BEND[1])]),
+    ],
+    ids=["gap", "bend"],
+)  # fmt: skip
+def test_a_side_across_an_interior_joint_keeps_its_full_length_under_v4(network, side):
+    sides = {(1, "self"): _side(side, separate=True)}
+    v3 = overlay.on_network_km(sides, network, BOUNDARY, V3)["A"]
+    assert v3 == pytest.approx(sides[1, "self"].km)
+    assert overlay.on_network_km(sides, network, BOUNDARY, V4)["A"] == pytest.approx(v3)
+
+
+def test_v1_to_v3_still_count_past_a_free_end_and_a_turn():
+    # values from before overlay_v4 existed (any piece within its buffer of a line matches)
+    for sides, network in ((OVERRUN, NETWORK), (ON_TURN, TURN)):
+        got = [overlay.on_network_km(sides, network, BOUNDARY, c)["A"] for c in (CFG, V2, V3)]
+        assert got == [pytest.approx(0.22), pytest.approx(0.23), pytest.approx(0.23)]
+
+
 # --- default overlay version ------------------------------------------------------------------
 
 

@@ -1,0 +1,12 @@
+# Plan-network overlay parameters (M8 spec §4.3). A parameter change is a new version file.
+# v4: v3 (buffers 12 / 25 m, angle 30°, min_part_m 20 on touching way-sides of one tier), plus
+# matches stop at a free end of a network line: a piece whose midpoint lies past such an end no
+# longer matches that line, so sidepaths of the crossing or continuing street within the buffer
+# of the end do not count (docs/review/m8-overlay.md). v1-v3: clip_free_ends false (default).
+version: overlay_v4
+buffer_m: 12
+buffer_separate_m: 25
+max_angle_deg: 30
+min_part_m: 20
+merge_scope: tier
+clip_free_ends: true

@@ -208,22 +208,34 @@ progress on the street.
 ### Check of the v3-only pieces (Task 8 review stop)
 
 The user's ruling ships v3 after a zoomed check of the pieces v3 keeps and v2 drops, for
-crossing-street false positives. Read-only review script (scratchpad, not shipped; it reuses
-`plans.overlay._kept_pieces` for both versions), run 743 (OSM 2026-01-01); no parameter changed.
-v3-only pieces: **58.5 km** (Vorrangnetz 25.8, Ergänzungsnetz 32.7). Each ~10 m piece was put in
-one class, in this order:
+crossing-street false positives. Read-only classifier `scripts/overlay_false_positives.py`
+(`uv run python scripts/overlay_false_positives.py --run 743 --version overlay_v3 --base
+overlay_v2`; it reuses `plans.overlay._kept_pieces` for both versions), run 743 (OSM
+2026-01-01); no overlay parameter changed. v3-only pieces: **58.5 km** (Vorrangnetz 25.8,
+Ergänzungsnetz 32.7). The pieces are the overlay's own: each A/B way-side clipped to the LAU
+boundary and cut into equal pieces of at most `min_part_m / 2` = 10 m; lengths in EPSG:25833.
+A *matching* line is a network line of the piece's class within the piece's buffer (12 m for
+road-side tags, 25 m for separately mapped ways) whose direction over ±1 m around its point
+nearest the piece's midpoint is within 30° of the piece (the overlay's match test). A matching
+line runs *alongside* the piece when the midpoint projects onto it more than 0.5 m from either
+end, or lies at most 1 m past the end it projects onto, measured along the line's outward
+direction over its last 1 m; every line end counts, so a piece across a joint is alongside the
+next edge. Each piece was put in the first class that applies:
 
-1. *Past the network line's end*: no line of its class that the piece matches (within its buffer,
-   at most 30°) runs alongside it: every one ends at or before the piece (the midpoint lies more
-   than 1 m beyond the line's end), and no line of the other class runs alongside either.
+1. *Past the network line's end*: no matching line runs alongside it (the midpoint lies more than
+   1 m past every matching line's end), and no line of the other class runs alongside either
+   (within the same buffer and 30°, projecting more than 0.5 m inside it).
 2. *Class boundary*: as 1, but a line of the other class runs alongside: the piece is on the
    network, counted in the class whose line ends there.
-3. *Crosses a network line, along another*: the nearest line of its class is at more than 30° to
-   the piece (it crosses it), while a matching line of the class runs alongside.
-4. *Beside another road*: the nearest carriageway (OSM, without `service`) within 30 m that runs
-   parallel to the piece is either at more than 30° to the network line or more than 15 m from
-   it.
-5. *Along*: the rest (including 0.6 km where the network itself runs off-road).
+3. *Crosses a network line, along another*: the nearest line of its class (any distance) is more
+   than 30° from the piece (directions over ±5 m), while a matching line runs alongside.
+4. *Beside another road*: of the OSM carriageways (the report classifier's
+   `road_classes.carriageway`: motorway to living_street, road and busway, with their links,
+   without `service`) within 30 m of the midpoint and within 30° of the piece, the nearest is more
+   than 30° from the matched line (the nearest matching line), or its point nearest the midpoint
+   lies more than 15 m from that line.
+5. *Along*: the rest, including pieces beside no carriageway (for example where the network
+   itself runs off-road).
 
 | class of the v3-only piece | km | share | Vorrang | Ergänzung |
 |---|---:|---:|---:|---:|
@@ -233,19 +245,19 @@ one class, in this order:
 | past its class's line end, on the other class | 5.3 | 9.0 % | 2.5 | 2.8 |
 | **past the network line's end** | **6.5** | **11.0 %** | 1.6 | 4.8 |
 
-Random samples of 16 pieces per class (120 m windows) confirm the first class: almost all are
+Random samples of 16 pieces per class (120 m windows, numpy `default_rng(1)`, `--detail CLASS`) confirm the first class: almost all are
 sidepaths or crossings of the street that continues where the network line ends or turns at a
 junction, i.e. sidepaths of crossing streets; a few are crossings inside the junction itself
-([sample](../../data/maps/berlin_overlay_v3_detail_beyond_network_end.png)). In the "crosses a
+([sample](../../data/maps/berlin_overlay_v3_vs_overlay_v2_detail_beyond_network_end.png)). In the "crosses a
 network line, along another" class most pieces are crossings inside a junction on the route of
 the crossing network street; about 3 of 16 are junction pieces whose assignment is doubtful
-([sample](../../data/maps/berlin_overlay_v3_detail_junction_crossing.png)). In the "beside another
+([sample](../../data/maps/berlin_overlay_v3_vs_overlay_v2_detail_junction_crossing.png)). In the "beside another
 road" class about half the sample are the network road's own sidepaths on wide or dual
 carriageways (the far carriageway lies more than 15 m from the network line), the rest sidepaths
 of a parallel road or junction pieces
-([sample](../../data/maps/berlin_overlay_v3_detail_parallel_or_crossing_street.png)).
+([sample](../../data/maps/berlin_overlay_v3_vs_overlay_v2_detail_parallel_or_crossing_street.png)).
 [Crops of the six densest 800 m cells, 1.2 km windows, v3-only
-pieces coloured by class](../../data/maps/berlin_overlay_v3_crops.png).
+pieces coloured by class](../../data/maps/berlin_overlay_v3_vs_overlay_v2_crops.png).
 
 **False-positive share: 11.0 % (6.5 km)** counting only pieces past the network line's end; about
 14 % with the doubtful parts of classes 3 and 4 added (3/16 of 5.1 km, half of 1.1 km); 21.7 %
@@ -260,6 +272,114 @@ network line from 2.0 to 5.3 km, and the "along" part from 11.7 to 42.4 km. So o
 the 2022 → current change (+17.5 km Vorrangnetz, +21.7 km Ergänzungsnetz over v2), about 0.7 and
 1.9 km are pieces past the network line's end, and the bulk (+14.1 and +16.5 km) are pieces
 along the network line.
+
+## overlay_v4: matches stop at a free end of a network line
+
+**Why.** The check above found 6.5 km (11.0 %) of the v3-only pieces past the network line's end:
+the overlay's distance test is "any point of the piece within the buffer", so a match runs past
+the free end of a network line into the crossing or continuing street by up to buffer + step
+(Task 5 review, Minor 2). User ruling: overlay_v4 = v3 plus one rule against this.
+
+`config/plans/overlay_v4.yaml`: v3's parameters (buffers 12 / 25 m, 30°, `min_part_m` 20,
+`merge_scope: tier`) plus `clip_free_ends: true` (v1-v3: false, the default, so their rows and
+behaviour are unchanged; their 120 rows stay in `plan_overlay`). The rule: a piece does not match
+a network line whose *free* end its midpoint lies past (nearest the line at that end, and beyond
+it along the line's outward direction over its last 1 m; no tolerance). The network is split
+into edges at every junction, so an end is free unless another line of the same class has an end
+within 1 m of it that leaves the joint within 30° (`max_angle_deg`) of the line's own direction.
+A straight or slightly bent joint (and a gap under 1 m) is therefore not a free end and keeps
+every piece across it; where the network turns by more than 30° at a junction, the end is free
+and the piece on the street that continues straight on stops matching. Of the network's line
+ends, 2,192 of 10,666 (Vorrangnetz) and 4,462 of 19,098 (Ergänzungsnetz) are free by this rule;
+by end-point contact alone only 33 and 1,106 would be, which would not have removed the
+false positives. `min_part_m` is then tested on the clipped runs.
+
+`uv run velometer plans overlay berlin --version overlay_v4`: 6:05 wall (363 s in the command,
+under machine load; v3 took 2:42), peak RSS 2.35 GB, every run's A–E totals agreed, 40 rows
+written (160 rows over v1–v4). The default version is now v4, and the content facts read it.
+
+A+B mapped km on the network, per_side (DB values):
+
+| run | snapshot | Vorrang v3 | Vorrang v4 (A / B) | v4 − v3 | Ergänzung v3 | Ergänzung v4 (A / B) | v4 − v3 |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 735 | 2018-01-01 | 497.5 | 490.4 (440.6 / 49.8) | −7.1 | 645.4 | 633.4 (567.7 / 65.7) | −12.0 |
+| 736 | 2019-01-01 | 483.8 | 476.7 (435.9 / 40.8) | −7.1 | 640.9 | 629.1 (565.8 / 63.3) | −11.8 |
+| 737 | 2020-01-01 | 485.0 | 477.8 (436.8 / 41.0) | −7.2 | 654.0 | 642.1 (576.3 / 65.9) | −11.9 |
+| 738 | 2021-01-01 | 497.7 | 489.7 (433.4 / 56.3) | −8.0 | 668.1 | 655.6 (571.9 / 83.7) | −12.5 |
+| 739 | 2022-01-01 | 446.3 | 438.3 (392.2 / 46.1) | −8.0 | 619.8 | 606.4 (520.1 / 86.3) | −13.4 |
+| 740 | 2023-01-01 | 463.0 | 454.3 (396.4 / 57.9) | −8.7 | 625.7 | 611.8 (520.0 / 91.8) | −13.9 |
+| 741 | 2024-01-01 | 460.0 | 450.2 (397.9 / 52.3) | −9.9 | 617.2 | 601.3 (518.0 / 83.3) | −15.9 |
+| 742 | 2025-01-01 | 473.0 | 462.0 (412.1 / 49.9) | −11.1 | 615.6 | 598.4 (520.7 / 77.7) | −17.2 |
+| 743 | 2026-01-01 | 476.2 | 464.4 (402.8 / 61.7) | −11.7 | 636.9 | 617.7 (533.0 / 84.7) | −19.2 |
+| 713 | 2026-10-03 | 492.2 | 480.4 (413.6 / 66.7) | −11.9 | 639.5 | 620.2 (531.9 / 88.3) | −19.3 |
+
+Change of A+B on the network, from the unrounded DB values (the v3 table above computed it from
+rounded endpoints, hence 45.9 / 19.7 / −5.3 / −5.9 there):
+
+| change of A+B on the network | Vorrang v3 | Vorrang v4 | Ergänzung v3 | Ergänzung v4 |
+|---|---:|---:|---:|---:|
+| 2022-01-01 → current (2026-10-03) | +46.0 | **+42.1** | +19.6 | **+13.7** |
+| 2022-01-01 → 2026-01-01 | +29.9 | +26.2 | +17.1 | +11.3 |
+| 2018-01-01 → current | −5.2 | −10.1 | −6.0 | −13.2 |
+
+**How much of the 6.5 km does v4 remove?** Same classifier, run 743, pieces v4 keeps and v2
+drops (`--version overlay_v4 --base overlay_v2`): 46.2 km (Vorrangnetz 21.5, Ergänzungsnetz 24.6),
+against v3's 58.5 km:
+
+| class | v3-only (km) | v4-only (km) | v4 share |
+|---|---:|---:|---:|
+| along the network line | 40.5 | 39.9 | 86.4 % |
+| crosses a network line, along another | 5.1 | 4.7 | 10.3 % |
+| beside another parallel or crossing road | 1.1 | 1.0 | 2.2 % |
+| past its class's line end, on the other class | 5.3 | 0.1 | 0.1 % |
+| **past the network line's end** | **6.5** | **0.45** | **1.0 %** |
+
+v4 removes 6.0 of the 6.5 km (93 %); what remains (0.45 km) lies past ends the rule does not
+treat as free: joints with a continuation within 30° that the piece does not match (the
+classifier counts every end, v4 only free ones). The midpoint test also lets a kept run overrun a
+free end by up to half a piece (5 m), which the classifier counts as alongside. The strict false-positive share
+of the version's additions over v2 falls from 11.0 % to 1.0 %; with the doubtful parts of classes
+3 and 4 added at the v3 samples' fractions (3/16 and half), about 4 %
+([crops](../../data/maps/berlin_overlay_v4_vs_overlay_v2_crops.png)).
+
+**What else v4 removes, and what real km it loses.** v4 does not only act on the v3-only pieces:
+the same overrun was in v1/v2's matches. All pieces v3 keeps and v4 drops (`--version overlay_v3
+--base overlay_v4`), classed the same way:
+
+| class of the v3-kept, v4-dropped piece | run 739 (2022-01-01) | run 743 (2026-01-01) | run 713 (current) |
+|---|---:|---:|---:|
+| past the network line's end | 10.4 | 14.8 | 14.9 |
+| past its class's line end, on the other class | 8.6 | 12.8 | 13.0 |
+| crosses a network line, along another | 0.9 | 1.3 | 1.3 |
+| beside another parallel or crossing road | 0.1 | 0.2 | 0.2 |
+| along the network line | 1.4 | 1.9 | 1.9 |
+| **total** (Vorrangnetz / Ergänzungsnetz) | 21.4 (8.0 / 13.4) | 31.0 (11.7 / 19.2) | 31.2 (11.9 / 19.3) |
+
+- Past the network line's end, 14.8 km on run 743: the false positives the rule exists for,
+  including those v1/v2 already had ([crops](../../data/maps/berlin_overlay_v3_vs_overlay_v4_crops.png),
+  [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_beyond_network_end.png)).
+- Class boundaries, 12.8 km: pieces past their class's line end where a line of the other class
+  continues. 12.1 km of them are still kept by v4 in the other class (scratchpad check), so v3
+  counted them in both classes; v4 counts them once, in the class whose line runs alongside.
+- Along the network line, **1.9 km (run 743) is the loss of real along-the-network km**, at most:
+  1.5 km still match under v4 but their clipped run (or touching group) falls below `min_part_m`
+  (20 m): short stubs that reached 20 m only with their overrun; 0.4 km lie 0–1 m past a free end,
+  which the classifier's 1 m tolerance calls alongside and v4 (no tolerance) does not. In a sample
+  of 16 (seed 1, [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_along.png)) most
+  are short pieces inside or at the edge of a junction; about a quarter are the last metres of a
+  sidepath along a network edge.
+
+**Does the 2022 → current change move?** Yes, down: Vorrangnetz +46.0 → **+42.1** km,
+Ergänzungsnetz +19.6 → **+13.7** km. The pieces v4 drops grow from 21.4 km (2022) to 31.2 km
+(current), and they move from road-side tags to separately mapped ways (25 m buffer) as those
+take over (v3 − v4, centreline / separate: Vorrangnetz 2018 5.4 / 1.7 km, current 1.1 / 10.7 km;
+Ergänzungsnetz 8.8 / 3.2 and 2.8 / 16.4 km, from the commands' split output); of the 3.9 / 5.9 km by which the change falls, past-end pieces are 1.4 /
+3.1 km, class-boundary double counts 2.1 / 2.3 km, and along pieces 0.2 / 0.3 km. Against 2018 the
+v4 series is lower (−10.1 / −13.2 km). Disconfirming against the expectation that v4 would trim
+about 6.5 km from the latest year: it trims 11.7 / 19.2 km on run 743 and 7.1 / 12.0 km already in
+2018, because v1–v3 all carried the overrun and the class-boundary double count. The rule was not
+tuned (no tolerance, the existing 30° as the joint angle, the 1 m joint distance chosen before the
+run; free-end counts above are with these values).
 
 ## Sanity maps
 
