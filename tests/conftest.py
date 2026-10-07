@@ -5,6 +5,13 @@ from tests.report_fixture import build_report_fixture, build_report_fixture_n
 from velometer.report.data import ReportData, open_readonly
 
 
+def pytest_collection_modifyitems(items):
+    """Slow tests (network, full-size data) run without the suite's per-test timeout."""
+    for item in items:
+        if item.get_closest_marker("slow") and not item.get_closest_marker("timeout"):
+            item.add_marker(pytest.mark.timeout(0))
+
+
 @pytest.fixture
 def fixture_db(tmp_path):
     """The shared report fixture: (db_path, config_dir, read-only connection, ReportData)."""

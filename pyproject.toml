@@ -29,6 +29,7 @@ velometer = "velometer.cli:app"
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-timeout>=2.4.0",
     "ruff>=0.6",
 ]
 
@@ -51,3 +52,6 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 testpaths = ["tests"]
 addopts = "-m 'not slow'"
 markers = ["slow: needs network or large data; deselected by default"]
+# a runaway test fails instead of filling RAM (the slowest fast test takes about 3 s); slow tests
+# are exempt in tests/conftest.py
+timeout = 60
