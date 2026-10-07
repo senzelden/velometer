@@ -429,7 +429,7 @@ def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
     if len(distinct) > 1:
         raise _err(expr, f"{doc!r} is ambiguous: documents {', '.join(distinct)}")
     if len({r.cumulative_from for r in named}) > 1:
-        starts = ", ".join(str(r.cumulative_from) for r in named)
+        starts = ", ".join(str(y) for y in sorted({r.cumulative_from for r in named}))
         raise _err(expr, f"{doc!r} prints this figure from several start years ({starts})")
     return named[0].value
 

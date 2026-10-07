@@ -365,7 +365,7 @@ def _plans(config_dir: Path) -> tuple[list[Plan], list[ReportRow], list[str]]:
     seen: dict[tuple, int] = {}
     for n, r in enumerate(rows, start=2):
         label = f"config/plans/reports.csv:{n}"
-        key = (r.plan_id, r.item_id, r.year, r.quantity, r.doc_id)
+        key = (r.plan_id, r.item_id, r.year, r.quantity, r.doc_id, r.cumulative_from)
         if key in seen:
             problems.append(f"{label}: duplicate of line {seen[key]} (same figure and document)")
         seen.setdefault(key, n)
@@ -379,6 +379,10 @@ def _plans(config_dir: Path) -> tuple[list[Plan], list[ReportRow], list[str]]:
             problems.append(f"{label}: no unit")
         if r.quantity == "implemented_cumulative" and r.cumulative_from is None:
             problems.append(f"{label}: cumulative figure without its start year")
+        if r.cumulative_from is not None and r.quantity != "implemented_cumulative":
+            problems.append(f"{label}: cumulative_from on a non-cumulative quantity")
+        if r.suspect and not (r.note or "").strip():
+            problems.append(f"{label}: suspect row without a note")
         if r.cumulative_from is not None and r.cumulative_from > r.year:
             problems.append(f"{label}: cumulative_from {r.cumulative_from} is after year {r.year}")
     return plans, rows, problems

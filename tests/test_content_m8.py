@@ -287,6 +287,33 @@ def test_duplicate_report_row_is_a_problem(m8):
     ]
 
 
+def test_same_document_from_two_start_years_is_not_a_duplicate(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    assert lines[3].endswith(",,2020")
+    path.write_text("\n".join([*lines, lines[3].replace(",,2020", ",,2015")]) + "\n")
+    assert _problems(m8) == []
+
+
+def test_start_year_on_a_non_cumulative_quantity(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    lines[1] = lines[1] + "2020"
+    path.write_text("\n".join(lines) + "\n")
+    assert _problems(m8) == [
+        "config/plans/reports.csv:2: cumulative_from on a non-cumulative quantity"
+    ]
+
+
+def test_suspect_row_needs_a_note(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    lines[1] = lines[1][:-1] + "true,"  # no note on this row
+    lines[2] = lines[2][:-1] + "true,"  # has a note
+    path.write_text("\n".join(lines) + "\n")
+    assert _problems(m8) == ["config/plans/reports.csv:2: suspect row without a note"]
+
+
 def test_malformed_figures_csv_is_a_problem(m8):
     path = m8[1] / "external" / "figures.csv"
     path.write_text(path.read_text().replace("city_id,source,", "city,source,", 1))
@@ -360,6 +387,18 @@ def test_plan_fact_with_several_start_years_names_them(fixture_db, tmp_path):
     expr = "plan.paris_plan_velo.total.2024.implemented_cumulative"
     with pytest.raises(FactError, match=r"start years \(2015, 2020\)"):
         evaluate(expr, fixture_db[3], tmp_path, config_dir=cfg)
+
+
+def test_plan_fact_doc_suffix_printing_two_start_years_is_refused(fixture_db, tmp_path):
+    cfg = tmp_path / "cfg"
+    shutil.copytree(FIXTURE / "config", cfg)
+    path = cfg / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    extra = [lines[3].replace(",,2020", f",,{y}") for y in (2015, 2015)]
+    path.write_text("\n".join([*lines, *extra]) + "\n")
+    expr = "plan.paris_plan_velo.total.2024.implemented_cumulative"
+    with pytest.raises(FactError, match=r"start years \(2015, 2020\)"):
+        evaluate(f"{expr}.PARIS-1", fixture_db[3], tmp_path, config_dir=cfg)
 
 
 def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
