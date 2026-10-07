@@ -28,12 +28,11 @@ sections:
     heading: Completed projects
     paragraphs:
       - >-
-        Completed projects come from the measures dataset on Berlin's geoportal: one line per
-        project since 2021, with its status, the networks it lies on and the quarter its works
-        ended, fed from the same infraVelo database, quoted below
-        [@berlin-gdi-radverkehrsmassnahmen]. We count the projects with status completed by the
-        year their works ended. The lines are drawn per project, not per network edge, so their
-        km and the reported km need not agree.
+        Completed projects come from the measures dataset on Berlin's geoportal, a view of the
+        planning and implementation of cycling infrastructure that is fed from the same infraVelo
+        database, quoted below [@berlin-gdi-radverkehrsmassnahmen]. We count its projects with
+        status completed by the year their works ended. The lines are drawn per project, not per
+        network edge, so their km and the reported km need not agree.
   - dimension: mapped
     heading: Mapped on the network
     paragraphs:
@@ -41,10 +40,18 @@ sections:
         The third series is ours: OpenStreetMap way-sides in tiers A and B that run along a
         segment of the planned network, measured per side in mapped km [#adr-0006]. Mapped km are
         not km completed to the plan's standard. They include tracks that existed long before the
-        plan, and a rise can be catch-up mapping as well as new infrastructure. The level therefore
-        says little about the plan. The comparable quantity is the change since the start of 2022,
-        the plan's first target year, and even that change is context for the reported figures,
-        not a check on them.
+        plan. The level therefore says little about the plan. The comparable quantity is the
+        change since the start of 2022, the plan's first target year, and even that change is
+        context for the reported figures, not a check on them.
+      - >-
+        The series is sensitive to how mappers draw cycleways and to the matching method. Between
+        2021 and 2022 Berlin's tiers A and B moved from tags on road centrelines to separately
+        drawn ways, and the change moves with the method version; the earlier version
+        `overlay_v2` showed a smaller change than the figures here, which come from `overlay_v3`.
+        On the priority network the overlay finds 446.3 km at the start of 2022 and
+        492.2 km in the current snapshot (October 2026), a change of 46.0 km. On the
+        supplementary network it finds 619.8 km and 639.5 km, a change of 19.6
+        km. These are changes in what is mapped, not km of new infrastructure.
 quotes:
   - {excerpt: berlin-radverkehrsplan-vo19-013/paths-adjusted, after: 0}
   - {excerpt: berlin-fortschrittsbericht-2021/halved, after: 1}
@@ -56,5 +63,11 @@ facts:
   - {id: vrn-2025-may, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.19_25987, printed: "9.8"}
   - {id: erg-2023, expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_27049, printed: "55.1"}
   - {id: erg-2023-may, expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_25987, printed: "5.1"}
+  - {id: ov-vrn-2022, expr: overlay.berlin.vorrangnetz.2022-01-01.ab_km, printed: "446.3"}
+  - {id: ov-vrn-now, expr: overlay.berlin.vorrangnetz.2026-10-03.ab_km, printed: "492.2"}
+  - {id: ov-vrn-change, expr: overlay_change.berlin.vorrangnetz.2022-01-01.2026-10-03, printed: "46.0"}
+  - {id: ov-erg-2022, expr: overlay.berlin.ergaenzungsnetz.2022-01-01.ab_km, printed: "619.8"}
+  - {id: ov-erg-now, expr: overlay.berlin.ergaenzungsnetz.2026-10-03.ab_km, printed: "639.5"}
+  - {id: ov-erg-change, expr: overlay_change.berlin.ergaenzungsnetz.2022-01-01.2026-10-03, printed: "19.6"}
 data_refs:
   - {id: adr-0006, label: "velometer ADR 0006, mapped km", file: docs/adr/0006-mapped-km-not-built-km.md, locator: "## Decision"}
