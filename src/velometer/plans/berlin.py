@@ -1,7 +1,8 @@
 """Berlin plan-network datasets from the city's WFS (`velometer plans fetch berlin`, M8 §4.2).
 
 Each layer in `config/plans/sources.yaml` is fetched with WFS 2.0.0 GetFeature as GeoJSON in the
-served EPSG (25833), paged with `count`/`startIndex` until a page comes back short, and written
+served EPSG (25833), sorted on the layer's stable id and paged with `count`/`startIndex` until
+the server's `numberMatched` is reached (or, without one, a page comes back short), and written
 to `<out_dir>/<layer>.geojson`; `retrieved.json` records each layer's URL, the licence and the
 retrieval time. Raw files live under `data/` and are never committed.
 """
@@ -19,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from velometer.config import ConfigError
 
 TIMEOUT_S = 120.0
+MAX_PAGES = 1000  # Berlin's largest layer is 3 pages; a server that pages forever is refused
 NETWORK_LAYER = "radverkehrsnetz"  # the layer `plans overlay` matches sides against
 
 Fetch = Callable[[str, dict[str, str]], bytes]
@@ -32,6 +34,7 @@ class WfsLayer(_Strict):
     url: str
     type_name: str
     record: str  # the dataset's metadata record
+    sort_by: str  # a property unique per feature, so pages neither overlap nor skip
 
 
 class PlanSourcesConfig(_Strict):
@@ -71,10 +74,12 @@ def _http_get(url: str, params: dict[str, str]) -> bytes:
 
 def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
     """All features of one layer, one FeatureCollection; ValueError if the server's
-    `numberMatched` disagrees with the features received."""
+    `numberMatched` disagrees with the features received, a page repeats features already
+    received, or the layer has not ended after `MAX_PAGES` pages."""
     features: list = []
+    seen: set = set()
     matched = None
-    while True:
+    for _ in range(MAX_PAGES):
         params = {
             "service": "WFS",
             "version": "2.0.0",
@@ -82,6 +87,7 @@ def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
             "typeNames": layer.type_name,
             "outputFormat": "application/json",
             "srsName": cfg.srs,
+            "sortBy": layer.sort_by,
             "count": str(cfg.page_size),
             "startIndex": str(len(features)),
         }
@@ -91,9 +97,23 @@ def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
         if isinstance(page.get("numberMatched"), int):
             matched = page["numberMatched"]
         got = page.get("features") or []
+        ids = [(f.get("properties") or {}).get(layer.sort_by) for f in got]
+        if seen.intersection(ids):
+            of = f", server numberMatched {matched}" if matched is not None else ""
+            raise ValueError(
+                f"{layer.url}: the page at startIndex {len(features)} repeated features already "
+                f"received ({len(features)} received{of})"
+            )
+        seen.update(ids)
         features += got
-        if len(got) < cfg.page_size:
+        # a server may cap `count` below page_size, so a short page ends the layer only when
+        # there is no numberMatched to page towards
+        if not got or (
+            len(features) >= matched if matched is not None else len(got) < cfg.page_size
+        ):
             break
+    else:
+        raise ValueError(f"{layer.url}: no end of the layer after {MAX_PAGES} pages")
     if matched is not None and matched != len(features):
         raise ValueError(
             f"{layer.url}: received {len(features)} features, server numberMatched {matched}"

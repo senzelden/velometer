@@ -165,7 +165,7 @@ def _fc(ids):
     return {
         "type": "FeatureCollection",
         "features": [
-            {"type": "Feature", "id": i, "properties": {"gisid": i},
+            {"type": "Feature", "id": i, "properties": {"gisid": i, "projektnummer": i},
              "geometry": {"type": "LineString", "coordinates": [[X, Y], [X + 1, Y]]}}
             for i in ids
         ],
@@ -391,3 +391,72 @@ def test_classified_sides_mark_only_ways_off_the_carriageway_as_separate():
     assert got[1, "self"] is True
     assert got[2, "self"] is False  # a cycle street is the road centreline
     assert got[3, "left"] is False and got[3, "right"] is False
+
+
+# --- WFS paging guards ------------------------------------------------------------------------
+
+
+def _one_layer_cfg():
+    cfg = berlin.load_plan_sources(CFG_DIR / "plans" / "sources.yaml", "berlin")
+    layer = cfg.layers["radverkehrsnetz"]
+    return cfg.model_copy(update={"page_size": 2, "layers": {"radverkehrsnetz": layer}})
+
+
+def test_fetch_sorts_on_the_layers_stable_id(tmp_path):
+    cfg = berlin.load_plan_sources(CFG_DIR / "plans" / "sources.yaml", "berlin")
+    seen = {}
+
+    def fake(url, params):
+        seen[url.rsplit("/", 1)[1]] = params["sortBy"]
+        return json.dumps(_fc([])).encode()
+
+    berlin.fetch_layers(cfg, tmp_path, fetch=fake)
+    assert seen == {"radverkehrsnetz": "gisid", "radverkehrsmassnahmen": "projektnummer"}
+
+
+@pytest.mark.parametrize("matched", [5, None])
+def test_a_server_ignoring_start_index_is_refused_not_looped(tmp_path, matched):
+    calls = []
+
+    def fake(url, params):
+        calls.append(params["startIndex"])
+        return json.dumps(
+            {**_fc([0, 1]), **({"numberMatched": matched} if matched else {})}
+        ).encode()
+
+    with pytest.raises(ValueError, match="repeated"):
+        berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
+    assert len(calls) == 2
+    assert not (tmp_path / "retrieved.json").exists()
+
+
+def test_a_server_capping_count_is_paged_to_number_matched(tmp_path):
+    cfg = _one_layer_cfg().model_copy(update={"page_size": 5})
+
+    def fake(url, params):
+        start = int(params["startIndex"])
+        return json.dumps({**_fc(range(start, min(start + 2, 7))), "numberMatched": 7}).encode()
+
+    res = berlin.fetch_layers(cfg, tmp_path, fetch=fake)
+    doc = json.loads(res.paths["radverkehrsnetz"].read_text())
+    assert [f["properties"]["gisid"] for f in doc["features"]] == list(range(7))
+
+
+def test_a_final_count_other_than_number_matched_is_refused(tmp_path):
+    def fake(url, params):
+        start = int(params["startIndex"])
+        return json.dumps({**_fc(range(start, min(start + 2, 3))), "numberMatched": 4}).encode()
+
+    with pytest.raises(ValueError, match="numberMatched 4"):
+        berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
+
+
+def test_paging_stops_at_the_page_cap(tmp_path, monkeypatch):
+    monkeypatch.setattr(berlin, "MAX_PAGES", 3)
+
+    def fake(url, params):
+        start = int(params["startIndex"])
+        return json.dumps(_fc([start, start + 1])).encode()  # endless full pages of new ids
+
+    with pytest.raises(ValueError, match="3 pages"):
+        berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)

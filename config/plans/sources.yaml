@@ -1,5 +1,6 @@
 # Plan-network datasets fetched by `velometer plans fetch <city>` (M8 spec §4.2), as served:
-# WFS 2.0.0 GetFeature, GeoJSON, paged with count/startIndex. Feasibility: docs/review/m8-feasibility.md §B.
+# WFS 2.0.0 GetFeature, GeoJSON, sorted on sort_by (unique per feature), paged with
+# count/startIndex. Feasibility: docs/review/m8-feasibility.md §B.
 berlin:
   licence: dl-de-zero-2.0
   licence_url: https://www.govdata.de/dl-de/zero-2-0
@@ -10,7 +11,9 @@ berlin:
       url: https://gdi.berlin.de/services/wfs/radverkehrsnetz
       type_name: radverkehrsnetz:radverkehrsnetz
       record: https://gdi.berlin.de/geonetwork/srv/api/records/1670bcb6-1065-4939-82e6-c39e12de9441
+      sort_by: gisid
     radverkehrsmassnahmen:
       url: https://gdi.berlin.de/services/wfs/radverkehrsmassnahmen
       type_name: radverkehrsmassnahmen:radverkehrsmassnahmen
       record: https://gdi.berlin.de/geonetwork/srv/api/records/9093d642-e2c4-4cb6-9798-4d1e3f12f3bf
+      sort_by: projektnummer
