@@ -1,2 +1,409 @@
 # Cycling plans, one entry per plan (M8 spec §4.1); loaded by velometer.plans.models.
-[]
+# Research log with the page-level check of every value: docs/review/m8-plans.md.
+# Targets are stored as printed. A plan without a printed km target has target_kind none.
+# Berlin publishers are organisation profile ids; the other cities name their publisher.
+
+- id: berlin_rvp_2021
+  city: berlin
+  title: Radverkehrsplan des Landes Berlin (Verordnung vom 16. November 2021, Vorlage zur Kenntnisnahme vo19-013)
+  adopted: 2021-11-16
+  url: https://www.parlament-berlin.de/ados/19/IIIPlen/vorgang/verordnungen/vo19-013.pdf
+  status: current
+  publisher: senmvku
+  note: >-
+    Issued by the Senatsverwaltung für Umwelt, Verkehr und Klimaschutz (predecessor of SenMVKU).
+    Targets from Tabelle 7 'Jahresausbauziele zur Errichtung des Radverkehrsnetzes Berlin' (PDF p.
+    42, plan p. 21): yearly completion in km, rounded to 5 km; the printed sums 850 km
+    (Vorrangnetz ohne RSV), 1.500 km (Ergänzungsnetz) and 2.350 km are rounded to 25 km
+    (footnote 12). Tabelle 3 (PDF p. 35, plan p. 14) gives the network lengths 865 km
+    (Radvorrangnetz), 1.506 km (Ergänzungsnetz), 2.371 km in total. Progress reports before 2022
+    count facility length with each side of a street counted (item anlagen); from the 2021 report
+    on, network items count route length once per street section.
+  items:
+    - id: vorrangnetz
+      label: Vorrangnetz (ohne Radschnellverbindungen)
+      target_kind: km_per_year
+      targets: {2022: 40, 2023: 60, 2024: 100, 2025: 150, 2026: 250, 2027: 250}
+    - id: ergaenzungsnetz
+      label: Ergänzungsnetz
+      target_kind: km_per_year
+      targets: {2025: 50, 2026: 100, 2027: 100, 2028: 350, 2029: 450, 2030: 450}
+    - id: radverkehrsnetz
+      label: Radverkehrsnetz (Vorrangnetz + Ergänzungsnetz)
+      target_kind: km_per_year
+      targets: {2022: 40, 2023: 60, 2024: 100, 2025: 200, 2026: 350, 2027: 350, 2028: 350, 2029: 450, 2030: 450}
+    - id: hauptverkehrsstrassen
+      label: Hauptverkehrsstraßen außerhalb des Radverkehrsnetzes
+      target_kind: none
+    - id: sonstige_strecke
+      label: Sonstige Strecke
+      target_kind: none
+    - id: sonstiges_netz
+      label: Sonstiges Netz (as named in Drs 19/27049; outside Vorrang- and Ergänzungsnetz)
+      target_kind: none
+    - id: total
+      label: All reported routes (Summe)
+      target_kind: none
+    - id: anlagen
+      label: Radverkehrsanlagen, facility length with each side counted (reports on 2020 and 2021)
+      target_kind: none
+
+- id: paris_plan_velo_2021
+  city: paris
+  title: Plan Vélo 2021-2026
+  adopted: null
+  url: https://opendata.paris.fr/explore/dataset/plan-velo-2026/
+  status: current
+  publisher: Ville de Paris
+  note: >-
+    Presented to the Conseil de Paris in October 2021 (open-data dataset description); the
+    adoption date of a deliberation was not confirmed. Target per the Ville de Paris press kit
+    (p. 15): 180 km of protected cycle tracks, 130 km new and 52 km of coronapistes made
+    permanent. No official progress figure in km found.
+  items:
+    - id: pistes_securisees
+      label: Pistes cyclables sécurisées (new and made permanent)
+      target_kind: km_total
+      targets: {2026: 180}
+
+- id: vienna_radwegoffensive
+  city: vienna
+  title: Radwegoffensive (yearly construction programme for the Hauptradverkehrsnetz)
+  adopted: null
+  url: https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
+  status: current
+  publisher: Stadt Wien / Mobilitätsagentur Wien
+  note: >-
+    No single adopted cycling plan with a km target found; the city announces a programme each
+    year. 2026: 33 projects and around 12.5 km of new cycle paths (Mobilitätsagentur page). The
+    yearly tally counts km of projects started in the year, not completed.
+  items:
+    - id: hauptradverkehrsnetz
+      label: Hauptradverkehrsnetz, km of new cycle paths in the yearly programme
+      target_kind: km_per_year
+      targets: {2026: 12.5}
+
+- id: copenhagen_cykelstrategi_2011
+  city: copenhagen
+  title: Cykelstrategi 2011–2025 and Cykelstiprioriteringsplan 2017–2025
+  adopted: null
+  url: https://byudvikling.kk.dk/mobilitet/verdens-bedste-cykelby
+  status: expired
+  successor: Samlet mobilitetsstrategi (decided by the Klima-, Miljø- og Teknikudvalg; political treatment expected early 2027)
+  publisher: Københavns Kommune
+  note: >-
+    Both plans ran to the end of 2025 (Mobilitetsredegørelse 2026, pp. 4 and 29). The strategy's
+    targets are shares (50 % of trips to work and education by bike), not km; the priority plan
+    lists 151 initiatives.
+  items:
+    - id: cykelstiprioriteringsplan
+      label: Initiatives of the Cykelstiprioriteringsplan 2017–2025
+      target_kind: none
+      unit: initiatives
+
+- id: amsterdam_meerjarenplan_fiets_2017
+  city: amsterdam
+  title: Meerjarenplan Fiets 2017-2022
+  adopted: null
+  url: https://bikecity.amsterdam.nl/wp-content/uploads/2023/11/Meerjarenplan_Fiets_2017-2022.pdf
+  status: expired
+  successor: Uitvoeringsplan 2024 Verkeersveiligheid, 30 km/u, voetganger en fiets
+  publisher: Gemeente Amsterdam
+  note: >-
+    The Uitvoeringsplan 2024 (p. 3) names the 2017 cycling plan as expiring. No km target; the
+    plan's network target is a width share on the Plusnet Fiets (p. 13).
+  items:
+    - id: plusnet_breedte
+      label: Plusnet Fiets routes inside the A10 ring, south of the IJ, at least 2.50 m wide
+      target_kind: share
+      targets: {2025: 50}
+      unit: "%"
+
+- id: utrecht_mobiliteitsplan_2040
+  city: utrecht
+  title: Mobiliteitsplan 2040
+  adopted: null
+  url: https://utrecht.bestuurlijkeinformatie.nl/Document/View/1042744c-3d66-4915-846f-a513f41b36f1
+  status: current
+  publisher: Gemeente Utrecht
+  note: >-
+    URL is the council proposal (raadsvoorstel). Adoption by the gemeenteraad on 15 July 2021 is
+    reported by APPM; the council decision itself was not opened. The plan sets a cycle network
+    on a map, with no km target.
+  items:
+    - id: fietsnetwerk
+      label: Fietsnetwerk
+      target_kind: none
+
+- id: madrid_pdmc_2008
+  city: madrid
+  title: Plan Director de Movilidad Ciclista (2008)
+  adopted: null
+  url: https://www.madrid.es/portales/munimadrid/es/Inicio/Vivienda-urbanismo-y-obras/Publicaciones/Plan-Director-de-Movilidad-Ciclista-2008-/?vgnextfmt=default&vgnextoid=09bccea83e67a110VgnVCM2000000c205a0aRCRD&vgnextchannel=cf6031d3b28fe410VgnVCM1000000b205a0aRCRD
+  status: expired
+  publisher: Ayuntamiento de Madrid
+  note: >-
+    Status not confirmed. The 2008 plan (Red Básica de Vías Ciclistas) and its 2016 revision are
+    on madrid.es, but the revision PDF refused scripted access (HTTP 403) and no current city
+    cycling plan with a km target was found; no successor confirmed.
+  items:
+    - id: red_basica
+      label: Red Básica de Vías Ciclistas
+      target_kind: none
+
+- id: barcelona_pmu_2024
+  city: barcelona
+  title: Pla de Mobilitat Urbana 2024
+  adopted: 2022-12-23
+  url: https://ajuntament.barcelona.cat/premsa/2022/12/23/aprovacio-definitiva-del-pla-de-mobilitat-urbana-2024/
+  status: expired
+  publisher: Ajuntament de Barcelona
+  note: >-
+    Final approval by the plenary of the Consell Municipal (press release of 23 December 2022).
+    Bicycle measures: increase the current bike-lane network by 40 %; bicycle and VMP modal share
+    from 2.28 % (2018) to 5 % in 2024. Horizon 2024 has passed; no successor confirmed.
+  items:
+    - id: xarxa_carrils_bici
+      label: Increase of the bike-lane network over its size at approval
+      target_kind: share
+      targets: {2024: 40}
+      unit: "% increase"
+
+- id: stockholm_cykelplan_2022
+  city: stockholm
+  title: Cykelstaden – Cykelplan för Stockholms stad
+  adopted: 2022-05-30
+  url: https://meetingspublic.stockholm.se/welcome-sv/namnder-styrelser/kommunfullmaktige/mote-2022-05-30/agenda/bilaga-2-cykelstaden-cykelplan-for-stockholmpdf?downloadMode=open
+  status: current
+  publisher: Stockholms stad
+  note: >-
+    The plan is an attachment to the Kommunfullmäktige agenda of 30 May 2022 (the decision
+    protocol was not opened). It designates about 36 Swedish miles (about 360 km) as the primary
+    network for successive expansion, with no deadline; the target is a share: every fourth trip
+    by bike by 2040 (Kommunstyrelsen statement, 18 May 2022).
+  items:
+    - id: cykelandel
+      label: Share of trips by bike
+      target_kind: share
+      targets: {2040: 25}
+      unit: "%"
+
+- id: oslo_sykkelveinettet_2018
+  city: oslo
+  title: Plan for sykkelveinettet i Oslo
+  adopted: null
+  url: https://www.oslo.kommune.no/slik-bygger-vi-oslo/plan-for-sykkelveinettet/
+  status: expired
+  publisher: Oslo kommune and Statens vegvesen
+  note: >-
+    Adopted by the bystyre in 2018 (city page; day not printed). Implements the Sykkelstrategi for
+    Oslo 2015–2025. First phase to 2025: about 100 km of new cycle network (about 70 km by Oslo
+    kommune, 30 km by Statens vegvesen), giving about 280 km in 2025; full future network about
+    530 km (plan PDF p. 7). First-phase horizon has passed; no successor plan confirmed.
+  items:
+    - id: forste_fase
+      label: New cycle network, first phase to 2025
+      target_kind: km_total
+      targets: {2025: 100}
+    - id: nye_og_oppgraderte
+      label: New and upgraded cycleway since 2015
+      target_kind: none
+
+- id: helsinki_pyoraliikenne_2020
+  city: helsinki
+  title: Pyöräliikenteen kehittämisohjelma 2020–2025
+  adopted: null
+  url: https://www.hel.fi/static/liitteet/kaupunkiymparisto/julkaisut/julkaisut/julkaisu-31-20.pdf
+  status: expired
+  publisher: Helsingin kaupunki
+  note: >-
+    Proposed by the Urban Environment Committee in 2020; the City Executive Board tabled it on 26
+    October 2020 and approved it in November 2020 (date not confirmed at source). Target networks
+    of about 140 km (inner city) and about 140 km (baana), with no km deadline; share target 20 %
+    by 2035. Programme period ended 2025; no successor confirmed.
+  items:
+    - id: kantakaupunki
+      label: Inner-city target cycle network (about 140 km)
+      target_kind: none
+    - id: baanaverkko
+      label: Baana target network (about 140 km)
+      target_kind: none
+
+- id: lyon_plan_velo_2024
+  city: lyon
+  title: Plan vélo 2024-2030 de la Métropole de Lyon (incl. Voies Lyonnaises)
+  adopted: null
+  url: https://avelo.grandlyon.com/fileadmin/user_upload/pdf/GL_PlanVelo_FR_aout2024_BAT03.pdf
+  status: current
+  publisher: Métropole de Lyon
+  note: >-
+    Métropole plan (published August 2024), not the city proper. Voies Lyonnaises: objective 355 km
+    in 2030 (p. 9); 2023: 29 km 'en cours de travaux ou livrés' (not stored: mixes started and
+    delivered). Cycle network objective 2 000 km, no year printed (p. 10). The earlier 250 km by
+    2026 Voies Lyonnaises target is reported only by press and an NGO.
+  items:
+    - id: voies_lyonnaises
+      label: Voies Lyonnaises
+      target_kind: km_total
+      targets: {2030: 355}
+    - id: reseau_cyclable
+      label: Linéaire d'aménagements cyclables (whole Métropole network)
+      target_kind: none
+
+- id: strasbourg_plan_velo_2021
+  city: strasbourg
+  title: Plan vélo de l'Eurométropole 2021-2026
+  adopted: null
+  url: https://www.strasbourg.eu/-/plan-velo-eurometropole-102024
+  status: current
+  publisher: Ville et Eurométropole de Strasbourg
+  note: >-
+    Launched by the Eurométropole in 2021 (day not printed). About a hundred operations for about
+    a hundred km of cycle tracks rebuilt or built by 2026, Eurométropole-wide.
+  items:
+    - id: pistes
+      label: Cycle tracks rebuilt or built (about)
+      target_kind: km_total
+      targets: {2026: 100}
+    - id: operations
+      label: Operations of the plan (about 100)
+      target_kind: none
+      unit: operations
+
+- id: bordeaux_plan_velo_2021
+  city: bordeaux
+  title: 3ème Plan vélo métropolitain 2021-2026
+  adopted: 2021-11-25
+  url: https://www.bordeaux-metropole.fr/sites/MET-BXMETRO-DRUPAL/files/2023-08/Plan_velo2021.pdf
+  status: current
+  publisher: Bordeaux Métropole
+  note: >-
+    Approved 25 November 2021 (Chambre régionale des comptes report, p. 35). Métropole-wide; the
+    target is a share (18 % by 2030). ReVE: 14 routes, 272 km on the Métropole page, 270 km in
+    the CRC report, no deadline printed.
+  items:
+    - id: part_modale
+      label: Cycling modal share
+      target_kind: share
+      targets: {2030: 18}
+      unit: "%"
+    - id: reve
+      label: Réseau Vélo Express (ReVE)
+      target_kind: none
+    - id: reseau_cyclable
+      label: Cycle routes of all types added since adoption
+      target_kind: none
+
+- id: wroclaw_plan_rowerowy_2030
+  city: wroclaw
+  title: Wrocławski Plan Działań Rowerowych do 2030 roku
+  adopted: null
+  url: https://www.wroclaw.pl/komunikacja/wroclawski-plan-dzialan-rowerowych-do-2030
+  status: current
+  publisher: Urząd Miejski Wrocławia
+  note: >-
+    Presented on 11 May 2022; no adoption resolution found. Targets: about 100 km of new routes,
+    25 km of modernised routes and 26 km with major transport projects by 2030 (city page).
+  items:
+    - id: nowe_trasy
+      label: New cycle routes (about)
+      target_kind: km_total
+      targets: {2030: 100}
+
+- id: warsaw_program_tras_2020
+  city: warsaw
+  title: Program rozwoju tras rowerowych Warszawy do 2020 roku
+  adopted: null
+  url: https://zdm.waw.pl/aktualnosci/jaka-ma-byc-rowerowa-warszawa-2030/
+  status: expired
+  successor: Program Rozwoju Ruchu Rowerowego na lata 2020–2030 (tendered February 2020; adoption not found)
+  publisher: Miasto Stołeczne Warszawa
+  note: >-
+    Prepared in 2013 (ZDM, 4 February 2020); its km target was not confirmed at the source. No
+    adopted successor found.
+  items:
+    - id: trasy_rowerowe
+      label: New cycle routes
+      target_kind: none
+
+- id: krakow_polityka_transportowa_2016
+  city: krakow
+  title: Polityka transportowa dla miasta Krakowa na lata 2016–2025 (uchwała Nr XLVII/848/16)
+  adopted: 2016-06-08
+  url: https://www.bip.krakow.pl/?sub_dok_id=19585
+  status: expired
+  publisher: Rada Miasta Krakowa
+  note: >-
+    General transport policy; no cycling km target found. Period ended 2025. A city cycling team
+    presented recommendations to 2030 in September 2026 (ZTP), not an adopted plan.
+  items:
+    - id: infrastruktura_rowerowa
+      label: Cycling infrastructure (city-wide)
+      target_kind: none
+
+- id: budapest_kfht
+  city: budapest
+  title: Kerékpárforgalmi főhálózati terv (KFHT)
+  adopted: null
+  url: https://bkk.hu/rolunk/strategiank/kerekparforgalmi-fohalozati-terv/
+  status: current
+  publisher: Budapesti Közlekedési Központ (BKK) for the Fővárosi Önkormányzat
+  note: >-
+    Prepared by BKK under Fővárosi Közgyűlés resolution 1539/2021 (X. 27.); its situation
+    assessment is dated 7 October 2022; the adoption date of the plan itself was not confirmed.
+    Main network about 800 km within about 5 500 km of roads; share target 10 % of trips by 2030
+    (Budapest Mobility Plan). The km goals 292 km by 2027 and 504 km by 2030 are reported only by
+    press (Telex).
+  items:
+    - id: kerekparos_reszarany
+      label: Cycling share of trips
+      target_kind: share
+      targets: {2030: 10}
+      unit: "%"
+
+- id: prague_koncepce_2010
+  city: prague
+  title: Koncepce rozvoje cyklistické dopravy na území hl. m. Prahy (2010)
+  adopted: null
+  url: https://iprpraha.cz/assets/files/files/506ba6ec042dbcfbd30a0ebf0f4dbf87.pdf
+  status: current
+  publisher: Hlavní město Praha (IPR Praha)
+  note: >-
+    URL is IPR Praha's 2021 Systém pražských cyklotras (published 7 March 2022), which cites the
+    Koncepce's goal of extending the base route network by a further 300–400 km; no single km
+    figure or deadline. The extension of the Koncepce to 2030 was not confirmed at source.
+  items:
+    - id: zakladni_sit_cyklotras
+      label: Base network of signed cycle routes, extension by 300–400 km
+      target_kind: none
+
+- id: bratislava_zasady_2014
+  city: bratislava
+  title: Zásady rozvoja cyklistickej a pešej dopravy (uznesenie č. 1743/2014)
+  adopted: null
+  url: https://zastupitelstvo.bratislava.sk/data/att/37247.pdf
+  status: current
+  publisher: Hlavné mesto SR Bratislava
+  note: >-
+    Approved by the city council in September 2014 (resolution 1743/2014; day not printed in the
+    council material of 2018). The target of 180 km of main city cycle routes by 2030 (Bratislava
+    2030) is reported by SITA quoting the city hall, not confirmed in an official document.
+  items:
+    - id: cyklisticka_infrastruktura
+      label: New cycling infrastructure, all types
+      target_kind: none
+
+- id: ljubljana_cps_2025
+  city: ljubljana
+  title: Celostna prometna strategija Mestne občine Ljubljana 2025–2032
+  adopted: 2025-10-20
+  url: https://www.ljubljana.si/sl/ljubljana/mobilna/celostna-prometna-strategija
+  status: current
+  publisher: Mestna občina Ljubljana
+  note: >-
+    Adopted by the Mestni svet MOL on 20 October 2025. Main goal about two thirds of trips by
+    walking, cycling and public transport; no cycling km target found in the strategy document.
+  items:
+    - id: kolesarska_infrastruktura
+      label: Cycling infrastructure
+      target_kind: none

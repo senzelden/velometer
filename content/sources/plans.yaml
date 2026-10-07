@@ -1,0 +1,94 @@
+sources:
+  # ------------------------------------------------- berlin plan documents (M8, Task 4)
+  # Every figure from these documents is in config/plans/reports.csv with its page; the
+  # page-level check is logged in docs/review/m8-plans.md.
+  - id: berlin-radverkehrsplan-vo19-013
+    publisher: Abgeordnetenhaus Berlin (Vorlage zur Kenntnisnahme of the Senatsverwaltung für Umwelt, Verkehr und Klimaschutz)
+    title: "Vorlage zur Kenntnisnahme vo19-013: Verordnung über Radverkehrsplan des Landes Berlin vom 16. November 2021 (with the Radverkehrsplan as Anlage)"
+    url: https://www.parlament-berlin.de/ados/19/IIIPlen/vorgang/verordnungen/vo19-013.pdf
+    published: 2021-11-16
+    accessed: 2026-10-07
+    language: de
+    kind: parliament
+    excerpts:
+      - id: fictive-path
+        text: "ergibt sich der in Tabelle 7 aufgeführte fiktive Ausbaupfad mit den über die Zeit ansteigenden jährlichen Ausbauzielen."
+        gloss_en: "results in the fictive expansion path listed in Table 7, with annual expansion targets rising over time."
+        locator: "PDF p. 42 (plan p. 21), 2.3.4.1 Ausbaupfade, text above Tabelle 7"
+      - id: paths-adjusted
+        text: "Die Ausbaupfade können beziehungsweise müssen dann entsprechend des aktuellen Umsetzungsstandes angepasst werden."
+        gloss_en: "The expansion paths can, or must, then be adjusted to the current state of implementation."
+        locator: "PDF p. 42 (plan p. 21), 2.3.4.1 Ausbaupfade, text below Tabelle 7"
+  - id: berlin-drs-19-27049
+    publisher: Abgeordnetenhaus Berlin (answer of the Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)
+    title: "Schriftliche Anfrage 19/27049: Verkehrspolitische Bilanz des Senats (answer of 14 September 2026)"
+    url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-27049.pdf
+    published: 2026-09-14
+    accessed: 2026-10-07
+    language: de
+    kind: parliament
+    excerpts:
+      - id: ergaenzungsnetz-row
+        text: "Ergänzungsnetz 10,0 55,1 9,6 7,5 3,77 36,24"
+        gloss_en: "Supplementary network 10.0 55.1 9.6 7.5 3.77 36.24 (km implemented in 2022, 2023, 2024, 2025, 2026 to 1 September, and the row total)."
+        locator: "PDF p. 6 (printed p. 5), Antwort zu 3, table 'Umgesetzt in km' (Stand: 01.09.2026), row Ergänzungsnetz"
+      - id: summe-row
+        text: "Summe 27,5 25,9 23,6 21,2 6,22 0 0 0 0 104,53"
+        gloss_en: "Total 27.5 25.9 23.6 21.2 6.22 0 0 0 0 104.53 (km implemented in 2022 to 2030, and the total)."
+        locator: "PDF p. 6 (printed p. 5), Antwort zu 3, table 'Umgesetzt in km', row Summe"
+      - id: in-progress
+        text: "Weitere 7,7 km Radverkehrsanlagen sind derzeit im Bau bzw. in Bauvorbereitung. Zudem befinden sich 92,7 km in Planung."
+        gloss_en: "A further 7.7 km of cycling facilities are currently under construction or in preparation for construction. In addition, 92.7 km are being planned."
+        locator: "PDF p. 6 (printed p. 5), Antwort zu 3, below the table"
+  - id: berlin-fortschrittsbericht-2021
+    publisher: Senatsverwaltung für Umwelt, Mobilität, Verbraucher- und Klimaschutz (SenUMVK)
+    title: "Fahrrad Berlin – Fortschrittsbericht 2021 (Hauptausschuss report rote Nr. 0389 A of 5 July 2022)"
+    url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-0389.A-v.pdf
+    published: 2022-07-05
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: halved
+        text: "Da an beiden Straßenseiten Radverkehrsanlagen bestehen, entspricht dies einer Länge im Radnetz von 9,4 Kilometern (18,7 geteilt durch 2)."
+        gloss_en: "As there are cycling facilities on both sides of the street, this corresponds to a length in the cycle network of 9.4 km (18.7 divided by 2)."
+        locator: "PDF p. 17 (report p. 15), 3.3.1 Umsetzung des Berliner Radverkehrsnetzes"
+  - id: berlin-fortschrittsbericht-2022
+    publisher: Der Senat von Berlin (SenUMVK)
+    title: "Fahrrad Berlin – Fortschrittsbericht 2022 (Hauptausschuss report rote Nr. 1064 of 27 June 2023)"
+    url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1064-v.pdf
+    published: 2023-06-27
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: target-missed-2022
+        text: "In 2022 wurden insgesamt 26,5 Kilometer Strecke neu gebaut oder verbessert. Das Jahresausbauziel des Radverkehrsplans (40 Kilometer) für 2022 wurde damit verfehlt."
+        gloss_en: "In 2022 a total of 26.5 km of route were newly built or improved. The cycling plan's annual expansion target for 2022 (40 km) was thus missed."
+        locator: "PDF p. 14 (report p. 12), 3.1.2 Umsetzung des Berliner Radverkehrsnetzes"
+  - id: berlin-fortschrittsbericht-2023
+    publisher: Der Senat von Berlin (SenMVKU)
+    title: "Fahrrad Berlin – Fortschrittsbericht 2023 (Hauptausschuss report rote Nr. 1733 B-1 of 28 January 2025, replacement version of 1733 B; scanned PDF, excerpt transcribed from the page image)"
+    url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.B-1-v.pdf
+    published: 2025-01-28
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: total-2023
+        text: "In 2023 wurden insgesamt 26,0 Kilometer Strecke neu gebaut oder verbessert. Zum Jahresende 2023 befanden sich weitere 34,7 Kilometer in Bau/Bauvorbereitung sowie 85,8 Kilometer in Planung."
+        gloss_en: "In 2023 a total of 26.0 km of route were newly built or improved. At the end of 2023 a further 34.7 km were under construction or in preparation for construction and 85.8 km were being planned."
+        locator: "PDF p. 8 (report p. 6), 2.1.2 Umsetzung des Berliner Radverkehrsnetzes"
+  - id: berlin-gdi-radverkehrsmassnahmen
+    publisher: Land Berlin, Geoportal (gdi.berlin.de); data from GB infraVelo GmbH
+    title: "Radverkehrsmaßnahmen (seit 2021), WFS service metadata record (publication date 2026-09-08)"
+    url: https://gdi.berlin.de/geonetwork/srv/api/records/9093d642-e2c4-4cb6-9798-4d1e3f12f3bf
+    published: 2026-09-08
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: abstract
+        text: "Der Datensatz zeigt die Planungen und Umsetzungen baulicher Radverkehrsinfrastruktur. Er ermöglicht es eine Übersicht und Auswertung über den Bestand vorzunehmen. Die Datenerfassung erfolgte kontinuierlich über die Datenbank der GB infraVelo GmbH."
+        gloss_en: "The dataset shows the planning and implementation of structural cycling infrastructure. It allows an overview and evaluation of the stock. Data were captured continuously via the database of GB infraVelo GmbH."
+        locator: "metadata abstract (gmd:abstract)"
