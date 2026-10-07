@@ -355,19 +355,44 @@ the same overrun was in v1/v2's matches. All pieces v3 keeps and v4 drops (`--ve
 | along the network line | 1.4 | 1.9 | 1.9 |
 | **total** (Vorrangnetz / Ergänzungsnetz) | 21.4 (8.0 / 13.4) | 31.0 (11.7 / 19.2) | 31.2 (11.9 / 19.3) |
 
-- Past the network line's end, 14.8 km on run 743: the false positives the rule exists for,
-  including those v1/v2 already had ([crops](../../data/maps/berlin_overlay_v3_vs_overlay_v4_crops.png),
-  [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_beyond_network_end.png)).
+- Past the network line's end, 14.8 km on run 743: mostly the false positives the rule exists
+  for, including those v1/v2 already had ([crops](../../data/maps/berlin_overlay_v3_vs_overlay_v4_crops.png),
+  [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_beyond_network_end.png)), but
+  not all: the classifier's "past the end" test uses the same geometry as v4, so a way-side that
+  follows the network round a curve split into edges at a bend over 30°, or through a junction
+  where the network's edges jog, is classed here too (Task 8b review: cases at EPSG:25833
+  383321, 5818298 and 390604, 5810575). The classifier cannot tell those followers from
+  sidepaths of the continuing street.
 - Class boundaries, 12.8 km: pieces past their class's line end where a line of the other class
-  continues. 12.1 km of them are still kept by v4 in the other class (scratchpad check), so v3
-  counted them in both classes; v4 counts them once, in the class whose line runs alongside.
-- Along the network line, **1.9 km (run 743) is the loss of real along-the-network km**, at most:
-  1.5 km still match under v4 but their clipped run (or touching group) falls below `min_part_m`
-  (20 m): short stubs that reached 20 m only with their overrun; 0.4 km lie 0–1 m past a free end,
-  which the classifier's 1 m tolerance calls alongside and v4 (no tolerance) does not. In a sample
-  of 16 (seed 1, [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_along.png)) most
-  are short pieces inside or at the edge of a junction; about a quarter are the last metres of a
-  sidepath along a network edge.
+  continues. 12.1 km of them are kept by v4 in the other class (`--checks`), so v3 counted them
+  in both classes and v4 counts them once; 0.7 km (Vorrangnetz 0.43, Ergänzungsnetz 0.26) are
+  counted in neither class by v4, mostly crossings inside junctions and pieces on the street
+  continuing past both lines' ends (review render), with an occasional corner piece of a
+  cycleway passing from one class's line to the other's. v4 does not end double counting: on
+  run 743 it still counts 3.54 km of pieces in both classes (v3: 16.97 km).
+- Along the network line, 1.9 km: 1.5 km still match under v4 but their clipped run (or
+  touching group) falls below `min_part_m` (20 m): short stubs that reached 20 m only with
+  their overrun; 0.4 km lie 0–1 m past a free end, which the classifier's 1 m tolerance calls
+  alongside and v4 (no tolerance) does not. In a sample of 16 (seed 1,
+  [sample](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_along.png)) most are short
+  pieces inside or at the edge of a junction; about a quarter are the last metres of a sidepath
+  along a network edge.
+
+**Real along-the-network km lost: about 0.5 to 3 km on run 743 (v4 counts 1,082 km on the two networks),
+a range, not a bound.** Measured with `--version overlay_v3 --base overlay_v4 --checks`: a
+dropped piece lies in a *hole* of a chain v4 keeps when, within 3 consecutive pieces chained end
+to start (one way-side part, or ways touching in input order), v4 keeps a piece both before and
+after it; such a piece is almost certainly on the network's route. Holes: 0.46 km (Vorrangnetz
+0.21, Ergänzungsnetz 0.25), of which 0.37 km lie past a *turn end* (a free end with another
+line's end within 1 m, where the network turns by more than 30° rather than stops) and 0.27 km
+are classed past the network line's end. That is the low end. The high end adds every dropped
+piece the classes leave open: the along class (1.9 km) and the class-boundary pieces counted in
+neither class (0.7 km), about 3.0 km together with the holes. It is not a strict upper bound: of
+the 21.4 km dropped past turn ends (Vorrangnetz 10.9, Ergänzungsnetz 10.6), some outer-corner
+pieces of ways following a turning network that do not sit in a hole are classed past the end,
+and their share is not measured. The review's renders show the turn ends over 60° to be mostly
+sidepaths of the continuing street. Getting the followers back would be a rule change (for
+example a wider joint angle for joints of exactly two edges), i.e. a v5 question for the user.
 
 **Does the 2022 → current change move?** Yes, down: Vorrangnetz +46.0 → **+42.1** km,
 Ergänzungsnetz +19.6 → **+13.7** km. The pieces v4 drops grow from 21.4 km (2022) to 31.2 km

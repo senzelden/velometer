@@ -34,6 +34,13 @@ Classes, first that applies:
 5. `along`: the rest (the piece runs beside the road the network line follows, beside no
    carriageway, or along a network line that runs off-road).
 
+`--checks` also prints: the km kept in both network classes by each version; per class, the
+`class_boundary` pieces that the base keeps in the other class, and those in neither class; and
+the pieces lying in a hole of a chain the base keeps (a base-kept piece within `HOLE_PIECES`
+consecutive, end-to-start chained pieces on both sides), in all and among the pieces whose
+midpoint lies past a *turn end* of a matching line (a free end under overlay_v4's rule, 30°,
+that another line's end lies within 1 m of: the network turns there rather than stops).
+
 `--crops` draws the six densest non-overlapping 800 m cells (1.2 km windows) to
 data/maps/berlin_<version>_vs_<base>_crops.png; `--detail CLASS` (repeatable) draws 16 pieces of
 the class drawn at random (numpy default_rng(`--seed`), 120 m windows) to
@@ -60,6 +67,7 @@ INSIDE_M = 0.5  # a projection this far inside a line is not at its end
 END_TOL_M = 1.0  # a midpoint at most this far past a line's end still runs alongside it
 NEAR_NET_M = 15.0  # a parallel road this close to the network line is the network's road
 ROAD_SEARCH_M = 30.0  # search radius for the road a piece runs beside
+HOLE_PIECES = 3  # --checks: a base-kept piece this many chained pieces away closes a hole
 CLASSES = ["along", "junction_crossing", "parallel_or_crossing_street", "class_boundary",
            "beyond_network_end"]  # fmt: skip
 LABEL = {
@@ -127,7 +135,8 @@ def beyond_end(lines, mids) -> np.ndarray:
 
 
 def load(run_id: int, versions: tuple[str, str]):
-    """(sides, network by class, configs, carriageway lines, way tags) for one Berlin LAU run."""
+    """(sides, LAU boundary, network lines by class, the two overlay configs, carriageway lines)
+    for one Berlin LAU run."""
     from velometer.config import default_config_dir, load_cities, load_classifier
     from velometer.db import fetch_boundary, fetch_run
     from velometer.pipeline.geometry import Projector
@@ -162,13 +171,74 @@ def load(run_id: int, versions: tuple[str, str]):
     return sides, boundary, network, cfgs, np.asarray(roads, dtype=object)
 
 
+def turn_ends(network) -> np.ndarray:
+    """Bool (2n,) in `plans.overlay._end_directions` order: free ends (overlay_v4's rule) that
+    another line's end lies within `_JOINT_M` of, i.e. where the network turns by more than
+    `max_angle_deg` (30) rather than stops."""
+    from velometer.plans import overlay as ov
+
+    end, _ = ov._end_directions(network)
+    owner = np.tile(np.arange(len(network)), 2)
+    pts = shapely.points(end)
+    a, b = STRtree(pts).query(pts, predicate="dwithin", distance=ov._JOINT_M)
+    joined = np.zeros(len(end), bool)
+    joined[a[owner[a] != owner[b]]] = True
+    return joined & ov.free_ends(network, 30.0)
+
+
+def past_turn_end(lines, qp, qn, mids, n_pieces) -> np.ndarray:
+    """Per piece: its midpoint lies past a turn end (`turn_ends`) of one of its matching lines
+    (pairs `qp`, `qn`), measured as overlay_v4 does."""
+    from velometer.plans import overlay as ov
+
+    end, out = ov._end_directions(lines)
+    turn = turn_ends(lines)
+    nets = np.asarray(lines, dtype=object)
+    at = shapely.line_locate_point(nets[qn], mids[qp])
+    length = shapely.length(nets[qn])
+    at_end = at >= length - ov._EPS_M
+    i = np.where(at_end, qn + len(lines), qn)
+    beyond = ((shapely.get_coordinates(mids[qp]) - end[i]) * out[i]).sum(axis=1) > ov._EPS_M
+    hit = ((at <= ov._EPS_M) | at_end) & beyond & turn[i]
+    res = np.zeros(n_pieces, bool)
+    res[qp[hit]] = True
+    return res
+
+
+def in_hole(seg_all, keep_base, only, reach: int = HOLE_PIECES) -> np.ndarray:
+    """Per piece in `only`: within `reach` consecutive pieces before and after it (pieces that
+    chain end to start, i.e. one way-side part, or touching ways in input order) there is a
+    piece kept by the base version on both sides: a hole in a chain the base keeps."""
+    n = len(seg_all)
+    chained = np.zeros(n, bool)  # piece i's end is piece i+1's start
+    chained[:-1] = np.all(np.isclose(seg_all[:-1, 1], seg_all[1:, 0], atol=1e-6), axis=1)
+    res = np.zeros(len(only), bool)
+    for k, j in enumerate(only.tolist()):
+        before = after = False
+        for step in range(1, reach + 1):
+            if j - step < 0 or not chained[j - step]:
+                break
+            if keep_base[j - step]:
+                before = True
+                break
+        for step in range(1, reach + 1):
+            if j + step >= n or not chained[j + step - 1]:
+                break
+            if keep_base[j + step]:
+                after = True
+                break
+        res[k] = before and after
+    return res
+
+
 def classify(sides, boundary, network, cfg, base, roads):
     """Per network class: (segments (n, 2, 2), class names, lengths m) of the pieces kept by
-    `cfg` and dropped by `base`; plus every piece kept by `cfg` (for drawing)."""
+    `cfg` and dropped by `base`; every piece kept by `cfg` (for drawing); and per class the
+    masks and flags `checks` reads."""
     from velometer.plans import overlay as ov
 
     road_tree = STRtree(roads)
-    out, kept_all = {}, []
+    out, kept_all, meta = {}, [], {}
     for cls, lines in sorted(network.items(), reverse=True):
         pieces, _, sep, plen, keep = ov._kept_pieces(sides, lines, boundary, cfg)
         keep_base = ov._kept_pieces(sides, lines, boundary, base)[4]
@@ -220,7 +290,36 @@ def classify(sides, boundary, network, cfg, base, roads):
                         float(shapely.distance(road_pt, matched[k])))  # fmt: skip
             names.append(piece_class(min_beyond[k], other_alongside[k], a_near[k], road))
         out[cls] = (seg, np.array(names, dtype=object), plen[only])
-    return out, np.concatenate(kept_all), road_tree
+        meta[cls] = {
+            "keep": keep, "keep_base": keep_base, "plen": plen, "only": only,
+            "turn": past_turn_end(lines, qp, qn, mids, len(only)),
+            "hole": in_hole(shapely.get_coordinates(pieces).reshape(-1, 2, 2), keep_base, only),
+        }  # fmt: skip
+    return out, np.concatenate(kept_all), road_tree, meta
+
+
+def checks(out, meta, version: str, base: str) -> None:
+    """Cross-class and chain checks of the pieces kept by `version`, dropped by `base`."""
+    a, b = sorted(meta)
+    km = lambda mask, cls: float(meta[cls]["plen"][mask].sum()) / 1000  # noqa: E731
+    for v, key in ((version, "keep"), (base, "keep_base")):
+        both = meta[a][key] & meta[b][key]
+        print(f"  kept by {v} in both classes: {km(both, a):.2f} km")
+    for cls in (a, b):
+        other = b if cls == a else a
+        m, names = meta[cls], out[cls][1]
+        cb = m["only"][names == "class_boundary"]
+        kept_other = meta[other]["keep_base"][cb]
+        print(f"  {cls} class_boundary: {km(cb[kept_other], cls):.2f} km kept by {base} in "
+              f"{other}, {km(cb[~kept_other], cls):.2f} km in neither class")  # fmt: skip
+    for cls in (a, b):
+        m, names = meta[cls], out[cls][1]
+        for label, sel in (("past a turn end", m["turn"]), ("all", np.ones(len(names), bool))):
+            hole = sel & m["hole"]
+            by = {c: km(m["only"][hole & (names == c)], cls) for c in CLASSES}
+            print(f"  {cls} {label}: {km(m['only'][sel], cls):.2f} km, of which in a hole of a "
+                  f"chain {base} keeps {km(m['only'][hole], cls):.2f} km ("
+                  + ", ".join(f"{c} {v:.2f}" for c, v in by.items() if v) + ")")  # fmt: skip
 
 
 def report(out, version: str, base: str, run_id: int) -> None:
@@ -359,6 +458,10 @@ def main() -> None:
     ap.add_argument("--base", default="overlay_v2", help="the version they are compared with")
     ap.add_argument("--crops", action="store_true", help="write the crops PNG to data/maps/")
     ap.add_argument(
+        "--checks", action="store_true",
+        help="print cross-class counts and pieces in holes of chains the base keeps",
+    )  # fmt: skip
+    ap.add_argument(
         "--detail", choices=CLASSES, action="append", default=[],
         help="write 16 pieces of a class to data/maps/ (repeatable)",
     )  # fmt: skip
@@ -366,8 +469,10 @@ def main() -> None:
     args = ap.parse_args()
     t0 = time.monotonic()
     sides, boundary, network, (cfg, base), roads = load(args.run, (args.version, args.base))
-    out, kept_all, road_tree = classify(sides, boundary, network, cfg, base, roads)
+    out, kept_all, road_tree, meta = classify(sides, boundary, network, cfg, base, roads)
     report(out, args.version, args.base, args.run)
+    if args.checks:
+        checks(out, meta, args.version, args.base)
     what = f"pieces kept by {args.version}, dropped by {args.base}, run {args.run}"
     stem = f"berlin_{args.version}_vs_{args.base}"
     if args.crops or args.detail:
