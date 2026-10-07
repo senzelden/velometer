@@ -114,6 +114,9 @@ class Side:
     line: BaseGeometry  # city EPSG, unclipped
     km: float  # per_side, clipped to the boundary
     km_by_subarea: dict[str, float] = field(default_factory=dict)  # empty without subareas
+    # a separately mapped way (side `self` of a highway outside the carriageway classes), not a
+    # tag on a road centreline (left/right sides, cycle streets)
+    separate: bool = False
 
 
 class _Clip:
@@ -148,10 +151,11 @@ class _Clip:
 
 
 def _sides(
-    classified: list[Classified], proj: Projector, clip: _Clip
+    classified: list[Classified], proj: Projector, clip: _Clip, carriageway: Iterable[str]
 ) -> dict[tuple[int, str], Side]:
     """Sides in A-E with a non-zero clipped length, keyed by (way id, side)."""
     out = {}
+    carriageway = frozenset(carriageway)
     for c in classified:
         if c.tier not in TIERS:
             continue
@@ -159,7 +163,10 @@ def _sides(
         km = clip.km(line)
         if km == 0:
             continue  # wholly outside the boundary: `measure` counts it nowhere either
-        out[(c.side.way_id, c.side.side)] = Side(c.tier, line, km, clip.by_subarea(line, km))
+        separate = c.side.side == "self" and c.side.tags.get("highway") not in carriageway
+        out[(c.side.way_id, c.side.side)] = Side(
+            c.tier, line, km, clip.by_subarea(line, km), separate
+        )
     return out
 
 
@@ -169,7 +176,12 @@ def classified_sides(
     """One snapshot's way-sides in A-E classified with `cfg`, keyed by (way id, side): lines in
     `epsg`, per_side km clipped to `boundary` as `measure` clips them, so their tier sums are
     the run's stored per_side totals (the overlay re-reads snapshots through this, M8 §4.3)."""
-    return _sides(classify_ways(ways, cfg), Projector(epsg), _Clip(boundary, subareas))
+    return _sides(
+        classify_ways(ways, cfg),
+        Projector(epsg),
+        _Clip(boundary, subareas),
+        cfg.road_classes.carriageway,
+    )
 
 
 def _tags_changed(a: Mapping[str, str], b: Mapping[str, str]) -> dict:
@@ -285,7 +297,8 @@ def compute_change(
     the subarea polygons are in `epsg`."""
     proj, clip = Projector(epsg), _Clip(boundary, subareas)
     cls_from, cls_to = classify_ways(ways_from, cfg), classify_ways(ways_to, cfg)
-    a, b = _sides(cls_from, proj, clip), _sides(cls_to, proj, clip)
+    road = cfg.road_classes.carriageway
+    a, b = _sides(cls_from, proj, clip, road), _sides(cls_to, proj, clip, road)
     tier_of_from = {(c.side.way_id, c.side.side): c.tier for c in cls_from}
     tier_of_to = {(c.side.way_id, c.side.side): c.tier for c in cls_to}
     tags_from = {w.id: w.tags for w in ways_from}

@@ -2,9 +2,12 @@
 
 A way-side in tier A or B counts as on the network over the parts of its geometry (clipped to
 the run's boundary) that lie within `buffer_m` of a network line whose local direction differs
-by at most `max_angle_deg`; a part shorter than `min_part_m` is dropped. The side is cut into
-equal pieces of at most `min_part_m / 2`; a piece is kept when a network line lies within
-`buffer_m` of it at a matching angle (measured at the network point nearest the piece's
+by at most `max_angle_deg`; a part shorter than `min_part_m` is dropped. From overlay_v2 a
+separately mapped way (`Side.separate`) gets its own buffer, `buffer_separate_m`: such a way runs
+beside the road whose centreline the network follows, while a road-side tag sits on it.
+
+The side is cut into equal pieces of at most `min_part_m / 2`; a piece is kept when a network
+line lies within its buffer at a matching angle (measured at the network point nearest the piece's
 midpoint), and consecutive kept pieces of one side merge into parts. Lengths are per_side km in
 the city EPSG (ADR 0006: mapped km, not km completed to any plan standard). The parameters are
 data (`config/plans/overlay_vN.yaml`); a change is a new version.
@@ -25,6 +28,7 @@ from shapely.prepared import prep
 from velometer.config import ConfigError
 
 TIERS = ("A", "B")
+GEOMETRIES = ("centreline", "separate")  # tags on a road centreline / separately mapped ways
 CLASSES = {"Radvorrangnetz": "vorrangnetz", "Ergänzungsnetz": "ergaenzungsnetz"}
 _LOCAL_M = 1.0  # half-length of the network stretch whose direction a piece is compared with
 _EPS_M = 1e-6
@@ -34,9 +38,15 @@ class OverlayConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     version: str
-    buffer_m: float = Field(gt=0)
+    buffer_m: float = Field(gt=0)  # way-sides tagged on a road centreline
+    # separately mapped ways (`Side.separate`); None (v1): `buffer_m` for both
+    buffer_separate_m: float | None = Field(default=None, gt=0)
     max_angle_deg: float = Field(ge=0, le=90)
     min_part_m: float = Field(gt=0)
+
+    @property
+    def separate_buffer_m(self) -> float:
+        return self.buffer_m if self.buffer_separate_m is None else self.buffer_separate_m
 
 
 def load_overlay_config(plans_dir: Path, version: str) -> OverlayConfig:
@@ -89,12 +99,12 @@ def _undirected_deg(dx, dy, ex, ey):
 
 
 def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry, cfg):
-    """(pieces, tier, length in m, kept mask) per piece of the A/B sides' clipped geometry; the
-    mask already drops parts shorter than `min_part_m`. A piece's length is its share of the
-    part's length (the piece itself is the chord between its ends)."""
+    """(pieces, tier, separate-way flag, length in m, kept mask) per piece of the A/B sides'
+    clipped geometry; the mask already drops parts shorter than `min_part_m`. A piece's length
+    is its share of the part's length (the piece itself is the chord between its ends)."""
     prepared = prep(boundary)
     step = cfg.min_part_m / 2
-    coords, part_of, piece_len, part_tier = [], [], [], []
+    coords, part_of, piece_len, part_tier, part_separate = [], [], [], [], []
     for side in sides.values():
         if side.tier not in TIERS:
             continue
@@ -108,17 +118,21 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
             part_of.append(np.full(n, len(part_tier)))
             piece_len.append(np.full(n, part.length / n))
             part_tier.append(side.tier)
+            part_separate.append(side.separate)
     if not coords:
-        return np.zeros(0, dtype=object), np.zeros(0, dtype=str), np.zeros(0), np.zeros(0, bool)
+        empty = np.zeros(0, bool)
+        return np.zeros(0, dtype=object), np.zeros(0, dtype=str), empty, np.zeros(0), empty
     seg = np.concatenate(coords)
     part_of, piece_len = np.concatenate(part_of), np.concatenate(piece_len)
     pieces = shapely.linestrings(seg)
     tiers = np.array(part_tier)[part_of]
+    separate = np.array(part_separate)[part_of]
     if not network:
-        return pieces, tiers, piece_len, np.zeros(len(seg), bool)
-    # distance: a network line within buffer_m of the piece
+        return pieces, tiers, separate, piece_len, np.zeros(len(seg), bool)
+    # distance: a network line within the piece's buffer
     tree = STRtree(network)
-    idx_piece, idx_net = tree.query(pieces, predicate="dwithin", distance=cfg.buffer_m)
+    buffers = np.where(separate, cfg.separate_buffer_m, cfg.buffer_m)
+    idx_piece, idx_net = tree.query(pieces, predicate="dwithin", distance=buffers)
     # angle: the network's direction around its point nearest the piece's midpoint
     nets = np.asarray(network, dtype=object)[idx_net]
     mids = shapely.points((seg[idx_piece, 0] + seg[idx_piece, 1]) / 2)
@@ -143,13 +157,26 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
     run_m = np.bincount(run[keep], weights=piece_len[keep], minlength=int(starts.sum()))
     long_enough = run_m >= cfg.min_part_m - _EPS_M
     keep[keep] = long_enough[run[keep]]
-    return pieces, tiers, piece_len, keep
+    return pieces, tiers, separate, piece_len, keep
+
+
+def on_network_km_by_geometry(
+    sides: dict, network: list[LineString], boundary: BaseGeometry, cfg: OverlayConfig
+) -> dict[tuple[str, str], float]:
+    """(tier, `centreline` | `separate`) -> per_side km of the sides' parts on `network`, as
+    `on_network_km`, split by tags on a road centreline and separately mapped ways."""
+    _, tiers, separate, piece_len, keep = _kept_pieces(sides, network, boundary, cfg)
+    return {
+        (t, g): float(piece_len[keep & (tiers == t) & (separate == (g == "separate"))].sum()) / 1000
+        for t in TIERS
+        for g in GEOMETRIES
+    }
 
 
 def on_network_km(
     sides: dict, network: list[LineString], boundary: BaseGeometry, cfg: OverlayConfig
 ) -> dict[str, float]:
     """Tier (A, B) -> per_side km of the sides' parts on `network` (lines in the sides' EPSG),
-    clipped to `boundary`. `sides` maps a key to `report.change.Side`; C-E are ignored."""
-    _, tiers, piece_len, keep = _kept_pieces(sides, network, boundary, cfg)
-    return {t: float(piece_len[keep & (tiers == t)].sum()) / 1000 for t in TIERS}
+    clipped to `boundary`. `sides` maps (way id, side) to `report.change.Side`; C-E are ignored."""
+    by = on_network_km_by_geometry(sides, network, boundary, cfg)
+    return {t: sum(by[t, g] for g in GEOMETRIES) for t in TIERS}

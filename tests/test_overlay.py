@@ -23,9 +23,9 @@ BOUNDARY = box(X - 5_000, Y - 5_000, X + 5_000, Y + 5_000)
 NETWORK = [LineString([(X - 500, Y), (X + 500, Y)])]  # 1 km west-east
 
 
-def _side(coords, tier="A") -> Side:
+def _side(coords, tier="A", separate=False) -> Side:
     line = LineString(coords)
-    return Side(tier, line, line.length / 1000)
+    return Side(tier, line, line.length / 1000, separate=separate)
 
 
 def _km(sides, network=NETWORK, boundary=BOUNDARY, tier="A") -> float:
@@ -310,3 +310,84 @@ def test_plans_overlay_without_a_fetched_network_says_to_fetch(tmp_path):
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 1
     assert "velometer plans fetch berlin" in result.output
+
+
+# --- overlay_v2: a wider buffer for separately mapped ways ------------------------------------
+
+V2 = overlay.OverlayConfig(
+    version="overlay_v2", buffer_m=12, buffer_separate_m=25, max_angle_deg=30, min_part_m=20
+)
+
+
+def test_overlay_v2_is_the_shipped_parameter_set():
+    assert overlay.load_overlay_config(CFG_DIR / "plans", "overlay_v2") == V2
+
+
+def test_a_v1_file_without_a_separate_buffer_uses_buffer_m_for_both():
+    assert CFG.buffer_separate_m is None
+    assert CFG.separate_buffer_m == 12
+    assert V2.separate_buffer_m == 25
+
+
+def test_a_separate_way_at_20_m_counts_under_v2_and_not_under_v1():
+    sides = {(1, "self"): _side([(X - 200, Y + 20), (X + 200, Y + 20)], separate=True)}
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, CFG)["A"] == 0.0
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == pytest.approx(0.4)
+
+
+@pytest.mark.parametrize("road_side", ["left", "right", "self"])  # self: a cycle street
+def test_a_centreline_tagged_side_at_20_m_counts_under_neither(road_side):
+    sides = {(1, road_side): _side([(X - 200, Y + 20), (X + 200, Y + 20)])}
+    for cfg in (CFG, V2):
+        assert overlay.on_network_km(sides, NETWORK, BOUNDARY, cfg)["A"] == 0.0
+
+
+def test_a_separate_way_at_30_m_counts_under_neither():
+    sides = {(1, "self"): _side([(X - 200, Y + 30), (X + 200, Y + 30)], separate=True)}
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == 0.0
+
+
+def test_on_network_km_splits_centreline_and_separate_km():
+    sides = {(1, "left"): _side([(X - 200, Y + 6), (X + 200, Y + 6)]),
+             (2, "self"): _side([(X - 100, Y + 20), (X + 100, Y + 20)], "B", True)}  # fmt: skip
+    got = overlay.on_network_km_by_geometry(sides, NETWORK, BOUNDARY, V2)
+    assert got == {("A", "centreline"): pytest.approx(0.4), ("A", "separate"): 0.0,
+                   ("B", "centreline"): 0.0, ("B", "separate"): pytest.approx(0.2)}  # fmt: skip
+
+
+def test_overlay_facts_read_the_latest_overlay_version(fixture_db, tmp_path):
+    from velometer.content.facts import evaluate
+    from velometer.db import OverlayRow, replace_plan_overlay
+
+    db_path, _cfg, _conn, data = fixture_db
+    with sqlite3.connect(db_path) as c:
+        run_id, ts = c.execute(
+            "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind='lau' "
+            "ORDER BY osm_timestamp LIMIT 1"
+        ).fetchone()
+
+    def row(version, km):
+        return OverlayRow(run_id, "berlin", "vorrangnetz", "A", km, 873.1, version, "t")
+
+    rows = [row("overlay_v1", 10.0), row("overlay_v2", 20.0)]
+    c = sqlite3.connect(db_path)
+    replace_plan_overlay(c, "berlin", rows)
+    c.close()
+    assert evaluate(f"overlay.berlin.vorrangnetz.{ts[:10]}.ab_km", data, tmp_path) == 20.0
+
+
+def test_classified_sides_mark_only_ways_off_the_carriageway_as_separate():
+    from velometer.config import load_classifier
+    from velometer.pipeline.types import WayRecord
+    from velometer.report.change import classified_sides
+
+    cfg = load_classifier(CFG_DIR / "classifier" / "v4.yaml")
+    line = ((13.40, 52.50), (13.41, 52.50))
+    tags = [{"highway": "cycleway"}, {"highway": "residential", "bicycle_road": "yes"},
+            {"highway": "secondary", "cycleway:both": "track"}]  # fmt: skip
+    ways = [WayRecord(9_000_000_101 + i, t, line) for i, t in enumerate(tags)]
+    sides = classified_sides(ways, cfg, 25833, box(300_000, 5_700_000, 500_000, 5_900_000))
+    got = {(k[0] - 9_000_000_100, k[1]): s.separate for k, s in sides.items()}
+    assert got[1, "self"] is True
+    assert got[2, "self"] is False  # a cycle street is the road centreline
+    assert got[3, "left"] is False and got[3, "right"] is False

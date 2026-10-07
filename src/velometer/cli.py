@@ -1657,14 +1657,18 @@ def plans_overlay(
                 ch.check_tier_totals(str(run_id), got, _stored_tier_totals(conn, run_id))
                 parts = []
                 for cls, lines in sorted(network.items()):
-                    km = ov.on_network_km(sides, lines, boundary, cfg)
+                    by = ov.on_network_km_by_geometry(sides, lines, boundary, cfg)
+                    km = {t: sum(by[t, g] for g in ov.GEOMETRIES) for t in ov.TIERS}
                     net_km = ov.network_km(lines)
                     rows += [
                         OverlayRow(run_id, city, cls, tier, km[tier], net_km, cfg.version,
                                    retrieved_at)
                         for tier in ov.TIERS
                     ]  # fmt: skip
-                    parts.append(f"{cls} A {km['A']:.1f} + B {km['B']:.1f} km")
+                    split = ", ".join(
+                        f"{g} {sum(by[t, g] for t in ov.TIERS):.1f}" for g in ov.GEOMETRIES
+                    )
+                    parts.append(f"{cls} A {km['A']:.1f} + B {km['B']:.1f} km ({split})")
                 typer.echo(
                     f"run {run_id} ({run['osm_timestamp'][:10]}): totals agree (A..E); "
                     + "; ".join(parts)

@@ -1,0 +1,8 @@
+# Plan-network overlay parameters (M8 spec §4.3). A parameter change is a new version file.
+# v2: separately mapped ways (side `self`) run beside the road whose centreline the network
+# follows, so they get a wider buffer; road-side tags keep v1's 12 m (docs/review/m8-overlay.md).
+version: overlay_v2
+buffer_m: 12
+buffer_separate_m: 25
+max_angle_deg: 30
+min_part_m: 20
