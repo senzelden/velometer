@@ -13,10 +13,10 @@ import pytest
 import yaml
 from markupsafe import escape
 
-from velometer.app.narrative import render_explainer
+from velometer.app.narrative import render_explainer, render_organisation
 from velometer.config import default_config_dir, load_cities
 from velometer.content.check import check_content_offline
-from velometer.content.loader import load_document, load_sources
+from velometer.content.loader import load_document, load_organisations, load_sources
 
 REAL_CONTENT = Path(__file__).parents[1] / "content"
 CONFIG = default_config_dir()
@@ -141,25 +141,43 @@ def test_an_over_long_excerpt_in_the_registry_is_reported(broken):
 
 
 EXPLAINER_SHAPED = ["explainer.yaml", "plans/berlin.yaml", "counters.yaml"]
+# every organisation profile that places a quote (the organisations page renders them all)
+PROFILES_WITH_QUOTES = [
+    f"organisations/{p.name}"
+    for p in sorted((REAL_CONTENT / "organisations").glob("*.yaml"))
+    if yaml.safe_load(p.read_text(encoding="utf-8")).get("quotes")
+]
+QUOTED_PAGES = EXPLAINER_SHAPED + PROFILES_WITH_QUOTES
 
 
 def _cites(paragraph: str) -> set[str]:
     return set(re.findall(r"\[@([^\]\s]+)\]", paragraph))
 
 
-@pytest.mark.parametrize("rel", EXPLAINER_SHAPED)
-def test_each_quote_renders_after_a_paragraph_citing_its_source(rel):
-    """Rendered as the app renders it, every pull-quote of a shipped explainer-shaped page
-    follows a paragraph that cites the quote's source (a quote whose source the intro cites may
-    follow the first paragraph). The Berlin plan page's `after` indices were once counted with
-    the intro, which put every quote one paragraph late."""
+def _render(rel: str, sources):
+    """(document, rendered) as the app renders the page or profile."""
+    if rel.startswith("organisations/"):
+        org = load_organisations(REAL_CONTENT / "organisations")[Path(rel).stem]
+        return org, render_organisation(org, sources)
     doc = load_document(REAL_CONTENT / rel)
+    return doc, render_explainer(doc, sources)
+
+
+def test_the_profiles_with_quotes_are_found():
+    assert PROFILES_WITH_QUOTES  # the parametrisation below is not silently empty
+
+
+@pytest.mark.parametrize("rel", QUOTED_PAGES)
+def test_each_quote_renders_after_a_paragraph_citing_its_source(rel):
+    """Rendered as the app renders it, every pull-quote of a shipped explainer-shaped page or
+    organisation profile follows a paragraph that cites the quote's source (a quote whose source
+    the intro cites may follow the first paragraph). The Berlin plan page's `after` indices were
+    once counted with the intro, which put every quote one paragraph late."""
     sources = load_sources(REAL_CONTENT / "sources")
-    rendered = render_explainer(doc, sources)
+    doc, rendered = _render(rel, sources)
     number = {s.id: n for n, s in rendered.sources.items()}
-    intro_cites = {
-        n for n in number.values() if any(f'href="#src-{n}"' in p for p in rendered.intro)
-    }
+    href = {n: f'href="#{rendered.prefix}src-{n}"' for n in number.values()}
+    intro_cites = {n for n in number.values() if any(href[n] in p for p in rendered.intro)}
     seen, previous, placed = 0, "", []
     for sec in rendered.sections:
         for item in sec.items:
@@ -168,18 +186,18 @@ def test_each_quote_renders_after_a_paragraph_citing_its_source(rel):
                 continue
             q = next(q for q in doc.quotes if _excerpt_text(sources, q.excerpt) in item)
             n = number[q.excerpt.partition("/")[0]]
-            assert f'href="#src-{n}"' in previous or (seen == 1 and n in intro_cites), q.excerpt
+            assert href[n] in previous or (seen == 1 and n in intro_cites), q.excerpt
             placed.append(q.excerpt)
     assert sorted(placed) == sorted(q.excerpt for q in doc.quotes)  # every quote was rendered
 
 
-@pytest.mark.parametrize("rel", EXPLAINER_SHAPED)
+@pytest.mark.parametrize("rel", QUOTED_PAGES)
 def test_a_quote_moved_off_its_paragraph_is_reported(broken, rel):
     """The offline check catches a quote moved to a paragraph that does not cite its source;
     the wrong index is derived from the file, so the break survives a rewrite of the page."""
     doc = yaml.safe_load((REAL_CONTENT / rel).read_text(encoding="utf-8"))
     paragraphs = [p for s in doc["sections"] for p in s["paragraphs"]]
-    intro = set().union(*(_cites(p) for p in doc["intro"]))
+    intro = set().union(*(_cites(p) for p in doc.get("intro", [])))
     q = doc["quotes"][0]
     sid = q["excerpt"].partition("/")[0]
     wrong = next(

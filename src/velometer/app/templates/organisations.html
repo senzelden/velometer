@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}velometer · Organisations{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Organisations</span></nav>{% endblock %}
+{% block content %}
+<h1>Who produces the figures</h1>
+<p class="dek">The bodies behind the published figures this app compares with our mapped km, and behind Berlin's plan and its progress reports: who they are, how they measure and what role their figures play.</p>
+{% if content_error %}<p class="note">the source registry could not be loaded (see the server log)</p>{% endif %}
+{% if broken %}<p class="note">not shown, the profile could not be loaded (see the server log): {{ broken | join(", ") }}</p>{% endif %}
+{% if profiles %}
+<nav class="org-index" aria-label="Organisations"><ul>
+{% for p in profiles %}<li><a href="#{{ p.org.id }}">{{ p.org.name }}</a></li>
+{% endfor %}</ul></nav>
+{% for p in profiles %}
+<section class="org" id="{{ p.org.id }}">
+<p class="kicker">{{ p.kind }}</p>
+<h2>{{ p.org.name }}</h2>
+<p class="meta">{% if p.org.url | http_url %}<a href="{{ p.org.url | http_url }}" rel="noopener noreferrer">{{ p.org.url | host }}</a>{% endif %}
+{%- if p.figures %} · figures in this app: {% for city, source in p.figures %}{{ source }} ({{ city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
+{%- if p.plans %} · plans: {% for l in p.plans %}<a href="{{ l.href }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
+<div class="narrative">
+{% for s in p.doc.sections %}
+<h3>{{ s.heading }}</h3>
+{% if s.dimensions %}<dl class="org-dims">
+{% for key, value in s.dimensions %}<div><dt>{{ dimension_labels.get(key, key) }}</dt><dd>{{ value }}</dd></div>
+{% endfor %}</dl>{% endif %}
+{% for item in s.items %}{{ item }}
+{% endfor %}
+{% endfor %}
+</div>
+{% with cited_sources=p.cited_sources, cited_refs=p.cited_refs, nar=p.doc %}{% include "city/_cited.html" %}{% endwith %}
+</section>
+{% endfor %}
+{% elif not content_error %}
+<p class="note">no organisation profiles (content/organisations/)</p>
+{% endif %}
+{% endblock %}

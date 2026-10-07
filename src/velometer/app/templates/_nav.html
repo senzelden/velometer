@@ -1,4 +1,4 @@
-{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Methodology. `active` names the
+{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Plans · Organisations · Methodology. `active` names the
     current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
 {%- macro item(key, href, label) -%}
 <li><a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
@@ -28,6 +28,8 @@
     </details>
   </li>
   {{ item("stories", "/stories", "Stories") }}
+  {{ item("plans", "/plans", "Plans") }}
+  {{ item("organisations", "/organisations", "Organisations") }}
   {{ item("methodology", "/methodology", "Methodology") }}
 </ul>
 </nav>

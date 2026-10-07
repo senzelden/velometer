@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}velometer · Berlin's cycling plan{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/plan-chart.js"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><a href="/plans">Plans</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Berlin</span></nav>{% endblock %}
+{% macro doc_ref(v) -%}
+{{ v.doc_type }} {% if v.url %}<a href="{{ v.url }}" rel="noopener noreferrer">{{ v.row.doc_id }}</a>{% else %}{{ v.row.doc_id }}{% endif %}, {{ v.row.doc_date.isoformat() }}
+{%- endmacro %}
+{% macro status(v) -%}
+{% if v.current %}<span class="rep-status current">current</span>{% else %}<span class="rep-status revision">revision</span>{% endif %}{% if v.row.suspect %} <span class="suspect-mark">suspect</span>{% endif %}
+{%- endmacro %}
+{% block content %}
+<h1>Berlin: {{ doc.title | lower if doc else "reported, completed, mapped" }}</h1>
+{% if plan %}
+<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer">{{ plan.title }}</a>{% else %}{{ plan.title }}{% endif %}{% if plan.adopted %}, adopted {{ plan.adopted.isoformat() }}{% endif %} · {% if publisher.href %}<a href="{{ publisher.href }}">{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="/plans">All cities' plans</a></p>
+{% endif %}
+{% if text_error %}<p class="note">the page text could not be loaded (see the server log)</p>{% endif %}
+{% if doc %}<div class="narrative prose">
+{% for p in doc.intro %}{{ p }}
+{% endfor %}
+</div>{% endif %}
+{% if error %}<p class="note">the plans could not be loaded (see the server log)</p>{% endif %}
+{% if plan %}
+<div class="plan-key" aria-label="How to read the charts">
+<p class="meta"><span class="key key-target"></span> target per year (the plan's steps) · <span class="key key-current"></span> reported, current figure · <span class="key key-revision"></span> reported in another document (revision) · <span class="key key-suspect"></span> suspect, kept as printed · <span class="key key-projects"></span> completed projects (infraVelo) · <span class="key key-mapped"></span> mapped on the network, change in the year (ours)</p>
+<p class="meta">Three series, three words: <a href="#series-reported">reported</a> (Senate documents), <a href="#series-completed">completed projects</a> (infraVelo measures dataset) and <a href="#series-mapped">mapped on the network</a> (OpenStreetMap, ours). They count different things.</p>
+</div>
+<nav class="dim-index" aria-label="Plan items"><ol>
+{% for i in items %}<li><a href="#item-{{ i.item.id }}">{{ i.item.label.split(" (")[0] }}</a></li>
+{% endfor %}<li><a href="#documents">Documents</a></li></ol></nav>
+
+{% for i in items %}
+<section class="plan-item" id="item-{{ i.item.id }}">
+<h2>{{ i.item.label }}</h2>
+<p class="meta">Target: {{ i.target }}</p>
+<div class="chart plan-chart" data-plan-item="{{ i.item.id }}"></div>
+{% if i.network %}
+<p class="meta series-note">Completed projects: km of projects marked completed in the measures dataset{% if projects_org.href %} (fed from the <a href="{{ projects_org.href }}">{{ projects_org.name }}</a> project database){% endif %}, by the year their works ended, per part on this network.
+{%- if not projects_present %} <span class="note">The measures dataset is not present (<code>velometer plans fetch berlin</code>); no completed-projects series.</span>{% endif %}</p>
+{% endif %}
+{% if i.has_overlay_class %}
+{% if overlay_version %}
+<p class="meta series-note mapped-note">Mapped on the network: the change in OpenStreetMap A+B mapped km (per side) on this network, from overlay version <code>{{ overlay_version }}</code>, the latest method. The series is sensitive to how mappers draw cycleways and to the matching method: it moves when ways are redrawn and with each method version. These are changes in what is mapped, not km of new infrastructure; mapped km are not km completed to the plan's standard (<a href="#series-mapped">why</a>).</p>
+{% else %}
+<p class="note">no plan overlay in the database (<code>velometer plans overlay berlin</code>); no mapped-on-the-network series.</p>
+{% endif %}
+{% elif i.network %}
+<p class="meta series-note">No mapped-on-the-network series for the whole network: a way along both networks would count once in each.</p>
+{% endif %}
+
+{% if i.yearly %}
+<div class="scroll">
+<table class="plan-years">
+<caption class="sr-only">{{ i.item.label }}: target, reported and completed km by year</caption>
+<thead><tr><th class="num">Year</th><th class="num">Target</th><th>Reported, implemented in the year</th>{% if i.network %}<th class="num">Completed projects</th>{% endif %}</tr></thead>
+<tbody>
+{% for y in i.yearly %}
+<tr>
+  <td class="num">{{ y.year }}</td>
+  <td class="num">{% if y.target is not none %}{{ y.target | num(",g") }} {{ i.item.unit }}{% else %}<span class="note">none</span>{% endif %}</td>
+  <td>{% if y.reported %}<ul class="figures">{% for v in y.reported %}<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.row.unit }}</b> · {{ status(v) }} · {{ doc_ref(v) }}{% if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<span class="note">not reported</span>{% endif %}</td>
+  {% if i.network %}<td class="num">{% if y.projects is not none %}{{ y.projects | num(",.2f") }} km{% else %}<span class="note">{% if projects_present %}0 or none{% else %}n/a{% endif %}</span>{% endif %}</td>{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+{% if i.projects %}
+{% set shown = i.yearly | map(attribute="year") | list %}
+{% set others = i.projects | rejectattr("year", "in", shown) | list %}
+{% if others %}<p class="meta">Completed projects in other years: {% for p in others %}{{ p.year }} {{ p.km | num(",.2f") }} km{% if not loop.last %} · {% endif %}{% endfor %}.</p>{% endif %}
+{% endif %}
+
+{% if i.overlay %}
+<div class="scroll">
+<table class="plan-overlay">
+<caption class="sr-only">{{ i.item.label }}: A+B mapped km on the network by snapshot, {{ overlay_version }}</caption>
+<thead><tr><th>Snapshot</th><th class="num">A+B mapped km on the network</th><th class="num">Change from the previous snapshot</th><th class="num">Change since 1 Jan {{ base_year }}</th></tr></thead>
+<tbody>
+{% for o in i.overlay %}
+<tr><td class="date">{{ o.date }}</td><td class="num">{{ o.ab_km | num }}</td><td class="num">{% if o.step is none %}n/a{% else %}{{ "%+.1f" | format(o.step) }}{% endif %}</td><td class="num">{% if o.since_base is none %}n/a{% else %}{{ "%+.1f" | format(o.since_base) }}{% endif %}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+{% if i.series %}
+<details class="table-details plan-series">
+<summary>Every printed figure ({{ i.figures }})</summary>
+{% for s in i.series %}
+<h3>{{ s.text | capitalize }}</h3>
+<div class="scroll">
+<table>
+<thead><tr><th class="num">Year</th><th class="num">Value</th><th>Status</th><th>Document</th></tr></thead>
+<tbody>
+{% for year, views in s.years %}{% for v in views %}
+<tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num">{{ year }}</td><td class="num">{{ v.value }} {{ v.row.unit }}</td><td>{{ status(v) }}</td><td>{{ doc_ref(v) }}<br><span class="meta">{{ v.row.locator }}</span></td></tr>
+{% if v.row.note %}<tr class="note-row"><td colspan="4" class="meta">{{ v.row.note }}</td></tr>{% endif %}
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+</div>
+{% endfor %}
+</details>
+{% endif %}
+</section>
+{% endfor %}
+{% endif %}
+
+{% if doc %}
+<section class="plan-why" id="why">
+<h2>Why the three series differ</h2>
+{% for s in doc.sections %}
+<div class="narrative prose" id="series-{{ s.role }}">
+<h3>{{ s.heading }}</h3>
+{% for item in s.items %}{{ item }}
+{% endfor %}
+</div>
+{% endfor %}
+</section>
+{% endif %}
+
+{% if plan %}
+<section id="documents">
+<h2>Documents</h2>
+<p class="meta">Every progress document a figure above comes from, oldest first. Hauptausschuss reports (rote Nummer) are the Senate's yearly progress reports; Drucksachen are answers to written questions.</p>
+<div class="scroll">
+<table class="plan-docs">
+<thead><tr><th>Type</th><th>Number</th><th>Date</th><th>Publisher</th><th>What it reports</th><th class="num">Figures</th></tr></thead>
+<tbody>
+{% for d in documents %}
+<tr>
+  <td>{{ d.doc_type }}</td>
+  <td>{% if d.url %}<a href="{{ d.url }}" rel="noopener noreferrer">{{ d.doc_id }}</a>{% else %}{{ d.doc_id }}{% endif %}</td>
+  <td class="date">{{ d.doc_date }}</td>
+  <td>{% if d.publisher.href %}<a href="{{ d.publisher.href }}">{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
+  <td>{{ d.reports_on | join(", ") }}; {{ d.years }}</td>
+  <td class="num">{{ d.figures }}{% if d.suspect %} <span class="suspect-mark">{{ d.suspect }} suspect</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<h3>Data</h3>
+<ul class="meta data-sources">
+<li>Measures dataset: Radverkehrsmaßnahmen, Berlin geoportal{% if measures %}, licence {{ measures.licence }}, retrieved {{ measures.retrieved_at }}{% elif not projects_present %} (not present){% endif %}.</li>
+<li>Planned network: Radverkehrsnetz, Berlin geoportal{% if network_retrieved_at %}, retrieved {{ network_retrieved_at }}{% endif %}; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0){% if overlay_version %} with <code>{{ overlay_version }}</code>{% endif %}.</li>
+</ul>
+</section>
+{% endif %}
+
+{% if doc %}
+<section class="prose">
+{% include "city/_cited.html" %}
+</section>
+{% endif %}
+{% if plan %}<script type="application/json" id="plan-config">{{ config | tojson }}</script>{% endif %}
+{% endblock %}

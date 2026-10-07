@@ -182,13 +182,15 @@ def _explainer_prose(doc: Explainer) -> list[str]:
     return prose
 
 
-def misplaced_quotes(doc: Explainer) -> list[str]:
-    """Quotes of an explainer-shaped page that do not follow a paragraph citing their source.
+def misplaced_quotes(doc: Explainer | Organisation) -> list[str]:
+    """Quotes of an explainer-shaped page or an organisation profile that do not follow a
+    paragraph citing their source.
 
-    `after` counts the sections' paragraphs, the intro excluded, as the renderer does. A quote
-    for the intro (its source cited there) follows the first paragraph."""
+    `after` counts the sections' paragraphs, the intro (and a profile's dimension values)
+    excluded, as the renderer does. A quote for the intro (its source cited there) follows the
+    first paragraph."""
     paragraphs = [p for s in doc.sections for p in s.paragraphs]
-    intro_cites = {sid for p in doc.intro for sid in _SOURCE_REF.findall(p)}
+    intro_cites = {sid for p in getattr(doc, "intro", []) for sid in _SOURCE_REF.findall(p)}
     out: list[str] = []
     for q in doc.quotes:
         sid = q.excerpt.partition("/")[0]
@@ -422,7 +424,8 @@ def _check_organisation(
     config_dir: Path,
 ) -> list[str]:
     label = f"organisations/{org.id}.yaml"
-    problems = _check_document(
+    problems = [f"{label}: {m}" for m in misplaced_quotes(org)]
+    problems += _check_document(
         label,
         org.prose,
         org.quotes,

@@ -300,7 +300,8 @@ def _change(expr, args, data, docs_dir):
         raise _err(expr, f"{path.name}: city row cell is not a number") from e
 
 
-def _version_key(version: str) -> tuple:
+def version_key(version: str) -> tuple:
+    """Sort key of a version id: `overlay_v10` after `overlay_v2`."""
     return tuple(int(p) if p.isdigit() else p for p in re.split(r"(\d+)", version))
 
 
@@ -309,7 +310,7 @@ def _overlay_at(expr: str, data: ReportData, city: str, cls: str, day: str) -> l
     rows = data.plan_overlay(city)
     if not rows:
         raise _err(expr, f"no plan overlay for city {city!r}")
-    version = max((r.overlay_version for r in rows), key=_version_key)
+    version = max((r.overlay_version for r in rows), key=version_key)
     rows = [r for r in rows if r.overlay_version == version]
     classes = sorted({r.network_class for r in rows})
     rows = [r for r in rows if r.network_class == cls]

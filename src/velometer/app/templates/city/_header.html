@@ -1,7 +1,7 @@
 <div class="city-head">
 <div>
 <h1>{{ city.name }}</h1>
-<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}</p>
+<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}{% if plan_href %} · <a href="{{ plan_href }}">Cycling plan</a>{% endif %}</p>
 </div>
 <form class="compare-form" action="/compare" method="get">
 <input type="hidden" name="c" value="{{ city.id }}">

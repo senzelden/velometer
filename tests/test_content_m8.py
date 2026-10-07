@@ -95,7 +95,12 @@ def test_an_internal_profile_url_is_refused(m8):
 
 
 def test_profile_citing_an_unknown_source(m8):
-    _edit(_senmvku(m8), lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "See [@nope]."))
+    _edit(
+        _senmvku(m8),
+        lambda d: d["sections"][0]["paragraphs"].__setitem__(
+            0, d["sections"][0]["paragraphs"][0] + " See [@nope]."
+        ),
+    )
     assert _problems(m8) == ["organisations/senmvku.yaml: unknown source nope"]
 
 

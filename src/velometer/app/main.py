@@ -31,15 +31,25 @@ from markupsafe import Markup
 
 from velometer import timeseries as ts
 from velometer.app import compare as cmp
+from velometer.app import plans_pages
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import render_explainer, render_narrative, safe_url
+from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.series import series_payload
 from velometer.config import ConfigError, load_differences
-from velometer.content.loader import load_explainer, load_narratives, load_sources
+from velometer.content.loader import (
+    load_document,
+    load_explainer,
+    load_narratives,
+    load_organisation_map,
+    load_organisations,
+    load_sources,
+)
 from velometer.content.models import ContentError
 from velometer.db import SchemaError, subarea_names
+from velometer.plans.models import load_plans
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
 from velometer.report import charts
@@ -258,9 +268,11 @@ def create_app(
     maps_dir: Path,
     docs_dir: Path,
     content_dir: Path = Path("content"),
+    plans_data_dir: Path = Path("data") / "plans",
 ) -> FastAPI:
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
+    plans_data_dir = Path(plans_data_dir)
     app = VelometerApp(title="velometer", docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=GZIP_LEVEL)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
@@ -282,7 +294,7 @@ def create_app(
         """The request's fingerprint, computed on first use and kept on `request.state`."""
         if not hasattr(request.state, "fingerprint"):
             request.state.fingerprint = fingerprint(
-                db_path, config_dir, docs_dir, maps_dir, content_dir
+                db_path, config_dir, docs_dir, maps_dir, content_dir, plans_data_dir
             )
         return request.state.fingerprint
 
@@ -497,7 +509,38 @@ def create_app(
 
         return cache.get(f"narrative:{city_id}", fp(request), build), content_error(errors, city_id)
 
-    def figures_context(data: ReportData, city_id: str) -> dict:
+    def organisations(request: Request) -> tuple[dict, dict[str, str]]:
+        """(profiles, errors) of content/organisations; a broken profile is a note, not a 500."""
+
+        def build():
+            errors: dict[str, str] = {}
+            try:
+                orgs = load_organisations(content_dir / "organisations", errors=errors)
+            except ContentError as e:  # pragma: no cover - the loader records per file
+                orgs, errors["*"] = {}, str(e)
+            for msg in errors.values():
+                log.error("organisation profile could not be loaded: %s", msg)
+            return orgs, errors
+
+        return cache.get("organisations-raw", fp(request), build)
+
+    def org_mapping() -> list:
+        try:
+            return load_organisation_map(config_dir / "organisations.yaml")
+        except ContentError as e:
+            log.error("config/organisations.yaml could not be read: %s", e)
+            return []
+
+    def plans_config():
+        """(plans, report rows, error) of config/plans; an unreadable file is a note."""
+        try:
+            plans, rows = load_plans(config_dir / "plans")
+        except ConfigError as e:
+            log.error("plans could not be loaded: %s", e)
+            return [], [], str(e)
+        return plans, rows, None
+
+    def figures_context(data: ReportData, city_id: str, profiles: set[str]) -> dict:
         try:
             cfg = load_differences(config_dir / "differences.yaml")
             rows = difference_rows(data, city_id, cfg)
@@ -509,6 +552,7 @@ def create_app(
                 "dimension_labels": {},
                 "metric_labels": {},
                 "source_names": {},
+                "org_of": {},
             }
         return {
             "differences": rows,
@@ -516,6 +560,7 @@ def create_app(
             "dimension_labels": {d.id: d.label for d in cfg.dimensions},
             "metric_labels": cfg.labels,
             "source_names": cfg.source_names,
+            "org_of": org_of_sources(org_mapping(), city_id, profiles),
         }
 
     def city_page(request: Request, city_id: str, tab: str, data: ReportData) -> HTMLResponse:
@@ -524,8 +569,9 @@ def create_app(
             raise HTTPException(404, f"{city_id!r} has no Bezirke")
         extra: dict = {}
         if tab == "figures":
+            profiles = set(organisations(request)[0])
             extra = cache.get(
-                f"figures:{city_id}", fp(request), lambda: figures_context(data, city_id)
+                f"figures:{city_id}", fp(request), lambda: figures_context(data, city_id, profiles)
             )
         nar, note = narrative_of(request, city_id)
         role = {"story": "story", "figures": "figures"}.get(tab)
@@ -666,6 +712,82 @@ def create_app(
             cities=cities,
         )  # fmt: skip
 
+    @app.get("/organisations", response_class=HTMLResponse)
+    async def organisations_page(request: Request, data: Data):
+        _, sources, _, errors = cache.get("content", fp(request), content())
+        orgs, org_errors = organisations(request)
+
+        def build() -> dict:
+            plans, rows, _ = plans_config()
+            try:
+                diffs = load_differences(config_dir / "differences.yaml")
+                labels, source_names = {d.id: d.label for d in diffs.dimensions}, diffs.source_names
+            except (ConfigError, OSError):
+                labels, source_names = {}, {}
+            names = {c.id: c.name for c in data.cities()}
+            return {
+                "profiles": organisations_context(
+                    orgs, sources, org_mapping(), plans, rows, names, source_names
+                ),
+                "dimension_labels": labels,
+            }
+
+        ctx = cache.get("organisations", fp(request), build)
+        return page(
+            request, "organisations.html", "organisations", data, **ctx,
+            content_error=errors.get("*"), broken=sorted(org_errors),
+        )  # fmt: skip
+
+    @app.get("/plans", response_class=HTMLResponse)
+    async def plans_index(request: Request, data: Data):
+        orgs, _ = organisations(request)
+
+        def build() -> dict:
+            plans, rows, error = plans_config()
+            cities = sorted(((c.id, c.name) for c in data.cities()), key=lambda c: c[1])
+            return {"table": plans_pages.plans_table(plans, rows, cities, orgs), "error": error}
+
+        ctx = cache.get("plans", fp(request), build)
+        return page(request, "plans.html", "plans", data, **ctx)
+
+    @app.get("/plans/{city_id}", response_class=HTMLResponse)
+    async def plan_page(request: Request, city_id: str, data: Data):
+        if city_id != plans_pages.DETAIL_CITY:
+            raise HTTPException(404, f"no plan page for {city_id!r}")
+        _, sources, _, errors = cache.get("content", fp(request), content())
+        orgs, _ = organisations(request)
+
+        def build() -> dict:
+            plans, rows, error = plans_config()
+            plan = next((p for p in plans if p.city == city_id), None)
+            try:
+                text = load_document(content_dir / "plans" / f"{city_id}.yaml")
+                text_error = None
+            except ContentError as e:
+                log.error("plan page text could not be loaded: %s", e)
+                text, text_error = None, str(e)
+            doc = None if text is None or errors.get("*") else render_explainer(text, sources)
+            if plan is None:
+                return {"plan": None, "error": error, "doc": doc, "text_error": text_error}
+            overlay = data.plan_overlay(city_id)
+            dates = plans_pages.run_dates(data.conn, {r.run_id for r in overlay})
+            projects = plans_pages.completed_projects(plans_data_dir / plans_pages.MEASURES_FILE)
+            ctx = plans_pages.berlin_context(plan, rows, orgs, overlay, dates, projects)
+            return ctx | {
+                "error": error,
+                "doc": doc,
+                "text_error": text_error,
+                "measures": plans_pages.measures_retrieved(plans_data_dir),
+            }
+
+        ctx = cache.get(f"plan:{city_id}", fp(request), build)
+        doc = ctx["doc"]
+        return page(
+            request, "plans_berlin.html", "plans", data, **ctx, nar=doc,
+            cited_sources=[] if doc is None else sorted(doc.sources.items()),
+            cited_refs=[] if doc is None else sorted(doc.refs.items()),
+        )  # fmt: skip
+
     def keynums(summary: dict, fua, fua_now: float | None, flagged: int) -> list[dict]:
         """The five numbers of the city header's `.keynums` row (LAU unless it says FUA)."""
         point, change = summary["point"], summary["change"]
@@ -758,6 +880,9 @@ def create_app(
             "headline_unit": HEADLINE_UNIT,
             "tiers": ts.TIERS,
             "tiermap": tiermap if map_kinds else None,
+            "plan_href": f"/plans/{city_id}"
+            if city_id == plans_pages.DETAIL_CITY
+            else f"/plans#{city_id}",
         }
 
     def bezirk_series(data: ReportData, city_id: str) -> dict:

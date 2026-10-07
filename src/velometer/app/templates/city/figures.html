@@ -14,7 +14,7 @@
 <tbody>
 {% for r in differences %}
 <tr>
-  <td data-label="Source">{{ source_names.get(r.source, r.source) }}<br><span class="meta">reference date {{ r.reference_date or "not stated" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
+  <td data-label="Source">{% if org_of.get(r.source) %}<a href="/organisations#{{ org_of[r.source] }}">{{ source_names.get(r.source, r.source) }}</a>{% else %}{{ source_names.get(r.source, r.source) }}{% endif %}<br><span class="meta">reference date {{ r.reference_date or "not stated" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
   <td data-label="Figure" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
   <td class="num" data-label="Theirs">{{ r.theirs | num }} {{ r.unit | unit }}</td>
   <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }} {{ r.unit | unit }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
@@ -81,7 +81,7 @@
 <tbody>
 {% for f in reported %}
 <tr>
-  <td>{{ f.source }}</td>
+  <td>{% if org_of.get(f.source) %}<a href="/organisations#{{ org_of[f.source] }}">{{ f.source }}</a>{% else %}{{ f.source }}{% endif %}</td>
   <td><code>{{ f.metric_name }}</code></td>
   <td class="num">{{ f.value | num }}</td>
   <td>{{ f.unit }}</td>

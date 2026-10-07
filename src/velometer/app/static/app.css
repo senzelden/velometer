@@ -421,3 +421,53 @@ table.compare-table th[scope="row"] { font-weight: 400; white-space: nowrap; col
   .s { transition: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- M8: organisations and plans ---------- */
+.org-index ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; padding: 0; margin: 0.5rem 0 1rem; font-size: 0.92rem; }
+.org { margin-bottom: 2.5rem; }
+dl.org-dims { margin: 0 0 1rem; font: 0.92rem/1.45 system-ui, sans-serif; }
+dl.org-dims div { display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr); gap: 0 1rem; padding: 0.3rem 0; border-bottom: 1px solid var(--grid); }
+dl.org-dims dt { font-weight: 600; color: var(--ink-2); }
+dl.org-dims dd { margin: 0; }
+@media (max-width: 480px) { dl.org-dims div { grid-template-columns: minmax(0, 1fr); } }
+.suspect-mark { display: inline-block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--surface); background: var(--flag); border-radius: 3px; padding: 0 0.3rem; vertical-align: 0.05em; }
+.suspect-note { display: inline-block; border-left: 2px solid var(--flag); padding-left: 0.4rem; }
+li.suspect > b { text-decoration: underline wavy var(--flag); text-underline-offset: 3px; }
+ul.figures, ul.plan-items { list-style: none; margin: 0; padding: 0; }
+ul.figures li, ul.plan-items li { margin: 0 0 0.35rem; }
+p.item-label { margin: 0 0 0.15rem; font-size: 0.85rem; color: var(--ink-2); }
+table.plans th[scope="row"] { white-space: nowrap; }
+table.plans td { min-width: 9rem; }
+table.plans td:nth-child(2) { min-width: 14rem; }
+table.plans td:last-child { min-width: 16rem; }
+.status-expired, .status-replaced { color: var(--down); }
+.plan-note summary { cursor: pointer; font-size: 0.85rem; color: var(--ink-2); }
+@media (max-width: 600px) {
+  table.plans, .plans tbody { display: block; }
+  .plans thead { display: none; }
+  .plans tr { display: block; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
+  .plans th, .plans td { display: block; border: 0; padding: 0.15rem 0; min-width: 0; }
+  table.plans td, table.plans td:nth-child(2), table.plans td:last-child { min-width: 0; }
+  .plans td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
+}
+.plan-item { margin-bottom: 2rem; }
+.series-note { max-width: 48rem; }
+.mapped-note { border-left: 3px solid #eda100; padding-left: 0.6rem; }
+.plan-key .key { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 0.2rem; }
+.key-target { border-top: 2px dashed var(--ink-2); height: 0; width: 16px; vertical-align: 3px; }
+.key-current { background: var(--accent); border-radius: 50%; }
+.key-revision { border: 2px solid var(--accent); border-radius: 50%; background: var(--surface); }
+.key-suspect { border: 2px solid var(--flag); border-radius: 50%; background: var(--surface); }
+.key-projects { background: #1baf7a; }
+.key-mapped { background: #eda100; }
+.plan-svg .target-step { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-dasharray: 5 3; }
+.plan-svg .gridl.zero { stroke: var(--grid-2); }
+.plan-svg .projects .bar { fill: #1baf7a; }
+.plan-svg .mapped .bar { fill: #eda100; }
+.plan-svg .bar.partial { opacity: 0.55; }
+.plan-svg .rep { stroke: var(--accent); stroke-width: 2; }
+.plan-svg .rep-current { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
+.plan-svg .rep-revision { fill: var(--surface); }
+.plan-svg .rep-suspect { stroke: var(--flag); stroke-width: 2.5; }
+.rep-status.revision { color: var(--ink-2); font-style: italic; }
+.data-sources { padding-left: 1.25rem; }
