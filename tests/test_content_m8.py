@@ -349,6 +349,19 @@ def test_plan_fact_doc_suffix_matching_two_documents_is_ambiguous(fixture_db, tm
         evaluate(f"{PLAN_EXPR}.TEST_0002", fixture_db[3], tmp_path, config_dir=cfg)
 
 
+def test_plan_fact_with_several_start_years_names_them(fixture_db, tmp_path):
+    cfg = tmp_path / "cfg"
+    shutil.copytree(FIXTURE / "config", cfg)
+    path = cfg / "plans" / "reports.csv"
+    lines = path.read_text().splitlines()
+    paris = lines[3]
+    assert "implemented_cumulative" in paris
+    path.write_text("\n".join([*lines, paris.replace(",,2020", ",,2015")]) + "\n")
+    expr = "plan.paris_plan_velo.total.2024.implemented_cumulative"
+    with pytest.raises(FactError, match=r"start years \(2015, 2020\)"):
+        evaluate(expr, fixture_db[3], tmp_path, config_dir=cfg)
+
+
 def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
     with pytest.raises(FactError, match="need the config directory"):
         evaluate(PLAN_EXPR, fixture_db[3], tmp_path)

@@ -378,6 +378,10 @@ def _counter_sites(expr, args, data, docs_dir):
     return float(_counter_year(expr, args, data).sites)
 
 
+def _years(series: dict) -> str:
+    return ", ".join(str(k[4]) for k in sorted(series, key=lambda k: (k[4] is None, k[4] or 0)))
+
+
 def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
     if config_dir is None:
         raise _err(expr, "plan facts need the config directory")
@@ -402,20 +406,31 @@ def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
         raise _err(expr, f"unknown quantity {quantity!r} ({'|'.join(QUANTITIES)})")
     if not year.isdigit():
         raise _err(expr, f"year {year!r} is not a year")
-    found = current_and_revisions(rows).get((plan_id, item_id, int(year), quantity))
-    if found is None:
+    series = {
+        k: v
+        for k, v in current_and_revisions(rows).items()
+        if k[:4] == (plan_id, item_id, int(year), quantity)
+    }
+    if not series:
         raise _err(expr, f"no reported {quantity} for {plan_id}/{item_id} in {year}")
-    current, revisions = found
     if not doc:
+        if len(series) > 1:
+            raise _err(
+                expr, f"counted from several start years ({_years(series)}); name a document"
+            )
+        ((current, _),) = series.values()
         return current.value
-    every: list[ReportRow] = [current, *revisions]
+    every: list[ReportRow] = [r for cur, revs in series.values() for r in (cur, *revs)]
     named = [r for r in every if r.doc_id.replace("/", "_") == doc]
     if not named:
-        have = ", ".join(r.doc_id.replace("/", "_") for r in every)
+        have = ", ".join(sorted({r.doc_id.replace("/", "_") for r in every}))
         raise _err(expr, f"no document {doc!r} for this figure (have {have})")
     distinct = sorted({r.doc_id for r in named})
     if len(distinct) > 1:
         raise _err(expr, f"{doc!r} is ambiguous: documents {', '.join(distinct)}")
+    if len({r.cumulative_from for r in named}) > 1:
+        starts = ", ".join(str(r.cumulative_from) for r in named)
+        raise _err(expr, f"{doc!r} prints this figure from several start years ({starts})")
     return named[0].value
 
 

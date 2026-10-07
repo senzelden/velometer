@@ -63,7 +63,7 @@ def test_later_document_is_current_and_the_earlier_a_revision():
     late = _row("TEST/0002", "2025-09-01", 8.6)
     for rows in ([early, late], [late, early]):
         got = current_and_revisions(rows)
-        key = ("berlin_rvp_2021", "vorrangnetz", 2025, "implemented_in_year")
+        key = ("berlin_rvp_2021", "vorrangnetz", 2025, "implemented_in_year", None)
         assert list(got) == [key]
         current, revisions = got[key]
         assert current.value == 8.6 and [r.value for r in revisions] == [10.8]
@@ -107,10 +107,7 @@ def test_report_columns_are_the_model_fields_in_order():
     assert REPORT_COLUMNS[:3] == ("plan_id", "item_id", "year")
     assert REPORT_COLUMNS[-2:] == ("suspect", "cumulative_from")
     header = (default_config_dir() / "plans" / "reports.csv").read_text().splitlines()[0]
-    columns = tuple(header.split(","))
-    # a shipped file may still lack the trailing optional columns, never reorder the rest
-    assert columns == REPORT_COLUMNS[: len(columns)]
-    assert len(columns) >= len(REPORT_COLUMNS) - 2
+    assert header.split(",") == list(REPORT_COLUMNS)
 
 
 def test_rows_lacking_the_optional_columns_get_defaults(plan_dir):
@@ -156,3 +153,15 @@ def test_equal_dates_prefer_drucksache_and_rote_nummer_over_report_over_web():
     # a later date still beats a better type
     later = _row("L", "2025-04-01", 5.0, doc_type="web")
     assert current_and_revisions([ds, later])[key][0].value == 5.0
+
+
+def test_cumulative_figures_from_different_start_years_are_separate_series():
+    kw = dict(item_id="vorrangnetz", year=2026, quantity="implemented_cumulative")
+    a = _row("A", "2026-03-01", 49.46, cumulative_from=2022, **kw)
+    b = _row("B", "2026-03-01", 78.2, cumulative_from=2017, **kw)
+    got = current_and_revisions([a, b])
+    assert len(got) == 2
+    assert {k[4]: (v[0].value, v[1]) for k, v in got.items()} == {
+        2022: (49.46, []),
+        2017: (78.2, []),
+    }

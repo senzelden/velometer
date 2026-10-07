@@ -76,7 +76,7 @@ REPORT_COLUMNS = tuple(ReportRow.model_fields)
 OPTIONAL_COLUMNS = ("suspect", "cumulative_from")  # a file may omit these trailing columns
 DOC_TYPE_RANK = {"drucksache": 0, "rote_nummer": 0, "report": 1, "web": 2}
 
-RowKey = tuple[str, str, int, str]
+RowKey = tuple[str, str, int, str, int | None]  # plan, item, year, quantity, cumulative_from
 
 
 def _load_plan_list(path: Path) -> list[Plan]:
@@ -133,12 +133,16 @@ def load_plans(dir: Path) -> tuple[list[Plan], list[ReportRow]]:
 def current_and_revisions(
     rows: list[ReportRow],
 ) -> dict[RowKey, tuple[ReportRow, list[ReportRow]]]:
-    """Per (plan, item, year, quantity): the current row and the other rows as revisions, best
-    first. Preference: a non-suspect row over a suspect one, then the latest `doc_date`, then on
-    equal dates drucksache = rote_nummer over report over web, then the later row in file order."""
+    """Per (plan, item, year, quantity, cumulative_from), so cumulative figures counted from
+    different start years are separate series, not revisions: the current row and the other rows
+    as revisions, best first. Preference: a non-suspect row over a suspect one, then the latest
+    `doc_date`, then on equal dates drucksache = rote_nummer over report over web, then the later
+    row in file order."""
     groups: dict[RowKey, list[ReportRow]] = {}
     for r in rows:
-        groups.setdefault((r.plan_id, r.item_id, r.year, r.quantity), []).append(r)
+        groups.setdefault((r.plan_id, r.item_id, r.year, r.quantity, r.cumulative_from), []).append(
+            r
+        )
 
     def preference(ir: tuple[int, ReportRow]) -> tuple:
         i, r = ir
