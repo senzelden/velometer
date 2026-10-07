@@ -1,0 +1,49 @@
+id: copenhagen_kommune
+name: Københavns Kommune (City of Copenhagen)
+kind: official
+url: https://www.kk.dk/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        Københavns Kommune is the municipality of Copenhagen. Its technical administration, the
+        Klima-, Miljø- og Teknikforvaltningen, is responsible for running and developing the
+        city and says it works to make getting around quick and easy by bicycle, public
+        transport or car [@kk-klima-miljoe-teknikforvaltningen]. The City Council
+        (Borgerrepræsentationen) instructs its committees on strategy by vote
+        [@kk-br-cykelstrategi-2024].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        cycle tracks (cykelstier), separated by kerbs from carriageway and pavement; cycle lanes
+        are reported in a separate row [@copenhagen-cykelfokus-2024]
+        [@copenhagen-mobilitetsredegorelse-2026]
+      kind: existing cycle track in 2025 [@copenhagen-mobilitetsredegorelse-2026]
+      length: not stated by the source
+      date: the year 2025 [@copenhagen-mobilitetsredegorelse-2026]
+      area: the municipality of Copenhagen [@copenhagen-mobilitetsredegorelse-2026]
+      method: the administration's own inventory [@copenhagen-mobilitetsredegorelse-2026]
+    paragraphs:
+      - >-
+        Our Copenhagen figure, 401 km of cycle track in 2025, comes from the
+        Mobilitetsredegørelse 2026 [@copenhagen-mobilitetsredegorelse-2026]. The city used to
+        report on cycling every second year in a bicycle account; since 2021 the mobility report
+        has replaced it [@copenhagen-verdens-bedste-cykelby]. In the city's design guidelines a
+        cykelsti has kerbs towards the carriageway and the pavement, while painted cycle lanes
+        are a separate category that new schemes should avoid [@copenhagen-cykelfokus-2024].
+  - heading: Political role
+    paragraphs:
+      - >-
+        Copenhagen's cycling targets came from the Cycling Strategy 2011–2025 and the Cycle
+        Track Priority Plan 2017–2025 [@copenhagen-mobilitetsredegorelse-2026]; the bicycle
+        account was there to show progress against the strategy's goals
+        [@copenhagen-verdens-bedste-cykelby]. In May 2024 the City Council instructed its
+        technical committee to give the city a new, strong cycling strategy when revising its
+        plans [@kk-br-cykelstrategi-2024].
+      - >-
+        In our reading, the city both delivers the infrastructure and keeps the score, and its
+        km figures serve its own targets.
+quotes:
+  - {excerpt: kk-br-cykelstrategi-2024/proposal, after: 3}
+literals:
+  - "401 km"

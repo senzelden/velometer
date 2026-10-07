@@ -1,4 +1,12 @@
 # Organisations: which profiled body stands behind each (city, source) pair of
 # config/external/figures.csv and each reconcile source (M8 spec §3.2). One entry per pair:
 #   - {city: "*" | <city id>, source: <source id>, organisation: <content/organisations id>}
-[]
+# The Berlin plan and report publishers (config/plans/) use the same ids: senmvku, infravelo,
+# abgeordnetenhaus. Research log: docs/review/m8-organisations.md
+- {city: "*", source: clean_cities_2025, organisation: clean_cities}
+- {city: "*", source: qecio_v2_10, organisation: ecf}
+- {city: "*", source: bikenetkit_v1, organisation: bikenetkit}
+- {city: berlin, source: official, organisation: senmvku}
+- {city: berlin, source: changing_cities, organisation: changing_cities}
+- {city: copenhagen, source: official, organisation: copenhagen_kommune}
+- {city: vienna, source: mobilitaetsagentur_wien, organisation: mobilitaetsagentur_wien}

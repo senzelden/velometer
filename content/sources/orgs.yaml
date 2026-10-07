@@ -1,0 +1,713 @@
+# Sources on the organisations behind our external figures (M8 spec §3): who they are, how they
+# are funded and what political role their figures play. Not tied to one region.
+# Research log: docs/review/m8-organisations.md
+sources:
+  # ------------------------------------------------------------ Clean Cities Campaign
+  - id: cc-what-we-do
+    publisher: Clean Cities Campaign
+    title: What we do
+    url: https://cleancitiescampaign.org/what-we-do/
+    accessed: 2026-10-07
+    language: en
+    kind: ngo
+    excerpts:
+      - id: network
+        text: >-
+          We are Europe’s largest network of organisations on a mission to build public support
+          for cities to shift from polluting cars to active, shared and electric mobility.
+        locator: "Introduction"
+      - id: hosted
+        text: Clean Cities is hosted by T&E
+        locator: "Introduction, second sentence"
+      - id: policy
+        text: >-
+          Backed by research, we shape city, national and European policy, trusted by both
+          policymakers and campaigners for our dedication to transformative change.
+        locator: "Who we are, Thought leaders"
+  - id: cc-ranking-2025-page
+    publisher: Clean Cities Campaign
+    title: "City Ranking 2025: Streets for Kids, Cities for All (overview page)"
+    url: https://cleancitiescampaign.org/city-ranking-2025/
+    accessed: 2026-10-07
+    language: en
+    kind: ngo
+    excerpts:
+      - id: cities
+        text: >-
+          We’ve analysed 36 European cities to see how they’re progressing in creating transport
+          systems that prioritise the needs of children.
+        locator: "Introduction"
+      - id: indicators
+        text: >-
+          The table below shows the combined ranking of the 36 cities, based on their performance
+          across all three key indicators.
+        locator: "Overall results"
+  - id: te-funders
+    publisher: Transport & Environment (T&E)
+    title: Funders
+    url: https://www.transportenvironment.org/about-us/funders
+    accessed: 2026-10-07
+    language: en
+    kind: ngo
+    excerpts:
+      - id: funding
+        text: >-
+          We receive funding from a diverse range of donors, including foundations, government
+          agencies, multilateral institutions, and our own membership of 49 independent
+          environmental organisations across Europe.
+        locator: "Our funding (page last updated April 17, 2026)"
+  - id: paris-fr-cc-ranking-2025
+    publisher: Ville de Paris
+    title: "Paris, ville européenne la plus adaptée à la mobilité des enfants"
+    url: https://www.paris.fr/pages/paris-ville-europeenne-la-plus-adaptee-a-la-mobilite-des-enfants-31537
+    accessed: 2026-10-07
+    language: fr
+    kind: official
+    excerpts:
+      - id: cites-ranking
+        text: >-
+          Paris est la capitale européenne la plus accueillante pour les enfants : c’est le
+          résultat d’une étude menée l’association Clean Cities auprès de 36 villes européennes.
+        gloss_en: >-
+          Paris is the most child-friendly European capital: that is the result of a study by
+          the Clean Cities association of 36 European cities.
+        locator: "News item, first paragraph (page updated 17/06/2025)"
+  - id: cities-today-cc-ranking-2025
+    publisher: Cities Today
+    title: Paris tops ranking for child-friendly urban travel
+    url: https://cities-today.com/paris-tops-ranking-for-child-friendly-urban-travel/
+    published: 2025-05-19
+    accessed: 2026-10-07
+    language: en
+    kind: press
+    excerpts:
+      - id: calls
+        text: >-
+          The report calls on national governments and the European Commission to strengthen
+          legal frameworks, promote best practice and improve data collection to support safe,
+          child-focused mobility across the continent.
+        locator: "Article body, last paragraph"
+
+  # ------------------------------------------------------------ European Cyclists' Federation
+  - id: ecf-about
+    publisher: European Cyclists' Federation (ECF)
+    title: About ECF
+    url: https://www.ecf.com/en/about-us/about-ecf/
+    accessed: 2026-10-07
+    language: en
+    kind: ngo
+    excerpts:
+      - id: umbrella
+        text: >-
+          We are the single European umbrella organisation for cycling for both transportation
+          and leisure.
+        locator: "About ECF, first sentence"
+      - id: founded
+        text: >-
+          Founded in 1983, the European Cyclists’ Federation is a Brussels-based independent
+          non-profit association dedicated to achieving more and better cycling for all in
+          Europe.
+        locator: "About ECF, second sentence"
+      - id: members
+        text: >-
+          With more than 70 member organisations in over 40 countries, we unite the European
+          cycling movements as the only civil society voice at the pan-European level
+        locator: "About ECF, third sentence"
+      - id: funding-life
+        text: ECF gratefully acknowledges financial support from the LIFE Programme of the European Union
+        locator: "Page footer"
+      - id: funding-industry
+        text: ECF gratefully acknowledges financial support from the European Cycling Industries
+        locator: "Page footer"
+  - id: ecf-2024-breakthroughs
+    publisher: European Cyclists' Federation (ECF)
+    title: "2024: A year of breakthroughs for cycling"
+    url: https://www.ecf.com/en/news/-2024-a-year-of-breakthroughs-for-cycling/
+    published: 2024-12-18
+    accessed: 2026-10-07
+    language: en
+    kind: ngo
+    excerpts:
+      - id: declaration-advocacy
+        text: >-
+          ECF, as the only Europe-wide civil society voice for cycling, together with its
+          industry partners Cycling Industries Europe and Confederation of the European Bicycle
+          Industry (CONEBI) had long advocated for a unified cycling policy at the European
+          level and were at the forefront every step of the way
+        locator: "Section The historic European Declaration on Cycling"
+      - id: egum
+        text: >-
+          In August, the European Commission’s Expert Group on Urban Mobility (EGUM), co-chaired
+          by ECF, issued a set of recommendation to improve road safety for people walking,
+          cycling, and using light electric vehicles.
+        locator: "Section Advancing road safety"
+  - id: ec-declaration-cycling
+    publisher: European Commission, DG Mobility and Transport
+    title: European declaration on cycling
+    url: https://transport.ec.europa.eu/transport-themes/urban-transport/european-declaration-cycling_en
+    accessed: 2026-10-07
+    language: en
+    kind: official
+    excerpts:
+      - id: signed
+        text: >-
+          The European declaration on cycling, signed in 2024 by the European Parliament,
+          Council and Commission, recognises cycling as a sustainable, accessible, and
+          affordable means of transport, with strong added value for the EU economy.
+        locator: "Boosting cycling across the EU, first paragraph"
+  - id: qecio-site
+    publisher: European Cyclists' Federation (ECF)
+    title: "ECF Cycling Infrastructure Tracker: Quantifying Europe’s Cycling Infrastructure using OpenStreetMap (QECIO 2.0)"
+    url: https://european-cyclists-federation.github.io/
+    accessed: 2026-10-07
+    language: en
+    kind: index
+    excerpts:
+      - id: purpose
+        text: >-
+          There is great demand for data on cycling infrastructure, but currently, no official
+          source provides this kind of information on a European scale. This data project
+          responds to this need by extracting data about cycling infrastructure from
+          OpenStreetMap (OSM).
+        locator: "Introduction"
+
+  # ------------------------------------------------------------ BikeNetKit
+  - id: bikenetkit-github-org
+    publisher: BikeNetKit (GitHub organisation profile)
+    title: BikeNetKit organisation README
+    url: https://github.com/BikeNetKit
+    accessed: 2026-10-07
+    language: en
+    kind: research
+    excerpts:
+      - id: toolkit
+        text: >-
+          this digital toolkit compiles state-of-the-art bicycle network planning algorithms by
+          the bicycle network research community, kick-started by NERDS since 2019, packaged as
+          a Python software suite
+        locator: "README, The toolkit to design and improve bike networks"
+      - id: started
+        text: We started developing BikeNetKit in 2026.
+        locator: "README, Contributing to the ecosystem"
+      - id: audience
+        text: >-
+          BikeNetKit is aimed at urban planners as a decision support tool for various network
+          planning tasks, or for proactive citizens to create a compelling vision for urban
+          cycling in their city.
+        locator: "README, User-friendly software for planners and advocates"
+      - id: stance
+        text: >-
+          Yet, politicians often neglect their citizens, not building for cycling at all, or
+          without a plan.
+        locator: "README, first paragraph"
+      - id: funding
+        text: Development of BikeNetKit is supported by the Innovation Fund Denmark
+        locator: "README, Supported by"
+      - id: funding-more
+        text: the EU HORIZON project JUST STREETS
+        locator: "README, Supported by"
+      - id: funding-itu
+        text: the Data Science Section of IT University of Copenhagen.
+        locator: "README, Supported by"
+  - id: bikenetkit-gisruk-2026
+    publisher: Zenodo (GISRUK 2026 conference proceeding; IT University of Copenhagen)
+    title: "BikeNetKit: Developing an open-source bicycle network software suite for urban planners"
+    url: https://zenodo.org/records/19390654
+    published: 2026-04-02
+    accessed: 2026-10-07
+    language: en
+    kind: research
+    excerpts:
+      - id: affiliation
+        text: Networks, Data and Society (NERDS), IT University of Copenhagen
+        locator: "Authors, affiliation 1"
+      - id: ad-hoc
+        text: >-
+          Contemporary bicycle network planning is largely an ad hoc process based on little
+          empirical evidence, sometimes outsourced to for-profit consultancies working with
+          opaque methods.
+        locator: "Description, first sentence"
+      - id: policy
+        text: >-
+          BikeNetKit is targeted at, and developed with the input of, urban planners and
+          policy-makers.
+        locator: "Description"
+
+  # ------------------------------------------------------------ Changing Cities
+  - id: changing-cities-verein
+    publisher: Changing Cities e.V.
+    title: Verein
+    url: https://changing-cities.org/verein/
+    accessed: 2026-10-07
+    language: de
+    kind: ngo
+    excerpts:
+      - id: origin
+        text: >-
+          Der Verein ist aus dem Netzwerk Lebenswerte Stadt e.V. hervorgegangen, der erfolgreich
+          den Volksentscheid Fahrrad organisiert hat.
+        gloss_en: >-
+          The association grew out of Netzwerk Lebenswerte Stadt e.V., which successfully
+          organised the Volksentscheid Fahrrad (cycling referendum).
+        locator: "Section Ja, wir sind die mit dem Fahrrad-Volksentscheid"
+      - id: members-funding
+        text: 1480 Fördermitglieder (Stand 2/2026) unterstützen den Verein und bilden die finanzielle Basis.
+        gloss_en: "1,480 supporting members (as of 2/2026) support the association and form its financial basis."
+        locator: "Section Wir sind viele"
+      - id: own-claim
+        text: >-
+          Mit dem Volksentscheid Fahrrad haben wir das Mobilitätsgesetz durchgesetzt. Seitdem
+          kämpfen wir um seine Umsetzung: Meter für Meter.
+        gloss_en: >-
+          With the Volksentscheid Fahrrad we pushed through the Mobility Act. Since then we have
+          been fighting for its implementation, metre by metre.
+        locator: "News teaser on the page"
+  - id: changing-cities-transparenz
+    publisher: Changing Cities e.V.
+    title: "Transparenz (Initiative Transparente Zivilgesellschaft)"
+    url: https://changing-cities.org/transparenz/
+    accessed: 2026-10-07
+    language: de
+    kind: ngo
+    excerpts:
+      - id: founded
+        text: "Gründungsjahr: 2016"
+        gloss_en: "Year founded: 2016"
+        locator: "1. Name, Sitz, Anschrift und Gründungsjahr"
+      - id: large-funder
+        text: >-
+          Im Jahr 2025 machten folgende Förderungen mehr als 10 Prozent des Jahresbudgets aus:
+          104.606,73 € der European Climate Foundation
+        gloss_en: >-
+          In 2025 the following grants made up more than 10 percent of the annual budget:
+          €104,606.73 from the European Climate Foundation
+        locator: "10. Namen von Personen, deren jährliche Zahlungen mehr als 10 % des Gesamtjahresbudgets ausmachen"
+  - id: changing-cities-volksentscheid
+    publisher: Changing Cities e.V.
+    title: Volksentscheid Fahrrad
+    url: https://changing-cities.org/kampagnen/volksentscheid-fahrrad/
+    accessed: 2026-10-07
+    language: de
+    kind: ngo
+    excerpts:
+      - id: signatures
+        text: >-
+          Der Volksentscheid Fahrrad übergab am 14. Juni 2016 nach dreieinhalb Wochen
+          Sammelphase 105.425 Unterschriften für den Antrag auf ein Volksbegehren an das Berliner
+          Abgeordnetenhaus.
+        gloss_en: >-
+          On 14 June 2016, after a collection phase of three and a half weeks, the Volksentscheid
+          Fahrrad handed 105,425 signatures for a request for a popular initiative to the Berlin
+          Abgeordnetenhaus.
+        locator: "Campaign text, first sentence"
+      - id: negotiated
+        text: >-
+          Gemeinsam mit dem ADFC, dem BUND, dem FUSS e.V. und dem Senat hat der Volksentscheid
+          Fahrrad ein RadGesetz verhandelt, das am 28. Juni 2018 als Teil des Berliner
+          Mobilitätsgesetzes verabschiedet wurde.
+        gloss_en: >-
+          Together with the ADFC, BUND, FUSS e.V. and the Senate, the Volksentscheid Fahrrad
+          negotiated a cycling law that was passed on 28 June 2018 as part of the Berlin Mobility
+          Act.
+        locator: "Campaign text, second sentence"
+  - id: klimareporter-radgesetz-2018
+    publisher: Klimareporter°
+    title: Berlin bekommt Radgesetz
+    url: https://klimareporter.de/verkehr/berlin-bekommt-radgesetz
+    published: 2018-06-28
+    accessed: 2026-10-07
+    language: de
+    kind: press
+    excerpts:
+      - id: co-drafted
+        text: >-
+          Die Euphorie kommt allerdings nicht von ungefähr, denn die Aktivisten haben selbst an
+          dem Gesetz mitgearbeitet.
+        gloss_en: >-
+          The euphoria is no accident, though: the activists themselves worked on the law.
+        locator: "Article body, first paragraph"
+      - id: drafted-with
+        text: >-
+          Zusammen mit Aktivisten von "Volksentscheid Fahrrad", dem Radfahrverband ADFC und dem
+          Umweltverband BUND erarbeitete die Senatsverwaltung das wegweisende Gesetz.
+        gloss_en: >-
+          Together with activists of 'Volksentscheid Fahrrad', the cycling association ADFC and
+          the environmental association BUND, the Senate administration drew up the landmark
+          law.
+        locator: "Article body, second paragraph"
+
+  # ------------------------------------------------------------ Berlin: Senate, parliament, infraVelo
+  - id: berlin-mobg-page
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
+    title: Berliner Mobilitätsgesetz (berlin.de web page)
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrspolitik/mobilitaetsgesetz/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: collaboration
+        text: >-
+          Das Berliner Mobilitätsgesetz ist das Ergebnis einer engen Zusammenarbeit zwischen der
+          Stadtgesellschaft, des Abgeordnetenhauses und der Verwaltung aus Senat und Bezirken.
+          Dabei sind wichtige Impulse engagierter Bürgerinnen und Bürger direkt in den
+          Gesetzgebungsprozess eingeflossen.
+        gloss_en: >-
+          The Berlin Mobility Act is the result of close cooperation between civil society, the
+          Abgeordnetenhaus and the administration of the Senate and the districts. Important
+          impulses from engaged citizens fed directly into the legislative process.
+        locator: "Section Die Schritte zum Berliner Mobilitätsgesetz"
+      - id: promulgated
+        text: >-
+          Verkündet als Artikel 1 des Gesetzes zur Neuregelung gesetzlicher Vorschriften zur
+          Mobilitätsgewährleistung vom 5. Juli 2018
+        gloss_en: >-
+          Promulgated as Article 1 of the Act reorganising statutory provisions on guaranteeing
+          mobility of 5 July 2018
+        locator: "Download list, Berliner Mobilitätsgesetz"
+  - id: berlin-radfortschrittsbericht-page
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
+    title: Radfortschrittsbericht (berlin.de web page)
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: annual
+        text: >-
+          Über den Stand der Entwicklung berichtet der jährliche Fortschrittsbericht. In dem
+          Bericht werden umfassend die Ergebnisse der Aktivitäten der Senatsverkehrsverwaltung,
+          der landeseigen Infrastrukturgesellschaft infraVelo sowie der Bezirke dargestellt.
+        gloss_en: >-
+          The annual progress report reports on the state of development. It presents in full
+          the results of the activities of the Senate transport administration, the state-owned
+          infrastructure company infraVelo and the districts.
+        locator: "Introduction"
+      - id: streckenlaenge
+        text: >-
+          Ab dem Bericht 2022, wird hier die neue Maßeinheit „Streckenlänge“ verwendet. Das
+          bedeutet, dass eine beidseitige Radverkehrsanlage an einem 1 Kilometer langen
+          Streckenabschnitt als 1 Kilometer umgesetzte Strecke „gemessen“ und kommuniziert wird.
+        gloss_en: >-
+          From the 2022 report onwards the new unit 'route length' (Streckenlänge) is used: a
+          cycling facility on both sides of a 1-km section is 'measured' and communicated as 1 km
+          of implemented route.
+        locator: "Anmerkung, below the 2024 summary"
+      - id: per-direction-before
+        text: >-
+          In der Vergangenheit wurde 1 Kilometer pro Richtung gezählt und für den
+          Streckenabschnitt entsprechend 2 Kilometer umgesetzte Radverkehrsanlagen kommuniziert.
+        gloss_en: >-
+          In the past 1 km was counted per direction, so 2 km of implemented cycling facilities
+          were communicated for such a section.
+        locator: "Anmerkung, below the 2024 summary"
+      - id: not-comparable
+        text: Die Zahlen erscheinen so niedriger und sind nicht direkt mit den Vorjahreswerten vergleichbar.
+        gloss_en: The figures thus appear lower and are not directly comparable with previous years' values.
+        locator: "Anmerkung, below the 2024 summary"
+  - id: berlin-dpa-fortschrittsbericht-hauptausschuss
+    publisher: Nordkurier (dpa)
+    title: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa report on the Senate's Fahrrad-Fortschrittsbericht 2025; same article as berlin-dpa-fortschrittsbericht-2025, other passages)"
+    url: https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
+    published: 2026-09-08
+    accessed: 2026-10-07
+    language: de
+    kind: press
+    excerpts:
+      - id: for-hauptausschuss
+        text: >-
+          Inklusive Bundesmitteln flossen 2025 knapp 27 Millionen Euro in den Berliner
+          Radverkehr, wie aus dem Fahrrad-Fortschrittsbericht der zuständigen
+          Verkehrssenatsverwaltung für den Hauptausschuss im Abgeordnetenhaus hervorgeht.
+        gloss_en: >-
+          Including federal funds, just under 27 million euros went into cycling in Berlin in
+          2025, according to the cycling progress report of the responsible Senate transport
+          administration for the main (budget) committee of the Abgeordnetenhaus.
+        locator: "Lead paragraph"
+      - id: available
+        text: >-
+          Dem Bericht zufolge standen im vergangenen Jahr über alle Haushaltstitel hinweg rund
+          82,4 Millionen Euro für den Radverkehr zur Verfügung.
+        gloss_en: >-
+          According to the report, around 82.4 million euros were available for cycling last
+          year across all budget lines.
+        locator: "Article body, second paragraph"
+  - id: berlin-tagesspiegel-radwegestopp-2023
+    publisher: Der Tagesspiegel
+    title: "Sobald ein Auto-Parkplatz wegfällt: Berliner Senat stoppt vorerst Radwegprojekte"
+    url: https://www.tagesspiegel.de/berlin/sobald-auch-nur-ein-parkplatz-wegfallt-berliner-senatsverwaltung-stoppt-vorerst-radwegprojekte-9992884.html
+    published: 2023-06-15
+    accessed: 2026-10-07
+    language: de
+    kind: press
+    excerpts:
+      - id: stop
+        text: >-
+          Keine neuen Radwege mehr für Berlin, wenn dafür auch nur ein Pkw-Stellplatz wegfällt:
+          Die Senatsverkehrsverwaltung hat die Bezirke gebeten, Radwegprojekte vorerst zu
+          stoppen.
+        gloss_en: >-
+          No more new cycle paths for Berlin if even one car parking space would be lost: the
+          Senate transport administration has asked the districts to stop cycle path projects for
+          the time being.
+        locator: "Lead paragraph (rest of the article behind the paywall)"
+  - id: agh-parlamentarische-anfragen
+    publisher: Abgeordnetenhaus Berlin
+    title: Parlamentarische Anfragen
+    url: https://www.parlament-berlin.de/dokumente/parlamentarische-anfragen
+    accessed: 2026-10-07
+    language: de
+    kind: parliament
+    excerpts:
+      - id: control
+        text: >-
+          Anfragen des Abgeordnetenhauses an den Senat sind ein wichtiges Mittel zur Ausübung der
+          parlamentarischen Kontrolle (Kontrollrecht).
+        gloss_en: >-
+          Questions from the Abgeordnetenhaus to the Senate are an important means of exercising
+          parliamentary control (right of scrutiny).
+        locator: "Das Fragerecht, first sentence"
+      - id: written-answer
+        text: Der Senat beantwortet die Anfrage schriftlich. Die Antwort soll innerhalb von drei Wochen erfolgen.
+        gloss_en: The Senate answers the question in writing. The answer is due within three weeks.
+        locator: "Das Fragerecht"
+      - id: pardok
+        text: >-
+          Alle Schriftlichen Anfragen sind darüber hinaus dauerhaft in der
+          Parlamentsdokumentation (PARDOK) abrufbar.
+        gloss_en: All written questions are also permanently available in the parliamentary documentation system (PARDOK).
+        locator: "Section Anfragen"
+  - id: agh-arbeitsweise
+    publisher: Abgeordnetenhaus Berlin
+    title: Aufgaben und Arbeitsweise des Parlaments
+    url: https://www.parlament-berlin.de/das-parlament/arbeitsweise
+    accessed: 2026-10-07
+    language: de
+    kind: parliament
+    excerpts:
+      - id: budget
+        text: >-
+          Eine herausragende Rolle spielt hierbei das Haushaltsgesetz, in dem jeweils für ein
+          Jahr oder zwei Jahre bestimmt wird, für welche Zwecke die vor allem aus
+          Steuereinnahmen gewonnenen Gelder ausgegeben werden sollen.
+        gloss_en: >-
+          The budget act plays an outstanding role here; it determines, for one or two years at a
+          time, the purposes for which the money raised mainly from taxes is to be spent.
+        locator: "Aufgaben und Arbeitsweise des Parlaments, second paragraph"
+      - id: control
+        text: Die dritte große Aufgabe liegt in der Kontrolle der Regierung.
+        gloss_en: The third major task is scrutiny of the government.
+        locator: "Aufgaben und Arbeitsweise des Parlaments, fourth paragraph"
+  - id: infravelo-ueber-uns
+    publisher: GB infraVelo GmbH
+    title: Über uns
+    url: https://www.infravelo.de/ueber-uns/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: founded
+        text: >-
+          infraVelo wurde Mitte 2017 im Auftrag der Senatsverwaltung für Umwelt, Verkehr und
+          Klimaschutz (seit Mai 2023 "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und
+          Umwelt") gegründet.
+        gloss_en: >-
+          infraVelo was founded in mid-2017 on behalf of the Senate Department for the
+          Environment, Transport and Climate Protection (since May 2023 the 'Senate Department
+          for Mobility, Transport, Climate Protection and the Environment').
+        locator: "Section Wer wir sind"
+      - id: subsidiary
+        text: Wir sind ein 100%iges Tochterunternehmen der landeseigenen Grün Berlin GmbH.
+        gloss_en: We are a wholly owned subsidiary of the state-owned Grün Berlin GmbH.
+        locator: "Section Wer wir sind"
+  - id: infravelo-organisation
+    publisher: GB infraVelo GmbH
+    title: Organisation (Unternehmensstruktur und Organe der Gesellschaft)
+    url: https://www.infravelo.de/ueber-uns/organisation/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: priorities
+        text: Die inhaltliche Ausrichtung und Priorisierung unserer Projekte obliegt der SenMVKU.
+        gloss_en: The substantive direction and prioritisation of our projects lie with SenMVKU.
+        locator: "Section Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt"
+      - id: responsibility
+        text: >-
+          Die Zuständigkeit für die Radverkehrsinfrastruktur in Berlin liegt bei der SenMVKU und
+          bei den Bezirken.
+        gloss_en: Responsibility for cycling infrastructure in Berlin lies with SenMVKU and the districts.
+        locator: "Section Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt"
+  - id: infravelo-faq
+    publisher: GB infraVelo GmbH
+    title: Fragen und Antworten
+    url: https://www.infravelo.de/ueber-uns/fragen-und-antworten/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: funding
+        text: infraVelo erhält Zuweisungen aus dem öffentlichen Haushalt des Landes Berlin.
+        gloss_en: infraVelo receives allocations from the public budget of the Land Berlin.
+        locator: "Wie finanziert sich infraVelo?"
+      - id: no-own-projects
+        text: >-
+          infraVelo initiiert keine Projekte, sondern nimmt Projektsteuerungs-,
+          Projektmanagement-, Baumanagement- und Bauherrenaufgaben wahr, die infraVelo zuvor von
+          der Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
+          übertragen wurden.
+        gloss_en: >-
+          infraVelo does not initiate projects; it carries out project control, project
+          management, construction management and client tasks previously assigned to it by
+          SenMVKU.
+        locator: "Entwickelt oder initiiert infraVelo auch eigenständig Projekte?"
+      - id: database
+        text: >-
+          infraVelo übernimmt seit Januar 2020 wichtige Funktionen bei der Projektsteuerung von
+          bezirklichen Maßnahmen: Mit der Führung einer zentralen Datenbank aller
+          Radverkehrsmaßnahmen in Berlin werden die Projekte vor allem hinsichtlich ihrer
+          Terminierung und Finanzen überwacht.
+        gloss_en: >-
+          Since January 2020 infraVelo has taken on key functions in steering district measures:
+          by keeping a central database of all cycling measures in Berlin, the projects are
+          monitored above all for scheduling and finances.
+        locator: "Welche Projekte sind auf der Projektkarte zu sehen?"
+      - id: quarterly
+        text: >-
+          In der Datenbank werden Informationen zu den Radverkehrsmaßahmen aller Berliner Bezirke
+          zentral erfasst und von den Projektverantwortlichen in den Bezirken quartalsweise
+          aktualisiert.
+        gloss_en: >-
+          The database records information on the cycling measures of all Berlin districts
+          centrally; the project leads in the districts update it quarterly.
+        locator: "Was ist der Zweck der bezirklichen Datenbank?"
+      - id: not-alone
+        text: >-
+          infraVelo ist nicht alleine für den Ausbau der Radverkehrsinfrastruktur zuständig: Auch
+          die Bezirke und die Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
+          (SenMVKU) sind als Baulastträger für einzelne Radverkehrsprojekte aktiv
+        gloss_en: >-
+          infraVelo is not solely responsible for expanding cycling infrastructure: the districts
+          and SenMVKU are also active as the authorities responsible for individual cycling
+          projects
+        locator: "Wann verbessert sich die Radverkehrsinfrastruktur sichtbar?"
+      - id: prioritises
+        text: >-
+          Als Zuwendungsgeberin von infraVelo priorisiert die Senatsverwaltung für Mobilität,
+          Verkehr, Klimaschutz und Umwelt (SenMVKU) die Projekte und Vorhaben.
+        gloss_en: As infraVelo's funder, SenMVKU prioritises the projects and plans.
+        locator: "Wie werden Vorhaben priorisiert?"
+      - id: steering
+        text: >-
+          infraVelo unterstützt diese Koordinierung mit der Leitung von drei bis vier
+          Steuerungsrunden pro Jahr und Bezirk.
+        gloss_en: infraVelo supports this coordination by chairing three to four steering rounds per year and district.
+        locator: "Wie erfolgt die Abstimmung zwischen den Bezirken und infraVelo?"
+
+  # ------------------------------------------------------------ Vienna
+  - id: mobilitaetsagentur-ueber-uns
+    publisher: Mobilitätsagentur Wien GmbH
+    title: Über uns
+    url: https://mobilitaetsagentur.at/ueber-uns
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: subsidiary
+        text: >-
+          Als Tochterunternehmen der Stadt Wien arbeiten wir für bessere Bedingungen für das
+          Radfahren und Zu-Fuß-Gehen in Wien.
+        gloss_en: >-
+          As a subsidiary of the City of Vienna we work for better conditions for cycling and
+          walking in Vienna.
+        locator: "Introduction"
+      - id: city-goals
+        text: Wir sind den Zielsetzungen der Stadt Wien verpflichtet.
+        gloss_en: We are committed to the City of Vienna's objectives.
+        locator: "Introduction"
+  - id: drahtesel-mobilitaetsagentur-2016
+    publisher: Drahtesel (Radlobby Österreich magazine)
+    title: Fünf Jahre mit Blum
+    url: https://www.drahtesel.or.at/fuenf-jahre-mit-blum/
+    published: 2016-12-02
+    accessed: 2026-10-07
+    language: de
+    kind: press
+    excerpts:
+      - id: start-2011
+        text: Im Herbst 2011 trat Martin Blum seine Arbeit als Fahrradbeauftragter der Stadt Wien an.
+        gloss_en: In autumn 2011 Martin Blum took up his post as the City of Vienna's cycling commissioner.
+        locator: "Standfirst"
+      - id: created
+        text: Eine Institution, die bald nach Arbeitsbeginn von der rot-grünen Stadtregierung geschaffen wurde.
+        gloss_en: An institution created by the red-green city government soon after it took office.
+        locator: "First paragraph"
+      - id: communication
+        text: >-
+          Bevor wir Bilanz ziehen, sollten wir uns in Erinnerung rufen, was die Mobilitätsagentur
+          eigentlich ist: eine Art Kommunikationsabteilung der Stadt. Konkrete
+          Infrastrukturmaßnahmen durchsetzen kann sie ebenso wenig wie Ampelschaltungen ändern
+          oder die Straßenverkehrsordnung novellieren.
+        gloss_en: >-
+          Before taking stock, we should recall what the Mobilitätsagentur actually is: a kind of
+          communications department of the city. It can no more push through concrete
+          infrastructure measures than change traffic-light phases or amend the road traffic
+          regulations.
+        locator: "Section Bewusstseinsbildung und Service"
+      - id: budget
+        text: >-
+          Die rund zwei Millionen Jahresbudgets der Agentur fließen in Veranstaltungen und
+          Kampagnen, die Radfahren und Zufußgehen fördern und attraltiv machen sollen.
+        gloss_en: >-
+          The agency's annual budget of around two million goes into events and campaigns meant
+          to promote cycling and walking and make them attractive.
+        locator: "Section Bewusstseinsbildung und Service"
+
+  # ------------------------------------------------------------ Copenhagen
+  - id: kk-klima-miljoe-teknikforvaltningen
+    publisher: Københavns Kommune
+    title: Klima-, Miljø- og Teknikforvaltningen
+    url: https://www.kk.dk/om-kommunen/forvaltninger/teknik-og-miljoeforvaltningen
+    accessed: 2026-10-07
+    language: da
+    kind: official
+    excerpts:
+      - id: responsible
+        text: >-
+          Klima-, Miljø- og Teknikforvaltningen er ansvarlig for drift og udvikling af byen til
+          gavn for borgere, erhvervsliv og andre brugere af byen.
+        gloss_en: >-
+          The Climate, Environment and Technical Administration is responsible for operating and
+          developing the city for the benefit of residents, businesses and other users of the
+          city.
+        locator: "Introduction"
+      - id: cycling
+        text: >-
+          Vi gør en stor indsats for at gøre det hurtigt og let at komme rundt i byen på cykel, i
+          offentlig transport eller i bil.
+        gloss_en: >-
+          We make a great effort to make it quick and easy to get around the city by bicycle, by
+          public transport or by car.
+        locator: "Afdelinger, Mobilitet, Klimatilpasning og Byvedligehold"
+  - id: kk-br-cykelstrategi-2024
+    publisher: Københavns Kommune, Borgerrepræsentationen
+    title: "Medlemsforslag om cykelstrategi (Borgerrepræsentationen, meeting of 2 May 2024, item 15, minutes)"
+    url: https://www.kk.dk/dagsordener-og-referater/Borgerrepr%C3%A6sentationen/m%C3%B8de-02052024/referat/punkt-15
+    published: 2024-05-02
+    accessed: 2026-10-07
+    language: da
+    kind: official
+    excerpts:
+      - id: proposal
+        text: >-
+          Det foreslås, at Borgerrepræsentationen pålægger Teknik- og Miljøudvalget, at det i
+          arbejdet med at revidere planer, politikker og strategier indenfor teknik- og
+          miljøområdet, indgår at Københavns Kommune får en ny stærk cykelstrategi
+        gloss_en: >-
+          It is proposed that the City Council instructs the Technical and Environmental
+          Committee that, in revising plans, policies and strategies in the technical and
+          environmental field, the City of Copenhagen gets a new, strong cycling strategy
+        locator: "Medlemsforslag, first point"
+      - id: adopted
+        text: Indstillingens 1. at-punkt blev således godkendt med 45 stemmer imod 9.
+        gloss_en: The first point of the recommendation was thus approved by 45 votes to 9.
+        locator: "Beslutning"

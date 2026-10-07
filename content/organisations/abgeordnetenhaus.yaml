@@ -1,0 +1,55 @@
+id: abgeordnetenhaus
+name: Abgeordnetenhaus Berlin
+kind: parliament
+url: https://www.parlament-berlin.de/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        The Abgeordnetenhaus is the parliament of the Land Berlin. It legislates, elects the
+        governing mayor and scrutinises the government, the Senate [@agh-arbeitsweise]. Its
+        budget act decides what the Land's money is spent on, for one or two years at a time
+        [@agh-arbeitsweise].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        whatever a question asks; for the priority network, km implemented per year and
+        district [@berlin-drs-19-25987]
+      kind: as the Senate answers it [@agh-parlamentarische-anfragen]
+      length: >-
+        as the Senate answers it; Drucksache 19/25987 gives route length for the target network
+        only [@berlin-drs-19-25987]
+      date: the date of the Senate's answer [@berlin-drs-19-25987]
+      area: Land Berlin
+      method: parliament does not measure; it publishes the Senate's answers and reports [@agh-parlamentarische-anfragen]
+    paragraphs:
+      - >-
+        Parliament publishes Berlin's cycling figures rather than producing them. In a written
+        question (Schriftliche Anfrage) any member can demand information; the Senate answers
+        in writing, normally within three weeks [@agh-parlamentarische-anfragen], and every
+        answer stays available in the parliamentary documentation system PARDOK
+        [@agh-parlamentarische-anfragen]. Drucksache 19/25987 of May 2026 is the source of our
+        priority-network rows [@berlin-drs-19-25987].
+      - >-
+        The yearly progress report reaches parliament as a report of the Senate transport
+        administration to the Hauptausschuss [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+  - heading: Political role
+    paragraphs:
+      - >-
+        The Abgeordnetenhaus passed the Mobilitätsgesetz on 28 June 2018, after the cycling
+        referendum campaign [@changing-cities-volksentscheid] [@berlin-mobg-page]. In July 2026
+        it amended the act: the priority network keeps its 2030 deadline, the secondary network
+        moves to 2035, and a main road may go without a cycling facility where a qualified
+        alternative on minor streets exists nearby [@berlin-mobg-amendment-2026].
+      - >-
+        It scrutinises the Senate through questions and requests for reports
+        [@agh-arbeitsweise]; Drucksache
+        19/25987, titled "eight years of the Mobilitätsgesetz", asked how much of the priority
+        network exists [@berlin-drs-19-25987]. In our reading, written questions are where the
+        Senate's figures get tied to a document and a date, which is why we cite them one
+        document at a time.
+quotes:
+  - {excerpt: agh-parlamentarische-anfragen/control, after: 3}
+literals:
+  - "Drucksache 19/25987"
+  - "28 June 2018"

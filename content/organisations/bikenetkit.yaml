@@ -1,0 +1,53 @@
+id: bikenetkit
+name: BikeNetKit (IT University of Copenhagen)
+kind: research
+url: https://bikenetkit.org/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        BikeNetKit is an open-source Python toolkit for planning bicycle networks, from the
+        Networks, Data and Society group (NERDS) at the IT University of Copenhagen
+        [@bikenetkit-gisruk-2026] [@bikenetkit-github-org]. It packages planning algorithms of
+        a research community that NERDS kick-started in 2019; work on the toolkit itself started
+        in 2026 [@bikenetkit-github-org]. Its development is supported by the Innovation Fund Denmark,
+        the EU Horizon project JUST STREETS and the university's Data Science Section
+        [@bikenetkit-github-org].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        a simplified OpenStreetMap bicycle network selected by the toolkit's filter for
+        protected bicycle infrastructure [@bikenetkit-zenodo] [@bikenetkit-pbi-filter]
+      kind: mapped in OpenStreetMap [@bikenetkit-zenodo]
+      length: not stated by the source
+      date: data collected and processed over the summer of 2026 [@bikenetkit-zenodo]
+      area: city boundaries of European cities above 100k population [@bikenetkit-export-notebook]
+      method: OpenStreetMap extracts processed with the project's own scripts [@bikenetkit-export-notebook]
+    paragraphs:
+      - >-
+        BikeNetKit's figures are a by-product. The project publishes bicycle networks, street
+        networks and points of interest for 403 European cities so that its tools can run
+        locally [@bikenetkit-zenodo]. The bicycle networks are simplified and stripped of some
+        tags [@bikenetkit-zenodo]; which ways belong to them follows the toolkit's filter for
+        protected bicycle infrastructure, which selects cycleways, living streets, and paths
+        and footways open to bicycles [@bikenetkit-pbi-filter].
+      - >-
+        In our reading the filter leaves out painted lanes, so we compare BikeNetKit only with
+        our tiers A, B and E.
+  - heading: Political role
+    paragraphs:
+      - >-
+        BikeNetKit is aimed at urban planners as a decision-support tool, and at citizens who
+        want to make a case for cycling in their city [@bikenetkit-github-org]. Its authors say
+        bicycle network planning is largely ad hoc, sometimes outsourced to consultancies with
+        opaque methods [@bikenetkit-gisruk-2026], and that politicians often fail to plan for
+        cycling at all [@bikenetkit-github-org].
+      - >-
+        We found no source of a city or parliament citing BikeNetKit figures. In our reading
+        its political role so far is the one it states for itself: a research tool meant to
+        reach policy, still under development.
+quotes:
+  - {excerpt: bikenetkit-gisruk-2026/ad-hoc, after: 3}
+literals:
+  - "100k"
+  - "403"

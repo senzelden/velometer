@@ -1,0 +1,60 @@
+id: changing_cities
+name: Changing Cities e.V.
+kind: ngo
+url: https://changing-cities.org/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        Changing Cities is a registered association (e.V.) founded in 2016
+        [@changing-cities-transparenz]. It grew out of the network that organised the
+        Volksentscheid Fahrrad, Berlin's cycling referendum campaign [@changing-cities-verein].
+        About 1,480 supporting members form its financial basis [@changing-cities-verein]; in
+        2025 one grant, from the European Climate Foundation, made up more than a tenth of its
+        budget [@changing-cities-transparenz].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        km of Berlin's cycle network newly created in the year, against the monitor's own
+        target network [@berlin-changing-cities-monitor]
+      kind: newly created in the year [@berlin-changing-cities-monitor]
+      length: not stated by the source
+      date: reference date 31 December 2025 [@berlin-changing-cities-monitor]
+      area: Berlin [@berlin-changing-cities-monitor]
+      method: the association's own measurement [@berlin-changing-cities-monitor]
+    paragraphs:
+      - >-
+        Changing Cities runs the Verkehrswende-Monitor, which tracks Berlin's cycle network
+        against the Mobilitätsgesetz [@berlin-changing-cities-monitor]. It says it measures the
+        network itself, as of 31 December 2025 [@berlin-changing-cities-monitor]. Its target
+        network of 2,699.8 km is longer than the 2,398.3 km in the Senate's progress report
+        [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
+      - >-
+        We found no published description of how the monitor measures. In our reading its
+        yearly figure and the Senate's describe different networks and cannot be set against
+        each other one to one.
+  - heading: Political role
+    paragraphs:
+      - >-
+        In 2016 the referendum campaign handed 105,425 signatures to the Abgeordnetenhaus after
+        three and a half weeks of collection, then negotiated a cycling law with the Senate,
+        ADFC, BUND and FUSS e.V. [@changing-cities-volksentscheid]. It was passed on
+        28 June 2018 as part of the Berlin Mobilitätsgesetz [@changing-cities-volksentscheid].
+        That the law came from the referendum is not just the association's claim
+        [@changing-cities-verein]: press coverage on the day of the vote reported that the
+        Senate administration drew up the law together with the referendum's activists, ADFC
+        and BUND [@klimareporter-radgesetz-2018], and the Senate's page says citizens' impulses
+        fed directly into the act [@berlin-mobg-page].
+      - >-
+        In our reading, its monitor and the Senate's progress report are the two yearly
+        scorecards of the Mobilitätsgesetz: one kept by its advocate, one by the administration
+        that must deliver it.
+quotes:
+  - {excerpt: klimareporter-radgesetz-2018/co-drafted, after: 3}
+literals:
+  - "1,480"
+  - "31 December 2025"
+  - "2,699.8 km"
+  - "2,398.3 km"
+  - "105,425"
+  - "28 June 2018"

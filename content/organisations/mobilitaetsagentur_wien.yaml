@@ -1,0 +1,54 @@
+id: mobilitaetsagentur_wien
+name: Mobilitätsagentur Wien GmbH
+kind: agency
+url: https://mobilitaetsagentur.at/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        Mobilitätsagentur Wien is a company owned by the City of Vienna that works for better
+        conditions for cycling and walking, and it says it is bound by the city's objectives
+        [@mobilitaetsagentur-ueber-uns]. The red-green city government created it soon after
+        taking office, and the city's cycling commissioner, in post since autumn 2011, led it
+        [@drahtesel-mobilitaetsagentur-2016]. A 2016
+        portrait in the cycling magazine Drahtesel put its yearly budget at around two million
+        and called it a kind of communications department of the city, unable to push through
+        infrastructure itself [@drahtesel-mobilitaetsagentur-2016].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        cycling projects of all facility types in the main cycle network whose realisation
+        began in the year [@vienna-radwegeausbau-bilanz-2025]
+      kind: projects started, not completed [@vienna-radwegeausbau-bilanz-2025]
+      length: >-
+        measured in the city's digital map from start to end point, each facility separately; a
+        junction project enters as one metre [@vienna-radwegeausbau-bilanz-2025]
+      date: the year in which the project started [@vienna-radwegeausbau-bilanz-2025]
+      area: City of Vienna, main cycle network [@vienna-radwegeausbau-bilanz-2025]
+      method: the agency's own tally of the city's projects [@vienna-radwegeausbau-bilanz-2025]
+    paragraphs:
+      - >-
+        Our Vienna figure is the agency's Bilanz Radwegeausbau 2025: 53 projects in the main
+        cycle network whose realisation began in 2025 [@vienna-radwegeausbau-bilanz-2025]. It is
+        a tally of starts, not of completed or existing km, and renovation of existing paths is
+        left out [@vienna-radwegeausbau-bilanz-2025]. The city's network statistics are a
+        separate series, which has recorded facilities on both sides of a street since 2018
+        [@vienna-radverkehrsnetz-fakten].
+  - heading: Political role
+    paragraphs:
+      - >-
+        The agency presents the city's yearly cycling programme, the Radweg-Offensive; for 2026
+        it announced 33 projects and about 12.5 km of new cycle paths
+        [@vienna-mobilitaetsagentur-2026]. ORF reported the 2025 programme as around 24 km
+        [@vienna-orf-radwegenetz-2025].
+      - >-
+        In our reading, these are the city's own account of its programme, published by a city
+        company rather than an independent body, and they measure intentions and starts more
+        than finished network.
+quotes:
+  - {excerpt: vienna-radwegeausbau-bilanz-2025/started-not-completed, after: 1}
+literals:
+  - "53"
+  - "33"
+  - "12.5 km"
+  - "24 km"

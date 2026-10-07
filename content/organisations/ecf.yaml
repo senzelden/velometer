@@ -1,0 +1,55 @@
+id: ecf
+name: European Cyclists' Federation (ECF)
+kind: ngo
+url: https://www.ecf.com/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        The European Cyclists' Federation is a Brussels-based independent non-profit
+        association, founded in 1983 [@ecf-about]. It calls itself the single European umbrella
+        organisation for cycling, with more than 70 member organisations in over 40 countries
+        [@ecf-about]. Its website acknowledges financial support from the EU's LIFE Programme
+        and from the European cycling industries [@ecf-about].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        cycle tracks, cycle lanes, and shared cycle and pedestrian tracks, as tagged in
+        OpenStreetMap [@qecio-methodology]
+      kind: >-
+        mapped in OpenStreetMap; low numbers may reflect missing data rather than missing
+        infrastructure [@qecio-methodology]
+      length: unidirectional infrastructure at half length [@qecio-methodology]
+      date: OpenStreetMap extracts downloaded on 10–11 January 2024 [@qecio-metadata]
+      area: NUTS 3 regions, not municipalities [@qecio-methodology]
+      method: ECF's own analysis of OpenStreetMap (QECIO) [@qecio-site]
+    paragraphs:
+      - >-
+        QECIO, Quantifying Europe's Cycling Infrastructure using OpenStreetMap, answers a gap
+        that ECF names itself: no official source gives cycling-infrastructure data on a
+        European scale [@qecio-site]. It clips OpenStreetMap ways to NUTS 3 boundaries and sorts
+        them into tracks, lanes and shared paths [@qecio-methodology]. Its disclaimer says the
+        figures show OpenStreetMap contributions only [@qecio-methodology].
+      - >-
+        The Clean Cities Campaign uses ECF's OpenStreetMap data where a city supplies none
+        [@cc2025-annexes], so ECF's method also stands behind some Clean Cities figures.
+  - heading: Political role
+    paragraphs:
+      - >-
+        ECF works at EU level. With its industry partners it campaigned for a unified European
+        cycling policy [@ecf-2024-breakthroughs], and in 2024 the European Parliament, Council
+        and Commission signed the European Declaration on Cycling [@ec-declaration-cycling].
+        The Commission's Expert Group on Urban Mobility, co-chaired by ECF, issued road-safety
+        recommendations for people walking and cycling in 2024 [@ecf-2024-breakthroughs].
+      - >-
+        In our reading, QECIO serves this advocacy: it supplies comparable numbers where
+        governments publish none. We found no source of a city or government adopting QECIO
+        figures as its own.
+quotes:
+  - {excerpt: ecf-2024-breakthroughs/declaration-advocacy, after: 3}
+literals:
+  - "1983"
+  - "70"
+  - "40"
+  - "10–11 January 2024"
+  - "NUTS 3"

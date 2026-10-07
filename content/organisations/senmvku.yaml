@@ -1,0 +1,60 @@
+id: senmvku
+name: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
+kind: official
+url: https://www.berlin.de/sen/uvk/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        SenMVKU is the department of the Berlin Senate for mobility, transport, climate
+        protection and the environment; it has carried this name since May 2023
+        [@infravelo-ueber-uns]. Responsibility for cycling infrastructure in Berlin lies with
+        SenMVKU and with the districts [@infravelo-organisation]. It administers the
+        Mobilitätsgesetz, promulgated on 5 July 2018 [@berlin-mobg-page], and funds and directs
+        the state cycling company infraVelo [@infravelo-faq].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        all cycling measures implemented or improved in the year, whoever is responsible for
+        the road or pays [@berlin-fortschrittsbericht-2025]
+      kind: measures completed in the year, not network stock [@berlin-fortschrittsbericht-2025]
+      length: >-
+        route length since the 2022 report: a street with facilities on both sides is one
+        length; earlier reports took each direction [@berlin-radfortschrittsbericht-page]
+      date: reference date 31 December of the report year [@berlin-fortschrittsbericht-2025]
+      area: Land Berlin [@berlin-fortschrittsbericht-2025]
+      method: >-
+        mainly the project database run by infraVelo and updated by the districts
+        [@berlin-fortschrittsbericht-2025] [@infravelo-faq]
+    paragraphs:
+      - >-
+        Our Berlin `official` rows come from SenMVKU: its yearly Fahrrad-Fortschrittsbericht and
+        its answers to written questions in the Abgeordnetenhaus
+        [@berlin-fortschrittsbericht-2025] [@berlin-drs-19-25987]. The report covers the work of
+        the Senate administration, infraVelo and the districts
+        [@berlin-radfortschrittsbericht-page]. Its numbers come mainly from the infraVelo project
+        database, refer to 31 December and may be revised in later reports
+        [@berlin-fortschrittsbericht-2025].
+      - >-
+        Since the 2022 report it gives route length instead of length per direction; the
+        department says this makes the figures lower and not directly comparable with earlier
+        years [@berlin-radfortschrittsbericht-page].
+  - heading: Political role
+    paragraphs:
+      - >-
+        The progress report goes to the Abgeordnetenhaus's main committee, the Hauptausschuss
+        [@berlin-dpa-fortschrittsbericht-hauptausschuss]. For 2025, dpa read from it that just under 27 million euros went into cycling, of about
+        82.4 million available [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+      - >-
+        In our reading, the same department sets the pace and reports on it. In June 2023 it
+        asked the districts to stop cycle path projects for the time being if they would cost
+        even one car parking space [@berlin-tagesspiegel-radwegestopp-2023]. In December 2025 it
+        gave 20.5 km for the year, below its own target [@berlin-tagesspiegel-dpa-2025-12].
+quotes:
+  - {excerpt: berlin-tagesspiegel-radwegestopp-2023/stop, after: 4}
+literals:
+  - "31 December"
+  - "5 July 2018"
+  - "27 million euros"
+  - "82.4 million"
+  - "20.5 km"

@@ -1,0 +1,60 @@
+id: clean_cities
+name: Clean Cities Campaign
+kind: ngo
+url: https://cleancitiescampaign.org/
+sections:
+  - heading: Who they are
+    paragraphs:
+      - >-
+        The Clean Cities Campaign calls itself Europe's largest network of organisations
+        campaigning for cities to shift from polluting cars to active, shared and electric
+        mobility [@cc-what-we-do]. It is hosted by Transport & Environment (T&E), a European
+        clean-transport NGO [@cc-what-we-do]. We found no separate funding statement for the
+        campaign; T&E says it is funded by foundations, government agencies, multilateral
+        institutions and its 49 members [@te-funders].
+  - heading: How they measure
+    dimensions:
+      scope: >-
+        physically separated cycling infrastructure, shared foot and bike paths included,
+        painted lanes excluded [@cc2025-annexes]
+      kind: existing infrastructure as reported by the city, else public data [@cc2025-report]
+      length: not stated for cycling infrastructure [@cc2025-annexes]
+      date: >-
+        data collected from December 2024 to 7 February 2025, updates accepted until
+        4 April 2025 [@cc2025-report]
+      area: the municipality of the same name [@cc2025-report]
+      method: city data, else public sources and ECF's OpenStreetMap data [@cc2025-report] [@cc2025-annexes]
+    paragraphs:
+      - >-
+        The 2025 ranking, Streets for Kids, Cities for All, scores 36 European cities on school
+        streets, safe speeds and protected cycling infrastructure [@cc-ranking-2025-page]. Our
+        figures use the last: protected cycling infrastructure as a ratio to road-network
+        length [@cc2025-report], which the annex calls comparable to, but not equivalent to, a
+        share of the road network [@cc2025-annexes].
+      - >-
+        Each city administration was invited to supply data, and 34 of the 36 did; gaps were
+        filled from public sources [@cc2025-report], including OpenStreetMap data compiled by
+        the European Cyclists' Federation [@cc2025-annexes].
+  - heading: Political role
+    paragraphs:
+      - >-
+        The campaign says its research shapes city, national and European policy
+        [@cc-what-we-do]; the 2025 report asks national governments and the European
+        Commission for stronger legal frameworks and better data collection
+        [@cities-today-cc-ranking-2025]. The City of Paris announced its first place on
+        paris.fr [@paris-fr-cc-ranking-2025]. Vienna supplied a
+        finer breakdown of traffic-calmed streets in July 2025, and the campaign raised the
+        city's protected km from 384.1 to 625.1 [@cc2025-cycling-table].
+      - >-
+        In our reading, cities either cite the ranking or contest it with their own data. We
+        found no source showing that it changed a city's plan.
+quotes:
+  - {excerpt: paris-fr-cc-ranking-2025/cites-ranking, after: 3}
+literals:
+  - "49"
+  - "7 February 2025"
+  - "4 April 2025"
+  - "36"
+  - "34"
+  - "384.1"
+  - "625.1"
