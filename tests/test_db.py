@@ -815,7 +815,7 @@ def test_v7_db_migrates_to_v8_keeping_every_row(tmp_path, cities):
         runs_before = c.execute("SELECT * FROM runs").fetchall()
     with open_db(path) as c:
         create_schema(c)
-        assert c.execute("PRAGMA user_version").fetchone()[0] == 8
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert set(_V8_TABLES) <= _tables(c)
         assert c.execute(counts).fetchall() == before
         assert fetch_run(c, rid)["subarea_sha"] is None

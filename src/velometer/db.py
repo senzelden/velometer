@@ -27,7 +27,7 @@ from velometer.models import (
 if TYPE_CHECKING:
     from velometer.pipeline.measure import SubareaMeasure
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 _RESULT_TABLES = (
     "duplicates",
     "completeness",
@@ -153,6 +153,29 @@ CREATE TABLE IF NOT EXISTS duplicates (
   side TEXT NOT NULL DEFAULT '',
   overlap_share REAL NOT NULL, distance_m REAL NOT NULL, resolved INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (run_id, kind, way_id_separate, way_id_road, side)
+);
+CREATE TABLE IF NOT EXISTS plan_overlay (
+  run_id INTEGER NOT NULL REFERENCES runs(id), city_id TEXT NOT NULL, network_class TEXT NOT NULL,
+  tier TEXT NOT NULL, mapped_km REAL NOT NULL, network_km REAL NOT NULL,
+  overlay_version TEXT NOT NULL, network_retrieved_at TEXT NOT NULL,
+  PRIMARY KEY (run_id, network_class, tier, overlay_version)
+);
+CREATE TABLE IF NOT EXISTS counter_sites (
+  city_id TEXT NOT NULL, site_id TEXT NOT NULL, name TEXT NOT NULL, lat REAL, lon REAL,
+  source TEXT NOT NULL, licence TEXT NOT NULL, url TEXT NOT NULL, retrieved_at TEXT NOT NULL,
+  first_day TEXT, last_day TEXT, PRIMARY KEY (city_id, site_id)
+);
+CREATE TABLE IF NOT EXISTS counter_daily (
+  city_id TEXT NOT NULL, site_id TEXT NOT NULL, day TEXT NOT NULL, count INTEGER NOT NULL
+  CHECK (count >= 0), complete INTEGER NOT NULL, PRIMARY KEY (city_id, site_id, day)
+);
+CREATE TABLE IF NOT EXISTS counter_monthly (
+  city_id TEXT NOT NULL, site_id TEXT NOT NULL, month TEXT NOT NULL, day_type TEXT NOT NULL,
+  avg_daily REAL NOT NULL, PRIMARY KEY (city_id, site_id, month, day_type)
+);
+CREATE TABLE IF NOT EXISTS counter_index (
+  city_id TEXT NOT NULL, year INTEGER NOT NULL, idx REAL, sites INTEGER NOT NULL,
+  base_year INTEGER NOT NULL, series TEXT NOT NULL, PRIMARY KEY (city_id, year, series)
 );
 """
 _SCHEMA = _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS).replace(
@@ -286,6 +309,10 @@ def _migrate_7_to_8(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE runs ADD COLUMN subarea_sha TEXT")
 
 
+def _migrate_8_to_9(conn: sqlite3.Connection) -> None:
+    """Additive: tables come from the schema script."""
+
+
 _MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
@@ -293,6 +320,7 @@ _MIGRATIONS = {
     4: _migrate_4_to_5,
     6: _migrate_6_to_7,
     7: _migrate_7_to_8,
+    8: _migrate_8_to_9,
 }  # 5 -> 6 takes the activity sha and is called by create_schema directly
 
 
@@ -967,3 +995,147 @@ def fetch_cities(conn: sqlite3.Connection) -> list[City]:
             d.pop(k)
         out.append(City(**d, population=pop))
     return out
+
+
+# --- M8: plan-network overlay and bike counters ------------------------------------------------
+
+
+@dataclass(frozen=True)
+class OverlayRow:
+    run_id: int
+    city_id: str
+    network_class: str
+    tier: str
+    mapped_km: float
+    network_km: float
+    overlay_version: str
+    network_retrieved_at: str
+
+
+@dataclass(frozen=True)
+class CounterSite:
+    city_id: str
+    site_id: str
+    name: str
+    lat: float | None
+    lon: float | None
+    source: str
+    licence: str
+    url: str
+    retrieved_at: str
+    first_day: str | None
+    last_day: str | None
+
+
+@dataclass(frozen=True)
+class CounterDay:
+    city_id: str
+    site_id: str
+    day: str
+    count: int
+    complete: bool
+
+
+@dataclass(frozen=True)
+class CounterMonth:
+    city_id: str
+    site_id: str
+    month: str
+    day_type: str
+    avg_daily: float
+
+
+@dataclass(frozen=True)
+class CounterIndexYear:
+    city_id: str
+    year: int
+    index: float | None  # column `idx`
+    sites: int
+    base_year: int
+    series: str  # 'counts' or 'avg_daily_intensity'
+
+
+def replace_plan_overlay(conn: sqlite3.Connection, city_id: str, rows: list[OverlayRow]) -> None:
+    """Replace the city's overlay rows of each overlay_version present in `rows`; other versions
+    stay."""
+    with conn:
+        for version in {r.overlay_version for r in rows}:
+            conn.execute(
+                "DELETE FROM plan_overlay WHERE city_id=? AND overlay_version=?",
+                (city_id, version),
+            )
+        conn.executemany(
+            "INSERT INTO plan_overlay VALUES (?,?,?,?,?,?,?,?)",
+            [
+                (
+                    r.run_id,
+                    r.city_id,
+                    r.network_class,
+                    r.tier,
+                    r.mapped_km,
+                    r.network_km,
+                    r.overlay_version,
+                    r.network_retrieved_at,
+                )
+                for r in rows
+            ],
+        )
+
+
+def replace_counter_sites(conn: sqlite3.Connection, city_id: str, sites: list[CounterSite]) -> None:
+    with conn:
+        conn.execute("DELETE FROM counter_sites WHERE city_id=?", (city_id,))
+        conn.executemany(
+            "INSERT INTO counter_sites VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [
+                (
+                    s.city_id,
+                    s.site_id,
+                    s.name,
+                    s.lat,
+                    s.lon,
+                    s.source,
+                    s.licence,
+                    s.url,
+                    s.retrieved_at,
+                    s.first_day,
+                    s.last_day,
+                )
+                for s in sites
+            ],
+        )
+
+
+def upsert_counter_daily(conn: sqlite3.Connection, rows: list[CounterDay]) -> None:
+    with conn:
+        conn.executemany(
+            """
+            INSERT INTO counter_daily (city_id, site_id, day, count, complete)
+            VALUES (?,?,?,?,?)
+            ON CONFLICT(city_id, site_id, day) DO UPDATE SET
+              count=excluded.count, complete=excluded.complete
+            """,
+            [(r.city_id, r.site_id, r.day, r.count, int(r.complete)) for r in rows],
+        )
+
+
+def replace_counter_monthly(
+    conn: sqlite3.Connection, city_id: str, rows: list[CounterMonth]
+) -> None:
+    with conn:
+        conn.execute("DELETE FROM counter_monthly WHERE city_id=?", (city_id,))
+        conn.executemany(
+            "INSERT INTO counter_monthly VALUES (?,?,?,?,?)",
+            [(r.city_id, r.site_id, r.month, r.day_type, r.avg_daily) for r in rows],
+        )
+
+
+def replace_counter_index(
+    conn: sqlite3.Connection, city_id: str, rows: list[CounterIndexYear]
+) -> None:
+    with conn:
+        conn.execute("DELETE FROM counter_index WHERE city_id=?", (city_id,))
+        conn.executemany(
+            "INSERT INTO counter_index VALUES (?,?,?,?,?,?)",
+            [(r.city_id, r.year, r.index, r.sites, r.base_year, r.series) for r in rows],
+        )

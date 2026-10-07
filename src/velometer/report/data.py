@@ -28,6 +28,9 @@ from velometer.config import (
 )
 from velometer.db import (
     SCHEMA_VERSION,
+    CounterIndexYear,
+    CounterSite,
+    OverlayRow,
     SchemaError,
     fetch_cities,
     fetch_external_figures,
@@ -538,3 +541,42 @@ class ReportData:
         )
         row["flags"] = ";".join(flag.rules) if flag else ""
         return row
+
+    # --- M8: plan overlay and counters (each is [] on a database without the v9 tables) ----------
+
+    def _optional_rows(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
+        try:
+            return self.conn.execute(sql, args).fetchall()
+        except sqlite3.OperationalError as e:
+            if "no such table" in str(e):
+                return []
+            raise
+
+    def plan_overlay(self, city_id: str) -> list[OverlayRow]:
+        rows = self._optional_rows(
+            "SELECT run_id, city_id, network_class, tier, mapped_km, network_km, overlay_version, "
+            "network_retrieved_at FROM plan_overlay WHERE city_id=? "
+            "ORDER BY overlay_version, network_class, tier, run_id",
+            (city_id,),
+        )
+        return [OverlayRow(*r) for r in rows]
+
+    def counter_sites(self, city_id: str) -> list[CounterSite]:
+        rows = self._optional_rows(
+            "SELECT city_id, site_id, name, lat, lon, source, licence, url, retrieved_at, "
+            "first_day, last_day FROM counter_sites WHERE city_id=? ORDER BY site_id",
+            (city_id,),
+        )
+        return [CounterSite(*r) for r in rows]
+
+    def counter_index(self, city_id: str) -> list[CounterIndexYear]:
+        rows = self._optional_rows(
+            "SELECT city_id, year, idx, sites, base_year, series FROM counter_index "
+            "WHERE city_id=? ORDER BY series, year",
+            (city_id,),
+        )
+        return [CounterIndexYear(*r) for r in rows]
+
+    def counter_cities(self) -> list[str]:
+        rows = self._optional_rows("SELECT DISTINCT city_id FROM counter_sites ORDER BY city_id")
+        return [r[0] for r in rows]
