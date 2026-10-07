@@ -21,7 +21,7 @@ from velometer.cli import app
 from velometer.counters.adapters import berlin, paris, vienna
 from velometer.counters.adapters import download as download_files
 from velometer.counters.check import check_counters
-from velometer.counters.days import to_days, zero_days_invalid
+from velometer.counters.days import sum_counters, to_days, zero_days_invalid
 from velometer.counters.index import chain_index
 from velometer.counters.model import (
     CounterEntry,
@@ -393,7 +393,7 @@ def test_paris_counter_in_service_is_its_reported_span():
     per |= _pc("s", "b", d1, range(24)) | _pc("s", "b", d3, range(24))
     # c reports from d2 on: not in service on d1
     per |= _pc("s", "c", d2, range(24)) | _pc("s", "c", d3, range(24))
-    days = _by_key(to_days(paris._site_hours(per), "Europe/Paris"))
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
     assert (days["s", d1].count, days["s", d1].complete) == (48, True)
     assert ("s", d2) not in days  # no hour has every in-service counter (a, b, c)
     assert (days["s", d3].count, days["s", d3].complete) == (72, True)

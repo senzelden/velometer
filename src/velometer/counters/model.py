@@ -1,9 +1,9 @@
 """Normalised counter records and `config/counters.yaml` (M8 spec §5).
 
-Adapters turn each portal's files into `Site` plus either `HourCount` (hourly portals) or
-`DayCount` (daily portals). `HourCount.local_hour` is the naive local wall-clock hour in the
-entry's timezone; the second occurrence of the repeated hour on a fall-back day carries
-`fold=1` (PEP 495), the first and every other hour `fold=0`.
+Adapters turn each portal's files into `Site` plus `HourCount` (hourly portals), `DayCount`
+(daily portals) or `MonthValue` (monthly portals: Barcelona). `HourCount.local_hour` is the
+naive local wall-clock hour in the entry's timezone; the second occurrence of the repeated hour
+on a fall-back day carries `fold=1` (PEP 495), the first and every other hour `fold=0`.
 """
 
 from dataclasses import dataclass
@@ -45,6 +45,14 @@ class DayCount:
     complete: bool
 
 
+@dataclass(frozen=True, slots=True)
+class MonthValue:
+    site_id: str
+    month: str  # YYYY-MM
+    day_type: str  # e.g. working_day; the portal's day types, normalised
+    avg_daily: float  # the portal's average daily value for that month and day type
+
+
 class CounterFormatError(Exception):
     """A portal file lacks a sheet or column the adapter needs, or holds a value it cannot
     read; the message names the file and what is missing."""
@@ -72,10 +80,14 @@ class CounterEntry(_Strict):
     timezone: str
     grain: Grain
     base_year: int = 2019  # spec §2.13
-    # a portal id -> the canonical site id (a site renumbered between yearly sheets)
+    # a portal id -> the canonical site id (Berlin: a site renumbered between yearly sheets;
+    # Helsinki: the two sides of a bridge, summed, whose counts move between columns)
     site_aliases: dict[str, str] = {}
     # columns that aggregate other columns of the same file (counted twice if kept)
     exclude_columns: list[str] = []
+    # sites outside the city's stored boundary of this kind (data/boundaries/<city>_<kind>.geojson)
+    # are dropped, with their counts (Oslo: state counters, county-wide query)
+    boundary: Literal["lau"] | None = None
 
     @field_validator("timezone")
     @classmethod

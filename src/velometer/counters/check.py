@@ -1,6 +1,6 @@
 """`velometer counters --check` (M8 spec §5.4): every configured city has sites and at least one
-index year; no site appears under two cities; daily counts are non-negative; the index base year
-equals 100.
+index year; no site appears under two cities; daily counts (and monthly values) are non-negative;
+the index base year equals 100.
 
 "An index year" is a year with a value carried by at least `MIN_SITES` qualifying sites: the
 base year is 100 by definition, so it counts only when enough sites qualify in it.
@@ -52,4 +52,8 @@ def check_counters(conn: sqlite3.Connection, cfg: CountersConfig) -> list[str]:
         "SELECT city_id, COUNT(*) FROM counter_daily WHERE count < 0 GROUP BY city_id"
     ):
         problems.append(f"{city}: {n} negative daily counts")
+    for city, n in conn.execute(
+        "SELECT city_id, COUNT(*) FROM counter_monthly WHERE avg_daily < 0 GROUP BY city_id"
+    ):
+        problems.append(f"{city}: {n} negative monthly values")
     return problems

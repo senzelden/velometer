@@ -21,12 +21,12 @@ hour in the 2024 and 2025 archives) are skipped.
 import csv
 import io
 import zipfile
-from collections import defaultdict
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from velometer.counters.adapters import _http_get, download
+from velometer.counters.days import sum_counters
 from velometer.counters.model import CounterEntry, CounterFormatError, HourCount, Site
 
 COLUMNS = {
@@ -152,36 +152,7 @@ def _parse_member(label, stream, times, sites, hours) -> None:
             if lat is None and prev is not None:  # a file without coordinates keeps the last
                 lat, lon = prev[1].lat, prev[1].lon
             sites[site] = (label, Site(site, row[idx["name"]].strip(), lat, lon))
-    hours.extend(_site_hours(per_counter))
-
-
-def _site_hours(per_counter: dict[tuple[str, str, datetime, int], int]) -> list[HourCount]:
-    """One file's site-hours: the sum of the site's counters, kept only when every counter of the
-    site in service that day reports the hour. A counter is in service on the days from its
-    first to its last reported day in the file; a site-hour one of them lacks is left out, so
-    to_days marks the day incomplete."""
-    span: dict[tuple[str, str], tuple[date, date]] = {}
-    for site, counter, t, _ in per_counter:
-        d = t.date()
-        lo, hi = span.get((site, counter), (d, d))
-        span[site, counter] = (min(lo, d), max(hi, d))
-    counters: dict[str, list[tuple[date, date]]] = defaultdict(list)
-    for (site, _), lo_hi in span.items():
-        counters[site].append(lo_hi)
-    total: dict[tuple[str, datetime, int], int] = defaultdict(int)
-    reporting: dict[tuple[str, datetime, int], int] = defaultdict(int)
-    for (site, _, t, fold), count in per_counter.items():
-        total[site, t, fold] += count
-        reporting[site, t, fold] += 1
-    in_service: dict[tuple[str, date], int] = {}
-    out = []
-    for (site, t, fold), count in total.items():
-        d = t.date()
-        if (site, d) not in in_service:
-            in_service[site, d] = sum(lo <= d <= hi for lo, hi in counters[site])
-        if reporting[site, t, fold] == in_service[site, d]:
-            out.append(HourCount(site, t, count))
-    return out
+    hours.extend(sum_counters(per_counter))
 
 
 def parse(paths: list[Path], entry: CounterEntry) -> tuple[list[Site], list[HourCount]]:

@@ -1,0 +1,77 @@
+{
+ "trafficRegistrationPointId": "70429B619257",
+ "from": "2003-08-01T00:00:00+02:00",
+ "to": "2026-10-08T00:00:00+02:00",
+ "days": [
+  {
+   "from": "2015-10-26T00:00:00+01:00",
+   "to": "2015-10-27T00:00:00+01:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 1306
+    },
+    "coverage": {
+     "percentage": 45.83
+    }
+   }
+  },
+  {
+   "from": "2017-05-20T00:00:00+02:00",
+   "to": "2017-05-21T00:00:00+02:00",
+   "total": {
+    "volumeNumbers": null,
+    "coverage": {
+     "percentage": 0.0
+    }
+   }
+  },
+  {
+   "from": "2019-03-31T00:00:00+01:00",
+   "to": "2019-04-01T00:00:00+02:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 1241
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  },
+  {
+   "from": "2019-10-26T00:00:00+02:00",
+   "to": "2019-10-27T00:00:00+02:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 418
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  },
+  {
+   "from": "2019-10-27T00:00:00+02:00",
+   "to": "2019-10-28T00:00:00+01:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 732
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  },
+  {
+   "from": "2019-10-28T00:00:00+01:00",
+   "to": "2019-10-29T00:00:00+01:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 2480
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  }
+ ]
+}

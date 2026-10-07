@@ -1,0 +1,75 @@
+{
+ "data": {
+  "trafficRegistrationPoints": [
+   {
+    "id": "12703B2460285",
+    "name": "Dr. Eufemias gt. Sykkel Vestgående",
+    "trafficRegistrationType": "BICYCLE",
+    "location": {
+     "municipality": {
+      "name": "Oslo",
+      "number": 301
+     },
+     "coordinates": {
+      "latLon": {
+       "lat": 59.90871,
+       "lon": 10.754715
+      }
+     }
+    },
+    "dataTimeSpan": {
+     "firstData": "2017-02-02T16:00:00+01:00",
+     "latestData": {
+      "volumeByDay": "2026-10-07T00:00:00+02:00"
+     }
+    }
+   },
+   {
+    "id": "70429B619257",
+    "name": "Frognerstranda sykkel 03",
+    "trafficRegistrationType": "BICYCLE",
+    "location": {
+     "municipality": {
+      "name": "Oslo",
+      "number": 301
+     },
+     "coordinates": {
+      "latLon": {
+       "lat": 59.911172,
+       "lon": 10.704059
+      }
+     }
+    },
+    "dataTimeSpan": {
+     "firstData": "2003-08-01T00:00:00+02:00",
+     "latestData": {
+      "volumeByDay": "2026-10-07T00:00:00+02:00"
+     }
+    }
+   },
+   {
+    "id": "88224B442844",
+    "name": "Snarøyveien sykkelsøyle",
+    "trafficRegistrationType": "BICYCLE",
+    "location": {
+     "municipality": {
+      "name": "Bærum",
+      "number": 3201
+     },
+     "coordinates": {
+      "latLon": {
+       "lat": 59.90048,
+       "lon": 10.626015
+      }
+     }
+    },
+    "dataTimeSpan": {
+     "firstData": "2018-12-17T13:00:00+01:00",
+     "latestData": {
+      "volumeByDay": "2026-10-07T00:00:00+02:00"
+     }
+    }
+   }
+  ]
+ }
+}

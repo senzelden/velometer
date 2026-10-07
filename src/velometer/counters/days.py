@@ -6,6 +6,9 @@ order. A day is complete when it holds every local hour that exists on that date
 timezone: 23 on the spring-forward day, 25 on the fall-back day (the repeated hour twice, the
 second with fold=1), else 24. A record for an hour that does not exist (the skipped hour of a
 spring-forward day, which some portals fill with a placeholder row) is ignored.
+
+`sum_counters` turns the hours of several counters of one site into site-hours (Paris: the
+counters of a counting site; Helsinki: the two sides of a bridge).
 """
 
 from collections import defaultdict
@@ -58,3 +61,35 @@ def zero_days_invalid(days: Iterable[DayCount]) -> list[DayCount]:
     """A site-day with nothing recorded is a counter outage (portals write 0 for a day not
     counted), not a valid day: kept with its count 0, marked incomplete."""
     return [DayCount(d.site_id, d.day, d.count, False) if d.count == 0 else d for d in days]
+
+
+CounterHours = dict[tuple[str, str, datetime, int], int]  # (site, counter, local hour, fold)
+
+
+def sum_counters(per_counter: CounterHours) -> list[HourCount]:
+    """The site-hours of one file: the sum of the site's counters, kept only when every counter of
+    the site in service that day reports the hour. A counter is in service on the days from its
+    first to its last reported day in the file; a site-hour one of them lacks is left out, so
+    to_days marks the day incomplete."""
+    span: dict[tuple[str, str], tuple[date, date]] = {}
+    for site, counter, t, _ in per_counter:
+        d = t.date()
+        lo, hi = span.get((site, counter), (d, d))
+        span[site, counter] = (min(lo, d), max(hi, d))
+    counters: dict[str, list[tuple[date, date]]] = defaultdict(list)
+    for (site, _), lo_hi in span.items():
+        counters[site].append(lo_hi)
+    total: dict[tuple[str, datetime, int], int] = defaultdict(int)
+    reporting: dict[tuple[str, datetime, int], int] = defaultdict(int)
+    for (site, _, t, fold), count in per_counter.items():
+        total[site, t, fold] += count
+        reporting[site, t, fold] += 1
+    in_service: dict[tuple[str, date], int] = {}
+    out = []
+    for (site, t, fold), count in total.items():
+        d = t.date()
+        if (site, d) not in in_service:
+            in_service[site, d] = sum(lo <= d <= hi for lo, hi in counters[site])
+        if reporting[site, t, fold] == in_service[site, d]:
+            out.append(HourCount(site, t.replace(fold=fold), count))
+    return out

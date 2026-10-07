@@ -7,18 +7,23 @@ counts over their complete days in the later year over the earlier one. Links ar
 chain: that year and every year beyond it (further from the base) have no value; the chain is
 never re-based. The base year is 100.0 by definition; its site count is the number of sites
 with `min_valid` complete days in it.
+
+`chain_index_monthly` chains a monthly series the same way (Barcelona's average daily intensity,
+spec §2.14): a site's value for a year is the mean of its twelve monthly values of one day type,
+and a site is valid in a year only when all twelve months are present.
 """
 
 import calendar
 from collections import defaultdict
 from collections.abc import Iterable
 
-from velometer.counters.model import DayCount
+from velometer.counters.model import DayCount, MonthValue
 
 IndexYear = tuple[int, float | None, int]  # year, index, qualifying sites
 
 MIN_VALID = 0.9  # share of complete days a site needs in both years of a link
 MIN_SITES = 3  # sites a link needs
+MONTHS = 12  # monthly values a site needs in a year (monthly series)
 
 
 def _year_stats(days: Iterable[DayCount]) -> dict[int, dict[str, tuple[int, int]]]:
@@ -46,14 +51,49 @@ def chain_index(
     years = {d.day.year for d in days}
     if not years:
         return []
-    first, last = min(years | {base_year}), max(years | {base_year})
     stats = _year_stats(days)
+    first, last = min(years | {base_year}), max(years | {base_year})
     valid = {y: _valid_sites(stats, y, min_valid) for y in range(first, last + 1)}
+    values = {y: {s: c for s, (_, c) in sites.items()} for y, sites in stats.items()}
+    return _chain(values, valid, first, last, base_year, min_sites)
+
+
+def chain_index_monthly(
+    months: Iterable[MonthValue],
+    base_year: int,
+    day_type: str,
+    min_sites: int = MIN_SITES,
+) -> list[IndexYear]:
+    per: dict[int, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    for m in months:
+        if m.day_type == day_type:
+            per[int(m.month[:4])][m.site_id].append(m.avg_daily)
+    if not per:
+        return []
+    first, last = min(set(per) | {base_year}), max(set(per) | {base_year})
+    valid = {
+        y: {s for s, v in per.get(y, {}).items() if len(v) == MONTHS}
+        for y in range(first, last + 1)
+    }
+    values = {y: {s: sum(v) / len(v) for s, v in sites.items()} for y, sites in per.items()}
+    return _chain(values, valid, first, last, base_year, min_sites)
+
+
+def _chain(
+    values: dict[int, dict[str, float]],
+    valid: dict[int, set[str]],
+    first: int,
+    last: int,
+    base_year: int,
+    min_sites: int,
+) -> list[IndexYear]:
+    """Chain the year-on-year links from `base_year` = 100; `values[year][site]` is what a link
+    sums over the sites valid in both of its years."""
 
     def link(earlier: int, later: int) -> tuple[float | None, int]:
         sites = valid[earlier] & valid[later]
-        before = sum(stats[earlier][s][1] for s in sites)
-        after = sum(stats[later][s][1] for s in sites)
+        before = sum(values[earlier][s] for s in sites)
+        after = sum(values[later][s] for s in sites)
         if len(sites) < min_sites or before == 0:
             return None, len(sites)
         return after / before, len(sites)

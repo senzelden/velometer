@@ -8,20 +8,26 @@ Each adapter module has
 
 `download` is the shared `fetch`: files are named `<nn>_<last URL path segment>` in the order of
 `entry.urls`, which is the order `parse` reads them in (later files win on overlapping hours).
-Nothing is written unless every URL arrived.
+Nothing is written unless every URL arrived. An adapter whose portal is an API (Oslo) writes its
+own files and records them with `write_retrieved`.
+
+`boundary_polygon` and `sites_inside` drop sites outside a city's stored boundary (an entry's
+`boundary` key).
 """
 
 import json
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
+from importlib.metadata import version
 from pathlib import Path
 from types import ModuleType
 from urllib.parse import urlsplit
 
 import httpx
+import shapely
 
-from velometer.counters.model import CounterEntry
+from velometer.counters.model import CounterEntry, CounterFormatError, Site
 
 TIMEOUT_S = 300.0
 RETRIEVED_FILE = "retrieved.json"
@@ -29,8 +35,15 @@ RETRIEVED_FILE = "retrieved.json"
 Fetch = Callable[[str], bytes]
 
 
+def user_agent() -> str:
+    """`velometer/<version>`, no contact: Open Data BCN answers httpx's default agent with 502."""
+    return f"velometer/{version('velometer')}"
+
+
 def _http_get(url: str) -> bytes:
-    r = httpx.get(url, timeout=TIMEOUT_S, follow_redirects=True)
+    r = httpx.get(
+        url, timeout=TIMEOUT_S, follow_redirects=True, headers={"User-Agent": user_agent()}
+    )
     r.raise_for_status()
     return r.content
 
@@ -48,13 +61,23 @@ def download(entry: CounterEntry, out_dir: Path, fetch: Fetch = _http_get) -> li
     got = []
     for i, url in enumerate(entry.urls):
         got.append((file_name(i, url), url, fetch(url), _now()))
+    return write_retrieved(entry, out_dir, got)
+
+
+def write_retrieved(entry: CounterEntry, out_dir: Path, got: list[tuple]) -> list[Path]:
+    """Write each `(name, url, body, retrieved_at[, extra])` file into `out_dir` and record them
+    in `retrieved.json` (URL, licence, retrieval time, size; `extra` is merged into the file's
+    record, e.g. the API query)."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     paths, files = [], []
-    for name, url, body, at in got:
+    for name, url, body, at, *extra in got:
         (out_dir / name).write_bytes(body)
         paths.append(out_dir / name)
-        files.append({"file": name, "url": url, "retrieved_at": at, "bytes": len(body)})
+        record = {"file": name, "url": url, "retrieved_at": at, "bytes": len(body)}
+        for e in extra:
+            record.update(e)
+        files.append(record)
     meta = {
         "city": entry.city,
         "source": entry.source,
@@ -73,10 +96,47 @@ def read_retrieved(out_dir: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def adapter(name: str) -> ModuleType:
-    from velometer.counters.adapters import berlin, paris, vienna
+def boundary_polygon(entry: CounterEntry, data_dir: Path):
+    """The city's stored boundary named by `entry.boundary` (EPSG:4326), from
+    `<data_dir>/boundaries/<city>_<kind>.geojson`; CounterFormatError when it is missing."""
+    path = Path(data_dir) / "boundaries" / f"{entry.city}_{entry.boundary}.geojson"
+    try:
+        feats = json.loads(path.read_text(encoding="utf-8"))["features"]
+    except (OSError, ValueError, KeyError) as e:
+        raise CounterFormatError(path, f"stored {entry.boundary} boundary not readable: {e}") from e
+    return shapely.union_all([shapely.from_geojson(json.dumps(f["geometry"])) for f in feats])
 
-    modules = {"berlin": berlin, "paris": paris, "vienna": vienna}
+
+def sites_inside(sites: list[Site], polygon) -> set[str]:
+    """Ids of the sites whose point lies inside `polygon` (a site without coordinates cannot be
+    placed and is not inside)."""
+    return {
+        s.site_id
+        for s in sites
+        if s.lat is not None and s.lon is not None and polygon.covers(shapely.Point(s.lon, s.lat))
+    }
+
+
+def adapter(name: str) -> ModuleType:
+    from velometer.counters.adapters import (
+        barcelona,
+        berlin,
+        helsinki,
+        madrid,
+        oslo,
+        paris,
+        vienna,
+    )
+
+    modules = {
+        "barcelona": barcelona,
+        "berlin": berlin,
+        "helsinki": helsinki,
+        "madrid": madrid,
+        "oslo": oslo,
+        "paris": paris,
+        "vienna": vienna,
+    }
     if name not in modules:
         raise KeyError(f"no counter adapter {name!r} (have {', '.join(sorted(modules))})")
     return modules[name]

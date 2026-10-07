@@ -2131,11 +2131,12 @@ def counters_fetch(
     retrieval time per file in retrieved.json."""
     from velometer.counters import city_dir
     from velometer.counters.adapters import adapter
+    from velometer.counters.model import CounterFormatError
 
     for entry in _counter_entries(_counters_config(config_dir), cities):
         try:
             paths = adapter(entry.adapter).fetch(entry, city_dir(data_dir, entry.city))
-        except (KeyError, OSError, httpx.HTTPError) as e:
+        except (KeyError, OSError, httpx.HTTPError, CounterFormatError) as e:
             typer.echo(f"error: {entry.city}: {e}", err=True)
             raise typer.Exit(1) from e
         for path in paths:
@@ -2151,8 +2152,8 @@ def counters_load(
     config_dir: Path = CONFIG_OPT,
 ) -> None:
     """Parse each fetched city's files into daily totals, its sites and its chained index,
-    replacing the city's rows in counter_daily, counter_sites and counter_index. Writes only the
-    counter_* tables."""
+    replacing the city's rows in counter_daily (counter_monthly for a monthly portal),
+    counter_sites and counter_index. Writes only the counter_* tables."""
     from velometer.counters import load_city
     from velometer.counters.model import CounterFormatError
 
@@ -2171,9 +2172,10 @@ def counters_load(
             except (CounterFormatError, KeyError, ValueError) as e:
                 typer.echo(f"error: {entry.city}: {e}", err=True)
                 raise typer.Exit(1) from e
+            kept = "complete" if res.unit == "days" else "working-day"
             typer.echo(
-                f"{entry.city}: {res.sites} sites, {res.days} days ({res.complete_days} complete),"
-                f" {res.first_day} to {res.last_day}"
+                f"{entry.city}: {res.sites} sites, {res.days} {res.unit} ({res.complete_days}"
+                f" {kept}), {res.first_day} to {res.last_day}"
             )
             for year, idx, n in res.index:
                 shown = f"{idx:.1f}" if idx is not None else "none"

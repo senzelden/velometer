@@ -1,0 +1,4 @@
+﻿"Id_aforament","Desc_aforament","Codi_tipus_aforament","Desc_tipus_aforament","Num_carrils","Codi_districte","Codi_Barri","Codi_tipus_equip_mesura","Desc_tipus_equip_mesura","Longitud","Latitud","X_ETRS89","Y_ETRS89"
+"20012","DIPUTACIÓ-SARDENYA",2,"Bicis",1,2,5,1,"Espira",2.17794983202623,41.3986192703823,431282.223999999,4583335.105
+"20037","TARRAGONA- SANT NICOLAU (sentit mar)",2,"Bicis",1,3,15,1,"Espira",2.14469336904796,41.3786240394963,428480.267999998,4581142.17499998
+"30001","TUNEL GLÒRIES SENTIT LLOBREGAT - BOCA ENTRADA",1,"Trànsit",3,10,65,1,"Espira",2.193663418293,41.4085436834747,432651.7,4584584.34

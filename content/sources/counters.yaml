@@ -1,0 +1,50 @@
+sources:
+  # ------------------------------------------- counter portals and their methodology (M8, Task 7)
+  - id: berlin-zaehlstellen
+    publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin
+    title: "Zählstellen und Fahrradbarometer: Fahrradverkehr in Zahlen"
+    url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/
+    accessed: 2026-10-07
+    language: de
+    kind: official
+    excerpts:
+      - id: what-is-counted
+        text: "An den Dauerzählstellen werden alle Fahrräder, welche die Erfassungsquerschnitte der Zählstellen überfahren, gezählt."
+        gloss_en: "At the permanent counting stations, every bicycle that crosses a station's counting cross-section is counted."
+        locator: "section Fragen und Antworten zu den Radzählungen, Allgemeines: Was wird gezählt?"
+  - id: paris-comptage-velo
+    publisher: Ville de Paris, Direction de la Voirie et des Déplacements
+    title: "Comptage vélo - Données compteurs (dataset information)"
+    url: https://opendata.paris.fr/explore/dataset/comptage-velo-donnees-compteurs/information/
+    accessed: 2026-10-07
+    language: fr
+    kind: official
+    excerpts:
+      - id: counters-change
+        text: "Le nombre de compteurs évolue au fur et à mesure des aménagements cyclables. Certains compteurs peuvent être désactivés pour travaux ou subir ponctuellement une panne."
+        gloss_en: "The number of counters changes as cycling facilities are added. Some counters may be switched off for works or occasionally break down."
+        locator: "dataset description, paragraph ATTENTION : Le nombre de compteurs évolue au cours du temps"
+  - id: madrid-aforos-bicicletas
+    publisher: Ayuntamiento de Madrid
+    title: "Aforos de peatones y bicicletas (dataset 300321-0-aforos-peatones-bicicletas)"
+    url: https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas
+    accessed: 2026-10-07
+    language: es
+    kind: official
+    excerpts:
+      - id: not-comparable
+        text: "Se advierte a que la comparación de estos conjuntos de datos no es recomendable al haberse cambiado los parámetros y tecnología de medición con objeto de mejorar la calidad de la información obtenida."
+        gloss_en: "Users are warned that comparing these datasets is not advisable, as the measurement parameters and technology were changed to improve the quality of the information obtained."
+        locator: "dataset description, Nota explicativa interrupción de datos"
+  - id: vegvesen-trafikkdata
+    publisher: Statens vegvesen
+    title: Trafikkdata (dataset)
+    url: https://dataut.vegvesen.no/dataset/trafikkdata
+    accessed: 2026-10-07
+    language: nb
+    kind: official
+    excerpts:
+      - id: road-network
+        text: "Trafikkdata.no har data fra trafikkmålinger fra det statlige og fylkeskommunale vegnettet samt noen kommunale veger."
+        gloss_en: "Trafikkdata.no has data from traffic measurements on the state and county road network and on some municipal roads."
+        locator: "dataset description, first paragraph"

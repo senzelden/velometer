@@ -1,0 +1,53 @@
+title: What the counters record
+intro:
+  - >-
+    Seven of our cities publish open bike-counter data, and the Counts tab sets an index of it
+    beside our mapped km. It is context: it shows how many bicycles were recorded at counter
+    sites, not how much cycling a city has.
+sections:
+  - dimension: measure
+    heading: What a counter measures
+    paragraphs:
+      - >-
+        A permanent counter records each bicycle that crosses its counting line, quoted below
+        [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's
+        sites are the state's counters, on state and county roads and a few municipal ones
+        [@vegvesen-trafikkdata]. Barcelona publishes no counts, only a monthly average daily
+        intensity per gauge, indexed as a separate series.
+  - dimension: selection
+    heading: Where counters stand
+    paragraphs:
+      - >-
+        Each city chooses where its counters stand, so the sites speak for themselves, not for
+        the city's streets. The set changes as counters are added, switched off for works or
+        break down, quoted below [@paris-comptage-velo]. The index therefore compares only sites
+        complete on nine days in ten (Barcelona: all twelve months) in both years of each step,
+        chained from 2019 (Madrid: 2020). A year with fewer than three such sites has no value.
+  - dimension: covid
+    heading: The COVID year
+    paragraphs:
+      - >-
+        2020 was the COVID year. Counts recorded at counter sites moved away from their 2019
+        level in every city with both years; Berlin's index stood at 114.6. Charts mark the
+        year, and a step into or out of it is no trend.
+  - dimension: breaks
+    heading: Breaks in a series
+    paragraphs:
+      - >-
+        A portal can change how it measures. Madrid's files hold no data from July 2021 to
+        August 2022; the portal reports a change of detectors in that time and advises against
+        comparing data across it, quoted below [@madrid-aforos-bicicletas]. Its index has a
+        value for 2020 only.
+  - dimension: side_by_side
+    heading: Counts beside mapped km
+    paragraphs:
+      - >-
+        Both lines are indexes, so their shapes can be read together. They describe
+        different things: a few street sections against a whole city's mapped network. A rise in
+        both can coincide without one explaining the other.
+quotes:
+  - {excerpt: berlin-zaehlstellen/what-is-counted, after: 0}
+  - {excerpt: paris-comptage-velo/counters-change, after: 1}
+  - {excerpt: madrid-aforos-bicicletas/not-comparable, after: 3}
+facts:
+  - {id: berlin-2020, expr: counter.berlin.2020, printed: "114.6"}

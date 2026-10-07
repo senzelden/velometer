@@ -1,0 +1,43 @@
+{
+ "trafficRegistrationPointId": "12703B2460285",
+ "from": "2017-02-02T00:00:00+01:00",
+ "to": "2026-10-08T00:00:00+02:00",
+ "days": [
+  {
+   "from": "2019-10-26T00:00:00+02:00",
+   "to": "2019-10-27T00:00:00+02:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 193
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  },
+  {
+   "from": "2019-10-27T00:00:00+02:00",
+   "to": "2019-10-28T00:00:00+01:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 233
+    },
+    "coverage": {
+     "percentage": 100.0
+    }
+   }
+  },
+  {
+   "from": "2019-10-28T00:00:00+01:00",
+   "to": "2019-10-29T00:00:00+01:00",
+   "total": {
+    "volumeNumbers": {
+     "volume": 483
+    },
+    "coverage": {
+     "percentage": 99.69
+    }
+   }
+  }
+ ]
+}
