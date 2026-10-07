@@ -193,6 +193,19 @@ def test_madrid_index_base_year_2020_is_100(tmp_path):
     assert by_year[2019][0] is None  # four months of 2019: no link qualifies
 
 
+@pytest.mark.parametrize(
+    ("old", "new", "missing"),
+    [(";NÚMERO;", ";PORTAL;", "número"), (";NOMBRE_VIAL;", ";VIA;", "nombre_vial")],
+)
+def test_madrid_address_header_without_its_pair_raises(tmp_path, old, new, missing):
+    raw = (FIX / "madrid" / "2020.csv").read_bytes()
+    assert old.encode() in raw
+    path = tmp_path / "2020.csv"
+    path.write_bytes(raw.replace(old.encode(), new.encode(), 1))
+    with pytest.raises(CounterFormatError, match=f"column {missing!r} missing"):
+        madrid.parse([path], CONFIG.entry("madrid"))
+
+
 # --- Oslo -----------------------------------------------------------------------------------
 
 
@@ -206,7 +219,34 @@ def test_oslo_day_totals_and_coverage():
     ) == (732, True)
     assert by["70429B619257", date(2015, 10, 26)].complete is False  # coverage 45.83 %
     assert ("70429B619257", date(2017, 5, 20)) not in by  # no volume (coverage 0)
-    assert by["12703B2460285", date(2019, 10, 28)].complete is False  # coverage 99.69 %
+
+
+def test_oslo_day_under_full_coverage_is_complete_when_every_local_hour_has_a_volume():
+    """§5.2: complete = all hours present. Coverage below 100 % is read from `byHour`."""
+    _, days = oslo.parse(OSLO_FILES, CONFIG.entry("oslo"))
+    by = {(d.site_id, d.day): d for d in days}
+    # coverage 99.69 %: 24 hours, each with a volume (one hour partly covered)
+    assert by["12703B2460285", date(2019, 10, 28)].complete is True
+    # coverage 45.83 %: 12 hour rows, 11 with a volume
+    assert by["70429B619257", date(2015, 10, 26)].complete is False
+    # no coverage figure (2010): 24 hours, each with a volume
+    assert by["70429B619257", date(2010, 5, 6)].complete is True
+
+
+def test_oslo_day_under_full_coverage_is_incomplete_without_every_hour(tmp_path):
+    doc = json.loads((OSLO / "12703B2460285.json").read_text(encoding="utf-8"))
+    no_hours = dict(doc, hours={})
+    one_missing = json.loads(json.dumps(doc))
+    one_missing["hours"]["2019-10-28"][7]["total"]["volumeNumbers"] = None
+    one_dropped = json.loads(json.dumps(doc))
+    del one_dropped["hours"]["2019-10-28"][7]
+    for name, variant in (("a", no_hours), ("b", one_missing), ("c", one_dropped)):
+        path = tmp_path / f"{name}_12703B2460285.json"
+        path.write_text(json.dumps(variant), encoding="utf-8")
+        _, days = oslo.parse([OSLO / "points.json", path], CONFIG.entry("oslo"))
+        by = {d.day: d for d in days}
+        assert by[date(2019, 10, 28)].complete is False, name
+        assert by[date(2019, 10, 27)].complete is True, name  # coverage 100
 
 
 def test_oslo_load_drops_a_point_outside_the_boundary(tmp_path):
@@ -237,10 +277,23 @@ def test_oslo_fetch_keeps_points_inside_pages_days_and_records_queries(tmp_path)
     }
     calls = []
 
+    hours = {
+        p: json.loads((OSLO / f"{p}.json").read_text(encoding="utf-8")).get("hours", {})
+        for p in days
+    }
+
     def post(url, query, variables):
         calls.append(variables)
         if "trafficRegistrationPoints" in query:
             return points
+        if "byHour" in query:
+            volume = {}
+            for k, v in variables.items():
+                if k.startswith("f"):
+                    nodes = hours[variables["id"]][v[:10]]
+                    edges = [{"node": n} for n in nodes]
+                    volume[f"d{k[1:]}"] = {"edges": edges, "pageInfo": {"hasNextPage": False}}
+            return {"trafficData": {"volume": volume}}
         nodes = days[variables["id"]]
         half = 0 if variables["after"] else 1  # two pages: the cursor is the split
         page = nodes[:2] if half else nodes[2:]
@@ -264,6 +317,10 @@ def test_oslo_fetch_keeps_points_inside_pages_days_and_records_queries(tmp_path)
     assert not any(c.get("id") == "88224B442844" for c in calls)
     got = json.loads(paths[2].read_text(encoding="utf-8"))
     assert [n["from"][:10] for n in got["days"]] == [n["from"][:10] for n in days["70429B619257"]]
+    # byHour is asked only for days with a volume and coverage below 100 % (or none)
+    assert sorted(got["hours"]) == ["2010-05-06", "2015-10-26"]
+    assert got["hours"]["2015-10-26"] == hours["70429B619257"]["2015-10-26"]
+    assert json.loads(paths[1].read_text(encoding="utf-8"))["hours"].keys() == {"2019-10-28"}
     meta = json.loads((out / "retrieved.json").read_text(encoding="utf-8"))
     assert meta["licence"] == "NLOD"
     assert all(f["url"] == "https://trafikkdata-api.atlas.vegvesen.no/" for f in meta["files"])

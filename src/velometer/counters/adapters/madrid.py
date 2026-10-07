@@ -1,8 +1,9 @@
 """Madrid: "Aforos de bicicletas" from datos.madrid.es (dataset 300321-0-aforos-peatones-
 bicicletas, CC BY 4.0), hourly per counter (`identificador`, one per direction: PERM_BICI01_PM01).
 
-One `;`-separated CSV per year (2019 from September; the 2021 and 2024 files end in June; the
-portal reports no data from August 2021 to August 2022, when the detectors were replaced). Two
+One `;`-separated CSV per year (2019 from September; the 2021 and 2024 files end in June).
+Files: none from July 2021 to August 2022; portal: interruption August 2021 to September 2022,
+when the detectors were replaced. Two
 header schemas: 2019-2021 upper case (`FECHA;HORA;IDENTIFICADOR;BICICLETAS;...;NOMBRE_VIAL;
 NÚMERO;...;OBSERVACIONES_DIRECCION;LATITUD;LONGITUD`, decimal commas), 2022-2024 lower case
 (`fecha;hora;identificador;bicicletas;device_id;...;direccion;observaciones_direccion;latitude;
@@ -89,6 +90,11 @@ def _parse_file(path: Path, tz: str, hours: list[HourCount], sites: dict[str, Si
     lat_i, lon_i = _column(header, LAT), _column(header, LON)
     addr_i = _column(header, ("direccion",))
     street_i, number_i = _column(header, ("nombre_vial",)), _column(header, ("número",))
+    if addr_i is None:  # 2019-2021: the address is the pair nombre_vial + número
+        if street_i is None:
+            raise CounterFormatError(path, "column 'nombre_vial' missing (no 'direccion')")
+        if number_i is None:
+            raise CounterFormatError(path, "column 'número' missing (no 'direccion')")
     obs_i = _column(header, ("observaciones_direccion",))
     # (counter, local hour, fold) -> (count, address)
     got: dict[tuple[str, datetime, int], tuple[int | None, str]] = {}
@@ -109,8 +115,10 @@ def _parse_file(path: Path, tz: str, hours: list[HourCount], sites: dict[str, Si
         count = int(raw) if raw else None
         if addr_i is not None:
             address = _squash(row[addr_i])
+        elif street_i is not None and number_i is not None:  # checked at the header
+            address = _squash(f"{row[street_i]} {row[number_i]}")
         else:
-            address = _squash(f"{row[street_i]} {row[number_i]}") if street_i is not None else ""
+            address = ""
         prev = got.get((sid, t, 0))
         fold = 0
         if prev is not None:

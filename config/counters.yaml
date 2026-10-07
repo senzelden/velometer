@@ -91,8 +91,9 @@ cities:
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/legalcode.es
     page: https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas
-    # "Aforos bicicletas. <year>" CSVs; no data from August 2021 to August 2022 (detectors
-    # replaced, per the dataset page) and none published after June 2024 (2026-10-07)
+    # "Aforos bicicletas. <year>" CSVs. Files: none from July 2021 to August 2022; portal:
+    # interruption August 2021 to September 2022 (detectors replaced). None published after
+    # June 2024 (2026-10-07)
     urls:
       - https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas/resource/300321-25-aforos-peatones-bicicletas-csv/download/300321-25-aforos-peatones-bicicletas-csv.csv  # 2019 (from September)
       - https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas/resource/300321-12-aforos-peatones-bicicletas-csv/download/300321-12-aforos-peatones-bicicletas-csv.csv  # 2020

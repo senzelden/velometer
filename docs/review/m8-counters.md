@@ -156,8 +156,20 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
     85.6); the merge is kept because a link must not count one bridge side twice and the other
     not at all. Pitkäsilta's sides are not merged: no swap is visible (`itäpuoli` ends in 2023).
   - Publisher-listed outages (Kaisaniemi 2021-12-19 to 2022-06-30 and others) appear as empty
-    cells; some years also hold near-zero totals (Viikintie 2019: 17 k; Baana 2023: 75 k against
-    873 k in 2022) that the 90 % complete-days rule keeps out of the links where days are 0.
+    cells. Some site-years hold near-zero totals (Viikintie 2019: 17 k; Baana 2023: 75 k against
+    873 k in 2022). They are mostly missing days, not zero days, and none of them reaches 90 %
+    complete days, so none feeds a link: Baana 2023 has 92 complete days (2024: 14), Viikintie
+    2019 has 50 (2024: 88), and Pitkäsilta itäpuoli 2024 has 0 (141 zero days). Leaving them
+    out moves the 2025 index by 0.0 (Task 7 review).
+- **Open question for the user (step-down sites, spec §2.13).** The 2024 and 2025 links rest on
+  8–9 sites, and two of them step down while still counting (no zeros), which looks like works
+  or diversions; the data cannot tell. Kaivokatu: May–August means about 3,200 in 2023, 1,900 in
+  2024 and 1,200 in 2025, from April 2024 (per-site ratios 0.59 for 2023→24 and 0.73 for
+  2024→25). Pitkäsilta länsipuoli: about halved from May 2025 (0.58), while `itäpuoli` has
+  written only zeros since mid-2024. These two account for about 15 points: the 2025 index is
+  84.2 (9 sites) as built and 99.9 (7 sites) without Kaivokatu 2024–25 and Pitkäsilta länsipuoli
+  2025 (2024: 85.9 and 93.9). The build keeps them, as the recorded §2.13 rule says; dropping
+  them, or a generic structural-break rule, would change that decision and is the user's call.
 - **Fixture** (`tests/fixtures/counters/helsinki/`): `Helsingin_pyorailijamaarat.xlsx` (18.0 KB,
   header and the rows of 2016-06-01, 2019-03-31, 2019-10-27, 2021-03-10, 2022-03-15, 2025-03-30,
   values copied from the real file) and the coordinate CSV byte for byte. Hand totals: Baana 671
@@ -211,9 +223,11 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
 
 - **API:** <https://trafikkdata-api.atlas.vegvesen.no/> (GraphQL). Public, no key: confirmed,
   every query of this task was answered without credentials (HTTP 200). Retrieved
-  2026-10-07T14:21:37Z to 14:22:51Z (18 files, 10.2 MB): `00_points.json` (every BICYCLE point of
-  county 3) and one `byDay` file per kept point, 100 days per page, cursor-paged, from the
-  point's `firstData` to 2026-10-08; the query and variables of each file are in
+  2026-10-07T15:00:30Z to 15:03:34Z (18 files, 40.9 MB; refetched in Task 7 fix round 1):
+  `00_points.json` (every BICYCLE point of county 3) and one file per kept point with its
+  `byDay` nodes, 100 days per page, cursor-paged, from the point's `firstData` to 2026-10-08,
+  and the `byHour` nodes of each day with a volume and coverage below 100 % or none (6,317
+  days, 20 days per request as GraphQL aliases); the queries and variables of each file are in
   `retrieved.json`. Page sizes above 100 fail with a `DataFetchingException`.
 - **Licence:** NLOD (`license_id` `NLOD`, <https://data.norge.no/nlod/no>, on the dataut.vegvesen.no
   record <https://dataut.vegvesen.no/dataset/trafikkdata>; publisher Statens vegvesen). The record
@@ -224,18 +238,42 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
   Frognerstranda about 40 m, Lysaker about 50 m). Bryn has been `OUT_OF_SERVICE` since 2026-03-04.
 - **Quirks found:**
   - `byDay` is the sum of `byHour`: Frognerstranda 2019-10-27 has 25 hourly nodes summing to 732,
-    the day's `byDay` volume. So the adapter reads days, and a day is complete when
-    `coverage.percentage` is 100 (every hour reported). Of 50,134 days with a volume, 43,817 have
-    coverage 100; 2,303 have 99–100 %, 682 less; 3,332 (old data, before quality metrics) have a
-    volume and no coverage: incomplete. 397 days have no volume (coverage 0): not stored.
+    the day's `byDay` volume. So the adapter reads days. `coverage.percentage` is the share of
+    the day's time reported, not of its hours. Of 50,134 days with a volume, 43,817 have
+    coverage 100, 2,303 have 99–100 %, 682 less, and 3,332 (2003–2015, before quality metrics)
+    have a volume and no coverage. 397 days have no volume (coverage 0): not stored.
+  - **Spot check of `byHour` (Task 7 fix round 1), 51 days sampled at random (seed 7) from the
+    real files:**
+
+    | Day coverage | Days | Hours with a volume | Partly covered hours |
+    |---|---|---|---|
+    | 99–100 % | 25 | 24 of 24 on every day | 1–3 per day (77.8–99.4 %) |
+    | 95–99 % | 10 | 24 of 24 on every day | 1–9 per day (50–99.2 %) |
+    | below 95 % | 6 | 10–19 (whole hours missing or at coverage 0) | |
+    | none (2005–2014) | 6 | 24 of 24 on every day | no coverage figure per hour |
+    | 100 % | 4 | 24 of 24 | 0 |
+
+    So coverage below 100 % means minutes missing inside present hours down to about 95 %, and
+    whole hours missing below it; the days without a coverage figure have every hour. No
+    coverage threshold says "all hours present" exactly, so the adapter derives it from `byHour`
+    (spec §5.2, as for the other cities): a day at coverage 100 is complete; any other day is
+    complete when `byHour` gives every local hour of it (23, 24 or 25) a volume, however much
+    of the hour is covered. In 2015 the API lists each old-system hour twice, once with a volume
+    and no coverage, once at coverage 0 without a volume: the hour counts as present.
+  - Result over the 50,134 stored days: the rule marks 49,778 complete (43,817 at coverage 100;
+    all 2,303 at 99–100 %; 315 of 350 at 95–99 %; 10 of 81 at 90–95 %; 3,326 of the 3,332
+    without coverage; 7 of 251 below 90 %, in 2015–16, with every hour partly covered), and the
+    zero-day rule then takes out 129 zero-total days: 49,649 complete.
   - `firstData` reaches back to 2003 (Frognerstranda) and 2009 (Aker sykehus), but no link
     before 2016→2017 has 3 qualifying sites; the index starts in 2017.
 - **Fixture** (`tests/fixtures/counters/oslo/`): `points.json` (Frognerstranda, Dr. Eufemias gt.
   Vestgående and, from a county-32 query, Snarøyveien in Bærum: outside Oslo), their day nodes for
   a few days cut from the real files (Snarøyveien from a 2019-10-26..28 query), and a copy of the
   stored Oslo LAU boundary (5.9 KB). Hand values: Frognerstranda 732 (2019-10-27, complete), 1,306
-  (2015-10-26, coverage 45.83 %), no day 2017-05-20 (coverage 0); Dr. Eufemias 483 (2019-10-28,
-  coverage 99.69 %: incomplete).
+  (2015-10-26, coverage 45.83 %, 11 of 24 hours: incomplete), 2,894 (2010-05-06, no coverage, 24
+  hours: complete), no day 2017-05-20 (coverage 0); Dr. Eufemias 483 (2019-10-28, coverage
+  99.69 %, 24 hours with a volume: complete). The `byHour` nodes of those three days are cut
+  from the real API answer (2026-10-07).
 
 ## Barcelona
 
@@ -343,29 +381,38 @@ counters --check`: exit 0, "counters ok: 7 cities".
 |---|---|---|---|---|
 | Helsinki | 18 | 65,413 days (64,562) | 2014-01-01 | 2026-06-30 |
 | Madrid | 55 | 51,485 days (47,949) | 2019-09-01 | 2024-06-30 |
-| Oslo | 17 | 50,134 days (43,688) | 2003-08-01 | 2026-10-07 |
+| Oslo | 17 | 50,134 days (49,649) | 2003-08-01 | 2026-10-07 |
 | Barcelona | 429 | 130,485 monthly values (26,110 working-day) | 2017-01-01 | 2025-12-31 |
 
 Index of counts recorded at counter sites (Barcelona: of average daily intensity), base 2019 =
-100 (Madrid 2020 = 100); qualifying sites in brackets. Oslo has `none (0)` rows for 2003–2016,
-Berlin and Paris as in the Task 6 table.
+100 (Madrid 2020 = 100); qualifying sites in brackets. Oslo has `none (0)` rows for 2003–2015
+and `none (2)` for 2016, Berlin and Paris as in the Task 6 table.
 
 | Year | Berlin | Paris | Vienna | Helsinki | Madrid | Oslo | Barcelona |
 |---|---|---|---|---|---|---|---|
 | 2013 | none (1) | | 71.7 (10) | | | none (0) | |
 | 2014 | none (1) | | 88.1 (12) | 87.6 (5) | | none (0) | |
 | 2015 | none (1) | | 87.5 (12) | 91.1 (8) | | none (0) | |
-| 2016 | 93.8 (14) | 75.9 (7) | 93.9 (12) | 92.2 (13) | | none (0) | |
-| 2017 | 89.6 (23) | 76.9 (6) | 93.0 (12) | 90.8 (12) | | 91.5 (4) | 89.2 (19) |
-| 2018 | 101.3 (20) | 66.9 (8) | 99.2 (13) | 104.4 (13) | | 108.2 (4) | 95.8 (31) |
-| 2019 | 100.0 (21) | 100.0 (31) | 100.0 (13) | 100.0 (13) | none (0) | 100.0 (8) | 100.0 (127) |
-| 2020 (COVID year) | 114.6 (21) | 130.2 (26) | 112.0 (13) | 106.2 (13) | 100.0 (33) | 124.0 (7) | 91.8 (114) |
-| 2021 | 102.2 (22) | 141.3 (49) | 113.3 (13) | 85.6 (13) | none (0) | 99.4 (6) | 119.3 (164) |
-| 2022 | 102.0 (23) | 165.2 (49) | 113.8 (13) | 79.0 (9) | none (0) | 108.2 (9) | 132.9 (165) |
-| 2023 | 98.5 (23) | 186.5 (48) | 116.9 (18) | 85.6 (10) | none (0) | 111.7 (12) | 135.8 (174) |
-| 2024 | 101.6 (29) | 191.5 (60) | 122.5 (17) | 85.9 (8) | none (0) | 118.2 (12) | 135.3 (191) |
-| 2025 | 100.3 (29) | 205.2 (74) | 121.6 (16) | 84.2 (9) | | 133.6 (13) | 140.3 (207) |
+| 2016 | 93.8 (14) | 75.9 (7) | 93.9 (12) | 92.2 (13) | | none (2) | |
+| 2017 | 89.6 (23) | 76.9 (6) | 93.0 (12) | 90.8 (12) | | 92.4 (5) | 89.2 (19) |
+| 2018 | 101.3 (20) | 66.9 (8) | 99.2 (13) | 104.4 (13) | | 108.7 (7) | 95.8 (31) |
+| 2019 | 100.0 (21) | 100.0 (31) | 100.0 (13) | 100.0 (13) | none (0) | 100.0 (11) | 100.0 (127) |
+| 2020 (COVID year) | 114.6 (21) | 130.2 (26) | 112.0 (13) | 106.2 (13) | 100.0 (33) | 128.3 (9) | 91.8 (114) |
+| 2021 | 102.2 (22) | 141.3 (49) | 113.3 (13) | 85.6 (13) | none (0) | 103.5 (8) | 119.3 (164) |
+| 2022 | 102.0 (23) | 165.2 (49) | 113.8 (13) | 79.0 (9) | none (0) | 113.6 (10) | 132.9 (165) |
+| 2023 | 98.5 (23) | 186.5 (48) | 116.9 (18) | 85.6 (10) | none (0) | 117.2 (13) | 135.8 (174) |
+| 2024 | 101.6 (29) | 191.5 (60) | 122.5 (17) | 85.9 (8) | none (0) | 124.7 (14) | 135.3 (191) |
+| 2025 | 100.3 (29) | 205.2 (74) | 121.6 (16) | 84.2 (9) | | 140.6 (15) | 140.3 (207) |
 | 2026 | | none (0) | | none (0) | | none (0) | |
+
+Oslo before and after the complete-day fix (Task 7 fix round 1; `coverage == 100` against all
+local hours present from `byHour`), reloaded with `velometer counters load oslo`, `counters
+--check` exit 0:
+
+| Oslo | 2017 | 2019 (base sites) | 2020 | 2021 | 2025 |
+|---|---|---|---|---|---|
+| coverage == 100 (before) | 91.5 (4) | 100.0 (8) | 124.0 (7) | 99.4 (6) | 133.6 (13) |
+| all hours present (after) | 92.4 (5) | 100.0 (11) | 128.3 (9) | 103.5 (8) | 140.6 (15) |
 
 `velometer content --check`: ok (the counter explainer `content/counters.yaml`, sources in
 `content/sources/counters.yaml`, every excerpt found on its page with `check_online`).

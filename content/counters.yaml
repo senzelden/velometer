@@ -12,8 +12,8 @@ sections:
         A permanent counter records each bicycle that crosses its counting line, quoted below
         [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's
         sites are the state's counters, on state and county roads and a few municipal ones
-        [@vegvesen-trafikkdata]. Barcelona publishes no counts, only a monthly average daily
-        intensity per gauge, indexed as a separate series.
+        [@vegvesen-trafikkdata]. Barcelona's files give one average value per gauge, month and
+        type of day [@barcelona-aforaments-detall], indexed as a separate series.
   - dimension: selection
     heading: Where counters stand
     paragraphs:

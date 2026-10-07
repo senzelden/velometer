@@ -39,5 +39,297 @@
     }
    }
   }
- ]
+ ],
+ "hours": {
+  "2019-10-28": [
+   {
+    "from": "2019-10-28T00:00:00+01:00",
+    "to": "2019-10-28T01:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 0
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T01:00:00+01:00",
+    "to": "2019-10-28T02:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 0
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T02:00:00+01:00",
+    "to": "2019-10-28T03:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 0
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T03:00:00+01:00",
+    "to": "2019-10-28T04:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 0
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T04:00:00+01:00",
+    "to": "2019-10-28T05:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 1
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T05:00:00+01:00",
+    "to": "2019-10-28T06:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 6
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T06:00:00+01:00",
+    "to": "2019-10-28T07:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 21
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T07:00:00+01:00",
+    "to": "2019-10-28T08:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 52
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T08:00:00+01:00",
+    "to": "2019-10-28T09:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 121
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T09:00:00+01:00",
+    "to": "2019-10-28T10:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 36
+     },
+     "coverage": {
+      "percentage": 92.5
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T10:00:00+01:00",
+    "to": "2019-10-28T11:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 17
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T11:00:00+01:00",
+    "to": "2019-10-28T12:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 19
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T12:00:00+01:00",
+    "to": "2019-10-28T13:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 19
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T13:00:00+01:00",
+    "to": "2019-10-28T14:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 14
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T14:00:00+01:00",
+    "to": "2019-10-28T15:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 24
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T15:00:00+01:00",
+    "to": "2019-10-28T16:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 31
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T16:00:00+01:00",
+    "to": "2019-10-28T17:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 45
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T17:00:00+01:00",
+    "to": "2019-10-28T18:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 40
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T18:00:00+01:00",
+    "to": "2019-10-28T19:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 12
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T19:00:00+01:00",
+    "to": "2019-10-28T20:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 10
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T20:00:00+01:00",
+    "to": "2019-10-28T21:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 6
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T21:00:00+01:00",
+    "to": "2019-10-28T22:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 4
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T22:00:00+01:00",
+    "to": "2019-10-28T23:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 1
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   },
+   {
+    "from": "2019-10-28T23:00:00+01:00",
+    "to": "2019-10-29T00:00:00+01:00",
+    "total": {
+     "volumeNumbers": {
+      "volume": 4
+     },
+     "coverage": {
+      "percentage": 100.0
+     }
+    }
+   }
+  ]
+ }
 }

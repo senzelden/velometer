@@ -48,3 +48,15 @@ sources:
         text: "Trafikkdata.no har data fra trafikkmålinger fra det statlige og fylkeskommunale vegnettet samt noen kommunale veger."
         gloss_en: "Trafikkdata.no has data from traffic measurements on the state and county road network and on some municipal roads."
         locator: "dataset description, first paragraph"
+  - id: barcelona-aforaments-detall
+    publisher: Ajuntament de Barcelona, Open Data BCN
+    title: Detall dels aforaments de mobilitat de la ciutat de Barcelona (dataset aforaments-detall)
+    url: https://opendata-ajuntament.barcelona.cat/data/ca/dataset/aforaments-detall
+    accessed: 2026-10-07
+    language: ca
+    kind: official
+    excerpts:
+      - id: monthly-average
+        text: "En aquest resum anual, es detalla un valor per cada mes i tipus de dia amb el valor mitjà de totes les dades disponibles."
+        gloss_en: "In this annual summary, one value is given for each month and type of day, the average of all the available data."
+        locator: "dataset description, second paragraph"
