@@ -4,6 +4,7 @@
 rest of it on every gate. The broken copies below prove each rule is live on the real files.
 """
 
+import re
 import shutil
 from collections.abc import Callable
 from pathlib import Path
@@ -100,11 +101,6 @@ def _drop_section(dimension: str) -> Callable[[dict], None]:
             lambda d: d["sections"][1].__setitem__("step", d["sections"][0]["step"]),
             "narratives/combined.yaml: step",
         ),
-        (
-            "plans/berlin.yaml",
-            lambda d: d["quotes"][1].__setitem__("after", 1),  # counted with the intro
-            "plans/berlin.yaml: quote berlin-fortschrittsbericht-2021/halved follows paragraph 1",
-        ),
         ("explainer.yaml", _drop_section("length"), "explainer.yaml: dimension length has 0"),
         (
             "explainer.yaml",
@@ -144,18 +140,27 @@ def test_an_over_long_excerpt_in_the_registry_is_reported(broken):
     assert len(problems) == 1 and "more than 60 words" in problems[0], problems
 
 
-def test_the_berlin_plan_page_sets_each_quote_after_the_paragraph_citing_its_source():
-    """Rendered as the app renders it: each pull-quote follows a paragraph that cites the
-    quote's source (the intro's quote follows the first paragraph). The `after` indices were
-    once counted with the intro, which put every quote one paragraph late."""
-    doc = load_document(REAL_CONTENT / "plans" / "berlin.yaml")
+EXPLAINER_SHAPED = ["explainer.yaml", "plans/berlin.yaml", "counters.yaml"]
+
+
+def _cites(paragraph: str) -> set[str]:
+    return set(re.findall(r"\[@([^\]\s]+)\]", paragraph))
+
+
+@pytest.mark.parametrize("rel", EXPLAINER_SHAPED)
+def test_each_quote_renders_after_a_paragraph_citing_its_source(rel):
+    """Rendered as the app renders it, every pull-quote of a shipped explainer-shaped page
+    follows a paragraph that cites the quote's source (a quote whose source the intro cites may
+    follow the first paragraph). The Berlin plan page's `after` indices were once counted with
+    the intro, which put every quote one paragraph late."""
+    doc = load_document(REAL_CONTENT / rel)
     sources = load_sources(REAL_CONTENT / "sources")
     rendered = render_explainer(doc, sources)
     number = {s.id: n for n, s in rendered.sources.items()}
     intro_cites = {
         n for n in number.values() if any(f'href="#src-{n}"' in p for p in rendered.intro)
     }
-    seen, previous, placed = 0, "", {}
+    seen, previous, placed = 0, "", []
     for sec in rendered.sections:
         for item in sec.items:
             if "pullquote" not in item:
@@ -164,13 +169,30 @@ def test_the_berlin_plan_page_sets_each_quote_after_the_paragraph_citing_its_sou
             q = next(q for q in doc.quotes if _excerpt_text(sources, q.excerpt) in item)
             n = number[q.excerpt.partition("/")[0]]
             assert f'href="#src-{n}"' in previous or (seen == 1 and n in intro_cites), q.excerpt
-            placed[q.excerpt] = sec.role
-    assert placed == {
-        "berlin-radverkehrsplan-vo19-013/paths-adjusted": "reported",
-        "berlin-fortschrittsbericht-2021/halved": "reported",
-        "berlin-drs-19-27049/ergaenzungsnetz-row": "reported",
-        "berlin-gdi-radverkehrsmassnahmen/abstract": "completed",
-    }
+            placed.append(q.excerpt)
+    assert sorted(placed) == sorted(q.excerpt for q in doc.quotes)  # every quote was rendered
+
+
+@pytest.mark.parametrize("rel", EXPLAINER_SHAPED)
+def test_a_quote_moved_off_its_paragraph_is_reported(broken, rel):
+    """The offline check catches a quote moved to a paragraph that does not cite its source;
+    the wrong index is derived from the file, so the break survives a rewrite of the page."""
+    doc = yaml.safe_load((REAL_CONTENT / rel).read_text(encoding="utf-8"))
+    paragraphs = [p for s in doc["sections"] for p in s["paragraphs"]]
+    intro = set().union(*(_cites(p) for p in doc["intro"]))
+    q = doc["quotes"][0]
+    sid = q["excerpt"].partition("/")[0]
+    wrong = next(
+        i
+        for i, p in enumerate(paragraphs)
+        if sid not in _cites(p) and not (i == 0 and sid in intro)
+    )
+
+    def mutate(d: dict) -> None:
+        d["quotes"][0]["after"] = wrong
+
+    problems = offline_problems(broken(rel, mutate))
+    assert f"{rel}: quote {q['excerpt']} follows paragraph {wrong}," in " ".join(problems), problems
 
 
 def _excerpt_text(sources, ref: str) -> str:

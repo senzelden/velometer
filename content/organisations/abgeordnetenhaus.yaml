@@ -49,7 +49,7 @@ sections:
         Senate's figures get tied to a document and a date, which is why we cite them one
         document at a time.
 quotes:
-  - {excerpt: agh-parlamentarische-anfragen/control, after: 3}
+  - {excerpt: agh-parlamentarische-anfragen/control, after: 1}
 literals:
   - "Drucksache 19/25987"
   - "28 June 2018"
