@@ -2150,8 +2150,9 @@ def counters_load(
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
 ) -> None:
-    """Parse each fetched city's files into daily totals (counter_daily, upserted), its sites
-    (counter_sites) and its chained index (counter_index). Writes only the counter_* tables."""
+    """Parse each fetched city's files into daily totals, its sites and its chained index,
+    replacing the city's rows in counter_daily, counter_sites and counter_index. Writes only the
+    counter_* tables."""
     from velometer.counters import load_city
     from velometer.counters.model import CounterFormatError
 

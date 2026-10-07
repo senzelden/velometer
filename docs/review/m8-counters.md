@@ -19,9 +19,12 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
   the `2013` sheet is read after it and wins on 2013.
 - **Quirks found:**
   - Data quality is coded as cell fill (sheet `Legende`): orange `FFFFC000` = "no or implausible
-    data" (2019 alone: 18,858 flagged zeros and 7,485 flagged non-zero values); a theme fill marks
-    reconstructed values. Flagged cells are read as missing hours; reconstructed values as counts.
-    The adapter takes the flag colour from the `Legende` cell holding `0`.
+    data" (2019 alone: 18,858 flagged zeros and 7,485 flagged non-zero values); yellow `FFFFEB9C`
+    = "keine Zähldaten an den Zählstellen vorhanden" (no count data; 16,856 cells, all empty or
+    `''` except seven 0s in 2022, none positive); a theme fill marks reconstructed values. Cells
+    with either flag fill are missing hours (fix round 1 added the yellow one); reconstructed
+    values are counts. The adapter takes the flag colours from the `Legende` rows whose text says
+    `keine`.
   - Every day has 24 rows. On spring-forward days the non-existent 02:00 row is empty or 0 (2019
     has 23 rows that day); on fall-back days 02:00 appears once. So spring-forward days are
     complete (the placeholder is ignored) and fall-back days have 24 of 25 hours: incomplete, one
@@ -64,6 +67,15 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
     year), so the site is the unit: each hour is the sum of the site's counters in that file.
     Within one file a counter repeating an hour (the spring-forward placeholder written as a second
     `03:00+02:00`) keeps the larger count.
+  - Rule (fix round 1): a site-hour is present only when every counter of the site in service
+    that day reports it; a counter is in service from its first to its last reported day in that
+    file. Found in the real files: in sites with two or more counters, no counter starts or
+    stops reporting inside a file while a sibling reports (renumbering happens between files),
+    and the counter-days missing inside a counter's span are outages: 26 (2023), 39 (2024), 30
+    (2025), none in 2016–2022 (the UTC rolling export was not split this way). Counter-days
+    with fewer than 23 rows: 32, 64, 14 (2018–2020) and 105, 204, 102 (2023–2025). A day where
+    one counter of a site lacks hours is therefore incomplete; its stored total covers only the
+    hours every in-service counter reported.
   - The 2016 and 2017 archives list counters installed later with 0 for every hour (37 of 48
     sites in 2017); such days are outages (rule below), so 2016–2018 index links rest on 6–8
     sites.
@@ -113,17 +125,19 @@ mapped km, not a measure of all cycling in a city (spec §2.12).
   counting, and Berlin's legend codes 0 as "no or implausible data".
 - Vienna sites have no coordinates (`lat`/`lon` NULL, allowed by the schema); the Counts tab
   shows them as a list. No coordinates were derived from the names.
-- `counters load` replaces a city's daily rows, sites and index from its files.
+- `counters load` replaces a city's daily rows (one transaction), sites and index from its files.
 
 ## Real load (2026-10-07)
 
-`velometer counters load berlin paris vienna`: 55 s, 1.9 GB peak RSS (Paris: 10.2 million rows
-read). `velometer counters --check`: exit 0, "counters ok: 3 cities".
+`velometer counters load berlin paris vienna`: 144 s, 1.9 GB peak RSS (Paris: 10.2 million rows
+read). `velometer counters --check`: exit 0, "counters ok: 3 cities". Figures after fix round 1
+(Berlin yellow fill as missing, Paris in-service counter rule); the values before it are given
+where they changed.
 
 | City | Sites | Days stored (complete) | First day | Last day |
 |---|---|---|---|---|
-| Berlin | 35 | 101,970 (101,375) | 2012-03-01 | 2025-12-31 |
-| Paris | 109 | 242,753 (202,312) | 2016-01-01 | 2026-10-06 |
+| Berlin | 35 | 101,963 (101,375); before: 101,970 | 2012-03-01 | 2025-12-31 |
+| Paris | 109 | 242,703 (202,263); before: 242,753 (202,312) | 2016-01-01 | 2026-10-06 |
 | Vienna | 19 | 67,933 (66,473) | 2013-01-01 | 2025-12-31 |
 
 Index of counts recorded at counter sites, 2019 = 100 (qualifying sites in brackets; "none" =
@@ -142,10 +156,14 @@ fewer than 3 sites with 90 % complete days in both years of the link, or a broke
 | 2020 (COVID year) | 114.6 (21) | 130.2 (26) | 112.0 (13) |
 | 2021 | 102.2 (22) | 141.3 (49) | 113.3 (13) |
 | 2022 | 102.0 (23) | 165.2 (49) | 113.8 (13) |
-| 2023 | 98.5 (23) | 185.2 (49) | 116.9 (18) |
-| 2024 | 101.6 (29) | 186.5 (62) | 122.5 (17) |
-| 2025 | 100.3 (29) | 199.9 (75) | 121.6 (16) |
+| 2023 | 98.5 (23) | 186.5 (48); before 185.2 (49) | 116.9 (18) |
+| 2024 | 101.6 (29) | 191.5 (60); before 186.5 (62) | 122.5 (17) |
+| 2025 | 100.3 (29) | 205.2 (74); before 199.9 (75) | 121.6 (16) |
 | 2026 | | none (0; Jan–Oct only) | |
 
 The base-year count is the number of sites with 90 % complete days in 2019; every other year's
 count is the sites of its link with the neighbouring year towards 2019.
+
+Fix round 1 changed no Berlin or Vienna index value (Berlin lost seven days, the 2022 yellow-filled
+0s, none of them complete); in Paris the in-service rule leaves 49 fewer complete site-days (and
+50 site-days with no hour reported by every counter drop out) and moves 2023–2025.

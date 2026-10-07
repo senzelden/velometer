@@ -9,7 +9,11 @@ local wall clock (`2022-01-01T00:00:00`), with an offset (`2019-01-01T07:00:00+0
 
 The site (`Identifiant du site de comptage`) is the unit: counter ids within a site are
 renumbered between yearly files, so each hour is the sum of the site's counters in that file. A
-counter that lists one hour twice in a file (the spring-forward placeholder row, written as a
+site-hour is present only when every counter of the site in service that day reports it; a
+counter is in service from its first to its last reported day in the file (in the real files a
+counter missing a day inside that span is an outage: 26, 39 and 30 counter-days in 2023-2025;
+none is missing outside it), so a day with a counter's hours missing is incomplete. A counter
+that lists one hour twice in a file (the spring-forward placeholder row, written as a
 second `03:00+02:00`) keeps the larger count. Rows without a site id (an all-counters total per
 hour in the 2024 and 2025 archives) are skipped.
 """
@@ -18,7 +22,7 @@ import csv
 import io
 import zipfile
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -148,10 +152,36 @@ def _parse_member(label, stream, times, sites, hours) -> None:
             if lat is None and prev is not None:  # a file without coordinates keeps the last
                 lat, lon = prev[1].lat, prev[1].lon
             sites[site] = (label, Site(site, row[idx["name"]].strip(), lat, lon))
-    per_site: dict[tuple[str, datetime, int], int] = defaultdict(int)
+    hours.extend(_site_hours(per_counter))
+
+
+def _site_hours(per_counter: dict[tuple[str, str, datetime, int], int]) -> list[HourCount]:
+    """One file's site-hours: the sum of the site's counters, kept only when every counter of the
+    site in service that day reports the hour. A counter is in service on the days from its
+    first to its last reported day in the file; a site-hour one of them lacks is left out, so
+    to_days marks the day incomplete."""
+    span: dict[tuple[str, str], tuple[date, date]] = {}
+    for site, counter, t, _ in per_counter:
+        d = t.date()
+        lo, hi = span.get((site, counter), (d, d))
+        span[site, counter] = (min(lo, d), max(hi, d))
+    counters: dict[str, list[tuple[date, date]]] = defaultdict(list)
+    for (site, _), lo_hi in span.items():
+        counters[site].append(lo_hi)
+    total: dict[tuple[str, datetime, int], int] = defaultdict(int)
+    reporting: dict[tuple[str, datetime, int], int] = defaultdict(int)
     for (site, _, t, fold), count in per_counter.items():
-        per_site[site, t, fold] += count
-    hours.extend(HourCount(site, t, c) for (site, t, _), c in per_site.items())
+        total[site, t, fold] += count
+        reporting[site, t, fold] += 1
+    in_service: dict[tuple[str, date], int] = {}
+    out = []
+    for (site, t, fold), count in total.items():
+        d = t.date()
+        if (site, d) not in in_service:
+            in_service[site, d] = sum(lo <= d <= hi for lo, hi in counters[site])
+        if reporting[site, t, fold] == in_service[site, d]:
+            out.append(HourCount(site, t, count))
+    return out
 
 
 def parse(paths: list[Path], entry: CounterEntry) -> tuple[list[Site], list[HourCount]]:

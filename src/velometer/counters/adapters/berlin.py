@@ -1,10 +1,11 @@
 """Berlin: the Senate's `gesamtdatei-stundenwerte.xlsx` (dl-de-zero-2.0), hourly per direction.
 
-Sheets read: `Legende` (the fill of its `0` cell marks "no or implausible data"), `Standortdaten`
+Sheets read: `Legende` (the fills of its "keine ... Zähldaten" rows mark missing data: orange on
+`0`, "no or implausible data"; yellow, "no count data"), `Standortdaten`
 (one row per direction: id, description, latitude, longitude) and every `Jahresdatei <year>`
 (column A the local wall-clock hour, one column per direction headed `<id> <install date>`).
-A cell is a count when it holds a number and does not carry the implausible-data fill; an empty
-cell, `''` or a flagged cell is a missing hour. Reconstructed values (another fill) are counts.
+A cell is a count when it holds a number and carries neither missing-data fill; an empty cell,
+`''` or a flagged cell is a missing hour. Reconstructed values (another fill) are counts.
 Header ids renumbered between years map to their `Standortdaten` id via `site_aliases`. The
 `2012` sheet also holds 2013; the `2013` sheet, read later, wins on those hours.
 """
@@ -22,6 +23,7 @@ from velometer.counters.model import CounterEntry, CounterFormatError, HourCount
 LEGEND = "Legende"
 SITES = "Standortdaten"
 YEAR_SHEET = re.compile(r"^Jahresdatei (\d{4})$")
+MISSING_TEXT = re.compile(r"\bkeine\b")
 SITE_COLUMNS = {
     "id": "Zählstelle",
     "name": "Beschreibung - Fahrtrichtung",
@@ -42,14 +44,19 @@ def _fill(cell) -> str | None:
     return rgb if isinstance(rgb, str) else None
 
 
-def _invalid_fill(wb, path: Path) -> str:
+def _missing_fills(wb, path: Path) -> frozenset[str]:
+    """The fills of the legend rows that mean "no data": a row whose text says `keine` (the `0`
+    row, "keine (0) oder unplausible Zähldaten", and the empty row, "keine Zähldaten ...
+    vorhanden"). The reconstruction row ("durch Rekonstruktion aufgefüllt") is not one."""
+    fills = set()
     for row in wb[LEGEND].iter_rows():
-        for c in row:
-            if c.value == 0 and not isinstance(c.value, bool):
-                fill = _fill(c)
-                if fill:
-                    return fill
-    raise CounterFormatError(path, f"sheet {LEGEND!r}: no filled legend cell for 0 (no data)")
+        texts = [str(c.value) for c in row if isinstance(c.value, str) and len(c.value) > 20]
+        if not any(MISSING_TEXT.search(t) for t in texts):
+            continue
+        fills.update(f for c in row if (f := _fill(c)))
+    if not fills:
+        raise CounterFormatError(path, f"sheet {LEGEND!r}: no filled legend row for missing data")
+    return frozenset(fills)
 
 
 def _sites(wb, path: Path) -> dict[str, Site]:
@@ -76,19 +83,19 @@ def _sites(wb, path: Path) -> dict[str, Site]:
     return out
 
 
-def _count(cell, invalid: str) -> int | None:
+def _count(cell, missing: frozenset[str]) -> int | None:
     """The cell's count; None for a missing or flagged hour; ValueError for anything else."""
     v = cell.value
     if v is None or (isinstance(v, str) and v.strip() == ""):
         return None
     if isinstance(v, bool) or not isinstance(v, int | float) or v < 0 or v != int(v):
         raise ValueError(f"not a count: {v!r}")
-    if _fill(cell) == invalid:
+    if _fill(cell) in missing:
         return None
     return int(v)
 
 
-def _year_sheet(ws, sites, aliases, invalid, path: Path, hours: list[HourCount]) -> None:
+def _year_sheet(ws, sites, aliases, missing, path: Path, hours: list[HourCount]) -> None:
     rows = ws.iter_rows()
     header = next(rows, ())
     columns: dict[int, str] = {}
@@ -116,7 +123,7 @@ def _year_sheet(ws, sites, aliases, invalid, path: Path, hours: list[HourCount])
             if i >= len(row):
                 continue
             try:
-                n = _count(row[i], invalid)
+                n = _count(row[i], missing)
             except ValueError as e:
                 cell = f"{get_column_letter(i + 1)}{row[0].row}"
                 raise CounterFormatError(path, f"sheet {ws.title!r} cell {cell}: {e}") from e
@@ -138,10 +145,10 @@ def parse(paths: list[Path], entry: CounterEntry) -> tuple[list[Site], list[Hour
             )
             if not year_sheets:
                 raise CounterFormatError(path, "no 'Jahresdatei <year>' sheet")
-            invalid = _invalid_fill(wb, path)
+            missing = _missing_fills(wb, path)
             file_sites = _sites(wb, path)
             for _, name in year_sheets:
-                _year_sheet(wb[name], file_sites, entry.site_aliases, invalid, path, hours)
+                _year_sheet(wb[name], file_sites, entry.site_aliases, missing, path, hours)
             sites.update(file_sites)
         finally:
             wb.close()

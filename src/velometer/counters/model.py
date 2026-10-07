@@ -19,6 +19,8 @@ from velometer.config import ConfigError
 
 COUNTERS_FILE = "counters.yaml"
 
+Grain = Literal["hourly", "daily", "monthly"]
+
 
 @dataclass(frozen=True, slots=True)
 class Site:
@@ -68,7 +70,7 @@ class CounterEntry(_Strict):
     page: str  # the dataset's portal page
     urls: list[str] = Field(min_length=1)  # the files `counters fetch` downloads, in load order
     timezone: str
-    grain: Literal["hourly", "daily", "monthly"]
+    grain: Grain
     base_year: int = 2019  # spec §2.13
     # a portal id -> the canonical site id (a site renumbered between yearly sheets)
     site_aliases: dict[str, str] = {}

@@ -36,12 +36,10 @@ def load_city(conn, entry: CounterEntry, data_dir: Path) -> LoadResult:
     adapter cannot read; ValueError for a grain this loader does not handle.
     """
     from velometer.db import (
-        CounterDay,
         CounterIndexYear,
         CounterSite,
         replace_counter_index,
         replace_counter_sites,
-        upsert_counter_daily,
     )
 
     if entry.grain not in ("hourly", "daily"):
@@ -54,13 +52,14 @@ def load_city(conn, entry: CounterEntry, data_dir: Path) -> LoadResult:
     days = to_days(records, entry.timezone) if entry.grain == "hourly" else records
     del records  # an hourly portal's history is millions of records
     days = zero_days_invalid(days)
-    # the files hold the city's whole history: rows they no longer give do not linger
+    # the files hold the city's whole history, so its daily rows are replaced (rows the files
+    # no longer give do not linger), in one transaction
     with conn:
         conn.execute("DELETE FROM counter_daily WHERE city_id=?", (entry.city,))
-    upsert_counter_daily(
-        conn,
-        [CounterDay(entry.city, d.site_id, d.day.isoformat(), d.count, d.complete) for d in days],
-    )
+        conn.executemany(
+            "INSERT INTO counter_daily (city_id, site_id, day, count, complete) VALUES (?,?,?,?,?)",
+            [(entry.city, d.site_id, d.day.isoformat(), d.count, int(d.complete)) for d in days],
+        )
     stored = [
         DayCount(site, date.fromisoformat(day), count, bool(complete))
         for site, day, count, complete in conn.execute(

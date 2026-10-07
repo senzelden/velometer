@@ -4,6 +4,7 @@ Vienna adapters on fixtures cut from the real portal files (tests/fixtures/count
 Day totals below were summed by hand from the fixture rows (docs/review/m8-counters.md).
 """
 
+import copy
 import json
 import shutil
 import sqlite3
@@ -27,6 +28,7 @@ from velometer.counters.model import (
     CounterFormatError,
     CountersConfig,
     DayCount,
+    Grain,
     HourCount,
     load_counters_config,
 )
@@ -47,7 +49,7 @@ PARIS_FILES = [FIX / "paris" / f for f in ("2019.zip", "2020.zip", "2022.zip", "
 VIENNA_CSV = FIX / "vienna" / "radverkehrszaehlungen.csv"
 
 
-def _entry(city: str, adapter: str, tz: str, grain: str = "hourly", **kw) -> CounterEntry:
+def _entry(city: str, adapter: str, tz: str, grain: Grain = "hourly", **kw) -> CounterEntry:
     return CounterEntry(
         city=city,
         adapter=adapter,
@@ -161,6 +163,20 @@ def test_two_qualifying_sites_give_no_value_and_the_chain_stays_broken():
     assert out[2025] == (None, 3)
 
 
+def test_a_break_before_the_base_year_stays_broken_backwards():
+    days = []
+    for y in (2021, 2022, 2023, 2024, 2025):
+        for s in "abc":
+            if not (y == 2023 and s == "c"):  # 2023 has only a and b
+                days += _year(s, y, 10)
+    out = {y: (idx, n) for y, idx, n in chain_index(days, 2025)}
+    assert out[2024] == (pytest.approx(100.0 * 366 / 365), 3)  # 2024 has 366 days of 10
+    assert out[2023] == (None, 2)
+    assert out[2022] == (None, 2)
+    # 2021 -> 2022 has three qualifying sites, but the chain is not re-based before the base
+    assert out[2021] == (None, 3)
+
+
 def test_a_site_below_90_percent_complete_days_does_not_qualify():
     days = []
     for s in "abc":
@@ -207,6 +223,43 @@ def _berlin_copy(tmp_path, edit) -> Path:
     edit(wb)
     wb.save(path)
     return path
+
+
+def test_berlin_no_data_fill_on_a_positive_value_is_a_missing_hour(tmp_path):
+    """The legend's second fill ("keine Zähldaten ... vorhanden", FFFFEB9C) marks missing data
+    like the orange one; the real file has it only on empty cells and seven 0s (2022), so the
+    fixture copy puts it on a positive value."""
+
+    def flag(wb):
+        legend_fill = wb["Legende"]["B3"].fill
+        assert legend_fill.fgColor.rgb == "FFFFEB9C"
+        ws = wb["Jahresdatei 2019"]
+        for row in ws.iter_rows(min_row=2):
+            if row[0].value == datetime(2019, 1, 1, 12):
+                assert row[1].value > 0  # 02-MI-JAN-N
+                row[1].fill = copy.copy(legend_fill)
+
+    entry = _entry("berlin", "berlin", "Europe/Berlin")
+    _, hours = berlin.parse([_berlin_copy(tmp_path, flag)], entry)
+    _, real = berlin.parse([BERLIN_XLSX], entry)
+    noon = next(
+        h.count
+        for h in real
+        if h.site_id == "02-MI-JAN-N" and h.local_hour == datetime(2019, 1, 1, 12)
+    )
+    day = _by_key(to_days(hours, entry.timezone))["02-MI-JAN-N", date(2019, 1, 1)]
+    assert (day.count, day.complete) == (458 - noon, False)
+
+
+def test_berlin_legend_without_a_missing_data_row_raises(tmp_path):
+    def drop(wb):
+        for row in wb["Legende"].iter_rows():
+            for c in row:
+                if isinstance(c.value, str) and "keine" in c.value:
+                    c.value = "x"
+
+    with pytest.raises(CounterFormatError, match="Legende"):
+        berlin.parse([_berlin_copy(tmp_path, drop)], _entry("berlin", "berlin", "Europe/Berlin"))
 
 
 def test_berlin_renamed_column_raises_naming_it(tmp_path):
@@ -302,6 +355,48 @@ def test_paris_a_file_without_coordinates_keeps_the_last_given(tmp_path):
     )
     site = next(s for s in sites if s.site_id == "100003096")
     assert (site.lat, site.lon) == (48.83504, 2.33314)
+
+
+def _rezip(src: Path, dst: Path, keep) -> Path:
+    with zipfile.ZipFile(src) as z:
+        (name,) = z.namelist()
+        lines = z.read(name).splitlines(keepends=True)
+    with zipfile.ZipFile(dst, "w") as z:
+        z.writestr(name, b"".join([lines[0]] + [ln for ln in lines[1:] if keep(ln)]))
+    return dst
+
+
+def test_paris_a_counter_missing_an_hour_makes_the_site_day_incomplete(tmp_path):
+    drop = b"100036718-103036718;", b"2019-03-31T12:00"
+    f = _rezip(
+        FIX / "paris" / "2019.zip",
+        tmp_path / "2019.zip",
+        lambda ln: not (ln.startswith(drop[0]) and drop[1] in ln),
+    )
+    entry = _entry("paris", "paris", "Europe/Paris")
+    days = _by_key(to_days(paris.parse([f], entry)[1], entry.timezone))
+    assert not days["100036718", date(2019, 3, 31)].complete
+    assert days["100003096", date(2019, 3, 31)].complete
+
+
+def _pc(site, counter, day, hours, count=1):
+    return {(site, counter, datetime(day.year, day.month, day.day, h), 0): count for h in hours}
+
+
+def test_paris_counter_in_service_is_its_reported_span():
+    d1, d2, d3 = date(2023, 6, 1), date(2023, 6, 2), date(2023, 6, 3)
+    per = {}
+    per |= (
+        _pc("s", "a", d1, range(24)) | _pc("s", "a", d2, range(24)) | _pc("s", "a", d3, range(24))
+    )
+    # b reports d1 and d3 but nothing on d2: inside its span, an outage
+    per |= _pc("s", "b", d1, range(24)) | _pc("s", "b", d3, range(24))
+    # c reports from d2 on: not in service on d1
+    per |= _pc("s", "c", d2, range(24)) | _pc("s", "c", d3, range(24))
+    days = _by_key(to_days(paris._site_hours(per), "Europe/Paris"))
+    assert (days["s", d1].count, days["s", d1].complete) == (48, True)
+    assert ("s", d2) not in days  # no hour has every in-service counter (a, b, c)
+    assert (days["s", d3].count, days["s", d3].complete) == (72, True)
 
 
 def _vienna_entry():
@@ -467,6 +562,21 @@ def test_load_replaces_days_the_files_no_longer_give(tmp_path):
         conn.execute("INSERT INTO counter_daily VALUES ('berlin', 'gone', '2019-01-01', 5, 1)")
     conn.close()
     assert CliRunner().invoke(app, args).exit_code == 0
+    assert _dump(db) == rows
+
+
+def test_a_failed_replace_keeps_the_previous_daily_rows(tmp_path, monkeypatch):
+    import velometer.counters as counters
+
+    cfg_dir, data, db = _setup_city(tmp_path, "berlin", BERLIN_ENTRY, [BERLIN_XLSX])
+    args = ["counters", "load", "berlin", "--db", str(db), "--data", str(data)]
+    args += ["--config-dir", str(cfg_dir)]
+    assert CliRunner().invoke(app, args).exit_code == 0
+    rows = _dump(db)
+    bad = DayCount("x", date(2019, 1, 2), -1, True)  # violates CHECK (count >= 0) mid-insert
+    real = counters.zero_days_invalid
+    monkeypatch.setattr(counters, "zero_days_invalid", lambda days: real(days) + [bad])
+    assert CliRunner().invoke(app, args).exit_code != 0
     assert _dump(db) == rows
 
 
