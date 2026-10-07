@@ -1,0 +1,384 @@
+"""M8 content: organisation profiles, plan and counter pages, coverage, and the new fact families
+(spec §3.4, §4.5, §5.5). Each rule is checked by breaking one fixture file."""
+
+import shutil
+import sqlite3
+from collections.abc import Callable
+from pathlib import Path
+
+import pytest
+import yaml
+from typer.testing import CliRunner
+
+from velometer.cli import app
+from velometer.content.check import causal_counter_wording, check_content_offline
+from velometer.content.facts import FAMILIES, FactError, evaluate
+from velometer.content.loader import (
+    load_document,
+    load_explainer,
+    load_organisation_map,
+    load_organisations,
+    load_sources,
+)
+from velometer.content.models import ContentError
+from velometer.db import CounterIndexYear, OverlayRow, replace_counter_index, replace_plan_overlay
+
+FIXTURE = Path(__file__).parent / "fixtures" / "content_m8"
+
+
+@pytest.fixture
+def m8(tmp_path) -> tuple[Path, Path]:
+    """Writable copies of the M8 fixture (content dir, config dir)."""
+    shutil.copytree(FIXTURE, tmp_path / "m8")
+    return tmp_path / "m8" / "content", tmp_path / "m8" / "config"
+
+
+def _problems(m8) -> list[str]:
+    return check_content_offline(*m8)
+
+
+def _edit(path: Path, mutate: Callable[[dict], None]) -> None:
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    mutate(doc)
+    path.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+
+def _senmvku(m8) -> Path:
+    return m8[0] / "organisations" / "senmvku.yaml"
+
+
+# --- loaders -------------------------------------------------------------------------------
+
+
+def test_the_fixture_is_clean(m8):
+    assert _problems(m8) == []
+
+
+def test_loaders_read_the_fixture(m8):
+    content, config = m8
+    orgs = load_organisations(content / "organisations")
+    assert sorted(orgs) == ["abgeordnetenhaus", "senmvku"]
+    assert orgs["senmvku"].sections[1].dimensions == {
+        "scope": "the planned network [@src]",
+        "length": "not stated by the source",
+    }
+    assert load_sources(content / "sources")["study"].kind == "research"
+    assert load_document(content / "counters.yaml").title == "Bike counters"
+    assert load_document(content / "absent.yaml") is None
+    assert load_explainer is load_document
+    assert [m.city for m in load_organisation_map(config / "organisations.yaml")][:2] == [
+        "berlin",
+        "*",
+    ]
+
+
+def test_profile_stem_must_equal_id_and_errors_are_collected(m8):
+    path = _senmvku(m8)
+    _edit(path, lambda d: d.__setitem__("id", "other"))
+    with pytest.raises(ContentError, match="file stem must equal id"):
+        load_organisations(path.parent)
+    errors: dict[str, str] = {}
+    assert sorted(load_organisations(path.parent, errors=errors)) == ["abgeordnetenhaus"]
+    assert list(errors) == ["senmvku"]
+
+
+def test_an_internal_profile_url_is_refused(m8):
+    _edit(_senmvku(m8), lambda d: d.__setitem__("url", "http://127.0.0.1:8000/"))
+    assert any("external http(s) URL" in p for p in _problems(m8))
+
+
+# --- profile document rules ----------------------------------------------------------------
+
+
+def test_profile_citing_an_unknown_source(m8):
+    _edit(_senmvku(m8), lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "See [@nope]."))
+    assert _problems(m8) == ["organisations/senmvku.yaml: unknown source nope"]
+
+
+def test_profile_quote_that_does_not_match_an_excerpt(m8):
+    _edit(_senmvku(m8), lambda d: d["quotes"].__setitem__(0, {"excerpt": "src/e9", "after": 0}))
+    assert _problems(m8) == ["organisations/senmvku.yaml: unknown excerpt src/e9"]
+
+
+def test_undeclared_number_in_a_profile(m8):
+    _edit(_senmvku(m8), lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "It is 9.4 km."))
+    assert _problems(m8) == ["organisations/senmvku.yaml: undeclared number 9.4"]
+
+
+def test_numbers_in_dimension_values_are_checked(m8):
+    _edit(_senmvku(m8), lambda d: d["sections"][1]["dimensions"].__setitem__("date", "as of 31"))
+    assert _problems(m8) == ["organisations/senmvku.yaml: undeclared number 31"]
+
+
+def test_unknown_dimension_key_and_http_url(m8):
+    def mutate(d):
+        d["sections"][1]["dimensions"]["colour"] = "red"
+        d["url"] = "http://example.org/senmvku"
+
+    _edit(_senmvku(m8), mutate)
+    assert _problems(m8) == [
+        "organisations/senmvku.yaml: url is not https: http://example.org/senmvku",
+        "organisations/senmvku.yaml: section 'How they measure': unknown dimension colour",
+    ]
+
+
+# --- causal counter wording ----------------------------------------------------------------
+
+
+def test_causal_counter_wording():
+    assert causal_counter_wording("Counts rose because of new lanes") == ["because of"]
+    assert causal_counter_wording("Rents rose because of demand") == []
+    assert causal_counter_wording("The counter shows growth that led to, and was due to, X") == [
+        "led to",
+        "due to",
+    ]
+    assert causal_counter_wording("Cyclists recorded rose thanks to the lanes") == ["thanks to"]
+
+
+def test_causal_wording_in_the_counters_page(m8):
+    _edit(
+        m8[0] / "counters.yaml",
+        lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "Counts rose because of lanes."),
+    )
+    assert _problems(m8) == ["counters.yaml: causal wording 'because of' about counts"]
+
+
+def test_causal_wording_in_a_profile(m8):
+    _edit(
+        _senmvku(m8),
+        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counted trips drove demand."),
+    )
+    assert _problems(m8) == ["organisations/senmvku.yaml: causal wording 'drove' about counts"]
+
+
+def test_plan_page_follows_the_document_rules(m8):
+    _edit(
+        m8[0] / "plans" / "berlin.yaml",
+        lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "Berlin built 12.5 km [@x]."),
+    )
+    assert _problems(m8) == [
+        "plans/berlin.yaml: unknown source x",
+        "plans/berlin.yaml: undeclared number 12.5",
+        "plans/berlin.yaml: construction verb 'built'",
+    ]
+
+
+def test_plan_and_counter_pages_are_optional(m8):
+    (m8[0] / "counters.yaml").unlink()
+    shutil.rmtree(m8[0] / "plans")
+    assert _problems(m8) == []
+
+
+def test_a_broken_plan_page_is_one_problem(m8):
+    (m8[0] / "counters.yaml").write_text("title: [unclosed\n", encoding="utf-8")
+    [problem] = _problems(m8)
+    assert "counters.yaml" in problem
+
+
+# --- coverage -------------------------------------------------------------------------------
+
+
+def _drop_mapping(config: Path, city: str, source: str) -> None:
+    path = config / "organisations.yaml"
+    doc = yaml.safe_load(path.read_text())
+    doc = [m for m in doc if (m["city"], m["source"]) != (city, source)]
+    path.write_text(yaml.safe_dump(doc))
+
+
+def test_figures_pair_with_no_mapping(m8):
+    _drop_mapping(m8[1], "berlin", "official")
+    assert _problems(m8) == [
+        "config/organisations.yaml: no organisation for figures.csv source berlin/official"
+    ]
+
+
+def test_reconcile_source_with_no_mapping(m8):
+    _drop_mapping(m8[1], "*", "parliament_docs")
+    assert _problems(m8) == [
+        "config/organisations.yaml: no organisation for reconcile source parliament_docs"
+    ]
+
+
+def test_mapping_to_an_organisation_without_profile(m8):
+    (m8[0] / "organisations" / "abgeordnetenhaus.yaml").unlink()
+    problems = _problems(m8)
+    assert (
+        "config/organisations.yaml: */parliament_docs maps to abgeordnetenhaus, which has no "
+        "profile" in problems
+    )
+    assert "config/plans/reports.csv:3: publisher abgeordnetenhaus has no profile" in problems
+
+
+def test_berlin_publishers_must_be_profiles_others_need_not(m8):
+    path = m8[1] / "plans" / "plans.yaml"
+    path.write_text(path.read_text().replace("publisher: senmvku", "publisher: nobody"))
+    # paris_plan_velo's publisher ville_de_paris has no profile and is not a problem
+    assert _problems(m8) == [
+        "config/plans/plans.yaml: plan berlin_rvp_2021: publisher nobody has no profile"
+    ]
+
+
+def test_coverage_waits_for_the_organisations_directory(m8):
+    shutil.rmtree(m8[0] / "organisations")
+    (m8[1] / "organisations.yaml").write_text("[]\n")
+    assert _problems(m8) == []
+
+
+# --- plan rules (always on) ------------------------------------------------------------------
+
+
+def test_report_row_naming_an_unknown_item(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace("paris_plan_velo,total", "paris_plan_velo,nope"))
+    assert _problems(m8) == ["config/plans/reports.csv:4: plan paris_plan_velo has no item nope"]
+
+
+def test_report_row_naming_an_unknown_plan(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace("paris_plan_velo,total", "ghost,total"))
+    assert _problems(m8) == ["config/plans/reports.csv:4: unknown plan ghost"]
+
+
+def test_http_plan_url(m8):
+    path = m8[1] / "plans" / "plans.yaml"
+    path.write_text(path.read_text().replace("https://example.org/rvp", "http://example.org/rvp"))
+    assert _problems(m8) == [
+        "config/plans/plans.yaml: plan berlin_rvp_2021: url is not https: http://example.org/rvp"
+    ]
+
+
+def test_http_report_url_and_empty_unit(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    text = path.read_text().replace("https://example.org/paris", "http://example.org/paris")
+    path.write_text(text.replace("1.0,km,implemented_cumulative", "1.0, ,implemented_cumulative"))
+    assert _problems(m8) == [
+        "config/plans/reports.csv:4: url is not https: http://example.org/paris",
+        "config/plans/reports.csv:4: no unit",
+    ]
+
+
+def test_empty_item_unit(m8):
+    path = m8[1] / "plans" / "plans.yaml"
+    path.write_text(path.read_text().replace("target_kind: none}", "target_kind: none, unit: ''}"))
+    assert _problems(m8) == [
+        "config/plans/plans.yaml: plan paris_plan_velo: item total has no unit"
+    ]
+
+
+def test_an_unreadable_plan_file_is_one_problem(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace("rote_nummer", "memo"))
+    [problem] = _problems(m8)
+    assert "reports.csv:2" in problem
+
+
+# --- facts ----------------------------------------------------------------------------------
+
+PLAN_EXPR = "plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year"
+
+
+def test_new_families_are_listed():
+    assert {"overlay", "overlay_change", "plan", "counter", "counter_sites"} <= set(FAMILIES)
+
+
+def test_plan_fact_current_value_and_named_document(fixture_db, tmp_path):
+    data = fixture_db[3]
+    cfg = FIXTURE / "config"
+    assert evaluate(PLAN_EXPR, data, tmp_path, config_dir=cfg) == 8.6
+    assert evaluate(f"{PLAN_EXPR}.TEST_0001", data, tmp_path, config_dir=cfg) == 10.8
+    assert evaluate(f"{PLAN_EXPR}.TEST_0002", data, tmp_path, config_dir=cfg) == 8.6
+
+
+@pytest.mark.parametrize(
+    "expr,match",
+    [
+        (f"{PLAN_EXPR}.TEST_0003", "no document 'TEST_0003'"),
+        ("plan.ghost.vorrangnetz.2025.implemented_in_year", "no plan 'ghost'"),
+        ("plan.berlin_rvp_2021.nope.2025.implemented_in_year", "has no item 'nope'"),
+        ("plan.berlin_rvp_2021.vorrangnetz.2024.implemented_in_year", "no reported"),
+        ("plan.berlin_rvp_2021.vorrangnetz.2025.built", "unknown quantity"),
+        ("plan.berlin_rvp_2021.vorrangnetz", "expected <plan_id>"),
+    ],
+)
+def test_plan_fact_errors(fixture_db, tmp_path, expr, match):
+    with pytest.raises(FactError, match=match):
+        evaluate(expr, fixture_db[3], tmp_path, config_dir=FIXTURE / "config")
+
+
+def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
+    with pytest.raises(FactError, match="need the config directory"):
+        evaluate(PLAN_EXPR, fixture_db[3], tmp_path)
+
+
+def _berlin_lau_runs(db_path: Path) -> list[tuple[int, str]]:
+    with sqlite3.connect(db_path) as c:
+        rows = c.execute(
+            "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind='lau' "
+            "ORDER BY osm_timestamp"
+        ).fetchall()
+    return [(rid, ts[:10]) for rid, ts in rows]
+
+
+def _write(db_path: Path, fn) -> None:
+    c = sqlite3.connect(db_path)
+    try:
+        fn(c)
+    finally:
+        c.close()
+
+
+def test_overlay_facts(fixture_db, tmp_path):
+    db_path, _cfg, _conn, data = fixture_db
+    (r1, d1), (r2, d2) = _berlin_lau_runs(db_path)[:2]
+    assert d1 != d2
+
+    def row(run, tier, km, version="v1"):
+        return OverlayRow(run, "berlin", "vorrangnetz", tier, km, 150.0, version, "2026-10-07")
+
+    rows = [row(r1, "A", 10.0), row(r1, "B", 2.5), row(r1, "C", 99.0)]
+    rows += [row(r2, "A", 11.0), row(r2, "B", 4.0)]
+    rows += [row(r2, "A", 500.0, "v0")]  # an older overlay version is ignored
+    _write(db_path, lambda c: replace_plan_overlay(c, "berlin", rows))
+
+    assert evaluate(f"overlay.berlin.vorrangnetz.{d1}.ab_km", data, tmp_path) == 12.5
+    assert evaluate(f"overlay.berlin.vorrangnetz.{d2}.ab_km", data, tmp_path) == 15.0
+    assert evaluate(f"overlay.berlin.vorrangnetz.{d1}.network_km", data, tmp_path) == 150.0
+    assert evaluate(f"overlay_change.berlin.vorrangnetz.{d1}.{d2}", data, tmp_path) == 2.5
+    with pytest.raises(FactError, match="no network class 'ergaenzung'"):
+        evaluate(f"overlay.berlin.ergaenzung.{d1}.ab_km", data, tmp_path)
+    with pytest.raises(FactError, match="no overlay at snapshot '1999-01-01'"):
+        evaluate("overlay.berlin.vorrangnetz.1999-01-01.ab_km", data, tmp_path)
+    with pytest.raises(FactError, match="no plan overlay for city 'paris'"):
+        evaluate(f"overlay.paris.vorrangnetz.{d1}.ab_km", data, tmp_path)
+
+
+def test_counter_facts(fixture_db, tmp_path):
+    db_path, _cfg, _conn, data = fixture_db
+    rows = [
+        CounterIndexYear("berlin", 2019, 100.0, 12, 2019, "counts"),
+        CounterIndexYear("berlin", 2020, 87.25, 11, 2019, "counts"),
+        CounterIndexYear("berlin", 2021, None, 2, 2019, "counts"),
+    ]
+    _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
+    assert evaluate("counter.berlin.2020", data, tmp_path) == 87.25
+    assert evaluate("counter_sites.berlin.2020", data, tmp_path) == 11.0
+    assert evaluate("counter_sites.berlin.2021", data, tmp_path) == 2.0
+    with pytest.raises(FactError, match="no index value in 2021"):
+        evaluate("counter.berlin.2021", data, tmp_path)
+    with pytest.raises(FactError, match="no counter index year '2018'"):
+        evaluate("counter.berlin.2018", data, tmp_path)
+    with pytest.raises(FactError, match="no counter index for city 'paris'"):
+        evaluate("counter.paris.2020", data, tmp_path)
+
+
+# --- CLI -----------------------------------------------------------------------------------
+
+
+def test_content_check_reports_profile_problems(fixture_db, m8):
+    db_path, cfg, _conn, _data = fixture_db  # cfg: a copy of the real config
+    content, _config = m8
+    _edit(_senmvku(m8), lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "See [@nope]."))
+    args = ["content", "--check", "--content", str(content), "--db", str(db_path)]
+    res = CliRunner().invoke(app, [*args, "--config-dir", str(cfg)])
+    assert res.exit_code == 1
+    assert "organisations/senmvku.yaml: unknown source nope" in res.output

@@ -1,0 +1,8 @@
+id: abgeordnetenhaus
+name: Abgeordnetenhaus Berlin (synthetic)
+kind: parliament
+url: https://example.org/parlament
+sections:
+  - heading: Who they are
+    paragraphs:
+      - The parliament publishes the written questions [@src].

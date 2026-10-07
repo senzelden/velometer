@@ -1,0 +1,8 @@
+title: Berlin's cycling plan
+intro:
+  - The plan sets yearly targets [@src].
+sections:
+  - dimension: kind
+    heading: Reported and mapped
+    paragraphs:
+      - Reported km are not mapped km.

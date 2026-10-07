@@ -6,7 +6,14 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from velometer.content.models import ContentError, Explainer, Narrative, Source
+from velometer.content.models import (
+    ContentError,
+    Explainer,
+    Narrative,
+    Organisation,
+    OrgMapping,
+    Source,
+)
 
 
 def _read(path: Path) -> Any:
@@ -67,11 +74,50 @@ def _narrative(path: Path) -> Narrative:
     return narrative
 
 
-def load_explainer(path: Path) -> Explainer | None:
-    """The explainer page, or None when the file does not exist."""
+def load_document(path: Path) -> Explainer | None:
+    """An explainer-shaped page (the explainer, `plans/berlin.yaml`, `counters.yaml`), or None
+    when the file does not exist."""
     if not path.exists():
         return None
     try:
         return Explainer.model_validate(_read(path))
+    except ValidationError as e:
+        raise ContentError(f"{path}: {e}") from e
+
+
+load_explainer = load_document
+
+
+def load_organisations(dir: Path, errors: dict[str, str] | None = None) -> dict[str, Organisation]:
+    """Load `<id>.yaml` profiles; the file stem must equal the organisation's `id`. `errors` as
+    in `load_narratives`."""
+    out: dict[str, Organisation] = {}
+    for path in sorted(Path(dir).glob("*.yaml")):
+        try:
+            out[path.stem] = _organisation(path)
+        except ContentError as e:
+            if errors is None:
+                raise
+            errors[path.stem] = str(e)
+    return out
+
+
+def _organisation(path: Path) -> Organisation:
+    try:
+        org = Organisation.model_validate(_read(path))
+    except ValidationError as e:
+        raise ContentError(f"{path}: {e}") from e
+    if org.id != path.stem:
+        raise ContentError(f"{path}: file stem must equal id, but id is {org.id}")
+    return org
+
+
+def load_organisation_map(path: Path) -> list[OrgMapping]:
+    """`config/organisations.yaml`: a list of {city, source, organisation}."""
+    doc = _read(path)
+    if not isinstance(doc, list):
+        raise ContentError(f"{path}: expected a list of {{city, source, organisation}}")
+    try:
+        return [OrgMapping.model_validate(m) for m in doc]
     except ValidationError as e:
         raise ContentError(f"{path}: {e}") from e

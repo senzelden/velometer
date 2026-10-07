@@ -1,4 +1,5 @@
-"""Pydantic models for narratives, the explainer and the external-source registry."""
+"""Pydantic models for narratives, the explainer, organisation profiles and the external-source
+registry."""
 
 from datetime import date
 from typing import Literal
@@ -19,6 +20,15 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+def _external_url(v: str | None) -> str | None:
+    if v is None:
+        return v
+    u = urlparse(v)
+    if u.scheme not in ("http", "https") or not u.hostname or u.hostname in INTERNAL_HOSTS:
+        raise ValueError(f"source url must be an external http(s) URL, not {v!r}")
+    return v
+
+
 class Excerpt(_Strict):
     id: str
     text: str
@@ -34,19 +44,14 @@ class Source(_Strict):
     published: date | None = None
     accessed: date
     language: str
-    kind: Literal["official", "parliament", "ngo", "index", "press"]
+    kind: Literal["official", "parliament", "ngo", "index", "press", "research"]
     archive_url: str | None = None
     excerpts: list[Excerpt]
 
     @field_validator("url", "archive_url")
     @classmethod
     def _external(cls, v: str | None) -> str | None:
-        if v is None:
-            return v
-        u = urlparse(v)
-        if u.scheme not in ("http", "https") or not u.hostname or u.hostname in INTERNAL_HOSTS:
-            raise ValueError(f"source url must be an external http(s) URL, not {v!r}")
-        return v
+        return _external_url(v)
 
     @model_validator(mode="after")
     def _excerpts(self) -> "Source":
@@ -146,3 +151,54 @@ class Explainer(_Strict):
         _unique("fact", [f.id for f in self.facts])
         _unique("data_ref", [d.id for d in self.data_refs])
         return self
+
+
+class OrgSection(_Strict):
+    heading: str
+    paragraphs: list[str]
+    dimensions: dict[str, str] | None = None  # keys ⊆ differences.yaml dimension ids
+
+
+class Organisation(_Strict):
+    """`content/organisations/<id>.yaml`: a profile of a body behind our external figures."""
+
+    id: str
+    name: str
+    kind: Literal["official", "ngo", "index", "research", "parliament", "agency"]
+    url: str
+    sections: list[OrgSection]
+    quotes: list[Quote] = []
+    facts: list[Fact] = []
+    data_refs: list[DataRef] = []
+    literals: list[str] = []
+
+    @field_validator("url")
+    @classmethod
+    def _external(cls, v: str) -> str:
+        _external_url(v)
+        return v
+
+    @property
+    def prose(self) -> list[str]:
+        out = [self.name]
+        for sec in self.sections:
+            out += [sec.heading, *sec.paragraphs, *(sec.dimensions or {}).values()]
+        return out
+
+    @model_validator(mode="after")
+    def _consistent(self) -> "Organisation":
+        n = sum(len(s.paragraphs) for s in self.sections)
+        for q in self.quotes:
+            if not 0 <= q.after < n:
+                raise ValueError(f"quote {q.excerpt}: after={q.after} must index one of {n}")
+        _unique("fact", [f.id for f in self.facts])
+        _unique("data_ref", [d.id for d in self.data_refs])
+        return self
+
+
+class OrgMapping(_Strict):
+    """One entry of `config/organisations.yaml`: the body behind a source (in one city or all)."""
+
+    city: str  # a city id or "*"
+    source: str
+    organisation: str

@@ -1,0 +1,21 @@
+id: senmvku
+name: Senate administration for mobility (synthetic)
+kind: official
+url: https://example.org/senmvku
+sections:
+  - heading: Who they are
+    paragraphs:
+      - The Senate administration states a network of 78.2 km [@src].
+  - heading: How they measure
+    dimensions:
+      scope: the planned network [@src]
+      length: not stated by the source
+    paragraphs:
+      - Its latest report gives 8.6 km for 2025 [#reports].
+quotes:
+  - {excerpt: src/e1, after: 0}
+facts:
+  - {id: vn2025, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year, printed: "8.6"}
+data_refs:
+  - {id: reports, label: Reported figures, file: config/plans/reports.csv}
+literals: [78.2 km]

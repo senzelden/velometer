@@ -170,7 +170,7 @@ def test_unknown_paths_raise(fixture_db, tmp_path, expr):
 
 
 def test_families_listed():
-    assert "series" in FAMILIES and "change" in FAMILIES and len(FAMILIES) == 12
+    assert "series" in FAMILIES and "change" in FAMILIES and len(FAMILIES) == 17  # M8: +5
 
 
 def _add_figures(db_path, source, figures):

@@ -1,0 +1,4 @@
+plan_id,item_id,year,value,unit,quantity,doc_type,doc_id,doc_date,url,locator,retrieved_at,note,publisher
+berlin_rvp_2021,vorrangnetz,2025,10.8,km,implemented_in_year,rote_nummer,TEST/0001,2025-03-01,https://example.org/doc-1,p. 3,2026-10-07,,senmvku
+berlin_rvp_2021,vorrangnetz,2025,8.6,km,implemented_in_year,drucksache,TEST/0002,2025-09-01,https://example.org/doc-2,p. 2,2026-10-07,later document disagrees,abgeordnetenhaus
+paris_plan_velo,total,2024,1.0,km,implemented_cumulative,web,PARIS-1,2024-06-01,https://example.org/paris,section 2,2026-10-07,,ville_de_paris

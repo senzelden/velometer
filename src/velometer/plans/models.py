@@ -1,0 +1,140 @@
+"""Plan targets (`config/plans/plans.yaml`) and the figures printed in progress documents
+(`config/plans/reports.csv`), stored as printed (M8 spec §2.8, §4.1).
+
+Two documents that disagree for the same plan item, year and quantity are both kept: the one
+with the later `doc_date` is current, the others are revisions (`current_and_revisions`).
+"""
+
+import csv
+from datetime import date
+from pathlib import Path
+from typing import Literal
+
+import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
+
+from velometer.config import ConfigError
+
+PLANS_FILE = "plans.yaml"
+REPORTS_FILE = "reports.csv"
+
+
+class _Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class PlanItem(_Strict):
+    id: str
+    label: str
+    target_kind: Literal["km_per_year", "km_cumulative", "km_total", "share", "none"]
+    targets: dict[int, float] = {}
+    unit: str = "km"
+
+
+class Plan(_Strict):
+    id: str
+    city: str
+    title: str
+    adopted: date | None
+    url: str
+    status: Literal["current", "expired", "replaced"]
+    successor: str | None = None
+    publisher: str
+    items: list[PlanItem]
+    note: str | None = None
+
+    @model_validator(mode="after")
+    def _unique_items(self) -> "Plan":
+        ids = [i.id for i in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError(f"duplicate item id in plan {self.id}")
+        return self
+
+
+class ReportRow(_Strict):
+    plan_id: str
+    item_id: str
+    year: int
+    value: float
+    unit: str
+    quantity: Literal[
+        "implemented_in_year", "implemented_cumulative", "under_construction", "in_planning"
+    ]
+    doc_type: Literal["drucksache", "rote_nummer", "report", "web"]
+    doc_id: str
+    doc_date: date
+    url: str
+    locator: str
+    retrieved_at: date
+    note: str | None = None
+    publisher: str
+
+
+REPORT_COLUMNS = tuple(ReportRow.model_fields)
+
+RowKey = tuple[str, str, int, str]
+
+
+def _load_plan_list(path: Path) -> list[Plan]:
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as e:
+        raise ConfigError(f"{path}: {e}") from e
+    if not isinstance(raw, list):
+        raise ConfigError(f"{path}: expected a list of plans")
+    plans: list[Plan] = []
+    for entry in raw:
+        try:
+            plans.append(Plan.model_validate(entry))
+        except ValidationError as e:
+            raise ConfigError(f"{path}: {e}") from e
+    ids = [p.id for p in plans]
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    if dupes:
+        raise ConfigError(f"{path}: duplicate plan id {', '.join(dupes)}")
+    return plans
+
+
+def _load_reports(path: Path) -> list[ReportRow]:
+    try:
+        with path.open(encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            header = tuple(reader.fieldnames or ())
+            if header != REPORT_COLUMNS:
+                raise ConfigError(
+                    f"{path}: header must be {','.join(REPORT_COLUMNS)}, got {','.join(header)}"
+                )
+            rows: list[ReportRow] = []
+            for line, rec in enumerate(reader, start=2):
+                values = {k: (v if v != "" else None) for k, v in rec.items()}
+                if values["note"] is None:
+                    values.pop("note")
+                try:
+                    rows.append(ReportRow.model_validate(values))
+                except ValidationError as e:
+                    raise ConfigError(f"{path}:{line}: {e}") from e
+    except OSError as e:
+        raise ConfigError(f"{path}: {e}") from e
+    return rows
+
+
+def load_plans(dir: Path) -> tuple[list[Plan], list[ReportRow]]:
+    """The plans and report rows of `dir` (`plans.yaml`, `reports.csv`); ConfigError naming the
+    file on any problem."""
+    dir = Path(dir)
+    return _load_plan_list(dir / PLANS_FILE), _load_reports(dir / REPORTS_FILE)
+
+
+def current_and_revisions(
+    rows: list[ReportRow],
+) -> dict[RowKey, tuple[ReportRow, list[ReportRow]]]:
+    """Per (plan, item, year, quantity): the current row (latest `doc_date`; on equal dates the
+    later row in file order) and the other rows as revisions, latest first."""
+    groups: dict[RowKey, list[ReportRow]] = {}
+    for r in rows:
+        groups.setdefault((r.plan_id, r.item_id, r.year, r.quantity), []).append(r)
+    out: dict[RowKey, tuple[ReportRow, list[ReportRow]]] = {}
+    for key, group in groups.items():
+        ordered = sorted(enumerate(group), key=lambda ir: (ir[1].doc_date, ir[0]), reverse=True)
+        out[key] = (ordered[0][1], [r for _, r in ordered[1:]])
+    return out

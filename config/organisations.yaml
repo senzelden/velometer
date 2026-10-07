@@ -1,0 +1,4 @@
+# Organisations: which profiled body stands behind each (city, source) pair of
+# config/external/figures.csv and each reconcile source (M8 spec §3.2). One entry per pair:
+#   - {city: "*" | <city id>, source: <source id>, organisation: <content/organisations id>}
+[]

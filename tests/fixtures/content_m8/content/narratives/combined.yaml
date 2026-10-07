@@ -1,0 +1,10 @@
+city_id: combined
+title: All
+dek: Dek.
+sections:
+  - {step: all, paragraphs: [Step all.]}
+  - {step: leaders, paragraphs: [Step leaders.]}
+  - {step: tail, paragraphs: [Step tail.]}
+  - {step: growth, paragraphs: [Step growth.]}
+  - {step: jumps, paragraphs: [Step jumps.]}
+  - {step: bezirke, paragraphs: [Step bezirke.]}

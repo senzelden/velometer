@@ -1,0 +1,22 @@
+# Synthetic plan for tests (not real figures).
+- id: berlin_rvp_2021
+  city: berlin
+  title: Radverkehrsplan (synthetic)
+  adopted: 2021-11-16
+  url: https://example.org/rvp
+  status: current
+  publisher: senmvku
+  items:
+    - id: vorrangnetz
+      label: Vorrangnetz
+      target_kind: km_per_year
+      targets: {2025: 150}
+- id: paris_plan_velo
+  city: paris
+  title: Plan Vélo (synthetic)
+  adopted: null
+  url: https://example.org/plan-velo
+  status: expired
+  publisher: ville_de_paris
+  items:
+    - {id: total, label: Plan total, target_kind: none}

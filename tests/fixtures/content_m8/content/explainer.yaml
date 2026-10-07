@@ -1,0 +1,9 @@
+title: Explainer
+intro: [Intro.]
+sections:
+  - {dimension: scope, heading: Scope, paragraphs: [Scope.]}
+  - {dimension: kind, heading: Kind, paragraphs: [Kind.]}
+  - {dimension: length, heading: Length, paragraphs: [Length.]}
+  - {dimension: date, heading: Date, paragraphs: [Date.]}
+  - {dimension: area, heading: Area, paragraphs: [Area.]}
+  - {dimension: method, heading: Method, paragraphs: [Method.]}

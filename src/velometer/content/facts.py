@@ -3,6 +3,24 @@
 A narrative declares every number it prints as a fact (an expression plus the printed value);
 `evaluate` recomputes the expression from `ReportData`, `printed_matches` compares it to the
 printed text at the printed precision.
+
+Families (`<family>.<args>`):
+
+- `series|index.<city>.<kind>.<label>.<field>`, `delta|pct.<city>.<kind>.<from>.<to>.<field>`,
+  `denominator.<city>.<kind>.<label>`, `rank.<city>.<kind>.<label>.headline`,
+  `total.<kind>.<label>.ab_km`, `bezirk.<city>.<subarea>.<label>.<field>`,
+  `gap.<city>.<gap key>.<ours|theirs|gap_pct>`,
+  `figure.<city>.<source>.<metric>.<scope>[.<reference_date|value>]`, `population.<city>`,
+  `change.<city>.<category>` (M7).
+- `overlay.<city>.<class>.<YYYY-MM-DD>.<ab_km|network_km>`: A+B mapped km on that plan-network
+  class at the run whose OSM snapshot has that date, or the class's network km (M8, from
+  `plan_overlay`; the latest overlay version of the city).
+- `overlay_change.<city>.<class>.<from YYYY-MM-DD>.<to YYYY-MM-DD>`: the change of `ab_km`.
+- `plan.<plan_id>.<item_id>.<year>.<quantity>[.<doc_id with / replaced by _>]`: the current
+  reported value (latest document) or the named document's value, from
+  `<config_dir>/plans/reports.csv`; needs `config_dir`.
+- `counter.<city>.<year>`: the counter index; `counter_sites.<city>.<year>`: the number of
+  qualifying sites of that year's link.
 """
 
 import math
@@ -10,6 +28,8 @@ import re
 from collections.abc import Callable
 from pathlib import Path
 
+from velometer.config import ConfigError
+from velometer.plans.models import ReportRow, current_and_revisions, load_plans
 from velometer.report import change as change_report
 from velometer.report.data import ReportData, rank_values
 from velometer.timeseries import YearPoint
@@ -19,6 +39,8 @@ TIER_FIELDS = ("A", "B", "C", "D", "E")
 KINDS = ("lau", "fua")
 CHANGE_CATEGORIES = ("gained", "lost", "retiered", "redrawn", "geometry")
 GAP_FIELDS = ("ours", "theirs", "gap_pct")
+OVERLAY_FIELDS = ("ab_km", "network_km")
+QUANTITIES = ("implemented_in_year", "implemented_cumulative", "under_construction", "in_planning")
 
 
 class FactError(Exception):
@@ -278,6 +300,122 @@ def _change(expr, args, data, docs_dir):
         raise _err(expr, f"{path.name}: city row cell is not a number") from e
 
 
+def _version_key(version: str) -> tuple:
+    return tuple(int(p) if p.isdigit() else p for p in re.split(r"(\d+)", version))
+
+
+def _overlay_at(expr: str, data: ReportData, city: str, cls: str, day: str) -> list:
+    """The overlay rows (one per tier) of one class at the run snapshotted on `day`."""
+    rows = data.plan_overlay(city)
+    if not rows:
+        raise _err(expr, f"no plan overlay for city {city!r}")
+    version = max((r.overlay_version for r in rows), key=_version_key)
+    rows = [r for r in rows if r.overlay_version == version]
+    classes = sorted({r.network_class for r in rows})
+    rows = [r for r in rows if r.network_class == cls]
+    if not rows:
+        raise _err(expr, f"no network class {cls!r} (have {', '.join(classes)})")
+    ids = sorted({r.run_id for r in rows})
+    marks = ",".join("?" * len(ids))
+    dates = {
+        rid: ts[:10]
+        for rid, ts in data.conn.execute(
+            f"SELECT id, osm_timestamp FROM runs WHERE id IN ({marks})", ids
+        )
+    }
+    at = [r for r in rows if dates.get(r.run_id) == day]
+    if not at:
+        have = ", ".join(sorted(set(dates.values())))
+        raise _err(expr, f"no overlay at snapshot {day!r} (have {have})")
+    if len({r.run_id for r in at}) > 1:
+        raise _err(expr, f"several runs have an overlay at snapshot {day!r}")
+    return at
+
+
+def _ab_km(rows: list) -> float:
+    return sum(r.mapped_km for r in rows if r.tier in ("A", "B"))
+
+
+def _overlay(expr, args, data, docs_dir):
+    _arity(expr, args, 4, "<city>.<class>.<YYYY-MM-DD>.<ab_km|network_km>")
+    city, cls, day, field = args
+    _field(expr, field, OVERLAY_FIELDS)
+    rows = _overlay_at(expr, data, city, cls, day)
+    return _ab_km(rows) if field == "ab_km" else float(rows[0].network_km)
+
+
+def _overlay_change(expr, args, data, docs_dir):
+    _arity(expr, args, 4, "<city>.<class>.<from YYYY-MM-DD>.<to YYYY-MM-DD>")
+    city, cls, frm, to = args
+    return _ab_km(_overlay_at(expr, data, city, cls, to)) - _ab_km(
+        _overlay_at(expr, data, city, cls, frm)
+    )
+
+
+def _counter_year(expr: str, args: list[str], data: ReportData):
+    _arity(expr, args, 2, "<city>.<year>")
+    city, year = args
+    rows = data.counter_index(city)
+    if not rows:
+        raise _err(expr, f"no counter index for city {city!r}")
+    at = [r for r in rows if str(r.year) == year]
+    if not at:
+        have = ", ".join(sorted({str(r.year) for r in rows}))
+        raise _err(expr, f"no counter index year {year!r} (have {have})")
+    if len(at) > 1:
+        raise _err(expr, f"{len(at)} counter series have year {year!r}")
+    return at[0]
+
+
+def _counter(expr, args, data, docs_dir):
+    row = _counter_year(expr, args, data)
+    if row.index is None:
+        raise _err(expr, f"no index value in {row.year} ({row.sites} qualifying sites)")
+    return float(row.index)
+
+
+def _counter_sites(expr, args, data, docs_dir):
+    return float(_counter_year(expr, args, data).sites)
+
+
+def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
+    if config_dir is None:
+        raise _err(expr, "plan facts need the config directory")
+    if len(args) < 4:
+        raise _err(
+            expr,
+            "expected <plan_id>.<item_id>.<year>.<quantity>[.<doc_id>], "
+            f"got {len(args)} parts after the family",
+        )
+    plan_id, item_id, year, quantity = args[:4]
+    doc = ".".join(args[4:])
+    try:
+        plans, rows = load_plans(Path(config_dir) / "plans")
+    except ConfigError as e:
+        raise _err(expr, str(e)) from e
+    plan = next((p for p in plans if p.id == plan_id), None)
+    if plan is None:
+        raise _err(expr, f"no plan {plan_id!r}")
+    if not any(i.id == item_id for i in plan.items):
+        raise _err(expr, f"plan {plan_id!r} has no item {item_id!r}")
+    if quantity not in QUANTITIES:
+        raise _err(expr, f"unknown quantity {quantity!r} ({'|'.join(QUANTITIES)})")
+    if not year.isdigit():
+        raise _err(expr, f"year {year!r} is not a year")
+    found = current_and_revisions(rows).get((plan_id, item_id, int(year), quantity))
+    if found is None:
+        raise _err(expr, f"no reported {quantity} for {plan_id}/{item_id} in {year}")
+    current, revisions = found
+    if not doc:
+        return current.value
+    every: list[ReportRow] = [current, *revisions]
+    named = [r for r in every if r.doc_id.replace("/", "_") == doc]
+    if not named:
+        have = ", ".join(r.doc_id.replace("/", "_") for r in every)
+        raise _err(expr, f"no document {doc!r} for this figure (have {have})")
+    return named[0].value
+
+
 _HANDLERS: dict[str, Callable[[str, list[str], ReportData, Path], float]] = {
     "series": _series,
     "index": _index,
@@ -291,14 +429,22 @@ _HANDLERS: dict[str, Callable[[str, list[str], ReportData, Path], float]] = {
     "figure": _figure,
     "population": _population,
     "change": _change,
+    "overlay": _overlay,
+    "overlay_change": _overlay_change,
+    "counter": _counter,
+    "counter_sites": _counter_sites,
 }
-FAMILIES: tuple[str, ...] = tuple(_HANDLERS)
+FAMILIES: tuple[str, ...] = (*_HANDLERS, "plan")
 
 
-def evaluate(expr: str, data: ReportData, docs_dir: Path) -> float:
+def evaluate(
+    expr: str, data: ReportData, docs_dir: Path, *, config_dir: Path | None = None
+) -> float:
     """The value of a fact expression; FactError (message starting with the expression) when
-    it does not name one."""
+    it does not name one. `plan.*` facts read `config_dir` and fail without it."""
     family, *args = expr.strip().split(".")
+    if family == "plan":
+        return _plan(expr.strip(), args, config_dir)
     handler = _HANDLERS.get(family)
     if handler is None:
         raise _err(expr, f"unknown family {family!r} (one of {', '.join(FAMILIES)})")

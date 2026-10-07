@@ -1,0 +1,3 @@
+comparisons:
+  - id: official_new_km
+    external: {source: [official, parliament_docs], metric_name: new_cycle_infra_km}

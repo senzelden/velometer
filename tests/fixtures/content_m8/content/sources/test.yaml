@@ -1,0 +1,24 @@
+sources:
+  - id: src
+    publisher: Senat
+    title: Radverkehr (synthetic)
+    url: https://example.org/radverkehr
+    accessed: 2026-10-01
+    language: de
+    kind: official
+    excerpts:
+      - id: e1
+        text: Das Netz ist 78,2 km lang.
+        gloss_en: The network is 78.2 km long.
+        locator: p. 3
+  - id: study
+    publisher: Uni
+    title: A study (synthetic)
+    url: https://example.org/study
+    accessed: 2026-10-01
+    language: en
+    kind: research
+    excerpts:
+      - id: e1
+        text: Counts are not outcomes.
+        locator: p. 1

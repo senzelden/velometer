@@ -1,0 +1,3 @@
+- {city: berlin, source: official, organisation: senmvku}
+- {city: "*", source: parliament_docs, organisation: abgeordnetenhaus}
+- {city: paris, source: official, organisation: abgeordnetenhaus}

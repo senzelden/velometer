@@ -1,6 +1,9 @@
-"""`velometer content --check`: validate narratives and the explainer against the source
-registry and the report data (spec §4.4). Every problem is one `"<file>: <message>"` string."""
+"""`velometer content --check`: validate narratives, the explainer, organisation profiles and the
+plan and counter pages against the source registry and the report data (M7 spec §4.4, M8 spec
+§3.4, §4.5, §5.5), and the plan figures in `config/plans/`. Every problem is one
+`"<file>: <message>"` string."""
 
+import csv
 import html
 import re
 from collections.abc import Callable, Iterable
@@ -9,8 +12,15 @@ from pathlib import Path
 import httpx
 import yaml
 
+from velometer.config import ConfigError
 from velometer.content.facts import FactError, evaluate, parse_printed, printed_matches
-from velometer.content.loader import load_explainer, load_narratives, load_sources
+from velometer.content.loader import (
+    load_document,
+    load_narratives,
+    load_organisation_map,
+    load_organisations,
+    load_sources,
+)
 from velometer.content.models import (
     STORY_STEPS,
     ContentError,
@@ -18,9 +28,11 @@ from velometer.content.models import (
     Explainer,
     Fact,
     Narrative,
+    Organisation,
     Quote,
     Source,
 )
+from velometer.plans.models import Plan, ReportRow, load_plans
 from velometer.report.data import ReportData
 
 COMBINED = "combined"
@@ -33,6 +45,13 @@ _SOURCE_REF = re.compile(r"\[@([^\]\s]+)\]")
 _DATA_REF = re.compile(r"\[#([^\]\s]+)\]")
 _STRIPPED = re.compile(r"\[@[^\]]*\]|\[#[^\]]*\]|`[^`]*`|\]\([^)]*\)")
 _VERBS = re.compile(r"\b(built|constructed|opened|removed)\b", re.IGNORECASE)
+_COUNTER_WORDS = re.compile(r"\b(counter|counts?|counted|cyclists recorded)\b", re.IGNORECASE)
+_CAUSAL = re.compile(
+    r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
+    re.IGNORECASE,
+)
+PLAN_DOCUMENTS = ("plans/berlin.yaml", "counters.yaml")
+BERLIN = "berlin"
 
 
 def normalise_number(text: str) -> str:
@@ -88,6 +107,14 @@ def construction_verbs(paragraph: str) -> list[str]:
     return found
 
 
+def causal_counter_wording(paragraph: str) -> list[str]:
+    """Causal wording in prose that mentions counters (counts are context, never an outcome of
+    km: M8 spec §2.12, §5.5); [] when the paragraph does not mention counters."""
+    if not _COUNTER_WORDS.search(paragraph):
+        return []
+    return [m.group(1) for m in _CAUSAL.finditer(paragraph)]
+
+
 def _check_document(
     label: str,
     prose: list[str],
@@ -98,6 +125,7 @@ def _check_document(
     sources: dict[str, Source],
     data: ReportData | None,
     docs_dir: Path | None,
+    config_dir: Path | None = None,
 ) -> list[str]:
     """The document's problems; without `data` the facts are not evaluated (their printed
     values still declare numbers)."""
@@ -115,7 +143,7 @@ def _check_document(
     for f in facts:
         if data is not None and docs_dir is not None:
             try:
-                value = evaluate(f.expr, data, docs_dir)
+                value = evaluate(f.expr, data, docs_dir, config_dir=config_dir)
                 if not printed_matches(value, f.printed):
                     add(f"fact {f.id}: {f.expr} is {_full(value)}, printed {f.printed}")
             except FactError as e:
@@ -134,6 +162,8 @@ def _check_document(
             add(f"undeclared number {n}")
         for v in construction_verbs(p):
             add(f"construction verb {v!r}")
+        for w in causal_counter_wording(p):
+            add(f"causal wording {w!r} about counts")
     return problems
 
 
@@ -145,6 +175,41 @@ def _dimension_ids(path: Path) -> list[str]:
     return [str(d["id"]) for d in dims or []]
 
 
+def _explainer_prose(doc: Explainer) -> list[str]:
+    prose = [doc.title, *doc.intro]
+    for sec in doc.sections:
+        prose += [sec.heading, *sec.paragraphs]
+    return prose
+
+
+def _check_explainer_shaped(
+    label: str,
+    doc: Explainer,
+    sources: dict[str, Source],
+    data: ReportData | None,
+    docs_dir: Path | None,
+    config_dir: Path,
+) -> list[str]:
+    return _check_document(
+        label,
+        _explainer_prose(doc),
+        doc.quotes,
+        doc.facts,
+        doc.data_refs,
+        doc.literals,
+        sources,
+        data,
+        docs_dir,
+        config_dir,
+    )
+
+
+def _read_dimensions(config_dir: Path) -> list[str] | None:
+    """The differences.yaml dimension ids, None when the file is absent; raises on a bad file."""
+    diff = Path(config_dir) / "differences.yaml"
+    return _dimension_ids(diff) if diff.is_file() else None
+
+
 def _check_explainer(
     explainer: Explainer,
     sources: dict[str, Source],
@@ -153,20 +218,7 @@ def _check_explainer(
     config_dir: Path,
 ) -> list[str]:
     label = "explainer.yaml"
-    prose = [explainer.title, *explainer.intro]
-    for sec in explainer.sections:
-        prose += [sec.heading, *sec.paragraphs]
-    problems = _check_document(
-        label,
-        prose,
-        explainer.quotes,
-        explainer.facts,
-        explainer.data_refs,
-        explainer.literals,
-        sources,
-        data,
-        docs_dir,
-    )
+    problems = _check_explainer_shaped(label, explainer, sources, data, docs_dir, config_dir)
     diff = Path(config_dir) / "differences.yaml"
     if diff.is_file():
         try:
@@ -229,7 +281,7 @@ def _check(
     narratives = load_narratives(content_dir / "narratives", errors=load_errors)
     problems: list[str] = list(load_errors.values())
     try:
-        explainer = load_explainer(content_dir / "explainer.yaml")
+        explainer = load_document(content_dir / "explainer.yaml")
     except ContentError as e:
         return problems + [str(e)]
 
@@ -255,6 +307,7 @@ def _check(
             sources,
             data,
             docs_dir,
+            config_dir,
         )
         if cid == COMBINED:
             problems += _check_combined_steps(n)
@@ -263,6 +316,150 @@ def _check(
 
     if explainer is not None:
         problems += _check_explainer(explainer, sources, data, docs_dir, config_dir)
+
+    for rel in PLAN_DOCUMENTS:
+        try:
+            doc = load_document(content_dir / rel)
+        except ContentError as e:
+            problems.append(str(e))
+            continue
+        if doc is not None:
+            problems += _check_explainer_shaped(rel, doc, sources, data, docs_dir, config_dir)
+
+    plans, rows, plan_problems = _plans(config_dir)
+    problems += plan_problems
+    org_dir = content_dir / "organisations"
+    if org_dir.is_dir():
+        org_errors: dict[str, str] = {}
+        orgs = load_organisations(org_dir, errors=org_errors)
+        problems += list(org_errors.values())
+        for org in orgs.values():
+            problems += _check_organisation(org, sources, data, docs_dir, config_dir)
+        problems += _check_coverage(config_dir, set(orgs) | set(org_errors), plans, rows)
+    return problems
+
+
+def _https(url: str) -> bool:
+    return url.startswith("https://")
+
+
+def _plans(config_dir: Path) -> tuple[list[Plan], list[ReportRow], list[str]]:
+    """The plans and report rows of `config/plans/` with their problems: unknown plan or item,
+    non-https URLs, empty units. No directory, no plans."""
+    plan_dir = Path(config_dir) / "plans"
+    if not plan_dir.is_dir():
+        return [], [], []
+    try:
+        plans, rows = load_plans(plan_dir)
+    except ConfigError as e:
+        return [], [], [str(e)]
+    problems: list[str] = []
+    items = {p.id: {i.id for i in p.items} for p in plans}
+    for p in plans:
+        label = f"config/plans/plans.yaml: plan {p.id}"
+        if not _https(p.url):
+            problems.append(f"{label}: url is not https: {p.url}")
+        for i in p.items:
+            if not i.unit.strip():
+                problems.append(f"{label}: item {i.id} has no unit")
+    for n, r in enumerate(rows, start=2):
+        label = f"config/plans/reports.csv:{n}"
+        if r.plan_id not in items:
+            problems.append(f"{label}: unknown plan {r.plan_id}")
+        elif r.item_id not in items[r.plan_id]:
+            problems.append(f"{label}: plan {r.plan_id} has no item {r.item_id}")
+        if not _https(r.url):
+            problems.append(f"{label}: url is not https: {r.url}")
+        if not r.unit.strip():
+            problems.append(f"{label}: no unit")
+    return plans, rows, problems
+
+
+def _check_organisation(
+    org: Organisation,
+    sources: dict[str, Source],
+    data: ReportData | None,
+    docs_dir: Path | None,
+    config_dir: Path,
+) -> list[str]:
+    label = f"organisations/{org.id}.yaml"
+    problems = _check_document(
+        label,
+        org.prose,
+        org.quotes,
+        org.facts,
+        org.data_refs,
+        org.literals,
+        sources,
+        data,
+        docs_dir,
+        config_dir,
+    )
+    if not _https(org.url):
+        problems.append(f"{label}: url is not https: {org.url}")
+    try:
+        dims = _read_dimensions(config_dir)
+    except (OSError, yaml.YAMLError, KeyError, TypeError) as e:
+        return problems + [f"{label}: cannot read dimensions: {e}"]
+    if dims is not None:
+        for sec in org.sections:
+            for key in sec.dimensions or {}:
+                if key not in dims:
+                    problems.append(f"{label}: section {sec.heading!r}: unknown dimension {key}")
+    return problems
+
+
+def _figure_pairs(config_dir: Path) -> list[tuple[str, str]]:
+    path = Path(config_dir) / "external" / "figures.csv"
+    if not path.is_file():
+        return []
+    with path.open(encoding="utf-8", newline="") as f:
+        return list(dict.fromkeys((r["city_id"], r["source"]) for r in csv.DictReader(f)))
+
+
+def _reconcile_sources(config_dir: Path) -> list[str]:
+    path = Path(config_dir) / "reconcile.yaml"
+    if not path.is_file():
+        return []
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    out: list[str] = []
+    for comp in doc.get("comparisons", []):
+        src = comp["external"]["source"]
+        out += [src] if isinstance(src, str) else list(src)
+    return list(dict.fromkeys(out))
+
+
+def _check_coverage(
+    config_dir: Path, profiles: set[str], plans: list[Plan], rows: list[ReportRow]
+) -> list[str]:
+    """Every figures.csv (city, source) pair and reconcile source maps to a profile, and every
+    Berlin plan and report-row publisher is a profile (M8 spec §3.4)."""
+    label = "config/organisations.yaml"
+    try:
+        mapping = load_organisation_map(Path(config_dir) / "organisations.yaml")
+    except ContentError as e:
+        return [str(e)]
+    problems: list[str] = []
+    for m in mapping:
+        if m.organisation not in profiles:
+            problems.append(
+                f"{label}: {m.city}/{m.source} maps to {m.organisation}, which has no profile"
+            )
+    for city, source in _figure_pairs(config_dir):
+        if not any(m.source == source and m.city in (city, "*") for m in mapping):
+            problems.append(f"{label}: no organisation for figures.csv source {city}/{source}")
+    for source in _reconcile_sources(config_dir):
+        if not any(m.source == source for m in mapping):
+            problems.append(f"{label}: no organisation for reconcile source {source}")
+    berlin_plans = {p.id for p in plans if p.city == BERLIN}
+    for p in plans:
+        if p.city == BERLIN and p.publisher not in profiles:
+            problems.append(
+                f"config/plans/plans.yaml: plan {p.id}: publisher {p.publisher} has no profile"
+            )
+    for n, r in enumerate(rows, start=2):
+        if r.plan_id in berlin_plans and r.publisher not in profiles:
+            problems.append(f"config/plans/reports.csv:{n}: publisher {r.publisher} has no profile")
     return problems
 
 
