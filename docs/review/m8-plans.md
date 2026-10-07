@@ -47,16 +47,23 @@ page; each was confirmed on the page image.
   but not for 2022 (2.8 vs 3.1) or 2023 (7.5 vs 7.2). Kept as its own item `sonstiges_netz`.
 - **Cumulative baselines differ**: 2017–2021 (0389 A), 2022–2024 (1733 C), 2017–2025 (1733 E),
   2022 to Sept 2026 (19/27049 Summe), stored in `cumulative_from`. Drs 19/25987's "insgesamt" 78.2
-  states no start; it gets 2017 because 1733 E prints the same 78.2 for 2017–2025. Note: Vorrangnetz
-  2026 cumulative now groups 49.46 (from 2022) with 78.2 (from 2017); `current_and_revisions` does
-  not key on `cumulative_from`, so 49.46 is current and 78.2 a revision.
+  states no start; it gets 2017 because 1733 E prints the same 78.2 for 2017–2025.
+  `current_and_revisions` keys on `cumulative_from`, so the two Vorrangnetz 2026 cumulative figures,
+  49.46 (from 2022, 19/27049) and 78.2 (from 2017, 19/25987), are separate series, each current in
+  its own, not revisions of one another.
 - **Counting basis changed.** Reports up to 2020 count facility length per side (item `anlagen`);
   from the 2021 report on, network items count route length once per street section (0389 A halves
   main-road facilities: "18,7 geteilt durch 2").
 - **Scope.** The 2021 per-network figures cover only the bezirkliches Radverkehrsprogramm.
-- **Not stored (logged only):** district-programme subset tables in the web editions of FB 2022 and
-  FB 2024 (e.g. 13.2 / 40.3; 7.4 / 67.5); facility-type tables (Radfahrstreifen, geschützte
-  Radfahrstreifen etc.).
+- **Not stored (logged only):**
+  - district-programme subset tables in the web editions of FB 2022 and FB 2024 (e.g. 13.2 / 40.3;
+    7.4 / 67.5);
+  - facility-type tables (Radfahrstreifen, geschützte Radfahrstreifen etc.);
+  - the printed "Radverkehrsnetz + Hauptverkehrsstraßen" rows: 1733 C (PDF p. 10, Tabelle 2) 22.7
+    km in 2024 / 69.9 km 2022–2024, and 1733 E (PDF p. 11, Tabelle 2) 20.1 km in 2025 / 156.9 km
+    2017–2025. The plan has no item for this combination; each row is the sum of two stored items
+    of the same table (Radverkehrsnetz + Hauptverkehrsstraßen außerhalb Radverkehrsnetz:
+    20.4 + 2.3, 62.6 + 7.3, 16.1 + 4.0, 140.1 + 16.8), so storing it would add no figure.
 - **Disconfirming:** Drs 19/10136 names only the years of the Ausbaupfade, not km; the feasibility
   log's claim that it quotes the table does not hold. Drs 19/25700, 19/26599, 19/26333 and 19/14625
   contain no city-wide km; no rows.
@@ -78,7 +85,7 @@ official document prints a figure tied to the plan.
 | --- | --- | --- | --- | --- |
 | Paris | paris_plan_velo_2021 | 180 km target (press kit p. 15) https://cdn.paris.fr/paris/2025/04/23/plan-velo_dossier-de-presse_fr-2024-web-W8kI.pdf | deliberation date; no official km progress | 0 |
 | Vienna | vienna_radwegoffensive | 2026 programme 12.5 km (Mobilitätsagentur); Bilanz 2025 20.4 km started | no single adopted plan | 1 (under_construction; doc_date from PDF metadata) |
-| Copenhagen | copenhagen_cykelstrategi_2011 | both plans ended 2025 (Mobilitetsredegørelse 2026 pp. 4, 29); 37 initiatives | successor date | 1 (unit initiatives; doc_date from PDF metadata, printed "Juni 2026") |
+| Copenhagen | copenhagen_cykelstrategi_2011 | both plans ended 2025 (Mobilitetsredegørelse 2026 pp. 4, 29); 37 initiatives | successor date | 1 (unit initiatives; doc_date from PDF metadata, printed "Juni 2026"; `suspect`: counts funded and under-construction initiatives as implemented) |
 | Amsterdam | amsterdam_meerjarenplan_fiets_2017 | expired per Uitvoeringsplan 2024 p. 3; width share target p. 13 | adoption date | 0 |
 | Utrecht | utrecht_mobiliteitsplan_2040 | raadsvoorstel | adoption 15 July 2021 (secondary only) | 0 |
 | Madrid | madrid_pdmc_2008 | plan pages on madrid.es | status; 2016 revision PDF refused scripted access (HTTP 403) | 0 |
@@ -87,7 +94,7 @@ official document prints a figure tied to the plan.
 | Oslo | oslo_sykkelveinettet_2018 | first phase ~100 km to 2025 (plan PDF p. 7); 155 km (press release 11 Nov 2024) | adoption day; successor | 1 |
 | Helsinki | helsinki_pyoraliikenne_2020 | 44.7 / 16.9 km (HEL 2022-010017), not stored | approval date | 0 |
 | Lyon | lyon_plan_velo_2024 | 355 km by 2030 (p. 9); network 1165 / 1208 km (p. 10), not stored | 250 km by 2026 (press, NGO only); lyon.fr returned 403 | 0 |
-| Strasbourg | strasbourg_plan_velo_2021 | ~100 operations / ~100 km by 2026; 52 operations (strasbourg.eu 30 Oct 2024) | launch day | 1 |
+| Strasbourg | strasbourg_plan_velo_2021 | ~100 operations / ~100 km by 2026; 52 operations (strasbourg.eu 30 Oct 2024) | launch day | 1 (`suspect`: a forecast at publication) |
 | Bordeaux | bordeaux_plan_velo_2021 | approved 25 Nov 2021, 107 km, ReVE 36 km (CRC report pp. 35, 46–47; ReVE not stored) | | 1 |
 | Wrocław | wroclaw_plan_rowerowy_2030 | 100 km by 2030; 40 km (wroclaw.pl 5 Sept 2025) | adoption resolution | 1 |
 | Warsaw | warsaw_program_tras_2020 | ~200 km (ZDM 4 Feb 2020) | programme km target; successor | 1 |
@@ -99,20 +106,34 @@ official document prints a figure tied to the plan.
 
 ## 5. Downloads (`data/plans/docs/`, retrieved 2026-10-07 10:16–10:34 UTC)
 
-No licence statement was checked. Parliamentary printed papers are likely official works under
-§ 5 UrhG; all documents are cited as data, not reproduced.
+Licence per document, from a search of each document's extracted text (the `.txt` beside each
+PDF) for licence, Lizenz, copyright, ©, Urheber and their Danish, Norwegian, French, Polish,
+Slovak and Slovene equivalents, checked 2026-10-07. "Not stated" means the document carries no
+licence statement; photo and base-map credits (©) cover those images only. All documents are cited
+as data, not reproduced.
 
-- vo19-013.pdf: Radverkehrsplan Verordnung (URL in §1).
-- h18-1392.I-v.pdf, h19-0389-v.pdf, h19-0389.A-v.pdf, h19-1064-v.pdf, h19-1733.B-v.pdf,
-  h19-1733.B-1-v.pdf, h19-1733.C-v.pdf, h19-1733.E-v.pdf:
-  `https://www.parlament-berlin.de/adosservice/{18,19}/Haupt/vorgang/<file>`.
-- S19-27049, S19-25987, S19-25700, S19-26599, S19-26333, S19-14625, S19-10136 (.pdf):
-  `https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/<file>`.
-- fb-2020.pdf … fb-2024.pdf: progress reports, berlin.de editions
-  (`https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/`).
-- oslo-plan-sykkelveinettet.pdf, oslo-sykkelstrategi.pdf, oslo-ey-2024.pdf (oslo.kommune.no);
-  paris-plan-velo-dp.pdf (cdn.paris.fr); lyon-plan-velo-2024.pdf (avelo.grandlyon.com);
-  cph-mobilitetsredegorelse-2026.pdf (byudvikling.kk.dk); bdx-crc-plan-velo.pdf (merignac.com,
-  CRC report); ljubljana-cps.pdf (ljubljana.si); bratislava-41761.pdf, bratislava-37247.pdf
-  (zastupitelstvo.bratislava.sk); vienna-bilanz-2025.pdf (fahrradwien.at). Exact URLs are in the
-  `url` column of `reports.csv` or `plans.yaml`.
+| File | Source | Licence |
+| --- | --- | --- |
+| vo19-013.pdf | Radverkehrsplan Verordnung (URL in §1) | not stated (base maps credited "© OpenStreetMap") |
+| h18-1392.I-v.pdf | parlament-berlin.de, rote Nummer | not stated |
+| h19-0389-v.pdf, h19-0389.A-v.pdf | parlament-berlin.de, rote Nummer | not stated |
+| h19-1064-v.pdf | parlament-berlin.de, rote Nummer | not stated |
+| h19-1733.B-v.pdf, h19-1733.B-1-v.pdf | parlament-berlin.de, rote Nummer | not stated |
+| h19-1733.C-v.pdf, h19-1733.E-v.pdf | parlament-berlin.de, rote Nummer | not stated |
+| S19-27049, S19-25987, S19-25700, S19-26599, S19-26333, S19-14625, S19-10136 (.pdf) | pardok.parlament-berlin.de, Schriftliche Anfragen | not stated |
+| fb-2020.pdf … fb-2024.pdf | berlin.de, progress reports | not stated |
+| oslo-plan-sykkelveinettet.pdf, oslo-sykkelstrategi.pdf, oslo-ey-2024.pdf | oslo.kommune.no | not stated |
+| paris-plan-velo-dp.pdf | cdn.paris.fr | not stated (photo credits only) |
+| lyon-plan-velo-2024.pdf | avelo.grandlyon.com | not stated (photo credits only) |
+| cph-mobilitetsredegorelse-2026.pdf | byudvikling.kk.dk | not stated |
+| bdx-crc-plan-velo.pdf | merignac.com (CRC report) | not stated |
+| ljubljana-cps.pdf | ljubljana.si | not stated |
+| bratislava-41761.pdf | zastupitelstvo.bratislava.sk | text: CC0 ("Licencia: CC0 (len textová časť)"); figures and the route map from Plán Bratislava: CC BY-SA 4.0 |
+| bratislava-37247.pdf | zastupitelstvo.bratislava.sk | not stated |
+| vienna-bilanz-2025.pdf | fahrradwien.at | not stated |
+
+URL patterns: rote Nummern
+`https://www.parlament-berlin.de/adosservice/{18,19}/Haupt/vorgang/<file>`; Schriftliche Anfragen
+`https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/<file>`; progress reports
+`https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/`.
+Exact URLs of the other documents are in the `url` column of `reports.csv` or `plans.yaml`.

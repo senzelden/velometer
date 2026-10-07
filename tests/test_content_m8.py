@@ -11,7 +11,11 @@ import yaml
 from typer.testing import CliRunner
 
 from velometer.cli import app
-from velometer.content.check import causal_counter_wording, check_content_offline
+from velometer.content.check import (
+    causal_counter_wording,
+    check_content_offline,
+    misplaced_quotes,
+)
 from velometer.content.facts import FAMILIES, FactError, evaluate
 from velometer.content.loader import (
     load_document,
@@ -20,7 +24,7 @@ from velometer.content.loader import (
     load_organisations,
     load_sources,
 )
-from velometer.content.models import ContentError
+from velometer.content.models import ContentError, Explainer
 from velometer.db import CounterIndexYear, OverlayRow, replace_counter_index, replace_plan_overlay
 
 FIXTURE = Path(__file__).parent / "fixtures" / "content_m8"
@@ -162,6 +166,39 @@ def test_plan_page_follows_the_document_rules(m8):
         "plans/berlin.yaml: undeclared number 12.5",
         "plans/berlin.yaml: construction verb 'built'",
     ]
+
+
+def test_a_quote_follows_the_paragraph_citing_its_source():
+    """`after` counts section paragraphs without the intro; an intro quote follows paragraph 0."""
+    doc = Explainer.model_validate(
+        {
+            "title": "t",
+            "intro": ["Intro [@a]."],
+            "sections": [
+                {"dimension": "x", "heading": "X", "paragraphs": ["One [@b].", "Two [@c]."]}
+            ],
+            "quotes": [
+                {"excerpt": "a/e", "after": 0},
+                {"excerpt": "b/e", "after": 0},
+                {"excerpt": "c/e", "after": 1},
+            ],
+        }
+    )
+    assert misplaced_quotes(doc) == []
+    late = doc.model_copy(
+        update={"quotes": [doc.quotes[0].model_copy(update={"after": 1}), *doc.quotes[1:]]}
+    )
+    assert misplaced_quotes(late) == [
+        "quote a/e follows paragraph 1, which does not cite a (not cited; paragraphs count from 0"
+        " without the intro)"
+    ]
+    shifted = doc.model_copy(update={"quotes": [doc.quotes[1].model_copy(update={"after": 1})]})
+    assert misplaced_quotes(shifted) == [
+        "quote b/e follows paragraph 1, which does not cite b (cited in paragraph 0; paragraphs"
+        " count from 0 without the intro)"
+    ]
+    wild = doc.model_copy(update={"quotes": [doc.quotes[2].model_copy(update={"after": 2})]})
+    assert misplaced_quotes(wild) == ["quote c/e: after=2 must index one of 2"]
 
 
 def test_plan_and_counter_pages_are_optional(m8):

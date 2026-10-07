@@ -205,6 +205,62 @@ that dependence (what it still drops is under 5 km and level), but the change re
 redrawing and new mapping, so it should still be worded as mapped km on the network, not as
 progress on the street.
 
+### Check of the v3-only pieces (Task 8 review stop)
+
+The user's ruling ships v3 after a zoomed check of the pieces v3 keeps and v2 drops, for
+crossing-street false positives. Read-only review script (scratchpad, not shipped; it reuses
+`plans.overlay._kept_pieces` for both versions), run 743 (OSM 2026-01-01); no parameter changed.
+v3-only pieces: **58.5 km** (Vorrangnetz 25.8, Ergänzungsnetz 32.7). Each ~10 m piece was put in
+one class, in this order:
+
+1. *Past the network line's end*: no line of its class that the piece matches (within its buffer,
+   at most 30°) runs alongside it: every one ends at or before the piece (the midpoint lies more
+   than 1 m beyond the line's end), and no line of the other class runs alongside either.
+2. *Class boundary*: as 1, but a line of the other class runs alongside: the piece is on the
+   network, counted in the class whose line ends there.
+3. *Crosses a network line, along another*: the nearest line of its class is at more than 30° to
+   the piece (it crosses it), while a matching line of the class runs alongside.
+4. *Beside another road*: the nearest carriageway (OSM, without `service`) within 30 m that runs
+   parallel to the piece is either at more than 30° to the network line or more than 15 m from
+   it.
+5. *Along*: the rest (including 0.6 km where the network itself runs off-road).
+
+| class of the v3-only piece | km | share | Vorrang | Ergänzung |
+|---|---:|---:|---:|---:|
+| along the network line | 40.5 | 69.3 % | 18.6 | 22.0 |
+| crosses a network line, along another | 5.1 | 8.8 % | 2.4 | 2.7 |
+| beside another parallel or crossing road | 1.1 | 1.9 % | 0.7 | 0.4 |
+| past its class's line end, on the other class | 5.3 | 9.0 % | 2.5 | 2.8 |
+| **past the network line's end** | **6.5** | **11.0 %** | 1.6 | 4.8 |
+
+Random samples of 16 pieces per class (120 m windows) confirm the first class: almost all are
+sidepaths or crossings of the street that continues where the network line ends or turns at a
+junction, i.e. sidepaths of crossing streets; a few are crossings inside the junction itself
+([sample](../../data/maps/berlin_overlay_v3_detail_beyond_network_end.png)). In the "crosses a
+network line, along another" class most pieces are crossings inside a junction on the route of
+the crossing network street; about 3 of 16 are junction pieces whose assignment is doubtful
+([sample](../../data/maps/berlin_overlay_v3_detail_junction_crossing.png)). In the "beside another
+road" class about half the sample are the network road's own sidepaths on wide or dual
+carriageways (the far carriageway lies more than 15 m from the network line), the rest sidepaths
+of a parallel road or junction pieces
+([sample](../../data/maps/berlin_overlay_v3_detail_parallel_or_crossing_street.png)).
+[Crops of the six densest 800 m cells, 1.2 km windows, v3-only
+pieces coloured by class](../../data/maps/berlin_overlay_v3_crops.png).
+
+**False-positive share: 11.0 % (6.5 km)** counting only pieces past the network line's end; about
+14 % with the doubtful parts of classes 3 and 4 added (3/16 of 5.1 km, half of 1.1 km); 21.7 %
+if every piece that crosses a network line at a steep angle counts (classes 1, 3 and 4), and
+30.7 % if the class-boundary pieces count too. This exceeds the ~10 % stop threshold set for this
+check, so the finding goes to the controller; the method is unchanged.
+
+Over time (same script, runs 739 and 713): v3-only km grow from 21.5 (2022-01-01) to 60.7
+(current, 2026-10-03); the "past the network line's end" part from 3.8 to 6.5 km (Vorrangnetz
+0.96 → 1.65, Ergänzungsnetz 2.86 → 4.80), class boundaries from 3.7 to 5.5 km, pieces crossing a
+network line from 2.0 to 5.3 km, and the "along" part from 11.7 to 42.4 km. So of v3's addition to
+the 2022 → current change (+17.5 km Vorrangnetz, +21.7 km Ergänzungsnetz over v2), about 0.7 and
+1.9 km are pieces past the network line's end, and the bulk (+14.1 and +16.5 km) are pieces
+along the network line.
+
 ## Sanity maps
 
 [Vorrangnetz and Ergänzungsnetz, matched vs unmatched, run 743 (2026-01-01)](../../data/maps/berlin_overlay_v1_2026-01-01.png)

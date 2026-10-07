@@ -55,9 +55,9 @@ sections:
         difference of the printed endpoints. These are changes in what is mapped, not km of new infrastructure.
 quotes:
   - {excerpt: berlin-radverkehrsplan-vo19-013/paths-adjusted, after: 0}
-  - {excerpt: berlin-fortschrittsbericht-2021/halved, after: 1}
-  - {excerpt: berlin-drs-19-27049/ergaenzungsnetz-row, after: 2}
-  - {excerpt: berlin-gdi-radverkehrsmassnahmen/abstract, after: 3}
+  - {excerpt: berlin-fortschrittsbericht-2021/halved, after: 0}
+  - {excerpt: berlin-drs-19-27049/ergaenzungsnetz-row, after: 1}
+  - {excerpt: berlin-gdi-radverkehrsmassnahmen/abstract, after: 2}
 facts:
   - {id: vrn-2025, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year, printed: "8.6"}
   - {id: vrn-2025-report, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.1733 E, printed: "8.6"}

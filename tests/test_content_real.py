@@ -10,9 +10,12 @@ from pathlib import Path
 
 import pytest
 import yaml
+from markupsafe import escape
 
+from velometer.app.narrative import render_explainer
 from velometer.config import default_config_dir, load_cities
 from velometer.content.check import check_content_offline
+from velometer.content.loader import load_document, load_sources
 
 REAL_CONTENT = Path(__file__).parents[1] / "content"
 CONFIG = default_config_dir()
@@ -97,6 +100,11 @@ def _drop_section(dimension: str) -> Callable[[dict], None]:
             lambda d: d["sections"][1].__setitem__("step", d["sections"][0]["step"]),
             "narratives/combined.yaml: step",
         ),
+        (
+            "plans/berlin.yaml",
+            lambda d: d["quotes"][1].__setitem__("after", 1),  # counted with the intro
+            "plans/berlin.yaml: quote berlin-fortschrittsbericht-2021/halved follows paragraph 1",
+        ),
         ("explainer.yaml", _drop_section("length"), "explainer.yaml: dimension length has 0"),
         (
             "explainer.yaml",
@@ -134,3 +142,37 @@ def test_an_over_long_excerpt_in_the_registry_is_reported(broken):
 
     problems = offline_problems(broken(str(rel), mutate))
     assert len(problems) == 1 and "more than 60 words" in problems[0], problems
+
+
+def test_the_berlin_plan_page_sets_each_quote_after_the_paragraph_citing_its_source():
+    """Rendered as the app renders it: each pull-quote follows a paragraph that cites the
+    quote's source (the intro's quote follows the first paragraph). The `after` indices were
+    once counted with the intro, which put every quote one paragraph late."""
+    doc = load_document(REAL_CONTENT / "plans" / "berlin.yaml")
+    sources = load_sources(REAL_CONTENT / "sources")
+    rendered = render_explainer(doc, sources)
+    number = {s.id: n for n, s in rendered.sources.items()}
+    intro_cites = {
+        n for n in number.values() if any(f'href="#src-{n}"' in p for p in rendered.intro)
+    }
+    seen, previous, placed = 0, "", {}
+    for sec in rendered.sections:
+        for item in sec.items:
+            if "pullquote" not in item:
+                seen, previous = seen + 1, item
+                continue
+            q = next(q for q in doc.quotes if _excerpt_text(sources, q.excerpt) in item)
+            n = number[q.excerpt.partition("/")[0]]
+            assert f'href="#src-{n}"' in previous or (seen == 1 and n in intro_cites), q.excerpt
+            placed[q.excerpt] = sec.role
+    assert placed == {
+        "berlin-radverkehrsplan-vo19-013/paths-adjusted": "reported",
+        "berlin-fortschrittsbericht-2021/halved": "reported",
+        "berlin-drs-19-27049/ergaenzungsnetz-row": "reported",
+        "berlin-gdi-radverkehrsmassnahmen/abstract": "completed",
+    }
+
+
+def _excerpt_text(sources, ref: str) -> str:
+    sid, _, eid = ref.partition("/")
+    return str(escape(next(e.text for e in sources[sid].excerpts if e.id == eid)))

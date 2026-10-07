@@ -182,6 +182,32 @@ def _explainer_prose(doc: Explainer) -> list[str]:
     return prose
 
 
+def misplaced_quotes(doc: Explainer) -> list[str]:
+    """Quotes of an explainer-shaped page that do not follow a paragraph citing their source.
+
+    `after` counts the sections' paragraphs, the intro excluded, as the renderer does. A quote
+    for the intro (its source cited there) follows the first paragraph."""
+    paragraphs = [p for s in doc.sections for p in s.paragraphs]
+    intro_cites = {sid for p in doc.intro for sid in _SOURCE_REF.findall(p)}
+    out: list[str] = []
+    for q in doc.quotes:
+        sid = q.excerpt.partition("/")[0]
+        if not 0 <= q.after < len(paragraphs):
+            out.append(f"quote {q.excerpt}: after={q.after} must index one of {len(paragraphs)}")
+            continue
+        if sid in _SOURCE_REF.findall(paragraphs[q.after]):
+            continue
+        if q.after == 0 and sid in intro_cites:
+            continue
+        citing = [i for i, p in enumerate(paragraphs) if sid in _SOURCE_REF.findall(p)]
+        where = f"cited in paragraph {', '.join(map(str, citing))}" if citing else "not cited"
+        out.append(
+            f"quote {q.excerpt} follows paragraph {q.after}, which does not cite {sid} ({where};"
+            " paragraphs count from 0 without the intro)"
+        )
+    return out
+
+
 def _check_explainer_shaped(
     label: str,
     doc: Explainer,
@@ -190,7 +216,7 @@ def _check_explainer_shaped(
     docs_dir: Path | None,
     config_dir: Path,
 ) -> list[str]:
-    return _check_document(
+    return [f"{label}: {m}" for m in misplaced_quotes(doc)] + _check_document(
         label,
         _explainer_prose(doc),
         doc.quotes,
