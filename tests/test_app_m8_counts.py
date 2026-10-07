@@ -284,3 +284,33 @@ def test_js_counter_notes_equal_the_python_ones():
     js = (ROOT / "src/velometer/app/static/js/counter-model.js").read_text(encoding="utf-8")
     for name in ("NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY"):
         assert f'export const {name} = "{getattr(compare, name)}";' in js, name
+
+
+# ---------- cities without open counter data (spec §5.1) ----------
+
+
+def test_city_without_counter_data_shows_the_portals_checked_on_figures_and_compare(setup):  # noqa: F811
+    db_path, cfg_dir, _, _ = setup
+    _seed(db_path)
+    doc = yaml.safe_load((cfg_dir / "counters.yaml").read_text(encoding="utf-8"))
+    listed = next(n for n in doc["none"] if n.get("note"))  # a real entry, moved to paris
+    doc["cities"] = [e for e in doc["cities"] if e["city"] != "paris"]
+    doc["none"] = [n for n in doc["none"] if n is not listed] + [{**listed, "city": "paris"}]
+    (cfg_dir / "counters.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True))
+    with _client(_app(setup)) as c:
+        figures = _text(c.get("/city/paris/figures").text)
+        berlin = c.get("/city/berlin/figures").text
+        compare_page = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+        payload = c.get("/data/series.json").json()
+    checked = ", ".join(listed["checked"])
+    assert f"No open counter data found (portals checked: {checked}; {listed['note']})." in figures
+    assert 'id="counter-data"' not in berlin  # a counter city has its Counts tab instead
+    note = f"Paris: no open counter data found (portals checked: {checked}; {listed['note']})"
+    assert note in compare_page
+    assert payload["counters"]["none"]["paris"].startswith("no open counter data found")
+
+
+def test_compare_summary_for_the_counter_index_names_counter_sites_and_no_mode(client):
+    html = client.get("/compare?c=berlin,paris&m=counter_index&b=fua&mode=index").text
+    summary = re.search(r"data-filters-summary>([^<]*)<", html).group(1)
+    assert summary == "Counter index · counter sites · 2 cities"

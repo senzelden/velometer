@@ -8,7 +8,7 @@
 
 <form class="filters-sheet" id="compare-filters" action="/compare" method="get">
 <div class="filters-top">
-  <span class="filters-summary" data-filters-summary>{{ metrics[state.m].label }} · {{ state.b | upper }} · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }} · {{ "indexed" if state.mode == "index" else "absolute" }}</span>
+  <span class="filters-summary" data-filters-summary>{% if state.m == "counter_index" %}{{ metrics[state.m].label }} · counter sites · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }}{% else %}{{ metrics[state.m].label }} · {{ state.b | upper }} · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }} · {{ "indexed" if state.mode == "index" else "absolute" }}{% endif %}</span>
   <button type="button" class="filters-toggle" hidden aria-expanded="false" aria-controls="filters-body">Filters</button>
 </div>
 <div class="filters-body" id="filters-body">
@@ -45,7 +45,7 @@
 <div data-compare-title>
 {% if state.m == "counter_index" %}
 <h2>{{ metrics[state.m].label }} · counter sites</h2>
-<p class="meta">{{ metrics[state.m].unit }}. Counters are context: they record the bicycles passing a few sites.</p>
+<p class="meta">{{ metrics[state.m].unit }}. Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.</p>
 {% else %}
 <h2>{{ metrics[state.m].label }} · {{ "City proper (LAU)" if state.b == "lau" else "Metro area (FUA)" }}{% if state.mode == "index" %} · index, first year = 100{% endif %}</h2>
 <p class="meta">{{ metrics[state.m].unit }}. Mapped km in OpenStreetMap, not built km.</p>

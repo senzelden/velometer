@@ -16,7 +16,7 @@ const FUA_NOTE =
   "A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).";
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
 const COUNTER_TITLE = "counter sites"; // the counter index is the same for both boundaries
-const COUNTER_FOOT = "Counters are context: they record the bicycles passing a few sites.";
+const COUNTER_FOOT = "Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const form = $("#compare-filters");
@@ -92,7 +92,9 @@ function syncForm() {
   }
   const n = state.c.length;
   $("[data-filters-summary]").textContent =
-    `${cfg.metrics[state.m].label} · ${state.b.toUpperCase()} · ${n} cit${n === 1 ? "y" : "ies"} · ${state.mode === "index" ? "indexed" : "absolute"}`;
+    state.m === "counter_index"
+      ? `${cfg.metrics[state.m].label} · ${COUNTER_TITLE} · ${n} cit${n === 1 ? "y" : "ies"}`
+      : `${cfg.metrics[state.m].label} · ${state.b.toUpperCase()} · ${n} cit${n === 1 ? "y" : "ies"} · ${state.mode === "index" ? "indexed" : "absolute"}`;
 }
 
 form.addEventListener("submit", (e) => {

@@ -195,8 +195,10 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
     """(labels, values, notes) of the counter index for `ids`: labels are the calendar years from
     the first to the last with a value for any drawn city; values[id] one per label (None: a
     gap, never 0). A city without counter data, or whose index is not drawn as a line, gets no
-    values and a note (compare-model.js: counterLines)."""
+    values and a note: a city listed under `none:` in config/counters.yaml its "no open counter
+    data found" note with the portals checked (compare-model.js: counterLines)."""
     counters = payload.get("counters", {}).get("cities", {})
+    none = payload.get("counters", {}).get("none", {})
     names = payload["cities"]
     drawn = {i: counters[i] for i in ids if i in counters and counters[i]["line"]}
     years = [p["year"] for c in drawn.values() for p in c["points"] if p["idx"] is not None]
@@ -205,7 +207,7 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
     for i in ids:
         c = counters.get(i)
         if c is None:
-            notes.append(f"{names[i]['name']}: {NO_COUNTERS}")
+            notes.append(f"{names[i]['name']}: {none.get(i, NO_COUNTERS)}")
         elif not c["line"]:
             notes.append(f"{names[i]['name']}: {NO_COUNTER_LINE}")
         elif c["series"] == "avg_daily_intensity":

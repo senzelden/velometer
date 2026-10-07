@@ -57,9 +57,20 @@ def has_line(points: list[dict]) -> bool:
     return sum(p["idx"] is not None for p in points) >= MIN_LINE_YEARS
 
 
+def no_data_notes(cfg: CountersConfig | None) -> dict[str, str]:
+    """city -> the note of a city listed under `none:` in config/counters.yaml (spec §5.1): "no
+    open counter data found", the portals checked and the config's note."""
+    out = {}
+    for n in cfg.none if cfg else []:
+        extra = f"; {n.note}" if n.note else ""
+        out[n.city] = f"no open counter data found (portals checked: {', '.join(n.checked)}{extra})"
+    return out
+
+
 def counter_payload(data: ReportData) -> dict:
-    """`counters` of series.json: the COVID year and, per counter city, its series kind, base
-    year, whether it is drawn as a line and its yearly index (None: no value, a gap)."""
+    """`counters` of series.json: the COVID year, per counter city its series kind, base year,
+    whether it is drawn as a line and its yearly index (None: no value, a gap), and `none`: the
+    note of each city without open counter data (`no_data_notes`)."""
     cities = {}
     for city_id in data.counter_cities():
         rows = data.counter_index(city_id)
@@ -72,7 +83,11 @@ def counter_payload(data: ReportData) -> dict:
             "line": has_line(points),
             "points": points,
         }
-    return {"covid_year": COVID_YEAR, "cities": cities}
+    return {
+        "covid_year": COVID_YEAR,
+        "cities": cities,
+        "none": no_data_notes(counters_config(data.config_dir)),
+    }
 
 
 def km_index(points, base_year: int) -> dict[int, float | None]:

@@ -909,6 +909,10 @@ def create_app(
             ],
             "bezirke": bezirke_context(data, city_id),
             "has_counts": city_id in data.counter_cities(),
+            # spec §5.1: a city without open counter data says so, with the portals checked
+            "no_counters": counts_model.no_data_notes(counts_model.counters_config(config_dir)).get(
+                city_id
+            ),
             "kinds": kinds,
             "yearly": yearly,
             "reconcile": data.reconcile(city_id),

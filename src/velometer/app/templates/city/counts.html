@@ -5,7 +5,7 @@
 {% set c = counts %}
 <section id="counts-index">
 <h2>Counter index</h2>
-<p class="meta">Index of {{ c.label }}, {{ c.base_year }} = 100, beside the index of A+B mapped km in the city proper (1 January snapshots, {{ c.base_year }} = 100). Counters are context: they record the bicycles passing a few sites, not those elsewhere in the city. {{ c.covid_year }} is the COVID year.</p>
+<p class="meta">Index of {{ c.label }}, {{ c.base_year }} = 100, beside the index of A+B mapped km in the city proper (1 January snapshots, {{ c.base_year }} = 100). Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city. {{ c.covid_year }} is the COVID year.</p>
 {% if c.line %}
 <div class="chart" data-chart="city-counts" data-city="{{ city.id }}" role="group" aria-label="Counter index and mapped-km index over time, {{ city.name }}"></div>
 {% else %}

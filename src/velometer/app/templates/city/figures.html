@@ -97,4 +97,10 @@
 </div>
 {% endif %}
 </section>
+{% if no_counters and not has_counts %}
+<section id="counter-data">
+<h2>Counter data</h2>
+<p class="note">{{ no_counters[:1] | upper }}{{ no_counters[1:] }}.</p>
+</section>
+{% endif %}
 {% endblock %}

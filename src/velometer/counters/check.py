@@ -1,6 +1,7 @@
 """`velometer counters --check` (M8 spec §5.4): every configured city has sites and at least one
 index year; no site appears under two cities; daily counts (and monthly values) are non-negative;
-the index base year equals 100.
+the index base year equals 100; every `step_downs` site of an entry is one of its stored sites
+(else the Counts tab's step-down note would drop it silently).
 
 "An index year" is a year with a value carried by at least `MIN_SITES` qualifying sites: the
 base year is 100 by definition, so it counts only when enough sites qualify in it.
@@ -22,6 +23,11 @@ def check_counters(conn: sqlite3.Connection, cfg: CountersConfig) -> list[str]:
         ).fetchone()
         if not n_sites:
             problems.append(f"{city}: no counter sites")
+        stored = {s for (s,) in conn.execute(
+            "SELECT site_id FROM counter_sites WHERE city_id=?", (city,))}  # fmt: skip
+        for step in entry.step_downs:
+            if step.site not in stored:
+                problems.append(f"{city}: step_downs site {step.site!r} is not a stored site")
         rows = conn.execute(
             "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id=?", (city,)
         ).fetchall()

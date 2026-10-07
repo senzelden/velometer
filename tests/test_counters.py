@@ -637,3 +637,20 @@ def test_check_flags_missing_sites_base_not_100_and_a_site_under_two_cities(tmp_
     assert "vienna: no counter sites" in text
     assert "paris: no index year" in text
     assert "site 'a' under more than one city: berlin, paris" in text
+
+
+def test_check_flags_a_step_down_site_absent_from_the_data(tmp_path):
+    conn = _check_db(tmp_path)
+    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+    replace_counter_index(
+        conn,
+        "berlin",
+        [
+            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+        ],
+    )
+    entry = {**BERLIN_ENTRY, "step_downs": [{"site": "a", "since": "2020-04"},
+                                            {"site": "renamed", "since": "2020-05"}]}  # fmt: skip
+    cfg = CountersConfig.model_validate({"cities": [entry], "none": []})
+    assert check_counters(conn, cfg) == ["berlin: step_downs site 'renamed' is not a stored site"]

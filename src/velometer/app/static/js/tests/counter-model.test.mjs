@@ -83,3 +83,9 @@ test("Counts tab without an index line (Madrid): the km line alone, rebased to i
   assert.deepEqual(m.series[0].points.map((p) => r(p.value)), [80, 100, 110]);
   assert.equal(countsChart(D, "cph"), null);
 });
+
+test("a city listed without open counter data gets its config note with the portals checked", () => {
+  const note = "no open counter data found (portals checked: data.kk.dk)";
+  const m = counterLines({ ...D, counters: { ...D.counters, none: { cph: note } } }, ["cph"]);
+  assert.deepEqual(m.notes, [`Copenhagen: ${note}`]);
+});

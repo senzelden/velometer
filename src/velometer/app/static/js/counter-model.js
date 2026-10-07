@@ -1,6 +1,7 @@
 // The counter index as chart models (Counts tab, Compare's counter_index metric), from the
 // `counters` block of /data/series.json. Pure (no DOM). Counters are context: counts recorded at
 // counter sites, never cycling in a city. A year without an index value is a gap (null), never 0.
+// A city listed under `none:` in config/counters.yaml gets its note from `counters.none`.
 // app/compare.py: counter_lines computes the Compare table the same way for the no-JS page.
 
 export const COUNTER_METRIC = "counter_index";
@@ -32,7 +33,7 @@ export function counterLines(D, ids) {
   const series = ids.map((id) => {
     const c = counters[id];
     const name = D.cities[id].name;
-    if (!c) notes.push(`${name}: ${NO_COUNTERS}`);
+    if (!c) notes.push(`${name}: ${D.counters?.none?.[id] ?? NO_COUNTERS}`);
     else if (!c.line) notes.push(`${name}: ${NO_COUNTER_LINE}`);
     else if (c.series === "avg_daily_intensity") notes.push(`${name}: ${AVG_DAILY}`);
     const by = new Map(c?.line ? c.points.map((p) => [String(p.year), p.idx]) : []);
