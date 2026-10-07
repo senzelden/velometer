@@ -68,9 +68,13 @@ class ReportRow(_Strict):
     retrieved_at: date
     note: str | None = None
     publisher: str
+    suspect: bool = False
+    cumulative_from: int | None = None
 
 
 REPORT_COLUMNS = tuple(ReportRow.model_fields)
+OPTIONAL_COLUMNS = ("suspect", "cumulative_from")  # a file may omit these trailing columns
+DOC_TYPE_RANK = {"drucksache": 0, "rote_nummer": 0, "report": 1, "web": 2}
 
 RowKey = tuple[str, str, int, str]
 
@@ -100,15 +104,16 @@ def _load_reports(path: Path) -> list[ReportRow]:
         with path.open(encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             header = tuple(reader.fieldnames or ())
-            if header != REPORT_COLUMNS:
+            if header not in (REPORT_COLUMNS, REPORT_COLUMNS[: -len(OPTIONAL_COLUMNS)]):
                 raise ConfigError(
                     f"{path}: header must be {','.join(REPORT_COLUMNS)}, got {','.join(header)}"
                 )
             rows: list[ReportRow] = []
             for line, rec in enumerate(reader, start=2):
                 values = {k: (v if v != "" else None) for k, v in rec.items()}
-                if values["note"] is None:
-                    values.pop("note")
+                for name in ("note", "suspect"):
+                    if name in values and values[name] is None:
+                        del values[name]
                 try:
                     rows.append(ReportRow.model_validate(values))
                 except ValidationError as e:
@@ -128,13 +133,19 @@ def load_plans(dir: Path) -> tuple[list[Plan], list[ReportRow]]:
 def current_and_revisions(
     rows: list[ReportRow],
 ) -> dict[RowKey, tuple[ReportRow, list[ReportRow]]]:
-    """Per (plan, item, year, quantity): the current row (latest `doc_date`; on equal dates the
-    later row in file order) and the other rows as revisions, latest first."""
+    """Per (plan, item, year, quantity): the current row and the other rows as revisions, best
+    first. Preference: a non-suspect row over a suspect one, then the latest `doc_date`, then on
+    equal dates drucksache = rote_nummer over report over web, then the later row in file order."""
     groups: dict[RowKey, list[ReportRow]] = {}
     for r in rows:
         groups.setdefault((r.plan_id, r.item_id, r.year, r.quantity), []).append(r)
+
+    def preference(ir: tuple[int, ReportRow]) -> tuple:
+        i, r = ir
+        return (not r.suspect, r.doc_date, -DOC_TYPE_RANK[r.doc_type], i)
+
     out: dict[RowKey, tuple[ReportRow, list[ReportRow]]] = {}
     for key, group in groups.items():
-        ordered = sorted(enumerate(group), key=lambda ir: (ir[1].doc_date, ir[0]), reverse=True)
+        ordered = sorted(enumerate(group), key=preference, reverse=True)
         out[key] = (ordered[0][1], [r for _, r in ordered[1:]])
     return out

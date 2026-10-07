@@ -377,6 +377,10 @@ def _plans(config_dir: Path) -> tuple[list[Plan], list[ReportRow], list[str]]:
             problems.append(f"{label}: url is not https: {r.url}")
         if not r.unit.strip():
             problems.append(f"{label}: no unit")
+        if r.quantity == "implemented_cumulative" and r.cumulative_from is None:
+            problems.append(f"{label}: cumulative figure without its start year")
+        if r.cumulative_from is not None and r.cumulative_from > r.year:
+            problems.append(f"{label}: cumulative_from {r.cumulative_from} is after year {r.year}")
     return plans, rows, problems
 
 

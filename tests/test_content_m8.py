@@ -240,6 +240,18 @@ def test_report_row_naming_an_unknown_plan(m8):
     assert _problems(m8) == ["config/plans/reports.csv:4: unknown plan ghost"]
 
 
+def test_cumulative_figure_without_start_year(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace(",,2020\n", ",,\n"))
+    assert _problems(m8) == ["config/plans/reports.csv:4: cumulative figure without its start year"]
+
+
+def test_cumulative_start_after_the_year(m8):
+    path = m8[1] / "plans" / "reports.csv"
+    path.write_text(path.read_text().replace(",,2020\n", ",,2030\n"))
+    assert _problems(m8) == ["config/plans/reports.csv:4: cumulative_from 2030 is after year 2024"]
+
+
 def test_http_plan_url(m8):
     path = m8[1] / "plans" / "plans.yaml"
     path.write_text(path.read_text().replace("https://example.org/rvp", "http://example.org/rvp"))
