@@ -259,8 +259,8 @@ def test_plans_overlay_checks_totals_and_stores_rows_per_run_class_and_tier(tmp_
 
     db_path, cfg, data_dir, run_from, run_to = _change_db(tmp_path)
     _network(data_dir, _way1_offset(5))
-    args = ["plans", "overlay", "berlin", "--data", str(data_dir), "--db", str(db_path),
-            "--config-dir", str(cfg)]  # fmt: skip
+    args = ["plans", "overlay", "berlin", "--version", "overlay_v1", "--data", str(data_dir),
+            "--db", str(db_path), "--config-dir", str(cfg)]  # fmt: skip
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0, result.output
     rows = _overlay_rows(db_path)
@@ -335,9 +335,10 @@ def test_a_separate_way_at_20_m_counts_under_v2_and_not_under_v1():
     assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == pytest.approx(0.4)
 
 
-@pytest.mark.parametrize("road_side", ["left", "right", "self"])  # self: a cycle street
-def test_a_centreline_tagged_side_at_20_m_counts_under_neither(road_side):
-    sides = {(1, road_side): _side([(X - 200, Y + 20), (X + 200, Y + 20)])}
+def test_a_centreline_tagged_side_at_20_m_counts_under_neither():
+    # the overlay reads `Side.separate`, never the side key; which sides are separate (road
+    # sides and cycle streets are not) is `test_classified_sides_mark_only_ways_off_...`
+    sides = {(1, "left"): _side([(X - 200, Y + 20), (X + 200, Y + 20)], separate=False)}
     for cfg in (CFG, V2):
         assert overlay.on_network_km(sides, NETWORK, BOUNDARY, cfg)["A"] == 0.0
 
@@ -391,6 +392,126 @@ def test_classified_sides_mark_only_ways_off_the_carriageway_as_separate():
     assert got[1, "self"] is True
     assert got[2, "self"] is False  # a cycle street is the road centreline
     assert got[3, "left"] is False and got[3, "right"] is False
+
+
+# --- overlay_v3: min_part_m over touching way-sides of one tier --------------------------------
+
+V3 = V2.model_copy(update={"version": "overlay_v3", "merge_scope": "tier"})
+
+
+def test_overlay_v3_is_v2_with_the_tier_merge_scope():
+    assert overlay.load_overlay_config(CFG_DIR / "plans", "overlay_v3") == V3
+    assert CFG.merge_scope == "side" and V2.merge_scope == "side"
+
+
+def _chain(n, length, tiers, y=Y + 5, separate=True):
+    """`n` ways of `length` m end to end along the network, the i-th of tier tiers[i]."""
+    return {(i, "self"): _side([(X + i * length, y), (X + (i + 1) * length, y)], tiers[i],
+                               separate)
+            for i in range(n)}  # fmt: skip
+
+
+def test_three_8_m_ways_end_to_end_count_24_m_under_v3_and_nothing_under_v2():
+    sides = _chain(3, 8, "AAA")
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == 0.0
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == pytest.approx(0.024)
+
+
+def test_touching_short_ways_of_different_tiers_do_not_merge():
+    assert overlay.on_network_km(_chain(2, 12, "AB"), NETWORK, BOUNDARY, V3) == {
+        "A": 0.0,
+        "B": 0.0,
+    }
+
+
+def test_both_road_sides_of_one_short_way_do_not_add_up_to_a_part():
+    line = [(X, Y + 3), (X + 12, Y + 3)]
+    sides = {(1, "left"): _side(line), (1, "right"): _side(line)}  # 12 m of extent, 24 m per_side
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == 0.0
+
+
+def test_a_merged_v3_part_keeps_per_side_km():
+    a, b = [(X, Y + 3), (X + 12, Y + 3)], [(X + 12, Y + 3), (X + 24, Y + 3)]
+    sides = {(1, "left"): _side(a), (1, "right"): _side(a),
+             (2, "left"): _side(b), (2, "right"): _side(b)}  # fmt: skip
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == pytest.approx(0.048)
+
+
+def test_v1_and_v2_keep_the_per_side_scope_on_the_same_chain():
+    sides = _chain(3, 8, "AAA", separate=False)
+    for cfg in (CFG, V2):
+        assert overlay.on_network_km(sides, NETWORK, BOUNDARY, cfg)["A"] == 0.0
+
+
+def test_short_ways_that_touch_only_across_network_classes_do_not_merge():
+    # way 1 follows a west-east line of one class; way 2 continues it end to start, turning
+    # north along a line of the other class (each fails the angle test on the other's line)
+    west_east = [LineString([(X - 50, Y), (X + 17, Y)])]
+    south_north = [LineString([(X + 17, Y), (X + 17, Y + 60)])]
+    sides = {(1, "self"): _side([(X, Y + 5), (X + 12, Y + 5)], separate=True),
+             (2, "self"): _side([(X + 12, Y + 5), (X + 12, Y + 17)], separate=True)}  # fmt: skip
+    assert overlay.on_network_km(sides, west_east, BOUNDARY, V3)["A"] == 0.0
+    assert overlay.on_network_km(sides, south_north, BOUNDARY, V3)["A"] == 0.0
+    both = west_east + south_north  # the same chain on one class's lines does merge
+    assert overlay.on_network_km(sides, both, BOUNDARY, V3)["A"] == pytest.approx(0.024)
+
+
+def test_short_ways_with_a_gap_between_them_do_not_merge():
+    sides = {(1, "self"): _side([(X, Y + 5), (X + 12, Y + 5)], separate=True),
+             (2, "self"): _side([(X + 14, Y + 5), (X + 26, Y + 5)], separate=True)}  # fmt: skip
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == 0.0
+
+
+def test_a_short_way_touching_a_long_kept_way_of_its_tier_counts_under_v3():
+    sides = {(1, "self"): _side([(X, Y + 5), (X + 50, Y + 5)], separate=True),
+             (2, "self"): _side([(X + 50, Y + 5), (X + 58, Y + 5)], separate=True)}  # fmt: skip
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == pytest.approx(0.050)
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == pytest.approx(0.058)
+
+
+def test_a_separate_way_split_into_short_osm_ways_counts_fully_only_under_v3():
+    # a cycleway 20 m beside the network road, split at crossings and attribute changes; the
+    # second piece bends, so the chain is not straight
+    xs = [0, 15, 22, 52, 61, 75, 100]
+    coords = [(X + x, Y + 20 + (1.5 if x == 22 else 0)) for x in xs]
+    sides = {(i, "self"): _side([coords[i], coords[i + 1]], separate=True)
+             for i in range(len(xs) - 1)}  # fmt: skip
+    total = sum(s.km for s in sides.values())
+    long_ones = sum(s.km for s in sides.values() if s.km >= 0.020)
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, CFG)["A"] == 0.0  # 20 m > 12 m
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V2)["A"] == pytest.approx(long_ones)
+    assert overlay.on_network_km(sides, NETWORK, BOUNDARY, V3)["A"] == pytest.approx(total)
+    assert total > long_ones
+
+
+# --- default overlay version ------------------------------------------------------------------
+
+
+def test_the_default_overlay_version_is_the_highest_numbered_file(tmp_path):
+    for v in ("overlay_v2", "overlay_v10", "overlay_v9"):
+        (tmp_path / f"{v}.yaml").write_text("")
+    (tmp_path / "overlay_vx.yaml").write_text("")
+    assert overlay.latest_overlay_version(tmp_path) == "overlay_v10"
+
+
+def test_no_overlay_file_is_a_config_error(tmp_path):
+    with pytest.raises(ConfigError, match="overlay_v"):
+        overlay.latest_overlay_version(tmp_path)
+
+
+@needs_osmium
+def test_plans_overlay_without_a_version_runs_the_highest_numbered_file(tmp_path):
+    from tests.test_cli import _change_db
+
+    db_path, cfg, data_dir, *_ = _change_db(tmp_path)
+    _network(data_dir, _way1_offset(5))
+    v3 = (cfg / "plans" / "overlay_v3.yaml").read_text()
+    (cfg / "plans" / "overlay_v12.yaml").write_text(v3.replace("overlay_v3", "overlay_v12"))
+    args = ["plans", "overlay", "berlin", "--data", str(data_dir), "--db", str(db_path),
+            "--config-dir", str(cfg)]  # fmt: skip
+    result = CliRunner().invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert {r[5] for r in _overlay_rows(db_path)} == {"overlay_v12"}
 
 
 # --- WFS paging guards ------------------------------------------------------------------------

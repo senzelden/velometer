@@ -1,0 +1,10 @@
+# Plan-network overlay parameters (M8 spec §4.3). A parameter change is a new version file.
+# v3: v2's buffers, angle and min_part_m, but min_part_m is tested on the extent of kept parts
+# of one tier that touch across way-sides, so a way split into short OSM ways still counts
+# (docs/review/m8-overlay.md). v1 and v2 test each way-side's parts (merge_scope: side).
+version: overlay_v3
+buffer_m: 12
+buffer_separate_m: 25
+max_angle_deg: 30
+min_part_m: 20
+merge_scope: tier

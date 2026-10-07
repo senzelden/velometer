@@ -8,13 +8,19 @@ beside the road whose centreline the network follows, while a road-side tag sits
 
 The side is cut into equal pieces of at most `min_part_m / 2`; a piece is kept when a network
 line lies within its buffer at a matching angle (measured at the network point nearest the piece's
-midpoint), and consecutive kept pieces of one side merge into parts. Lengths are per_side km in
-the city EPSG (ADR 0006: mapped km, not km completed to any plan standard). The parameters are
-data (`config/plans/overlay_vN.yaml`); a change is a new version.
+midpoint), and consecutive kept pieces of one side merge into parts. Up to overlay_v2 the
+`min_part_m` test applies to each such part (`merge_scope: side`); from overlay_v3
+(`merge_scope: tier`) it applies to the extent of kept parts of one tier that touch across
+way-sides, so a way split into short OSM ways still counts, while the two road sides of one short
+way (the same extent) do not add up to a part. Either way a kept part counts its own km. Lengths
+are per_side km in the city EPSG (ADR 0006: mapped km, not km completed to any plan standard).
+The parameters are data (`config/plans/overlay_vN.yaml`); a change is a new version.
 """
 
 import math
+import re
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import shapely
@@ -23,6 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from shapely import LineString, STRtree
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import substring
 from shapely.prepared import prep
 
 from velometer.config import ConfigError
@@ -32,6 +39,8 @@ GEOMETRIES = ("centreline", "separate")  # tags on a road centreline / separatel
 CLASSES = {"Radvorrangnetz": "vorrangnetz", "Ergänzungsnetz": "ergaenzungsnetz"}
 _LOCAL_M = 1.0  # half-length of the network stretch whose direction a piece is compared with
 _EPS_M = 1e-6
+_TOUCH_M = 1e-3  # kept parts of one tier closer than this touch (shared OSM nodes)
+_VERSION_FILE = re.compile(r"overlay_v(\d+)")
 
 
 class OverlayConfig(BaseModel):
@@ -43,6 +52,9 @@ class OverlayConfig(BaseModel):
     buffer_separate_m: float | None = Field(default=None, gt=0)
     max_angle_deg: float = Field(ge=0, le=90)
     min_part_m: float = Field(gt=0)
+    # what `min_part_m` is tested on: each way-side's kept parts (v1, v2), or kept parts of one
+    # tier merged across touching way-sides (v3)
+    merge_scope: Literal["side", "tier"] = "side"
 
     @property
     def separate_buffer_m(self) -> float:
@@ -59,6 +71,18 @@ def load_overlay_config(plans_dir: Path, version: str) -> OverlayConfig:
     if cfg.version != version:
         raise ConfigError(f"{path}: version {cfg.version!r} differs from the file name {version}")
     return cfg
+
+
+def latest_overlay_version(plans_dir: Path) -> str:
+    """The highest-numbered `<plans_dir>/overlay_vN.yaml` (numeric order: v10 after v9)."""
+    found = {
+        int(m.group(1)): p.stem
+        for p in Path(plans_dir).glob("overlay_v*.yaml")
+        if (m := _VERSION_FILE.fullmatch(p.stem))
+    }
+    if not found:
+        raise ConfigError(f"{plans_dir}: no overlay_vN.yaml file")
+    return found[max(found)]
 
 
 def _lines(geom: BaseGeometry) -> list[LineString]:
@@ -104,7 +128,7 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
     is its share of the part's length (the piece itself is the chord between its ends)."""
     prepared = prep(boundary)
     step = cfg.min_part_m / 2
-    coords, part_of, piece_len, part_tier, part_separate = [], [], [], [], []
+    coords, part_of, piece_len, part_tier, part_separate, parts = [], [], [], [], [], []
     for side in sides.values():
         if side.tier not in TIERS:
             continue
@@ -119,6 +143,7 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
             piece_len.append(np.full(n, part.length / n))
             part_tier.append(side.tier)
             part_separate.append(side.separate)
+            parts.append(part)
     if not coords:
         empty = np.zeros(0, bool)
         return np.zeros(0, dtype=object), np.zeros(0, dtype=str), empty, np.zeros(0), empty
@@ -156,8 +181,69 @@ def _kept_pieces(sides: dict, network: list[LineString], boundary: BaseGeometry,
     run = np.cumsum(starts) - 1
     run_m = np.bincount(run[keep], weights=piece_len[keep], minlength=int(starts.sum()))
     long_enough = run_m >= cfg.min_part_m - _EPS_M
+    if cfg.merge_scope == "tier" and not long_enough.all():
+        long_enough = _touching_extent_long_enough(
+            seg, keep, run, run_m, long_enough, part_of, piece_len, parts, tiers, cfg
+        )
     keep[keep] = long_enough[run[keep]]
     return pieces, tiers, separate, piece_len, keep
+
+
+def _touching_extent_long_enough(seg, keep, run, run_m, long_enough, part_of, piece_len, parts,
+                                 tiers, cfg):  # fmt: skip
+    """`long_enough` per kept run (consecutive kept pieces of one part), widened to every run
+    that touches, through runs of its tier, a run of at least `min_part_m` or a group whose
+    extent (the length of the union of its runs) is at least `min_part_m`. Touch is tested on
+    the runs' chords; extent on their exact geometry."""
+    n_runs = len(run_m)
+    kept = np.flatnonzero(keep)
+    first = np.full(n_runs, len(seg))
+    np.minimum.at(first, run[kept], kept)
+    last = np.zeros(n_runs, int)
+    np.maximum.at(last, run[kept], kept)
+    # chord polyline per run: its first piece's start, then each kept piece's end
+    with_start = np.stack([kept == first[run[kept]], np.ones(len(kept), bool)], axis=1)
+    pts = seg[kept].reshape(-1, 2)[with_start.ravel()]
+    chords = shapely.linestrings(pts, indices=np.repeat(run[kept], with_start.sum(axis=1)))
+    run_tier = tiers[first]
+    short = np.flatnonzero(~long_enough)
+    i_short, j = STRtree(chords).query(chords[short], predicate="dwithin", distance=_TOUCH_M)
+    i = short[i_short]
+    same = (run_tier[i] == run_tier[j]) & (i != j)
+    parent = list(range(n_runs))
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for a, b in zip(i[same].tolist(), j[same].tolist(), strict=True):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+    with_long = {find(b) for b in j[same].tolist() if long_enough[b]}
+    groups: dict[int, list[int]] = {}
+    for r in short.tolist():
+        groups.setdefault(find(r), []).append(r)
+    out = long_enough.copy()
+    part_start = np.searchsorted(part_of, np.arange(len(parts)))
+    for root, members in groups.items():
+        if root in with_long:
+            out[members] = True
+            continue
+        if len(members) < 2:
+            continue
+        geoms = []
+        for r in members:
+            p = int(part_of[first[r]])
+            step = piece_len[first[r]]
+            start = (first[r] - part_start[p]) * step
+            end = (last[r] + 1 - part_start[p]) * step
+            geoms.append(substring(parts[p], start, end))
+        if shapely.union_all(geoms).length >= cfg.min_part_m - _EPS_M:
+            out[members] = True
+    return out
 
 
 def on_network_km_by_geometry(

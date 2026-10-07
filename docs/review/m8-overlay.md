@@ -126,6 +126,85 @@ network roads' own sidepaths on both sides; the only visibly doubtful pieces are
 junctions (sidepaths of the crossing street within 25 m and 30° of a network edge); no
 parallel side street was picked up in the crops.
 
+## overlay_v3: `min_part_m` on touching way-sides of one tier
+
+**Why.** The Task 5 review measured that v1/v2 apply `min_part_m` (20 m) to each way-side's own
+kept parts, so a way split into OSM ways shorter than 20 m counts 0 km even when it lies wholly
+on the network and its neighbours are kept. A+B sides under 20 m that would match without the
+filter: Vorrangnetz 4.0 km (2018, run 735) → 24.3 km (current, run 713), Ergänzungsnetz 5.5 →
+30.4 km, a drift of the same size as v2's 2022 → current change (+28.3 / −2.0). Controller
+ruling: overlay_v3.
+
+`config/plans/overlay_v3.yaml`: v2's buffers (12 m centreline tags / 25 m separate ways), angle
+(30°) and `min_part_m` (20) unchanged, plus `merge_scope: tier` (v1/v2: `side`, the default, so
+their rows and behaviour are unchanged). Kept parts of one tier that touch across way-sides
+(within 1 mm, i.e. shared OSM nodes) form a group per network class; the group passes when one
+of its parts is at least 20 m or the length of the union of its parts (its extent) is. The two
+road sides of one short way share their extent, so they do not add up to a part; a kept part
+still counts its own per_side km (both road sides of a passing group count). Tiers do not merge
+with each other, and a chain that changes network class does not merge across the classes (each
+class is a separate overlay).
+
+`uv run velometer plans overlay berlin --version overlay_v3`: 2:42 wall (161 s in the command),
+peak RSS 2.35 GB, every run's A–E totals agreed, 40 rows written. v1 and v2 rows stay in
+`plan_overlay` (120 rows). `velometer plans overlay` without `--version` now runs the
+highest-numbered `overlay_vN.yaml` (v3).
+
+A+B mapped km on the network, per_side:
+
+| run | snapshot | Vorrang v2 | Vorrang v3 (A / B) | v3 − v2 | Ergänzung v2 | Ergänzung v3 (A / B) | v3 − v2 |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 735 | 2018-01-01 | 490.1 | 497.5 (446.8 / 50.7) | +7.4 | 635.4 | 645.4 (578.1 / 67.3) | +10.0 |
+| 736 | 2019-01-01 | 476.0 | 483.8 (442.0 / 41.7) | +7.8 | 630.5 | 640.9 (576.0 / 64.9) | +10.4 |
+| 737 | 2020-01-01 | 476.8 | 485.0 (442.9 / 42.1) | +8.2 | 643.2 | 654.0 (586.6 / 67.4) | +10.8 |
+| 738 | 2021-01-01 | 489.0 | 497.7 (440.2 / 57.4) | +8.7 | 656.9 | 668.1 (582.7 / 85.4) | +11.3 |
+| 739 | 2022-01-01 | 436.9 | 446.3 (399.2 / 47.0) | +9.4 | 607.7 | 619.8 (531.9 / 87.9) | +12.1 |
+| 740 | 2023-01-01 | 450.4 | 463.0 (404.2 / 58.8) | +12.6 | 611.7 | 625.7 (532.1 / 93.5) | +14.0 |
+| 741 | 2024-01-01 | 441.8 | 460.0 (406.9 / 53.2) | +18.3 | 595.5 | 617.2 (532.2 / 85.0) | +21.7 |
+| 742 | 2025-01-01 | 452.5 | 473.0 (422.3 / 50.7) | +20.6 | 590.5 | 615.6 (536.3 / 79.3) | +25.1 |
+| 743 | 2026-01-01 | 450.3 | 476.2 (413.6 / 62.6) | +25.8 | 604.3 | 636.9 (550.5 / 86.4) | +32.7 |
+| 713 | 2026-10-03 | 465.3 | 492.2 (424.5 / 67.7) | +27.0 | 605.7 | 639.5 (549.5 / 90.0) | +33.7 |
+
+(v2 values from the DB; the v2 table above rounds the same rows at most 0.1 km differently.)
+Centreline / separate split of v3 (command output), Vorrangnetz: 2018 419.7 / 77.8, 2022
+292.5 / 153.8, current 119.0 / 373.2; Ergänzungsnetz: 2018 549.5 / 95.9, 2022 428.4 / 191.4,
+current 215.2 / 424.2.
+
+**What v3 recovers, and does the drift disappear?** The km v3 adds over v2 grow from 7.4 (2018)
+to 27.0 km (current) on the Vorrangnetz and from 10.0 to 33.7 km on the Ergänzungsnetz: v3
+recovers the drift, it does not remove a growing loss by chance. It recovers more than the
+review's estimate (4.0 → 24.3) because that estimate counted only whole sides under 20 m, while
+v3 also recovers short kept runs at the ends of longer sides that continue on a neighbouring
+way. What v3 still drops, measured against the same overlay with the `min_part_m` filter
+disabled (read-only scratchpad script, runs 735 / 739 / 713, step unchanged):
+
+| network | 2018 | 2022 | current | drift 2018 → current |
+|---|---:|---:|---:|---:|
+| Vorrangnetz: dropped by v2 | 8.8 | 11.4 | 29.1 | +20.3 |
+| Vorrangnetz: dropped by v3 | 1.4 | 2.0 | 2.2 | +0.8 |
+| Ergänzungsnetz: dropped by v2 | 12.7 | 15.4 | 38.0 | +25.3 |
+| Ergänzungsnetz: dropped by v3 | 2.6 | 3.3 | 4.3 | +1.7 |
+
+So the drift is gone: what v3 still drops (isolated pieces under 20 m that touch no other kept
+part of their tier) moves by under 2 km between 2018 and now.
+
+**Does the 2022 → current change move?** Yes, and by a lot relative to its size:
+
+| change of A+B on the network | Vorrang v2 | Vorrang v3 | Ergänzung v2 | Ergänzung v3 |
+|---|---:|---:|---:|---:|
+| 2022-01-01 → current (2026-10-03) | +28.4 | **+45.9** | −2.0 | **+19.7** |
+| 2022-01-01 → 2026-01-01 | +13.4 | +29.9 | −3.4 | +17.1 |
+| 2018-01-01 → current | −24.8 | −5.3 | −29.7 | −5.9 |
+
+Under v3 both classes rise since 2022 (+45.9 / +19.7 km), where v2 showed a small rise and a
+flat line. Against 2018 the v3 series is about level (−5.3 / −5.9 km); the 2021 → 2022 drop
+(Vorrang 497.7 → 446.3, Ergänzung 668.1 → 619.8) is still there, for the reason given under v2.
+The size of the move (17.5 km on the Vorrangnetz, 21.7 km on the Ergänzungsnetz, out of a 4.75-year
+change) shows how much of the headline depends on how short OSM ways are treated; v3 removes
+that dependence (what it still drops is under 5 km and level), but the change remains a mix of
+redrawing and new mapping, so it should still be worded as mapped km on the network, not as
+progress on the street.
+
 ## Sanity maps
 
 [Vorrangnetz and Ergänzungsnetz, matched vs unmatched, run 743 (2026-01-01)](../../data/maps/berlin_overlay_v1_2026-01-01.png)

@@ -1587,7 +1587,11 @@ def _overlay_runs(conn, city_id: str, selector) -> list[int]:
 @plans_app.command("overlay")
 def plans_overlay(
     city: str = typer.Argument(..., help="City id with a fetched plan network (berlin)."),
-    version: str = typer.Option("overlay_v1", "--version", help="config/plans/<version>.yaml."),
+    version: str | None = typer.Option(
+        None,
+        "--version",
+        help="config/plans/<version>.yaml; default the highest-numbered overlay_vN.yaml.",
+    ),
     data_dir: Path = DATA_OPT,
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
@@ -1621,6 +1625,8 @@ def plans_overlay(
         raise typer.Exit(1)
     selector = report_selector(config_dir)
     try:
+        if version is None:
+            version = ov.latest_overlay_version(config_dir / "plans")
         cfg = ov.load_overlay_config(config_dir / "plans", version)
         retrieved_at = json.loads(meta_path.read_text())["retrieved_at"]
         network = ov.network_lines(json.loads(net_path.read_text()))
