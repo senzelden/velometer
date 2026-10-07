@@ -1,0 +1,94 @@
+# M8 feasibility research (2026-10-07)
+
+Legend: V = verified by fetching the data/API/metadata itself. S = search snippet or portal page only (not independently verified). Eco-Counter paid API excluded.
+
+## A) Open bike-counter data, 21 cities
+
+| City | Open dataset? | URL | Licence | Granularity | History | Format | Sites | Coords | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| Berlin | YES | senate page https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/ ; file .../gesamtdatei-stundenwerte.xlsx (17.8 MB); daten.berlin.de/datensaetze/radzahldaten-in-berlin (portal page returns 403 to bots) | dl-de-zero-2.0 (S, from portal snippet) | hourly | 2012-2025, one sheet per year (2018-2025 covered) | XLSX | 26 direction columns, ~18-24 sites (V: sheet "Standortdaten") | lat/lon + install date in sheet Standortdaten | V |
+| Paris | YES | https://opendata.paris.fr/explore/dataset/comptage-velo-historique-donnees-compteurs/ (history, yearly zips 2016-2025) + comptage-velo-donnees-compteurs (rolling 13 months, API) | ODbL | hourly per counter (+15 min per site in history) | 2016-2025 (V attachments list) | CSV zip, Explore API v2.1 | ~100+ counters (V) | yes (coordinates) | V |
+| Vienna | YES (daily only) | https://www.data.gv.at/katalog/datasets/2e9f926c-f688-4889-856d-5e6935440c28 -> https://www.wien.gv.at/gogv/l9ogdradverkehrszaehlungen | CC BY 4.0 | daily | 2013-2025 (2013-03-29 start); 2011-12 separate CSV | CSV (one file, 4.7k rows) | 20 counters | NOT in CSV (names only); locate via site names | V |
+| Copenhagen | Old only | https://data.kk.dk/dataset/faste-cykeltaellinger | none stated | hourly | 2005-2014 only | XLSX per year | fixed points (Vej-Id) | UTM X/Y | V; 2018-2025 NOT covered. Newer counts: none found |
+| Amsterdam | none found on city portal | NDW Dexter (https://dexter.ndw.nu/opendata/bicycle) lists national bike data; Amsterdam coverage unverified; VRA counts only as maps (maps-vervoerregio.nl) | n/a | n/a | n/a | n/a | n/a | n/a | S, "none found" |
+| Utrecht | Old only | https://open.utrecht.nl/dataset/fietstellingen | CC0 | monthly/occasional | 2014-2016 only | ZIP/CSV, XLSX | 17 (2015), 11 (2016) | not specified | V; 2018-2025 NOT covered |
+| Madrid | YES | https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas | CC BY 4.0 | hourly | 2019-09 onwards, quarterly files (V CSV: PERM_BICI*) | CSV + XLSX (~25 files) | ~35 sites (S) | lat/lon in file (decimal-comma/dot quirks) | V |
+| Barcelona | NO hourly counts. "Aforaments" are monthly average daily intensity (IMD) by day type | https://opendata-ajuntament.barcelona.cat (aforaments-descriptiu, aforaments-detall) | CC BY 4.0 | monthly mean per day-type | 2017-2025 | CSV per year | 412 "Bicis" points in 2025 descriptor (V) | lat/lon + ETRS89 | V; not time-resolved enough for hourly work, usable as AADT-like |
+| Stockholm | Partial | https://openstreetgs.stockholm.se/home/Data (layers "Signal - Cykelräknare" = station points; "Trafikflöde Cykel" = weekday average flows) | not verified | station points; flow = weekday mean | auto stations data since 2016 (S) | web services (key/login likely) | n/a | points yes | S; counts time series not verified open |
+| Oslo | YES | https://trafikkdata-api.atlas.vegvesen.no/ (GraphQL), https://dataut.vegvesen.no/dataset/trafikkdata | NLOD | hourly (min. interval 1 h) | per point: earliest first-data dates 2003, 2009, 2016-2018, 2021-22 (V) | GraphQL JSON | 17 BICYCLE points in county 3 (Oslo) (V); Oslo kommune's own counters not found | lat/lon (V) | V |
+| Helsinki | YES | https://hri.fi/data/dataset/helsingin-pyorailijamaarat | CC BY 4.0 (V via CKAN API) | hourly | 2014 -> (updated 2026-08-24, half-yearly) | CSV/XLSX via HRI | 16 automatic points (V) | yes (ETRS-GK25, "indicative") | V |
+| Lyon | Partial | WFS https://data.grandlyon.com/geoserver/metropole-de-lyon/ows (layer pvo_patrimoine_voirie.pvocomptagesite = counting sites); counts: "Mesures de comptage de la Métropole de Lyon" (CSV/JSON, last June 2025, S) | Licence Ouverte (S) | unknown | unknown | CSV/JSON | ~88 counters (S) | yes (V for sites) | sites V; counts series NOT verified |
+| Strasbourg | none found | data.strasbourg.eu search (cycl/compteur/passages) returns only bike parking, BNAC network, planned bike routes; none on data.gouv.fr | n/a | n/a | n/a | n/a | n/a | n/a | V (negative) |
+| Bordeaux | YES but short history | https://opendata.bordeaux-metropole.fr/explore/dataset/pc_velo_p/ (hourly) and pc_captv_p (5-min live) | Licence Ouverte | hourly | rolling window: min 2024-10-05 in dataset (V); historisation started 2020 per metadata, older not in portal | Opendatasoft API, CSV | 92 distinct idents (V) | yes | V; 2018-2025 NOT covered on portal (third-party archive: GitHub velo-cite/compteurs-velo, S) |
+| Wrocław | none found | open-data.cui.wroclaw.pl lists city-bike (WRM) trips only | n/a | n/a | n/a | n/a | n/a | n/a | S |
+| Warsaw | none found as dataset | counts only in ZDM web viewer (zdm.waw.pl), 31 automatic counters (S) | n/a | hourly in viewer | since 2014 | viewer | 31 | n/a | S |
+| Kraków | none found | otwartedane.um.krakow.pl "Mobilność aktywna" = locations only (V); BIP has manual/video survey reports 2015-2022 | n/a | n/a | n/a | n/a | n/a | n/a | V (negative for counters) |
+| Budapest | No official portal; NGO | https://kerekparosklub.hu/szamlalo/adatok (Hungarian Cyclists' Club) | not stated | 15 min (Múzeum krt) | 2010-07 -> | XLS via stat_uj.php?year&month | 5 BKK counters (Árpád híd, Bem rakpart, Hungária krt, Múzeum krt, Weiss M. út) | no | V page; not an open-licence portal dataset |
+| Prague | Partial | opendata catalogue via https://lkod.cz/catalog/praha ; Golemio API https://api.golemio.cz (401 without token) | CC BY (S) | 5 min raw; quarterly zip CSV 2018-2020 (S) | 2010-2018 stats, 2018- (S) | CSV zip, API (token) | 29 locations (S) | yes (S) | S/V mix: API needs free token, bulk CSV after 2020 not confirmed |
+| Bratislava | Unclear | data.bratislava.sk dashboards from cyklosčítače (S) | unknown | unknown | unknown | unknown | ~5 counters (S) | unknown | S, essentially none found |
+| Ljubljana | none found for the city | national DRSI counts https://podatki.gov.si/dataset/pldp-stevna-mesta-kolesarji (daily, 2013-2025, XLSX/CSV, 36 state-network sites, none in Ljubljana; V) ; Maribor has own counter dataset | n/a | n/a | n/a | n/a | n/a | n/a | V (negative for Ljubljana) |
+
+Summary: usable now with 2018-2025 coverage: Berlin, Paris, Vienna (daily, no coords), Madrid (2019-09+), Helsinki, Oslo (state counters only, partial), Barcelona (monthly IMD). Partial/uncertain: Lyon, Prague, Stockholm, Budapest(NGO). Short history: Bordeaux. Old only: Copenhagen, Utrecht. None: Amsterdam, Strasbourg, Wrocław, Warsaw, Kraków, Bratislava, Ljubljana.
+Tooling note: from this machine curl works only unsandboxed; WebFetch gets 403 from daten.berlin.de.
+
+## B) Berlin planned network geometry
+
+Radverkehrsnetz (MobG, Radverkehrsplan) = OPEN, V.
+- Geoportal record: https://gdi.berlin.de/geonetwork/srv/api/records/1670bcb6-1065-4939-82e6-c39e12de9441 ("Radverkehrsnetz", metadata 2025-11, data 2025-09-03)
+- WFS: https://gdi.berlin.de/services/wfs/radverkehrsnetz (WMS: .../services/wms/radverkehrsnetz); CRS EPSG:25833; licence dl-de-zero-2.0; no access limits.
+- Layers: radverkehrsnetz:radverkehrsnetz (14,882 MultiLineString segments), radfernwege (175), stadtgruen, untersuchungsbereiche.
+- Attributes of main layer (V from GetFeature and Datenformatbeschreibung_Radverkehrsnetz.pdf): gisid, elem_nr (Detailnetz edge id), ist_radvorrangnetz = {Radvorrangnetz, Ergänzungsnetz}, existenz = {ja in Straßennetz, ja in Fußnetz, ja als Pfad/Privat, nein}. Computed lengths: Vorrang about 873 km, Ergänzung about 1,508 km (matches the 871 / 1,505 official).
+- NO implementation status on the network layer. "existenz" is whether the way exists in the base graph, not whether bike infrastructure is built.
+- Status lives in a different dataset: "Radverkehrsmaßnahmen (seit 2021)", https://gdi.berlin.de/geonetwork/srv/api/records/9093d642-e2c4-4cb6-9798-4d1e3f12f3bf ; WFS https://gdi.berlin.de/services/wfs/radverkehrsmassnahmen ; layer radverkehrsmassnahmen:radverkehrsmassnahmen ; dl-de-zero-2.0; source: GB infraVelo database; updated 2026-07/09. 332 features (MultiLineString). Fields: projektnummer, strassenname, strassenseite, status {Abgeschlossen 269, In Planung 31, In Bau 18, Vorgesehen 14}, bezirk, baustart, bauende (quarter strings), bauherr, projektbeschreibung_lang, streckenlaenge, netz_art1..5 {Vorrangnetz, Ergänzungsnetz, Sonstiges}, massnahmen_typ1..5, streckenlaenge1..5 (m). Sum by status/net (km): completed Vorrang 64.2, Ergänzung 55.6, Sonstiges 28.5; in Bau V 3.4 / E 6.7; in Planung V 10.1 / E 6.6; vorgesehen V 2.6 / E 6.9. Completed Vorrang by bauende year: 2020 6.5, 2021 8.5, 2022 13.5, 2023 12.4, 2024 7.7, 2025 7.0, 2026 1.9 (compare Senate: 14.4, 13.6, 10.8, 8.6, 2.3 for 2022-26).
+- Caveat: project geometry is NOT the network edges; no key to elem_nr, so segment-level status needs spatial matching (buffer + overlay) of project lines to Detailnetz edges. Dataset is "since 2021" bezirkliche/infraVelo projects, quarterly updated, completeness not guaranteed (Senate says district reporting lacks completeness).
+- infraVelo: project map (https://www.infravelo.de/meldung/radnetz-auf-projektkarte/) is backed by the same database; infraVelo also offers an API at infravelo.de/api (S). Also Radverkehrsanlagen (Bestand) WFS exists (gdi record e34e0b40-0a06-3e4f-9540-a759a0d52bcb, dl-de-zero, last update 2020, S) and Fahrradstraßen (S).
+- Plan itself: Verordnung Radverkehrsplan vom 16.11.2021, Vorlage zur Kenntnisnahme https://www.parlament-berlin.de/ados/19/IIIPlen/vorgang/verordnungen/vo19-013.pdf ; targets: Vorrang 40/60/100/150/250/250 km 2022-27 (sum 850), Ergänzung 50/100/100/350/450/450 km 2025-30 (sum 1,500).
+
+## C) Abgeordnetenhaus documents (all fetched and read)
+
+Important: the annual Fortschrittsbericht "Fahrrad Berlin" is NOT a Drucksache. It is a Senate report to the Hauptausschuss under "Rote Nummer" (rN), series "Umsetzung des Leitprojektes Radwegeinfrastruktur", on the Auflagenbeschluss to report each 30 June. PDF URL pattern: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-<rN>-v.pdf (18th WP: .../18/Haupt/vorgang/h18-1392.I-v.pdf). Report PDFs also on https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/fortschrittsbericht-fahrrad-<year>.pdf (2021-2024; 2025 .pdf 404 there, but exists as rN 1733 E).
+
+Fortschrittsberichte (rote Nummern):
+1. rN 1392 I, 6 Jul 2021, report on 2020/21 (series 1392 to 1392 I since Nov 2018, 18th WP): https://www.parlament-berlin.de/adosservice/18/Haupt/vorgang/h18-1392.I-v.pdf
+2. FB 2021: published as Zwischenbericht rN 0389 (7 Jun 2022) / Bericht rN 0389 A (5 Jul 2022); report itself V: Vorrang 7.4 km in 2021, 27.4 km 2017-21 (of 871); total 18.4 km (2021), 69.4 km 2017-21.
+3. rN 1064, 27 Jun 2023, FB 2022 (26.5 km built/improved): https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1064-v.pdf
+4. rN 1733 B (17 Dec 2024) and Austauschfassung 1733 B-1 (28 Jan 2025), FB 2023 (26.0 km; 34.7 km in construction, 85.8 in planning): https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.B-1-v.pdf (and h19-1733.B-v.pdf)
+5. rN 1733 C, 24 Jun 2025, FB 2024 (23.6 km; Vorrang 10.8 km): https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.C-v.pdf
+6. rN 1733 E, 12 Aug 2026, FB 2025 (21.2 km total, Vorrang 8.6 km; Vorrang 78.2 km cumulative 2017-2025 of 870.5; Radverkehrsnetz now 2,398.3 km): https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.E-v.pdf
+   (1733 A = Zwischenbericht 16 Sep 2024; 1733 D = 24 Jul 2026 Fristverlängerung request; both read/seen)
+Related Vorlage zur Kenntnisnahme: Verordnung Radverkehrsplan, vo19-013 (see B).
+
+Schriftliche Anfragen (pardok, pattern https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-<nr>.pdf):
+7. Drs 19/27 049, Hassepaß (Grüne), "Verkehrspolitische Bilanz des Senats", answer 14 Sep 2026: KEY. Table (stand 01.09.2026): umgesetzt Vorrangnetz 14.4 (2022), 13.6 (2023), 10.8 (2024), 8.6 (2025), 2.3 (2026 YTD) = 49.46 km; Ergänzung 10.0, [55.1 sic, evidently typo], 9.6, 7.5, 3.77 = 36.24; Sonstiges 3.1/7.2/3.2/5.1/0.15; total 27.5/25.9/23.6/21.2/6.22 = 104.53; 7.7 km in Bau, 92.7 km in Planung. Also Anlage 1 with project lengths by district. https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-27049.pdf
+8. Drs 19/25 987, Schopf (SPD), "Acht Jahre Mobilitätsgesetz", answer 20 May 2026: Radvorrangnetz ~870 km Zielnetz, ~350 km on Hauptverkehrsstraßen, >500 km Nebennetz; Q17 gives Vorrangnetz km 2022-25 per district: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-25987.pdf
+9. Drs 19/25 700, Dörstelmann (SPD), Charlottenburg-Wilmersdorf project table with phase/dates, answer 13 Apr 2026: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-25700.pdf
+10. Drs 19/20 138 (Friedrichshain-Kreuzberg, 17 Sep 2024) and 19/20 145 (Tempelhof-Schöneberg, 17 Sep 2024), Schopf: per-district realised projects 2021-24 with Finanzierungsbescheid sums: .../S19-20138.pdf, .../S19-20145.pdf (20145 not read in detail)
+11. Drs 19/15 972 (Hassepaß, "Radwege-Stopp II", answer 18 Jul 2023) and 19/16 015 ("Radwege-Stopp III" Schönhauser Allee, 20 Jul 2023): project-level effects of the 2023 funding freeze, no network km: .../S19-15972.pdf, .../S19-16015.pdf
+12. Drs 19/10 136 (Hofer, 26 Nov 2021): quotes RVP Tabelle 7 Ausbaupfade (Vorrang 2022-27, Ergänzung 2025-30): .../S19-10136.pdf
+13. Other seen in search but NOT read for km: 19/26 599 ("Radwege-Stopp 21: Finanzierung neuer Radwege 2026 Teil 2", 27 Jul 2026), 19/26 333 (Filandastraße), 19/14 625, 19/24 182 (not network-progress).
+Not found: a "Mitteilung zur Kenntnisnahme" that is a Drucksache with the progress report (the series is Hauptausschuss rN); searching pardok directly by full text is not possible from here.
+Data-quality notes: network lengths differ by report (2,376 / 2,371 / 2,379 / 2,398 km; Vorrang 865-872); counting rule: double-sided facility counts as 1 km network (Streckenlänge); Senate figures are by completion, WFS Radverkehrsmaßnahmen ("seit 2021") gives bauende quarter per project.
+
+## D) Official cycling plans (title, year, target; URL)
+
+- Berlin: Radverkehrsplan des Landes Berlin (VO 16.11.2021): 2,371 km network (865 Vorrang), by 2030; 23% bike share target. vo19-013 above.
+- Paris: Plan Vélo 2021-2026: +180 km (130 new + 52 perennial coronapistes), 250 M EUR; target "100% cyclable". (S) https://observatoire.parisenselle.fr/engagements/
+- Vienna: no single plan found; Hauptradverkehrsnetz expansion via annual Radwegeoffensive (2025: ~24 km; 2026: ~12.5 km; ~100 km this term); Fachkonzept Mobilität / Radverkehrsstrategie not verified. (S) https://www.fahrradwien.at/radwegoffensive-2026/ ; dataset Hauptradverkehrsnetz Planung Wien on data.gv.at (data.gv.at/katalog/datasets/4973cdb9-...)
+- Copenhagen: Cykelstrategi 2011-2025 plus Cykelsti-prioriteringsplan 2017-2025; expired 2025; to be folded into a Mobilitetsstrategi (draft 2025). Target 2025: 50% commuter share (never quantified in km). (S) https://byudvikling.kk.dk/mobilitet/verdens-bedste-cykelby
+- Amsterdam: Meerjarenplan Fiets 2017-2022 (extended to 2023); successor in Uitvoeringsplan Verkeersveiligheid, 30 km, voetgangers en fiets 2024; Plusnet/Hoofdnet Fiets. No km target found. (S) https://bikecity.amsterdam.nl/wp-content/uploads/2023/11/Meerjarenplan_Fiets_2017-2022.pdf
+- Utrecht: Mobiliteitsplan 2040 (city, hoofdfietsnetwerk, +72% bike trips); province: Uitvoeringsprogramma Fiets 2024-2029 (~300 km regional network, ~150 done). City-level km target unknown. (S)
+- Madrid: Plan Director de Movilidad Ciclista 2008 (revised 2016): basic network 575 km; current Plan de Movilidad Sostenible (PMS 360, 2022); network 959 km in 2019; press: 274 km network connecting districts (S, madrid.es).
+- Barcelona: Pla de Mobilitat Urbana 2024 (final approval Dec 2022): +40% bike network, 5% (to 5.7% 2030) bike modal share; 268 km protected lanes. (S) ajuntament.barcelona.cat/premsa/2022/12/23/...
+- Stockholm: Cykelstaden, Cykelplan för Stockholm (KF 2022-05-30): 15% bike share rush hour by 2030; main network ~36 mil (~360 km) primary network (S, cykla.stockholm).
+- Oslo: Sykkelstrategi 2015-2025; Plan for sykkelveinettet (2018): prioritised network by 2025; 16% bike share target (raised to 25% in 2019); to be replaced by a mobility strategy (S). EY evaluation 2024.
+- Helsinki: Pyöräliikenteen kehittämisohjelma 2020-2025 (earlier 2014 programme); Baanaverkko 22 baanas, 148 km; goal 75 km by 2030, 30 km built by 2025 (S, fi.wikipedia + paatokset.hel.fi).
+- Lyon (Métropole): Voies Lyonnaises: 250 km by 2026, 355 km by 2030 (13 lines), 100 M EUR; 103.3 km done Sept 2025 (S, lyonmag/lebonbon).
+- Strasbourg (Eurométropole): Plan Vélo (June 2021) 2021-2026: +120 km, 100 M EUR, 20% share; PAMA (8->16% by 2030). (S) strasbourg.eu
+- Bordeaux (Métropole): 3ème Plan vélo métropolitain 2021-2026 (PDF https://www.bordeaux-metropole.fr/sites/MET-BXMETRO-DRUPAL/files/2023-08/Plan_velo2021.pdf); km target unknown.
+- Wrocław: Wrocławski Plan Działań Rowerowych do 2030 (2022): +150 km new/modernised to >1,400 km friendly routes, 15% share target. (S) https://www.wroclaw.pl/komunikacja/plan-dzialan-rowerowych-do-2030
+- Warsaw: Program rozwoju ruchu rowerowego 2020-2030 (and "Rowerowa Warszawa 2030"); ~800-900 km coherent network aim; Program Zrównoważonej Mobilności do 2026 (draft 2022). (S) https://zdm.waw.pl/aktualnosci/jaka-ma-byc-rowerowa-warszawa-2030/
+- Kraków: Polityka rowerowa (older, 355 km routes); Zespół rowerowy recommendations 2026-2030 (0.6% of budget for bikes). No formal current plan with km target found. (S)
+- Budapest: Budapesti Mobilitási Terv (2019, updated 2023): 10% bike share by 2030; Kerékpárforgalmi Főhálózati Terv (BKK): ~800 km main network of 5,500 km. (S) https://bkk.hu/rolunk/strategiank/kerekparforgalmi-fohalozati-terv/
+- Prague: Koncepce rozvoje cyklistické dopravy a rekreační cyklistiky (2010, extended to 2030 by RHMP res. 418, 7 Mar 2022); Strategie aktivní mobility (2022); Plán udržitelné mobility 2019-2030. Target 5-7% summer bike share; no km. (S)
+- Bratislava: no city plan found; Bratislava region: Koncepcia územného rozvoja cyklotrás BSK (2015, updated); km unknown. (S)
+- Ljubljana: Celostna prometna strategija MOL 2025-2032 (adopted 20 Oct 2025), predecessor 2017 strategy and Celovita kolesarska strategija (20% share by 2020); no km target found. (S) https://www.ljubljana.si/sl/ljubljana/mobilna/celostna-prometna-strategija
