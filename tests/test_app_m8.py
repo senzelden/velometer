@@ -16,7 +16,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
     _text,
     setup,
 )
-from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT
+from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
 from velometer.app.main import create_app
 from velometer.content.loader import load_organisations
 from velometer.db import OverlayRow, replace_plan_overlay
@@ -418,3 +418,31 @@ def test_mapped_caption_states_the_change_since_the_baseline_in_mapped_km(setup,
     sec = _text(_section(html, "item-vorrangnetz"))
     assert f"since 1 January {base}, +{change:.1f} mapped km to the current snapshot of " in sec
     assert runs[-1][1][:10] in sec
+
+
+def test_overlay_table_column_is_the_difference_from_the_baseline(setup, plans_data):  # noqa: F811
+    # snapshots before the baseline are in the table too: "change since 1 Jan" misreads them,
+    # "difference from 1 Jan" reads right on both sides (render check, Task 11)
+    _overlay(setup[0], "overlay_v4", 50.0)
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    head = html[html.index('<table class="plan-overlay">') :].split("</thead>")[0]
+    assert re.search(r"Difference from 1 Jan \d{4}</th>", head)
+    assert "Change since" not in head
+
+
+def test_plan_tables_fit_a_phone_width(client):
+    # Task 11 render check: at 390 px the plan tables were cut at the right. At phone width
+    # the headers wrap, long cell text breaks, and the documents table stacks with labels
+    html = client.get("/plans/berlin").text
+    docs = html[html.index('<table class="plan-docs">') :].split("</table>")[0]
+    body = docs.split("<tbody>")[1]
+    cells = re.findall(r"<td\b[^>]*>", body)
+    assert cells and all("data-label=" in c for c in cells)
+    css = (STATIC / "app.css").read_text()
+    narrow = css[css.index("/* plan tables at phone width */") :]
+    narrow = narrow[: narrow.index("\n}\n")]
+    assert "@media (max-width: 600px)" in narrow
+    assert re.search(r"\.plan-item th[^{]*\{[^}]*white-space: normal", narrow)
+    assert re.search(r"\.plan-item td[^{]*\{[^}]*overflow-wrap: anywhere", narrow)
+    assert re.search(r"table\.plan-docs[^{]*\{[^}]*display: block", narrow)

@@ -89,3 +89,13 @@ test("a city listed without open counter data gets its config note with the port
   const m = counterLines({ ...D, counters: { ...D.counters, none: { cph: note } } }, ["cph"]);
   assert.deepEqual(m.notes, [`Copenhagen: ${note}`]);
 });
+
+test("Counts tab end labels: each series has a short name that fits the narrow chart's margin", () => {
+  // renderLines gives end labels at most 82 px at phone width (about 11 characters); the full
+  // names ("Counts at counter sites", "A+B mapped km (1 Jan)") are in the key under the chart
+  const m = countsChart(D, "ber", { counter: "Counts at counter sites", km: "A+B mapped km (1 Jan)" });
+  assert.deepEqual(m.series.map((s) => s.short), ["Counts", "Mapped km"]);
+  const avg = countsChart(D, "ber", { counterShort: "Intensity" });
+  assert.equal(avg.series[0].short, "Intensity");
+  for (const s of [...m.series, ...avg.series]) assert.ok(s.short.length <= 11, s.short);
+});

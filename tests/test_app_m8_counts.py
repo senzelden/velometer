@@ -314,3 +314,35 @@ def test_compare_summary_for_the_counter_index_names_counter_sites_and_no_mode(c
     html = client.get("/compare?c=berlin,paris&m=counter_index&b=fua&mode=index").text
     summary = re.search(r"data-filters-summary>([^<]*)<", html).group(1)
     assert summary == "Counter index · counter sites · 2 cities"
+
+
+def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F811
+    # the chart's end labels are short at most widths ("Counts", "Mapped km"; counter-model.js):
+    # the key under the chart gives each line its full name, in the line's colour. Base 2024:
+    # the fixture has A+B km on 1 January 2024, so both lines are drawn
+    _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    key = html[html.index('class="meta chart-key"') :].split("</p>")[0]
+    text = _text(key)
+    assert "Counts: index of counts recorded at counter sites" in text
+    assert "Mapped km: index of A+B mapped km in the city proper, 1 January snapshots" in text
+    assert 'class="key key-counter"' in key and 'class="key key-km"' in key
+    from tests.test_app import _css_rules
+    from tests.test_app_m7 import STATIC
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    colour = {s: d.get("background") for sels, d in rules for s in sels}
+    palette = re.search(r"PALETTE = \[([^\]]*)\]", (STATIC / "js" / "data.js").read_text())
+    first, second = re.findall(r'"(#[0-9a-f]{6})"', palette.group(1))[:2]
+    assert colour[".key-counter"] == first and colour[".key-km"] == second
+
+
+def test_counts_chart_key_for_average_daily_intensity(setup):  # noqa: F811
+    _seed(setup[0], series="avg_daily_intensity")
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    key = _text(html[html.index('class="meta chart-key"') :].split("</p>")[0])
+    assert "Intensity: index of average daily intensity recorded at counter sites" in key
+    # no km for the base year (2019 is before the fixture's snapshots): no km line, no km key
+    assert "Mapped km" not in key

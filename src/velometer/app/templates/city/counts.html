@@ -8,6 +8,7 @@
 <p class="meta">Index of {{ c.label }}, {{ c.base_year }} = 100, beside the index of A+B mapped km in the city proper (1 January snapshots, {{ c.base_year }} = 100). Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city. {{ c.covid_year }} is the COVID year.</p>
 {% if c.line %}
 <div class="chart" data-chart="city-counts" data-city="{{ city.id }}" role="group" aria-label="Counter index and mapped-km index over time, {{ city.name }}"></div>
+<p class="meta chart-key"><span class="key key-counter"></span> {{ "Intensity" if c.series == "avg_daily_intensity" else "Counts" }}: index of {{ c.label }}{% if not c.km_base_missing %} · <span class="key key-km"></span> Mapped km: index of A+B mapped km in the city proper, 1 January snapshots{% endif %}</p>
 {% else %}
 <p class="note" id="counts-no-line">No index line is drawn: the counter index has a value for {{ c.index_years | join(", ") or "no year" }} only, because no other year links to a neighbouring one with three sites complete on nine days in ten.{% if c.gaps %} The files hold no counts from {% for a, b in c.gaps %}{{ a }} to {{ b }}{% if not loop.last %}, {% endif %}{% endfor %}. For the portal's account of that time, a change of detectors, see <a href="#counters-breaks">Breaks in a series</a> below.{% endif %}</p>
 {% endif %}

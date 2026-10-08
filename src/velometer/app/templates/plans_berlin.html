@@ -75,7 +75,7 @@
 <div class="scroll">
 <table class="plan-overlay">
 <caption class="sr-only">{{ i.item.label }}: A+B mapped km on the network by snapshot, {{ overlay_version }}</caption>
-<thead><tr><th>Snapshot</th><th class="num">A+B mapped km on the network</th><th class="num">Change from the previous snapshot</th><th class="num">Change since 1 Jan {{ base_year }}</th></tr></thead>
+<thead><tr><th>Snapshot</th><th class="num">A+B mapped km on the network</th><th class="num">Change from the previous snapshot</th><th class="num">Difference from 1 Jan {{ base_year }}</th></tr></thead>
 <tbody>
 {% for o in i.overlay %}
 <tr><td class="date">{{ o.date }}</td><td class="num">{{ o.ab_km | num }}</td><td class="num">{% if o.step is none %}n/a{% else %}{{ "%+.1f" | format(o.step) }}{% endif %}</td><td class="num">{% if o.since_base is none %}n/a{% else %}{{ "%+.1f" | format(o.since_base) }}{% endif %}</td></tr>
@@ -131,12 +131,12 @@
 <tbody>
 {% for d in documents %}
 <tr>
-  <td>{{ d.doc_type }}</td>
-  <td>{% if d.url %}<a href="{{ d.url }}" rel="noopener noreferrer">{{ d.doc_id }}</a>{% else %}{{ d.doc_id }}{% endif %}</td>
-  <td class="date">{{ d.doc_date }}</td>
-  <td>{% if d.publisher.href %}<a href="{{ d.publisher.href }}">{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
-  <td>{{ d.reports_on | join(", ") }}; {{ d.years }}</td>
-  <td class="num">{{ d.figures }}{% if d.suspect %} <span class="suspect-mark">{{ d.suspect }} suspect</span>{% endif %}</td>
+  <td data-label="Type">{{ d.doc_type }}</td>
+  <td data-label="Number">{% if d.url %}<a href="{{ d.url }}" rel="noopener noreferrer">{{ d.doc_id }}</a>{% else %}{{ d.doc_id }}{% endif %}</td>
+  <td class="date" data-label="Date">{{ d.doc_date }}</td>
+  <td data-label="Publisher">{% if d.publisher.href %}<a href="{{ d.publisher.href }}">{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
+  <td data-label="What it reports">{{ d.reports_on | join(", ") }}; {{ d.years }}</td>
+  <td class="num" data-label="Figures">{{ d.figures }}{% if d.suspect %} <span class="suspect-mark">{{ d.suspect }} suspect</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>

@@ -451,14 +451,29 @@ table.plans td:last-child { min-width: 16rem; }
   .plans td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
 }
 .plan-item { margin-bottom: 2rem; }
+/* plan tables at phone width */
+@media (max-width: 600px) {
+  .plan-item th { white-space: normal; }
+  .plan-item th, .plan-item td { padding-left: 0.4rem; padding-right: 0.4rem; }
+  .plan-item td, .plan-item td * { overflow-wrap: anywhere; }
+  table.plan-docs, .plan-docs tbody { display: block; }
+  .plan-docs thead { display: none; }
+  .plan-docs tr { display: block; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
+  .plan-docs td { display: block; border: 0; padding: 0.15rem 0; text-align: left; }
+  .plan-docs td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
+}
 .series-note { max-width: 48rem; }
 .mapped-note { border-left: 3px solid #eda100; padding-left: 0.6rem; }
-.plan-key .key { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 0.2rem; }
+.plan-key .key, .chart-key .key { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 0.2rem; }
 .key-target { border-top: 2px dashed var(--ink-2); height: 0; width: 16px; vertical-align: 3px; }
 .key-current { background: var(--accent); border-radius: 50%; }
 .key-revision { border: 2px solid var(--accent); border-radius: 50%; background: var(--surface); }
 .key-suspect { border: 2px solid var(--flag); border-radius: 50%; background: var(--surface); }
 .key-projects { background: #1baf7a; }
+.chart-key .key { height: 0; width: 16px; vertical-align: 3px; border-top: 3px solid; }
+/* the Counts chart's line colours: PALETTE[0] and PALETTE[1] in js/data.js */
+.key-counter { background: #2a78d6; border-color: #2a78d6; }
+.key-km { background: #eb6834; border-color: #eb6834; }
 .key-mapped { border-top: 3px solid #eda100; height: 0; width: 16px; vertical-align: 3px; }
 .plan-svg .target-step { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-dasharray: 5 3; }
 .plan-svg .gridl.zero { stroke: var(--grid-2); }

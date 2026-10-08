@@ -50,7 +50,8 @@ export function counterLines(D, ids) {
  * The Counts tab chart of one city: the counter index and the A+B mapped-km index of the city
  * proper (1 January snapshots), both base year = 100 (the counter index's base year). Years run
  * from the first to the last with either value. No counter line (one year only): the km line
- * alone. No km for the base year: the counter line alone.
+ * alone. No km for the base year: the counter line alone. `names`: {counter, km, counterShort,
+ * kmShort}, the short ones for end labels at phone width.
  */
 export function countsChart(D, id, names = {}) {
   const c = D.counters?.cities?.[id];
@@ -66,13 +67,16 @@ export function countsChart(D, id, names = {}) {
   const years = [...counter.keys(), ...km.keys()];
   if (!years.length) return null;
   const labels = range(Math.min(...years), Math.max(...years));
-  const line = (map, sid, name) => ({
+  const line = (map, sid, name, short) => ({
     id: sid,
     name,
+    short, // the end label when the full name has no room; the key under the chart names it
     points: labels.map((l) => ({ label: l, value: map.has(Number(l)) ? map.get(Number(l)) : null, flags: [] })),
   });
   const series = [];
-  if (counter.size) series.push(line(counter, "counter", names.counter ?? "Counter index"));
-  if (km.size) series.push(line(km, "km", names.km ?? "A+B mapped km index"));
+  if (counter.size) {
+    series.push(line(counter, "counter", names.counter ?? "Counter index", names.counterShort ?? "Counts"));
+  }
+  if (km.size) series.push(line(km, "km", names.km ?? "A+B mapped km index", names.kmShort ?? "Mapped km"));
   return { labels, series, marks: covidMarks(D, labels), base };
 }
