@@ -163,6 +163,64 @@ Rules on these values flag a year for review. A flag changes no number. Change r
 
 Our numbers are set against Clean Cities 2025, ECF QECIO v2.10, the BikeNetKit dataset and official city figures. Each external figure is stored with its source, its network scope, its length basis where known and its retrieval date [ADR 0001, ADR 0006, ADR 0008]. The comparison lists the gaps and explains them; it does not average them away. Clean Cities 2025 mostly used figures the cities submitted, and QECIO publishes results per NUTS3 region only. The rankings therefore differ in definition, denominator and boundary, not only in data.
 
+## Berlin plan network overlay
+
+The Berlin plan page sets our mapped km against the city's planned cycle network: the Senate's `radverkehrsnetz` WFS layer with its two classes, Vorrangnetz (priority network) and Ergänzungsnetz (supplementary network), in EPSG:25833 as served. For every Berlin LAU run of the report classifier, the cached OSM snapshot is read and classified again, and the recomputed tier totals must equal the stored run totals; no new OSM run is made [M8 spec, decision 10]. A way-side of tier A or B counts as on the network over the parts of it that lie within a buffer of a network line whose direction differs from its own by at most a maximum angle; parts shorter than a minimum length are dropped. The parameters are data. A parameter change is a new overlay version, and the rows of earlier versions stay in the database [M8 spec, decision 11]. The page shows the latest version.
+
+<!-- generated:overlay -->
+Version `{{ f.overlay.version }}`, from `config/plans/{{ f.overlay.version }}.yaml`:
+
+| Parameter | Value |
+|---|---|
+| buffer, way-sides tagged on the road centreline | {{ f.overlay.buffer_m | num }} m |
+| buffer, separately mapped ways | {{ f.overlay.separate_buffer_m | num }} m |
+| maximum angle to the network line | {{ f.overlay.max_angle_deg | num }}° |
+| minimum part length | {{ f.overlay.min_part_m | num }} m |
+| minimum length tested on | {{ "parts of one tier merged across touching way-sides" if f.overlay.merge_scope == "tier" else "each way-side's parts" }} |
+| matches stop at a free end of a network line | {{ "yes" if f.overlay.clip_free_ends else "no" }} |
+<!-- /generated:overlay -->
+
+The method has four versions, all run on the same snapshots. `overlay_v1` used one 12 m buffer. Over the snapshot years much of Berlin's A and B moved from tags on the road centreline to separately mapped ways, which lie further from the network line, so v1 measured that change in mapping practice more than the network. `overlay_v2` gives separately mapped ways a 25 m buffer. `overlay_v3` tests the minimum part length on the pieces of one tier merged across touching way-sides, so the result no longer depends on how finely OSM splits its ways. `overlay_v4` stops a match at the free end of a network line, so sidepaths of the crossing or continuing street near that end no longer count; an end is free unless another line of the same class meets it within 1 m and leaves the joint within the maximum angle. Each version's figures and the checks behind it are in `docs/review/m8-overlay.md`.
+
+The series on the page is the change in mapped A+B km per side on each network class since 1 January 2022, the plan's first target year, one point per snapshot [M8 spec §4.4]. The level is not comparable with the plan: it includes infrastructure that predates the plan, and mapped km are not km completed to the Mobilitätsgesetz standard [ADR 0006]. The series is sensitive to how mappers draw cycleways and to the matching method. It moves when ways are redrawn and with each method version, and pieces at junctions can be matched or dropped wrongly; the log measures both kinds of error for v4.
+
+## Counter index
+
+Counter data are context, not an outcome. They record the bicycles passing the sites where counters stand, not cycling across a city, and nothing here links counts and mapped km as cause and effect [M8 spec, decision 12]. The cities in the table below publish open, licensed counter data; the paid Eco-Counter API is not used [M8 spec, decision 2]. Portals, licences and retrieval times are recorded per downloaded file, and each city's Counts tab names its source.
+
+<!-- generated:counters -->
+| City | Publisher | Licence | Base year (= 100) | Series |
+|---|---|---|---|---|
+{% for c in f.counters.cities %}
+| {{ c.name }} | {{ c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "average daily intensity" if c.series == "avg_daily_intensity" else "counts" }} |
+{% endfor %}
+
+For the other {{ f.counters.n_no_data | num }} cities no open counter data were found; their Figures tab names the portals checked.
+
+Index rule: a site qualifies for the link between two years when both years have at least {{ f.counters.min_valid_pct | num }} % valid days. The link is the ratio of the qualifying sites' summed counts, and links are chained from the base year. A link with fewer than {{ f.counters.min_sites | num }} qualifying sites has no value, and no year beyond it in the chain has one either.
+<!-- /generated:counters -->
+
+Hourly data are summed to days. A day is valid when it holds every local hour of its date (23, 24 or 25), and a site-day with a total of 0 is an outage, not a count. Sites a portal lists under two ids, such as a renumbered counter or the two sides of a bridge, are summed as one site. The base year is 2019, or the first full year for a city whose data start later; the table gives each city's [M8 spec, decision 13]. Every counter chart marks 2020 as the COVID year. The Counts tab sets the index beside the index of A+B mapped km in the city proper (1 January snapshots, same base year).
+
+{% set counter_ids = f.counters.cities | map(attribute="id") | list %}
+Per city:
+
+{% if "paris" in counter_ids %}
+- Paris: a site-hour is present only when every counter of the site that is in service that day reports it; a counter is in service from its first to its last reported day in a file.
+{% endif %}
+{% if "oslo" in counter_ids %}
+- Oslo: the counters are state counters of Statens vegvesen, limited to sites inside the city's LAU boundary [M8 spec, decision 15]. A day is complete when the hourly values give every local hour a volume; the API's daily coverage share is not used, as no threshold on it matched that rule in a spot check.
+{% endif %}
+{% if "madrid" in counter_ids %}
+- Madrid: the data start in September 2019, so its base year is 2020. The files hold no counts from July 2021 to August 2022, while the detectors were changed. Only 2020 has an index value, so no index line is drawn.
+{% endif %}
+{% if "barcelona" in counter_ids %}
+- Barcelona publishes the monthly average daily intensity per gauge and day type, not counts. Its index uses a gauge's mean over the twelve working-day months, a gauge being valid in a year only with all twelve, and is labelled average daily intensity [M8 spec, decision 14].
+{% endif %}
+{% if "helsinki" in counter_ids %}
+- Helsinki: the index keeps every qualifying site. The counts of two sites step down while they keep counting (Kaivokatu from April 2024, Pitkäsilta west side from May 2025). The Counts tab gives, as our reading of the daily data, the index without them from those years on [user decision on counters of 2026-10-07, `docs/superpowers/rulings-m8.md`].
+{% endif %}
+
 ## Provenance
 
 Every number traces to a run. A run records the git commit, the classifier version and its parameters, a checksum of the classifier, preset and activity configuration, the OSM timestamp, the boundary checksum and the source files [ADR 0001; ADR 0005; M4 spec §3.1]. A report shows only runs of the report classifier and of the configuration on disk. Changing the configuration therefore needs new runs, and old runs are not mixed in.

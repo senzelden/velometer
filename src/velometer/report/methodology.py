@@ -23,8 +23,12 @@ from velometer.config import (
     load_limitations,
     load_trust,
 )
+from velometer.counters import MONTHLY_SERIES, SERIES
+from velometer.counters.index import MIN_SITES, MIN_VALID
+from velometer.counters.model import COUNTERS_FILE, load_counters_config
 from velometer.db import fetch_boundary, fetch_run
 from velometer.models import City
+from velometer.plans.overlay import latest_overlay_version, load_overlay_config
 from velometer.report.data import KINDS, ReportData
 from velometer.sources.boundaries import OSM_ADMIN_VERSION
 from velometer.trust import golden_paths
@@ -88,6 +92,34 @@ class CountryFact(_Frozen):
     golden_not_found: str | None = None  # the path trust.yaml names, when no file is there
 
 
+class OverlayFacts(_Frozen):
+    """The plan-network overlay version the Berlin plan page shows (the latest config file)."""
+
+    version: str
+    buffer_m: float
+    separate_buffer_m: float
+    max_angle_deg: float
+    min_part_m: float
+    merge_scope: str
+    clip_free_ends: bool
+
+
+class CounterCityFact(_Frozen):
+    id: str
+    name: str
+    source: str
+    licence: str
+    base_year: int
+    series: Literal["counts", "avg_daily_intensity"]
+
+
+class CounterFacts(_Frozen):
+    cities: list[CounterCityFact]  # cities with an open counter portal, in config order
+    n_no_data: int  # cities listed as checked without open counter data
+    min_valid_pct: float  # valid days a site needs in both years of a link
+    min_sites: int  # qualifying sites a link needs
+
+
 class MethodologyFacts(_Frozen):
     classifier_version: str
     classifier_parameters: dict[str, str]
@@ -101,6 +133,8 @@ class MethodologyFacts(_Frozen):
     snapshot_dates: list[str]
     flag_thresholds: dict[str, float]
     limitations: list[Limitation]
+    overlay: OverlayFacts
+    counters: CounterFacts
 
 
 # The rules table is diffed against the previous version from v4 on, the rewrite that renamed
@@ -229,6 +263,43 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
     return out
 
 
+def _overlay_facts(config_dir: Path) -> OverlayFacts:
+    plans = config_dir / "plans"
+    cfg = load_overlay_config(plans, latest_overlay_version(plans))
+    return OverlayFacts(
+        version=cfg.version,
+        buffer_m=cfg.buffer_m,
+        separate_buffer_m=cfg.separate_buffer_m,
+        max_angle_deg=cfg.max_angle_deg,
+        min_part_m=cfg.min_part_m,
+        merge_scope=cfg.merge_scope,
+        clip_free_ends=cfg.clip_free_ends,
+    )
+
+
+def _counter_facts(config_dir: Path, names: dict[str, str]) -> CounterFacts:
+    """The counter portals of the reported cities (`names`: id -> name); a city the trust gate
+    holds back appears in neither the table nor the no-data count."""
+    cfg = load_counters_config(config_dir / COUNTERS_FILE)
+    return CounterFacts(
+        cities=[
+            CounterCityFact(
+                id=c.city,
+                name=names[c.city],
+                source=c.source,
+                licence=c.licence,
+                base_year=c.base_year,
+                series=MONTHLY_SERIES if c.grain == "monthly" else SERIES,
+            )
+            for c in cfg.cities
+            if c.city in names
+        ],
+        n_no_data=sum(1 for n in cfg.none if n.city in names),
+        min_valid_pct=MIN_VALID * 100,
+        min_sites=MIN_SITES,
+    )
+
+
 def methodology_facts(data: ReportData) -> MethodologyFacts:
     """Every generated fact of the methodology, on the report classifier and config on disk.
 
@@ -285,6 +356,8 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
         snapshot_dates=[f"{y}-01-01" for y in data.years],
         flag_thresholds=dict(data.activity.flags.model_dump()),
         limitations=load_limitations(data.config_dir / "limitations.yaml"),
+        overlay=_overlay_facts(data.config_dir),
+        counters=_counter_facts(data.config_dir, {c.id: c.name for c in data.cities()}),
     )
 
 

@@ -683,3 +683,72 @@ def test_rules_table_of_v3_carries_no_change_notes(fixture_db):
         assert "changed from" not in render(facts, lang) and "geändert gegenüber" not in render(
             facts, lang
         )
+
+
+# --- M8: the plan-network overlay and the counter index ---------------------------------------
+
+M8_SECTIONS = {
+    "en": ("## Berlin plan network overlay", "## Counter index"),
+    "de": ("## Überlagerung mit dem Berliner Plannetz", "## Zählstellenindex"),
+}
+
+
+def _generated(text: str, name: str) -> str:
+    return text.split(f"<!-- generated:{name} -->")[1].split(f"<!-- /generated:{name} -->")[0]
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_overlay_section_gives_the_latest_overlay_version_and_its_parameters(fixture_db, lang):
+    from velometer.plans.overlay import latest_overlay_version, load_overlay_config
+
+    cfg_dir = fixture_db[1]
+    oc = load_overlay_config(cfg_dir / "plans", latest_overlay_version(cfg_dir / "plans"))
+    block = _generated(render(methodology_facts(fixture_db[3]), lang), "overlay")
+    assert f"`{oc.version}`" in block
+    for value in (oc.buffer_m, oc.separate_buffer_m, oc.max_angle_deg, oc.min_part_m):
+        assert _number(value, lang) in block, value
+
+
+def test_a_new_overlay_version_makes_the_methodology_stale(fixture_db, tmp_path):
+    cfg_dir = fixture_db[1]
+    write(tmp_path, methodology_facts(fixture_db[3]))
+    plans = cfg_dir / "plans"
+    latest = max(plans.glob("overlay_v*.yaml"), key=lambda p: int(p.stem.removeprefix("overlay_v")))
+    n = int(latest.stem.removeprefix("overlay_v")) + 1
+    raw = yaml.safe_load(latest.read_text()) | {"version": f"overlay_v{n}", "buffer_m": 13}
+    (plans / f"overlay_v{n}.yaml").write_text(yaml.safe_dump(raw))
+    assert check(tmp_path, methodology_facts(fixture_db[3]))
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_counter_section_lists_every_counter_city_with_licence_and_base_year(fixture_db, lang):
+    from velometer.counters.model import load_counters_config
+
+    # the reported cities only: a city the trust gate holds back is on no report surface
+    cfg_dir, data = fixture_db[1], fixture_db[3]
+    counters = load_counters_config(cfg_dir / "counters.yaml")
+    reported = {c.id: c.name for c in data.cities()}
+    block = _generated(render(methodology_facts(data), lang), "counters")
+    rows = [line for line in block.splitlines() if line.startswith("| ") and "---" not in line]
+    listed = [e for e in counters.cities if e.city in reported]
+    assert listed, "the fixture reports at least one counter city"
+    assert len(rows) == 1 + len(listed)  # the header and one row per reported counter city
+    for entry in listed:
+        (row,) = [r for r in rows if f"| {reported[entry.city]} |" in r]
+        assert entry.licence in row and str(entry.base_year) in row, row
+    no_data = sum(1 for n in counters.none if n.city in reported)
+    assert f" {_number(no_data, lang)} " in block
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_m8_sections_have_no_construction_verb_and_no_causal_counter_wording(lang):
+    from velometer.content.check import causal_counter_wording, construction_verbs
+
+    template = PUBLISHED_SOURCES[lang][0].read_text()
+    first, second = M8_SECTIONS[lang]
+    assert first in template and second in template
+    text = template[template.index(first) :]
+    text = text[: text.index("\n## ", text.index(second) + 1)]
+    for para in text.split("\n\n"):
+        assert not construction_verbs(para), para
+        assert not causal_counter_wording(para), para

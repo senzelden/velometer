@@ -253,6 +253,57 @@ Regeln über diese Werte markieren ein Jahr zur Prüfung. Ein Prüfhinweis ände
 
 Die eigenen Zahlen werden Clean Cities 2025, ECF QECIO v2.10, dem Datensatz BikeNetKit und amtlichen Zahlen der Städte gegenübergestellt. Jede externe Zahl wird mit Quelle, Netzumfang, Längenbasis (soweit bekannt) und Abrufdatum gespeichert [ADR 0001, ADR 0006, ADR 0008]. Der Vergleich weist Abweichungen aus und erklärt sie; er mittelt sie nicht weg. Clean Cities 2025 hat überwiegend von den Städten gemeldete Zahlen verwendet, und QECIO veröffentlicht Ergebnisse nur je NUTS-3-Region. Die Ranglisten unterscheiden sich daher in Definition, Bezugsgröße und Gebiet, nicht nur in den Daten.
 
+## Überlagerung mit dem Berliner Plannetz
+
+Die Berliner Planseite stellt die eigenen kartierten Kilometer dem geplanten Radverkehrsnetz der Stadt gegenüber: der WFS-Ebene `radverkehrsnetz` der Senatsverwaltung mit ihren beiden Klassen Vorrangnetz und Ergänzungsnetz, in EPSG:25833 wie geliefert. Für jeden Berliner LAU-Lauf des Berichtsklassifikators wird der zwischengespeicherte OSM-Stand neu gelesen und neu klassifiziert; die neu berechneten Stufensummen müssen den gespeicherten Laufsummen entsprechen. Ein neuer OSM-Lauf entsteht dabei nicht [M8-Spezifikation, Entscheidung 10]. Eine Wegseite der Stufe A oder B zählt als auf dem Netz für die Teile, die innerhalb eines Puffers um eine Netzlinie liegen, deren Richtung höchstens um einen Grenzwinkel von der eigenen abweicht; Teile unter einer Mindestlänge entfallen. Die Parameter sind Daten. Eine Parameteränderung ist eine neue Überlagerungsversion, und die Zeilen früherer Versionen bleiben in der Datenbank [M8-Spezifikation, Entscheidung 11]. Die Seite zeigt die neueste Version.
+
+<!-- generated:overlay -->
+Version `overlay_v4`, aus `config/plans/overlay_v4.yaml`:
+
+| Parameter | Wert |
+|---|---|
+| Puffer, auf der Straßenachse erfasste Wegseiten | 12 m |
+| Puffer, separat erfasste Wege | 25 m |
+| Grenzwinkel zur Netzlinie | 30° |
+| Mindestlänge eines Teils | 20 m |
+| Mindestlänge geprüft an | den über sich berührende Wegseiten zusammengefassten Teilen einer Stufe |
+| Treffer enden an einem freien Ende einer Netzlinie | ja |
+<!-- /generated:overlay -->
+
+Das Verfahren hat vier Versionen, alle auf denselben Ständen gerechnet. `overlay_v1` verwendete einen einzigen Puffer von 12 m. Über die Jahresstände wechselte ein großer Teil der Berliner Stufen A und B von Merkmalen an der Straßenachse zu separat erfassten Wegen, die weiter von der Netzlinie entfernt liegen; v1 maß daher eher diesen Wandel der Erfassungspraxis als das Netz. `overlay_v2` gibt separat erfassten Wegen einen Puffer von 25 m. `overlay_v3` prüft die Mindestlänge an den über sich berührende Wegseiten zusammengefassten Teilen einer Stufe, sodass das Ergebnis nicht mehr davon abhängt, wie fein OSM seine Wege teilt. `overlay_v4` beendet einen Treffer am freien Ende einer Netzlinie, sodass Begleitwege der kreuzenden oder weiterführenden Straße nahe diesem Ende nicht mehr zählen; ein Ende ist frei, sofern keine andere Linie derselben Klasse innerhalb von 1 m an es anschließt und den Knoten innerhalb des Grenzwinkels verlässt. Die Zahlen jeder Version und die Prüfungen dahinter stehen in `docs/review/m8-overlay.md`.
+
+Die Reihe auf der Seite ist die Veränderung der kartierten A+B-Kilometer je Seite auf jeder Netzklasse seit dem 1. Januar 2022, dem ersten Zieljahr des Plans, mit einem Punkt je Stand [M8-Spezifikation §4.4]. Der Bestand ist mit dem Plan nicht vergleichbar: Er enthält Infrastruktur, die älter ist als der Plan, und kartierte Kilometer sind keine nach dem Standard des Mobilitätsgesetzes fertiggestellten Kilometer [ADR 0006]. Die Reihe hängt davon ab, wie Kartierende Radwege zeichnen, und vom Zuordnungsverfahren. Sie verändert sich, wenn Wege neu gezeichnet werden, und mit jeder Verfahrensversion; Teile an Knoten können fälschlich zugeordnet oder verworfen werden. Das Protokoll beziffert beide Fehlerarten für v4.
+
+## Zählstellenindex
+
+Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die die Standorte der Zählstellen passieren, nicht den Radverkehr einer ganzen Stadt, und nichts hier verknüpft Zählwerte und kartierte Kilometer als Ursache und Wirkung [M8-Spezifikation, Entscheidung 12]. Die Städte der folgenden Tabelle veröffentlichen offene, lizenzierte Zählstellendaten; die kostenpflichtige Eco-Counter-API wird nicht verwendet [M8-Spezifikation, Entscheidung 2]. Portal, Lizenz und Abrufzeit werden je heruntergeladener Datei festgehalten, und der Reiter „Counts“ jeder Stadt nennt seine Quelle.
+
+<!-- generated:counters -->
+| Stadt | Herausgeber | Lizenz | Basisjahr (= 100) | Reihe |
+|---|---|---|---|---|
+| Berlin | Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin | dl-de-zero-2.0 | 2019 | Zählwerte |
+| Paris | Ville de Paris, Direction de la Voirie et des Déplacements | ODbL | 2019 | Zählwerte |
+| Wien | Stadt Wien | CC BY 4.0 | 2019 | Zählwerte |
+| Helsinki | City of Helsinki, Urban Environment Division (Helsingin kaupunkiympäristön toimiala) | CC BY 4.0 | 2019 | Zählwerte |
+| Madrid | Ayuntamiento de Madrid | CC BY 4.0 | 2020 | Zählwerte |
+| Oslo | Statens vegvesen (state counters) | NLOD | 2019 | Zählwerte |
+| Barcelona | Ajuntament de Barcelona | CC BY 4.0 | 2019 | durchschnittliche tägliche Verkehrsstärke |
+
+Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Figures“ nennt die geprüften Portale.
+
+Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
+<!-- /generated:counters -->
+
+Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Counts“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
+
+Je Stadt:
+
+- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der an diesem Tag in Betrieb ist, sie meldet; ein Zähler ist von seinem ersten bis zu seinem letzten gemeldeten Tag einer Datei in Betrieb.
+- Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.
+- Madrid: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die Dateien enthalten von Juli 2021 bis August 2022, während die Detektoren getauscht wurden, keine Zählwerte. Nur 2020 hat einen Indexwert, daher wird keine Indexlinie gezeichnet.
+- Barcelona veröffentlicht die monatliche durchschnittliche tägliche Verkehrsstärke je Zählstelle und Tagestyp, keine Zählwerte. Sein Index verwendet den Mittelwert einer Zählstelle über die zwölf Werktagsmonate, wobei eine Zählstelle in einem Jahr nur mit allen zwölf gültig ist, und heißt durchschnittliche tägliche Verkehrsstärke [M8-Spezifikation, Entscheidung 14].
+- Helsinki: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte zweier Zählstellen fallen ab, während sie weiterzählen (Kaivokatu ab April 2024, Westseite der Pitkäsilta ab Mai 2025). Der Reiter „Counts“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesen Jahren an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
+
 ## Herkunft der Zahlen
 
 Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-Commit, die Klassifikatorversion mit ihren Parametern, eine Prüfsumme der Konfiguration von Klassifikator, Kennzahlvarianten und Aktivitätsregeln, den OSM-Zeitstempel, die Prüfsumme der Gebietsgrenze und die Quelldateien [ADR 0001; ADR 0005; M4-Spezifikation §3.1]. Eine Auswertung zeigt nur Läufe des Auswertungsklassifikators und der vorliegenden Konfiguration. Eine geänderte Konfiguration erfordert daher neue Läufe, und alte Läufe werden nicht beigemischt.
