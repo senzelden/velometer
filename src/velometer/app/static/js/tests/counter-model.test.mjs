@@ -119,7 +119,9 @@ const shared = JSON.parse(
 
 for (const c of shared.cases) {
   test(`shared counter case: ${c.name}`, () => {
-    const m = counterLines(shared.payload, c.ids);
+    // a case's `counters` replaces those keys of the payload's
+    const payload = { ...shared.payload, counters: { ...shared.payload.counters, ...c.counters } };
+    const m = counterLines(payload, c.ids);
     const values = Object.fromEntries(m.series.map((s) => [s.id, s.points.map((p) => p.value)]));
     assert.deepEqual({ labels: m.labels, values, notes: m.notes, unit: m.unit }, c.expect);
   });

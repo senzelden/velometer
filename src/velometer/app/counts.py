@@ -14,6 +14,7 @@ tab's note, which gives the index computed here without those sites from their `
 the stored index keeps them (user ruling, Task 8).
 """
 
+import logging
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -29,6 +30,8 @@ from velometer.counters.model import (
 )
 from velometer.report.data import ReportData
 
+log = logging.getLogger(__name__)
+
 COVID_YEAR = 2020
 MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line
 GAP_DAYS = 31  # a run of days without any count longer than this is named in the no-line note
@@ -42,11 +45,14 @@ MONTH_NAMES = [
 ]  # fmt: skip
 
 
-def counters_config(config_dir: Path) -> CountersConfig | None:
+def counters_config(config_dir: Path) -> tuple[CountersConfig | None, str | None]:
+    """(config, error) of config/counters.yaml: unreadable, (None, the logged reason), and each
+    page that would use it says so (the no-data notes and step-downs cannot be read)."""
     try:
-        return load_counters_config(Path(config_dir) / COUNTERS_FILE)
-    except ConfigError:
-        return None
+        return load_counters_config(Path(config_dir) / COUNTERS_FILE), None
+    except ConfigError as e:
+        log.error("counter configuration could not be read: %s", e)
+        return None, str(e)
 
 
 def _round(v: float | None) -> float | None:
@@ -82,9 +88,9 @@ def _entry(cfg: CountersConfig | None, city_id: str) -> CounterEntry | None:
 def counter_payload(data: ReportData) -> dict:
     """`counters` of series.json: the COVID year, per counter city its series kind, base year,
     whether it is drawn as a line, its yearly index (None: no value, a gap) and its attribution
-    (`source`, `licence`), and `none`: the note of each city without open counter data
-    (`no_data_notes`)."""
-    cfg = counters_config(data.config_dir)
+    (`source`, `licence`), `none`: the note of each city without open counter data
+    (`no_data_notes`), and `config_error`: whether config/counters.yaml was unreadable."""
+    cfg, error = counters_config(data.config_dir)
     cities = {}
     for city_id in data.counter_cities():
         rows = data.counter_index(city_id)
@@ -100,7 +106,12 @@ def counter_payload(data: ReportData) -> dict:
             "source": source,
             "licence": licence,
         }
-    return {"covid_year": COVID_YEAR, "cities": cities, "none": no_data_notes(cfg)}
+    return {
+        "covid_year": COVID_YEAR,
+        "cities": cities,
+        "none": no_data_notes(cfg),
+        "config_error": error is not None,
+    }
 
 
 def km_index(points, base_year: int) -> dict[int, float | None]:

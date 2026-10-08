@@ -16,6 +16,7 @@ from velometer.app.narrative import safe_url
 from velometer.content.facts import version_key
 from velometer.content.models import Organisation
 from velometer.db import OverlayRow
+from velometer.plans.berlin import NETWORK_LAYER
 from velometer.plans.models import Plan, PlanItem, ReportRow, current_and_revisions
 
 DETAIL_CITY = "berlin"  # the one city with a plan page of its own (spec §4.4)
@@ -205,11 +206,27 @@ def completed_projects(path: Path) -> tuple[dict[str, dict[int, float]], int] | 
     return metres, undated
 
 
-def measures_retrieved(plans_data_dir: Path) -> dict | None:
+def measures_retrieved(plans_data_dir: Path) -> tuple[dict | None, str | None]:
+    """(record, error) of the `retrieved.json` that `velometer plans fetch berlin` writes beside
+    the layers: the licence, the retrieval time and the layers fetched. Absent: (None, None), the
+    page says the dataset is not present; present but unreadable, or without a licence: (None,
+    the reason), a note on the page instead of licence lines that silently vanish."""
+    path = plans_data_dir / MEASURES_RETRIEVED
     try:
-        return json.loads((plans_data_dir / MEASURES_RETRIEVED).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, None
+    except (OSError, ValueError) as e:
+        return None, f"{path}: {e}"
+    if not isinstance(record, dict) or not isinstance(record.get("licence"), str):
+        return None, f"{path}: not a record with a licence"
+    return record, None
+
+
+def network_licence(record: dict | None) -> str | None:
+    """The planned-network layer's licence: the record's, when the record lists that layer."""
+    layers = (record or {}).get("layers")
+    return record["licence"] if isinstance(layers, dict) and NETWORK_LAYER in layers else None
 
 
 def _projects_of(item_id: str, metres: dict[str, dict[int, float]] | None) -> list[dict] | None:

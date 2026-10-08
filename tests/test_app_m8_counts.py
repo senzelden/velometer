@@ -335,10 +335,16 @@ def _node(script: str):
     return json.loads(out.stdout)
 
 
+def _case_payload(case: dict) -> dict:
+    """The shared payload with the case's `counters` keys in place of the payload's."""
+    payload = COUNTER_CASES["payload"]
+    return {**payload, "counters": {**payload["counters"], **case.get("counters", {})}}
+
+
 @pytest.mark.parametrize("case", COUNTER_CASES["cases"], ids=lambda c: c["name"])
 def test_counter_lines_and_unit_match_the_shared_cases(case):
     # counter-model.test.mjs runs counterLines over the same cases
-    payload = COUNTER_CASES["payload"]
+    payload = _case_payload(case)
     labels, values, notes = compare.counter_lines(payload, case["ids"])
     unit = compare.counter_unit(payload, case["ids"])
     assert {"labels": labels, "values": values, "notes": notes, "unit": unit} == case["expect"]
@@ -347,20 +353,19 @@ def test_counter_lines_and_unit_match_the_shared_cases(case):
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is needed to run counter-model.js")
 def test_js_counter_title_footnote_unit_and_notes_equal_the_python_ones():
     # the no-JS page and compare.js show the same title, footnote, unit and notes
-    payload = COUNTER_CASES["payload"]
-    cases = [c["ids"] for c in COUNTER_CASES["cases"]]
+    cases = [(_case_payload(c), c["ids"]) for c in COUNTER_CASES["cases"]]
     script = (
         f"Promise.all([import('{COUNTER_JS}'), import('{COMPARE_JS}')]).then(([c, m]) => "
         f"console.log(JSON.stringify({{"
-        f"lines: {json.dumps(cases)}.map(ids => {{ const r = c.counterLines("
-        f"{json.dumps(payload)}, ids); return [r.notes, r.unit]; }}), "
+        f"lines: {json.dumps(cases)}.map(([payload, ids]) => {{ const r = c.counterLines("
+        f"payload, ids); return [r.notes, r.unit]; }}), "
         f"title: c.counterTitle('Counter index'), "
         f"foot: ['counter_index', 'headline', 'ab_km'].map(k => m.footnote(k, 'HU'))}})))"
     )
     js = _node(script)
     assert js["lines"] == [
         [compare.counter_lines(payload, ids)[2], compare.counter_unit(payload, ids)]
-        for ids in cases
+        for payload, ids in cases
     ]
     assert js["title"] == compare.counter_title("Counter index")
     assert js["foot"] == [compare.footnote(k, "HU") for k in ("counter_index", "headline", "ab_km")]
@@ -371,6 +376,7 @@ def test_js_counter_notes_equal_the_python_ones():
     names = (
         "NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY", "COUNTER_DATA", "NOT_RECORDED",
         "COUNTER_TITLE", "COUNTER_CONTEXT", "COUNTER_FOOT", "COUNTER_OF", "ANY_BASE",
+        "COUNTER_CONFIG_ERROR",
     )  # fmt: skip
     for name in names:
         assert f'export const {name} = "{getattr(compare, name)}";' in js, name
@@ -514,3 +520,32 @@ def test_counts_tables_fit_a_phone_width():
     assert decl[".counts-table th"]["white-space"] == "normal"
     assert decl[".counter-sites td"]["overflow-wrap"] == "anywhere"
     assert decl[".counts-table .covid-mark"]["white-space"] == "nowrap"  # "COVID year" stays whole
+
+
+# ---------- an unreadable config/counters.yaml (M8 follow-ups, Task 2) ----------
+
+
+def test_an_unreadable_counter_configuration_is_a_note_on_figures_compare_and_counts(setup, caplog):  # noqa: F811
+    db_path, cfg_dir, _, _ = setup
+    _seed(db_path)
+    note = "counter configuration unreadable"
+    with _client(_app(setup)) as c:  # readable: no note anywhere
+        assert note not in _text(c.get("/city/paris/figures").text).lower()
+        assert note not in _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+        assert c.get("/data/series.json").json()["counters"]["config_error"] is False
+    (cfg_dir / "counters.yaml").write_text("cities: [unclosed\n")
+    with _client(_app(setup)) as c:
+        figures = c.get("/city/paris/figures").text
+        compare_page = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+        counts = _text(c.get("/city/berlin/counts").text)
+        payload = c.get("/data/series.json").json()
+    assert note in _text(_section_of(figures, "counter-data")).lower()
+    assert compare.COUNTER_CONFIG_ERROR in compare_page
+    assert note in counts.lower()
+    assert payload["counters"]["config_error"] is True
+    assert "counters.yaml" in caplog.text  # the detail goes to the log
+
+
+def _section_of(html: str, anchor: str) -> str:
+    start = html.index(f'id="{anchor}"')
+    return html[start : html.index("</section>", start)]

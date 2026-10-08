@@ -7,6 +7,8 @@
 export const COUNTER_METRIC = "counter_index";
 export const NO_COUNTERS = "no open counter data";
 export const NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)";
+// config/counters.yaml unreadable (`counters.config_error`): the no-data notes are missing
+export const COUNTER_CONFIG_ERROR = "counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such";
 export const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
 export const COVID_TEXT = "COVID year";
 // the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
@@ -61,14 +63,15 @@ export function counterUnit(D, ids) {
  * flags}]}], notes, marks, unit}. Labels are the calendar years from the first to the last with a value
  * for any drawn city; a city without counter data, or whose index is not a line, has no values
  * and a note. Each drawn city gets an attribution note, after the others: "Counter data, <city>:
- * <publisher>, licence <licence>" (ADR 0008).
+ * <publisher>, licence <licence>" (ADR 0008). An unreadable config/counters.yaml is a note before
+ * all others.
  */
 export function counterLines(D, ids) {
   const counters = D.counters?.cities ?? {};
   const drawn = ids.filter((id) => counters[id]?.line);
   const years = drawn.flatMap((id) => counters[id].points.filter((p) => p.idx != null).map((p) => p.year));
   const labels = years.length ? range(Math.min(...years), Math.max(...years)) : [];
-  const notes = [];
+  const notes = D.counters?.config_error ? [COUNTER_CONFIG_ERROR] : [];
   const series = ids.map((id) => {
     const c = counters[id];
     const name = D.cities[id].name;

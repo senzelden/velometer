@@ -62,6 +62,11 @@ FUA_NOTE = (
 )
 NO_COUNTERS = "no open counter data"
 NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)"
+# config/counters.yaml unreadable (`counters.config_error`): the no-data notes are missing
+COUNTER_CONFIG_ERROR = (
+    "counter configuration unreadable (config/counters.yaml; see the server log): "
+    "cities without open counter data are not named as such"
+)
 # the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
 COUNTER_DATA = "Counter data"
 NOT_RECORDED = "not recorded"
@@ -210,15 +215,17 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
     gap, never 0). A city without counter data, or whose index is not drawn as a line, gets no
     values and a note: a city listed under `none:` in config/counters.yaml its "no open counter
     data found" note with the portals checked. Each drawn city gets an attribution note, after
-    the others: "Counter data, <city>: <publisher>, licence <licence>" (ADR 0008)
-    (counter-model.js: counterLines)."""
+    the others: "Counter data, <city>: <publisher>, licence <licence>" (ADR 0008). An
+    unreadable config/counters.yaml is a note before all others (counter-model.js:
+    counterLines)."""
     counters = payload.get("counters", {}).get("cities", {})
     none = payload.get("counters", {}).get("none", {})
     names = payload["cities"]
     drawn = {i: counters[i] for i in ids if i in counters and counters[i]["line"]}
     years = [p["year"] for c in drawn.values() for p in c["points"] if p["idx"] is not None]
     labels = [str(y) for y in range(min(years), max(years) + 1)] if years else []
-    values, notes = {}, []
+    values: dict = {}
+    notes = [COUNTER_CONFIG_ERROR] if payload.get("counters", {}).get("config_error") else []
     for i in ids:
         c = counters.get(i)
         if c is None:

@@ -13,6 +13,7 @@
 {% if plan %}
 <p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer">{{ plan.title }}</a>{% else %}{{ plan.title }}{% endif %}{% if plan.adopted %}, adopted {{ plan.adopted.isoformat() }}{% endif %} · {% if publisher.href %}<a href="{{ publisher.href }}">{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="/plans">All cities' plans</a></p>
 {% endif %}
+{% if content_error %}<p class="note">the source registry could not be loaded (see the server log)</p>{% endif -%}
 {% if text_error %}<p class="note">the page text could not be loaded (see the server log)</p>{% endif %}
 {% if doc %}<div class="narrative prose">
 {% for p in doc.intro %}{{ p }}
@@ -145,8 +146,9 @@
 <h3>Data</h3>
 <ul class="meta data-sources">
 <li>Measures dataset: Radverkehrsmaßnahmen, Berlin geoportal{% if measures %}, licence {{ measures.licence }}, retrieved {{ measures.retrieved_at }}{% elif not projects_present %} (not present){% endif %}.</li>
-<li>Planned network: Radverkehrsnetz, Berlin geoportal{% if network_retrieved_at %}, retrieved {{ network_retrieved_at }}{% endif %}; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0){% if overlay_version %} with <code>{{ overlay_version }}</code>{% endif %}.</li>
+<li>Planned network: Radverkehrsnetz, Berlin geoportal{% if network_licence %}, licence {{ network_licence }}{% elif measures %}, licence not recorded{% endif %}{% if network_retrieved_at %}, retrieved {{ network_retrieved_at }}{% endif %}; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0){% if overlay_version %} with <code>{{ overlay_version }}</code>{% endif %}.</li>
 </ul>
+{% if record_error %}<p class="note">data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licence and retrieval date cannot be shown.</p>{% endif -%}
 </section>
 {% endif %}
 

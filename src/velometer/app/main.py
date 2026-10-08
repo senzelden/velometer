@@ -573,7 +573,7 @@ def create_app(
         _, sources, _, errors = cache.get("content", fp(request), content())
 
         def build() -> dict:
-            cfg = counts_model.counters_config(config_dir)
+            cfg, cfg_error = counts_model.counters_config(config_dir)
             entry = next((e for e in cfg.cities if e.city == city_id), None) if cfg else None
             lau = data.series(city_id, "lau")
             ctx = counts_model.counts_context(data, city_id, entry, lau.points if lau else [])
@@ -589,7 +589,7 @@ def create_app(
                 else ctx["site_map"]
                 | {"tiles": OSM_TILES, "tile_class": TILE_CLASS, "links": OSM_LINKS}
             )
-            return ctx | {"doc": doc, "text_error": text_error}
+            return ctx | {"doc": doc, "text_error": text_error, "config_error": cfg_error}
 
         return cache.get(f"counts:{city_id}", fp(request), build)
 
@@ -811,17 +811,23 @@ def create_app(
             dates = plans_pages.run_dates(data.conn, {r.run_id for r in overlay})
             projects = plans_pages.completed_projects(plans_data_dir / plans_pages.MEASURES_FILE)
             ctx = plans_pages.berlin_context(plan, rows, orgs, overlay, dates, projects)
+            measures, record_error = plans_pages.measures_retrieved(plans_data_dir)
+            if record_error:
+                log.error("plan data source record could not be read: %s", record_error)
             return ctx | {
                 "error": error,
                 "doc": doc,
                 "text_error": text_error,
-                "measures": plans_pages.measures_retrieved(plans_data_dir),
+                "measures": measures,
+                "network_licence": plans_pages.network_licence(measures),
+                "record_error": record_error,
             }
 
         ctx = cache.get(f"plan:{city_id}", fp(request), build)
         doc = ctx["doc"]
         return page(
             request, "plans_berlin.html", "plans", data, **ctx, nar=doc,
+            content_error=errors.get("*"),
             cited_sources=[] if doc is None else sorted(doc.sources.items()),
             cited_refs=[] if doc is None else sorted(doc.refs.items()),
         )  # fmt: skip
@@ -891,6 +897,7 @@ def create_app(
             "kinds": map_kinds,
         }
         summary = city_summary(data, c)
+        counters_cfg, counters_error = counts_model.counters_config(config_dir)
         lau = summary["point"]
         fua = data.current(city_id, "fua")
         return {
@@ -910,10 +917,10 @@ def create_app(
             ],
             "bezirke": bezirke_context(data, city_id),
             "has_counts": city_id in data.counter_cities(),
-            # spec §5.1: a city without open counter data says so, with the portals checked
-            "no_counters": counts_model.no_data_notes(counts_model.counters_config(config_dir)).get(
-                city_id
-            ),
+            # spec §5.1: a city without open counter data says so, with the portals checked; an
+            # unreadable config/counters.yaml says that instead of dropping the note
+            "no_counters": counts_model.no_data_notes(counters_cfg).get(city_id),
+            "counters_error": None if counters_error is None else cmp.COUNTER_CONFIG_ERROR,
             "kinds": kinds,
             "yearly": yearly,
             "reconcile": data.reconcile(city_id),

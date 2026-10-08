@@ -48,14 +48,27 @@ MEASURES = _measures(
 )  # fmt: skip
 
 
+# the record `velometer plans fetch berlin` writes beside the layers (plans/berlin.py); the
+# licence is a value no template could hold, so a page showing it read it from the record
+RETRIEVED = {
+    "retrieved_at": "2026-10-07T10:40:42Z",
+    "licence": "test-licence-from-record",
+    "licence_url": "https://example.org/licence",
+    "srs": "EPSG:25833",
+    "layers": {
+        name: {"url": f"https://example.org/{name}", "type_name": f"{name}:{name}",
+               "record": "https://example.org/record", "features": 1}
+        for name in ("radverkehrsnetz", "radverkehrsmassnahmen")
+    },
+}  # fmt: skip
+
+
 @pytest.fixture
 def plans_data(tmp_path) -> Path:
     d = tmp_path / "plans-data"
     (d / "berlin").mkdir(parents=True)
     (d / "berlin" / "radverkehrsmassnahmen.geojson").write_text(json.dumps(MEASURES))
-    (d / "berlin" / "retrieved.json").write_text(
-        json.dumps({"retrieved_at": "2026-10-07T10:40:42Z", "licence": "dl-de-zero-2.0"})
-    )
+    (d / "berlin" / "retrieved.json").write_text(json.dumps(RETRIEVED))
     return d
 
 
@@ -446,3 +459,78 @@ def test_plan_tables_fit_a_phone_width(client):
     assert re.search(r"\.plan-item th[^{]*\{[^}]*white-space: normal", narrow)
     assert re.search(r"\.plan-item td[^{]*\{[^}]*overflow-wrap: anywhere", narrow)
     assert re.search(r"table\.plan-docs[^{]*\{[^}]*display: block", narrow)
+
+
+# ---------- notes for unreadable inputs, licences (M8 follow-ups, Task 2) ----------
+
+
+def _data_line(html: str, start: str) -> str:
+    """The text of the Data list item that starts with `start`."""
+    items = re.findall(r"<li>(.*?)</li>", _section(html, "documents").split("<h3>Data</h3>")[1])
+    return next(_text(i) for i in items if _text(i).startswith(start))
+
+
+def test_planned_network_line_names_the_licence_of_its_record(client):
+    html = client.get("/plans/berlin").text
+    line = _data_line(html, "Planned network:")
+    assert f"licence {RETRIEVED['licence']}" in line
+    assert f"licence {RETRIEVED['licence']}" in _data_line(html, "Measures dataset:")
+
+
+def test_a_record_without_the_network_layer_does_not_lend_it_its_licence(setup, plans_data):  # noqa: F811
+    record = {
+        **RETRIEVED,
+        "layers": {"radverkehrsmassnahmen": RETRIEVED["layers"]["radverkehrsmassnahmen"]},
+    }
+    (plans_data / "berlin" / "retrieved.json").write_text(json.dumps(record))
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    line = _data_line(html, "Planned network:")
+    assert RETRIEVED["licence"] not in line and "licence not recorded" in line
+
+
+@pytest.mark.parametrize(
+    "body",
+    ["{not json", "[]", json.dumps({"retrieved_at": "2026-10-07T10:40:42Z"})],
+    ids=["not-json", "not-an-object", "no-licence"],
+)
+def test_an_unreadable_source_record_is_a_note_not_missing_licences(
+    setup,  # noqa: F811
+    plans_data,
+    body,
+    caplog,
+):
+    (plans_data / "berlin" / "retrieved.json").write_text(body)
+    with _client(_app(setup, plans_data)) as c:
+        r = c.get("/plans/berlin")
+    assert r.status_code == 200
+    text = _text(_section(r.text, "documents"))
+    assert "data source record unreadable" in text
+    assert "retrieved.json" in caplog.text  # the detail goes to the log
+
+
+def test_a_readable_or_absent_source_record_has_no_note(setup, plans_data, tmp_path):  # noqa: F811
+    with _client(_app(setup, plans_data)) as c:
+        assert "data source record unreadable" not in _text(c.get("/plans/berlin").text)
+    with _client(_app(setup, tmp_path / "absent")) as c:
+        assert "data source record unreadable" not in _text(c.get("/plans/berlin").text)
+
+
+def test_a_broken_source_registry_is_a_note_on_the_plan_page(setup, plans_data, tmp_path):  # noqa: F811
+    import shutil
+
+    content = tmp_path / "content"
+    shutil.copytree(CONTENT, content)
+    db_path, cfg, maps, docs = setup
+
+    def page() -> str:
+        app = create_app(db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans_data)
+        with _client(app) as c:
+            return _text(c.get("/plans/berlin").text)
+
+    note = "the source registry could not be loaded (see the server log)"
+    assert note not in page()
+    (content / "sources" / "zz-broken.yaml").write_text("sources: [unclosed\n")
+    text = page()
+    assert note in text
+    assert text.count(note) == 1
