@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { DEFAULTS } from "../state.js";
 import { buildModel } from "../compare-model.js";
 import {
-  AVG_DAILY, NO_COUNTERS, NO_COUNTER_LINE, counterLines, countsChart,
+  AVG_DAILY, COUNTER_DATA, NO_COUNTERS, NO_COUNTER_LINE, NOT_RECORDED, counterLines, countsChart,
 } from "../counter-model.js";
 
 const r = (v) => (v == null ? v : +v.toFixed(6));
@@ -23,12 +23,22 @@ const D = {
   counters: {
     covid_year: 2020,
     cities: {
-      ber: { series: "counts", base_year: 2019, line: true, points: pts({ 2017: 90, 2018: null, 2019: 100, 2020: 114.6, 2021: 0 }) },
-      bcn: { series: "avg_daily_intensity", base_year: 2019, line: true, points: pts({ 2019: 100, 2020: 91.8, 2022: 132.9 }) },
+      ber: { series: "counts", base_year: 2019, line: true, source: "Senate", licence: "dl-de-zero-2.0", points: pts({ 2017: 90, 2018: null, 2019: 100, 2020: 114.6, 2021: 0 }) },
+      bcn: { series: "avg_daily_intensity", base_year: 2019, line: true, source: "Ajuntament", licence: "CC BY 4.0", points: pts({ 2019: 100, 2020: 91.8, 2022: 132.9 }) },
       mad: { series: "counts", base_year: 2020, line: false, points: pts({ 2019: null, 2020: 100, 2021: null }) },
     },
   },
 };
+
+const ATT_BER = `${COUNTER_DATA}, Berlin: Senate, licence dl-de-zero-2.0`;
+const ATT_BCN = `${COUNTER_DATA}, Barcelona: Ajuntament, licence CC BY 4.0`;
+
+test("every drawn city carries its counter data attribution; an undrawn city none (ADR 0008)", () => {
+  const notes = counterLines(D, ["ber", "bcn", "mad"]).notes;
+  assert.deepEqual(notes.filter((n) => n.startsWith(COUNTER_DATA)), [ATT_BER, ATT_BCN]);
+  const bare = { ...D, counters: { ...D.counters, cities: { ber: { ...D.counters.cities.ber, source: null, licence: undefined } } } };
+  assert.deepEqual(counterLines(bare, ["ber"]).notes, [`${COUNTER_DATA}, Berlin: source ${NOT_RECORDED}, licence ${NOT_RECORDED}`]);
+});
 
 test("a year with idx = null is a gap (null), never 0; a stored 0 stays 0", () => {
   const m = counterLines(D, ["ber"]);
@@ -42,12 +52,12 @@ test("years between two cities' values are gaps, the axis spans every drawn city
   const m = counterLines(D, ["ber", "bcn"]);
   assert.deepEqual(m.labels, ["2017", "2018", "2019", "2020", "2021", "2022"]);
   assert.deepEqual(m.series[1].points.map((p) => p.value), [null, null, 100, 91.8, null, 132.9]);
-  assert.deepEqual(m.notes, [`Barcelona: ${AVG_DAILY}`]);
+  assert.deepEqual(m.notes, [`Barcelona: ${AVG_DAILY}`, ATT_BER, ATT_BCN]);
 });
 
 test("no counter data and no index line are notes without values; Madrid draws nothing", () => {
   const m = counterLines(D, ["mad", "cph", "ber"]);
-  assert.deepEqual(m.notes, [`Madrid: ${NO_COUNTER_LINE}`, `Copenhagen: ${NO_COUNTERS}`]);
+  assert.deepEqual(m.notes, [`Madrid: ${NO_COUNTER_LINE}`, `Copenhagen: ${NO_COUNTERS}`, ATT_BER]);
   assert.ok(m.series[0].points.every((p) => p.value === null));
   assert.ok(m.series[1].points.every((p) => p.value === null));
   assert.deepEqual(counterLines(D, ["mad"]).labels, []);
@@ -64,7 +74,7 @@ test("compare: m=counter_index is never rebased, whatever the mode and boundary"
   const m = buildModel(D, state);
   assert.ok(m.counter);
   assert.deepEqual(m.series[0].points.map((p) => p.value), [90, null, 100, 114.6, 0]);
-  assert.deepEqual(m.notes, [`Copenhagen: ${NO_COUNTERS}`]);
+  assert.deepEqual(m.notes, [`Copenhagen: ${NO_COUNTERS}`, ATT_BER]);
 });
 
 test("Counts tab: counter index beside the A+B km index, both base year = 100", () => {

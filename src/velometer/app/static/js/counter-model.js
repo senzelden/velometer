@@ -9,6 +9,9 @@ export const NO_COUNTERS = "no open counter data";
 export const NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)";
 export const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
 export const COVID_TEXT = "COVID year";
+// the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
+export const COUNTER_DATA = "Counter data";
+export const NOT_RECORDED = "not recorded";
 
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i));
 
@@ -22,7 +25,8 @@ export function covidMarks(D, labels) {
  * Compare's counter index for `ids`: {labels, series: [{id, name, points: [{label, value,
  * flags}]}], notes, marks}. Labels are the calendar years from the first to the last with a value
  * for any drawn city; a city without counter data, or whose index is not a line, has no values
- * and a note.
+ * and a note. Each drawn city gets an attribution note, after the others: "Counter data, <city>:
+ * <publisher>, licence <licence>" (ADR 0008).
  */
 export function counterLines(D, ids) {
   const counters = D.counters?.cities ?? {};
@@ -43,6 +47,10 @@ export function counterLines(D, ids) {
     });
     return { id, name, points };
   });
+  for (const id of drawn) {
+    const c = counters[id];
+    notes.push(`${COUNTER_DATA}, ${D.cities[id].name}: ${c.source || `source ${NOT_RECORDED}`}, licence ${c.licence || NOT_RECORDED}`);
+  }
   return { labels, series, notes, marks: covidMarks(D, labels) };
 }
 

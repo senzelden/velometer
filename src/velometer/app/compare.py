@@ -62,6 +62,9 @@ FUA_NOTE = (
 )
 NO_COUNTERS = "no open counter data"
 NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)"
+# the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
+COUNTER_DATA = "Counter data"
+NOT_RECORDED = "not recorded"
 AVG_DAILY = "index of average daily intensity (monthly values), not of counts"
 COUNTER_UNIT = (
     "index of counts recorded at counter sites (or of their average daily intensity), "
@@ -196,7 +199,9 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
     the first to the last with a value for any drawn city; values[id] one per label (None: a
     gap, never 0). A city without counter data, or whose index is not drawn as a line, gets no
     values and a note: a city listed under `none:` in config/counters.yaml its "no open counter
-    data found" note with the portals checked (compare-model.js: counterLines)."""
+    data found" note with the portals checked. Each drawn city gets an attribution note, after
+    the others: "Counter data, <city>: <publisher>, licence <licence>" (ADR 0008)
+    (counter-model.js: counterLines)."""
     counters = payload.get("counters", {}).get("cities", {})
     none = payload.get("counters", {}).get("none", {})
     names = payload["cities"]
@@ -214,6 +219,10 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
             notes.append(f"{names[i]['name']}: {AVG_DAILY}")
         by_year = {str(p["year"]): p["idx"] for p in c["points"]} if i in drawn else {}
         values[i] = [by_year.get(lbl) for lbl in labels]
+    for i, c in drawn.items():
+        source = c.get("source") or f"source {NOT_RECORDED}"
+        licence = c.get("licence") or NOT_RECORDED
+        notes.append(f"{COUNTER_DATA}, {names[i]['name']}: {source}, licence {licence}")
     return labels, values, notes
 
 

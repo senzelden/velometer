@@ -67,27 +67,40 @@ def no_data_notes(cfg: CountersConfig | None) -> dict[str, str]:
     return out
 
 
+def attribution(entry: CounterEntry | None, sites) -> tuple[str | None, str | None]:
+    """(publisher, licence) of a city's counter data: its config/counters.yaml entry, else the
+    stored sites' (ADR 0008: every page that shows the data carries an attribution line)."""
+    if entry is not None:
+        return entry.source, entry.licence
+    return (sites[0].source, sites[0].licence) if sites else (None, None)
+
+
+def _entry(cfg: CountersConfig | None, city_id: str) -> CounterEntry | None:
+    return next((e for e in cfg.cities if e.city == city_id), None) if cfg else None
+
+
 def counter_payload(data: ReportData) -> dict:
     """`counters` of series.json: the COVID year, per counter city its series kind, base year,
-    whether it is drawn as a line and its yearly index (None: no value, a gap), and `none`: the
-    note of each city without open counter data (`no_data_notes`)."""
+    whether it is drawn as a line, its yearly index (None: no value, a gap) and its attribution
+    (`source`, `licence`), and `none`: the note of each city without open counter data
+    (`no_data_notes`)."""
+    cfg = counters_config(data.config_dir)
     cities = {}
     for city_id in data.counter_cities():
         rows = data.counter_index(city_id)
         if not rows:
             continue
         points = [{"year": r.year, "idx": _round(r.index), "sites": r.sites} for r in rows]
+        source, licence = attribution(_entry(cfg, city_id), data.counter_sites(city_id))
         cities[city_id] = {
             "series": rows[0].series,
             "base_year": rows[0].base_year,
             "line": has_line(points),
             "points": points,
+            "source": source,
+            "licence": licence,
         }
-    return {
-        "covid_year": COVID_YEAR,
-        "cities": cities,
-        "none": no_data_notes(counters_config(data.config_dir)),
-    }
+    return {"covid_year": COVID_YEAR, "cities": cities, "none": no_data_notes(cfg)}
 
 
 def km_index(points, base_year: int) -> dict[int, float | None]:
@@ -176,6 +189,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     sites = data.counter_sites(city_id)
     mapped = [s for s in sites if s.lat is not None and s.lon is not None]
     retrieved = max((s.retrieved_at for s in sites), default=None)
+    source, licence = attribution(entry, sites)
     return {
         "label": SERIES_LABEL.get(series, series),
         "series": series,
@@ -193,8 +207,8 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
         if mapped
         else None,
         "entry": entry,
-        "source": entry.source if entry else (sites[0].source if sites else None),
-        "licence": entry.licence if entry else (sites[0].licence if sites else None),
+        "source": source,
+        "licence": licence,
         "retrieved": None if retrieved is None else retrieved[:10],
         "covid_year": COVID_YEAR,
     }

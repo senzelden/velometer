@@ -2,7 +2,9 @@
 
 import json
 import re
+import shutil
 import sqlite3
+import subprocess
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -253,7 +255,11 @@ def test_counter_lines_gap_is_none_and_cities_without_data_are_notes():
     labels, values, notes = compare.counter_lines(payload, ["a", "m", "n"])
     assert labels == ["2018", "2019", "2020", "2021"]
     assert values == {"a": [90.0, 100.0, None, 0.0], "m": [None] * 4, "n": [None] * 4}
-    assert notes == [f"M: {compare.NO_COUNTER_LINE}", f"N: {compare.NO_COUNTERS}"]
+    assert notes == [
+        f"M: {compare.NO_COUNTER_LINE}",
+        f"N: {compare.NO_COUNTERS}",
+        "Counter data, A: source not recorded, licence not recorded",
+    ]
 
 
 def test_compare_table_without_js_shows_the_counter_index(client):
@@ -280,9 +286,73 @@ def test_compare_table_without_js_shows_the_counter_index(client):
     ]
 
 
+def test_compare_counter_index_names_the_publisher_and_licence_of_every_drawn_city(setup):  # noqa: F811
+    # ADR 0008 (M8 note): every page that shows the counter data carries an attribution line
+    db_path = setup[0]
+    _seed(db_path)
+    _seed(db_path, "paris", sites=[_site("paris", "p1", 48.86, 2.35)])
+    doc = yaml.safe_load((ROOT / "config" / "counters.yaml").read_text(encoding="utf-8"))
+    entries = {e["city"]: e for e in doc["cities"]}
+    with _client(_app(setup)) as c:
+        payload = c.get("/data/series.json").json()
+        text = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+    drawn = [i for i, v in payload["counters"]["cities"].items() if v["line"]]
+    assert sorted(drawn) == ["berlin", "paris"]
+    for city in drawn:
+        entry = entries[city]
+        got = payload["counters"]["cities"][city]
+        assert (got["source"], got["licence"]) == (entry["source"], entry["licence"])
+        name = payload["cities"][city]["name"]
+        line = f"Counter data, {name}: {entry['source']}, licence {entry['licence']}"
+        assert line in text, line
+    # a city whose index is not drawn (one year only) shows no data, so no attribution
+    _seed(db_path, "paris", index={2019: 100.0}, sites=[_site("paris", "p1", 48.86, 2.35)])
+    with _client(_app(setup)) as c:
+        text = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+    assert f"Counter data, {payload['cities']['berlin']['name']}:" in text
+    assert f"Counter data, {payload['cities']['paris']['name']}:" not in text
+
+
+def test_counter_lines_attribution_falls_back_to_unrecorded():
+    payload = {
+        "cities": {"a": {"name": "A"}},
+        "counters": {"cities": {"a": {"series": "counts", "base_year": 2019, "line": True,
+                                      "points": [{"year": 2019, "idx": 100.0},
+                                                 {"year": 2020, "idx": 99.0}]}}},
+    }  # fmt: skip
+    _, _, notes = compare.counter_lines(payload, ["a"])
+    assert notes == ["Counter data, A: source not recorded, licence not recorded"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is needed to run counter-model.js")
+def test_js_counter_lines_notes_equal_the_python_ones():
+    # the no-JS table and compare.js show the same notes, attribution included
+    pts = [{"year": 2019, "idx": 100.0}, {"year": 2020, "idx": 110.0}]
+    payload = {
+        "cities": {k: {"name": k.upper()} for k in ("a", "b", "m", "n", "z")},
+        "counters": {"covid_year": 2020, "none": {"z": "no open counter data found (x)"},
+                     "cities": {
+            "a": {"series": "counts", "base_year": 2019, "line": True, "points": pts,
+                  "source": "Stadt A", "licence": "CC BY 4.0"},
+            "b": {"series": "avg_daily_intensity", "base_year": 2019, "line": True,
+                  "points": pts, "source": "Ajuntament B", "licence": "CC BY 4.0"},
+            "m": {"series": "counts", "base_year": 2020, "line": False, "points": pts[1:],
+                  "source": "M", "licence": "CC BY 4.0"},
+        }},
+    }  # fmt: skip
+    ids = ["a", "b", "m", "n", "z"]
+    js = (ROOT / "src/velometer/app/static/js/counter-model.js").as_uri()
+    script = (
+        f"import('{js}').then(m => console.log(JSON.stringify("
+        f"m.counterLines({json.dumps(payload)}, {json.dumps(ids)}).notes)))"
+    )
+    out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+    assert json.loads(out.stdout) == compare.counter_lines(payload, ids)[2]
+
+
 def test_js_counter_notes_equal_the_python_ones():
     js = (ROOT / "src/velometer/app/static/js/counter-model.js").read_text(encoding="utf-8")
-    for name in ("NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY"):
+    for name in ("NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY", "COUNTER_DATA", "NOT_RECORDED"):
         assert f'export const {name} = "{getattr(compare, name)}";' in js, name
 
 
