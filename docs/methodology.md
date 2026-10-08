@@ -294,6 +294,8 @@ For the other 14 cities no open counter data were found; their Figures tab names
 Index rule: a site qualifies for the link between two years when both years have at least 90 % valid days. The link is the ratio of the qualifying sites' summed counts, and links are chained from the base year. A link with fewer than 3 qualifying sites has no value, and no year beyond it in the chain has one either.
 <!-- /generated:counters -->
 
+A known property of this rule: a site's counts are summed over its valid days only, so a site with fewer valid days in one year of a link than in the other moves the ratio by that difference in coverage. The 90 % rule bounds the effect. Measured on the stored daily data against a mean per valid day of the same sites, most links move by less than 0.5 %; the largest are +2.1 % (Paris, 2019 to 2020) and −2.0 % (Helsinki, 2024 to 2025) [M8 final review, `docs/superpowers/rulings-m8.md`]. Barcelona's monthly series is not affected, as a gauge needs all twelve months.
+
 Hourly data are summed to days. A day is valid when it holds every local hour of its date (23, 24 or 25), and a site-day with a total of 0 is an outage, not a count. Sites a portal lists under two ids, such as a renumbered counter or the two sides of a bridge, are summed as one site. The base year is 2019, or the first full year for a city whose data start later; the table gives each city's [M8 spec, decision 13]. Every counter chart marks 2020 as the COVID year. The Counts tab sets the index beside the index of A+B mapped km in the city proper (1 January snapshots, same base year).
 
 Per city:

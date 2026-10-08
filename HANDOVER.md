@@ -10,7 +10,7 @@ A reproducible pipeline and small read-only app that measures **protected cyclin
 
 The journalistic premise that drives every design decision: **existing rankings are not reproducible.** Clean Cities 2025 mixes city-submitted data with OSM and publishes no code; Copenhagenize is expert scoring; ECF/QECIO publishes tag logic but only per NUTS3 region and frozen in Jan 2024. Our asset is a pipeline anyone can re-run that produces per-city numbers with explicit definitions, and that shows *why* rankings disagree (definitions, denominators, boundaries) rather than hiding it.
 
-Non-goals for v1: no counter/usage modelling, no modal-share harmonisation, no LTS/network-connectivity analysis, no interactive map editor, no scraping of vendor APIs.
+Non-goals for v1: no counter/usage modelling (M8 shows open counter data as context beside the km, not as a model), no modal-share harmonisation, no LTS/network-connectivity analysis, no interactive map editor, no scraping of vendor APIs.
 
 ---
 

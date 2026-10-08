@@ -199,6 +199,32 @@ The SDD ledger's controller rulings of Tasks 1–7 are also listed in the review
 - The methodology gets two sections (overlay, counter index) whose overlay parameters and counter
   cities are generated from config, so `report methodology --check` fails when a new overlay
   version or counter city lands without a regeneration. Cost: two generated blocks.
+- Counter facts in the methodology (`report/methodology.py` `_counter_facts`) list only the cities
+  the country trust gate reports, and "the other N cities" counts the same way. Why: the existing
+  rule `test_untrusted_country_is_absent_from_every_report_surface`; the spec does not require
+  listing held-back cities, and today all seven counter cities are reported. Cost: a counter city
+  drops out of the methodology if its country loses trust.
+
+## Final review and fix wave (2026-10-08)
+
+- The final fix wave takes I1 (counter attribution on Compare, code and parity test) and the
+  doc-only items (M11: these rulings and follow-ups made complete; the §5.3 link-ratio coverage
+  bias recorded as a known property); the other final-review Minors become follow-ups below, not
+  code changes. Why: none is a correctness defect per the reviewer, and one fix wave is the cap.
+  Cost: those Minors stay open after the merge.
+- HANDOVER's "delivered 2026-10-08" stands. Why: the merge, if approved, lands today. Cost: a date
+  edit if the merge slips.
+- I1: `/data/series.json` `counters.cities.<id>` carries `source` and `licence` (the
+  `config/counters.yaml` entry, else the stored sites', as the Counts tab), and Compare's counter
+  index adds one note per drawn city, "Counter data, <city>: <publisher>, licence <licence>",
+  after the other notes, in the no-JS table and compare.js alike. A city whose index is not drawn
+  (Madrid) shows no values and gets no attribution note. Why: ADR 0008's M8 note, attribution is a
+  licence condition for CC BY 4.0, NLOD and ODbL. Cost: six more note lines on a full selection,
+  which push the chart down at phone width.
+- The coverage bias is measured against a mean per complete day pooled over the link's sites (the
+  reviewer's estimator, reproduced exactly). Cost: a per-site mean gives other per-link values
+  (Helsinki 2022→2023 −2.2 % instead of −1.8 %), the same order of magnitude.
+
 
 ## Follow-ups
 
@@ -237,5 +263,38 @@ The SDD ledger's controller rulings of Tasks 1–7 are also listed in the review
   italics, reads ambiguously; no test asserts that Copenhagen 37 and Strasbourg 52 are suspect; the
   quote-break test's `next(...)` raises StopIteration if a page cites the source in every
   paragraph; `content/plans/berlin.yaml` has lines over 100 characters (cosmetic).
+- Counter index (final review M1, M2): a link sums each qualifying site's counts over its complete
+  days only, so a coverage difference between the two years moves the ratio (spec §2.13/§5.3 as
+  recorded, kept by the user; now in the methodology as a known property). Against a pooled mean
+  per complete day, 37 of the 49 daily-count links move by less than 0.5 %; the largest are
+  +2.1 % (Paris 2019→2020), −2.0 % (Helsinki 2024→2025), −1.8 % (Helsinki 2022→2023), +1.6 %
+  (Paris 2023→2024) and −1.3 % (Oslo 2018→2019); Berlin and Vienna stay within 0.7 %. A mean per
+  day link is the natural index v2 question. The base year prints 100 whatever its number of
+  qualifying sites (`counters/index.py:122`), although spec §2.13 gives a year with fewer than 3
+  sites no value (every base year has at least 9 today).
+- Attribution and error notes (final review M3, M4): the Berlin plan page's planned-network line
+  names no licence, although `retrieved.json` covers both layers, and a corrupt `retrieved.json`
+  silently removes the measures licence too (`plans_pages.measures_retrieved`); a source-registry
+  load error removes the plan page's text and quotes without a note (`main.py` `plan_page` passes
+  no `content_error`, unlike `/organisations`).
+- Prose restating config (final review M5, M6, M7; Task 11): `counts.html`, `content/counters.yaml`
+  and `compare.py` `COUNTER_UNIT` ("2019 = 100", wrong for a base-2020 city drawn as a line) spell
+  out `MIN_VALID`, `MIN_SITES` and the base years by hand; the methodology's Madrid and Helsinki
+  bullets hard-code facts outside the generated blocks, so `--check` is blind to their drift; the
+  methodology takes the latest overlay version from config, the page and the facts from
+  `plan_overlay`, so a new config file without a rerun makes them disagree; `berlin_context`
+  derives the 1 January 2022 baseline from the plan's first target year instead of a named
+  constant.
+- Code structure (final review M8, M9): `counters/__init__.py` `load_city` writes `counter_daily`
+  itself while `db.upsert_counter_daily` is used only by tests; `content/check.py`
+  `_COUNTER_WORDS` matches the verb "count", so a "due to" near it would fail the causal check for
+  the wrong reason.
+- Task 11 minors: the Counts/Intensity short names are duplicated in `counts.html` and `city.js`;
+  the phone-width CSS tests assert that a rule is present, not the resolved cascade;
+  `plan-chart.test.mjs` pins the chart margins 44/10; `test_app_m8_counts.py` repeats
+  function-local imports; the counts key wraps at 390 px with a leading "·"; HANDOVER's
+  "delivered 2026-10-08" needs a date edit if the merge slips.
 - Gate: the Starlette `httpx` deprecation warning (pre-existing) stays in the pytest output.
+- Process: the Task 7 full gate was not rerun after the last `oslo.py` reformat (moot: every gate
+  since is green); Task 10's tests were written after the code (red shown against HEAD).
 - Left as M7 behaviour: the Figures-tab tables scroll horizontally inside their box at 390 px.
