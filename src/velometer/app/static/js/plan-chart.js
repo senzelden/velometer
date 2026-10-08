@@ -4,7 +4,7 @@
 // 1 January of the plan's first target year (a line, one point per OSM snapshot).
 // Data: the page's <script type="application/json" id="plan-config">; every value is also in the
 // tables under each chart. Built with createElementNS / textContent only.
-import { niceTicks, scaleLinear, tickLabel, formatValue } from "./chart-core.js";
+import { niceTicks, scaleLinear, tickLabel, formatValue, textWidth } from "./chart-core.js";
 import { mount, failed } from "./data.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -93,6 +93,27 @@ const titled = (node, text) => {
 };
 
 /**
+ * Where the date label of the last snapshot goes: above-left of the point (x, y), else above-right,
+ * below-left, below-right, the first whose box (width w, 10px text) crosses no target step and
+ * stays inside the plot [left, right, top, bottom]; none fits: above-left. Returns text attributes.
+ */
+export function labelSpot(x, y, w, segments, [left, right, top, bottom]) {
+  const spots = [
+    { x: x - 4, y: y - 7, "text-anchor": "end" },
+    { x: x + 4, y: y - 7, "text-anchor": "start" },
+    { x: x - 4, y: y + 13, "text-anchor": "end" },
+    { x: x + 4, y: y + 13, "text-anchor": "start" },
+  ];
+  const fits = (s) => {
+    const [x1, x2] = s["text-anchor"] === "end" ? [s.x - w, s.x] : [s.x, s.x + w];
+    const [y1, y2] = [s.y - 9, s.y + 2]; // cap height to below the baseline
+    if (x1 < left || x2 > right || y1 < top || y2 > bottom) return false;
+    return !segments.some((g) => g.x1 < x2 && g.x2 > x1 && g.y >= y1 && g.y <= y2);
+  };
+  return spots.find(fits) ?? spots[0];
+}
+
+/**
  * Draw `series` (planSeries) into `host`: one band per year (opts.years, else every year with a
  * value), target steps across each band, completed-project bars beside the reported markers and
  * the mapped line (positioned by snapshot date, its last point labelled with the date).
@@ -164,6 +185,8 @@ export function renderPlanChart(host, series, opts = {}) {
     svg.appendChild(g);
   };
   bars(series.projects, "projects", -barW * 1.6, "Completed projects");
+  const steps = series.target.filter(inRange);
+  const segments = steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) }));
 
   if (mapped.length) {
     // a snapshot sits at its date: 1 January of Y on the left edge of Y's band
@@ -177,11 +200,11 @@ export function renderPlanChart(host, series, opts = {}) {
       g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y(p.value), r: 3 }), text));
     }
     const last = mapped.at(-1);
-    g.appendChild(el("text", { class: "mapped-label", x: xAt(last) - 4, y: y(last.value) - 7, "text-anchor": "end" }, last.date));
+    const spot = labelSpot(xAt(last), y(last.value), textWidth(last.date), segments, [ml, W - mr, mt, H - mb]);
+    g.appendChild(el("text", { class: "mapped-label", ...spot }, last.date));
     svg.appendChild(g);
   }
 
-  const steps = series.target.filter(inRange);
   if (steps.length) {
     const g = el("g", { class: "target" });
     let d = "";

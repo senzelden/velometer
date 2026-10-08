@@ -167,6 +167,32 @@ test("renderPlanChart: the mapped series is a line labelled in mapped km, its la
   assert.ok(texts.some((t) => t.includes("2026-10-03")), "the last point is labelled with its date");
 });
 
+test("renderPlanChart: the date label of the last snapshot never sits on a target step", () => {
+  // render check, Task 11: at 390 px the Ergänzungsnetz label "2026-10-03" (right-aligned left of
+  // the point) ran across the 2025 target step just above the point. Narrow chart, the same shape:
+  // a low target in the band left of the last snapshot, the snapshot late in its year
+  const el = new Node("div");
+  const overlay = [
+    { date: "2022-01-01", ab_km: 100 }, { date: "2025-01-01", ab_km: 104 },
+    { date: "2026-10-03", ab_km: 113.7 },
+  ];
+  const targets = { 2025: 50, 2026: 100, 2027: 100, 2028: 350, 2029: 450, 2030: 450 };
+  const s = planSeries(targets, [row(2022, 10, "b", true)], overlay, [], { mappedFrom: 2022 });
+  const years = [2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+  renderPlanChart(el, s, { label: "Ergänzungsnetz", years, unit: "km", width: 358 });
+  const label = el.find((n) => n.attrs.class === "mapped-label")[0];
+  const w = label.textContent.length * 6.2; // 10px labels: chart-core's textWidth
+  const lx = Number(label.attrs.x);
+  const [x1, x2] = label.attrs["text-anchor"] === "end" ? [lx - w, lx] : [lx, lx + w];
+  const [y2, y1] = [Number(label.attrs.y) + 2, Number(label.attrs.y) - 9]; // baseline to cap height
+  const d = el.find((n) => n.attrs.class === "target-step")[0].attrs.d;
+  for (const [, sx, sy, ex] of d.matchAll(/M([\d.]+),([\d.]+)H([\d.]+)/g).map((m) => m.map(Number))) {
+    const crosses = sx < x2 && ex > x1 && sy >= y1 && sy <= y2;
+    assert.ok(!crosses, `label [${x1}..${x2}]x[${y1}..${y2}] crosses the step at y=${sy} [${sx}..${ex}]`);
+  }
+  assert.ok(x1 >= 44 && x2 <= 358 - 10, "the label stays inside the plot");
+});
+
 test("renderPlanChart: no target line for an item without a target", () => {
   const el = new Node("div");
   const s = planSeries({}, [row(2024, 3, "a", true)], [], []);

@@ -332,10 +332,33 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     from tests.test_app_m7 import STATIC
 
     rules = _css_rules((STATIC / "app.css").read_text())
-    colour = {s: d.get("background") for sels, d in rules for s in sels}
     palette = re.search(r"PALETTE = \[([^\]]*)\]", (STATIC / "js" / "data.js").read_text())
     first, second = re.findall(r'"(#[0-9a-f]{6})"', palette.group(1))[:2]
-    assert colour[".key-counter"] == first and colour[".key-km"] == second
+    # the swatch is a 3 px top border on a box of no height: its visible colour is the
+    # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`
+    assert _key_line_colour(rules, "key-counter") == first
+    assert _key_line_colour(rules, "key-km") == second
+
+
+def _key_line_colour(rules, cls: str) -> str:
+    """The border-top colour of `<p class="chart-key"><span class="key {cls}">`: the matching
+    rule of highest specificity wins, a later one on ties; a shorthand without a colour resets
+    it to currentColor."""
+    matching = {".key", f".{cls}", ".chart-key .key", f".chart-key .{cls}", f".key.{cls}"}
+    best = (-1, "currentColor")
+    for sels, decls in rules:
+        for sel in (s for s in sels if s in matching):
+            for prop, value in decls.items():
+                if prop in ("border", "border-top"):
+                    hexes = re.findall(r"#[0-9a-f]{3,6}\b", value)
+                    colour = hexes[0] if hexes else "currentColor"
+                elif prop in ("border-color", "border-top-color"):
+                    colour = value
+                else:
+                    continue
+                if sel.count(".") >= best[0]:
+                    best = (sel.count("."), colour)
+    return best[1]
 
 
 def test_counts_chart_key_for_average_daily_intensity(setup):  # noqa: F811
@@ -346,3 +369,24 @@ def test_counts_chart_key_for_average_daily_intensity(setup):  # noqa: F811
     assert "Intensity: index of average daily intensity recorded at counter sites" in key
     # no km for the base year (2019 is before the fixture's snapshots): no km line, no km key
     assert "Mapped km" not in key
+
+
+def test_counts_tables_fit_a_phone_width():
+    # Task 11 render check: at 390 px the counts table (four columns, headers kept on one line)
+    # was 626 px wide in a 358 px column, and a site name like "Hesperian puisto/Ooppera"
+    # pushed the sites table past it. At phone width the headers wrap and site names break
+    from tests.test_app import _css_rules
+    from tests.test_app_m7 import STATIC
+
+    css = (STATIC / "app.css").read_text()
+    start = css.index("/* counts tables at phone width */")
+    block = css[start : css.index("\n}\n", start)]
+    assert "@media (max-width: 600px)" in block
+    rules = _css_rules(block.split("{", 1)[1])
+    decl: dict[str, dict] = {}
+    for sels, d in rules:
+        for s in sels:
+            decl.setdefault(s, {}).update(d)
+    assert decl[".counts-table th"]["white-space"] == "normal"
+    assert decl[".counter-sites td"]["overflow-wrap"] == "anywhere"
+    assert decl[".counts-table .covid-mark"]["white-space"] == "nowrap"  # "COVID year" stays whole
