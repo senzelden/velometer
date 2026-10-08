@@ -650,7 +650,8 @@ def create_app(
             request, "compare.html", "compare", data, state=state, table=table, quick=quick,
             groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
             href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
-            headline_unit=HEADLINE_UNIT,
+            foot=cmp.footnote(state.m, HEADLINE_UNIT),
+            counter={"title": cmp.counter_title, "context": cmp.COUNTER_CONTEXT},
         )  # fmt: skip
 
     @app.get("/city/{city_id}/panel", response_class=HTMLResponse)

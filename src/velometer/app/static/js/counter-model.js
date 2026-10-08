@@ -12,6 +12,13 @@ export const COVID_TEXT = "COVID year";
 // the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
 export const COUNTER_DATA = "Counter data";
 export const NOT_RECORDED = "not recorded";
+// Compare's counter metric: title, unit and footnote (app/compare.py has the same strings; a test
+// asserts it). The unit's base year comes from the drawn cities (counterUnit).
+export const COUNTER_TITLE = "counter sites"; // the counter index is the same for both boundaries
+export const COUNTER_CONTEXT = "Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.";
+export const COUNTER_FOOT = "Counter index: each city's base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected.";
+export const COUNTER_OF = "index of counts recorded at counter sites (or of their average daily intensity)";
+export const ANY_BASE = "each city's base year = 100"; // no city drawn: no year to name
 
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i));
 
@@ -21,9 +28,37 @@ export function covidMarks(D, labels) {
   return labels.includes(y) ? [{ label: y, text: COVID_TEXT }] : [];
 }
 
+/** The counter metric's chart and table title. */
+export const counterTitle = (label) => `${label} · ${COUNTER_TITLE}`;
+
+/**
+ * The counter index unit for `ids`, naming the base year (= 100) of the cities drawn as a line:
+ * the base year of most of them (a tie: the earliest), then each other base year with its cities,
+ * "2019 = 100 (2020 = 100 for Madrid)"; no city drawn: each city's base year.
+ */
+export function counterUnit(D, ids) {
+  const counters = D.counters?.cities ?? {};
+  const byBase = new Map();
+  for (const id of ids) {
+    if (!counters[id]?.line) continue;
+    const y = counters[id].base_year;
+    if (!byBase.has(y)) byBase.set(y, []);
+    byBase.get(y).push(D.cities[id].name);
+  }
+  let base = ANY_BASE;
+  if (byBase.size) {
+    const years = [...byBase.keys()].sort((a, b) => a - b);
+    const lead = years.reduce((best, y) => (byBase.get(y).length > byBase.get(best).length ? y : best));
+    const others = years.filter((y) => y !== lead).map((y) => `${y} = 100 for ${byBase.get(y).join(", ")}`).join("; ");
+    base = `${lead} = 100${others ? ` (${others})` : ""}`;
+  }
+  const covid = D.counters?.covid_year;
+  return `${COUNTER_OF}, ${base}${covid != null ? `; ${covid} is the COVID year` : ""}`;
+}
+
 /**
  * Compare's counter index for `ids`: {labels, series: [{id, name, points: [{label, value,
- * flags}]}], notes, marks}. Labels are the calendar years from the first to the last with a value
+ * flags}]}], notes, marks, unit}. Labels are the calendar years from the first to the last with a value
  * for any drawn city; a city without counter data, or whose index is not a line, has no values
  * and a note. Each drawn city gets an attribution note, after the others: "Counter data, <city>:
  * <publisher>, licence <licence>" (ADR 0008).
@@ -51,7 +86,7 @@ export function counterLines(D, ids) {
     const c = counters[id];
     notes.push(`${COUNTER_DATA}, ${D.cities[id].name}: ${c.source || `source ${NOT_RECORDED}`}, licence ${c.licence || NOT_RECORDED}`);
   }
-  return { labels, series, notes, marks: covidMarks(D, labels) };
+  return { labels, series, notes, marks: covidMarks(D, labels), unit: counterUnit(D, ids) };
 }
 
 /**

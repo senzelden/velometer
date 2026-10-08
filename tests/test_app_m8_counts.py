@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import subprocess
 from datetime import date, timedelta
+from html import unescape
 from pathlib import Path
 
 import pytest
@@ -324,36 +325,89 @@ def test_counter_lines_attribution_falls_back_to_unrecorded():
     assert notes == ["Counter data, A: source not recorded, licence not recorded"]
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node is needed to run counter-model.js")
-def test_js_counter_lines_notes_equal_the_python_ones():
-    # the no-JS table and compare.js show the same notes, attribution included
-    pts = [{"year": 2019, "idx": 100.0}, {"year": 2020, "idx": 110.0}]
-    payload = {
-        "cities": {k: {"name": k.upper()} for k in ("a", "b", "m", "n", "z")},
-        "counters": {"covid_year": 2020, "none": {"z": "no open counter data found (x)"},
-                     "cities": {
-            "a": {"series": "counts", "base_year": 2019, "line": True, "points": pts,
-                  "source": "Stadt A", "licence": "CC BY 4.0"},
-            "b": {"series": "avg_daily_intensity", "base_year": 2019, "line": True,
-                  "points": pts, "source": "Ajuntament B", "licence": "CC BY 4.0"},
-            "m": {"series": "counts", "base_year": 2020, "line": False, "points": pts[1:],
-                  "source": "M", "licence": "CC BY 4.0"},
-        }},
-    }  # fmt: skip
-    ids = ["a", "b", "m", "n", "z"]
-    js = (ROOT / "src/velometer/app/static/js/counter-model.js").as_uri()
-    script = (
-        f"import('{js}').then(m => console.log(JSON.stringify("
-        f"m.counterLines({json.dumps(payload)}, {json.dumps(ids)}).notes)))"
-    )
+COUNTER_CASES = json.loads((ROOT / "tests" / "counter_cases.json").read_text(encoding="utf-8"))
+COUNTER_JS = (ROOT / "src/velometer/app/static/js/counter-model.js").as_uri()
+COMPARE_JS = (ROOT / "src/velometer/app/static/js/compare-model.js").as_uri()
+
+
+def _node(script: str):
     out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
-    assert json.loads(out.stdout) == compare.counter_lines(payload, ids)[2]
+    return json.loads(out.stdout)
+
+
+@pytest.mark.parametrize("case", COUNTER_CASES["cases"], ids=lambda c: c["name"])
+def test_counter_lines_and_unit_match_the_shared_cases(case):
+    # counter-model.test.mjs runs counterLines over the same cases
+    payload = COUNTER_CASES["payload"]
+    labels, values, notes = compare.counter_lines(payload, case["ids"])
+    unit = compare.counter_unit(payload, case["ids"])
+    assert {"labels": labels, "values": values, "notes": notes, "unit": unit} == case["expect"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is needed to run counter-model.js")
+def test_js_counter_title_footnote_unit_and_notes_equal_the_python_ones():
+    # the no-JS page and compare.js show the same title, footnote, unit and notes
+    payload = COUNTER_CASES["payload"]
+    cases = [c["ids"] for c in COUNTER_CASES["cases"]]
+    script = (
+        f"Promise.all([import('{COUNTER_JS}'), import('{COMPARE_JS}')]).then(([c, m]) => "
+        f"console.log(JSON.stringify({{"
+        f"lines: {json.dumps(cases)}.map(ids => {{ const r = c.counterLines("
+        f"{json.dumps(payload)}, ids); return [r.notes, r.unit]; }}), "
+        f"title: c.counterTitle('Counter index'), "
+        f"foot: ['counter_index', 'headline', 'ab_km'].map(k => m.footnote(k, 'HU'))}})))"
+    )
+    js = _node(script)
+    assert js["lines"] == [
+        [compare.counter_lines(payload, ids)[2], compare.counter_unit(payload, ids)]
+        for ids in cases
+    ]
+    assert js["title"] == compare.counter_title("Counter index")
+    assert js["foot"] == [compare.footnote(k, "HU") for k in ("counter_index", "headline", "ab_km")]
 
 
 def test_js_counter_notes_equal_the_python_ones():
     js = (ROOT / "src/velometer/app/static/js/counter-model.js").read_text(encoding="utf-8")
-    for name in ("NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY", "COUNTER_DATA", "NOT_RECORDED"):
+    names = (
+        "NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY", "COUNTER_DATA", "NOT_RECORDED",
+        "COUNTER_TITLE", "COUNTER_CONTEXT", "COUNTER_FOOT", "COUNTER_OF", "ANY_BASE",
+    )  # fmt: skip
+    for name in names:
         assert f'export const {name} = "{getattr(compare, name)}";' in js, name
+
+
+def _foot(html: str) -> str:
+    tag = "data-compare-foot>"
+    return unescape(_text(html[html.index(tag) + len(tag) :].split("</p>")[0]))
+
+
+def test_compare_footnote_is_metric_aware(client):
+    # the headline footnote (flag mark, headline unit) is about the mapped-km metrics; the
+    # counter index has no flagged years and is not the headline: its own footnote
+    counter = _foot(client.get("/compare?c=berlin&m=counter_index").text)
+    assert "flagged year" not in counter and "Headline:" not in counter
+    assert counter == compare.COUNTER_FOOT
+    assert "base year = 100" in counter and "recorded at counter sites" in counter
+    for m in ("headline", "ab_km"):
+        foot = _foot(client.get(f"/compare?c=berlin&m={m}").text)
+        assert "flagged year" in foot and "Headline:" in foot, m
+
+
+def test_compare_counter_unit_names_the_base_year_of_each_drawn_city(setup):  # noqa: F811
+    # the unit's "<year> = 100" comes from the drawn cities' base years, not a constant
+    db_path = setup[0]
+    _seed(db_path)  # base 2019
+    _seed(db_path, "paris", index={2020: 100.0, 2021: 104.0}, base=2020,
+          sites=[_site("paris", "p1", 48.86, 2.35)])  # fmt: skip
+    with _client(_app(setup)) as c:
+        berlin = _text(c.get("/compare?c=berlin&m=counter_index").text)
+        paris = _text(c.get("/compare?c=paris&m=counter_index").text)
+        both = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+    assert "counter sites (or of their average daily intensity), 2019 = 100;" in berlin
+    assert "2020 = 100" not in berlin
+    assert "counter sites (or of their average daily intensity), 2020 = 100;" in paris
+    assert "2019 = 100" not in paris
+    assert "2019 = 100 (2020 = 100 for Paris);" in both
 
 
 # ---------- cities without open counter data (spec §5.1) ----------

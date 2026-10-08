@@ -3,9 +3,18 @@
 import { assignColours, indexSeries, ranks } from "./chart-core.js";
 import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
 import { PALETTE, labelsOf } from "./data.js";
-import { COUNTER_METRIC, counterLines } from "./counter-model.js";
+import { COUNTER_FOOT, COUNTER_METRIC, counterLines } from "./counter-model.js";
 
 export const NO_INDEX = "no index: first year is 0 or missing";
+
+/**
+ * The footnote under the chart and table: the counter index has its own (no flagged years, not
+ * the headline); every other metric the flag mark and the headline unit (app/compare.py: footnote).
+ */
+export function footnote(metric, headlineUnit) {
+  if (metric === COUNTER_METRIC) return COUNTER_FOOT;
+  return `⚑ flagged year (automatic check). Headline: ${headlineUnit}. Ranks in the Rank view depend on the cities selected.`;
+}
 
 /** One point's value of a metric; null where it is missing. */
 export function metricValue(point, metric, population) {

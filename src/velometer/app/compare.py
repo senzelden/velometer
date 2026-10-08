@@ -66,10 +66,20 @@ NO_COUNTER_LINE = "no counter index line (an index value for one year only; see 
 COUNTER_DATA = "Counter data"
 NOT_RECORDED = "not recorded"
 AVG_DAILY = "index of average daily intensity (monthly values), not of counts"
-COUNTER_UNIT = (
-    "index of counts recorded at counter sites (or of their average daily intensity), "
-    "2019 = 100; 2020 is the COVID year"
+# The counter metric's title, unit and footnote (counter-model.js has the same strings; a test
+# asserts it). The unit's base year comes from the drawn cities (`counter_unit`).
+COUNTER_TITLE = "counter sites"  # the counter index is the same for both boundaries
+COUNTER_CONTEXT = (
+    "Counters are context: they record the bicycles passing the sites where they stand, "
+    "not those elsewhere in the city."
 )
+COUNTER_FOOT = (
+    "Counter index: each city's base year = 100, never rebased. Counters are context: counts "
+    "recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on "
+    "the cities selected."
+)
+COUNTER_OF = "index of counts recorded at counter sites (or of their average daily intensity)"
+ANY_BASE = "each city's base year = 100"  # no city drawn: no year to name
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
@@ -172,7 +182,7 @@ def metric_info(
         "ecf_qecio": preset_units.get("ecf_qecio", ""),
         "clean_cities": preset_units.get("clean_cities_2025", ""),
         "ab_per_100k": per_100k_unit(population_years),
-        "counter_index": COUNTER_UNIT,
+        "counter_index": counter_unit({}, []),  # Compare names the drawn cities' base years
     }
     return {m: {"label": METRIC_LABELS[m], "unit": unit[m]} for m in METRICS}
 
@@ -226,6 +236,44 @@ def counter_lines(payload: dict, ids: Sequence[str]) -> tuple[list[str], dict, l
     return labels, values, notes
 
 
+def counter_title(label: str) -> str:
+    """The counter metric's chart and table title (counter-model.js: counterTitle)."""
+    return f"{label} · {COUNTER_TITLE}"
+
+
+def footnote(metric: str, headline_unit: str) -> str:
+    """The footnote under Compare's chart and table: the counter index has its own (no flagged
+    years, not the headline); every other metric the flag mark and the headline unit
+    (compare-model.js: footnote)."""
+    if metric == COUNTER_METRIC:
+        return COUNTER_FOOT
+    return (
+        f"⚑ flagged year (automatic check). Headline: {headline_unit}. "
+        "Ranks in the Rank view depend on the cities selected."
+    )
+
+
+def counter_unit(payload: dict, ids: Sequence[str]) -> str:
+    """The counter index unit for `ids`, naming the base year (= 100) of the cities drawn as a
+    line: the base year of most of them (a tie: the earliest), then each other base year with
+    its cities, "2019 = 100 (2020 = 100 for Madrid)"; no city drawn: each city's base year
+    (counter-model.js: counterUnit)."""
+    counters = payload.get("counters", {})
+    cities = counters.get("cities", {})
+    by_base: dict[int, list[str]] = {}
+    for i in ids:
+        if i in cities and cities[i]["line"]:
+            by_base.setdefault(cities[i]["base_year"], []).append(payload["cities"][i]["name"])
+    base = ANY_BASE
+    if by_base:
+        years = sorted(by_base)
+        lead = max(years, key=lambda y: len(by_base[y]))  # the first of the most: the earliest
+        others = "; ".join(f"{y} = 100 for {', '.join(by_base[y])}" for y in years if y != lead)
+        base = f"{lead} = 100" + (f" ({others})" if others else "")
+    covid = counters.get("covid_year")
+    return f"{COUNTER_OF}, {base}" + (f"; {covid} is the COVID year" if covid is not None else "")
+
+
 def _counter_table(payload: dict, ids: list[str]) -> dict:
     labels, values, notes = counter_lines(payload, ids)
     covid = str(payload.get("counters", {}).get("covid_year", ""))
@@ -239,6 +287,7 @@ def _counter_table(payload: dict, ids: list[str]) -> dict:
         ],
         "notes": notes,
         "index_base": None,
+        "unit": counter_unit(payload, ids),
     }
 
 

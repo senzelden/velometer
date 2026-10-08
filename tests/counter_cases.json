@@ -1,0 +1,137 @@
+{
+ "about": "Shared py/js cases of Compare's counter index: app/compare.py counter_lines + counter_unit and static/js/counter-model.js counterLines (labels, values per city, notes, unit). Read by tests/test_app_m8_counts.py and static/js/tests/counter-model.test.mjs.",
+ "payload": {
+  "cities": {
+   "a": {"name": "Aville"},
+   "b": {"name": "Bton"},
+   "m": {"name": "Mton"},
+   "n": {"name": "Nham"},
+   "p": {"name": "Pville"},
+   "q": {"name": "Qburg"},
+   "z": {"name": "Zstad"}
+  },
+  "counters": {
+   "covid_year": 2020,
+   "none": {"z": "no open counter data found (portals checked: x)"},
+   "cities": {
+    "a": {"series": "counts", "base_year": 2019, "line": true, "source": "Stadt A",
+          "licence": "CC BY 4.0",
+          "points": [{"year": 2018, "idx": 90.0}, {"year": 2019, "idx": 100.0},
+                     {"year": 2020, "idx": null}, {"year": 2021, "idx": 0.0}]},
+    "b": {"series": "avg_daily_intensity", "base_year": 2019, "line": true,
+          "source": "Ajuntament B", "licence": "CC BY 4.0",
+          "points": [{"year": 2019, "idx": 100.0}, {"year": 2020, "idx": 91.8},
+                     {"year": 2022, "idx": 132.9}]},
+    "m": {"series": "counts", "base_year": 2020, "line": false, "source": "M",
+          "licence": "CC BY 4.0", "points": [{"year": 2020, "idx": 100.0}]},
+    "p": {"series": "counts", "base_year": 2020, "line": true,
+          "points": [{"year": 2020, "idx": 100.0}, {"year": 2021, "idx": 104.0}]},
+    "q": {"series": "counts", "base_year": 2020, "line": true, "source": "Q", "licence": "ODbL",
+          "points": [{"year": 2020, "idx": 100.0}, {"year": 2021, "idx": 98.5}]}
+   }
+  }
+ },
+ "cases": [
+  {
+   "name": "base 2019 everywhere: a gap stays null, a stored 0 stays 0, attribution after the notes",
+   "ids": ["a", "b", "n"],
+   "expect": {
+    "labels": ["2018", "2019", "2020", "2021", "2022"],
+    "values": {
+     "a": [90.0, 100.0, null, 0.0, null],
+     "b": [null, 100.0, 91.8, null, 132.9],
+     "n": [null, null, null, null, null]
+    },
+    "notes": [
+     "Bton: index of average daily intensity (monthly values), not of counts",
+     "Nham: no open counter data",
+     "Counter data, Aville: Stadt A, licence CC BY 4.0",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0"
+    ],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100; 2020 is the COVID year"
+   }
+  },
+  {
+   "name": "a drawn city with another base year is named with it",
+   "ids": ["a", "b", "p"],
+   "expect": {
+    "labels": ["2018", "2019", "2020", "2021", "2022"],
+    "values": {
+     "a": [90.0, 100.0, null, 0.0, null],
+     "b": [null, 100.0, 91.8, null, 132.9],
+     "p": [null, null, 100.0, 104.0, null]
+    },
+    "notes": [
+     "Bton: index of average daily intensity (monthly values), not of counts",
+     "Counter data, Aville: Stadt A, licence CC BY 4.0",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0",
+     "Counter data, Pville: source not recorded, licence not recorded"
+    ],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100 (2020 = 100 for Pville); 2020 is the COVID year"
+   }
+  },
+  {
+   "name": "every drawn city based 2020: 2020 = 100",
+   "ids": ["p"],
+   "expect": {
+    "labels": ["2020", "2021"],
+    "values": {"p": [100.0, 104.0]},
+    "notes": ["Counter data, Pville: source not recorded, licence not recorded"],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2020 = 100; 2020 is the COVID year"
+   }
+  },
+  {
+   "name": "the base year of most drawn cities leads, the others are named",
+   "ids": ["a", "p", "q"],
+   "expect": {
+    "labels": ["2018", "2019", "2020", "2021"],
+    "values": {
+     "a": [90.0, 100.0, null, 0.0],
+     "p": [null, null, 100.0, 104.0],
+     "q": [null, null, 100.0, 98.5]
+    },
+    "notes": [
+     "Counter data, Aville: Stadt A, licence CC BY 4.0",
+     "Counter data, Pville: source not recorded, licence not recorded",
+     "Counter data, Qburg: Q, licence ODbL"
+    ],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2020 = 100 (2019 = 100 for Aville); 2020 is the COVID year"
+   }
+  },
+  {
+   "name": "a tie goes to the earliest base year, whatever the selection order",
+   "ids": ["p", "q", "b", "a"],
+   "expect": {
+    "labels": ["2018", "2019", "2020", "2021", "2022"],
+    "values": {
+     "p": [null, null, 100.0, 104.0, null],
+     "q": [null, null, 100.0, 98.5, null],
+     "b": [null, 100.0, 91.8, null, 132.9],
+     "a": [90.0, 100.0, null, 0.0, null]
+    },
+    "notes": [
+     "Bton: index of average daily intensity (monthly values), not of counts",
+     "Counter data, Pville: source not recorded, licence not recorded",
+     "Counter data, Qburg: Q, licence ODbL",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0",
+     "Counter data, Aville: Stadt A, licence CC BY 4.0"
+    ],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100 (2020 = 100 for Pville, Qburg); 2020 is the COVID year"
+   }
+  },
+  {
+   "name": "no drawn city: no axis, notes only, the unit names no year",
+   "ids": ["m", "n", "z"],
+   "expect": {
+    "labels": [],
+    "values": {"m": [], "n": [], "z": []},
+    "notes": [
+     "Mton: no counter index line (an index value for one year only; see its Counts tab)",
+     "Nham: no open counter data",
+     "Zstad: no open counter data found (portals checked: x)"
+    ],
+    "unit": "index of counts recorded at counter sites (or of their average daily intensity), each city's base year = 100; 2020 is the COVID year"
+   }
+  }
+ ]
+}

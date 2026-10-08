@@ -6,17 +6,16 @@ import { renderLines, renderRank, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import {
-  buildModel, colourPlan, colouredIds, nextSort, orderCities, plainText, popPlan, queryOf, rankSeries,
-  sortRows,
+  buildModel, colourPlan, colouredIds, footnote, nextSort, orderCities, plainText, popPlan, queryOf,
+  rankSeries, sortRows,
 } from "./compare-model.js";
+import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
 import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
 
 const FUA_NOTE =
   "A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).";
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
-const COUNTER_TITLE = "counter sites"; // the counter index is the same for both boundaries
-const COUNTER_FOOT = "Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const form = $("#compare-filters");
@@ -27,6 +26,7 @@ const out = {
   chart: $("[data-compare-chart]"),
   flag: $("[data-flag-note]"),
   table: $("[data-compare-table]"),
+  foot: $("[data-compare-foot]"),
 };
 const cfg = JSON.parse($("#compare-config").textContent);
 const known = { cities: cfg.cities, metrics: cfg.metric_order };
@@ -93,7 +93,7 @@ function syncForm() {
   const n = state.c.length;
   $("[data-filters-summary]").textContent =
     state.m === "counter_index"
-      ? `${cfg.metrics[state.m].label} · ${COUNTER_TITLE} · ${n} cit${n === 1 ? "y" : "ies"}`
+      ? `${counterTitle(cfg.metrics[state.m].label)} · ${n} cit${n === 1 ? "y" : "ies"}`
       : `${cfg.metrics[state.m].label} · ${state.b.toUpperCase()} · ${n} cit${n === 1 ? "y" : "ies"} · ${state.mode === "index" ? "indexed" : "absolute"}`;
 }
 
@@ -240,7 +240,7 @@ function drawChart(model) {
   } else {
     renderLines(out.chart, base, {
       ...size, zero: state.mode === "abs" && !model.counter, tip, onPick,
-      label: `Line chart: ${cfg.metrics[state.m].label}, ${model.counter ? COUNTER_TITLE : BOUNDARY[state.b]}`,
+      label: `Line chart: ${model.counter ? counterTitle(cfg.metrics[state.m].label) : `${cfg.metrics[state.m].label}, ${BOUNDARY[state.b]}`}`,
     });
     out.chart.dataset.series = String(series.length);
   }
@@ -300,10 +300,11 @@ function drawTitle(model) {
   const m = cfg.metrics[state.m];
   out.title.replaceChildren(
     model.counter
-      ? el("h2", {}, `${m.label} · ${COUNTER_TITLE}`)
+      ? el("h2", {}, counterTitle(m.label))
       : el("h2", {}, `${m.label} · ${BOUNDARY[state.b]}${state.mode === "index" ? " · index, first year = 100" : ""}`),
-    el("p", { class: "meta" }, `${m.unit}. ${model.counter ? COUNTER_FOOT : "Mapped km in OpenStreetMap, not built km."}`),
+    el("p", { class: "meta" }, model.counter ? `${model.unit}. ${COUNTER_CONTEXT}` : `${m.unit}. Mapped km in OpenStreetMap, not built km.`),
   );
+  out.foot.textContent = footnote(state.m, cfg.headline_unit);
   const notes = [...(dropped ? [FUA_NOTE] : []), ...model.notes];
   out.notes.replaceChildren(...notes.map((n) => el("p", { class: "note" }, n)));
   if (state.view === "rank") {

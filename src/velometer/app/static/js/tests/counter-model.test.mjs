@@ -109,3 +109,18 @@ test("Counts tab end labels: each series has a short name that fits the narrow c
   assert.equal(avg.series[0].short, "Intensity");
   for (const s of [...m.series, ...avg.series]) assert.ok(s.short.length <= 11, s.short);
 });
+
+// ---- the cases table shared with the Python suite (tests/test_app_m8_counts.py) ----
+import { readFileSync } from "node:fs";
+
+const shared = JSON.parse(
+  readFileSync(new URL("../../../../../../tests/counter_cases.json", import.meta.url), "utf8"),
+);
+
+for (const c of shared.cases) {
+  test(`shared counter case: ${c.name}`, () => {
+    const m = counterLines(shared.payload, c.ids);
+    const values = Object.fromEntries(m.series.map((s) => [s.id, s.points.map((p) => p.value)]));
+    assert.deepEqual({ labels: m.labels, values, notes: m.notes, unit: m.unit }, c.expect);
+  });
+}
