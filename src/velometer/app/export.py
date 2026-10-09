@@ -4,13 +4,17 @@ The app renders every exported URL in-process (Starlette TestClient: no server, 
 the response bodies are written to files; there is no second renderer. The URL list comes from
 the data (`export_urls`), a URL maps to a file by `url_to_path`, `static/` is copied, `404.html`
 is the app's 404 response and `build.json` stamps the build. The site is written to a staging
-directory next to `out` and moved into place only when complete, so a failed export leaves `out`
-as it was. The database is opened read-only, as the app opens it.
+directory next to `out` (never inside it) and moved into place only when complete, so a failed
+export leaves `out` as it was. A dangerous `out` (`/`, $HOME, a repo root, a directory holding
+an input, a symlink) and a base that is not a plain path are refused before anything happens.
+The database is opened read-only, as the app opens it.
 """
 
 import json
+import os
 import re
 import shutil
+import subprocess
 import tempfile
 import warnings
 from dataclasses import dataclass
@@ -46,6 +50,11 @@ BUILD_KEYS = (
     "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "built_at"
 )  # fmt: skip
 STATIC_EXCLUDED = PurePosixPath("js/tests")  # the node tests of the JS modules, not the site
+# The staging and set-aside directories, siblings of `out` (never inside it); .gitignore ignores
+# the prefix, so an export killed mid-way leaves no untracked directory in the repo.
+STAGING_PREFIX = ".velometer-staging-"
+# a base path is `/`-separated segments of these characters (no `..`, `//`, scheme, query, ...)
+BASE_SEGMENT = re.compile(r"^[A-Za-z0-9._~-]+$")
 
 
 class ExportError(Exception):
@@ -77,6 +86,53 @@ def url_to_path(url: str, content_type: str) -> PurePosixPath:
     return PurePosixPath(*parts)
 
 
+def validate_base(base: str) -> None:
+    """Refuse a `--base` that is not a plain path: `..`/`.` segments, `//`, a scheme, a query, a
+    fragment or any character outside `A-Z a-z 0-9 . _ ~ -` in a segment."""
+    if "//" in base:
+        raise ExportError(f"--base {base!r}: '//' is not a path (a scheme or an empty segment)")
+    for segment in base.strip("/").split("/"):
+        if not segment and base.strip("/") == "":
+            return  # `/` or ""
+        if segment in (".", ".."):
+            raise ExportError(f"--base {base!r}: a '{segment}' segment is not allowed")
+        if not BASE_SEGMENT.match(segment):
+            raise ExportError(
+                f"--base {base!r}: segment {segment!r} may hold only letters, digits and . _ ~ - "
+                "(no scheme, query, fragment or space)"
+            )
+
+
+def _git_toplevel(cwd: Path) -> Path | None:
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=cwd, capture_output=True, text=True
+        )
+    except OSError:
+        return None
+    return Path(r.stdout.strip()).resolve() if r.returncode == 0 and r.stdout.strip() else None
+
+
+def _refuse_dangerous_out(out: Path, inputs: list[Path]) -> None:
+    """Refuse an `out` that is `/`, $HOME, a git toplevel (of the cwd or of velometer's source),
+    or a directory that holds an input (DB, config, maps, docs, content, plans data, the app's
+    own static files), or a symlink: `--clean` would delete it."""
+    if out.is_symlink():
+        raise ExportError(f"refusing --out {out}: it is a symlink; name the directory itself")
+    real = out.resolve()
+    if real == Path(real.anchor):
+        raise ExportError(f"refusing --out {out}: it is the filesystem root")
+    if real == Path.home().resolve():
+        raise ExportError(f"refusing --out {out}: it is the home directory")
+    for where in (Path.cwd(), HERE):
+        top = _git_toplevel(where)
+        if top is not None and real == top:
+            raise ExportError(f"refusing --out {out}: it is the root of the git repository {top}")
+    for path in [*inputs, HERE]:
+        if Path(path).resolve().is_relative_to(real):
+            raise ExportError(f"refusing --out {out}: it contains the input {path}")
+
+
 def _map_refs(html: str, base: str) -> set[str]:
     """The `/maps/…` routes a page references (written `<base>maps/…`, in an attribute or in a
     JSON config): the base taken off."""
@@ -97,7 +153,7 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
         probed += [f"/data/{city.id}.csv", f"/data/{city.id}_subareas.csv"]
     found = list(PAGES)
     maps: set[str] = set()
-    with TestClient(app, base_url=BASE_URL) as client:
+    with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as client:
         for url in PAGES + probed:
             r = client.get(url, follow_redirects=False)
             if r.status_code == 404 and url not in PAGES:
@@ -133,6 +189,8 @@ def build_stamp(data: ReportData, base: str) -> dict:
 def _check_out(out: Path, clean: bool) -> None:
     """Refuse a non-empty `out` without `clean`, and with it any directory that holds no
     `build.json` of a previous export (decision 9). Nothing is written or deleted here."""
+    if out.is_symlink():
+        raise ExportError(f"refusing --out {out}: it is a symlink; name the directory itself")
     if out.exists() and not out.is_dir():
         raise ExportError(f"{out} exists and is not a directory")
     if not out.exists() or not any(out.iterdir()):
@@ -163,7 +221,7 @@ def _ignore_tests(static: Path):
 def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
     """Every URL's response to its file, `static/`, `404.html` and `build.json` into `site`."""
     written: dict[PurePosixPath, str] = {}
-    with TestClient(app, base_url=BASE_URL) as client:
+    with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as client:
         for url in urls:
             r = client.get(url, follow_redirects=False)
             if r.status_code != 200:
@@ -184,11 +242,34 @@ def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
     (site / BUILD_FILE).write_text(json.dumps(build, indent=2, sort_keys=True) + "\n")
 
 
-def _install(site: Path, out: Path) -> None:
-    """The complete `site` in place of `out` (already checked by `_check_out`)."""
-    if out.exists():
-        shutil.rmtree(out)
-    site.rename(out)
+def _install(site: Path, out: Path, clean: bool) -> None:
+    """The complete `site` in place of `out`'s contents. The guard is checked again first (`out`
+    may have changed during the render); `out`'s old entries are set aside in a sibling
+    directory and deleted only once the new ones are in, else they are put back."""
+    _check_out(out, clean)
+    created = not out.exists()
+    out.mkdir(exist_ok=True)
+    old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
+    moved_out: list[str] = []
+    moved_in: list[str] = []
+    try:
+        for entry in list(out.iterdir()):
+            entry.rename(old / entry.name)
+            moved_out.append(entry.name)
+        for entry in list(site.iterdir()):
+            entry.rename(out / entry.name)
+            moved_in.append(entry.name)
+    except OSError:
+        for name in moved_in:
+            (out / name).rename(site / name)
+        for name in moved_out:
+            (old / name).rename(out / name)
+        old.rmdir()
+        if created:
+            out.rmdir()
+        raise
+    shutil.rmtree(old)
+    site.rmdir()
 
 
 def run_export(
@@ -203,7 +284,29 @@ def run_export(
     clean: bool,
 ) -> ExportResult:
     """Write the static edition of the app built with `base` to `out` (module docstring)."""
-    out = Path(out)
+    try:
+        return _run_export(
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
+        )
+    except OSError as e:
+        raise ExportError(f"export to {out} failed: {e}") from e
+
+
+def _run_export(
+    out: Path,
+    base: str,
+    db: Path,
+    config_dir: Path,
+    maps: Path,
+    docs: Path,
+    content_dir: Path,
+    plans_data_dir: Path,
+    clean: bool,
+) -> ExportResult:
+    validate_base(base)
+    # absolute without following symlinks: `.` gets a real name, so staging is its sibling
+    out = Path(os.path.abspath(out))
+    _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
     _check_out(out, clean)
     try:
         conn = open_readonly(Path(db))
@@ -220,10 +323,10 @@ def run_export(
     finally:
         conn.close()
     out.parent.mkdir(parents=True, exist_ok=True)
-    site = Path(tempfile.mkdtemp(prefix=f".{out.name}.", dir=out.parent))
+    site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
         _write_site(site, app, urls, build)
-        _install(site, out)
+        _install(site, out, clean)
     except BaseException:
         shutil.rmtree(site, ignore_errors=True)
         raise
