@@ -151,7 +151,7 @@
 <h3>Data</h3>
 <ul class="meta data-sources">
 <li>Measures dataset: Radverkehrsmaßnahmen, Berlin geoportal{% if measures %}, licence {{ measures.licence }}, retrieved {{ measures.retrieved_at }}{% elif not projects_present %} (not present){% endif %}.</li>
-<li>Planned network: Radverkehrsnetz, Berlin geoportal{% if network_licence %}, licence {{ network_licence }}{% elif measures %}, licence not recorded{% endif %}{% if network_retrieved_at %}, retrieved {{ network_retrieved_at }}{% endif %}; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0){% if overlay_version %} with <code>{{ overlay_version }}</code>{% endif %}.</li>
+<li>Planned network: Radverkehrsnetz, Berlin geoportal{% if network_licence %}, licence {{ network_licence }}{% elif measures or overlay_version %}, licence not recorded{% endif %}{% if network_retrieved_at %}, retrieved {{ network_retrieved_at }}{% endif %}; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0){% if overlay_version %} with <code>{{ overlay_version }}</code>{% endif %}.</li>
 </ul>
 {% if record_error %}<p class="note">data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licence and retrieval date cannot be shown.</p>{% endif -%}
 </section>

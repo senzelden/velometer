@@ -154,18 +154,22 @@ def causal_counter_wording(paragraph: str) -> list[str]:
     return [m.group(1) for m in _CAUSAL.finditer(paragraph)]
 
 
-def counter_rule_values(config_dir: Path) -> dict[float, str]:
-    """The index rule's values (spec §2.13) -> the fact that prints each: `MIN_VALID` in percent,
-    `MIN_SITES`, and each configured city's base year (none when config/counters.yaml is absent
-    or unreadable; its own check reports that)."""
+def counter_rule_values(config_dir: Path) -> tuple[dict[float, str], str | None]:
+    """(rules, error): the index rule's values (spec §2.13) -> the fact that prints each:
+    `MIN_VALID` in percent, `MIN_SITES`, and each configured city's base year. No base years
+    when config/counters.yaml is absent; when it is unreadable, also the reason, which the
+    content check reports as a problem (the base-year rules would otherwise go unchecked)."""
     rules = {round(counter_rule(r), 6): f"counter.{r}" for r in COUNTER_RULES}
+    path = Path(config_dir) / COUNTERS_FILE
+    if not path.exists():
+        return rules, None
     try:
-        cfg = load_counters_config(Path(config_dir) / COUNTERS_FILE)
-    except (ConfigError, OSError):
-        return rules
+        cfg = load_counters_config(path)
+    except (ConfigError, OSError) as e:
+        return rules, str(e)
     for e in cfg.cities:
         rules.setdefault(float(e.base_year), f"counter.{BASE_YEAR}.{e.city}")
-    return rules
+    return rules, None
 
 
 def _is_rule_fact(expr: str) -> bool:
@@ -478,7 +482,9 @@ def _check(
         if doc is not None:
             problems += _check_explainer_shaped(rel, doc, sources, data, docs_dir, config_dir)
         if doc is not None and rel == COUNTER_PAGE:
-            rules = counter_rule_values(config_dir)
+            rules, rules_error = counter_rule_values(config_dir)
+            if rules_error is not None:
+                problems.append(f"{rel}: cannot read config/{COUNTERS_FILE}: {rules_error}")
             for p in _explainer_prose(doc):
                 for lit in literal_counter_rules(p, rules, doc.facts):
                     problems.append(f"{rel}: index rule stated as literal text: {lit}")

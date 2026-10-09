@@ -552,6 +552,18 @@ def test_a_readable_or_absent_source_record_has_no_note(setup, plans_data, tmp_p
         assert "data source record unreadable" not in _text(c.get("/plans/berlin").text)
 
 
+def test_an_absent_source_record_never_leaves_a_drawn_network_unattributed(setup, tmp_path):  # noqa: F811
+    # fresh checkout: the overlay rows are in the (tracked) DB, retrieved.json is in the
+    # git-ignored data dir. The planned-network series is drawn, so its line must say that
+    # its licence is not recorded instead of naming nothing (ADR 0008)
+    _overlay(setup[0], "overlay_v4", 50.0)
+    with _client(_app(setup, tmp_path / "absent")) as c:
+        html = c.get("/plans/berlin").text
+    line = _data_line(html, "Planned network:")
+    assert "overlay_v4" in line, "the overlay is shown"
+    assert "licence not recorded" in line
+
+
 def test_a_broken_source_registry_is_a_note_on_the_plan_page(setup, plans_data, tmp_path):  # noqa: F811
     import shutil
 

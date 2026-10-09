@@ -216,7 +216,8 @@ def completed_projects(path: Path) -> tuple[dict[str, dict[int, float]], int] | 
 def measures_retrieved(plans_data_dir: Path) -> tuple[dict | None, str | None]:
     """(record, error) of the `retrieved.json` that `velometer plans fetch berlin` writes beside
     the layers: the licence, the retrieval time and the layers fetched. Absent: (None, None), the
-    page says the dataset is not present; present but unreadable, or without a licence: (None,
+    page says the dataset is not present and a drawn planned network that its licence is not
+    recorded; present but unreadable, or without a licence: (None,
     the reason), a note on the page instead of licence lines that silently vanish."""
     path = plans_data_dir / MEASURES_RETRIEVED
     try:

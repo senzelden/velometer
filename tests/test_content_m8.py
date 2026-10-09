@@ -602,6 +602,19 @@ def test_content_check_reports_profile_problems(fixture_db, m8):
     assert res.stderr.strip().splitlines() == ["organisations/senmvku.yaml: unknown source nope"]
 
 
+def test_an_unreadable_counters_config_fails_the_content_check(fixture_db, m8):
+    # the base-year rules come from config/counters.yaml: a check that cannot read it must say
+    # so and fail, not print "ok" with those rules silently dropped
+    args = _clean_cli_setup(fixture_db, m8)
+    cfg = Path(args[args.index("--config-dir") + 1])
+    assert (cfg / "counters.yaml").is_file(), "the report fixture's config has the counters"
+    assert CliRunner().invoke(app, args).exit_code == 0
+    (cfg / "counters.yaml").write_text("cities: [unclosed\n", encoding="utf-8")
+    res = CliRunner().invoke(app, args)
+    assert res.exit_code == 1
+    assert res.stderr.startswith("counters.yaml: cannot read config/counters.yaml: "), res.stderr
+
+
 # --- the counter index rule in prose (follow-up Task 3) --------------------------------------
 
 
