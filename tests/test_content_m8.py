@@ -480,7 +480,9 @@ def test_overlay_facts(fixture_db, tmp_path):
     (f1, fd1), *_ = _berlin_lau_runs(db_path, "fua")
     assert fd1 == d1
     rows += [row(f1, "A", 700.0)]  # an FUA run on the same snapshot is not an LAU overlay
-    _write(db_path, lambda c: replace_plan_overlay(c, "berlin", rows))
+    for v in ("v0", "v1"):
+        mine = [r for r in rows if r.overlay_version == v]
+        _write(db_path, lambda c, v=v, mine=mine: replace_plan_overlay(c, "berlin", v, mine))
 
     assert evaluate(f"overlay.berlin.vorrangnetz.{d1}.ab_km", data, tmp_path) == 12.5
     assert evaluate(f"overlay.berlin.vorrangnetz.{d2}.ab_km", data, tmp_path) == 15.0
@@ -602,3 +604,13 @@ def test_the_literal_rule_check_follows_the_constants(m8, monkeypatch):
     assert _counter_prose(m8, "A year with fewer than four sites has no value.") == [
         f"{RULE}four (counter.min_sites)"
     ]
+
+
+def test_the_online_check_fetches_with_the_shared_user_agent(agent_server):
+    # Open Data BCN answers httpx's default User-Agent with 502
+    from velometer.content import check as ck
+    from velometer.sources.download import user_agent
+
+    url, agents = agent_server
+    ck._http_get(url)
+    assert agents == [user_agent()]

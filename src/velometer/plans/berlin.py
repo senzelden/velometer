@@ -18,6 +18,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from velometer.config import ConfigError
+from velometer.sources.download import user_agent
 
 TIMEOUT_S = 120.0
 MAX_PAGES = 1000  # Berlin's largest layer is 3 pages; a server that pages forever is refused
@@ -67,15 +68,22 @@ def load_plan_sources(path: Path, city: str) -> PlanSourcesConfig:
 
 
 def _http_get(url: str, params: dict[str, str]) -> bytes:
-    r = httpx.get(url, params=params, timeout=TIMEOUT_S, follow_redirects=True)
+    r = httpx.get(
+        url,
+        params=params,
+        timeout=TIMEOUT_S,
+        follow_redirects=True,
+        headers={"User-Agent": user_agent()},
+    )
     r.raise_for_status()
     return r.content
 
 
 def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
     """All features of one layer, one FeatureCollection; ValueError if the server's
-    `numberMatched` disagrees with the features received, a page repeats features already
-    received, or the layer has not ended after `MAX_PAGES` pages."""
+    `numberMatched` disagrees with the features received, a feature lacks the `sort_by`
+    property, an id appears twice (within a page or across pages), or the layer has not ended
+    after `MAX_PAGES` pages."""
     features: list = []
     seen: set = set()
     matched = None
@@ -97,7 +105,21 @@ def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
         if isinstance(page.get("numberMatched"), int):
             matched = page["numberMatched"]
         got = page.get("features") or []
-        ids = [(f.get("properties") or {}).get(layer.sort_by) for f in got]
+        ids = []
+        for f in got:
+            props = f.get("properties") or {}
+            if props.get(layer.sort_by) is None:
+                raise ValueError(
+                    f"{layer.url}: a feature at startIndex {len(features)} has no "
+                    f"{layer.sort_by!r} property (the layer's sort_by, which must be unique)"
+                )
+            ids.append(props[layer.sort_by])
+        if len(set(ids)) < len(ids):
+            dup = next(i for i in ids if ids.count(i) > 1)
+            raise ValueError(
+                f"{layer.url}: the page at startIndex {len(features)} has "
+                f"{layer.sort_by} {dup!r} more than once"
+            )
         if seen.intersection(ids):
             of = f", server numberMatched {matched}" if matched is not None else ""
             raise ValueError(

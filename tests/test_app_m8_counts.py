@@ -27,9 +27,9 @@ from velometer.db import (
     CounterDay,
     CounterIndexYear,
     CounterSite,
+    replace_counter_daily,
     replace_counter_index,
     replace_counter_sites,
-    upsert_counter_daily,
 )
 
 URL = "https://example.org/counters.csv"
@@ -52,7 +52,7 @@ def _seed(db_path, city="berlin", index=None, sites=None, days=(), base=2019, se
         replace_counter_sites(
             conn, city, sites or [_site(city, "s1"), _site(city, "s2", None, None)]
         )
-        upsert_counter_daily(conn, list(days))
+        replace_counter_daily(conn, city, list(days))
         values = index or {2018: 101.3, 2019: 100.0, 2020: 114.6, 2021: None, 2022: 102.0}
         replace_counter_index(conn, city, _index(city, values, base, series))
     finally:

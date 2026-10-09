@@ -603,7 +603,9 @@ def _check_coverage(
 
 
 def _http_get(url: str) -> str:
-    resp = httpx.get(url, follow_redirects=True, timeout=30.0)
+    from velometer.sources.download import user_agent
+
+    resp = httpx.get(url, follow_redirects=True, timeout=30.0, headers={"User-Agent": user_agent()})
     resp.raise_for_status()
     return resp.text
 

@@ -372,7 +372,8 @@ def test_overlay_facts_read_the_latest_overlay_version(fixture_db, tmp_path):
 
     rows = [row("overlay_v1", 10.0), row("overlay_v2", 20.0)]
     c = sqlite3.connect(db_path)
-    replace_plan_overlay(c, "berlin", rows)
+    for v, row_v in (("overlay_v1", rows[0]), ("overlay_v2", rows[1])):
+        replace_plan_overlay(c, "berlin", v, [row_v])
     c.close()
     assert evaluate(f"overlay.berlin.vorrangnetz.{ts[:10]}.ab_km", data, tmp_path) == 20.0
 
@@ -642,3 +643,31 @@ def test_paging_stops_at_the_page_cap(tmp_path, monkeypatch):
 
     with pytest.raises(ValueError, match="3 pages"):
         berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
+
+
+def test_duplicate_ids_within_one_page_are_refused(tmp_path):
+    def fake(url, params):
+        return json.dumps(_fc([0, 0])).encode()  # one page, the same gisid twice
+
+    with pytest.raises(ValueError, match="gisid 0 more than once"):
+        berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
+    assert not (tmp_path / "retrieved.json").exists()
+
+
+def test_a_feature_without_the_sort_property_is_refused_naming_it(tmp_path):
+    def fake(url, params):
+        doc = _fc([0, 1])
+        del doc["features"][1]["properties"]["gisid"]
+        return json.dumps(doc).encode()
+
+    with pytest.raises(ValueError, match="no 'gisid' property") as e:
+        berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
+    assert "repeated" not in str(e.value)
+
+
+def test_the_wfs_fetch_sends_the_velometer_user_agent(agent_server):
+    from velometer.sources.download import user_agent
+
+    url, agents = agent_server
+    berlin._http_get(url, {"a": "b"})
+    assert agents == [user_agent()]

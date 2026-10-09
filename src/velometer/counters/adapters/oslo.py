@@ -145,15 +145,19 @@ def _fetch_hours(url: str, pid: str, days: list[dict], post: Post) -> dict[str, 
     return out
 
 
-def fetch(entry: CounterEntry, out_dir: Path, post: Post = _graphql) -> list[Path]:
+def fetch(
+    entry: CounterEntry, out_dir: Path, data_dir: Path | None = None, post: Post = _graphql
+) -> list[Path]:
+    """The points, then each kept point's days (and hours); `data_dir` holds the stored Oslo
+    boundary (`<data_dir>/boundaries/`) the points are kept inside, and is required."""
+    if data_dir is None:
+        raise ValueError("oslo fetch needs the data directory (its stored boundary)")
     url = entry.urls[0]
     zone = ZoneInfo(entry.timezone)
     points_data = post(url, POINTS_QUERY, {"county": [COUNTY]})
     at = _now()
     points = _points(points_data, url)
-    inside = sites_inside(
-        [_site(p) for p in points], boundary_polygon(entry, Path(out_dir).parents[1])
-    )
+    inside = sites_inside([_site(p) for p in points], boundary_polygon(entry, data_dir))
     got = [
         (
             POINTS_FILE,

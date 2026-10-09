@@ -40,7 +40,9 @@ LAT = ("latitud", "latitude")
 LON = ("longitud", "longitude")
 
 
-def fetch(entry: CounterEntry, out_dir: Path, fetch=_http_get) -> list[Path]:
+def fetch(
+    entry: CounterEntry, out_dir: Path, data_dir: Path | None = None, fetch=_http_get
+) -> list[Path]:
     return download(entry, out_dir, fetch)
 
 

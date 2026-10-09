@@ -32,7 +32,9 @@ DESCRIPTOR = ("Id_aforament", "Desc_aforament", "Codi_tipus_aforament", "Longitu
 DETAIL = ("Any", "Id_aforament", "Mes", "Codi_tipus_dia", "Valor_IMD")
 
 
-def fetch(entry: CounterEntry, out_dir: Path, fetch=_http_get) -> list[Path]:
+def fetch(
+    entry: CounterEntry, out_dir: Path, data_dir: Path | None = None, fetch=_http_get
+) -> list[Path]:
     return download(entry, out_dir, fetch)
 
 

@@ -312,8 +312,8 @@ def test_oslo_fetch_keeps_points_inside_pages_days_and_records_queries(tmp_path)
     data = tmp_path / "data"
     (data / "boundaries").mkdir(parents=True)
     shutil.copy(OSLO / "oslo_lau.geojson", data / "boundaries" / "oslo_lau.geojson")
-    out = data / "counters" / "oslo"
-    paths = oslo.fetch(CONFIG.entry("oslo"), out, post=post)
+    out = tmp_path / "elsewhere" / "oslo"  # the data dir is a parameter, not out_dir's parent
+    paths = oslo.fetch(CONFIG.entry("oslo"), out, data_dir=data, post=post)
     assert [p.name for p in paths] == [
         "00_points.json",
         "01_12703B2460285.json",
@@ -330,6 +330,40 @@ def test_oslo_fetch_keeps_points_inside_pages_days_and_records_queries(tmp_path)
     assert meta["licence"] == "NLOD"
     assert all(f["url"] == "https://trafikkdata-api.atlas.vegvesen.no/" for f in meta["files"])
     assert all(f["query"] and f["retrieved_at"].endswith("Z") for f in meta["files"])
+
+
+def test_counters_fetch_hands_the_data_dir_to_the_adapter(tmp_path, monkeypatch):
+    import types
+
+    from velometer.counters import adapters
+
+    seen = {}
+
+    def fetch(entry, out_dir, data_dir=None):
+        seen.update(out_dir=out_dir, data_dir=data_dir)
+        return []
+
+    monkeypatch.setattr(adapters, "adapter", lambda name: types.SimpleNamespace(fetch=fetch))
+    data = tmp_path / "somewhere"
+    res = CliRunner().invoke(app, ["counters", "fetch", "oslo", "--data", str(data)])
+    assert res.exit_code == 0, res.output
+    assert seen == {"out_dir": data / "counters" / "oslo", "data_dir": data}
+
+
+def test_oslo_fetch_without_a_data_dir_is_refused():
+    with pytest.raises(ValueError, match="data directory"):
+        oslo.fetch(CONFIG.entry("oslo"), Path("x"), post=lambda *a: pytest.fail("posted"))
+
+
+def test_counter_downloads_and_the_oslo_api_send_the_shared_user_agent(agent_server):
+    from velometer.counters import adapters
+    from velometer.sources import download
+
+    url, agents = agent_server
+    assert adapters.user_agent is download.user_agent  # one user agent, not a copy
+    adapters._http_get(url)
+    oslo._graphql(url, "query { x }", {})
+    assert agents == [download.user_agent(), download.user_agent()]
 
 
 # --- Barcelona ------------------------------------------------------------------------------

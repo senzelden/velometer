@@ -3,7 +3,7 @@
 import json
 import re
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -1055,18 +1055,36 @@ class CounterIndexYear:
     series: str  # 'counts' or 'avg_daily_intensity'
 
 
-def replace_plan_overlay(conn: sqlite3.Connection, city_id: str, rows: list[OverlayRow]) -> None:
-    """Replace the city's overlay rows of each overlay_version present in `rows`; other versions
-    stay."""
-    with conn:
-        for version in {r.overlay_version for r in rows}:
-            conn.execute(
-                "DELETE FROM plan_overlay WHERE city_id=? AND overlay_version=?",
-                (city_id, version),
+def _same_city(table: str, city_id: str, rows: Iterable) -> Iterator:
+    """`rows`, refusing (ValueError) one whose `city_id` is not `city_id`: a replace_* deletes
+    the argument city's rows, so a row of another city would be stored under a scope it does not
+    belong to."""
+    for r in rows:
+        if r.city_id != city_id:
+            raise ValueError(f"{table}: a row has city_id {r.city_id!r}, replacing {city_id!r}")
+        yield r
+
+
+def replace_plan_overlay(
+    conn: sqlite3.Connection, city_id: str, overlay_version: str, rows: list[OverlayRow]
+) -> None:
+    """Replace the city's overlay rows of `overlay_version` (the scope `plans overlay` writes:
+    one version for one city) with `rows`, which may be empty; other versions and cities stay.
+    ValueError, and nothing written, on a row of another city or version."""
+    for r in rows:
+        if r.overlay_version != overlay_version:
+            raise ValueError(
+                f"plan_overlay: a row has overlay_version {r.overlay_version!r}, "
+                f"replacing {overlay_version!r}"
             )
+    with conn:
+        conn.execute(
+            "DELETE FROM plan_overlay WHERE city_id=? AND overlay_version=?",
+            (city_id, overlay_version),
+        )
         conn.executemany(
             "INSERT INTO plan_overlay VALUES (?,?,?,?,?,?,?,?)",
-            [
+            (
                 (
                     r.run_id,
                     r.city_id,
@@ -1077,8 +1095,8 @@ def replace_plan_overlay(conn: sqlite3.Connection, city_id: str, rows: list[Over
                     r.overlay_version,
                     r.network_retrieved_at,
                 )
-                for r in rows
-            ],
+                for r in _same_city("plan_overlay", city_id, rows)
+            ),
         )
 
 
@@ -1087,7 +1105,7 @@ def replace_counter_sites(conn: sqlite3.Connection, city_id: str, sites: list[Co
         conn.execute("DELETE FROM counter_sites WHERE city_id=?", (city_id,))
         conn.executemany(
             "INSERT INTO counter_sites VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            [
+            (
                 (
                     s.city_id,
                     s.site_id,
@@ -1101,21 +1119,24 @@ def replace_counter_sites(conn: sqlite3.Connection, city_id: str, sites: list[Co
                     s.first_day,
                     s.last_day,
                 )
-                for s in sites
-            ],
+                for s in _same_city("counter_sites", city_id, sites)
+            ),
         )
 
 
-def upsert_counter_daily(conn: sqlite3.Connection, rows: list[CounterDay]) -> None:
+def replace_counter_daily(
+    conn: sqlite3.Connection, city_id: str, rows: Iterable[CounterDay]
+) -> None:
+    """Replace the city's daily totals with `rows`, in one transaction: a city's fetched files
+    hold its whole history, so days they no longer give do not linger."""
     with conn:
+        conn.execute("DELETE FROM counter_daily WHERE city_id=?", (city_id,))
         conn.executemany(
-            """
-            INSERT INTO counter_daily (city_id, site_id, day, count, complete)
-            VALUES (?,?,?,?,?)
-            ON CONFLICT(city_id, site_id, day) DO UPDATE SET
-              count=excluded.count, complete=excluded.complete
-            """,
-            [(r.city_id, r.site_id, r.day, r.count, int(r.complete)) for r in rows],
+            "INSERT INTO counter_daily (city_id, site_id, day, count, complete) VALUES (?,?,?,?,?)",
+            (
+                (r.city_id, r.site_id, r.day, r.count, int(r.complete))
+                for r in _same_city("counter_daily", city_id, rows)
+            ),
         )
 
 
@@ -1126,7 +1147,10 @@ def replace_counter_monthly(
         conn.execute("DELETE FROM counter_monthly WHERE city_id=?", (city_id,))
         conn.executemany(
             "INSERT INTO counter_monthly VALUES (?,?,?,?,?)",
-            [(r.city_id, r.site_id, r.month, r.day_type, r.avg_daily) for r in rows],
+            (
+                (r.city_id, r.site_id, r.month, r.day_type, r.avg_daily)
+                for r in _same_city("counter_monthly", city_id, rows)
+            ),
         )
 
 
@@ -1137,5 +1161,8 @@ def replace_counter_index(
         conn.execute("DELETE FROM counter_index WHERE city_id=?", (city_id,))
         conn.executemany(
             "INSERT INTO counter_index VALUES (?,?,?,?,?,?)",
-            [(r.city_id, r.year, r.index, r.sites, r.base_year, r.series) for r in rows],
+            (
+                (r.city_id, r.year, r.index, r.sites, r.base_year, r.series)
+                for r in _same_city("counter_index", city_id, rows)
+            ),
         )

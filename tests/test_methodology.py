@@ -713,7 +713,8 @@ def _store_overlay(db_path, *versions: str) -> None:
         for tier in ("A", "B")
     ]
     with closing(sqlite3.connect(db_path)) as c:
-        replace_plan_overlay(c, "berlin", rows)
+        for v in versions:
+            replace_plan_overlay(c, "berlin", v, [r for r in rows if r.overlay_version == v])
 
 
 @pytest.mark.parametrize("lang", LANGS)
@@ -867,9 +868,9 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
         CounterDay,
         CounterIndexYear,
         CounterSite,
+        replace_counter_daily,
         replace_counter_index,
         replace_counter_sites,
-        upsert_counter_daily,
     )
 
     db_path, cfg_dir, _conn, data = fixture_db
@@ -887,7 +888,7 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
              ((2019, None), (2020, 100.0), (2021, None), (2022, None))]  # fmt: skip
     with closing(sqlite3.connect(db_path)) as c:
         replace_counter_sites(c, "berlin", [site])
-        upsert_counter_daily(c, days)
+        replace_counter_daily(c, "berlin", days)
         replace_counter_index(c, "berlin", index)
     _edit_counters(cfg_dir, "berlin", base_year=2020)
     facts = methodology_facts(data)

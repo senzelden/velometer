@@ -745,16 +745,19 @@ def test_commands_on_a_v5_db_with_activity_rows_point_to_migrate(tmp_path):
     _make_v5_db_with_activity(db, rows=2)
     report = tmp_path / "r.md"
     report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
-    for args in (
-        ["init"],
-        ["results"],
-        ["reconcile", "--report", str(report)],
-        ["timeseries", "--report", str(report)],
+    # init migrates, so it names the sha; the read-only commands never migrate and point to
+    # `velometer migrate`, which names it in turn
+    for args, hint in (
+        (["init"], "migrate --activity-sha"),
+        (["migrate"], "migrate --activity-sha"),
+        (["results"], "velometer migrate"),
+        (["reconcile", "--report", str(report)], "velometer migrate"),
+        (["timeseries", "--report", str(report)], "velometer migrate"),
     ):
         out = CliRunner().invoke(app, [*args, "--db", str(db)])
         assert out.exit_code == 1, (args, out.output)
         assert out.exception.__class__ is SystemExit, args
-        assert "migrate --activity-sha" in out.output, args
+        assert hint in out.output, args
 
 
 def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):

@@ -48,6 +48,8 @@ def load_city(conn, entry: CounterEntry, data_dir: Path) -> LoadResult:
     FileNotFoundError when the city was not fetched; CounterFormatError on a portal file the
     adapter cannot read (or a missing boundary file).
     """
+    from velometer.db import CounterDay, replace_counter_daily
+
     out_dir = city_dir(data_dir, entry.city)
     meta = read_retrieved(out_dir)
     paths = [out_dir / f["file"] for f in meta["files"]]
@@ -59,14 +61,12 @@ def load_city(conn, entry: CounterEntry, data_dir: Path) -> LoadResult:
     days = to_days(records, entry.timezone) if entry.grain == "hourly" else records
     del records  # an hourly portal's history is millions of records
     days = zero_days_invalid(days)
-    # the files hold the city's whole history, so its daily rows are replaced (rows the files
-    # no longer give do not linger), in one transaction
-    with conn:
-        conn.execute("DELETE FROM counter_daily WHERE city_id=?", (entry.city,))
-        conn.executemany(
-            "INSERT INTO counter_daily (city_id, site_id, day, count, complete) VALUES (?,?,?,?,?)",
-            [(entry.city, d.site_id, d.day.isoformat(), d.count, int(d.complete)) for d in days],
-        )
+    # the files hold the city's whole history, so its daily rows are replaced
+    replace_counter_daily(
+        conn,
+        entry.city,
+        (CounterDay(entry.city, d.site_id, d.day.isoformat(), d.count, d.complete) for d in days),
+    )
     stored = [
         DayCount(site, date.fromisoformat(day), count, bool(complete))
         for site, day, count, complete in conn.execute(

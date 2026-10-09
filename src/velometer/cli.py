@@ -84,6 +84,27 @@ def _open_schema(db: Path) -> Iterator:
         yield conn
 
 
+@contextmanager
+def _open_readonly(db: Path) -> Iterator:
+    """The database opened read-only, for a command that does not write it: its bytes stay as
+    they were. A missing database or another schema version is exit 1, never a new or migrated
+    file."""
+    from velometer.report.data import open_readonly
+
+    try:
+        conn = open_readonly(db)
+    except FileNotFoundError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    except (SchemaError, sqlite3.Error) as e:
+        typer.echo(f"database error: {e}", err=True)
+        raise typer.Exit(1) from e
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
 @app.callback()
 def main() -> None:
     """velometer: reproducible OSM cycling-infrastructure measurement."""
@@ -802,7 +823,7 @@ def _results_subareas(city_id, boundary, sel, config_dir, db, fmt) -> None:
     if city.country_iso2 not in _selection.trusted_countries(config_dir):
         typer.echo(f"error: {_not_trusted(city_id, city.country_iso2)}", err=True)
         raise typer.Exit(2)
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:
         run_id = sel.latest(conn, city_id, boundary)
         if run_id is None:
             typer.echo(f"no done runs for {city_id} {boundary!r} of the current config")
@@ -879,7 +900,7 @@ def results(
     rows = []
     metrics_by_city: dict[str, list] = {}
     stale: list[str] = []
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:
         for c in fetch_cities(conn):
             if city is not None and c.id != city:
                 continue
@@ -970,7 +991,7 @@ def reconcile(
     config_path = config_dir / "reconcile.yaml"
     all_by_city: dict[str, rc.CityReport] = {}
     skipped: list[str] = []
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:  # --write rewrites the report file, never the database
         for c in _report_cities(config_dir):
             try:
                 rep = rc.reconcile_city(
@@ -1042,7 +1063,7 @@ def _timeseries_subareas(selected, config_dir, db, classifier) -> None:
         typer.echo("error: no subareas configured for the selected cities", err=True)
         raise typer.Exit(1)
     typer.echo(_presets_line(sel.presets))
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:
         for c in cities:
             md5 = latest_history_set(
                 conn,
@@ -1131,7 +1152,7 @@ def timeseries(
         raise _config_error(e) from e
     sel = run_selector(config_dir, _report_classifier(config_dir, classifier))
     built: dict[tuple[str, str], ts.CitySeries] = {}
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:  # --write rewrites the report file, never the database
         for c in _report_cities(config_dir):
             for kind in ("lau", "fua"):  # every kind, so --write never drops other tables
                 cs = ts.build_city(conn, c.id, kind, sel, history_cfg.year_range())
@@ -1684,7 +1705,7 @@ def plans_overlay(
                     f"run {run_id} ({run['osm_timestamp'][:10]}): totals agree (A..E); "
                     + "; ".join(parts)
                 )
-            replace_plan_overlay(conn, city, rows)
+            replace_plan_overlay(conn, city, cfg.version, rows)
         except ch.ChangeRefused as e:
             typer.echo(f"refused: {e}", err=True)
             raise typer.Exit(1) from e
@@ -2112,7 +2133,7 @@ def counters_main(
     from velometer.counters.check import check_counters
 
     cfg = _counters_config(config_dir)
-    with _open_schema(db) as conn:
+    with _open_readonly(db) as conn:
         problems = check_counters(conn, cfg)
     for p in problems:
         typer.echo(p)
@@ -2135,8 +2156,10 @@ def counters_fetch(
 
     for entry in _counter_entries(_counters_config(config_dir), cities):
         try:
-            paths = adapter(entry.adapter).fetch(entry, city_dir(data_dir, entry.city))
-        except (KeyError, OSError, httpx.HTTPError, CounterFormatError) as e:
+            paths = adapter(entry.adapter).fetch(
+                entry, city_dir(data_dir, entry.city), data_dir=data_dir
+            )
+        except (KeyError, ValueError, OSError, httpx.HTTPError, CounterFormatError) as e:
             typer.echo(f"error: {entry.city}: {e}", err=True)
             raise typer.Exit(1) from e
         for path in paths:

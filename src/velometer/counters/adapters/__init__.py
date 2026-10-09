@@ -1,8 +1,10 @@
 """Counter portal adapters (M8 spec §5.1).
 
 Each adapter module has
-- `fetch(entry, out_dir, fetch=_http_get) -> list[Path]`: download every URL of the entry into
-  `out_dir` and record URL, licence and retrieval time per file in `retrieved.json`;
+- `fetch(entry, out_dir, data_dir=None, fetch=_http_get) -> list[Path]`: download every URL of
+  the entry into `out_dir` and record URL, licence and retrieval time per file in
+  `retrieved.json` (`data_dir` is the data directory, for an adapter that reads the stored
+  boundary while fetching: Oslo);
 - `parse(paths, entry) -> (sites, records)`: `HourCount` records for an hourly portal,
   `DayCount` for a daily one; `CounterFormatError` on a missing sheet or column.
 
@@ -19,7 +21,6 @@ import json
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
-from importlib.metadata import version
 from pathlib import Path
 from types import ModuleType
 from urllib.parse import urlsplit
@@ -28,16 +29,12 @@ import httpx
 import shapely
 
 from velometer.counters.model import CounterEntry, CounterFormatError, Site
+from velometer.sources.download import user_agent  # Open Data BCN answers httpx's own with 502
 
 TIMEOUT_S = 300.0
 RETRIEVED_FILE = "retrieved.json"
 
 Fetch = Callable[[str], bytes]
-
-
-def user_agent() -> str:
-    """`velometer/<version>`, no contact: Open Data BCN answers httpx's default agent with 502."""
-    return f"velometer/{version('velometer')}"
 
 
 def _http_get(url: str) -> bytes:

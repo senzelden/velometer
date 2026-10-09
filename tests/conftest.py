@@ -1,3 +1,6 @@
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
 import pytest
 import yaml
 
@@ -40,3 +43,35 @@ def report_db_with_trust(tmp_path):
 def report_db_21(tmp_path):
     """(db_path, config_dir) of the report fixture grown to 21 cities (berlin, paris, c03..c21)."""
     return build_report_fixture_n(tmp_path, 21)
+
+
+@pytest.fixture
+def agent_server():
+    """A local HTTP server on 127.0.0.1: `(base_url, agents)`, `agents` the User-Agent header of
+    each request it answered (GET or POST, answered with a small JSON body)."""
+    agents: list[str | None] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def _answer(self):
+            agents.append(self.headers.get("User-Agent"))
+            n = int(self.headers.get("Content-Length") or 0)
+            if n:
+                self.rfile.read(n)
+            body = b'{"data": {}}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        do_GET = do_POST = _answer
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_address[1]}/x", agents
+    server.shutdown()
+    server.server_close()

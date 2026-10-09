@@ -369,7 +369,7 @@ def _overlay(db_path: Path, version: str, km: float) -> None:
             for cls in ("vorrangnetz", "ergaenzungsnetz")
             for tier in ("A", "B")
         ]
-        replace_plan_overlay(conn, "berlin", rows)
+        replace_plan_overlay(conn, "berlin", version, rows)
     finally:
         conn.close()
 

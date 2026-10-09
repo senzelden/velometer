@@ -127,7 +127,7 @@ def open_readonly(db_path: Path) -> sqlite3.Connection:
         hint = (
             "run `velometer migrate`"
             if version < SCHEMA_VERSION
-            else "upgrade velometer to read it"
+            else "it is newer: upgrade velometer to read it"
         )
         raise SchemaError(
             f"database {db_path} has schema v{version}, this velometer reads "
@@ -545,16 +545,19 @@ class ReportData:
 
     # --- M8: plan overlay and counters (each is [] on a database without the v9 tables) ----------
 
-    def _optional_rows(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
-        try:
-            return self.conn.execute(sql, args).fetchall()
-        except sqlite3.OperationalError as e:
-            if "no such table" in str(e):
-                return []
-            raise
+    def _optional_rows(self, table: str, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
+        """`sql`'s rows, or [] when `table` is not in the schema (a v8 database); any error of
+        the query itself is raised."""
+        present = self.conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+        ).fetchone()
+        if present is None:
+            return []
+        return self.conn.execute(sql, args).fetchall()
 
     def plan_overlay(self, city_id: str) -> list[OverlayRow]:
         rows = self._optional_rows(
+            "plan_overlay",
             "SELECT run_id, city_id, network_class, tier, mapped_km, network_km, overlay_version, "
             "network_retrieved_at FROM plan_overlay WHERE city_id=? "
             "ORDER BY overlay_version, network_class, tier, run_id",
@@ -564,6 +567,7 @@ class ReportData:
 
     def counter_sites(self, city_id: str) -> list[CounterSite]:
         rows = self._optional_rows(
+            "counter_sites",
             "SELECT city_id, site_id, name, lat, lon, source, licence, url, retrieved_at, "
             "first_day, last_day FROM counter_sites WHERE city_id=? ORDER BY site_id",
             (city_id,),
@@ -572,6 +576,7 @@ class ReportData:
 
     def counter_index(self, city_id: str) -> list[CounterIndexYear]:
         rows = self._optional_rows(
+            "counter_index",
             "SELECT city_id, year, idx, sites, base_year, series FROM counter_index "
             "WHERE city_id=? ORDER BY series, year",
             (city_id,),
@@ -582,6 +587,7 @@ class ReportData:
         """Every stored day of the city's counter sites; `complete` False marks a day whose
         total misses hours (or a zero-total outage day)."""
         rows = self._optional_rows(
+            "counter_daily",
             "SELECT city_id, site_id, day, count, complete FROM counter_daily WHERE city_id=? "
             "ORDER BY site_id, day",
             (city_id,),
@@ -589,5 +595,7 @@ class ReportData:
         return [CounterDay(r[0], r[1], r[2], r[3], bool(r[4])) for r in rows]
 
     def counter_cities(self) -> list[str]:
-        rows = self._optional_rows("SELECT DISTINCT city_id FROM counter_sites ORDER BY city_id")
+        rows = self._optional_rows(
+            "counter_sites", "SELECT DISTINCT city_id FROM counter_sites ORDER BY city_id"
+        )
         return [r[0] for r in rows]
