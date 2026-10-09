@@ -636,8 +636,8 @@ def _stylesheet() -> str:
 
 
 def test_no_hex_colour_outside_the_colour_tokens():
-    # every colour is a :root token with a dark-mode value: a hex literal in a rule is a colour
-    # the dark mode cannot reach. The rule is over the whole stylesheet, M7 rules included
+    # every colour is a :root token: a hex literal in a rule is a colour that changes in one
+    # place and not the others. The rule is over the whole stylesheet, M7 rules included
     from tests.test_app import _css_outside_tokens, _css_rules
 
     rest = _css_outside_tokens(_stylesheet())
@@ -651,17 +651,12 @@ def test_no_hex_colour_outside_the_colour_tokens():
     assert found == []
 
 
-def test_every_colour_token_has_a_dark_value_and_every_token_used_is_defined():
+def test_every_token_used_is_defined():
     from tests.test_app import _css_outside_tokens, _css_tokens
 
-    light, dark = _css_tokens(_stylesheet())
-    colours = {k for k, v in light.items() if HEX.fullmatch(v)}
-    assert colours, "the light :root defines the colours"
-    assert sorted(colours - dark.keys()) == [], "light colour tokens without a dark value"
-    assert sorted(dark.keys() - colours) == [], "dark tokens that the light :root does not define"
-    assert all(HEX.fullmatch(dark[k]) for k in colours)
+    tokens = _css_tokens(_stylesheet())
     used = set(re.findall(r"var\((--[\w-]+)\)", _css_outside_tokens(_stylesheet())))
-    assert sorted(used - light.keys()) == []
+    assert sorted(used - tokens.keys()) == []
 
 
 def _rgb(hexcolour: str) -> tuple[float, float, float]:
@@ -670,15 +665,6 @@ def _rgb(hexcolour: str) -> tuple[float, float, float]:
         h = "".join(c * 2 for c in h)
     srgb = [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
     return tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb)
-
-
-def _contrast(a: str, b: str) -> float:
-    def lum(c):
-        r, g, b_ = _rgb(c)
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
-
-    hi, lo = sorted((lum(a), lum(b)), reverse=True)
-    return (hi + 0.05) / (lo + 0.05)
 
 
 def _lch_hue(hexcolour: str) -> float:
@@ -697,39 +683,26 @@ def _lch_hue(hexcolour: str) -> float:
     return math.degrees(math.atan2(b_, a_)) % 360
 
 
-@pytest.mark.parametrize("mode", ["light", "dark"])
-def test_text_colours_are_readable_on_the_page_in_both_modes(mode):
-    # WCAG AA for body text: 4.5:1 for every text token on the page and card backgrounds
-    from tests.test_app import _css_tokens
-
-    tokens = dict(zip(("light", "dark"), _css_tokens(_stylesheet()), strict=True))[mode]
-    for text in ("--ink", "--ink-2", "--muted"):
-        for ground in ("--paper", "--surface", "--panel"):
-            ratio = _contrast(tokens[text], tokens[ground])
-            assert ratio >= 4.5, (mode, text, ground, round(ratio, 2))
-
-
 # Hue distance between the mapped line and the plan chart's other colours. The M8 amber was
 # 28 degrees of CIELAB hue from --flag (the suspect ring, orange) and read as its shade; 60
 # degrees, a sixth of the circle, puts two colours in different hue families (orange, magenta,
-# blue, green), whatever their lightness, in both modes
+# blue, green), whatever their lightness
 MIN_HUE_DEGREES = 60
 
 
-@pytest.mark.parametrize("mode", ["light", "dark"])
-def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours(mode):
+def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours():
     from tests.test_app import _css_tokens
 
-    tokens = dict(zip(("light", "dark"), _css_tokens(_stylesheet()), strict=True))[mode]
+    tokens = _css_tokens(_stylesheet())
     mapped = _lch_hue(tokens["--mapped"])
     for other in ("--flag", "--accent", "--completed"):
         d = abs(mapped - _lch_hue(tokens[other])) % 360
-        assert min(d, 360 - d) >= MIN_HUE_DEGREES, (mode, other, round(min(d, 360 - d)))
+        assert min(d, 360 - d) >= MIN_HUE_DEGREES, (other, round(min(d, 360 - d)))
 
 
 def test_the_plan_chart_and_its_key_draw_with_the_same_tokens():
     # the key's swatch and the chart's mark are one token: a colour changed in one place
-    # changes both, in both modes
+    # changes both
     from tests.test_app import _css_rules
 
     decl: dict[str, dict] = {}

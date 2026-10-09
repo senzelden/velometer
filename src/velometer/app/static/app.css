@@ -18,34 +18,9 @@
   --mapped: #c2378f;  /* the plan chart's mapped line: magenta, a hue family apart from --flag */
   --completed: #1baf7a; /* the plan chart's completed-projects bars */
   --series-1: #2a78d6; /* PALETTE[0] in js/data.js: the Counts chart's counter line */
-  --series-2: #eb6834; /* PALETTE[1]: its mapped-km line. The lines are drawn in PALETTE's hex */
-  color-scheme: light dark;
+  --series-2: #eb6834; /* PALETTE[1]: its mapped-km line */
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-}
-/* dark mode: every colour token above, redefined. --series-* stay PALETTE's (the chart lines
-   are drawn in it in both modes) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #ecebe6;
-    --ink-2: #c2c0b8;
-    --muted: #a3a19a;
-    --grid: #33322f;
-    --grid-2: #4a4944;
-    --paper: #151514;
-    --surface: #1d1d1b;
-    --panel: #262623;
-    --accent: #5d9ce8;
-    --accent-bg: #1c2b3f;
-    --flag: #f07a48;
-    --ctx: #5c5a54;
-    --up: #74c27a;
-    --down: #e3995a;
-    --mapped: #e070b8;
-    --completed: #2fc28c;
-    --series-1: #2a78d6;
-    --series-2: #eb6834;
-  }
 }
 
 * { box-sizing: border-box; }

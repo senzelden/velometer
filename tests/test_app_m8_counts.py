@@ -466,11 +466,10 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     palette = re.search(r"PALETTE = \[([^\]]*)\]", (STATIC / "js" / "data.js").read_text())
     first, second = re.findall(r'"(#[0-9a-f]{6})"', palette.group(1))[:2]
     # the swatch is a 3 px top border on a box of no height: its visible colour is the
-    # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`. The lines
-    # are drawn in PALETTE's hex in both modes, so the swatch token is the same in both
-    for tokens in _css_tokens(css):
-        assert _resolve(_key_line_colour(rules, "key-counter"), tokens) == first
-        assert _resolve(_key_line_colour(rules, "key-km"), tokens) == second
+    # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`
+    tokens = _css_tokens(css)
+    assert _resolve(_key_line_colour(rules, "key-counter"), tokens) == first
+    assert _resolve(_key_line_colour(rules, "key-km"), tokens) == second
 
 
 def _chart_key(html: str) -> str:
