@@ -4,7 +4,7 @@
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Compare</span></nav>{% endblock %}
 {% block content %}
 <h1>Compare cities</h1>
-<p class="lede">Pick cities, a metric and a boundary; the views show the same numbers four ways. Without JavaScript the form reloads the page and the table below holds the values.</p>
+<p class="lede">Pick cities, a metric and a boundary; the views show the same numbers four ways. {% if static_edition %}Without JavaScript this static edition shows the default selection; the table below holds its values.{% else %}Without JavaScript the form reloads the page and the table below holds the values.{% endif %}</p>
 
 <form class="filters-sheet" id="compare-filters" action="{{ u('/compare') }}" method="get">
 <div class="filters-top">

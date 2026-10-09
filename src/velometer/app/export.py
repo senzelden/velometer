@@ -1,17 +1,19 @@
-"""`velometer app export`: the static edition (M9 spec decisions 1, 2, 4, 8, 9).
+"""`velometer app export`: the static edition (M9 spec decisions 1, 2, 4, 5, 8, 9).
 
 The app renders every exported URL in-process (Starlette TestClient: no server, no network) and
 the response bodies are written to files; there is no second renderer. The URL list comes from
 the data (`export_urls`), a URL maps to a file by `url_to_path`, `static/` is copied, `404.html`
-is the app's 404 response and `build.json` stamps the build. The site is written to a staging
-directory next to `out` (never inside it) and moved into place only when complete, so a failed
-export leaves `out` as it was. A dangerous `out` (`/`, $HOME, a repo root, a directory holding
+is the app's 404 response and `build.json` stamps the build. `scan_references` then proves every
+reference in the written HTML, CSS and JS resolves (an export with one that does not fails,
+listing each). The site is written to a staging directory next to `out` (never inside it) and
+moved into place only when complete, so a failed export leaves `out` as it was. A dangerous `out` (`/`, $HOME, a repo root, a directory holding
 an input, a symlink) and a base that is not a plain path are refused before anything happens.
 The database is opened read-only, as the app opens it.
 """
 
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -19,12 +21,14 @@ import tempfile
 import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
+from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
 from velometer.app.main import HERE, TABS, create_app
-from velometer.app.urls import normalise_base
+from velometer.app.urls import make_u, normalise_base
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
@@ -53,12 +57,44 @@ STATIC_EXCLUDED = PurePosixPath("js/tests")  # the node tests of the JS modules,
 # The staging and set-aside directories, siblings of `out` (never inside it); .gitignore ignores
 # the prefix, so an export killed mid-way leaves no untracked directory in the repo.
 STAGING_PREFIX = ".velometer-staging-"
+# The reference scan (decision 5). A *loaded* reference (src, <link href>, a form action, CSS
+# url(), a script's import / url("…") / fetch("…"), a JSON config string) must resolve to a file
+# in the export, or be `data:`, or be on the one external host below. A *link* (<a>/<area> href,
+# a string under a JSON config's "links" key, which scripts put in an <a>) is followed by the
+# reader, not loaded by the page: it may also point at any http(s) or mailto address (the
+# attribution and source links).
+LOADED_HOSTS = frozenset({"tile.openstreetmap.org"})
+LINK_SCHEMES = frozenset({"http", "https", "mailto"})
+LINK_TAGS = frozenset({"a", "area"})
+SCANNED_SUFFIXES = (".html", ".css", ".js")
+# The images the vendored leaflet.css names that static/vendor/VERSIONS records as not vendored:
+# the maps use neither the layers control nor the default marker icon (a test keeps that true).
+UNVENDORED = frozenset(
+    ("static/vendor/leaflet.css", ref)
+    for ref in ("images/layers.png", "images/layers-2x.png", "images/marker-icon.png")
+)
+CSS_URL = re.compile(r"""url\(\s*(["']?)([^"')]*?)\1\s*\)""")
+# a literal (no `${…}`) passed to url() / fetch(); a module specifier
+JS_URL_CALL = re.compile(r"""\burl\(\s*(["'`])([^"'`$\n]*)\1""")
+JS_FETCH = re.compile(r"""\bfetch\(\s*(["'`])([^"'`$\n]*)\1""")
+JS_IMPORT = re.compile(r"""\b(?:import|from)\s*\(?\s*(["'])([^"'\n]+)\1""")
+JS_COMMENT_LINE = re.compile(r"^\s*(//|/\*|\*)")
+SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
 # a base path is `/`-separated segments of these characters (no `..`, `//`, scheme, query, ...)
 BASE_SEGMENT = re.compile(r"^[A-Za-z0-9._~-]+$")
 
 
 class ExportError(Exception):
     """An export that cannot complete; the message names what and why."""
+
+
+@dataclass(frozen=True, order=True)
+class Unresolved:
+    """A reference in an exported file (relative path) that resolves to no exported file, or a
+    loaded resource on a host other than the tile server."""
+
+    file: str
+    ref: str
 
 
 @dataclass(frozen=True)
@@ -242,6 +278,121 @@ def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
     (site / BUILD_FILE).write_text(json.dumps(build, indent=2, sort_keys=True) + "\n")
 
 
+class _HtmlRefs(HTMLParser):
+    """A page's references as (value, loaded?): href / src / action, the velometer-base meta, a
+    data-* attribute holding a root-relative path and the strings of each JSON config."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.refs: list[tuple[str, bool]] = []
+        self._json: str | None = None
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        for name in ("href", "src", "action"):
+            if a.get(name) is not None:
+                self.refs.append((a[name], not (name == "href" and tag in LINK_TAGS)))
+        if tag == "meta" and a.get("name") == "velometer-base":
+            self.refs.append((a.get("content") or "", True))
+        for name, value in attrs:
+            if name.startswith("data-") and value and value.startswith("/"):
+                self.refs.append((value, True))
+        if tag == "script" and a.get("type") == "application/json":
+            self._json = ""
+
+    def handle_data(self, data):
+        if self._json is not None:
+            self._json += data
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._json is not None:
+            self.refs += list(_json_refs(json.loads(self._json), link=False))
+            self._json = None
+
+
+def _json_refs(value, link: bool):
+    """A JSON config's strings that are URLs: root-relative or http(s); under "links", links."""
+    if isinstance(value, dict):
+        for k, v in value.items():
+            yield from _json_refs(v, link or k == "links")
+    elif isinstance(value, list):
+        for v in value:
+            yield from _json_refs(v, link)
+    elif isinstance(value, str) and (
+        value.startswith("/") or value.startswith(("http://", "https://"))
+    ):
+        yield value, not link
+
+
+def _js_refs(text: str, base: str) -> list[tuple[str, bool]]:
+    """A script's import specifiers, url("…") literals (as url() resolves them under `base`) and
+    fetch("…") literals; comment lines are skipped. A built URL (`${…}`) is not a literal."""
+    u = make_u(base)
+    code = "\n".join(line for line in text.split("\n") if not JS_COMMENT_LINE.match(line))
+    refs = [(m.group(2), True) for m in JS_IMPORT.finditer(code)]
+    for m in JS_URL_CALL.finditer(code):
+        try:
+            refs.append((u(m.group(2)), True))
+        except ValueError:
+            refs.append((m.group(2), True))  # not `/…`: reported as it is written
+    refs += [(m.group(2), True) for m in JS_FETCH.finditer(code)]
+    return refs
+
+
+def _resolves(out: Path, rel: str) -> bool:
+    """`rel` (relative to `out`, no query) is an exported file or a page directory."""
+    rel = posixpath.normpath(rel) if rel else "."
+    if rel == ".." or rel.startswith("../") or rel.startswith("/"):
+        return False
+    target = out / rel
+    return target.is_file() or (target / "index.html").is_file()
+
+
+def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
+    if ref.startswith("#"):
+        return True
+    scheme = SCHEME.match(ref)
+    if scheme or ref.startswith("//"):
+        name = scheme.group(1).lower() if scheme else ""
+        if name == "data":
+            return loaded
+        if not loaded and name in LINK_SCHEMES:
+            return True
+        return name in ("http", "https", "") and urlsplit(ref).hostname in LOADED_HOSTS
+    path = unquote(urlsplit(ref).path)
+    if path.startswith("/"):
+        return path.startswith(base) and _resolves(out, path.removeprefix(base))
+    if file.endswith(".html") or not path:
+        return False  # relative in a page: it depends on the URL the page is served at
+    return _resolves(out, posixpath.join(posixpath.dirname(file), path))
+
+
+def scan_references(out: Path, base: str) -> list[Unresolved]:
+    """Every reference of every exported HTML, CSS and JS file under `out` that does not resolve
+    (the rule at LOADED_HOSTS): an internal one must carry `base` and name an exported file or
+    page directory (a relative one in CSS/JS resolves against its file); a loaded external one
+    must be on the tile server; a link may also leave the site. Sorted, without duplicates."""
+    base = normalise_base(base)
+    found: set[Unresolved] = set()
+    for path in sorted(p for p in out.rglob("*") if p.is_file()):
+        if path.suffix not in SCANNED_SUFFIXES:
+            continue
+        file = path.relative_to(out).as_posix()
+        text = path.read_text(encoding="utf-8")
+        if path.suffix == ".html":
+            parser = _HtmlRefs()
+            parser.feed(text)
+            refs = parser.refs
+        elif path.suffix == ".css":
+            refs = [(m.group(2), True) for m in CSS_URL.finditer(text)]
+        else:
+            refs = _js_refs(text, base)
+        for ref, loaded in refs:
+            if (file, ref) not in UNVENDORED and not _ok(ref.strip(), loaded, file, out, base):
+                found.add(Unresolved(file, ref))
+    return sorted(found)
+
+
 def _install(site: Path, out: Path, clean: bool) -> None:
     """The complete `site` in place of `out`'s contents. The guard is checked again first (`out`
     may have changed during the render); `out`'s old entries are set aside in a sibling
@@ -326,6 +477,10 @@ def _run_export(
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
         _write_site(site, app, urls, build)
+        unresolved = scan_references(site, build["base"])
+        if unresolved:
+            lines = "\n".join(f"  {x.file}: {x.ref}" for x in unresolved)
+            raise ExportError(f"{len(unresolved)} reference(s) do not resolve:\n{lines}")
         _install(site, out, clean)
     except BaseException:
         shutil.rmtree(site, ignore_errors=True)

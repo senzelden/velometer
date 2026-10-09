@@ -16,7 +16,7 @@ from typer.testing import CliRunner
 from tests.test_app import CONTENT
 from tests.test_app_base import BASE, rich  # noqa: F401  (`rich` is a fixture)
 from velometer.app import export
-from velometer.app.main import HERE, TABS, create_app
+from velometer.app.main import CSP, HERE, TABS, create_app, csp_meta
 from velometer.cli import app as cli_app
 from velometer.report.data import ReportData, open_readonly
 
@@ -31,10 +31,32 @@ def _md5(path: Path) -> str:
     return hashlib.md5(path.read_bytes()).hexdigest()
 
 
+def _content(rich) -> Path:  # noqa: F811
+    """The shipped content with each link to a city the fixture DB lacks pointed at a fixture
+    city: the reference scan fails an export that links to a page it does not have, and the
+    shipped narratives link to all the real cities."""
+    db_path, cfg, *_ = rich
+    content = db_path.parent / "content-for-fixture"
+    if not content.exists():
+        cities = {c.id for c in _data(rich).cities()}
+        assert "berlin" in cities
+        city_link = re.compile(r"/city/([a-z_-]+)")
+
+        def keep(m):
+            return m.group(0) if m.group(1) in cities else "/city/berlin"
+
+        for src in _files(CONTENT):
+            dst = content / src.relative_to(CONTENT)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(city_link.sub(keep, src.read_text()))
+    return content
+
+
 def _app(rich, base="/"):  # noqa: F811
     db_path, cfg, maps, docs, plans = rich
+    content = _content(rich)
     return create_app(
-        db_path, cfg, maps, docs, content_dir=CONTENT, plans_data_dir=plans, base_path=base
+        db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans, base_path=base
     )
 
 
@@ -45,7 +67,8 @@ def _data(rich):  # noqa: F811
 
 def _export(rich, out: Path, base="/", clean=False):  # noqa: F811
     db_path, cfg, maps, docs, plans = rich
-    return export.run_export(out, base, db_path, cfg, maps, docs, CONTENT, plans, clean)
+    content = _content(rich)
+    return export.run_export(out, base, db_path, cfg, maps, docs, content, plans, clean)
 
 
 def _files(root: Path) -> list[Path]:
@@ -154,7 +177,7 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
                 assert path.read_bytes() == r.content, url  # a CSV's preamble has a timestamp
         missing = c.get("/no-such-page")
         assert missing.status_code == 404
-        assert (out / "404.html").read_bytes() == missing.content
+        assert _without_footer((out / "404.html").read_text()) == missing.text
 
     static = HERE / "static"
     for src in _files(static):
@@ -250,7 +273,7 @@ def test_cli_app_export(rich, tmp_path, monkeypatch):  # noqa: F811
     out = tmp_path / "site"
     args = ["app", "export", "--out", str(out), "--base", "/velometer", "--db", str(db_path)]
     args += ["--config", str(cfg), "--maps", str(maps), "--docs", str(docs)]
-    args += ["--content", str(CONTENT)]
+    args += ["--content", str(_content(rich))]
     r = CliRunner().invoke(cli_app, args)
     assert r.exit_code == 0, r.output
     assert json.loads((out / "build.json").read_text())["base"] == BASE
@@ -367,6 +390,7 @@ def test_a_dangerous_out_is_refused(rich, tmp_path, monkeypatch, which, clean): 
     # each would pass the build.json guard, so only the path rule refuses it
     if out != Path("/") and which != "velometer-repo":
         (out / "build.json").write_text(json.dumps(dict.fromkeys(BUILD_KEYS, "x")))
+    _content(rich)  # made before the snapshot (it lives beside the fixture's inputs)
     before = _snapshot(out) if which not in ("root", "velometer-repo") else None
     calls = []
     monkeypatch.setattr(export, "open_readonly", lambda *a: calls.append(a))
@@ -429,3 +453,301 @@ def test_cli_reports_a_bad_base(rich, tmp_path):  # noqa: F811
     r = CliRunner().invoke(cli_app, [*args, "--db", str(rich[0])])
     assert r.exit_code == 1
     assert "--base" in r.output
+
+
+# --- the reference scan (decision 5) ---
+
+# a tiny site, base /velometer/: every reference form points at its own file, so deleting a file
+# leaves exactly the reference of that form unresolved
+SCAN_SITE = {
+    "index.html": (
+        "<!doctype html><html><head>"
+        '<link rel="stylesheet" href="/velometer/static/a.css">'
+        '<script type="module" src="/velometer/static/m.js"></script></head><body>'
+        '<a href="/velometer/page?x=1#top">page</a>'
+        '<form action="/velometer/search" method="get"></form>'
+        '<div data-src="/velometer/data/d.json"></div>'
+        '<script type="application/json" id="cfg">{"k": [{"url": "/velometer/maps/m.geojson"}],'
+        ' "links": {"copyright": "https://www.openstreetmap.org/copyright"},'
+        ' "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"}</script>'
+        '<img src="data:image/png;base64,AAAA" alt="">'
+        '<a href="https://www.openstreetmap.org/copyright">OSM</a> <a href="#x">here</a>'
+        "</body></html>"
+    ),
+    "about/index.html": (
+        '<!doctype html><html><head><meta name="velometer-base" content="/velometer/">'
+        "</head><body></body></html>"
+    ),
+    "page/index.html": "<!doctype html><html><head></head><body></body></html>",
+    "search/index.html": "<!doctype html><html><head></head><body></body></html>",
+    "data/d.json": "{}",
+    "maps/m.geojson": "{}",
+    "static/a.css": "a { background: url(img/bg.png); } b { background: url('data:x'); }",
+    "static/img/bg.png": "png",
+    "static/m.js": (
+        'import { x } from "./dep.js";\n'
+        'const series = fetch(url("/data/series.json"));\n'
+        'fetch("/velometer/data/raw.csv");\n'
+        '// a comment naming url("/nowhere") is not a reference\n'
+        "const dynamic = url(`/city/${id}`);\n"
+    ),
+    "static/dep.js": "export const x = 1;\n",
+    "data/series.json": "{}",
+    "data/raw.csv": "a\n",
+}
+# file deleted -> (file holding the reference, the reference as written resolved to a URL)
+SCAN_FORMS = {
+    "index.html": ("about/index.html", "/velometer/"),  # the velometer-base meta
+    "static/a.css": ("index.html", "/velometer/static/a.css"),  # <link href>
+    "static/m.js": ("index.html", "/velometer/static/m.js"),  # <script src>
+    "page/index.html": ("index.html", "/velometer/page?x=1#top"),  # <a href>
+    "search/index.html": ("index.html", "/velometer/search"),  # <form action>
+    "data/d.json": ("index.html", "/velometer/data/d.json"),  # a data-* attribute
+    "maps/m.geojson": ("index.html", "/velometer/maps/m.geojson"),  # a JSON config string
+    "static/img/bg.png": ("static/a.css", "img/bg.png"),  # CSS url(), relative to the CSS
+    "static/dep.js": ("static/m.js", "./dep.js"),  # a JS import
+    "data/series.json": ("static/m.js", "/velometer/data/series.json"),  # url("/…")
+    "data/raw.csv": ("static/m.js", "/velometer/data/raw.csv"),  # fetch("…")
+}
+
+
+def _scan_site(root: Path) -> Path:
+    for rel, text in SCAN_SITE.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text)
+    return root
+
+
+def test_the_scan_of_a_complete_site_finds_nothing(tmp_path):
+    assert export.scan_references(_scan_site(tmp_path), BASE) == []
+
+
+@pytest.mark.parametrize("deleted", sorted(SCAN_FORMS))
+def test_the_scan_finds_each_reference_form(tmp_path, deleted):
+    site = _scan_site(tmp_path)
+    (site / deleted).unlink()
+    file, ref = SCAN_FORMS[deleted]
+    found = export.scan_references(site, BASE)
+    assert found == [export.Unresolved(file, ref)]
+
+
+@pytest.mark.parametrize(
+    ("planted", "ref"),
+    [
+        ('<a href="/velometer/nowhere">x</a>', "/velometer/nowhere"),
+        ('<a href="/nowhere">x</a>', "/nowhere"),  # internal without the base
+        ('<a href="nowhere">x</a>', "nowhere"),  # relative in a page: no fixed file
+        ('<script src="https://cdn.example/x.js"></script>', "https://cdn.example/x.js"),
+        ('<img src="//cdn.example/x.png" alt="">', "//cdn.example/x.png"),
+        ('<link rel="stylesheet" href="https://cdn.example/x.css">', "https://cdn.example/x.css"),
+        ('<form action="https://forms.example/x"></form>', "https://forms.example/x"),
+        ('<a href="javascript:alert(1)">x</a>', "javascript:alert(1)"),
+        (
+            '<script type="application/json">{"url": "https://cdn.example/t.json"}</script>',
+            "https://cdn.example/t.json",
+        ),
+    ],
+)
+def test_the_scan_reports_dangling_and_foreign_references(tmp_path, planted, ref):
+    site = _scan_site(tmp_path)
+    page = site / "page" / "index.html"
+    page.write_text(page.read_text().replace("<body>", "<body>" + planted))
+    assert export.scan_references(site, BASE) == [export.Unresolved("page/index.html", ref)]
+
+
+@pytest.mark.parametrize(
+    "allowed",
+    [
+        '<a href="https://www.openstreetmap.org/copyright">OSM</a>',  # a link, not a load
+        '<a href="mailto:x@example.org">mail</a>',
+        '<img src="https://tile.openstreetmap.org/1/0/0.png" alt="">',  # the one loaded host
+        '<script type="application/json">{"links": {"w": "https://example.org/w/"}}</script>',
+    ],
+)
+def test_the_scan_allows_links_and_the_tile_host(tmp_path, allowed):
+    site = _scan_site(tmp_path)
+    page = site / "page" / "index.html"
+    page.write_text(page.read_text().replace("<body>", "<body>" + allowed))
+    assert export.scan_references(site, BASE) == []
+
+
+def test_the_scan_of_a_real_export_finds_the_planted_breaks_only(rich, tmp_path):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    assert export.scan_references(out, BASE) == []
+    page = out / "cities" / "index.html"
+    planted = (
+        '<a href="/velometer/nowhere">x</a><script src="https://cdn.example/x.js"></script>'
+        '<a href="https://www.openstreetmap.org/copyright">OSM</a>'
+    )
+    page.write_text(page.read_text().replace("<main>", "<main>" + planted, 1))
+    assert export.scan_references(out, BASE) == [
+        export.Unresolved("cities/index.html", "/velometer/nowhere"),
+        export.Unresolved("cities/index.html", "https://cdn.example/x.js"),
+    ]
+
+
+def test_an_unresolved_reference_fails_the_export_listing_each(rich, tmp_path, monkeypatch):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    before = _snapshot(out)
+    real = export._write_site
+
+    def write_then_break(site, *args):
+        real(site, *args)
+        for rel in ("cities/index.html", "stories/index.html"):
+            page = site / rel
+            page.write_text(page.read_text().replace("<main>", '<main><a href="/velometer/x">', 1))
+        (site / "static" / "app.css").unlink()
+
+    monkeypatch.setattr(export, "_write_site", write_then_break)
+    with pytest.raises(export.ExportError) as e:
+        _export(rich, out, BASE, clean=True)
+    msg = str(e.value)
+    assert "cities/index.html: /velometer/x" in msg
+    assert "stories/index.html: /velometer/x" in msg
+    assert "index.html: /velometer/static/app.css" in msg
+    assert _snapshot(out) == before
+    assert not _staging(tmp_path)
+
+
+def test_the_unvendored_leaflet_images_are_unused():
+    """The scan allows only the leaflet.css images VERSIONS records as not vendored, because the
+    maps use neither the layers control nor the default marker icon; this keeps that true."""
+    static = HERE / "static"
+    assert "not vendored" in (static / "vendor" / "VERSIONS").read_text()
+    for allowed_file, ref in export.UNVENDORED:
+        assert allowed_file == "static/vendor/leaflet.css"
+        assert ref in (static / "vendor" / "leaflet.css").read_text()
+        assert not (static / "vendor" / ref).exists()
+    uses = re.compile(r"\bL\.(marker|icon|Icon|control)\b")
+    for js in [*static.glob("*.js"), *static.glob("js/*.js")]:
+        assert not uses.search(js.read_text()), js
+
+
+# --- the whole export: base rule, equality, CSP, the static compare note ---
+
+ROOT_REF = {
+    # an attribute value or a JSON config string that is a root-relative path
+    ".html": re.compile(r'(?:=|": )"(/(?!/)[^"]*)"'),
+    ".css": re.compile(r"url\(\s*['\"]?(/(?!/)[^'\")]*)"),
+    # a root-relative string literal anywhere in a script (url() adds the base at run time)
+    ".js": re.compile(r"""(\burl\(\s*)?(["'`])(/(?![/*])[A-Za-z][^"'`\s]*)\2"""),
+}
+
+
+def test_every_internal_reference_of_an_export_carries_the_base(rich, tmp_path):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    seen = 0
+    for path in _files(out):
+        text = path.read_text(errors="replace")
+        if path.suffix in (".html", ".css"):
+            for ref in ROOT_REF[path.suffix].findall(text):
+                seen += 1
+                assert ref.startswith(BASE), f"{path.relative_to(out)}: {ref}"
+        elif path.suffix == ".js":
+            for via_url, _quote, ref in ROOT_REF[".js"].findall(text):
+                seen += 1
+                assert via_url, f"{path.relative_to(out)}: {ref} not through url()"
+    assert seen > 100
+    assert export.scan_references(out, BASE) == []
+
+
+def _without_footer(html: str) -> str:
+    lines = html.split("\n")
+    stamps = [i for i, line in enumerate(lines) if FOOTER in line]
+    assert len(stamps) == 1
+    assert lines[stamps[0]].strip().startswith("<p>" + FOOTER)
+    return "\n".join(lines[: stamps[0]] + lines[stamps[0] + 1 :])
+
+
+STATIC_NOTE = "Without JavaScript this static edition shows the default selection"
+
+
+def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
+    """Equality: every exported HTML file is the live app's response for its URL (base `/`, no
+    static edition) apart from the footer stamp, and on Compare the lede's static note."""
+    out = tmp_path / "dist"
+    _export(rich, out)
+    pages = [p for p in _files(out) if p.suffix == ".html"]
+    assert len(pages) > 10
+    with TestClient(_app(rich), base_url=BASE_URL) as c:
+        for page in pages:
+            rel = page.relative_to(out).as_posix()
+            url = "/404" if rel == "404.html" else "/" + rel.removesuffix("index.html").rstrip("/")
+            r = c.get(url)
+            assert r.status_code == (404 if rel == "404.html" else 200), rel
+            text = page.read_text()
+            if rel.endswith("panel/index.html"):
+                assert text == r.text, rel  # a fragment: no footer
+                continue
+            text = _without_footer(text)
+            if rel == "compare/index.html":
+                static, live = text.split("\n"), r.text.split("\n")
+                differ = [i for i, (a, b) in enumerate(zip(static, live, strict=True)) if a != b]
+                assert len(differ) == 1, differ
+                assert STATIC_NOTE in static[differ[0]]
+                assert static[differ[0]].startswith('<p class="lede">')
+                assert STATIC_NOTE not in r.text
+            else:
+                assert text == r.text, rel
+
+
+def test_every_exported_page_carries_the_csp_meta_tag(rich, tmp_path):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    tag = f'<meta http-equiv="Content-Security-Policy" content="{csp_meta(CSP)}">'
+    documents = 0
+    for page in (p for p in _files(out) if p.suffix == ".html"):
+        text = page.read_text()
+        if "<html" not in text:
+            assert page.parent.name == "panel", page  # only the panels are fragments
+            continue
+        documents += 1
+        assert text.split("</head>")[0].count(tag) == 1, page
+    assert documents > 10
+
+
+def test_the_static_compare_says_it_shows_the_default(rich, tmp_path):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    lede = [
+        line
+        for line in (out / "compare" / "index.html").read_text().split("\n")
+        if line.startswith('<p class="lede">')
+    ]
+    assert len(lede) == 1 and STATIC_NOTE in lede[0]
+    with TestClient(_app(rich), base_url=BASE_URL) as c:
+        assert STATIC_NOTE not in c.get("/compare").text
+
+
+# --- the HTML 404 page (controller ruling) ---
+
+
+@pytest.mark.parametrize("base", ["/", BASE])
+def test_an_unknown_page_is_an_html_404_with_the_layout(rich, base):  # noqa: F811
+    with TestClient(_app(rich, base), base_url=BASE_URL) as c:
+        for url in ("/no-such-page", "/city/nowhere", "/city/berlin/nope"):
+            r = c.get(url)
+            assert r.status_code == 404, url
+            assert r.headers["content-type"].startswith("text/html"), url
+            assert r.headers["content-security-policy"] == CSP
+            assert "Page not found" in r.text
+            assert f'href="{base}"' in r.text  # the way home, through u()
+            assert 'id="site-nav"' in r.text  # the layout's navigation
+            assert "openstreetmap.org/copyright" in r.text  # the footer and its attribution
+        for url in ("/data/nope.csv", "/maps/nope.png", "/static/nope.js"):
+            r = c.get(url)
+            assert r.status_code == 404, url
+            assert r.headers["content-type"].startswith("application/json"), url
+            assert "detail" in r.json()
+
+
+def test_the_exported_404_is_the_html_page_and_resolves(rich, tmp_path):  # noqa: F811
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    text = (out / "404.html").read_text()
+    assert text.startswith("<!doctype html>") and "Page not found" in text
+    assert 'href="/velometer/"' in text
+    assert [u for u in export.scan_references(out, BASE) if u.file == "404.html"] == []

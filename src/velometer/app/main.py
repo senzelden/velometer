@@ -22,12 +22,14 @@ from urllib.parse import urlparse
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from velometer import timeseries as ts
 from velometer.app import compare as cmp
@@ -125,6 +127,9 @@ UNITS = {"pct": "%"}
 CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
 OURS_PREFIX = re.compile(r"^\s*ours:\s*", re.I)
+# A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
+# is the HTML "page not found" page (the static edition's 404.html).
+NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/")
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
@@ -353,7 +358,12 @@ def create_app(
         ]
 
     def page(
-        request: Request, name: str, active: str, data: ReportData | None = None, **ctx
+        request: Request,
+        name: str,
+        active: str,
+        data: ReportData | None = None,
+        status_code: int = 200,
+        **ctx,
     ) -> HTMLResponse:
         def build_footer() -> dict:
             sel = report_selector(config_dir)  # config only: the footer needs no database
@@ -367,8 +377,23 @@ def create_app(
             except HTTPException:
                 nav = None
         return templates.TemplateResponse(
-            request, name, {"footer": footer, "nav_groups": nav, "active": active, **ctx}
+            request,
+            name,
+            {"footer": footer, "nav_groups": nav, "active": active, **ctx},
+            status_code=status_code,
         )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def not_found_page(request: Request, exc: StarletteHTTPException) -> Response:
+        """A 404 for a page path is the HTML "page not found" page (layout, nav, a way home);
+        any other error, and a 404 for data, maps or static files, is FastAPI's JSON."""
+        if exc.status_code != 404 or request.url.path.startswith(NOT_PAGE_PREFIXES):
+            return await http_exception_handler(request, exc)
+        lazy = LazyData(db_path, config_dir)
+        try:
+            return page(request, "404.html", "", lazy, status_code=404)
+        finally:
+            lazy.close()
 
     def known(data: ReportData, city_id: str):
         city = next((c for c in data.cities() if c.id == city_id), None)
