@@ -1345,6 +1345,20 @@ def test_a_starred_title_renders_in_italics_and_a_lone_star_stays_text():
     assert "<code>a=*</code> b*c" in html and html.count("<em>") == 1
 
 
+@pytest.mark.parametrize(
+    ("prose", "html"),
+    [
+        ("`highway=*` or `cycleway=*`", "<code>highway=*</code> or <code>cycleway=*</code>"),
+        ("tag `*x*` here", "tag <code>*x*</code> here"),
+        ("*a `b` c*", "*a <code>b</code> c*"),  # an emphasis never spans a code span
+    ],
+)
+def test_stars_inside_or_around_code_spans_stay_text(prose, html):
+    from velometer.app.narrative import _Numbering
+
+    assert str(_Numbering({}, {}).paragraph(prose)) == f"<p>{html}</p>"
+
+
 def test_a_step_without_a_heading_names_its_chart_not_null(setup_21, tmp_path):  # noqa: F811
     db_path, cfg, maps, docs = setup_21
     story = STORY_YAML.replace("  - heading: Heading leaders\n", "  -\n")

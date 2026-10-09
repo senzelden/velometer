@@ -149,7 +149,7 @@ def test_causal_counter_wording():
 def test_the_verb_count_alone_is_not_a_counter_mention():
     # "count" the verb says nothing about counter data; a counter noun beside "due to" does
     assert causal_counter_wording("We count the km, due to the method.") == []
-    assert causal_counter_wording("We counted the km, due to the method.") == []
+    assert causal_counter_wording("Counted trips drove demand.") == ["drove"]
     assert causal_counter_wording("The counts fell due to works.") == ["due to"]
     assert causal_counter_wording("We count the km at the counter, due to X.") == ["due to"]
 
@@ -165,7 +165,7 @@ def test_causal_wording_in_the_counters_page(m8):
 def test_causal_wording_in_a_profile(m8):
     _edit(
         _senmvku(m8),
-        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counter trips drove demand."),
+        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counted trips drove demand."),
     )
     assert _problems(m8) == ["organisations/senmvku.yaml: causal wording 'drove' about counts"]
 

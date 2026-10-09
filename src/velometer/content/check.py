@@ -55,8 +55,9 @@ _SOURCE_REF = re.compile(r"\[@([^\]\s]+)\]")
 _DATA_REF = re.compile(r"\[#([^\]\s]+)\]")
 _STRIPPED = re.compile(r"\[@[^\]]*\]|\[#[^\]]*\]|`[^`]*`|\]\([^)]*\)")
 _VERBS = re.compile(r"\b(built|constructed|opened|removed)\b", re.IGNORECASE)
-# counter nouns only: the verb "count" ("we count the km") says nothing about counter data
-_COUNTER_WORDS = re.compile(r"\b(counters?|counts|cyclists recorded)\b", re.IGNORECASE)
+# counter nouns and "counted" ("counted trips"); the verb "count" alone ("we count the km") says
+# nothing about counter data
+_COUNTER_WORDS = re.compile(r"\b(counters?|counts|counted|cyclists recorded)\b", re.IGNORECASE)
 _CAUSAL = re.compile(
     r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
     re.IGNORECASE,
