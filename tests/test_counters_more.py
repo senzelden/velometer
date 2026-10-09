@@ -183,19 +183,46 @@ def _setup(tmp_path, city: str, files: list[Path], boundary: Path | None = None)
     return res, sqlite3.connect(db)
 
 
+def _madrid_year(path: Path, year: int, sites: int) -> Path:
+    """A synthetic Madrid file in the 2019-2021 schema: `sites` counters, every whole hour of
+    `year` with 1 bicycle, the two clock-change days left out (no counter needs them: 364 of 366
+    days is above MIN_VALID)."""
+    header = (FIX / "madrid" / "2020.csv").read_bytes().decode("utf-8-sig").splitlines()[0]
+    tail = "2;Arganzuela;Calle Toledo ;133;28005;Sentido Sur ;40,40547173;-3,711960704"
+    lines = [header]
+    day = date(year, 1, 1)
+    while day.year == year:
+        if (day.month, day.day) not in ((3, 29), (10, 25)):  # 2020's clock changes
+            for h in range(24):
+                stamp = f"{day:%d/%m/%Y} {h}:00;{h}:00"
+                lines += [f"{stamp};PERM_BICI{n:02d}_PM01;1;{tail}" for n in range(sites)]
+        day = date.fromordinal(day.toordinal() + 1)
+    path.write_bytes(("\ufeff" + "\r\n".join(lines) + "\r\n").encode("utf-8"))
+    return path
+
+
 def test_madrid_index_base_year_2020_is_100(tmp_path):
+    # Madrid's index is chained from 2020 (spec §2.13): a 2020 with MIN_SITES complete sites is
+    # 100 by definition. The real fixture cut has no qualifying site in any year, so the base
+    # year is a synthetic full 2020.
     assert CONFIG.entry("madrid").base_year == 2020
-    res, conn = _setup(tmp_path, "madrid", MAD_FILES)
+    (tmp_path / "src").mkdir()
+    synthetic = _madrid_year(tmp_path / "src" / "2020.csv", 2020, MIN_SITES)
+    res, conn = _setup(tmp_path, "madrid", [synthetic])
     assert res.exit_code == 0, res.output
     rows = conn.execute(
         "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id='madrid'"
     )
-    by_year = {y: (idx, n, base) for y, idx, n, base in rows}
-    assert {base for _, _, base in by_year.values()} == {2020}
-    idx, n, _ = by_year[2020]
-    # 100 by definition, when the base year itself has MIN_SITES qualifying sites (spec §2.13)
-    assert idx == (100.0 if n >= MIN_SITES else None)
-    assert by_year[2019][0] is None  # four months of 2019: no link qualifies
+    assert {y: (idx, n, base) for y, idx, n, base in rows} == {2020: (100.0, MIN_SITES, 2020)}
+
+
+def test_madrid_fixture_years_have_no_index_value(tmp_path):
+    # the real fixture cut: four months of 2019 and a few days of the other years qualify nowhere
+    res, conn = _setup(tmp_path, "madrid", MAD_FILES)
+    assert res.exit_code == 0, res.output
+    rows = conn.execute("SELECT year, idx, base_year FROM counter_index WHERE city_id='madrid'")
+    by_year = {y: (idx, base) for y, idx, base in rows}
+    assert by_year and all(v == (None, 2020) for v in by_year.values()), by_year
 
 
 @pytest.mark.parametrize(
