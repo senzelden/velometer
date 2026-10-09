@@ -351,6 +351,18 @@ def test_a_route_exception_names_its_url(rich, tmp_path, monkeypatch):  # noqa: 
     assert not out.exists() and not _staging(tmp_path)
 
 
+def test_a_missing_database_is_an_export_error(rich, tmp_path):  # noqa: F811
+    """Spec §5: a missing DB fails with the app's message, not a traceback, and writes nothing."""
+    db_path, cfg, maps, docs, plans = rich
+    out = tmp_path / "dist"
+    with pytest.raises(export.ExportError, match="database not found"):
+        export.run_export(
+            out, "/", db_path.with_name("nope.sqlite"), cfg, maps, docs, _content(rich), plans,
+            False,
+        )  # fmt: skip
+    assert not out.exists() and not _staging(tmp_path)
+
+
 def test_an_os_error_is_an_export_error(rich, tmp_path):  # noqa: F811
     parent = tmp_path / "locked"
     parent.mkdir()

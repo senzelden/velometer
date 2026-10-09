@@ -109,8 +109,11 @@ Hosting and later work:
 
 - **Size:** the export is about 252 MB (258 files), 237 MB of it tier-map GeoJSON. Simplify or
   compress before hosting (HANDOVER §12 Q4, publishing, stays open).
-- **Live-vs-main identity:** a one-off byte diff of the live app's pages against `main` at base
-  `/` (the identity test cannot see shared markup). This is being done in the M9 final review.
+- **Live-vs-main identity (done, clean):** the M9 final review rendered all 232 export URLs
+  plus `/404` and a compare `?…` state on `m9` and `main` at base `/`. The 103 HTML pages differ
+  by exactly the two meta lines. The panels, PNGs, GeoJSON and `series.json` are identical.
+  The CSVs differ only in the existing `# velometer <commit> generated <time>` preamble line,
+  and `/404` is the ruled HTML page. Not a standing test.
 - **Render-pass observations (out of scope for M9):**
   - At 390 px the wide tables (overview key numbers and rankings) are readable only
     inside their own scroll boxes. The page itself does not scroll sideways. This is M10's
