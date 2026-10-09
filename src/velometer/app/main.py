@@ -27,12 +27,12 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from velometer import timeseries as ts
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import plans_pages
+from velometer.app import plans_pages, urls
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
@@ -107,6 +107,9 @@ CSP = (
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
+# Directives a browser ignores in a <meta http-equiv> policy: the header keeps them; a page served
+# without our headers (the static edition) goes without them.
+HEADER_ONLY_DIRECTIVES = {"frame-ancestors", "report-uri", "report-to", "sandbox"}
 # The city page's tabs: key, label, path suffix. Counts only for a city with counter data
 # (ReportData.counter_cities), Bezirke only for a city with subareas.
 TABS = [
@@ -123,6 +126,13 @@ CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
 OURS_PREFIX = re.compile(r"^\s*ours:\s*", re.I)
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def csp_meta(csp: str) -> str:
+    """The policy as a `<meta http-equiv>` tag can carry it: `csp` without the header-only
+    directives, the others verbatim and in order."""
+    kept = [d.strip() for d in csp.split(";") if d.strip()]
+    return "; ".join(d for d in kept if d.split()[0].lower() not in HEADER_ONLY_DIRECTIVES)
 
 
 class CSPMiddleware:
@@ -273,7 +283,12 @@ def create_app(
     docs_dir: Path,
     content_dir: Path = Path("content"),
     plans_data_dir: Path = Path("data") / "plans",
+    base_path: str = "/",
+    static_edition: dict | None = None,
 ) -> FastAPI:
+    """The app. `base_path` is the path the site is served under (M9: every URL a page emits
+    carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
+    for the static export (a footer line), None for the live app."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -281,7 +296,17 @@ def create_app(
     app.add_middleware(GZipMiddleware, minimum_size=GZIP_MIN_BYTES, compresslevel=GZIP_LEVEL)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
+    app.state.base_path = urls.normalise_base(base_path)
+    # Every URL that leaves the app goes through `u`: templates call it on each internal href,
+    # src and action at the point they write it; values a script reads from a JSON config (map
+    # URLs, the Stories steps' links) get it here, since the script uses them as they are.
+    u = urls.make_u(app.state.base_path)
     templates = Jinja2Templates(directory=HERE / "templates")
+    templates.env.globals["u"] = u
+    templates.env.globals["base_path"] = app.state.base_path
+    # inside a double-quoted attribute the policy's single quotes need no escaping
+    templates.env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
+    templates.env.globals["static_edition"] = static_edition
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
     templates.env.filters["when"] = _when
@@ -696,6 +721,7 @@ def create_app(
         config = {
             step: {k: v for k, v in built.items() if k != "table"}
             | {
+                "href": u(built["href"]),  # story.js sets it as the Explore link
                 # a step section may have no heading: the eyebrow then names the chart
                 "heading": next(s["sec"].heading for s in story if s["step"] == step)
                 or built.get("title")
@@ -864,7 +890,9 @@ def create_app(
             map_name = f"{city_id}_{kind}.png"
             geojson = f"{city_id}_{kind}.geojson"
             if (maps_dir / geojson).is_file():
-                map_kinds.append({"kind": kind, "label": kind.upper(), "url": f"/maps/{geojson}"})
+                map_kinds.append(
+                    {"kind": kind, "label": kind.upper(), "url": u(f"/maps/{geojson}")}
+                )
             kinds.append(
                 {
                     "kind": kind,
@@ -986,7 +1014,7 @@ def create_app(
             "latest_run": latest,
             "change_table": table,
             "change_map": {
-                "url": f"/maps/{stem}.geojson",
+                "url": u(f"/maps/{stem}.geojson"),
                 "tiles": OSM_TILES,
                 "tile_class": TILE_CLASS,
                 "weight": LINE_WEIGHT,

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}velometer · cities{% endblock %}
-{% block scripts %}<script type="module" src="/static/js/overview.js"></script>{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Cities</span></nav>{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Cities</span></nav>{% endblock %}
 {% block content %}
 <h1>Cities</h1>
 <p class="dek">{{ n }} cities in {{ groups | length }} countries. Headline for the city proper (LAU), current run:
@@ -10,7 +10,7 @@
 <h2 id="{{ g.iso2 | lower }}">{{ g.country }}</h2>
 <div class="cards">
 {% for s in g.cities %}
-  <a class="card city-card" href="/city/{{ s.city.id }}">
+  <a class="card city-card" href="{{ u('/city/' ~ s.city.id) }}">
     <span class="card-title">{{ s.city.name }}</span>
     {% if s.now is not none %}
     <span class="bignum">{{ s.now | num }}</span> <span class="sub">per 100 km of main roads, {{ s.now_label }}</span>

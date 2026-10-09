@@ -299,8 +299,10 @@ def test_city_page_without_any_geojson_loads_no_map(setup):
 
 def _loaded_hosts(html: str) -> set[str]:
     """Hosts the page loads from: every absolute URL except anchors' hrefs and the map config's
-    `links` (way pages and the copyright note are links a reader follows, not loads)."""
+    `links` (way pages and the copyright note are links a reader follows, not loads) and the CSP
+    meta tag (a policy naming hosts, as the header does, not a load)."""
     html = re.sub(r'<a\s[^>]*href="[^"]*"', "<a", html)
+    html = re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', "", html)
     cfg = _map_config(html)
     if cfg is not None:
         cfg.pop("links")

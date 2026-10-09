@@ -1,5 +1,5 @@
 {% extends "city/_page.html" %}
-{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <div class="story-layout">
 <article class="narrative">
@@ -21,12 +21,12 @@
 {% if yearly %}
 <div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
 {% else %}<p class="note">no run (history)</p>{% endif %}
-<p class="meta"><a href="/city/{{ city.id }}/time">Over time, with flagged years →</a></p>
+<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">Over time, with flagged years →</a></p>
 </section>
 <section class="aside-box">
 <h2>Read on</h2>
-<p class="meta"><a href="/city/{{ city.id }}/figures">Why the figures differ →</a></p>
-<p class="meta"><a href="/stories">The combined story across all cities →</a></p>
+<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/figures') }}">Why the figures differ →</a></p>
+<p class="meta"><a href="{{ u('/stories') }}">The combined story across all cities →</a></p>
 </section>
 </aside>
 </div>

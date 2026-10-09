@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · overview{% endblock %}
-{% block scripts %}<script type="module" src="/static/js/overview.js"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><span aria-current="page">Overview</span></nav>{% endblock %}
 {% block content %}
 <h1>Protected cycling infrastructure in {{ rows | length }} European cities, as mapped</h1>
@@ -30,7 +30,7 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 {% for s in ranking %}
 <tr>
   <td class="num">{% if s.now is not none %}{{ loop.index }}{% endif %}</td>
-  <td><a href="/city/{{ s.city.id }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
+  <td><a href="{{ u('/city/' ~ s.city.id) }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
   <td class="bar-col">{% if s.now is not none and s.first is not none %}
     {%- set a = 2 + 96 * s.first / scale_max %}{% set b = 2 + 96 * s.now / scale_max -%}
     <svg class="dumbbell" width="100%" height="14" aria-hidden="true" focusable="false">
@@ -63,13 +63,13 @@ The ranking above lists every city's values.</p>
 <section aria-labelledby="explore-h">
 <h2 id="explore-h">Explore</h2>
 <div class="cards">
-  <a class="card" href="/compare"><span class="kicker">Compare</span><span class="card-title">Cities side by side</span>
+  <a class="card" href="{{ u('/compare') }}"><span class="kicker">Compare</span><span class="card-title">Cities side by side</span>
     <span class="card-text">Any set of cities on one chart, LAU or FUA, absolute or indexed to 2018.</span><span class="more">Open Compare →</span></a>
-  <a class="card" href="/stories"><span class="kicker">Stories</span><span class="card-title">What the map shows</span>
+  <a class="card" href="{{ u('/stories') }}"><span class="kicker">Stories</span><span class="card-title">What the map shows</span>
     <span class="card-text">The combined narrative across all cities, with quotes and sources.</span><span class="more">Read the stories →</span></a>
-  <a class="card" href="/cities"><span class="kicker">Cities</span><span class="card-title">All cities by country</span>
+  <a class="card" href="{{ u('/cities') }}"><span class="kicker">Cities</span><span class="card-title">All cities by country</span>
     <span class="card-text">Each city with its headline and a sparkline, leading to its own page.</span><span class="more">Browse the cities →</span></a>
-  <a class="card" href="/methodology"><span class="kicker">Methodology</span><span class="card-title">How the numbers are made</span>
+  <a class="card" href="{{ u('/methodology') }}"><span class="kicker">Methodology</span><span class="card-title">How the numbers are made</span>
     <span class="card-text">Tiers A–E, the headline, LAU and FUA boundaries, and the limits of mapped km.</span><span class="more">Read the methodology →</span></a>
 </div>
 </section>
@@ -78,7 +78,7 @@ The ranking above lists every city's values.</p>
 <h2 id="keys-h">Key numbers</h2>
 <p class="lede">Current LAU run per city, on the report classifier. The headline is
 {{ headline_unit }}. Each preset divides by its own denominator (see the
-<a href="/methodology">methodology</a>); all values are ours, computed on each publisher's method,
+<a href="{{ u('/methodology') }}">methodology</a>); all values are ours, computed on each publisher's method,
 not the published figures. km are OSM mapped km per side.</p>
 <div class="scroll">
 <table>
@@ -91,7 +91,7 @@ not the published figures. km are OSM mapped km per side.</p>
 <tbody>
 {% for r in rows %}
 <tr>
-  <td><a href="/city/{{ r.city.id }}">{{ r.city.name }}</a></td>
+  <td><a href="{{ u('/city/' ~ r.city.id) }}">{{ r.city.name }}</a></td>
   {% if r.point %}
   {% for p in preset_label %}<td class="num">{{ r.presets.get(p) | num }}</td>{% endfor %}
   <td class="num">{{ r.point.ab_km | num }}</td>
@@ -120,7 +120,7 @@ which cities a source covers; each source has its own measure and scope.</p>
 <tbody>
 {% for row in rankings.rows %}
 <tr>
-  <td><a href="/city/{{ row.id }}">{{ row.name }}</a></td>
+  <td><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></td>
   {% for sid in rankings.columns %}{% set cell = row.cells.get(sid) %}
   <td class="num">{% if cell and cell.rank is not none %}{{ cell.rank }}{% if cell.dagger %} †{% endif %}{% else %}<span class="note">not published</span>{% endif %}</td>
   {% endfor %}

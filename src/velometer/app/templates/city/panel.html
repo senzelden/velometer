@@ -4,7 +4,7 @@
 <h2>{{ city.name }}</h2>
 <p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %}</p>
 </div>
-<a class="panel-full" href="/city/{{ city.id }}">Open full page →</a>
+<a class="panel-full" href="{{ u('/city/' ~ city.id) }}">Open full page →</a>
 </header>
 <div class="keynums" role="list" aria-label="Key numbers">
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>

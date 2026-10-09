@@ -1,6 +1,6 @@
 {% extends "city/_page.html" %}
-{% block head %}{% if tiermap %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
-{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block head %}{% if tiermap %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
 <h2>Tier composition</h2>
@@ -66,15 +66,15 @@
 <div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
 <p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
 <script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
-<script src="/static/vendor/leaflet.js"></script>
-<script src="/static/map.js"></script>
+<script src="{{ u('/static/vendor/leaflet.js') }}"></script>
+<script src="{{ u('/static/map.js') }}"></script>
 {% endif %}
 <ul class="tiermap-files">
 {% for k in kinds %}
 <li><strong>{{ k.kind | upper }}:</strong>
 {% if k.point is none %}<span class="note">no run ({{ k.kind | upper }} current)</span>
 {% elif not k.geojson %}<span class="note">map not generated (<code>velometer report maps</code>)</span>{% endif %}
-{% if k.map %}<a href="/maps/{{ k.map }}">{{ k.kind | upper }} static image</a> (PNG){% endif %}</li>
+{% if k.map %}<a href="{{ u('/maps/' ~ k.map) }}">{{ k.kind | upper }} static image</a> (PNG){% endif %}</li>
 {% endfor %}
 </ul>
 </section>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}velometer · Stories{% endblock %}
-{% block scripts %}{% if config %}<script type="module" src="/static/js/story.js"></script>{% endif %}{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
+{% block scripts %}{% if config %}<script type="module" src="{{ u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
 {#- A step's fallback: first and current value per city. Open without JavaScript; story.js folds it away. -#}
 {% macro step_table(t) %}
 {% if t %}
@@ -12,7 +12,7 @@
 <div class="scroll"><table class="step-table">
 <thead><tr><th scope="col">{{ t.row_head }}</th>{% for h in t.head %}<th scope="col"{% if t.rows[0].cells[loop.index0] is not string %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for r in t.rows %}<tr><th scope="row">{% if t.linked %}<a href="/city/{{ r.id }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td>{{ c }}</td>{% else %}<td class="num">{{ c | num }}</td>{% endif %}{% endfor %}</tr>
+{% for r in t.rows %}<tr><th scope="row">{% if t.linked %}<a href="{{ u('/city/' ~ r.id) }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td>{{ c }}</td>{% else %}<td class="num">{{ c | num }}</td>{% endif %}{% endfor %}</tr>
 {% endfor %}</tbody>
 </table></div>
 </details>
@@ -29,7 +29,7 @@
     <div class="chart story-plot" data-story-plot role="group" aria-label="Chart of the current step"></div>
     <p class="meta story-note-long" data-story-note></p>
     <p class="meta story-note-short" data-story-short></p>
-    <p class="meta"><a data-story-link href="/compare">Explore this chart →</a></p>
+    <p class="meta"><a data-story-link href="{{ u('/compare') }}">Explore this chart →</a></p>
   </aside>
   <article class="narrative story-text">
   {% for s in story %}
@@ -39,7 +39,7 @@
     {% endfor %}
     {% if s.step in steps %}
     {{ step_table(steps[s.step].table) }}
-    <p class="explore"><a href="{{ steps[s.step].href }}">Explore this chart →</a></p>
+    <p class="explore"><a href="{{ u(steps[s.step].href) }}">Explore this chart →</a></p>
     {% endif %}
   </section>
   {% endfor %}

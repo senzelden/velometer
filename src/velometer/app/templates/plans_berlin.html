@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}velometer · Berlin's cycling plan{% endblock %}
-{% block scripts %}<script type="module" src="/static/js/plan-chart.js"></script>{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><a href="/plans">Plans</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Berlin</span></nav>{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/plan-chart.js') }}"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/plans') }}">Plans</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Berlin</span></nav>{% endblock %}
 {% macro doc_ref(v) -%}
 {{ v.doc_type }} {% if v.url %}<a href="{{ v.url }}" rel="noopener noreferrer">{{ v.row.doc_id }}</a>{% else %}{{ v.row.doc_id }}{% endif %}, {{ v.row.doc_date.isoformat() }}
 {%- endmacro %}
@@ -16,7 +16,7 @@
 {% set why_roles = doc.sections | map(attribute="role") | list if doc else [] %}
 <h1>Berlin: {{ doc.title | lower if doc else "reported, completed, mapped" }}</h1>
 {% if plan %}
-<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer">{{ plan.title }}</a>{% else %}{{ plan.title }}{% endif %}{% if plan.adopted %}, adopted {{ plan.adopted.isoformat() }}{% endif %} · {% if publisher.href %}<a href="{{ publisher.href }}">{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="/plans">All cities' plans</a></p>
+<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer">{{ plan.title }}</a>{% else %}{{ plan.title }}{% endif %}{% if plan.adopted %}, adopted {{ plan.adopted.isoformat() }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}">{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">All cities' plans</a></p>
 {% endif %}
 {% if content_error %}<p class="note">the source registry could not be loaded (see the server log)</p>{% endif -%}
 {% if text_error %}<p class="note">the page text could not be loaded (see the server log)</p>{% endif %}
@@ -40,7 +40,7 @@
 <p class="meta">Target: {{ i.target }}</p>
 <div class="chart plan-chart" data-plan-item="{{ i.item.id }}"></div>
 {% if i.network %}
-<p class="meta series-note">Completed projects: km of projects marked completed in the measures dataset{% if projects_org.href %} (fed from the <a href="{{ projects_org.href }}">{{ projects_org.name }}</a> project database){% endif %}, by the year their works ended, per part on this network.
+<p class="meta series-note">Completed projects: km of projects marked completed in the measures dataset{% if projects_org.href %} (fed from the <a href="{{ u(projects_org.href) }}">{{ projects_org.name }}</a> project database){% endif %}, by the year their works ended, per part on this network.
 {%- if not projects_present %} <span class="note">The measures dataset is not present (<code>velometer plans fetch berlin</code>); no completed-projects series.</span>{% endif %}</p>
 {% endif %}
 {% if i.has_overlay_class %}
@@ -140,7 +140,7 @@
   <td data-label="Type">{{ d.doc_type }}</td>
   <td data-label="Number">{% if d.url %}<a href="{{ d.url }}" rel="noopener noreferrer">{{ d.doc_id }}</a>{% else %}{{ d.doc_id }}{% endif %}</td>
   <td class="date" data-label="Date">{{ d.doc_date }}</td>
-  <td data-label="Publisher">{% if d.publisher.href %}<a href="{{ d.publisher.href }}">{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
+  <td data-label="Publisher">{% if d.publisher.href %}<a href="{{ u(d.publisher.href) }}">{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
   <td data-label="What it reports">{{ d.reports_on | join(", ") }}; {{ d.years }}</td>
   <td class="num" data-label="Figures">{{ d.figures }}{% if d.suspect %} <span class="suspect-mark">{{ d.suspect }} suspect</span>{% endif %}</td>
 </tr>

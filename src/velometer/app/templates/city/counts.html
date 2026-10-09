@@ -1,6 +1,6 @@
 {% extends "city/_page.html" %}
-{% block head %}{% if counts.site_map %}<link rel="stylesheet" href="/static/vendor/leaflet.css">{% endif %}{% endblock %}
-{% block scripts %}<script type="module" src="/static/js/city.js"></script>{% endblock %}
+{% block head %}{% if counts.site_map %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 {% set c = counts %}
 <section id="counts-index">
@@ -35,8 +35,8 @@
 <div id="countermap" class="tiermap countermap" role="region" aria-label="Map of the counter sites, {{ city.name }}"></div>
 <p class="meta tiermap-note" id="countermap-status">{{ c.site_map.sites | length }} of {{ c.sites | length }} sites have coordinates.</p>
 <script type="application/json" id="countermap-config">{{ c.site_map | tojson }}</script>
-<script src="/static/vendor/leaflet.js"></script>
-<script src="/static/countermap.js"></script>
+<script src="{{ u('/static/vendor/leaflet.js') }}"></script>
+<script src="{{ u('/static/countermap.js') }}"></script>
 {% else %}
 <p class="meta">The portal publishes no coordinates for these sites: a list instead of a map.</p>
 {% endif %}

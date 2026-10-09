@@ -1,9 +1,9 @@
 <div class="city-head">
 <div>
 <h1>{{ city.name }}</h1>
-<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %} · <a href="/data/{{ city.id }}.csv">CSV</a>{% if bezirke %} · <a href="/data/{{ city.id }}_subareas.csv">Bezirke CSV</a>{% endif %}{% if plan_href %} · <a href="{{ plan_href }}">Cycling plan</a>{% endif %}</p>
+<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %} · <a href="{{ u('/data/' ~ city.id ~ '.csv') }}">CSV</a>{% if bezirke %} · <a href="{{ u('/data/' ~ city.id ~ '_subareas.csv') }}">Bezirke CSV</a>{% endif %}{% if plan_href %} · <a href="{{ u(plan_href) }}">Cycling plan</a>{% endif %}</p>
 </div>
-<form class="compare-form" action="/compare" method="get">
+<form class="compare-form" action="{{ u('/compare') }}" method="get">
 <input type="hidden" name="c" value="{{ city.id }}">
 <label for="compare-with">Compare this city with…</label>
 <div class="compare-row">
@@ -20,5 +20,5 @@
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
 {% endfor %}</div>
 <nav class="tabs" aria-label="City sections"><ul>
-{% for t in tabs %}<li><a href="{{ t.href }}"{% if t.key == tab %} aria-current="page"{% endif %}>{{ t.label }}</a></li>
+{% for t in tabs %}<li><a href="{{ u(t.href) }}"{% if t.key == tab %} aria-current="page"{% endif %}>{{ t.label }}</a></li>
 {% endfor %}</ul></nav>

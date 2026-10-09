@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · Why the figures differ{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Why the figures differ</span></nav>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Why the figures differ</span></nav>{% endblock %}
 {% block content %}
 {% if doc %}
 <h1>{{ doc.title }}</h1>
@@ -29,7 +29,7 @@
 <section>
 <h2>Each city's figures</h2>
 <ul class="city-links">
-{% for c in cities %}<li><a href="/city/{{ c.id }}/figures">{{ c.name }}</a></li>
+{% for c in cities %}<li><a href="{{ u('/city/' ~ c.id ~ '/figures') }}">{{ c.name }}</a></li>
 {% endfor %}</ul>
 </section>
 {% endblock %}
