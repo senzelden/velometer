@@ -73,6 +73,8 @@ gives the decision, the reason, and what it costs.
   its own error page, not `404.html`. The exported `404.html` renders correctly at
   `/velometer/404.html` (no console errors, no CSP violations). HANDOVER says to point the host's
   not-found page at it. Cost: none.
+- **CLAUDE.md "Next:" names M10 (not yet specced).** The user chose the four-milestone roadmap
+  (spec §2), so "none planned" would be stale. Cost: none.
 
 ## Follow-ups
 
