@@ -1,0 +1,30 @@
+{
+ "about": "Shared py/js cases of the base-path helper: app/urls.py normalise_base + make_u and static/js/base.js base + url. Read by tests/test_urls.py and static/js/tests/base.test.mjs.",
+ "normalise": [
+  ["", "/"],
+  ["/", "/"],
+  ["velometer", "/velometer/"],
+  ["/velometer", "/velometer/"],
+  ["velometer/", "/velometer/"],
+  ["/a/b", "/a/b/"]
+ ],
+ "emit": [
+  ["/", "/", "/"],
+  ["/", "/city/berlin", "/city/berlin"],
+  ["/velometer/", "/", "/velometer/"],
+  ["/velometer/", "/city/berlin", "/velometer/city/berlin"],
+  ["/velometer/", "/compare?q=1#x", "/velometer/compare?q=1#x"],
+  ["/velometer/", "/plans#berlin", "/velometer/plans#berlin"],
+  ["/a/b/", "/static/app.css", "/a/b/static/app.css"],
+  ["velometer", "/data/all.csv", "/velometer/data/all.csv"]
+ ],
+ "untouched": [
+  "https://www.openstreetmap.org/copyright",
+  "http://example.org/x",
+  "mailto:someone@example.org",
+  "//tile.openstreetmap.org/1/2/3.png",
+  "#x",
+  "#"
+ ],
+ "relative": ["city/berlin", "", "compare?c=berlin"]
+}

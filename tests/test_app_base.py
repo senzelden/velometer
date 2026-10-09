@@ -205,3 +205,27 @@ def test_static_edition_footer_only_when_built_for_it(rich):
                 assert f"{FOOTER_STAMP} abc1234" in html, path
     with _client(_app(rich)) as c:
         assert all(FOOTER_STAMP not in html for html in _pages(c).values())
+
+
+def _config(html: str, script_id: str):
+    m = re.search(rf'<script type="application/json" id="{script_id}">(.*?)</script>', html, re.S)
+    assert m, script_id
+    return json.loads(m.group(1))
+
+
+@pytest.mark.parametrize("base", ["/", BASE])
+def test_config_urls_scripts_use_as_given_carry_the_base_once(rich, base):
+    """The tier and change map GeoJSON URLs and the Stories steps' Explore links are based in
+    main.py; map.js, changemap.js and story.js use them as given (static/js/tests/base.test.mjs
+    forbids passing them through url() again), so each carries the base exactly once."""
+    with _client(_app(rich, base_path=base)) as c:
+        tiers = _config(c.get("/city/berlin/tiers").text, "tiermap-config")
+        change = _config(c.get("/city/berlin/bezirke").text, "changemap-config")
+        story = _config(c.get("/stories").text, "story-config")
+    found = [k["url"] for k in tiers["kinds"]] + [change["url"]]
+    found += [step["href"] for step in story.values()]
+    assert len(found) >= 3 and tiers["kinds"] and story
+    for value in found:
+        assert value.startswith(base), value
+        rest = value.removeprefix(base)
+        assert ROUTE.match("/" + rest), value  # an app route follows the base, not the base again

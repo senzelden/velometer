@@ -1,39 +1,19 @@
 """The base-path helper (`app/urls.py`) and the CSP meta tag's policy (M9 spec decisions 3, 6)."""
 
+import json
+from pathlib import Path
+
 import pytest
 
 from velometer.app.main import CSP, csp_meta
 from velometer.app.urls import make_u, normalise_base
 
-# (base as given, normalised)
-NORMALISE = [
-    ("", "/"),
-    ("/", "/"),
-    ("velometer", "/velometer/"),
-    ("/velometer", "/velometer/"),
-    ("velometer/", "/velometer/"),
-    ("/a/b", "/a/b/"),
-]
-# (base, path, emitted URL)
-EMIT = [
-    ("/", "/", "/"),
-    ("/", "/city/berlin", "/city/berlin"),
-    ("/velometer/", "/", "/velometer/"),
-    ("/velometer/", "/city/berlin", "/velometer/city/berlin"),
-    ("/velometer/", "/compare?q=1#x", "/velometer/compare?q=1#x"),
-    ("/velometer/", "/plans#berlin", "/velometer/plans#berlin"),
-    ("/a/b/", "/static/app.css", "/a/b/static/app.css"),
-    ("velometer", "/data/all.csv", "/velometer/data/all.csv"),
-]
-# URLs that are not ours: unchanged under any base
-UNTOUCHED = [
-    "https://www.openstreetmap.org/copyright",
-    "http://example.org/x",
-    "mailto:someone@example.org",
-    "//tile.openstreetmap.org/1/2/3.png",
-    "#x",
-    "#",
-]
+# shared with static/js/tests/base.test.mjs, so the two helpers agree
+CASES = json.loads((Path(__file__).parent / "url_cases.json").read_text(encoding="utf-8"))
+NORMALISE = [tuple(c) for c in CASES["normalise"]]  # (base as given, normalised)
+EMIT = [tuple(c) for c in CASES["emit"]]  # (base, path, emitted URL)
+UNTOUCHED = CASES["untouched"]  # URLs that are not ours: unchanged under any base
+RELATIVE = CASES["relative"]  # paths u() refuses
 HEADER_ONLY = {"frame-ancestors", "report-uri", "report-to", "sandbox"}
 
 
@@ -62,7 +42,7 @@ def test_u_leaves_external_and_fragment_urls_alone(base, url):
     assert make_u(base)(url) == url
 
 
-@pytest.mark.parametrize("path", ["city/berlin", "", "compare?c=berlin"])
+@pytest.mark.parametrize("path", RELATIVE)
 def test_u_refuses_a_relative_path(path):
     with pytest.raises(ValueError):
         make_u("/velometer/")(path)

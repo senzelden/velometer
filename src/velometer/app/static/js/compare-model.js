@@ -4,6 +4,7 @@ import { assignColours, indexSeries, ranks } from "./chart-core.js";
 import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
 import { PALETTE, labelsOf } from "./data.js";
 import { COUNTER_FOOT, COUNTER_METRIC, counterLines } from "./counter-model.js";
+import { url } from "./base.js";
 
 export const NO_INDEX = "no index: first year is 0 or missing";
 
@@ -106,6 +107,12 @@ export function nextSort(sort, key) {
 }
 
 // ---- history: what the URL must say, whatever the panel did ----
+
+/** The Compare URL of a serialised query ("" is the default selection), under the base. */
+export const compareUrl = (qs, doc) => url(`/compare${qs ? `?${qs}` : ""}`, doc);
+
+/** The server-rendered fragment the city slide-over fetches. */
+export const panelUrl = (id, doc) => url(`/city/${encodeURIComponent(id)}/panel`, doc);
 
 /** The normalised query (what the page shows) of a search string. */
 export const queryOf = (search, known) => serializeState(parseState(search, known));

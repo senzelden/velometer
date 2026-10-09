@@ -4,7 +4,8 @@
 // On phones the panel covers the page: it is modal there (aria-modal, inert background, Tab
 // stays inside); on wide screens it is a side panel and the page stays usable.
 import { loadSeries } from "./data.js";
-import { closeAction, openAction } from "./compare-model.js";
+import { url } from "./base.js";
+import { closeAction, openAction, panelUrl } from "./compare-model.js";
 import { drawTiers } from "./tier-chart.js";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tabindex]:not([tabindex="-1"])';
@@ -43,7 +44,7 @@ export function createPanel(root, opts = {}) {
     body.replaceChildren(Object.assign(document.createElement("p"), { className: "empty", textContent: "Loading…" }));
     closeBtn.focus();
     try {
-      const r = await fetch(`/city/${encodeURIComponent(id)}/panel`, { headers: { Accept: "text/html" } });
+      const r = await fetch(panelUrl(id), { headers: { Accept: "text/html" } });
       if (!r.ok) throw new Error(`panel: HTTP ${r.status}`);
       const doc = new DOMParser().parseFromString(await r.text(), "text/html");
       if (mine !== token) return;
@@ -54,7 +55,7 @@ export function createPanel(root, opts = {}) {
     } catch (err) {
       if (mine !== token) return;
       body.replaceChildren(Object.assign(document.createElement("p"), {
-        className: "note", textContent: "The city panel could not be loaded. Its page is /city/" + id + ".",
+        className: "note", textContent: `The city panel could not be loaded. Its page is ${url(`/city/${id}`)}.`,
       }));
       console.warn(err);
     }

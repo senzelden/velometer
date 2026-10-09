@@ -1,5 +1,6 @@
 // The chart data of every page: one fetch of /data/series.json, and the small helpers that turn
 // its series into chart.js models. No DOM drawing here.
+import { url } from "./base.js";
 import { xLabels } from "./chart-core.js";
 
 /** Series colours (charts.CITY_COLOURS on the Python side, plus one). */
@@ -16,7 +17,7 @@ let pending = null;
 
 /** The payload, fetched once per page. Rejects on a non-200 answer. */
 export function loadSeries() {
-  pending ??= fetch("/data/series.json").then((r) => {
+  pending ??= fetch(url("/data/series.json")).then((r) => {
     if (!r.ok) throw new Error(`series.json: HTTP ${r.status}`);
     return r.json();
   });

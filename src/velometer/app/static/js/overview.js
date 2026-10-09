@@ -1,6 +1,7 @@
 // Overview and Cities pages: the all-cities headline chart and the per-city sparklines, drawn
 // from /data/series.json into the [data-chart] mounts the server rendered. The tables on both
 // pages carry the same values without JavaScript.
+import { url } from "./base.js";
 import { renderLines, renderSparkline } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { PILOT5 } from "./state.js";
@@ -30,7 +31,7 @@ function overviewLines(el, D) {
         `${s.name} · ${label}: ${formatValue(p.value)} per 100 km of main roads` +
         (p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : ""),
       onPick: (id) => {
-        location.href = `/city/${encodeURIComponent(id)}`;
+        location.href = url(`/city/${encodeURIComponent(id)}`);
       },
     }),
   );

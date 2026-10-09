@@ -2,12 +2,13 @@
 // the city slide-over. The server renders the form and the Table for the requested URL (it works
 // without this file); this file keeps the URL in sync with the filters via history.replaceState
 // and redraws from /data/series.json without a reload.
+import { url } from "./base.js";
 import { renderLines, renderRank, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import {
-  buildModel, colourPlan, colouredIds, footnote, nextSort, orderCities, plainText, popPlan, queryOf,
-  rankSeries, sortRows,
+  buildModel, colourPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
+  queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
 import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
@@ -56,7 +57,7 @@ const el = (tag, attrs = {}, text) => {
 
 function commit() {
   const qs = serializeState(state);
-  history.replaceState(history.state, "", qs ? `/compare?${qs}` : "/compare");
+  history.replaceState(history.state, "", compareUrl(qs));
 }
 
 function apply(search) {
@@ -130,7 +131,7 @@ window.addEventListener("popstate", (e) => {
   if (plan.panel) panel.show(plan.panel);
   else if (panel.isOpen) panel.hide();
   if (plan.restore !== null) {
-    history.replaceState(e.state, "", plan.restore ? `/compare?${plan.restore}` : "/compare");
+    history.replaceState(e.state, "", compareUrl(plan.restore));
   }
   if (plan.rerender) {
     state = parseState(location.search, known);
@@ -176,7 +177,7 @@ function showFlag(id, label, rawLabel) {
     box.append(el("p", { class: "note" }, "No explanation recorded for this flag."));
   }
   const more = el("p");
-  more.append(el("a", { href: `/city/${encodeURIComponent(id)}/time` }, "Over time tab →"));
+  more.append(el("a", { href: url(`/city/${encodeURIComponent(id)}/time`) }, "Over time tab →"));
   box.append(more);
   box.hidden = false;
   box.scrollIntoView({ block: "nearest" });
@@ -275,7 +276,7 @@ function drawTable(model) {
   for (const r of rows) {
     const tr = el("tr");
     const name = el("th", { scope: "row" });
-    const a = el("a", { href: `/city/${encodeURIComponent(r.id)}`, "data-city": r.id }, r.name);
+    const a = el("a", { href: url(`/city/${encodeURIComponent(r.id)}`), "data-city": r.id }, r.name);
     a.addEventListener("click", (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
       e.preventDefault();
