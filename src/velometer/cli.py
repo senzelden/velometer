@@ -58,11 +58,17 @@ counters_app = typer.Typer(
     invoke_without_command=True, help="Bike-counter context: fetch, load, --check."
 )
 app.add_typer(counters_app, name="counters")
+web_app = typer.Typer(no_args_is_help=True, help="The reader app's static edition.")
+app.add_typer(web_app, name="app")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
 DOCS_OPT = typer.Option(Path("docs"), "--docs", help="Docs directory (review/trust/ inside).")
 CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config directory.")
+# `app export` names it `--config` as well (M9 plan), `--config-dir` as every other command
+CONFIG_EXPORT_OPT = typer.Option(
+    default_config_dir(), "--config", "--config-dir", help="Config directory."
+)
 CC_BASIS_OPT = typer.Option(
     None,
     "--clean-cities-basis",
@@ -2032,6 +2038,42 @@ def serve(
     from velometer.app.main import create_app
 
     uvicorn.run(create_app(db, config_dir, maps, docs, content_dir), host=host, port=port)
+
+
+@web_app.command("export")
+def app_export(
+    out: Path = typer.Option(..., "--out", help="Directory the static site is written to."),  # noqa: B008
+    base: str = typer.Option(
+        "/", "--base", help="Path the site is served under, e.g. /velometer/."
+    ),
+    clean: bool = typer.Option(
+        False, "--clean", help="Replace a previous export in --out (one with its build.json)."
+    ),
+    db: Path = DB_OPT,
+    config_dir: Path = CONFIG_EXPORT_OPT,
+    maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
+    docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
+    content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
+) -> None:
+    """The reader app's static edition: every page the data has, rendered by the app, as files
+    (read-only on the database)."""
+    import time
+
+    from velometer.app.export import ExportError, run_export
+
+    start = time.monotonic()
+    try:
+        result = run_export(
+            out, base, db, config_dir, maps, docs, content_dir, Path("data") / "plans", clean
+        )
+    except ExportError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo(
+        f"exported {result.files} files ({result.bytes / 1e6:.1f} MB) to {out} in "
+        f"{time.monotonic() - start:.1f} s, build {result.build['commit']}, "
+        f"base {result.build['base']}"
+    )
 
 
 @app.command()
