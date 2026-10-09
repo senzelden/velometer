@@ -102,6 +102,25 @@ export function targetScale(steps, figures) {
   return { onScale: steps.filter((p) => !off(p)), offScale: steps.filter(off) };
 }
 
+/**
+ * The y domain and the targets it holds, agreeing: with caps the domain keeps a step of
+ * headroom (yDomain), and that can lift its top past an off-scale target. Such a target is
+ * drawn on the scale and the domain is set again, until every cap lies above the top.
+ * Returns {steps (on scale, by year), offScale, dom}.
+ */
+export function settleScale({ onScale, offScale }, figures, count = 5) {
+  let steps = [...onScale];
+  let off = [...offScale];
+  for (;;) {
+    const values = [...steps.map((p) => p.value), ...figures];
+    const dom = yDomain(values, count, { headroom: off.length > 0 });
+    const inside = off.filter((p) => p.value <= dom.hi);
+    if (!inside.length) return { steps, offScale: off, dom };
+    steps = [...steps, ...inside].sort((a, b) => a.year - b.year);
+    off = off.filter((p) => p.value > dom.hi);
+  }
+}
+
 function el(tag, attrs = {}, text) {
   const e = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, String(v));
@@ -142,7 +161,7 @@ export function labelSpot(x, y, w, segments, [left, right, top, bottom]) {
  * opts: {label, years, unit, quantity, width, height}; quantity is the item's target_kind, and
  * the y label says it. The charted figures are per year: a cumulative or total target is not
  * drawn against them (a note under the chart says so; the table lists it), only on its own.
- * Off-scale targets (targetScale) are caps on the top edge, their values labelled. Margins
+ * Off-scale targets (targetScale, then settleScale) are caps on the top edge, their values labelled. Margins
  * follow the labels: every text lies inside the svg. No values: a note instead of an svg.
  */
 export function renderPlanChart(host, series, opts = {}) {
@@ -163,10 +182,10 @@ export function renderPlanChart(host, series, opts = {}) {
   ].map((p) => p.value);
   const perYear = PER_YEAR.has(quantity);
   const drawTarget = perYear || !figures.length;
-  const { onScale: steps, offScale } = drawTarget
+  const scaled = drawTarget
     ? targetScale(series.target.filter(inRange), figures)
     : { onScale: [], offScale: [] };
-  const values = [...steps.map((p) => p.value), ...figures];
+  const values = [...scaled.onScale.map((p) => p.value), ...figures];
   if (!years.length || !values.length) {
     const p = document.createElement("p");
     p.className = "empty";
@@ -176,7 +195,7 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const W = Math.max(280, opts.width ?? host.clientWidth ?? 0);
   const H = opts.height ?? 240;
-  const dom = yDomain(values, W < 480 ? 4 : 5, { headroom: offScale.length > 0 });
+  const { steps, offScale, dom } = settleScale(scaled, figures, W < 480 ? 4 : 5);
   const ticks = dom.ticks;
   // left: the widest tick label and its 6 px gap, 4 px to spare; right: the last band's edge
   const ml = Math.ceil(Math.max(...ticks.map((t) => textWidth(tickLabel(t))))) + 10;

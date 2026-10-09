@@ -363,3 +363,19 @@ test("renderPlanChart: with caps on the top edge, no on-scale target or figure l
     for (const yy of [...stepYs, ...figureYs]) assert.ok(yy >= capY + gap - 0.5, `y ${yy}, cap ${capY}, gap ${gap}`);
   }
 });
+
+test("renderPlanChart: a target at or below the axis top is drawn on the scale, never as a cap", () => {
+  // review finding: 290 is on scale and 310 off (> 3 x 100); headroom lifts the top from 300
+  // to 400, so 310 lies inside the scale. The rule: caps only for targets above the final top
+  for (const width of [640, 358]) {
+    const el = new Node("div");
+    const s = planSeries({ 2024: 290, 2025: 310 }, [row(2024, 100, "a", true)], [], []);
+    renderPlanChart(el, s, { years: [2024, 2025], unit: "km", quantity: "km_per_year", width });
+    const ticks = texts(el).filter((n) => n.attrs.class === "axis-t" && n.attrs["text-anchor"] === "end");
+    const top = Math.max(...ticks.map((n) => Number(n.textContent.replace(",", ""))));
+    const caps = marks(el, "target-cap-label").map((n) => Number(n.textContent.replace(/[^\d.]/g, "")));
+    assert.ok(caps.every((v) => v > top), `caps ${caps} at or below the top tick ${top}`);
+    const steps = [...(marks(el, "target-step")[0]?.attrs.d ?? "").matchAll(/M/g)].length;
+    assert.equal(steps + caps.length, 2, "every target drawn once, as a step or a cap");
+  }
+});
