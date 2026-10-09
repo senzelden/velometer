@@ -88,7 +88,8 @@ def test_profile_stem_must_equal_id_and_errors_are_collected(m8):
 
 def test_an_internal_profile_url_is_refused(m8):
     _edit(_senmvku(m8), lambda d: d.__setitem__("url", "http://127.0.0.1:8000/"))
-    assert any("external http(s) URL" in p for p in _problems(m8))
+    [problem] = [p for p in _problems(m8) if "external http(s) URL" in p]
+    assert "organisation url must be" in problem and "source url" not in problem, problem
 
 
 # --- profile document rules ----------------------------------------------------------------
@@ -145,6 +146,14 @@ def test_causal_counter_wording():
     assert causal_counter_wording("Cyclists recorded rose thanks to the lanes") == ["thanks to"]
 
 
+def test_the_verb_count_alone_is_not_a_counter_mention():
+    # "count" the verb says nothing about counter data; a counter noun beside "due to" does
+    assert causal_counter_wording("We count the km, due to the method.") == []
+    assert causal_counter_wording("We counted the km, due to the method.") == []
+    assert causal_counter_wording("The counts fell due to works.") == ["due to"]
+    assert causal_counter_wording("We count the km at the counter, due to X.") == ["due to"]
+
+
 def test_causal_wording_in_the_counters_page(m8):
     _edit(
         m8[0] / "counters.yaml",
@@ -156,7 +165,7 @@ def test_causal_wording_in_the_counters_page(m8):
 def test_causal_wording_in_a_profile(m8):
     _edit(
         _senmvku(m8),
-        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counted trips drove demand."),
+        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counter trips drove demand."),
     )
     assert _problems(m8) == ["organisations/senmvku.yaml: causal wording 'drove' about counts"]
 
@@ -363,6 +372,29 @@ def test_malformed_figures_csv_is_a_problem(m8):
     assert problem.startswith("config/external/figures.csv: cannot read")
 
 
+def test_an_undecodable_figures_csv_is_a_problem_not_a_crash(m8):
+    path = m8[1] / "external" / "figures.csv"
+    path.write_bytes(path.read_bytes() + "berlin,caf\xe9\n".encode("latin-1"))
+    [problem] = _problems(m8)
+    assert problem.startswith("config/external/figures.csv: cannot read"), problem
+
+
+def test_an_undecodable_reconcile_yaml_is_a_problem_not_a_crash(m8):
+    path = m8[1] / "reconcile.yaml"
+    path.write_bytes(path.read_bytes() + "# caf\xe9\n".encode("latin-1"))
+    [problem] = _problems(m8)
+    assert problem.startswith("config/reconcile.yaml: cannot read"), problem
+
+
+def test_an_undecodable_dimension_list_is_a_problem_for_each_reader(m8):
+    # the explainer and the profiles read differences.yaml through one function
+    path = m8[1] / "differences.yaml"
+    path.write_bytes(path.read_bytes() + "# caf\xe9\n".encode("latin-1"))
+    problems = _problems(m8)
+    assert any(p.startswith("explainer.yaml: cannot read dimensions from") for p in problems)
+    assert sum(": cannot read dimensions: " in p for p in problems) == 2, problems  # 2 profiles
+
+
 def test_malformed_reconcile_yaml_is_a_problem(m8):
     (m8[1] / "reconcile.yaml").write_text("comparisons:\n  - id: x\n")
     [problem] = _problems(m8)
@@ -443,6 +475,28 @@ def test_plan_fact_doc_suffix_printing_two_start_years_is_refused(fixture_db, tm
         evaluate(f"{expr}.PARIS-1", fixture_db[3], tmp_path, config_dir=cfg)
 
 
+def test_the_plan_files_are_read_once_for_many_plan_facts(fixture_db, tmp_path, monkeypatch):
+    from velometer.content import facts
+
+    cfg = tmp_path / "cfg"
+    shutil.copytree(FIXTURE / "config", cfg)
+    calls: list[Path] = []
+    real = facts.load_plans
+
+    def counting(path):
+        calls.append(Path(path))
+        return real(path)
+
+    monkeypatch.setattr(facts, "load_plans", counting)
+    for doc in ("", ".TEST_0001", ".TEST_0002"):
+        evaluate(f"{PLAN_EXPR}{doc}", fixture_db[3], tmp_path, config_dir=cfg)
+    assert calls == [cfg / "plans"]
+    path = cfg / "plans" / "reports.csv"  # an edited file is read again, not served stale
+    path.write_text(path.read_text().replace(",8.6,", ",8.7,"))
+    assert evaluate(PLAN_EXPR, fixture_db[3], tmp_path, config_dir=cfg) == 8.7
+    assert len(calls) == 2
+
+
 def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
     with pytest.raises(FactError, match="need the config directory"):
         evaluate(PLAN_EXPR, fixture_db[3], tmp_path)
@@ -518,14 +572,34 @@ def test_counter_facts(fixture_db, tmp_path):
 # --- CLI -----------------------------------------------------------------------------------
 
 
-def test_content_check_reports_profile_problems(fixture_db, m8):
+def _clean_cli_setup(fixture_db, m8) -> list[str]:
+    """`content --check` arguments for the M8 fixture beside the report fixture's database,
+    clean before any edit: the fixture's organisation, plan and reconcile config over the
+    report fixture's config copy, and a narrative for each of its cities."""
     db_path, cfg, _conn, _data = fixture_db  # cfg: a copy of the real config
-    content, _config = m8
-    _edit(_senmvku(m8), lambda d: d["sections"][0]["paragraphs"].__setitem__(0, "See [@nope]."))
+    content, config = m8
+    for rel in ("organisations.yaml", "reconcile.yaml", "differences.yaml"):
+        shutil.copy(config / rel, cfg / rel)
+    shutil.copy(config / "external" / "figures.csv", cfg / "external" / "figures.csv")
+    shutil.rmtree(cfg / "plans")
+    shutil.copytree(config / "plans", cfg / "plans")
+    for city in ("berlin", "paris"):
+        doc = {"city_id": city, "title": city, "dek": "Dek.", "sections": [
+            {"role": "figures", "paragraphs": ["Figures."]}
+        ]}  # fmt: skip
+        (content / "narratives" / f"{city}.yaml").write_text(yaml.safe_dump(doc))
     args = ["content", "--check", "--content", str(content), "--db", str(db_path)]
-    res = CliRunner().invoke(app, [*args, "--config-dir", str(cfg)])
+    return [*args, "--config-dir", str(cfg), "--docs", str(db_path.parent)]
+
+
+def test_content_check_reports_profile_problems(fixture_db, m8):
+    args = _clean_cli_setup(fixture_db, m8)
+    ok = CliRunner().invoke(app, args)
+    assert ok.exit_code == 0 and ok.output.strip() == "ok", ok.output
+    _edit(_senmvku(m8), lambda d: d["sections"][0]["paragraphs"].append("See [@nope]."))
+    res = CliRunner().invoke(app, args)
     assert res.exit_code == 1
-    assert "organisations/senmvku.yaml: unknown source nope" in res.output
+    assert res.stderr.strip().splitlines() == ["organisations/senmvku.yaml: unknown source nope"]
 
 
 # --- the counter index rule in prose (follow-up Task 3) --------------------------------------
@@ -603,6 +677,66 @@ def test_the_literal_rule_check_follows_the_constants(m8, monkeypatch):
     monkeypatch.setattr(index, "MIN_SITES", 4)
     assert _counter_prose(m8, "A year with fewer than four sites has no value.") == [
         f"{RULE}four (counter.min_sites)"
+    ]
+
+
+RULES = {90.0: "counter.min_valid", 3.0: "counter.min_sites"} | {
+    2019.0: "counter.base_year.berlin",
+    2020.0: "counter.base_year.madrid",
+}
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Three cities publish hourly counts.",
+        "2020 was the COVID year.",
+        "Counts fell in 2020 and rose in 2019 terms.",
+        "The network grew by 90 km; 3 portals were checked.",
+        "Nine of the sites are in three districts.",
+        "In 2019 the city opened its portal (Madrid: 2020).",
+    ],
+)
+def test_a_rule_value_outside_a_threshold_statement_is_not_a_literal_rule(sentence):
+    from velometer.content.check import literal_counter_rules
+
+    assert literal_counter_rules(sentence, RULES, []) == []
+
+
+@pytest.mark.parametrize(
+    ("sentence", "found"),
+    [
+        ("A link needs 3 sites.", "3 (counter.min_sites)"),
+        ("A year with fewer than three such sites has no value.", "three (counter.min_sites)"),
+        ("Fewer than three counter sites give no value.", "three (counter.min_sites)"),
+        ("Sites complete on 90% of days count.", "90% (counter.min_valid)"),
+        ("Sites complete on 90 per cent of their days count.", "90 (counter.min_valid)"),
+        ("Sites complete on nine days in ten count.", "nine days in ten (counter.min_valid)"),
+        ("The index sets 2019 = 100.", "2019 (counter.base_year.berlin)"),
+        ("Its base year is 2020.", "2020 (counter.base_year.madrid)"),
+        ("Chained from 2019 (Madrid: 2020).", "2020 (counter.base_year.madrid)"),
+    ],
+)
+def test_a_rule_value_in_a_threshold_statement_is_a_literal_rule(sentence, found):
+    from velometer.content.check import literal_counter_rules
+
+    assert found in literal_counter_rules(sentence, RULES, [])
+
+
+def test_the_shipped_counter_page_states_the_rule_through_its_facts():
+    # the follow-up Task 3 wording ("90% of days", "chained from 2019 (Madrid: 2020)", "fewer
+    # than 3 such sites") passes because the rule facts print those numbers, and only then
+    from velometer.content.check import _is_rule_fact, literal_counter_rules
+
+    doc = load_document(Path(__file__).parents[1] / "content" / "counters.yaml")
+    prose = [p for s in doc.sections for p in s.paragraphs]
+    assert [x for p in prose for x in literal_counter_rules(p, RULES, doc.facts)] == []
+    others = [f for f in doc.facts if not _is_rule_fact(f.expr)]
+    assert sorted(x for p in prose for x in literal_counter_rules(p, RULES, others)) == [
+        "2019 (counter.base_year.berlin)",
+        "2020 (counter.base_year.madrid)",
+        "3 (counter.min_sites)",
+        "90% (counter.min_valid)",
     ]
 
 

@@ -20,12 +20,13 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-def _external_url(v: str | None) -> str | None:
+def _external_url(v: str | None, what: str = "source url") -> str | None:
+    """`v` unchanged when it is an external http(s) URL; ValueError naming `what` otherwise."""
     if v is None:
         return v
     u = urlparse(v)
     if u.scheme not in ("http", "https") or not u.hostname or u.hostname in INTERNAL_HOSTS:
-        raise ValueError(f"source url must be an external http(s) URL, not {v!r}")
+        raise ValueError(f"{what} must be an external http(s) URL, not {v!r}")
     return v
 
 
@@ -175,7 +176,7 @@ class Organisation(_Strict):
     @field_validator("url")
     @classmethod
     def _external(cls, v: str) -> str:
-        _external_url(v)
+        _external_url(v, "organisation url")
         return v
 
     @property

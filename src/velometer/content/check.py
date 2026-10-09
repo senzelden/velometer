@@ -55,7 +55,8 @@ _SOURCE_REF = re.compile(r"\[@([^\]\s]+)\]")
 _DATA_REF = re.compile(r"\[#([^\]\s]+)\]")
 _STRIPPED = re.compile(r"\[@[^\]]*\]|\[#[^\]]*\]|`[^`]*`|\]\([^)]*\)")
 _VERBS = re.compile(r"\b(built|constructed|opened|removed)\b", re.IGNORECASE)
-_COUNTER_WORDS = re.compile(r"\b(counters?|counts?|counted|cyclists recorded)\b", re.IGNORECASE)
+# counter nouns only: the verb "count" ("we count the km") says nothing about counter data
+_COUNTER_WORDS = re.compile(r"\b(counters?|counts|cyclists recorded)\b", re.IGNORECASE)
 _CAUSAL = re.compile(
     r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
     re.IGNORECASE,
@@ -72,6 +73,22 @@ _TENS = {"thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "ei
 _NUMBER_WORDS = {w: i for i, w in enumerate(_ONES)} | _TENS
 _WORD = re.compile(r"\b[A-Za-z]+\b")
 _IN_TEN = re.compile(r"\b([A-Za-z]+)\s+(?:[A-Za-z]+\s+)?in\s+ten\b", re.IGNORECASE)  # 9 days in 10
+# Threshold statements of the index rule (spec §2.13), read around a number equal to a rule value.
+# A site count: the number, up to two words, then "sites" or "counters" ("3 such sites").
+_SITES_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,2}?(?:sites?|counters?)\b", re.IGNORECASE)
+# A share of days: a percentage followed within three words by "days" ("90% of days").
+_PER_CENT = re.compile(r"\s*(?:%|per\s?cent\b)", re.IGNORECASE)
+_DAYS_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,3}?days?\b", re.IGNORECASE)
+# A base year: "2019 = 100", "2019 is the base (year)", "base year (is) 2019", "chained from
+# 2019", "indexed/rebased to 2019", and a year in the parenthesis after one ("(Madrid: 2020)").
+_BASE_AFTER = re.compile(
+    r"\s*=\s*100\b|\s+(?:is\s+|as\s+)?(?:the\s+)?(?:index\s+)?base\b", re.IGNORECASE
+)
+_BASE_BEFORE = re.compile(
+    r"(?:\bbase\s+year(?:\s+(?:is|of))?|\bchained\s+from|\b(?:indexed|rebased)\s+to)\s*:?\s*"
+    r"(?:\d{4}\s*\([^()]*)?$",
+    re.IGNORECASE,
+)
 BERLIN = "berlin"
 
 
@@ -155,11 +172,31 @@ def _is_rule_fact(expr: str) -> bool:
     return family == "counter" and (rest in COUNTER_RULES or rest.startswith(f"{BASE_YEAR}."))
 
 
+def _rule_kind(fact: str) -> str:
+    """`min_valid`, `min_sites` or `base_year` for a rule fact name of `counter_rule_values`."""
+    return fact.split(".")[1]
+
+
+def _threshold(kind: str, text: str, start: int, end: int, percent: bool) -> bool:
+    """Whether the number at `text[start:end]` states the index rule's `kind` threshold rather
+    than another quantity of the same value ("three cities", "2020 was the COVID year")."""
+    after = text[end:]
+    if kind == "min_sites":
+        return bool(_SITES_AFTER.match(after))
+    if kind == "min_valid":
+        if not percent and (m := _PER_CENT.match(after)):
+            percent, after = True, after[m.end() :]
+        return percent and bool(_DAYS_AFTER.match(after))
+    return bool(_BASE_AFTER.match(after) or _BASE_BEFORE.search(text[max(0, start - 80) : start]))
+
+
 def literal_counter_rules(paragraph: str, rules: dict[float, str], facts: list[Fact]) -> list[str]:
-    """Index-rule values the counter prose states as literal text: a rule value spelled out in
-    words ("three sites", "nine days in ten"), or a number equal to a rule value that no
-    counter rule fact of the document (`counter.min_valid`, `counter.min_sites`,
-    `counter.base_year.<city>`) prints. Each is "<text> (<the fact to use>)"."""
+    """Index-rule values the counter prose states as literal text in a threshold statement (a
+    site count before "sites", a percentage of days, a base year as "= 100", "base year" or
+    "chained from"): a rule value spelled out in words ("three sites", "nine days in ten"), or a
+    number equal to a rule value that no counter rule fact of the document (`counter.min_valid`,
+    `counter.min_sites`, `counter.base_year.<city>`) prints. The same value elsewhere ("three
+    cities", "2020 was the COVID year") is not the rule. Each is "<text> (<the fact to use>)"."""
     declared = set()
     for f in facts:
         if _is_rule_fact(f.expr):
@@ -175,19 +212,26 @@ def literal_counter_rules(paragraph: str, rules: dict[float, str], facts: list[F
 
     for m in _IN_TEN.finditer(text):
         n = _NUMBER_WORDS.get(m.group(1).lower())
-        if n is not None and float(n * 10) in rules:
+        fact = rules.get(float(n * 10)) if n is not None else None
+        if fact is not None and _rule_kind(fact) == "min_valid":
             add(m.group(0), float(n * 10))
     for m in _WORD.finditer(text):
         n = _NUMBER_WORDS.get(m.group(0).lower())
         if n is not None and float(n) in rules:
-            add(m.group(0), float(n))
+            kind = _rule_kind(rules[float(n)])
+            if _threshold(kind, text, m.start(), m.end(), percent=False):
+                add(m.group(0), float(n))
     for m in _NUMBER_TOKEN.finditer(text):
+        raw = m.group(0).rstrip(",")
         try:
-            value = round(parse_printed(normalise_number(m.group(0).rstrip(",")))[0], 6)
+            value = round(parse_printed(normalise_number(raw))[0], 6)
         except FactError:
             continue
-        if value in rules and value not in declared:
-            add(m.group(0).rstrip(","), value)
+        if value not in rules or value in declared:
+            continue
+        end = m.start() + len(raw)
+        if _threshold(_rule_kind(rules[value]), text, m.start(), end, raw.endswith("%")):
+            add(raw, value)
     return found
 
 
@@ -308,6 +352,9 @@ def _check_explainer_shaped(
     )
 
 
+_DIMENSION_ERRORS = (OSError, UnicodeDecodeError, yaml.YAMLError, KeyError, TypeError)
+
+
 def _read_dimensions(config_dir: Path) -> list[str] | None:
     """The differences.yaml dimension ids, None when the file is absent; raises on a bad file."""
     diff = Path(config_dir) / "differences.yaml"
@@ -323,12 +370,12 @@ def _check_explainer(
 ) -> list[str]:
     label = "explainer.yaml"
     problems = _check_explainer_shaped(label, explainer, sources, data, docs_dir, config_dir)
-    diff = Path(config_dir) / "differences.yaml"
-    if diff.is_file():
-        try:
-            dims = _dimension_ids(diff)
-        except (OSError, yaml.YAMLError, KeyError, TypeError) as e:
-            return problems + [f"{label}: cannot read dimensions from {diff}: {e}"]
+    try:
+        dims = _read_dimensions(config_dir)
+    except _DIMENSION_ERRORS as e:
+        diff = Path(config_dir) / "differences.yaml"
+        return problems + [f"{label}: cannot read dimensions from {diff}: {e}"]
+    if dims is not None:
         have = [s.dimension for s in explainer.sections]
         for d in dims:
             if have.count(d) != 1:
@@ -522,7 +569,7 @@ def _check_organisation(
         problems.append(f"{label}: url is not https: {org.url}")
     try:
         dims = _read_dimensions(config_dir)
-    except (OSError, yaml.YAMLError, KeyError, TypeError) as e:
+    except _DIMENSION_ERRORS as e:
         return problems + [f"{label}: cannot read dimensions: {e}"]
     if dims is not None:
         for sec in org.sections:
@@ -540,7 +587,7 @@ def _figure_pairs(config_dir: Path) -> list[tuple[str, str]]:
     try:
         with path.open(encoding="utf-8", newline="") as f:
             return list(dict.fromkeys((r["city_id"], r["source"]) for r in csv.DictReader(f)))
-    except (OSError, csv.Error, KeyError) as e:
+    except (OSError, UnicodeDecodeError, csv.Error, KeyError) as e:
         raise ContentError(
             f"config/external/figures.csv: cannot read (city_id, source): {e!r}"
         ) from e
@@ -558,7 +605,7 @@ def _reconcile_sources(config_dir: Path) -> list[str]:
             src = comp["external"]["source"]
             out += [src] if isinstance(src, str) else list(src)
         return list(dict.fromkeys(out))
-    except (OSError, yaml.YAMLError, AttributeError, KeyError, TypeError) as e:
+    except (OSError, UnicodeDecodeError, yaml.YAMLError, AttributeError, KeyError, TypeError) as e:
         raise ContentError(f"config/reconcile.yaml: cannot read comparison sources: {e!r}") from e
 
 

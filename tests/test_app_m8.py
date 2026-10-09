@@ -129,6 +129,12 @@ def _plain(paragraph: str) -> str:
     return re.sub(r"`([^`]+)`", r"<code>\1</code>", str(escape(text)))
 
 
+def test_the_german_document_title_renders_in_italics_with_its_translation(client):
+    html = " ".join(client.get("/organisations").text.split())
+    title = "Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und Wirklichkeit im Radverkehr"
+    assert f"Drucksache 19/25987, <em>{title}</em> (Eight years of the Mobility Act:" in html
+
+
 def test_every_profile_renders_with_its_anchor_text_and_quotes(client):
     html = client.get("/organisations").text
     assert ORGS  # the shipped profiles

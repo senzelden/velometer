@@ -53,23 +53,34 @@ sections:
         42.1 km. On the supplementary network it finds 606.4 km and 620.2 km, a change of
         13.7 km.
         Changes are computed before rounding, so they can differ in the last digit from the
-        difference of the printed endpoints. These are changes in what is mapped, not km of new infrastructure.
+        difference of the printed endpoints. These are changes in what is mapped, not km of new
+        infrastructure.
 quotes:
   - {excerpt: berlin-radverkehrsplan-vo19-013/paths-adjusted, after: 0}
   - {excerpt: berlin-fortschrittsbericht-2021/halved, after: 0}
   - {excerpt: berlin-drs-19-27049/ergaenzungsnetz-row, after: 1}
   - {excerpt: berlin-gdi-radverkehrsmassnahmen/abstract, after: 2}
 facts:
-  - {id: vrn-2025, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year, printed: "8.6"}
-  - {id: vrn-2025-report, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.1733 E, printed: "8.6"}
-  - {id: vrn-2025-may, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.19_25987, printed: "9.8"}
-  - {id: erg-2023, expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_27049, printed: "55.1"}
-  - {id: erg-2023-may, expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_25987, printed: "5.1"}
+  - {id: vrn-2025, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year,
+     printed: "8.6"}
+  - {id: vrn-2025-report, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.1733 E,
+     printed: "8.6"}
+  - {id: vrn-2025-may, expr: plan.berlin_rvp_2021.vorrangnetz.2025.implemented_in_year.19_25987,
+     printed: "9.8"}
+  - {id: erg-2023,
+     expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_27049,
+     printed: "55.1"}
+  - {id: erg-2023-may,
+     expr: plan.berlin_rvp_2021.ergaenzungsnetz.2023.implemented_in_year.19_25987,
+     printed: "5.1"}
   - {id: ov-vrn-2022, expr: overlay.berlin.vorrangnetz.2022-01-01.ab_km, printed: "438.3"}
   - {id: ov-vrn-now, expr: overlay.berlin.vorrangnetz.2026-10-03.ab_km, printed: "480.4"}
-  - {id: ov-vrn-change, expr: overlay_change.berlin.vorrangnetz.2022-01-01.2026-10-03, printed: "42.1"}
+  - {id: ov-vrn-change, expr: overlay_change.berlin.vorrangnetz.2022-01-01.2026-10-03,
+     printed: "42.1"}
   - {id: ov-erg-2022, expr: overlay.berlin.ergaenzungsnetz.2022-01-01.ab_km, printed: "606.4"}
   - {id: ov-erg-now, expr: overlay.berlin.ergaenzungsnetz.2026-10-03.ab_km, printed: "620.2"}
-  - {id: ov-erg-change, expr: overlay_change.berlin.ergaenzungsnetz.2022-01-01.2026-10-03, printed: "13.7"}
+  - {id: ov-erg-change, expr: overlay_change.berlin.ergaenzungsnetz.2022-01-01.2026-10-03,
+     printed: "13.7"}
 data_refs:
-  - {id: adr-0006, label: "velometer ADR 0006, mapped km", file: docs/adr/0006-mapped-km-not-built-km.md, locator: "## Decision"}
+  - {id: adr-0006, label: "velometer ADR 0006, mapped km",
+     file: docs/adr/0006-mapped-km-not-built-km.md, locator: "## Decision"}

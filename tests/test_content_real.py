@@ -191,20 +191,33 @@ def test_each_quote_renders_after_a_paragraph_citing_its_source(rel):
     assert sorted(placed) == sorted(q.excerpt for q in doc.quotes)  # every quote was rendered
 
 
+def _paragraph_not_citing(doc: dict, sid: str) -> int:
+    """The first paragraph a quote of `sid` may not follow (counted as `after` counts)."""
+    paragraphs = [p for s in doc["sections"] for p in s["paragraphs"]]
+    intro = set().union(*(_cites(p) for p in doc.get("intro", [])))
+    wrong = [
+        i
+        for i, p in enumerate(paragraphs)
+        if sid not in _cites(p) and not (i == 0 and sid in intro)
+    ]
+    assert wrong, f"every paragraph may carry a quote of {sid}: no wrong place to move it to"
+    return wrong[0]
+
+
+def test_a_page_citing_the_source_everywhere_fails_with_a_message_not_stopiteration():
+    doc = {"sections": [{"paragraphs": ["A [@s].", "B [@s]."]}]}
+    assert _paragraph_not_citing({"sections": [{"paragraphs": ["A [@s].", "B."]}]}, "s") == 1
+    with pytest.raises(AssertionError, match="every paragraph may carry a quote of s"):
+        _paragraph_not_citing(doc, "s")
+
+
 @pytest.mark.parametrize("rel", QUOTED_PAGES)
 def test_a_quote_moved_off_its_paragraph_is_reported(broken, rel):
     """The offline check catches a quote moved to a paragraph that does not cite its source;
     the wrong index is derived from the file, so the break survives a rewrite of the page."""
     doc = yaml.safe_load((REAL_CONTENT / rel).read_text(encoding="utf-8"))
-    paragraphs = [p for s in doc["sections"] for p in s["paragraphs"]]
-    intro = set().union(*(_cites(p) for p in doc.get("intro", [])))
     q = doc["quotes"][0]
-    sid = q["excerpt"].partition("/")[0]
-    wrong = next(
-        i
-        for i, p in enumerate(paragraphs)
-        if sid not in _cites(p) and not (i == 0 and sid in intro)
-    )
+    wrong = _paragraph_not_citing(doc, q["excerpt"].partition("/")[0])
 
     def mutate(d: dict) -> None:
         d["quotes"][0]["after"] = wrong
@@ -216,3 +229,16 @@ def test_a_quote_moved_off_its_paragraph_is_reported(broken, rel):
 def _excerpt_text(sources, ref: str) -> str:
     sid, _, eid = ref.partition("/")
     return str(escape(next(e.text for e in sources[sid].excerpts if e.id == eid)))
+
+
+def test_plan_page_lines_fit_100_characters():
+    # the plan pages are kept to the repo's line length (follow-up Task 7)
+    pages = sorted((REAL_CONTENT / "plans").glob("*.yaml"))
+    assert pages
+    long = [
+        f"{p.name}:{n}"
+        for p in pages
+        for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), start=1)
+        if len(line) > 100
+    ]
+    assert long == []

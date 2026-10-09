@@ -15,13 +15,23 @@ import yaml
 from tests.test_app import (  # noqa: F401 - `setup` is a fixture
     CONTENT,
     _client,
+    _css_rules,
+    _css_tokens,
+    _resolve,
     _text,
     setup,
 )
-from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT
+from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
 from velometer.app import compare
-from velometer.app.counts import COVID_YEAR, data_gaps, step_down_note
+from velometer.app.counts import (
+    COVID_YEAR,
+    KM_SHORT,
+    SERIES_SHORT,
+    data_gaps,
+    step_down_note,
+)
 from velometer.app.main import create_app
+from velometer.counters import index as counter_index
 from velometer.counters.model import CounterEntry, DayCount, StepDown
 from velometer.db import (
     CounterDay,
@@ -458,8 +468,6 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     assert "Counts: index of counts recorded at counter sites" in text
     assert "Mapped km: index of A+B mapped km in the city proper, 1 January snapshots" in text
     assert 'class="key key-counter"' in key and 'class="key key-km"' in key
-    from tests.test_app import _css_rules, _css_tokens, _resolve
-    from tests.test_app_m7 import STATIC
 
     css = (STATIC / "app.css").read_text()
     rules = _css_rules(css)
@@ -500,7 +508,6 @@ def test_counts_chart_key_items_are_list_items_without_a_typed_separator(setup):
 def test_counter_short_names_come_from_one_place(setup, series, short):  # noqa: F811
     # the chart's end labels (city.js) and the key under it name the lines alike: the server
     # puts the short names on the chart mount and city.js reads them, typing none of its own
-    from velometer.app.counts import KM_SHORT, SERIES_SHORT
 
     _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024, series=series)
     with _client(_app(setup)) as c:
@@ -551,8 +558,6 @@ def test_counts_tables_fit_a_phone_width():
     # Task 11 render check: at 390 px the counts table (four columns, headers kept on one line)
     # was 626 px wide in a 358 px column, and a site name like "Hesperian puisto/Ooppera"
     # pushed the sites table past it. At phone width the headers wrap and site names break
-    from tests.test_app import _css_rules
-    from tests.test_app_m7 import STATIC
 
     css = (STATIC / "app.css").read_text()
     start = css.index("/* counts tables at phone width */")
@@ -600,11 +605,10 @@ def _section_of(html: str, anchor: str) -> str:
 def test_the_counts_tab_states_the_index_rule_from_its_constants(setup, monkeypatch):  # noqa: F811
     """MIN_SITES and MIN_VALID are printed from `counters.index`, not spelled out by hand: moving
     the constants moves the text (follow-up Task 3)."""
-    from velometer.counters import index
 
     _seed(setup[0], index={2019: 100.0, 2020: None})  # one year with a value: the no-line note
-    monkeypatch.setattr(index, "MIN_SITES", 7)
-    monkeypatch.setattr(index, "MIN_VALID", 0.8)
+    monkeypatch.setattr(counter_index, "MIN_SITES", 7)
+    monkeypatch.setattr(counter_index, "MIN_VALID", 0.8)
     with _client(_app(setup)) as c:
         text = _text(c.get("/city/berlin/counts").text)
     assert "links to a neighbouring one with 7 sites complete on at least 80% of days." in text

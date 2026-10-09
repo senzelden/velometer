@@ -18,6 +18,8 @@ from velometer.content.models import DataRef, Explainer, Narrative, Organisation
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
 CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
+# *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text
+EM_MARK = re.compile(r"(?<![\w*])\*(?=[^\s*])([^*\n]*?[^\s*])\*(?![\w*])")
 MISSING = Markup('<span class="note">source missing</span>')
 MISSING_REF = Markup('<span class="note">data reference missing</span>')
 
@@ -86,7 +88,7 @@ class _Numbering:
             return f'<sup class="dref"><a href="#{self.prefix}ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
-        body = CODE_MARK.sub(r"<code>\1</code>", body)
+        body = EM_MARK.sub(r"<em>\1</em>", CODE_MARK.sub(r"<code>\1</code>", body))
         return Markup(REF_MARK.sub(ref, SOURCE_MARK.sub(source, body)))
 
 

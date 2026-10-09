@@ -27,6 +27,7 @@ Families (`<family>.<args>`):
   checked against the constants and the data.
 """
 
+import hashlib
 import math
 import re
 from collections.abc import Callable
@@ -34,7 +35,14 @@ from pathlib import Path
 
 from velometer.config import ConfigError
 from velometer.counters import index as counter_index
-from velometer.plans.models import ReportRow, current_and_revisions, load_plans
+from velometer.plans.models import (
+    PLANS_FILE,
+    REPORTS_FILE,
+    Plan,
+    ReportRow,
+    current_and_revisions,
+    load_plans,
+)
 from velometer.report import change as change_report
 from velometer.report.data import ReportData, rank_values
 from velometer.timeseries import YearPoint
@@ -414,6 +422,26 @@ def _years(series: dict) -> str:
     return ", ".join(str(k[4]) for k in sorted(series, key=lambda k: (k[4] is None, k[4] or 0)))
 
 
+_PLANS_READ: dict[Path, tuple[bytes, tuple[list[Plan], list[ReportRow]]]] = {}
+
+
+def _plans(plan_dir: Path) -> tuple[list[Plan], list[ReportRow]]:
+    """`load_plans(plan_dir)`, parsed once while the files' bytes stay the same: a content check
+    evaluates every plan fact against the same files."""
+    digest = hashlib.sha256()
+    for name in (PLANS_FILE, REPORTS_FILE):
+        try:
+            digest.update((plan_dir / name).read_bytes())
+        except OSError:
+            digest.update(b"\0missing")  # load_plans names the file
+        digest.update(b"\0")
+    key, stamp = plan_dir.resolve(), digest.digest()
+    hit = _PLANS_READ.get(key)
+    if hit is None or hit[0] != stamp:
+        hit = _PLANS_READ[key] = (stamp, load_plans(plan_dir))
+    return hit[1]
+
+
 def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
     if config_dir is None:
         raise _err(expr, "plan facts need the config directory")
@@ -426,7 +454,7 @@ def _plan(expr: str, args: list[str], config_dir: Path | None) -> float:
     plan_id, item_id, year, quantity = args[:4]
     doc = ".".join(args[4:])
     try:
-        plans, rows = load_plans(Path(config_dir) / "plans")
+        plans, rows = _plans(Path(config_dir) / "plans")
     except ConfigError as e:
         raise _err(expr, str(e)) from e
     plan = next((p for p in plans if p.id == plan_id), None)
