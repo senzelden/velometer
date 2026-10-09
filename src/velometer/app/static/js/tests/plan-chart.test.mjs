@@ -338,3 +338,28 @@ test("renderPlanChart: every label fits inside the svg, at any width and scale",
     }
   }
 });
+
+test("yDomain with headroom: the top tick lies at least one step above the largest value", () => {
+  for (const values of [[50, 100, 100, 55.1], [20], [3, 40], [-4.1, 250], [0.7, 1]]) {
+    const d = yDomain(values, 5, { headroom: true });
+    const step = d.ticks[1] - d.ticks[0];
+    assert.ok(d.hi - Math.max(...values) >= step - 1e-9, `${values}: hi ${d.hi}, step ${step}`);
+    assert.equal(d.hi, d.ticks.at(-1));
+  }
+  // without it, the top tick may be the largest value itself
+  assert.equal(yDomain([50, 100]).hi, 100);
+});
+
+test("renderPlanChart: with caps on the top edge, no on-scale target or figure lies on the cap line", () => {
+  // the Ergänzungsnetz 2026-2027 targets of 100 km were the domain top: their steps were drawn
+  // on the line of the 2028-2030 caps. With caps the axis keeps a tick step of headroom
+  for (const width of [640, 358]) {
+    const el = ergChart(width);
+    const capY = Number(marks(el, "target-cap")[0].attrs.d.match(/M[\d.]+,([\d.]+)/)[1]);
+    const gridYs = [...new Set(marks(el, "gridl").map((n) => Number(n.attrs.y1)))].sort((a, b) => a - b);
+    const gap = gridYs[1] - gridYs[0];
+    const stepYs = [...marks(el, "target-step")[0].attrs.d.matchAll(/M[\d.]+,([\d.]+)/g)].map((m) => Number(m[1]));
+    const figureYs = [...marks(el, "rep"), ...marks(el, "mapped-pt")].map((n) => Number(n.attrs.cy));
+    for (const yy of [...stepYs, ...figureYs]) assert.ok(yy >= capY + gap - 0.5, `y ${yy}, cap ${capY}, gap ${gap}`);
+  }
+});

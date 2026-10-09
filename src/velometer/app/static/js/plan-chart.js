@@ -70,8 +70,10 @@ export function yearPosition(date) {
  * The y domain: the step comes from the positive span (niceTicks over [0, max]); a negative
  * minimum only adds the room it needs (5 % of the span below it), never a whole negative step.
  * Ticks are those inside [lo, hi], 0 always among them. All values negative: niceTicks as is.
+ * opts.headroom: the top tick lies at least one step above the largest value (with caps on the
+ * top edge, no value drawn on scale shares their line).
  */
-export function yDomain(values, count = 5) {
+export function yDomain(values, count = 5, opts = {}) {
   const max = Math.max(0, ...values);
   const min = Math.min(0, ...values);
   if (max <= 0) {
@@ -80,6 +82,7 @@ export function yDomain(values, count = 5) {
   }
   const up = niceTicks(0, max, count);
   const step = up[1] - up[0];
+  if (opts.headroom && up.at(-1) - max < step - 1e-9) up.push(+(up.at(-1) + step).toFixed(10));
   const hi = up.at(-1);
   const lo = min < 0 ? min - 0.05 * (hi - min) : 0;
   const ticks = [];
@@ -173,7 +176,7 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const W = Math.max(280, opts.width ?? host.clientWidth ?? 0);
   const H = opts.height ?? 240;
-  const dom = yDomain(values, W < 480 ? 4 : 5);
+  const dom = yDomain(values, W < 480 ? 4 : 5, { headroom: offScale.length > 0 });
   const ticks = dom.ticks;
   // left: the widest tick label and its 6 px gap, 4 px to spare; right: the last band's edge
   const ml = Math.ceil(Math.max(...ticks.map((t) => textWidth(tickLabel(t))))) + 10;
