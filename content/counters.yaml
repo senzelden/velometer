@@ -21,8 +21,8 @@ sections:
         Each city chooses where its counters stand, so the sites speak for themselves, not for
         the city's streets. The set changes as counters are added, switched off for works or
         break down, quoted below [@paris-comptage-velo]. The index therefore compares only sites
-        complete on nine days in ten (Barcelona: all twelve months) in both years of each step,
-        chained from 2019 (Madrid: 2020). A year with fewer than three such sites has no value.
+        complete on at least 90% of days (Barcelona: all twelve months) in both years of each
+        step, chained from 2019 (Madrid: 2020). A year with fewer than 3 such sites has no value.
   - dimension: covid
     heading: The COVID year
     paragraphs:
@@ -51,3 +51,8 @@ quotes:
   - {excerpt: madrid-aforos-bicicletas/not-comparable, after: 3}
 facts:
   - {id: berlin-2020, expr: counter.berlin.2020, printed: "114.6"}
+  # the index rule (spec §2.13): stated through facts, so the check follows the constants
+  - {id: min-valid, expr: counter.min_valid, printed: "90%"}
+  - {id: min-sites, expr: counter.min_sites, printed: "3"}
+  - {id: base-year, expr: counter.base_year.berlin, printed: "2019"}
+  - {id: base-year-madrid, expr: counter.base_year.madrid, printed: "2020"}

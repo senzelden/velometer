@@ -3,10 +3,13 @@
 The prose is hand-written in the Jinja templates (`templates/methodology.<lang>.md.j2`), once
 per language. Every number and identifier comes from `MethodologyFacts`, gathered here from the
 report classifier, presets, `activity.yaml`, `history.yaml`, `limitations.yaml`, `trust.yaml`
-(with the golden fixtures it points to), `cities.yaml` and the runs `ReportData` selects.
+(with the golden fixtures it points to), `cities.yaml`, `counters.yaml`, the counter index
+rule (`counters.index`), the runs `ReportData` selects and the stored `plan_overlay` and counter
+tables.
 `check` re-renders in memory and lists what is stale.
 """
 
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
@@ -23,12 +26,23 @@ from velometer.config import (
     load_limitations,
     load_trust,
 )
+from velometer.content.facts import version_key
 from velometer.counters import MONTHLY_SERIES, SERIES
-from velometer.counters.index import MIN_SITES, MIN_VALID
-from velometer.counters.model import COUNTERS_FILE, load_counters_config
+from velometer.counters import index as counter_index
+from velometer.counters.model import (
+    COUNTERS_FILE,
+    COVID_YEAR,
+    DEFAULT_BASE_YEAR,
+    MIN_LINE_YEARS,
+    CounterEntry,
+    DayCount,
+    data_gaps,
+    load_counters_config,
+)
 from velometer.db import fetch_boundary, fetch_run
 from velometer.models import City
-from velometer.plans.overlay import latest_overlay_version, load_overlay_config
+from velometer.plans.models import MAPPED_BASELINE
+from velometer.plans.overlay import load_overlay_config
 from velometer.report.data import KINDS, ReportData
 from velometer.sources.boundaries import OSM_ADMIN_VERSION
 from velometer.trust import golden_paths
@@ -93,7 +107,8 @@ class CountryFact(_Frozen):
 
 
 class OverlayFacts(_Frozen):
-    """The plan-network overlay version the Berlin plan page shows (the latest config file)."""
+    """The plan-network overlay version the Berlin plan page shows (the latest version stored in
+    `plan_overlay`, as the page reads it) and its parameters (its config file)."""
 
     version: str
     buffer_m: float
@@ -104,6 +119,11 @@ class OverlayFacts(_Frozen):
     clip_free_ends: bool
 
 
+class StepDownFact(_Frozen):
+    site: str
+    since: str  # YYYY-MM
+
+
 class CounterCityFact(_Frozen):
     id: str
     name: str
@@ -111,6 +131,11 @@ class CounterCityFact(_Frozen):
     licence: str
     base_year: int
     series: Literal["counts", "avg_daily_intensity"]
+    data_from: str | None = None  # YYYY-MM of the first stored day of any site
+    index_years: list[int] = []  # stored years with an index value
+    line: bool = True  # whether the index is drawn as a line (`MIN_LINE_YEARS` valued years)
+    gaps: list[tuple[str, str]] = []  # (YYYY-MM, YYYY-MM) runs without counts, of a no-line city
+    step_downs: list[StepDownFact] = []  # config/counters.yaml: our reading of the daily data
 
 
 class CounterFacts(_Frozen):
@@ -118,6 +143,8 @@ class CounterFacts(_Frozen):
     n_no_data: int  # cities listed as checked without open counter data
     min_valid_pct: float  # valid days a site needs in both years of a link
     min_sites: int  # qualifying sites a link needs
+    default_base_year: int  # the base year of a city whose entry names none
+    covid_year: int
 
 
 class MethodologyFacts(_Frozen):
@@ -133,7 +160,8 @@ class MethodologyFacts(_Frozen):
     snapshot_dates: list[str]
     flag_thresholds: dict[str, float]
     limitations: list[Limitation]
-    overlay: OverlayFacts
+    overlay: OverlayFacts | None  # None: no overlay stored
+    mapped_baseline: date  # "mapped on the network" counts from this day (spec §4.4)
     counters: CounterFacts
 
 
@@ -263,9 +291,17 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
     return out
 
 
-def _overlay_facts(config_dir: Path) -> OverlayFacts:
-    plans = config_dir / "plans"
-    cfg = load_overlay_config(plans, latest_overlay_version(plans))
+OVERLAY_CITY = "berlin"  # the one city with a plan network overlay (spec §4.3)
+
+
+def _overlay_facts(data: ReportData) -> OverlayFacts | None:
+    """The latest overlay version stored for Berlin (numeric order, as the plan page picks it)
+    with the parameters of its config file; None when no overlay is stored."""
+    rows = data.plan_overlay(OVERLAY_CITY)
+    if not rows:
+        return None
+    version = max((r.overlay_version for r in rows), key=version_key)
+    cfg = load_overlay_config(data.config_dir / "plans", version)
     return OverlayFacts(
         version=cfg.version,
         buffer_m=cfg.buffer_m,
@@ -277,26 +313,48 @@ def _overlay_facts(config_dir: Path) -> OverlayFacts:
     )
 
 
-def _counter_facts(config_dir: Path, names: dict[str, str]) -> CounterFacts:
+def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFact:
+    """One counter city: its config entry and what the stored data say (first day, index years,
+    gaps of a city drawn without a line, as the Counts tab names them)."""
+    series = MONTHLY_SERIES if c.grain == "monthly" else SERIES
+    rows = data.counter_index(c.city)
+    years = [r.year for r in rows if r.index is not None]
+    line = len(years) >= MIN_LINE_YEARS
+    firsts = [s.first_day for s in data.counter_sites(c.city) if s.first_day]
+    gaps: list[tuple[str, str]] = []
+    if rows and not line and series == SERIES:
+        days = [
+            DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
+            for d in data.counter_days(c.city)
+        ]
+        gaps = [(a[:7], b[:7]) for a, b in data_gaps(days)]
+    return CounterCityFact(
+        id=c.city,
+        name=name,
+        source=c.source,
+        licence=c.licence,
+        base_year=c.base_year,
+        series=series,
+        data_from=min(firsts)[:7] if firsts else None,
+        index_years=years,
+        line=line,
+        gaps=gaps,
+        step_downs=[StepDownFact(site=s.site, since=s.since) for s in c.step_downs],
+    )
+
+
+def _counter_facts(data: ReportData, names: dict[str, str]) -> CounterFacts:
     """The counter portals of the reported cities (`names`: id -> name); a city the trust gate
-    holds back appears in neither the table nor the no-data count."""
-    cfg = load_counters_config(config_dir / COUNTERS_FILE)
+    holds back appears in neither the table nor the no-data count. The index rule is read from
+    `counters.index` when the facts are gathered."""
+    cfg = load_counters_config(data.config_dir / COUNTERS_FILE)
     return CounterFacts(
-        cities=[
-            CounterCityFact(
-                id=c.city,
-                name=names[c.city],
-                source=c.source,
-                licence=c.licence,
-                base_year=c.base_year,
-                series=MONTHLY_SERIES if c.grain == "monthly" else SERIES,
-            )
-            for c in cfg.cities
-            if c.city in names
-        ],
+        cities=[_counter_city(data, c, names[c.city]) for c in cfg.cities if c.city in names],
         n_no_data=sum(1 for n in cfg.none if n.city in names),
-        min_valid_pct=MIN_VALID * 100,
-        min_sites=MIN_SITES,
+        min_valid_pct=counter_index.MIN_VALID * 100,
+        min_sites=counter_index.MIN_SITES,
+        default_base_year=DEFAULT_BASE_YEAR,
+        covid_year=COVID_YEAR,
     )
 
 
@@ -356,8 +414,9 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
         snapshot_dates=[f"{y}-01-01" for y in data.years],
         flag_thresholds=dict(data.activity.flags.model_dump()),
         limitations=load_limitations(data.config_dir / "limitations.yaml"),
-        overlay=_overlay_facts(data.config_dir),
-        counters=_counter_facts(data.config_dir, {c.id: c.name for c in data.cities()}),
+        overlay=_overlay_facts(data),
+        mapped_baseline=MAPPED_BASELINE,
+        counters=_counter_facts(data, {c.id: c.name for c in data.cities()}),
     )
 
 
@@ -376,6 +435,44 @@ def _number(v: float | int | None, lang: Lang) -> str:
 
 
 AND: dict[str, str] = {"en": "and", "de": "und"}
+MONTHS: dict[str, tuple[str, ...]] = {
+    "en": ("January", "February", "March", "April", "May", "June", "July", "August",
+           "September", "October", "November", "December"),
+    "de": ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September",
+           "Oktober", "November", "Dezember"),
+}  # fmt: skip
+
+
+def _month(v: str, lang: Lang) -> str:
+    """A month (YYYY-MM or an ISO day) in words: "September 2019"."""
+    y, m = v.split("-")[:2]
+    return f"{MONTHS[lang][int(m) - 1]} {y}"
+
+
+GAP: dict[str, str] = {"en": "from {} to {}", "de": "von {} bis {}"}
+# a count of sites in words: English after "of", German in the genitive ("die Zählwerte zweier
+# Zählstellen"); a larger count in figures
+SITES: dict[str, tuple[str, ...]] = {
+    "en": ("no sites", "one site", "two sites", "three sites", "four sites"),
+    "de": ("keiner Zählstelle", "einer Zählstelle", "zweier Zählstellen", "dreier Zählstellen"),
+}
+SITES_MANY: dict[str, str] = {"en": "{} sites", "de": "von {} Zählstellen"}
+
+
+def _gaps(gaps: list[tuple[str, str]], lang: Lang) -> str:
+    """Runs of months without counts: "from July 2021 to August 2022 and from ..."."""
+    return _and_list([GAP[lang].format(_month(a, lang), _month(b, lang)) for a, b in gaps], lang)
+
+
+def _sites(n: int, lang: Lang) -> str:
+    words = SITES[lang]
+    return words[n] if n < len(words) else SITES_MANY[lang].format(n)
+
+
+def _day(v: date, lang: Lang) -> str:
+    """A day in words: "1 January 2022", "1. Januar 2022"."""
+    sep = ". " if lang == "de" else " "
+    return f"{v.day}{sep}{MONTHS[lang][v.month - 1]} {v.year}"
 
 
 def _and_list(items: list[str], lang: Lang) -> str:
@@ -397,6 +494,10 @@ def _environment(lang: Lang) -> Environment:
     )
     env.filters["num"] = lambda v: _number(v, lang)
     env.filters["and_list"] = lambda v: _and_list(v, lang)
+    env.filters["month"] = lambda v: _month(v, lang)
+    env.filters["day"] = lambda v: _day(v, lang)
+    env.filters["gaps"] = lambda v: _gaps(v, lang)
+    env.filters["sites"] = lambda v: _sites(v, lang)
     return env
 
 

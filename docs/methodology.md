@@ -304,7 +304,7 @@ Per city:
 - Oslo: the counters are state counters of Statens vegvesen, limited to sites inside the city's LAU boundary [M8 spec, decision 15]. A day is complete when the hourly values give every local hour a volume; the API's daily coverage share is not used, as no threshold on it matched that rule in a spot check.
 - Madrid: the data start in September 2019, so its base year is 2020. The files hold no counts from July 2021 to August 2022, while the detectors were changed. Only 2020 has an index value, so no index line is drawn.
 - Barcelona publishes the monthly average daily intensity per gauge and day type, not counts. Its index uses a gauge's mean over the twelve working-day months, a gauge being valid in a year only with all twelve, and is labelled average daily intensity [M8 spec, decision 14].
-- Helsinki: the index keeps every qualifying site. The counts of two sites step down while they keep counting (Kaivokatu from April 2024, Pitkäsilta west side from May 2025). The Counts tab gives, as our reading of the daily data, the index without them from those years on [user decision on counters of 2026-10-07, `docs/superpowers/rulings-m8.md`].
+- Helsinki: the index keeps every qualifying site. The counts of two sites step down while they keep counting (Kaivokatu from April 2024, Pitkäsilta länsipuoli from May 2025). The Counts tab gives, as our reading of the daily data, the index without them from those years on [user decision on counters of 2026-10-07, `docs/superpowers/rulings-m8.md`].
 
 ## Provenance
 

@@ -5,8 +5,9 @@ year's 365 or 366 calendar days) in both years; the link ratio is the sum of tho
 counts over their complete days in the later year over the earlier one. Links are chained from
 `base_year` = 100.0, forwards and backwards. A link with fewer than `min_sites` sites breaks the
 chain: that year and every year beyond it (further from the base) have no value; the chain is
-never re-based. The base year is 100.0 by definition; its site count is the number of sites
-with `min_valid` complete days in it.
+never re-based. The base year is 100.0 by definition when at least `min_sites` sites have
+`min_valid` complete days in it (its site count); with fewer it has no value, and so neither has
+any other year (spec §2.13: a year with fewer qualifying sites has no index value).
 
 `chain_index_monthly` chains a monthly series the same way (Barcelona's average daily intensity,
 spec §2.14): a site's value for a year is the mean of its twelve monthly values of one day type,
@@ -99,7 +100,8 @@ def _chain(
         return after / before, len(sites)
 
     out: dict[int, IndexYear] = {}
-    out[base_year] = (base_year, 100.0, len(valid[base_year]))
+    n_base = len(valid[base_year])
+    out[base_year] = (base_year, 100.0 if n_base >= min_sites else None, n_base)
     for step, years_out in (
         (1, range(base_year + 1, last + 1)),
         (-1, range(base_year - 1, first - 1, -1)),

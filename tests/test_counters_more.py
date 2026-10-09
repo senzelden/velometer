@@ -22,7 +22,7 @@ from velometer.content.loader import load_document
 from velometer.counters.adapters import barcelona, helsinki, madrid, oslo
 from velometer.counters.check import check_counters
 from velometer.counters.days import to_days
-from velometer.counters.index import chain_index_monthly
+from velometer.counters.index import MIN_SITES, chain_index_monthly
 from velometer.counters.model import CounterFormatError, MonthValue, load_counters_config
 from velometer.db import CounterMonth, create_schema, replace_counter_monthly
 
@@ -187,9 +187,14 @@ def test_madrid_index_base_year_2020_is_100(tmp_path):
     assert CONFIG.entry("madrid").base_year == 2020
     res, conn = _setup(tmp_path, "madrid", MAD_FILES)
     assert res.exit_code == 0, res.output
-    rows = conn.execute("SELECT year, idx, base_year FROM counter_index WHERE city_id='madrid'")
-    by_year = {y: (idx, base) for y, idx, base in rows}
-    assert by_year[2020] == (100.0, 2020)
+    rows = conn.execute(
+        "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id='madrid'"
+    )
+    by_year = {y: (idx, n, base) for y, idx, n, base in rows}
+    assert {base for _, _, base in by_year.values()} == {2020}
+    idx, n, _ = by_year[2020]
+    # 100 by definition, when the base year itself has MIN_SITES qualifying sites (spec §2.13)
+    assert idx == (100.0 if n >= MIN_SITES else None)
     assert by_year[2019][0] is None  # four months of 2019: no link qualifies
 
 
@@ -381,9 +386,11 @@ def test_monthly_index_with_a_gap_in_the_base_year():
         for y in (2019, 2020)
         for m in range(1, 13)
     ]
+    complete = {y: (v, n) for y, v, n in chain_index_monthly(months, 2019, "working_day")}
+    assert complete[2019] == (100.0, 3)
     months = [x for x in months if not (x.site_id == "a" and x.month == "2019-05")]
     index = {y: (v, n) for y, v, n in chain_index_monthly(months, 2019, "working_day")}
-    assert index[2019] == (100.0, 2)
+    assert index[2019] == (None, 2)  # two gauges valid in the base year: below three (§2.13)
     assert index[2020] == (None, 2)  # two sites valid in both years: below three
 
 

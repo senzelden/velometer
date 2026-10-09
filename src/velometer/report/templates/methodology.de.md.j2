@@ -168,6 +168,7 @@ Die eigenen Zahlen werden Clean Cities 2025, ECF QECIO v2.10, dem Datensatz Bike
 Die Berliner Planseite stellt die eigenen kartierten Kilometer dem geplanten Radverkehrsnetz der Stadt gegenüber: der WFS-Ebene `radverkehrsnetz` der Senatsverwaltung mit ihren beiden Klassen Vorrangnetz und Ergänzungsnetz, in EPSG:25833 wie geliefert. Für jeden Berliner LAU-Lauf des Berichtsklassifikators wird der zwischengespeicherte OSM-Stand neu gelesen und neu klassifiziert; die neu berechneten Stufensummen müssen den gespeicherten Laufsummen entsprechen. Ein neuer OSM-Lauf entsteht dabei nicht [M8-Spezifikation, Entscheidung 10]. Eine Wegseite der Stufe A oder B zählt als auf dem Netz für die Teile, die innerhalb eines Puffers um eine Netzlinie liegen, deren Richtung höchstens um einen Grenzwinkel von der eigenen abweicht; Teile unter einer Mindestlänge entfallen. Die Parameter sind Daten. Eine Parameteränderung ist eine neue Überlagerungsversion, und die Zeilen früherer Versionen bleiben in der Datenbank [M8-Spezifikation, Entscheidung 11]. Die Seite zeigt die neueste Version.
 
 <!-- generated:overlay -->
+{% if f.overlay %}
 Version `{{ f.overlay.version }}`, aus `config/plans/{{ f.overlay.version }}.yaml`:
 
 | Parameter | Wert |
@@ -178,11 +179,14 @@ Version `{{ f.overlay.version }}`, aus `config/plans/{{ f.overlay.version }}.yam
 | Mindestlänge eines Teils | {{ f.overlay.min_part_m | num }} m |
 | Mindestlänge geprüft an | {{ "den über sich berührende Wegseiten zusammengefassten Teilen einer Stufe" if f.overlay.merge_scope == "tier" else "den Teilen jeder Wegseite" }} |
 | Treffer enden an einem freien Ende einer Netzlinie | {{ "ja" if f.overlay.clip_free_ends else "nein" }} |
+{% else %}
+Noch ist keine Überlagerung mit dem Plannetz gespeichert.
+{% endif %}
 <!-- /generated:overlay -->
 
 Das Verfahren hat vier Versionen, alle auf denselben Ständen gerechnet. `overlay_v1` verwendete einen einzigen Puffer von 12 m. Über die Jahresstände wechselte ein großer Teil der Berliner Stufen A und B von Merkmalen an der Straßenachse zu separat erfassten Wegen, die weiter von der Netzlinie entfernt liegen; v1 maß daher eher diesen Wandel der Erfassungspraxis als das Netz. `overlay_v2` gibt separat erfassten Wegen einen Puffer von 25 m. `overlay_v3` prüft die Mindestlänge an den über sich berührende Wegseiten zusammengefassten Teilen einer Stufe, sodass das Ergebnis nicht mehr davon abhängt, wie fein OSM seine Wege teilt. `overlay_v4` beendet einen Treffer am freien Ende einer Netzlinie, sodass Begleitwege der kreuzenden oder weiterführenden Straße nahe diesem Ende nicht mehr zählen; ein Ende ist frei, sofern keine andere Linie derselben Klasse innerhalb von 1 m an es anschließt und den Knoten innerhalb des Grenzwinkels verlässt. Die Zahlen jeder Version und die Prüfungen dahinter stehen in `docs/review/m8-overlay.md`.
 
-Die Reihe auf der Seite ist die Veränderung der kartierten A+B-Kilometer je Seite auf jeder Netzklasse seit dem 1. Januar 2022, dem ersten Zieljahr des Plans, mit einem Punkt je Stand [M8-Spezifikation §4.4]. Der Bestand ist mit dem Plan nicht vergleichbar: Er enthält Infrastruktur, die älter ist als der Plan, und kartierte Kilometer sind keine nach dem Standard des Mobilitätsgesetzes fertiggestellten Kilometer [ADR 0006]. Die Reihe hängt davon ab, wie Kartierende Radwege zeichnen, und vom Zuordnungsverfahren. Sie verändert sich, wenn Wege neu gezeichnet werden, und mit jeder Verfahrensversion; Teile an Knoten können fälschlich zugeordnet oder verworfen werden. Das Protokoll beziffert beide Fehlerarten für v4.
+Die Reihe auf der Seite ist die Veränderung der kartierten A+B-Kilometer je Seite auf jeder Netzklasse seit dem {{ f.mapped_baseline | day }}, dem ersten Zieljahr des Plans, mit einem Punkt je Stand [M8-Spezifikation §4.4]. Der Bestand ist mit dem Plan nicht vergleichbar: Er enthält Infrastruktur, die älter ist als der Plan, und kartierte Kilometer sind keine nach dem Standard des Mobilitätsgesetzes fertiggestellten Kilometer [ADR 0006]. Die Reihe hängt davon ab, wie Kartierende Radwege zeichnen, und vom Zuordnungsverfahren. Sie verändert sich, wenn Wege neu gezeichnet werden, und mit jeder Verfahrensversion; Teile an Knoten können fälschlich zugeordnet oder verworfen werden. Das Protokoll beziffert beide Fehlerarten für v4.
 
 ## Zählstellenindex
 
@@ -204,7 +208,7 @@ Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide
 Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die {{ f.counters.min_valid_pct | num }}-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %{% if "paris" in counter_ids and "helsinki" in counter_ids %}; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025){% endif %} [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`].{% if "barcelona" in counter_ids %} Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.{% endif %}
 
 
-Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Counts“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
+Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist {{ f.counters.default_base_year }} oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert {{ f.counters.covid_year }} als Corona-Jahr. Der Reiter „Counts“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 
 Je Stadt:
 
@@ -214,15 +218,28 @@ Je Stadt:
 {% if "oslo" in counter_ids %}
 - Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.
 {% endif %}
-{% if "madrid" in counter_ids %}
-- Madrid: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die Dateien enthalten von Juli 2021 bis August 2022, während die Detektoren getauscht wurden, keine Zählwerte. Nur 2020 hat einen Indexwert, daher wird keine Indexlinie gezeichnet.
+{% for c in f.counters.cities if not c.line %}
+{% set ns = namespace(parts=[]) %}
+{% if c.base_year != f.counters.default_base_year and c.data_from %}
+{% set ns.parts = ns.parts + ["Die Daten beginnen im " ~ (c.data_from | month) ~ ", das Basisjahr ist daher " ~ c.base_year] %}
 {% endif %}
+{% if c.gaps %}
+{% set ns.parts = ns.parts + ["Die Dateien enthalten " ~ (c.gaps | gaps) ~ (", während die Detektoren getauscht wurden," if c.id == "madrid" else "") ~ " keine Zählwerte"] %}
+{% endif %}
+{% if c.index_years %}
+{% set ns.parts = ns.parts + ["Nur " ~ (c.index_years | map("string") | list | and_list) ~ (" hat" if c.index_years | length == 1 else " haben") ~ " einen Indexwert, daher wird keine Indexlinie gezeichnet"] %}
+{% else %}
+{% set ns.parts = ns.parts + ["Kein Jahr hat einen Indexwert, daher wird keine Indexlinie gezeichnet"] %}
+{% endif %}
+- {{ c.name }}: {{ ns.parts | join(". ") }}.
+{% endfor %}
 {% if "barcelona" in counter_ids %}
 - Barcelona veröffentlicht die monatliche durchschnittliche tägliche Verkehrsstärke je Zählstelle und Tagestyp, keine Zählwerte. Sein Index verwendet den Mittelwert einer Zählstelle über die zwölf Werktagsmonate, wobei eine Zählstelle in einem Jahr nur mit allen zwölf gültig ist, und heißt durchschnittliche tägliche Verkehrsstärke [M8-Spezifikation, Entscheidung 14].
 {% endif %}
-{% if "helsinki" in counter_ids %}
-- Helsinki: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte zweier Zählstellen fallen ab, während sie weiterzählen (Kaivokatu ab April 2024, Westseite der Pitkäsilta ab Mai 2025). Der Reiter „Counts“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesen Jahren an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
-{% endif %}
+{% for c in f.counters.cities if c.step_downs %}
+{% set n = c.step_downs | length %}
+- {{ c.name }}: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte {{ n | sites }} fallen ab, während {{ "sie weiterzählt" if n == 1 else "sie weiterzählen" }} ({% for s in c.step_downs %}{{ s.site }} ab {{ s.since | month }}{{ ", " if not loop.last }}{% endfor %}). Der Reiter „Counts“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab {{ "diesem Jahr" if n == 1 else "diesen Jahren" }} an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
+{% endfor %}
 
 ## Herkunft der Zahlen
 

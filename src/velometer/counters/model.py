@@ -7,7 +7,7 @@ on a fall-back day carries `fold=1` (PEP 495), the first and every other hour `f
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -18,6 +18,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from velometer.config import ConfigError
 
 COUNTERS_FILE = "counters.yaml"
+DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names another (§2.13)
+COVID_YEAR = 2020  # marked on every counter chart (spec decision 12)
+MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line (user ruling, Task 8)
+GAP_DAYS = 31  # a run of days without any count longer than this is a gap in the data
 
 Grain = Literal["hourly", "daily", "monthly"]
 
@@ -51,6 +55,17 @@ class MonthValue:
     month: str  # YYYY-MM
     day_type: str  # e.g. working_day; the portal's day types, normalised
     avg_daily: float  # the portal's average daily value for that month and day type
+
+
+def data_gaps(days: list[DayCount]) -> list[tuple[str, str]]:
+    """Runs of more than GAP_DAYS days without a count at any site, inside the data's span, as
+    (first, last) ISO days of each run."""
+    seen = sorted({d.day for d in days})
+    out = []
+    for a, b in zip(seen, seen[1:], strict=False):
+        if (b - a).days - 1 > GAP_DAYS:
+            out.append(((a + timedelta(days=1)).isoformat(), (b - timedelta(days=1)).isoformat()))
+    return out
 
 
 class CounterFormatError(Exception):
@@ -89,7 +104,7 @@ class CounterEntry(_Strict):
     urls: list[str] = Field(min_length=1)  # the files `counters fetch` downloads, in load order
     timezone: str
     grain: Grain
-    base_year: int = 2019  # spec §2.13
+    base_year: int = DEFAULT_BASE_YEAR  # spec §2.13
     # a portal id -> the canonical site id (Berlin: a site renumbered between yearly sheets;
     # Helsinki: the two sides of a bridge, summed, whose counts move between columns)
     site_aliases: dict[str, str] = {}

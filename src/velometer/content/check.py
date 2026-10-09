@@ -3,6 +3,7 @@ plan and counter pages against the source registry and the report data (M7 spec 
 §3.4, §4.5, §5.5), and the plan figures in `config/plans/`. Every problem is one
 `"<file>: <message>"` string."""
 
+import contextlib
 import csv
 import html
 import re
@@ -13,7 +14,15 @@ import httpx
 import yaml
 
 from velometer.config import ConfigError
-from velometer.content.facts import FactError, evaluate, parse_printed, printed_matches
+from velometer.content.facts import (
+    BASE_YEAR,
+    COUNTER_RULES,
+    FactError,
+    counter_rule,
+    evaluate,
+    parse_printed,
+    printed_matches,
+)
 from velometer.content.loader import (
     load_document,
     load_narratives,
@@ -32,6 +41,7 @@ from velometer.content.models import (
     Quote,
     Source,
 )
+from velometer.counters.model import COUNTERS_FILE, load_counters_config
 from velometer.plans.models import Plan, ReportRow, load_plans
 from velometer.report.data import ReportData
 
@@ -50,7 +60,18 @@ _CAUSAL = re.compile(
     r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
     re.IGNORECASE,
 )
-PLAN_DOCUMENTS = ("plans/berlin.yaml", "counters.yaml")
+COUNTER_PAGE = "counters.yaml"
+PLAN_DOCUMENTS = ("plans/berlin.yaml", COUNTER_PAGE)
+_ONES = (
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+    "nineteen", "twenty",
+)  # fmt: skip
+_TENS = {"thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80,
+         "ninety": 90}  # fmt: skip
+_NUMBER_WORDS = {w: i for i, w in enumerate(_ONES)} | _TENS
+_WORD = re.compile(r"\b[A-Za-z]+\b")
+_IN_TEN = re.compile(r"\b([A-Za-z]+)\s+(?:[A-Za-z]+\s+)?in\s+ten\b", re.IGNORECASE)  # 9 days in 10
 BERLIN = "berlin"
 
 
@@ -113,6 +134,61 @@ def causal_counter_wording(paragraph: str) -> list[str]:
     if not _COUNTER_WORDS.search(paragraph):
         return []
     return [m.group(1) for m in _CAUSAL.finditer(paragraph)]
+
+
+def counter_rule_values(config_dir: Path) -> dict[float, str]:
+    """The index rule's values (spec §2.13) -> the fact that prints each: `MIN_VALID` in percent,
+    `MIN_SITES`, and each configured city's base year (none when config/counters.yaml is absent
+    or unreadable; its own check reports that)."""
+    rules = {round(counter_rule(r), 6): f"counter.{r}" for r in COUNTER_RULES}
+    try:
+        cfg = load_counters_config(Path(config_dir) / COUNTERS_FILE)
+    except (ConfigError, OSError):
+        return rules
+    for e in cfg.cities:
+        rules.setdefault(float(e.base_year), f"counter.{BASE_YEAR}.{e.city}")
+    return rules
+
+
+def _is_rule_fact(expr: str) -> bool:
+    family, _, rest = expr.strip().partition(".")
+    return family == "counter" and (rest in COUNTER_RULES or rest.startswith(f"{BASE_YEAR}."))
+
+
+def literal_counter_rules(paragraph: str, rules: dict[float, str], facts: list[Fact]) -> list[str]:
+    """Index-rule values the counter prose states as literal text: a rule value spelled out in
+    words ("three sites", "nine days in ten"), or a number equal to a rule value that no
+    counter rule fact of the document (`counter.min_valid`, `counter.min_sites`,
+    `counter.base_year.<city>`) prints. Each is "<text> (<the fact to use>)"."""
+    declared = set()
+    for f in facts:
+        if _is_rule_fact(f.expr):
+            with contextlib.suppress(FactError):  # the fact's own check reports it
+                declared.add(round(parse_printed(f.printed)[0], 6))
+    text = _STRIPPED.sub(" ", paragraph)
+    found: list[str] = []
+
+    def add(literal: str, value: float) -> None:
+        item = f"{literal} ({rules[value]})"
+        if item not in found:
+            found.append(item)
+
+    for m in _IN_TEN.finditer(text):
+        n = _NUMBER_WORDS.get(m.group(1).lower())
+        if n is not None and float(n * 10) in rules:
+            add(m.group(0), float(n * 10))
+    for m in _WORD.finditer(text):
+        n = _NUMBER_WORDS.get(m.group(0).lower())
+        if n is not None and float(n) in rules:
+            add(m.group(0), float(n))
+    for m in _NUMBER_TOKEN.finditer(text):
+        try:
+            value = round(parse_printed(normalise_number(m.group(0).rstrip(",")))[0], 6)
+        except FactError:
+            continue
+        if value in rules and value not in declared:
+            add(m.group(0).rstrip(","), value)
+    return found
 
 
 def _check_document(
@@ -353,6 +429,11 @@ def _check(
             continue
         if doc is not None:
             problems += _check_explainer_shaped(rel, doc, sources, data, docs_dir, config_dir)
+        if doc is not None and rel == COUNTER_PAGE:
+            rules = counter_rule_values(config_dir)
+            for p in _explainer_prose(doc):
+                for lit in literal_counter_rules(p, rules, doc.facts):
+                    problems.append(f"{rel}: index rule stated as literal text: {lit}")
 
     plans, rows, plan_problems = _plans(config_dir)
     problems += plan_problems

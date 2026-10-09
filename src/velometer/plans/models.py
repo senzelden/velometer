@@ -16,6 +16,9 @@ from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 from velometer.config import ConfigError
 
 PLANS_FILE = "plans.yaml"
+# The day "mapped on the network" is counted from: the comparable quantity is the change since
+# 1 January 2022, not the level (M8 spec decision 9, §4.4)
+MAPPED_BASELINE = date(2022, 1, 1)
 REPORTS_FILE = "reports.csv"
 
 

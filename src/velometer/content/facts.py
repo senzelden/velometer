@@ -21,6 +21,10 @@ Families (`<family>.<args>`):
   `<config_dir>/plans/reports.csv`; needs `config_dir`.
 - `counter.<city>.<year>`: the counter index; `counter_sites.<city>.<year>`: the number of
   qualifying sites of that year's link.
+- `counter.min_valid` (the share of complete days a site needs in both years of a link, in
+  percent), `counter.min_sites` (the qualifying sites a link needs), `counter.base_year.<city>`
+  (the city's stored index base year): the index rule (spec §2.13), so prose that states it is
+  checked against the constants and the data.
 """
 
 import math
@@ -29,6 +33,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from velometer.config import ConfigError
+from velometer.counters import index as counter_index
 from velometer.plans.models import ReportRow, current_and_revisions, load_plans
 from velometer.report import change as change_report
 from velometer.report.data import ReportData, rank_values
@@ -368,7 +373,33 @@ def _counter_year(expr: str, args: list[str], data: ReportData):
     return at[0]
 
 
+COUNTER_RULES = ("min_valid", "min_sites")
+BASE_YEAR = "base_year"
+
+
+def counter_rule(name: str) -> float:
+    """The index rule's value `counter.<name>` prints: `min_valid` in percent, `min_sites`."""
+    if name == "min_valid":
+        return counter_index.MIN_VALID * 100
+    return float(counter_index.MIN_SITES)
+
+
+def _counter_base_year(expr: str, city: str, data: ReportData) -> float:
+    rows = data.counter_index(city)
+    if not rows:
+        raise _err(expr, f"no counter index for city {city!r}")
+    years = sorted({r.base_year for r in rows})
+    if len(years) > 1:
+        raise _err(expr, f"counter series of {city!r} have several base years ({years})")
+    return float(years[0])
+
+
 def _counter(expr, args, data, docs_dir):
+    if len(args) == 1 and args[0] in COUNTER_RULES:
+        return counter_rule(args[0])
+    if args and args[0] == BASE_YEAR:
+        _arity(expr, args, 2, "base_year.<city>")
+        return _counter_base_year(expr, args[1], data)
     row = _counter_year(expr, args, data)
     if row.index is None:
         raise _err(expr, f"no index value in {row.year} ({row.sites} qualifying sites)")

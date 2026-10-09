@@ -524,3 +524,81 @@ def test_content_check_reports_profile_problems(fixture_db, m8):
     res = CliRunner().invoke(app, [*args, "--config-dir", str(cfg)])
     assert res.exit_code == 1
     assert "organisations/senmvku.yaml: unknown source nope" in res.output
+
+
+# --- the counter index rule in prose (follow-up Task 3) --------------------------------------
+
+
+def test_counter_rule_facts_follow_the_constants_and_the_stored_base_year(
+    fixture_db, tmp_path, monkeypatch
+):
+    from velometer.counters import index
+
+    db_path, _cfg, _conn, data = fixture_db
+    rows = [CounterIndexYear("berlin", y, 100.0, 12, 2020, "counts") for y in (2020, 2021)]
+    _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
+    assert evaluate("counter.min_valid", data, tmp_path) == pytest.approx(index.MIN_VALID * 100)
+    assert evaluate("counter.min_sites", data, tmp_path) == index.MIN_SITES
+    assert evaluate("counter.base_year.berlin", data, tmp_path) == 2020
+    monkeypatch.setattr(index, "MIN_SITES", 5)
+    monkeypatch.setattr(index, "MIN_VALID", 0.75)
+    assert evaluate("counter.min_sites", data, tmp_path) == 5
+    assert evaluate("counter.min_valid", data, tmp_path) == 75
+    with pytest.raises(FactError, match="no counter index for city 'paris'"):
+        evaluate("counter.base_year.paris", data, tmp_path)
+    with pytest.raises(FactError, match="expected base_year.<city>"):
+        evaluate("counter.base_year", data, tmp_path)
+
+
+def _counter_prose(m8, paragraph: str, facts: list[dict] = ()) -> list[str]:
+    """The problems of the fixture's counters.yaml with `paragraph` added, beside the real
+    config/counters.yaml (whose base years are rule values)."""
+    shutil.copy(Path(__file__).parents[1] / "config" / "counters.yaml", m8[1] / "counters.yaml")
+
+    def edit(d):
+        d["sections"][0]["paragraphs"].append(paragraph)
+        d["facts"] = [*d.get("facts", []), *facts]
+
+    _edit(m8[0] / "counters.yaml", edit)
+    return _problems(m8)
+
+
+RULE = "counters.yaml: index rule stated as literal text: "
+
+
+def test_counter_prose_may_not_spell_out_the_index_rule(m8):
+    problems = _counter_prose(
+        m8,
+        "Sites complete on nine days in ten are compared, chained from 2019. A year with fewer "
+        "than three such sites has no value.",
+    )
+    assert problems == [
+        f"{RULE}nine days in ten (counter.min_valid)",
+        f"{RULE}three (counter.min_sites)",
+        f"{RULE}2019 (counter.base_year.berlin)",
+    ]
+
+
+def test_counter_prose_states_the_index_rule_through_its_facts(m8):
+    paragraph = "Sites complete on at least 90% of days, from 2019: fewer than 3 have no value."
+    facts = [
+        {"id": "v", "expr": "counter.min_valid", "printed": "90%"},
+        {"id": "s", "expr": "counter.min_sites", "printed": "3"},
+        {"id": "b", "expr": "counter.base_year.berlin", "printed": "2019"},
+    ]
+    assert _counter_prose(m8, paragraph, facts) == []
+
+
+def test_a_rule_value_printed_by_another_fact_is_still_a_literal(m8):
+    # "3" declared by a counter_sites fact is not the rule: the check names the rule fact
+    facts = [{"id": "n", "expr": "counter_sites.berlin.2020", "printed": "3"}]
+    assert _counter_prose(m8, "A link needs 3 sites.", facts) == [f"{RULE}3 (counter.min_sites)"]
+
+
+def test_the_literal_rule_check_follows_the_constants(m8, monkeypatch):
+    from velometer.counters import index
+
+    monkeypatch.setattr(index, "MIN_SITES", 4)
+    assert _counter_prose(m8, "A year with fewer than four sites has no value.") == [
+        f"{RULE}four (counter.min_sites)"
+    ]

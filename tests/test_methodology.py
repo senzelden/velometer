@@ -697,26 +697,62 @@ def _generated(text: str, name: str) -> str:
     return text.split(f"<!-- generated:{name} -->")[1].split(f"<!-- /generated:{name} -->")[0]
 
 
+def _berlin_lau_runs(db_path) -> list[int]:
+    with closing(sqlite3.connect(db_path)) as c:
+        sql = "SELECT id FROM runs WHERE city_id='berlin' AND boundary_kind='lau' ORDER BY id"
+        return [r for (r,) in c.execute(sql)]
+
+
+def _store_overlay(db_path, *versions: str) -> None:
+    from velometer.db import OverlayRow, replace_plan_overlay
+
+    rows = [
+        OverlayRow(rid, "berlin", "vorrangnetz", tier, 10.0, 100.0, v, "2026-10-07T10:40:42Z")
+        for v in versions
+        for rid in _berlin_lau_runs(db_path)
+        for tier in ("A", "B")
+    ]
+    with closing(sqlite3.connect(db_path)) as c:
+        replace_plan_overlay(c, "berlin", rows)
+
+
 @pytest.mark.parametrize("lang", LANGS)
-def test_overlay_section_gives_the_latest_overlay_version_and_its_parameters(fixture_db, lang):
+def test_overlay_section_gives_the_latest_stored_overlay_version_and_its_parameters(
+    fixture_db, lang
+):
+    """The version is the latest stored in `plan_overlay`, the one the plan page shows (numeric
+    order), not the latest config file: the config has newer versions than are stored here."""
     from velometer.plans.overlay import latest_overlay_version, load_overlay_config
 
-    cfg_dir = fixture_db[1]
-    oc = load_overlay_config(cfg_dir / "plans", latest_overlay_version(cfg_dir / "plans"))
+    db_path, cfg_dir = fixture_db[0], fixture_db[1]
+    assert latest_overlay_version(cfg_dir / "plans") not in ("overlay_v2", "overlay_v3")
+    _store_overlay(db_path, "overlay_v3", "overlay_v2")
+    oc = load_overlay_config(cfg_dir / "plans", "overlay_v3")
     block = _generated(render(methodology_facts(fixture_db[3]), lang), "overlay")
-    assert f"`{oc.version}`" in block
+    assert "`overlay_v3`" in block and "overlay_v2" not in block
     for value in (oc.buffer_m, oc.separate_buffer_m, oc.max_angle_deg, oc.min_part_m):
         assert _number(value, lang) in block, value
 
 
-def test_a_new_overlay_version_makes_the_methodology_stale(fixture_db, tmp_path):
-    cfg_dir = fixture_db[1]
+@pytest.mark.parametrize("lang", LANGS)
+def test_without_a_stored_overlay_the_section_says_so(fixture_db, lang):
+    block = _generated(render(methodology_facts(fixture_db[3]), lang), "overlay")
+    assert "Version" not in block
+    assert ("No plan network overlay is stored" if lang == "en" else "keine Überlagerung") in block
+
+
+def test_a_new_stored_overlay_version_makes_the_methodology_stale(fixture_db, tmp_path):
+    db_path, cfg_dir = fixture_db[0], fixture_db[1]
+    _store_overlay(db_path, "overlay_v2")
     write(tmp_path, methodology_facts(fixture_db[3]))
+    # a newer config file alone changes nothing: the page shows what is stored
     plans = cfg_dir / "plans"
     latest = max(plans.glob("overlay_v*.yaml"), key=lambda p: int(p.stem.removeprefix("overlay_v")))
     n = int(latest.stem.removeprefix("overlay_v")) + 1
     raw = yaml.safe_load(latest.read_text()) | {"version": f"overlay_v{n}", "buffer_m": 13}
     (plans / f"overlay_v{n}.yaml").write_text(yaml.safe_dump(raw))
+    assert check(tmp_path, methodology_facts(fixture_db[3])) == []
+    _store_overlay(db_path, "overlay_v2", f"overlay_v{n}")
     assert check(tmp_path, methodology_facts(fixture_db[3]))
 
 
@@ -752,3 +788,109 @@ def test_m8_sections_have_no_construction_verb_and_no_causal_counter_wording(lan
     for para in text.split("\n\n"):
         assert not construction_verbs(para), para
         assert not causal_counter_wording(para), para
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_the_index_rule_text_follows_the_constants(fixture_db, monkeypatch, lang):
+    from velometer.counters import index
+
+    monkeypatch.setattr(index, "MIN_SITES", 7)
+    monkeypatch.setattr(index, "MIN_VALID", 0.8)
+    text = render(methodology_facts(fixture_db[3]), lang)
+    block = _generated(text, "counters")
+    assert ("fewer than 7 qualifying" if lang == "en" else "weniger als 7 solchen") in block
+    assert f"{_number(80, lang)} %" in block
+    assert ("The 80 % rule" if lang == "en" else "Die 80-%-Regel") in text
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_default_base_year_covid_year_and_mapped_baseline_come_from_the_facts(fixture_db, lang):
+    from datetime import date
+
+    facts = methodology_facts(fixture_db[3])
+    counters = facts.counters.model_copy(update={"default_base_year": 2017, "covid_year": 2021})
+    facts = facts.model_copy(update={"counters": counters, "mapped_baseline": date(2023, 1, 1)})
+    text = render(facts, lang)
+    if lang == "en":
+        assert "The base year is 2017," in text and "marks 2021 as the COVID year" in text
+        assert "since 1 January 2023, the plan's first target year" in text
+    else:
+        assert "Das Basisjahr ist 2017 oder" in text and "markiert 2021 als Corona-Jahr" in text
+        assert "seit dem 1. Januar 2023, dem ersten Zieljahr" in text
+
+
+def _edit_counters(cfg_dir, city: str, **fields) -> None:
+    path = cfg_dir / "counters.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    next(e for e in doc["cities"] if e["city"] == city).update(fields)
+    path.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+
+
+STEP_DOWN = {
+    "en": "- Berlin: the index keeps every qualifying site. The counts of one site step down while "
+    "it keeps counting (Teststelle from March 2023). The Counts tab gives, as our reading of the "
+    "daily data, the index without it from that year on",
+    "de": "- Berlin: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte einer "
+    "Zählstelle fallen ab, während sie weiterzählt (Teststelle ab März 2023). Der Reiter „Counts“ "
+    "gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesem Jahr an",
+}
+
+
+def test_step_down_bullets_come_from_counters_yaml(fixture_db, tmp_path):
+    """The Helsinki bullet is generated: a step-down added to config/counters.yaml appears in
+    both languages, and the committed text is stale until it is regenerated."""
+    cfg_dir, data = fixture_db[1], fixture_db[3]
+    write(tmp_path, methodology_facts(data))
+    _edit_counters(cfg_dir, "berlin", step_downs=[{"site": "Teststelle", "since": "2023-03"}])
+    facts = methodology_facts(data)
+    for lang in LANGS:
+        assert STEP_DOWN[lang] in render(facts, lang)
+    assert check(tmp_path, facts)
+
+
+NO_LINE = {
+    "en": "- Berlin: the data start in September 2019, so its base year is 2020. The files hold no "
+    "counts from July 2021 to August 2022. Only 2020 has an index value, so no index line is "
+    "drawn.\n",
+    "de": "- Berlin: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die "
+    "Dateien enthalten von Juli 2021 bis August 2022 keine Zählwerte. Nur 2020 hat einen "
+    "Indexwert, daher wird keine Indexlinie gezeichnet.\n",
+}
+
+
+def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture_db, tmp_path):
+    """The Madrid bullet is generated: the first month, the gaps and the years with a value come
+    from the stored counter tables, the base year from config/counters.yaml."""
+    from datetime import date, timedelta
+
+    from velometer.db import (
+        CounterDay,
+        CounterIndexYear,
+        CounterSite,
+        replace_counter_index,
+        replace_counter_sites,
+        upsert_counter_daily,
+    )
+
+    db_path, cfg_dir, _conn, data = fixture_db
+    write(tmp_path, methodology_facts(data))
+
+    def span(a: date, b: date) -> list[CounterDay]:
+        n = (b - a).days + 1
+        return [
+            CounterDay("berlin", "s1", (a + timedelta(i)).isoformat(), 5, True) for i in range(n)
+        ]
+
+    site = CounterSite("berlin", "s1", "S1", None, None, "x", "y", "u", "t", "2019-09-14", None)
+    days = span(date(2019, 9, 14), date(2021, 6, 30)) + span(date(2022, 9, 1), date(2022, 12, 31))
+    index = [CounterIndexYear("berlin", y, v, 4, 2020, "counts") for y, v in
+             ((2019, None), (2020, 100.0), (2021, None), (2022, None))]  # fmt: skip
+    with closing(sqlite3.connect(db_path)) as c:
+        replace_counter_sites(c, "berlin", [site])
+        upsert_counter_daily(c, days)
+        replace_counter_index(c, "berlin", index)
+    _edit_counters(cfg_dir, "berlin", base_year=2020)
+    facts = methodology_facts(data)
+    for lang in LANGS:
+        assert NO_LINE[lang] in render(facts, lang)
+    assert check(tmp_path, facts)

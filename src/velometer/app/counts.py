@@ -15,26 +15,28 @@ the stored index keeps them (user ruling, Task 8).
 """
 
 import logging
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 from velometer import timeseries as ts
 from velometer.config import ConfigError
+from velometer.counters import index as counter_index
 from velometer.counters.index import chain_index
 from velometer.counters.model import (
     COUNTERS_FILE,
+    COVID_YEAR,
+    DEFAULT_BASE_YEAR,
+    MIN_LINE_YEARS,
     CounterEntry,
     CountersConfig,
     DayCount,
+    data_gaps,
     load_counters_config,
 )
 from velometer.report.data import ReportData
 
 log = logging.getLogger(__name__)
 
-COVID_YEAR = 2020
-MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line
-GAP_DAYS = 31  # a run of days without any count longer than this is named in the no-line note
 SERIES_LABEL = {
     "counts": "counts recorded at counter sites",
     "avg_daily_intensity": "average daily intensity recorded at counter sites",
@@ -153,16 +155,6 @@ def step_down_note(
     }
 
 
-def data_gaps(days: list[DayCount]) -> list[tuple[str, str]]:
-    """Runs of more than GAP_DAYS days without a count at any site, inside the data's span."""
-    seen = sorted({d.day for d in days})
-    out = []
-    for a, b in zip(seen, seen[1:], strict=False):
-        if (b - a).days - 1 > GAP_DAYS:
-            out.append(((a + timedelta(days=1)).isoformat(), (b - timedelta(days=1)).isoformat()))
-    return out
-
-
 def _days(data: ReportData, city_id: str) -> list[DayCount]:
     return [
         DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
@@ -175,7 +167,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     sites (a map config for those with coordinates), attribution."""
     rows = data.counter_index(city_id)
     series = rows[0].series if rows else "counts"
-    base = rows[0].base_year if rows else (entry.base_year if entry else 2019)
+    base = rows[0].base_year if rows else (entry.base_year if entry else DEFAULT_BASE_YEAR)
     points = [{"year": r.year, "idx": r.index, "sites": r.sites} for r in rows]
     line = has_line(points)
     km = km_index(km_points, base)
@@ -222,4 +214,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
         "licence": licence,
         "retrieved": None if retrieved is None else retrieved[:10],
         "covid_year": COVID_YEAR,
+        # the index rule (spec §2.13), read when the page renders: the text follows the constants
+        "min_sites": counter_index.MIN_SITES,
+        "min_valid_pct": round(counter_index.MIN_VALID * 100, 6),
     }

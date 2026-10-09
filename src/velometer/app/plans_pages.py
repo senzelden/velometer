@@ -10,6 +10,7 @@ revision, and a `suspect` row is shown with a marker and its note wherever it ap
 import json
 import re
 import sqlite3
+from datetime import date
 from pathlib import Path
 
 from velometer.app.narrative import safe_url
@@ -17,7 +18,13 @@ from velometer.content.facts import version_key
 from velometer.content.models import Organisation
 from velometer.db import OverlayRow
 from velometer.plans.berlin import NETWORK_LAYER
-from velometer.plans.models import Plan, PlanItem, ReportRow, current_and_revisions
+from velometer.plans.models import (
+    MAPPED_BASELINE,
+    Plan,
+    PlanItem,
+    ReportRow,
+    current_and_revisions,
+)
 
 DETAIL_CITY = "berlin"  # the one city with a plan page of its own (spec §4.4)
 MEASURES_FILE = Path("berlin") / "radverkehrsmassnahmen.geojson"
@@ -274,8 +281,8 @@ def _overlay_of(item_id: str, rows: list[OverlayRow], dates: dict[int, str]) -> 
     return [{"date": d, "ab_km": round(ab[d], 3)} for d in sorted(ab)] or None
 
 
-def _overlay_table(points: list[dict] | None, base_year: int) -> list[dict]:
-    base = next((p["ab_km"] for p in points or [] if p["date"] == f"{base_year}-01-01"), None)
+def _overlay_table(points: list[dict] | None, baseline: date) -> list[dict]:
+    base = next((p["ab_km"] for p in points or [] if p["date"] == baseline.isoformat()), None)
     out, prev = [], None
     for p in points or []:
         out.append(
@@ -350,7 +357,8 @@ def berlin_context(
     rows = [r for r in rows if r.plan_id == plan.id]
     groups = current_and_revisions(rows)
     version, latest = latest_overlay(overlay_rows)
-    base_year = min((y for i in plan.items for y in i.targets), default=2022)
+    baseline = MAPPED_BASELINE  # spec §4.4, not the plan's first target year
+    base_year = baseline.year
     metres = projects[0] if projects else None
     items, config = [], []
     for item in plan.items:
@@ -400,9 +408,9 @@ def berlin_context(
                     {"text": text, "years": sorted(ys, key=lambda t: t[0])}
                     for (_q, _b, text), ys in sorted(series.items())
                 ],
-                "overlay": (table := _overlay_table(overlay, base_year)),
-                # the spec's quantity (§4.4): the change since 1 January of the base year, to the
-                # latest snapshot
+                "overlay": (table := _overlay_table(overlay, baseline)),
+                # the spec's quantity (§4.4): the change since MAPPED_BASELINE, to the latest
+                # snapshot
                 "mapped_change": table[-1]
                 if table and table[-1]["since_base"] is not None
                 else None,

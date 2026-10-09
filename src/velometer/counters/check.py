@@ -1,6 +1,7 @@
 """`velometer counters --check` (M8 spec §5.4): every configured city has sites and at least one
 index year; no site appears under two cities; daily counts (and monthly values) are non-negative;
-the index base year equals 100; every `step_downs` site of an entry is one of its stored sites
+the index base year equals 100 (no value when fewer than `MIN_SITES` sites qualify in it,
+spec §2.13); every `step_downs` site of an entry is one of its stored sites
 (else the Counts tab's step-down note would drop it silently).
 
 "An index year" is a year with a value carried by at least `MIN_SITES` qualifying sites: the
@@ -33,11 +34,16 @@ def check_counters(conn: sqlite3.Connection, cfg: CountersConfig) -> list[str]:
         ).fetchall()
         if not any(idx is not None and sites >= MIN_SITES for _, idx, sites, _ in rows):
             problems.append(f"{city}: no index year")
-        for year, idx, _, base in rows:
+        for year, idx, sites, base in rows:
             if base != entry.base_year:
                 problems.append(f"{city}: index base year {base}, config says {entry.base_year}")
-            elif year == base and idx != 100.0:
+            elif year == base and sites >= MIN_SITES and idx != 100.0:
                 problems.append(f"{city}: index base year {base} is {idx}, not 100")
+            elif year == base and sites < MIN_SITES and idx is not None:
+                problems.append(
+                    f"{city}: index base year {base} has {sites} qualifying sites "
+                    f"(fewer than {MIN_SITES}) but the value {idx}"
+                )
     owners = defaultdict(set)
     for city, site in conn.execute("SELECT city_id, site_id FROM counter_sites"):
         owners[site].add(city)

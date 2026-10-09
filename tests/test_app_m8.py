@@ -4,6 +4,7 @@ import csv
 import json
 import re
 import sqlite3
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -406,23 +407,21 @@ def test_berlin_page_renders_the_cited_text_on_why_the_series_differ(client):
     assert text.count('class="pullquote"') == len(doc["quotes"])
 
 
-def test_mapped_caption_states_the_change_since_the_baseline_in_mapped_km(setup, plans_data):  # noqa: F811
-    """Spec §4.4: the mapped series is the change since 1 January of the plan's first target
-    year; the caption states it, to the latest snapshot, in mapped km."""
+def test_mapped_caption_states_the_change_since_the_baseline_in_mapped_km(
+    setup,  # noqa: F811
+    plans_data,
+    monkeypatch,
+):
+    """Spec §4.4: the mapped series is the change since MAPPED_BASELINE (1 January 2022); the
+    caption states it, to the latest snapshot, in mapped km. The fixture's snapshots start later,
+    so the baseline is moved onto its first 1 January snapshot."""
+    from velometer.app import plans_pages
+
     runs = _berlin_runs(setup[0])
     jan = [ts[:10] for _rid, ts in runs if ts[5:10] == "01-01"]
     assert jan  # the fixture has 1 January snapshots
     base = int(jan[0][:4])
-
-    def rebase(ps):
-        for p in ps:
-            if p["city"] == "berlin":
-                for item in p["items"]:
-                    if item.get("targets"):
-                        item["targets"] = {base + k: v for k, v in enumerate([10, 20])}
-        return ps
-
-    _edit_plans(setup[1], rebase)
+    monkeypatch.setattr(plans_pages, "MAPPED_BASELINE", date(base, 1, 1))
     _overlay(setup[0], "overlay_v4", 50.0)  # A+B = 2 * (50 + run index)
     with _client(_app(setup, plans_data)) as c:
         html = c.get("/plans/berlin").text
@@ -431,6 +430,37 @@ def test_mapped_caption_states_the_change_since_the_baseline_in_mapped_km(setup,
     sec = _text(_section(html, "item-vorrangnetz"))
     assert f"since 1 January {base}, +{change:.1f} mapped km to the current snapshot of " in sec
     assert runs[-1][1][:10] in sec
+    assert _config(html)["mapped_from"] == base
+
+
+def test_the_baseline_is_mapped_baseline_not_the_plans_first_target_year(setup, plans_data):  # noqa: F811
+    """Spec §4.4 names the day (MAPPED_BASELINE); a plan whose first target year is that of a
+    snapshot does not move the baseline onto it."""
+    from velometer.plans.models import MAPPED_BASELINE
+
+    runs = _berlin_runs(setup[0])
+    jan = sorted({ts[:4] for _rid, ts in runs if ts[5:10] == "01-01"})
+    assert f"{MAPPED_BASELINE.year}" not in jan  # no snapshot on the baseline in the fixture
+    first = int(jan[0])
+
+    def rebase(ps):
+        for p in ps:
+            if p["city"] == "berlin":
+                for item in p["items"]:
+                    if item.get("targets"):
+                        item["targets"] = {first + k: v for k, v in enumerate([10, 20])}
+        return ps
+
+    _edit_plans(setup[1], rebase)
+    _overlay(setup[0], "overlay_v4", 50.0)
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    sec = _text(_section(html, "item-vorrangnetz"))
+    assert f"since 1 January {MAPPED_BASELINE.year}." in sec  # no change: no baseline snapshot
+    assert f"since 1 January {first}" not in sec
+    assert _config(html)["mapped_from"] == MAPPED_BASELINE.year
+    vrn = next(i for i in _config(html)["items"] if i["id"] == "vorrangnetz")
+    assert vrn["overlay"]  # the series is drawn, only its difference column is empty
 
 
 def test_overlay_table_column_is_the_difference_from_the_baseline(setup, plans_data):  # noqa: F811

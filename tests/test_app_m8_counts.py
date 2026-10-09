@@ -549,3 +549,18 @@ def test_an_unreadable_counter_configuration_is_a_note_on_figures_compare_and_co
 def _section_of(html: str, anchor: str) -> str:
     start = html.index(f'id="{anchor}"')
     return html[start : html.index("</section>", start)]
+
+
+def test_the_counts_tab_states_the_index_rule_from_its_constants(setup, monkeypatch):  # noqa: F811
+    """MIN_SITES and MIN_VALID are printed from `counters.index`, not spelled out by hand: moving
+    the constants moves the text (follow-up Task 3)."""
+    from velometer.counters import index
+
+    _seed(setup[0], index={2019: 100.0, 2020: None})  # one year with a value: the no-line note
+    monkeypatch.setattr(index, "MIN_SITES", 7)
+    monkeypatch.setattr(index, "MIN_VALID", 0.8)
+    with _client(_app(setup)) as c:
+        text = _text(c.get("/city/berlin/counts").text)
+    assert "links to a neighbouring one with 7 sites complete on at least 80% of days." in text
+    assert "fewer than 7 sites complete on at least 80% of days in both years of a link" in text
+    assert "nine days in ten" not in text and "three sites" not in text

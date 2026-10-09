@@ -22,7 +22,7 @@ from velometer.counters.adapters import berlin, paris, vienna
 from velometer.counters.adapters import download as download_files
 from velometer.counters.check import check_counters
 from velometer.counters.days import sum_counters, to_days, zero_days_invalid
-from velometer.counters.index import chain_index
+from velometer.counters.index import MIN_SITES, chain_index, chain_index_monthly
 from velometer.counters.model import (
     CounterEntry,
     CounterFormatError,
@@ -30,6 +30,7 @@ from velometer.counters.model import (
     DayCount,
     Grain,
     HourCount,
+    MonthValue,
     load_counters_config,
 )
 from velometer.db import (
@@ -654,3 +655,61 @@ def test_check_flags_a_step_down_site_absent_from_the_data(tmp_path):
                                             {"site": "renamed", "since": "2020-05"}]}  # fmt: skip
     cfg = CountersConfig.model_validate({"cities": [entry], "none": []})
     assert check_counters(conn, cfg) == ["berlin: step_downs site 'renamed' is not a stored site"]
+
+
+# --- the base year needs MIN_SITES qualifying sites (spec §2.13; follow-up Task 3) -----------
+
+
+def test_a_base_year_with_fewer_than_min_sites_qualifying_sites_has_no_value():
+    """Spec §2.13: a year with fewer than MIN_SITES qualifying sites has no index value. That
+    holds for the base year too, and the chain from it then has no value either."""
+    few = MIN_SITES - 1
+    days = [d for i in range(few) for y in (2022, 2023) for d in _year(f"s{i}", y, 10)]
+    assert chain_index(days, 2022) == [(2022, None, few), (2023, None, few)]
+    enough = days + [d for y in (2022, 2023) for d in _year("extra", y, 10)]
+    assert chain_index(enough, 2022) == [(2022, 100.0, MIN_SITES), (2023, 100.0, MIN_SITES)]
+
+
+def test_a_monthly_base_year_with_fewer_than_min_sites_gauges_has_no_value():
+    def gauge(g, year):
+        return [MonthValue(g, f"{year}-{m:02d}", "working_day", 50.0) for m in range(1, 13)]
+
+    few = MIN_SITES - 1
+    months = [v for i in range(few) for y in (2019, 2020) for v in gauge(f"g{i}", y)]
+    assert chain_index_monthly(months, 2019, "working_day") == [
+        (2019, None, few),
+        (2020, None, few),
+    ]
+
+
+def test_check_accepts_no_value_on_a_base_year_with_too_few_sites(tmp_path):
+    conn = _check_db(tmp_path)
+    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+    few = MIN_SITES - 1
+    replace_counter_index(
+        conn,
+        "berlin",
+        [
+            CounterIndexYear("berlin", 2019, None, few, 2019, "counts"),
+            CounterIndexYear("berlin", 2020, None, few, 2019, "counts"),
+        ],
+    )
+    assert check_counters(conn, _cfg("berlin")) == ["berlin: no index year"]
+
+
+def test_check_flags_a_value_on_a_base_year_with_too_few_sites(tmp_path):
+    conn = _check_db(tmp_path)
+    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+    few = MIN_SITES - 1
+    replace_counter_index(
+        conn,
+        "berlin",
+        [
+            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts"),
+            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts"),
+        ],
+    )
+    assert check_counters(conn, _cfg("berlin")) == [
+        f"berlin: index base year 2019 has {few} qualifying sites (fewer than {MIN_SITES}) "
+        "but the value 100.0"
+    ]
