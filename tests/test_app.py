@@ -707,6 +707,34 @@ def _css_rules(css: str) -> list[tuple[list[str], dict[str, str]]]:
     return rules
 
 
+_ROOT_LIGHT = re.compile(r"(?m)^:root\s*\{([^{}]*)\}")
+_ROOT_DARK = re.compile(r"@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{([^{}]*)\}\s*\}")
+
+
+def _css_tokens(css: str) -> tuple[dict[str, str], dict[str, str]]:
+    """The custom properties of the stylesheet's `:root` (light) and of its dark-mode block."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+    def decls(m: re.Match | None) -> dict[str, str]:
+        assert m, "no such :root block"
+        pairs = (d.partition(":") for d in m.group(1).split(";") if ":" in d)
+        return {k.strip(): v.strip() for k, _, v in pairs}
+
+    return decls(_ROOT_LIGHT.search(css)), decls(_ROOT_DARK.search(css))
+
+
+def _css_outside_tokens(css: str) -> str:
+    """The stylesheet without comments, its `:root` block and its dark-mode `:root` block."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    return _ROOT_LIGHT.sub("", _ROOT_DARK.sub("", css))
+
+
+def _resolve(value: str, tokens: dict[str, str]) -> str:
+    """`var(--x)` -> the token's value (one level, as the stylesheet uses them)."""
+    m = re.fullmatch(r"var\((--[\w-]+)\)", value.strip())
+    return tokens[m.group(1)] if m else value
+
+
 def test_table_cells_never_break_inside_words():
     """A table must overflow into its .scroll box, not shrink letter by letter: no inherited
     `overflow-wrap: anywhere` reaches a cell, headers do not wrap, and code in cells stays whole."""

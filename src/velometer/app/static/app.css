@@ -15,8 +15,37 @@
   --ctx: #c4c2ba;     /* grey context lines */
   --up: #2c6b2f;
   --down: #a2560a;
+  --mapped: #c2378f;  /* the plan chart's mapped line: magenta, a hue family apart from --flag */
+  --completed: #1baf7a; /* the plan chart's completed-projects bars */
+  --series-1: #2a78d6; /* PALETTE[0] in js/data.js: the Counts chart's counter line */
+  --series-2: #eb6834; /* PALETTE[1]: its mapped-km line. The lines are drawn in PALETTE's hex */
+  color-scheme: light dark;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+/* dark mode: every colour token above, redefined. --series-* stay PALETTE's (the chart lines
+   are drawn in it in both modes) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #ecebe6;
+    --ink-2: #c2c0b8;
+    --muted: #a3a19a;
+    --grid: #33322f;
+    --grid-2: #4a4944;
+    --paper: #151514;
+    --surface: #1d1d1b;
+    --panel: #262623;
+    --accent: #5d9ce8;
+    --accent-bg: #1c2b3f;
+    --flag: #f07a48;
+    --ctx: #5c5a54;
+    --up: #74c27a;
+    --down: #e3995a;
+    --mapped: #e070b8;
+    --completed: #2fc28c;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -463,27 +492,29 @@ table.plans td:last-child { min-width: 16rem; }
   .plan-docs td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
 }
 .series-note { max-width: 48rem; }
-.mapped-note { border-left: 3px solid #eda100; padding-left: 0.6rem; }
+.mapped-note { border-left: 3px solid var(--mapped); padding-left: 0.6rem; }
 .plan-key .key, .chart-key .key { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 0.2rem; }
 .key-target { border-top: 2px dashed var(--ink-2); height: 0; width: 16px; vertical-align: 3px; }
 .key-current { background: var(--accent); border-radius: 50%; }
 .key-revision { border: 2px solid var(--accent); border-radius: 50%; background: var(--surface); }
 .key-suspect { border: 2px solid var(--flag); border-radius: 50%; background: var(--surface); }
-.key-projects { background: #1baf7a; }
+.key-projects { background: var(--completed); }
 .chart-key .key { height: 0; width: 16px; vertical-align: 3px; border-top: 3px solid; }
 /* one item per key entry: items wrap whole, no typed separator to start a line */
 ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; }
-/* the Counts chart's line colours: PALETTE[0] and PALETTE[1] in js/data.js */
-.chart-key .key-counter { border-top-color: #2a78d6; }
-.chart-key .key-km { border-top-color: #eb6834; }
-.key-mapped { border-top: 3px solid #eda100; height: 0; width: 16px; vertical-align: 3px; }
+/* the Counts chart's line colours: --series-1 and -2 are PALETTE[0] and [1] in js/data.js */
+.chart-key .key-counter { border-top-color: var(--series-1); }
+.chart-key .key-km { border-top-color: var(--series-2); }
+.key-mapped { border-top: 3px solid var(--mapped); height: 0; width: 16px; vertical-align: 3px; }
+/* an off-scale target: the cap plan-chart.js draws on the top edge */
+.key-cap { border-top: 2px solid var(--ink-2); height: 0; width: 16px; vertical-align: 3px; }
 .plan-svg .target-step { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-dasharray: 5 3; }
 .plan-svg .target-cap { fill: none; stroke: var(--ink-2); stroke-width: 2; }
 .plan-svg .target-cap-label { font: 10px system-ui, sans-serif; fill: var(--ink-2); }
 .plan-svg .gridl.zero { stroke: var(--grid-2); }
-.plan-svg .projects .bar { fill: #1baf7a; }
-.plan-svg .mapped-line { fill: none; stroke: #eda100; stroke-width: 2.5; stroke-linejoin: round; }
-.plan-svg .mapped-pt { fill: #eda100; stroke: var(--surface); stroke-width: 1; }
+.plan-svg .projects .bar { fill: var(--completed); }
+.plan-svg .mapped-line { fill: none; stroke: var(--mapped); stroke-width: 2.5; stroke-linejoin: round; }
+.plan-svg .mapped-pt { fill: var(--mapped); stroke: var(--surface); stroke-width: 1; }
 .plan-svg .mapped-label { font: 10px system-ui, sans-serif; fill: var(--ink-2); }
 .plan-svg .rep { stroke: var(--accent); stroke-width: 2; }
 .plan-svg .rep-current { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }

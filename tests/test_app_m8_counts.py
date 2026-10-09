@@ -458,16 +458,19 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     assert "Counts: index of counts recorded at counter sites" in text
     assert "Mapped km: index of A+B mapped km in the city proper, 1 January snapshots" in text
     assert 'class="key key-counter"' in key and 'class="key key-km"' in key
-    from tests.test_app import _css_rules
+    from tests.test_app import _css_rules, _css_tokens, _resolve
     from tests.test_app_m7 import STATIC
 
-    rules = _css_rules((STATIC / "app.css").read_text())
+    css = (STATIC / "app.css").read_text()
+    rules = _css_rules(css)
     palette = re.search(r"PALETTE = \[([^\]]*)\]", (STATIC / "js" / "data.js").read_text())
     first, second = re.findall(r'"(#[0-9a-f]{6})"', palette.group(1))[:2]
     # the swatch is a 3 px top border on a box of no height: its visible colour is the
-    # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`
-    assert _key_line_colour(rules, "key-counter") == first
-    assert _key_line_colour(rules, "key-km") == second
+    # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`. The lines
+    # are drawn in PALETTE's hex in both modes, so the swatch token is the same in both
+    for tokens in _css_tokens(css):
+        assert _resolve(_key_line_colour(rules, "key-counter"), tokens) == first
+        assert _resolve(_key_line_colour(rules, "key-km"), tokens) == second
 
 
 def _chart_key(html: str) -> str:
@@ -524,8 +527,8 @@ def _key_line_colour(rules, cls: str) -> str:
         for sel in (s for s in sels if s in matching):
             for prop, value in decls.items():
                 if prop in ("border", "border-top"):
-                    hexes = re.findall(r"#[0-9a-f]{3,6}\b", value)
-                    colour = hexes[0] if hexes else "currentColor"
+                    found = re.findall(r"#[0-9a-f]{3,6}\b|var\(--[\w-]+\)", value)
+                    colour = found[0] if found else "currentColor"
                 elif prop in ("border-color", "border-top-color"):
                     colour = value
                 else:

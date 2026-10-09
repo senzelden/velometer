@@ -624,3 +624,135 @@ def test_every_target_value_is_in_the_year_table(client):
             )
             assert row, (item.id, year)
             assert row.group(1).replace(",", "").startswith(f"{value:g} "), (item.id, year, row)
+
+
+# ---------- colour tokens (M8 follow-ups, Task 5) ----------
+
+HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+
+
+def _stylesheet() -> str:
+    return (STATIC / "app.css").read_text()
+
+
+def test_no_hex_colour_outside_the_colour_tokens():
+    # every colour is a :root token with a dark-mode value: a hex literal in a rule is a colour
+    # the dark mode cannot reach. The rule is over the whole stylesheet, M7 rules included
+    from tests.test_app import _css_outside_tokens, _css_rules
+
+    rest = _css_outside_tokens(_stylesheet())
+    found = [
+        (sel, prop, value)
+        for sels, decls in _css_rules(rest)
+        for sel in sels[:1]
+        for prop, value in decls.items()
+        if HEX.search(value)
+    ]
+    assert found == []
+
+
+def test_every_colour_token_has_a_dark_value_and_every_token_used_is_defined():
+    from tests.test_app import _css_outside_tokens, _css_tokens
+
+    light, dark = _css_tokens(_stylesheet())
+    colours = {k for k, v in light.items() if HEX.fullmatch(v)}
+    assert colours, "the light :root defines the colours"
+    assert sorted(colours - dark.keys()) == [], "light colour tokens without a dark value"
+    assert sorted(dark.keys() - colours) == [], "dark tokens that the light :root does not define"
+    assert all(HEX.fullmatch(dark[k]) for k in colours)
+    used = set(re.findall(r"var\((--[\w-]+)\)", _css_outside_tokens(_stylesheet())))
+    assert sorted(used - light.keys()) == []
+
+
+def _rgb(hexcolour: str) -> tuple[float, float, float]:
+    h = hexcolour.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    srgb = [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+    return tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb)
+
+
+def _contrast(a: str, b: str) -> float:
+    def lum(c):
+        r, g, b_ = _rgb(c)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
+
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _lch_hue(hexcolour: str) -> float:
+    """The CIELAB hue angle (D65) of an sRGB colour, in degrees."""
+    import math
+
+    r, g, b = _rgb(hexcolour)
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+
+    def f(t):
+        return t ** (1 / 3) if t > 216 / 24389 else (24389 / 27 * t + 16) / 116
+
+    a_, b_ = 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
+    return math.degrees(math.atan2(b_, a_)) % 360
+
+
+@pytest.mark.parametrize("mode", ["light", "dark"])
+def test_text_colours_are_readable_on_the_page_in_both_modes(mode):
+    # WCAG AA for body text: 4.5:1 for every text token on the page and card backgrounds
+    from tests.test_app import _css_tokens
+
+    tokens = dict(zip(("light", "dark"), _css_tokens(_stylesheet()), strict=True))[mode]
+    for text in ("--ink", "--ink-2", "--muted"):
+        for ground in ("--paper", "--surface", "--panel"):
+            ratio = _contrast(tokens[text], tokens[ground])
+            assert ratio >= 4.5, (mode, text, ground, round(ratio, 2))
+
+
+# Hue distance between the mapped line and the plan chart's other colours. The M8 amber was
+# 28 degrees of CIELAB hue from --flag (the suspect ring, orange) and read as its shade; 60
+# degrees, a sixth of the circle, puts two colours in different hue families (orange, magenta,
+# blue, green), whatever their lightness, in both modes
+MIN_HUE_DEGREES = 60
+
+
+@pytest.mark.parametrize("mode", ["light", "dark"])
+def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours(mode):
+    from tests.test_app import _css_tokens
+
+    tokens = dict(zip(("light", "dark"), _css_tokens(_stylesheet()), strict=True))[mode]
+    mapped = _lch_hue(tokens["--mapped"])
+    for other in ("--flag", "--accent", "--completed"):
+        d = abs(mapped - _lch_hue(tokens[other])) % 360
+        assert min(d, 360 - d) >= MIN_HUE_DEGREES, (mode, other, round(min(d, 360 - d)))
+
+
+def test_the_plan_chart_and_its_key_draw_with_the_same_tokens():
+    # the key's swatch and the chart's mark are one token: a colour changed in one place
+    # changes both, in both modes
+    from tests.test_app import _css_rules
+
+    decl: dict[str, dict] = {}
+    for sels, d in _css_rules(_stylesheet()):
+        for s in sels:
+            decl.setdefault(s, {}).update(d)
+    assert decl[".plan-svg .mapped-line"]["stroke"] == "var(--mapped)"
+    assert decl[".plan-svg .mapped-pt"]["fill"] == "var(--mapped)"
+    assert decl[".key-mapped"]["border-top"].endswith("var(--mapped)")
+    assert decl[".mapped-note"]["border-left"].endswith("var(--mapped)")
+    assert decl[".plan-svg .projects .bar"]["fill"] == "var(--completed)"
+    assert decl[".key-projects"]["background"] == "var(--completed)"
+    cap = decl[".plan-svg .target-cap"]["stroke"]
+    assert cap.startswith("var(") and decl[".key-cap"]["border-top"].endswith(cap)
+
+
+def test_the_plan_key_explains_the_capped_marker(client):
+    # plan-chart.js draws a target above the chart's scale as a cap on the top edge, labelled
+    # "↑ <value>": the key says what the cap and the arrow mean and where the value is
+    html = client.get("/plans/berlin").text
+    key = html[html.index('class="plan-key"') :].split("</div>")[0]
+    items = re.findall(r"<li\b[^>]*>(.*?)</li>", key, re.S)
+    cap = [i for i in items if 'class="key key-cap"' in i]
+    assert len(cap) == 1
+    text = _text(cap[0])
+    assert "↑" in text and "above the chart's scale" in text and "table" in text
