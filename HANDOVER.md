@@ -149,7 +149,48 @@ velometer external load path/to/figures.csv
 velometer reconcile --city X                # ours vs QECIO / BikeNetKit / Clean Cities / official; writes gap table
 velometer report tables|charts
 velometer serve                             # FastAPI read-only app
+velometer app export --out DIR [--base /velometer/] [--clean]   # static edition of the reader app (M9)
 ```
+
+`app export` renders every page, fragment, CSV, JSON, PNG and GeoJSON the reader app serves through
+the app itself (in-process, no server, database read-only) and writes them as files under `DIR`,
+with every internal URL under `--base` (default `/`). It writes `build.json` (commit, dirty flag,
+classifier versions, OSM snapshot timestamps, base, build time) and `404.html`, then fails if any
+internal reference in an exported HTML, CSS or JS file does not resolve to a file in `DIR`, or if a
+file loads from a host other than `https://tile.openstreetmap.org`. A non-empty `DIR` is refused
+unless `--clean` is given, and `--clean` replaces only a previous export (a directory with its
+`build.json`). The CLI refuses `--out .`, any parent of the working directory, `/`, `$HOME`, the
+repository root, a symlink, and any directory that contains one of its inputs.
+
+### Serving the static edition
+
+The export is plain files; any static host serves it. No server code runs, and nothing is uploaded
+by velometer (publishing is HANDOVER §12 Q4, still open).
+
+- **Base path.** Export with the path the site will live under (`--base /velometer/` for
+  `https://example.org/velometer/`). Every internal link, fetch and history URL carries it; the
+  JS reads it from `<meta name="velometer-base">`. A site moved to another path is re-exported,
+  not edited.
+- **Directory redirect that keeps the query string.** Pages are `x/y/index.html`, linked as
+  `/base/x/y` without a trailing slash. The host must answer `/base/x/y` with the directory's
+  `index.html`, by a redirect to `/base/x/y/` or directly, and **keep the query string**: Compare
+  keeps its state in `?c=…&m=…&view=…`, and a redirect that drops it shows the default selection.
+  The city panel fragment (`city/<id>/panel`) is fetched the same way. Python's
+  `python -m http.server` does this (301 to the slash URL, query kept; checked in the M9 render
+  pass); configure other hosts to match.
+- **404 page.** `404.html` sits at the export root, with absolute (based) URLs so it works at any
+  depth. Point the host's not-found page at it; `python -m http.server` serves its own error page
+  instead.
+- **CSP.** Every page carries the app's Content-Security-Policy as a
+  `<meta http-equiv="Content-Security-Policy">` tag, generated from the same constant as the live
+  app's header (`app/main.py: CSP`). A meta policy cannot carry the header-only directives
+  (`main.HEADER_ONLY_DIRECTIVES`): `frame-ancestors`, `report-uri`, `report-to` and `sandbox`.
+  Of these the app's policy uses `frame-ancestors 'none'`; a host that should forbid framing
+  sends it as a real `Content-Security-Policy` header (or `X-Frame-Options: DENY`). The live
+  app keeps sending the full header.
+- **Size.** The export is about 252 MB (258 files), of which about 237 MB is the tier-map GeoJSON
+  under `maps/`. Simplifying or compressing those files before hosting is a follow-up
+  (rulings-m9 Follow-ups); hosts that serve gzip/brotli shrink them a lot.
 
 Runs must be resumable and idempotent: skip a (city, date, boundary, classifier_version) tuple that already has a completed `Run`.
 
@@ -178,6 +219,8 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 **M8 — Organisations, plans and counters** (added after M7; spec `docs/superpowers/specs/2026-10-07-velometer-m8-design.md`, rulings `docs/superpowers/rulings-m8.md`). `/organisations` profiles the 9 bodies behind our comparison figures and Berlin's plan (who they are, how they measure, their political role), with claims and quotes from the source registry only. `/plans` gives one row per city's cycling plan (21 plans, 129 reported figures stored as printed in `config/plans/reports.csv`, revisions and suspect figures kept and flagged); `/plans/berlin` sets, per plan item, the yearly target against every document's reported figure (118 Berlin rows), the infraVelo completed projects and our mapped A+B km on the planned network, drawn as the change since 1 January 2022. That overlay (`velometer plans overlay berlin`) re-reads the cached Berlin LAU snapshots and matches A/B way-sides to the Senate's network by buffer and angle; its parameters are versioned data and the page shows `overlay_v4` (v1 to v3 superseded, history in `docs/review/m8-overlay.md`). Counters: open counter data for Berlin, Paris, Vienna, Helsinki, Madrid, Oslo and Barcelona (`velometer counters fetch/load`), indexed per spec §2.13 (base 2019, Madrid 2020; Barcelona as average daily intensity); a Counts tab beside the A+B mapped-km index, a counter-index metric in Compare, and a "no open counter data found" note with the portals checked for the other 14 cities. Counts are context, never an outcome; `content --check` rejects causal wording between counts and km. **DB writes:** no new OSM runs and no change to existing tables. Schema v8 → v9 added `plan_overlay` and `counter_sites`, `counter_daily`, `counter_monthly`, `counter_index`, and M8 wrote only into those tables (160 overlay rows, four versions; 682 counter sites, 90 index years), after the one-time backup `data/velometer-pre-m8.sqlite` (v8; the 15 pre-existing tables have the same row counts in both files). *Accept:* gate green including the node tests; `timeseries`, `reconcile`, `trust`, `report methodology`, `content` and `counters` checks exit 0; user review of profiles, plans, overlay and counters 2026-10-07 (rulings-m8 Task 8), overlay_v4 by user decision; render check of every new route at 1280 and 390 px; delivered 2026-10-08.
 
 *M8 follow-up pass (2026-10-08/09; plan `docs/superpowers/plans/2026-10-08-velometer-m8-followups.md`, rulings-m8 "Follow-up pass"):* closed the M8 follow-ups that were defects or drift risks without a method change (metric-aware Compare counter footnote, notes for unreadable inputs, index thresholds and base years from one source, plan chart axis by quantity with capped off-scale targets, colour tokens with a magenta mapped colour, DB/adapter/content-check hygiene); no new runs, stored numbers unchanged. Visible wording: the counter index rule now reads "3 sites complete on at least 90% of days" (was "three sites complete on nine days in ten"; same rule, numbers from `MIN_SITES`/`MIN_VALID`), and the methodology names the Helsinki step-down site by its config id "Pitkäsilta länsipuoli" instead of a hand translation. DB hygiene: `reconcile` and `timeseries` used to open the DB read-write and change `velometer.sqlite`'s bytes on every run (no stored value); since `e8b36d2` they, `results` and `counters --check` open it read-only. Index v2, overlay v5, Paris in-service granularity and dark mode stay open (rulings-m8 Follow-ups).
+
+**M9 — The static edition** (added after M8; spec `docs/superpowers/specs/2026-10-09-velometer-m9-design.md`, rulings `docs/superpowers/rulings-m9.md`). `velometer app export --out DIR --base /velometer/ [--clean]` renders the whole reader app through the FastAPI app itself (Starlette TestClient, no second renderer) into directory-style files that any static host can serve under any base path: every page, the city panel fragments, `data/series.json`, the CSVs, map PNGs and tier-map GeoJSON, the static assets, `build.json` and an HTML `404.html` (the app now answers unknown pages with an HTML 404; `/data`, `/maps` and `/static` keep the JSON 404). Templates build every internal URL with `u()` (`app/urls.py`) and the JS with `url()`/`base()` (`static/js/base.js`, reading `<meta name="velometer-base">`); both are tested against one case file (`tests/url_cases.json`). The live app at base `/` differs from M8 only by two meta tags (the CSP meta policy and `velometer-base`). The export proves completeness: a reference scan over every exported HTML, CSS and JS file fails closed on any unresolved internal reference, any form it cannot parse, and any loaded host other than `https://tile.openstreetmap.org`. Exported pages show "Static edition · build <short commit>". Safety: the export opens the DB read-only (md5 unchanged), installs a complete staging directory by swap, and refuses dangerous `--out` targets (`.`, parents of cwd, `/`, `$HOME`, the repo root, any directory holding an input). Nothing is hosted (§12 Q4 stays open); the export is about 252 MB, 237 MB of it tier-map GeoJSON (a hosting follow-up). *Accept:* gate green including the node tests; the six checks exit 0; render pass of the real export under `/velometer/` with `python -m http.server` and headless Chrome at 1280 and 390 px on every page type (no horizontal scroll, no console errors, no CSP violations, only 127.0.0.1 and `tile.openstreetmap.org` requested, compare `?…` state drawn, city panel opens from compare through the directory redirect, maps load); delivered 2026-10-09.
 
 ---
 
