@@ -34,12 +34,13 @@ Classes, first that applies:
 5. `along`: the rest (the piece runs beside the road the network line follows, beside no
    carriageway, or along a network line that runs off-road).
 
-`--checks` also prints: the km kept in both network classes by each version; per class, the
-`class_boundary` pieces that the base keeps in the other class, and those in neither class; and
-the pieces lying in a hole of a chain the base keeps (a base-kept piece within `HOLE_PIECES`
-consecutive, end-to-start chained pieces on both sides), in all and among the pieces whose
-midpoint lies past a *turn end* of a matching line (a free end under overlay_v4's rule, 30°,
-that another line's end lies within 1 m of: the network turns there rather than stops).
+`--checks` also prints: the km each version keeps on the two networks (summed over the classes) and
+in both network classes; per class, the `class_boundary` pieces that the base keeps in the other
+class, and those in neither class; and the pieces lying in a hole of a chain the base keeps (a
+base-kept piece within `HOLE_PIECES` consecutive, end-to-start chained pieces on both sides), in all
+and among the pieces whose midpoint lies past a *turn end* of a matching line (a free end under
+overlay_v4's rule, 30°, that another line's end lies within 1 m of: the network turns there rather
+than stops).
 
 `--crops` draws the six densest non-overlapping 800 m cells (1.2 km windows) to
 data/maps/berlin_<version>_vs_<base>_crops.png; `--detail CLASS` (repeatable) draws 16 pieces of
@@ -302,6 +303,10 @@ def checks(out, meta, version: str, base: str) -> None:
     """Cross-class and chain checks of the pieces kept by `version`, dropped by `base`."""
     a, b = sorted(meta)
     km = lambda mask, cls: float(meta[cls]["plen"][mask].sum()) / 1000  # noqa: E731
+    for v, key in ((version, "keep"), (base, "keep_base")):
+        per = {cls: km(meta[cls][key], cls) for cls in (a, b)}
+        print(f"  kept by {v}: {sum(per.values()):.2f} km on the two networks ("
+              + ", ".join(f"{cls} {k:.2f}" for cls, k in per.items()) + ")")  # fmt: skip
     for v, key in ((version, "keep"), (base, "keep_base")):
         both = meta[a][key] & meta[b][key]
         print(f"  kept by {v} in both classes: {km(both, a):.2f} km")

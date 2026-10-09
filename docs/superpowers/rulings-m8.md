@@ -225,76 +225,225 @@ The SDD ledger's controller rulings of Tasks 1–7 are also listed in the review
   reviewer's estimator, reproduced exactly). Cost: a per-site mean gives other per-link values
   (Helsinki 2022→2023 −2.2 % instead of −1.8 %), the same order of magnitude.
 
+## Follow-up pass (2026-10-08/09)
+
+Plan `docs/superpowers/plans/2026-10-08-velometer-m8-followups.md`, branch `m8-followups`, commits
+`4b30984..` (Tasks 1–8). It closes the Follow-ups below that are defects or drift risks without a
+method change; each closed item is marked with its commit. No new OSM runs, overlay rows stay
+overlay_v4, the counter index rule stays spec §2.13, and every stored number is unchanged: all six
+checks (`counters`, `content`, `report methodology`, `timeseries`, `reconcile`, `trust`) exit 0
+with the same values.
+
+**DB hygiene discovery.** Before this pass, `reconcile` and `timeseries` (also without `--write`)
+opened `velometer.sqlite` read-write through `create_schema`, which always began a transaction,
+re-ran `CREATE ... IF NOT EXISTS`, repaired the done-key index and set `user_version`, then
+committed: every check run changed the file's bytes (header change counter), though no stored
+value. Found when the controller's own check run moved the md5 from `6008c28d` to `a5222dc4`;
+pre-existing since M1. Since `e8b36d2` (Task 6), `results`, `reconcile`, `timeseries` and
+`counters --check` open the DB read-only (`--write` rewrites only the markdown report), and a
+test asserts identical DB bytes after each. The md5 has stayed `a5222dc4` since.
+
+**Visible changes.**
+
+- Counts tab and `content/counters.yaml`: the index rule reads "3 sites complete on at least 90%
+  of days" (was "three sites complete on nine days in ten"); the numbers now come from
+  `MIN_SITES`/`MIN_VALID` (`f5108be`). The meaning is identical, but the counters prose was
+  user-approved content (Task 8 review). Cost: a wording revert if the user prefers the old
+  phrasing.
+- The methodology names the Helsinki step-down site by its config id "Pitkäsilta länsipuoli", as
+  the Counts tab does, instead of a hand translation (`f5108be`). Why: a name map is the drift the
+  task removes. Cost: a less readable name in the en/de methodology.
+- The mapped colour on the plan chart (and its key) changed from amber to magenta (`#c2378f`,
+  token `--mapped`; `08cd96a`). Why: amber was 28° of CIELAB hue from `--flag`; magenta is at
+  least 60° from `--flag`, `--accent` and `--completed`. Cost: a colour change on two pages if the
+  user prefers another hue.
+- `/plans/berlin` names the planned-network layer's licence (dl-de-zero-2.0, from
+  `retrieved.json`); Compare's counter-index footnote and unit text are metric-aware and name
+  off-majority base years; notes replace silently missing parts on unreadable inputs (`f0684ed`,
+  `3657d97`).
+
+**Rulings.**
+
+- Scope: the plan takes the follow-ups that are defects or drift risks without a method change.
+  Left open for the user: counter index v2 (mean per day), overlay v5, Paris in-service
+  granularity (all three move stored numbers), the M7 Figures-table scroll (recorded M7
+  behaviour), the Starlette warning (a dependency change), the unexplained `test_overlay_facts`
+  failure (no repro), and a test that Copenhagen 37 / Strasbourg 52 are suspect (a value pin adds
+  little). Cost: those items stay open.
+- Execution by subagent-driven development without asking (the user's standing instruction,
+  "continue on your own"). Cost: nothing.
+- Task 1 owns the base-year wording in Compare's unit text; Task 3 would only swap threshold
+  numbers there (it found none). Cost: nothing in the end.
+- Ergänzungsnetz chart: a data-led y-domain, with targets above `OFFSCALE_FACTOR` (3) × the
+  largest figure capped at the top edge with their value labelled, and every value in the table
+  (`6b4adec`). Factor 3 is kept although the Radverkehrsnetz chart caps 7 of 9 years: its targets
+  (100–450 km) are 5–20× its largest figure (~22 km), so capping is the honest picture. Cost: a
+  redesign if the user prefers a broken axis or log scale, or a factor tweak if it looks busy.
+- Mixed per-year and cumulative/total targets in one chart are refused with a table note, not
+  drawn on panels (no city has them today); the plan key became a list like the counts key.
+  Cost: nothing.
+- Task 4's two reader-visible Minors (a key entry for the capped marker; headroom so an on-scale
+  target at the axis top does not share the caps' line) went into Task 5 (`08cd96a`, `ca40fb2`,
+  with the follow-up fix `275702a`: caps only above the final axis top). Cost: a larger Task 5.
+- Task 2: a "counter configuration unreadable" note also on the Counts tab (beyond the brief,
+  same silent-vanish defect). A `retrieved.json` without a licence counts as unreadable; the
+  planned-network licence is shown only when the record lists that layer, else "licence not
+  recorded"; a licence is never inferred. Two blank screenshots of broken-input pages were
+  accepted because HTML tests assert each note renders with the existing note style. Cost: one
+  note string; a "not recorded" line if the record format changes; a missed layout defect on two
+  broken-input pages.
+- Task 3 placement: `MAPPED_BASELINE` (2022-01-01) in `plans/models.py`; counter constants and
+  `data_gaps` in `counters/model.py`, re-exported from `app/counts.py`; the Madrid detector clause
+  and the link-ratio figures stay hand-written text; the methodology says "no stored overlay" on
+  an empty DB; two Madrid tests follow spec §2.13 (a base year with fewer than 3 sites has no
+  value). Cost: nothing.
+- Dark mode removed: Task 5 added a site-wide `prefers-color-scheme: dark` palette because the
+  plan said every token needs a dark value, but the app had no dark mode, and the palette was
+  rendered only on two pages (maps, compare, stories and JS-set colours untested). The block and
+  its tests were dropped (`35f0876`); the tokens stay. Cost: no dark mode until it is its own task
+  with a render pass of every page.
+- The read-only-open discovery went into Task 6 (same DB-hygiene area; it broke the "no writes"
+  constraint on every check run). Task 6's own rulings: `--write` also opens read-only;
+  `replace_counter_daily(conn, city, rows)` replaces `upsert_counter_daily` and is what
+  `load_city` uses; `replace_plan_overlay` takes the overlay version, and empty rows clear that
+  version; a v5 DB with activity rows makes read-only commands say "run `velometer migrate`";
+  adapters' `fetch` takes `data_dir`; the Berlin WFS sends the shared `user_agent()`;
+  `VELOMETER_CONTACT`, when the user sets it, is appended to the counter fetch User-Agent as
+  downloads already did. Cost: a User-Agent difference toward Open Data BCN if the contact suffix
+  trips it (untested).
+- Task 7 also took three test/check hygiene Minors (read-only CLI cases accepting any exit, the
+  vacuous Madrid base-year test, literal-threshold false positives). `counters --check` is
+  asserted as exit 1 ("no counter sites") in the read-only CLI test, since its rule is identical
+  DB bytes. Cost: a larger Task 7; nothing.
+- Prose renders `*title*` as italics (`narrative.py`), outside code spans only (`bf44c3d`), for
+  the Abgeordnetenhaus profile's German title; a lone `*` stays text. Cost: a renderer quirk if
+  prose later uses `*` otherwise.
+- The literal-threshold content check matches English threshold phrases (before "sites", a
+  percentage of days, "= 100", "base year", "chained from"); facts stay the primary guard. Cost: a
+  paraphrase ("a trio of sites") slips through.
+- "Counted" is a counter word again in the causal guard ("Counted trips drove demand" fails);
+  the verb "count" alone passes (`bf44c3d`). Cost: one line.
 
 ## Follow-ups
 
+Marks: "closed `sha`" by the follow-up pass (2026-10-08/09); unmarked parts stay open.
+
 - Overlay method: v3 contact is tested on simplified chords and may miss runs meeting at a bend
   (bounded by the residual drop); v4 drops some km along a turning network (about 0.5 to 3 km on
-  2026-01-01, not a strict bound), a v5 question; the log's "1,082 km on the two networks" is not
-  printed by the script; the "~10 % stop threshold" in `m8-overlay.md` should say it was set by the
-  controller.
+  2026-01-01, not a strict bound), a v5 question (open). The log's "1,082 km on the two networks"
+  is not printed by the script (closed by the pass's docs commit: `--checks` prints it); the "~10 %
+  stop threshold" in `m8-overlay.md` should say it was set by the controller (closed, same
+  commit).
 - Plan chart: the axis label always says "per year", so `km_cumulative`/`km_total` targets would
-  draw wrongly (Berlin only today); the cumulative mapped line shares the "km per year" axis with
-  per-year targets (disclosed in the y label); `plans_berlin.html` key links depend on berlin.yaml
-  dimension values, untested.
-- Colours: `app.css` hard-codes `#eda100`, `#1baf7a` and now the Counts key colours `#2a78d6` /
-  `#eb6834` (a test ties the latter to `PALETTE` in `js/data.js`) instead of `:root` tokens; the
-  mapped amber is close to `--flag`.
+  draw wrongly (closed `6b4adec`); the cumulative mapped line shares the "km per year" axis with
+  per-year targets (disclosed in the y label; open); `plans_berlin.html` key links depend on
+  berlin.yaml dimension values, untested (closed `6b4adec`).
+- Colours: `app.css` hard-codes `#eda100`, `#1baf7a` and the Counts key colours `#2a78d6` /
+  `#eb6834` instead of `:root` tokens; the mapped amber is close to `--flag` (closed `08cd96a`).
 - Compare: the footnote under the chart ("flagged year", "Headline: ...") is shown for the counter
-  index metric too, where neither applies.
+  index metric too, where neither applies (closed `f0684ed`).
 - Counters: Paris in-service is day-granular (a counter's first and last day in a file count as
-  incomplete) and the rolling UTC export is not scanned for in-service by local day; the Oslo data
-  directory is derived as `Path(out_dir).parents[1]`; `user_agent()` is duplicated in
-  `counters/adapters/__init__.py` and `sources/download.py`; `content --check --online` fetches with
-  the httpx User-Agent, which Open Data BCN answers with 502; a `counters.yaml` ConfigError makes
-  the no-data note vanish silently; py/js counter computations are hand-mirrored without shared
-  cases (they agree today); the km-only Counts chart branch is unreachable from the tab; the compare
-  counter title and footnote are duplicated outside the parity test.
+  incomplete) and the rolling UTC export is not scanned for in-service by local day (open); the
+  Oslo data directory is derived as `Path(out_dir).parents[1]` (closed `e8b36d2`); `user_agent()`
+  is duplicated in `counters/adapters/__init__.py` and `sources/download.py` (closed `e8b36d2`);
+  `content --check --online` fetches with the httpx User-Agent, which Open Data BCN answers with
+  502 (closed `e8b36d2`); a `counters.yaml` ConfigError makes the no-data note vanish silently
+  (closed `3657d97`); py/js counter computations are hand-mirrored without shared cases (closed
+  `f0684ed`, `tests/counter_cases.json`); the km-only Counts chart branch is unreachable from the
+  tab (open); the compare counter title and footnote are duplicated outside the parity test
+  (closed `f0684ed`).
 - DB helpers (Task 1): `replace_plan_overlay` with empty rows leaves stale rows; `replace_*` do not
   check `city_id` against the rows' `city_id`; the migration row-count test populates only `runs`;
-  `_optional_rows` detects a missing table by matching the error message.
+  `_optional_rows` detects a missing table by matching the error message (all closed `e8b36d2`).
 - Content checks (Task 2): `_plan` reloads the plans files per fact; `_external_url` says "source
   url" for organisation urls; `_check_explainer` duplicates `_read_dimensions`; a CLI test's
-  exit-code assertion does not discriminate; `_figure_pairs` does not catch UnicodeDecodeError;
-  one unexplained `test_overlay_facts` failure (no order or timing dependence found).
+  exit-code assertion does not discriminate; `_figure_pairs` does not catch UnicodeDecodeError
+  (all closed `ec401ac`); one unexplained `test_overlay_facts` failure (no order or timing
+  dependence found; open).
 - Berlin WFS fetch: duplicate ids within one page are not refused, and a missing `sort_by` property
-  gives a misleading "repeated" error.
+  gives a misleading "repeated" error (closed `e8b36d2`).
 - Content: the Abgeordnetenhaus profile's German document title, without quotation marks or
-  italics, reads ambiguously; no test asserts that Copenhagen 37 and Strasbourg 52 are suspect; the
-  quote-break test's `next(...)` raises StopIteration if a page cites the source in every
-  paragraph; `content/plans/berlin.yaml` has lines over 100 characters (cosmetic).
+  italics, reads ambiguously (closed `ec401ac`, `bf44c3d`); no test asserts that Copenhagen 37 and
+  Strasbourg 52 are suspect (open, by scope ruling); the quote-break test's `next(...)` raises
+  StopIteration if a page cites the source in every paragraph (closed `ec401ac`);
+  `content/plans/berlin.yaml` has lines over 100 characters (closed `ec401ac`).
 - Counter index (final review M1, M2): a link sums each qualifying site's counts over its complete
   days only, so a coverage difference between the two years moves the ratio (spec §2.13/§5.3 as
   recorded, kept by the user; now in the methodology as a known property). Against a pooled mean
   per complete day, 37 of the 49 daily-count links move by less than 0.5 %; the largest are
   +2.1 % (Paris 2019→2020), −2.0 % (Helsinki 2024→2025), −1.8 % (Helsinki 2022→2023), +1.6 %
   (Paris 2023→2024) and −1.3 % (Oslo 2018→2019); Berlin and Vienna stay within 0.7 %. A mean per
-  day link is the natural index v2 question. The base year prints 100 whatever its number of
-  qualifying sites (`counters/index.py:122`), although spec §2.13 gives a year with fewer than 3
-  sites no value (every base year has at least 9 today).
+  day link is the natural index v2 question (open). The base year prints 100 whatever its number
+  of qualifying sites (`counters/index.py:122`), although spec §2.13 gives a year with fewer than
+  3 sites no value (closed `f5108be`, test made non-vacuous in `ebab4e7`; every stored base year
+  has 11 or more sites, the index is unchanged).
 - Attribution and error notes (final review M3, M4): the Berlin plan page's planned-network line
   names no licence, although `retrieved.json` covers both layers, and a corrupt `retrieved.json`
   silently removes the measures licence too (`plans_pages.measures_retrieved`); a source-registry
   load error removes the plan page's text and quotes without a note (`main.py` `plan_page` passes
-  no `content_error`, unlike `/organisations`).
+  no `content_error`, unlike `/organisations`) (all closed `3657d97`).
 - Prose restating config (final review M5, M6, M7; Task 11): `counts.html`, `content/counters.yaml`
   and `compare.py` `COUNTER_UNIT` ("2019 = 100", wrong for a base-2020 city drawn as a line) spell
-  out `MIN_VALID`, `MIN_SITES` and the base years by hand; the methodology's Madrid and Helsinki
-  bullets hard-code facts outside the generated blocks, so `--check` is blind to their drift; the
-  methodology takes the latest overlay version from config, the page and the facts from
-  `plan_overlay`, so a new config file without a rerun makes them disagree; `berlin_context`
-  derives the 1 January 2022 baseline from the plan's first target year instead of a named
-  constant.
+  out `MIN_VALID`, `MIN_SITES` and the base years by hand (closed `f5108be`; `COUNTER_UNIT`
+  closed `f0684ed`); the methodology's Madrid and Helsinki bullets hard-code facts outside the
+  generated blocks, so `--check` is blind to their drift; the methodology takes the latest overlay
+  version from config, the page and the facts from `plan_overlay`, so a new config file without a
+  rerun makes them disagree; `berlin_context` derives the 1 January 2022 baseline from the plan's
+  first target year instead of a named constant (all closed `f5108be`).
 - Code structure (final review M8, M9): `counters/__init__.py` `load_city` writes `counter_daily`
-  itself while `db.upsert_counter_daily` is used only by tests; `content/check.py`
-  `_COUNTER_WORDS` matches the verb "count", so a "due to" near it would fail the causal check for
-  the wrong reason.
-- Task 11 minors: the Counts/Intensity short names are duplicated in `counts.html` and `city.js`;
-  the phone-width CSS tests assert that a rule is present, not the resolved cascade;
-  `plan-chart.test.mjs` pins the chart margins 44/10; `test_app_m8_counts.py` repeats
-  function-local imports; the counts key wraps at 390 px with a leading "·"; HANDOVER's
-  "delivered 2026-10-08" needs a date edit if the merge slips.
-- Gate: the Starlette `httpx` deprecation warning (pre-existing) stays in the pytest output.
+  itself while `db.upsert_counter_daily` is used only by tests (closed `e8b36d2`);
+  `content/check.py` `_COUNTER_WORDS` matches the verb "count", so a "due to" near it would fail
+  the causal check for the wrong reason (closed `ec401ac`, `bf44c3d`).
+- Task 11 minors: the Counts/Intensity short names are duplicated in `counts.html` and `city.js`
+  (closed `6b4adec`); the phone-width CSS tests assert that a rule is present, not the resolved
+  cascade (open); `plan-chart.test.mjs` pins the chart margins 44/10 (closed `6b4adec`);
+  `test_app_m8_counts.py` repeats function-local imports (closed `ec401ac`); the counts key wraps
+  at 390 px with a leading "·" (closed `6b4adec`); HANDOVER's "delivered 2026-10-08" needs a date
+  edit if the merge slips (closed: M8 was merged on 2026-10-08).
+- Gate: the Starlette `httpx` deprecation warning (pre-existing) stays in the pytest output (open).
 - Process: the Task 7 full gate was not rerun after the last `oslo.py` reformat (moot: every gate
-  since is green); Task 10's tests were written after the code (red shown against HEAD).
-- Left as M7 behaviour: the Figures-tab tables scroll horizontally inside their box at 390 px.
+  since is green); Task 10's tests were written after the code (red shown against HEAD) (notes,
+  open).
+- Left as M7 behaviour: the Figures-tab tables scroll horizontally inside their box at 390 px
+  (open).
+- Dark mode (follow-up pass, Task 5): the app has no dark theme; the pass removed an untested one
+  (`35f0876`). A dark theme needs dark values for every token and the JS-set chart and map
+  colours, and a render pass of every page (open).
+
+Opened by the follow-up pass (reviewers' deferred Minors, all open):
+
+- Compare and counters (Task 1): the counter tooltip unit reads "each city's base year = 100" and
+  lost "2019 = 100; 2020 is the COVID year" (text only); "Counters are context" is stated twice on
+  the counter Compare view (subtitle and footnote); a static import mid-file in
+  `counter-model.test.mjs` (~454); `test_app_m8_counts.py` (~800) pins today's footnote string;
+  `compare.py` (~265) raises on a city without `line` where the JS skips it.
+- Notes and licences (Task 2): the unreadable-record note on `/plans/berlin` says the retrieval
+  date cannot be shown while the planned-network line still shows its DB date; the measures line
+  takes the licence without checking that its layer is listed (the planned-network line does);
+  with `retrieved.json` missing (fresh checkout) and the overlay shown, the planned-network line
+  names no licence and shows no note; a `counters.yaml` read error is logged per city per cached
+  build, not once.
+- One source (Task 3): the latest-overlay-version logic and the Berlin city constant are
+  duplicated (`methodology.py` ~1073, `plans_pages.py` ~250); the methodology re-implements
+  `has_line`/`_days` from `app/counts.py` and computes gaps under a different condition;
+  `DEFAULT_BASE_YEAR`/`COVID_YEAR` are imported by name and the test covers the template side
+  only; the hand-written "the plan's first target year" still sits beside the generated
+  `MAPPED_BASELINE` in the methodology templates.
+- Plan chart (Task 4): `counter-model.js` (~124, ~126) keeps literal fallbacks "Counts" / "Mapped
+  km" (a second copy of the short names); `labelSpot` ignores cap segments and adjacent cap labels
+  are untested for overlap; the date-label test was relaxed from inside-plot to inside-svg; the
+  `_key_line_colour` docstring still says `<p class="chart-key">` (now `<ul>`); section roles are
+  computed twice in `plans_berlin.html`; the every-target-in-table test is a guard (passes
+  without the change).
+- Colours (Task 5): the hue-distance test has no chroma floor; `rgb(...)` shadow colours sit
+  outside `:root` (the rule covers hex only); the key test's "table" check is loose.
+- DB and fetch (Task 6): the counters fetch `ValueError` catch (`cli.py` ~2157) has no CLI test;
+  `_print_city_metrics` (`cli.py` ~378) reads through `_open_schema` after a write (harmless); the
+  WFS treats a JSON-null id as a missing property (wording only); six adapters take an ignored
+  `data_dir` (documented).
+- Content checks (Task 7): the plan-file cache in `facts.py` (~474) is unbounded and shares mutable
+  lists; `_madrid_year` hardcodes the 2020 clock-change dates; the "Nine of the sites" test case
+  uses a number that is not a rule value; threshold phrasings the check misses ("2019 (= 100)",
+  "relative to 2019", "90% coverage"); `_seed_report` depends on the fixture flagging at least one
+  gap; source and data-ref substitutions still run inside code spans (pre-existing); "counts" as
+  a verb still triggers the causal check, and the `archive_url` error still says "source url".
