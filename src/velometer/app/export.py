@@ -6,9 +6,10 @@ the data (`export_urls`), a URL maps to a file by `url_to_path`, `static/` is co
 is the app's 404 response and `build.json` stamps the build. `scan_references` then proves every
 reference in the written HTML, CSS and JS resolves (an export with one that does not fails,
 listing each). The site is written to a staging directory next to `out` (never inside it) and
-moved into place only when complete, so a failed export leaves `out` as it was. A dangerous `out` (`/`, $HOME, a repo root, a directory holding
-an input, a symlink) and a base that is not a plain path are refused before anything happens.
-The database is opened read-only, as the app opens it.
+moved into place only when complete, so a failed export leaves `out` as it was. A dangerous
+`out` (`/`, $HOME, a repo root, a directory holding an input, a symlink) and a base that is not
+a plain path are refused before anything happens. The database is opened read-only, as the app
+opens it.
 """
 
 import json
@@ -57,15 +58,22 @@ STATIC_EXCLUDED = PurePosixPath("js/tests")  # the node tests of the JS modules,
 # The staging and set-aside directories, siblings of `out` (never inside it); .gitignore ignores
 # the prefix, so an export killed mid-way leaves no untracked directory in the repo.
 STAGING_PREFIX = ".velometer-staging-"
-# The reference scan (decision 5). A *loaded* reference (src, <link href>, a form action, CSS
-# url(), a script's import / url("…") / fetch("…"), a JSON config string) must resolve to a file
-# in the export, or be `data:`, or be on the one external host below. A *link* (<a>/<area> href,
-# a string under a JSON config's "links" key, which scripts put in an <a>) is followed by the
-# reader, not loaded by the page: it may also point at any http(s) or mailto address (the
-# attribution and source links).
+# The reference scan (decision 5). A *loaded* reference (src, srcset, <link href>, a form action,
+# object data, poster, any other attribute holding a URL, CSS url() / @import in a file, a <style>
+# or a style attribute, a script's import / url("…") / fetch("…") / new URL("…") and any other
+# URL-shaped string literal, a JSON config string) must resolve to a file in the export, or be
+# `data:`, or be `https:` on the one external host below (as the CSP allows). A *link* (<a>/<area>
+# href, a string under a JSON config's "links" key, which scripts put in an <a>) is followed by
+# the reader, not loaded by the page: it may also point at any http(s) or mailto address (the
+# attribution and source links). The scan fails closed: an inline <script> (the CSP runs none,
+# and its code is not parsed) is reported as it is.
 LOADED_HOSTS = frozenset({"tile.openstreetmap.org"})
 LINK_SCHEMES = frozenset({"http", "https", "mailto"})
 LINK_TAGS = frozenset({"a", "area"})
+# attributes whose value is a URL whatever it looks like; any other attribute is a reference when
+# its value looks like one (URL_SHAPED)
+URL_ATTRS = frozenset({"href", "src", "action", "data", "poster", "formaction", "cite"})
+JSON_SCRIPT_TYPES = frozenset({"application/json", "application/ld+json"})
 SCANNED_SUFFIXES = (".html", ".css", ".js")
 # The images the vendored leaflet.css names that static/vendor/VERSIONS records as not vendored:
 # the maps use neither the layers control nor the default marker icon (a test keeps that true).
@@ -73,12 +81,23 @@ UNVENDORED = frozenset(
     ("static/vendor/leaflet.css", ref)
     for ref in ("images/layers.png", "images/layers-2x.png", "images/marker-icon.png")
 )
-CSS_URL = re.compile(r"""url\(\s*(["']?)([^"')]*?)\1\s*\)""")
-# a literal (no `${…}`) passed to url() / fetch(); a module specifier
-JS_URL_CALL = re.compile(r"""\burl\(\s*(["'`])([^"'`$\n]*)\1""")
-JS_FETCH = re.compile(r"""\bfetch\(\s*(["'`])([^"'`$\n]*)\1""")
+# XML namespace names in scripts (document.createElementNS): identifiers, never fetched
+NAMESPACES = frozenset({"http://www.w3.org/2000/svg", "http://www.w3.org/1999/xhtml"})
+URL_SHAPED = re.compile(r"^\s*(/|[A-Za-z][A-Za-z0-9+.-]*://|javascript:|data:)", re.I)
+CSS_URL = re.compile(r"""url\(\s*(["']?)([^"')]*?)\1\s*\)""", re.I)
+CSS_IMPORT = re.compile(r"""@import\s+(["'])([^"']*)\1""", re.I)
+CSS_QUOTED_URL = re.compile(r"""(["'])([A-Za-z][A-Za-z0-9+.-]*://[^"']*)\1""")
 JS_IMPORT = re.compile(r"""\b(?:import|from)\s*\(?\s*(["'])([^"'\n]+)\1""")
-JS_COMMENT_LINE = re.compile(r"^\s*(//|/\*|\*)")
+# a string literal that is a URL: a root-relative path (`/` and a name character: not "/", "//"
+# or "/${…}" string pieces), protocol-relative (`//` and a host) or with a scheme; group 1 is
+# set when it is the argument of url()
+JS_URL_LITERAL = re.compile(
+    r"""(\burl\s*\(\s*)?(["'`])((?:/[A-Za-z0-9_.~-]|//[A-Za-z0-9]|[A-Za-z][A-Za-z0-9+.-]*://)[^"'`\s]*)\2"""
+)
+# a literal passed to fetch() / new URL() that JS_URL_LITERAL does not see (a relative path)
+JS_CALL_LITERAL = re.compile(r"""\b(?:fetch|new\s+URL)\s*\(\s*(["'`])([^"'`\n]*)\1""")
+# whole-line comments: `// …` lines and `/* … */` blocks that open a line (the JSDoc kind)
+JS_COMMENTS = re.compile(r"^[ \t]*//[^\n]*$|^[ \t]*/\*.*?\*/", re.M | re.S)
 SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
 # a base path is `/`-separated segments of these characters (no `..`, `//`, scheme, query, ...)
 BASE_SEGMENT = re.compile(r"^[A-Za-z0-9._~-]+$")
@@ -279,35 +298,50 @@ def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
 
 
 class _HtmlRefs(HTMLParser):
-    """A page's references as (value, loaded?): href / src / action, the velometer-base meta, a
-    data-* attribute holding a root-relative path and the strings of each JSON config."""
+    """A page's references as (value, loaded?), and what it cannot vouch for (`unsupported`): see
+    the rule at LOADED_HOSTS."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.refs: list[tuple[str, bool]] = []
-        self._json: str | None = None
+        self.unsupported: list[str] = []
+        self._block: tuple[str, str] | None = None  # ("json" | "style" | "script", text so far)
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        for name in ("href", "src", "action"):
-            if a.get(name) is not None:
-                self.refs.append((a[name], not (name == "href" and tag in LINK_TAGS)))
+        for name, value in attrs:
+            if value is None:
+                continue
+            if name == "srcset":
+                self.refs += [(c.split()[0], True) for c in value.split(",") if c.strip()]
+            elif name == "style":
+                self.refs += _css_refs(value)
+            elif name in URL_ATTRS or URL_SHAPED.match(value):
+                self.refs.append((value, not (name == "href" and tag in LINK_TAGS)))
         if tag == "meta" and a.get("name") == "velometer-base":
             self.refs.append((a.get("content") or "", True))
-        for name, value in attrs:
-            if name.startswith("data-") and value and value.startswith("/"):
-                self.refs.append((value, True))
-        if tag == "script" and a.get("type") == "application/json":
-            self._json = ""
+        if tag == "style":
+            self._block = ("style", "")
+        elif tag == "script":
+            kind = "json" if (a.get("type") or "").lower() in JSON_SCRIPT_TYPES else "script"
+            self._block = (kind, "")
 
     def handle_data(self, data):
-        if self._json is not None:
-            self._json += data
+        if self._block is not None:
+            self._block = (self._block[0], self._block[1] + data)
 
     def handle_endtag(self, tag):
-        if tag == "script" and self._json is not None:
-            self.refs += list(_json_refs(json.loads(self._json), link=False))
-            self._json = None
+        if self._block is None or tag not in ("style", "script"):
+            return
+        kind, text = self._block
+        self._block = None
+        if kind == "json":
+            self.refs += list(_json_refs(json.loads(text), link=False))
+        elif kind == "style":
+            self.refs += _css_refs(text)
+        elif text.strip():
+            snippet = " ".join(text.split())[:80]
+            self.unsupported.append(f"inline <script> (not parsed; the CSP runs none): {snippet}")
 
 
 def _json_refs(value, link: bool):
@@ -318,24 +352,38 @@ def _json_refs(value, link: bool):
     elif isinstance(value, list):
         for v in value:
             yield from _json_refs(v, link)
-    elif isinstance(value, str) and (
-        value.startswith("/") or value.startswith(("http://", "https://"))
-    ):
+    elif isinstance(value, str) and URL_SHAPED.match(value):
         yield value, not link
 
 
+def _css_refs(text: str) -> list[tuple[str, bool]]:
+    """Every url(…), @import "…" and quoted absolute URL of a stylesheet, all loaded."""
+    found = [m.group(2) for m in CSS_URL.finditer(text)]
+    found += [m.group(2) for m in CSS_IMPORT.finditer(text)]
+    found += [m.group(2) for m in CSS_QUOTED_URL.finditer(text)]
+    return [(ref, True) for ref in found]
+
+
 def _js_refs(text: str, base: str) -> list[tuple[str, bool]]:
-    """A script's import specifiers, url("…") literals (as url() resolves them under `base`) and
-    fetch("…") literals; comment lines are skipped. A built URL (`${…}`) is not a literal."""
+    """A script's references, loaded unless noted: import specifiers; every URL-shaped string
+    literal (root-relative, `//host` or with a scheme; an argument of url() as url() resolves it
+    under `base`; one written as an `href="…"` in markup is a link); the literal of a fetch() or
+    new URL(). Whole-line comments are skipped. A built URL (`${…}`) passed to url() carries the
+    base by construction and is not resolved; anywhere else it is checked as written. XML
+    namespace names are not references."""
     u = make_u(base)
-    code = "\n".join(line for line in text.split("\n") if not JS_COMMENT_LINE.match(line))
+    code = JS_COMMENTS.sub("", text)
     refs = [(m.group(2), True) for m in JS_IMPORT.finditer(code)]
-    for m in JS_URL_CALL.finditer(code):
-        try:
-            refs.append((u(m.group(2)), True))
-        except ValueError:
-            refs.append((m.group(2), True))  # not `/…`: reported as it is written
-    refs += [(m.group(2), True) for m in JS_FETCH.finditer(code)]
+    for m in JS_URL_LITERAL.finditer(code):
+        via_url, literal = m.group(1), m.group(3)
+        if literal in NAMESPACES:
+            continue
+        if via_url:
+            if "${" not in literal:
+                refs.append((u(literal), True))
+        else:  # the href of markup a script writes (`'<a href="…"'`) is a link
+            refs.append((literal, not code.endswith("href=", 0, m.start())))
+    refs += [(m.group(2), True) for m in JS_CALL_LITERAL.finditer(code)]
     return refs
 
 
@@ -358,7 +406,7 @@ def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
             return loaded
         if not loaded and name in LINK_SCHEMES:
             return True
-        return name in ("http", "https", "") and urlsplit(ref).hostname in LOADED_HOSTS
+        return name == "https" and urlsplit(ref).hostname in LOADED_HOSTS
     path = unquote(urlsplit(ref).path)
     if path.startswith("/"):
         return path.startswith(base) and _resolves(out, path.removeprefix(base))
@@ -382,9 +430,11 @@ def scan_references(out: Path, base: str) -> list[Unresolved]:
         if path.suffix == ".html":
             parser = _HtmlRefs()
             parser.feed(text)
+            parser.close()
             refs = parser.refs
+            found |= {Unresolved(file, what) for what in parser.unsupported}
         elif path.suffix == ".css":
-            refs = [(m.group(2), True) for m in CSS_URL.finditer(text)]
+            refs = _css_refs(text)
         else:
             refs = _js_refs(text, base)
         for ref, loaded in refs:

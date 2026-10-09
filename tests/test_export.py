@@ -5,6 +5,7 @@ guarded `--clean`."""
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -587,6 +588,124 @@ def test_the_scan_of_a_real_export_finds_the_planted_breaks_only(rich, tmp_path)
     ]
 
 
+# (file, text planted, the reference reported contains): each reference form the scan must not
+# pass silently, with a dangling internal and a foreign target where the form takes both
+PLANTS = [
+    (
+        "cities/index.html",
+        '<img srcset="https://cdn.example/a.png 1x" alt="">',
+        "cdn.example/a.png",
+    ),
+    (
+        "cities/index.html",
+        '<img srcset="/velometer/static/favicon.svg 1x, /velometer/nowhere-2x.png 2x" alt="">',
+        "/velometer/nowhere-2x.png",
+    ),
+    (
+        "cities/index.html",
+        '<div style="background:url(https://cdn.example/b.png)"></div>',
+        "cdn.example/b.png",
+    ),
+    (
+        "cities/index.html",
+        '<div style="background:url(/velometer/nowhere-b.png)"></div>',
+        "/velometer/nowhere-b.png",
+    ),
+    (
+        "cities/index.html",
+        "<style>body{background:url(https://cdn.example/s.png)}</style>",
+        "cdn.example/s.png",
+    ),
+    (
+        "cities/index.html",
+        "<style>body{background:url(/velometer/nowhere.png)}</style>",
+        "/velometer/nowhere.png",
+    ),
+    (
+        "cities/index.html",
+        "<style>@import 'https://cdn.example/i.css';</style>",
+        "cdn.example/i.css",
+    ),
+    ("cities/index.html", '<script>fetch("https://cdn.example/h")</script>', "inline <script>"),
+    ("cities/index.html", '<script>fetch("/velometer/nowhere-h")</script>', "inline <script>"),
+    (
+        "cities/index.html",
+        '<object data="https://cdn.example/o.svg"></object>',
+        "cdn.example/o.svg",
+    ),
+    (
+        "cities/index.html",
+        '<object data="/velometer/nowhere-o.svg"></object>',
+        "/velometer/nowhere-o.svg",
+    ),
+    (
+        "cities/index.html",
+        '<video poster="https://cdn.example/p.png"></video>',
+        "cdn.example/p.png",
+    ),
+    (
+        "cities/index.html",
+        '<video poster="/velometer/nowhere-p.png"></video>',
+        "/velometer/nowhere-p.png",
+    ),
+    (
+        "cities/index.html",
+        '<div data-src="https://cdn.example/d.json"></div>',
+        "cdn.example/d.json",
+    ),
+    (
+        "cities/index.html",
+        '<div data-src="/velometer/nowhere-d.json"></div>',
+        "/velometer/nowhere-d.json",
+    ),
+    # the CSP allows the tile server over https only
+    (
+        "cities/index.html",
+        '<img src="http://tile.openstreetmap.org/1/0/0.png" alt="">',
+        "http://tile",
+    ),
+    ("cities/index.html", '<img src="//tile.openstreetmap.org/1/0/0.png" alt="">', "//tile"),
+    ("static/app.css", '@import "https://cdn.example/j.css";', "cdn.example/j.css"),
+    ("static/app.css", '@import "/velometer/nowhere-j.css";', "/velometer/nowhere-j.css"),
+    ("static/app.css", '@import "nowhere-j2.css";', "nowhere-j2.css"),
+    ("static/js/data.js", 's.src = "https://cdn.example/k.js";', "cdn.example/k.js"),
+    ("static/js/data.js", 's.src = "/velometer/nowhere-k.js";', "/velometer/nowhere-k.js"),
+    (
+        "static/js/data.js",
+        'new URL("/velometer/nowhere-u", location.href);',
+        "/velometer/nowhere-u",
+    ),
+    ("static/js/data.js", 'new URL("https://cdn.example/u");', "cdn.example/u"),
+    ("static/js/data.js", 'fetch ("https://cdn.example/f");', "cdn.example/f"),
+    ("static/js/data.js", 'fetch ("/velometer/nowhere-f");', "/velometer/nowhere-f"),
+    ("static/js/data.js", 'const z = 2\n  *fetch("/velometer/nowhere-z");', "/velometer/nowhere-z"),
+]
+
+
+def test_the_scan_fails_closed_on_every_reference_form(rich, tmp_path):  # noqa: F811
+    """Each form planted into a copy of a fixture export is reported with its file; the export
+    as made (its JSON configs' based URLs included) scans clean."""
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    assert export.scan_references(out, BASE) == []
+    missed = []
+    for i, (rel, planted, expected) in enumerate(PLANTS):
+        copy = tmp_path / f"plant-{i}"
+        shutil.copytree(out, copy)
+        target = copy / rel
+        text = target.read_text()
+        if rel.endswith(".html"):
+            text = text.replace("<main>", "<main>" + planted, 1)
+        else:
+            text += "\n" + planted + "\n"
+        target.write_text(text)
+        found = export.scan_references(copy, BASE)
+        if [u.file for u in found] != [rel] or expected not in found[0].ref:
+            missed.append((planted, found))
+        shutil.rmtree(copy)
+    assert missed == []
+
+
 def test_an_unresolved_reference_fails_the_export_listing_each(rich, tmp_path, monkeypatch):  # noqa: F811
     out = tmp_path / "dist"
     _export(rich, out, BASE)
@@ -734,7 +853,8 @@ def test_an_unknown_page_is_an_html_404_with_the_layout(rich, base):  # noqa: F8
             assert r.headers["content-type"].startswith("text/html"), url
             assert r.headers["content-security-policy"] == CSP
             assert "Page not found" in r.text
-            assert f'href="{base}"' in r.text  # the way home, through u()
+            main = r.text.split("<main>", 1)[1].split("</main>", 1)[0]
+            assert f'<a href="{base}">Go to the overview</a>' in main  # its own way home, u()
             assert 'id="site-nav"' in r.text  # the layout's navigation
             assert "openstreetmap.org/copyright" in r.text  # the footer and its attribution
         for url in ("/data/nope.csv", "/maps/nope.png", "/static/nope.js"):
