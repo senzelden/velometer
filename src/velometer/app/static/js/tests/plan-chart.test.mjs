@@ -35,7 +35,7 @@ globalThis.document = {
   createElement: (tag) => new Node(tag),
 };
 
-const { planSeries, renderPlanChart, yDomain } = await import("../plan-chart.js");
+const { planSeries, renderPlanChart, yDomain, targetScale, OFFSCALE_FACTOR } = await import("../plan-chart.js");
 
 const row = (year, value, doc, current, extra = {}) => ({
   year, value, doc, doc_type: "drucksache", doc_date: "2026-01-01",
@@ -185,12 +185,15 @@ test("renderPlanChart: the date label of the last snapshot never sits on a targe
   const lx = Number(label.attrs.x);
   const [x1, x2] = label.attrs["text-anchor"] === "end" ? [lx - w, lx] : [lx, lx + w];
   const [y2, y1] = [Number(label.attrs.y) + 2, Number(label.attrs.y) - 9]; // baseline to cap height
-  const d = el.find((n) => n.attrs.class === "target-step")[0].attrs.d;
+  // the steps on the scale and the caps of those above it (Task 4 of the follow-ups)
+  const d = el.find((n) => ["target-step", "target-cap"].includes(n.attrs.class)).map((n) => n.attrs.d).join("");
+  assert.ok(d, "the targets are drawn");
   for (const [, sx, sy, ex] of d.matchAll(/M([\d.]+),([\d.]+)H([\d.]+)/g).map((m) => m.map(Number))) {
     const crosses = sx < x2 && ex > x1 && sy >= y1 && sy <= y2;
     assert.ok(!crosses, `label [${x1}..${x2}]x[${y1}..${y2}] crosses the step at y=${sy} [${sx}..${ex}]`);
   }
-  assert.ok(x1 >= 44 && x2 <= 358 - 10, "the label stays inside the plot");
+  const svg = svgOf(el);
+  assert.ok(x1 >= 0 && x2 <= Number(svg.attrs.width), "the label stays inside the svg");
 });
 
 test("renderPlanChart: no target line for an item without a target", () => {
@@ -208,4 +211,130 @@ test("renderPlanChart: nothing to draw is a note, not an empty svg", () => {
   assert.equal(el.children.length, 1);
   assert.equal(el.children[0].tag, "p");
   assert.match(el.children[0].textContent, /no figures/i);
+});
+
+// ---------- Task 4 (M8 follow-ups): axis by quantity, off-scale targets, labels inside ----------
+
+const texts = (el) => el.find((n) => n.tag === "text");
+const ylabText = (el) => texts(el).filter((n) => n.attrs.class === "ylab").map((n) => n.textContent).join(" ");
+
+test("renderPlanChart: the y label follows the target quantity", () => {
+  const cases = [
+    ["km_per_year", "km per year"],
+    ["none", "km per year"],
+    ["km_cumulative", "km, cumulative"],
+    ["km_total", "km, total"],
+  ];
+  for (const [quantity, label] of cases) {
+    // a target alone: its own quantity is the axis
+    const el = new Node("div");
+    renderPlanChart(el, planSeries({ 2025: 100, 2030: 400 }, [], [], []), { years: [2025, 2030], unit: "km", quantity });
+    assert.ok(ylabText(el).startsWith(label), `${quantity}: ${ylabText(el)}`);
+  }
+});
+
+test("renderPlanChart: a cumulative or total target is never drawn on the per-year axis", () => {
+  // the simpler of the two rulings: the chart draws the per-year figures and leaves the target
+  // out (a note says so; the table lists it), never both quantities against one axis
+  for (const quantity of ["km_cumulative", "km_total"]) {
+    const el = new Node("div");
+    const s = planSeries({ 2030: 400 }, [row(2024, 12, "a", true)], [], []);
+    renderPlanChart(el, s, { years: [2024, 2030], unit: "km", quantity });
+    assert.equal(marks(el, "target-step").length, 0, quantity);
+    assert.equal(marks(el, "target-cap").length, 0, quantity);
+    assert.ok(ylabText(el).startsWith("km per year"), ylabText(el));
+    const note = el.children.find((c) => c.tag === "p");
+    assert.ok(note && /not drawn/.test(note.textContent) && /table/.test(note.textContent), quantity);
+  }
+});
+
+test("targetScale: a target above OFFSCALE_FACTOR x the largest figure is off scale", () => {
+  assert.equal(OFFSCALE_FACTOR, 3);
+  const steps = [50, 100, 350, 450].map((value, i) => ({ year: 2025 + i, value }));
+  const { onScale, offScale } = targetScale(steps, [10, 55.1, -2]);
+  assert.deepEqual(onScale.map((p) => p.value), [50, 100]);
+  assert.deepEqual(offScale.map((p) => p.value), [350, 450]);
+  // at exactly the factor a target stays on scale
+  assert.equal(targetScale([{ year: 2025, value: 30 }], [10]).offScale.length, 0);
+  // no figures (or none above 0): every target is on scale, the targets set the axis
+  assert.equal(targetScale(steps, []).offScale.length, 0);
+  assert.equal(targetScale(steps, [0, -3]).offScale.length, 0);
+});
+
+// the Berlin Ergänzungsnetz shape (controller observation 2026-10-08): 2028-2030 targets of
+// 350-450 km per year flattened the figures near 0
+const ERG_TARGETS = { 2025: 50, 2026: 100, 2027: 100, 2028: 350, 2029: 450, 2030: 450 };
+const ERG_OVERLAY = [
+  { date: "2022-01-01", ab_km: 606.4 }, { date: "2025-01-01", ab_km: 610 },
+  { date: "2026-10-03", ab_km: 620.2 },
+];
+const ergChart = (width) => {
+  const el = new Node("div");
+  // as on the page: 2023 has a current 5.1 and a suspect revision of 55.1, a figure too
+  const reports = [
+    row(2023, 5.1, "a", true), row(2023, 55.1, "c", false, { suspect: true }), row(2025, 20.3, "b", true),
+  ];
+  const s = planSeries(ERG_TARGETS, reports, ERG_OVERLAY,
+    [{ year: 2023, km: 1.2 }], { mappedFrom: 2022 });
+  const years = [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
+  renderPlanChart(el, s, { label: "Ergänzungsnetz", years, unit: "km", quantity: "km_per_year", width });
+  return el;
+};
+
+test("renderPlanChart: off-scale targets are capped at the top edge, labelled, the axis set by the data", () => {
+  for (const width of [640, 358]) {
+    const el = ergChart(width);
+    const caps = marks(el, "target-cap");
+    assert.equal(caps.length, 3, "one cap per off-scale target (2028, 2029, 2030)");
+    const labels = marks(el, "target-cap-label").map((n) => n.textContent);
+    assert.deepEqual(labels, ["↑ 350", "↑ 450", "↑ 450"]);
+    // the cap sits on the plot's top edge: the highest gridline
+    const gridYs = marks(el, "gridl").map((n) => Number(n.attrs.y1));
+    const top = Math.min(...gridYs);
+    for (const c of caps) {
+      for (const [, , y] of c.attrs.d.matchAll(/M([\d.]+),([\d.]+)/g)) assert.equal(Number(y), top);
+    }
+    // the axis is the data's and the nearer targets': its top tick is far below 350
+    const ticks = texts(el).filter((n) => n.attrs.class === "axis-t" && n.attrs["text-anchor"] === "end");
+    const hi = Math.max(...ticks.map((n) => Number(n.textContent.replace(",", ""))));
+    assert.ok(hi >= 100 && hi < 350, `top tick ${hi}`);
+    // the on-scale steps exclude the off-scale years
+    const d = marks(el, "target-step")[0].attrs.d;
+    assert.equal([...d.matchAll(/M/g)].length, 3, d);
+  }
+});
+
+test("renderPlanChart: no figures, no off-scale: the targets set the axis", () => {
+  const el = new Node("div");
+  renderPlanChart(el, planSeries(ERG_TARGETS, [], [], []), { years: [2025, 2030], unit: "km" });
+  assert.equal(marks(el, "target-cap").length, 0);
+});
+
+test("renderPlanChart: every label fits inside the svg, at any width and scale", () => {
+  // the rule the margins exist for: tick labels, the y label, year labels, the date label and
+  // the off-scale caps all lie inside [0, width] x [0, height] (10-11 px text: about 6.2 px/char)
+  const charts = [
+    ergChart(640),
+    ergChart(358),
+    ergChart(280),
+    (() => {
+      const el = new Node("div");
+      const s = planSeries({ 2022: 12000, 2023: 9000 }, [row(2022, -4200, "a", true), row(2023, 11500, "b", true)], [], []);
+      renderPlanChart(el, s, { years: [2022, 2023], unit: "km", quantity: "km_cumulative", width: 280 });
+      return el;
+    })(),
+  ];
+  for (const el of charts) {
+    const svg = svgOf(el);
+    const [W, H] = [Number(svg.attrs.width), Number(svg.attrs.height)];
+    for (const t of texts(el)) {
+      const w = t.textContent.length * 6.2;
+      const x = Number(t.attrs.x);
+      const anchor = t.attrs["text-anchor"] ?? "start";
+      const [x1, x2] = anchor === "end" ? [x - w, x] : anchor === "middle" ? [x - w / 2, x + w / 2] : [x, x + w];
+      const y = Number(t.attrs.y);
+      assert.ok(x1 >= 0 && x2 <= W, `W=${W}: "${t.textContent}" spans [${x1.toFixed(1)}, ${x2.toFixed(1)}]`);
+      assert.ok(y - 9 >= 0 && y + 2 <= H, `H=${H}: "${t.textContent}" at y=${y}`);
+    }
+  }
 });

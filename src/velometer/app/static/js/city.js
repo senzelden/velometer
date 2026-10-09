@@ -67,8 +67,9 @@ function counts(el, D) {
   const avg = D.counters?.cities?.[id]?.series === "avg_daily_intensity";
   const model = countsChart(D, id, {
     counter: avg ? "Average daily intensity at counter sites" : "Counts at counter sites",
-    counterShort: avg ? "Intensity" : "Counts",
+    counterShort: el.dataset.counterShort, // the server's short names, as in the key
     km: "A+B mapped km (1 Jan)",
+    kmShort: el.dataset.kmShort,
   });
   if (!model) throw new Error(`no counter data for ${id}`);
   const lines = {

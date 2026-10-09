@@ -41,6 +41,10 @@ SERIES_LABEL = {
     "counts": "counts recorded at counter sites",
     "avg_daily_intensity": "average daily intensity recorded at counter sites",
 }
+# the lines' short names: the chart's end labels (city.js reads them off the chart mount) and
+# the key under the chart, which gives each its full name
+SERIES_SHORT = {"counts": "Counts", "avg_daily_intensity": "Intensity"}
+KM_SHORT = "Mapped km"
 MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June", "July", "August", "September",
     "October", "November", "December",
@@ -195,6 +199,8 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     source, licence = attribution(entry, sites)
     return {
         "label": SERIES_LABEL.get(series, series),
+        "short": SERIES_SHORT.get(series, series),
+        "km_short": KM_SHORT,
         "series": series,
         "base_year": base,
         "line": line,

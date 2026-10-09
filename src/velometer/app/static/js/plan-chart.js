@@ -9,6 +9,13 @@ import { mount, failed } from "./data.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
+/** A target above this many times the largest figure is capped at the chart's top edge. */
+export const OFFSCALE_FACTOR = 3;
+// target kinds whose steps are km per year, the quantity of every charted figure
+const PER_YEAR = new Set(["km_per_year", "none"]);
+const QUANTITY_TEXT = { km_cumulative: "cumulative", km_total: "total", share: "share" };
+const LINE = 12; // one line of axis text, px
+
 /**
  * The chart series of one plan item. targets: {year: value} (empty or null: no target line);
  * reports: [{year, value, doc, quantity, current, suspect, note, ...}] (only figures for the
@@ -80,6 +87,18 @@ export function yDomain(values, count = 5) {
   return { lo, hi, ticks: [...ticks, ...up] };
 }
 
+/**
+ * Which target steps the y axis holds. A step above OFFSCALE_FACTOR x the largest figure
+ * (reported, completed or mapped) is off scale: the axis is set by the figures and the nearer
+ * steps, and the far ones are drawn as caps on the top edge. No figure above 0: all on scale.
+ */
+export function targetScale(steps, figures) {
+  const top = Math.max(0, ...figures);
+  if (!(top > 0)) return { onScale: [...steps], offScale: [] };
+  const off = (p) => p.value > OFFSCALE_FACTOR * top;
+  return { onScale: steps.filter((p) => !off(p)), offScale: steps.filter(off) };
+}
+
 function el(tag, attrs = {}, text) {
   const e = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, String(v));
@@ -117,10 +136,15 @@ export function labelSpot(x, y, w, segments, [left, right, top, bottom]) {
  * Draw `series` (planSeries) into `host`: one band per year (opts.years, else every year with a
  * value), target steps across each band, completed-project bars beside the reported markers and
  * the mapped line (positioned by snapshot date, its last point labelled with the date).
- * opts: {label, years, unit, width, height}. No values: a note instead of an svg.
+ * opts: {label, years, unit, quantity, width, height}; quantity is the item's target_kind, and
+ * the y label says it. The charted figures are per year: a cumulative or total target is not
+ * drawn against them (a note under the chart says so; the table lists it), only on its own.
+ * Off-scale targets (targetScale) are caps on the top edge, their values labelled. Margins
+ * follow the labels: every text lies inside the svg. No values: a note instead of an svg.
  */
 export function renderPlanChart(host, series, opts = {}) {
   const unit = opts.unit ?? "km";
+  const quantity = opts.quantity ?? "km_per_year";
   const all = [
     ...series.target.map((p) => p.year),
     ...series.reported.map((p) => p.year),
@@ -128,13 +152,18 @@ export function renderPlanChart(host, series, opts = {}) {
   let years = opts.years?.length ? [...opts.years] : [...new Set(all)];
   years.sort((a, b) => a - b);
   const inRange = (p) => years.includes(p.year);
-  const values = [
-    ...series.target.filter(inRange),
+  const mapped = series.mapped.filter(inRange);
+  const figures = [
     ...series.reported.filter(inRange),
     ...series.projects.filter(inRange),
-    ...series.mapped.filter(inRange),
+    ...mapped,
   ].map((p) => p.value);
-  const mapped = series.mapped.filter(inRange);
+  const perYear = PER_YEAR.has(quantity);
+  const drawTarget = perYear || !figures.length;
+  const { onScale: steps, offScale } = drawTarget
+    ? targetScale(series.target.filter(inRange), figures)
+    : { onScale: [], offScale: [] };
+  const values = [...steps.map((p) => p.value), ...figures];
   if (!years.length || !values.length) {
     const p = document.createElement("p");
     p.className = "empty";
@@ -144,12 +173,18 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const W = Math.max(280, opts.width ?? host.clientWidth ?? 0);
   const H = opts.height ?? 240;
-  const ml = 44;
-  const mr = 10;
-  const mt = 14;
-  const mb = 26;
   const dom = yDomain(values, W < 480 ? 4 : 5);
   const ticks = dom.ticks;
+  // left: the widest tick label and its 6 px gap, 4 px to spare; right: the last band's edge
+  const ml = Math.ceil(Math.max(...ticks.map((t) => textWidth(tickLabel(t))))) + 10;
+  const mr = 10;
+  const axis = perYear || !drawTarget ? `${unit} per year` : `${unit}, ${QUANTITY_TEXT[quantity] ?? quantity}`;
+  const line = mapped.length ? `line: mapped km since 1 Jan ${series.mappedFrom}` : null;
+  const oneLine = line ? `${axis} · ${line}` : axis;
+  const ylines = !line || textWidth(oneLine) <= W - ml - mr ? [oneLine] : [axis, line];
+  // the y label's lines, then a row for the off-scale caps' values, then the plot
+  const mt = 14 + (ylines.length - 1) * LINE + (offScale.length ? LINE : 0);
+  const mb = 26;
   const y = scaleLinear([dom.lo, dom.hi], [H - mb, mt]);
   const band = (W - ml - mr) / years.length;
   const x0 = (yr) => ml + years.indexOf(yr) * band;
@@ -169,10 +204,7 @@ export function renderPlanChart(host, series, opts = {}) {
     if ((years.length - 1 - i) % every) return;
     svg.appendChild(el("text", { class: "axis-t", x: mid(yr), y: H - mb + 16, "text-anchor": "middle" }, String(yr)));
   });
-  const ylab = mapped.length
-    ? `${unit} per year · line: mapped km since 1 Jan ${series.mappedFrom}`
-    : `${unit} per year`;
-  svg.appendChild(el("text", { class: "ylab", x: ml, y: mt - 4 }, ylab));
+  ylines.forEach((text, i) => svg.appendChild(el("text", { class: "ylab", x: ml, y: 10 + i * LINE }, text)));
 
   const bars = (points, cls, dx, what) => {
     const g = el("g", { class: cls });
@@ -185,7 +217,6 @@ export function renderPlanChart(host, series, opts = {}) {
     svg.appendChild(g);
   };
   bars(series.projects, "projects", -barW * 1.6, "Completed projects");
-  const steps = series.target.filter(inRange);
   const segments = steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) }));
 
   if (mapped.length) {
@@ -215,6 +246,20 @@ export function renderPlanChart(host, series, opts = {}) {
     g.appendChild(titled(el("path", { class: "target-step", d }), `Target: ${steps.map((p) => `${p.year} ${formatValue(p.value)} ${unit}`).join(", ")}`));
     svg.appendChild(g);
   }
+  if (offScale.length) {
+    // off the scale: a cap on the top edge of the band, the value above it (every target is
+    // also in the table under the chart)
+    const g = el("g", { class: "target offscale" });
+    for (const p of offScale) {
+      const d = `M${(x0(p.year) + 2).toFixed(1)},${mt}H${(x0(p.year) + band - 2).toFixed(1)}`;
+      const text = `Target ${p.year}: ${formatValue(p.value)} ${unit}, above the chart's scale`;
+      g.appendChild(titled(el("path", { class: "target-cap", d }), text));
+      const wide = `↑ ${formatValue(p.value)}`;
+      const value = textWidth(wide) <= band ? wide : `↑${formatValue(p.value)}`;
+      g.appendChild(el("text", { class: "target-cap-label", x: mid(p.year), y: mt - 3, "text-anchor": "middle" }, value));
+    }
+    svg.appendChild(g);
+  }
 
   const g = el("g", { class: "reported" });
   const offsets = {};
@@ -231,7 +276,14 @@ export function renderPlanChart(host, series, opts = {}) {
     g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text));
   }
   svg.appendChild(g);
-  host.replaceChildren(svg);
+  if (drawTarget || !series.target.some(inRange)) {
+    host.replaceChildren(svg);
+    return;
+  }
+  const note = document.createElement("p");
+  note.className = "meta plan-chart-note";
+  note.textContent = `The target (${unit}, ${QUANTITY_TEXT[quantity] ?? quantity}) is not drawn: the figures in the chart are per year. The table lists it.`;
+  host.replaceChildren(svg, note);
 }
 
 function boot() {
@@ -257,7 +309,9 @@ function boot() {
       const years = ys.length
         ? Array.from({ length: Math.max(...ys) - Math.min(...ys) + 1 }, (_, i) => Math.min(...ys) + i)
         : [];
-      mount(m, () => renderPlanChart(m, series, { label: item.label, years, unit: item.unit }));
+      mount(m, () =>
+        renderPlanChart(m, series, { label: item.label, years, unit: item.unit, quantity: item.target_kind }),
+      );
     } catch (err) {
       failed(m, err);
     }

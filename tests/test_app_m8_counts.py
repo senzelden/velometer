@@ -453,7 +453,7 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
     with _client(_app(setup)) as c:
         html = c.get("/city/berlin/counts").text
-    key = html[html.index('class="meta chart-key"') :].split("</p>")[0]
+    key = _chart_key(html)
     text = _text(key)
     assert "Counts: index of counts recorded at counter sites" in text
     assert "Mapped km: index of A+B mapped km in the city proper, 1 January snapshots" in text
@@ -468,6 +468,50 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
     # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`
     assert _key_line_colour(rules, "key-counter") == first
     assert _key_line_colour(rules, "key-km") == second
+
+
+def _chart_key(html: str) -> str:
+    """The Counts tab's chart key: a list, one item per line of the chart."""
+    start = html.index('class="meta chart-key"')
+    return html[start : html.index("</ul>", start)]
+
+
+def test_counts_chart_key_items_are_list_items_without_a_typed_separator(setup):  # noqa: F811
+    # render check: at 390 px the key wrapped after " · ", starting its second line with "·".
+    # Items in a list wrap whole; the spacing between them is the stylesheet's
+    _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    key = _chart_key(html)
+    assert re.search(r'<ul class="meta chart-key"', html)
+    items = re.findall(r"<li\b[^>]*>(.*?)</li>", key, re.S)
+    assert len(items) == 2
+    assert "·" not in re.sub(r"<li\b[^>]*>.*?</li>", "", key, flags=re.S)
+    assert all(
+        not _text(i).strip().startswith("·") and not _text(i).strip().endswith("·") for i in items
+    )
+
+
+@pytest.mark.parametrize(
+    ("series", "short"), [("counts", "Counts"), ("avg_daily_intensity", "Intensity")]
+)
+def test_counter_short_names_come_from_one_place(setup, series, short):  # noqa: F811
+    # the chart's end labels (city.js) and the key under it name the lines alike: the server
+    # puts the short names on the chart mount and city.js reads them, typing none of its own
+    from velometer.app.counts import KM_SHORT, SERIES_SHORT
+
+    _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024, series=series)
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    mount = re.search(r'<div class="chart" data-chart="city-counts"[^>]*>', html).group(0)
+    assert f'data-counter-short="{SERIES_SHORT[series]}"' in mount and SERIES_SHORT[series] == short
+    assert f'data-km-short="{KM_SHORT}"' in mount
+    key = _text(_chart_key(html))
+    assert f"{SERIES_SHORT[series]}: index of" in key and f"{KM_SHORT}: index of" in key
+    js = (ROOT / "src" / "velometer" / "app" / "static" / "js" / "city.js").read_text()
+    for name in (*SERIES_SHORT.values(), KM_SHORT):
+        assert f'"{name}"' not in js, f"city.js types {name!r}"
+    assert "dataset.counterShort" in js and "dataset.kmShort" in js
 
 
 def _key_line_colour(rules, cls: str) -> str:
@@ -495,7 +539,7 @@ def test_counts_chart_key_for_average_daily_intensity(setup):  # noqa: F811
     _seed(setup[0], series="avg_daily_intensity")
     with _client(_app(setup)) as c:
         html = c.get("/city/berlin/counts").text
-    key = _text(html[html.index('class="meta chart-key"') :].split("</p>")[0])
+    key = _text(_chart_key(html))
     assert "Intensity: index of average daily intensity recorded at counter sites" in key
     # no km for the base year (2019 is before the fixture's snapshots): no km line, no km key
     assert "Mapped km" not in key

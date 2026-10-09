@@ -8,7 +8,12 @@
 {% macro status(v) -%}
 {% if v.current %}<span class="rep-status current">current</span>{% else %}<span class="rep-status revision">revision</span>{% endif %}{% if v.row.suspect %} <span class="suspect-mark">suspect</span>{% endif %}
 {%- endmacro %}
+{% macro series_link(role, text) -%}
+{# the explainer section's anchor comes from berlin.yaml's `dimension`: no section, no link #}
+{% if doc and role in doc.sections | map(attribute="role") %}<a href="#series-{{ role }}">{{ text }}</a>{% else %}{{ text }}{% endif %}
+{%- endmacro %}
 {% block content %}
+{% set why_roles = doc.sections | map(attribute="role") | list if doc else [] %}
 <h1>Berlin: {{ doc.title | lower if doc else "reported, completed, mapped" }}</h1>
 {% if plan %}
 <p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer">{{ plan.title }}</a>{% else %}{{ plan.title }}{% endif %}{% if plan.adopted %}, adopted {{ plan.adopted.isoformat() }}{% endif %} · {% if publisher.href %}<a href="{{ publisher.href }}">{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="/plans">All cities' plans</a></p>
@@ -22,8 +27,8 @@
 {% if error %}<p class="note">the plans could not be loaded (see the server log)</p>{% endif %}
 {% if plan %}
 <div class="plan-key" aria-label="How to read the charts">
-<p class="meta"><span class="key key-target"></span> target per year (the plan's steps) · <span class="key key-current"></span> reported, current figure · <span class="key key-revision"></span> reported in another document (revision) · <span class="key key-suspect"></span> suspect, kept as printed · <span class="key key-projects"></span> completed projects (infraVelo) · <span class="key key-mapped"></span> mapped on the network, mapped km since 1 Jan {{ base_year }} (ours; a line, one point per OpenStreetMap snapshot, the last at the current snapshot)</p>
-<p class="meta">Three series, three words: <a href="#series-reported">reported</a> (Senate documents), <a href="#series-completed">completed projects</a> (infraVelo measures dataset) and <a href="#series-mapped">mapped on the network</a> (OpenStreetMap, ours). They count different things.</p>
+<ul class="meta key-list"><li><span class="key key-target"></span> target per year (the plan's steps)</li><li><span class="key key-current"></span> reported, current figure</li><li><span class="key key-revision"></span> reported in another document (revision)</li><li><span class="key key-suspect"></span> suspect, kept as printed</li><li><span class="key key-projects"></span> completed projects (infraVelo)</li><li><span class="key key-mapped"></span> mapped on the network, mapped km since 1 Jan {{ base_year }} (ours; a line, one point per OpenStreetMap snapshot, the last at the current snapshot)</li></ul>
+<p class="meta">Three series, three words: {{ series_link("reported", "reported") }} (Senate documents), {{ series_link("completed", "completed projects") }} (infraVelo measures dataset) and {{ series_link("mapped", "mapped on the network") }} (OpenStreetMap, ours). They count different things.</p>
 </div>
 <nav class="dim-index" aria-label="Plan items"><ol>
 {% for i in items %}<li><a href="#item-{{ i.item.id }}">{{ i.item.label.split(" (")[0] }}</a></li>
@@ -40,7 +45,7 @@
 {% endif %}
 {% if i.has_overlay_class %}
 {% if overlay_version %}
-<p class="meta series-note mapped-note">Mapped on the network: the change in OpenStreetMap A+B mapped km (per side) on this network since 1 January {{ base_year }}{% if i.mapped_change %}, {{ "%+.1f" | format(i.mapped_change.since_base) }} mapped km to the current snapshot of {{ i.mapped_change.date }}{% endif %}. The line has one point per snapshot: each 1 January, then the current snapshot, so its last stretch covers part of a year. Method: overlay version <code>{{ overlay_version }}</code>, the latest. The series is sensitive to how mappers draw cycleways and to the matching method: it moves when ways are redrawn and with each method version. These are changes in what is mapped, not km of new infrastructure; mapped km are not km completed to the plan's standard (<a href="#series-mapped">why</a>).</p>
+<p class="meta series-note mapped-note">Mapped on the network: the change in OpenStreetMap A+B mapped km (per side) on this network since 1 January {{ base_year }}{% if i.mapped_change %}, {{ "%+.1f" | format(i.mapped_change.since_base) }} mapped km to the current snapshot of {{ i.mapped_change.date }}{% endif %}. The line has one point per snapshot: each 1 January, then the current snapshot, so its last stretch covers part of a year. Method: overlay version <code>{{ overlay_version }}</code>, the latest. The series is sensitive to how mappers draw cycleways and to the matching method: it moves when ways are redrawn and with each method version. These are changes in what is mapped, not km of new infrastructure; mapped km are not km completed to the plan's standard{% if "mapped" in why_roles %} (<a href="#series-mapped">why</a>){% endif %}.</p>
 {% else %}
 <p class="note">no plan overlay in the database (<code>velometer plans overlay berlin</code>); no mapped-on-the-network series.</p>
 {% endif %}

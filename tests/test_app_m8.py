@@ -564,3 +564,63 @@ def test_a_broken_source_registry_is_a_note_on_the_plan_page(setup, plans_data, 
     text = page()
     assert note in text
     assert text.count(note) == 1
+
+
+# ---------- M8 follow-ups, Task 4 ----------
+
+
+def _in_page_links(html: str) -> list[str]:
+    return re.findall(r'href="#([^"]+)"', html)
+
+
+def _dangling(html: str) -> list[str]:
+    ids = set(re.findall(r'\bid="([^"]+)"', html))
+    return sorted(a for a in _in_page_links(html) if a not in ids)
+
+
+def test_every_in_page_link_on_the_berlin_page_has_its_anchor(client):
+    # the key's links ("reported", "completed projects", "mapped on the network") and the
+    # mapped notes' "why" point at the explainer sections, whose ids come from berlin.yaml's
+    # `dimension` values: the rule is over every in-page link, not a list of today's anchors
+    html = client.get("/plans/berlin").text
+    key = html[html.index('class="plan-key"') :].split("</div>")[0]
+    assert _in_page_links(key), "the key links the three series"
+    assert _dangling(html) == []
+
+
+@pytest.mark.parametrize("change", ["rename", "drop"])
+def test_key_links_never_dangle_when_the_page_text_changes(setup, plans_data, tmp_path, change):  # noqa: F811
+    # a renamed dimension, or no page text at all: the key names the series without a link
+    import shutil
+
+    content = tmp_path / "content"
+    shutil.copytree(CONTENT, content)
+    text = content / "plans" / "berlin.yaml"
+    if change == "rename":
+        doc = yaml.safe_load(text.read_text())
+        for s in doc["sections"]:
+            s["dimension"] = f"{s['dimension']}-renamed"
+        text.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False))
+    else:
+        text.write_text("title: [unclosed\n")
+    db_path, cfg, maps, docs = setup
+    app = create_app(db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans_data)
+    with _client(app) as c:
+        html = c.get("/plans/berlin").text
+    assert _dangling(html) == []
+    key = _text(html[html.index('class="plan-key"') :].split("</div>")[0])
+    assert "reported" in key and "completed projects" in key and "mapped on the network" in key
+
+
+def test_every_target_value_is_in_the_year_table(client):
+    # off-scale targets are capped in the chart (plan-chart.js): the table keeps every value
+    html = client.get("/plans/berlin").text
+    plan = next(p for p in load_plans(CONTENT.parent / "config" / "plans")[0] if p.city == "berlin")
+    for item in plan.items:
+        sec = _section(html, f"item-{item.id}")
+        for year, value in item.targets.items():
+            row = re.search(
+                rf"<tr>\s*<td class=\"num\">{year}</td>\s*<td class=\"num\">([^<]*)<", sec
+            )
+            assert row, (item.id, year)
+            assert row.group(1).replace(",", "").startswith(f"{value:g} "), (item.id, year, row)
