@@ -288,7 +288,10 @@ test asserts identical DB bytes after each. The md5 has stayed `a5222dc4` since.
 - Task 2: a "counter configuration unreadable" note also on the Counts tab (beyond the brief,
   same silent-vanish defect). A `retrieved.json` without a licence counts as unreadable; the
   planned-network licence is shown only when the record lists that layer, else "licence not
-  recorded"; a licence is never inferred. Two blank screenshots of broken-input pages were
+  recorded"; a licence is never inferred. An absent `retrieved.json` (fresh checkout: the DB is
+  tracked, `data/` is not) was first ruled "no note"; that holds for nothing that is drawn — the
+  final review reversed it for the planned-network line, whose overlay comes from the DB and is
+  drawn regardless, so that line says "licence not recorded" (`10f9865`). Two blank screenshots of broken-input pages were
   accepted because HTML tests assert each note renders with the existing note style. Cost: one
   note string; a "not recorded" line if the record format changes; a missed layout defect on two
   broken-input pages.
@@ -323,6 +326,12 @@ test asserts identical DB bytes after each. The md5 has stayed `a5222dc4` since.
   paraphrase ("a trio of sites") slips through.
 - "Counted" is a counter word again in the causal guard ("Counted trips drove demand" fails);
   the verb "count" alone passes (`bf44c3d`). Cost: one line.
+- Final review (2 Important, 9 Minor, no Critical): reverse the Task 2 absent-record ruling for
+  the planned-network line (the plan's Review Focus names a missing `retrieved.json`). Cost: one
+  "licence not recorded" line on fresh checkouts.
+- One final fix wave takes I1, I2 and doc-only items (the corrected Task 2 ruling, Task 8 doc
+  Minors, the spec §5.4 wording note as a follow-up, the remaining final-review Minors as
+  follow-ups); the other Minors are not correctness defects. Cost: those Minors stay open.
 
 ## Follow-ups
 
@@ -331,7 +340,7 @@ Marks: "closed `sha`" by the follow-up pass (2026-10-08/09); unmarked parts stay
 - Overlay method: v3 contact is tested on simplified chords and may miss runs meeting at a bend
   (bounded by the residual drop); v4 drops some km along a turning network (about 0.5 to 3 km on
   2026-01-01, not a strict bound), a v5 question (open). The log's "1,082 km on the two networks"
-  is not printed by the script (closed by the pass's docs commit: `--checks` prints it); the "~10 %
+  is not printed by the script (closed `e4786e0`: `--checks` prints it); the "~10 %
   stop threshold" in `m8-overlay.md` should say it was set by the controller (closed, same
   commit).
 - Plan chart: the axis label always says "per year", so `km_cumulative`/`km_total` targets would
@@ -389,7 +398,10 @@ Marks: "closed `sha`" by the follow-up pass (2026-10-08/09); unmarked parts stay
   generated blocks, so `--check` is blind to their drift; the methodology takes the latest overlay
   version from config, the page and the facts from `plan_overlay`, so a new config file without a
   rerun makes them disagree; `berlin_context` derives the 1 January 2022 baseline from the plan's
-  first target year instead of a named constant (all closed `f5108be`).
+  first target year instead of a named constant (all closed `f5108be`, except the Madrid detector
+  clause ", while the detectors were changed", which stays hand-written text and now sits inside
+  a generated block of `methodology.*.md.j2` where `--check` cannot see it drift; open, final
+  review M4: a `note:` field on the counters.yaml entry would close it).
 - Code structure (final review M8, M9): `counters/__init__.py` `load_city` writes `counter_daily`
   itself while `db.upsert_counter_daily` is used only by tests (closed `e8b36d2`);
   `content/check.py` `_COUNTER_WORDS` matches the verb "count", so a "due to" near it would fail
@@ -413,7 +425,9 @@ Marks: "closed `sha`" by the follow-up pass (2026-10-08/09); unmarked parts stay
 Opened by the follow-up pass (reviewers' deferred Minors, all open):
 
 - Compare and counters (Task 1): the counter tooltip unit reads "each city's base year = 100" and
-  lost "2019 = 100; 2020 is the COVID year" (text only); "Counters are context" is stated twice on
+  lost "2019 = 100; 2020 is the COVID year" (text only; final review M7: `metric_info` calls
+  `counter_unit({}, [])` without a payload, `compare.py` ~190 / `compare.js` ~155; pass
+  `covid_year` or use `model.unit` in the tooltip); "Counters are context" is stated twice on
   the counter Compare view (subtitle and footnote); a static import mid-file in
   `counter-model.test.mjs` (~454); `test_app_m8_counts.py` (~800) pins today's footnote string;
   `compare.py` (~265) raises on a city without `line` where the JS skips it.
@@ -421,8 +435,9 @@ Opened by the follow-up pass (reviewers' deferred Minors, all open):
   date cannot be shown while the planned-network line still shows its DB date; the measures line
   takes the licence without checking that its layer is listed (the planned-network line does);
   with `retrieved.json` missing (fresh checkout) and the overlay shown, the planned-network line
-  names no licence and shows no note; a `counters.yaml` read error is logged per city per cached
-  build, not once.
+  names no licence and shows no note (closed `10f9865`, final review I1: it says "licence not
+  recorded"); a `counters.yaml` read error is logged per city per cached build, not once
+  (`main.py` ~900, ~576; final review M8: cache the `(cfg, error)` pair with the content cache).
 - One source (Task 3): the latest-overlay-version logic and the Berlin city constant are
   duplicated (`methodology.py` ~1073, `plans_pages.py` ~250); the methodology re-implements
   `has_line`/`_days` from `app/counts.py` and computes gaps under a different condition;
@@ -447,3 +462,27 @@ Opened by the follow-up pass (reviewers' deferred Minors, all open):
   "relative to 2019", "90% coverage"); `_seed_report` depends on the fixture flagging at least one
   gap; source and data-ref substitutions still run inside code spans (pre-existing); "counts" as
   a verb still triggers the causal check, and the `archive_url` error still says "source url".
+
+Opened by the final review (Minors, all open):
+
+- Content check (I2, closed `10f9865`): `content --check` dropped the base-year rules
+  silently when `config/counters.yaml` was unreadable and printed `ok`; it now reports
+  `counters.yaml: cannot read config/counters.yaml: <reason>` and exits 1.
+- Prose italics (M1): `EM_MARK` (`narrative.py` ~22, ~94) can pair two OSM wildcards in one
+  paragraph outside backticks (`cycleway:left=*, cycleway:right=* or ...` renders
+  `<em>, cycleway:right=</em>`); no shipped prose has it. A content-check problem for an
+  unbackticked `=*`, or `(?!,)` on the opening lookahead.
+- Spec (M2): spec §5.4 still says "the index base year equals 100" while `counters/check.py`
+  accepts no value for a base year with fewer than `MIN_SITES` sites (§2.13); a one-line note in
+  §5.4 keeps them in step.
+- Report data (M3): `_optional_rows(table, sql)` (`report/data.py` ~548) trusts its caller to name
+  the table the SQL reads; a mismatch returns `[]` for a present table. Guard: assert `table` in
+  `sql`.
+- Plan chart (M5): `plan-chart.js` axis text for `share` targets reads "<unit>, share" ("%,
+  share"); no Berlin item uses `share`. A `QUANTITY_TEXT.share` or dropping `share` from the map.
+- Tests (M6): `RULES` in `tests/test_content_m8.py` (~683) types today's rule values by hand and
+  `test_the_shipped_counter_page_states_the_rule_through_its_facts` reuses it; use
+  `counter_rule_values(CONFIG)` for that test.
+- Counters fetch (M9): `cli.py` ~2157 catches `ValueError` around `adapter.fetch`, so a portal
+  answering HTML gives "error: <city>: Expecting value" without naming the file; a
+  `CounterFormatError` from the adapter would be clearer.
