@@ -8,3 +8,4 @@ __pycache__/
 dist/
 .envrc
 .velometer-staging-*/
+tools/out/
