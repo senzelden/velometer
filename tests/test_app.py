@@ -710,21 +710,38 @@ def _css_rules(css: str) -> list[tuple[list[str], dict[str, str]]]:
 
 
 _ROOT = re.compile(r"(?m)^:root\s*\{([^{}]*)\}")
+_DARK = re.compile(r"@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{([^{}]*)\}\s*\}")
 
 
-def _css_tokens(css: str) -> dict[str, str]:
-    """The custom properties of the stylesheet's `:root`."""
-    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    m = _ROOT.search(css)
-    assert m, "no :root block"
-    pairs = (d.partition(":") for d in m.group(1).split(";") if ":" in d)
+def _pairs(body: str) -> dict[str, str]:
+    pairs = (d.partition(":") for d in body.split(";") if ":" in d)
     return {k.strip(): v.strip() for k, _, v in pairs}
 
 
-def _css_outside_tokens(css: str) -> str:
-    """The stylesheet without comments and its `:root` block."""
+def _dark_tokens(css: str) -> dict[str, str]:
+    """The custom properties the `prefers-color-scheme: dark` `:root` block redefines."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    return _ROOT.sub("", css)
+    m = _DARK.search(css)
+    assert m, "no dark :root block"
+    return _pairs(m.group(1))
+
+
+def _css_tokens(css: str, theme: str = "light") -> dict[str, str]:
+    """The custom properties of the stylesheet's `:root`; for dark, updated with the dark block."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    m = _ROOT.search(css)
+    assert m, "no :root block"
+    light = _pairs(m.group(1))
+    if theme == "light":
+        return light
+    assert theme == "dark", theme
+    return {**light, **_dark_tokens(css)}
+
+
+def _css_outside_tokens(css: str) -> str:
+    """The stylesheet without comments and its two token blocks (light `:root`, dark media)."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    return _ROOT.sub("", _DARK.sub("", css))
 
 
 def _resolve(value: str, tokens: dict[str, str]) -> str:

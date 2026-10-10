@@ -647,15 +647,43 @@ def test_every_target_value_is_in_the_year_table(client):
 # ---------- colour tokens (M8 follow-ups, Task 5) ----------
 
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+COLOUR_FN = re.compile(r"(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(", re.I)
+# the CSS named colours; `transparent`, `currentColor` and `inherit` are allowed (not colours)
+NAMED = (  # noqa: SIM905 - one word list reads better than 148 quoted names
+    "aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue "
+    "blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk "
+    "crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki "
+    "darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen "
+    "darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue "
+    "dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite "
+    "gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki "
+    "lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan "
+    "lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen "
+    "lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen "
+    "magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen "
+    "mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream "
+    "mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid "
+    "palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum "
+    "powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown "
+    "seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen "
+    "steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow "
+    "yellowgreen"
+).split()
+NAMED_COLOUR = re.compile(rf"(?<![\w-])(?:{'|'.join(NAMED)})(?![\w-])", re.I)
+
+
+def _colour_literal(value: str) -> bool:
+    return bool(HEX.search(value) or COLOUR_FN.search(value) or NAMED_COLOUR.search(value))
 
 
 def _stylesheet() -> str:
     return (STATIC / "app.css").read_text()
 
 
-def test_no_hex_colour_outside_the_colour_tokens():
-    # every colour is a :root token: a hex literal in a rule is a colour that changes in one
-    # place and not the others. The rule is over the whole stylesheet, M7 rules included
+def test_no_colour_literal_outside_the_colour_tokens():
+    # every colour is a token, defined in the light :root and the dark block: a literal in a rule
+    # (hex, rgb()/hsl()/..., or a named colour) is a colour that changes in one place and not
+    # the others, and that no theme redefines. Over the whole stylesheet, M7 rules included
     from tests.test_app import _css_outside_tokens, _css_rules
 
     rest = _css_outside_tokens(_stylesheet())
@@ -664,9 +692,18 @@ def test_no_hex_colour_outside_the_colour_tokens():
         for sels, decls in _css_rules(rest)
         for sel in sels[:1]
         for prop, value in decls.items()
-        if HEX.search(value)
+        if _colour_literal(value)
     ]
     assert found == []
+
+
+def test_the_literal_rule_sees_every_kind_of_colour():
+    for literal in ("#fff", "rgb(0 0 0 / 0.1)", "rgba(0,0,0,.1)", "hsl(0 0% 0%)", "white",
+                    "1px solid Grey", "0 4px 16px black"):  # fmt: skip
+        assert _colour_literal(literal), literal
+    for fine in ("transparent", "currentColor", "inherit", "var(--ink)", "nowrap",
+                 "underline wavy var(--flag)", "1px solid var(--grid)"):  # fmt: skip
+        assert not _colour_literal(fine), fine
 
 
 def test_every_token_used_is_defined():
@@ -732,7 +769,7 @@ def test_the_plan_chart_and_its_key_draw_with_the_same_tokens():
     assert decl[".key-mapped"]["border-top"].endswith("var(--mapped)")
     assert decl[".mapped-note"]["border-left"].endswith("var(--mapped)")
     assert decl[".plan-svg .projects .bar"]["fill"] == "var(--completed)"
-    assert decl[".key-projects"]["background"] == "var(--completed)"
+    assert decl[".key-projects"]["border"].endswith("var(--completed)")
     cap = decl[".plan-svg .target-cap"]["stroke"]
     assert cap.startswith("var(") and decl[".key-cap"]["border-top"].endswith(cap)
 
