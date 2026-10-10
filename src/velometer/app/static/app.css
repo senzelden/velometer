@@ -204,6 +204,7 @@ td.date { white-space: nowrap; } /* 2025-12-31 never breaks at its hyphens */
 .align-center { text-align: center; }
 .align-left { text-align: left; }
 th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+thead th, thead th.num { white-space: normal; }  /* a long column head wraps; the data cells stay on one line */
 tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--flag); }
 tr.remainder td { border-top: 2px solid var(--ink-2); color: var(--ink-2); font-style: italic; }
 tr:has(+ tr.note-row) td { border-bottom: 0; }

@@ -918,3 +918,11 @@ def test_the_compare_sort_bar_has_a_visible_caption_tied_to_the_table():
     phone = {k: v for s, d in rules if s == [".compare-js .sort-caption"] for k, v in d.items()}
     assert phone.get("display") == "block"  # not visually hidden: sighted readers need it
     assert "clip" not in phone and "width" not in phone
+
+
+def test_column_heads_may_wrap_so_a_wide_table_fits_its_box():
+    # a long head ("Ours: Clean Cities method (n=21)") must not set its column's width: with
+    # nowrap heads the ranks, presets and story tables spilled out of their box at 1280 px
+    rules = _css_rules(_stylesheet())
+    wrap = {s for s, d in rules if d.get("white-space") == "normal" for s in s}
+    assert "thead th" in wrap and "thead th.num" in wrap  # the .num rule is more specific
