@@ -3,18 +3,25 @@
 M10 spec decision 7. Serves the export with `python -m http.server` on 127.0.0.1 under the base
 path, opens each page × theme × width in headless Chrome over the DevTools protocol and records
 axe-core violations (WCAG 2.1 A/AA tags), sideways overflow, console messages, CSP violations,
-the hosts contacted and a full-page screenshot. `results.json` in `--out` holds one entry per
-visit; the exit status is 1 when any visit has a finding, else 0.
+the hosts contacted and a full-page screenshot. A failed navigation, a document that is not 200,
+a load event that never fires and (with `--interact`) a panel that does not open, close or give
+focus back are findings too (`errors`). `results.json` in `--out` holds one entry per visit and
+is rewritten after each one; the exit status is 1 when any visit has a finding or nothing was
+visited, else 0.
 
 axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injected through
 `Runtime.evaluate`, which the page's CSP does not apply to; it is never served by the app.
 
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
-        [--pages all|types|<url>,...] [--flip]
+        [--pages all|types|<url>,...] [--flip] [--interact] [--chrome PATH]
 
 `--flip` is a mode of its own: each page loads in light, the emulated scheme switches to dark
 mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
+`--interact` adds, per theme and width, a visit to `<base>compare` that opens a city panel with a
+mouse click (table view, first city link), audits the page with the panel open, presses Escape and
+checks focus returned to the link. Chrome is `--chrome`, else `$VELOMETER_CHROME`, else
+`/usr/bin/google-chrome`.
 """
 
 from __future__ import annotations
@@ -23,6 +30,7 @@ import argparse
 import base64
 import contextlib
 import json
+import os
 import re
 import shutil
 import socket
@@ -37,18 +45,23 @@ from urllib.parse import urlsplit
 
 HERE = Path(__file__).resolve().parent
 AXE_JS = HERE / "axe" / "axe.min.js"
-CHROME = "/usr/bin/google-chrome"
+CHROME = "/usr/bin/google-chrome"  # default; --chrome or $VELOMETER_CHROME override it
+LOAD_TIMEOUT = 30.0  # seconds for a page's load event; a load that never fires is a finding
+OK_STATUS = {200, 304}  # 304: the browser cache revalidated a 200
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
 ALLOWED_HOSTS = {"127.0.0.1", "tile.openstreetmap.org"}
 # pages in a city are /city/<slug>/<tab>; --pages types keeps Berlin plus the first city (by
 # slug) whose tab list differs from Berlin's
 TYPES_CITY = "berlin"
 
-# Elements wider than their box, outside prose tables (allowed to scroll, spec decision 5) and
-# the Leaflet map (its panes are positioned beyond the viewport by design). Elements that clip
-# their overflow (overflow-x hidden/clip: ellipsis, visually hidden text) cannot scroll and are
-# skipped, and so are boxes whose only spilling content is a prose table. The document itself
-# overflowing the viewport is reported as ":root".
+# Overflow, as a reader on a phone meets it:
+# - a box whose content is wider than it: a scroller, a box that clips it (content lost) or one
+#   it spills out of, including a leaf whose own text spills (nowrap, a long word);
+# - the document wider than the layout viewport, reported as ":root".
+# Not counted: anything inside a prose table (allowed to scroll, spec decision 5), the Leaflet map
+# (its panes sit beyond the viewport by design), text cut with `text-overflow: ellipsis`, the
+# visually-hidden pattern (a box of 1px or less), and a box whose only spill is a prose table that
+# actually sticks out of it (prose tables may be wider than the prose column).
 OVERFLOW_JS = r"""
 (() => {
   const sel = (el) => {
@@ -62,27 +75,46 @@ OVERFLOW_JS = r"""
     }
     return parts.join(' > ');
   };
-  // a box whose content spills only because a prose table sticks out of it (by design: prose
-  // tables may be wider than the prose column) is not itself overflowing
-  const onlyProse = (el) => {
-    const right = el.getBoundingClientRect().left + el.clientWidth + 1;
-    for (const d of el.querySelectorAll('*')) {
-      if (d.closest('.prose table')) continue;
-      if (d.getBoundingClientRect().right > right) return false;
+  const inProse = (e) => !!e.closest('.prose table');
+  // does the element's own text (its direct text nodes) reach past `right`?
+  const textSpills = (el, right) => {
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3 || !n.textContent.trim()) continue;
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      for (const b of r.getClientRects()) if (b.right > right) return true;
     }
-    return true;
+    return false;
+  };
+  // true only if a prose table really sticks out of el and nothing else does
+  const onlyProse = (el) => {
+    const right = el.getBoundingClientRect().left + el.clientLeft + el.clientWidth + 1;
+    if (textSpills(el, right)) return false;
+    let prose = false;
+    for (const d of el.querySelectorAll('*')) {
+      const spills = d.getBoundingClientRect().right > right || textSpills(d, right);
+      if (!spills) continue;
+      if (inProse(d)) prose = true;
+      else return false;
+    }
+    return prose;
   };
   const out = [];
   for (const el of document.querySelectorAll('body *')) {
-    if (el.scrollWidth <= el.clientWidth + 1 || el.clientWidth === 0) continue;
-    if (el.closest('.prose table') || el.closest('.leaflet-container')) continue;
-    const ox = getComputedStyle(el).overflowX;
-    if (ox === 'hidden' || ox === 'clip') continue;
+    if (el.scrollWidth <= el.clientWidth + 1) continue;
+    if (inProse(el) || el.closest('.leaflet-container')) continue;
+    const box = el.getBoundingClientRect();
+    if (box.width <= 1 || box.height <= 1) continue;  // visually hidden
+    const cs = getComputedStyle(el);
+    if (cs.textOverflow === 'ellipsis') continue;
+    const ox = cs.overflowX;
     if (ox === 'visible' && onlyProse(el)) continue;
-    out.push(sel(el) + ' (' + el.scrollWidth + '>' + el.clientWidth + ')');
+    const how = ox === 'hidden' || ox === 'clip' ? ' clipped' : '';
+    out.push(sel(el) + ' (' + el.scrollWidth + '>' + el.clientWidth + how + ')');
   }
-  const doc = document.documentElement.scrollWidth;
-  if (doc > innerWidth) out.unshift(':root (' + doc + '>' + innerWidth + ')');
+  const root = document.documentElement;
+  if (root.scrollWidth > root.clientWidth + 1)
+    out.unshift(':root (' + root.scrollWidth + '>' + root.clientWidth + ')');
   return [...new Set(out)];
 })()
 """
@@ -196,11 +228,24 @@ class Tab:
                 self.events.append(json.loads(self.ws.recv()))
         self.ws.settimeout(120)
 
-    def wait_event(self, method: str, since: int, cap: float = 30) -> None:
+    def wait_event(self, method: str, since: int, cap: float) -> bool:
+        """True when `method` arrived after event `since` within `cap` seconds."""
         end = time.time() + cap
-        while time.time() < end:
+        while True:
             if any(e.get("method") == method for e in self.events[since:]):
-                return
+                return True
+            if time.time() >= end:
+                return False
+            self.pump(0.1)
+
+    def wait_js(self, expr: str, cap: float) -> bool:
+        """True when the JS expression is truthy within `cap` seconds."""
+        end = time.time() + cap
+        while True:
+            if self.js(expr):
+                return True
+            if time.time() >= end:
+                return False
             self.pump(0.1)
 
     def js(self, expr: str, await_promise: bool = False):
@@ -222,17 +267,21 @@ def open_tab(devtools: str, width: int, theme: str) -> Tab:
     with urllib.request.urlopen(req) as r:
         info = json.load(r)
     t = Tab(devtools, info["webSocketDebuggerUrl"], info["id"])
-    for domain in ("Page", "Network", "Runtime", "Log", "Audits"):
-        t.call(f"{domain}.enable")
-    phone = width < 600
-    t.call(
-        "Emulation.setDeviceMetricsOverride",
-        width=width,
-        height=844 if phone else 900,
-        deviceScaleFactor=1,
-        mobile=phone,
-    )
-    set_theme(t, theme)
+    try:
+        for domain in ("Page", "Network", "Runtime", "Log", "Audits"):
+            t.call(f"{domain}.enable")
+        phone = width < 600
+        t.call(
+            "Emulation.setDeviceMetricsOverride",
+            width=width,
+            height=844 if phone else 900,
+            deviceScaleFactor=1,
+            mobile=phone,
+        )
+        set_theme(t, theme)
+    except BaseException:
+        t.close()
+        raise
     return t
 
 
@@ -288,41 +337,158 @@ def screenshot(t: Tab, path: Path, width: int) -> str:
     return str(path)
 
 
+def navigate(t: Tab, url: str) -> list[str]:
+    """Load `url`; the errors are a failed navigation, a non-200 document and a missing load."""
+    since = len(t.events)
+    res = t.call("Page.navigate", url=url)
+    if res.get("errorText"):
+        return [f"navigation failed: {res['errorText']} {url}"]
+    errors = []
+    if not t.wait_event("Page.loadEventFired", since, LOAD_TIMEOUT):
+        errors.append(f"load event did not fire within {LOAD_TIMEOUT:g} s: {url}")
+    docs = [
+        e["params"]["response"]
+        for e in t.events[since:]
+        if e.get("method") == "Network.responseReceived"
+        and e["params"].get("type") == "Document"
+        and e["params"].get("frameId") == res.get("frameId")
+    ]
+    if not docs:
+        errors.append(f"no document response: {url}")
+    elif docs[-1]["status"] not in OK_STATUS:
+        errors.append(f"document HTTP {docs[-1]['status']}: {url}")
+    return errors
+
+
+def audit(t: Tab) -> list[dict]:
+    t.js(AXE_JS.read_text(encoding="utf-8"))
+    return t.js(AXE_RUN_JS, await_promise=True)
+
+
+def entry(url, theme, width, kind, *, axe=(), overflow=(), events=(), errors=(), shot=None):
+    console, csp, hosts = collect(list(events))
+    return {
+        "url": url,
+        "theme": theme,
+        "width": width,
+        "kind": kind,
+        "axe": list(axe),
+        "overflow": list(overflow),
+        "console": console,
+        "csp": csp,
+        "hosts": hosts,
+        "errors": list(errors),
+        "screenshot": shot,
+    }
+
+
 def visit(devtools: str, origin: str, url: str, theme: str, width: int, shots: Path, base: str,
           flip: bool = False) -> dict:  # fmt: skip
-    t = open_tab(devtools, width, "light" if flip else theme)
+    kind, label = ("flip", "light->dark") if flip else ("page", theme)
+    t = None
     try:
-        since = len(t.events)
-        t.call("Page.navigate", url=origin + url)
-        t.wait_event("Page.loadEventFired", since)
+        t = open_tab(devtools, width, "light" if flip else theme)
+        errors = navigate(t, origin + url)
+        if any(e.startswith("navigation failed") for e in errors):
+            return entry(url, label, width, kind, events=t.events, errors=errors)
         t.pump(1.5)
         if flip:
             set_theme(t, "dark")
             t.pump(0.5)
         # console, CSP and hosts belong to the page, not to axe: collect before injecting it
-        console, csp, hosts = collect(t.events)
+        events = list(t.events)
         overflow = t.js(OVERFLOW_JS)
         name = f"{slug(url, base)}-{'flipped' if flip else theme}-{width}.png"
         shot = screenshot(t, shots / name, width)
-        t.js(AXE_JS.read_text(encoding="utf-8"))
-        axe = t.js(AXE_RUN_JS, await_promise=True)
+        axe = audit(t)
+        return entry(url, label, width, kind, axe=axe, overflow=overflow, events=events,
+                     errors=errors, shot=shot)  # fmt: skip
     finally:
-        t.close()
-    return {
-        "url": url,
-        "theme": "light->dark" if flip else theme,
-        "width": width,
-        "axe": axe,
-        "overflow": overflow,
-        "console": console,
-        "csp": csp,
-        "hosts": hosts,
-        "screenshot": shot,
-    }
+        if t is not None:
+            t.close()
+
+
+# The Compare city panel (a fragment, so never a page of its own): open it as a reader does, audit
+# the page with it open, close it with Escape and check focus went back to the link that opened it.
+PANEL_OPEN_JS = (
+    "(() => { const p = document.querySelector('#city-panel');"
+    " return !!p && !p.hidden && !!p.querySelector('.slideover-body .panel-frag'); })()"
+)
+PANEL_CLOSED_JS = (
+    "(() => { const p = document.querySelector('#city-panel'); return !p || p.hidden; })()"
+)
+
+
+def click(t: Tab, selector: str) -> str | None:
+    """Scroll the first visible match into view and click its centre with the mouse; None, or why
+    it could not."""
+    box = t.js(
+        "(() => { const e = [...document.querySelectorAll(" + json.dumps(selector) + ")]"
+        ".find(x => x.getClientRects().length); if (!e) return null;"
+        " e.scrollIntoView({block: 'center'}); window.__clicked = e;"
+        " const r = e.getBoundingClientRect(); return {x: r.left + r.width / 2,"
+        " y: r.top + r.height / 2}; })()"
+    )
+    if not box:
+        return f"nothing visible to click: {selector}"
+    for typ in ("mouseMoved", "mousePressed", "mouseReleased"):
+        t.call("Input.dispatchMouseEvent", type=typ, x=box["x"], y=box["y"], button="left",
+               clickCount=1)  # fmt: skip
+    return None
+
+
+def interact(devtools: str, origin: str, base: str, theme: str, width: int, shots: Path) -> dict:
+    url = base + "compare"
+    label = url + " (city panel)"
+    t = None
+    try:
+        t = open_tab(devtools, width, theme)
+        errors = navigate(t, origin + url)
+        if errors:
+            return entry(label, theme, width, "interact", events=t.events, errors=errors)
+        t.pump(1.5)
+        # the table view lists every selected city as a link that opens its panel
+        if why := click(t, ".view-tabs a[data-view=table]"):
+            return entry(label, theme, width, "interact", events=t.events, errors=[why])
+        if not t.wait_js("!!document.querySelector('table a[data-city]')", 5):
+            return entry(label, theme, width, "interact", events=t.events,
+                         errors=["the table view shows no city link"])  # fmt: skip
+        if why := click(t, "table a[data-city]"):
+            return entry(label, theme, width, "interact", events=t.events, errors=[why])
+        t.js("window.__opener = window.__clicked")
+        if not t.wait_js(PANEL_OPEN_JS, 10):
+            return entry(label, theme, width, "interact", events=t.events,
+                         errors=["the city panel did not open and load"])  # fmt: skip
+        t.pump(1.0)
+        before = len(t.events)
+        overflow = t.js(OVERFLOW_JS)
+        shot = screenshot(t, shots / f"compare-panel-{theme}-{width}.png", width)
+        axe = audit(t)
+        after = len(t.events)
+        for typ in ("keyDown", "keyUp"):
+            t.call("Input.dispatchKeyEvent", type=typ, key="Escape", code="Escape",
+                   windowsVirtualKeyCode=27)  # fmt: skip
+        if not t.wait_js(PANEL_CLOSED_JS, 3):
+            errors.append("Escape did not close the city panel")
+        else:
+            t.pump(0.3)
+            if not t.js("document.activeElement === window.__opener"):
+                now = t.js(
+                    "(e => e ? e.outerHTML.slice(0, 80) : 'nothing')(document.activeElement)"
+                )
+                errors.append(f"focus did not return to the opener after Escape (now on {now})")
+        events = t.events[:before] + t.events[after:]
+        return entry(label, theme, width, "interact", axe=axe, overflow=overflow, events=events,
+                     errors=errors, shot=shot)  # fmt: skip
+    finally:
+        if t is not None:
+            t.close()
 
 
 def failures(r: dict) -> list[str]:
     out = []
+    if r["errors"]:
+        out.append(f"errors {len(r['errors'])}")
     if r["axe"]:
         out.append(f"axe {len(r['axe'])}")
     if r["overflow"]:
@@ -335,6 +501,16 @@ def failures(r: dict) -> list[str]:
     if foreign:
         out.append(f"hosts {','.join(foreign)}")
     return out
+
+
+def stop(proc: subprocess.Popen, timeout: float = 10) -> None:
+    """Terminate a child; kill it if it has not gone within `timeout` seconds."""
+    proc.terminate()
+    try:
+        proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
 
 
 @contextlib.contextmanager
@@ -361,19 +537,18 @@ def serve(site: Path, base: str):
         wait_http(origin + base)
         yield origin
     finally:
-        proc.terminate()
-        proc.wait()
+        stop(proc)
         if rel:
             shutil.rmtree(root, ignore_errors=True)
 
 
 @contextlib.contextmanager
-def chrome():
+def chrome(binary: str = CHROME):
     port = free_port()
     profile = tempfile.mkdtemp(prefix="render-pass-chrome-")
     proc = subprocess.Popen(
         [
-            CHROME,
+            binary,
             "--headless=new",
             f"--remote-debugging-port={port}",
             f"--user-data-dir={profile}",
@@ -394,13 +569,13 @@ def chrome():
         wait_http(devtools + "/json/version", 30)
         yield devtools
     finally:
-        proc.terminate()
-        try:
-            proc.wait(10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
+        stop(proc)
         shutil.rmtree(profile, ignore_errors=True)
+
+
+def find_chrome(path: str) -> str | None:
+    found = shutil.which(path)
+    return found if found and os.access(found, os.X_OK) else None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -414,6 +589,16 @@ def main(argv: list[str] | None = None) -> int:
         "--pages", default="all", help="all, types, or comma-separated URLs (base included)"
     )
     ap.add_argument("--flip", action="store_true", help="light, then dark mid-page (own mode)")
+    ap.add_argument(
+        "--interact",
+        action="store_true",
+        help="also open a city panel on <base>compare per theme and width, audit, Escape",
+    )
+    ap.add_argument(
+        "--chrome",
+        default=os.environ.get("VELOMETER_CHROME") or CHROME,
+        help=f"Chrome binary (default: $VELOMETER_CHROME, else {CHROME})",
+    )
     a = ap.parse_args(argv)
 
     base = _norm_base(a.base)
@@ -430,33 +615,55 @@ def main(argv: list[str] | None = None) -> int:
         urls = type_urls(page_urls(site, base), base)
     else:
         urls = [u for u in a.pages.split(",") if u]
-    if a.flip:
-        themes = ["light->dark"]
+    page_themes = ["light->dark"] if a.flip else themes
+    plan = [("page", u, th, w) for u in urls for th in page_themes for w in widths]
+    if a.interact:
+        plan += [("interact", base + "compare", th, w) for th in themes for w in widths]
 
     out = a.out
     shots = out / "shots"
     if shots.exists():
         shutil.rmtree(shots)
     out.mkdir(parents=True, exist_ok=True)
-    results = []
-    total = len(urls) * len(themes) * len(widths)
-    with serve(site, base) as origin, chrome() as devtools:
-        for url in urls:
-            for theme in themes:
-                for width in widths:
+    results: list[dict] = []
+
+    def save() -> None:
+        (out / "results.json").write_text(json.dumps(results, indent=1) + "\n", encoding="utf-8")
+
+    if not plan:
+        save()
+        print("no visits: nothing was checked (check --pages, --themes and --widths)")
+        return 1
+    binary = find_chrome(a.chrome)
+    if binary is None:
+        ap.error(
+            f"Chrome not found or not executable: {a.chrome} (set --chrome or $VELOMETER_CHROME)"
+        )
+
+    try:
+        with serve(site, base) as origin, chrome(binary) as devtools:
+            for kind, url, theme, width in plan:
+                if kind == "interact":
+                    r = interact(devtools, origin, base, theme, width, shots)
+                else:
                     r = visit(devtools, origin, url, theme, width, shots, base, flip=a.flip)
-                    results.append(r)
-                    bad = failures(r)
-                    print(f"[{len(results)}/{total}] {url} {r['theme']} {width}: "
-                          f"{'; '.join(bad) or 'ok'}", flush=True)  # fmt: skip
-    (out / "results.json").write_text(json.dumps(results, indent=1) + "\n", encoding="utf-8")
+                results.append(r)
+                save()
+                bad = failures(r)
+                print(f"[{len(results)}/{len(plan)}] {r['url']} {r['theme']} {width}: "
+                      f"{'; '.join(bad) or 'ok'}", flush=True)  # fmt: skip
+    finally:
+        save()
 
     failed = [r for r in results if failures(r)]
     rules = Counter(v["id"] for r in results for v in r["axe"])
     print(f"\n{len(results)} visits, {len(failed)} with findings; results in {out}/results.json")
     for rule, n in rules.most_common():
         print(f"  axe {rule}: {n} visits")
-    return 1 if failed else 0
+    for r in results:
+        for e in r["errors"]:
+            print(f"  error {r['url']} {r['theme']} {r['width']}: {e}")
+    return 1 if failed or len(results) < len(plan) else 0
 
 
 if __name__ == "__main__":

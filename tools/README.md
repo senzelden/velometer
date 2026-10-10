@@ -10,8 +10,13 @@ with `python -m http.server` on 127.0.0.1 under the base path and drives
 `dev` dependency group). For every page × theme (`prefers-color-scheme`) × width it records:
 
 - axe-core violations for the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`;
-- overflow: elements wider than their box (not counting prose tables, the Leaflet map and
-  elements that clip their overflow), and the document wider than the viewport (`:root`);
+- overflow: boxes whose content is wider than they are. This covers scrollers, boxes that clip
+  the content (marked `clipped`), and boxes the content spills out of, including a leaf's own
+  text. It also covers the document being wider than the layout viewport (`:root`). Not counted:
+  prose tables, the Leaflet map, `text-overflow: ellipsis`, visually hidden boxes of 1px or less,
+  and a box whose only spill is a prose table;
+- errors: a failed navigation, a document that is not 200 (304 from the cache counts as 200), or
+  a load event that has not fired within 30 s;
 - console messages (console API, uncaught exceptions, browser log errors and warnings such as
   failed loads);
 - CSP violations (DevTools `Audits` issues);
@@ -22,7 +27,7 @@ with `python -m http.server` on 127.0.0.1 under the base path and drives
 uv run velometer app export --out "$SCRATCH/site/velometer" --base /velometer/ --clean
 uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" \
     --base /velometer/ --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
-    [--pages all|types|/velometer/compare,...] [--flip]
+    [--pages all|types|/velometer/compare,...] [--flip] [--interact] [--chrome PATH]
 ```
 
 - `--pages all` (default) visits every exported page. HTML fragments (the city panels) and
@@ -30,10 +35,18 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   Berlin and of the first city whose tab list differs from Berlin's.
 - `--flip` is a separate mode. Each page loads in light, the emulated scheme switches to dark
   mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
-- The exit status is 1 if any visit has an axe violation, overflow, a console message, a CSP
-  violation or a host other than `127.0.0.1` and `tile.openstreetmap.org`. Otherwise it is 0.
-- `<out>/results.json` lists one entry per visit:
-  `{url, theme, width, axe: [{id, impact, nodes}], overflow, console, csp, hosts, screenshot}`.
+- `--interact` adds one visit per theme and width to `<base>compare`. It switches to the table
+  view and clicks the first city link, the way a reader would, and waits for the city panel to
+  load. Then it runs the same checks with the panel open, presses Escape, and checks that the
+  panel closed and focus went back to the link. Screenshots are `compare-panel-<theme>-<width>.png`.
+- `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else
+  `/usr/bin/google-chrome`. A missing binary is a usage error.
+- The exit status is 1 if any visit has an error, an axe violation, overflow, a console message,
+  a CSP violation or a host other than `127.0.0.1` and `tile.openstreetmap.org`. It is also 1
+  when nothing was visited. Otherwise it is 0.
+- `<out>/results.json` lists one entry per visit and is rewritten after every visit:
+  `{url, theme, width, kind: page|flip|interact, axe: [{id, impact, nodes}], overflow, console,
+  csp, hosts, errors, screenshot}`.
 - `tools/out/` is git-ignored.
 
 The tool contacts `tile.openstreetmap.org` because the maps do. The browser cache is kept
