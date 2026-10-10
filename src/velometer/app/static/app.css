@@ -386,6 +386,8 @@ footer p { margin: 0.25rem 0; }
 .pullquote .gloss { display: block; font-style: italic; }
 .pullquote .gloss::before { content: "In English: "; font-style: normal; }
 .story-aside .aside-box { background: var(--surface); border: 1px solid var(--grid); border-radius: 8px; padding: 0.6rem 1rem 0.4rem; margin-bottom: 1rem; }
+.story-aside table { font-size: 0.78rem; width: 100%; }
+.story-aside th, .story-aside td, .story-aside td.num { padding: 0.2rem 0.3rem; white-space: normal; min-width: 0; }
 .story-aside h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border: 0; margin: 0 0 0.25rem; padding: 0; }
 .citations { font: 0.88rem/1.45 system-ui, sans-serif; padding-left: 1.5rem; color: var(--ink-2); }
 .citations li { margin-bottom: 0.3rem; }

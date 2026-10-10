@@ -883,3 +883,12 @@ def test_the_tier_names_are_the_popup_labels(client):  # noqa: F811
     html = client.get("/city/berlin/tiers").text
     cfg = json.loads(re.search(r'id="tiermap-config">(.*?)</script>', html, re.S).group(1))
     assert all(re.match(rf"{t} \w", cfg["labels"][t]) for t in "ABCDE")
+
+
+def test_the_story_aside_table_is_compact_and_wraps_so_it_never_scrolls_sideways():
+    # decision 5: only prose tables scroll sideways. The aside box is 18rem wide, so its table
+    # is set small, full width, with cells that may wrap (render pass: no overflow at 1280/390/320)
+    rules = {k: v for sels, d in _rules() if ".story-aside table" in sels for k, v in d.items()}
+    assert rules.get("width") == "100%" and float(rules["font-size"].removesuffix("rem")) <= 0.8
+    cells = {k: v for sels, d in _rules() if ".story-aside td.num" in sels for k, v in d.items()}
+    assert cells.get("white-space") == "normal" and cells.get("min-width") == "0"

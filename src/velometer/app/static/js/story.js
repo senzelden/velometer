@@ -6,6 +6,7 @@
 import { renderLines, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { buildModel, slotPlan } from "./compare-model.js";
+import { describe } from "./describe.js";
 import { displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
 
 const cfg = JSON.parse(document.getElementById("story-config").textContent);
@@ -97,7 +98,7 @@ function show(step) {
   out.short.textContent = spec.short ?? "";
   out.link.href = spec.href;
   // the chart's data is the table in the section being read
-  if (document.getElementById(`step-values-${step}`)) plot.setAttribute("aria-describedby", `step-values-${step}`);
+  describe(plot, step);
   draw();
   if (reduced) return;
   plot.classList.remove("fade-in"); // restart the CSS fade
