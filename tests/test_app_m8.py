@@ -796,3 +796,57 @@ def test_the_plan_key_explains_the_capped_marker(client):
     assert len(cap) == 1
     text = _text(cap[0])
     assert "↑" in text and "above the chart's scale" in text and "table" in text
+
+
+# --- quote language (M10 spec decision 6, Language) ---
+def _src(language="de", gloss="cycle paths"):
+    from velometer.content.models import Excerpt, Source
+
+    return {"s": Source(id="s", publisher="P", title="T", url="https://example.org/",
+                        accessed="2026-01-01", language=language, kind="press",
+                        excerpts=[Excerpt(id="e", text="Radwege", gloss_en=gloss,
+                                          locator="p. 1")])}  # fmt: skip
+
+
+def test_a_pullquote_carries_the_language_of_its_source_and_its_gloss_is_english():
+    from velometer.app.narrative import pullquote
+
+    html = str(pullquote(_src(), "s/e"))
+    assert '<blockquote lang="de">' in html
+    assert '<span class="gloss" lang="en">cycle paths</span>' in html
+    # an English source needs no gloss, and the quote still says what it is written in
+    en = str(pullquote(_src("en", None), "s/e"))
+    assert '<blockquote lang="en">' in en and "gloss" not in en
+
+
+def _para(text):
+    from velometer.app.narrative import _Numbering
+
+    return str(_Numbering({}, {}).paragraph(text))
+
+
+def test_content_may_mark_an_inline_quote_with_its_language():
+    assert _para('He said <q lang="de">Radwege</q> twice.') == (
+        '<p>He said <q lang="de">Radwege</q> twice.</p>'
+    )
+    assert _para('<blockquote lang="fr">Les pistes.</blockquote>') == (
+        '<blockquote lang="fr"><p>Les pistes.</p></blockquote>'
+    )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '<q lang="de" onclick="x()">a</q>',  # no other attribute
+        '<q lang="de&quot; onclick=&quot;x">a</q>',  # the value is a language tag, nothing else
+        '<q lang="d e">a</q>',
+        "<q>a</q>",  # no language, no tag
+        '<span lang="de">a</span>',  # only the two quote tags
+        '<q lang="de">unclosed',
+        'a <blockquote lang="de">mid-paragraph</blockquote> b',  # a block only as a paragraph
+        '<script lang="de">x</script>',
+    ],
+)
+def test_nothing_but_a_language_marked_quote_reaches_the_page_as_markup(text):
+    out = _para(text)
+    assert "<" not in re.sub(r"</?p>", "", out), out  # every tag was escaped to text

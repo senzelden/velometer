@@ -1,0 +1,16 @@
+{#- The values behind a tier-composition chart: mapped km by tier per snapshot. `sum_id` is the
+    summary's id, which the chart names in aria-describedby. -#}
+{% macro tier_series_table(k, tiers, sum_id) %}
+<details class="table-details"><summary id="{{ sum_id }}">Table: mapped km by tier ({{ k.kind | upper }})</summary>
+<div class="scroll">
+<table class="stack">
+<thead><tr><th>Snapshot</th>{% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}</tr></thead>
+<tbody>
+{% for p in k.series.points %}
+<tr><td data-label="Snapshot">{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% endmacro %}

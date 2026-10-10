@@ -96,6 +96,8 @@ function show(step) {
   out.note.textContent = spec.note;
   out.short.textContent = spec.short ?? "";
   out.link.href = spec.href;
+  // the chart's data is the table in the section being read
+  if (document.getElementById(`step-values-${step}`)) plot.setAttribute("aria-describedby", `step-values-${step}`);
   draw();
   if (reduced) return;
   plot.classList.remove("fade-in"); // restart the CSS fade

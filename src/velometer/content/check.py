@@ -31,6 +31,7 @@ from velometer.content.loader import (
     load_sources,
 )
 from velometer.content.models import (
+    LANG_TAG,
     STORY_STEPS,
     ContentError,
     DataRef,
@@ -62,6 +63,7 @@ _CAUSAL = re.compile(
     r"\b(led to|lead to|leads to|because of|drove|driven by|thanks to|resulted in|caused|due to)\b",
     re.IGNORECASE,
 )
+_LANG_ATTR = re.compile(r"""\blang\s*=\s*(?:"([^"]*)"|'([^']*)')""", re.IGNORECASE)
 COUNTER_PAGE = "counters.yaml"
 PLAN_DOCUMENTS = ("plans/berlin.yaml", COUNTER_PAGE)
 _ONES = (
@@ -407,6 +409,22 @@ def _narrative_prose(n: Narrative) -> list[str]:
     return out
 
 
+def _check_lang_attributes(content_dir: Path) -> list[str]:
+    """A problem per `lang="…"` in a content file whose value is not a BCP 47 language tag: the
+    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`)."""
+    problems = []
+    for path in sorted(content_dir.rglob("*.yaml")):
+        text = path.read_text(encoding="utf-8")
+        for m in _LANG_ATTR.finditer(text):
+            value = m.group(1) if m.group(1) is not None else m.group(2)
+            if not LANG_TAG.fullmatch(value):
+                problems.append(
+                    f"{path.relative_to(content_dir).as_posix()}: lang attribute {value!r} "
+                    "is not a BCP 47 language tag"
+                )
+    return problems
+
+
 def check_content(content_dir: Path, data: ReportData, docs_dir: Path) -> list[str]:
     """Every problem of the content directory, facts evaluated against the report data."""
     return _check(content_dir, Path(data.config_dir), data, docs_dir)
@@ -435,7 +453,7 @@ def _check(
         return [str(e)]
     load_errors: dict[str, str] = {}
     narratives = load_narratives(content_dir / "narratives", errors=load_errors)
-    problems: list[str] = list(load_errors.values())
+    problems: list[str] = list(load_errors.values()) + _check_lang_attributes(content_dir)
     try:
         explainer = load_document(content_dir / "explainer.yaml")
     except ContentError as e:

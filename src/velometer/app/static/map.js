@@ -63,6 +63,9 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
 
   function popup(p) {
     var box = el("div", null, { class: "tiermap-popup" });
+    // the tier opens the popup, by name ("A separated track"): the line's colour is not the only
+    // thing that says which tier a side is
+    box.appendChild(el("p", cfg.labels[p.tier] || p.tier, { class: "tiermap-popup-tier" }));
     var dl = el("dl");
     function row(label, value) {
       dl.appendChild(el("dt", label));

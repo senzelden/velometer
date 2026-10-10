@@ -145,3 +145,14 @@ test("renderLines draws a mark at its label with its text, and skips a label not
   assert.equal(marks[0].attrs["data-mark"], "2019");
   assert.ok(marks[0].find("text").some((t) => t.textContent === "COVID year"));
 });
+
+test("renderTiers keys every tier by name beside its colour, in the order they stack", () => {
+  const el = new Node("div");
+  const names = { A: "A separated track", B: "B shared path", C: "C lane" };
+  renderTiers(el, { labels, layers: Object.entries(names).map(([key, name]) => (
+    { key, name, values: [1, 2, 3] })) });
+  const legend = el.children.find((c) => c.attrs.class === "legend" || c.className === "legend");
+  assert.ok(legend, "a visible key under the chart");
+  const text = (n) => (n._text ?? "") + (n.children ?? []).map(text).join("");
+  assert.deepEqual(legend.children.map(text), Object.values(names).reverse());
+});

@@ -59,7 +59,7 @@
   <td class="num" data-label="Ours">{{ g.ours | num }}</td>
   <td class="num" data-label="Theirs">{{ g.theirs | num }}</td>
   <td class="num" data-label="Gap">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
-  <td data-label="Flagged">{% if g.informational %}info{% elif g.flagged %}yes{% else %}no{% endif %}</td>
+  <td data-label="Flagged">{% if g.informational %}info{% elif g.flagged %}<span class="flagmark" aria-hidden="true">⚑</span> yes{% else %}no{% endif %}</td>
   <td data-label="Source (date)">{{ g.source }} ({{ g.reference_date or "date not stated" }})</td>
 </tr>
 {% endfor %}

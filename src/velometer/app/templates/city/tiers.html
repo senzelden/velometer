@@ -1,4 +1,5 @@
 {% extends "city/_page.html" %}
+{% from "city/_tier_table.html" import tier_series_table %}
 {% block head %}{% if tiermap %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
@@ -8,19 +9,8 @@
 {% for k in kinds %}
 <h3>{{ k.kind | upper }}</h3>
 {% if k.series %}
-<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
-<details class="table-details"><summary>Table: mapped km by tier ({{ k.kind | upper }})</summary>
-<div class="scroll">
-<table class="stack">
-<thead><tr><th>Snapshot</th>{% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}</tr></thead>
-<tbody>
-{% for p in k.series.points %}
-<tr><td data-label="Snapshot">{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</details>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+{{ tier_series_table(k, tiers, "tiers-sum-" ~ k.kind) }}
 {% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
 {% endfor %}
 </section>

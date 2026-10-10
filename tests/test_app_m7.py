@@ -312,7 +312,7 @@ sources:
   title: Index
   url: https://example.org/index
   accessed: '2026-10-06'
-  language: 'en" onclick="x'
+  language: fr
   kind: ngo
   excerpts:
   - id: e1
@@ -663,10 +663,17 @@ def test_an_unreadable_explainer_is_the_standard_note_not_the_raw_error(setup, c
 
 
 def test_pull_quote_language_attribute_is_escaped(setup, content):  # noqa: F811
+    # the model only admits a language tag; the renderer still escapes whatever it is given
+    from velometer.app.narrative import pullquote
+    from velometer.content.loader import load_sources
+
+    src = load_sources(content / "sources")
+    hostile = {"en-src": src["en-src"].model_copy(update={"language": 'en" onclick="x'})}
+    assert '<blockquote lang="en&#34; onclick=&#34;x">' in pullquote(hostile, "en-src/e1")
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs, content_dir=content)) as c:
         html = c.get("/city/berlin/figures").text
-    assert '<blockquote lang="en&#34; onclick=&#34;x">' in html
+    assert '<blockquote lang="fr">' in html
     assert "Gloss &lt;em&gt;x&lt;/em&gt;" in html and "<em>x</em>" not in html
 
 

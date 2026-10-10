@@ -56,7 +56,17 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 <h2 id="time-h">Over time</h2>
 <p class="meta">Headline, city proper (LAU), every city; the pilot five in colour. Mapped km in OpenStreetMap, not built km.
 The ranking above lists every city's values.</p>
-<div class="chart" data-chart="overview-lines" role="group" aria-label="Headline over time, all cities"></div>
+<div class="chart" data-chart="overview-lines" aria-describedby="overview-sum" role="group" aria-label="Headline over time, all cities"></div>
+<details class="table-details"><summary id="overview-sum">Table: headline per city and snapshot</summary>
+<div class="scroll">
+<table class="stack">
+<thead><tr><th scope="col">City</th>{% for col in chart_table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in chart_table.rows %}<tr><th scope="row" data-label="City"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ chart_table.columns[loop.index0].text }}">{{ v | num }}{% if chart_table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}</td>{% endfor %}</tr>
+{% endfor %}</tbody>
+</table>
+</div>
+</details>
 <p class="meta chartnote"><span class="ring"></span> ringed point = flagged year (automatic check); its explanation is on the city page.</p>
 </section>
 

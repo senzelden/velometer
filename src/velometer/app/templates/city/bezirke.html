@@ -28,8 +28,8 @@
 {% endif %}
 <h3>Over time</h3>
 {% if bezirke.series.rows %}
-<div class="chart" data-chart="bezirke" data-city="{{ city.id }}" role="group" aria-label="Headline per Bezirk over time, {{ city.name }}"></div>
-<details class="table-details"><summary>Table: headline per Bezirk and snapshot</summary>
+<div class="chart" data-chart="bezirke" data-city="{{ city.id }}" aria-describedby="bezirke-series-sum" role="group" aria-label="Headline per Bezirk over time, {{ city.name }}"></div>
+<details class="table-details"><summary id="bezirke-series-sum">Table: headline per Bezirk and snapshot</summary>
 <div class="scroll">
 <table class="stack">
 <thead><tr><th>Bezirk</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>

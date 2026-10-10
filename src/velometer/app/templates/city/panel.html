@@ -1,3 +1,4 @@
+{% from "city/_tier_table.html" import tier_series_table %}
 <div class="panel-frag">
 <header class="panel-head">
 <div>
@@ -11,7 +12,8 @@
 {% endfor %}</div>
 {% for k in kinds if k.kind == "lau" and k.series %}
 <h3>Tier composition over time ({{ k.kind | upper }})</h3>
-<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="panel-tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+{{ tier_series_table(k, tiers, "panel-tiers-sum-" ~ k.kind) }}
 {% endfor %}
 <h3>Tiers, mapped km now</h3>
 <div class="scroll">

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from velometer.content.loader import load_explainer, load_narratives, load_sources
 from velometer.content.models import ContentError, Narrative, Source
@@ -114,3 +115,19 @@ def test_unknown_step_is_refused():
 
 def test_missing_explainer_is_none(tmp_path):
     assert load_explainer(tmp_path / "explainer.yaml") is None
+
+
+@pytest.mark.parametrize("tag", ["en", "de", "fil", "pt-BR", "zh-Hant-TW", "de-CH-1996"])
+def test_a_source_language_may_be_a_language_tag(tag):
+    assert _lang_source(tag).language == tag
+
+
+@pytest.mark.parametrize("tag", ["German", "d", "DE", "de_DE", "", "de ", "de-", "english"])
+def test_a_source_language_must_be_a_language_tag(tag):
+    with pytest.raises(ValidationError):
+        _lang_source(tag)
+
+
+def _lang_source(language):
+    return Source(id="s", publisher="P", title="T", url="https://example.org/",
+                  accessed="2026-01-01", language=language, kind="press", excerpts=[])  # fmt: skip

@@ -5,9 +5,10 @@
 <h2>Over time</h2>
 <p class="meta">Headline: {{ headline_unit }}, city proper (LAU) and metro area (FUA). Mapped km in OpenStreetMap, not built km.</p>
 {% if yearly %}
-<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" aria-describedby="yearly-caption" role="group" aria-label="Headline over time, {{ city.name }}"></div>
 <div class="scroll">
 <table class="yearly stack">
+<caption id="yearly-caption" class="sr-only">Headline and A+B km per snapshot, {{ city.name }}: the values the chart above draws</caption>
 <thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}

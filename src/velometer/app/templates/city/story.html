@@ -19,7 +19,19 @@
 <section class="aside-box">
 <h2>Headline over time</h2>
 {% if yearly %}
-<div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" aria-describedby="story-headline-sum" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<details class="table-details"><summary id="story-headline-sum">Table: headline per snapshot</summary>
+<div class="scroll">
+<table class="stack">
+<thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in yearly %}
+<tr><td data-label="Snapshot">{{ row.label | when(row.osm) }}</td>{% for k in kinds %}{% set p = row.get(k.kind) %}<td class="num" data-label="{{ k.kind | upper }} headline">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
 {% else %}<p class="note">no run (history)</p>{% endif %}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">Over time, with flagged years →</a></p>
 </section>

@@ -13,13 +13,34 @@ from dataclasses import dataclass, field
 
 from markupsafe import Markup, escape
 
-from velometer.content.models import DataRef, Explainer, Narrative, Organisation, Quote, Source
+from velometer.content.models import (
+    LANG_TAG,
+    DataRef,
+    Explainer,
+    Narrative,
+    Organisation,
+    Quote,
+    Source,
+)
 
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
 CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
 # *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text
 EM_MARK = re.compile(r"(?<![\w*])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>])\*(?![\w*])")
+
+
+# the one markup content may write: a quotation in another language, `<q lang="de">…</q>` inside
+# a paragraph or a paragraph that is wholly `<blockquote lang="de">…</blockquote>`. Matched on the
+# escaped text, the language only ever a plain tag (LANG_TAG), nothing else is let through
+def _open(tag: str) -> str:
+    return f"&lt;{tag} lang=&#34;({LANG_TAG.pattern})&#34;&gt;"
+
+
+QUOTE_MARK = re.compile(_open("q") + r"(.*?)&lt;/q&gt;", re.DOTALL)
+BLOCKQUOTE_MARK = re.compile(
+    _open("blockquote") + r"((?:(?!&lt;/?blockquote).)*?)&lt;/blockquote&gt;", re.DOTALL
+)
 MISSING = Markup('<span class="note">source missing</span>')
 MISSING_REF = Markup('<span class="note">data reference missing</span>')
 
@@ -68,7 +89,15 @@ class _Numbering:
         self.used_refs: list[int] = []
 
     def paragraph(self, text: str) -> Markup:
+        whole = BLOCKQUOTE_MARK.fullmatch(str(escape(text.strip())))
+        if whole:  # a block quotation is a paragraph of its own, never inside a <p>
+            inner = self.inline(self._unescape(whole.group(2)))
+            return Markup(f'<blockquote lang="{whole.group(1)}"><p>{inner}</p></blockquote>')
         return Markup(f"<p>{self.inline(text)}</p>")
+
+    @staticmethod
+    def _unescape(escaped: str) -> str:
+        return str(Markup(escaped).unescape())
 
     def inline(self, text: str) -> Markup:
         def source(m: re.Match) -> str:
@@ -88,6 +117,7 @@ class _Numbering:
             return f'<sup class="dref"><a href="#{self.prefix}ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
+        body = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', body)  # the only markup content may write
         # code spans first and kept whole: `*` inside one is text, and no *...* spans across one
         parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
         body = "".join(
@@ -113,7 +143,7 @@ def pullquote(sources: dict[str, Source], excerpt_ref: str) -> Markup:
     if url := safe_url(source.url):
         caption.append(Markup(f'<a href="{escape(url)}" rel="noopener noreferrer">source</a>'))
     if excerpt.gloss_en and source.language != "en":
-        caption.append(Markup(f'<span class="gloss">{escape(excerpt.gloss_en)}</span>'))
+        caption.append(Markup(f'<span class="gloss" lang="en">{escape(excerpt.gloss_en)}</span>'))
     return Markup(
         f'<figure class="pullquote"><blockquote lang="{escape(source.language)}">'
         f"{escape(excerpt.text)}</blockquote><figcaption>"

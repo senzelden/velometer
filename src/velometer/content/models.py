@@ -1,6 +1,7 @@
 """Pydantic models for narratives, the explainer, organisation profiles and the external-source
 registry."""
 
+import re
 from datetime import date
 from typing import Literal
 from urllib.parse import urlparse
@@ -10,6 +11,9 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 STORY_STEPS = ("all", "leaders", "tail", "growth", "jumps", "bezirke")
 INTERNAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "::1"}
 MAX_EXCERPT_WORDS = 60
+# a BCP 47 language tag, as far as content needs one: "de", "pt-BR", "zh-Hant". It is what the
+# page writes into `lang` attributes (a quote's language), so it is also what content may write
+LANG_TAG = re.compile(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
 
 
 class ContentError(Exception):
@@ -48,6 +52,13 @@ class Source(_Strict):
     kind: Literal["official", "parliament", "ngo", "index", "press", "research"]
     archive_url: str | None = None
     excerpts: list[Excerpt]
+
+    @field_validator("language")
+    @classmethod
+    def _language_tag(cls, v: str) -> str:
+        if not LANG_TAG.fullmatch(v):
+            raise ValueError(f"language must be a BCP 47 language tag such as 'de', not {v!r}")
+        return v
 
     @field_validator("url", "archive_url")
     @classmethod

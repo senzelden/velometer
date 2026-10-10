@@ -502,6 +502,10 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request, data: Data):
+        payload = cache.get(
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+        )
+
         def build() -> dict:
             rows, summaries = [], []
             for c in data.cities():
@@ -532,6 +536,10 @@ def create_app(
                 "preset_unit": data.preset_units(),
                 "headline_unit": HEADLINE_UNIT,
                 "rankings": rankings_table(data),
+                # the values the all-cities chart draws: headline per city and snapshot, LAU
+                "chart_table": cmp.table_model(
+                    payload, cmp.CompareState(c=list(payload["cities"]), b="lau")
+                ),
             }
 
         ctx = cache.get("index", fp(request), build)
@@ -795,6 +803,7 @@ def create_app(
         sources_cited, refs_cited = nar.cited(nar.sections)
         return {
             "nar": nar, "story": story, "figures": figures, "steps": steps, "config": config,
+            "first_step": order[0] if order else None,  # the chart's table until a step is read
             "cited_sources": sources_cited, "cited_refs": refs_cited,
         }  # fmt: skip
 

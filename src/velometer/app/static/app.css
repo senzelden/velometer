@@ -340,6 +340,7 @@ footer p { margin: 0.25rem 0; }
 .tiermap { height: min(70vh, 40rem); width: 100%; border: 1px solid var(--grid); background: var(--panel); }
 .tiermap-note { margin: 0.25rem 0 0.5rem; }
 .tiermap-files { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; }
+.tiermap-popup-tier { margin: 0; font-weight: 600; }
 .tiermap-popup dl { display: grid; grid-template-columns: auto 1fr; gap: 0 0.75rem; margin: 0.25rem 0; }
 .tiermap-popup dt { color: var(--ink-2); }
 .tiermap-popup dd { margin: 0; }

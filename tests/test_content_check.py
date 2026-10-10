@@ -436,3 +436,37 @@ def test_explainer_needs_one_section_per_shipped_dimension(content):
     assert _problems(root, data, tmp) == [
         f"explainer.yaml: dimension {DIFFERENCE_DIMENSIONS[-1]} has 0 sections, expected 1"
     ]
+
+
+@pytest.mark.parametrize("value", ["de", "pt-BR", "zh-Hant"])
+def test_a_language_tag_in_content_passes(content, value):
+    root, data, tmp = content
+    path = root / "narratives" / "berlin.yaml"
+    n = yaml.safe_load(path.read_text())
+    n["sections"][0]["paragraphs"][0] += f' <q lang="{value}">Radwege</q>'
+    _write(path, n)
+    assert _problems(root, data, tmp) == []
+
+
+@pytest.mark.parametrize("value", ["German", "de_DE", "d", "", "DE"])
+def test_a_lang_attribute_that_is_not_a_language_tag_fails_the_check(content, value):
+    root, data, tmp = content
+    path = root / "narratives" / "berlin.yaml"
+    n = yaml.safe_load(path.read_text())
+    n["sections"][0]["paragraphs"][0] += f' <q lang="{value}">Radwege</q>'
+    _write(path, n)
+    problems = _problems(root, data, tmp)
+    assert any(
+        p.startswith("narratives/berlin.yaml: ") and "not a BCP 47 language tag" in p
+        for p in problems
+    ), problems
+
+
+def test_a_bad_lang_in_any_content_file_fails_the_check(content):
+    root, data, tmp = content
+    _write(
+        root / "explainer.yaml", {"title": "E", "intro": ['<q lang="xx_">a</q>'], "sections": []}
+    )
+    assert any(
+        p.startswith("explainer.yaml: ") and "BCP 47" in p for p in _problems(root, data, tmp)
+    )

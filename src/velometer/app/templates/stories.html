@@ -3,10 +3,10 @@
 {% block scripts %}{% if config %}<script type="module" src="{{ u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
 {#- A step's fallback: first and current value per city. Open without JavaScript; story.js folds it away. -#}
-{% macro step_table(t) %}
+{% macro step_table(t, step) %}
 {% if t %}
 <details class="step-values" open>
-<summary>Values behind the chart</summary>
+<summary id="step-values-{{ step }}">Values behind the chart</summary>
 {% for n in t.notes %}<p class="note">{{ n }}</p>
 {% endfor %}
 <div class="scroll"><table class="step-table stack">
@@ -26,7 +26,7 @@
   <aside class="story-sticky" data-story-chart hidden aria-label="Chart for the current step">
     <p class="eyebrow" data-story-eyebrow></p>
     <h2 data-story-title></h2>
-    <div class="chart story-plot" data-story-plot role="group" aria-label="Chart of the current step"></div>
+    <div class="chart story-plot" data-story-plot{% if first_step %} aria-describedby="step-values-{{ first_step }}"{% endif %} role="group" aria-label="Chart of the current step"></div>
     <p class="meta story-note-long" data-story-note></p>
     <p class="meta story-note-short" data-story-short></p>
     <p class="meta"><a data-story-link href="{{ u('/compare') }}">Explore this chart →</a></p>
@@ -38,7 +38,7 @@
     {% for item in s.sec.items %}{{ item }}
     {% endfor %}
     {% if s.step in steps %}
-    {{ step_table(steps[s.step].table) }}
+    {{ step_table(steps[s.step].table, s.step) }}
     <p class="explore"><a href="{{ u(steps[s.step].href) }}">Explore this chart →</a></p>
     {% endif %}
   </section>

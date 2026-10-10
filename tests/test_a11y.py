@@ -752,3 +752,134 @@ def test_every_group_label_labels_a_group_and_ids_are_unique(client, all_page_ur
             seen += 1
             assert name_id and name_id in p.groups, (url, name_id)
     assert seen > 5
+
+
+# --- content semantics (M10 spec decision 6): a table behind every chart, not colour alone ---
+class _Charts(HTMLParser):
+    """Every element with the class token `chart`, and the ids that name a table: the table's
+    own, an ancestor's (a details block), or the id of its summary or caption."""
+
+    def __init__(self):
+        super().__init__()
+        self.charts: list[dict] = []
+        self.table_ids: set[str] = set()
+        self._open: list[list] = []  # [tag, ids, holds a table]
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if "chart" in (a.get("class") or "").split():
+            self.charts.append(a)
+        if tag in VOID:
+            return
+        ids = {a["id"]} if a.get("id") else set()
+        if tag in ("summary", "caption") and self._open:
+            self._open[-1][1] |= ids  # the id of a summary or caption names its parent
+        self._open.append([tag, ids, tag == "table"])
+
+    def handle_endtag(self, tag):
+        while tag not in VOID and self._open:
+            t, ids, has_table = self._open.pop()
+            if has_table:
+                self.table_ids |= ids
+                if self._open:
+                    self._open[-1][2] = True
+            if t == tag:
+                break
+
+
+def _chart_gaps(html: str) -> tuple[int, list]:
+    p = _Charts()
+    p.feed(html)
+    bad = []
+    for a in p.charts:
+        ref = a.get("aria-describedby")
+        if not ref:
+            bad.append(("no aria-describedby", a))
+        elif ref not in p.table_ids:
+            bad.append(("describedby names no table", ref, a))
+    return len(p.charts), bad
+
+
+def test_every_chart_has_its_data_in_the_page(client, all_page_urls):  # noqa: F811
+    seen = 0
+    for url in all_page_urls:
+        n, bad = _chart_gaps(client.get(url).text)
+        seen += n
+        assert not bad, (url, bad[:2])
+    assert seen > 8  # the parser found the charts at all
+
+
+def test_the_chart_check_catches_a_chart_without_its_table():
+    ok = ('<div class="chart" aria-describedby="t"></div>'
+          '<details id="t"><table><tr><td>1</td></tr></table></details>')  # fmt: skip
+    assert _chart_gaps(ok) == (1, [])
+    summed = (
+        '<div class="chart" aria-describedby="s"></div><details><summary id="s">T</summary>'
+        "<div><table></table></div></details>"
+    )
+    assert _chart_gaps(summed) == (1, [])
+    assert _chart_gaps(summed.replace("<table></table>", ""))[1]  # a summary of nothing
+    captioned = (
+        '<div class="chart" aria-describedby="c"></div><table><caption id="c">T</caption></table>'
+    )
+    assert _chart_gaps(captioned) == (1, [])
+    assert _chart_gaps(ok.replace(' aria-describedby="t"', ""))[1]  # no link
+    assert _chart_gaps(ok.replace("<table>", "<ul>").replace("</table>", "</ul>"))[1]  # no table
+    assert _chart_gaps(ok.replace('id="t"', 'id="u"'))[1]  # the link points nowhere
+    assert _chart_gaps(
+        '<div class="chart plan-chart" aria-describedby="t"></div><table id="t"></table>'
+    ) == (1, [])  # a table with the id, any other class on the chart
+    assert _chart_gaps('<span class="spark-mount" data-chart="sparkline"></span>') == (0, [])
+
+
+def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(client, all_page_urls):  # noqa: F811
+    rows = 0
+    for url in all_page_urls:
+        html = client.get(url).text
+        for row in re.findall(r'<tr class="[^"]*\bflagged\b[^"]*"[^>]*>(.*?)</tr>', html, re.S):
+            rows += 1
+            assert 'class="flagmark"' in row and "⚑" in row, (url, row[:120])
+            # and said to a screen reader: in words, or by a cell headed "Flagged" / a status
+            assert re.search(r"\(flagged\)|data-label=\"Flagged\"|suspect", row), (url, row[:120])
+    assert rows  # the fixtures have flagged rows
+
+
+def test_every_up_and_down_value_carries_a_sign(client, all_page_urls):  # noqa: F811
+    seen = 0
+    for url in all_page_urls:
+        html = client.get(url).text
+        for m in re.finditer(r'class="[^"]*\b(?:up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<', html):
+            seen += 1
+            assert m.group(1).strip()[0] in "+−-" or m.group(1).strip() == "n/a", (url, m[0])
+    assert seen
+
+
+def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noqa: F811
+    html = client.get("/").text
+    block = html[html.index('data-chart="overview-lines"') :]
+    table = block[block.index("<table") : block.index("</table>")]
+    assert "⚑" in table and "stack" in table and 'data-label="' in table
+
+
+def test_the_tier_chart_names_every_tier_in_a_visible_key():
+    # chart.js renderTiers draws a legend chip per tier layer; the node test proves it renders
+    src = (STATIC / "js" / "chart.js").read_text()
+    assert 'legend.className = "legend"' in src and "layer.name" in src
+
+
+def test_the_tier_map_popup_names_the_tier_of_the_side():
+    # the side's tier opens the popup, by its full name ("A separated track"), not a colour
+    src = (STATIC / "map.js").read_text()
+    popup = src[src.index("function popup(p)") : src.index("function checked")]
+    head = "\n".join(
+        ln for ln in popup[: popup.index("var dl")].splitlines() if not ln.strip().startswith("//")
+    )
+    assert "cfg.labels[p.tier]" in head and "tiermap-popup-tier" in head
+
+
+def test_the_tier_names_are_the_popup_labels(client):  # noqa: F811
+    import json
+
+    html = client.get("/city/berlin/tiers").text
+    cfg = json.loads(re.search(r'id="tiermap-config">(.*?)</script>', html, re.S).group(1))
+    assert all(re.match(rf"{t} \w", cfg["labels"][t]) for t in "ABCDE")
