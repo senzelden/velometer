@@ -1,5 +1,6 @@
 import itertools
 import re
+from pathlib import Path
 
 import pytest
 
@@ -220,3 +221,74 @@ def test_the_page_declares_both_schemes():
     # the first :root rule is the light token block (the dark block's :root comes later)
     root = next(d for s, d in _css_rules(_stylesheet()) if s == [":root"])
     assert root.get("color-scheme") == "light dark"
+
+
+# ---------- colours the JS paints (static/js/theme.js reads the tokens) ----------
+
+STATIC_DIR = Path(__file__).parents[1] / "src" / "velometer" / "app" / "static"
+SVG_TEXT_EL = re.compile(r'svgEl\(\s*"(?:text|tspan)"\s*,\s*\{')
+STYLE_TEXT = re.compile(r"\.style\.(?:color|fill)\s*=\s*([^;\n]+)")
+JS_FILL = re.compile(r"(?<![\w-])fill:\s*([^,}]+)")
+TOKEN_CALL = re.compile(r'^token\(\s*"(--[\w-]+)"\s*\)$')
+JS_TOKEN = re.compile(r'token\(\s*"(--[\w-]+)"\s*\)')
+
+
+def _js_sources() -> dict[str, str]:
+    files = [*STATIC_DIR.glob("*.js"), *(STATIC_DIR / "js").glob("*.js")]
+    return {f.name: f.read_text() for f in files}
+
+
+def _braced(text: str, start: int) -> str:
+    """The `{...}` object literal that opens at text[start - 1]."""
+    depth, i = 1, start
+    while depth:
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        i += 1
+    return text[start : i - 1]
+
+
+def _js_text_paints(text: str) -> list[str]:
+    """Every expression the JS paints text with: the `fill` of an SVG text element it builds,
+    and a colour it sets on an element's style. Text the JS builds without one is painted by
+    the stylesheet, whose text colours the CSS tests above hold to 4.5:1."""
+    paints = [m.group(1).strip() for m in STYLE_TEXT.finditer(text)]
+    for m in SVG_TEXT_EL.finditer(text):
+        paints += [f.group(1).strip() for f in JS_FILL.finditer(_braced(text, m.end()))]
+    return paints
+
+
+def test_js_paints_text_only_with_text_tokens():
+    # the M7 carry: a series colour as end-label text read 3.1:1 on white. JS text is painted
+    # by the stylesheet, or by one named token held to 4.5:1 on every ground in both themes; a
+    # data-driven colour (a series, a tier) never paints text, it goes on a key mark beside it
+    painted = {name: _js_text_paints(src) for name, src in _js_sources().items()}
+    loose = {n: [p for p in ps if not TOKEN_CALL.match(p)] for n, ps in painted.items()}
+    assert {n: ps for n, ps in loose.items() if ps} == {}
+    used = {TOKEN_CALL.match(p).group(1) for ps in painted.values() for p in ps}
+    for theme in THEMES:
+        t = _css_tokens(_stylesheet(), theme)
+        bad = [
+            (fg, bg, round(contrast(t[fg], t[bg]), 2))
+            for fg, bg in itertools.product(sorted(used), sorted(_backgrounds()))
+            if contrast(t[fg], t[bg]) < 4.5
+        ]
+        assert bad == [], theme
+
+
+def test_the_js_text_rule_sees_a_series_colour_as_text():
+    src = 'g.appendChild(svgEl("text", { class: "el", x: 1, fill: it.s.colour ?? null }, "Aa"));'
+    assert _js_text_paints(src) == ["it.s.colour ?? null"]
+    assert _js_text_paints('svgEl("text", { class: "el", "fill-opacity": 1 }, "Aa")') == []
+    assert _js_text_paints('svgEl("path", { fill: s.colour })') == []
+    assert _js_text_paints("lab.style.color = colours[i];") == ["colours[i]"]
+    assert _js_text_paints('svgEl("text", { fill: token("--ink") })') == ['token("--ink")']
+
+
+def test_every_token_the_js_reads_is_defined_in_both_themes():
+    # a missing token falls back to grey with a console error at run time (theme.js); this
+    # catches it before: every token the JS names, and the families theme.js builds by number
+    names = {n for src in _js_sources().values() for n in JS_TOKEN.findall(src)}
+    names |= set(SERIES) | set(TIERS) | set(CHANGES)
+    assert "--ctx" in names and "--outline" in names  # the scan sees the call sites
+    for theme in THEMES:
+        assert sorted(names - _css_tokens(_stylesheet(), theme).keys()) == [], theme

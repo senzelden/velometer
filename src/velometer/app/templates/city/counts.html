@@ -36,7 +36,7 @@
 <p class="meta tiermap-note" id="countermap-status">{{ c.site_map.sites | length }} of {{ c.sites | length }} sites have coordinates.</p>
 <script type="application/json" id="countermap-config">{{ c.site_map | tojson }}</script>
 <script src="{{ u('/static/vendor/leaflet.js') }}"></script>
-<script src="{{ u('/static/countermap.js') }}"></script>
+<script type="module" src="{{ u('/static/countermap.js') }}"></script>
 {% else %}
 <p class="meta">The portal publishes no coordinates for these sites: a list instead of a map.</p>
 {% endif %}

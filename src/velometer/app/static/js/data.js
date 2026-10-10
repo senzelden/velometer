@@ -2,9 +2,8 @@
 // its series into chart.js models. No DOM drawing here.
 import { url } from "./base.js";
 import { xLabels } from "./chart-core.js";
+import { onThemeChange } from "./theme.js";
 
-/** Series colours (charts.CITY_COLOURS on the Python side, plus one). */
-export const PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#7a5bd1", "#52514e", "#008300"];
 export const TIER_NAMES = {
   A: "A separated track",
   B: "B shared foot/cycle path",
@@ -53,10 +52,14 @@ export function pointsOn(points, labels, key) {
   });
 }
 
-/** Draw now and again when the element's width changes (charts size to their box). */
+/**
+ * Draw now, again when the element's width changes (charts size to their box) and again when the
+ * OS theme changes (chart.js reads the colour tokens at draw time; the data and selection stay).
+ */
 export function mount(el, draw) {
   let width = el.clientWidth;
   draw();
+  const off = onThemeChange(() => (el.isConnected ? draw() : off())); // a replaced panel chart lets go
   if (typeof ResizeObserver === "undefined") return;
   let timer = null;
   new ResizeObserver(() => {

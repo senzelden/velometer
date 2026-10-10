@@ -1324,8 +1324,11 @@ def test_the_change_map_has_a_legend_for_each_colour(subarea_setup):  # noqa: F8
     section = html.split('id="changemap"')[1].split("</section>")[0]
     legend = re.search(r'<ul class="changemap-legend"[^>]*>(.*?)</ul>', section, re.S)
     assert legend, "the change map's colours need a key"
-    for category, colour in CATEGORY_COLOURS.items():
-        assert re.search(rf'fill="{colour}".*?mapped {category}', legend.group(1), re.S)
+    for category in CATEGORY_COLOURS:  # changemap.js paints each swatch from --change-<category>
+        assert re.search(rf'data-key="{category}".*?mapped {category}', legend.group(1), re.S)
+    assert "fill=" not in legend.group(1)  # the colours are tokens, not the server's literals
+    cfg = json.loads(re.search(r'id="changemap-config">(.*?)</script>', html, re.S).group(1))
+    assert "colours" not in cfg and set(cfg["labels"]) == set(CATEGORY_COLOURS)
 
 
 def test_a_narrative_backtick_tag_renders_as_code_and_stays_escaped():

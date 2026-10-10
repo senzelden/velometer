@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULTS } from "../state.js";
 import {
-  NO_INDEX, buildModel, colourPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
+  NO_INDEX, buildModel, slotPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
 } from "../compare-model.js";
 
 const pt = (label, o = {}) => ({ label, headline: 10, ab_km: 50, C: 0, flags: "", ...o });
@@ -55,11 +55,25 @@ test("coloured ids: highlighted ones, else the first eight selected", () => {
   assert.deepEqual(colouredIds({ c, hl: ["j", "b"] }), ["j", "b"]);
 });
 
-test("colours stay with a city while the others change", () => {
-  const first = colourPlan({ c: ["a", "b"], hl: [] }, {});
-  const next = colourPlan({ c: ["b", "c"], hl: [] }, first);
+test("colour slots stay with a city while the others change", () => {
+  const first = slotPlan({ c: ["a", "b"], hl: [] }, {});
+  const next = slotPlan({ c: ["b", "c"], hl: [] }, first);
   assert.equal(next.b, first.b);
   assert.notEqual(next.c, next.b);
+});
+
+test("a plan holds slot indices 0..7, never colours, and keeps a city's slot (Review Focus 2)", () => {
+  const c = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+  const first = slotPlan({ c, hl: [] }, {});
+  const all = Object.values(first);
+  assert.equal(all.length, 8);
+  for (const v of all) assert.ok(Number.isInteger(v) && v >= 0 && v <= 7, String(v));
+  assert.equal(new Set(all).size, all.length);
+  // a selection change: "a" and "c" leave, "h" is highlighted with "b"; both keep their slots
+  const next = slotPlan({ c: c.filter((id) => id !== "a" && id !== "c"), hl: ["h", "b"] }, first);
+  assert.deepEqual(next, { h: first.h, b: first.b });
+  // the same plan again (a theme change redraws with the previous plan): nothing moves
+  assert.deepEqual(slotPlan({ c, hl: ["h", "b"] }, next), next);
 });
 
 test("ranks per label among the selected cities, ties share a rank", () => {

@@ -6,8 +6,9 @@ import { url } from "./base.js";
 import { renderLines, renderRank, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
+import { onThemeChange, seriesColours, token } from "./theme.js";
 import {
-  buildModel, colourPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
+  buildModel, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
   queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
 import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
@@ -35,12 +36,11 @@ const known = { cities: cfg.cities, metrics: cfg.metric_order };
 let state = parseState(location.search, known);
 let dropped = droppedMetric(location.search, state);
 let D = null;
-let colours = {};
+let slots = {}; // {cityId: slot}: kept across selection and theme changes
 let sort = null;
 let sharedScale = true;
 let sheetOpen = false;
 document.documentElement.classList.add("compare-js");
-const CONTEXT = "#8f8d86"; // grey cities in small multiples, as their chips
 out.chart.tabIndex = -1; // the last resort for focus: the chart itself
 const cityEl = (id) =>
   [...document.querySelectorAll(`[data-city="${CSS.escape(id)}"]`)].find((e) => e.offsetParent) ?? out.chart;
@@ -185,7 +185,8 @@ function showFlag(id, label, rawLabel) {
 }
 
 function drawChips(model) {
-  colours = colourPlan(state, colours);
+  slots = slotPlan(state, slots);
+  const palette = seriesColours();
   out.chips.replaceChildren();
   const coloured = new Set(colouredIds(state));
   const many = state.c.length > MAX_HIGHLIGHTED;
@@ -195,7 +196,7 @@ function drawChips(model) {
   for (const s of model.series) {
     const b = el("button", { type: "button", class: "chip", "data-city": s.id, "aria-pressed": many ? String(state.hl.includes(s.id)) : "false" });
     const dot = el("i");
-    dot.style.background = coloured.has(s.id) ? colours[s.id] : "";
+    dot.style.background = coloured.has(s.id) ? (palette[slots[s.id]] ?? "") : "";
     dot.className = coloured.has(s.id) ? "dot-on" : "dot-off";
     b.append(dot, document.createTextNode(s.name));
     b.title = many ? "Highlight this city" : "Open the city panel";
@@ -211,14 +212,16 @@ function drawChips(model) {
 }
 
 function drawChart(model) {
-  colours = colourPlan(state, colours);
+  slots = slotPlan(state, slots);
+  const context = token("--ctx"); // grey cities in small multiples, as their chips
   const present = model.series.filter((s) => s.points.some((p) => p.value != null));
   // the axis names the snapshot month of the first list that has a current run
   const lists = model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []);
   const axis = displayLabels(model.labels, lists);
   const series = present.map((s) => ({
     ...s,
-    colour: colours[s.id] ?? (state.view === "small" ? CONTEXT : undefined),
+    slot: slots[s.id],
+    colour: s.id in slots || state.view !== "small" ? undefined : context,
   }));
   const onPick = (id, flagLabel) => {
     if (flagLabel) {
@@ -367,6 +370,9 @@ new ResizeObserver(() => {
   clearTimeout(timer);
   timer = setTimeout(() => render(true), 120);
 }).observe(out.chart);
+
+// the OS theme changed: redraw the same state (colours are read at draw time, slots are kept)
+onThemeChange(() => render(true));
 
 loadSeries()
   .then((data) => {

@@ -5,7 +5,7 @@ import { url } from "./base.js";
 import { renderLines, renderSparkline } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { PILOT5 } from "./state.js";
-import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
+import { displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 
 function overviewLines(el, D) {
   const ids = Object.keys(D.cities).sort((a, b) => D.cities[a].name.localeCompare(D.cities[b].name));
@@ -18,7 +18,7 @@ function overviewLines(el, D) {
     series: ids.map((id, i) => ({
       id,
       name: D.cities[id].name,
-      colour: coloured.includes(id) ? PALETTE[coloured.indexOf(id)] : undefined,
+      slot: coloured.includes(id) ? coloured.indexOf(id) : undefined,
       points: pointsOn(lists[i], labels, "headline"),
     })),
   };

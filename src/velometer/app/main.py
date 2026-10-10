@@ -938,15 +938,13 @@ def create_app(
         years = sorted((r for r in by_label.values() if r["label"] != ts.CURRENT),
                        key=lambda r: r["label"])  # fmt: skip
         yearly = years + ([by_label[ts.CURRENT]] if ts.CURRENT in by_label else [])
-        colours = dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
+        # no colours: the tier and outline colours are stylesheet tokens map.js reads (both themes)
         tiermap = {
             "tiles": OSM_TILES,
             "tile_class": TILE_CLASS,
             "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
-            "colours": colours,
             "labels": charts.TIER_LABEL,
-            "outline": charts.OUTLINE,
             "kinds": map_kinds,
         }
         summary = city_summary(data, c)
@@ -1027,7 +1025,6 @@ def create_app(
             table = table.replace("<", "&lt;").replace(">", "&gt;")
         runs = None if text is None else change_report.change_runs(text)
         has_map = (maps_dir / f"{stem}.geojson").is_file()
-        colours = change_report.CATEGORY_COLOURS
         latest = data.selector.latest(data.conn, city_id, "lau")
         return {
             "rows": rows,
@@ -1044,8 +1041,9 @@ def create_app(
                 "tile_class": TILE_CLASS,
                 "weight": LINE_WEIGHT,
                 "links": OSM_LINKS,
-                "colours": colours,
-                "labels": {c: f"mapped {c}" for c in colours},
+                # the drawn categories, in key order; their colours are the --change-<category>
+                # tokens changemap.js reads (both themes)
+                "labels": {c: f"mapped {c}" for c in change_report.CATEGORY_COLOURS},
             }
             if has_map
             else None,

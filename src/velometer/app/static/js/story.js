@@ -5,8 +5,8 @@
 // page is the article with a table per step.
 import { renderLines, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
-import { buildModel, colourPlan } from "./compare-model.js";
-import { PALETTE, displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
+import { buildModel, slotPlan } from "./compare-model.js";
+import { displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
 
 const cfg = JSON.parse(document.getElementById("story-config").textContent);
 const box = document.querySelector("[data-story-chart]");
@@ -28,7 +28,7 @@ let current = null;
 function linesModel(spec) {
   const state = spec.state;
   const model = buildModel(D, state);
-  const colours = colourPlan(state, {});
+  const slots = slotPlan(state, {});
   const lists = model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []);
   // a step may ring only one kind of flag (jumps: the km jumps its text discusses)
   const only = (flags) => (spec.ring ? flags.filter((f) => f === spec.ring) : flags);
@@ -36,7 +36,7 @@ function linesModel(spec) {
     .filter((s) => s.points.some((p) => p.value != null))
     .map((s) => ({
       ...s,
-      colour: colours[s.id],
+      slot: slots[s.id],
       points: s.points.map((p) => ({ ...p, flags: only(p.flags ?? []) })),
     }));
   const abs = state.mode === "abs";
@@ -58,7 +58,7 @@ function bezirkeModel(spec) {
   const series = subareas.map(([id, b]) => ({
     id,
     name: b.name,
-    colour: spec.hl.includes(id) ? PALETTE[spec.hl.indexOf(id)] : undefined,
+    slot: spec.hl.includes(id) ? spec.hl.indexOf(id) : undefined,
     points: pointsOn(b.points, labels, "headline"),
   }));
   const tip = (s, p, label) => `${s.name} · ${label}: ${formatValue(p.value)} ${UNIT}`;

@@ -60,14 +60,14 @@
 {% for m in tiermap.kinds %}<label><input type="radio" name="kind" value="{{ m.kind }}"{% if loop.first %} checked{% endif %}> {{ m.label }}</label>
 {% endfor %}</fieldset>
 <fieldset class="tiers"><legend>Tiers</legend>
-{% for t, colour in tiermap.colours.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <svg class="swatch" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2" fill="{{ colour }}"></rect></svg> {{ tiermap.labels[t] }}</label>
+{% for t, label in tiermap.labels.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <svg class="swatch" data-key="{{ t }}" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2"></rect></svg> {{ label }}</label>
 {% endfor %}</fieldset>
 </div>
 <div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
 <p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
 <script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
 <script src="{{ u('/static/vendor/leaflet.js') }}"></script>
-<script src="{{ u('/static/map.js') }}"></script>
+<script type="module" src="{{ u('/static/map.js') }}"></script>
 {% endif %}
 <ul class="tiermap-files">
 {% for k in kinds %}

@@ -5,7 +5,7 @@
 import { renderLines, renderSmallMultiples } from "./chart.js";
 import { drawTiers } from "./tier-chart.js";
 import { formatValue } from "./chart-core.js";
-import { PALETTE, displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
+import { displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 import { countsChart } from "./counter-model.js";
 
 const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
@@ -24,7 +24,7 @@ function headline(el, D) {
       id: k,
       name: BOUNDARY[k],
       short: BOUNDARY_SHORT[k],
-      colour: PALETTE[i],
+      slot: i,
       points: pointsOn(lists[i], labels, "headline"),
     })),
   };
@@ -50,7 +50,7 @@ function bezirke(el, D) {
     series: subareas.map((b, i) => ({
       id: `b${i}`,
       name: b.name,
-      colour: PALETTE[0],
+      slot: 0,
       points: pointsOn(b.points, labels, "headline"),
     })),
   };
@@ -75,7 +75,7 @@ function counts(el, D) {
   const lines = {
     labels: model.labels,
     yTitle: `Index, ${model.base} = 100`,
-    series: model.series.map((s, i) => ({ ...s, colour: PALETTE[i] })),
+    series: model.series.map((s, i) => ({ ...s, slot: i })),
   };
   mount(el, () =>
     renderLines(el, lines, {

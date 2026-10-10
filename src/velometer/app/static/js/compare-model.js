@@ -2,7 +2,7 @@
 // state. Pure (no DOM); app/compare.py computes the same Table for the no-JS page.
 import { assignColours, indexSeries, ranks } from "./chart-core.js";
 import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
-import { PALETTE, labelsOf } from "./data.js";
+import { labelsOf } from "./data.js";
 import { COUNTER_FOOT, COUNTER_METRIC, counterLines } from "./counter-model.js";
 import { url } from "./base.js";
 
@@ -66,9 +66,16 @@ export function colouredIds(state) {
   return state.hl.length ? state.hl : state.c.slice(0, MAX_HIGHLIGHTED);
 }
 
-/** Stable colours for the plan (previous colours are kept). */
-export function colourPlan(state, prev) {
-  return assignColours(prev, colouredIds(state), PALETTE);
+/** The series palette's slots (theme.js seriesColours: --series-1 … --series-8). */
+export const SLOTS = [0, 1, 2, 3, 4, 5, 6, 7];
+
+/**
+ * Stable colour slots for the plan, {cityId: slotIndex}: a city keeps the slot it had in `prev`,
+ * newcomers take free slots. Slots, not colours, so a theme change (which changes every colour)
+ * moves no city; drawing resolves seriesColours()[slot].
+ */
+export function slotPlan(state, prev) {
+  return assignColours(prev, colouredIds(state), SLOTS);
 }
 
 /** Rank per label among the model's cities: series points get {rank}. */

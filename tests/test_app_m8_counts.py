@@ -133,7 +133,7 @@ def test_site_map_for_sites_with_coordinates_and_a_list_for_all(client):
     cfg = json.loads(re.search(r'id="countermap-config">(.*?)</script>', html, re.S).group(1))
     assert [s["name"] for s in cfg["sites"]] == ["Site s1"]  # s2 has no coordinates
     assert cfg["tiles"].startswith("https://tile.openstreetmap.org/")
-    assert '<script src="/static/countermap.js"></script>' in html
+    assert '<script type="module" src="/static/countermap.js"></script>' in html
     assert "Site s2" in _text(html)  # in the site list
 
 
@@ -471,11 +471,14 @@ def test_counts_chart_key_names_the_short_end_labels_in_full(setup):  # noqa: F8
 
     css = (STATIC / "app.css").read_text()
     rules = _css_rules(css)
-    palette = re.search(r"PALETTE = \[([^\]]*)\]", (STATIC / "js" / "data.js").read_text())
-    first, second = re.findall(r'"(#[0-9a-f]{6})"', palette.group(1))[:2]
+    # the chart draws the counter index in series slot 0 and the km index in slot 1 (city.js),
+    # which theme.js resolves to --series-1 and --series-2
+    city_js = (STATIC / "js" / "city.js").read_text()
+    assert "series: model.series.map((s, i) => ({ ...s, slot: i }))" in city_js
     # the swatch is a 3 px top border on a box of no height: its visible colour is the
     # border-top colour the cascade gives a `.key.key-counter` inside `.chart-key`
     tokens = _css_tokens(css)
+    first, second = tokens["--series-1"], tokens["--series-2"]
     assert _resolve(_key_line_colour(rules, "key-counter"), tokens) == first
     assert _resolve(_key_line_colour(rules, "key-km"), tokens) == second
 

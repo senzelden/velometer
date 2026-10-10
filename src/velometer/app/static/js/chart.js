@@ -1,9 +1,14 @@
 // Hand-rolled SVG charts. Layout maths lives in chart-core.js; this file only draws.
 // Everything is built with createElementNS / textContent: nothing from data reaches innerHTML.
+// Colours are the stylesheet's tokens, resolved here at draw time (theme.js): the SVG carries the
+// resolved values, so a saved chart looks as it did on screen, and a redraw follows the theme.
 import { scaleLinear, niceTicks, placeLabels, tickLabel, formatValue, textWidth, tickIndices } from "./chart-core.js";
+import { seriesColours, tierColours, token } from "./theme.js";
 
 const NS = "http://www.w3.org/2000/svg";
-export const TIER_COLOURS = { A: "#1f5fae", B: "#6fa5e6", C: "#1a9e77", D: "#eb9a54", E: "#a59fc9" };
+// the coloured mark before a series' end label: the label text is --ink (a series colour is a
+// graphic at 3:1, not text at 4.5:1), the mark carries the colour
+const KEY = 11;
 
 function svgEl(tag, attrs = {}, text) {
   const e = document.createElementNS(NS, tag);
@@ -57,10 +62,13 @@ function segDist(px, py, ax, ay, bx, by) {
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
+/** A series' colour: an explicit one, else its slot (0..7) in the series palette. */
+const colourOf = (s, palette) => s.colour ?? (Number.isInteger(s.slot) ? palette[s.slot] : undefined);
+
 /**
- * Lines. model: {labels: string[], series: [{id, name, colour?, ghost?, points: [{value, flags?}]}],
- * yTitle?}. Series with a colour are highlighted, without are grey context, ghost ones are
- * faint and unlabelled. opts: {height, width, compact, zero, invert, intTicks, yDomain,
+ * Lines. model: {labels: string[], series: [{id, name, slot?, colour?, ghost?, points: [{value,
+ * flags?}]}], yTitle?}. Series with a slot (or a colour) are highlighted, without are grey
+ * context, ghost ones are faint and unlabelled. opts: {height, width, compact, zero, invert, intTicks, yDomain,
  * tip(series, point, label) -> string, onPick(id, label), marks: [{label, text}]} (a dashed
  * vertical line at each mark's label, its text at the top; compact charts draw the line only).
  */
@@ -71,6 +79,8 @@ export function renderLines(el, model, opts = {}) {
   const narrow = W < 560;
   const labels = model.labels;
   const n = labels.length;
+  const palette = seriesColours();
+  model = { ...model, series: model.series.map((s) => ({ ...s, colour: colourOf(s, palette) })) };
   const live = model.series.filter((s) => !s.ghost);
   const coloured = live.filter((s) => s.colour);
   const values = model.series
@@ -98,8 +108,9 @@ export function renderLines(el, model, opts = {}) {
   );
   // the last x label is centred on the last point: leave room for its right half
   const lastHalf = Math.ceil(textWidth(axisTexts.at(-1) ?? "") / 2) + 2;
+  const key = labelled.some((s) => s.colour) ? KEY : 0;
   const mr = Math.max(
-    labelled.length ? Math.min(narrow ? 82 : 130, longest * 6.4 + 22) : compact ? 6 : 16,
+    labelled.length ? Math.min(narrow ? 82 : 130, longest * 6.4 + 22) + key : compact ? 6 : 16,
     lastHalf,
   );
   const ml = compact ? 30 : 44;
@@ -173,7 +184,7 @@ export function renderLines(el, model, opts = {}) {
             r: compact ? 3 : s.colour ? 4.5 : 3.5 }));
         } else if (!s.ghost && !pts[i - 1] && !pts[i + 1]) {
           // isolated point between gaps: a line would be invisible, so draw a dot
-          g.appendChild(svgEl("circle", { cx: pts[i][0], cy: pts[i][1], r: 2.4, fill: s.colour ?? "#8a8a8a" }));
+          g.appendChild(svgEl("circle", { cx: pts[i][0], cy: pts[i][1], r: 2.4, fill: s.colour ?? token("--axis") }));
         } else if (s.colour && !compact && n <= 12) {
           g.appendChild(svgEl("circle", { cx: pts[i][0], cy: pts[i][1], r: 2.2, fill: s.colour }));
         }
@@ -191,9 +202,14 @@ export function renderLines(el, model, opts = {}) {
     if (Math.abs(y - it.y0) > 2) {
       g.appendChild(svgEl("line", { class: "leader", x1: it.x0 + 2, y1: it.y0, x2: it.x0 + 7, y2: y }));
     }
+    const k = it.s.colour ? KEY : 0;
+    if (k) {
+      g.appendChild(svgEl("line", { class: "el-key", x1: it.x0 + 8, x2: it.x0 + 16, y1: y, y2: y,
+        stroke: it.s.colour }));
+    }
     g.appendChild(
-      svgEl("text", { class: "el", x: it.x0 + 8, y: y + 3.5, "text-anchor": "start",
-        fill: it.s.colour ?? null }, fit(endName(it.s, mr - 10), mr - 10)),
+      svgEl("text", { class: "el", x: it.x0 + 8 + k, y: y + 3.5, "text-anchor": "start" },
+        fit(endName(it.s, mr - 10 - k), mr - 10 - k)),
     );
   }
 
@@ -288,14 +304,15 @@ export function renderSmallMultiples(el, model, opts = {}) {
     card.append(cap, chart);
     grid.appendChild(card);
     if (opts.onPick) card.addEventListener("click", () => opts.onPick(s.id, ""));
-    renderLines(chart, { labels: model.labels, series: [{ ...s, colour: s.colour ?? "#1f5fae" }] },
+    const one = s.colour || Number.isInteger(s.slot) ? s : { ...s, slot: 0 };
+    renderLines(chart, { labels: model.labels, series: [one] },
       { height: opts.height ?? 150, compact: true, zero: !yDomain, yDomain, hoverOnly: s.id,
         tip: opts.tip, label: s.name, marks: opts.marks });
   }
 }
 
 /**
- * Rank per year. model: {labels, series: [{id, name, colour?, points: [{rank}]}]}, where rank
+ * Rank per year. model: {labels, series: [{id, name, slot?, colour?, points: [{rank}]}]}, where rank
  * comes from chart-core ranks() over the selected cities. 1 is at the top.
  */
 export function renderRank(el, model, opts = {}) {
@@ -361,6 +378,9 @@ export function renderTiers(el, model, opts = {}) {
   const y = scaleLinear([0, ticks.at(-1)], [mt + ih, mt]);
   const x = (i) => ml + i * step;
 
+  const tiers = tierColours();
+  const tierFill = (key) => tiers[key] ?? token("--axis");
+  const halo = token("--halo");
   const svg = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
   nameSvg(svg, opts.label ?? "Stacked area chart: mapped km by tier");
   for (const t of ticks) {
@@ -376,7 +396,7 @@ export function renderTiers(el, model, opts = {}) {
     const up = top.map((v, i) => `${x(i)},${y(v)}`).join("L");
     const down = base.map((v, i) => `${x(i)},${y(v)}`).reverse().join("L");
     svg.appendChild(svgEl("path", { class: `tier tier-${layer.key}`, d: `M${up}L${down}Z`,
-      fill: TIER_COLOURS[layer.key] ?? "#999", "fill-opacity": 0.9, stroke: "#fff", "stroke-width": 0.6 }));
+      fill: tierFill(layer.key), "fill-opacity": 0.9, stroke: halo, "stroke-width": 0.6 }));
     top.forEach((v, i) => (base[i] = v));
   }
   const hx = svgEl("line", { class: "hover-x", x1: 0, x2: 0, y1: mt, y2: mt + ih, visibility: "hidden" });
@@ -389,7 +409,7 @@ export function renderTiers(el, model, opts = {}) {
     const chip = document.createElement("span");
     chip.className = "chip";
     const sw = document.createElement("i");
-    sw.style.background = TIER_COLOURS[layer.key] ?? "#999";
+    sw.style.background = tierFill(layer.key);
     chip.append(sw, document.createTextNode(layer.name));
     legend.appendChild(chip);
   }

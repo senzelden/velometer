@@ -253,7 +253,8 @@ p.kicker { margin: 2rem 0 0; }
 .s.ghost .line { stroke: var(--ctx); stroke-width: 1; opacity: 0.5; }
 .s .flag { fill: var(--halo); stroke: var(--ink-2); stroke-width: 2; }
 .s.gray .flag { stroke: var(--ctx); stroke-width: 1.5; }
-.s .el { font: 600 12px system-ui, sans-serif; }
+.s .el { font: 600 12px system-ui, sans-serif; fill: var(--ink); } /* text: the colour is on .el-key */
+.el-key { stroke-width: 3; stroke-linecap: round; }
 .s.gray .el { fill: var(--muted); font-weight: 400; font-size: 11px; }
 .leader { stroke: var(--ctx); stroke-width: 1; }
 .s { transition: opacity 0.12s; }

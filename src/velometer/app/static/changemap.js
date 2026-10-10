@@ -1,8 +1,11 @@
 // velometer change map: the mapped gained / lost / retiered / redrawn way-sides between two runs
-// (GeoJSON from `velometer report change`) over OSM raster tiles. Every URL and colour comes from
-// the #changemap-config blob the server renders, so this file names no host and duplicates no
-// palette. Figures are mapped km (ADR 0006). OSM tag values are user data: popups are built with
-// textContent, never innerHTML.
+// (GeoJSON from `velometer report change`) over OSM raster tiles. Every URL comes from the
+// #changemap-config blob the server renders, so this file names no host; every colour is a
+// stylesheet token (--change-<category>) read when it draws, and the layer and its key are
+// restyled in place when the OS theme changes (zoom and position stay). Figures are mapped km
+// (ADR 0006). OSM tag values are user data: popups are built with textContent, never innerHTML.
+import { onThemeChange, token } from "./js/theme.js";
+
 (function () {
   "use strict";
   var configEl = document.getElementById("changemap-config");
@@ -22,6 +25,29 @@
   function say(text) {
     if (status) status.textContent = text;
   }
+
+  // the categories drawn (geometry changes are listed in the table, not drawn), in key order
+  var CATEGORIES = Object.keys(cfg.labels);
+  var drawn = function (c) { return CATEGORIES.indexOf(c) >= 0; };
+  var colourOf = function (c) { return token("--change-" + c); };
+  var layer = null;
+
+  function style(f) {
+    return { color: colourOf(f.properties.category), weight: cfg.weight, opacity: 0.9 };
+  }
+
+  // the key under the map: one swatch per category, the colour its way-sides are drawn in
+  function paintKey() {
+    document.querySelectorAll(".changemap-legend svg.swatch[data-key] rect").forEach(function (r) {
+      r.setAttribute("fill", colourOf(r.parentNode.getAttribute("data-key")));
+    });
+  }
+
+  paintKey();
+  onThemeChange(function () {
+    paintKey();
+    if (layer) layer.setStyle(style);
+  });
 
   function el(tag, text) {
     var node = document.createElement(tag);
@@ -65,13 +91,10 @@
       return r.json();
     })
     .then(function (data) {
-      // geometry changes are listed in the table, not drawn (no colour for them)
-      var layer = L.geoJSON(data, {
+      layer = L.geoJSON(data, {
         renderer: renderer,
-        filter: function (f) { return !!cfg.colours[f.properties.category]; },
-        style: function (f) {
-          return { color: cfg.colours[f.properties.category], weight: cfg.weight, opacity: 0.9 };
-        },
+        filter: function (f) { return drawn(f.properties.category); },
+        style: style,
         onEachFeature: function (f, l) {
           l.bindPopup(function () { return popup(f.properties); }, { maxWidth: 360 });
         },
@@ -81,11 +104,11 @@
       var counts = {};
       data.features.forEach(function (f) {
         var c = f.properties.category;
-        if (cfg.colours[c]) counts[c] = (counts[c] || 0) + 1;
+        if (drawn(c)) counts[c] = (counts[c] || 0) + 1;
       });
       say(
         "Way-sides: " +
-        Object.keys(cfg.colours)
+        CATEGORIES
           .map(function (c) { return (counts[c] || 0).toLocaleString("en-GB") + " " + cfg.labels[c]; })
           .join(" · ") + ". Click a way-side for its way and mapped km."
       );

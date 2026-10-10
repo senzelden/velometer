@@ -1,8 +1,11 @@
 // velometer tier map: the run's tiered sides (GeoJSON from `velometer report maps`) over OSM
-// raster tiles, with a LAU/FUA switch and tier checkboxes. Every URL and colour comes from the
-// #tiermap-config blob the server renders (charts.TIER_COLOURS, the tile and link URLs), so this
-// file names no host and duplicates no palette. OSM tag values are user data: popups are built
-// with textContent, never innerHTML.
+// raster tiles, with a LAU/FUA switch and tier checkboxes. Every URL comes from the
+// #tiermap-config blob the server renders, so this file names no host; every colour is a
+// stylesheet token (--tier-a … --tier-e, --outline) read when it draws, and the layers are
+// restyled in place when the OS theme changes (zoom and position stay). OSM tag values are user
+// data: popups are built with textContent, never innerHTML.
+import { onThemeChange, tierColours, token } from "./js/theme.js";
+
 (function () {
   "use strict";
   var configEl = document.getElementById("tiermap-config");
@@ -10,7 +13,7 @@
   if (!configEl || !mapEl || typeof L === "undefined") return;
   var cfg = JSON.parse(configEl.textContent);
   var status = document.getElementById("tiermap-status");
-  var TIERS = Object.keys(cfg.colours); // A..E
+  var TIERS = Object.keys(cfg.labels); // A..E
   var cache = {}; // kind -> FeatureCollection
   var current = null; // {tiers: {A: layer, ...}, boundary: layer}
   var selected = null; // the kind the reader picked last
@@ -26,6 +29,29 @@
 
   function say(text) {
     if (status) status.textContent = text;
+  }
+
+  function tierStyle(colours, t) {
+    return { color: colours[t], weight: cfg.weight, opacity: 0.9 };
+  }
+
+  function boundaryStyle() {
+    return { color: token("--outline"), weight: 1.5, fill: false };
+  }
+
+  // the key beside the tier checkboxes: one swatch per tier, the colour its lines are drawn in
+  function paintKey(colours) {
+    document.querySelectorAll(".tiermap-controls svg.swatch[data-key] rect").forEach(function (r) {
+      r.setAttribute("fill", colours[r.parentNode.getAttribute("data-key")]);
+    });
+  }
+
+  function restyle() {
+    var colours = tierColours();
+    paintKey(colours);
+    if (!current) return;
+    TIERS.forEach(function (t) { current.tiers[t].setStyle(tierStyle(colours, t)); });
+    if (current.boundary) current.boundary.setStyle(boundaryStyle());
   }
 
   function el(tag, text, attrs) {
@@ -85,16 +111,17 @@
       ? L.geoJSON(data.boundary, {
           interactive: false,
           renderer: renderer,
-          style: { color: cfg.outline, weight: 1.5, fill: false },
+          style: boundaryStyle(),
         }).addTo(map)
       : null;
     var tiers = {};
+    var colours = tierColours();
     // E first, A last: A draws on top where sides overlap (as in the PNG)
     TIERS.slice().reverse().forEach(function (t) {
       tiers[t] = L.geoJSON(data, {
         renderer: renderer,
         filter: function (f) { return f.properties.tier === t; },
-        style: { color: cfg.colours[t], weight: cfg.weight, opacity: 0.9 },
+        style: tierStyle(colours, t),
         onEachFeature: function (f, layer) {
           layer.bindPopup(function () { return popup(f.properties); }, { maxWidth: 360 });
         },
@@ -149,6 +176,8 @@
   document.querySelectorAll('input[name="kind"]').forEach(function (radio) {
     radio.addEventListener("change", function () { if (radio.checked) load(radio.value); });
   });
+  paintKey(tierColours());
+  onThemeChange(restyle);
   var first = document.querySelector('input[name="kind"]:checked');
   load(first ? first.value : cfg.kinds[0].kind);
 })();

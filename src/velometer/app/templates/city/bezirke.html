@@ -54,12 +54,12 @@
 {% if bezirke.change_map %}
 <div id="changemap" class="tiermap" role="region" aria-label="Interactive change map, {{ city.name }}"></div>
 <ul class="changemap-legend" aria-label="Map key">
-{% for c, colour in bezirke.change_map.colours.items() %}<li><svg class="swatch" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2" fill="{{ colour }}"></rect></svg> {{ bezirke.change_map.labels[c] }}</li>
+{% for c, label in bezirke.change_map.labels.items() %}<li><svg class="swatch" data-key="{{ c }}" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2"></rect></svg> {{ label }}</li>
 {% endfor %}</ul>
 <p class="meta tiermap-note" id="changemap-status">Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.</p>
 <script type="application/json" id="changemap-config">{{ bezirke.change_map | tojson }}</script>
 <script src="{{ u('/static/vendor/leaflet.js') }}"></script>
-<script src="{{ u('/static/changemap.js') }}"></script>
+<script type="module" src="{{ u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
 <div class="scroll">{{ bezirke.change_table | md }}</div>

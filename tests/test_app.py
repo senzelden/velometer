@@ -270,15 +270,18 @@ def test_city_page_interactive_map_with_png_link_and_hint(client):
         assert client.get(s).status_code == 200
     cfg = _map_config(section)
     assert cfg["kinds"] == [{"kind": "lau", "label": "LAU", "url": "/maps/berlin_lau.geojson"}]
-    assert cfg["colours"] == dict(zip("ABCDE", charts.TIER_COLOURS, strict=True))
+    # the colours live in the stylesheet's tokens (both themes), not in the config: map.js
+    # reads them when it draws and again when the OS theme changes
+    assert "colours" not in cfg and "outline" not in cfg
     assert cfg["labels"] == charts.TIER_LABEL
-    for t, colour in zip("ABCDE", charts.TIER_COLOURS, strict=True):  # the tier checkboxes
+    for t in "ABCDE":  # the tier checkboxes: a key swatch map.js paints from --tier-x
         box = re.search(
             rf'<input type="checkbox" name="tier" value="{t}"[^>]*>'
-            rf'\s*<svg class="swatch"[^>]*><rect [^>]*fill="([^"]+)"',
+            rf'\s*<svg class="swatch" data-key="{t}"[^>]*><rect ([^>]*)>',
             section,
         )
-        assert box and box.group(1) == colour, t
+        assert box and "fill=" not in box.group(1), t
+    assert not HEX_COLOUR.search(section)
     assert re.findall(r'<input type="radio" name="kind" value="(\w+)"', section) == ["lau"]
     assert re.search(r'<a href="/maps/berlin_lau.png">[^<]*static image', section)
     assert '<a href="/maps/berlin_fua.png"' not in section  # no PNG either
@@ -427,10 +430,40 @@ def test_pages_load_our_chart_modules(client):
         assert srcs == expected, path
         for s in srcs:
             assert client.get(s).status_code == 200
-    # the modules import only our own files, by relative path
-    for js in (STATIC / "js").glob("*.js"):
+    # the modules import only our own files, by relative path (the map modules beside js/ too)
+    for js in [*(STATIC / "js").glob("*.js"), *STATIC.glob("*.js")]:
         for spec in re.findall(r'^import .*? from "([^"]+)"', js.read_text(), re.M):
-            assert spec.startswith("./") and (STATIC / "js" / spec).is_file(), (js.name, spec)
+            assert spec.startswith("./") and (js.parent / spec).is_file(), (js.name, spec)
+
+
+HEX_COLOUR = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+JS_COLOUR = re.compile(rf"{HEX_COLOUR.pattern}|(?<![\w-])(?:rgba?|hsla?)\(", re.I)
+
+
+def _js_colour_literals(text: str) -> list[str]:
+    return JS_COLOUR.findall(text)
+
+
+def test_no_js_file_holds_a_colour_literal():
+    # charts and maps draw from the stylesheet's tokens (static/js/theme.js), so a theme
+    # changes every colour in one place. The one literal is theme.js's MISSING grey, the
+    # fallback for a token that is not defined (it logs a console error, which fails the render
+    # pass). Our own scripts, not the vendored ones or the node tests
+    found = {}
+    for js in [*STATIC.glob("*.js"), *(STATIC / "js").glob("*.js")]:
+        text = js.read_text()
+        if js.name == "theme.js":
+            text = text.replace('export const MISSING = "#808080";', "", 1)
+        if hits := _js_colour_literals(text):
+            found[js.name] = hits
+    assert found == {}
+
+
+def test_the_js_literal_rule_sees_each_kind():
+    for lit in ['"#2a78d6"', "'#fff'", "rgb(0 0 0)", "rgba(0,0,0,.1)", "hsl(10 50% 50%)"]:
+        assert _js_colour_literals(f"const c = {lit};"), lit
+    for ok in ['"#tiermap-config"', "`#${t}`", '"transparent"', '"currentColor"', "#hash"]:
+        assert not _js_colour_literals(f"const c = {ok};"), ok
 
 
 def test_footer_on_every_page(client, fixture_db):
