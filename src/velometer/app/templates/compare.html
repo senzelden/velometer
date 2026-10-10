@@ -15,7 +15,7 @@
   <fieldset class="f-cities"><legend>Cities</legend>
     <p class="quick" aria-label="Quick sets">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ u(href(c=q.ids)) }}">{{ q.label }}</a>{% endfor %}</p>
     <div class="country-grid">
-    {% for g in groups %}<div class="country"><p class="grp-name">{{ g.country }}</p>
+    {% for g in groups %}<div class="country" role="group" aria-labelledby="cmp-grp-{{ loop.index }}"><p class="grp-name" id="cmp-grp-{{ loop.index }}">{{ g.country }}</p>
       {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ c.name }}</label>
       {% endfor %}</div>
     {% endfor %}</div>

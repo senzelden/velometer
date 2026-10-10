@@ -680,3 +680,75 @@ def test_prose_tables_are_scroll_regions_too(client):  # noqa: F811
     p = _Scrolls()
     p.feed(html)
     assert any(t == "table" for t, _ in p.found)
+
+
+# ---- Task 7 fix round 1: the scroll-region post-process, and named groups ----
+
+from velometer.app.regions import name_scroll_regions  # noqa: E402
+
+
+def test_a_scroll_wrapper_is_matched_by_class_token_in_any_attribute_order():
+    for tag in (
+        '<div data-x="1" class="wide scroll">',
+        '<div id="a" class="scroll" hidden>',
+        '<div class="scroll wide">',
+    ):
+        out = name_scroll_regions(f"<h2>Heads</h2>{tag}<table></table></div>")
+        assert 'tabindex="0"' in out.split("<table")[0], tag
+        assert 'role="region"' in out and 'aria-label="Heads"' in out, tag
+    assert "tabindex" not in name_scroll_regions('<div class="scrolled">x</div>')
+    assert "tabindex" not in name_scroll_regions('<div class="no-scroll">x</div>')
+
+
+def test_a_wrapper_is_never_named_by_a_caption_outside_it():
+    page = (
+        '<h2>Above</h2><div class="scroll"><p>no table here</p></div>'
+        "<table><caption>Later table</caption></table>"
+    )
+    out = name_scroll_regions(page)
+    assert 'aria-label="Above"' in out and 'Later table"' not in out.split("</div>")[0]
+    bare = name_scroll_regions('<div class="scroll"><p>x</p></div>')  # no heading at all
+    assert re.search(r'aria-label="[^"]+"', bare)
+    inner = name_scroll_regions(
+        '<h2>Above</h2><div class="scroll"><table><caption>Inside</caption></table></div>'
+    )
+    assert 'aria-label="Inside"' in inner
+
+
+def test_a_table_inside_a_wrapper_gets_no_tab_stop_of_its_own():
+    out = name_scroll_regions(
+        '<h2>H</h2><div class="scroll"><table><caption>C</caption></table></div>'
+        "<table><caption>Prose</caption></table>"
+    )
+    assert out.count('tabindex="0"') == 2  # the wrapper and the one table outside it
+    inside = out.split("</div>")[0]
+    assert inside.count('tabindex="0"') == 1
+    nested = name_scroll_regions('<div class="scroll"><div>x</div><table></table></div>')
+    assert nested.count('tabindex="0"') == 1  # a nested div does not end the wrapper early
+
+
+class _Groups(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.ids, self.names, self.groups = [], [], []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if a.get("id"):
+            self.ids.append(a["id"])
+        if "grp-name" in (a.get("class") or "").split():
+            self.names.append(a.get("id"))
+        if a.get("role") == "group" and a.get("aria-labelledby"):
+            self.groups.append(a["aria-labelledby"])
+
+
+def test_every_group_label_labels_a_group_and_ids_are_unique(client, all_page_urls):  # noqa: F811
+    seen = 0
+    for url in all_page_urls:
+        p = _Groups()
+        p.feed(client.get(url).text)
+        assert len(p.ids) == len(set(p.ids)), url
+        for name_id in p.names:
+            seen += 1
+            assert name_id and name_id in p.groups, (url, name_id)
+    assert seen > 5

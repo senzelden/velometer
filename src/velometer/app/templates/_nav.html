@@ -15,8 +15,8 @@
         {% if nav_groups %}
         <div class="groups">
         {% for g in nav_groups %}
-          <div class="grp" data-country="{{ g.country }}">
-            <p class="grp-name">{{ g.country }}</p>
+          <div class="grp" data-country="{{ g.country }}" role="group" aria-labelledby="nav-grp-{{ loop.index }}">
+            <p class="grp-name" id="nav-grp-{{ loop.index }}">{{ g.country }}</p>
             <ul>{% for c in g.cities %}<li><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></li>{% endfor %}</ul>
           </div>
         {% endfor %}

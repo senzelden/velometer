@@ -1,10 +1,12 @@
 """Sideways-scrolling regions reachable by keyboard (WCAG 2.1.1, axe scrollable-region-focusable).
 
-Every `.scroll` wrapper and every bare `<table>` (the markdown tables of prose pages scroll
-themselves) gets `tabindex="0"` and an accessible name: the table's caption when it has one,
-else the nearest heading above it. A wrapper becomes `role="region"` so the name is announced.
-Attributes a template already sets are kept. Done once, on the rendered page, so no page
-needs an edit of its own.
+Every element whose class list holds `scroll` gets `tabindex="0"`, `role="region"` and an
+accessible name; every bare `<table>` outside such a wrapper (markdown tables of prose pages
+scroll themselves) gets `tabindex="0"` and a name. A table inside a wrapper gets nothing of its
+own: one tab stop per scroller. A name comes from a caption or heading inside the region, else
+from the heading above it, else a fixed fallback; never from a caption outside the region.
+Attributes a template already sets are kept. Done once, on the rendered page, so no page needs
+an edit of its own.
 """
 
 from __future__ import annotations
@@ -12,49 +14,77 @@ from __future__ import annotations
 import html
 import re
 
-SCROLL = re.compile(r'<div class="scroll"([^>]*)>')
+WRAPPER = re.compile(
+    r'<(div|section)\b(?=[^>]*\bclass="[^"]*(?<![\w-])scroll(?![\w-])[^"]*")([^>]*)>'
+)
 BARE_TABLE = re.compile(r"<table>")
+TAG = re.compile(r"<(/?)(div|section)\b[^>]*>")
 HEADING = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.S)
 CAPTION = re.compile(r"<caption\b[^>]*>(.*?)</caption>", re.S)
-FALLBACK = "Table"
+WRAPPER_FALLBACK = "Scrollable content"
+TABLE_FALLBACK = "Table"
 
 
 def _text(fragment: str) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", "", fragment)).split())
 
 
-def _name(page: str, start: int, end: int) -> str:
-    """The label for a region starting at `start`: its table's caption, else the last heading."""
-    table = re.search(r"</table>", page[end:])
-    caption = CAPTION.search(page[end : end + table.end()] if table else page[end:end])
-    if caption and _text(caption.group(1)):
-        return _text(caption.group(1))
-    headings = HEADING.findall(page[:start])
-    for h in reversed(headings):
+def _first(pattern: re.Pattern, fragment: str) -> str:
+    for m in pattern.finditer(fragment):
+        if _text(m.group(1)):
+            return _text(m.group(1))
+    return ""
+
+
+def _extent(page: str, m: re.Match) -> int:
+    """Index just past the closing tag of the element `m` opens (end of page if unclosed)."""
+    depth = 1
+    for t in TAG.finditer(page, m.end()):
+        if t.group(2) != m.group(1):
+            continue
+        depth += -1 if t.group(1) else 1
+        if not depth:
+            return t.end()
+    return len(page)
+
+
+def _name(page: str, start: int, inner: str, fallback: str) -> str:
+    name = _first(CAPTION, inner) or _first(HEADING, inner)
+    if name:
+        return name
+    for h in reversed(HEADING.findall(page[:start])):
         if _text(h):
             return _text(h)
-    return FALLBACK
+    return fallback
+
+
+def _attrs(attrs: str, wrapper: bool, name: str) -> str:
+    add = []
+    if "tabindex=" not in attrs:
+        add.append('tabindex="0"')
+    if wrapper and "role=" not in attrs:
+        add.append('role="region"')
+    if "aria-label" not in attrs:
+        add.append(f'aria-label="{html.escape(name)}"')
+    return (" " + " ".join(add)) if add else ""
 
 
 def name_scroll_regions(page: str) -> str:
-    out: list[str] = []
-    last = 0
-    for m in sorted([*SCROLL.finditer(page), *BARE_TABLE.finditer(page)], key=lambda m: m.start()):
-        out.append(page[last : m.start()])
-        last = m.end()
-        wrapper = m.re is SCROLL
-        attrs = m.group(1) if wrapper else ""
-        add = []
-        if "tabindex=" not in attrs:
-            add.append('tabindex="0"')
-        if wrapper and "role=" not in attrs:
-            add.append('role="region"')
-        if "aria-label" not in attrs:
-            add.append(f'aria-label="{html.escape(_name(page, m.start(), m.end()))}"')
-        extra = (" " + " ".join(add)) if add else ""
-        if wrapper:
-            out.append(f'<div class="scroll"{attrs}{extra}>')
-        else:
-            out.append(f"<table{extra}>")
+    wrappers = [(m, _extent(page, m)) for m in WRAPPER.finditer(page)]
+    edits: list[tuple[int, int, str]] = []  # (start, end, replacement)
+    for m, end in wrappers:
+        name = _name(page, m.start(), page[m.end() : end], WRAPPER_FALLBACK)
+        edits.append((m.start(), m.end(), m.group(0)[:-1] + _attrs(m.group(2), True, name) + ">"))
+    for m in BARE_TABLE.finditer(page):
+        if any(w.start() < m.start() < end for w, end in wrappers):
+            continue
+        close = page.find("</table>", m.end())
+        inner = page[m.end() : close if close >= 0 else len(page)]
+        name = _name(page, m.start(), inner, TABLE_FALLBACK)
+        edits.append((m.start(), m.end(), "<table" + _attrs("", False, name) + ">"))
+    out, last = [], 0
+    for start, end, text in sorted(edits):
+        out += [page[last:start], text]
+        last = end
     out.append(page[last:])
     return "".join(out)

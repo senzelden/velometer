@@ -14,7 +14,8 @@ const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tab
 /**
  * @param {HTMLElement} root the <aside>, with a .slideover-close button and a .slideover-body
  * @param {{fallbackFocus?: (id: string) => HTMLElement | null}} [opts] where focus goes on close
- *   when the element that opened the panel is gone (the page was redrawn meanwhile)
+ *   when the element that opened the panel is gone (the page was redrawn meanwhile); `nameOf`,
+ *   `draw` and `load` replace the city name lookup, drawTiers and loadSeries (node tests)
  */
 export function createPanel(root, opts = {}) {
   const body = root.querySelector(".slideover-body");
@@ -55,9 +56,9 @@ export function createPanel(root, opts = {}) {
       if (mine !== token) return;
       body.replaceChildren(...doc.body.childNodes);
       announce(panelAnnouncement("loaded", body.querySelector("h2")?.textContent || nameOf(id)));
-      const D = await loadSeries();
+      const D = await (opts.load ?? loadSeries)();
       if (mine !== token) return;
-      for (const el of body.querySelectorAll('[data-chart="city-tiers"]')) charts.add(drawTiers(el, D));
+      for (const el of body.querySelectorAll('[data-chart="city-tiers"]')) charts.add((opts.draw ?? drawTiers)(el, D));
     } catch (err) {
       if (mine !== token) return;
       charts.run();
