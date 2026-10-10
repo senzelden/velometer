@@ -721,17 +721,17 @@ def _pairs(body: str) -> dict[str, str]:
 def _dark_tokens(css: str) -> dict[str, str]:
     """The custom properties the `prefers-color-scheme: dark` `:root` block redefines."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    m = _DARK.search(css)
-    assert m, "no dark :root block"
-    return _pairs(m.group(1))
+    found = _DARK.findall(css)
+    assert len(found) == 1, f"{len(found)} dark :root blocks; the theme is one block"
+    return _pairs(found[0])
 
 
 def _css_tokens(css: str, theme: str = "light") -> dict[str, str]:
     """The custom properties of the stylesheet's `:root`; for dark, updated with the dark block."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    m = _ROOT.search(css)
-    assert m, "no :root block"
-    light = _pairs(m.group(1))
+    found = _ROOT.findall(css)
+    assert len(found) == 1, f"{len(found)} light :root blocks; the tokens are one block"
+    light = _pairs(found[0])
     if theme == "light":
         return light
     assert theme == "dark", theme
@@ -741,6 +741,7 @@ def _css_tokens(css: str, theme: str = "light") -> dict[str, str]:
 def _css_outside_tokens(css: str) -> str:
     """The stylesheet without comments and its two token blocks (light `:root`, dark media)."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    _css_tokens(css, "dark")  # exactly one block of each, or a second one could hide literals
     return _ROOT.sub("", _DARK.sub("", css))
 
 

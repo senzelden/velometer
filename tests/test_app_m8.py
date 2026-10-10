@@ -745,12 +745,24 @@ def _lch_hue(hexcolour: str) -> float:
 MIN_HUE_DEGREES = 60
 
 
-def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours():
-    from tests.test_app import _css_tokens
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours(theme):
+    # the colours the plan chart actually draws with: every token its `.plan-svg` rules stroke
+    # or fill, apart from the greys (ink, grid, halo), whose hue is noise
+    from tests.test_app import _css_rules, _css_tokens
 
-    tokens = _css_tokens(_stylesheet())
+    tokens = _css_tokens(_stylesheet(), theme)
+    drawn = {
+        t
+        for sels, decls in _css_rules(_stylesheet())
+        if any(s.startswith(".plan-svg ") for s in sels)
+        for p, v in decls.items()
+        if p in ("fill", "stroke")
+        for t in re.findall(r"var\((--[\w-]+)\)", v)
+    } - {"--ink", "--ink-2", "--grid", "--grid-2", "--halo"}
+    assert {"--mapped", "--series-1", "--flag", "--completed"} <= drawn
     mapped = _lch_hue(tokens["--mapped"])
-    for other in ("--flag", "--accent", "--completed"):
+    for other in sorted(drawn - {"--mapped"}):
         d = abs(mapped - _lch_hue(tokens[other])) % 360
         assert min(d, 360 - d) >= MIN_HUE_DEGREES, (other, round(min(d, 360 - d)))
 

@@ -15,7 +15,8 @@
   --accent: #1a66c2;    /* links, focusable controls and UI marks: text, >= 4.5:1 (not tier A) */
   --accent-bg: #e8f0fb;
   --flag: #b8440f;      /* flagged rows and suspect marks: a text colour, >= 4.5:1 */
-  --ctx: #8f8d86;       /* grey context lines: a graphic, >= 3:1 */
+  --ctx: #8a8882;       /* grey context lines: a graphic, >= 3:1 */
+  --control-border: #807e77; /* inputs, selects, chips, toggles: their boundary, >= 3:1 */
   --up: #2c6b2f;
   --down: #a2560a;
   --mapped: #c2378f;    /* the plan chart's mapped line: magenta, a hue family apart from --flag */
@@ -67,7 +68,8 @@
     --accent: #5d9ce8;
     --accent-bg: #1c2b3f;
     --flag: #f07a48;
-    --ctx: #706e68;
+    --ctx: #75736c;
+    --control-border: #8a8882;
     --up: #74c27a;
     --down: #e3995a;
     --mapped: #e070b8;
@@ -113,6 +115,8 @@ body {
    letter by letter instead of overflowing into its .scroll box. */
 p, li, dd, figcaption, .explanation, .provenance { overflow-wrap: anywhere; }
 a { color: var(--accent); }
+/* native checkboxes and radios: drawn by the browser in the page's color-scheme, ticked in the accent */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 code { font-family: var(--mono); font-size: 0.9em; }
 pre { overflow-x: auto; background: var(--panel); padding: 0.75rem; }
 
@@ -143,13 +147,13 @@ header.site .bar {
 }
 .site-nav .cities-panel ul { display: block; }
 .site-nav .cities-panel a { padding: 0.15rem 0; border: 0; color: var(--accent); font-weight: 400; }
-.city-filter { width: 100%; font: inherit; padding: 0.4rem 0.6rem; border: 1px solid var(--grid-2); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.city-filter { width: 100%; font: inherit; padding: 0.4rem 0.6rem; border: 1px solid var(--control-border); border-radius: 6px; background: var(--paper); color: var(--ink); }
 .cities-panel .groups { columns: 3 10rem; column-gap: 1.25rem; margin-top: 0.75rem; }
 .cities-panel .grp { break-inside: avoid; margin-bottom: 0.6rem; }
 .cities-panel .grp[hidden], .cities-panel li[hidden] { display: none; }
 .cities-panel h4 { margin: 0 0 0.1rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .site-nav .cities-panel a.all { display: inline-block; margin-top: 0.4rem; font-size: 0.9rem; }
-.menu-toggle { margin-left: auto; font: inherit; background: none; border: 1px solid var(--grid-2); border-radius: 6px; padding: 0.3rem 0.75rem; color: var(--ink); cursor: pointer; }
+.menu-toggle { margin-left: auto; font: inherit; background: none; border: 1px solid var(--control-border); border-radius: 6px; padding: 0.3rem 0.75rem; color: var(--ink); cursor: pointer; }
 .menu-toggle[hidden] { display: none; }
 @media (max-width: 760px) {
   /* nav.js present: the nav folds into the menu button; without it the links wrap */
@@ -318,7 +322,7 @@ footer p { margin: 0.25rem 0; }
 .compare-form { font-size: 0.85rem; color: var(--ink-2); max-width: 100%; }
 .compare-form label { display: block; margin-bottom: 0.2rem; }
 .compare-row { display: flex; gap: 0.5rem; align-items: flex-start; }
-.compare-form select { font: inherit; font-size: 0.9rem; max-width: 14rem; padding: 0.2rem; border: 1px solid var(--grid-2); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.compare-form select { font: inherit; font-size: 0.9rem; max-width: 14rem; padding: 0.2rem; border: 1px solid var(--control-border); border-radius: 6px; background: var(--surface); color: var(--ink); }
 .compare-form button { font: inherit; padding: 0.35rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
 .keynums { display: flex; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); margin: 0.75rem 0 0; overflow-x: auto; max-width: 100%; }
 .kn { flex: 1 0 9.5rem; padding: 0.55rem 1rem 0.55rem 0; margin-right: 1rem; display: flex; flex-direction: column; gap: 0.1rem; border-right: 1px solid var(--grid); }
@@ -392,12 +396,12 @@ dl.drivers dd { margin: 0; color: var(--ink-2); }
 .slideover[hidden], .filters-toggle[hidden] { display: none; }
 .filters-sheet { background: var(--surface); border: 1px solid var(--grid); border-radius: 8px; padding: 0.6rem 1rem; margin: 1rem 0; }
 .filters-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 0.92rem; color: var(--ink-2); }
-.filters-toggle { font: inherit; background: none; border: 1px solid var(--grid-2); border-radius: 6px; padding: 0.3rem 0.75rem; color: var(--ink); cursor: pointer; }
+.filters-toggle { font: inherit; background: none; border: 1px solid var(--control-border); border-radius: 6px; padding: 0.3rem 0.75rem; color: var(--ink); cursor: pointer; }
 .filters-body { margin-top: 0.6rem; }
 .filters-sheet fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .filters-sheet legend { padding: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin-bottom: 0.3rem; }
 .quick { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.6rem; }
-.chip-link, .chip { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.7rem; border: 1px solid var(--grid-2); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer; }
+.chip-link, .chip { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.7rem; border: 1px solid var(--control-border); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; cursor: pointer; }
 .chip-link:hover, .chip:hover { border-color: var(--ink-2); }
 .country-grid { columns: 5 9.5rem; column-gap: 1.25rem; font-size: 0.9rem; }
 .country { break-inside: avoid; margin-bottom: 0.5rem; }
@@ -405,7 +409,7 @@ dl.drivers dd { margin: 0; color: var(--ink-2); }
 .country label { display: block; white-space: nowrap; }
 .f-row { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; align-items: flex-end; margin-top: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--grid); }
 .f-metric { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
-.f-metric select { font: 0.95rem system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: var(--ink); padding: 0.3rem 0.5rem; border: 1px solid var(--grid-2); border-radius: 6px; background: var(--surface); }
+.f-metric select { font: 0.95rem system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: var(--ink); padding: 0.3rem 0.5rem; border: 1px solid var(--control-border); border-radius: 6px; background: var(--surface); }
 .seg label { display: inline-block; margin-right: 0.9rem; font-size: 0.9rem; }
 .apply { font: inherit; padding: 0.35rem 1rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
 .compare-js .apply { display: none; }
