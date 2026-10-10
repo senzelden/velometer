@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}velometer · Page not found{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Page not found</span></nav>{% endblock %}
 {% block content %}
 <h1>Page not found</h1>
-<p class="lede">There is no page at this address. <a href="{{ u('/') }}">Go to the overview</a>.</p>
+<p class="dek">There is no page at this address. <a href="{{ u('/') }}">Go to the overview</a>.</p>
 {% endblock %}

@@ -3,6 +3,7 @@
 import { renderTiers } from "./chart.js";
 import { TIER_NAMES, displayLabels, labelsOf, mount, pointsOn } from "./data.js";
 
+/** Draws it and returns the release function of its theme/resize listeners. */
 export function drawTiers(el, D) {
   const id = el.dataset.city;
   const pts = D.series[`${id}/${el.dataset.kind}`] ?? [];
@@ -16,7 +17,7 @@ export function drawTiers(el, D) {
     })),
   };
   const where = `${D.cities[id]?.name ?? id} ${el.dataset.kind.toUpperCase()}`;
-  mount(el, () =>
+  return mount(el, () =>
     renderTiers(el, model, { label: `Stacked area chart: mapped km by tier, ${where}` }),
   );
 }

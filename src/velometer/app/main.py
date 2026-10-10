@@ -40,6 +40,7 @@ from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import render_explainer, render_narrative, safe_url
 from velometer.app.organisations import org_of_sources, organisations_context
+from velometer.app.regions import name_scroll_regions
 from velometer.app.series import series_payload
 from velometer.config import ConfigError, load_differences
 from velometer.content.loader import (
@@ -343,6 +344,16 @@ def create_app(
     templates.env.filters["host"] = _host
     templates.env.filters["clause"] = _note_clause
     templates.env.filters["unit"] = lambda u: UNITS.get(u, u)
+    _respond = templates.TemplateResponse
+
+    def respond(*args, **kwargs):
+        """Every rendered page, with its sideways-scrolling regions made keyboard-reachable."""
+        resp = _respond(*args, **kwargs)
+        resp.body = name_scroll_regions(resp.body.decode()).encode()
+        resp.headers["content-length"] = str(len(resp.body))
+        return resp
+
+    templates.TemplateResponse = respond  # type: ignore[method-assign]
     # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
     templates.env.filters["strip_ours"] = lambda v: OURS_PREFIX.sub("", v or "")
 

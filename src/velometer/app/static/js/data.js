@@ -55,19 +55,41 @@ export function pointsOn(points, labels, key) {
 /**
  * Draw now, again when the element's width changes (charts size to their box) and again when the
  * OS theme changes (chart.js reads the colour tokens at draw time; the data and selection stay).
+ * Returns a release function that stops both; a chart in a replaceable container (the city
+ * panel) must call it when the container's content goes. A disconnected node also lets go on
+ * the next theme change.
  */
 export function mount(el, draw) {
   let width = el.clientWidth;
   draw();
-  const off = onThemeChange(() => (el.isConnected ? draw() : off())); // a replaced panel chart lets go
-  if (typeof ResizeObserver === "undefined") return;
+  const unsubscribe = onThemeChange(() => (el.isConnected ? draw() : off()));
   let timer = null;
-  new ResizeObserver(() => {
+  const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => {
     if (el.clientWidth === width) return;
     width = el.clientWidth;
     clearTimeout(timer);
     timer = setTimeout(draw, 120);
-  }).observe(el);
+  });
+  observer?.observe(el);
+  function off() {
+    unsubscribe();
+    observer?.disconnect();
+    clearTimeout(timer);
+  }
+  return off;
+}
+
+/** A bag of release functions: `add` one, `run` calls them all once and empties the bag. */
+export function releaser() {
+  let fns = [];
+  return {
+    add: (fn) => { if (typeof fn === "function") fns.push(fn); },
+    run() {
+      const todo = fns;
+      fns = [];
+      for (const fn of todo) fn();
+    },
+  };
 }
 
 /** A short note in place of a chart that could not be drawn (the tables still hold the data). */

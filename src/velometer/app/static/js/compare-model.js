@@ -167,3 +167,17 @@ export function plainText(md) {
     .replace(/[ \t]+\n/g, "\n")
     .replace(/(?<!\n)\n(?!\n|[ \t]*(?:[-*]|\d+\.)\s)[ \t]*/g, " ");
 }
+
+/** What a screen reader hears after Compare redraws: how many cities, which metric, what scale. */
+export function compareSummary(state, metrics) {
+  const n = state.c.length;
+  const scale = state.mode === "index" ? "indexed to the first year = 100" : "absolute values";
+  return `Showing ${n} ${n === 1 ? "city" : "cities"}, ${metrics[state.m]?.label ?? state.m}, ${scale}`;
+}
+
+/** What a screen reader hears while the city panel loads, once it has, and when it failed. */
+export function panelAnnouncement(phase, name) {
+  if (phase === "loading") return `Loading ${name}…`;
+  if (phase === "loaded") return name;
+  return `The city panel for ${name} could not be loaded.`;
+}

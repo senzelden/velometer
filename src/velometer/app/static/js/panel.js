@@ -3,9 +3,10 @@
 // decisions are the pure functions of compare-model.js, and compare.js owns `popstate`.
 // On phones the panel covers the page: it is modal there (aria-modal, inert background, Tab
 // stays inside); on wide screens it is a side panel and the page stays usable.
-import { loadSeries } from "./data.js";
+import { loadSeries, releaser } from "./data.js";
+import { announce } from "./live.js";
 import { url } from "./base.js";
-import { closeAction, openAction, panelUrl } from "./compare-model.js";
+import { closeAction, openAction, panelAnnouncement, panelUrl } from "./compare-model.js";
 import { drawTiers } from "./tier-chart.js";
 
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tabindex]:not([tabindex="-1"])';
@@ -23,6 +24,8 @@ export function createPanel(root, opts = {}) {
   let current = null;
   let returnTo = null;
   let token = 0; // a slow answer must not replace a newer one
+  const charts = releaser(); // the panel's charts listen for theme changes: let go when it is replaced
+  const nameOf = (id) => opts.nameOf?.(id) ?? id;
 
   const background = () => [...document.body.children].filter((e) => e !== root && e.tagName !== "SCRIPT");
   const modal = () => !root.hidden && phone.matches;
@@ -41,7 +44,9 @@ export function createPanel(root, opts = {}) {
     root.hidden = false;
     document.body.classList.add("panel-open");
     applyModal();
+    charts.run();
     body.replaceChildren(Object.assign(document.createElement("p"), { className: "empty", textContent: "Loading…" }));
+    announce(panelAnnouncement("loading", nameOf(id)));
     closeBtn.focus();
     try {
       const r = await fetch(panelUrl(id), { headers: { Accept: "text/html" } });
@@ -49,11 +54,14 @@ export function createPanel(root, opts = {}) {
       const doc = new DOMParser().parseFromString(await r.text(), "text/html");
       if (mine !== token) return;
       body.replaceChildren(...doc.body.childNodes);
+      announce(panelAnnouncement("loaded", body.querySelector("h2")?.textContent || nameOf(id)));
       const D = await loadSeries();
       if (mine !== token) return;
-      for (const el of body.querySelectorAll('[data-chart="city-tiers"]')) drawTiers(el, D);
+      for (const el of body.querySelectorAll('[data-chart="city-tiers"]')) charts.add(drawTiers(el, D));
     } catch (err) {
       if (mine !== token) return;
+      charts.run();
+      announce(panelAnnouncement("failed", nameOf(id)));
       body.replaceChildren(Object.assign(document.createElement("p"), {
         className: "note", textContent: `The city panel could not be loaded. Its page is ${url(`/city/${id}`)}.`,
       }));
@@ -66,6 +74,7 @@ export function createPanel(root, opts = {}) {
     const id = current;
     token++;
     root.hidden = true;
+    charts.run(); // the content stays in the hidden body until the next city, but nothing redraws it
     document.body.classList.remove("panel-open");
     current = null;
     applyModal();

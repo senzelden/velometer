@@ -8,11 +8,12 @@ import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import { onThemeChange, seriesColours, token } from "./theme.js";
 import {
-  buildModel, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
+  buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
   queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
 import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
+import { announce } from "./live.js";
 import { labelCells } from "./table.js";
 import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
 
@@ -45,7 +46,10 @@ document.documentElement.classList.add("compare-js");
 out.chart.tabIndex = -1; // the last resort for focus: the chart itself
 const cityEl = (id) =>
   [...document.querySelectorAll(`[data-city="${CSS.escape(id)}"]`)].find((e) => e.offsetParent) ?? out.chart;
-const panel = createPanel($("#city-panel"), { fallbackFocus: cityEl });
+const panel = createPanel($("#city-panel"), {
+  fallbackFocus: cityEl,
+  nameOf: (id) => D?.cities[id]?.name ?? cfg.cities?.[id]?.name,
+});
 
 const el = (tag, attrs = {}, text) => {
   const e = document.createElement(tag);
@@ -337,12 +341,23 @@ function extras() {
   }
 }
 
+let lastSummary = "";
+/** Tell a screen reader what the redraw shows, unless it is the same as the last time. */
+function announceOnce(model) {
+  const text = compareSummary({ ...state, c: model.series.map((s) => s.id) }, cfg.metrics);
+  const first = lastSummary === "";
+  if (text === lastSummary) return;
+  lastSummary = text;
+  if (!first) announce(text); // the first draw is the page loading, not a change
+}
+
 function render(keepFlag = false) {
   syncForm();
   if (!D) return;
   try {
     const model = buildModel(D, state);
     drawTitle(model);
+    if (!keepFlag) announceOnce(model);
     const table = state.view === "table";
     out.table.hidden = !table;
     out.chart.hidden = table;

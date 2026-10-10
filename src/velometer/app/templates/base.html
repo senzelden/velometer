@@ -13,6 +13,7 @@
 {% block scripts %}{% endblock %}
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="site">
   <div class="bar">
     <a class="brand" href="{{ u('/') }}">velo<span>meter</span></a>
@@ -20,7 +21,7 @@
     {% include "_nav.html" %}
   </div>
 </header>
-<main>
+<main id="main" tabindex="-1">
 {% block crumbs %}{% endblock %}
 {% block content %}{% endblock %}
 </main>
@@ -30,5 +31,6 @@
   <p>Classifier {{ footer.classifier }} · config <code>{{ footer.config }}</code></p>{% if static_edition %}
   <p>Static edition · build {{ static_edition.commit }}</p>{% endif %}
 </footer>
+<div id="live" class="visually-hidden" aria-live="polite"></div>
 </body>
 </html>

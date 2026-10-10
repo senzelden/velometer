@@ -15,7 +15,7 @@
   <fieldset class="f-cities"><legend>Cities</legend>
     <p class="quick" aria-label="Quick sets">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ u(href(c=q.ids)) }}">{{ q.label }}</a>{% endfor %}</p>
     <div class="country-grid">
-    {% for g in groups %}<div class="country"><h4>{{ g.country }}</h4>
+    {% for g in groups %}<div class="country"><p class="grp-name">{{ g.country }}</p>
       {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ c.name }}</label>
       {% endfor %}</div>
     {% endfor %}</div>
@@ -56,7 +56,7 @@
 <div class="chips" data-compare-chips hidden></div>
 <div class="chart" data-compare-chart role="group" aria-label="Chart of the selected cities" hidden></div>
 <div class="flag-note" data-flag-note hidden></div>
-<div class="scroll" data-compare-table>
+<div class="scroll" data-compare-table tabindex="0" role="region" aria-label="Values per city and snapshot">
 <table class="compare-table stack">
 <caption class="sr-only">{{ metrics[state.m].label }} per city and snapshot</caption>
 <thead><tr><th scope="col">City</th>{% for col in table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>

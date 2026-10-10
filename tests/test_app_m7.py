@@ -45,6 +45,8 @@ INLINE_SCRIPT = re.compile(
 STATIC = Path(__file__).parents[1] / "src" / "velometer" / "app" / "static"
 TEMPLATES = STATIC.parent / "templates"
 
+MAIN_OPEN = '<main id="main" tabindex="-1">'
+
 
 @pytest.fixture
 def client(setup):  # noqa: F811 - the imported fixture
@@ -1120,8 +1122,10 @@ def test_the_real_methodology_pages_keep_their_generated_blocks(setup):  # noqa:
         for path in ("/methodology", "/methodology/de"):
             html = c.get(path).text
             assert "&lt;!--" not in html and "<!--" not in html, path
-            assert "<table>" in html, path  # the generated rules table
-            assert not re.search(r"^\s*(\| |- )", html.split("<main>")[1], re.M), path  # raw markup
+            assert "<table" in html, path  # the generated rules table
+            assert not re.search(r"^\s*(\| |- )", html.split(MAIN_OPEN)[1], re.M), (
+                path
+            )  # raw markup
             assert "generated:rules" not in html, path
 
 

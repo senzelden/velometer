@@ -27,6 +27,8 @@ BUILD_KEYS = {
     "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "built_at"
 }  # fmt: skip
 
+MAIN_OPEN = '<main id="main" tabindex="-1">'
+
 
 def _md5(path: Path) -> str:
     return hashlib.md5(path.read_bytes()).hexdigest()
@@ -593,7 +595,7 @@ def test_the_scan_of_a_real_export_finds_the_planted_breaks_only(rich, tmp_path)
         '<a href="/velometer/nowhere">x</a><script src="https://cdn.example/x.js"></script>'
         '<a href="https://www.openstreetmap.org/copyright">OSM</a>'
     )
-    page.write_text(page.read_text().replace("<main>", "<main>" + planted, 1))
+    page.write_text(page.read_text().replace(MAIN_OPEN, MAIN_OPEN + planted, 1))
     assert export.scan_references(out, BASE) == [
         export.Unresolved("cities/index.html", "/velometer/nowhere"),
         export.Unresolved("cities/index.html", "https://cdn.example/x.js"),
@@ -707,7 +709,7 @@ def test_the_scan_fails_closed_on_every_reference_form(rich, tmp_path):  # noqa:
         target = copy / rel
         text = target.read_text()
         if rel.endswith(".html"):
-            text = text.replace("<main>", "<main>" + planted, 1)
+            text = text.replace(MAIN_OPEN, MAIN_OPEN + planted, 1)
         else:
             text += "\n" + planted + "\n"
         target.write_text(text)
@@ -728,7 +730,9 @@ def test_an_unresolved_reference_fails_the_export_listing_each(rich, tmp_path, m
         real(site, *args)
         for rel in ("cities/index.html", "stories/index.html"):
             page = site / rel
-            page.write_text(page.read_text().replace("<main>", '<main><a href="/velometer/x">', 1))
+            page.write_text(
+                page.read_text().replace(MAIN_OPEN, MAIN_OPEN + '<a href="/velometer/x">', 1)
+            )
         (site / "static" / "app.css").unlink()
 
     monkeypatch.setattr(export, "_write_site", write_then_break)
@@ -865,7 +869,7 @@ def test_an_unknown_page_is_an_html_404_with_the_layout(rich, base):  # noqa: F8
             assert r.headers["content-type"].startswith("text/html"), url
             assert r.headers["content-security-policy"] == CSP
             assert "Page not found" in r.text
-            main = r.text.split("<main>", 1)[1].split("</main>", 1)[0]
+            main = r.text.split(MAIN_OPEN, 1)[1].split("</main>", 1)[0]
             assert f'<a href="{base}">Go to the overview</a>' in main  # its own way home, u()
             assert 'id="site-nav"' in r.text  # the layout's navigation
             assert "openstreetmap.org/copyright" in r.text  # the footer and its attribution

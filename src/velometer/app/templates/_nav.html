@@ -16,7 +16,7 @@
         <div class="groups">
         {% for g in nav_groups %}
           <div class="grp" data-country="{{ g.country }}">
-            <h4>{{ g.country }}</h4>
+            <p class="grp-name">{{ g.country }}</p>
             <ul>{% for c in g.cities %}<li><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></li>{% endfor %}</ul>
           </div>
         {% endfor %}

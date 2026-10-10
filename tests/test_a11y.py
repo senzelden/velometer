@@ -571,3 +571,112 @@ def test_the_figures_cards_align_ours_with_theirs_and_gap():
         '<table class="diffs stack"><thead><tr><th>Source</th><th>Figure</th><th>Theirs</th>'
         '<th>Ours</th></tr></thead><tbody></tbody></table>'
     ) == (1, [])  # fmt: skip
+
+
+# ---- Task 7: page structure ----
+
+
+def _split_fragments(urls):
+    """(pages, panels): the city panels are layout-less fragments, fetched by panel.js."""
+    return [u for u in urls if not u.endswith("/panel")], [u for u in urls if u.endswith("/panel")]
+
+
+def test_every_page_has_a_skip_link_main_and_live_region(client, all_page_urls):  # noqa: F811
+    pages, _ = _split_fragments(all_page_urls)
+    assert pages
+    for url in pages:
+        html = client.get(url).text
+        body = html.split("<body>", 1)[1]
+        first = re.search(r"<(a|button|input|select|textarea)\b[^>]*>", body)
+        assert first and 'class="skip"' in first.group(0) and 'href="#main"' in first.group(0), url
+        assert '<main id="main"' in html, url
+        assert 'id="live"' in html and 'aria-live="polite"' in html, url
+        assert html.rfind('id="live"') > html.rfind("</main>"), url  # outside main, before </body>
+
+
+def test_one_h1_and_no_skipped_levels(client, all_page_urls):  # noqa: F811
+    pages, panels = _split_fragments(all_page_urls)
+    assert panels
+    for url in [*pages, *panels]:
+        panel = url.endswith("/panel")
+        levels = [int(n) for n in re.findall(r"<h([1-6])\b", client.get(url).text)]
+        if not panel:
+            assert levels.count(1) == 1, url
+        prev = 1 if panel else 0  # a panel sits under compare's h2 title, so it starts at h2
+        for lv in levels:
+            assert lv <= prev + 1, (url, levels)
+            prev = lv
+
+
+def test_the_404_page_has_the_heading_block_of_other_pages(client):  # noqa: F811
+    r = client.get("/no-such-page")
+    assert r.status_code == 404
+    assert 'class="crumbs"' in r.text
+    assert re.search(r"<h1>[^<]+</h1>\s*<p class=\"dek\">", r.text)
+
+
+def test_focus_is_always_visible():
+    rules = _rules()
+    focus = [d for s, d in rules if any(":focus-visible" in x for x in s)]
+    assert any("var(--focus)" in d.get("outline", "") for d in focus)
+    # no rule, for any element (compare's sort buttons included), removes the outline on focus
+    assert not any(
+        d.get("outline") in ("none", "0") or d.get("outline-style") == "none"
+        for s, d in rules
+        if any(":focus" in x for x in s)
+    )
+    assert not any(
+        d.get("outline") in ("none", "0") for s, d in rules if any("button" in x for x in s)
+    )
+
+
+def test_skip_link_is_hidden_until_focused_and_visually_hidden_exists():
+    rules = _rules()
+    skip = {k: v for s, d in rules if ".skip" in s for k, v in d.items()}
+    assert skip.get("position") in ("absolute", "fixed")
+    shown = [d for s, d in rules if ".skip:focus" in s or ".skip:focus-visible" in s]
+    assert shown
+    assert any(s == [".visually-hidden"] or ".visually-hidden" in s for s, _ in rules)
+
+
+class _Scrolls(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.found = []  # (tag, attrs) of every sideways-scrolling region
+        self.depth_prose = 0
+        self._stack = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        classes = (a.get("class") or "").split()
+        if tag not in ("br", "img", "meta", "link", "input", "hr"):
+            self._stack.append("prose" in classes)
+            self.depth_prose += "prose" in classes
+        if "scroll" in classes or (tag == "table" and self.depth_prose):
+            self.found.append((tag, a))
+
+    def handle_endtag(self, tag):
+        if self._stack:
+            self.depth_prose -= self._stack.pop()
+
+
+def test_every_sideways_scrolling_region_is_focusable_and_named(client, all_page_urls):  # noqa: F811
+    seen = 0
+    for url in all_page_urls:  # panels included: they are in the export
+        p = _Scrolls()
+        p.feed(client.get(url).text)
+        for tag, a in p.found:
+            seen += 1
+            assert a.get("tabindex") == "0", (url, tag, a)
+            assert (a.get("aria-label") or "").strip() or a.get("aria-labelledby"), (url, tag, a)
+            if tag == "div":
+                assert a.get("role") == "region", (url, a)
+    assert seen > 20
+
+
+def test_prose_tables_are_scroll_regions_too(client):  # noqa: F811
+    html = client.get("/methodology").text
+    assert "<table" in html
+    p = _Scrolls()
+    p.feed(html)
+    assert any(t == "table" for t, _ in p.found)

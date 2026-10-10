@@ -485,7 +485,7 @@ def test_footer_on_every_page(client, fixture_db):
 
 def test_methodology_rendered_with_tables_and_language_links(client):
     html = client.get("/methodology").text
-    assert "<table>" in html and "separated track" in html
+    assert "<table" in html and "separated track" in html
     assert "<pre><code>velometer run" in html  # fenced_code
     assert 'href="/methodology/de"' in html
     de = client.get("/methodology/de").text
