@@ -266,12 +266,14 @@ function drawTable(model) {
   const head = el("tr");
   const th = (key, text, cls) => {
     const h = el("th", { scope: "col", ...(cls ? { class: cls } : {}) });
-    const b = el("button", { type: "button", class: "sort" }, text);
+    const b = el("button", { type: "button", class: "sort", "data-key": key }, text);
     h.setAttribute("aria-sort", sort?.key === key ? (sort.dir === 1 ? "ascending" : "descending") : "none");
     if (sort?.key === key) b.textContent = `${text} ${sort.dir === 1 ? "↑" : "↓"}`;
     b.addEventListener("click", () => {
       sort = nextSort(sort, key);
       render();
+      // the table was rebuilt: put keyboard focus back on the header that was pressed
+      [...out.table.querySelectorAll("button.sort")].find((x) => x.dataset.key === key)?.focus();
     });
     h.append(b);
     return h;

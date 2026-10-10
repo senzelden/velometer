@@ -926,3 +926,15 @@ def test_column_heads_may_wrap_so_a_wide_table_fits_its_box():
     rules = _css_rules(_stylesheet())
     wrap = {s for s, d in rules if d.get("white-space") == "normal" for s in s}
     assert "thead th" in wrap and "thead th.num" in wrap  # the .num rule is more specific
+
+
+def test_sorting_a_compare_column_puts_focus_back_on_its_button():
+    # drawTable rebuilds the table, so the pressed header is a new element: the click handler
+    # must refocus the one with the same key (found by the keyboard pass: focus fell to <body>)
+    js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
+    body = js[js.index("function drawTable") :]
+    body = body[: body.index("\nfunction ", 10)]
+    assert '"data-key": key' in body
+    handler = body[body.index('addEventListener("click"') :]
+    assert handler.index("render()") < handler.index("button.sort")
+    assert ".focus()" in handler[handler.index("button.sort") :][:200]

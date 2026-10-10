@@ -279,3 +279,48 @@ def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path):  #
         assert r["errors"] == [], r["errors"]
         assert r["screenshot"] and Path(r["screenshot"]).is_file()
         assert isinstance(r["axe"], list)
+
+
+def test_key_params_send_a_real_key_press(rp):
+    down, up = rp.key_params("Tab", True), rp.key_params("Tab", False)
+    assert (down["type"], up["type"]) == ("keyDown", "keyUp")
+    assert down["windowsVirtualKeyCode"] == 9 and down["modifiers"] == 0
+    assert rp.key_params("Tab", True, shift=True)["modifiers"] == 8
+    assert rp.key_params("+", True)["windowsVirtualKeyCode"] == 187  # what Leaflet zooms on
+    assert "text" in rp.key_params(" ", True) and "text" not in rp.key_params(" ", False)
+
+
+def test_a_failed_keyboard_step_fails_the_run(rp, tmp_path, monkeypatch):
+    site = _site(tmp_path, {"": "<p>x</p>"})
+    monkeypatch.setattr(rp, "find_chrome", lambda path: path)
+    monkeypatch.setattr(rp, "serve", lambda site, base: contextlib.nullcontext("http://x"))
+    monkeypatch.setattr(rp, "chrome", lambda binary: contextlib.nullcontext("http://d"))
+    failing = {"light": ["compare: Escape closes it: focus lost"], "dark": []}
+
+    def fake_keyboard(devtools, origin, base, theme):
+        r = rp.entry(base, theme, 1280, "keyboard", errors=failing[theme])
+        return r | {"steps": ["ok   a", *[f"FAIL {e}" for e in failing[theme]]]}
+
+    monkeypatch.setattr(rp, "keyboard", fake_keyboard)
+    out = tmp_path / "out"
+    args = ["--site", str(site), "--out", str(out), "--pages", "", "--keyboard"]
+    assert rp.main(args) == 1
+    res = json.loads((out / "results.json").read_text())
+    assert [(r["kind"], r["theme"]) for r in res] == [("keyboard", "light"), ("keyboard", "dark")]
+    assert res[0]["steps"][-1].startswith("FAIL") and res[1]["errors"] == []
+    failing["light"] = []
+    assert rp.main(args) == 0
+
+
+@pytest.mark.slow
+@needs_chrome
+def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # noqa: F811
+    site = tmp_path / "velometer"
+    _export(rich, site, base="/velometer/")
+    code, res = _run(rp, site, tmp_path / "out", "--pages", "", "--keyboard", "--themes", "light")
+    (r,) = res
+    assert r["kind"] == "keyboard" and r["errors"] == [], r["steps"]
+    steps = " ".join(r["steps"])
+    for needle in ("skip link", "phone menu", "city tabs", "compare: Escape", "sort button"):
+        assert needle in steps, needle
+    assert code == 0

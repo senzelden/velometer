@@ -14,14 +14,17 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
 
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
-        [--pages all|types|<url>,...] [--flip] [--interact] [--chrome PATH]
+        [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH]
 
 `--flip` is a mode of its own: each page loads in light, the emulated scheme switches to dark
 mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
 `--interact` adds, per theme and width, a visit to `<base>compare` that opens a city panel with a
 mouse click (table view, first city link), audits the page with the panel open, presses Escape and
-checks focus returned to the link. Chrome is `--chrome`, else `$VELOMETER_CHROME`, else
-`/usr/bin/google-chrome`.
+checks focus returned to the link. `--keyboard` adds, per theme, a scripted keyboard pass driven by
+real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare
+(tick, metric, view, sort, panel, Escape) and the tier and counter maps (+ and -); each step is a
+line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
+`$VELOMETER_CHROME`, else `/usr/bin/google-chrome`.
 """
 
 from __future__ import annotations
@@ -485,6 +488,320 @@ def interact(devtools: str, origin: str, base: str, theme: str, width: int, shot
             t.close()
 
 
+# ---------- the keyboard pass (--keyboard) ----------
+# (key, code, windowsVirtualKeyCode, text); anything not here is a single printable character
+KEYS = {
+    "Tab": ("Tab", "Tab", 9, ""),
+    "Enter": ("Enter", "Enter", 13, "\r"),
+    "Escape": ("Escape", "Escape", 27, ""),
+    " ": (" ", "Space", 32, " "),
+    "ArrowDown": ("ArrowDown", "ArrowDown", 40, ""),
+    "+": ("+", "Equal", 187, "+"),  # Leaflet reads keyCode 187/107 for zoom in
+    "-": ("-", "Minus", 189, "-"),
+}
+SHIFT = 8
+
+
+def key_params(name: str, down: bool, shift: bool = False) -> dict:
+    """`Input.dispatchKeyEvent` parameters for one key press half."""
+    key, code, vk, text = KEYS[name]
+    p = {"type": "keyDown" if down else "keyUp", "key": key, "code": code,
+         "windowsVirtualKeyCode": vk, "modifiers": SHIFT if shift else 0}  # fmt: skip
+    if down and text:
+        p["text"] = text
+    return p
+
+
+def press(t: Tab, name: str, shift: bool = False, wait: float = 0.15) -> None:
+    for down in (True, False):
+        t.call("Input.dispatchKeyEvent", **key_params(name, down, shift))
+    t.pump(wait)
+
+
+FOCUS_JS = r"""
+(() => {
+  const e = document.activeElement;
+  if (!e || e === document.body) return null;
+  const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+  const ring = (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0)
+    || (cs.boxShadow !== 'none');
+  return {tag: e.localName, cls: typeof e.className === 'string' ? e.className : '',
+    text: (e.getAttribute('aria-label') || e.textContent || e.value || '').trim().slice(0, 40),
+    visible: r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight
+      && r.right > 0 && r.left < innerWidth,
+    ring, focusVisible: e.matches(':focus-visible')};
+})()
+"""
+
+
+def where(t: Tab) -> str:
+    f = t.js(FOCUS_JS)
+    return "nothing focused" if not f else f"{f['tag']}.{f['cls']} '{f['text']}'"
+
+
+def tab_to(t: Tab, selector: str, cap: int = 250) -> str | None:
+    """Press Tab until the focused element matches `selector`; None, or why not within `cap`."""
+    test = f"!!document.activeElement && document.activeElement.matches({json.dumps(selector)})"
+    for _ in range(cap):
+        if t.js(test):
+            return None
+        press(t, "Tab", wait=0.02)
+    return f"Tab did not reach {selector} in {cap} presses (focus is on {where(t)})"
+
+
+def focus_shown(t: Tab) -> str | None:
+    """None when the focused element is on screen with a visible focus ring, else why not."""
+    f = t.js(FOCUS_JS)
+    if not f:
+        return "nothing focused"
+    if not f["visible"]:
+        return f"focused {f['tag']} '{f['text']}' is off screen"
+    if not (f["ring"] and f["focusVisible"]):
+        return f"focused {f['tag']} '{f['text']}' shows no focus ring"
+    return None
+
+
+class Steps:
+    """Records the steps of one keyboard pass."""
+
+    def __init__(self) -> None:
+        self.lines: list[str] = []
+        self.errors: list[str] = []
+
+    def check(self, name: str, why: str | None, detail: str = "") -> bool:
+        if why:
+            self.lines.append(f"FAIL {name}: {why}")
+            self.errors.append(f"{name}: {why}")
+        else:
+            self.lines.append(f"ok   {name}" + (f" ({detail})" if detail else ""))
+        return why is None
+
+
+def _page(devtools, origin, base, theme, width, path) -> tuple[Tab, list[str]]:
+    t = open_tab(devtools, width, theme)
+    errors = navigate(t, origin + base + path)
+    t.pump(1.5)
+    return t, errors
+
+
+def _zoom(t: Tab) -> int:
+    """The highest tile zoom level in the DOM (a tile's URL is .../{z}/{x}/{y}.png)."""
+    return t.js(
+        "Math.max(0, ...[...document.querySelectorAll('img.leaflet-tile')]"
+        ".map(i => +((i.src.match(/\\/(\\d+)\\/\\d+\\/\\d+\\.png/) || [])[1] || 0)))"
+    )
+
+
+def _map_steps(devtools, origin, base, theme, path, label, st: Steps) -> None:
+    t = None
+    try:
+        t, errs = _page(devtools, origin, base, theme, 1280, path)
+        if not st.check(f"{label}: page loads", "; ".join(errs) or None):
+            return
+        if not st.check(f"{label}: Tab reaches the map", tab_to(t, ".leaflet-container", 400)):
+            return
+        st.check(f"{label}: the map shows a focus ring", focus_shown(t))
+        t.pump(1.5)
+        z0 = _zoom(t)
+        press(t, "+", wait=1.5)
+        z1 = _zoom(t)
+        st.check(f"{label}: + zooms in", None if z1 > z0 else f"zoom stayed {z0}->{z1}",
+                 f"{z0}->{z1}")  # fmt: skip
+        press(t, "-", wait=1.5)
+        press(t, "-", wait=1.5)
+        t.pump(0.5)
+        z2 = _zoom(t)
+        st.check(f"{label}: - zooms out", None if z2 < z1 else f"zoom stayed {z1}->{z2}",
+                 f"{z1}->{z2}")  # fmt: skip
+    finally:
+        if t is not None:
+            t.close()
+
+
+def _skip_link(devtools, origin, base, theme, st: Steps) -> None:
+    t, errs = _page(devtools, origin, base, theme, 1280, "")
+    try:
+        if not st.check("skip link: page loads", "; ".join(errs) or None):
+            return
+        press(t, "Tab")
+        on = t.js("document.activeElement.matches('a.skip')")
+        st.check("skip link: the first Tab lands on it", None if on else f"on {where(t)}")
+        st.check("skip link: visible with a focus ring", focus_shown(t))
+        press(t, "Enter", wait=0.4)
+        moved = t.js("document.activeElement === document.querySelector('main')")
+        hashed = t.js("location.hash === '#main'")
+        st.check("skip link: Enter moves focus to main",
+                 None if moved and hashed else f"on {where(t)}")  # fmt: skip
+        press(t, "Tab")
+        inside = t.js("!!document.activeElement.closest('main')")
+        st.check("skip link: the next Tab stays inside main",
+                 None if inside else f"on {where(t)}")  # fmt: skip
+    finally:
+        t.close()
+
+
+def _cities_menu(devtools, origin, base, theme, st: Steps) -> None:
+    t, errs = _page(devtools, origin, base, theme, 1280, "")
+    try:
+        if not st.check("cities menu: page loads", "; ".join(errs) or None):
+            return
+        if not st.check("cities menu: Tab reaches the summary",
+                        tab_to(t, "details.cities-menu > summary")):  # fmt: skip
+            return
+        st.check("cities menu: the summary has a focus ring", focus_shown(t))
+        press(t, "Enter", wait=0.4)
+        opened = t.js("document.querySelector('details.cities-menu').open")
+        st.check("cities menu: Enter opens it", None if opened else "still closed")
+        press(t, "Escape", wait=0.3)
+        closed = t.js(
+            "!document.querySelector('details.cities-menu').open && document.activeElement"
+            " === document.querySelector('details.cities-menu > summary')"
+        )
+        st.check("cities menu: Escape closes it, focus back on the summary",
+                 None if closed else f"on {where(t)}")  # fmt: skip
+    finally:
+        t.close()
+
+
+def _phone_menu(devtools, origin, base, theme, st: Steps) -> None:
+    t, errs = _page(devtools, origin, base, theme, 390, "")
+    try:
+        if not st.check("phone menu: page loads", "; ".join(errs) or None):
+            return
+        if not st.check("phone menu: Tab reaches the Menu button", tab_to(t, ".menu-toggle", 10)):
+            return
+        expanded = "document.querySelector('.menu-toggle').getAttribute('aria-expanded')"
+        st.check("phone menu: the button has a focus ring", focus_shown(t))
+        press(t, "Enter", wait=0.3)
+        st.check("phone menu: Enter opens it",
+                 None if t.js(expanded) == "true" else "aria-expanded stayed false")  # fmt: skip
+        press(t, "Tab")
+        st.check("phone menu: the next Tab enters the menu links",
+                 None if t.js("!!document.activeElement.closest('#site-nav')")
+                 else f"on {where(t)}")  # fmt: skip
+        st.check("phone menu: that link is on screen with a focus ring", focus_shown(t))
+        press(t, "Tab", shift=True)
+        press(t, " ", wait=0.3)
+        st.check("phone menu: Space on the button closes it",
+                 None if t.js(expanded) == "false" else "still open")  # fmt: skip
+    finally:
+        t.close()
+
+
+def _city_tabs(devtools, origin, base, theme, st: Steps) -> None:
+    t, errs = _page(devtools, origin, base, theme, 1280, "city/berlin")
+    try:
+        if not st.check("city tabs: page loads", "; ".join(errs) or None):
+            return
+        n = t.js("document.querySelectorAll('nav.tabs a').length")
+        if not st.check("city tabs: Tab reaches the first tab", tab_to(t, "nav.tabs a")):
+            return
+        bad = focus_shown(t)
+        for _ in range(n - 1):
+            press(t, "Tab", wait=0.05)
+            bad = bad or focus_shown(t)
+        st.check(f"city tabs: all {n} tabs take focus, on screen with a ring", bad)
+        press(t, "Tab", shift=True)
+        href = t.js("document.activeElement.getAttribute('href')").rstrip("/")
+        press(t, "Enter", wait=0.2)
+        there = f"location.pathname.replace(/\\/$/, '').endsWith({json.dumps(href)})"
+        t.wait_js(there, 5)
+        st.check("city tabs: Enter on a tab goes there",
+                 None if t.js(there) else f"still on {t.js('location.pathname')}")  # fmt: skip
+    finally:
+        t.close()
+
+
+def _compare(devtools, origin, base, theme, st: Steps) -> None:
+    t, errs = _page(devtools, origin, base, theme, 1280, "compare")
+    try:
+        if not st.check("compare: page loads", "; ".join(errs) or None):
+            return
+        if not st.check("compare: Tab reaches a city checkbox", tab_to(t, "input[name=c]")):
+            return
+        st.check("compare: the checkbox has a focus ring", focus_shown(t))
+        count = "document.querySelectorAll('input[name=c]:checked').length"
+        before = t.js(count)
+        press(t, " ", wait=0.4)
+        after = t.js(count)
+        st.check("compare: Space ticks or unticks a city",
+                 None if after != before else "the checked count did not change",
+                 f"{before}->{after}")  # fmt: skip
+        if st.check("compare: Tab reaches the metric select", tab_to(t, "select[name=m]")):
+            m0 = t.js("document.querySelector('select[name=m]').value")
+            h0 = t.js("document.querySelector('[data-compare-title] h2').textContent")
+            press(t, "ArrowDown", wait=0.8)
+            m1 = t.js("document.querySelector('select[name=m]').value")
+            h1 = t.js("document.querySelector('[data-compare-title] h2').textContent")
+            st.check("compare: ArrowDown changes the metric and the title",
+                     None if m1 != m0 and h1 != h0 else f"metric {m0}->{m1}, title kept",
+                     f"{m0}->{m1}")  # fmt: skip
+        if not st.check("compare: Tab reaches the table view tab",
+                        tab_to(t, ".view-tabs a[data-view=table]")):  # fmt: skip
+            return
+        press(t, "Enter", wait=0.8)
+        shown = t.js(
+            "!!document.querySelector('table.compare-table') && document"
+            ".querySelector('[data-compare-table]').getClientRects().length > 0"
+        )
+        st.check("compare: Enter switches to the table view",
+                 None if shown else "no table on screen")  # fmt: skip
+        if st.check(
+            "compare: Tab reaches a sort button", tab_to(t, "th:not(:first-child) > button.sort")
+        ):
+            name = t.js("document.activeElement.textContent")
+            order = "(document.querySelector('th[aria-sort=ascending], th[aria-sort=descending]')"
+            order += " || {getAttribute: () => 'none'}).getAttribute('aria-sort')"
+            on_sort = "document.activeElement.matches('button.sort')"
+            press(t, "Enter", wait=0.5)
+            first = t.js(order)
+            why = None if first != "none" else "no column is marked as sorted"
+            st.check("compare: Enter on a header sorts the table", why, name)
+            st.check("compare: focus stays on the sort button after the table is rebuilt",
+                     None if t.js(on_sort) else f"focus is on {where(t)}")  # fmt: skip
+            press(t, "Enter", wait=0.5)
+            second = t.js(order)
+            st.check("compare: a second Enter reverses the order",
+                     None if second not in ("none", first) else f"{first} then {second}",
+                     f"{first} then {second}")  # fmt: skip
+            st.check("compare: focus is still on the sort button",
+                     None if t.js(on_sort) else f"focus is on {where(t)}")  # fmt: skip
+        if not st.check("compare: Tab reaches a city link", tab_to(t, "table a[data-city]")):
+            return
+        t.js("window.__opener = document.activeElement")
+        press(t, "Enter", wait=0.2)
+        opened = t.wait_js(PANEL_OPEN_JS, 10)
+        if not st.check("compare: Enter on a city opens its panel",
+                        None if opened else "the panel did not open"):  # fmt: skip
+            return
+        t.pump(0.8)
+        st.check("compare: focus moves into the panel",
+                 None if t.js("!!document.activeElement.closest('#city-panel')")
+                 else f"on {where(t)}")  # fmt: skip
+        press(t, "Escape", wait=0.4)
+        closed = t.wait_js(PANEL_CLOSED_JS, 3)
+        back = t.js("document.activeElement === window.__opener")
+        st.check("compare: Escape closes it and focus is back on the opener",
+                 None if closed and back else f"closed={closed}, on {where(t)}")  # fmt: skip
+    finally:
+        t.close()
+
+
+def keyboard(devtools: str, origin: str, base: str, theme: str) -> dict:
+    """One scripted keyboard pass in `theme`; the step lines are in the entry's `steps`."""
+    st = Steps()
+    _skip_link(devtools, origin, base, theme, st)
+    _cities_menu(devtools, origin, base, theme, st)
+    _phone_menu(devtools, origin, base, theme, st)
+    _city_tabs(devtools, origin, base, theme, st)
+    _compare(devtools, origin, base, theme, st)
+    _map_steps(devtools, origin, base, theme, "city/berlin/tiers", "tier map", st)
+    _map_steps(devtools, origin, base, theme, "city/berlin/counts", "counter map", st)
+    return entry(base + " (keyboard)", theme, 1280, "keyboard", errors=st.errors) | {
+        "steps": st.lines
+    }
+
+
 def failures(r: dict) -> list[str]:
     out = []
     if r["errors"]:
@@ -595,6 +912,11 @@ def main(argv: list[str] | None = None) -> int:
         help="also open a city panel on <base>compare per theme and width, audit, Escape",
     )
     ap.add_argument(
+        "--keyboard",
+        action="store_true",
+        help="also run the scripted keyboard pass per theme (real key events)",
+    )
+    ap.add_argument(
         "--chrome",
         default=os.environ.get("VELOMETER_CHROME") or CHROME,
         help=f"Chrome binary (default: $VELOMETER_CHROME, else {CHROME})",
@@ -619,6 +941,8 @@ def main(argv: list[str] | None = None) -> int:
     plan = [("page", u, th, w) for u in urls for th in page_themes for w in widths]
     if a.interact:
         plan += [("interact", base + "compare", th, w) for th in themes for w in widths]
+    if a.keyboard:
+        plan += [("keyboard", base, th, 1280) for th in themes]
 
     out = a.out
     shots = out / "shots"
@@ -645,6 +969,9 @@ def main(argv: list[str] | None = None) -> int:
             for kind, url, theme, width in plan:
                 if kind == "interact":
                     r = interact(devtools, origin, base, theme, width, shots)
+                elif kind == "keyboard":
+                    r = keyboard(devtools, origin, base, theme)
+                    print("\n".join(f"    [{theme}] {x}" for x in r["steps"]), flush=True)
                 else:
                     r = visit(devtools, origin, url, theme, width, shots, base, flip=a.flip)
                 results.append(r)
