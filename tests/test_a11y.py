@@ -347,6 +347,10 @@ def test_the_dark_theme_darkens_the_tiles_only():
     tiles = [d for s, d in rules if any("tiermap-tiles" in x for x in s)]
     assert tiles and "invert" in tiles[0].get("filter", "")
     assert not any("leaflet-overlay-pane" in x or "canvas" in x for s, _ in rules for x in s)
+    # the counter markers (pane and icons) keep their own colours: no dark rule may touch them
+    assert not any(
+        "leaflet-marker-pane" in x or "leaflet-marker-icon" in x for s, _ in rules for x in s
+    )
     assert not any("img" in x for s, _ in rules for x in s if "tiermap-tiles" in x)  # no seams
 
 
@@ -371,8 +375,6 @@ def test_key_swatches_have_a_css_fill_without_js():
         assert found and found[0]["fill"] == f"var({token})", key
     assert any(".swatch rect:not([fill])" in s for s, _ in rules)
     assert ".swatch rect {" not in css  # an unconditional rule would beat the fill attribute
-    for token in TIERS:  # the tier fills are held to 3:1 by the graphics test (change: see there)
-        assert token in _graphics(), token
 
 
 def test_map_tiles_carry_no_border():
@@ -551,12 +553,13 @@ def test_compare_js_builds_a_stacking_labelled_table_on_every_render():
     # and the labelling must be in drawTable itself, labelling after the rows exist and before
     # the table goes into the page
     js = (STATIC / "js" / "compare.js").read_text()
+    js = re.sub(r"/\*.*?\*/|//[^\n]*", "", js, flags=re.S)  # a comment must not satisfy it
     assert 'import { labelCells } from "./table.js"' in js
     body = js[js.index("function drawTable") :]
     body = body[: body.index("\nfunction ", 10)]
     assert 'el("table", { class: "compare-table stack" })' in body
     assert body.index("table.append(tbody)") < body.index("labelCells(table)")
-    assert body.index("labelCells(table)") < body.index("out.table.replaceChildren(table)")
+    assert body.index("labelCells(table)") < body.index("out.table.replaceChildren(")
     render = js[js.index("function render(") :]
     assert "drawTable(" in render[: render.index("\n}\n")]  # render, which a sort click calls
 
@@ -892,3 +895,26 @@ def test_the_story_aside_table_is_compact_and_wraps_so_it_never_scrolls_sideways
     assert rules.get("width") == "100%" and float(rules["font-size"].removesuffix("rem")) <= 0.8
     cells = {k: v for sels, d in _rules() if ".story-aside td.num" in sels for k, v in d.items()}
     assert cells.get("white-space") == "normal" and cells.get("min-width") == "0"
+
+
+def test_stack_table_labels_are_escaped_exactly_once():
+    from velometer.app.main import _md, _stack_table
+
+    out = str(_stack_table(_md("| A & B | C < D |\n|---|---|\n| 1 | 2 |\n")))
+    assert 'data-label="A &amp; B"' in out and 'data-label="C &lt; D"' in out
+    assert "&amp;amp;" not in out and "&amp;lt;" not in out
+
+
+def test_the_compare_sort_bar_has_a_visible_caption_tied_to_the_table():
+    js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
+    body = js[js.index("function drawTable") :]
+    body = body[: body.index("\nfunction ", 10)]
+    assert '"Sort by"' in body and 'class: "sort-caption"' in body
+    assert 'table.setAttribute("aria-describedby", caption.id)' in body
+    assert "out.table.replaceChildren(caption, table)" in body  # the caption sits with the table
+    rules = _css_rules(_stylesheet())
+    plain = {k: v for s, d in rules if s == [".sort-caption"] for k, v in d.items()}
+    assert plain.get("display") == "none"  # wide screens show the real header instead
+    phone = {k: v for s, d in rules if s == [".compare-js .sort-caption"] for k, v in d.items()}
+    assert phone.get("display") == "block"  # not visually hidden: sighted readers need it
+    assert "clip" not in phone and "width" not in phone

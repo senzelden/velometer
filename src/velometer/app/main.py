@@ -16,6 +16,7 @@ import re
 import sqlite3
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from html import unescape
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlparse
@@ -213,7 +214,7 @@ def _stack_table(html: Markup) -> Markup:
     text = str(html)
     thead = re.search(r"<thead>.*?</thead>", text, re.S)
     heads = [
-        " ".join(re.sub(r"<[^>]+>", "", h).split())
+        " ".join(unescape(re.sub(r"<[^>]+>", "", h)).split())  # text, escaped once below
         for h in re.findall(r"<th\b[^>]*>(.*?)</th>", thead.group(0) if thead else "", re.S)
     ]
 

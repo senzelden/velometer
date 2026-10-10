@@ -615,7 +615,7 @@ def test_header_key_numbers_sit_in_one_wrapping_row(client, fixture_db):
     # reflow at 320 px (WCAG 1.4.10): the row wraps into more lines, it never scrolls sideways
     assert decl.get("flex-wrap") == "wrap" and decl.get("display") == "flex"
     assert "overflow-x" not in decl
-    kn = {k: v for sels, d in rules if ".kn" in sels for k, v in d.items()}
+    kn = {k: v for sels, d in rules if any(x == ".kn" for x in sels) for k, v in d.items()}
     assert kn.get("min-width") == "0"  # a flex item may shrink below its text: the 320 px fix
 
 

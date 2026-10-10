@@ -303,7 +303,10 @@ function drawTable(model) {
   }
   table.append(tbody);
   labelCells(table);
-  out.table.replaceChildren(table);
+  // on a phone the header is a bar of sort buttons: the caption says what the bar is for
+  const caption = el("p", { class: "sort-caption", id: "compare-sort-caption" }, "Sort by");
+  table.setAttribute("aria-describedby", caption.id);
+  out.table.replaceChildren(caption, table);
 }
 
 function drawTitle(model) {
