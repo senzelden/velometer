@@ -375,7 +375,7 @@ def test_osm_tiles_are_muted_and_tier_lines_readable(client):
     rules = _css_rules((STATIC / "app.css").read_text())
     decls = [d for sels, d in rules if f".{cls}" in sels]
     assert decls, cls
-    rule = {k: v for d in decls for k, v in d.items()}
+    rule = decls[0]  # the light rule; the dark-theme filter is checked in test_a11y
     assert "grayscale(1)" in rule["filter"]
     assert float(rule.get("opacity", "1")) <= 0.8 or "contrast(" in rule["filter"]
     assert not any(".leaflet-overlay-pane" in s or "canvas" in s for sels, d in rules
@@ -757,6 +757,20 @@ def _dark_tokens(css: str) -> dict[str, str]:
     found = _DARK.findall(css)
     assert len(found) == 1, f"{len(found)} dark :root blocks; the theme is one block"
     return _pairs(found[0])
+
+
+def _dark_rules(css: str) -> list[tuple[list[str], dict[str, str]]]:
+    """The (selectors, declarations) of the rules inside `prefers-color-scheme: dark` media
+    blocks, the `:root` token block excluded."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    rules = []
+    for m in re.finditer(r"@media\s*\(prefers-color-scheme:\s*dark\)\s*\{", css):
+        depth, i = 1, m.end()
+        while depth:
+            depth += {"{": 1, "}": -1}.get(css[i], 0)
+            i += 1
+        rules += [r for r in _css_rules(css[m.end() : i - 1]) if r[0] != [":root"]]
+    return rules
 
 
 def _css_tokens(css: str, theme: str = "light") -> dict[str, str]:

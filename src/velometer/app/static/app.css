@@ -282,6 +282,9 @@ svg.dim .s:not(.on) { opacity: 0.18; }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem 2rem; }
 figure { margin: 0; }
 img { max-width: 100%; height: auto; border: 1px solid var(--grid); }
+/* the global img border would frame every map tile: a 2px seam between tiles, light in the
+   light theme and, once filtered, lighter still in the dark one */
+.leaflet-container img { border: 0; }
 
 .flag { border-left: 3px solid var(--flag); padding: 0.25rem 0 0.25rem 0.75rem; margin: 0 0 1rem; }
 .explanation p { margin: 0.5rem 0; }
@@ -304,10 +307,31 @@ footer p { margin: 0.25rem 0; }
 .tiermap-controls legend { float: left; margin-right: 0.5rem; color: var(--ink-2); font-weight: 600; font-size: 0.9rem; }
 .tiermap-controls label { white-space: nowrap; font-size: 0.9rem; }
 .swatch { display: inline-block; vertical-align: middle; border: 0; }
+/* the key's colours before (or without) JS: the JS `fill` attribute, once set, wins over these */
+.swatch rect:not([fill]) { fill: var(--ctx); }
+.swatch[data-key="A"] rect:not([fill]) { fill: var(--tier-a); }
+.swatch[data-key="B"] rect:not([fill]) { fill: var(--tier-b); }
+.swatch[data-key="C"] rect:not([fill]) { fill: var(--tier-c); }
+.swatch[data-key="D"] rect:not([fill]) { fill: var(--tier-d); }
+.swatch[data-key="E"] rect:not([fill]) { fill: var(--tier-e); }
+.swatch[data-key="gained"] rect:not([fill]) { fill: var(--change-gained); }
+.swatch[data-key="lost"] rect:not([fill]) { fill: var(--change-lost); }
+.swatch[data-key="retiered"] rect:not([fill]) { fill: var(--change-retiered); }
+.swatch[data-key="redrawn"] rect:not([fill]) { fill: var(--change-redrawn); }
+/* server-rendered PNG maps are light images: in the dark theme they sit on a light plate */
+.map-png { margin: 0.75rem 0; padding: 0.5rem; background: var(--plate); border: 1px solid var(--grid-2); }
+.map-png img { display: block; max-width: 100%; height: auto; border: 0; }
 .changemap-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.4rem 0 0; padding: 0; font-size: 0.9rem; color: var(--ink-2); }
 /* Standard OSM draws main roads orange/red, which reads as tiers B and D: grey the tiles out
    and fade them. Only the tile layer's class: the tier lines (vector canvas) keep their colours. */
 .tiermap-tiles { filter: grayscale(1) contrast(0.8) brightness(1.08); opacity: 0.7; }
+/* the OSM tiles, darkened: invert + hue-rotate keeps the hues, brightness/contrast/grayscale
+   mute the standard style. Only the tile layer (a filter on its container, not on each tile
+   image, so no sub-pixel seams); the vector overlay keeps its full colours on top. Filter
+   functions only: a colour literal here would sit outside the token blocks. */
+@media (prefers-color-scheme: dark) {
+  .tiermap-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) grayscale(0.6); }
+}
 .tiermap { height: min(70vh, 40rem); width: 100%; border: 1px solid var(--grid); background: var(--panel); }
 .tiermap-note { margin: 0.25rem 0 0.5rem; }
 .tiermap-files { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; }

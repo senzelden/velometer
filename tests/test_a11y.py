@@ -4,7 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_app import _css_outside_tokens, _css_rules, _css_tokens, _dark_tokens
+from tests.test_app import (
+    STATIC,
+    _css_outside_tokens,
+    _css_rules,
+    _css_tokens,
+    _dark_rules,
+    _dark_tokens,
+    client,  # noqa: F401 - the fixture
+    setup,  # noqa: F401
+)
 from tests.test_app_m8 import _stylesheet
 from velometer.report import change, charts
 from velometer.report.colour import contrast, delta
@@ -41,7 +50,9 @@ def _backgrounds() -> set[str]:
     # that hold no text (legend dots, key swatches, the story step bar) are drawn with `border`,
     # not `background`: they are graphics (3:1, the graphics test), not grounds for text. A
     # swatch drawn with `background` lands here, and every text token is then checked on it
-    return _used(BG_PROPS) | {"--paper", "--surface", "--panel"}
+    # --plate is the exception: it grounds the PNG map figures only (an image, no page text; the
+    # caption sits outside the plate), so page text tokens are not read on it
+    return (_used(BG_PROPS) - {"--plate"}) | {"--paper", "--surface", "--panel"}
 
 
 # SVG text is painted with `fill`: a rule that targets chart text, by class name or because it
@@ -123,8 +134,11 @@ def test_the_panel_grounds_are_the_known_ones():
 
 def _graphics() -> set[str]:
     # gridlines, dividers and halos are decoration (WCAG 1.4.11 exempts them)
+    # the change colours are exempt in light: they are fixed at their M9 values (decision 3) and
+    # the key swatch beside each carries its text label; in dark they are held to 3:1 by
+    # test_the_dark_change_colours_stand_apart_and_out
     return (
-        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2"}
+        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2", *CHANGES}
         | set(SERIES) | set(TIERS)
         | {"--outline", "--focus", "--accent", "--flag", "--mapped", "--completed",
            "--control-border", "--marker-fill"}
@@ -171,7 +185,8 @@ def test_knock_outs_are_the_card_ground(theme):
 def test_one_token_block_per_theme():
     css = re.sub(r"/\*.*?\*/", "", _stylesheet(), flags=re.S)
     assert len(re.findall(r"(?m)^:root\s*\{", css)) == 1
-    assert len(re.findall(r"prefers-color-scheme:\s*dark", css)) == 1
+    # one dark token block; other dark media blocks hold rules (the tile filter), not tokens
+    assert len(re.findall(r"prefers-color-scheme:\s*dark\)\s*\{\s*:root", css)) == 1
     assert len(re.findall(r":root\s*\{", css)) == 2
 
 
@@ -292,3 +307,73 @@ def test_every_token_the_js_reads_is_defined_in_both_themes():
     assert "--ctx" in names and "--outline" in names  # the scan sees the call sites
     for theme in THEMES:
         assert sorted(names - _css_tokens(_stylesheet(), theme).keys()) == [], theme
+
+
+# --- maps in the dark (M10 decisions 3 and 4) ---
+
+
+@pytest.fixture
+def all_page_urls(client, fixture_db):  # noqa: F811
+    from velometer.app import export
+
+    urls = export.export_urls(fixture_db[3], client.app)
+    return [u for u in urls if client.get(u).headers["content-type"].startswith("text/html")]
+
+
+def test_every_map_png_sits_on_a_plate(client, all_page_urls):  # noqa: F811
+    # light PNGs read as figures in the dark theme; the pages link them today, so this guards
+    # any page that shows one inline
+    assert all_page_urls
+    for url in all_page_urls:
+        html = client.get(url).text
+        for img in re.finditer(r'<img[^>]+src="[^"]*/maps/[^"]+\.png"', html):
+            before = html[: img.start()]
+            assert before.rfind('<figure class="map-png') > before.rfind("</figure>"), url
+
+
+def test_the_map_png_plate_is_a_light_ground_with_a_border():
+    rule = {k: v for s, d in _rules() if "figure.map-png" in s or ".map-png" in s
+            for k, v in d.items()}  # fmt: skip
+    assert rule["background"] == "var(--plate)"
+    assert "var(--grid-2)" in rule["border"]
+    for theme in THEMES:  # the plate is light in both themes: the PNGs are drawn for white
+        assert contrast(_css_tokens(_stylesheet(), theme)["--plate"], "#000000") > 12, theme
+
+
+def test_the_dark_theme_darkens_the_tiles_only():
+    rules = _dark_rules(_stylesheet())
+    tiles = [d for s, d in rules if any("tiermap-tiles" in x for x in s)]
+    assert tiles and "invert" in tiles[0].get("filter", "")
+    assert not any("leaflet-overlay-pane" in x or "canvas" in x for s, _ in rules for x in s)
+    assert not any("img" in x for s, _ in rules for x in s if "tiermap-tiles" in x)  # no seams
+
+
+def test_every_map_tile_layer_uses_the_dark_filtered_class():
+    static = STATIC
+    for js in ("map.js", "changemap.js", "countermap.js"):
+        assert "className: cfg.tile_class" in (static / js).read_text(), js
+
+
+def test_key_swatches_have_a_css_fill_without_js():
+    # the swatch <rect>s carry no fill until JS sets the attribute: black without it. The
+    # fallback applies only while the attribute is absent, so JS (or an inline style) wins
+    rules = [(s, d) for s, d in _rules() if any("swatch" in x for x in s)]
+    css = _stylesheet()
+    keys = {
+        "A": "--tier-a", "B": "--tier-b", "C": "--tier-c", "D": "--tier-d", "E": "--tier-e",
+        **{k: f"--change-{k}" for k in change.CATEGORY_COLOURS},
+    }  # fmt: skip
+    for key, token in keys.items():
+        sel = f'.swatch[data-key="{key}"] rect:not([fill])'
+        found = [d for s, d in rules if sel in s]
+        assert found and found[0]["fill"] == f"var({token})", key
+    assert any(".swatch rect:not([fill])" in s for s, _ in rules)
+    assert ".swatch rect {" not in css  # an unconditional rule would beat the fill attribute
+    for token in TIERS:  # the tier fills are held to 3:1 by the graphics test (change: see there)
+        assert token in _graphics(), token
+
+
+def test_map_tiles_carry_no_border():
+    # the global `img` border would frame every 256px tile: a 2px seam grid across the map
+    assert any(s == [".leaflet-container img"] and d.get("border") == "0" for s, d in _rules())
+    assert any(s == [".map-png img"] and d.get("border") == "0" for s, d in _rules())

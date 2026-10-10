@@ -162,6 +162,13 @@ unless `--clean` is given, and `--clean` replaces only a previous export (a dire
 `build.json`). The CLI refuses `--out .`, any parent of the working directory, `/`, `$HOME`, the
 repository root, a symlink, and any directory that contains one of its inputs.
 
+### Re-rendering the tier maps
+
+After a palette change (`charts.TIER_COLOURS`), re-run `velometer report maps`; the change maps
+keep fixed colours. A tier map is skipped while its `.run` marker names the current run, and a
+palette change does not touch the run, so delete `data/maps/*_{lau,fua}.run` first (the PNGs and
+GeoJSON stay; the database is opened read-only).
+
 ### Serving the static edition
 
 The export is plain files; any static host serves it. No server code runs, and nothing is uploaded
