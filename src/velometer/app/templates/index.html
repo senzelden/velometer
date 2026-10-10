@@ -21,7 +21,7 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 </div>
 <p class="meta">{{ headline_unit }}. Each city's first series year against its current run; click a city for its page.</p>
 <div class="scroll">
-<table class="ranking">
+<table class="ranking stack">
 <thead><tr>
   <th class="num">#</th><th>City</th><th class="bar-col"><span class="sr-only">First year to current run</span></th>
   <th class="num first-col">First year</th><th class="num">Current</th><th class="num">Change</th>
@@ -29,9 +29,9 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 <tbody>
 {% for s in ranking %}
 <tr>
-  <td class="num">{% if s.now is not none %}{{ loop.index }}{% endif %}</td>
-  <td><a href="{{ u('/city/' ~ s.city.id) }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
-  <td class="bar-col">{% if s.now is not none and s.first is not none %}
+  <td class="num" data-label="#">{% if s.now is not none %}{{ loop.index }}{% endif %}</td>
+  <td data-label="City"><a href="{{ u('/city/' ~ s.city.id) }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
+  <td class="bar-col" data-label="First year to current run">{% if s.now is not none and s.first is not none %}
     {%- set a = 2 + 96 * s.first / scale_max %}{% set b = 2 + 96 * s.now / scale_max -%}
     <svg class="dumbbell" width="100%" height="14" aria-hidden="true" focusable="false">
       <line x1="{{ '%.2f' % ([a, b] | min) }}%" x2="{{ '%.2f' % ([a, b] | max) }}%" y1="7" y2="7"></line>
@@ -39,11 +39,11 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
       <circle class="now" cx="{{ '%.2f' % b }}%" cy="7" r="4.5"></circle>
     </svg>{% endif %}</td>
   {% if s.now is none %}
-  <td class="note" colspan="3">no run (LAU current)</td>
+  <td class="note" colspan="3" data-label="First year">no run (LAU current)</td>
   {% else %}
-  <td class="num first-col">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
-  <td class="num"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
-  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}">{% if s.change is none %}n/a{% else %}{{ "%+.1f" | format(s.change) }}{% endif %}</td>
+  <td class="num first-col" data-label="First year">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
+  <td class="num" data-label="Current"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
+  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}" data-label="Change">{% if s.change is none %}n/a{% else %}{{ "%+.1f" | format(s.change) }}{% endif %}</td>
   {% endif %}
 </tr>
 {% endfor %}
@@ -81,7 +81,7 @@ The ranking above lists every city's values.</p>
 <a href="{{ u('/methodology') }}">methodology</a>); all values are ours, computed on each publisher's method,
 not the published figures. km are OSM mapped km per side.</p>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr>
   <th>City</th>
   {% for p in preset_label %}<th class="num" title="{{ preset_unit[p] }}">{{ preset_label[p] }}</th>{% endfor %}
@@ -91,14 +91,14 @@ not the published figures. km are OSM mapped km per side.</p>
 <tbody>
 {% for r in rows %}
 <tr>
-  <td><a href="{{ u('/city/' ~ r.city.id) }}">{{ r.city.name }}</a></td>
+  <td data-label="City"><a href="{{ u('/city/' ~ r.city.id) }}">{{ r.city.name }}</a></td>
   {% if r.point %}
-  {% for p in preset_label %}<td class="num">{{ r.presets.get(p) | num }}</td>{% endfor %}
-  <td class="num">{{ r.point.ab_km | num }}</td>
+  {% for p in preset_label %}<td class="num" data-label="{{ preset_label[p] }}">{{ r.presets.get(p) | num }}</td>{% endfor %}
+  <td class="num" data-label="A+B km">{{ r.point.ab_km | num }}</td>
   {% else %}
-  <td class="note" colspan="{{ preset_label | length + 1 }}">no run (LAU current)</td>
+  <td class="note" colspan="{{ preset_label | length + 1 }}" data-label="{{ preset_label.values() | first }}">no run (LAU current)</td>
   {% endif %}
-  <td class="num">{{ r.flags }}</td>
+  <td class="num" data-label="Flagged years (LAU)">{{ r.flags }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -115,14 +115,14 @@ not the published figures. km are OSM mapped km per side.</p>
 <p class="meta">Rank of each city (1 = highest) in our presets and in the published rankings. Ranks depend on
 which cities a source covers; each source has its own measure and scope.</p>
 <div class="scroll">
-<table class="ranks">
+<table class="ranks stack">
 <thead><tr><th>City</th>{% for col in rankings.columns.values() %}<th class="num">{{ col }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in rankings.rows %}
 <tr>
-  <td><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></td>
+  <td data-label="City"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></td>
   {% for sid in rankings.columns %}{% set cell = row.cells.get(sid) %}
-  <td class="num">{% if cell and cell.rank is not none %}{{ cell.rank }}{% if cell.dagger %} †{% endif %}{% else %}<span class="note">not published</span>{% endif %}</td>
+  <td class="num" data-label="{{ rankings.columns[sid] }}">{% if cell and cell.rank is not none %}{{ cell.rank }}{% if cell.dagger %} †{% endif %}{% else %}<span class="note">not published</span>{% endif %}</td>
   {% endfor %}
 </tr>
 {% endfor %}

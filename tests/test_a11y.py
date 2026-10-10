@@ -1,5 +1,6 @@
 import itertools
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from tests.test_app import (
     _dark_tokens,
     client,  # noqa: F401 - the fixture
     setup,  # noqa: F401
+    subarea_setup,  # noqa: F401 - the fixture
 )
 from tests.test_app_m8 import _stylesheet
 from velometer.report import change, charts
@@ -377,3 +379,147 @@ def test_map_tiles_carry_no_border():
     # the global `img` border would frame every 256px tile: a 2px seam grid across the map
     assert any(s == [".leaflet-container img"] and d.get("border") == "0" for s, d in _rules())
     assert any(s == [".map-png img"] and d.get("border") == "0" for s, d in _rules())
+
+
+# ---------- phone tables stack into labelled cards (M10 decision 5) ----------
+
+VOID = {"br", "img", "hr", "input", "meta", "link", "col", "wbr", "source", "area", "base"}
+
+
+class _Tables(HTMLParser):
+    """Every <table> outside a `.prose` ancestor: its classes, its header texts and, per body
+    row, the (data-label, column index, tag) of every cell. A cell's column is where its
+    colspan-aware position starts."""
+
+    def __init__(self):
+        super().__init__()
+        self.tables: list[dict] = []
+        self._open: list[tuple[str, bool]] = []  # (tag, carries the prose class)
+        self._t = self._row = None
+        self._in_body = self._in_th = False
+        self._col = 0
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag not in VOID:
+            self._open.append((tag, "prose" in (a.get("class") or "").split()))
+        if tag == "table":
+            prose = any(p for _, p in self._open)
+            self._t = {"cls": (a.get("class") or "").split(), "heads": [], "rows": []}
+            if not prose:
+                self.tables.append(self._t)
+        elif self._t is None:
+            return
+        elif tag == "tbody":
+            self._in_body = True
+        elif tag == "tr" and self._in_body:
+            self._row, self._col = [], 0
+            self._t["rows"].append(self._row)
+        elif tag == "th" and not self._in_body:
+            self._in_th = True
+            self._t["heads"].append("")
+        elif tag in ("td", "th") and self._row is not None:
+            self._row.append((a.get("data-label"), self._col, tag))
+            self._col += int(a.get("colspan") or 1)
+
+    def handle_endtag(self, tag):
+        while tag not in VOID and self._open:  # unclosed <p>/<li> never occur in our templates
+            if self._open.pop()[0] == tag:
+                break
+        if tag == "table":
+            self._t = self._row = None
+            self._in_body = False
+        elif tag == "th":
+            self._in_th = False
+        elif tag == "tbody":
+            self._in_body = False
+
+    def handle_data(self, data):
+        if self._in_th and self._t is not None:
+            self._t["heads"][-1] += data
+
+
+def _stack_violations(html: str) -> tuple[int, list]:
+    p = _Tables()
+    p.feed(html)
+    bad = []
+    for t in p.tables:
+        heads = [" ".join(h.split()) for h in t["heads"]]
+        if "stack" not in t["cls"]:
+            bad.append(("not stacked", t["cls"], heads))
+        for row in t["rows"]:
+            for label, col, tag in row:
+                if col >= len(heads) or label != heads[col]:
+                    bad.append(("label", label, col, tag, heads))
+    return len(p.tables), bad
+
+
+def test_every_data_table_stacks_with_labels(client, all_page_urls):  # noqa: F811
+    # spec decision 5: data tables outside prose stack; every body cell, row header included,
+    # names its column with data-label equal to that column's header text
+    seen = 0
+    for url in all_page_urls:
+        n, bad = _stack_violations(client.get(url).text)
+        seen += n
+        assert not bad, (url, bad[:3])
+    assert seen > 10  # the parser found the tables at all
+
+
+def test_the_stack_check_catches_a_missing_or_wrong_label():
+    ok = ('<table class="stack"><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr>'
+          '<td data-label="A">1</td><td data-label="B">2</td></tr></tbody></table>')  # fmt: skip
+    assert _stack_violations(ok) == (1, [])
+    assert _stack_violations(ok.replace(' data-label="B"', ""))[1]
+    assert _stack_violations(ok.replace('"B">2', '"A">2'))[1]
+    assert _stack_violations(ok.replace('class="stack"', ""))[1]
+    prose = f'<div class="prose">{ok.replace("stack", "x")}</div>'
+    assert _stack_violations(prose) == (0, [])  # prose tables scroll instead
+
+
+def test_a_colspan_cell_is_labelled_by_the_column_it_starts_in():
+    html = ('<table class="stack"><thead><tr><th>A</th><th>B</th><th>C</th></tr></thead><tbody>'
+            '<tr><td data-label="A">1</td><td colspan="2" data-label="B">n/a</td></tr>'
+            "</tbody></table>")  # fmt: skip
+    assert _stack_violations(html) == (1, [])
+
+
+def test_the_markdown_change_table_is_a_prose_table(subarea_setup):  # noqa: F811
+    # the Bezirk change table is rendered from markdown with a column per category: it scrolls
+    # like the other prose tables rather than stacking, so it must sit in a `.prose` box
+    from tests.test_app import CONTENT, _client, _latest_lau_run, _write_change
+    from velometer.app.main import create_app
+
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs, run_to=_latest_lau_run(db_path, cfg))
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
+        html = c.get("/city/berlin/bezirke").text
+    section = html.split("<h3>Mapped change")[1]
+    assert "<table" in section
+    assert re.search(r'<div class="prose">\s*<table', section)
+    n, bad = _stack_violations(html)
+    assert not bad  # and the page's other tables still stack
+
+
+def _phone_rules():
+    css = _css_outside_tokens(_stylesheet())
+    blocks = re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+    return [r for b in blocks for r in _css_rules(b)]
+
+
+def test_the_stack_pattern_is_one_phone_rule_set():
+    rules = _phone_rules()
+    sel = {s for ss, _ in rules for s in ss}
+
+    def decl(selector):
+        return {k: v for ss, d in rules if selector in ss for k, v in d.items()}
+
+    # the header row stays for screen readers: visually hidden, not display:none
+    head = decl("table.stack thead")
+    assert head.get("display") != "none" and head.get("position") == "absolute"
+    # each row is a bordered card, each cell a block that prints its column name first
+    assert "border" in decl("table.stack tr") and "padding" in decl("table.stack tr")
+    assert decl("table.stack td")["display"] == "block"
+    assert decl("table.stack td::before")["content"] == "attr(data-label)"
+    assert decl("table.stack td.num")["text-align"] == "right"  # numbers stay right-aligned
+    # the per-table phone rules this pattern replaced are gone
+    assert not {s for s in sel if s.startswith((".diffs", ".plans", ".plan-docs"))}

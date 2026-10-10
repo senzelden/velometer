@@ -7,15 +7,15 @@
 {% if yearly %}
 <div class="chart" data-chart="city-headline" data-city="{{ city.id }}" role="group" aria-label="Headline over time, {{ city.name }}"></div>
 <div class="scroll">
-<table class="yearly">
+<table class="yearly stack">
 <thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}
 <tr>
-  <td>{{ row.label | when(row.osm) }}</td>
+  <td data-label="Snapshot">{{ row.label | when(row.osm) }}</td>
   {% for k in kinds %}{% set p = row.get(k.kind) %}
-  <td class="num">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>
-  <td class="num">{% if p %}{{ p.ab_km | num }}{% else %}n/a{% endif %}</td>
+  <td class="num" data-label="{{ k.kind | upper }} headline">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>
+  <td class="num" data-label="{{ k.kind | upper }} A+B km">{% if p %}{{ p.ab_km | num }}{% else %}n/a{% endif %}</td>
   {% endfor %}
 </tr>
 {% endfor %}
@@ -57,11 +57,11 @@
 <h3>{{ k.kind | upper }}</h3>
 {% if k.point %}
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents{% if k.point.population_year %} ({{ k.point.population_year }} population){% endif %}</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}
-<tr><td>{{ preset_label.get(p.preset, p.preset) }}</td><td class="num">{{ p.value | num }}</td><td>{{ preset_unit.get(p.preset, "") }}</td><td class="num">{{ p.per_100k | num }}</td></tr>
+<tr><td data-label="Preset">{{ preset_label.get(p.preset, p.preset) }}</td><td class="num" data-label="Value">{{ p.value | num }}</td><td data-label="Measure">{{ preset_unit.get(p.preset, "") }}</td><td class="num" data-label="km per 100k residents{% if k.point.population_year %} ({{ k.point.population_year }} population){% endif %}">{{ p.per_100k | num }}</td></tr>
 {% endfor %}
 </tbody>
 </table>

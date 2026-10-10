@@ -13,6 +13,7 @@ import {
 } from "./compare-model.js";
 import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
+import { labelCells } from "./table.js";
 import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
 
 const FUA_NOTE =
@@ -256,7 +257,7 @@ function drawTable(model) {
     ? model.labels.map((l) => (marked.has(l) ? `${l} (${marked.get(l)})` : l))
     : displayLabels(model.labels, model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []));
   const rows = sortRows(model.series, model.labels, sort);
-  const table = el("table", { class: "compare-table" });
+  const table = el("table", { class: "compare-table stack" });
   table.append(el("caption", { class: "sr-only" }, `${cfg.metrics[state.m].label} per city and snapshot`));
   const head = el("tr");
   const th = (key, text, cls) => {
@@ -297,6 +298,7 @@ function drawTable(model) {
     tbody.append(tr);
   }
   table.append(tbody);
+  labelCells(table);
   out.table.replaceChildren(table);
 }
 

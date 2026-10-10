@@ -11,11 +11,11 @@
 <div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
 <details class="table-details"><summary>Table: mapped km by tier ({{ k.kind | upper }})</summary>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th>Snapshot</th>{% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for p in k.series.points %}
-<tr><td>{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
+<tr><td data-label="Snapshot">{{ p.label | when(p.osm_timestamp) }}</td>{% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ p.tiers_km[t] | num }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
 </table>
@@ -29,7 +29,7 @@
 <h2>LAU vs FUA</h2>
 <p class="meta">Headline: {{ headline_unit }}.</p>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr>
   <th>Boundary</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A+B km</th>
   {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
@@ -37,13 +37,13 @@
 <tbody>
 {% for k in kinds %}
 <tr>
-  <td>{{ k.kind | upper }}</td>
+  <td data-label="Boundary">{{ k.kind | upper }}</td>
   {% if k.point %}
-  <td class="num">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
-  <td class="num">{{ k.point.ab_km | num }}</td>
-  {% for t in tiers %}<td class="num">{{ k.point.tiers_km[t] | num }}</td>{% endfor %}
+  <td class="num" data-label="Headline per 100 km">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
+  <td class="num" data-label="A+B km">{{ k.point.ab_km | num }}</td>
+  {% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ k.point.tiers_km[t] | num }}</td>{% endfor %}
   {% else %}
-  <td class="note" colspan="{{ tiers | length + 2 }}">no run ({{ k.kind | upper }} current)</td>
+  <td class="note" colspan="{{ tiers | length + 2 }}" data-label="Headline per 100 km">no run ({{ k.kind | upper }} current)</td>
   {% endif %}
 </tr>
 {% endfor %}

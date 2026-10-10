@@ -6,7 +6,7 @@
 <h2>Bezirke</h2>
 <p class="meta">Latest current LAU run, per subarea. Headline: {{ headline_unit }}. Tier A share is A of A+B per-side mapped km.</p>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr>
   <th>Bezirk</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A share of A+B</th>
   {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
@@ -14,10 +14,10 @@
 <tbody>
 {% for r in bezirke.rows %}
 <tr{% if r.remainder %} class="remainder"{% endif %}>
-  <td>{{ r.name }}</td>
-  <td class="num">{{ r.headline | num }}</td>
-  <td class="num">{% if r.a_share_of_ab is none %}n/a{% else %}{{ r.a_share_of_ab | num }} %{% endif %}</td>
-  {% for t in tiers %}<td class="num">{{ r.tier_km[t] | num }}</td>{% endfor %}
+  <td data-label="Bezirk">{{ r.name }}</td>
+  <td class="num" data-label="Headline per 100 km">{{ r.headline | num }}</td>
+  <td class="num" data-label="A share of A+B">{% if r.a_share_of_ab is none %}n/a{% else %}{{ r.a_share_of_ab | num }} %{% endif %}</td>
+  {% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ r.tier_km[t] | num }}</td>{% endfor %}
 </tr>
 {% endfor %}
 </tbody>
@@ -31,11 +31,11 @@
 <div class="chart" data-chart="bezirke" data-city="{{ city.id }}" role="group" aria-label="Headline per Bezirk over time, {{ city.name }}"></div>
 <details class="table-details"><summary>Table: headline per Bezirk and snapshot</summary>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th>Bezirk</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for r in bezirke.series.rows %}
-<tr><td>{{ r.name }}</td>{% for l in bezirke.series.labels %}<td class="num">{{ r["values"].get(l.label) | num }}</td>{% endfor %}</tr>
+<tr><td data-label="Bezirk">{{ r.name }}</td>{% for l in bezirke.series.labels %}<td class="num" data-label="{{ l.text }}">{{ r["values"].get(l.label) | num }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
 </table>
@@ -62,7 +62,7 @@
 <script type="module" src="{{ u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
-<div class="scroll">{{ bezirke.change_table | md }}</div>
+<div class="prose">{{ bezirke.change_table | md }}</div>
 <p class="meta">Mapped km per Bezirk and category, from the change page <code>docs/review</code>; "geometry" is the signed length change of a same-tier way-side.</p>
 {% endif %}
 {% if not bezirke.change_map and not bezirke.change_table %}

@@ -19,6 +19,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
     _css_tokens,
     _resolve,
     _text,
+    nolabels,
     setup,
 )
 from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
@@ -104,7 +105,7 @@ def test_counts_tab_renders_with_the_csp_and_no_inline_code(client):
 
 
 def test_counts_tab_has_the_chart_table_attribution_and_the_counters_text(client):
-    html = client.get("/city/berlin/counts").text
+    html = nolabels(client.get("/city/berlin/counts").text)
     text = _text(html)
     assert 'data-chart="city-counts"' in html
     assert "Index of counts recorded at counter sites, 2019 = 100" in text
@@ -158,7 +159,7 @@ def test_barcelona_style_series_is_labelled_average_daily_intensity(setup):  # n
 def test_km_index_is_rebased_to_the_counter_base_year(setup):  # noqa: F811
     _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
     with _client(_app(setup)) as c:
-        html = c.get("/city/berlin/counts").text
+        html = nolabels(c.get("/city/berlin/counts").text)
     # the fixture's A+B km on 1 January 2024 is the km index's 100
     assert re.search(r"<th scope=\"row\">2024</th><td class=\"num\">100.0</td><td class=\"num\">"
                      r"4</td><td class=\"num\">100.0</td>", html)  # fmt: skip
@@ -285,7 +286,8 @@ def test_compare_table_without_js_shows_the_counter_index(client):
         "2018", "2019", "2020 (COVID year)", "2021", "2022",
     ]  # fmt: skip
     # not rebased in index mode; 2021 is a gap
-    body = r.text[r.text.index("<tbody>", r.text.index('class="compare-table"')) :]
+    page = nolabels(r.text)
+    body = page[page.index("<tbody>", page.index('class="compare-table stack"')) :]
     row = body[body.index('<a href="/city/berlin">') :]
     row = row[: row.index("</tr>")]
     assert re.findall(r'<td class="num">([^<]+)', row) == [

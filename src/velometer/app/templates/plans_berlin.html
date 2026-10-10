@@ -55,16 +55,16 @@
 
 {% if i.yearly %}
 <div class="scroll">
-<table class="plan-years">
+<table class="plan-years stack">
 <caption class="sr-only">{{ i.item.label }}: target, reported and completed km by year</caption>
 <thead><tr><th class="num">Year</th><th class="num">Target</th><th>Reported, implemented in the year</th>{% if i.network %}<th class="num">Completed projects</th>{% endif %}</tr></thead>
 <tbody>
 {% for y in i.yearly %}
 <tr>
-  <td class="num">{{ y.year }}</td>
-  <td class="num">{% if y.target is not none %}{{ y.target | num(",g") }} {{ i.item.unit }}{% else %}<span class="note">none</span>{% endif %}</td>
-  <td>{% if y.reported %}<ul class="figures">{% for v in y.reported %}<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.row.unit }}</b> · {{ status(v) }} · {{ doc_ref(v) }}{% if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<span class="note">not reported</span>{% endif %}</td>
-  {% if i.network %}<td class="num">{% if y.projects is not none %}{{ y.projects | num(",.2f") }} km{% else %}<span class="note">{% if projects_present %}0 or none{% else %}n/a{% endif %}</span>{% endif %}</td>{% endif %}
+  <td class="num" data-label="Year">{{ y.year }}</td>
+  <td class="num" data-label="Target">{% if y.target is not none %}{{ y.target | num(",g") }} {{ i.item.unit }}{% else %}<span class="note">none</span>{% endif %}</td>
+  <td data-label="Reported, implemented in the year">{% if y.reported %}<ul class="figures">{% for v in y.reported %}<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.row.unit }}</b> · {{ status(v) }} · {{ doc_ref(v) }}{% if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<span class="note">not reported</span>{% endif %}</td>
+  {% if i.network %}<td class="num" data-label="Completed projects">{% if y.projects is not none %}{{ y.projects | num(",.2f") }} km{% else %}<span class="note">{% if projects_present %}0 or none{% else %}n/a{% endif %}</span>{% endif %}</td>{% endif %}
 </tr>
 {% endfor %}
 </tbody>
@@ -79,12 +79,12 @@
 
 {% if i.overlay %}
 <div class="scroll">
-<table class="plan-overlay">
+<table class="plan-overlay stack">
 <caption class="sr-only">{{ i.item.label }}: A+B mapped km on the network by snapshot, {{ overlay_version }}</caption>
 <thead><tr><th>Snapshot</th><th class="num">A+B mapped km on the network</th><th class="num">Change from the previous snapshot</th><th class="num">Difference from 1 Jan {{ base_year }}</th></tr></thead>
 <tbody>
 {% for o in i.overlay %}
-<tr><td class="date">{{ o.date }}</td><td class="num">{{ o.ab_km | num }}</td><td class="num">{% if o.step is none %}n/a{% else %}{{ "%+.1f" | format(o.step) }}{% endif %}</td><td class="num">{% if o.since_base is none %}n/a{% else %}{{ "%+.1f" | format(o.since_base) }}{% endif %}</td></tr>
+<tr><td class="date" data-label="Snapshot">{{ o.date }}</td><td class="num" data-label="A+B mapped km on the network">{{ o.ab_km | num }}</td><td class="num" data-label="Change from the previous snapshot">{% if o.step is none %}n/a{% else %}{{ "%+.1f" | format(o.step) }}{% endif %}</td><td class="num" data-label="Difference from 1 Jan {{ base_year }}">{% if o.since_base is none %}n/a{% else %}{{ "%+.1f" | format(o.since_base) }}{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table>
@@ -97,12 +97,12 @@
 {% for s in i.series %}
 <h3>{{ s.text | capitalize }}</h3>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th class="num">Year</th><th class="num">Value</th><th>Status</th><th>Document</th></tr></thead>
 <tbody>
 {% for year, views in s.years %}{% for v in views %}
-<tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num">{{ year }}</td><td class="num">{{ v.value }} {{ v.row.unit }}</td><td>{{ status(v) }}</td><td>{{ doc_ref(v) }}<br><span class="meta">{{ v.row.locator }}</span></td></tr>
-{% if v.row.note %}<tr class="note-row"><td colspan="4" class="meta">{{ v.row.note }}</td></tr>{% endif %}
+<tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num" data-label="Year">{{ year }}</td><td class="num" data-label="Value">{{ v.value }} {{ v.row.unit }}</td><td data-label="Status">{{ status(v) }}</td><td data-label="Document">{{ doc_ref(v) }}<br><span class="meta">{{ v.row.locator }}</span></td></tr>
+{% if v.row.note %}<tr class="note-row"><td colspan="4" class="meta" data-label="Year">{{ v.row.note }}</td></tr>{% endif %}
 {% endfor %}{% endfor %}
 </tbody>
 </table>
@@ -132,7 +132,7 @@
 <h2>Documents</h2>
 <p class="meta">Every progress document a figure above comes from, oldest first. Hauptausschuss reports (rote Nummer) are the Senate's yearly progress reports; Drucksachen are answers to written questions.</p>
 <div class="scroll">
-<table class="plan-docs">
+<table class="plan-docs stack">
 <thead><tr><th>Type</th><th>Number</th><th>Date</th><th>Publisher</th><th>What it reports</th><th class="num">Figures</th></tr></thead>
 <tbody>
 {% for d in documents %}

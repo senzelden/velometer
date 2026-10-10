@@ -9,7 +9,7 @@
 <p class="note">no published figures for {{ city.name }}</p>
 {% else %}
 <div class="scroll">
-<table class="diffs">
+<table class="diffs stack">
 <thead><tr><th>Source</th><th>Figure</th><th class="num">Theirs</th><th>Ours</th><th class="num">Gap</th><th>Where it differs</th></tr></thead>
 <tbody>
 {% for r in differences %}
@@ -50,17 +50,17 @@
 <p class="note">no published figures for {{ city.name }}</p>
 {% else %}
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th>Comparison</th><th class="num">Ours</th><th class="num">Theirs</th><th class="num">Gap</th><th>Flagged</th><th>Source (date)</th></tr></thead>
 <tbody>
 {% for g in reconcile.gaps %}
 <tr{% if g.flagged %} class="flagged"{% endif %}>
-  <td><code>{{ g.key.split("/", 1)[1] }}</code></td>
-  <td class="num">{{ g.ours | num }}</td>
-  <td class="num">{{ g.theirs | num }}</td>
-  <td class="num">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
-  <td>{% if g.informational %}info{% elif g.flagged %}yes{% else %}no{% endif %}</td>
-  <td>{{ g.source }} ({{ g.reference_date or "date not stated" }})</td>
+  <td data-label="Comparison"><code>{{ g.key.split("/", 1)[1] }}</code></td>
+  <td class="num" data-label="Ours">{{ g.ours | num }}</td>
+  <td class="num" data-label="Theirs">{{ g.theirs | num }}</td>
+  <td class="num" data-label="Gap">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
+  <td data-label="Flagged">{% if g.informational %}info{% elif g.flagged %}yes{% else %}no{% endif %}</td>
+  <td data-label="Source (date)">{{ g.source }} ({{ g.reference_date or "date not stated" }})</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -76,21 +76,21 @@
 {% else %}
 <p class="meta">Figures as published by their sources, each with its own scope and length basis. They are not mapped km and are not equal to the velometer numbers above.</p>
 <div class="scroll">
-<table>
+<table class="stack">
 <thead><tr><th>Source</th><th>Metric</th><th class="num">Value</th><th>Unit</th><th>Scope</th><th>Length basis</th><th>Date</th><th>Source link</th></tr></thead>
 <tbody>
 {% for f in reported %}
 <tr>
-  <td>{% if org_of.get(f.source) %}<a href="{{ u('/organisations#' ~ org_of[f.source]) }}">{{ f.source }}</a>{% else %}{{ f.source }}{% endif %}</td>
-  <td><code>{{ f.metric_name }}</code></td>
-  <td class="num">{{ f.value | num }}</td>
-  <td>{{ f.unit }}</td>
-  <td>{{ f.network_scope }}</td>
-  <td>{{ f.length_basis }}</td>
-  <td class="date">{{ f.reference_date or "not stated" }}</td>
-  <td>{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}</td>
+  <td data-label="Source">{% if org_of.get(f.source) %}<a href="{{ u('/organisations#' ~ org_of[f.source]) }}">{{ f.source }}</a>{% else %}{{ f.source }}{% endif %}</td>
+  <td data-label="Metric"><code>{{ f.metric_name }}</code></td>
+  <td class="num" data-label="Value">{{ f.value | num }}</td>
+  <td data-label="Unit">{{ f.unit }}</td>
+  <td data-label="Scope">{{ f.network_scope }}</td>
+  <td data-label="Length basis">{{ f.length_basis }}</td>
+  <td class="date" data-label="Date">{{ f.reference_date or "not stated" }}</td>
+  <td data-label="Source link">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}</td>
 </tr>
-{% if f.note %}<tr class="note-row"><td colspan="8" class="meta">{{ f.note }}</td></tr>{% endif %}
+{% if f.note %}<tr class="note-row"><td colspan="8" class="meta" data-label="Source">{{ f.note }}</td></tr>{% endif %}
 {% endfor %}
 </tbody>
 </table>

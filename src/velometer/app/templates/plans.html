@@ -13,12 +13,12 @@
 <p class="meta">A figure marked <span class="suspect-mark">suspect</span> is kept as printed, with the reason it is doubtful. Berlin's plan has its own page, with every document's figures and two further series: <a href="{{ u('/plans/berlin') }}">Berlin: reported, completed, mapped →</a></p>
 {% if error %}<p class="note">the plans could not be loaded (see the server log)</p>{% endif %}
 <div class="scroll">
-<table class="plans">
+<table class="plans stack">
 <thead><tr><th>City</th><th>Plan</th><th>Status</th><th>Target</th><th>Latest reported</th></tr></thead>
 <tbody>
 {% for c in table %}
 {% if not c.plans %}
-<tr id="{{ c.id }}"><th scope="row" data-label="City"><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></th><td colspan="4" class="note">no plan recorded</td></tr>
+<tr id="{{ c.id }}"><th scope="row" data-label="City"><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></th><td colspan="4" class="note" data-label="Plan">no plan recorded</td></tr>
 {% endif %}
 {% for p in c.plans %}
 <tr{% if loop.first %} id="{{ c.id }}"{% endif %}>

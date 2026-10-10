@@ -15,12 +15,12 @@
 {% endfor %}
 <h3>Tiers, mapped km now</h3>
 <div class="scroll">
-<table class="panel-tiers">
+<table class="panel-tiers stack">
 <thead><tr><th>Boundary</th>{% for t in tiers %}<th class="num">{{ t }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for k in kinds %}<tr><td>{{ k.kind | upper }}</td>
-{% if k.point %}{% for t in tiers %}<td class="num">{{ k.point.tiers_km[t] | num(",.0f") }}</td>{% endfor %}
-{% else %}<td class="note" colspan="{{ tiers | length }}">no run</td>{% endif %}</tr>
+{% for k in kinds %}<tr><td data-label="Boundary">{{ k.kind | upper }}</td>
+{% if k.point %}{% for t in tiers %}<td class="num" data-label="{{ t }}">{{ k.point.tiers_km[t] | num(",.0f") }}</td>{% endfor %}
+{% else %}<td class="note" colspan="{{ tiers | length }}" data-label="{{ tiers | first }}">no run</td>{% endif %}</tr>
 {% endfor %}</tbody>
 </table>
 </div>

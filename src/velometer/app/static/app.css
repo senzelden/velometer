@@ -168,9 +168,10 @@ header.site .bar {
 @media (min-width: 761px) { .menu-toggle { display: none; } }
 
 /* ---------- breadcrumbs, page head ---------- */
-.crumbs { font-size: 0.86rem; color: var(--muted); margin: 1rem 0 0.25rem; }
+.crumbs { font-size: 0.86rem; color: var(--muted); margin: 1rem 0 0.25rem; overflow-wrap: anywhere; }
 .crumbs a { color: var(--muted); }
 .crumbs .sep { margin: 0 0.45rem; color: var(--muted); }
+.crumbs .sep::after { content: "\200b"; } /* a line may break after the separator, not inside a name */
 .crumbs [aria-current] { color: var(--ink-2); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -220,8 +221,6 @@ th.bar-col, td.bar-col { width: 40%; min-width: 8rem; }
 .dumbbell .now { fill: var(--series-1); stroke: var(--halo); stroke-width: 1.5; }
 td.up { color: var(--up); }
 td.down { color: var(--down); }
-/* narrow: the dot plot and the first-year column go, so the Change column stays in view */
-@media (max-width: 600px) { th.bar-col, td.bar-col, th.first-col, td.first-col, .cc, table.ranking .sub { display: none; } }
 .chartnote .ring { flex: none; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin: 0.75rem 0 1rem; }
 .card {
@@ -349,15 +348,15 @@ footer p { margin: 0.25rem 0; }
 .compare-row { display: flex; gap: 0.5rem; align-items: flex-start; }
 .compare-form select { font: inherit; font-size: 0.9rem; max-width: 14rem; padding: 0.2rem; border: 1px solid var(--control-border); border-radius: 6px; background: var(--surface); color: var(--ink); }
 .compare-form button { font: inherit; padding: 0.35rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
-.keynums { display: flex; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); margin: 0.75rem 0 0; overflow-x: auto; max-width: 100%; }
-.kn { flex: 1 0 9.5rem; padding: 0.55rem 1rem 0.55rem 0; margin-right: 1rem; display: flex; flex-direction: column; gap: 0.1rem; border-right: 1px solid var(--grid); }
+.keynums { display: flex; flex-wrap: wrap; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); margin: 0.75rem 0 0; max-width: 100%; }
+.kn { flex: 1 1 9.5rem; min-width: 0; padding: 0.55rem 1rem 0.55rem 0; margin-right: 1rem; display: flex; flex-direction: column; gap: 0.1rem; border-right: 1px solid var(--grid); }
 .kn:last-child { border-right: 0; margin-right: 0; }
 .kn-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .kn-val { font-family: var(--serif); font-size: 1.45rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .kn-val.up { color: var(--up); }
 .kn-val.down { color: var(--down); }
 .kn-sub { font-size: 0.78rem; color: var(--muted); }
-@media (max-width: 480px) { .kn { flex-basis: 8rem; } }
+@media (max-width: 600px) { .kn { flex-basis: 8rem; border-right: 0; margin-right: 0; } }
 .tabs ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0 0.25rem; margin: 0.5rem 0 1rem; padding: 0; border-bottom: 1px solid var(--grid); }
 .tabs a { display: block; padding: 0.6rem 0.8rem; color: var(--ink-2); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .tabs a:hover { color: var(--ink); }
@@ -401,19 +400,8 @@ dl.drivers dd { margin: 0; color: var(--ink-2); }
 .citations.drefs { list-style: none; padding-left: 0; }
 .citations .dnum { display: inline-block; min-width: 1.8rem; color: var(--down); font-weight: 600; }
 .compare-form select { width: 15rem; }
-.tabs ul { flex-wrap: nowrap; overflow-x: auto; }
 .tabs li { flex: none; }
 .tabs a { white-space: nowrap; }
-@media (max-width: 600px) {
-  table.diffs, .diffs tbody { display: block; }
-  .diffs thead { display: none; }
-  .diffs tr { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr) minmax(0, 0.7fr); gap: 0.25rem 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
-  .diffs td { display: block; border: 0; padding: 0; min-width: 0; }
-  table.diffs td, table.diffs td:nth-child(4), table.diffs td:last-child { min-width: 0; }
-  .diffs td:nth-child(1), .diffs td:nth-child(2), .diffs td:nth-child(6) { grid-column: 1 / -1; }
-  .diffs td[data-label]:nth-child(n+3):nth-child(-n+5)::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
-  .diffs td.num { text-align: left; }
-  .diffs td:nth-child(6) { margin-top: 0.3rem; }
 }
 
 /* ---------- compare: filters, views, slide-over ---------- */
@@ -552,25 +540,12 @@ table.plans td:nth-child(2) { min-width: 14rem; }
 table.plans td:last-child { min-width: 16rem; }
 .status-expired, .status-replaced { color: var(--down); }
 .plan-note summary { cursor: pointer; font-size: 0.85rem; color: var(--ink-2); }
-@media (max-width: 600px) {
-  table.plans, .plans tbody { display: block; }
-  .plans thead { display: none; }
-  .plans tr { display: block; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
-  .plans th, .plans td { display: block; border: 0; padding: 0.15rem 0; min-width: 0; }
-  table.plans td, table.plans td:nth-child(2), table.plans td:last-child { min-width: 0; }
-  .plans td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
-}
 .plan-item { margin-bottom: 2rem; }
 /* plan tables at phone width */
 @media (max-width: 600px) {
   .plan-item th { white-space: normal; }
   .plan-item th, .plan-item td { padding-left: 0.4rem; padding-right: 0.4rem; }
   .plan-item td, .plan-item td * { overflow-wrap: anywhere; }
-  table.plan-docs, .plan-docs tbody { display: block; }
-  .plan-docs thead { display: none; }
-  .plan-docs tr { display: block; padding: 0.6rem 0; border-bottom: 1px solid var(--grid-2); }
-  .plan-docs td { display: block; border: 0; padding: 0.15rem 0; text-align: left; }
-  .plan-docs td[data-label]::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--muted); }
 }
 .series-note { max-width: 48rem; }
 .mapped-note { border-left: 3px solid var(--mapped); padding-left: 0.6rem; }
@@ -614,3 +589,30 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   .counter-sites td { overflow-wrap: anywhere; }
 }
 .covid-mark { font-size: 0.75rem; color: var(--ink-2); font-weight: normal; }
+
+/* ---------- tables that stack into cards on phones (M10 decision 5) ----------
+   table.stack: below 600 px each body row is a card and every cell prints its column's name
+   (data-label, written by the template or by table.js) above or beside its value. The header
+   row stays for screen readers, visually hidden. Prose tables never get the class. */
+@media (max-width: 600px) {
+  table.stack, .stack tbody, table.stack tr, table.stack td, table.stack th[scope="row"] { display: block; }
+  table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.stack thead tr, table.stack thead th { display: block; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; }
+  table.stack tr { border: 1px solid var(--grid-2); border-radius: 6px; padding: 0.35rem 0.75rem; margin: 0 0 0.6rem; background: var(--surface); }
+  table.stack td, table.stack td:nth-child(n), table.stack th[scope="row"] { border: 0; padding: 0.2rem 0; white-space: normal; min-width: 0; width: auto; overflow-wrap: anywhere; }
+  table.stack td::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  table.stack td.num { text-align: right; white-space: normal; }
+  table.stack td.num::before { float: left; margin-right: 0.75rem; text-align: left; }
+  table.stack td.date { white-space: normal; }
+  table.stack th[scope="row"] { font-weight: 600; color: var(--ink); padding-bottom: 0.3rem; }
+  table.stack th[scope="row"]::before, table.stack td[colspan]::before { display: none; }
+  table.stack td:empty, table.stack td.bar-col { display: none; }
+  table.stack tr.flagged { box-shadow: inset 3px 0 0 var(--flag); }
+  table.stack tr.flagged td:first-child { box-shadow: none; }
+  table.stack tr.note-row { margin-top: -0.6rem; border-top: 0; border-radius: 0 0 6px 6px; }
+  table.stack tr:has(+ tr.note-row) { border-bottom: 0; border-radius: 6px 6px 0 0; margin-bottom: 0; }
+  table.stack tr.note-row td { padding-top: 0; }
+  table.stack td *, table.stack th[scope="row"] * { overflow-wrap: anywhere; }
+  table.stack td code { white-space: normal; }
+  .compare-js .compare-table.stack thead th { position: static; }
+}

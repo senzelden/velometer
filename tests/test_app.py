@@ -109,6 +109,11 @@ def fixture_db_path(setup):
     return setup[0]
 
 
+def nolabels(html: str) -> str:
+    """The page without the stacking labels (data-label), for tests that match cell markup."""
+    return re.sub(r' data-label="[^"]*"', "", html)
+
+
 def _text(html: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
 
@@ -163,8 +168,8 @@ def test_city_tabs_have_their_sections_in_order(client):
 
 def test_city_page_mounts_the_headline_with_lau_and_fua_and_tabulates_it(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
-    html = client.get("/city/berlin/time").text
-    tiers_html = client.get("/city/berlin/tiers").text
+    html = nolabels(client.get("/city/berlin/time").text)
+    tiers_html = nolabels(client.get("/city/berlin/tiers").text)
     mount = '<div class="chart" data-chart="city-headline" data-city="berlin"'
     assert mount in html
     assert 'data-chart="city-tiers"' not in html  # the tier charts are on the Tiers tab
@@ -174,7 +179,7 @@ def test_city_page_mounts_the_headline_with_lau_and_fua_and_tabulates_it(client,
         "lau",
         "fua",
     ]
-    table = html[html.index('<table class="yearly">') :]
+    table = html[html.index('<table class="yearly stack">') :]
     table = table[: table.index("</table>")]
     assert _headers(table)[1:] == ["LAU headline", "LAU A+B km", "FUA headline", "FUA A+B km"]
     lau = data.series("berlin", "lau").points
@@ -1108,7 +1113,7 @@ def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM, **kw) -> None
 
 
 def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
-    html = subarea_client.get("/city/berlin/bezirke").text
+    html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
     assert "<h2>Bezirke</h2>" in html
     bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
@@ -1120,7 +1125,7 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
 
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
-    html = subarea_client.get("/city/berlin/bezirke").text
+    html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
     bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h3>")[0]
     body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
     rows = body.split("<tr")[1:]
@@ -1369,7 +1374,7 @@ def test_reported_figure_note_gets_its_own_full_width_row(setup):
     db_path, cfg, maps, docs = setup
     _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        html = c.get("/city/berlin/figures").text
+        html = nolabels(c.get("/city/berlin/figures").text)
     section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
     link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]
     assert "Drucksache" not in link_cell

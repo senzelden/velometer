@@ -15,6 +15,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
     CONTENT,
     _client,
     _text,
+    nolabels,
     setup,
 )
 from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
@@ -172,7 +173,7 @@ def test_a_profile_names_the_figures_it_stands_behind(client):
 
 def test_figures_rows_link_to_the_organisation_anchor(client):
     html = client.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs">') : html.index("</table>")]
+    table = html[html.index('<table class="diffs stack">') : html.index("</table>")]
     assert 'href="/organisations#clean_cities"' in table
     assert 'href="/organisations#ecf"' in table
 
@@ -475,16 +476,16 @@ def test_overlay_table_column_is_the_difference_from_the_baseline(setup, plans_d
     _overlay(setup[0], "overlay_v4", 50.0)
     with _client(_app(setup, plans_data)) as c:
         html = c.get("/plans/berlin").text
-    head = html[html.index('<table class="plan-overlay">') :].split("</thead>")[0]
+    head = html[html.index('<table class="plan-overlay stack">') :].split("</thead>")[0]
     assert re.search(r"Difference from 1 Jan \d{4}</th>", head)
     assert "Change since" not in head
 
 
 def test_plan_tables_fit_a_phone_width(client):
     # Task 11 render check: at 390 px the plan tables were cut at the right. At phone width
-    # the headers wrap, long cell text breaks, and the documents table stacks with labels
+    # the headers wrap, long cell text breaks, and the documents table is a stack with labels
     html = client.get("/plans/berlin").text
-    docs = html[html.index('<table class="plan-docs">') :].split("</table>")[0]
+    docs = html[html.index('<table class="plan-docs stack">') :].split("</table>")[0]
     body = docs.split("<tbody>")[1]
     cells = re.findall(r"<td\b[^>]*>", body)
     assert cells and all("data-label=" in c for c in cells)
@@ -494,7 +495,6 @@ def test_plan_tables_fit_a_phone_width(client):
     assert "@media (max-width: 600px)" in narrow
     assert re.search(r"\.plan-item th[^{]*\{[^}]*white-space: normal", narrow)
     assert re.search(r"\.plan-item td[^{]*\{[^}]*overflow-wrap: anywhere", narrow)
-    assert re.search(r"table\.plan-docs[^{]*\{[^}]*display: block", narrow)
 
 
 # ---------- notes for unreadable inputs, licences (M8 follow-ups, Task 2) ----------
@@ -632,7 +632,7 @@ def test_key_links_never_dangle_when_the_page_text_changes(setup, plans_data, tm
 
 def test_every_target_value_is_in_the_year_table(client):
     # off-scale targets are capped in the chart (plan-chart.js): the table keeps every value
-    html = client.get("/plans/berlin").text
+    html = nolabels(client.get("/plans/berlin").text)
     plan = next(p for p in load_plans(CONTENT.parent / "config" / "plans")[0] if p.city == "berlin")
     for item in plan.items:
         sec = _section(html, f"item-{item.id}")
