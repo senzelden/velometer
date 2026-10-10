@@ -258,7 +258,7 @@ def test_bezirk_change_table_has_no_inline_style(subarea_setup):  # noqa: F811
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        html = c.get("/city/berlin/bezirke").text
+        html = nolabels(c.get("/city/berlin/bezirke").text)
     assert "Mapped change" in html and "<td>West</td>" in html
     assert not re.search(r"\sstyle=", html)
 
@@ -613,6 +613,8 @@ def test_header_key_numbers_sit_in_one_wrapping_row(client, fixture_db):
     # reflow at 320 px (WCAG 1.4.10): the row wraps into more lines, it never scrolls sideways
     assert decl.get("flex-wrap") == "wrap" and decl.get("display") == "flex"
     assert "overflow-x" not in decl
+    kn = {k: v for sels, d in rules if ".kn" in sels for k, v in d.items()}
+    assert kn.get("min-width") == "0"  # a flex item may shrink below its text: the 320 px fix
 
 
 def test_unreadable_content_is_logged(setup, content, caplog):  # noqa: F811

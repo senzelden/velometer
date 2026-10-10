@@ -1161,7 +1161,7 @@ def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea
     db_path, cfg, maps, docs = subarea_setup
     _write_change(maps, docs)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        html = c.get("/city/berlin/bezirke").text
+        html = nolabels(c.get("/city/berlin/bezirke").text)
         assert "No change map generated yet" not in html
         assert f"/maps/{CHANGE_STEM}.geojson" in html
         assert "/static/changemap.js" in html and "/static/vendor/leaflet.js" in html

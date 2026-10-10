@@ -483,9 +483,9 @@ def test_a_colspan_cell_is_labelled_by_the_column_it_starts_in():
     assert _stack_violations(html) == (1, [])
 
 
-def test_the_markdown_change_table_is_a_prose_table(subarea_setup):  # noqa: F811
-    # the Bezirk change table is rendered from markdown with a column per category: it scrolls
-    # like the other prose tables rather than stacking, so it must sit in a `.prose` box
+def test_the_markdown_change_table_stacks_with_labels(subarea_setup):  # noqa: F811
+    # the Bezirk change table is rendered from markdown but is a data table (decision 5): it
+    # stacks, outside any `.prose` box, each cell labelled with its column header
     from tests.test_app import CONTENT, _client, _latest_lau_run, _write_change
     from velometer.app.main import create_app
 
@@ -494,10 +494,10 @@ def test_the_markdown_change_table_is_a_prose_table(subarea_setup):  # noqa: F81
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/bezirke").text
     section = html.split("<h3>Mapped change")[1]
-    assert "<table" in section
-    assert re.search(r'<div class="prose">\s*<table', section)
+    assert '<table class="stack">' in section and 'class="prose"' not in section
+    assert "data-label=" in section.split("<tbody>")[1]
     n, bad = _stack_violations(html)
-    assert not bad  # and the page's other tables still stack
+    assert n >= 3 and not bad
 
 
 def _phone_rules():
@@ -523,3 +523,51 @@ def test_the_stack_pattern_is_one_phone_rule_set():
     assert decl("table.stack td.num")["text-align"] == "right"  # numbers stay right-aligned
     # the per-table phone rules this pattern replaced are gone
     assert not {s for s in sel if s.startswith((".diffs", ".plans", ".plan-docs"))}
+
+
+def test_the_compare_sort_buttons_stay_visible_on_phones():
+    # the compare table's header holds focusable sort buttons: below 600 px it must not be
+    # clipped like the label-only headers of the other stacking tables (WCAG 2.4.7)
+    rules = _phone_rules()
+    decl: dict[str, str] = {}
+    for ss, d in rules:
+        if ".compare-js .compare-table.stack thead" in ss:
+            decl.update(d)
+    assert decl, "no phone rule keeps the compare header on screen"
+    assert decl["position"] == "static" and decl["overflow"] == "visible"
+    assert decl["clip"] == "auto" and decl["width"] == "auto" and decl["height"] == "auto"
+    assert decl["display"] == "block"  # a table-header-group would shrink to its 1px children
+    row = {k: v for ss, d in rules if ".compare-js .compare-table.stack thead tr" in ss
+           for k, v in d.items()}  # fmt: skip
+    assert row["display"] == "flex" and row["flex-wrap"] == "wrap"
+    assert row["overflow"] == "visible" and row["height"] == "auto" and row["width"] == "auto"
+    cell = {k: v for ss, d in rules if ".compare-js .compare-table.stack thead th" in ss
+            for k, v in d.items()}  # fmt: skip
+    assert cell["overflow"] == "visible" and cell["width"] == "auto"
+
+
+def test_compare_js_builds_a_stacking_labelled_table_on_every_render():
+    # the table is rebuilt by drawTable on each render, and a sort click re-renders: so the class
+    # and the labelling must be in drawTable itself, labelling after the rows exist and before
+    # the table goes into the page
+    js = (STATIC / "js" / "compare.js").read_text()
+    assert 'import { labelCells } from "./table.js"' in js
+    body = js[js.index("function drawTable") :]
+    body = body[: body.index("\nfunction ", 10)]
+    assert 'el("table", { class: "compare-table stack" })' in body
+    assert body.index("table.append(tbody)") < body.index("labelCells(table)")
+    assert body.index("labelCells(table)") < body.index("out.table.replaceChildren(table)")
+    render = js[js.index("function render(") :]
+    assert "drawTable(" in render[: render.index("\n}\n")]  # render, which a sort click calls
+
+
+def test_the_figures_cards_align_ours_with_theirs_and_gap():
+    # in a card the three figures read as a column: Ours is right-aligned like Theirs and Gap
+    rules = _phone_rules()
+    ours = {k: v for ss, d in rules if "table.diffs td:nth-child(4)" in ss for k, v in d.items()}
+    assert ours.get("text-align") == "right"
+    assert any("table.diffs td:nth-child(4)::before" in ss for ss, _ in rules)
+    assert _stack_violations(
+        '<table class="diffs stack"><thead><tr><th>Source</th><th>Figure</th><th>Theirs</th>'
+        '<th>Ours</th></tr></thead><tbody></tbody></table>'
+    ) == (1, [])  # fmt: skip

@@ -206,6 +206,29 @@ def _md(text: str) -> Markup:
     )
 
 
+def _stack_table(html: Markup) -> Markup:
+    """A rendered markdown table made a stacking table: class `stack`, and `data-label` on each
+    body cell, equal to its column's header text (the same rule the templates follow)."""
+    text = str(html)
+    thead = re.search(r"<thead>.*?</thead>", text, re.S)
+    heads = [
+        " ".join(re.sub(r"<[^>]+>", "", h).split())
+        for h in re.findall(r"<th\b[^>]*>(.*?)</th>", thead.group(0) if thead else "", re.S)
+    ]
+
+    def row(m: re.Match) -> str:
+        cells = iter(heads + [""] * 64)
+        return re.sub(
+            r"<td\b",
+            lambda _: f'<td data-label="{escape(next(cells))}"',
+            m.group(0),
+        )
+
+    head, sep, body = text.partition("</thead>")
+    body = re.sub(r"<tr>.*?</tr>", row, body, flags=re.S)
+    return Markup((head + sep + body).replace("<table>", '<table class="stack">', 1))
+
+
 def _host(url: str) -> str:
     host = urlparse(url).hostname or url
     return host.removeprefix("www.")
@@ -314,6 +337,7 @@ def create_app(
     templates.env.globals["static_edition"] = static_edition
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
+    templates.env.filters["stack_table"] = _stack_table
     templates.env.filters["when"] = _when
     templates.env.filters["http_url"] = safe_url
     templates.env.filters["host"] = _host

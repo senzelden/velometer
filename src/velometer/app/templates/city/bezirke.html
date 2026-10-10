@@ -62,7 +62,7 @@
 <script type="module" src="{{ u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
-<div class="prose">{{ bezirke.change_table | md }}</div>
+<div class="scroll">{{ bezirke.change_table | md | stack_table }}</div>
 <p class="meta">Mapped km per Bezirk and category, from the change page <code>docs/review</code>; "geometry" is the signed length change of a same-tier way-side.</p>
 {% endif %}
 {% if not bezirke.change_map and not bezirke.change_table %}

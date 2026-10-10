@@ -604,6 +604,9 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   table.stack td.num { text-align: right; white-space: normal; }
   table.stack td.num::before { float: left; margin-right: 0.75rem; text-align: left; }
   table.stack td.date { white-space: normal; }
+  /* Figures: "Ours" (value and what it counts) lines up with "Theirs" and "Gap" */
+  table.diffs td:nth-child(4) { text-align: right; }
+  table.diffs td:nth-child(4)::before { float: left; margin-right: 0.75rem; text-align: left; }
   table.stack th[scope="row"] { font-weight: 600; color: var(--ink); padding-bottom: 0.3rem; }
   table.stack th[scope="row"]::before, table.stack td[colspan]::before { display: none; }
   table.stack td:empty, table.stack td.bar-col { display: none; }
@@ -614,5 +617,10 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   table.stack tr.note-row td { padding-top: 0; }
   table.stack td *, table.stack th[scope="row"] * { overflow-wrap: anywhere; }
   table.stack td code { white-space: normal; }
-  .compare-js .compare-table.stack thead th { position: static; }
+  /* the compare table's header holds the sort buttons: with JS it stays on screen as a wrapped
+     row of buttons (a sort bar), so keyboard and sighted users can reach and see them */
+  .compare-js .compare-table.stack thead { display: block; position: static; width: auto; height: auto; overflow: visible; clip: auto; margin: 0 0 0.6rem; }
+  .compare-js .compare-table.stack thead tr { display: flex; flex-wrap: wrap; width: auto; height: auto; overflow: visible; gap: 0.4rem; border: 0; padding: 0; margin: 0; background: none; }
+  .compare-js .compare-table.stack thead th { position: static; display: block; width: auto; height: auto; overflow: visible; padding: 0; background: none; }
+  .compare-js .compare-table.stack button.sort { padding: 0.35rem 0.7rem; border: 1px solid var(--control-border); border-radius: 6px; background: var(--surface); }
 }
