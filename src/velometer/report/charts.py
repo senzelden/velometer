@@ -17,8 +17,11 @@ from velometer.report.data import HEADLINE_UNIT, ReportData
 ATTRIBUTION = (
     "Map data © OpenStreetMap contributors, ODbL 1.0 · OSM mapped km, not built km (ADR 0006)"
 )
-# The M3 chart's tier colours (dataviz categorical slots 1-5), A-E.
-TIER_COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]
+# Tier colours A-E, light theme; the light CSS tier tokens equal these. Chosen by rule (M10
+# decision 3, tested in tests/test_colour.py): each >= 3:1 on the light backgrounds, every pair
+# >= CIEDE2000 20 and adjacent tiers >= 25, in normal vision and simulated deuteranopia and
+# protanopia. Hue families of the M3 palette: blue, orange, green, yellow-brown, pink-purple.
+TIER_COLOURS = ["#2a78d6", "#9f3d0c", "#22a397", "#c68501", "#8d415b"]
 TIER_LABEL = {
     "A": "A separated track",
     "B": "B shared foot/cycle path",
@@ -26,8 +29,13 @@ TIER_LABEL = {
     "D": "D painted lane",
     "E": "E cycle street / bus lane",
 }
-OUTLINE = "#9a9994"  # the boundary outline on the tier maps (PNG and interactive)
-CITY_COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#7a5bd1", "#52514e"]
+OUTLINE = "#93928d"  # the tier maps' boundary outline (PNG and interactive), >= 3:1 on light
+# Series colours, light theme: each >= 3:1 on the light backgrounds, every pair >= CIEDE2000 20
+# in normal vision (tests/test_colour.py).
+SERIES_COLOURS = [
+    "#2a78d6", "#eb6834", "#35a186", "#bf8500", "#d96d98", "#8753cd", "#52514e", "#008300",
+]  # fmt: skip
+CITY_COLOURS = SERIES_COLOURS[:7]  # the Altair report charts
 GREY = "#c9c8c3"  # the context ("other") cities
 PICK_COLOUR = "#7a5bd1"  # a context city picked in the headline chart's select
 HIGHLIGHT, COMPARISON, OTHER = "highlight", "comparison", "other"

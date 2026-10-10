@@ -46,7 +46,7 @@ from velometer.pipeline.dedupe import share_within  # noqa: E402
 from velometer.pipeline.geometry import Projector  # noqa: E402
 from velometer.pipeline.measure import clipped_length_km, remainder_polygon  # noqa: E402
 from velometer.pipeline.types import Classified, WayRecord  # noqa: E402
-from velometer.report.charts import INK_2, TIER_COLOURS  # noqa: E402
+from velometer.report.charts import INK_2  # noqa: E402
 from velometer.report.maps import (  # noqa: E402
     DPI,
     ODBL,
@@ -64,12 +64,13 @@ GEOMETRY_MIN_KM = 0.001  # a same-tier side whose length changed by more than 1 
 SPLIT_SLACK_SHARE = 0.2
 SPLIT_SLACK_KM = 0.015
 TOP_N = 20
-# four map colours from the chart palette (geometry changes are listed, not drawn)
+# four map colours (geometry changes are listed, not drawn), fixed at their M9 values and
+# independent of the tier palette (M10 decision 3), so the change maps need no re-render
 CATEGORY_COLOURS = {
-    "gained": TIER_COLOURS[2],
-    "lost": TIER_COLOURS[1],
-    "retiered": TIER_COLOURS[3],
-    "redrawn": TIER_COLOURS[0],
+    "gained": "#1baf7a",
+    "lost": "#eb6834",
+    "retiered": "#eda100",
+    "redrawn": "#2a78d6",
 }
 BEZIRK_OUTLINE = "#d6d5d0"  # light grey
 MAPPED_KM_LINE = (
