@@ -94,7 +94,7 @@ not the published figures. km are OSM mapped km per side.</p>
 <table class="stack">
 <thead><tr>
   <th>City</th>
-  {% for p in preset_label %}<th class="num" title="{{ preset_unit[p] }}">{{ preset_label[p] }}</th>{% endfor %}
+  {% for p in preset_label %}<th class="num" title="{{ preset_unit[p] }}"><a href="{{ u('/sources') }}#{{ preset_anchor[p] }}">{{ preset_label[p] }}</a></th>{% endfor %}
   <th class="num">A+B km</th>
   <th class="num">Flagged years (LAU)</th>
 </tr></thead>
@@ -126,7 +126,7 @@ not the published figures. km are OSM mapped km per side.</p>
 which cities a source covers; each source has its own measure and scope.</p>
 <div class="scroll">
 <table class="ranks stack">
-<thead><tr><th>City</th>{% for col in rankings.columns.values() %}<th class="num">{{ col }}</th>{% endfor %}</tr></thead>
+<thead><tr><th>City</th>{% for sid, col in rankings.columns.items() %}<th class="num"><a href="{{ u('/sources') }}#{{ rankings.anchors[sid] }}">{{ col }}</a></th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in rankings.rows %}
 <tr>

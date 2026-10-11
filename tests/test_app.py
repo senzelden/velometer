@@ -626,10 +626,10 @@ def test_index_preset_columns_are_labelled_ours(client, fixture_db):
     headers = _headers(client.get("/").text)
     for preset in ("ecf_qecio", "clean_cities_2025"):
         label = data.preset_labels()[preset]
-        assert label.startswith("Ours") and label in headers
-    # a publisher's name heads only our values ("Ours: ...") or its own published ranking
+        assert label.endswith("our OSM data") and label in headers
+    # a publisher's name heads only our values ("<method>, our OSM data") or its own ranking
     named = [h for h in headers if "QECIO" in h or "Clean Cities" in h]
-    assert all(h.startswith("Ours") or "(published)" in h for h in named)
+    assert all("our OSM data" in h or "(published)" in h for h in named)
     assert any("(published)" in h for h in named)  # the rankings-by-source table
     for path in ["/", "/city/berlin"]:
         for h in _headers(client.get(path).text):
@@ -647,10 +647,12 @@ def test_index_lede_names_the_headline_unit_and_own_denominators(client):
 def test_preset_labels_follow_report_yaml(setup):
     db_path, cfg, maps, docs = setup
     path = cfg / "report.yaml"
-    path.write_text(path.read_text().replace("Ours: QECIO method", "Ours: QECIO test label"))
+    path.write_text(
+        path.read_text().replace("QECIO method, our OSM data", "QECIO test label, our OSM data")
+    )
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        assert "Ours: QECIO test label" in _headers(c.get("/").text)
-        assert "Ours: QECIO test label" in _text(c.get("/city/berlin/time").text)
+        assert "QECIO test label, our OSM data" in _headers(c.get("/").text)
+        assert "QECIO test label, our OSM data" in _text(c.get("/city/berlin/time").text)
 
 
 def test_app_follows_report_classifier_of_the_config(setup):

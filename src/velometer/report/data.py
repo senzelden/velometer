@@ -186,13 +186,24 @@ class ReportData:
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
 
     def preset_labels(self) -> dict[str, str]:
-        """Each preset's label, from its `kind: preset` ranking in report.yaml ("Ours: ..."):
-        these are our values on a publisher's method, never the published figure. A preset
-        without a ranking falls back to "Ours: <id>"."""
+        """Each preset's label, from its `kind: preset` ranking in report.yaml ("velometer
+        headline", "<method>, our OSM data"): these are our values on a publisher's method, never
+        the published figure. A preset without a ranking falls back to "<id>, our OSM data"."""
         labels = {
             r.preset: r.label for r in self.report_config.rankings if isinstance(r, PresetRanking)
         }
-        return {p.id: labels.get(p.id, f"Ours: {p.id}") for p in self.selector.presets.presets}
+        return {
+            p.id: labels.get(p.id, f"{p.id}, our OSM data") for p in self.selector.presets.presets
+        }
+
+    def preset_sources(self) -> dict[str, str | None]:
+        """Each preset's figure-source id (what it recomputes on our data), None for our own."""
+        sources = {
+            r.preset: r.recomputes
+            for r in self.report_config.rankings
+            if isinstance(r, PresetRanking)
+        }
+        return {p.id: sources.get(p.id) for p in self.selector.presets.presets}
 
     def preset_units(self) -> dict[str, str]:
         """What each preset's value measures: its tiers' km per 100 km of its own denominator."""

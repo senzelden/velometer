@@ -106,7 +106,7 @@ def test_rankings_missing_city_has_a_null_rank_not_a_zero(fixture_data):
     for r in rows:
         by_source.setdefault(r["source"], {})[r["city"]] = r["rank"]
     # paris has no current run (no preset value) and lacks cycle_lanes_km: a gap, not a zero
-    assert by_source["Ours: headline (n=1)"] == {"Berlin": 1, "Paris": None}
+    assert by_source["velometer headline (n=1)"] == {"Berlin": 1, "Paris": None}
     assert by_source["QECIO v2.10 (published) (n=1)"] == {"Berlin": 1, "Paris": None}
     assert by_source["Clean Cities 2025 (published) (n=2)"] == {"Berlin": 1, "Paris": 2}
 
@@ -321,7 +321,7 @@ def test_qecio_column_marks_cities_whose_nuts3_is_not_the_city(fixture_db):
     assert by[("QECIO v2.10 (published)", "Berlin")] == "Berlin"
     # only the NUTS3 column carries the marker
     assert by[("Clean Cities 2025 (published)", "Paris")] == "Paris"
-    assert by[("Ours: headline", "Paris")] == "Paris"
+    assert by[("velometer headline", "Paris")] == "Paris"
 
 
 def test_qecio_marker_follows_the_flag(fixture_db):

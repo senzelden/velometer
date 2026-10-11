@@ -43,7 +43,8 @@ from velometer.app.narrative import render_explainer, render_narrative, safe_url
 from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
 from velometer.app.series import series_payload
-from velometer.config import ConfigError, load_differences
+from velometer.app.sources import source_anchor
+from velometer.config import ConfigError, PresetRanking, load_differences
 from velometer.content.loader import (
     load_document,
     load_explainer,
@@ -128,7 +129,7 @@ COUNTERS_TEXT = "counters.yaml"  # content/: what the counters record, under the
 UNITS = {"pct": "%"}
 CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
-OURS_PREFIX = re.compile(r"^\s*ours:\s*", re.I)
+OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data\s*$", re.I)
 # A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
 # is the HTML "page not found" page (the static edition's 404.html).
 NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/")
@@ -355,8 +356,8 @@ def create_app(
         return resp
 
     templates.TemplateResponse = respond  # type: ignore[method-assign]
-    # a preset's report.yaml label starts "Ours: "; a Figures row's "Ours" column says it already
-    templates.env.filters["strip_ours"] = lambda v: OURS_PREFIX.sub("", v or "")
+    # a preset label ends ", our OSM data"; a Figures row's "Ours" column says it already
+    templates.env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
 
     cache = PageCache()
 
@@ -490,8 +491,13 @@ def create_app(
         names = {c.id: c.name for c in data.cities()}
         first = next(iter(columns))
         order = sorted(cells, key=lambda i: (cells[i].get(first, {}).get("rank") or 10**6, i))
+        anchors = {
+            r.id: source_anchor(r.recomputes if isinstance(r, PresetRanking) else r.source)
+            for r in data.report_config.rankings
+        }
         return {
             "columns": columns,
+            "anchors": anchors,
             "rows": [{"id": i, "name": names.get(i, i), "cells": cells[i]} for i in order],
             "notes": [
                 f"{r.label}: {n}"
@@ -534,6 +540,7 @@ def create_app(
                 "countries": len({c.country_iso2 for c in data.cities()}),
                 "years": data.years,
                 "preset_label": data.preset_labels(),
+                "preset_anchor": {p: source_anchor(s) for p, s in data.preset_sources().items()},
                 "preset_unit": data.preset_units(),
                 "headline_unit": HEADLINE_UNIT,
                 "rankings": rankings_table(data),

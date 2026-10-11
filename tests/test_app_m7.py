@@ -519,7 +519,7 @@ def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup
     assert "route length (Streckenlänge)" in table
     row = next(r for r in table.split("<tr>") if "vorrangnetz_target_km" in r)
     assert "reference date 2025-01-01" in row and 'href="https://example.invalid/fixture"' in row
-    assert "Ours:" not in _text(table)  # preset labels read "Ours: ..."; the column says it
+    assert "Ours:" not in _text(table)  # the old "Ours: ..." preset label prefix is gone
 
 
 def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # noqa: F811

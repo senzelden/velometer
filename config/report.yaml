@@ -7,9 +7,11 @@ comparison_set: [paris, copenhagen, vienna, amsterdam]
 # `report change` default window (M6 decision 17): a 1 January snapshot -> the latest current run
 change_window: {from: "2023-01-01", to: current}
 rankings:
-  - {id: ours_headline, label: "Ours: headline", kind: preset, preset: ours_headline}
-  - {id: ours_ecf_qecio, label: "Ours: QECIO method", kind: preset, preset: ecf_qecio}
-  - {id: ours_clean_cities, label: "Ours: Clean Cities method", kind: preset, preset: clean_cities_2025}
+  - {id: ours_headline, label: "velometer headline", kind: preset, preset: ours_headline}
+  - {id: ours_ecf_qecio, label: "QECIO method, our OSM data", kind: preset, preset: ecf_qecio,
+     recomputes: qecio_v2_10}
+  - {id: ours_clean_cities, label: "Clean Cities method, our OSM data", kind: preset,
+     preset: clean_cities_2025, recomputes: clean_cities_2025}
   - id: published_clean_cities
     label: "Clean Cities 2025 (published)"
     kind: external

@@ -418,6 +418,8 @@ class PresetRanking(_Strict):
     id: str
     label: str
     preset: str
+    # the figure-source id this preset recomputes on our data (None: our own headline)
+    recomputes: str | None = None
 
 
 class ExternalRanking(_Strict):
