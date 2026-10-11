@@ -302,3 +302,62 @@ def test_multi_city_fields_have_a_snapshot_range_and_no_run(fixture_db):
     assert f.run_id is None and f.osm_timestamp is None
     assert f.snapshot_note and f.snapshot_note.startswith("OSM snapshot")
     assert "run " not in cite_text(f)
+
+
+class _StubData:
+    """csv_rows(city) from {city: (timestamp, classifier)}; a city missing from it has no run."""
+
+    def __init__(self, runs):
+        self.runs = runs
+
+    def csv_rows(self, city_id):
+        if city_id not in self.runs:
+            return []
+        ts, clf = self.runs[city_id]
+        return [
+            {"boundary_kind": "lau", "label": "current", "osm_timestamp": ts,
+             "classifier_version": clf, "run_id": 1},
+        ]  # fmt: skip
+
+
+def test_multi_city_snapshot_range_singular_and_natural_classifier_order():
+    from velometer.app.cite import fields_for_cities
+
+    data = _StubData(
+        {
+            "a": ("2026-10-05T01:00:00Z", "v10"),
+            "b": ("2026-10-03T01:00:00Z", "v9"),
+            "c": ("2026-10-04T01:00:00Z", "v9"),
+        }
+    )
+    f = fields_for_cities(data, ["a", "b", "c"], "t", "/compare")
+    assert f.snapshot_note == "OSM snapshots of 2026-10-03 to 2026-10-05"
+    assert f.classifier == "v9/v10"
+    same = fields_for_cities(data, ["b", "b"], "t", "/compare")
+    assert same.snapshot_note == "OSM snapshot of 2026-10-03"
+    assert same.classifier == "v9"
+
+
+def test_missing_runs_give_none_never_an_error(fixture_db):
+    from velometer.app.cite import fields_for_cities, fields_for_city
+
+    data = _StubData({"a": ("2026-10-05T01:00:00Z", "v4")})
+    assert fields_for_city(data, "nowhere", "t", "/x") is None
+    assert fields_for_city(data, "a", "t", "/x", kind="fua") is None
+    assert fields_for_cities(data, ["nowhere"], "t", "/compare") is None
+    skipped = fields_for_cities(data, ["nowhere", "a"], "t", "/compare")
+    assert skipped.snapshot_note == "OSM snapshot of 2026-10-05"
+    assert fields_for_city(fixture_db[3], "no_such_city", "t", "/x") is None
+
+
+def test_commit_is_resolved_once_per_process(monkeypatch):
+    from velometer.app import cite
+
+    calls = []
+    cite._commit.cache_clear()
+    monkeypatch.setattr(cite, "git_commit", lambda: calls.append(1) or "0123456789")
+    data = _StubData({"a": ("2026-10-05T01:00:00Z", "v4")})
+    for _ in range(3):
+        cite.fields_for_city(data, "a", "t", "/x")
+    cite._commit.cache_clear()
+    assert len(calls) == 1

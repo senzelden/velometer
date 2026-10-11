@@ -163,5 +163,33 @@
    "note": "OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
    "version": "abc1234"
   }
+ },
+ {
+  "name": "hostile query in the url, backslash dollar tilde caret in the title, specials in the note",
+  "fields": {
+   "title": "A\\B $5 ~ x^2",
+   "path": "/city/berlin",
+   "osm_timestamp": "2026-10-03T21:00:00Z",
+   "snapshot_note": null,
+   "classifier": "v4_rc#1",
+   "run_id": "12",
+   "commit": "abc1234",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-10-11",
+  "url": "https://x.org/city/berlin?x=}\\input{/etc/passwd}{ a%20b#h",
+  "text": "velometer (2026). A\\B $5 ~ x^2 [Data set]. OSM snapshot 2026-10-03T21:00:00Z; classifier v4_rc#1; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. https://x.org/city/berlin?x=}\\input{/etc/passwd}{ a%20b#h (accessed 2026-10-11).",
+  "bibtex": "@misc{velometer_a_b_5_x_2_20261011,\n  author = {{velometer}},\n  title = {A\\textbackslash{}B \\$5 \\textasciitilde{} x\\textasciicircum{}2},\n  year = {2026},\n  howpublished = {\\url{https://x.org/city/berlin?x=%7D%5Cinput%7B/etc/passwd%7D%7B%20a%20b#h}},\n  note = {OSM snapshot 2026-10-03T21:00:00Z; classifier v4\\_rc\\#1; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-10-11}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_a_b_5_x_2_20261011",
+   "title": "A\\B $5 ~ x^2",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "accessed": {"date-parts": [[2026, 10, 11]]},
+   "URL": "https://x.org/city/berlin?x=}\\input{/etc/passwd}{ a%20b#h",
+   "note": "OSM snapshot 2026-10-03T21:00:00Z; classifier v4_rc#1; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
  }
 ]

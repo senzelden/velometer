@@ -7,6 +7,7 @@ Both are tested against `tests/cite_cases.json`.
 
 import re
 from dataclasses import dataclass
+from functools import cache
 
 from velometer.reconcile import short_commit
 from velometer.run import git_commit
@@ -27,16 +28,33 @@ class CiteFields:
     attribution: str = ATTRIBUTION
 
 
-def _current_lau_row(data, city_id: str, kind: str):
+@cache
+def _commit() -> str:
+    """The short commit, resolved once per process (git is not shelled out to per figure)."""
+    return short_commit(git_commit())
+
+
+def _natural(s: str) -> list:
+    """Sort key where digit runs compare as numbers: v9 before v10."""
+    return [int(p) if p.isdigit() else p for p in re.split(r"(\d+)", s)]
+
+
+def _current_row_of_kind(data, city_id: str, kind: str):
+    """The city's `current` row for a boundary kind (else its last), None without a run."""
     rows = [r for r in data.csv_rows(city_id) if r["boundary_kind"] == kind]
     if not rows:
-        raise ValueError(f"no {kind} run for city {city_id!r}")
+        return None
     current = [r for r in rows if r["label"] == "current"]
     return (current or rows)[-1]
 
 
-def fields_for_city(data, city_id: str, title: str, path: str, kind: str = "lau") -> CiteFields:
-    row = _current_lau_row(data, city_id, kind)
+def fields_for_city(
+    data, city_id: str, title: str, path: str, kind: str = "lau"
+) -> CiteFields | None:
+    """The citation fields of a city's run, or None when it has none for `kind`."""
+    row = _current_row_of_kind(data, city_id, kind)
+    if row is None:
+        return None
     return CiteFields(
         title=title,
         path=path,
@@ -44,12 +62,15 @@ def fields_for_city(data, city_id: str, title: str, path: str, kind: str = "lau"
         snapshot_note=None,
         classifier=row["classifier_version"],
         run_id=str(row["run_id"]),
-        commit=short_commit(git_commit()),
+        commit=_commit(),
     )
 
 
-def fields_for_cities(data, city_ids: list[str], title: str, path: str) -> CiteFields:
-    rows = [_current_lau_row(data, c, "lau") for c in city_ids]
+def fields_for_cities(data, city_ids: list[str], title: str, path: str) -> CiteFields | None:
+    """Fields for several cities; runless cities are skipped, None when none has a run."""
+    rows = [r for c in city_ids if (r := _current_row_of_kind(data, c, "lau")) is not None]
+    if not rows:
+        return None
     days = sorted(r["osm_timestamp"][:10] for r in rows)
     first, last = days[0], days[-1]
     note = f"OSM snapshot of {first}" if first == last else f"OSM snapshots of {first} to {last}"
@@ -58,9 +79,9 @@ def fields_for_cities(data, city_ids: list[str], title: str, path: str) -> CiteF
         path=path,
         osm_timestamp=None,
         snapshot_note=note,
-        classifier="/".join(sorted({r["classifier_version"] for r in rows})),
+        classifier="/".join(sorted({r["classifier_version"] for r in rows}, key=_natural)),
         run_id=None,
-        commit=short_commit(git_commit()),
+        commit=_commit(),
     )
 
 

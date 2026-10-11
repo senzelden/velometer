@@ -44,7 +44,17 @@ function key(f, accessed) {
   return `velometer_${slug}_${(accessed || snapshotDay(f)).replaceAll("-", "")}`;
 }
 
-const bibEscape = (s) => s.replace(/[{}%&#_]/g, (c) => `\\${c}`);
+const BIB_SPECIAL = {
+  "\\": "\\textbackslash{}",
+  "~": "\\textasciitilde{}",
+  "^": "\\textasciicircum{}",
+};
+// one pass, so the braces of \textbackslash{} are not escaped again
+const bibEscape = (s) => s.replace(/[\\~^{}%&#_$]/g, (c) => BIB_SPECIAL[c] ?? `\\${c}`);
+
+// A page URL goes into \url{...}: a brace or backslash would close the group and let a crafted
+// link inject LaTeX, so those and spaces are percent-encoded; `%` and `#` stay (url package).
+const bibUrl = (u) => u.replace(/[{}\\ ]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0"));
 
 export function citeBibtex(f, accessed = null, url = null) {
   const note =
@@ -54,7 +64,7 @@ export function citeBibtex(f, accessed = null, url = null) {
     `title = {${bibEscape(f.title)}}`,
     `year = {${year(f)}}`,
   ];
-  if (url) fields.push(`howpublished = {\\url{${url}}}`);
+  if (url) fields.push(`howpublished = {\\url{${bibUrl(url)}}}`);
   fields.push(`note = {${bibEscape(note)}}`);
   return `@misc{${key(f, accessed)},\n  ${fields.join(",\n  ")}\n}`;
 }
