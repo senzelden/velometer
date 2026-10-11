@@ -321,6 +321,6 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
     (r,) = res
     assert r["kind"] == "keyboard" and r["errors"] == [], r["steps"]
     steps = " ".join(r["steps"])
-    for needle in ("skip link", "phone menu", "city tabs", "compare: Escape", "sort button"):
+    for needle in ("skip link", "phone menu", "city tabs", "compare: Escape", "sort button", "chart view"):
         assert needle in steps, needle
     assert code == 0

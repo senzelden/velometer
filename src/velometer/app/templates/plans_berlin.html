@@ -38,7 +38,8 @@
 <section class="plan-item" id="item-{{ i.item.id }}">
 <h2>{{ i.item.label }}</h2>
 <p class="meta">Target: {{ i.target }}</p>
-<div class="chart plan-chart" data-plan-item="{{ i.item.id }}" role="group" aria-label="{{ i.item.label }}: target, reported and completed km by year"{% if i.yearly %} aria-describedby="plan-years-{{ i.item.id }}"{% endif %}></div>
+{% if i.yearly %}<div class="chart plan-chart" data-plan-item="{{ i.item.id }}" role="group" aria-label="{{ i.item.label }}: target, reported and completed km by year" aria-describedby="plan-years-{{ i.item.id }}"></div>
+{% else %}<p class="note">No yearly figures for this item, so there is no chart.</p>{% endif %}
 {% if i.network %}
 <p class="meta series-note">Completed projects: km of projects marked completed in the measures dataset{% if projects_org.href %} (fed from the <a href="{{ u(projects_org.href) }}">{{ projects_org.name }}</a> project database){% endif %}, by the year their works ended, per part on this network.
 {%- if not projects_present %} <span class="note">The measures dataset is not present (<code>velometer plans fetch berlin</code>); no completed-projects series.</span>{% endif %}</p>

@@ -620,7 +620,9 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   table.diffs td:nth-child(4)::before { float: left; margin-right: 0.75rem; text-align: left; }
   table.stack th[scope="row"] { font-weight: 600; color: var(--ink); padding-bottom: 0.3rem; }
   table.stack th[scope="row"]::before, table.stack td[colspan]::before { display: none; }
-  table.stack td:empty, table.stack td.bar-col { display: none; }
+  table.stack td.bar-col { display: none; }
+  /* a cell with no value keeps its label and says so: a dash on screen, "no value" to a reader */
+  table.stack td:empty:not(.bar-col)::after { content: "–" / "no value"; }
   table.stack tr.flagged { box-shadow: inset 3px 0 0 var(--flag); }
   table.stack tr.flagged td:first-child { box-shadow: none; }
   table.stack tr.note-row { margin-top: -0.6rem; border-top: 0; border-radius: 0 0 6px 6px; }

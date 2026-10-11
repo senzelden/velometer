@@ -41,6 +41,15 @@ globalThis.document = {
   createElement: (tag) => new Node(tag),
   createTextNode: (t) => Object.assign(new Node("#text"), { _text: t }),
 };
+// the page's colour tokens, as a stylesheet would supply them: every chart here draws from them
+const TOKENS = {
+  ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`--series-${i + 1}`, `#10${i}0${i}0`])),
+  ...Object.fromEntries([..."abcde"].map((t, i) => [`--tier-${t}`, `#a${i}b${i}c0`])),
+  "--axis": "#777777", "--ctx": "#999999", "--halo": "#ffffff",
+};
+globalThis.getComputedStyle = () => ({ getPropertyValue: (name) => TOKENS[name] ?? "" });
+const consoleErrors = [];
+console.error = (...a) => consoleErrors.push(a.join(" "));
 const { renderLines, renderTiers, renderSparkline, renderSmallMultiples } = await import(
   "../chart.js"
 );
@@ -155,4 +164,24 @@ test("renderTiers keys every tier by name beside its colour, in the order they s
   assert.ok(legend, "a visible key under the chart");
   const text = (n) => (n._text ?? "") + (n.children ?? []).map(text).join("");
   assert.deepEqual(legend.children.map(text), Object.values(names).reverse());
+});
+
+test("a series without a colour is drawn in its slot's token, a tier in its tier's token", () => {
+  const el = new Node("div");
+  renderLines(el, { labels, series: [
+    { id: "a", name: "A", slot: 0, points: [1, 2, 3].map((value) => ({ value })) },
+    { id: "b", name: "B", slot: 1, points: [3, 2, 1].map((value) => ({ value })) },
+  ] }, { height: 200 });
+  const strokes = el.find("path").filter((p) => p.attrs.class === "line").map((p) => p.attrs.stroke);
+  assert.deepEqual(strokes, [TOKENS["--series-1"], TOKENS["--series-2"]]);
+  const t = new Node("div");
+  renderTiers(t, { labels, layers: [
+    { key: "A", name: "A", values: [1, 2, 3] }, { key: "B", name: "B", values: [2, 2, 2] },
+  ] });
+  const fills = t.find("path").map((p) => p.attrs.fill);
+  assert.ok(fills.includes(TOKENS["--tier-a"]) && fills.includes(TOKENS["--tier-b"]), fills);
+});
+
+test("no chart drew from the missing-token fallback", () => {
+  assert.deepEqual(consoleErrors, []);
 });

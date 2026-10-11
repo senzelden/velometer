@@ -82,3 +82,22 @@ test("a releaser runs every release once and forgets them", () => {
   r.run();
   assert.equal(n, 2);
 });
+
+test("a theme change redraws a connected chart, and a disconnected one lets go instead", () => {
+  const listeners = new Set();
+  globalThis.matchMedia = () => ({
+    addEventListener: (_, f) => listeners.add(f),
+    removeEventListener: (_, f) => listeners.delete(f),
+  });
+  let draws = 0;
+  const el = { clientWidth: 100, isConnected: true };
+  mount(el, () => draws++);
+  assert.equal(draws, 1);
+  [...listeners].forEach((f) => f()); // the OS switches scheme
+  assert.equal(draws, 2);
+  el.isConnected = false; // its container was replaced
+  [...listeners].forEach((f) => f());
+  assert.equal(draws, 2);
+  assert.equal(listeners.size, 0);
+  delete globalThis.matchMedia;
+});

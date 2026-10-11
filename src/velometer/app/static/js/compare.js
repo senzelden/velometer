@@ -255,6 +255,18 @@ function drawChart(model) {
   }
 }
 
+// "Sort by" is on screen only where the header is a bar of buttons (a phone), so the table is
+// described by it only there; it follows the layout when the window crosses the breakpoint
+const PHONE = matchMedia("(max-width: 600px)");
+function describeSort(table) {
+  if (PHONE.matches) table.setAttribute("aria-describedby", table.dataset.sortCaption);
+  else table.removeAttribute("aria-describedby");
+}
+PHONE.addEventListener("change", () => {
+  const table = out.table.querySelector("table");
+  if (table) describeSort(table);
+});
+
 function drawTable(model) {
   const marked = new Map(model.marks.map((m) => [m.label, m.text]));
   const axis = model.counter
@@ -262,7 +274,7 @@ function drawTable(model) {
     : displayLabels(model.labels, model.series.map((s) => D.series[`${s.id}/${state.b}`] ?? []));
   const rows = sortRows(model.series, model.labels, sort);
   const table = el("table", { class: "compare-table stack" });
-  table.append(el("caption", { class: "sr-only" }, `${cfg.metrics[state.m].label} per city and snapshot`));
+  table.append(el("caption", { class: "sr-only", id: "compare-caption" }, `${cfg.metrics[state.m].label} per city and snapshot`));
   const head = el("tr");
   const th = (key, text, cls) => {
     const h = el("th", { scope: "col", ...(cls ? { class: cls } : {}) });
@@ -307,7 +319,8 @@ function drawTable(model) {
   labelCells(table);
   // on a phone the header is a bar of sort buttons: the caption says what the bar is for
   const caption = el("p", { class: "sort-caption", id: "compare-sort-caption" }, "Sort by");
-  table.setAttribute("aria-describedby", caption.id);
+  table.dataset.sortCaption = caption.id;
+  describeSort(table);
   out.table.replaceChildren(caption, table);
 }
 

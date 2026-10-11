@@ -910,7 +910,7 @@ def test_the_compare_sort_bar_has_a_visible_caption_tied_to_the_table():
     body = js[js.index("function drawTable") :]
     body = body[: body.index("\nfunction ", 10)]
     assert '"Sort by"' in body and 'class: "sort-caption"' in body
-    assert 'table.setAttribute("aria-describedby", caption.id)' in body
+    assert "describeSort(table)" in body  # described by it only where it is on screen
     assert "out.table.replaceChildren(caption, table)" in body  # the caption sits with the table
     rules = _css_rules(_stylesheet())
     plain = {k: v for s, d in rules if s == [".sort-caption"] for k, v in d.items()}
@@ -938,3 +938,56 @@ def test_sorting_a_compare_column_puts_focus_back_on_its_button():
     handler = body[body.index('addEventListener("click"') :]
     assert handler.index("render()") < handler.index("button.sort")
     assert ".focus()" in handler[handler.index("button.sort") :][:200]
+
+
+def test_the_sort_caption_describes_the_table_only_where_it_is_visible():
+    js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
+    fn = js[js.index("function describeSort") :]
+    fn = fn[: fn.index("\n}\n")]
+    # set under the phone query that shows the caption, removed otherwise, and kept in step
+    assert 'matchMedia("(max-width: 600px)")' in js and "PHONE.matches" in fn
+    assert 'setAttribute("aria-describedby"' in fn and 'removeAttribute("aria-describedby")' in fn
+    assert 'PHONE.addEventListener("change"' in js
+    # the query is the one that shows the caption (the stack breakpoint in the stylesheet)
+    css = _stylesheet()
+    assert re.search(r"@media \(max-width: 600px\) \{[^@]*?\.compare-js \.sort-caption", css, re.S)
+
+
+def test_the_rebuilt_compare_table_keeps_the_caption_the_chart_points_at():
+    # the chart is described by #compare-caption (compare.html); drawTable replaces the server
+    # table, so the JS caption must carry the same id or the chart's description dangles
+    html = (STATIC.parent / "templates" / "compare.html").read_text()
+    m = re.search(r'data-compare-chart aria-describedby="([^"]+)"', html)
+    assert m
+    js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
+    body = js[js.index("function drawTable") :]
+    body = body[: body.index("\nfunction ", 10)]
+    assert f'id: "{m.group(1)}"' in body
+
+
+def test_a_plan_item_without_yearly_rows_gets_no_chart_without_a_table(client, monkeypatch):  # noqa: F811
+    from velometer.app import plans_pages
+
+    real = plans_pages.berlin_context
+
+    def no_yearly_for_the_first_item(*a, **k):
+        ctx = real(*a, **k)
+        ctx["items"][0]["yearly"] = []
+        return ctx
+
+    monkeypatch.setattr(plans_pages, "berlin_context", no_yearly_for_the_first_item)
+    html = client.get("/plans/berlin").text
+    first, second, *_ = re.finditer(r'<section class="plan-item" id="item-([^"]+)"', html)
+    bare = html[first.end() : second.start()]
+    assert "data-plan-item" not in bare and "plan-years" not in bare  # no chart, no table
+    assert "no chart" in bare  # and it says so
+    assert "data-plan-item" in html[second.end() :]  # the others keep theirs
+
+
+def test_an_empty_card_cell_keeps_its_label_and_says_there_is_no_value():
+    rules = _css_rules(_stylesheet())
+    hidden = [s for s, d in rules if d.get("display") == "none" for s in s if "td" in s]
+    assert not any("empty" in s for s in hidden)  # an empty cell is not hidden with its label
+    marked = {k: v for s, d in rules if any("td:empty" in x and "::after" in x for x in s)
+              for k, v in d.items()}  # fmt: skip
+    assert "no value" in marked.get("content", "")  # a visible dash with a spoken alternative

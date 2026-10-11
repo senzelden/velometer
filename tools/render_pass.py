@@ -534,6 +534,19 @@ FOCUS_JS = r"""
 """
 
 
+# the ids an aria-describedby/labelledby/controls names that no element has
+IDREFS_JS = r"""
+(() => {
+  const missing = new Set();
+  for (const a of ['aria-describedby', 'aria-labelledby', 'aria-controls'])
+    for (const e of document.querySelectorAll('[' + a + ']'))
+      for (const id of e.getAttribute(a).split(/\s+/).filter(Boolean))
+        if (!document.getElementById(id)) missing.add(a + ' -> #' + id);
+  return [...missing];
+})()
+"""
+
+
 def where(t: Tab) -> str:
     f = t.js(FOCUS_JS)
     return "nothing focused" if not f else f"{f['tag']}.{f['cls']} '{f['text']}'"
@@ -783,6 +796,19 @@ def _compare(devtools, origin, base, theme, st: Steps) -> None:
         back = t.js("document.activeElement === window.__opener")
         st.check("compare: Escape closes it and focus is back on the opener",
                  None if closed and back else f"closed={closed}, on {where(t)}")  # fmt: skip
+        # back to the chart after the table was rebuilt: its description must still resolve
+        if not st.check("compare: Tab reaches the lines view tab",
+                        tab_to(t, ".view-tabs a[data-view=lines]")):  # fmt: skip
+            return
+        press(t, "Enter", wait=0.8)
+        shown = t.js("document.querySelector('[data-compare-chart]').getClientRects().length > 0")
+        st.check("compare: Enter switches back to the chart view",
+                 None if shown else "the chart is not on screen")  # fmt: skip
+        dangling = t.js(IDREFS_JS)
+        st.check("compare: every aria-describedby/labelledby on the page resolves in chart view",
+                 f"dangling: {', '.join(dangling)}" if dangling else None)  # fmt: skip
+        bad = [v["id"] for v in audit(t)]
+        st.check("compare: axe finds nothing in chart view after the table", ", ".join(bad) or None)
     finally:
         t.close()
 
