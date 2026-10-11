@@ -44,7 +44,8 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter
   opens, Escape closes and returns focus), the phone menu at 390 px, a city's tabs, Compare (tick
   a city, change the metric, switch to the table view, re-sort with focus kept, open the panel,
-  Escape returns focus to the opener) and the tier and counter maps (`+` and `-` zoom). Each step
+  Escape returns focus to the opener, back to the chart view with every ARIA id reference
+  resolving and no axe violation) and the tier and counter maps (`+` and `-` zoom). Each step
   is a line in the entry's `steps` (`ok`/`FAIL`); a failed step is an error, so the exit status
   is 1. Use `--pages ""` to run it alone.
 - `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else

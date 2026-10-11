@@ -59,6 +59,11 @@ gives the decision, the reason, and what it costs.
   of sort buttons). The brief's visually hidden header assumed no controls in it; 2.4.7 and
   working sort outrank it. Cost: a CSS exception for `.compare-table`.
 
+- **Fix round 1 also takes M1 to M3 and a re-shoot.** A test that `compare.js` builds the `.stack`
+  table and calls `labelCells` after each render and re-sort (M1); `.kn` pinned to
+  `min-width: 0` (M2, the 320 px fix); the Figures "Ours" cell right-aligned like Theirs and Gap;
+  and a 320 px re-shoot of the breadcrumbs. All cheap. Cost: none.
+
 ## Task 7 (focus, regions, live region)
 
 - **Keep the post-process layer (`regions.py`) for scroll regions** and narrow it: class token
@@ -101,6 +106,37 @@ gives the decision, the reason, and what it costs.
   passes 1.4.10 and 1.4.12, but it departs from "only prose tables scroll". Raising the stack
   breakpoint above 600 px would not be robust (zoom on other screens gives other widths). Cost: a
   known limit, in the HANDOVER statement and below.
+
+## Final review and the final fix wave
+
+The whole-branch review (`.superpowers/sdd/2026-10-10-velometer-m10/final-review.md`) found no
+Critical issue, three Important and seven Minor. One round took:
+
+- **The compare chart keeps its description (Important 1).** `drawTable` rebuilt the table
+  caption without the id the chart's `aria-describedby` points at, so after table view and back the
+  chart's description dangled. The JS caption now carries `id="compare-caption"`. The keyboard pass
+  gained a step that returns to the chart view and fails on any `aria-describedby`,
+  `aria-labelledby` or `aria-controls` that names no element, and runs axe there (axe did not flag
+  this case; the id check did). Cost: one more step in the keyboard pass.
+- **Node tests own spec decision 7 (Important 2).** The chart tests stub `getComputedStyle` with a
+  token map: a line draws in its slot's `--series-N`, a tier in its `--tier-x`, and no chart draws
+  from the missing-token fallback. A theme change redraws a connected chart, and a disconnected one
+  lets go instead. Cost: none.
+- **Honest claims (Important 3).** The HANDOVER Accept line and accessibility statement say what
+  is audited: every exported page as loaded, plus Compare with a panel open and the keyboard
+  pass; the full `--pages all` pass is cited as run on the M10 head. The light change-map gap is
+  named as a WCAG 1.4.11 gap. Cost: wording.
+- **The "Sort by" description applies only where the caption is visible (Minor 4).** The table is
+  described by it under the phone query and the attribute follows the window across the breakpoint.
+- **An empty card cell keeps its label and says so (Minor 5).** On a phone it shows a dash with the
+  spoken alternative "no value" instead of vanishing; no displayed number changed.
+- **A plan item without yearly rows gets no chart (Minor 8).** It shows a note instead, so a chart
+  never ships without its data table.
+
+Parked to M11: the chart SVG keeps axis and label colours on CSS classes, so a saved SVG would
+differ from the screen (matters for downloads); `regions.py` tag counting inside `<script>` and
+comments (latent); source-grep tests that could become behaviour tests; `.sr-only` and
+`.visually-hidden` are one rule twice.
 
 ## Follow-ups
 
