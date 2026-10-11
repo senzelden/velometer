@@ -259,3 +259,46 @@ def test_recomputed_link_text_is_the_overview_column_label(client):  # noqa: F81
             assert re.sub(r"<[^>]+>", "", th).strip() == text, rid
             seen += 1
     assert seen >= 3
+
+
+# --- task 3: citation fields and formats -------------------------------------------------------
+
+
+def test_python_citation_text_matches_the_shared_cases():
+    from pathlib import Path
+
+    from velometer.app.cite import CiteFields, cite_text
+
+    cases = json.loads((Path(__file__).parent / "cite_cases.json").read_text(encoding="utf-8"))
+    assert len(cases) >= 5
+    for c in cases:
+        assert cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"]) == c["text"], c["name"]
+
+
+def test_city_fields_come_from_the_run_and_build(fixture_db):
+    from velometer.app.cite import fields_for_city
+
+    data = fixture_db[3]
+    f = fields_for_city(data, "berlin", "t", "/city/berlin")
+    (row,) = [
+        r
+        for r in data.csv_rows("berlin")
+        if r["boundary_kind"] == "lau" and r["label"] == "current"
+    ]
+    assert (f.osm_timestamp, f.run_id, f.classifier) == (
+        row["osm_timestamp"],
+        str(row["run_id"]),
+        row["classifier_version"],
+    )
+    assert f.commit and f.path == "/city/berlin" and "ODbL 1.0" in f.attribution
+    assert "built" not in f.title.lower()  # ADR 0006 wording
+
+
+def test_multi_city_fields_have_a_snapshot_range_and_no_run(fixture_db):
+    from velometer.app.cite import cite_text, fields_for_cities
+
+    data = fixture_db[3]
+    f = fields_for_cities(data, ["berlin", "paris"], "t", "/compare")
+    assert f.run_id is None and f.osm_timestamp is None
+    assert f.snapshot_note and f.snapshot_note.startswith("OSM snapshot")
+    assert "run " not in cite_text(f)

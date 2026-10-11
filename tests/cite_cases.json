@@ -1,0 +1,167 @@
+[
+ {
+  "name": "city view with a run",
+  "fields": {
+   "title": "Berlin, headline (A+B km per 100 km of main roads), city proper (LAU), Oct 2026",
+   "path": "/city/berlin/time",
+   "osm_timestamp": "2026-10-03T21:00:00Z",
+   "snapshot_note": null,
+   "classifier": "v4",
+   "run_id": "12",
+   "commit": "abc1234",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-10-11",
+  "url": "https://velometer.example/city/berlin/time",
+  "text": "velometer (2026). Berlin, headline (A+B km per 100 km of main roads), city proper (LAU), Oct 2026 [Data set]. OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. https://velometer.example/city/berlin/time (accessed 2026-10-11).",
+  "bibtex": "@misc{velometer_berlin_headline_a_b_km_per_100_km_of_mai_20261011,\n  author = {{velometer}},\n  title = {Berlin, headline (A+B km per 100 km of main roads), city proper (LAU), Oct 2026},\n  year = {2026},\n  howpublished = {\\url{https://velometer.example/city/berlin/time}},\n  note = {OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-10-11}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_berlin_headline_a_b_km_per_100_km_of_mai_20261011",
+   "title": "Berlin, headline (A+B km per 100 km of main roads), city proper (LAU), Oct 2026",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "accessed": {"date-parts": [[2026, 10, 11]]},
+   "URL": "https://velometer.example/city/berlin/time",
+   "note": "OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
+ },
+ {
+  "name": "multi-city view, no run, snapshot note",
+  "fields": {
+   "title": "Berlin, Paris: headline, city proper (LAU), Oct 2026",
+   "path": "/compare",
+   "osm_timestamp": null,
+   "snapshot_note": "OSM snapshots of 2026-10-03 to 2026-10-05",
+   "classifier": "v4",
+   "run_id": null,
+   "commit": "abc1234",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-10-12",
+  "url": "https://velometer.example/compare?cities=berlin,paris",
+  "text": "velometer (2026). Berlin, Paris: headline, city proper (LAU), Oct 2026 [Data set]. OSM snapshots of 2026-10-03 to 2026-10-05; classifier v4; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. https://velometer.example/compare?cities=berlin,paris (accessed 2026-10-12).",
+  "bibtex": "@misc{velometer_berlin_paris_headline_city_proper_lau_oc_20261012,\n  author = {{velometer}},\n  title = {Berlin, Paris: headline, city proper (LAU), Oct 2026},\n  year = {2026},\n  howpublished = {\\url{https://velometer.example/compare?cities=berlin,paris}},\n  note = {OSM snapshots of 2026-10-03 to 2026-10-05; classifier v4; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-10-12}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_berlin_paris_headline_city_proper_lau_oc_20261012",
+   "title": "Berlin, Paris: headline, city proper (LAU), Oct 2026",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "accessed": {"date-parts": [[2026, 10, 12]]},
+   "URL": "https://velometer.example/compare?cities=berlin,paris",
+   "note": "OSM snapshots of 2026-10-03 to 2026-10-05; classifier v4; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
+ },
+ {
+  "name": "title with & _ % { } #, dirty commit, year from the run",
+  "fields": {
+   "title": "Cologne & Bonn_x: 100% {A+B} #1",
+   "path": "/city/cologne",
+   "osm_timestamp": "2025-12-31T23:59:59Z",
+   "snapshot_note": null,
+   "classifier": "v3",
+   "run_id": "3",
+   "commit": "def5678-dirty",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-01-02",
+  "url": "https://velometer.example/city/cologne",
+  "text": "velometer (2025). Cologne & Bonn_x: 100% {A+B} #1 [Data set]. OSM snapshot 2025-12-31T23:59:59Z; classifier v3; run 3; commit def5678-dirty. Map data © OpenStreetMap contributors, ODbL 1.0. https://velometer.example/city/cologne (accessed 2026-01-02).",
+  "bibtex": "@misc{velometer_cologne_bonn_x_100_a_b_1_20260102,\n  author = {{velometer}},\n  title = {Cologne \\& Bonn\\_x: 100\\% \\{A+B\\} \\#1},\n  year = {2025},\n  howpublished = {\\url{https://velometer.example/city/cologne}},\n  note = {OSM snapshot 2025-12-31T23:59:59Z; classifier v3; run 3; commit def5678-dirty. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-01-02}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_cologne_bonn_x_100_a_b_1_20260102",
+   "title": "Cologne & Bonn_x: 100% {A+B} #1",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2025]]},
+   "accessed": {"date-parts": [[2026, 1, 2]]},
+   "URL": "https://velometer.example/city/cologne",
+   "note": "OSM snapshot 2025-12-31T23:59:59Z; classifier v3; run 3; commit def5678-dirty. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "def5678-dirty"
+  }
+ },
+ {
+  "name": "no url: the text ends at the attribution",
+  "fields": {
+   "title": "Paris, tiers, city proper (LAU), Oct 2026",
+   "path": "/city/paris/tiers",
+   "osm_timestamp": "2026-10-05T04:00:00Z",
+   "snapshot_note": null,
+   "classifier": "v4",
+   "run_id": "9",
+   "commit": "abc1234",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-10-11",
+  "url": null,
+  "text": "velometer (2026). Paris, tiers, city proper (LAU), Oct 2026 [Data set]. OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+  "bibtex": "@misc{velometer_paris_tiers_city_proper_lau_oct_2026_20261011,\n  author = {{velometer}},\n  title = {Paris, tiers, city proper (LAU), Oct 2026},\n  year = {2026},\n  note = {OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-10-11}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_paris_tiers_city_proper_lau_oct_2026_20261011",
+   "title": "Paris, tiers, city proper (LAU), Oct 2026",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "accessed": {"date-parts": [[2026, 10, 11]]},
+   "note": "OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
+ },
+ {
+  "name": "url with a query and a hash under base /velometer/",
+  "fields": {
+   "title": "Berlin, tiers, functional area (FUA), Oct 2026",
+   "path": "/city/berlin/tiers",
+   "osm_timestamp": "2026-10-03T21:00:00Z",
+   "snapshot_note": null,
+   "classifier": "v4",
+   "run_id": "14",
+   "commit": "abc1234",
+   "attribution": "Map data © OpenStreetMap contributors, ODbL 1.0"
+  },
+  "accessed": "2026-10-11",
+  "url": "https://x.org/velometer/city/berlin/tiers?kind=fua#map",
+  "text": "velometer (2026). Berlin, tiers, functional area (FUA), Oct 2026 [Data set]. OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 14; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. https://x.org/velometer/city/berlin/tiers?kind=fua#map (accessed 2026-10-11).",
+  "bibtex": "@misc{velometer_berlin_tiers_functional_area_fua_oct_202_20261011,\n  author = {{velometer}},\n  title = {Berlin, tiers, functional area (FUA), Oct 2026},\n  year = {2026},\n  howpublished = {\\url{https://x.org/velometer/city/berlin/tiers?kind=fua#map}},\n  note = {OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 14; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. Accessed 2026-10-11}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_berlin_tiers_functional_area_fua_oct_202_20261011",
+   "title": "Berlin, tiers, functional area (FUA), Oct 2026",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "accessed": {"date-parts": [[2026, 10, 11]]},
+   "URL": "https://x.org/velometer/city/berlin/tiers?kind=fua#map",
+   "note": "OSM snapshot 2026-10-03T21:00:00Z; classifier v4; run 14; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
+ },
+ {
+  "name": "url but no accessed date, default attribution omitted from fields",
+  "fields": {
+   "title": "Paris, headline, city proper (LAU), Oct 2026",
+   "path": "/city/paris",
+   "osm_timestamp": "2026-10-05T04:00:00Z",
+   "snapshot_note": null,
+   "classifier": "v4",
+   "run_id": "9",
+   "commit": "abc1234"
+  },
+  "accessed": null,
+  "url": "https://velometer.example/city/paris",
+  "text": "velometer (2026). Paris, headline, city proper (LAU), Oct 2026 [Data set]. OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0. https://velometer.example/city/paris.",
+  "bibtex": "@misc{velometer_paris_headline_city_proper_lau_oct_2026_20261005,\n  author = {{velometer}},\n  title = {Paris, headline, city proper (LAU), Oct 2026},\n  year = {2026},\n  howpublished = {\\url{https://velometer.example/city/paris}},\n  note = {OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.}\n}",
+  "csl": {
+   "type": "dataset",
+   "id": "velometer_paris_headline_city_proper_lau_oct_2026_20261005",
+   "title": "Paris, headline, city proper (LAU), Oct 2026",
+   "author": [{"literal": "velometer"}],
+   "issued": {"date-parts": [[2026]]},
+   "URL": "https://velometer.example/city/paris",
+   "note": "OSM snapshot 2026-10-05T04:00:00Z; classifier v4; run 9; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.",
+   "version": "abc1234"
+  }
+ }
+]
