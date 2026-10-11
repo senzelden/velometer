@@ -109,6 +109,8 @@ class SubareasConfig(_Strict):
 class CityConfig(_Strict):
     id: str = Field(pattern=r"^[a-z0-9_]+$")
     name: str
+    # Other names the search matches (the common English one): display data, not classifier input
+    aliases: list[str] = []
     country_iso2: str = Field(pattern=r"^[A-Z]{2}$")
     epsg: int
     geofabrik_region: str
@@ -140,6 +142,13 @@ class CityConfig(_Strict):
     nuts3_note: str | None = None
     # Optional sub-city areas; None = the city has none
     subareas: SubareasConfig | None = None
+
+    @field_validator("aliases")
+    @classmethod
+    def _aliases_not_blank(cls, v: list[str]) -> list[str]:
+        if any(not a.strip() for a in v):
+            raise ValueError("aliases: a blank alias")
+        return v
 
     @model_validator(mode="after")
     def _one_lau_source(self) -> "CityConfig":

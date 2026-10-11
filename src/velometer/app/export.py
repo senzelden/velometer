@@ -47,7 +47,8 @@ BASE_URL = "http://127.0.0.1:8000"
 # The pages every export has; per-city pages, CSVs and maps are added from the data.
 PAGES = [
     "/", "/cities", "/compare", "/stories", "/differences", "/organisations", "/sources",
-    "/plans", "/methodology", "/methodology/de", "/data/series.json", "/data/all.csv",
+    "/plans", "/methodology", "/methodology/de", "/data/series.json", "/data/search.json",
+    "/data/all.csv",
 ]  # fmt: skip
 NOT_FOUND_PROBE = "/404"  # no route: the app's 404 response, written as 404.html
 BUILD_FILE = "build.json"

@@ -808,6 +808,7 @@ KEYS = {
     "Escape": ("Escape", "Escape", 27, ""),
     " ": (" ", "Space", 32, " "),
     "ArrowDown": ("ArrowDown", "ArrowDown", 40, ""),
+    "ArrowUp": ("ArrowUp", "ArrowUp", 38, ""),
     "+": ("+", "Equal", 187, "+"),  # Leaflet reads keyCode 187/107 for zoom in
     "-": ("-", "Minus", 189, "-"),
 }
@@ -1125,6 +1126,69 @@ def _compare(devtools, origin, base, theme, st: Steps) -> None:
         t.close()
 
 
+def _search(devtools, origin, base, theme, width, st: Steps) -> None:
+    """The nav combobox: type, Escape twice, type, arrows, Enter lands on the city. At phone
+    width the menu is opened first; the open list must stay inside the viewport."""
+    label = f"search {width}px"
+    t, errs = _page(devtools, origin, base, theme, width, "")
+    try:
+        if not st.check(f"{label}: page loads", "; ".join(errs) or None):
+            return
+        if width <= 760:
+            if not st.check(f"{label}: Tab reaches the Menu button", tab_to(t, ".menu-toggle", 10)):
+                return
+            press(t, "Enter", wait=0.3)
+        if not st.check(f"{label}: Tab reaches the search box", tab_to(t, "#site-search")):
+            return
+        st.check(f"{label}: the box has a focus ring", focus_shown(t))
+        state = (
+            "(() => { const i = document.getElementById('site-search');"
+            " const o = [...document.querySelectorAll('#site-search-list [role=option]')];"
+            " const a = i.getAttribute('aria-activedescendant');"
+            " const l = document.getElementById('site-search-list').getBoundingClientRect();"
+            " return {expanded: i.getAttribute('aria-expanded'), n: o.length, value: i.value,"
+            " first: o.length ? o[0].textContent : '', active: a,"
+            " selected: o.findIndex((x) => x.id === a),"
+            " inside: l.left >= 0 && l.right <= innerWidth,"
+            " sideways: document.documentElement.scrollWidth > innerWidth}; })()"
+        )
+        t.call("Input.insertText", text="kra")
+        t.wait_js("document.querySelectorAll('#site-search-list [role=option]').length > 0", 5)
+        s = t.js(state)
+        st.check(f"{label}: typing opens the list with Kraków first",
+                 None if s["expanded"] == "true" and s["n"] >= 1 and s["first"].startswith("Krak")
+                 else f"{s}")  # fmt: skip
+        st.check(f"{label}: the open list fits the viewport",
+                 None if s["inside"] and not s["sideways"] else f"{s}")  # fmt: skip
+        press(t, "Escape", wait=0.2)
+        s = t.js(state)
+        st.check(f"{label}: Escape closes the list and keeps the text",
+                 None if s["expanded"] == "false" and s["value"] == "kra" else f"{s}")  # fmt: skip
+        press(t, "Escape", wait=0.2)
+        st.check(f"{label}: a second Escape clears the box",
+                 None if t.js(state)["value"] == "" else "the text stayed")  # fmt: skip
+        t.call("Input.insertText", text="kra")
+        t.wait_js("document.querySelectorAll('#site-search-list [role=option]').length > 0", 5)
+        press(t, "ArrowDown", wait=0.2)
+        s = t.js(state)
+        st.check(f"{label}: Down moves aria-activedescendant to the first option",
+                 None if s["selected"] == 0 else f"{s}")  # fmt: skip
+        press(t, "ArrowDown", wait=0.2)
+        press(t, "ArrowUp", wait=0.2)
+        st.check(f"{label}: Up returns to the first option",
+                 None if t.js(state)["selected"] == 0 else f"{t.js(state)}")  # fmt: skip
+        press(t, "Enter", wait=0.3)
+        landed = t.wait_js(
+            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + 'city/krakow')}", 8
+        )
+        st.check(f"{label}: Enter lands on the Kraków page",
+                 None if landed else f"at {t.js('location.pathname')}")  # fmt: skip
+        console = collect(t.events)[0]
+        st.check(f"{label}: no console errors", "; ".join(console) or None)
+    finally:
+        t.close()
+
+
 def keyboard(devtools: str, origin: str, base: str, theme: str) -> dict:
     """One scripted keyboard pass in `theme`; the step lines are in the entry's `steps`."""
     st = Steps()
@@ -1132,6 +1196,8 @@ def keyboard(devtools: str, origin: str, base: str, theme: str) -> dict:
     _cities_menu(devtools, origin, base, theme, st)
     _phone_menu(devtools, origin, base, theme, st)
     _city_tabs(devtools, origin, base, theme, st)
+    _search(devtools, origin, base, theme, 1280, st)
+    _search(devtools, origin, base, theme, 320, st)
     _compare(devtools, origin, base, theme, st)
     _map_steps(devtools, origin, base, theme, "city/berlin/tiers", "tier map", st)
     _map_steps(devtools, origin, base, theme, "city/berlin/counts", "counter map", st)

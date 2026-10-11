@@ -114,6 +114,7 @@ cities:
     nuts3_is_city: true
   - id: vienna
     name: Wien
+    aliases: ["Vienna"]  # common English name; display data only
     country_iso2: AT
     epsg: 25833
     geofabrik_region: europe/austria
@@ -125,6 +126,7 @@ cities:
     nuts3_is_city: true
   - id: copenhagen
     name: København
+    aliases: ["Copenhagen"]  # common English name; display data only
     country_iso2: DK
     epsg: 25832
     epsg_exception: "Danish national standard ETRS89 / UTM 32N; centroid 12.57E is 0.57 deg into zone 33, scale error about 0.06 %"
@@ -302,6 +304,7 @@ cities:
       source_url: "https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063"
   - id: warsaw
     name: Warszawa
+    aliases: ["Warsaw"]  # common English name; display data only
     country_iso2: PL
     epsg: 25834
     geofabrik_region: europe/poland/mazowieckie
@@ -313,6 +316,7 @@ cities:
     nuts3_is_city: true
   - id: krakow
     name: Kraków
+    aliases: ["Cracow"]  # common English name; display data only
     country_iso2: PL
     epsg: 25834
     geofabrik_region: europe/poland/malopolskie
@@ -335,6 +339,7 @@ cities:
     nuts3_is_city: true
   - id: prague
     name: Praha
+    aliases: ["Prague"]  # common English name; display data only
     country_iso2: CZ
     epsg: 25833
     geofabrik_region: europe/czech-republic/stredocesky

@@ -32,5 +32,13 @@
   {{ item("organisations", "/organisations", "Organisations") }}
   {{ item("sources", "/sources", "Sources") }}
   {{ item("methodology", "/methodology", "Methodology") }}
+  <li class="search-item">
+    <a class="search-fallback" href="{{ u('/cities') }}">Find a city</a>
+    <div class="search" hidden>
+      <label for="site-search" class="visually-hidden">Search cities and pages</label>
+      <input id="site-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="site-search-list" placeholder="Search cities and pages" autocomplete="off" spellcheck="false">
+      <ul id="site-search-list" role="listbox" aria-label="Search results" hidden></ul>
+    </div>
+  </li>
 </ul>
 </nav>

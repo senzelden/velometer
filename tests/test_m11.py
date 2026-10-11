@@ -608,3 +608,102 @@ def test_permalink_code_never_writes_url_values_with_innerhtml():
         assert not re.search(
             r"\.(innerHTML|outerHTML)\s*\+?=|insertAdjacentHTML|document\.write", src
         ), name
+
+
+# ---- Task 7: search and jump ----
+
+
+def test_search_index_covers_every_city_country_org_story_and_page(client, fixture_db):  # noqa: F811
+    idx = client.get("/data/search.json").json()
+    urls = {e["url"] for e in idx}
+    for c in fixture_db[3].cities():
+        assert f"/city/{c.id}" in urls
+    for p in ["/", "/compare", "/cities", "/stories", "/plans", "/organisations", "/sources",
+              "/methodology", "/methodology/de", "/differences"]:  # fmt: skip
+        assert p in urls, p
+    assert all(client.get(u.split("#")[0]).status_code == 200 for u in urls)
+    assert {e["kind"] for e in idx} == {"city", "country", "organisation", "story", "page"}
+    for e in idx:
+        assert set(e) == {"label", "kind", "url", "terms"} and e["url"].startswith("/")
+
+
+def test_search_index_anchors_exist_on_their_pages(client):  # noqa: F811
+    for e in client.get("/data/search.json").json():
+        if "#" not in e["url"]:
+            continue
+        path, anchor = e["url"].split("#")
+        assert f'id="{anchor}"' in client.get(path).text, e["url"]
+
+
+def test_search_index_city_entries_carry_name_id_aliases_and_country(client):  # noqa: F811
+    idx = {e["url"]: e for e in client.get("/data/search.json").json() if e["kind"] == "city"}
+    berlin = idx["/city/berlin"]
+    assert berlin["label"] == "Berlin (Germany)"
+    assert {"Berlin", "berlin"} <= set(berlin["terms"])
+
+
+def test_aliases_validate_and_reach_the_index():
+    from pathlib import Path
+
+    from velometer.config import load_cities
+
+    cities = load_cities(Path("config/cities.yaml"))
+    assert any(c.aliases for c in cities)
+    assert all(isinstance(a, str) and a.strip() for c in cities for a in c.aliases)
+    by_id = {c.id: c.aliases for c in cities}
+    assert by_id["vienna"] == ["Vienna"] and by_id["krakow"] == ["Cracow"]
+    assert by_id["copenhagen"] == ["Copenhagen"]
+    assert by_id["prague"] == ["Prague"] and by_id["warsaw"] == ["Warsaw"]
+
+
+def test_a_blank_alias_is_refused():
+    import pytest
+    from pydantic import ValidationError
+
+    from velometer.config import CityConfig
+
+    with pytest.raises(ValidationError):
+        CityConfig(
+            id="x", name="X", aliases=[" "], country_iso2="DE", epsg=25832, geofabrik_region="r",
+            osm_relation_id=1,
+        )  # fmt: skip
+
+
+def test_the_js_fold_makes_every_real_city_name_ascii():
+    # Wrocław, København, Kraków must be typeable on an ASCII keyboard (ł and ø do not decompose)
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    from velometer.config import load_cities
+
+    names = [c.name for c in load_cities(Path("config/cities.yaml"))]
+    script = (
+        f"import {{fold}} from {json.dumps((STATIC_JS / 'search.js').resolve().as_uri())};"
+        f"console.log(JSON.stringify({json.dumps(names)}.map(fold)));"
+    )
+    node = shutil.which("node")
+    assert node
+    out = subprocess.run(
+        [node, "--input-type=module", "-e", script], capture_output=True, text=True, check=True
+    ).stdout
+    folded = json.loads(out)
+    assert all(re.fullmatch(r"[a-z0-9 -]+", f) for f in folded), folded
+    assert {"wroclaw", "kobenhavn", "krakow"} <= set(folded)
+
+
+def test_nav_search_is_a_hidden_combobox_with_a_working_fallback_link(client):  # noqa: F811
+    html = client.get("/").text
+    assert re.search(r'<a class="search-fallback" href="/cities">Find a city</a>', html)
+    assert re.search(r'<div class="search" hidden>', html)
+    assert 'role="combobox"' in html and 'aria-expanded="false"' in html
+    assert 'aria-controls="site-search-list"' in html and 'role="listbox"' in html
+    assert re.search(r'<label for="site-search" class="visually-hidden">', html)
+
+
+def test_search_js_follows_the_rules():
+    src = (STATIC_JS / "search.js").read_text(encoding="utf-8")
+    assert not re.search(r"\.(innerHTML|outerHTML)\s*\+?=|insertAdjacentHTML", src)
+    assert 'url("/data/search.json")' in src or "url('/data/search.json')" in src
+    assert "announce" in src and "aria-activedescendant" in src
+    assert "https://" not in src

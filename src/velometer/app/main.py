@@ -44,6 +44,7 @@ from velometer.app.names import country_name
 from velometer.app.narrative import render_explainer, render_narrative, safe_url
 from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
+from velometer.app.search import search_index
 from velometer.app.series import series_payload
 from velometer.app.sources import GROUPS as GROUP_NAMES
 from velometer.app.sources import overview_column, source_anchor, source_rows
@@ -626,6 +627,13 @@ def create_app(
     async def series_json(request: Request, data: Data):
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+        )
+        return JSONResponse(payload)
+
+    @app.get("/data/search.json")
+    async def search_json(request: Request, data: Data):
+        payload = cache.get(
+            "search", fp(request), lambda: search_index(data, config_dir, content_dir)
         )
         return JSONResponse(payload)
 
