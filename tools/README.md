@@ -27,7 +27,7 @@ with `python -m http.server` on 127.0.0.1 under the base path and drives
 uv run velometer app export --out "$SCRATCH/site/velometer" --base /velometer/ --clean
 uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" \
     --base /velometer/ --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
-    [--pages all|types|/velometer/compare,...] [--flip] [--interact] [--chrome PATH]
+    [--pages all|types|/velometer/compare,...] [--flip] [--interact] [--keyboard] [--chrome PATH]
 ```
 
 - `--pages all` (default) visits every exported page. HTML fragments (the city panels) and
@@ -39,6 +39,14 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   view and clicks the first city link, the way a reader would, and waits for the city panel to
   load. Then it runs the same checks with the panel open, presses Escape, and checks that the
   panel closed and focus went back to the link. Screenshots are `compare-panel-<theme>-<width>.png`.
+- `--keyboard` adds one scripted keyboard pass per theme (entry `kind: keyboard`, no axe or
+  screenshot). It sends real key events with `Input.dispatchKeyEvent` and checks, step by step:
+  the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter
+  opens, Escape closes and returns focus), the phone menu at 390 px, a city's tabs, Compare (tick
+  a city, change the metric, switch to the table view, re-sort with focus kept, open the panel,
+  Escape returns focus to the opener) and the tier and counter maps (`+` and `-` zoom). Each step
+  is a line in the entry's `steps` (`ok`/`FAIL`); a failed step is an error, so the exit status
+  is 1. Use `--pages ""` to run it alone.
 - `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else
   `/usr/bin/google-chrome`. A missing binary is a usage error.
 - The exit status is 1 if any visit has an error, an axe violation, overflow, a console message,

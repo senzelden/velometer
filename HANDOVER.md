@@ -199,6 +199,29 @@ by velometer (publishing is HANDOVER §12 Q4, still open).
   under `maps/`. Simplifying or compressing those files before hosting is a follow-up
   (rulings-m9 Follow-ups); hosts that serve gzip/brotli shrink them a lot.
 
+### Render pass (M10)
+
+`tools/render_pass.py` audits the exported static edition in headless Chrome. It is a developer
+tool, outside the package and the gate; usage and result format are in `tools/README.md`.
+
+```bash
+uv run velometer app export --out "$SCRATCH/site" --base /velometer/ --clean
+uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
+    --out tools/out/NAME --pages all --themes light,dark --widths 1280,390,320 --interact
+uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
+    --out tools/out/NAME-flip --pages types --flip --interact
+uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
+    --out tools/out/NAME-kb --pages "" --keyboard
+```
+
+**Exit rule:** the exit status is 0 only when every visit has no axe violation (WCAG 2.1 A and AA
+tags), no overflow (a box that scrolls, clips or is spilled out of, other than a prose table, the
+map and ellipsised text), no console message, no CSP violation, no host other than `127.0.0.1` and
+`tile.openstreetmap.org`, and no error; `--keyboard` adds its own steps, each of which must pass.
+Run it before reporting UI work done. axe-core is vendored and never shipped (`tools/axe/`).
+`velometer report maps` skips a map whose `.run` marker names the current run, and the marker
+ignores palette changes: after a palette change delete `data/maps/*.run` first (see above).
+
 Runs must be resumable and idempotent: skip a (city, date, boundary, classifier_version) tuple that already has a completed `Run`.
 
 ---
@@ -228,6 +251,39 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 *M8 follow-up pass (2026-10-08/09; plan `docs/superpowers/plans/2026-10-08-velometer-m8-followups.md`, rulings-m8 "Follow-up pass"):* closed the M8 follow-ups that were defects or drift risks without a method change (metric-aware Compare counter footnote, notes for unreadable inputs, index thresholds and base years from one source, plan chart axis by quantity with capped off-scale targets, colour tokens with a magenta mapped colour, DB/adapter/content-check hygiene); no new runs, stored numbers unchanged. Visible wording: the counter index rule now reads "3 sites complete on at least 90% of days" (was "three sites complete on nine days in ten"; same rule, numbers from `MIN_SITES`/`MIN_VALID`), and the methodology names the Helsinki step-down site by its config id "Pitkäsilta länsipuoli" instead of a hand translation. DB hygiene: `reconcile` and `timeseries` used to open the DB read-write and change `velometer.sqlite`'s bytes on every run (no stored value); since `e8b36d2` they, `results` and `counters --check` open it read-only. Index v2, overlay v5, Paris in-service granularity and dark mode stay open (rulings-m8 Follow-ups).
 
 **M9 — The static edition** (added after M8; spec `docs/superpowers/specs/2026-10-09-velometer-m9-design.md`, rulings `docs/superpowers/rulings-m9.md`). `velometer app export --out DIR --base /velometer/ [--clean]` renders the whole reader app through the FastAPI app itself (Starlette TestClient, no second renderer) into directory-style files that any static host can serve under any base path: every page, the city panel fragments, `data/series.json`, the CSVs, map PNGs and tier-map GeoJSON, the static assets, `build.json` and an HTML `404.html` (the app now answers unknown pages with an HTML 404; `/data`, `/maps` and `/static` keep the JSON 404). Templates build every internal URL with `u()` (`app/urls.py`) and the JS with `url()`/`base()` (`static/js/base.js`, reading `<meta name="velometer-base">`); both are tested against one case file (`tests/url_cases.json`). The live app at base `/` differs from M8 only by two meta tags (the CSP meta policy and `velometer-base`). The export proves completeness: a reference scan over every exported HTML, CSS and JS file fails closed on any unresolved internal reference, any form it cannot parse, and any loaded host other than `https://tile.openstreetmap.org`. Exported pages show "Static edition · build <short commit>". Safety: the export opens the DB read-only (md5 unchanged), installs a complete staging directory by swap, and refuses dangerous `--out` targets (`.`, parents of cwd, `/`, `$HOME`, the repo root, any directory holding an input). Nothing is hosted (§12 Q4 stays open); the export is about 252 MB, 237 MB of it tier-map GeoJSON (a hosting follow-up). *Accept:* gate green including the node tests; the six checks exit 0; render pass of the real export under `/velometer/` with `python -m http.server` and headless Chrome at 1280 and 390 px on every page type (no horizontal scroll, no console errors, no CSP violations, only 127.0.0.1 and `tile.openstreetmap.org` requested, compare `?…` state drawn, city panel opens from compare through the directory redirect, maps load); delivered 2026-10-09.
+
+**M10 — Polish and accessibility** (added after M9; spec `docs/superpowers/specs/2026-10-09-velometer-m10-design.md`, rulings `docs/superpowers/rulings-m10.md`). The reader app follows the OS colour scheme (`prefers-color-scheme`, no toggle) through colour tokens; the JS draws from those tokens (series, tier, axis, halo and counter-map colours) and redraws when the scheme changes. One tier palette (`charts.TIER_COLOURS`, tokens `--tier-a`…`--tier-e`) serves the maps and charts in both themes, chosen by rule (3:1 on the grounds, pairwise colour difference, tested in `tests/test_colour.py` and `tests/test_a11y.py`); the tier-map PNGs were re-rendered with it. Below 600 px wide tables stack into labelled cards (only prose tables in methodology and the explainer scroll). The page has a skip link, a visible focus ring everywhere, a live region for Compare and the city panel, heading order, scroll regions that are focusable and named, a data table behind every chart, flags and changes that do not rely on colour, and `lang` on quotes. `tools/render_pass.py` (see §8) runs axe-core over every exported page in both themes at 1280, 390 and 320 px. *Accept:* gate green including the node tests; the six checks exit 0; render pass `--pages all` (both themes, 1280/390/320, `--interact`) and `--pages types --flip --interact` exit 0 (no axe violation, overflow, console message, CSP violation or foreign host); the scripted keyboard pass (`--keyboard`, real key events) passes in both themes; 200% zoom and WCAG 1.4.12 text-spacing spot checks on Compare, Figures and methodology; `velometer.sqlite` unchanged; delivered 2026-10-10.
+
+### Accessibility statement (M10)
+
+**Target:** WCAG 2.1 level AA for the reader app (live and static edition). **How it is proven:**
+the pytest rule tests (`tests/test_a11y.py`, `tests/test_colour.py`: contrast of every text and
+graphic token pair in both themes, palette distance rules, no outline removal, labelled regions,
+table stacking, the data table behind each chart); the axe-core render pass (0 violations, WCAG 2
+A/AA and 2.1 A/AA tags, every page, both themes, 1280, 390 and 320 px, plus the compare panel
+open); and a manual keyboard pass driven by real key events (skip link, menus, city tabs,
+Compare, the panel and Escape, the maps with + and -). axe cannot judge everything; this is
+tested conformance, not a certification.
+
+**Known limits:**
+
+- The light-theme change-map colours fall below 3:1 against white. The spec fixes them at their
+  M9 values so the change PNGs are not regenerated; they draw over greyed tiles, and the key
+  swatches carry text labels (ruling, rulings-m10).
+- The PNG maps stay light: they are drawn for a white ground and are linked, not embedded, so a
+  reader who opens one in the dark theme sees it on the browser's own background. No dark PNGs
+  were made.
+- Prose tables (methodology, explainer) scroll sideways inside a named, focusable region. At 200%
+  zoom on a 1280 px screen (640 CSS px) and under WCAG 1.4.12 text spacing the Figures tables also
+  scroll inside their region, because stacking starts at 600 px; nothing is lost or clipped.
+- The series palette (8 city colours) is held only to normal-vision colour difference (CIEDE2000
+  at least 20); only the tier palette is checked under simulated colour blindness, and tiers B and
+  E are only 20.5 apart under deuteranopia. Charts also label series directly and have tables.
+- If a colour token is missing, the JS falls back to a neutral grey and logs one console error
+  (spec §5 said "the light value"; ruling in rulings-m10). The render pass fails on that error.
+- `velometer report maps` skips a map when its `.run` marker names the current run; the marker
+  ignores palette changes, so re-rendering after one needs the markers deleted (§8).
+- Not covered: screen-reader testing with real assistive technology, and a German interface (M12).
 
 ---
 
