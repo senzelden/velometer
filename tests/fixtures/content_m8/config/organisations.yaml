@@ -1,3 +1,7 @@
 - {city: berlin, source: official, organisation: senmvku}
 - {city: "*", source: parliament_docs, organisation: abgeordnetenhaus}
 - {city: paris, source: official, organisation: abgeordnetenhaus}
+# the figure sources config/report.yaml's presets recompute (load_report checks them); synthetic
+# owners, no figure of theirs is quoted here
+- {city: "*", source: qecio_v2_10, organisation: abgeordnetenhaus}
+- {city: "*", source: clean_cities_2025, organisation: abgeordnetenhaus}

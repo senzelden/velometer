@@ -6,3 +6,13 @@ sections:
   - heading: Who they are
     paragraphs:
       - The parliament publishes the written questions [@src].
+  - heading: How they measure
+    dimensions:
+      scope: the figures answered to written questions [@src]
+      kind: not stated by the source
+      length: not stated by the source
+      date: not stated by the source
+      area: Land Berlin [@src]
+      method: the Senate's answers [@src]
+    paragraphs:
+      - It prints what the Senate answers [@src].

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}velometer · Sources{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Sources</span></nav>{% endblock %}
+{% block content %}
+<h1>Sources and how they measure</h1>
+<p class="dek">velometer sets published figures beside our own OpenStreetMap figures. Each row is one source; each column is one of the six dimensions along which figures differ.</p>
+{% if content_error %}<p class="note">the sources table could not be built (see the server log)</p>{% endif %}
+{% if groups %}
+<div class="scroll">
+<table class="sources stack">
+<caption>Every figure source the app quotes, beside our approach, along the six dimensions (<a href="{{ u('/differences') }}">why the figures differ</a>)</caption>
+<thead><tr>
+  <th scope="col">Source</th>
+  {% for d in dimensions %}<th scope="col"><a href="{{ u('/differences') }}#dim-{{ d.id }}">{{ d.label }}</a></th>{% endfor %}
+  <th scope="col">Cities</th>
+  <th scope="col">Recomputed by us</th>
+</tr></thead>
+{% for heading, rows in groups %}
+<tbody>
+<tr class="group"><th colspan="{{ dimensions | length + 3 }}" scope="rowgroup" data-label="Source">{{ heading }}</th></tr>
+{% for r in rows %}
+<tr id="{{ r.anchor }}">
+  <th scope="row" data-label="Source">{{ r.title }}{% if r.organisation_id %}<br><span class="meta"><a href="{{ u('/organisations') }}#{{ r.organisation_id }}">{{ r.organisation_name }}</a>{% if r.city_name %} · {{ r.city_name }}{% endif %}</span>{% endif %}</th>
+  {% for d in dimensions %}<td data-label="{{ d.label }}">{{ r.cells.get(d.id) }}</td>{% endfor %}
+  <td data-label="Cities">{% if r.group == "ours" %}<a href="{{ u('/cities') }}">every city</a>{% elif r.cities %}{% for cid, name in r.cities %}<a href="{{ u('/city/' ~ cid ~ '/figures') }}">{{ name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<span class="note">no city in this edition</span>{% endif %}</td>
+  <td data-label="Recomputed by us">{% if r.recomputed_anchor %}<a href="{{ u('/') }}#{{ r.recomputed_anchor }}">{{ "our headline" if r.group == "ours" else "on our OSM data" }}</a>{% else %}<span class="note">–</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endfor %}
+</table>
+</div>
+{% if cited %}
+<section class="prose" aria-labelledby="cited-h">
+<h2 id="cited-h">What the cells cite</h2>
+{% with cited_sources=cited.sources, cited_refs=cited.refs, nar=cited %}{% include "city/_cited.html" %}{% endwith %}
+</section>
+{% endif %}
+{% elif not content_error %}
+<p class="note">no figure sources (config/organisations.yaml)</p>
+{% endif %}
+{% endblock %}

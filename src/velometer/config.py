@@ -511,6 +511,15 @@ class ReportConfig(_Strict):
         return self
 
 
+def _figure_source_ids(path: Path) -> set[str]:
+    """The figure-source ids: the `source` of every config/organisations.yaml entry."""
+    doc = _read(path)
+    try:
+        return {str(m["source"]) for m in doc}
+    except (KeyError, TypeError) as e:
+        raise ConfigError(f"{path}: expected a list of {{city, source, organisation}}: {e}") from e
+
+
 def load_report(
     path: Path, presets_path: Path | None = None, cities_path: Path | None = None
 ) -> ReportConfig:
@@ -525,6 +534,15 @@ def load_report(
                 f"{path}: ranking {r.id!r}: preset {r.preset!r} is not in {presets_path.name} "
                 f"(known: {sorted(known)})"
             )
+    recomputing = [r for r in config.rankings if isinstance(r, PresetRanking) and r.recomputes]
+    if recomputing:
+        figure_sources = _figure_source_ids(path.parent / "organisations.yaml")
+        for r in recomputing:
+            if r.recomputes not in figure_sources:
+                raise ConfigError(
+                    f"{path}: ranking {r.id!r}: recomputes {r.recomputes!r} is not a figure "
+                    f"source of organisations.yaml (known: {sorted(figure_sources)})"
+                )
     if cities_path is not None:
         cities = {c.id for c in load_cities(cities_path)}
         for field in ("highlight", "comparison_set"):

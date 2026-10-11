@@ -517,6 +517,7 @@ def _check(
         for org in orgs.values():
             problems += _check_organisation(org, sources, data, docs_dir, config_dir)
         problems += _check_coverage(config_dir, set(orgs) | set(org_errors), plans, rows)
+        problems += _check_source_rows(config_dir, orgs)
     return problems
 
 
@@ -632,6 +633,42 @@ def _reconcile_sources(config_dir: Path) -> list[str]:
         return list(dict.fromkeys(out))
     except (OSError, UnicodeDecodeError, yaml.YAMLError, AttributeError, KeyError, TypeError) as e:
         raise ContentError(f"config/reconcile.yaml: cannot read comparison sources: {e!r}") from e
+
+
+NOT_STATED = "not stated by the source"
+
+
+def _check_source_rows(config_dir: Path, orgs: dict[str, Organisation]) -> list[str]:
+    """Every quoted figure source has its /sources row (M11 spec decision 1): the organisation
+    behind each mapping entry whose (city, source) figures.csv or reconcile.yaml quotes has a
+    "How they measure" section with all six dimensions, each cited or "not stated by the
+    source". A missing profile or an unreadable file is `_check_coverage`'s problem."""
+    try:
+        mapping = load_organisation_map(Path(config_dir) / "organisations.yaml")
+        dims = _read_dimensions(config_dir)
+        pairs = _figure_pairs(config_dir)
+        reconciled = set(_reconcile_sources(config_dir))
+    except (ContentError, *_DIMENSION_ERRORS):
+        return []
+    if dims is None:
+        return []
+    problems: list[str] = []
+    for m in mapping:
+        quoted = m.source in reconciled or any(
+            s == m.source and m.city in (c, "*") for c, s in pairs
+        )
+        org = orgs.get(m.organisation)
+        if not quoted or org is None:
+            continue
+        label = f"organisations/{org.id}.yaml: How they measure"
+        given = next((s.dimensions for s in org.sections if s.dimensions), None) or {}
+        for d in dims:
+            value = " ".join(str(given.get(d, "")).split())
+            if not value:
+                problems.append(f"{label} lacks {d} (figure source {m.source})")
+            elif "[@" not in value and value != NOT_STATED:
+                problems.append(f"{label}: {d} has no citation (figure source {m.source})")
+    return list(dict.fromkeys(problems))
 
 
 def _check_coverage(

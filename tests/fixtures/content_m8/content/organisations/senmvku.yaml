@@ -9,7 +9,11 @@ sections:
   - heading: How they measure
     dimensions:
       scope: the planned network [@src]
+      kind: completed in the year [@src]
       length: not stated by the source
+      date: not stated by the source
+      area: Land Berlin [@src]
+      method: the administration's own figures [@src]
     paragraphs:
       - Its latest report gives 8.6 km for 2025 [#reports].
 quotes:

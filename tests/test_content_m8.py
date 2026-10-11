@@ -62,10 +62,9 @@ def test_loaders_read_the_fixture(m8):
     content, config = m8
     orgs = load_organisations(content / "organisations")
     assert sorted(orgs) == ["abgeordnetenhaus", "senmvku"]
-    assert orgs["senmvku"].sections[1].dimensions == {
-        "scope": "the planned network [@src]",
-        "length": "not stated by the source",
-    }
+    dims = orgs["senmvku"].sections[1].dimensions
+    assert dims["scope"] == "the planned network [@src]"
+    assert dims["length"] == "not stated by the source"
     assert load_sources(content / "sources")["study"].kind == "research"
     assert load_document(content / "counters.yaml").title == "Bike counters"
     assert load_document(content / "absent.yaml") is None
@@ -116,7 +115,10 @@ def test_undeclared_number_in_a_profile(m8):
 
 
 def test_numbers_in_dimension_values_are_checked(m8):
-    _edit(_senmvku(m8), lambda d: d["sections"][1]["dimensions"].__setitem__("date", "as of 31"))
+    _edit(
+        _senmvku(m8),
+        lambda d: d["sections"][1]["dimensions"].__setitem__("date", "as of 31 [@src]"),
+    )
     assert _problems(m8) == ["organisations/senmvku.yaml: undeclared number 31"]
 
 

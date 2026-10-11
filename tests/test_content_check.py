@@ -470,3 +470,66 @@ def test_a_bad_lang_in_any_content_file_fails_the_check(content):
     assert any(
         p.startswith("explainer.yaml: ") and "BCP 47" in p for p in _problems(root, data, tmp)
     )
+
+
+# --- M11: every quoted figure source has a complete, cited "How they measure" ---------------
+
+
+@pytest.fixture
+def shipped(tmp_path):
+    """Writable copies of the shipped content/ and config/ (content dir, config dir, editor)."""
+    import shutil
+
+    repo = Path(__file__).parents[1]
+    content_dir, config_dir = tmp_path / "content", tmp_path / "config"
+    shutil.copytree(repo / "content", content_dir)
+    shutil.copytree(default_config_dir(), config_dir)
+
+    def dims_of(org: str, mutate) -> None:
+        path = content_dir / "organisations" / f"{org}.yaml"
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        (section,) = [s for s in doc["sections"] if s.get("dimensions")]
+        mutate(section["dimensions"])
+        path.write_text(yaml.safe_dump(doc, allow_unicode=True, sort_keys=False), "utf-8")
+
+    return content_dir, config_dir, dims_of
+
+
+def _source_row_problems(content_dir, config_dir):
+    from velometer.content.check import check_content_offline
+
+    return [p for p in check_content_offline(content_dir, config_dir) if "How they measure" in p]
+
+
+def test_shipped_figure_sources_have_complete_cited_dimensions(shipped):
+    content_dir, config_dir, _ = shipped
+    assert _source_row_problems(content_dir, config_dir) == []
+
+
+def test_a_quoted_source_whose_profile_lacks_a_dimension_fails(shipped):
+    content_dir, config_dir, dims_of = shipped
+    dims_of("ecf", lambda d: d.pop("area"))  # ECF stands behind qecio_v2_10 (reconcile.yaml)
+    problems = _source_row_problems(content_dir, config_dir)
+    assert any("ecf.yaml" in p and "area" in p and "qecio_v2_10" in p for p in problems), problems
+
+
+def test_a_dimension_value_without_a_citation_fails(shipped):
+    content_dir, config_dir, dims_of = shipped
+    dims_of("senmvku", lambda d: d.update(area="Berlin"))  # official, figures.csv berlin row
+    problems = _source_row_problems(content_dir, config_dir)
+    assert any("senmvku.yaml" in p and "area has no citation" in p for p in problems), problems
+
+
+def test_not_stated_by_the_source_needs_no_citation(shipped):
+    content_dir, config_dir, dims_of = shipped
+    dims_of("senmvku", lambda d: d.update(area="not stated by the source"))
+    assert _source_row_problems(content_dir, config_dir) == []
+
+
+def test_an_unquoted_mapping_entry_is_not_checked(shipped):
+    content_dir, config_dir, dims_of = shipped
+    with (config_dir / "organisations.yaml").open("a", encoding="utf-8") as f:
+        f.write("- {city: oslo, source: unquoted_source, organisation: senmvku}\n")
+    dims_of("senmvku", lambda d: d.update(area="Berlin"))
+    problems = _source_row_problems(content_dir, config_dir)
+    assert problems and all("unquoted_source" not in p for p in problems)

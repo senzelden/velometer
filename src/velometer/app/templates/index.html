@@ -94,7 +94,7 @@ not the published figures. km are OSM mapped km per side.</p>
 <table class="stack">
 <thead><tr>
   <th>City</th>
-  {% for p in preset_label %}<th class="num" title="{{ preset_unit[p] }}"><a href="{{ u('/sources') }}#{{ preset_anchor[p] }}">{{ preset_label[p] }}</a></th>{% endfor %}
+  {% for p in preset_label %}<th class="num" id="{{ preset_column[p] }}" title="{{ preset_unit[p] }}"><a href="{{ u('/sources') }}#{{ preset_anchor[p] }}">{{ preset_label[p] }}</a></th>{% endfor %}
   <th class="num">A+B km</th>
   <th class="num">Flagged years (LAU)</th>
 </tr></thead>
@@ -117,6 +117,7 @@ not the published figures. km are OSM mapped km per side.</p>
 <ul class="meta units">
 {% for p in preset_label %}<li><strong>{{ preset_label[p] }}:</strong> {{ preset_unit[p] }}</li>
 {% endfor %}</ul>
+<p class="meta">How each source measures: <a href="{{ u('/sources') }}">Sources</a> · why the figures differ: <a href="{{ u('/differences') }}">the six dimensions</a></p>
 </section>
 
 <section aria-labelledby="ranks-h">

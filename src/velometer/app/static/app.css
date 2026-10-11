@@ -398,6 +398,11 @@ table.diffs td { min-width: 7rem; }
 table.diffs td.num { min-width: 0; white-space: nowrap; }
 table.diffs td:nth-child(4) { min-width: 12rem; } /* Ours: the value and what it counts */
 table.diffs td:last-child { min-width: 16rem; }
+/* Sources (M11): a prose cell per dimension; each group of rows opens with its heading */
+table.sources { font-size: 0.88rem; }
+table.sources th[scope="row"] { white-space: normal; min-width: 8rem; color: var(--ink); }
+table.sources td { min-width: 6.5rem; }
+table.sources tr.group th { padding-top: 1rem; color: var(--ink); font-size: 1rem; white-space: normal; border-bottom: 2px solid var(--grid-2); }
 dl.drivers { margin: 0; font-size: 0.88rem; }
 dl.drivers div { margin-bottom: 0.35rem; }
 dl.drivers dt { font-weight: 600; }
@@ -630,6 +635,10 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   table.stack tr.note-row td { padding-top: 0; }
   table.stack td *, table.stack th[scope="row"] * { overflow-wrap: anywhere; }
   table.stack td code { white-space: normal; }
+  table.sources tr.group { border: 0; padding: 0; margin: 1rem 0 0.4rem; background: none; }
+  table.sources tr.group th { display: block; padding: 0; border: 0; }
+  table.sources td { min-width: 0; }
+  table.sources caption { display: block; text-align: left; }
   /* the compare table's header holds the sort buttons: with JS it stays on screen as a wrapped
      row of buttons (a sort bar), so keyboard and sighted users can reach and see them */
   .compare-js .sort-caption { display: block; margin: 0 0 0.3rem; font-size: 0.78rem; color: var(--muted); }

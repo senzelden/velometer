@@ -43,7 +43,8 @@ from velometer.app.narrative import render_explainer, render_narrative, safe_url
 from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
 from velometer.app.series import series_payload
-from velometer.app.sources import source_anchor
+from velometer.app.sources import GROUPS as GROUP_NAMES
+from velometer.app.sources import overview_column, source_anchor, source_rows
 from velometer.config import ConfigError, PresetRanking, load_differences
 from velometer.content.loader import (
     load_document,
@@ -129,7 +130,7 @@ COUNTERS_TEXT = "counters.yaml"  # content/: what the counters record, under the
 UNITS = {"pct": "%"}
 CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
-OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data\s*$", re.I)
+OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data(?=\s*(,|$))", re.I)
 # A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
 # is the HTML "page not found" page (the static edition's 404.html).
 NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/")
@@ -356,7 +357,8 @@ def create_app(
         return resp
 
     templates.TemplateResponse = respond  # type: ignore[method-assign]
-    # a preset label ends ", our OSM data"; a Figures row's "Ours" column says it already
+    # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
+    # "Ours" column says it already
     templates.env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
 
     cache = PageCache()
@@ -541,6 +543,7 @@ def create_app(
                 "years": data.years,
                 "preset_label": data.preset_labels(),
                 "preset_anchor": {p: source_anchor(s) for p, s in data.preset_sources().items()},
+                "preset_column": {p: overview_column(p) for p in data.preset_sources()},
                 "preset_unit": data.preset_units(),
                 "headline_unit": HEADLINE_UNIT,
                 "rankings": rankings_table(data),
@@ -877,6 +880,26 @@ def create_app(
         return page(
             request, "organisations.html", "organisations", data, **ctx,
             content_error=errors.get("*"), broken=sorted(org_errors),
+        )  # fmt: skip
+
+    @app.get("/sources", response_class=HTMLResponse)
+    async def sources_page(request: Request, data: Data):
+        def build() -> dict:
+            try:
+                rows, cited = source_rows(data, config_dir, content_dir)
+                dims = load_differences(config_dir / "differences.yaml").dimensions
+            except (ConfigError, ContentError, OSError) as e:
+                log.error("the sources table could not be built: %s", e)
+                return {"rows": [], "cited": None, "dimensions": [], "error": str(e)}
+            return {"rows": rows, "cited": cited, "dimensions": dims, "error": None}
+
+        ctx = cache.get("sources", fp(request), build)
+        groups = [
+            (name, [r for r in ctx["rows"] if r.group == g]) for g, name in GROUP_NAMES.items()
+        ]
+        return page(
+            request, "sources.html", "sources", data, groups=[(n, rs) for n, rs in groups if rs],
+            cited=ctx["cited"], dimensions=ctx["dimensions"], content_error=ctx["error"],
         )  # fmt: skip
 
     @app.get("/plans", response_class=HTMLResponse)
