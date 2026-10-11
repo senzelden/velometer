@@ -258,6 +258,11 @@ p.kicker { margin: 2rem 0 0; }
 .cite-copy { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
 .cite pre { margin: 0.25rem 0 0; padding: 0.5rem 0.6rem; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 td .cite, th .cite { margin: 0.4rem 0 0; }
+.download { margin: 0 0 1rem; }
+.download > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
+.download-row { display: flex; gap: 0.5rem; margin: 0.4rem 0; }
+.download-row button { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
+[hidden] + .download { display: none; }
 .flagmark { color: var(--flag); }
 
 /* ---------- charts (static/js/chart.js) ---------- */

@@ -530,3 +530,34 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
                     (city, "lau")
                 ), (url, title)
     assert seen_fua
+
+
+def test_theme_tokens_cover_both_themes_and_dark_maps_unambiguously(client):  # noqa: F811
+    from tests.test_app_m8 import _stylesheet
+    from velometer.app.tokens import theme_tokens
+
+    toks = theme_tokens(_stylesheet())
+    assert toks["--ink"][0] != toks["--ink"][1]
+    drawable = [k for k in toks if k.startswith(("--series-", "--tier-", "--ink", "--muted",
+                "--grid", "--axis", "--halo", "--surface", "--paper", "--flag", "--outline",
+                "--ctx", "--marker-"))]  # fmt: skip
+    seen = {}
+    for k in drawable:
+        light, dark = toks[k]
+        assert seen.setdefault(dark, light) == light, (k, dark)  # Review Focus 2
+
+
+def test_theme_tokens_parse_both_blocks_and_keep_light_when_dark_is_silent():
+    from velometer.app.tokens import theme_tokens
+
+    css = (
+        ":root { --a: #111111; --b: #222222; --font: system-ui; }"
+        "@media (prefers-color-scheme: dark) { :root { --a: #eeeeee; } }"
+    )
+    assert theme_tokens(css) == {"--a": ["#111111", "#eeeeee"], "--b": ["#222222", "#222222"]}
+
+
+def test_every_page_ships_tokens_and_commit(client):  # noqa: F811
+    html = client.get("/").text
+    assert 'id="theme-tokens"' in html and 'name="velometer-commit"' in html
+    assert "download-ui.js" in html

@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="{{ csp_meta }}">
 <meta name="velometer-base" content="{{ base_path }}">
+<meta name="velometer-commit" content="{{ build_commit }}">
 <title>{% block title %}velometer{% endblock %}</title>
 <link rel="icon" href="{{ u('/static/favicon.svg') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ u('/static/app.css') }}">
 {% block head %}{% endblock %}
 <script type="module" src="{{ u('/static/js/nav.js') }}"></script>
 <script type="module" src="{{ u('/static/js/cite-ui.js') }}"></script>
+<script type="module" src="{{ u('/static/js/download-ui.js') }}"></script>
 {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -32,6 +34,7 @@
   <p>Classifier {{ footer.classifier }} · config <code>{{ footer.config }}</code></p>{% if static_edition %}
   <p>Static edition · build {{ static_edition.commit }}</p>{% endif %}
 </footer>
+<script type="application/json" id="theme-tokens">{{ theme_tokens | tojson }}</script>
 <div id="live" class="visually-hidden" aria-live="polite"></div>
 </body>
 </html>

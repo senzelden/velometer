@@ -47,6 +47,7 @@ from velometer.app.regions import name_scroll_regions
 from velometer.app.series import series_payload
 from velometer.app.sources import GROUPS as GROUP_NAMES
 from velometer.app.sources import overview_column, source_anchor, source_rows
+from velometer.app.tokens import theme_tokens
 from velometer.config import ConfigError, PresetRanking, load_differences
 from velometer.content.loader import (
     load_document,
@@ -342,6 +343,14 @@ def create_app(
     templates.env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
     templates.env.globals["static_edition"] = static_edition
     templates.env.globals["cite_text"] = cite_model.cite_text
+    # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light, and
+    # the commit the source line names (the export's build commit, else the live checkout's)
+    templates.env.globals["theme_tokens"] = theme_tokens(
+        (HERE / "static" / "app.css").read_text(encoding="utf-8")
+    )
+    templates.env.globals["build_commit"] = (
+        static_edition["commit"] if static_edition else short_commit(git_commit())
+    )
     templates.env.filters["cite_json"] = cite_model.json_fields
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md

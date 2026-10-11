@@ -419,16 +419,17 @@ def test_responses_are_gzipped_when_the_client_accepts_it(client):
 
 
 def test_pages_load_our_chart_modules(client):
+    base = ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/download-ui.js"]
     pages = {
-        "/": ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/overview.js"],
-        "/cities": ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/overview.js"],
-        "/city/berlin": ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/city.js"],
-        "/city/berlin/time": ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/city.js"],
-        "/city/berlin/tiers": ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/city.js",
-                               "/static/vendor/leaflet.js", "/static/map.js"],
-        "/city/berlin/figures": ["/static/js/nav.js", "/static/js/cite-ui.js"],
-        "/differences": ["/static/js/nav.js", "/static/js/cite-ui.js"],
-        "/methodology": ["/static/js/nav.js", "/static/js/cite-ui.js"],
+        "/": [*base, "/static/js/overview.js"],
+        "/cities": [*base, "/static/js/overview.js"],
+        "/city/berlin": [*base, "/static/js/city.js"],
+        "/city/berlin/time": [*base, "/static/js/city.js"],
+        "/city/berlin/tiers": [*base, "/static/js/city.js", "/static/vendor/leaflet.js",
+                               "/static/map.js"],
+        "/city/berlin/figures": base,
+        "/differences": base,
+        "/methodology": base,
     }  # fmt: skip
     for path, expected in pages.items():
         srcs = re.findall(r'<script[^>]+src="([^"]+)"', client.get(path).text)
