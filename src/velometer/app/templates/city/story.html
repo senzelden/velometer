@@ -33,7 +33,7 @@
 </table>
 </div>
 </details>
-{{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU) and metro area (FUA)", city=city.id)) }}
+{{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU)", city=city.id)) }}
 {% else %}<p class="note">no run (history)</p>{% endif %}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">Over time, with flagged years →</a></p>
 </section>

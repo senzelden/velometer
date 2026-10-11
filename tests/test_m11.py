@@ -496,3 +496,37 @@ def test_the_keynums_cite_is_titled_for_the_run_it_cites(client):  # noqa: F811
 def test_cite_pre_blocks_are_not_scroll_regions():
     js = (STATIC_JS / "cite-ui.js").read_text(encoding="utf-8")
     assert "scroll" not in js
+
+
+def test_a_cite_names_only_the_boundary_whose_run_it_cites(
+    client,  # noqa: F811
+    all_page_urls,  # noqa: F811
+    fixture_db,
+):
+    # a citation is built from one run (LAU unless it says FUA): its title may name that
+    # boundary only. A title naming both, or FUA with the LAU run, cites a run it does not name.
+    data = fixture_db[3]
+    runs = {
+        (c.id, k): next(
+            str(r["run_id"])
+            for r in data.csv_rows(c.id)
+            if r["boundary_kind"] == k and r["label"] == "current"
+        )
+        for c in data.cities()
+        for k in ("lau", "fua")
+        if any(r["boundary_kind"] == k and r["label"] == "current" for r in data.csv_rows(c.id))
+    }
+    seen_fua = 0
+    for url in all_page_urls:
+        for blob in CITE_DATA.findall(client.get(url).text):
+            f = json.loads(blob)
+            title = f["title"]
+            names_lau, names_fua = "LAU" in title, bool(re.search(r"\bFUA\b", title))
+            assert not (names_lau and names_fua), (url, title)
+            if names_fua and f["run_id"] is not None:
+                seen_fua += 1
+                city = next(c for (c, k), rid in runs.items() if k == "fua" and rid == f["run_id"])
+                assert f["run_id"] == runs[(city, "fua")] and f["run_id"] != runs.get(
+                    (city, "lau")
+                ), (url, title)
+    assert seen_fua
