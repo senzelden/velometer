@@ -81,3 +81,9 @@ export function serializeState(state) {
   if (state.hl.length) parts.push(`hl=${enc(state.hl)}`);
   return parts.join("&");
 }
+
+/** The city whose panel the query asks to open (`panel=<id>`), if it is a known city, else null. */
+export function panelOf(search, known) {
+  const id = new URLSearchParams(search).get("panel");
+  return id && known.cities.includes(id) ? id : null;
+}

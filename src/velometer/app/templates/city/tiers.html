@@ -1,5 +1,5 @@
 {% extends "city/_page.html" %}
-{% from "_cite.html" import cite %}
+{% from "_cite.html" import cite, copy_link %}
 {% from "city/_tier_table.html" import tier_series_table %}
 {% block head %}{% if tiermap %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
@@ -46,6 +46,7 @@
 
 <section>
 <h2>Tier map</h2>
+{{ copy_link() }}
 {% if tiermap %}
 <div class="tiermap-controls">
 <fieldset class="kinds"><legend>Boundary</legend>

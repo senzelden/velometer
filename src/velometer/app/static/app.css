@@ -257,6 +257,10 @@ p.kicker { margin: 2rem 0 0; }
 .cite-head h4 { margin: 0; font-size: 0.85rem; color: var(--ink); }
 .cite-copy { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
 .cite pre { margin: 0.25rem 0 0; padding: 0.5rem 0.6rem; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Copy link (M11): shown by permalink-ui.js; where the clipboard is refused the address is selected here. */
+.permalink { margin: 0 0 1rem; }
+.copy-link { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
+.copy-link-url { margin: 0.4rem 0 0; padding: 0.5rem 0.6rem; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 td .cite, th .cite { margin: 0.4rem 0 0; }
 .download { margin: 0 0 1rem; }
 .download > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }

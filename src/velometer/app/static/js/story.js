@@ -7,6 +7,7 @@ import { renderLines, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { buildModel, slotPlan } from "./compare-model.js";
 import { describe } from "./describe.js";
+import { stepFromHash } from "./permalink.js";
 import { displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
 
 const cfg = JSON.parse(document.getElementById("story-config").textContent);
@@ -110,9 +111,23 @@ document.documentElement.classList.add("story-js");
 for (const d of document.querySelectorAll("details.step-values")) d.open = false;
 
 const sections = [...document.querySelectorAll("section[data-step]")];
+const ids = sections.map((s) => s.dataset.step);
+// permalink: the step in view is the address's #step-<id> (replaceState: Back is not flooded). The
+// first step at the top of a page that came without a step hash writes nothing.
+let written = stepFromHash(location.hash, ids);
+const remember = (step) => {
+  if (step === written || (step === ids[0] && written === null)) return;
+  written = step;
+  try {
+    history.replaceState(history.state, "", `${location.pathname}${location.search}#step-${encodeURIComponent(step)}`);
+  } catch {
+    // a frame that refuses history changes: the page works without the permalink
+  }
+};
 const mark = (step) => {
   for (const s of sections) s.classList.toggle("is-active", s.dataset.step === step);
   show(step);
+  remember(step);
 };
 // the section that crosses a thin band a third of the way down the viewport is the one being read
 const seen = new Set();
@@ -127,7 +142,10 @@ const observer = new IntersectionObserver(
   { rootMargin: "-30% 0px -60% 0px" },
 );
 for (const s of sections) observer.observe(s);
-if (sections.length) mark(sections[0].dataset.step);
+// a permalink's step: scroll to it and mark it (an unknown step is ignored)
+const wanted = stepFromHash(location.hash, ids);
+if (wanted) sections.find((s) => s.dataset.step === wanted).scrollIntoView();
+if (sections.length) mark(wanted ?? ids[0]);
 
 loadSeries()
   .then((data) => {

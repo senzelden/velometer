@@ -6,3 +6,6 @@
 <p class="cite-text">{{ cite_text(fields) }}</p>
 <script type="application/json" class="cite-data">{{ fields | cite_json | tojson }}</script>
 </details>{% endif %}{% endmacro %}
+{#- "Copy link" (M11): the page's address with its permalink state. Hidden until permalink-ui.js
+    reveals it; without JavaScript the address bar is the link. -#}
+{% macro copy_link() %}<div class="permalink"><button type="button" class="copy-link" hidden>Copy link</button></div>{% endmacro %}

@@ -1,5 +1,5 @@
 {% extends "city/_page.html" %}
-{% from "_cite.html" import cite %}
+{% from "_cite.html" import cite, copy_link %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <div class="story-layout">
@@ -34,6 +34,7 @@
 </div>
 </details>
 {{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU)", city=city.id)) }}
+{{ copy_link() }}
 {% else %}<p class="note">no run (history)</p>{% endif %}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">Over time, with flagged years →</a></p>
 </section>

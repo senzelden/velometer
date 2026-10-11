@@ -4,6 +4,7 @@
 // stylesheet token (--tier-a … --tier-e, --outline) read when it draws, and the layers are
 // restyled in place when the OS theme changes (zoom and position stay). OSM tag values are user
 // data: popups are built with textContent, never innerHTML.
+import { TIERMAP, read, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
 
 (function () {
@@ -17,6 +18,10 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
   var cache = {}; // kind -> FeatureCollection
   var current = null; // {tiers: {A: layer, ...}, boundary: layer}
   var selected = null; // the kind the reader picked last
+  // permalink state (?kind=&tiers=&at=lat,lon,z): bad values are the defaults, see permalink.js
+  var want = read(location.search, TIERMAP, cfg.kinds.map(function (k) { return k.kind; }));
+  var view = want.at; // the reader's own pan/zoom, or null while the app's fit is showing
+  var fitting = false; // true while the app moves the map itself: that is not the reader's view
 
   var map = L.map(mapEl, { preferCanvas: true });
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
@@ -100,6 +105,19 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     return box;
   }
 
+  // write the state into the address (replaceState: the Back button is not flooded)
+  function sync() {
+    var radio = document.querySelector('input[name="kind"]:checked');
+    var tiers = TIERS.filter(checked);
+    try {
+      history.replaceState(history.state, "", write({
+        kind: radio && radio.value !== cfg.kinds[0].kind ? radio.value : null,
+        tiers: tiers,
+        at: view,
+      }, TIERMAP));
+    } catch (e) { /* a sandboxed frame may refuse; the page works without */ }
+  }
+
   function checked(tier) {
     var box = document.querySelector('input[name="tier"][value="' + tier + '"]');
     return !box || box.checked;
@@ -135,7 +153,10 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     var bounds = boundary ? boundary.getBounds() : L.featureGroup(TIERS.map(function (t) {
       return tiers[t];
     })).getBounds();
-    if (bounds.isValid()) map.fitBounds(bounds);
+    fitting = true;
+    if (view) map.setView([view[0], view[1]], view[2], { animate: false });
+    else if (bounds.isValid()) map.fitBounds(bounds, { animate: false });
+    fitting = false;
     var p = data.properties || {};
     say(
       kind.toUpperCase() + " · " + data.features.length + " sides · OSM " + p.osm_timestamp +
@@ -166,6 +187,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
 
   document.querySelectorAll('input[name="tier"]').forEach(function (box) {
     box.addEventListener("change", function () {
+      sync();
       if (!current) return;
       var layer = current.tiers[box.value];
       if (box.checked) layer.addTo(map);
@@ -177,10 +199,28 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     });
   });
   document.querySelectorAll('input[name="kind"]').forEach(function (radio) {
-    radio.addEventListener("change", function () { if (radio.checked) load(radio.value); });
+    radio.addEventListener("change", function () {
+      if (!radio.checked) return;
+      view = null; // another boundary is fitted by the app; the old view is no longer the reader's
+      load(radio.value);
+      sync();
+    });
+  });
+  map.on("moveend", function () {
+    if (fitting) return;
+    var c = map.getCenter();
+    view = [c.lat, c.lng, map.getZoom()];
+    sync();
   });
   paintKey(tierColours());
   onThemeChange(restyle);
-  var first = document.querySelector('input[name="kind"]:checked');
-  load(first ? first.value : cfg.kinds[0].kind);
+  // apply the permalink state to the controls before the first draw
+  var kind = want.kind || cfg.kinds[0].kind;
+  document.querySelectorAll('input[name="kind"]').forEach(function (radio) {
+    radio.checked = radio.value === kind;
+  });
+  document.querySelectorAll('input[name="tier"]').forEach(function (box) {
+    box.checked = want.tiers.indexOf(box.value) !== -1;
+  });
+  load(kind);
 })();

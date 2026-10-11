@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_cite.html" import cite %}
+{% from "_cite.html" import cite, copy_link %}
 {% block title %}velometer · Stories{% endblock %}
 {% block scripts %}{% if config %}<script type="module" src="{{ u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
@@ -23,6 +23,7 @@
 {% if nar %}
 <h1>{{ nar.title }}</h1>
 <p class="dek">{{ nar.dek }}</p>
+{{ copy_link() }}
 <div class="stories">
   <aside class="story-sticky" data-story-chart hidden aria-label="Chart for the current step">
     <p class="eyebrow" data-story-eyebrow></p>

@@ -419,7 +419,12 @@ def test_responses_are_gzipped_when_the_client_accepts_it(client):
 
 
 def test_pages_load_our_chart_modules(client):
-    base = ["/static/js/nav.js", "/static/js/cite-ui.js", "/static/js/download-ui.js"]
+    base = [
+        "/static/js/nav.js",
+        "/static/js/cite-ui.js",
+        "/static/js/download-ui.js",
+        "/static/js/permalink-ui.js",
+    ]
     pages = {
         "/": [*base, "/static/js/overview.js"],
         "/cities": [*base, "/static/js/overview.js"],

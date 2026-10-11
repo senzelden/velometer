@@ -612,6 +612,194 @@ def interact_cite(devtools: str, origin: str, base: str, theme: str, width: int,
             t.close()
 
 
+PERMALINK_TIERS = "city/berlin/tiers?kind=fua&tiers=AB&at=52.52,13.40,12"
+# the map's centre and zoom, read back from the tile under the container's centre (the map object
+# is private to map.js); {z, lat, lon} or null while no tile has been placed
+MAP_VIEW_JS = r"""(() => {
+  const box = document.querySelector('#tiermap').getBoundingClientRect();
+  const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+  for (const i of document.querySelectorAll('img.leaflet-tile')) {
+    const m = i.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+    const r = i.getBoundingClientRect();
+    if (!m || cx < r.left || cx >= r.right || cy < r.top || cy >= r.bottom) continue;
+    const z = +m[1], n = 2 ** z;
+    const x = +m[2] + (cx - r.left) / r.width, y = +m[3] + (cy - r.top) / r.height;
+    const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
+    return {z, lat, lon: x / n * 360 - 180};
+  }
+  return null;
+})()"""
+TIER_STATE_JS = """(() => ({
+  kind: (document.querySelector('input[name=kind]:checked') || {}).value,
+  tiers: [...document.querySelectorAll('input[name=tier]:checked')].map(e => e.value).join(''),
+  search: location.search, hash: location.hash,
+}))()"""
+STORY_STEP_JS = """(() => ({
+  active: (document.querySelector('section[data-step].is-active') || {dataset: {}}).dataset.step,
+  hash: location.hash, top: Math.round(scrollY),
+}))()"""
+
+
+def _at(search: str) -> list[float] | None:
+    got = dict(p.split("=", 1) for p in search.lstrip("?").split("&") if "=" in p)
+    return [float(x) for x in got["at"].split(",")] if "at" in got else None
+
+
+def _permalink_tiers(devtools, origin, base, theme, width, shots) -> tuple[Tab, list[str], list]:
+    """The tier map opened from a permalink shows that state; a pan or zoom rewrites `at`; a
+    hostile query leaves the defaults and says nothing."""
+    t = open_tab(devtools, width, theme)
+    errors = navigate(t, origin + base + PERMALINK_TIERS)
+    errors += _wait_map(t, "the tier map did not draw")
+    if errors:
+        return t, errors, []
+    st = t.js(TIER_STATE_JS)
+    if st["kind"] != "fua" or st["tiers"] != "AB":
+        errors.append(f"permalink state not applied: kind {st['kind']!r}, tiers {st['tiers']!r}")
+    view = t.js(MAP_VIEW_JS)
+    if (
+        not view
+        or view["z"] != 12
+        or abs(view["lat"] - 52.52) > 0.01
+        or abs(view["lon"] - 13.40) > 0.01
+    ):
+        errors.append(f"map view not restored: {view}")
+    if _at(st["search"]) != [52.52, 13.4, 12]:
+        errors.append(f"loading the permalink rewrote the address: {st['search']}")
+    # a reader's zoom and drag rewrite `at`
+    t.js("document.querySelector('#tiermap').focus()")
+    press(t, "+", wait=1.5)
+    now = _at(t.js("location.search"))
+    if not now or now[2] != 13:
+        errors.append(f"zooming in did not write at=..,13: {now}")
+    box = t.js("(() => { const r = document.querySelector('#tiermap').getBoundingClientRect();"
+               " return {x: r.left + r.width / 2, y: r.top + r.height / 2}; })()")  # fmt: skip
+    t.call("Input.dispatchMouseEvent", type="mouseMoved", x=box["x"], y=box["y"])
+    t.call("Input.dispatchMouseEvent", type="mousePressed", x=box["x"], y=box["y"], button="left",
+           buttons=1, clickCount=1)  # fmt: skip
+    for k in range(1, 9):
+        t.call("Input.dispatchMouseEvent", type="mouseMoved", x=box["x"] - 25 * k, y=box["y"],
+               button="left", buttons=1)  # fmt: skip
+        t.pump(0.03)
+    t.call("Input.dispatchMouseEvent", type="mouseReleased", x=box["x"] - 200, y=box["y"],
+           button="left", buttons=0, clickCount=1)  # fmt: skip
+    t.pump(0.8)
+    panned = _at(t.js("location.search"))
+    if not panned or not now or panned[1] <= now[1]:
+        errors.append(f"dragging the map did not move at= east: {now} -> {panned}")
+    # a tier box and the boundary radio write the address too
+    if why := click(t, 'input[name="tier"][value="C"]'):
+        errors.append(why)
+    elif "tiers=ABC" not in t.js("location.search"):
+        errors.append(f"checking tier C did not write tiers=ABC: {t.js('location.search')}")
+    shot = screenshot(t, shots / f"permalink-tiers-{theme}-{width}.png", width)
+    return t, errors, [shot]
+
+
+def _wait_map(t: Tab, why: str) -> list[str]:
+    ok = t.wait_js(
+        "!!document.querySelector('img.leaflet-tile')"
+        " && !/^Loading/.test(document.querySelector('#tiermap-status').textContent)",
+        15,
+    )
+    t.pump(0.5)
+    return [] if ok else [why]
+
+
+def interact_permalink(devtools: str, origin: str, base: str, theme: str, width: int, shots: Path):
+    """Permalinks (M11): a tier map URL, a story `#step-` and a compare `panel=` URL each open
+    the state they name, a bad value opens the defaults, and the console stays quiet."""
+    label = base + "permalinks"
+    errors: list[str] = []
+    events: list = []
+    shot = None
+    t = None
+    try:
+        t, errs, got = _permalink_tiers(devtools, origin, base, theme, width, shots)
+        errors += errs
+        shot = got[0] if got else None
+        events += t.events
+        t.close()
+        # hostile values: defaults, no console message
+        t = open_tab(devtools, width, theme)
+        errs = navigate(t, origin + base + "city/berlin/tiers?tiers=XYZ&kind=%E0%A4%A&at=NaN,1,5")
+        errs += _wait_map(t, "the tier map did not draw with a hostile query")
+        errors += errs
+        if not errs:
+            st = t.js(TIER_STATE_JS)
+            if st["tiers"] != "ABCDE" or st["kind"] != "lau":
+                errors.append(f"a hostile query did not give the defaults: {st}")
+        events += t.events
+        t.close()
+        # a story step: the page opens on it and marks it
+        t = open_tab(devtools, width, theme)
+        errs = navigate(t, origin + base + "stories")
+        if errs:
+            errors += errs
+        else:
+            t.pump(1.0)
+            steps = t.js("[...document.querySelectorAll('section[data-step]')]"
+                         ".map(s => s.dataset.step)")  # fmt: skip
+            if len(steps) < 3:
+                errors.append(f"expected at least 3 story steps, found {steps}")
+            else:
+                # scrolling a step into view writes #step-<id> (replaceState)
+                t.js(f"document.getElementById('step-{steps[1]}').scrollIntoView()")
+                t.pump(1.5)
+                got = t.js(STORY_STEP_JS)
+                if got["hash"] != f"#step-{steps[1]}":
+                    errors.append(f"reading step {steps[1]} did not write its hash: {got}")
+                # scrolling a step into view writes #step-<id> (replaceState)
+                t.js(f"document.getElementById('step-{steps[1]}').scrollIntoView()")
+                t.pump(1.5)
+                got = t.js(STORY_STEP_JS)
+                if got["hash"] != f"#step-{steps[1]}":
+                    errors.append(f"reading step {steps[1]} did not write its hash: {got}")
+                want = steps[2]
+                errs = navigate(t, origin + base + f"stories#step-{want}")
+                errors += errs
+                t.pump(2.0)
+                got = t.js(STORY_STEP_JS)
+                if got["active"] != want or got["hash"] != f"#step-{want}" or got["top"] < 100:
+                    errors.append(f"story permalink not restored (want {want}): {got}")
+                errs = navigate(t, origin + base + "stories#step-gone")
+                errors += errs
+                t.pump(1.0)
+                got = t.js(STORY_STEP_JS)
+                if got["active"] != steps[0]:
+                    errors.append(f"an unknown step did not open the first step: {got}")
+        events += t.events
+        t.close()
+        # compare: panel=<city> reopens the panel; an unknown city is ignored; closing drops it
+        t = open_tab(devtools, width, theme)
+        errs = navigate(t, origin + base + "compare?panel=berlin")
+        errors += errs
+        if not errs:
+            if not t.wait_js(PANEL_OPEN_JS, 10):
+                errors.append("compare?panel=berlin did not open the city panel")
+            else:
+                for typ in ("keyDown", "keyUp"):
+                    t.call("Input.dispatchKeyEvent", type=typ, key="Escape", code="Escape",
+                           windowsVirtualKeyCode=27)  # fmt: skip
+                if not t.wait_js(PANEL_CLOSED_JS, 3):
+                    errors.append("Escape did not close the permalinked panel")
+                elif "panel=" in t.js("location.search"):
+                    errors.append(f"closing left panel= in the address: {t.js('location.search')}")
+        errs = navigate(t, origin + base + "compare?panel=atlantis")
+        errors += errs
+        t.pump(1.5)
+        if not errs and not t.js(PANEL_CLOSED_JS):
+            errors.append("an unknown panel city opened a panel")
+        events += t.events  # before the audit, whose own findings are the axe list
+        overflow = t.js(OVERFLOW_JS)
+        axe = audit(t)
+        return entry(label, theme, width, "interact", axe=axe, overflow=overflow, events=events,
+                     errors=errors, shot=shot)  # fmt: skip
+    finally:
+        if t is not None:
+            t.close()
+
+
 # ---------- the keyboard pass (--keyboard) ----------
 # (key, code, windowsVirtualKeyCode, text); anything not here is a single printable character
 KEYS = {
@@ -1093,6 +1281,7 @@ def main(argv: list[str] | None = None) -> int:
         plan += [("interact", base + "compare", th, w) for th in themes for w in widths]
         plan += [("cite", base + CITE_PAGE, th, w) for th in themes for w in widths]
         plan += [("download", base + DOWNLOAD_PAGE, th, w) for th in themes for w in widths]
+        plan += [("permalink", base + "permalinks", th, w) for th in themes for w in widths]
     if a.keyboard:
         plan += [("keyboard", base, th, 1280) for th in themes]
 
@@ -1125,6 +1314,8 @@ def main(argv: list[str] | None = None) -> int:
                     r = interact_download(devtools, origin, base, theme, width, shots)
                 elif kind == "cite":
                     r = interact_cite(devtools, origin, base, theme, width, shots)
+                elif kind == "permalink":
+                    r = interact_permalink(devtools, origin, base, theme, width, shots)
                 elif kind == "keyboard":
                     r = keyboard(devtools, origin, base, theme)
                     print("\n".join(f"    [{theme}] {x}" for x in r["steps"]), flush=True)

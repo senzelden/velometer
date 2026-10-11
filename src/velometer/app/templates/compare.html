@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_cite.html" import cite %}
+{% from "_cite.html" import cite, copy_link %}
 {% block title %}velometer · Compare{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/compare.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Compare</span></nav>{% endblock %}
@@ -67,6 +67,7 @@
 </table>
 </div>
 {{ cite(compare_cite) }}
+{{ copy_link() }}
 {% if not table.rows %}<p class="note">No city selected.</p>{% endif %}
 <p class="meta" data-compare-foot>{{ foot }}</p>
 </section>

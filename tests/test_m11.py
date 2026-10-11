@@ -576,3 +576,35 @@ def test_server_csv_guards_formula_cells_and_keeps_numbers():
     body = list(csv.DictReader(io.StringIO(csv_table([row], SUBAREA_CSV_COLUMNS))))[0]
     assert body["name"] == '\'=HYPERLINK("http://x")'
     assert body["length_km"] == "-3.2"
+
+
+# ---- Task 6: permalinks and "Copy link" ----
+
+COPY_LINK = re.compile(r'<button type="button" class="copy-link" hidden>Copy link</button>')
+
+
+def test_stateful_pages_render_a_hidden_copy_link_button(client):  # noqa: F811
+    for url in ["/city/berlin/tiers", "/city/berlin", "/stories", "/compare"]:
+        html = client.get(url).text
+        assert len(COPY_LINK.findall(html)) == 1, url  # hidden until permalink-ui.js reveals it
+        assert "permalink-ui.js" in html, url
+
+
+def test_permalink_js_reveals_the_button_and_copies_through_copytext():
+    ui = (STATIC_JS / "permalink-ui.js").read_text(encoding="utf-8")
+    assert "copyText" in ui and "currentAddress" in ui and ".copy-link" in ui
+    assert "hidden = false" in ui
+    for name in ["map.js", "js/story.js", "js/panel.js", "js/compare.js"]:
+        src = (STATIC_JS.parent / name).read_text(encoding="utf-8")
+        assert "replaceState" in src, name
+    for name in ["map.js", "js/story.js", "js/panel.js"]:
+        assert "permalink.js" in (STATIC_JS.parent / name).read_text(encoding="utf-8"), name
+
+
+def test_permalink_code_never_writes_url_values_with_innerhtml():
+    for name in ["map.js", "js/story.js", "js/panel.js", "js/compare.js", "js/permalink.js",
+                 "js/permalink-ui.js"]:  # fmt: skip
+        src = (STATIC_JS.parent / name).read_text(encoding="utf-8")
+        assert not re.search(
+            r"\.(innerHTML|outerHTML)\s*\+?=|insertAdjacentHTML|document\.write", src
+        ), name

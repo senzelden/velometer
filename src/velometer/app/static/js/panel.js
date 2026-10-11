@@ -6,8 +6,12 @@
 import { loadSeries, releaser } from "./data.js";
 import { announce } from "./live.js";
 import { url } from "./base.js";
+import { setParam } from "./permalink.js";
 import { closeAction, openAction, panelAnnouncement, panelUrl } from "./compare-model.js";
 import { drawTiers } from "./tier-chart.js";
+
+/** The address with `panel=<id>` in its query (removed for null); path and hash stay. */
+const addressWith = (id) => location.pathname + setParam(location.search, "panel", id) + location.hash;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tabindex]:not([tabindex="-1"])';
 
@@ -78,6 +82,10 @@ export function createPanel(root, opts = {}) {
     charts.run(); // the content stays in the hidden body until the next city, but nothing redraws it
     document.body.classList.remove("panel-open");
     current = null;
+    // the address no longer names a panel (a Back that landed on a panel-less entry changes nothing)
+    if (new URLSearchParams(location.search).has("panel")) {
+      history.replaceState(history.state, "", addressWith(null));
+    }
     applyModal();
     const target = returnTo?.offsetParent && returnTo !== document.body ? returnTo : opts.fallbackFocus?.(id);
     returnTo = null;
@@ -90,8 +98,8 @@ export function createPanel(root, opts = {}) {
     if (opener) returnTo = opener;
     const action = openAction(!root.hidden);
     const state = { ...history.state, panel: id };
-    if (action === "push") history.pushState(state, "", location.href);
-    else history.replaceState(state, "", location.href);
+    if (action === "push") history.pushState(state, "", addressWith(id));
+    else history.replaceState(state, "", addressWith(id));
     const keep = returnTo;
     show(id);
     if (action === "push" && opener) returnTo = keep;

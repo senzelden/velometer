@@ -17,7 +17,8 @@ import { announce } from "./live.js";
 import { multiFields } from "./cite.js";
 import { fieldsOf, setFields } from "./cite-ui.js";
 import { labelCells } from "./table.js";
-import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
+import { setParam } from "./permalink.js";
+import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, panelOf, parseState, serializeState } from "./state.js";
 
 const FUA_NOTE =
   "A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).";
@@ -62,9 +63,15 @@ const el = (tag, attrs = {}, text) => {
 
 // ---- state <-> URL <-> form ----
 
+// the open panel travels in the query (`panel=<city id>`), after the compare state
+const withPanel = (qs) => {
+  const q = setParam(qs ? `?${qs}` : "", "panel", panel.isOpen ? panel.current : null);
+  return q.replace(/^\?/, "");
+};
+
 function commit() {
   const qs = serializeState(state);
-  history.replaceState(history.state, "", compareUrl(qs));
+  history.replaceState(history.state, "", compareUrl(withPanel(qs)));
 }
 
 function apply(search) {
@@ -138,7 +145,7 @@ window.addEventListener("popstate", (e) => {
   if (plan.panel) panel.show(plan.panel);
   else if (panel.isOpen) panel.hide();
   if (plan.restore !== null) {
-    history.replaceState(e.state, "", compareUrl(plan.restore));
+    history.replaceState(e.state, "", compareUrl(withPanel(plan.restore)));
   }
   if (plan.rerender) {
     state = parseState(location.search, known);
@@ -428,6 +435,10 @@ new ResizeObserver(() => {
 
 // the OS theme changed: redraw the same state (colours are read at draw time, slots are kept)
 onThemeChange(() => render(true));
+
+// a permalink with `panel=<city>` reopens that city's panel (an unknown city is ignored)
+const wantedPanel = panelOf(location.search, known);
+if (wantedPanel) panel.show(wantedPanel);
 
 loadSeries()
   .then((data) => {
