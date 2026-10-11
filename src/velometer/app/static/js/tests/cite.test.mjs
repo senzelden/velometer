@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { absoluteUrl, citeBibtex, citeCsl, citeText } from "../cite.js";
+import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson, multiFields } from "../cite.js";
 
 // shared with tests/test_m11.py, so the Python and JS formatting rules agree
-const CASES = JSON.parse(
+const SHARED = JSON.parse(
   readFileSync(new URL("../../../../../../tests/cite_cases.json", import.meta.url), "utf8"),
 );
+const CASES = SHARED.cases;
 
 const docWithBase = (content) => ({
   querySelector: (sel) =>
@@ -21,6 +22,7 @@ test("cite: the shared cases give the same text, BibTeX and CSL-JSON", () => {
     assert.equal(citeText(c.fields, c.accessed, c.url), c.text, c.name);
     assert.equal(citeBibtex(c.fields, c.accessed, c.url), c.bibtex, c.name);
     assert.deepEqual(citeCsl(c.fields, c.accessed, c.url), c.csl, c.name);
+    assert.equal(cslJson(citeCsl(c.fields, c.accessed, c.url)), c.csl_text, c.name);
   }
 });
 
@@ -35,19 +37,24 @@ test("absoluteUrl: origin + base + path + search + hash", () => {
   );
 });
 
-test("multiFields mirrors fields_for_cities: a day range, natural classifier order, skipped runless", async () => {
-  const { multiFields } = await import("../cite.js");
-  const runs = {
-    a: { osm_timestamp: "2026-10-05T01:00:00Z", classifier: "v10" },
-    b: { osm_timestamp: "2026-10-03T01:00:00Z", classifier: "v9" },
-    c: { osm_timestamp: "2026-10-04T01:00:00Z", classifier: "v9" },
-  };
-  const f = multiFields(runs, ["a", "b", "c", "nowhere"], "t", "/compare", "abc1234");
-  assert.equal(f.snapshot_note, "OSM snapshots of 2026-10-03 to 2026-10-05");
-  assert.equal(f.classifier, "v9/v10");
-  assert.equal(f.run_id, null);
-  assert.equal(f.osm_timestamp, null);
-  assert.equal(f.commit, "abc1234");
-  assert.equal(multiFields(runs, ["b", "b"], "t", "/compare", "x").snapshot_note, "OSM snapshot of 2026-10-03");
-  assert.equal(multiFields(runs, ["nowhere"], "t", "/compare", "x"), null);
+test("cslJson puts every date-parts array on one line", () => {
+  const text = cslJson({ issued: { "date-parts": [[2026]] }, accessed: { "date-parts": [[2026, 10, 11]] } });
+  assert.match(text, /"date-parts": \[\[2026\]\]/);
+  assert.match(text, /"date-parts": \[\[2026, 10, 11\]\]/);
+});
+
+test("absoluteUrl takes the slashless path the page emits, under / and a base", () => {
+  const loc = { origin: "https://x.org", search: "", hash: "" };
+  assert.equal(absoluteUrl("city/berlin/time", loc, docWithBase("/")), "https://x.org/city/berlin/time");
+  assert.equal(
+    absoluteUrl("city/berlin/time", loc, docWithBase("/velometer/")),
+    "https://x.org/velometer/city/berlin/time",
+  );
+});
+
+test("multiFields agrees with the shared cases (tests/cite_cases.json, multi)", () => {
+  assert.ok(SHARED.multi.length >= 3);
+  for (const c of SHARED.multi) {
+    assert.deepEqual(multiFields(c.runs, c.ids, c.title, c.path, c.commit), c.expected, c.name);
+  }
 });

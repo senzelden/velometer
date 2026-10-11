@@ -495,13 +495,13 @@ CITE_BLOCKS_JS = """(() => {
   const pre = d && d.open && d.querySelector('pre');
   if (!pre) return null;
   return {n: d.querySelectorAll('.cite-block').length,
-          regions: d.querySelectorAll('.cite-block .scroll[role=region][tabindex="0"]').length,
+          regions: d.querySelectorAll('.cite-block pre').length,
           text: pre.textContent};
 })()"""
 
 
 def interact_cite(devtools: str, origin: str, base: str, theme: str, width: int, shots: Path):
-    """Open a Cite with the mouse: three blocks in named focusable regions, the address in the
+    """Open a Cite with the mouse: three blocks, the address in the
     text under the base path, no axe violation, a Copy button that announces."""
     label = base + CITE_PAGE + " (cite)"
     t = None
@@ -519,9 +519,7 @@ def interact_cite(devtools: str, origin: str, base: str, theme: str, width: int,
         t.pump(0.3)
         got = t.js(CITE_BLOCKS_JS)
         if got["n"] != 3 or got["regions"] != 3:
-            errors.append(
-                f"expected 3 blocks in 3 named regions, got {got['n']} and {got['regions']}"
-            )
+            errors.append(f"expected 3 blocks with 3 <pre>, got {got['n']} and {got['regions']}")
         want = origin + base + CITE_PAGE
         if want not in got["text"]:
             errors.append(f"the citation does not carry {want}: {got['text'][:200]}")

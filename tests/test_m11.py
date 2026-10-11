@@ -269,7 +269,8 @@ def test_python_citation_text_matches_the_shared_cases():
 
     from velometer.app.cite import CiteFields, cite_text
 
-    cases = json.loads((Path(__file__).parent / "cite_cases.json").read_text(encoding="utf-8"))
+    shared = json.loads((Path(__file__).parent / "cite_cases.json").read_text(encoding="utf-8"))
+    cases = shared["cases"]
     assert len(cases) >= 5
     for c in cases:
         assert cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"]) == c["text"], c["name"]
@@ -366,7 +367,9 @@ def test_commit_is_resolved_once_per_process(monkeypatch):
 # ---- Task 4: cite this figure in the pages ----
 
 from tests.test_a11y import all_page_urls  # noqa: E402,F401  (fixture)
+from tests.test_app import STATIC  # noqa: E402
 
+STATIC_JS = STATIC / "js"
 CHART = re.compile(r'<div[^>]+class="[^"]*\bchart\b[^"]*"[^>]*aria-describedby=')
 CITE_DATA = re.compile(r'class="cite-data">(.*?)</script>', re.S)
 
@@ -429,3 +432,67 @@ def test_compare_carries_the_per_city_runs_for_its_citation(client):  # noqa: F8
     cfg = json.loads(re.search(r'id="compare-config">(.*?)</script>', html, re.S).group(1))
     assert set(cfg["cite_runs"]) >= {"berlin"}
     assert set(cfg["cite_runs"]["berlin"]) == {"osm_timestamp", "classifier"}
+
+
+def test_multi_fields_agree_with_the_shared_cases(monkeypatch):
+    # the same cases tests multiFields in cite.test.mjs: one rule in Python and JS
+    from dataclasses import asdict
+    from pathlib import Path
+
+    from velometer.app import cite
+
+    multi = json.loads((Path(__file__).parent / "cite_cases.json").read_text("utf-8"))["multi"]
+    assert len(multi) >= 3
+    for c in multi:
+        monkeypatch.setattr(cite, "_commit", lambda c=c: c["commit"])
+        rows = cite.RunRows(
+            {
+                city: [
+                    {
+                        "boundary_kind": "lau",
+                        "label": "current",
+                        "osm_timestamp": r["osm_timestamp"],
+                        "classifier_version": r["classifier"],
+                        "run_id": r["run_id"],
+                    }
+                ]
+                for city, r in c["runs"].items()
+            }
+        )
+        got = cite.fields_for_cities(rows, c["ids"], c["title"], c["path"])
+        assert (None if got is None else asdict(got)) == c["expected"], c["name"]
+
+
+def test_run_rows_runs_give_the_lau_timestamp_and_classifier():
+    from velometer.app.cite import RunRows
+
+    def row(kind, ts, clf):
+        return {"boundary_kind": kind, "label": "current", "osm_timestamp": ts,
+                "classifier_version": clf, "run_id": 1}  # fmt: skip
+
+    rows = RunRows(
+        {
+            "a": [
+                row("fua", "2026-01-01T00:00:00Z", "v1"),
+                row("lau", "2026-10-03T01:00:00Z", "v4"),
+            ],
+            "b": [row("fua", "2026-01-01T00:00:00Z", "v1")],
+        }
+    )
+    assert rows.runs(["a", "b", "nowhere"]) == {
+        "a": {"osm_timestamp": "2026-10-03T01:00:00Z", "classifier": "v4"}
+    }
+
+
+def test_the_keynums_cite_is_titled_for_the_run_it_cites(client):  # noqa: F811
+    # it cites the LAU run only, so its title must not claim the metro area
+    html = client.get("/city/berlin").text
+    block = re.split(r'<nav class="tabs"', html.split('class="keynums"', 1)[1])[0]
+    (blob,) = CITE_DATA.findall(block)
+    title = json.loads(blob)["title"]
+    assert "LAU" in title and "FUA" not in title
+
+
+def test_cite_pre_blocks_are_not_scroll_regions():
+    js = (STATIC_JS / "cite-ui.js").read_text(encoding="utf-8")
+    assert "scroll" not in js

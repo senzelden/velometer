@@ -121,3 +121,11 @@ export function multiFields(runs, ids, title, path, commit, attr = ATTRIBUTION) 
     attribution: attr,
   };
 }
+
+/** The CSL-JSON item as shown and copied: 2-space indent, each `date-parts` array on one line. */
+export function cslJson(item) {
+  return JSON.stringify(item, null, 2).replace(
+    /"date-parts": \[\s+\[([\s\S]*?)\]\s+\]/g,
+    (_, inner) => `"date-parts": [[${inner.replace(/\s+/g, " ").trim()}]]`,
+  );
+}

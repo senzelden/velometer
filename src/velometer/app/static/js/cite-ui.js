@@ -3,13 +3,13 @@
 // `.cite-data` JSON the server wrote. The access date and the absolute address (base path, query
 // and fragment included) are taken when the disclosure opens, so a permalink state is in them.
 // Compare rebuilds its citation by calling `setFields` on the details and closing it.
-import { absoluteUrl, citeBibtex, citeCsl, citeText } from "./cite.js";
+import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson } from "./cite.js";
 import { copyText } from "./clipboard.js";
 
 const FORMATS = [
   ["Text", (f, a, u) => citeText(f, a, u)],
   ["BibTeX", (f, a, u) => citeBibtex(f, a, u)],
-  ["CSL-JSON", (f, a, u) => JSON.stringify(citeCsl(f, a, u), null, 2)],
+  ["CSL-JSON", (f, a, u) => cslJson(citeCsl(f, a, u))],
 ];
 
 let serial = 0;
@@ -52,10 +52,7 @@ function render(details) {
     button.setAttribute("aria-label", `Copy ${label}`);
     button.addEventListener("click", () => copyText(text));
     head.append(button);
-    const scroll = el("div", { class: "scroll", tabindex: "0", role: "region" });
-    scroll.setAttribute("aria-labelledby", `${id}-h`);
-    scroll.append(el("pre", {}, text));
-    block.append(head, scroll);
+    block.append(head, el("pre", {}, text));
     blocks.append(block);
   });
   details.append(blocks);

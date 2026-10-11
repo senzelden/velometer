@@ -247,8 +247,8 @@ p.kicker { margin: 2rem 0 0; }
 .ring { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--ink-2); border-radius: 50%; }
 .table-details { margin: 0 0 1rem; }
 .table-details > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
-/* Cite this figure (M11): a disclosure with Text, BibTeX and CSL-JSON blocks, each in a
-   focusable named scroll region (the <pre> wraps, so it never widens the page) */
+/* Cite this figure (M11): a disclosure with Text, BibTeX and CSL-JSON blocks; the <pre> wraps, so it
+   never widens the page and needs no scroll region */
 .cite { margin: 0 0 1rem; }
 .cite > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
 .cite-text { margin: 0.5rem 0; font-size: 0.85rem; color: var(--ink-2); overflow-wrap: anywhere; }
