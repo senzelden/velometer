@@ -1,4 +1,9 @@
 {% extends "city/_page.html" %}
+{% from "_cite.html" import cite %}
+{#- One Cite per row. The row shares the city's run; only the title differs. -#}
+{% macro row_cite(source, metric) -%}
+{{ cite(cite_for(city.name ~ ": " ~ source_names.get(source, source) ~ ", " ~ (metric_labels.get(metric) or metric | replace("_", " ")) ~ " (published figure, with our comparison)", city=city.id)) }}
+{%- endmacro %}
 {% block tab %}
 <section>
 <h2>Why the figures differ</h2>
@@ -21,7 +26,7 @@
   <td class="num" data-label="Gap">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
   <td class="drivers-cell" data-label="Where it differs">{% if r.drivers %}<dl class="drivers">
 {% for d in r.drivers %}<div data-dimension="{{ d.dimension }}"><dt>{{ dimension_labels.get(d.dimension, d.dimension) }}</dt><dd>ours: {{ d.ours }}; theirs: {{ d.theirs }}</dd></div>
-{% endfor %}</dl>{% else %}<span class="note">no difference recorded</span>{% endif %}</td>
+{% endfor %}</dl>{% else %}<span class="note">no difference recorded</span>{% endif %}{{ row_cite(r.source, r.metric) }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -60,7 +65,7 @@
   <td class="num" data-label="Theirs">{{ g.theirs | num }}</td>
   <td class="num" data-label="Gap">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
   <td data-label="Flagged">{% if g.informational %}info{% elif g.flagged %}<span class="flagmark" aria-hidden="true">⚑</span> yes{% else %}no{% endif %}</td>
-  <td data-label="Source (date)">{{ g.source }} ({{ g.reference_date or "date not stated" }})</td>
+  <td data-label="Source (date)">{{ g.source }} ({{ g.reference_date or "date not stated" }}){{ row_cite(g.source, g.key.split("/", 1)[1]) }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -88,7 +93,7 @@
   <td data-label="Scope">{{ f.network_scope }}</td>
   <td data-label="Length basis">{{ f.length_basis }}</td>
   <td class="date" data-label="Date">{{ f.reference_date or "not stated" }}</td>
-  <td data-label="Source link">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}</td>
+  <td data-label="Source link">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}{{ row_cite(f.source, f.metric_name) }}</td>
 </tr>
 {% if f.note %}<tr class="note-row"><td colspan="8" class="meta" data-label="Source">{{ f.note }}</td></tr>{% endif %}
 {% endfor %}

@@ -88,3 +88,36 @@ export function citeCsl(f, accessed = null, url = null) {
 export function absoluteUrl(path, loc = globalThis.location, doc = globalThis.document) {
   return loc.origin + base(doc) + path.replace(/^\/+/, "") + loc.search + loc.hash;
 }
+
+const natural = (s) => s.split(/(\d+)/).map((p, i) => (i % 2 ? Number(p) : p));
+function compareNatural(a, b) {
+  const x = natural(a);
+  const y = natural(b);
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    if (x[i] === y[i]) continue;
+    return x[i] < y[i] ? -1 : 1;
+  }
+  return x.length - y.length;
+}
+
+/**
+ * Fields for several cities, as app/cite.py fields_for_cities, from `runs`
+ * ({city: {osm_timestamp, classifier}}); cities without a run are skipped, null when none has one.
+ * Compare uses it to rebuild its citation when the cities change without a reload.
+ */
+export function multiFields(runs, ids, title, path, commit, attr = ATTRIBUTION) {
+  const rows = ids.map((id) => runs[id]).filter(Boolean);
+  if (!rows.length) return null;
+  const days = rows.map((r) => r.osm_timestamp.slice(0, 10)).sort();
+  const [first, last] = [days[0], days[days.length - 1]];
+  return {
+    title,
+    path,
+    osm_timestamp: null,
+    snapshot_note: first === last ? `OSM snapshot of ${first}` : `OSM snapshots of ${first} to ${last}`,
+    classifier: [...new Set(rows.map((r) => r.classifier))].sort(compareNatural).join("/"),
+    run_id: null,
+    commit,
+    attribution: attr,
+  };
+}

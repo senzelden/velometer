@@ -247,6 +247,17 @@ p.kicker { margin: 2rem 0 0; }
 .ring { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--ink-2); border-radius: 50%; }
 .table-details { margin: 0 0 1rem; }
 .table-details > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
+/* Cite this figure (M11): a disclosure with Text, BibTeX and CSL-JSON blocks, each in a
+   focusable named scroll region (the <pre> wraps, so it never widens the page) */
+.cite { margin: 0 0 1rem; }
+.cite > summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
+.cite-text { margin: 0.5rem 0; font-size: 0.85rem; color: var(--ink-2); overflow-wrap: anywhere; }
+.cite-block { margin: 0.6rem 0; }
+.cite-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.cite-head h4 { margin: 0; font-size: 0.85rem; color: var(--ink); }
+.cite-copy { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.7rem; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-bg); color: var(--ink); cursor: pointer; }
+.cite pre { margin: 0.25rem 0 0; padding: 0.5rem 0.6rem; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+td .cite, th .cite { margin: 0.4rem 0 0; }
 .flagmark { color: var(--flag); }
 
 /* ---------- charts (static/js/chart.js) ---------- */

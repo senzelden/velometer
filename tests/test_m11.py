@@ -361,3 +361,71 @@ def test_commit_is_resolved_once_per_process(monkeypatch):
         cite.fields_for_city(data, "a", "t", "/x")
     cite._commit.cache_clear()
     assert len(calls) == 1
+
+
+# ---- Task 4: cite this figure in the pages ----
+
+from tests.test_a11y import all_page_urls  # noqa: E402,F401  (fixture)
+
+CHART = re.compile(r'<div[^>]+class="[^"]*\bchart\b[^"]*"[^>]*aria-describedby=')
+CITE_DATA = re.compile(r'class="cite-data">(.*?)</script>', re.S)
+
+
+def test_every_chart_and_keynum_has_a_cite(client, all_page_urls):  # noqa: F811
+    seen = 0
+    for url in all_page_urls:
+        html = client.get(url).text
+        n_charts = len(CHART.findall(html))
+        seen += n_charts
+        assert html.count('<details class="cite"') >= n_charts, url
+        if 'class="keynums"' in html:
+            block = html.split('class="keynums"', 1)[1].split("</div>\n<nav", 1)[0]
+            assert 'class="cite"' in block, url
+    assert seen > 5
+
+
+def test_cite_data_is_valid_json_with_the_attribution(client):  # noqa: F811
+    html = client.get("/city/berlin/time").text
+    blobs = CITE_DATA.findall(html)
+    assert blobs
+    for blob in blobs:
+        f = json.loads(blob)
+        assert f["attribution"].startswith("Map data © OpenStreetMap contributors")
+        assert f["path"].startswith(
+            "city/berlin"
+        )  # no base and no leading slash: the browser adds both
+
+
+def test_figures_rows_each_carry_a_cite(client):  # noqa: F811
+    html = client.get("/city/berlin/figures").text
+    rows = re.findall(r"<tr[^>]*>.*?</tr>", html.split("<tbody", 1)[1], re.S)
+    rows = [r for r in rows if "<td" in r and 'class="note-row"' not in r]
+    assert rows and all('class="cite"' in r for r in rows)
+
+
+def test_no_cite_title_says_built(client, all_page_urls):  # noqa: F811
+    # ADR 0006: mapped km, never a construction verb
+    titles = 0
+    for url in all_page_urls:
+        for blob in CITE_DATA.findall(client.get(url).text):
+            title = json.loads(blob)["title"]
+            titles += 1
+            assert not re.search(r"\bbuil[dt]|construct", title, re.I), (url, title)
+    assert titles > 10
+
+
+def test_a_city_without_a_run_gets_no_cite_and_no_error(client, monkeypatch):  # noqa: F811
+    from velometer.app import cite
+
+    monkeypatch.setattr(cite, "_current_row_of_kind", lambda *a, **k: None)
+    for url in ("/city/berlin/time", "/", "/compare", "/city/berlin/figures"):
+        r = client.get(url)
+        assert r.status_code == 200, url
+        assert '<details class="cite"' not in r.text, url
+
+
+def test_compare_carries_the_per_city_runs_for_its_citation(client):  # noqa: F811
+    html = client.get("/compare?c=berlin").text
+    cfg = json.loads(re.search(r'id="compare-config">(.*?)</script>', html, re.S).group(1))
+    assert set(cfg["cite_runs"]) >= {"berlin"}
+    assert set(cfg["cite_runs"]["berlin"]) == {"osm_timestamp", "classifier"}

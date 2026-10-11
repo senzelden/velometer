@@ -15,6 +15,7 @@ import logging
 import re
 import sqlite3
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from datetime import UTC, datetime
 from html import unescape
 from pathlib import Path
@@ -33,6 +34,7 @@ from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from velometer import timeseries as ts
+from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
 from velometer.app import plans_pages, urls
@@ -339,6 +341,8 @@ def create_app(
     # inside a double-quoted attribute the policy's single quotes need no escaping
     templates.env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
     templates.env.globals["static_edition"] = static_edition
+    templates.env.globals["cite_text"] = cite_model.cite_text
+    templates.env.filters["cite_json"] = cite_model.json_fields
     templates.env.filters["num"] = _num
     templates.env.filters["md"] = _md
     templates.env.filters["stack_table"] = _stack_table
@@ -396,6 +400,37 @@ def create_app(
             for name, cs in sorted(groups.items())
         ]
 
+    def cite_rows(request: Request, data: ReportData) -> cite_model.RunRows | None:
+        """The run rows citations read, built once per fingerprint (None without a database)."""
+        try:
+            return cache.get("cite:rows", fp(request), lambda: cite_model.RunRows.of(data))
+        except HTTPException:
+            return None
+
+    def cite_for(request: Request, data: ReportData | None, path: str | None = None):
+        """`cite_for(title, city=…, kind=…)` / `cite_for(title, cities=[…])` for a template:
+        the CiteFields of that figure, None without a run (the template then shows no Cite).
+        `path` is the page's path without the base path (the browser adds the base)."""
+        rows = None if data is None else cite_rows(request, data)
+        where = request.url.path if path is None else path
+
+        shared: dict = {}  # a page's figures share one run: built once, the title varies
+
+        def make(title, city=None, cities=None, kind="lau", path=None):
+            if rows is None:
+                return None
+            key = (city, kind, None if cities is None else tuple(cities))
+            if key not in shared:
+                if city is not None:
+                    shared[key] = cite_model.fields_for_city(rows, city, "", where, kind)
+                else:
+                    ids = cities if cities is not None else rows.city_ids()
+                    shared[key] = cite_model.fields_for_cities(rows, list(ids), "", where)
+            base = shared[key]
+            return None if base is None else replace(base, title=title, path=path or where)
+
+        return make
+
     def page(
         request: Request,
         name: str,
@@ -418,7 +453,13 @@ def create_app(
         return templates.TemplateResponse(
             request,
             name,
-            {"footer": footer, "nav_groups": nav, "active": active, **ctx},
+            {
+                "footer": footer,
+                "nav_groups": nav,
+                "active": active,
+                "cite_for": cite_for(request, data),
+                **ctx,
+            },
             status_code=status_code,
         )
 
@@ -750,8 +791,22 @@ def create_app(
             "views": cmp.VIEW_LABELS,
             "headline_unit": HEADLINE_UNIT,
         }
+        rows = cite_rows(request, data)
+        config["cite_runs"] = {} if rows is None else rows.runs(known_ids)
+        names = [r["name"] for r in table["rows"]]
+        heading = (
+            cmp.counter_title(info[state.m]["label"])
+            if state.m == cmp.COUNTER_METRIC
+            else f"{info[state.m]['label']} \u00b7 "
+            + ("City proper (LAU)" if state.b == "lau" else "Metro area (FUA)")
+            + (" \u00b7 index, first year = 100" if state.mode == "index" else "")
+        )
         return page(
             request, "compare.html", "compare", data, state=state, table=table, quick=quick,
+            compare_cite=cite_for(request, data)(
+                f"Compare: {heading}; {', '.join(names)}", cities=[r["id"] for r in table["rows"]],
+                path="/compare",
+            ),
             groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
             href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
             foot=cmp.footnote(state.m, HEADLINE_UNIT),
@@ -765,7 +820,11 @@ def create_app(
         ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
         # a copy: TemplateResponse adds `request` to the dict it is given, and this one is cached
         # (a tab page spreads it next to its own `request=`)
-        return templates.TemplateResponse(request, "city/panel.html", {**ctx})
+        return templates.TemplateResponse(
+            request,
+            "city/panel.html",
+            {**ctx, "cite_for": cite_for(request, data, f"/city/{city_id}")},
+        )
 
     @app.get("/city/{city_id}", response_class=HTMLResponse)
     async def city(request: Request, city_id: str, data: Data):

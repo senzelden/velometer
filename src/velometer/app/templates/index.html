@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_cite.html" import cite %}
 {% block title %}velometer · overview{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><span aria-current="page">Overview</span></nav>{% endblock %}
@@ -13,6 +14,7 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
   <li><b>{{ countries }}</b> countries</li>
   {% if years %}<li>snapshots <b>1 Jan {{ years[0] }}–{{ years[-1] }}</b> and the current run</li>{% endif %}
 </ul>
+{{ cite(cite_for("Headline ranking, " ~ headline_unit ~ ", city proper (LAU), all cities")) }}
 
 <section class="panel" id="ranking" aria-labelledby="ranking-h">
 <div class="panel-head">
@@ -67,6 +69,7 @@ The ranking above lists every city's values.</p>
 </table>
 </div>
 </details>
+{{ cite(cite_for("Headline over time, " ~ headline_unit ~ ", city proper (LAU), all cities")) }}
 <p class="meta chartnote"><span class="ring"></span> ringed point = flagged year (automatic check); its explanation is on the city page.</p>
 </section>
 

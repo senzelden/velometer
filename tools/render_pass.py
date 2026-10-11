@@ -19,7 +19,8 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
 `--flip` is a mode of its own: each page loads in light, the emulated scheme switches to dark
 mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
 `--interact` adds, per theme and width, a visit to `<base>compare` that opens a city panel with a
-mouse click (table view, first city link), audits the page with the panel open, presses Escape and
+mouse click (table view, first city link) and a visit to a city's Time tab that opens a Cite,
+checking its three blocks and its address, audits the page with the panel open, presses Escape and
 checks focus returned to the link. `--keyboard` adds, per theme, a scripted keyboard pass driven by
 real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare
 (tick, metric, view, sort, panel, Escape) and the tier and counter maps (+ and -); each step is a
@@ -480,6 +481,62 @@ def interact(devtools: str, origin: str, base: str, theme: str, width: int, shot
                     "(e => e ? e.outerHTML.slice(0, 80) : 'nothing')(document.activeElement)"
                 )
                 errors.append(f"focus did not return to the opener after Escape (now on {now})")
+        events = t.events[:before] + t.events[after:]
+        return entry(label, theme, width, "interact", axe=axe, overflow=overflow, events=events,
+                     errors=errors, shot=shot)  # fmt: skip
+    finally:
+        if t is not None:
+            t.close()
+
+
+CITE_PAGE = "city/berlin/time"
+CITE_BLOCKS_JS = """(() => {
+  const d = document.querySelector('details.cite');
+  const pre = d && d.open && d.querySelector('pre');
+  if (!pre) return null;
+  return {n: d.querySelectorAll('.cite-block').length,
+          regions: d.querySelectorAll('.cite-block .scroll[role=region][tabindex="0"]').length,
+          text: pre.textContent};
+})()"""
+
+
+def interact_cite(devtools: str, origin: str, base: str, theme: str, width: int, shots: Path):
+    """Open a Cite with the mouse: three blocks in named focusable regions, the address in the
+    text under the base path, no axe violation, a Copy button that announces."""
+    label = base + CITE_PAGE + " (cite)"
+    t = None
+    try:
+        t = open_tab(devtools, width, theme)
+        errors = navigate(t, origin + base + CITE_PAGE)
+        if errors:
+            return entry(label, theme, width, "interact", events=t.events, errors=errors)
+        t.pump(1.0)
+        if why := click(t, "details.cite > summary"):
+            return entry(label, theme, width, "interact", events=t.events, errors=[why])
+        if not t.wait_js(CITE_BLOCKS_JS, 5):
+            return entry(label, theme, width, "interact", events=t.events,
+                         errors=["the Cite did not open"])  # fmt: skip
+        t.pump(0.3)
+        got = t.js(CITE_BLOCKS_JS)
+        if got["n"] != 3 or got["regions"] != 3:
+            errors.append(
+                f"expected 3 blocks in 3 named regions, got {got['n']} and {got['regions']}"
+            )
+        want = origin + base + CITE_PAGE
+        if want not in got["text"]:
+            errors.append(f"the citation does not carry {want}: {got['text'][:200]}")
+        if click(t, ".cite-copy"):
+            errors.append("no Copy button to click")
+        else:
+            t.pump(0.5)
+            say = t.js("document.getElementById('live').textContent")
+            if say not in ("Copied", "Press Ctrl+C to copy"):
+                errors.append(f"Copy announced {say!r}")
+        before = len(t.events)
+        overflow = t.js(OVERFLOW_JS)
+        shot = screenshot(t, shots / f"cite-{theme}-{width}.png", width)
+        axe = audit(t)
+        after = len(t.events)
         events = t.events[:before] + t.events[after:]
         return entry(label, theme, width, "interact", axe=axe, overflow=overflow, events=events,
                      errors=errors, shot=shot)  # fmt: skip
@@ -967,6 +1024,7 @@ def main(argv: list[str] | None = None) -> int:
     plan = [("page", u, th, w) for u in urls for th in page_themes for w in widths]
     if a.interact:
         plan += [("interact", base + "compare", th, w) for th in themes for w in widths]
+        plan += [("cite", base + CITE_PAGE, th, w) for th in themes for w in widths]
     if a.keyboard:
         plan += [("keyboard", base, th, 1280) for th in themes]
 
@@ -995,6 +1053,8 @@ def main(argv: list[str] | None = None) -> int:
             for kind, url, theme, width in plan:
                 if kind == "interact":
                     r = interact(devtools, origin, base, theme, width, shots)
+                elif kind == "cite":
+                    r = interact_cite(devtools, origin, base, theme, width, shots)
                 elif kind == "keyboard":
                     r = keyboard(devtools, origin, base, theme)
                     print("\n".join(f"    [{theme}] {x}" for x in r["steps"]), flush=True)

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_cite.html" import cite %}
 {% block title %}velometer · Stories{% endblock %}
 {% block scripts %}{% if config %}<script type="module" src="{{ u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
@@ -39,6 +40,7 @@
     {% endfor %}
     {% if s.step in steps %}
     {{ step_table(steps[s.step].table, s.step) }}
+    {{ cite(cite_for((steps[s.step].title or s.sec.heading or "Stories chart") ~ " (Stories)")) }}
     <p class="explore"><a href="{{ u(steps[s.step].href) }}">Explore this chart →</a></p>
     {% endif %}
   </section>

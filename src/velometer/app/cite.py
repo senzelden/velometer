@@ -6,7 +6,7 @@ Both are tested against `tests/cite_cases.json`.
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import cache
 
 from velometer.reconcile import short_commit
@@ -39,13 +39,62 @@ def _natural(s: str) -> list:
     return [int(p) if p.isdigit() else p for p in re.split(r"(\d+)", s)]
 
 
-def _current_row_of_kind(data, city_id: str, kind: str):
-    """The city's `current` row for a boundary kind (else its last), None without a run."""
-    rows = [r for r in data.csv_rows(city_id) if r["boundary_kind"] == kind]
+def json_fields(f: CiteFields) -> dict:
+    """The fields as the page's `.cite-data` JSON holds them. The path loses its leading slash
+    (`absoluteUrl` adds the base path and the slash): a root-relative string in a page's JSON is
+    a URL the static export must find under the base (M9), and this one is not."""
+    return {**asdict(f), "path": f.path.lstrip("/")}
+
+
+def _pick(rows: list[dict], kind: str):
+    """The `current` row of a boundary kind among `rows` (else the last), None without one."""
+    rows = [r for r in rows if r["boundary_kind"] == kind]
     if not rows:
         return None
     current = [r for r in rows if r["label"] == "current"]
     return (current or rows)[-1]
+
+
+def _current_row_of_kind(data, city_id: str, kind: str):
+    """The city's `current` row for a boundary kind (else its last), None without a run."""
+    return _pick(data.csv_rows(city_id), kind)
+
+
+class RunRows:
+    """The one row per (city, boundary kind) the citation fields read. A page builds many
+    citations from one of these (cached with the page), since `csv_rows` is not free. It quacks
+    like the part of ReportData the `fields_for_*` functions use."""
+
+    def __init__(self, rows: dict[str, list[dict]]):
+        self._rows = rows
+
+    @classmethod
+    def of(cls, data) -> "RunRows":
+        rows: dict[str, list[dict]] = {}
+        for c in data.cities():
+            all_rows = data.csv_rows(c.id)
+            kinds = sorted({r["boundary_kind"] for r in all_rows})
+            rows[c.id] = [r for k in kinds if (r := _pick(all_rows, k)) is not None]
+        return cls(rows)
+
+    def csv_rows(self, city_id: str) -> list[dict]:
+        return self._rows.get(city_id, [])
+
+    def city_ids(self) -> list[str]:
+        return list(self._rows)
+
+    def runs(self, city_ids: list[str]) -> dict[str, dict[str, str]]:
+        """{city: {osm_timestamp, classifier}} of each city's LAU run: what a browser needs to
+        rebuild a multi-city citation when Compare changes its cities without a reload."""
+        out = {}
+        for c in city_ids:
+            row = _current_row_of_kind(self, c, "lau")
+            if row is not None:
+                out[c] = {
+                    "osm_timestamp": row["osm_timestamp"],
+                    "classifier": row["classifier_version"],
+                }
+        return out
 
 
 def fields_for_city(

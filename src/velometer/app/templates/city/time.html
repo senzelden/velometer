@@ -1,4 +1,5 @@
 {% extends "city/_page.html" %}
+{% from "_cite.html" import cite %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
@@ -23,6 +24,7 @@
 </tbody>
 </table>
 </div>
+{{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU) and metro area (FUA)", city=city.id)) }}
 <p class="meta">⚑ flagged year (automatic check); its explanation is in the section on flagged years below.</p>
 {% else %}
 <p class="note">no run (history)</p>

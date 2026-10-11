@@ -34,3 +34,20 @@ test("absoluteUrl: origin + base + path + search + hash", () => {
     "https://x.org/city/berlin#map",
   );
 });
+
+test("multiFields mirrors fields_for_cities: a day range, natural classifier order, skipped runless", async () => {
+  const { multiFields } = await import("../cite.js");
+  const runs = {
+    a: { osm_timestamp: "2026-10-05T01:00:00Z", classifier: "v10" },
+    b: { osm_timestamp: "2026-10-03T01:00:00Z", classifier: "v9" },
+    c: { osm_timestamp: "2026-10-04T01:00:00Z", classifier: "v9" },
+  };
+  const f = multiFields(runs, ["a", "b", "c", "nowhere"], "t", "/compare", "abc1234");
+  assert.equal(f.snapshot_note, "OSM snapshots of 2026-10-03 to 2026-10-05");
+  assert.equal(f.classifier, "v9/v10");
+  assert.equal(f.run_id, null);
+  assert.equal(f.osm_timestamp, null);
+  assert.equal(f.commit, "abc1234");
+  assert.equal(multiFields(runs, ["b", "b"], "t", "/compare", "x").snapshot_note, "OSM snapshot of 2026-10-03");
+  assert.equal(multiFields(runs, ["nowhere"], "t", "/compare", "x"), null);
+});

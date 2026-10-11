@@ -1,4 +1,5 @@
 {% extends "city/_page.html" %}
+{% from "_cite.html" import cite %}
 {% block head %}{% if counts.site_map %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
@@ -26,6 +27,7 @@
 {% endfor %}</tbody>
 </table>
 </div>
+{% if c.line %}{{ cite(cite_for(city.name ~ ": " ~ c.label ~ " index and A+B mapped km index, " ~ c.base_year ~ " = 100", city=city.id)) }}{% endif %}
 <p class="meta">n/a: no value (fewer than {{ c.min_sites }} sites complete on at least {{ "%g" | format(c.min_valid_pct) }}% of days in both years of a link, or a broken chain), not zero. A year's site count is the sites of its link with the neighbouring year towards {{ c.base_year }}.</p>
 </section>
 

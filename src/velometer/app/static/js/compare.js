@@ -14,6 +14,8 @@ import {
 import { COUNTER_CONTEXT, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
 import { announce } from "./live.js";
+import { multiFields } from "./cite.js";
+import { fieldsOf, setFields } from "./cite-ui.js";
 import { labelCells } from "./table.js";
 import { DEFAULTS, MAX_HIGHLIGHTED, QUICK_SETS, droppedMetric, parseState, serializeState } from "./state.js";
 
@@ -340,6 +342,23 @@ function drawTitle(model) {
   }
 }
 
+let citeKey = null;
+/** Rebuild the Cite for what the page now shows. It is rebuilt (and closed) only when the title
+ * or the cities change, not on a resize or a theme redraw. The date and address are taken when
+ * the disclosure opens, so the URL state the page keeps is in them. */
+function updateCite(model) {
+  const details = $(".compare-out details.cite");
+  if (!details) return; // no run for the cities the page was rendered with: no Cite
+  const title = `Compare: ${out.title.querySelector("h2").textContent}; ${model.series.map((s) => s.name).join(", ")}`;
+  const ids = model.series.map((s) => s.id);
+  const key = `${title}|${ids.join(",")}`;
+  if (key === citeKey) return;
+  citeKey = key;
+  const f0 = fieldsOf(details);
+  const fields = multiFields(cfg.cite_runs ?? {}, ids, title, f0.path, f0.commit);
+  if (fields) setFields(details, fields);
+}
+
 function extras() {
   // small multiples: shared or own y scale
   let box = $(".sm-controls");
@@ -375,6 +394,7 @@ function render(keepFlag = false) {
   try {
     const model = buildModel(D, state);
     drawTitle(model);
+    updateCite(model);
     if (!keepFlag) announceOnce(model);
     const table = state.view === "table";
     out.table.hidden = !table;

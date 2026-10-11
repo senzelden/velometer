@@ -1,3 +1,4 @@
+{% from "_cite.html" import cite %}
 {% from "city/_tier_table.html" import tier_series_table %}
 <div class="panel-frag">
 <header class="panel-head">
@@ -10,10 +11,12 @@
 <div class="keynums" role="list" aria-label="Key numbers">
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
 {% endfor %}</div>
+{{ cite(cite_for(city.name ~ ": key numbers, city proper (LAU) and metro area (FUA)", city=city.id)) }}
 {% for k in kinds if k.kind == "lau" and k.series %}
 <h3>Tier composition over time ({{ k.kind | upper }})</h3>
 <div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="panel-tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
 {{ tier_series_table(k, tiers, "panel-tiers-sum-" ~ k.kind) }}
+{{ cite(cite_for(city.name ~ ": tier composition over time, mapped km by tier, " ~ (k.kind | upper), city=city.id, kind=k.kind)) }}
 {% endfor %}
 <h3>Tiers, mapped km now</h3>
 <div class="scroll">

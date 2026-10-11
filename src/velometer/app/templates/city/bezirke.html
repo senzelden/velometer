@@ -1,4 +1,5 @@
 {% extends "city/_page.html" %}
+{% from "_cite.html" import cite %}
 {% block head %}{% if bezirke.change_map %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
@@ -41,6 +42,7 @@
 </table>
 </div>
 </details>
+{{ cite(cite_for(city.name ~ ": headline per Bezirk over time, " ~ headline_unit, city=city.id)) }}
 {% else %}
 <p class="note">no Bezirk history</p>
 {% endif %}

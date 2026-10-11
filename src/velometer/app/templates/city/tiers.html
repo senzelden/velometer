@@ -1,4 +1,5 @@
 {% extends "city/_page.html" %}
+{% from "_cite.html" import cite %}
 {% from "city/_tier_table.html" import tier_series_table %}
 {% block head %}{% if tiermap %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
@@ -11,6 +12,7 @@
 {% if k.series %}
 <div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
 {{ tier_series_table(k, tiers, "tiers-sum-" ~ k.kind) }}
+{{ cite(cite_for(city.name ~ ": tier composition over time, mapped km by tier, " ~ (k.kind | upper), city=city.id, kind=k.kind)) }}
 {% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
 {% endfor %}
 </section>

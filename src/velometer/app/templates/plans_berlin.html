@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_cite.html" import cite %}
 {% block title %}velometer · Berlin's cycling plan{% endblock %}
 {% block scripts %}<script type="module" src="{{ u('/static/js/plan-chart.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/plans') }}">Plans</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Berlin</span></nav>{% endblock %}
@@ -71,6 +72,7 @@
 </tbody>
 </table>
 </div>
+{{ cite(cite_for("Berlin cycling plan, " ~ i.item.label ~ ": target, reported and completed km by year", city="berlin")) }}
 {% endif %}
 {% if i.projects %}
 {% set shown = i.yearly | map(attribute="year") | list %}
