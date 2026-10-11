@@ -5,7 +5,7 @@ import { base } from "./base.js";
 import { fileName, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
 import { announce } from "./live.js";
 
-const SELECTOR = [
+export const SELECTOR = [
   "[data-chart]:not([data-chart=sparkline])",
   "[data-compare-chart]",
   "[data-story-plot]",
@@ -28,6 +28,14 @@ function styleOf(el) {
   if (el.style_) return el.style_;
   const cs = getComputedStyle(el);
   return Object.fromEntries(STYLE_PROPS.map((p) => [p, cs.getPropertyValue(p)]));
+}
+
+/** The key chips of a chart whose key is an HTML `.legend` beside its SVG: colour (computed) and text. */
+function keyOf(container) {
+  return [...container.querySelectorAll(".legend .chip")].map((chip) => {
+    const sw = chip.querySelector("i");
+    return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text: chip.textContent.trim() };
+  });
 }
 
 /** The citation fields next to the chart (its section's `.cite-data`), else the page's first. */
@@ -69,13 +77,14 @@ export function metaOf(container) {
     title: container.getAttribute("aria-label") || f?.title || document.title,
     source,
     ...light(),
+    key: keyOf(container),
     attribution: f?.attribution ?? "Map data © OpenStreetMap contributors, ODbL 1.0",
   };
 }
 
 /** The chart drawn in the container: its one SVG, or the small-multiple cards stacked. */
 function chartOf(container) {
-  const svgs = [...container.querySelectorAll("svg")].filter((s) => !s.closest(".legend"));
+  const svgs = [...container.querySelectorAll("svg")];
   if (svgs.length <= 1) return svgs[0] ?? null;
   const sizes = svgs.map(sizeOf);
   const w = Math.max(...sizes.map((s) => s.w));
@@ -109,9 +118,17 @@ function svgFor(container) {
   return { out, w: +vb[1], h: +vb[2] };
 }
 
-function tableOf(container) {
-  const id = container.getAttribute("aria-describedby");
-  const table = id ? document.getElementById(id)?.closest("table") : null;
+/** The table a description element belongs to: a <caption> is inside it, a <summary> is beside it
+ * in the same <details>. */
+export const tableFor = (el) => el?.closest("table") ?? el?.closest("details")?.querySelector("table") ?? null;
+
+/** The data table a chart's description names: the id is the one the chart names now, else the one
+ * seen at setup (a chart's `aria-describedby` can come and go; the table stays). */
+const tableId = (container) => container.getAttribute("aria-describedby") || container.dataset.downloadTable;
+
+function tableOf(container, doc = document) {
+  const id = tableId(container);
+  const table = id ? tableFor(doc.getElementById(id)) : null;
   if (!table) throw new Error("This chart has no data table to download");
   return table;
 }
@@ -157,22 +174,36 @@ async function download(container, kind) {
   }
 }
 
-function control(container) {
-  const d = document.createElement("details");
+const labelsSeen = new Map();
+
+/** The chart's name for a screen reader, unique on the page ("... (2)" for a repeat). */
+function chartName(container) {
+  const base = container.getAttribute("aria-label") || container.dataset.chart || "chart";
+  const n = (labelsSeen.get(base) ?? 0) + 1;
+  labelsSeen.set(base, n);
+  return n === 1 ? base : `${base} (${n})`;
+}
+
+/** The Download disclosure: SVG, PNG and, when the chart has a data table, CSV. */
+export function control(container, doc = document) {
+  const name = chartName(container);
+  const hasTable = Boolean(tableFor(doc.getElementById(tableId(container) ?? "")));
+  if (hasTable) container.dataset.downloadTable = tableId(container);
+  const d = doc.createElement("details");
   d.className = "download";
-  const s = document.createElement("summary");
+  const s = doc.createElement("summary");
   s.append("Download");
-  const hidden = document.createElement("span");
+  const hidden = doc.createElement("span");
   hidden.className = "visually-hidden";
-  hidden.textContent = " chart";
+  hidden.textContent = ` ${name}`;
   s.append(hidden);
-  const row = document.createElement("div");
+  const row = doc.createElement("div");
   row.className = "download-row";
-  for (const kind of ["svg", "png", "csv"]) {
-    const b = document.createElement("button");
+  for (const kind of hasTable ? ["svg", "png", "csv"] : ["svg", "png"]) {
+    const b = doc.createElement("button");
     b.type = "button";
     b.textContent = kind.toUpperCase();
-    b.setAttribute("aria-label", `Download ${kind.toUpperCase()}`);
+    b.setAttribute("aria-label", `Download ${kind.toUpperCase()}, ${name}`);
     b.addEventListener("click", () => download(container, kind));
     row.append(b);
   }
@@ -180,17 +211,20 @@ function control(container) {
   return d;
 }
 
-function upgrade(container) {
+/** Give a chart container its control (once). */
+export function upgrade(container, doc = document) {
   if (container.dataset.downloadBound !== undefined) return;
   container.dataset.downloadBound = "";
-  container.after(control(container));
+  container.after(control(container, doc));
 }
 
-if (typeof document !== "undefined") {
-  const scan = (root) => {
-    for (const c of root.matches?.(SELECTOR) ? [root] : []) upgrade(c);
-    for (const c of root.querySelectorAll?.(SELECTOR) ?? []) upgrade(c);
-  };
+/** Upgrade every chart container in (or being) `root`. */
+export function scan(root, doc = document) {
+  if (root.matches?.(SELECTOR)) upgrade(root, doc);
+  for (const c of root.querySelectorAll?.(SELECTOR) ?? []) upgrade(c, doc);
+}
+
+if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") {
   scan(document);
   // the city panel is fetched after load
   new MutationObserver((records) => {

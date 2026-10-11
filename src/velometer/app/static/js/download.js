@@ -55,12 +55,23 @@ const esc = (s) =>
 
 const attrs = (pairs) => pairs.map(([k, v]) => ` ${k}="${esc(v)}"`).join("");
 
+const RGB = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)\s*(?:[,/]\s*([\d.]+)(%?))?\s*\)$/;
+
+/** A computed colour as {value, alpha}: value a light hex (or "none"), alpha 0..1; null when it is
+ * none of those (a paint server reference, a keyword). A colour with alpha keeps its rgb and says the alpha. */
 function colour(value, toLight) {
   const s = String(value ?? "").trim().toLowerCase();
-  if (s === "none" || /^rgba\(.*,\s*0\)$/.test(s) || s === "transparent") return "none";
-  const h = hex(s);
+  if (s === "none" || s === "transparent") return { value: "none", alpha: 1 };
+  let h = hex(s);
+  let alpha = 1;
+  const m = s.match(RGB);
+  if (m) {
+    h = `#${two(+m[1])}${two(+m[2])}${two(+m[3])}`;
+    if (m[4] !== undefined) alpha = m[5] ? +m[4] / 100 : +m[4];
+  }
   if (!h) return null;
-  return toLight?.get(h) ?? h;
+  if (alpha <= 0) return { value: "none", alpha: 1 };
+  return { value: toLight?.get(h) ?? h, alpha };
 }
 
 /** The size the chart is drawn at: its viewBox, else its width and height. */
@@ -82,15 +93,23 @@ function walk(el, styleOf, toLight, out) {
     .map(({ name, value }) => [name, value]);
   const written = new Map(own);
   if (tag !== "svg") {
+    const alphas = {};
     for (const p of COLOUR_PROPS) {
       const c = st[p] === undefined ? null : colour(st[p], toLight);
       if (c === null) continue;
       // a stroke of none is the default, and a line has no fill to speak of
-      if (p === "stroke" && c === "none") continue;
+      if (p === "stroke" && c.value === "none") continue;
       if (p === "fill" && (tag === "line" || tag === "title" || tag === "desc")) continue;
-      written.set(p, c);
+      written.set(p, c.value);
+      if (c.alpha < 1) alphas[p] = c.alpha;
     }
     const strokeless = !written.has("stroke");
+    const fromAlpha = () => {
+      for (const [p, a] of Object.entries(alphas)) {
+        const own = parseFloat(written.get(`${p}-opacity`) ?? 1);
+        written.set(`${p}-opacity`, String(+(a * own).toFixed(3)));
+      }
+    };
     for (const p of PLAIN_PROPS) {
       const v = st[p];
       if (v === undefined || v === "" || v === DEFAULTS[p] || v === "normal") continue;
@@ -100,6 +119,7 @@ function walk(el, styleOf, toLight, out) {
       if (p.startsWith("stroke-") && p !== "stroke-opacity" && strokeless) continue;
       written.set(p, v);
     }
+    fromAlpha();
   }
   const kids = Array.from(el.children ?? []);
   const open = `<${tag}${attrs([...written])}`;
@@ -116,6 +136,44 @@ function walk(el, styleOf, toLight, out) {
 const TOP = 30;
 const BOTTOM = 44;
 
+const KEY_ROW = 18;
+const CHAR = 6.6; // an estimate of the width of a character at 11px, to wrap the key
+
+/** The key chips ({colour, text}) in rows that fit the width, each chip with its x. */
+function layoutKey(chips, width) {
+  const rows = [];
+  let row = [];
+  let x = 8;
+  for (const c of chips) {
+    const need = 14 + c.text.length * CHAR + 14;
+    if (row.length && x + need > width) {
+      rows.push(row);
+      row = [];
+      x = 8;
+    }
+    row.push({ ...c, x });
+    x += need;
+  }
+  if (row.length) rows.push(row);
+  return rows;
+}
+
+/** A swatch and a label per chip: the key of a chart whose key is HTML beside the SVG. */
+function keySvg(rows, top, toLight, ink, t) {
+  if (!rows.length) return [];
+  const out = ['<g id="velometer-key">'];
+  rows.forEach((row, i) => {
+    const y = top + 6 + i * KEY_ROW;
+    for (const c of row) {
+      const col = colour(c.colour, toLight);
+      out.push(`<rect${attrs([["x", c.x], ["y", y], ["width", 10], ["height", 10], ["fill", col?.value ?? "none"]])}/>`); // fmt: skip
+      out.push(t(c.x + 14, y + 9, "11px", "400", ink, c.text));
+    }
+  });
+  out.push("</g>");
+  return out;
+}
+
 /**
  * The chart as one self-contained SVG string. Every colour and text property comes from
  * `styleOf(el)` (computed style, one object keyed by CSS property name), written as an attribute,
@@ -126,7 +184,9 @@ const BOTTOM = 44;
 export function selfContained(svg, styleOf, toLight, meta) {
   const { w, h } = sizeOf(svg);
   const { ground, ink, muted } = { ...FALLBACK, ...Object.fromEntries(Object.entries(meta).filter(([k, v]) => k in FALLBACK && v)) };
-  const height = h + TOP + BOTTOM;
+  const keyRows = layoutKey(meta.key ?? [], w);
+  const keyH = keyRows.length * KEY_ROW + (keyRows.length ? 6 : 0);
+  const height = h + TOP + keyH + BOTTOM;
   const inner = [];
   for (const k of Array.from(svg.children ?? [])) walk(k, styleOf, toLight, inner);
   const t = (x, y, size, weight, fill, text) =>
@@ -138,16 +198,28 @@ export function selfContained(svg, styleOf, toLight, meta) {
     `<g transform="translate(0,${TOP})">`,
     ...inner,
     "</g>",
+    ...keySvg(keyRows, h + TOP, toLight, ink, t),
     `<g id="velometer-meta">`,
-    t(8, h + TOP + 18, "11px", "400", muted, meta.source),
-    t(8, h + TOP + 33, "11px", "400", muted, `${meta.attribution} · ${NOTE}`),
+    t(8, h + TOP + keyH + 18, "11px", "400", muted, meta.source),
+    t(8, h + TOP + keyH + 33, "11px", "400", muted, `${meta.attribution} · ${NOTE}`),
     "</g>",
     "</svg>",
   ].join("");
 }
 
 const text = (n) => String(n?.textContent ?? "").replace(/\s+/g, " ").trim();
-const cell = (s) => (/[",\r\n]|^\s|\s$/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+/** A cell a spreadsheet would run as a formula starts with a quote mark instead (OWASP CSV
+ * injection): = + @ tab and CR always, and - unless the whole cell is a number. The same rule is
+ * `velometer.report.csvexport.safe_cell`. */
+export function safeCell(s) {
+  if (/^[=+@\t\r]/.test(s)) return `'${s}`;
+  if (s.startsWith("-") && !/^-\d[\d,]*(\.\d+)?$/.test(s)) return `'${s}`;
+  return s;
+}
+const cell = (raw) => {
+  const s = safeCell(raw);
+  return /[",\r\n]|^\s|\s$/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 /** The table as shown: a two-line preamble, the header texts, the rows (RFC 4180, CRLF). */
 export function tableCsv(table, commit, generatedAt) {
@@ -187,8 +259,6 @@ export function pngBlob(svgString, width, height, scale = 2, doc = document, Ima
         canvas.width = Math.round(width * scale);
         canvas.height = Math.round(height * scale);
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("the canvas gave no PNG"))), "image/png");
       } catch (e) {

@@ -489,6 +489,75 @@ def interact(devtools: str, origin: str, base: str, theme: str, width: int, shot
             t.close()
 
 
+DOWNLOAD_PAGE = "city/berlin/tiers"  # a chart with an HTML key and a data table
+
+
+def interact_download(devtools: str, origin: str, base: str, theme: str, width: int, shots: Path):
+    """Open a chart's Download with the mouse and click SVG, PNG and CSV: each announces a result,
+    the console stays clean, and the files are in the light theme, self-contained, with the chart's
+    key and the OSM attribution."""
+    label = base + DOWNLOAD_PAGE + " (download)"
+    folder = Path(tempfile.mkdtemp(prefix="render-pass-dl-"))
+    t = None
+    try:
+        t = open_tab(devtools, width, theme)
+        t.call("Browser.setDownloadBehavior", behavior="allow", downloadPath=str(folder))
+        errors = navigate(t, origin + base + DOWNLOAD_PAGE)
+        if errors:
+            return entry(label, theme, width, "interact", events=t.events, errors=errors)
+        if not t.wait_js(
+            "!!document.querySelector('[data-chart] svg') && "
+            "!!document.querySelector('details.download')",
+            10,
+        ):
+            return entry(label, theme, width, "interact", events=t.events,
+                         errors=["the chart has no Download control"])  # fmt: skip
+        t.pump(1.0)
+        if why := click(t, "details.download > summary"):
+            return entry(label, theme, width, "interact", events=t.events, errors=[why])
+        for kind in ("SVG", "PNG", "CSV"):
+            if why := click(t, f'details.download button[aria-label^="Download {kind},"]'):
+                errors.append(why)
+                continue
+            if not t.wait_js(
+                "/^Downloaded velometer-/.test(document.getElementById('live').textContent)", 10
+            ):
+                say = t.js("document.getElementById('live').textContent")
+                errors.append(f"{kind} download announced {say!r}")
+            t.js("document.getElementById('live').textContent = ''")
+            t.pump(0.5)
+        files = {f.suffix: f for f in folder.iterdir() if not f.name.endswith(".crdownload")}
+        for ext in (".svg", ".png", ".csv"):
+            if ext not in files or files[ext].stat().st_size == 0:
+                errors.append(f"no {ext} file was saved")
+        if ".svg" in files:
+            svg = files[".svg"].read_text(encoding="utf-8")
+            for bad in ("var(", " class=", " style="):
+                if bad in svg:
+                    errors.append(f"the SVG holds {bad!r}")
+            for need in ("OpenStreetMap contributors", "separated track"):
+                if need not in svg:
+                    errors.append(f"the SVG lacks {need!r}")
+        if ".png" in files and files[".png"].read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            errors.append("the PNG is not a PNG")
+        if ".csv" in files and not files[".csv"].read_text(encoding="utf-8").startswith(
+            "# Map data"
+        ):
+            errors.append("the CSV does not start with the attribution")
+        before = len(t.events)
+        overflow = t.js(OVERFLOW_JS)
+        shot = screenshot(t, shots / f"download-{theme}-{width}.png", width)
+        axe = audit(t)
+        after = len(t.events)
+        events = t.events[:before] + t.events[after:]
+        return entry(label, theme, width, "interact", axe=axe, overflow=overflow, events=events,
+                     errors=errors, shot=shot)  # fmt: skip
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+        if t is not None:
+            t.close()
+
+
 CITE_PAGE = "city/berlin/time"
 CITE_BLOCKS_JS = """(() => {
   const d = document.querySelector('details.cite');
@@ -1023,6 +1092,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.interact:
         plan += [("interact", base + "compare", th, w) for th in themes for w in widths]
         plan += [("cite", base + CITE_PAGE, th, w) for th in themes for w in widths]
+        plan += [("download", base + DOWNLOAD_PAGE, th, w) for th in themes for w in widths]
     if a.keyboard:
         plan += [("keyboard", base, th, 1280) for th in themes]
 
@@ -1051,6 +1121,8 @@ def main(argv: list[str] | None = None) -> int:
             for kind, url, theme, width in plan:
                 if kind == "interact":
                     r = interact(devtools, origin, base, theme, width, shots)
+                elif kind == "download":
+                    r = interact_download(devtools, origin, base, theme, width, shots)
                 elif kind == "cite":
                     r = interact_cite(devtools, origin, base, theme, width, shots)
                 elif kind == "keyboard":

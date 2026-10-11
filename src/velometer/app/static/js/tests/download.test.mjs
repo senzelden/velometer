@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fileName, hex, lightOf, pngBlob, selfContained, tableCsv } from "../download.js";
+import { fileName, hex, lightOf, pngBlob, safeCell, selfContained, tableCsv } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -29,7 +29,7 @@ const darkStyle = (el) =>
   el.tagName === "path"
     ? { fill: "none", stroke: "rgb(94, 152, 237)", "stroke-width": "2", opacity: "1" }
     : el.tagName === "text"
-      ? { fill: "rgb(163, 161, 154)", "font-size": "11px", "font-weight": "400", opacity: "1" }
+      ? { fill: "rgb(163, 161, 154)", "font-size": "11px", "font-weight": "600", "text-anchor": "end", opacity: "1" }
       : el.tagName === "g"
         ? { display: "none" }
         : { fill: "rgb(0, 0, 0)", opacity: "1" };
@@ -118,7 +118,7 @@ test("pngBlob: draws the SVG at 2x on a canvas and resolves with its PNG blob", 
     createElement: (t) => {
       assert.equal(t, "canvas");
       return {
-        getContext: () => ({ drawImage: (...a) => drawn.push(a), fillRect() {}, set fillStyle(v) {} }),
+        getContext: () => ({ drawImage: (...a) => drawn.push(a) }), // no fillRect: the SVG draws its own ground
         toBlob(cb, type) { cb({ type, size: 9 }); },
       };
     },
@@ -140,4 +140,66 @@ test("selfContained: the ground and the added text take the light colours the ca
   assert.match(out, /<rect[^>]*fill="#fafafa"/);
   assert.match(out, /font-weight="600" fill="#101010"/);
   assert.match(out, /fill="#505050">velometer/);
+});
+
+test("selfContained: a text keeps its anchor, font size and weight as attributes", () => {
+  const out = selfContained(chart(), darkStyle, null, META);
+  const t = out.match(/<text x="5"[^>]*>/)[0];
+  assert.match(t, /text-anchor="end"/);
+  assert.match(t, /font-size="11px"/);
+  assert.match(t, /font-weight="600"/);
+});
+
+test("selfContained: a colour with alpha keeps its rgb and writes the alpha as an opacity", () => {
+  const style = (el) => (el.tagName === "path" ? { fill: "rgba(94, 152, 237, 0.4)", stroke: "rgb(94 152 237 / 50%)", opacity: "1" } : {});
+  const out = selfContained(chart(), style, lightOf(TOKENS), META);
+  const p = out.match(/<path[^>]*>/)[0];
+  assert.match(p, /fill="#2a78d6"/);
+  assert.match(p, /fill-opacity="0\.4"/);
+  assert.match(p, /stroke="#2a78d6"/);
+  assert.match(p, /stroke-opacity="0\.5"/);
+  // fully transparent is no fill at all
+  const none = selfContained(chart(), () => ({ fill: "rgba(0, 0, 0, 0)" }), null, META);
+  assert.match(none, /<path[^>]* fill="none"/);
+});
+
+test("selfContained: a chart's HTML key is drawn as swatches and labels in light colours", () => {
+  const key = [
+    { colour: "rgb(94, 152, 237)", text: "A separated track" },
+    { colour: "rgb(163, 161, 154)", text: "B shared foot/cycle path" },
+  ];
+  const out = selfContained(chart(), darkStyle, lightOf(TOKENS), { ...META, key });
+  assert.ok(out.includes("A separated track") && out.includes("B shared foot/cycle path"));
+  assert.match(out, /<rect x="8"[^>]*fill="#2a78d6"/);
+  assert.match(out, /<rect[^>]*fill="#6b6a66"/);
+  const [, , , h] = out.match(/viewBox="([^"]+)"/)[1].split(" ").map(Number);
+  const plain = selfContained(chart(), darkStyle, null, META).match(/viewBox="([^"]+)"/)[1].split(" ")[3];
+  assert.ok(h > +plain, "the key makes room for itself");
+  // the key sits above the source line
+  assert.ok(out.indexOf("A separated track") < out.indexOf(META.source));
+});
+
+test("selfContained: a long key wraps to a second row", () => {
+  const key = Array.from({ length: 12 }, (_, i) => ({ colour: "rgb(94, 152, 237)", text: `Tier number ${i}` }));
+  const out = selfContained(chart(), darkStyle, null, { ...META, key });
+  const ys = new Set([...out.matchAll(/<rect x="\d+" y="(\d+)" width="10"/g)].map((m) => m[1]));
+  assert.ok(ys.size >= 2);
+});
+
+test("safeCell: formula starters get a quote, a plain number does not", () => {
+  for (const bad of ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--x", "-"])
+    assert.equal(safeCell(bad), `'${bad}`, bad);
+  for (const ok of ["-3.2", "-1,639.8", "-0", "12", "abc", "a=b", "", "2018"]) assert.equal(safeCell(ok), ok, ok);
+});
+
+test("tableCsv: a cell that would run as a formula is quoted off in header and body", () => {
+  const c = (t) => ({ textContent: t });
+  const table = {
+    querySelectorAll: (q) =>
+      q === "thead th" ? [c("=HEAD()")] : q === "tbody tr" ? [{ querySelectorAll: () => [c('=HYPERLINK("x")')] }, { querySelectorAll: () => [c("-3.2")] }] : [],
+  };
+  const lines = tableCsv(table, "abc", "t").split("\r\n");
+  assert.equal(lines[2], "'=HEAD()");
+  assert.equal(lines[3], `"'=HYPERLINK(""x"")"`);
+  assert.equal(lines[4], "-3.2");
 });

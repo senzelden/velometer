@@ -538,9 +538,8 @@ def test_theme_tokens_cover_both_themes_and_dark_maps_unambiguously(client):  # 
 
     toks = theme_tokens(_stylesheet())
     assert toks["--ink"][0] != toks["--ink"][1]
-    drawable = [k for k in toks if k.startswith(("--series-", "--tier-", "--ink", "--muted",
-                "--grid", "--axis", "--halo", "--surface", "--paper", "--flag", "--outline",
-                "--ctx", "--marker-"))]  # fmt: skip
+    # every token lightOf maps, not a prefix subset: a later token must not corrupt the map
+    drawable = list(toks)
     seen = {}
     for k in drawable:
         light, dark = toks[k]
@@ -561,3 +560,19 @@ def test_every_page_ships_tokens_and_commit(client):  # noqa: F811
     html = client.get("/").text
     assert 'id="theme-tokens"' in html and 'name="velometer-commit"' in html
     assert "download-ui.js" in html
+
+
+def test_server_csv_guards_formula_cells_and_keeps_numbers():
+    from velometer.report.csvexport import SUBAREA_CSV_COLUMNS, csv_table, safe_cell
+
+    for bad in ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "-"]:
+        assert safe_cell(bad) == "'" + bad, bad
+    for ok in ["-3.2", "-1,639.8", "12", "abc", "a=b", "", "2018"]:
+        assert safe_cell(ok) == ok, ok
+    row = {c: "" for c in SUBAREA_CSV_COLUMNS} | {
+        "name": '=HYPERLINK("http://x")',
+        "length_km": "-3.2",
+    }
+    body = list(csv.DictReader(io.StringIO(csv_table([row], SUBAREA_CSV_COLUMNS))))[0]
+    assert body["name"] == '\'=HYPERLINK("http://x")'
+    assert body["length_km"] == "-3.2"

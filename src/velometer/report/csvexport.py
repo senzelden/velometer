@@ -2,6 +2,7 @@
 
 import csv
 import io
+import re
 
 CSV_COLUMNS = [
     "city_id",
@@ -42,6 +43,20 @@ SUBAREA_CSV_COLUMNS = [
 ATTRIBUTION = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km"
 
 
+_NUMBER = re.compile(r"-\d[\d,]*(\.\d+)?")
+
+
+def safe_cell(value: str) -> str:
+    """A cell a spreadsheet would run as a formula (OWASP CSV injection) gets a leading quote:
+    `=`, `+`, `@`, tab and CR always, `-` unless the whole cell is a number. The same rule is
+    `safeCell` in `static/js/download.js`."""
+    if value.startswith(("=", "+", "@", "\t", "\r")):
+        return "'" + value
+    if value.startswith("-") and not _NUMBER.fullmatch(value):
+        return "'" + value
+    return value
+
+
 def csv_preamble(commit: str, generated_at: str) -> str:
     """The two comment lines: attribution, then the commit and time of this export."""
     return f"{ATTRIBUTION}\n# velometer {commit} generated {generated_at}\n"
@@ -52,7 +67,9 @@ def csv_table(rows: list[dict[str, str]], columns: list[str] = CSV_COLUMNS) -> s
     out = io.StringIO()
     writer = csv.DictWriter(out, columns, lineterminator="\n")
     writer.writeheader()
-    writer.writerows(rows)
+    writer.writerows(
+        {k: safe_cell(v) if isinstance(v, str) else v for k, v in r.items()} for r in rows
+    )
     return out.getvalue()
 
 
