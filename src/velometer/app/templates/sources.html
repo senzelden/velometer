@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}velometer · Sources{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Sources</span></nav>{% endblock %}
+{% macro city_links(cities) %}{% for cid, name in cities %}<a href="{{ u('/city/' ~ cid ~ '/figures') }}">{{ name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endmacro %}
 {% block content %}
 <h1>Sources and how they measure</h1>
 <p class="dek">velometer sets published figures beside our own OpenStreetMap figures. Each row is one source; each column is one of the six dimensions along which figures differ.</p>
@@ -22,8 +23,8 @@
 <tr id="{{ r.anchor }}">
   <th scope="row" data-label="Source">{{ r.title }}{% if r.organisation_id %}<br><span class="meta"><a href="{{ u('/organisations') }}#{{ r.organisation_id }}">{{ r.organisation_name }}</a>{% if r.city_name %} · {{ r.city_name }}{% endif %}</span>{% endif %}</th>
   {% for d in dimensions %}<td data-label="{{ d.label }}">{{ r.cells.get(d.id) }}</td>{% endfor %}
-  <td data-label="Cities">{% if r.group == "ours" %}<a href="{{ u('/cities') }}">every city</a>{% elif r.cities %}{% for cid, name in r.cities %}<a href="{{ u('/city/' ~ cid ~ '/figures') }}">{{ name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<span class="note">no city in this edition</span>{% endif %}</td>
-  <td data-label="Recomputed by us">{% if r.recomputed_anchor %}<a href="{{ u('/') }}#{{ r.recomputed_anchor }}">{{ "our headline" if r.group == "ours" else "on our OSM data" }}</a>{% else %}<span class="note">–</span>{% endif %}</td>
+  <td data-label="Cities">{% if r.group == "ours" %}<a href="{{ u('/cities') }}">every city</a>{% elif r.cities | length > 3 %}<details class="src-cities"><summary>{{ r.cities | length }} cities</summary>{{ city_links(r.cities) }}</details>{% elif r.cities %}{{ city_links(r.cities) }}{% else %}<span class="note">no city in this edition</span>{% endif %}</td>
+  <td data-label="Recomputed by us">{% if r.recomputed_anchor %}<a href="{{ u('/') }}#{{ r.recomputed_anchor }}">{{ r.recomputed_label or r.recomputed_anchor }}</a>{% else %}<span class="note">–</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>

@@ -52,6 +52,7 @@ class SourceRow:
     cities: list[tuple[str, str]]  # (city id, city name) whose Figures tab quotes it
     recomputed_anchor: str | None  # the overview key-numbers column id, else None
     city_name: str | None = None  # the city of a city source (its sort key)
+    recomputed_label: str | None = None  # that overview column's own header label
 
 
 @dataclass
@@ -100,6 +101,7 @@ def source_rows(
     for preset, source in data.preset_sources().items():
         preset_of.setdefault(source, preset)
     names = {c.id: c.name for c in data.all_cities()}
+    labels = data.preset_labels()
     # the sources a city's Figures tab quotes: the rows that tab is built from
     quoted = {c.id: {r.source for r in difference_rows(data, c.id, diffs)} for c in data.cities()}
     owner = {c.id: org_of_sources(mapping, c.id, set(orgs)) for c in data.cities()}
@@ -123,6 +125,7 @@ def source_rows(
             cells=ours_cells,
             cities=[],
             recomputed_anchor=overview_column(preset_of[None]) if None in preset_of else None,
+            recomputed_label=labels.get(preset_of.get(None)),
         )
     ]
     for m in mapping:
@@ -155,6 +158,7 @@ def source_rows(
                     overview_column(preset_of[m.source]) if m.source in preset_of else None
                 ),
                 city_name=None if m.city == "*" else names.get(m.city, m.city),
+                recomputed_label=labels.get(preset_of.get(m.source)),
             )
         )
     rows = [

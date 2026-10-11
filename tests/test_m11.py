@@ -3,7 +3,7 @@ import io
 import json
 import re
 
-from tests.test_app import client, setup  # noqa: F401  (fixtures)
+from tests.test_app import client, client_21, setup, setup_21  # noqa: F401  (fixtures)
 
 M10_CSV_COLUMNS = [
     "city_id", "boundary_kind", "label", "run_id", "osm_timestamp", "classifier_version",
@@ -217,3 +217,45 @@ def test_sources_citations_are_numbered_in_reading_order(client):  # noqa: F811
         dict.fromkeys(int(n) for n in re.findall(r'<sup><a href="#[\w-]+">(\d+)<', table))
     )
     assert firsts and firsts == list(range(1, len(firsts) + 1))
+
+
+def test_long_city_lists_fold_into_a_disclosure(client_21, monkeypatch):  # noqa: F811
+    import velometer.app.sources as sources
+
+    real = sources.difference_rows
+
+    def many(data, city_id, cfg):  # every fixture city quotes the sources it quotes in berlin
+        return real(data, "berlin", cfg)
+
+    monkeypatch.setattr(sources, "difference_rows", many)
+    rows = dict(_rows(client_21.get("/sources").text))
+    folded = 0
+    for rid, body in rows.items():
+        cell = body.split('data-label="Cities">', 1)[1].split("</td>", 1)[0]
+        links = re.findall(r'href="/city/[\w-]+/figures"', cell)
+        if len(links) > 3:
+            folded += 1
+            m = re.fullmatch(r"<details[^>]*><summary>(\d+) cities</summary>(.*)</details>", cell)
+            assert m and int(m.group(1)) == len(links), rid
+        else:
+            assert "<details" not in cell, rid
+    assert folded  # 21 cities: the ranking rows list more than three
+
+
+def test_short_city_lists_stay_inline(client):  # noqa: F811
+    for rid, body in _rows(client.get("/sources").text):
+        cell = body.split('data-label="Cities">', 1)[1].split("</td>", 1)[0]
+        if 0 < len(re.findall(r'href="/city/', cell)) <= 3:
+            assert "<details" not in cell, rid
+
+
+def test_recomputed_link_text_is_the_overview_column_label(client):  # noqa: F811
+    overview = client.get("/").text
+    rows = dict(_rows(client.get("/sources").text))
+    seen = 0
+    for rid, body in rows.items():
+        for col, text in re.findall(r'href="/#(col-[\w-]+)">([^<]+)</a>', body):
+            (th,) = re.findall(rf'<th[^>]*id="{col}"[^>]*>(.*?)</th>', overview, re.S)
+            assert re.sub(r"<[^>]+>", "", th).strip() == text, rid
+            seen += 1
+    assert seen >= 3
