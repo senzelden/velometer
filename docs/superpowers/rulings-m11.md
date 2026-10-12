@@ -204,18 +204,39 @@ Parked minors, from the ledger:
   unlabelled).
 - The `[hidden] + .download` adjacency rule.
 - Two-line headline charts cite only the LAU run (the title says so); they could cite both runs.
-- A bare `-` or U+2212 no-data cell gets a stray `'` in the CSVs (harmless: a lone dash is not a
-  formula, so it could be exempted); `-1e-5` and `-.5` are over-neutralised (safe); the key wrap
-  width is estimated.
-- `panel.js` history calls lack try/catch; the `.permalink` margin leaves a gap when JS is off; the
-  story `remember` decision could move to `permalink.js` with a node test (the DOM wiring is guarded
-  only by the render pass).
-- Search: clearing the input before the index loads leaves a stale list open (close on an empty
-  query before the `!index` guard); there is no export-level test that every `search.json` url
-  resolves; the anchor test uses a substring `id="x"`; "No match" is an `li` inside the listbox;
-  key dispatch is untested outside `--keyboard`; a stale `orgs` pyright hint at `search.py:60`.
+- `-1e-5` and `-.5` are over-neutralised in the CSVs (safe); the key wrap width is estimated.
+- The story `remember` decision could move to `permalink.js` with a node test (the DOM wiring is
+  guarded only by the render pass).
+- Search: "No match" is an `li` inside the listbox; key dispatch is untested outside `--keyboard`;
+  a stale `orgs` pyright hint in `search.py`.
 - Sources: the check is silent on `ContentError` by design; the fixture owners are synthetic; the
   content check covers quoted entries only; the series-id check is loose.
+
+Fixed in final wave (after the final whole-branch review, `.superpowers/sdd/2026-10-11-velometer-m11/final-review.md`):
+
+- Parked, now fixed: a cell that is exactly `-`, `–`, `—` or U+2212 is a no-data mark and keeps no
+  `'` (`safeCell` and `safe_cell`, tested on both sides); `panel.js` history calls are wrapped in
+  try/catch (node test with a refusing `history`); the Copy link box is itself `hidden` until
+  `permalink-ui.js` reveals it, so there is no margin gap without JS; clearing the search input
+  before the index loads closes the list (the empty-query check runs before the `!index` guard);
+  an export-level test resolves every `data/search.json` url to an exported page and its anchor
+  under `/velometer/`, and the anchor tests match parsed ids, not a substring `id="x"`.
+- Review findings: a Compare or Stories download is titled from its Cite (metric, boundary,
+  cities; the current step), else the drawn SVG's label, with the container's generic label last;
+  a chart's download source line reads its own Cite (the first after the data table its
+  description names, within its section), so a FUA chart names the FUA run; the Compare citation
+  and `cite_runs` follow the boundary shown (`fields_for_cities(kind=)`, `RunRows.runs(kind)`,
+  `cite_runs` keyed by kind); a citation of another page (the city panel on Compare) cites that
+  page's own address without the current query; an open Cite labels its blocks with a `<p>`, not
+  an `<h4>`, sets no id, and names each Copy button "Copy <format>, <figure title>"; a resize's
+  `moveend` no longer writes `at=` (`readerMoves` in `permalink.js`, a render-pass resize step);
+  the search index logs content it leaves out; focus moves to the fallback link when the index
+  fails; the three button rules are one; the docs describe the render pass as built.
+- Ruling: a generic container prefers its Cite's title over the drawn SVG's label — the Compare
+  SVG names metric and boundary but not the cities, the Cite names all three — cost: none.
+- Ruling: `absoluteUrl` appends the live query and hash only when the cited path is the page shown
+  (`index.html` and slashes ignored) — one rule covers the panel and any future cross-page cite,
+  without a template flag — cost: none.
 
 M10 follow-ups this milestone resolved:
 
