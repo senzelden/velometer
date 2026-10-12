@@ -618,7 +618,11 @@ def interact_cite(devtools: str, origin: str, base: str, theme: str, width: int,
             t.close()
 
 
-PERMALINK_TIERS = "city/berlin/tiers?kind=fua&tiers=AB&at=52.52,13.40,12"
+TIER_PAGE = "city/berlin/tiers"
+# the permalink restored: the boundary is the last one the site's tier map offers (FUA on the real
+# data; a site with a LAU map only has nothing else), read from the page, not assumed
+PERMALINK_TIERS = TIER_PAGE + "?kind={kind}&tiers=AB&at=52.52,13.40,12"
+TIER_KINDS_JS = "[...document.querySelectorAll('input[name=kind]')].map(e => e.value)"
 # the map's centre and zoom, read back from the tile under the container's centre (the map object
 # is private to map.js); {z, lat, lon} or null while no tile has been placed
 MAP_VIEW_JS = r"""(() => {
@@ -655,12 +659,20 @@ def _permalink_tiers(devtools, origin, base, theme, width, shots) -> tuple[Tab, 
     """The tier map opened from a permalink shows that state; a pan or zoom rewrites `at`; a
     hostile query leaves the defaults and says nothing."""
     t = open_tab(devtools, width, theme)
-    errors = navigate(t, origin + base + PERMALINK_TIERS)
+    errors = navigate(t, origin + base + TIER_PAGE)
     errors += _wait_map(t, "the tier map did not draw")
     if errors:
         return t, errors, []
+    kinds = t.js(TIER_KINDS_JS)
+    if not kinds:
+        return t, ["the tier map offers no boundary"], []
+    kind = kinds[-1]
+    errors = navigate(t, origin + base + PERMALINK_TIERS.format(kind=kind))
+    errors += _wait_map(t, "the tier map did not draw from a permalink")
+    if errors:
+        return t, errors, []
     st = t.js(TIER_STATE_JS)
-    if st["kind"] != "fua" or st["tiers"] != "AB":
+    if st["kind"] != kind or st["tiers"] != "AB":
         errors.append(f"permalink state not applied: kind {st['kind']!r}, tiers {st['tiers']!r}")
     view = t.js(MAP_VIEW_JS)
     if (
@@ -728,12 +740,13 @@ def interact_permalink(devtools: str, origin: str, base: str, theme: str, width:
         t.close()
         # hostile values: defaults, no console message
         t = open_tab(devtools, width, theme)
-        errs = navigate(t, origin + base + "city/berlin/tiers?tiers=XYZ&kind=%E0%A4%A&at=NaN,1,5")
+        errs = navigate(t, origin + base + TIER_PAGE + "?tiers=XYZ&kind=%E0%A4%A&at=NaN,1,5")
         errs += _wait_map(t, "the tier map did not draw with a hostile query")
         errors += errs
         if not errs:
             st = t.js(TIER_STATE_JS)
-            if st["tiers"] != "ABCDE" or st["kind"] != "lau":
+            first = (t.js(TIER_KINDS_JS) or [None])[0]  # the default boundary is the first offered
+            if st["tiers"] != "ABCDE" or st["kind"] != first:
                 errors.append(f"a hostile query did not give the defaults: {st}")
             # resizing the window is not a reader's pan: Leaflet's own moveend writes no `at`
             other = width - 40 if width > 360 else width + 40

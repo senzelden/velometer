@@ -269,15 +269,15 @@ def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path):  #
         rp, site, tmp_path / "out", "--pages", "", "--interact", "--widths", "1280,390",
         "--themes", "light,dark",
     )  # fmt: skip
-    assert [(r["kind"], r["theme"], r["width"]) for r in res] == [
-        ("interact", "light", 1280),
-        ("interact", "light", 390),
-        ("interact", "dark", 1280),
-        ("interact", "dark", 390),
-    ]
+    # --interact runs, per theme and width, the city panel and the M11 cite, download and
+    # permalinks visits; every one must come back without an error
+    visits = ["(city panel)", "(cite)", "(download)", "permalinks"]
+    want = [(v, th, w) for v in visits for th in ("light", "dark") for w in (1280, 390)]
+    got = [(next(v for v in visits if v in r["url"]), r["theme"], r["width"]) for r in res]
+    assert sorted(got) == sorted(want)
     for r in res:
-        assert r["errors"] == [], r["errors"]
-        assert r["screenshot"] and Path(r["screenshot"]).is_file()
+        assert r["errors"] == [], (r["url"], r["theme"], r["width"], r["errors"])
+        assert r["screenshot"] and Path(r["screenshot"]).is_file(), r["url"]
         assert isinstance(r["axe"], list)
 
 

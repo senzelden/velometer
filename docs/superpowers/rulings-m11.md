@@ -234,6 +234,11 @@ Fixed in final wave (after the final whole-branch review, `.superpowers/sdd/2026
   fails; the three button rules are one; the docs describe the render pass as built.
 - Ruling: a generic container prefers its Cite's title over the drawn SVG's label — the Compare
   SVG names metric and boundary but not the cities, the Cite names all three — cost: none.
+- Ruling: the render pass's tier-map permalink step reads the boundaries the site offers and
+  restores the last one (FUA on the real data), instead of assuming `kind=fua` — the fixture site
+  has a LAU tier map only, so the app rightly ignored `kind=fua` and the slow `--interact` test
+  failed; its expectation now lists the M11 visits and requires zero errors — cost: on a site with
+  one boundary the step proves `tiers` and `at`, not a non-default `kind`.
 - Ruling: `absoluteUrl` appends the live query and hash only when the cited path is the page shown
   (`index.html` and slashes ignored) — one rule covers the panel and any future cross-page cite,
   without a template flag — cost: none.
