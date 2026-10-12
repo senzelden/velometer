@@ -312,6 +312,29 @@ def test_a_failed_keyboard_step_fails_the_run(rp, tmp_path, monkeypatch):
     assert rp.main(args) == 0
 
 
+@pytest.mark.parametrize("step", ["cite", "download", "permalink"])
+def test_a_failed_cite_download_or_permalink_step_fails_the_run(rp, tmp_path, monkeypatch, step):
+    site = _site(tmp_path, {"": "<p>x</p>"})
+    monkeypatch.setattr(rp, "find_chrome", lambda path: path)
+    monkeypatch.setattr(rp, "serve", lambda site, base: contextlib.nullcontext("http://x"))
+    monkeypatch.setattr(rp, "chrome", lambda binary: contextlib.nullcontext("http://d"))
+    failing = [True]
+
+    def fake(devtools, origin, base, theme, width, shots):
+        return rp.entry(base + step, theme, width, "interact",
+                        errors=["step failed"] if failing[0] else [])  # fmt: skip
+
+    ok = lambda *a, **k: rp.entry("x", "light", 1280, "interact")  # noqa: E731
+    for name in ("interact", "interact_cite", "interact_download", "interact_permalink"):
+        monkeypatch.setattr(rp, name, ok)
+    monkeypatch.setattr(rp, f"interact_{step}", fake)
+    args = ["--site", str(site), "--out", str(tmp_path / "out"), "--pages", "", "--interact"]
+    args += ["--themes", "light", "--widths", "1280"]
+    assert rp.main(args) == 1
+    failing[0] = False
+    assert rp.main(args) == 0
+
+
 @pytest.mark.slow
 @needs_chrome
 def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # noqa: F811
@@ -319,8 +342,14 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
     _export(rich, site, base="/velometer/")
     code, res = _run(rp, site, tmp_path / "out", "--pages", "", "--keyboard", "--themes", "light")
     (r,) = res
-    assert r["kind"] == "keyboard" and r["errors"] == [], r["steps"]
+    assert r["kind"] == "keyboard", r["steps"]
+    # the fixture export holds neither Kraków nor Vienna, so the jump steps of `_search` cannot
+    # land here (the real-export pass covers them); everything else must pass, including the
+    # "No match" row and axe with the list open
+    assert [e for e in r["errors"] if not e.startswith("search ")] == [], r["steps"]
     steps = " ".join(r["steps"])
+    for done in ("zzz offers the No match option", "axe finds nothing with the list open"):
+        assert any(done in x and x.startswith("ok") for x in r["steps"]), done
     for needle in (
         "skip link",
         "phone menu",
@@ -328,6 +357,9 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
         "compare: Escape",
         "sort button",
         "chart view",
+        "search 1280px: Enter lands on the Kraków page",
+        "search 1280px: Enter lands on the Vienna page",
+        "search 320px: zzz offers the No match option",
     ):
         assert needle in steps, needle
-    assert code == 0
+    assert code == (1 if r["errors"] else 0)

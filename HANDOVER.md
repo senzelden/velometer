@@ -207,12 +207,22 @@ tool, outside the package and the gate; usage and result format are in `tools/RE
 ```bash
 uv run velometer app export --out "$SCRATCH/site" --base /velometer/ --clean
 uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
-    --out tools/out/NAME --pages all --themes light,dark --widths 1280,390,320 --interact
+    --out tools/out/NAME --pages all --themes light,dark --widths 1280,390,320
 uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
-    --out tools/out/NAME-flip --pages types --flip --interact
-uv run --group dev python tools/render_pass.py --site "$SCRATCH/site" --base /velometer/ \
-    --out tools/out/NAME-kb --pages "" --keyboard
+    --out tools/out/NAME-flip --pages types --interact --keyboard --flip
 ```
+
+M11 added four proofs (details in "Reader features (M11)" below). `--interact` gained, per theme and
+width: a **Cite** visit (opens the first `details.cite` on `/city/berlin/time`, three blocks, the
+Copy button's live region, axe), a **download** visit (on `/city/berlin/tiers`: SVG, PNG and CSV
+saved through `Browser.setDownloadBehavior`, the SVG without `var(` and with the OpenStreetMap
+attribution, axe with the control open) and a **permalinks** visit (the tier map restores `kind`,
+`tiers` and `at` from the URL, read through `window.__velometerMap`, which `map.js` exposes only
+when `<html data-test>` is set; a hostile `?tiers=XYZ` leaves the console empty). `--keyboard`
+gained `_search` (Tab to `#site-search`, type with `Input.insertText`, Down sets
+`aria-activedescendant`, Enter lands on `/city/krakow` and `/city/vienna`, "zzz" shows "No match",
+axe with the list open; at 1280 and 320 px). The static export gained `/data/search.json` (the
+search index, §9 M11).
 
 **Exit rule:** the exit status is 0 only when every visit has no axe violation (WCAG 2.1 A and AA
 tags), no overflow (a box that scrolls, clips or is spilled out of, other than a prose table, the
@@ -254,6 +264,8 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 
 **M10 — Polish and accessibility** (added after M9; spec `docs/superpowers/specs/2026-10-09-velometer-m10-design.md`, rulings `docs/superpowers/rulings-m10.md`). The reader app follows the OS colour scheme (`prefers-color-scheme`, no toggle) through colour tokens; the JS draws from those tokens (series, tier, axis, halo and counter-map colours) and redraws when the scheme changes. One tier palette (`charts.TIER_COLOURS`, tokens `--tier-a`…`--tier-e`) serves the maps and charts in both themes, chosen by rule (3:1 on the grounds, pairwise colour difference, tested in `tests/test_colour.py` and `tests/test_a11y.py`); the tier-map PNGs were re-rendered with it. Below 600 px wide tables stack into labelled cards (only prose tables in methodology and the explainer scroll). The page has a skip link, a visible focus ring everywhere, a live region for Compare and the city panel, heading order, scroll regions that are focusable and named, a data table behind every chart, flags and changes that do not rely on colour, and `lang` on quotes. `tools/render_pass.py` (see §8) runs axe-core over every exported page in both themes at 1280, 390 and 320 px. *Accept:* gate green including the node tests; the six checks exit 0; the full render pass (`--pages all`, both themes, 1280/390/320, `--interact`), run on the M10 head, exits 0, and so does `--pages types --flip --interact`: no axe violation (WCAG 2 A/AA and 2.1 A/AA tags), overflow, console message, CSP violation or foreign host in every exported page as loaded, plus Compare with a city panel open; the scripted keyboard pass (`--keyboard`, real key events, both themes) passes, including Compare's chart view after the table view; 200% zoom and WCAG 1.4.12 text-spacing spot checks on Compare, Figures and methodology; `velometer.sqlite` unchanged; delivered 2026-10-10.
 
+**M11 — Reader features** (added after M10; spec `docs/superpowers/specs/2026-10-11-velometer-m11-design.md`, rulings `docs/superpowers/rulings-m11.md`). A **Sources** page (`/sources`) sets every quoted report beside our approach, one row per source, dimension by dimension, with the organisation behind it, the cities it covers and, where we recompute its method on our data, a link to that overview column. Every chart, key number and Figures row has a **Cite** disclosure (plain text, BibTeX and CSL-JSON, with the address the page is served at); every chart can be **downloaded** as SVG, PNG or the CSV behind it, in the light theme with attribution; the tier map, the story steps and the compare panel have **permalinks** and a Copy link button; the nav has a **search** over cities, countries, organisations, stories and pages (`/data/search.json`, no server). No DB write, no new run, no new host, no npm. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the full render pass (`--pages all`, both themes, 1280/390/320) and `--pages types --interact --keyboard --flip`, run on the M11 head, exit 0, which audits every exported page as loaded for axe violations, overflow, console messages, CSP violations and foreign hosts, plus the Cite, download and permalink visits and the `_search` keyboard steps listed in §8; screenshots of the Sources page, an open Cite, the Download menu, a downloaded SVG and PNG, the open search list and a restored tier-map permalink were looked at in both themes. Not claimed: downloads and Cite are not checked with a screen reader, and clipboard behaviour is proven only through the live-region message. Next: M12, the German edition.
+
 ### Accessibility statement (M10)
 
 **Target:** WCAG 2.1 level AA for the reader app (live and static edition). **How it is proven:**
@@ -288,6 +300,50 @@ conformance, not a certification.
 - `velometer report maps` skips a map when its `.run` marker names the current run; the marker
   ignores palette changes, so re-rendering after one needs the markers deleted (§8).
 - Not covered: screen-reader testing with real assistive technology, and a German interface (M12).
+
+### Reader features (M11)
+
+How each is built, and how to verify it.
+
+- **Sources page** (`/sources`, nav link). Rows are figure-source ids mapped to organisations in
+  `config/organisations.yaml` (`recomputes` names the overview column we recompute). The row
+  group is derived (city `*` is a ranking, else a city). Anchors are `src-<source>` (or
+  `src-<source>-<org>` when several organisations share a source) and `col-<preset id>`. Verify:
+  `tests/test_m11.py` (anchors resolve, every cited source has a row, the table stacks on a phone),
+  the page in the render pass, and the screenshots at 1280 and 390 px.
+- **Labels.** Preset columns read "method on our data" and link to their source; the Figures tab
+  names the overview column it recomputes. Verify: the Sources and Figures tests in `tests/`.
+- **Cite** (`static/js/cite.js`, `app/cite.py`). Plain text, BibTeX and CSL-JSON from one set of
+  fields, with the same cases tested in Python and JS (`tests/cite_cases.json`). **Citations use
+  the address the page is served at** (`location`, base path included), so a citation made on the
+  static edition names that host; a crafted query cannot inject BibTeX (`{ } \` and spaces in the
+  URL are percent-encoded, `\ $ ~ ^` escaped in title and note). A key number cites only the
+  boundary it shows. Verify: `cite.test.mjs`, `test_m11.py`, the render-pass Cite visit.
+- **Downloads** (`static/js/download.js`, `download-ui.js`). SVG, PNG and CSV for each chart.
+  **Downloads are always light-theme**: computed colours are resolved to the light tokens
+  (`theme_tokens`), the file carries a title, the source line (OSM date, classifier, commit), the
+  OpenStreetMap contributors attribution and the HTML key if the chart has one; there is no
+  `var(`, class or style left in the SVG. The CSV is the chart's data table as shown (display
+  headers) with a two-line preamble. **CSV formula neutralisation:** a cell starting with `=`, `+`,
+  `@`, TAB or CR, or a `-` cell that is not a number, gets a leading `'`; this applies to the chart
+  CSV (`safeCell`, `download.js`) and to the server CSVs (`safe_cell`, `report/csvexport.py`, which
+  backs `/data/*.csv`, the export and the CLI); shared cases are tested on both sides. Scripts that
+  need stable column ids use `/data/*.csv`, not the chart CSV. Verify: `download.test.mjs`,
+  `download-ui.test.mjs`, the render-pass download visit, and a downloaded SVG and PNG opened.
+- **Permalinks** (`static/js/permalink.js`, `permalink-ui.js`). No server route is involved.
+  Tier map: `?kind=<boundary>&tiers=<letters A-E>&at=<lat>,<lon>,<zoom>` (a default value is
+  left out; `tiers` is sorted and deduplicated; `at` is exactly three plain decimals, zoom 3-19).
+  Story steps: `#step-<id>`. Compare panel: `?panel=<city id>` beside Compare's own `state.js`
+  keys. A bad, hostile or stale value falls back to its default silently, with nothing on the
+  console. Copy link copies the address as it is now. Verify: `permalink.test.mjs`, the
+  render-pass `permalinks` visit.
+- **Search** (`static/js/search.js`, `app/search.py`, `/data/search.json`). A combobox in the nav.
+  Scope: cities (with English exonym aliases from `config/cities.yaml`), countries,
+  organisations, the stories (only for trusted cities with a narrative) and the main pages. It
+  does not search narrative text, quotes or figures. The match folds case and diacritics
+  (including ł ø đ ð æ œ ß þ ı). Without JS, or when the index fails to load, the box is hidden
+  and a "Find a city" link shows. Verify: `search.test.mjs`, `test_m11.py`, the `_search`
+  keyboard steps.
 
 ---
 

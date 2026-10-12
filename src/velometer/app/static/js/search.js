@@ -126,7 +126,8 @@ function mount(doc) {
     if (!shown.length) {
       const li = doc.createElement("li");
       li.className = "none";
-      li.setAttribute("role", "presentation");
+      li.setAttribute("role", "option"); // a listbox owns only options
+      li.setAttribute("aria-disabled", "true");
       li.textContent = "No match";
       list.append(li);
     }

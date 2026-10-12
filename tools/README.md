@@ -39,13 +39,21 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   view and clicks the first city link, the way a reader would, and waits for the city panel to
   load. Then it runs the same checks with the panel open, presses Escape, and checks that the
   panel closed and focus went back to the link. Screenshots are `compare-panel-<theme>-<width>.png`.
+  It also adds three more visits per theme and width (M11): `city/berlin/time` with the first Cite
+  opened and its Copy button pressed (three blocks, live region "Copied" or "Press Ctrl+C to
+  copy"); `city/berlin/tiers` with the Download menu, saving SVG, PNG and CSV into the out
+  directory (the SVG has no `var(` and names OpenStreetMap contributors); and `permalinks`, the
+  tier map loaded from `?kind&tiers&at` (state read through `window.__velometerMap`, exposed only
+  when `<html data-test>` is set before load) and a hostile `?tiers=XYZ` with a clean console.
 - `--keyboard` adds one scripted keyboard pass per theme (entry `kind: keyboard`, no axe or
   screenshot). It sends real key events with `Input.dispatchKeyEvent` and checks, step by step:
   the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter
   opens, Escape closes and returns focus), the phone menu at 390 px, a city's tabs, Compare (tick
   a city, change the metric, switch to the table view, re-sort with focus kept, open the panel,
   Escape returns focus to the opener, back to the chart view with every ARIA id reference
-  resolving and no axe violation) and the tier and counter maps (`+` and `-` zoom). Each step
+  resolving and no axe violation), the nav search (type, Escape twice, arrows, Enter lands on the
+  city, "zzz" shows "No match", axe with the list open; at 1280 and 320 px) and the tier and
+  counter maps (`+` and `-` zoom). Each step
   is a line in the entry's `steps` (`ok`/`FAIL`); a failed step is an error, so the exit status
   is 1. Use `--pages ""` to run it alone.
 - `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else

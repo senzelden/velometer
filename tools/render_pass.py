@@ -1187,6 +1187,57 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
         st.check(f"{label}: no console errors", "; ".join(console) or None)
     finally:
         t.close()
+    _search_again(devtools, origin, base, theme, width, st, state, label)
+
+
+def _search_again(devtools, origin, base, theme, width, st: Steps, state: str, label: str) -> None:
+    """Two fresh loads: "vienna" + Down + Enter lands on /city/vienna; "zzz" offers the one
+    "No match" option and axe finds nothing with that list open."""
+
+    def to_box(t, errs, what: str) -> bool:
+        if not st.check(f"{label}: {what} loads", "; ".join(errs) or None):
+            return False
+        if width <= 760:
+            if not st.check(f"{label}: {what} Tab reaches the Menu button",
+                            tab_to(t, ".menu-toggle", 10)):  # fmt: skip
+                return False
+            press(t, "Enter", wait=0.3)
+        return st.check(f"{label}: {what} Tab reaches the search box", tab_to(t, "#site-search"))
+
+    options = "document.querySelectorAll('#site-search-list [role=option]').length > 0"
+    t, errs = _page(devtools, origin, base, theme, width, "")
+    try:
+        if not to_box(t, errs, "vienna page"):
+            return
+        t.call("Input.insertText", text="vienna")
+        t.wait_js(options, 5)
+        press(t, "ArrowDown", wait=0.2)
+        s = t.js(state)
+        st.check(f"{label}: vienna lists a visible option and Down sets aria-activedescendant",
+                 None if s["n"] >= 1 and s["expanded"] == "true" and s["active"] and s["inside"]
+                 else f"{s}")  # fmt: skip
+        press(t, "Enter", wait=0.3)
+        landed = t.wait_js(
+            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + 'city/vienna')}", 8
+        )
+        st.check(f"{label}: Enter lands on the Vienna page",
+                 None if landed else f"at {t.js('location.pathname')}")  # fmt: skip
+    finally:
+        t.close()
+    t, errs = _page(devtools, origin, base, theme, width, "")
+    try:
+        if not to_box(t, errs, "no-match page"):
+            return
+        t.call("Input.insertText", text="zzz")
+        t.wait_js(options, 5)
+        s = t.js(state)
+        st.check(f"{label}: zzz offers the No match option",
+                 None if s["n"] == 1 and s["first"] == "No match" and s["expanded"] == "true"
+                 else f"{s}")  # fmt: skip
+        bad = [v["id"] for v in audit(t)]
+        st.check(f"{label}: axe finds nothing with the list open", ", ".join(bad) or None)
+    finally:
+        t.close()
 
 
 def keyboard(devtools: str, origin: str, base: str, theme: str) -> dict:

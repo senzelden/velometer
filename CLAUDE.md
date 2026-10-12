@@ -1,7 +1,7 @@
 # velometer
 
 Read `HANDOVER.md` (project brief) and `docs/adr/` (locked decisions) before changing behaviour.
-Latest delivered: M10, polish and accessibility (`docs/superpowers/specs/2026-10-09-velometer-m10-design.md`, rulings in `docs/superpowers/rulings-m10.md`). Next: M11 reader features (roadmap in the M9 spec §2), not yet specced.
+Latest delivered: M11, reader features (`docs/superpowers/specs/2026-10-11-velometer-m11-design.md`, rulings in `docs/superpowers/rulings-m11.md`). Next: M12 German edition (roadmap in the M9 spec §2), not yet specced.
 
 - Gate: `uv run ruff format --check . && uv run ruff check . && uv run pytest && node --test "src/velometer/app/static/js/tests/*.test.mjs"`
 - Network tests are `@pytest.mark.slow` and deselected by default.
