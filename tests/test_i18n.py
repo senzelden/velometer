@@ -114,3 +114,42 @@ def test_german_required_only_for_the_shipped_tree(monkeypatch, tmp_path):
     monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", True)
     assert i18n.german_required(i18n.SHIPPED_CONTENT_DIR)
     assert not i18n.german_required(tmp_path)
+
+
+def test_catalogue_cache_invalidates_when_the_file_changes(cat):
+    _write(cat, "a.b: one\n", "a.b: eins\n")
+    assert i18n.t("de", "a.b") == "eins"
+    _write(cat, "a.b: one\n", "a.b: zwei und mehr\n")  # no cache_clear
+    assert i18n.t("de", "a.b") == "zwei und mehr"
+
+
+@pytest.mark.parametrize(
+    "en,de,needle",
+    [
+        ("a.b: 5\n", "a.b: x\n", "string"),
+        ("a.b: x\n", "a.b: [1, 2]\n", "string"),
+        ("a.b: {one: x, other: y, few: z}\n", "a.b: {one: x, other: y}\n", "plural"),
+        ("a.b: {one: x}\n", "a.b: {one: x}\n", "plural"),
+        (
+            "a.b: {one: '{count} a', other: '{count} b'}\n",
+            "a.b: {one: eine, other: '{count} b'}\n",
+            "placeholder",
+        ),
+        (
+            "a.b: {one: x, other: '{count} b'}\n",
+            "a.b: {one: x, other: '{n} b'}\n",
+            "placeholder",
+        ),
+    ],
+)
+def test_catalogue_value_and_per_form_rules(tmp_path, en, de, needle):
+    _write(tmp_path, en, de)
+    assert any(needle in p for p in i18n.check_catalogues(tmp_path))
+
+
+def test_rounded_negative_zero_has_no_sign():
+    for lang, zero in (("en", "0.0"), ("de", "0,0")):
+        assert i18n.fmt(-0.04, ",.1f", lang) == zero
+        assert i18n.signed(-0.04, lang) == zero
+        assert i18n.percent(-0.04, lang, signed=True).startswith(zero)
+    assert i18n.fmt(-0.06, ",.1f", "de") == "−0,1"

@@ -52,8 +52,9 @@ _PLURAL = {"one", "other"}
 _warned: set[tuple[str, str]] = set()
 
 
-@functools.cache
-def _load(path: str, mtime_ns: int, size: int) -> dict[str, Value]:
+@functools.lru_cache(maxsize=32)
+def _load(path: str, mtime_ns: int, size: int) -> dict[str, object]:
+    del mtime_ns, size  # cache-key parts only: an edited file reads fresh
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
         raise ValueError(f"{path}: the catalogue must be a flat mapping")
@@ -63,7 +64,8 @@ def _load(path: str, mtime_ns: int, size: int) -> dict[str, Value]:
 def catalogue(lang: str, directory: Path | None = None) -> dict[str, Value]:
     path = (directory or CATALOGUE_DIR) / f"{lang}.yaml"
     st = path.stat()
-    return _load(str(path), st.st_mtime_ns, st.st_size)
+    # validated by `check_catalogues`; `_load` is typed object because YAML can hold anything
+    return _load(str(path), st.st_mtime_ns, st.st_size)  # type: ignore[return-value]
 
 
 catalogue.cache_clear = _load.cache_clear  # type: ignore[attr-defined]
@@ -107,14 +109,8 @@ def js_strings(lang: str) -> dict:
     return merged
 
 
-def _placeholders(value: Value) -> set[str]:
-    forms = value.values() if isinstance(value, dict) else [value]
-    return {
-        name
-        for form in forms
-        for _, name, _, _ in string.Formatter().parse(str(form))
-        if name is not None
-    }
+def _placeholders(form: object) -> set[str]:
+    return {name for _, name, _, _ in string.Formatter().parse(str(form)) if name is not None}
 
 
 def check_catalogues(directory: Path | None = None) -> list[str]:
@@ -141,6 +137,10 @@ def check_catalogues(directory: Path | None = None) -> list[str]:
     for key in sorted(set(en) & set(de)):
         if isinstance(en[key], dict) != isinstance(de[key], dict):
             problems.append(f"{key}: plural in one catalogue and not in the other")
+        elif isinstance(en[key], dict):
+            for form in sorted(_PLURAL & set(en[key]) & set(de[key])):
+                if _placeholders(en[key][form]) != _placeholders(de[key][form]):
+                    problems.append(f"{key}.{form}: placeholder sets differ")
         elif _placeholders(en[key]) != _placeholders(de[key]):
             problems.append(f"{key}: placeholder sets differ")
     return problems
@@ -150,6 +150,8 @@ def check_catalogues(directory: Path | None = None) -> list[str]:
 
 
 def _localise(text: str, lang: str) -> str:
+    if text.startswith("-") and not any(c in "123456789" for c in text):
+        text = text[1:]  # a value that rounds to zero carries no sign
     if lang != "de":
         return text
     text = text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
@@ -172,6 +174,7 @@ def signed(v: float | int | None, lang: str, decimals: int = 1) -> str:
     return _localise(f"{v:+.{decimals}f}", lang)
 
 
+# `percent` has a `signed` flag that shadows the function inside it; this alias reaches it.
 _signed = signed
 
 
