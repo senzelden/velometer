@@ -117,7 +117,9 @@ reported stale until someone re-translates it.
    set.
    - `differences.yaml`: every label, `ours` and base text gets `_de`.
    - `report.yaml`: ranking `label_de` and `note_de`.
-   - `presets.yaml`: `basis_de`.
+   - `presets.yaml` is not touched. Its bytes are part of every run's `config_sha256`, and its
+     `basis` values are ids; the basis words readers see come from `differences.yaml`.
+     (Amended 2026-10-12 after planning.)
    - `config/plans/plans.yaml`: `note_de` and `label_de`. German plan titles stay as they are.
    - `counters.yaml`: `note_de`.
    - `config/external/figures.csv`: a `note_de` column.
