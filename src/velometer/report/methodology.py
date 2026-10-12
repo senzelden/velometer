@@ -17,6 +17,7 @@ import yaml
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from pydantic import BaseModel, ConfigDict
 
+from velometer import i18n
 from velometer import timeseries as ts
 from velometer.config import (
     CityConfig,
@@ -40,6 +41,7 @@ from velometer.counters.model import (
     load_counters_config,
 )
 from velometer.db import fetch_boundary, fetch_run
+from velometer.i18n import AND, LANGS, MONTHS, Lang  # noqa: F401
 from velometer.models import City
 from velometer.plans.models import MAPPED_BASELINE
 from velometer.plans.overlay import load_overlay_config
@@ -47,8 +49,6 @@ from velometer.report.data import KINDS, ReportData
 from velometer.sources.boundaries import OSM_ADMIN_VERSION
 from velometer.trust import golden_paths
 
-Lang = Literal["en", "de"]
-LANGS: tuple[Lang, ...] = ("en", "de")
 FILES: dict[str, str] = {"en": "methodology.md", "de": "methodology.de.md"}
 
 
@@ -423,30 +423,13 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
 # --- rendering ----------------------------------------------------------------------------
 
 
-def _number(v: float | int | None, lang: Lang) -> str:
-    """Thousands and decimal separators of the language. At most two decimals (config
-    thresholds such as 0.5 or 0.25), trailing zeros and a bare decimal point dropped."""
-    if v is None:
-        return ""
-    text = f"{v:,.2f}".rstrip("0").rstrip(".")
-    if lang == "de":
-        text = text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
-    return text
-
-
-AND: dict[str, str] = {"en": "and", "de": "und"}
-MONTHS: dict[str, tuple[str, ...]] = {
-    "en": ("January", "February", "March", "April", "May", "June", "July", "August",
-           "September", "October", "November", "December"),
-    "de": ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September",
-           "Oktober", "November", "Dezember"),
-}  # fmt: skip
+_number = i18n.number_trimmed
+_and_list = i18n.and_list
 
 
 def _month(v: str, lang: Lang) -> str:
     """A month (YYYY-MM or an ISO day) in words: "September 2019"."""
-    y, m = v.split("-")[:2]
-    return f"{MONTHS[lang][int(m) - 1]} {y}"
+    return i18n.month_year(v, lang, short=False)
 
 
 GAP: dict[str, str] = {"en": "from {} to {}", "de": "von {} bis {}"}
@@ -471,16 +454,7 @@ def _sites(n: int, lang: Lang) -> str:
 
 def _day(v: date, lang: Lang) -> str:
     """A day in words: "1 January 2022", "1. Januar 2022"."""
-    sep = ". " if lang == "de" else " "
-    return f"{v.day}{sep}{MONTHS[lang][v.month - 1]} {v.year}"
-
-
-def _and_list(items: list[str], lang: Lang) -> str:
-    """The items joined as "A", "A and B" or "A, B and C" in the language."""
-    items = list(items)
-    if len(items) < 2:
-        return "".join(items)
-    return f"{', '.join(items[:-1])} {AND[lang]} {items[-1]}"
+    return i18n.long_day(v, lang)
 
 
 def _environment(lang: Lang) -> Environment:
