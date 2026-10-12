@@ -735,6 +735,13 @@ def interact_permalink(devtools: str, origin: str, base: str, theme: str, width:
             st = t.js(TIER_STATE_JS)
             if st["tiers"] != "ABCDE" or st["kind"] != "lau":
                 errors.append(f"a hostile query did not give the defaults: {st}")
+            # resizing the window is not a reader's pan: Leaflet's own moveend writes no `at`
+            other = width - 40 if width > 360 else width + 40
+            t.call("Emulation.setDeviceMetricsOverride", width=other, height=700,
+                   deviceScaleFactor=1, mobile=other < 600)  # fmt: skip
+            t.pump(1.0)
+            if (now := t.js("location.search")) != st["search"]:
+                errors.append(f"resizing the window rewrote the address: {st['search']} -> {now}")
         events += t.events
         t.close()
         # a story step: the page opens on it and marks it

@@ -57,6 +57,8 @@ def search_index(data: ReportData, config_dir: Path, content_dir: Path) -> list[
     except OSError as e:  # pragma: no cover - the loaders record per-file errors
         log.error("search index: content could not be read: %s", e)
         orgs, narratives = {}, {}
+    for name, why in sorted(errors.items()):  # the pages show a note; the index says it here
+        log.warning("search index: left out content %s: %s", name, why)
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
         out.append(_entry(org.name, "organisation", f"/organisations#{org.id}", org.id))
     if "combined" in narratives:

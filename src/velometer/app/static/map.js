@@ -4,7 +4,7 @@
 // stylesheet token (--tier-a … --tier-e, --outline) read when it draws, and the layers are
 // restyled in place when the OS theme changes (zoom and position stay). OSM tag values are user
 // data: popups are built with textContent, never innerHTML.
-import { TIERMAP, read, write } from "./js/permalink.js";
+import { TIERMAP, read, readerMoves, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
 
 (function () {
@@ -206,8 +206,10 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
       sync();
     });
   });
+  var moves = readerMoves();
+  map.on("resize", moves.resize);
   map.on("moveend", function () {
-    if (fitting) return;
+    if (!moves.moveend(fitting)) return;
     var c = map.getCenter();
     view = [c.lat, c.lng, map.getZoom()];
     sync();

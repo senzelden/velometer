@@ -187,9 +187,13 @@ test("selfContained: a long key wraps to a second row", () => {
 });
 
 test("safeCell: formula starters get a quote, a plain number does not", () => {
-  for (const bad of ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--x", "-"])
+  for (const bad of ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--x", "--", "- "])
     assert.equal(safeCell(bad), `'${bad}`, bad);
   for (const ok of ["-3.2", "-1,639.8", "-0", "12", "abc", "a=b", "", "2018"]) assert.equal(safeCell(ok), ok, ok);
+});
+
+test("safeCell: a lone dash is a no-data mark, not a formula, and keeps no quote", () => {
+  for (const mark of ["-", "\u2013", "\u2014", "\u2212"]) assert.equal(safeCell(mark), mark, JSON.stringify(mark));
 });
 
 test("tableCsv: a cell that would run as a formula is quoted off in header and body", () => {

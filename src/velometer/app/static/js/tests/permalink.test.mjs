@@ -107,3 +107,14 @@ test("currentAddress: origin + base + path without base + query + hash", () => {
     "https://x.org/city/berlin/tiers?kind=fua&tiers=AB#a",
   );
 });
+
+test("readerMoves: a resize's moveend and the app's own fit are not the reader's; the next move is", async () => {
+  const { readerMoves } = await import("../permalink.js");
+  const moves = readerMoves();
+  assert.equal(moves.moveend(true), false, "the app fitting the map");
+  assert.equal(moves.moveend(false), true, "a drag or zoom");
+  moves.resize(); // Leaflet's invalidateSize: moveend follows (200 ms later on a window resize)
+  moves.resize();
+  assert.equal(moves.moveend(false), false, "the moveend a resize sends");
+  assert.equal(moves.moveend(false), true, "the reader's next move counts again");
+});

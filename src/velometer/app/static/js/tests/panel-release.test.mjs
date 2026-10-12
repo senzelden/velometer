@@ -74,3 +74,19 @@ test("hiding the panel releases its charts", async () => {
   panel.hide();
   assert.deepEqual(log, ["release:1"]);
 });
+
+test("a frame that refuses history changes still opens and hides the panel", async () => {
+  const { root, opts, log } = setup();
+  const panel = (await loadPanel())(root, opts);
+  const refuse = () => {
+    throw new DOMException("history is not allowed here", "SecurityError");
+  };
+  globalThis.history = { state: null, replaceState: refuse, pushState: refuse, back() {} };
+  globalThis.location = { href: "http://x/compare?panel=berlin", pathname: "/compare", search: "?panel=berlin", hash: "" };
+  assert.doesNotThrow(() => panel.open("berlin"));
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(panel.isOpen, true);
+  assert.ok(log.includes("draw:1"), log.join());
+  assert.doesNotThrow(() => panel.hide());
+  assert.equal(panel.isOpen, false);
+});

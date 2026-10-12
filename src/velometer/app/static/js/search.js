@@ -62,7 +62,7 @@ export function keyAction({ active, count }, key) {
   return null;
 }
 
-function mount(doc) {
+export function mount(doc) {
   const box = doc.querySelector(".search");
   const input = box?.querySelector("input");
   const list = box?.querySelector("[role=listbox]");
@@ -88,8 +88,11 @@ function mount(doc) {
       })
       .catch((err) => {
         console.error("search index could not be loaded", err);
-        box.hidden = true;
+        const hadFocus = box.contains(doc.activeElement);
         if (fallback) fallback.hidden = false;
+        // focus goes to the fallback link before the box it was in is hidden, not to the body
+        if (hadFocus) fallback?.focus();
+        box.hidden = true;
       });
     return loading;
   };
@@ -114,10 +117,15 @@ function mount(doc) {
   };
 
   function update() {
+    // an empty query closes the list, also before the index has arrived
+    if (!input.value.trim()) {
+      shown = [];
+      list.replaceChildren();
+      return close();
+    }
     if (!index) return;
     shown = rank(index, input.value);
     list.replaceChildren();
-    if (!input.value.trim()) return close();
     shown.forEach((entry, n) => {
       const li = doc.createElement("li");
       li.id = `site-search-opt-${n}`;

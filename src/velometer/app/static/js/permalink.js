@@ -94,3 +94,20 @@ export function currentAddress(loc = globalThis.location, doc = globalThis.docum
   const below = loc.pathname.startsWith(b) ? loc.pathname.slice(b.length) : loc.pathname;
   return absoluteUrl(below, loc, doc);
 }
+
+/** Which map `moveend`s are the reader's: not one while the app fits the map itself (`fitting`),
+ * and not the one a resize sends (Leaflet's `invalidateSize` keeps the centre and fires `moveend`
+ * after `resize`, 200 ms later for a window resize), so resizing never writes `at`. */
+export function readerMoves() {
+  let resized = false;
+  return {
+    resize() {
+      resized = true;
+    },
+    moveend(fitting) {
+      const reader = !fitting && !resized;
+      resized = false;
+      return reader;
+    },
+  };
+}

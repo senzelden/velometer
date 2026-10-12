@@ -13,6 +13,16 @@ import { drawTiers } from "./tier-chart.js";
 /** The address with `panel=<id>` in its query (removed for null); path and hash stay. */
 const addressWith = (id) => location.pathname + setParam(location.search, "panel", id) + location.hash;
 
+/** A history call that a frame may refuse (a SecurityError): the panel works without its
+ * permalink then, like map.js and story.js. */
+function remember(call) {
+  try {
+    call();
+  } catch {
+    // the address keeps its old state; the panel still opens and closes
+  }
+}
+
 const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, select, [tabindex]:not([tabindex="-1"])';
 
 /**
@@ -84,7 +94,7 @@ export function createPanel(root, opts = {}) {
     current = null;
     // the address no longer names a panel (a Back that landed on a panel-less entry changes nothing)
     if (new URLSearchParams(location.search).has("panel")) {
-      history.replaceState(history.state, "", addressWith(null));
+      remember(() => history.replaceState(history.state, "", addressWith(null)));
     }
     applyModal();
     const target = returnTo?.offsetParent && returnTo !== document.body ? returnTo : opts.fallbackFocus?.(id);
@@ -98,8 +108,10 @@ export function createPanel(root, opts = {}) {
     if (opener) returnTo = opener;
     const action = openAction(!root.hidden);
     const state = { ...history.state, panel: id };
-    if (action === "push") history.pushState(state, "", addressWith(id));
-    else history.replaceState(state, "", addressWith(id));
+    remember(() => {
+      if (action === "push") history.pushState(state, "", addressWith(id));
+      else history.replaceState(state, "", addressWith(id));
+    });
     const keep = returnTo;
     show(id);
     if (action === "push" && opener) returnTo = keep;
@@ -113,7 +125,7 @@ export function createPanel(root, opts = {}) {
   }
 
   // a reload can keep the state of an open panel that no longer is: never let Back leave the page
-  if (history.state?.panel) history.replaceState(null, "", location.href);
+  if (history.state?.panel) remember(() => history.replaceState(null, "", location.href));
 
   closeBtn.addEventListener("click", close);
   document.addEventListener("keydown", (e) => {

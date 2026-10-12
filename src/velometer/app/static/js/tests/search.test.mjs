@@ -90,3 +90,60 @@ test("keyAction moves with the arrows, wrapping, and Enter picks the active or f
   assert.deepEqual(keyAction({ active: -1, count: 3 }, "Enter"), { type: "pick", index: 0 });
   assert.equal(keyAction({ active: -1, count: 3 }, "a"), null);
 });
+
+// ---- the DOM part (final review 10, parked: empty query) with a fake page ----
+function fakeNode(tag, extra = {}) {
+  return {
+    tag, hidden: false, attrs: {}, children: [], listeners: {}, value: "", textContent: "",
+    setAttribute(k, v) { this.attrs[k] = String(v); },
+    getAttribute(k) { return this.attrs[k] ?? null; },
+    removeAttribute(k) { delete this.attrs[k]; },
+    addEventListener(t, f) { (this.listeners[t] ??= []).push(f); },
+    fire(t, e = {}) { for (const f of this.listeners[t] ?? []) f({ preventDefault() {}, stopPropagation() {}, ...e }); },
+    replaceChildren(...n) { this.children = n; },
+    append(...n) { this.children.push(...n); },
+    contains(n) { return n === this || this.kids?.includes(n); },
+    ...extra,
+  };
+}
+function fakePage() {
+  const doc = { activeElement: null, listeners: {}, addEventListener() {}, createElement: (t) => fakeNode(t),
+    getElementById: () => null }; // fmt: skip
+  const focusable = (n) => Object.assign(n, { focus() { if (!this.hidden) doc.activeElement = this; } });
+  const input = focusable(fakeNode("input"));
+  const list = fakeNode("ul", { hidden: true });
+  const box = fakeNode("div", { hidden: true, kids: [input, list] });
+  box.querySelector = (s) => (s === "input" ? input : list);
+  const fallback = focusable(fakeNode("a"));
+  doc.querySelector = (s) => (s === ".search" ? box : s === ".search-fallback" ? fallback : null);
+  return { doc, box, input, list, fallback };
+}
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+test("when the index fails to load, focus moves from the box to the fallback link", async (t) => {
+  const { mount } = await import("../search.js");
+  t.mock.method(console, "error", () => {});
+  t.mock.method(globalThis, "fetch", async () => ({ ok: false, status: 404 }));
+  const { doc, box, input, fallback } = fakePage();
+  mount(doc);
+  input.focus();
+  input.fire("focus");
+  await settle();
+  await settle();
+  assert.equal(box.hidden, true);
+  assert.equal(fallback.hidden, false);
+  assert.equal(doc.activeElement, fallback, "focus is not dropped to the body");
+});
+
+test("clearing the input before the index arrives closes the list", async (t) => {
+  const { mount } = await import("../search.js");
+  t.mock.method(globalThis, "fetch", () => new Promise(() => {})); // never answers
+  const { doc, input, list } = fakePage();
+  mount(doc);
+  list.hidden = false; // a list left open
+  input.setAttribute("aria-expanded", "true");
+  input.value = "";
+  input.fire("input");
+  assert.equal(list.hidden, true);
+  assert.equal(input.getAttribute("aria-expanded"), "false");
+});

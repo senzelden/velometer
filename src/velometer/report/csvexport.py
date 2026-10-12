@@ -44,12 +44,15 @@ ATTRIBUTION = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped
 
 
 _NUMBER = re.compile(r"-\d[\d,]*(\.\d+)?")
+_NO_DATA = frozenset({"-", "\u2013", "\u2014", "\u2212"})  # a lone dash: hyphen, en, em, minus
 
 
 def safe_cell(value: str) -> str:
     """A cell a spreadsheet would run as a formula (OWASP CSV injection) gets a leading quote:
-    `=`, `+`, `@`, tab and CR always, `-` unless the whole cell is a number. The same rule is
-    `safeCell` in `static/js/download.js`."""
+    `=`, `+`, `@`, tab and CR always, `-` unless the whole cell is a number or a lone dash (a
+    no-data mark, which runs nothing). The same rule is `safeCell` in `static/js/download.js`."""
+    if value in _NO_DATA:
+        return value
     if value.startswith(("=", "+", "@", "\t", "\r")):
         return "'" + value
     if value.startswith("-") and not _NUMBER.fullmatch(value):

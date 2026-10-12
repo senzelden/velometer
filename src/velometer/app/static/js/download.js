@@ -209,9 +209,12 @@ export function selfContained(svg, styleOf, toLight, meta) {
 
 const text = (n) => String(n?.textContent ?? "").replace(/\s+/g, " ").trim();
 /** A cell a spreadsheet would run as a formula starts with a quote mark instead (OWASP CSV
- * injection): = + @ tab and CR always, and - unless the whole cell is a number. The same rule is
+ * injection): = + @ tab and CR always, and - unless the whole cell is a number or a lone dash
+ * (a no-data mark: - – — or U+2212 alone runs nothing). The same rule is
  * `velometer.report.csvexport.safe_cell`. */
+const NO_DATA = new Set(["-", "\u2013", "\u2014", "\u2212"]);
 export function safeCell(s) {
+  if (NO_DATA.has(s)) return s;
   if (/^[=+@\t\r]/.test(s)) return `'${s}`;
   if (s.startsWith("-") && !/^-\d[\d,]*(\.\d+)?$/.test(s)) return `'${s}`;
   return s;
