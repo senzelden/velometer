@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite, copy_link %}
-{% block title %}velometer · Compare{% endblock %}
+{% block title %}velometer · {{ t('nav.compare') }}{% endblock %}
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/compare.js') }}"></script>{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Compare</span></nav>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.compare') }}</span></nav>{% endblock %}
 {% block content %}
-<h1>Compare cities</h1>
-<p class="lede">Pick cities, a metric and a boundary; the views show the same numbers four ways. {% if static_edition %}Without JavaScript this static edition shows the default selection; the table below holds its values.{% else %}Without JavaScript the form reloads the page and the table below holds the values.{% endif %}</p>
+<h1>{{ t('page.compare.h1') }}</h1>
+<p class="lede">{{ t('page.compare.lede') }} {% if static_edition %}{{ t('page.compare.nojs_static') }}{% else %}{{ t('page.compare.nojs_live') }}{% endif %}</p>
 
 <form class="filters-sheet" id="compare-filters" action="{{ u('/compare') }}" method="get">
 <div class="filters-top">
-  <span class="filters-summary" data-filters-summary>{% if state.m == "counter_index" %}{{ counter.title(metrics[state.m].label) }} · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }}{% else %}{{ metrics[state.m].label }} · {{ state.b | upper }} · {{ table.rows | length }} cit{{ "y" if table.rows | length == 1 else "ies" }} · {{ "indexed" if state.mode == "index" else "absolute" }}{% endif %}</span>
-  <button type="button" class="filters-toggle" hidden aria-expanded="false" aria-controls="filters-body">Filters</button>
+  <span class="filters-summary" data-filters-summary>{% if state.m == "counter_index" %}{{ counter.title(metrics[state.m].label) }} · {{ t('page.compare.n_cities', count=table.rows | length) }}{% else %}{{ metrics[state.m].label }} · {{ state.b | upper }} · {{ t('page.compare.n_cities', count=table.rows | length) }} · {{ t('page.compare.indexed') if state.mode == "index" else t('page.compare.absolute') }}{% endif %}</span>
+  <button type="button" class="filters-toggle" hidden aria-expanded="false" aria-controls="filters-body">{{ t('page.compare.filters') }}</button>
 </div>
 <div class="filters-body" id="filters-body">
-  <fieldset class="f-cities"><legend>Cities</legend>
-    <p class="quick" aria-label="Quick sets">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ u(href(c=q.ids)) }}">{{ q.label }}</a>{% endfor %}</p>
+  <fieldset class="f-cities"><legend>{{ t('nav.cities') }}</legend>
+    <p class="quick" aria-label="{{ t('page.compare.quick') }}">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ u(href(c=q.ids)) }}">{{ q.label }}</a>{% endfor %}</p>
     <div class="country-grid">
     {% for g in groups %}<div class="country" role="group" aria-labelledby="cmp-grp-{{ loop.index }}"><p class="grp-name" id="cmp-grp-{{ loop.index }}">{{ g.country }}</p>
       {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ c.name }}</label>
@@ -22,23 +22,23 @@
     {% endfor %}</div>
   </fieldset>
   <div class="f-row">
-    <label class="f-metric">Metric
-      <select name="m">{% for key, info in metrics.items() %}<option value="{{ key }}"{% if key == (state.dropped_metric or state.m) %} selected{% endif %}>{{ info.label }}{% if key == "ab_per_100k" %} (LAU only){% endif %}</option>
+    <label class="f-metric">{{ t('page.compare.metric') }}
+      <select name="m">{% for key, info in metrics.items() %}<option value="{{ key }}"{% if key == (state.dropped_metric or state.m) %} selected{% endif %}>{{ info.label }}{% if key == "ab_per_100k" %} {{ t('page.compare.lau_only') }}{% endif %}</option>
       {% endfor %}</select></label>
-    <fieldset class="seg"><legend>Boundary</legend>
-      <label><input type="radio" name="b" value="lau"{% if state.b == "lau" %} checked{% endif %}> City proper (LAU)</label>
-      <label><input type="radio" name="b" value="fua"{% if state.b == "fua" %} checked{% endif %}> Metro area (FUA)</label></fieldset>
-    <fieldset class="seg"><legend>Scale</legend>
-      <label><input type="radio" name="mode" value="abs"{% if state.mode == "abs" %} checked{% endif %}> Absolute</label>
-      <label><input type="radio" name="mode" value="index"{% if state.mode == "index" %} checked{% endif %}> Index, first year = 100</label></fieldset>
+    <fieldset class="seg"><legend>{{ t('table.boundary') }}</legend>
+      <label><input type="radio" name="b" value="lau"{% if state.b == "lau" %} checked{% endif %}> {{ t('unit.lau') }}</label>
+      <label><input type="radio" name="b" value="fua"{% if state.b == "fua" %} checked{% endif %}> {{ t('unit.fua') }}</label></fieldset>
+    <fieldset class="seg"><legend>{{ t('page.compare.scale') }}</legend>
+      <label><input type="radio" name="mode" value="abs"{% if state.mode == "abs" %} checked{% endif %}> {{ t('page.compare.scale_abs') }}</label>
+      <label><input type="radio" name="mode" value="index"{% if state.mode == "index" %} checked{% endif %}> {{ t('page.compare.scale_index') }}</label></fieldset>
     <input type="hidden" name="view" value="{{ state.view }}">
     {% if state.hl %}<input type="hidden" name="hl" value="{{ state.hl | join(',') }}">{% endif %}
-    <button type="submit" class="apply">Apply</button>
+    <button type="submit" class="apply">{{ t('page.compare.apply') }}</button>
   </div>
 </div>
 </form>
 
-<nav class="view-tabs" aria-label="Views"><ul>
+<nav class="view-tabs" aria-label="{{ t('page.compare.views') }}"><ul>
 {% for key, label in views.items() %}<li><a href="{{ u(href(view=key)) }}" data-view="{{ key }}"{% if key == state.view %} aria-current="page"{% endif %}>{{ label }}</a></li>
 {% endfor %}</ul></nav>
 
@@ -48,32 +48,32 @@
 <h2>{{ counter.title(metrics[state.m].label) }}</h2>
 <p class="meta">{{ table.unit }}. {{ counter.context }}</p>
 {% else %}
-<h2>{{ metrics[state.m].label }} · {{ "City proper (LAU)" if state.b == "lau" else "Metro area (FUA)" }}{% if state.mode == "index" %} · index, first year = 100{% endif %}</h2>
-<p class="meta">{{ metrics[state.m].unit }}. Mapped km in OpenStreetMap, not built km.</p>
+<h2>{{ metrics[state.m].label }} · {{ t('unit.lau') if state.b == "lau" else t('unit.fua') }}{% if state.mode == "index" %} · {{ t('page.compare.index_first') }}{% endif %}</h2>
+<p class="meta">{{ metrics[state.m].unit }}. {{ t('note.mapped_not_built') }}</p>
 {% endif %}
 </div>
 <div data-compare-notes>{% for n in table.notes %}<p class="note">{{ n }}</p>
 {% endfor %}</div>
 <div class="chips" data-compare-chips hidden></div>
-<div class="chart" data-compare-chart aria-describedby="compare-caption" role="group" aria-label="Chart of the selected cities" hidden></div>
+<div class="chart" data-compare-chart aria-describedby="compare-caption" role="group" aria-label="{{ t('page.compare.chart') }}" hidden></div>
 <div class="flag-note" data-flag-note hidden></div>
-<div class="scroll" data-compare-table tabindex="0" role="region" aria-label="Values per city and snapshot">
+<div class="scroll" data-compare-table tabindex="0" role="region" aria-label="{{ t('page.compare.table_region') }}">
 <table class="compare-table stack">
-<caption id="compare-caption" class="sr-only">{{ metrics[state.m].label }} per city and snapshot</caption>
-<thead><tr><th scope="col">City</th>{% for col in table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
+<caption id="compare-caption" class="sr-only">{{ t('page.compare.caption', metric=metrics[state.m].label) }}</caption>
+<thead><tr><th scope="col">{{ t('table.city') }}</th>{% for col in table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for row in table.rows %}<tr><th scope="row" data-label="City"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ table.columns[loop.index0].text }}">{{ v | num }}{% if table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}</td>{% endfor %}</tr>
+{% for row in table.rows %}<tr><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ table.columns[loop.index0].text }}">{{ v | num }}{% if table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}</td>{% endfor %}</tr>
 {% endfor %}</tbody>
 </table>
 </div>
 {{ cite(compare_cite) }}
 {{ copy_link() }}
-{% if not table.rows %}<p class="note">No city selected.</p>{% endif %}
+{% if not table.rows %}<p class="note">{{ t('page.compare.none') }}</p>{% endif %}
 <p class="meta" data-compare-foot>{{ foot }}</p>
 </section>
 
-<aside class="slideover" id="city-panel" role="dialog" aria-label="City panel" aria-modal="false" hidden>
-<button type="button" class="slideover-close" aria-label="Close panel">×</button>
+<aside class="slideover" id="city-panel" role="dialog" aria-label="{{ t('page.compare.panel') }}" aria-modal="false" hidden>
+<button type="button" class="slideover-close" aria-label="{{ t('page.compare.panel_close') }}">×</button>
 <div class="slideover-body"></div>
 </aside>
 <script type="application/json" id="compare-config">{{ config | tojson }}</script>

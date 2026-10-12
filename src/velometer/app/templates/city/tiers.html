@@ -5,37 +5,37 @@
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
-<h2>Tier composition</h2>
-<p class="meta">Per-side mapped km by tier.</p>
+<h2>{{ t('page.tiers.h2') }}</h2>
+<p class="meta">{{ t('page.tiers.meta') }}</p>
 {% for k in kinds %}
 <h3>{{ k.kind | upper }}</h3>
 {% if k.series %}
-<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="tiers-sum-{{ k.kind }}" role="group" aria-label="{{ t('page.city.tiers_chart', city=city.name, kind=k.kind | upper) }}"></div>
 {{ tier_series_table(k, tiers, "tiers-sum-" ~ k.kind) }}
-{{ cite(cite_for(city.name ~ ": tier composition over time, mapped km by tier, " ~ (k.kind | upper), city=city.id, kind=k.kind)) }}
-{% else %}<p class="note">no run ({{ k.kind | upper }} history)</p>{% endif %}
+{{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=k.kind | upper), city=city.id, kind=k.kind)) }}
+{% else %}<p class="note">{{ t('note.no_run_kind_history', kind=k.kind | upper) }}</p>{% endif %}
 {% endfor %}
 </section>
 
 <section>
-<h2>LAU vs FUA</h2>
-<p class="meta">Headline: {{ headline_unit }}.</p>
+<h2>{{ t('page.tiers.lau_fua') }}</h2>
+<p class="meta">{{ t('page.tiers.headline', unit=headline_unit) }}</p>
 <div class="scroll">
 <table class="stack">
 <thead><tr>
-  <th>Boundary</th><th class="num" title="{{ headline_unit }}">Headline per 100 km</th><th class="num">A+B km</th>
-  {% for t in tiers %}<th class="num">{{ t }} km</th>{% endfor %}
+  <th>{{ t('table.boundary') }}</th><th class="num" title="{{ headline_unit }}">{{ t('table.headline_per_100') }}</th><th class="num">A+B km</th>
+  {% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}
 </tr></thead>
 <tbody>
 {% for k in kinds %}
 <tr>
-  <td data-label="Boundary">{{ k.kind | upper }}</td>
+  <td data-label="{{ t('table.boundary') }}">{{ k.kind | upper }}</td>
   {% if k.point %}
-  <td class="num" data-label="Headline per 100 km">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
+  <td class="num" data-label="{{ t('table.headline_per_100') }}">{{ (k.point.presets | selectattr("preset", "equalto", "ours_headline") | map(attribute="value") | first) | num }}</td>
   <td class="num" data-label="A+B km">{{ k.point.ab_km | num }}</td>
-  {% for t in tiers %}<td class="num" data-label="{{ t }} km">{{ k.point.tiers_km[t] | num }}</td>{% endfor %}
+  {% for tier in tiers %}<td class="num" data-label="{{ tier }} km">{{ k.point.tiers_km[tier] | num }}</td>{% endfor %}
   {% else %}
-  <td class="note" colspan="{{ tiers | length + 2 }}" data-label="Headline per 100 km">no run ({{ k.kind | upper }} current)</td>
+  <td class="note" colspan="{{ tiers | length + 2 }}" data-label="{{ t('table.headline_per_100') }}">{{ t('note.no_run_kind_current', kind=k.kind | upper) }}</td>
   {% endif %}
 </tr>
 {% endfor %}
@@ -45,19 +45,19 @@
 </section>
 
 <section>
-<h2>Tier map</h2>
+<h2>{{ t('page.tiers.map') }}</h2>
 {{ copy_link() }}
 {% if tiermap %}
 <div class="tiermap-controls">
-<fieldset class="kinds"><legend>Boundary</legend>
+<fieldset class="kinds"><legend>{{ t('table.boundary') }}</legend>
 {% for m in tiermap.kinds %}<label><input type="radio" name="kind" value="{{ m.kind }}"{% if loop.first %} checked{% endif %}> {{ m.label }}</label>
 {% endfor %}</fieldset>
-<fieldset class="tiers"><legend>Tiers</legend>
-{% for t, label in tiermap.labels.items() %}<label><input type="checkbox" name="tier" value="{{ t }}" checked> <svg class="swatch" data-key="{{ t }}" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2"></rect></svg> {{ label }}</label>
+<fieldset class="tiers"><legend>{{ t('city.tab.tiers') }}</legend>
+{% for tier, label in tiermap.labels.items() %}<label><input type="checkbox" name="tier" value="{{ tier }}" checked> <svg class="swatch" data-key="{{ tier }}" width="20" height="6" aria-hidden="true" focusable="false"><rect width="20" height="6" rx="2"></rect></svg> {{ label }}</label>
 {% endfor %}</fieldset>
 </div>
-<div id="tiermap" class="tiermap" role="region" aria-label="Interactive tier map, {{ city.name }}"></div>
-<p class="meta tiermap-note" id="tiermap-status">Click a side for its way, tier, rule and tags.</p>
+<div id="tiermap" class="tiermap" role="region" aria-label="{{ t('page.tiers.map_label', city=city.name) }}"></div>
+<p class="meta tiermap-note" id="tiermap-status">{{ t('page.tiers.map_note') }}</p>
 <script type="application/json" id="tiermap-config">{{ tiermap | tojson }}</script>
 <script src="{{ data_u('/static/vendor/leaflet.js') }}"></script>
 <script type="module" src="{{ data_u('/static/map.js') }}"></script>
@@ -65,9 +65,9 @@
 <ul class="tiermap-files">
 {% for k in kinds %}
 <li><strong>{{ k.kind | upper }}:</strong>
-{% if k.point is none %}<span class="note">no run ({{ k.kind | upper }} current)</span>
-{% elif not k.geojson %}<span class="note">map not generated (<code>velometer report maps</code>)</span>{% endif %}
-{% if k.map %}<a href="{{ data_u('/maps/' ~ k.map) }}">{{ k.kind | upper }} static image</a> (PNG){% endif %}</li>
+{% if k.point is none %}<span class="note">{{ t('note.no_run_kind_current', kind=k.kind | upper) }}</span>
+{% elif not k.geojson %}<span class="note">{{ t('page.tiers.no_map') }}</span>{% endif %}
+{% if k.map %}<a href="{{ data_u('/maps/' ~ k.map) }}">{{ t('page.tiers.static_image', kind=k.kind | upper) }}</a> (PNG){% endif %}</li>
 {% endfor %}
 </ul>
 </section>

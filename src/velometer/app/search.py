@@ -8,17 +8,22 @@ from pathlib import Path
 from velometer.app.names import country_name
 from velometer.config import ConfigError, load_cities
 from velometer.content.loader import load_narratives, load_organisations
-from velometer.i18n import Lang
+from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
 
 log = logging.getLogger(__name__)
 
-PAGES = [
-    ("Overview", "/"), ("Compare", "/compare"), ("Cities", "/cities"), ("Stories", "/stories"),
-    ("Plans", "/plans"), ("Organisations", "/organisations"), ("Sources", "/sources"),
-    ("Methodology", "/methodology"), ("Methodology (Deutsch)", "/methodology/de"),
-    ("Why the figures differ", "/differences"),
-]  # fmt: skip
+
+def pages(lang: Lang = "en") -> list[tuple[str, str]]:
+    """The fixed pages the search finds: (label in `lang`, path)."""
+    return [
+        (t(lang, "nav.overview"), "/"), (t(lang, "nav.compare"), "/compare"),
+        (t(lang, "nav.cities"), "/cities"), (t(lang, "nav.stories"), "/stories"),
+        (t(lang, "nav.plans"), "/plans"), (t(lang, "nav.organisations"), "/organisations"),
+        (t(lang, "nav.sources"), "/sources"), (t(lang, "nav.methodology"), "/methodology"),
+        (t(lang, "search.methodology_de"), "/methodology/de"),
+        (t(lang, "page.differences.title"), "/differences"),
+    ]  # fmt: skip
 
 
 def _entry(label: str, kind: str, url: str, *terms: str) -> dict:
@@ -38,7 +43,7 @@ def search_index(
     instead."""
     out = [
         _entry(label, "page", url)
-        for label, url in PAGES
+        for label, url in pages(lang)
         if lang == "en" or url not in LEGACY_DE_ONLY
     ]
     cities = data.cities()
@@ -49,7 +54,7 @@ def search_index(
         aliases = {}
     countries: dict[str, str] = {}  # iso2 -> name
     for c in cities:
-        country = country_name(c.country_iso2)
+        country = country_name(c.country_iso2, lang)
         countries[c.country_iso2] = country
         out.append(
             _entry(
@@ -75,8 +80,11 @@ def search_index(
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
         out.append(_entry(org.name, "organisation", f"/organisations#{org.id}", org.id))
     if "combined" in narratives:
-        out.append(_entry("The story across cities", "story", "/stories", "stories", "narrative"))
+        out.append(
+            _entry(t(lang, "search.story_combined"), "story", "/stories", "stories", "narrative")
+        )
     for c in cities:
         if c.id in narratives:
-            out.append(_entry(f"The story of {c.name}", "story", f"/city/{c.id}", c.name, c.id))
+            label = t(lang, "search.story_city", city=c.name)
+            out.append(_entry(label, "story", f"/city/{c.id}", c.name, c.id))
     return out

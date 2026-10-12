@@ -24,11 +24,11 @@
 {% block scripts %}{% endblock %}
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">{{ t('site.skip') }}</a>
 <header class="site">
   <div class="bar">
     <a class="brand" href="{{ u('/') }}">velo<span>meter</span></a>
-    <button class="menu-toggle" type="button" hidden aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <button class="menu-toggle" type="button" hidden aria-expanded="false" aria-controls="site-nav">{{ t('site.menu') }}</button>
     {% include "_nav.html" %}
   </div>
 </header>

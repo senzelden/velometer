@@ -16,7 +16,7 @@ import re
 import sqlite3
 from collections.abc import AsyncIterator, Callable
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from functools import partial
 from html import unescape
 from pathlib import Path
@@ -48,8 +48,7 @@ from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
 from velometer.app.search import search_index
 from velometer.app.series import series_payload
-from velometer.app.sources import GROUPS as GROUP_NAMES
-from velometer.app.sources import overview_column, source_anchor, source_rows
+from velometer.app.sources import GROUPS, group_name, overview_column, source_anchor, source_rows
 from velometer.app.tokens import theme_tokens
 from velometer.config import ConfigError, PresetRanking, load_differences
 from velometer.content.loader import (
@@ -72,7 +71,7 @@ from velometer.report.csvexport import (
     csv_preamble,
     csv_table,
 )
-from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, open_readonly
+from velometer.report.data import KINDS, ReportData, headline_unit, open_readonly
 from velometer.report.differences import difference_rows
 from velometer.run import git_commit
 from velometer.selection import report_selector
@@ -123,15 +122,16 @@ CSP = (
 # Directives a browser ignores in a <meta http-equiv> policy: the header keeps them; a page served
 # without our headers (the static edition) goes without them.
 HEADER_ONLY_DIRECTIVES = {"frame-ancestors", "report-uri", "report-to", "sandbox"}
-# The city page's tabs: key, label, path suffix. Counts only for a city with counter data
-# (ReportData.counter_cities), Bezirke only for a city with subareas.
+# The city page's tabs: key and path suffix; a tab's label is the catalogue's `city.tab.<key>`.
+# Counts only for a city with counter data (ReportData.counter_cities), Bezirke only for a city
+# with subareas.
 TABS = [
-    ("story", "Story", ""),
-    ("time", "Over time", "/time"),
-    ("tiers", "Tiers", "/tiers"),
-    ("figures", "Figures", "/figures"),
-    ("counts", "Counts", "/counts"),
-    ("bezirke", "Bezirke", "/bezirke"),
+    ("story", ""),
+    ("time", "/time"),
+    ("tiers", "/tiers"),
+    ("figures", "/figures"),
+    ("counts", "/counts"),
+    ("bezirke", "/bezirke"),
 ]
 COUNTERS_TEXT = "counters.yaml"  # content/: what the counters record, under the Counts tab
 UNITS = {"pct": "%"}
@@ -141,7 +141,6 @@ OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data(?=\s*(,|$))", re.I)
 # A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
 # is the HTML "page not found" page (the static edition's 404.html).
 NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/", "/de/data/")
-MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 def set_lang(lang: Lang):
@@ -202,8 +201,15 @@ class VelometerApp(FastAPI):
         return CSPMiddleware(super().build_middleware_stack())
 
 
-def _num(v: float | int | None, spec: str = ",.1f") -> str:
-    return "n/a" if v is None else format(v, spec)
+def _num(v: float | int | None, spec: str = ",.1f", lang: Lang = "en") -> str:
+    return i18n.fmt(v, spec, lang)
+
+
+def _day(d: date | str | None, lang: Lang = "en") -> str:
+    """A page date (a date or an ISO string): ISO in English, in words in German."""
+    if d is None or d == "":
+        return ""
+    return i18n.iso_day(d, lang) if isinstance(d, str) else i18n.day(d, lang)
 
 
 # the tables extension aligns columns with style="text-align: ..."; the CSP allows no inline
@@ -275,32 +281,35 @@ def _clause(note: str, limit: int = 90) -> str:
 
 # The provenance prefix of an external figure's CSV note and how a reader is told it.
 NOTE_PREFIX = re.compile(r"^\s*(primary-by-agency|primary|secondary)\b\s*(\([^)]*\))?\s*[;:]?\s*")
-NOTE_PREFIX_TEXT = {
-    "primary": "primary source",
-    "secondary": "secondary source",
-    "primary-by-agency": "primary source, published by the agency",
-}
 
 
-def _note_clause(note: str) -> str:
+def _note_prefix(prefix: str, lang: Lang) -> str:
+    if prefix == "primary":
+        return i18n.t(lang, "note.prefix.primary")
+    if prefix == "secondary":
+        return i18n.t(lang, "note.prefix.secondary")
+    return i18n.t(lang, "note.prefix.primary_by_agency")
+
+
+def _note_clause(note: str, lang: Lang = "en") -> str:
     """A figure's note as the Figures tab shows it: the CSV provenance prefix (`primary`,
     `secondary`, `primary-by-agency`) in words, then the first clause of the rest."""
     m = NOTE_PREFIX.match(note or "")
     if not m:
         return _clause(note or "")
-    head = NOTE_PREFIX_TEXT[m.group(1)] + (f" {m.group(2)}" if m.group(2) else "")
+    head = _note_prefix(m.group(1), lang) + (f" {m.group(2)}" if m.group(2) else "")
     rest = note[m.end() :]
     return f"{head}: {_clause(rest)}" if rest.strip() else head
 
 
-def _when(label: str, osm_timestamp: str | None = None) -> str:
+def _when(label: str, osm_timestamp: str | None = None, lang: Lang = "en") -> str:
     """A series label as the reader sees it: a year is "Jan <year>" (1 January snapshots), the
     current run its snapshot month ("Oct 2026")."""
     if label != ts.CURRENT:
-        return f"Jan {label}"
+        return i18n.january(int(label), lang)
     if osm_timestamp and re.match(r"^\d{4}-\d{2}", osm_timestamp):
-        return f"{MONTHS[int(osm_timestamp[5:7]) - 1]} {osm_timestamp[:4]}"
-    return "current"
+        return i18n.month_year(osm_timestamp, lang)
+    return i18n.t(lang, "time.current")
 
 
 class LazyData:
@@ -397,13 +406,20 @@ def create_app(
         env.globals["theme_tokens"] = tokens
         env.globals["build_commit"] = commit
         env.filters["cite_json"] = cite_model.json_fields
-        env.filters["num"] = _num
+        env.filters["num"] = lambda v, spec=",.1f": _num(v, spec, lang)
+        env.filters["signed"] = lambda v, decimals=1: i18n.signed(v, lang, decimals)
+        env.filters["pct"] = lambda v, decimals=1, signed=False: i18n.percent(
+            v, lang, decimals, signed
+        )
+        # not `trim`: Jinja's own trim (whitespace) is in use
+        env.filters["trimmed"] = lambda v: i18n.number_trimmed(v, lang)
+        env.filters["day"] = lambda d: _day(d, lang)
         env.filters["md"] = _md
         env.filters["stack_table"] = _stack_table
-        env.filters["when"] = _when
+        env.filters["when"] = lambda label, osm=None: _when(label, osm, lang)
         env.filters["http_url"] = safe_url
         env.filters["host"] = _host
-        env.filters["clause"] = _note_clause
+        env.filters["clause"] = lambda note: _note_clause(note, lang)
         env.filters["unit"] = lambda u: UNITS.get(u, u)
         # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
         # "Ours" column says it already
@@ -413,7 +429,7 @@ def create_app(
         def respond(*args, **kwargs):
             """Every rendered page, with its sideways-scrolling regions keyboard-reachable."""
             resp = _respond(*args, **kwargs)
-            resp.body = name_scroll_regions(resp.body.decode()).encode()
+            resp.body = name_scroll_regions(resp.body.decode(), lang).encode()
             resp.headers["content-length"] = str(len(resp.body))
             return resp
 
@@ -448,7 +464,7 @@ def create_app(
         """The trusted cities grouped by country name, both sorted by name."""
         groups: dict[str, list] = {}
         for c in data.cities():
-            groups.setdefault(country_name(c.country_iso2), []).append(c)
+            groups.setdefault(country_name(c.country_iso2, data.lang), []).append(c)
         return [
             {
                 "country": name,
@@ -485,6 +501,8 @@ def create_app(
                     ids = cities if cities is not None else rows.city_ids()
                     shared[key] = cite_model.fields_for_cities(rows, list(ids), "", where, kind)
             base = shared[key]
+            # a title built with `t()` in a template is Markup: the citation wants its plain text
+            title = str(title.unescape()) if isinstance(title, Markup) else title
             return None if base is None else replace(base, title=title, path=path or where)
 
         return make
@@ -563,12 +581,14 @@ def create_app(
         now = headline_of(point)
         return {
             "city": c,
-            "country": country_name(c.country_iso2),
+            "country": country_name(c.country_iso2, data.lang),
             "point": point,
             "now": now,
-            "now_label": _when(ts.CURRENT, point.osm_timestamp) if point else None,
+            "now_label": _when(ts.CURRENT, point.osm_timestamp, data.lang) if point else None,
             "first": None if first is None else first.headline,
-            "first_label": None if first is None else _when(first.label, first.osm_timestamp),
+            "first_label": (
+                None if first is None else _when(first.label, first.osm_timestamp, data.lang)
+            ),
             "change": None if now is None or first is None else now - first.headline,
         }
 
@@ -648,11 +668,11 @@ def create_app(
                 "preset_anchor": {p: source_anchor(s) for p, s in data.preset_sources().items()},
                 "preset_column": {p: overview_column(p) for p in data.preset_sources()},
                 "preset_unit": data.preset_units(),
-                "headline_unit": HEADLINE_UNIT,
+                "headline_unit": headline_unit(data.lang),
                 "rankings": rankings_table(data),
                 # the values the all-cities chart draws: headline per city and snapshot, LAU
                 "chart_table": cmp.table_model(
-                    payload, cmp.CompareState(c=list(payload["cities"]), b="lau")
+                    payload, cmp.CompareState(c=list(payload["cities"]), b="lau"), data.lang
                 ),
             }
 
@@ -671,7 +691,7 @@ def create_app(
                             key=lambda s: -s["now"])  # fmt: skip
             rank = {s["city"].id: i + 1 for i, s in enumerate(ranked)}
             return {"groups": groups, "rank": rank, "n": len(summaries),
-                    "headline_unit": HEADLINE_UNIT}  # fmt: skip
+                    "headline_unit": headline_unit(data.lang)}  # fmt: skip
 
         ctx = cache.get(f"cities:{request.state.lang}", fp(request), build)
         return page(request, "cities.html", "cities", data, **ctx)
@@ -734,7 +754,7 @@ def create_app(
 
         def build():
             n = narratives.get(city_id)
-            return None if n is None else render_narrative(n, sources)
+            return None if n is None else render_narrative(n, sources, request.state.lang)
 
         return cache.get(
             f"narrative:{city_id}:{request.state.lang}", fp(request), build
@@ -809,7 +829,11 @@ def create_app(
             except ContentError as e:
                 log.error("counters text could not be loaded: %s", e)
                 text, text_error = None, str(e)
-            doc = None if text is None or errors.get("*") else render_explainer(text, sources)
+            doc = (
+                None
+                if text is None or errors.get("*")
+                else render_explainer(text, sources, data.lang)
+            )
             ctx["site_map"] = (
                 None
                 if ctx["site_map"] is None
@@ -844,10 +868,11 @@ def create_app(
             nar = extra["counts"]["doc"]  # the tab cites the counters text's sources
             cited_sources = [] if nar is None else sorted(nar.sources.items())
             cited_refs = [] if nar is None else sorted(nar.refs.items())
-        label = next(t[1] for t in TABS if t[0] == tab)
+        lang = request.state.lang
+        label = i18n.t(lang, f"city.tab.{tab}")
         tabs = [
-            {"key": k, "label": lbl, "href": f"/city/{city_id}{suffix}"}
-            for k, lbl, suffix in TABS
+            {"key": k, "label": i18n.t(lang, f"city.tab.{k}"), "href": f"/city/{city_id}{suffix}"}
+            for k, suffix in TABS
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
         return page(
@@ -862,19 +887,23 @@ def create_app(
         )
         known_ids = list(payload["cities"])
         state = cmp.parse_compare(request.url.query, known_ids, cmp.METRICS)
-        table = cmp.table_model(payload, state)
+        lang = request.state.lang
+        table = cmp.table_model(payload, state, lang)
         quick = [
-            {"key": k, "label": label, "ids": cmp.quick_set_ids(k, known_ids)}
-            for k, label in cmp.QUICK_LABELS.items()
-        ]
-        info = cmp.metric_info(HEADLINE_UNIT, data.preset_units(), population_years(data))
+            {"key": k, "label": i18n.t(lang, f"compare.group.{k}"),
+             "ids": cmp.quick_set_ids(k, known_ids)}
+            for k in cmp.QUICK_SETS
+        ]  # fmt: skip
+        unit = headline_unit(lang)
+        info = cmp.metric_info(unit, data.preset_units(), population_years(data), lang)
+        views = {v: i18n.t(lang, f"compare.view.{v}") for v in cmp.VIEW_IDS}
         config = {
             "cities": known_ids,
             "metric_order": list(cmp.METRICS),  # tojson sorts the keys of `metrics`
             "metrics": info,
             "quick": cmp.QUICK_SETS,
-            "views": cmp.VIEW_LABELS,
-            "headline_unit": HEADLINE_UNIT,
+            "views": views,
+            "headline_unit": unit,
         }
         rows = cite_rows(request, data)
         # per boundary kind: the browser rebuilds the Cite when the boundary changes
@@ -883,22 +912,24 @@ def create_app(
         }
         names = [r["name"] for r in table["rows"]]
         heading = (
-            cmp.counter_title(info[state.m]["label"])
+            cmp.counter_title(info[state.m]["label"], lang)
             if state.m == cmp.COUNTER_METRIC
             else f"{info[state.m]['label']} \u00b7 "
-            + ("City proper (LAU)" if state.b == "lau" else "Metro area (FUA)")
-            + (" \u00b7 index, first year = 100" if state.mode == "index" else "")
+            + i18n.t(lang, "unit.lau" if state.b == "lau" else "unit.fua")
+            + (f" \u00b7 {i18n.t(lang, 'compare.index_heading')}" if state.mode == "index" else "")
         )
         return page(
             request, "compare.html", "compare", data, state=state, table=table, quick=quick,
             compare_cite=cite_for(request, data)(
-                f"Compare: {heading}; {', '.join(names)}", cities=[r["id"] for r in table["rows"]],
-                kind=state.b, path=urls.with_lang("/compare", request.state.lang),
+                i18n.t(lang, "cite.title.compare", heading=heading, cities=", ".join(names)),
+                cities=[r["id"] for r in table["rows"]],
+                kind=state.b, path=urls.with_lang("/compare", lang),
             ),
-            groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
+            groups=by_country(data), metrics=info, views=views, config=config,
             href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
-            foot=cmp.footnote(state.m, HEADLINE_UNIT),
-            counter={"title": cmp.counter_title, "context": cmp.COUNTER_CONTEXT},
+            foot=cmp.footnote(state.m, unit, lang),
+            counter={"title": partial(cmp.counter_title, lang=lang),
+                     "context": i18n.t(lang, "counts.context")},
         )  # fmt: skip
 
     register_pages(app, "/compare", compare)
@@ -926,7 +957,7 @@ def create_app(
     register_pages(app, "/city/{city_id}", city)
 
     async def city_tab(request: Request, city_id: str, tab: str, data: Data):
-        if tab not in {k for k, _, suffix in TABS if suffix}:
+        if tab not in {k for k, suffix in TABS if suffix}:
             raise HTTPException(404, f"unknown tab {tab!r}")
         return city_page(request, city_id, tab, data)
 
@@ -934,14 +965,16 @@ def create_app(
 
     def story_context(data: ReportData, payload: dict, n, sources, lang: Lang) -> dict:
         """The Stories page: the combined narrative's sections with the chart step each names."""
-        nar = render_narrative(n, sources)
-        metrics = cmp.metric_info(HEADLINE_UNIT, data.preset_units(), population_years(data))
+        nar = render_narrative(n, sources, lang)
+        metrics = cmp.metric_info(
+            headline_unit(lang), data.preset_units(), population_years(data), lang
+        )
         steps = {}
         for step, spec in STEP_COMPARE.items():
             built = (
-                story_model.bezirke_step(payload, STORY_CITY, spec["href"])
+                story_model.bezirke_step(payload, STORY_CITY, spec["href"], lang)
                 if "href" in spec
-                else story_model.lines_step(payload, spec, metrics)
+                else story_model.lines_step(payload, spec, metrics, lang)
             )
             if built:
                 steps[step] = built
@@ -996,7 +1029,11 @@ def create_app(
         error = content_error(errors, "explainer")
 
         def build():
-            return None if explainer is None else render_explainer(explainer, sources)
+            return (
+                None
+                if explainer is None
+                else render_explainer(explainer, sources, request.state.lang)
+            )
 
         doc = cache.get(f"differences:{request.state.lang}", fp(request), build)
         try:
@@ -1029,7 +1066,14 @@ def create_app(
             names = {c.id: c.name for c in data.cities()}
             return {
                 "profiles": organisations_context(
-                    orgs, sources, org_mapping(), plans, rows, names, source_names
+                    orgs,
+                    sources,
+                    org_mapping(),
+                    plans,
+                    rows,
+                    names,
+                    source_names,
+                    request.state.lang,
                 ),
                 "dimension_labels": labels,
             }
@@ -1045,7 +1089,7 @@ def create_app(
     async def sources_page(request: Request, data: Data):
         def build() -> dict:
             try:
-                rows, cited = source_rows(data, config_dir, content_dir)
+                rows, cited = source_rows(data, config_dir, content_dir, request.state.lang)
                 dims = load_differences(config_dir / "differences.yaml").dimensions
             except (ConfigError, ContentError, OSError) as e:
                 log.error("the sources table could not be built: %s", e)
@@ -1054,7 +1098,8 @@ def create_app(
 
         ctx = cache.get(f"sources:{request.state.lang}", fp(request), build)
         groups = [
-            (name, [r for r in ctx["rows"] if r.group == g]) for g, name in GROUP_NAMES.items()
+            (group_name(g, request.state.lang), [r for r in ctx["rows"] if r.group == g])
+            for g in GROUPS
         ]
         return page(
             request, "sources.html", "sources", data, groups=[(n, rs) for n, rs in groups if rs],
@@ -1069,7 +1114,8 @@ def create_app(
         def build() -> dict:
             plans, rows, error = plans_config()
             cities = sorted(((c.id, c.name) for c in data.cities()), key=lambda c: c[1])
-            return {"table": plans_pages.plans_table(plans, rows, cities, orgs), "error": error}
+            table = plans_pages.plans_table(plans, rows, cities, orgs, request.state.lang)
+            return {"table": table, "error": error}
 
         ctx = cache.get(f"plans:{request.state.lang}", fp(request), build)
         return page(request, "plans.html", "plans", data, **ctx)
@@ -1091,13 +1137,19 @@ def create_app(
             except ContentError as e:
                 log.error("plan page text could not be loaded: %s", e)
                 text, text_error = None, str(e)
-            doc = None if text is None or errors.get("*") else render_explainer(text, sources)
+            doc = (
+                None
+                if text is None or errors.get("*")
+                else render_explainer(text, sources, request.state.lang)
+            )
             if plan is None:
                 return {"plan": None, "error": error, "doc": doc, "text_error": text_error}
             overlay = data.plan_overlay(city_id)
             dates = plans_pages.run_dates(data.conn, {r.run_id for r in overlay})
             projects = plans_pages.completed_projects(plans_data_dir / plans_pages.MEASURES_FILE)
-            ctx = plans_pages.berlin_context(plan, rows, orgs, overlay, dates, projects)
+            ctx = plans_pages.berlin_context(
+                plan, rows, orgs, overlay, dates, projects, request.state.lang
+            )
             measures, record_error = plans_pages.measures_retrieved(plans_data_dir)
             if record_error:
                 log.error("plan data source record could not be read: %s", record_error)
@@ -1121,27 +1173,39 @@ def create_app(
 
     register_pages(app, "/plans/{city_id}", plan_page)
 
-    def keynums(summary: dict, fua, fua_now: float | None, flagged: int) -> list[dict]:
+    def keynums(
+        summary: dict, fua, fua_now: float | None, flagged: int, lang: Lang = "en"
+    ) -> list[dict]:
         """The five numbers of the city header's `.keynums` row (LAU unless it says FUA)."""
         point, change = summary["point"], summary["change"]
+        na = i18n.t(lang, "fmt.na")
+        now_label = summary["now_label"]
         return [
-            {"label": f"Headline, {summary['now_label'] or 'now'}", "value": _num(summary["now"]),
-             "sub": "per 100 km of main roads"},
-            {"label": f"Since {summary['first_label'] or 'the first year'}",
-             "value": "n/a" if change is None else f"{change:+.1f}".replace("-", "\u2212"),
+            {"label": i18n.t(lang, "city.keynum.headline",
+                             when=now_label or i18n.t(lang, "city.keynum.now")),
+             "value": _num(summary["now"], lang=lang),
+             "sub": i18n.t(lang, "city.keynum.headline_sub")},
+            {"label": i18n.t(lang, "city.keynum.since",
+                             when=summary["first_label"] or i18n.t(lang, "city.keynum.first_year")),
+             "value": na if change is None else i18n.signed(change, lang).replace("-", i18n.MINUS),
              "tone": None if change is None else ("up" if change >= 0 else "down"),
-             "sub": "n/a" if summary["first"] is None else f"from {_num(summary['first'])}"},
-            {"label": "A+B mapped km",
-             "value": "n/a" if point is None else _num(point.ab_km, ",.0f"),
-             "sub": "per side" + (f", {summary['now_label']}" if point else "")},
-            {"label": "Metro area (FUA)", "value": _num(fua_now),
-             "sub": "headline" + (f", {_when(ts.CURRENT, fua.osm_timestamp)}" if fua else "")},
-            {"label": "Flagged years", "value": str(flagged),
-             "sub": "LAU, with explanations" if flagged else "LAU, none flagged"},
+             "sub": na if summary["first"] is None
+             else i18n.t(lang, "city.keynum.from", value=_num(summary["first"], lang=lang))},
+            {"label": i18n.t(lang, "city.keynum.ab_km"),
+             "value": na if point is None else _num(point.ab_km, ",.0f", lang),
+             "sub": i18n.t(lang, "city.keynum.per_side")
+             + (f", {now_label}" if point else "")},
+            {"label": i18n.t(lang, "unit.fua"), "value": _num(fua_now, lang=lang),
+             "sub": i18n.t(lang, "city.keynum.fua_sub")
+             + (f", {_when(ts.CURRENT, fua.osm_timestamp, lang)}" if fua else "")},
+            {"label": i18n.t(lang, "city.keynum.flagged"), "value": str(flagged),
+             "sub": i18n.t(lang, "city.keynum.flagged_sub") if flagged
+             else i18n.t(lang, "city.keynum.none_flagged")},
         ]  # fmt: skip
 
     def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
+        lang = data.lang
         explanations = docs_dir / EXPLANATIONS
         kinds, map_kinds = [], []
         for kind in KINDS:
@@ -1182,7 +1246,7 @@ def create_app(
             "tile_class": TILE_CLASS,
             "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
-            "labels": charts.TIER_LABEL,
+            "labels": {tier: i18n.t(lang, f"tier.{tier}") for tier in charts.TIER_LABEL},
             "kinds": map_kinds,
         }
         summary = city_summary(data, c)
@@ -1191,13 +1255,14 @@ def create_app(
         fua = data.current(city_id, "fua")
         return {
             "city": c,
-            "country": country_name(c.country_iso2),
+            "country": country_name(c.country_iso2, data.lang),
             "residents": lau.population_value if lau else None,
             "keynums": keynums(
                 summary,
                 fua,
                 headline_of(fua),
                 len(next(k for k in kinds if k["kind"] == "lau")["flags"]),
+                data.lang,
             ),
             "compare_groups": [
                 {**g, "cities": others}
@@ -1208,15 +1273,17 @@ def create_app(
             "has_counts": city_id in data.counter_cities(),
             # spec §5.1: a city without open counter data says so, with the portals checked; an
             # unreadable config/counters.yaml says that instead of dropping the note
-            "no_counters": counts_model.no_data_notes(counters_cfg).get(city_id),
-            "counters_error": None if counters_error is None else cmp.COUNTER_CONFIG_ERROR,
+            "no_counters": counts_model.no_data_notes(counters_cfg, data.lang).get(city_id),
+            "counters_error": (
+                None if counters_error is None else i18n.t(lang, "counts.config_error")
+            ),
             "kinds": kinds,
             "yearly": yearly,
             "reconcile": data.reconcile(city_id),
             "reported": data.reported_figures(city_id),
             "preset_label": data.preset_labels(),
             "preset_unit": data.preset_units(),
-            "headline_unit": HEADLINE_UNIT,
+            "headline_unit": headline_unit(data.lang),
             "tiers": ts.TIERS,
             "tiermap": tiermap if map_kinds else None,
             "plan_href": f"/plans/{city_id}"
@@ -1239,7 +1306,9 @@ def create_app(
             for sid, points in series.items()
         ]
         return {
-            "labels": [{"label": lbl, "text": _when(lbl, osm.get(lbl))} for lbl in labels],
+            "labels": [
+                {"label": lbl, "text": _when(lbl, osm.get(lbl), data.lang)} for lbl in labels
+            ],
             "rows": sorted(rows, key=lambda r: r["name"]),
         }
 
@@ -1250,6 +1319,7 @@ def create_app(
         if rows is None:
             return None
         window = data.report_config.change_window
+        lang = data.lang
         label_from = window.from_.isoformat()
         label_to = window.to if isinstance(window.to, str) else window.to.isoformat()
         stem = f"{city_id}_change_{label_from}_{label_to}"
@@ -1258,7 +1328,7 @@ def create_app(
             text = md_path.read_text(encoding="utf-8")
         except OSError:
             text = None
-        table = None if text is None else change_report.bezirk_table(text)
+        table = None if text is None else change_report.bezirk_table(text, data.lang)
         if table is not None:  # never raw HTML from the page into the `md` filter
             table = table.replace("<", "&lt;").replace(">", "&gt;")
         runs = None if text is None else change_report.change_runs(text)
@@ -1267,7 +1337,7 @@ def create_app(
         return {
             "rows": rows,
             "series": bezirk_series(data, city_id),
-            "window": f"{label_from} to {label_to}",
+            "window": i18n.t(lang, "page.bezirke.window", start=label_from, end=label_to),
             "change_runs": runs,
             # the change page does not end at the run the Bezirk table above shows
             "change_stale": (has_map or table is not None) and (runs is None or runs[1] != latest),
@@ -1281,7 +1351,10 @@ def create_app(
                 "links": OSM_LINKS,
                 # the drawn categories, in key order; their colours are the --change-<category>
                 # tokens changemap.js reads (both themes)
-                "labels": {c: f"mapped {c}" for c in change_report.CATEGORY_COLOURS},
+                "labels": {
+                    c: i18n.t(lang, "change.mapped", category=i18n.t(lang, f"change.category.{c}"))
+                    for c in change_report.CATEGORY_COLOURS
+                },  # fmt: skip
             }
             if has_map
             else None,

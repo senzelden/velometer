@@ -132,7 +132,7 @@ def test_export_urls_are_what_the_app_serves(rich):  # noqa: F811
         for city in cities:
             assert f"/city/{city}" in found
             assert f"/city/{city}/panel" in found
-            for _k, _l, suffix in TABS:
+            for _k, suffix in TABS:
                 url = f"/city/{city}{suffix}"
                 # a tab is exported exactly when the app serves it for that city
                 assert (url in found) == (c.get(url, follow_redirects=False).status_code == 200), (
@@ -813,7 +813,8 @@ def _without_footer(html: str) -> str:
     return "\n".join(lines[: stamps[0]] + lines[stamps[0] + 1 :])
 
 
-STATIC_NOTE = "Without JavaScript this static edition shows the default selection"
+def _static_note(lang: str) -> str:
+    return i18n.t(lang, "page.compare.nojs_static")
 
 
 def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
@@ -837,10 +838,11 @@ def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
             if rel in ("compare/index.html", "de/compare/index.html"):
                 static, live = text.split("\n"), r.text.split("\n")
                 differ = [i for i, (a, b) in enumerate(zip(static, live, strict=True)) if a != b]
+                note = _static_note("de" if rel.startswith("de/") else "en")
                 assert len(differ) == 1, differ
-                assert STATIC_NOTE in static[differ[0]]
+                assert note in static[differ[0]]
                 assert static[differ[0]].startswith('<p class="lede">')
-                assert STATIC_NOTE not in r.text
+                assert note not in r.text
             else:
                 assert text == r.text, rel
 
@@ -868,9 +870,9 @@ def test_the_static_compare_says_it_shows_the_default(rich, tmp_path):  # noqa: 
         for line in (out / "compare" / "index.html").read_text().split("\n")
         if line.startswith('<p class="lede">')
     ]
-    assert len(lede) == 1 and STATIC_NOTE in lede[0]
+    assert len(lede) == 1 and _static_note("en") in lede[0]
     with TestClient(_app(rich), base_url=BASE_URL) as c:
-        assert STATIC_NOTE not in c.get("/compare").text
+        assert _static_note("en") not in c.get("/compare").text
 
 
 # --- the HTML 404 page (controller ruling) ---

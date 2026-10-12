@@ -41,7 +41,7 @@ from velometer.db import (
     subarea_names,
     subarea_rows,
 )
-from velometer.i18n import Lang
+from velometer.i18n import Lang, t
 from velometer.models import City, ExternalFigure
 from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.selection import report_selector, trusted_countries
@@ -55,6 +55,14 @@ ROAD_CLASS_TEXT = {
     "main_incl_motorway_raw": "main roads (incl. motorways, per carriageway)",
     "all_public": "all public roads",
 }
+
+
+def headline_unit(lang: Lang = "en") -> str:
+    """The headline's unit in words (`unit.headline` of the UI catalogue)."""
+    return t(lang, "unit.preset", tiers="A+B", road_class=t(lang, "road_class.main_excl_motorway"))
+
+
+# the CLI's English forms; tests/test_ui_strings.py keeps them equal to the English catalogue
 HEADLINE_UNIT = f"A+B km per 100 km of {ROAD_CLASS_TEXT['main_excl_motorway']}"
 
 
@@ -220,9 +228,16 @@ class ReportData:
         return {p.id: sources.get(p.id) for p in self.selector.presets.presets}
 
     def preset_units(self) -> dict[str, str]:
-        """What each preset's value measures: its tiers' km per 100 km of its own denominator."""
+        """What each preset's value measures: its tiers' km per 100 km of its own denominator,
+        in the data's language."""
+        lang = self.lang
         return {
-            p.id: f"{'+'.join(p.tiers)} km per 100 km of {ROAD_CLASS_TEXT[p.denominator]}"
+            p.id: t(
+                lang,
+                "unit.preset",
+                tiers="+".join(p.tiers),
+                road_class=t(lang, f"road_class.{p.denominator}"),
+            )
             for p in self.selector.presets.presets
         }
 
@@ -427,11 +442,12 @@ class ReportData:
             return False
         return bool(self.city_fields().get(city_id, {}).get("subareas"))
 
-    def _subarea_names(self, city_id: str) -> dict[str, str]:
-        """Display name by subarea_id, including the remainder's label (`remainder_label`)."""
+    def _subarea_names(self, city_id: str, lang: Lang = "en") -> dict[str, str]:
+        """Display name by subarea_id, including the remainder's label (`remainder_label`) in
+        `lang`."""
         n = len(self.city_fields()[city_id]["subareas"]["relations"])
         names = subarea_names(self.conn, city_id)
-        return {**names, REMAINDER_ID: remainder_label(n)}
+        return {**names, REMAINDER_ID: remainder_label(n, lang=lang)}
 
     def _headline(self, tiers, roads) -> float | None:
         metrics = compute_metrics(SubareaMeasure(tiers, roads), self.selector.presets.presets)
@@ -447,7 +463,7 @@ class ReportData:
         parts = {} if run_id is None else subarea_rows(self.conn, run_id)
         if not parts:
             return None
-        names = self._subarea_names(city_id)
+        names = self._subarea_names(city_id, self.lang)
         rows = []
         for sid, (tiers, roads) in parts.items():
             km = {
@@ -496,9 +512,9 @@ class ReportData:
                 parts.items(), key=lambda kv: (kv[0] == REMAINDER_ID, kv[0])
             ):
                 km: dict[tuple[str, str], float] = {}
-                for t in tiers:
-                    key = (t.tier, t.length_basis)
-                    km[key] = km.get(key, 0.0) + t.length_km
+                for row in tiers:
+                    key = (row.tier, row.length_basis)
+                    km[key] = km.get(key, 0.0) + row.length_km
                 for (tier, basis), length in sorted(km.items()):
                     out.append(
                         {

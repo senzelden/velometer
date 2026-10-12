@@ -120,7 +120,7 @@ def _pages(client) -> dict[str, str]:
     """path -> HTML of every page kind, the city tabs each city has included."""
     paths = list(PAGES)
     for city in CITIES:
-        paths += [f"/city/{city}{suffix}" for _k, _l, suffix in TABS]
+        paths += [f"/city/{city}{suffix}" for _k, suffix in TABS]
     out = {}
     for path in paths:
         r = client.get(path)

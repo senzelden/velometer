@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}velometer · Organisations{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Organisations</span></nav>{% endblock %}
+{% block title %}velometer · {{ t('nav.organisations') }}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.organisations') }}</span></nav>{% endblock %}
 {% block content %}
-<h1>Who produces the figures</h1>
-<p class="dek">The bodies behind the published figures this app compares with our mapped km, and behind Berlin's plan and its progress reports: who they are, how they measure and what role their figures play.</p>
-{% if content_error %}<p class="note">the source registry could not be loaded (see the server log)</p>{% endif %}
-{% if broken %}<p class="note">not shown, the profile could not be loaded (see the server log): {{ broken | join(", ") }}</p>{% endif %}
+<h1>{{ t('page.organisations.h1') }}</h1>
+<p class="dek">{{ t('page.organisations.dek') }}</p>
+{% if content_error %}<p class="note">{{ t('note.registry_error') }}</p>{% endif %}
+{% if broken %}<p class="note">{{ t('page.organisations.broken', names=broken | join(", ")) }}</p>{% endif %}
 {% if profiles %}
-<nav class="org-index" aria-label="Organisations"><ul>
+<nav class="org-index" aria-label="{{ t('nav.organisations') }}"><ul>
 {% for p in profiles %}<li><a href="#{{ p.org.id }}">{{ p.org.name }}</a></li>
 {% endfor %}</ul></nav>
 {% for p in profiles %}
@@ -15,8 +15,8 @@
 <p class="kicker">{{ p.kind }}</p>
 <h2>{{ p.org.name }}</h2>
 <p class="meta">{% if p.org.url | http_url %}<a href="{{ p.org.url | http_url }}" rel="noopener noreferrer">{{ p.org.url | host }}</a>{% endif %}
-{%- if p.figures %} · figures in this app: {% for city, source in p.figures %}{{ source }} ({{ city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
-{%- if p.plans %} · plans: {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
+{%- if p.figures %} · {{ t('page.organisations.figures') }} {% for city, source in p.figures %}{{ source }} ({{ city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
+{%- if p.plans %} · {{ t('page.organisations.plans') }} {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
 <div class="narrative">
 {% for s in p.doc.sections %}
 <h3>{{ s.heading }}</h3>
@@ -31,6 +31,6 @@
 </section>
 {% endfor %}
 {% elif not content_error %}
-<p class="note">no organisation profiles (content/organisations/)</p>
+<p class="note">{{ t('page.organisations.none') }}</p>
 {% endif %}
 {% endblock %}

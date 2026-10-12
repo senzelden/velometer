@@ -17,6 +17,7 @@ from tests.test_app import (
     subarea_setup,  # noqa: F401 - the fixture
 )
 from tests.test_app_m8 import _stylesheet
+from velometer import i18n
 from velometer.report import change, charts
 from velometer.report.colour import contrast, delta
 
@@ -833,6 +834,17 @@ def test_the_chart_check_catches_a_chart_without_its_table():
     assert _chart_gaps('<span class="spark-mount" data-chart="sparkline"></span>') == (0, [])
 
 
+FLAG_WORDS = "|".join(
+    re.escape(text)
+    for lang in ("en", "de")
+    for text in (
+        i18n.t(lang, "table.flagged"),
+        f'data-label="{i18n.t(lang, "table.flagged_col")}"',
+        i18n.t(lang, "page.plans.suspect"),
+    )
+)
+
+
 def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, page_site):  # noqa: F811
     rows = 0
     for url in all_page_urls:
@@ -840,8 +852,9 @@ def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, pag
         for row in re.findall(r'<tr class="[^"]*\bflagged\b[^"]*"[^>]*>(.*?)</tr>', html, re.S):
             rows += 1
             assert 'class="flagmark"' in row and "⚑" in row, (url, row[:120])
-            # and said to a screen reader: in words, or by a cell headed "Flagged" / a status
-            assert re.search(r"\(flagged\)|data-label=\"Flagged\"|suspect", row), (url, row[:120])
+            # and said to a screen reader: in words, or by a cell headed "Flagged" / a status, in
+            # the page's language
+            assert re.search(FLAG_WORDS, row), (url, row[:120])
     assert rows  # the fixtures have flagged rows
 
 

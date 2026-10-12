@@ -1,4 +1,11 @@
-# English UI strings. Flat keys; a plural is {one, other}. Keys mirror de.yaml.
+# English UI strings: every word a page shows that is not content (content/) or config (config/).
+# Flat keys; a plural is {one, other}, chosen by `count=`. Keys mirror de.yaml (i18n.check).
+# Families: site.* nav.* crumbs.* (layout) · page.<page>.* (one page's text) · table.* (column
+# heads) · note.* (notes in tables) · cite.* (citations; cite.title.* the figure titles) · unit.*
+# · fmt.* · city.keynum.* · counts.* · compare.* · story.* · time.* · sources.* · search.* ·
+# org.* · plan.* · regions.* · permalink.* · subarea.*. Built from ids (i18n.DYNAMIC_FAMILIES): country.* tier.* road_class.*
+# city.tab.* compare.group.* compare.metric.* compare.view.* org.kind.* plan.doc_type.*
+# plan.status.* change.category.*
 fmt.na: n/a
 nav.lang_switch: Deutsch
 site.footer.attribution: 'Map data © <a href="{osm}">OpenStreetMap contributors, ODbL 1.0</a>'
@@ -10,3 +17,560 @@ site.footer.static_edition: Static edition · build {commit}
 page.404.title: Page not found
 page.404.home: Overview
 page.404.text: 'There is no page at this address. <a href="{home}">Go to the overview</a>.'
+
+# --- index
+site.skip: Skip to content
+site.menu: Menu
+nav.label: Main
+nav.overview: Overview
+nav.compare: Compare
+nav.cities: Cities
+nav.city_filter_placeholder: Filter cities or countries
+nav.city_filter: Filter cities
+nav.no_match: No city matches.
+nav.all_cities: All cities, with headline values
+nav.stories: Stories
+nav.plans: Plans
+nav.organisations: Organisations
+nav.sources: Sources
+nav.methodology: Methodology
+nav.find_city: Find a city
+nav.search: Search cities and pages
+nav.search_results: Search results
+crumbs.label: Breadcrumb
+cite.label: Cite
+permalink.copy: Copy link
+page.index.title: overview
+page.index.h1: Protected cycling infrastructure in {n} European cities, as mapped
+page.index.dek: "How many kilometres of separated tracks and shared foot/cycle paths OpenStreetMap shows\nper 100 km of main roads"
+page.index.dek_years: ', from 1 January {year} to the latest snapshot'
+page.index.defn: "<b>Headline</b> = {unit}. A = separated track, B = shared foot/cycle path.\nAll lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not what was built."
+page.index.n_cities:
+  one: <b>{count}</b> city
+  other: <b>{count}</b> cities
+page.index.n_countries:
+  one: <b>{count}</b> country
+  other: <b>{count}</b> countries
+page.index.snapshots: snapshots <b>1 Jan {first}–{last}</b> and the current run
+cite.title.ranking: Headline ranking, {unit}, city proper (LAU), all cities
+page.index.ranking: Headline ranking, city proper (LAU)
+page.index.legend_first: first year
+page.index.legend_now: current run
+page.index.ranking_meta: "{unit}. Each city's first series year against its current run; click a city for its page."
+table.city: City
+table.first_to_current: First year to current run
+table.first_year: First year
+table.current: Current
+table.change: Change
+note.no_run_lau_current: no run (LAU current)
+page.index.time_meta: "Headline, city proper (LAU), every city; the pilot five in colour. Mapped km in OpenStreetMap, not built km.\nThe ranking above lists every city's values."
+page.index.time_chart: Headline over time, all cities
+page.index.time_table: 'Table: headline per city and snapshot'
+table.flagged_year: flagged year
+table.flagged: (flagged)
+cite.title.over_time: Headline over time, {unit}, city proper (LAU), all cities
+page.index.ring_note: ringed point = flagged year (automatic check); its explanation is on the city page.
+page.index.explore: Explore
+page.index.card_compare_title: Cities side by side
+page.index.card_compare_text: Any set of cities on one chart, LAU or FUA, absolute or indexed to 2018.
+page.index.card_compare_more: Open Compare
+page.index.card_stories_title: What the map shows
+page.index.card_stories_text: The combined narrative across all cities, with quotes and sources.
+page.index.card_stories_more: Read the stories
+page.index.card_cities_title: All cities by country
+page.index.card_cities_text: Each city with its headline and a sparkline, leading to its own page.
+page.index.card_cities_more: Browse the cities
+page.index.card_method_title: How the numbers are made
+page.index.card_method_text: Tiers A–E, the headline, LAU and FUA boundaries, and the limits of mapped km.
+page.index.card_method_more: Read the methodology
+page.index.keys: Key numbers
+page.index.keys_lede: "Current LAU run per city, on the report classifier. The headline is\n{unit}. Each preset divides by its own denominator (see the\n<a href=\"{methodology}\">methodology</a>); all values are ours, computed on each publisher's method,\nnot the published figures. km are OSM mapped km per side."
+table.flagged_years_lau: Flagged years (LAU)
+page.index.how_measure: 'How each source measures: <a href="{sources}">Sources</a> · why the figures differ: <a href="{differences}">the six dimensions</a>'
+page.index.ranks: Rankings by source
+page.index.ranks_meta: "Rank of each city (1 = highest) in our presets and in the published rankings. Ranks depend on\nwhich cities a source covers; each source has its own measure and scope."
+table.not_published: not published
+page.index.no_ranks: no run or figures to rank
+
+# --- cities
+page.cities.title: cities
+page.cities.dek: "{n} cities in {countries} countries. Headline for the city proper (LAU), current run:\n{unit}, in mapped km."
+page.cities.per_main_roads: per 100 km of main roads, {when}
+page.cities.rank: rank {rank} of {n}
+page.cities.open: Open {city}
+
+# --- compare
+page.compare.h1: Compare cities
+page.compare.lede: Pick cities, a metric and a boundary; the views show the same numbers four ways.
+page.compare.nojs_static: Without JavaScript this static edition shows the default selection; the table below holds its values.
+page.compare.nojs_live: Without JavaScript the form reloads the page and the table below holds the values.
+page.compare.n_cities:
+  one: '{count} city'
+  other: '{count} cities'
+page.compare.indexed: indexed
+page.compare.absolute: absolute
+page.compare.filters: Filters
+page.compare.quick: Quick sets
+page.compare.metric: Metric
+page.compare.lau_only: (LAU only)
+table.boundary: Boundary
+unit.lau: City proper (LAU)
+unit.fua: Metro area (FUA)
+page.compare.scale: Scale
+page.compare.scale_abs: Absolute
+page.compare.scale_index: Index, first year = 100
+page.compare.apply: Apply
+page.compare.views: Views
+page.compare.index_first: index, first year = 100
+note.mapped_not_built: Mapped km in OpenStreetMap, not built km.
+page.compare.chart: Chart of the selected cities
+page.compare.table_region: Values per city and snapshot
+page.compare.caption: '{metric} per city and snapshot'
+page.compare.none: No city selected.
+page.compare.panel: City panel
+page.compare.panel_close: Close panel
+
+# --- pages
+page.differences.title: Why the figures differ
+page.differences.six: The six dimensions
+page.differences.dimension: Dimension {i} of {n}
+page.differences.error: the explainer could not be loaded (see the server log)
+page.differences.missing: no explainer yet (content/explainer.yaml)
+page.differences.cities: Each city's figures
+page.methodology.title: methodology
+page.methodology.missing: 'methodology not generated (<code>velometer report methodology</code> writes <code>docs/{file}</code>)'
+page.organisations.h1: Who produces the figures
+page.organisations.dek: "The bodies behind the published figures this app compares with our mapped km, and behind Berlin's plan and its progress reports: who they are, how they measure and what role their figures play."
+note.registry_error: the source registry could not be loaded (see the server log)
+page.organisations.broken: 'not shown, the profile could not be loaded (see the server log): {names}'
+page.organisations.figures: 'figures in this app:'
+page.organisations.plans: 'plans:'
+page.organisations.none: no organisation profiles (content/organisations/)
+page.sources.h1: Sources and how they measure
+page.sources.dek: velometer sets published figures beside our own OpenStreetMap figures. Each row is one source; each column is one of the six dimensions along which figures differ.
+page.sources.error: the sources table could not be built (see the server log)
+page.sources.caption: 'Every figure source the app quotes, beside our approach, along the six dimensions (<a href="{differences}">why the figures differ</a>)'
+table.source: Source
+table.recomputed: Recomputed by us
+page.sources.every_city: every city
+page.sources.n_cities:
+  one: '{count} city'
+  other: '{count} cities'
+page.sources.no_city: no city in this edition
+page.sources.cited: What the cells cite
+page.sources.none: no figure sources (config/organisations.yaml)
+
+# --- stories
+page.stories.values: Values behind the chart
+page.stories.aside: Chart for the current step
+page.stories.chart: Chart of the current step
+page.stories.explore: Explore this chart
+cite.title.stories: '{title} (Stories)'
+cite.title.stories_chart: Stories chart
+page.stories.error: narratives could not be loaded (see the server log)
+page.stories.missing: story not written yet
+
+# --- plans
+page.plans.title: Cycling plans
+page.plans.suspect: suspect
+page.plans.document: document
+page.plans.dek: "Each city's cycling plan, its target and the latest progress its publisher reports. Reported figures are the publishers' own, stored as printed; they are not mapped km and not velometer numbers."
+page.plans.meta: "A figure marked <span class=\"suspect-mark\">suspect</span> is kept as printed, with the reason it is doubtful. Berlin's plan has its own page, with every document's figures and two further series: <a href=\"{berlin}\">Berlin: reported, completed, mapped →</a>"
+page.plans.error: the plans could not be loaded (see the server log)
+table.plan: Plan
+table.status: Status
+table.target: Target
+table.latest_reported: Latest reported
+page.plans.no_plan: no plan recorded
+page.plans.adopted: adopted {date}
+page.plans.adoption_unknown: adoption date not confirmed
+page.plans.every_item: Every item and document
+page.plans.notes: Notes
+plan.no_km_target: no km target
+page.plans.no_figure: no reported figure found
+
+# --- plan
+page.plan.title: Berlin's cycling plan
+page.plan.crumb: Berlin
+page.plan.current: current
+page.plan.revision: revision
+page.plan.h1: 'Berlin: {title}'
+page.plan.h1_default: reported, completed, mapped
+page.plan.all_plans: All cities' plans
+page.plan.text_error: the page text could not be loaded (see the server log)
+page.plan.key: How to read the charts
+page.plan.key_target: target per year (the plan's steps)
+page.plan.key_cap: "↑ value: target above the chart's scale, drawn on its top edge; the table under the chart gives every target"
+page.plan.key_current: reported, current figure
+page.plan.key_revision: reported in another document (revision)
+page.plan.key_suspect: suspect, kept as printed
+page.plan.key_projects: completed projects (infraVelo)
+page.plan.key_mapped: mapped on the network, mapped km since 1 Jan {year} (ours; a line, one point per OpenStreetMap snapshot, the last at the current snapshot)
+page.plan.three: 'Three series, three words: {reported} (Senate documents), {completed} (infraVelo measures dataset) and {mapped} (OpenStreetMap, ours). They count different things.'
+page.plan.reported: reported
+page.plan.completed: completed projects
+page.plan.mapped: mapped on the network
+page.plan.items: Plan items
+page.plan.documents: Documents
+page.plan.target: 'Target: {target}'
+page.plan.chart: '{item}: target, reported and completed km by year'
+page.plan.no_yearly: No yearly figures for this item, so there is no chart.
+page.plan.projects_note: 'Completed projects: km of projects marked completed in the measures dataset'
+page.plan.projects_fed: ' (fed from the <a href="{href}">{name}</a> project database)'
+page.plan.projects_note_end: ', by the year their works ended, per part on this network.'
+page.plan.no_measures: The measures dataset is not present (<code>velometer plans fetch berlin</code>); no completed-projects series.
+page.plan.mapped_note: 'Mapped on the network: the change in OpenStreetMap A+B mapped km (per side) on this network since 1 January {year}'
+page.plan.mapped_change: ', {km} mapped km to the current snapshot of {date}'
+page.plan.mapped_note_end: ". The line has one point per snapshot: each 1 January, then the current snapshot, so its last stretch covers part of a year. Method: overlay version <code>{version}</code>, the latest. The series is sensitive to how mappers draw cycleways and to the matching method: it moves when ways are redrawn and with each method version. These are changes in what is mapped, not km of new infrastructure; mapped km are not km completed to the plan's standard"
+page.plan.why: why
+page.plan.no_overlay: no plan overlay in the database (<code>velometer plans overlay berlin</code>); no mapped-on-the-network series.
+page.plan.no_overlay_whole: 'No mapped-on-the-network series for the whole network: a way along both networks would count once in each.'
+table.year: Year
+table.reported_in_year: Reported, implemented in the year
+table.completed_projects: Completed projects
+page.plan.none: none
+page.plan.not_reported: not reported
+page.plan.zero_or_none: 0 or none
+cite.title.plan: 'Berlin cycling plan, {item}: target, reported and completed km by year'
+page.plan.other_years: 'Completed projects in other years:'
+page.plan.overlay_caption: '{item}: A+B mapped km on the network by snapshot, {version}'
+table.snapshot: Snapshot
+table.ab_on_network: A+B mapped km on the network
+table.change_previous: Change from the previous snapshot
+table.difference_from: Difference from 1 Jan {year}
+page.plan.every_figure: Every printed figure ({n})
+table.value: Value
+table.document: Document
+page.plan.why_differ: Why the three series differ
+page.plan.documents_meta: "Every progress document a figure above comes from, oldest first. Hauptausschuss reports (rote Nummer) are the Senate's yearly progress reports; Drucksachen are answers to written questions."
+table.type: Type
+table.number: Number
+table.date: Date
+table.publisher: Publisher
+table.reports_on: What it reports
+table.figures: Figures
+page.plan.n_suspect: '{n} suspect'
+page.plan.data: Data
+page.plan.measures: 'Measures dataset: Radverkehrsmaßnahmen, Berlin geoportal'
+page.plan.licence_retrieved: ', licence {licence}, retrieved {retrieved}'
+page.plan.not_present: (not present)
+page.plan.network: 'Planned network: Radverkehrsnetz, Berlin geoportal'
+page.plan.licence: ', licence {licence}'
+page.plan.licence_unknown: ', licence not recorded'
+page.plan.retrieved: ', retrieved {retrieved}'
+page.plan.matched: '; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0)'
+page.plan.matched_with: with <code>{version}</code>
+page.plan.record_error: 'data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licence and retrieval date cannot be shown.'
+
+# --- city
+page.city.residents: '{n} residents (city proper)'
+page.city.bezirke_csv: Bezirke CSV
+page.city.plan: Cycling plan
+page.city.compare_with: Compare this city with…
+cite.title.keynums: '{city}: key numbers, city proper (LAU)'
+page.city.sections: City sections
+page.panel.full: Open full page
+page.panel.tiers_over_time: Tier composition over time ({kind})
+page.city.tiers_chart: Tier composition over time, {city} {kind}
+cite.title.tiers: '{city}: tier composition over time, mapped km by tier, {kind}'
+page.panel.tiers_now: Tiers, mapped km now
+note.no_run: no run
+page.city.flagged_years: Flagged years
+page.panel.no_explanation: no explanation recorded
+note.no_flagged_years: no flagged years
+page.city.tier_table: 'Table: mapped km by tier ({kind})'
+cite.source: source
+cite.archived: archived
+cite.data: velometer data
+cite.dref: d{n}
+page.bezirke.meta: 'Latest current LAU run, per subarea. Headline: {unit}. Tier A share is A of A+B per-side mapped km.'
+table.bezirk: Bezirk
+table.headline_per_100: Headline per 100 km
+table.a_share: A share of A+B
+unit.pct_spaced: '{value} %'
+page.bezirke.remainder: "Road and path km inside the city's LAU boundary but outside every Bezirk polygon; the LAU is generalised at 1:1M (ADR 0004)."
+page.bezirke.chart: Headline per Bezirk over time, {city}
+page.bezirke.table: 'Table: headline per Bezirk and snapshot'
+cite.title.bezirke: '{city}: headline per Bezirk over time, {unit}'
+page.bezirke.no_history: no Bezirk history
+page.bezirke.change: Mapped change {window}
+page.bezirke.runs: Run {run_from} → run {run_to}
+page.bezirke.stale_runs: This change map ends at run {run}, not at the run {latest} of the figures above.
+page.bezirke.stale_unnamed: This change map does not name its runs, so it may not match the figures above.
+page.bezirke.regenerate: Regenerate it with <code>velometer report change --city {city}</code>.
+page.bezirke.map: Interactive change map, {city}
+page.bezirke.map_key: Map key
+page.bezirke.map_note: Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.
+page.bezirke.table_note: 'Mapped km per Bezirk and category, from the change page <code>docs/review</code>; "{geometry}" is the signed length change of a same-tier way-side.'
+page.bezirke.no_map: No change map generated yet (<code>velometer report change --city {city}</code>)
+
+# --- counts
+counts.index: Counter index
+page.counts.meta: Index of {label}, {base} = 100, beside the index of A+B mapped km in the city proper (1 January snapshots, {base} = 100).
+page.counts.covid: '{year} is the COVID year.'
+page.counts.chart: Counter index and mapped-km index over time, {city}
+page.counts.key_counter: '{short}: index of {label}'
+page.counts.key_km: '{short}: index of A+B mapped km in the city proper, 1 January snapshots'
+page.counts.no_line: 'No index line is drawn: the counter index has a value for {years} only, because no other year links to a neighbouring one with {sites} sites complete on at least {pct}% of days.'
+page.counts.no_year: no year
+page.counts.gaps: The files hold no counts from
+page.counts.gap: '{start} to {end}'
+page.counts.breaks: "For the portal's account of that time, a change of detectors, see <a href=\"#counters-breaks\">Breaks in a series</a> below."
+page.counts.config_error: "Counter configuration unreadable (<code>config/counters.yaml</code>; see the server log): no step-down note can be given, and the attribution below is the stored sites'."
+page.counts.step_down_start: In our reading of the daily counts, the counts of
+page.counts.step_site: '{site} (from {since})'
+page.counts.and: and
+page.counts.step_down_body: 'step down while still counting. Possibly works or diversions; the data do not say why. The index above keeps them, as the index rule counts every qualifying site. Computed here from the stored daily counts without those sites from those years on (the list is in <code>config/counters.yaml</code>),'
+page.counts.step_index: the index is
+page.counts.step_year: '{idx} in {year} ({sites} sites; above: {stored})'
+page.counts.step_none: the index has no value in those years
+page.counts.km_base_missing: 'No A+B mapped km snapshot for 1 January {year}: no mapped-km index.'
+page.counts.caption: Counter index and mapped-km index per year, {city}
+table.qualifying_sites: Qualifying sites
+table.km_index: A+B mapped km index (1 Jan)
+counts.covid_year: COVID year
+cite.title.counts: '{city}: {label} index and A+B mapped km index, {base} = 100'
+page.counts.na_note: "n/a: no value (fewer than {sites} sites complete on at least {pct}% of days in both years of a link, or a broken chain), not zero. A year's site count is the sites of its link with the neighbouring year towards {base}."
+page.counts.sites: Counter sites
+page.counts.map: Map of the counter sites, {city}
+page.counts.coords: '{n} of {of} sites have coordinates.'
+page.counts.no_coords: 'The portal publishes no coordinates for these sites: a list instead of a map.'
+page.counts.n_sites:
+  one: '{count} site'
+  other: '{count} sites'
+table.site: Site
+table.first_day: First day
+table.last_day: Last day
+counts.data: Counter data
+page.counts.licence: licence
+page.counts.retrieved: retrieved {date}
+page.counts.map_credit: 'Map: © <a href="{href}" rel="noopener noreferrer">OpenStreetMap contributors</a>.'
+page.counts.text_error: the counters text could not be loaded (see the server log)
+
+# --- figures
+cite.title.figure: '{city}: {source}, {metric} (published figure, with our comparison)'
+page.figures.dimensions: 'Each published figure is read along six dimensions:'
+page.figures.explained: The dimensions explained
+page.figures.config_error: the differences configuration could not be read
+page.figures.none: no published figures for {city}
+table.figure: Figure
+table.theirs: Theirs
+table.ours: Ours
+table.gap: Gap
+table.differs: Where it differs
+page.figures.reference_date: reference date {date}
+page.figures.not_stated: not stated
+page.figures.scope: 'scope: {scope}'
+page.figures.not_compared: not compared
+page.figures.driver: 'ours: {ours}; theirs: {theirs}'
+page.figures.no_difference: no difference recorded
+page.city.narrative_error: the narrative for this city could not be loaded (see the server log)
+page.figures.comparison: Comparison with published figures
+page.figures.no_run: no run (LAU current) to compare
+table.comparison: Comparison
+table.flagged_col: Flagged
+table.source_date: Source (date)
+page.figures.info: info
+page.figures.yes: 'yes'
+page.figures.no: 'no'
+page.figures.date_not_stated: date not stated
+page.figures.official: Official and reported figures
+page.figures.no_official: no official or reported figures for {city}
+page.figures.official_meta: Figures as published by their sources, each with its own scope and length basis. They are not mapped km and are not equal to the velometer numbers above.
+table.unit: Unit
+table.scope: Scope
+table.length_basis: Length basis
+table.source_link: Source link
+page.figures.no_url: no source URL recorded
+
+# --- tabs
+page.story.no_narrative: no narrative yet
+page.story.headline: Headline over time
+page.city.headline_chart: Headline over time, {city}
+page.story.table: 'Table: headline per snapshot'
+table.kind_headline: '{kind} headline'
+cite.title.city_headline: '{city}: headline over time, {unit}, city proper (LAU)'
+note.no_run_history: no run (history)
+page.story.over_time: Over time, with flagged years
+page.story.read_on: Read on
+page.story.combined: The combined story across all cities
+page.time.meta: 'Headline: {unit}, city proper (LAU) and metro area (FUA).'
+page.time.caption: 'Headline and A+B km per snapshot, {city}: the values the chart above draws'
+page.time.flag_note: flagged year (automatic check); its explanation is in the section on flagged years below.
+note.no_run_kind_history: no run ({kind} history)
+page.time.no_explanation: no explanation in <code>docs/review/m3_timeseries.md</code>
+page.time.presets: Headline and presets
+table.preset: Preset
+table.measure: Measure
+table.per_100k: km per 100k residents
+table.population_year: ({year} population)
+page.time.population: population
+note.no_run_kind_current: no run ({kind} current)
+page.time.provenance: Provenance
+page.time.kind_current: '{kind} current:'
+page.time.run: 'run {run} · OSM {osm} · classifier {classifier} · config <code>{config}</code>'
+page.time.kind_history: '{kind} history:'
+page.time.comparison: 'Comparison:'
+page.tiers.h2: Tier composition
+page.tiers.meta: Per-side mapped km by tier.
+page.tiers.lau_fua: LAU vs FUA
+page.tiers.headline: 'Headline: {unit}.'
+page.tiers.map: Tier map
+page.tiers.map_label: Interactive tier map, {city}
+page.tiers.map_note: Click a side for its way, tier, rule and tags.
+page.tiers.no_map: map not generated (<code>velometer report maps</code>)
+page.tiers.static_image: '{kind} static image'
+
+# --- py
+country.AT: Austria
+country.CZ: Czechia
+country.DE: Germany
+country.DK: Denmark
+country.ES: Spain
+country.FI: Finland
+country.FR: France
+country.HU: Hungary
+country.NL: Netherlands
+country.NO: Norway
+country.PL: Poland
+country.SE: Sweden
+country.SI: Slovenia
+country.SK: Slovakia
+regions.scroll: Scrollable content
+regions.table: Table
+story.km_before: A+B km before
+story.km_after: A+B km after
+story.change_km: Change, km
+story.km_at: A+B km {when}
+story.own_scale: each city on its own scale
+story.first: first
+story.bezirke_title: Headline by Bezirk · {city}
+time.current: current
+unit.preset: '{tiers} km per 100 km of {road_class}'
+road_class.main_excl_motorway: main roads (excl. motorways)
+road_class.main_incl_motorway: main roads (incl. motorways)
+road_class.main_incl_motorway_raw: main roads (incl. motorways, per carriageway)
+road_class.all_public: all public roads
+subarea.remainder: Outside the {n} Bezirke (LAU edge)
+tier.A: A separated track
+tier.B: B shared foot/cycle path
+tier.C: C protected lane
+tier.D: D painted lane
+tier.E: E cycle street / bus lane
+compare.group.all: All
+compare.group.pilot5: Pilot 5
+compare.group.nordic: Nordic
+compare.group.dach: DACH
+compare.group.west: West & South
+compare.group.central: Central & East
+compare.metric.headline: Headline
+compare.metric.ab_km: A+B km
+compare.metric.A: Tier A km
+compare.metric.B: Tier B km
+compare.metric.C: Tier C km
+compare.metric.D: Tier D km
+compare.metric.E: Tier E km
+compare.metric.ecf_qecio: QECIO method
+compare.metric.clean_cities: Clean Cities method
+compare.metric.ab_per_100k: A+B km per 100k residents
+compare.metric.counter_index: Counter index
+compare.view.lines: Lines
+compare.view.small: Small multiples
+compare.view.rank: Rank
+compare.view.table: Table
+compare.no_index: 'no index: first year is 0 or missing'
+compare.fua_note: A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).
+counts.no_counters: no open counter data
+counts.no_line: no counter index line (an index value for one year only; see its Counts tab)
+counts.config_error: 'counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such'
+counts.title: counter sites
+counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
+counts.foot: "Counter index: each city's base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected."
+counts.not_recorded: not recorded
+counts.source_not_recorded: source not recorded
+counts.avg_daily: index of average daily intensity (monthly values), not of counts
+counts.of: index of counts recorded at counter sites (or of their average daily intensity)
+counts.any_base: each city's base year = 100
+counts.base_for: '{year} = 100 for {cities}'
+counts.covid_is: '{year} is the COVID year'
+counts.covid_column: '{year} (COVID year)'
+counts.attribution: 'Counter data, {city}: {source}, licence {licence}'
+unit.per_100k: "A+B mapped km per 100,000 residents (each city's {span}population, held for every year)"
+unit.ab_km: A+B mapped km, per side
+unit.tier_km: mapped km of tier {tier}, per side
+compare.foot: '⚑ flagged year (automatic check). Headline: {unit}. Ranks in the Rank view depend on the cities selected.'
+counts.series.counts: counts recorded at counter sites
+counts.series.avg_daily_intensity: average daily intensity recorded at counter sites
+counts.short.counts: Counts
+counts.short.avg_daily_intensity: Intensity
+counts.short.km: Mapped km
+counts.none_found: 'no open counter data found (portals checked: {portals}{note})'
+sources.ours: Our approach
+sources.rankings: Cross-city rankings and datasets
+sources.city: City sources
+sources.missing_cell: not in the profile
+sources.snapshot: OSM snapshot of {date}
+sources.no_snapshot: OSM snapshot (no run yet)
+search.methodology_de: Methodology (Deutsch)
+search.story_combined: The story across cities
+search.story_city: The story of {city}
+org.all_cities: all cities
+org.kind.official: city or state administration
+org.kind.ngo: non-governmental organisation
+org.kind.index: index publisher
+org.kind.research: research
+org.kind.parliament: parliament
+org.kind.agency: public agency
+cite.missing_source: source missing
+cite.missing_ref: data reference missing
+plan.quantity.in_year: implemented in {year}
+plan.quantity.cumulative: implemented, cumulative since {since}, to {year}
+plan.quantity.under_construction: under construction, {year}
+plan.quantity.in_planning: in planning, {year}
+plan.series.in_year: implemented in the year
+plan.series.cumulative: implemented, cumulative since {since}
+plan.series.under_construction: under construction
+plan.series.in_planning: in planning
+plan.target_by: '{value} {unit} by {year}'
+plan.per_year: '{unit} per year, {steps}'
+plan.doc_type.drucksache: Drucksache
+plan.doc_type.rote_nummer: Hauptausschuss report (rote Nummer)
+plan.doc_type.report: report
+plan.doc_type.web: web page
+plan.status.current: current
+plan.status.expired: expired
+plan.status.replaced: replaced
+plan.successor: 'successor: {successor}'
+plan.no_successor: no successor found
+
+# --- missing
+city.tab.story: Story
+city.tab.time: Over time
+city.tab.tiers: Tiers
+city.tab.figures: Figures
+city.tab.counts: Counts
+city.tab.bezirke: Bezirke
+change.category.gained: gained
+change.category.lost: lost
+change.category.retiered: retiered
+change.category.redrawn: redrawn
+change.category.geometry: geometry
+change.mapped: mapped {category}
+note.prefix.primary: primary source
+note.prefix.secondary: secondary source
+note.prefix.primary_by_agency: primary source, published by the agency
+city.keynum.headline: Headline, {when}
+city.keynum.now: now
+city.keynum.headline_sub: per 100 km of main roads
+city.keynum.since: Since {when}
+city.keynum.first_year: the first year
+city.keynum.from: from {value}
+city.keynum.ab_km: A+B mapped km
+city.keynum.per_side: per side
+city.keynum.fua_sub: headline
+city.keynum.flagged: Flagged years
+city.keynum.flagged_sub: LAU, with explanations
+city.keynum.none_flagged: LAU, none flagged
+compare.index_heading: index, first year = 100
+cite.title.compare: 'Compare: {heading}; {cities}'
+page.bezirke.window: '{start} to {end}'

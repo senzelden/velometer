@@ -41,6 +41,7 @@ from shapely.prepared import prep  # noqa: E402
 
 from velometer.config import REMAINDER_ID, ClassifierConfig, remainder_label  # noqa: E402
 from velometer.db import fetch_run  # noqa: E402
+from velometer.i18n import Lang, fmt, t  # noqa: E402
 from velometer.pipeline.classify import classify_ways  # noqa: E402
 from velometer.pipeline.dedupe import share_within  # noqa: E402
 from velometer.pipeline.geometry import Projector  # noqa: E402
@@ -520,10 +521,10 @@ def render_markdown(
         "| tier | from | to | net change (to − from) |",
         "|---|---:|---:|---:|",
     ]
-    for t in (*TIERS, None):
-        f = sum(result.totals_from.values()) if t is None else result.totals_from.get(t, 0.0)
-        to = sum(result.totals_to.values()) if t is None else result.totals_to.get(t, 0.0)
-        label = "**A–E**" if t is None else t
+    for tier in (*TIERS, None):
+        f = sum(result.totals_from.values()) if tier is None else result.totals_from.get(tier, 0.0)
+        to = sum(result.totals_to.values()) if tier is None else result.totals_to.get(tier, 0.0)
+        label = "**A–E**" if tier is None else tier
         lines.append(f"| {label} | {_km(f)} | {_km(to)} | {to - f:+.3f} |")
     by_cat = {c: [r for r in result.rows if r.category == c] for c in CATEGORIES}
     lines += ["", BEZIRK_HEADING, ""]
@@ -568,9 +569,11 @@ def render_markdown(
     return "\n".join(lines)
 
 
-def bezirk_table(markdown: str) -> str | None:
+def bezirk_table(markdown: str, lang: Lang = "en") -> str | None:
     """The per-Bezirk table of a change markdown (its `BEZIRK_HEADING` section's table lines),
-    or None if the page has none. The app shows it as written, never re-computed."""
+    or None if the page has none. The app shows it as written, never re-computed: in English
+    as it stands, in German with the category words, the number cells and the remainder's label
+    in German (the same values, German separators)."""
     lines = markdown.splitlines()
     if BEZIRK_HEADING not in lines:
         return None
@@ -580,7 +583,32 @@ def bezirk_table(markdown: str) -> str | None:
             break
         if line.startswith("|"):
             table.append(line)
+    if lang != "en" and table:
+        table = [_localise_row(line, i, lang) for i, line in enumerate(table)]
     return "\n".join(table) or None
+
+
+_REMAINDER = re.compile(
+    re.escape(t("en", "subarea.remainder", n=0)).replace("0", r"(\d+)", 1) + "$"
+)
+_NUMBER_CELL = re.compile(r"^-?\d+(\.\d+)?$")
+
+
+def _localise_row(line: str, index: int, lang: Lang) -> str:
+    """One row of the per-Bezirk table in `lang`: row 0 is the header (category ids), row 1 the
+    alignment row; a body row's number cells and the remainder's label are localised."""
+    cells = line.strip().strip("|").split("|")
+    if index == 0:
+        cells = [cells[0]] + [f" {t(lang, f'change.category.{c.strip()}')} " for c in cells[1:]]
+    elif index > 1:
+        name = cells[0].strip()
+        if m := _REMAINDER.match(name):
+            cells[0] = f" {t(lang, 'subarea.remainder', n=int(m.group(1)))} "
+        cells = [cells[0]] + [
+            f" {fmt(float(c), ',.3f', lang)} " if _NUMBER_CELL.match(c.strip()) else c
+            for c in cells[1:]
+        ]
+    return "|" + "|".join(cells) + "|"
 
 
 def _coords(ways: Iterable[WayRecord]) -> dict[int, tuple]:

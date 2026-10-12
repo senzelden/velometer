@@ -3,49 +3,49 @@
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
-<h2>Over time</h2>
-<p class="meta">Headline: {{ headline_unit }}, city proper (LAU) and metro area (FUA). Mapped km in OpenStreetMap, not built km.</p>
+<h2>{{ t('city.tab.time') }}</h2>
+<p class="meta">{{ t('page.time.meta', unit=headline_unit) }} {{ t('note.mapped_not_built') }}</p>
 {% if yearly %}
-<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" aria-describedby="yearly-caption" role="group" aria-label="Headline over time, {{ city.name }}"></div>
+<div class="chart" data-chart="city-headline" data-city="{{ city.id }}" aria-describedby="yearly-caption" role="group" aria-label="{{ t('page.city.headline_chart', city=city.name) }}"></div>
 <div class="scroll">
 <table class="yearly stack">
-<caption id="yearly-caption" class="sr-only">Headline and A+B km per snapshot, {{ city.name }}: the values the chart above draws</caption>
-<thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
+<caption id="yearly-caption" class="sr-only">{{ t('page.time.caption', city=city.name) }}</caption>
+<thead><tr><th>{{ t('table.snapshot') }}</th>{% for k in kinds %}<th class="num">{{ t('table.kind_headline', kind=k.kind | upper) }}</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}
 <tr>
-  <td data-label="Snapshot">{{ row.label | when(row.osm) }}</td>
+  <td data-label="{{ t('table.snapshot') }}">{{ row.label | when(row.osm) }}</td>
   {% for k in kinds %}{% set p = row.get(k.kind) %}
-  <td class="num" data-label="{{ k.kind | upper }} headline">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>
-  <td class="num" data-label="{{ k.kind | upper }} A+B km">{% if p %}{{ p.ab_km | num }}{% else %}n/a{% endif %}</td>
+  <td class="num" data-label="{{ t('table.kind_headline', kind=k.kind | upper) }}">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}{% else %}{{ t('fmt.na') }}{% endif %}</td>
+  <td class="num" data-label="{{ k.kind | upper }} A+B km">{% if p %}{{ p.ab_km | num }}{% else %}{{ t('fmt.na') }}{% endif %}</td>
   {% endfor %}
 </tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
-{{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU)", city=city.id)) }}
-<p class="meta">⚑ flagged year (automatic check); its explanation is in the section on flagged years below.</p>
+{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id)) }}
+<p class="meta">⚑ {{ t('page.time.flag_note') }}</p>
 {% else %}
-<p class="note">no run (history)</p>
+<p class="note">{{ t('note.no_run_history') }}</p>
 {% endif %}
 </section>
 
 <section>
-<h2>Flagged years</h2>
+<h2>{{ t('page.city.flagged_years') }}</h2>
 {% for k in kinds %}
 <h3>{{ k.kind | upper }}</h3>
 {% if k.series is none %}
-<p class="note">no run ({{ k.kind | upper }} history)</p>
+<p class="note">{{ t('note.no_run_kind_history', kind=k.kind | upper) }}</p>
 {% elif not k.flags %}
-<p class="note">no flagged years</p>
+<p class="note">{{ t('note.no_flagged_years') }}</p>
 {% else %}
 {% for f in k.flags %}
 <article class="flag">
 <h4><code>{{ f.flag.key }}</code> · {{ f.flag.rules | join(", ") }}</h4>
 <p class="meta">{{ f.flag.detail }}</p>
 {% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>
-{% else %}<p class="note">no explanation in <code>docs/review/m3_timeseries.md</code></p>{% endif %}
+{% else %}<p class="note">{{ t('page.time.no_explanation') }}</p>{% endif %}
 </article>
 {% endfor %}
 {% endif %}
@@ -53,7 +53,7 @@
 </section>
 
 <section>
-<h2>Headline and presets</h2>
+<h2>{{ t('page.time.presets') }}</h2>
 <div class="pair">
 {% for k in kinds %}
 <div>
@@ -61,18 +61,18 @@
 {% if k.point %}
 <div class="scroll">
 <table class="stack">
-<thead><tr><th>Preset</th><th class="num">Value</th><th>Measure</th><th class="num">km per 100k residents{% if k.point.population_year %} ({{ k.point.population_year }} population){% endif %}</th></tr></thead>
+<thead><tr><th>{{ t('table.preset') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.measure') }}</th><th class="num">{{ t('table.per_100k') }}{% if k.point.population_year %} {{ t('table.population_year', year=k.point.population_year) }}{% endif %}</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}
-<tr><td data-label="Preset">{{ preset_label.get(p.preset, p.preset) }}</td><td class="num" data-label="Value">{{ p.value | num }}</td><td data-label="Measure">{{ preset_unit.get(p.preset, "") }}</td><td class="num" data-label="km per 100k residents{% if k.point.population_year %} ({{ k.point.population_year }} population){% endif %}">{{ p.per_100k | num }}</td></tr>
+<tr><td data-label="{{ t('table.preset') }}">{{ preset_label.get(p.preset, p.preset) }}</td><td class="num" data-label="{{ t('table.value') }}">{{ p.value | num }}</td><td data-label="{{ t('table.measure') }}">{{ preset_unit.get(p.preset, "") }}</td><td class="num" data-label="{{ t('table.per_100k') }}{% if k.point.population_year %} {{ t('table.population_year', year=k.point.population_year) }}{% endif %}">{{ p.per_100k | num }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
 <p class="meta">A+B km {{ k.point.ab_km | num }} · OSM {{ k.point.osm_timestamp }}
-· population {% if k.point.population_value %}{{ k.point.population_value | num(",d") }} ({{ k.point.population_year }}){% else %}n/a{% endif %}</p>
+· {{ t('page.time.population') }} {% if k.point.population_value %}{{ k.point.population_value | num(",d") }} ({{ k.point.population_year }}){% else %}{{ t('fmt.na') }}{% endif %}</p>
 {% else %}
-<p class="note">no run ({{ k.kind | upper }} current)</p>
+<p class="note">{{ t('note.no_run_kind_current', kind=k.kind | upper) }}</p>
 {% endif %}
 </div>
 {% endfor %}
@@ -80,15 +80,15 @@
 </section>
 
 <section>
-<h2>Provenance</h2>
+<h2>{{ t('page.time.provenance') }}</h2>
 <ul class="provenance">
 {% for k in kinds %}
-<li><strong>{{ k.kind | upper }} current:</strong>
-{% if k.point %}run {{ k.point.run_id }} · OSM {{ k.point.osm_timestamp }} · classifier {{ k.point.classifier_version }} · config <code>{{ k.point.config_sha256[:12] }}</code>{% else %}no run{% endif %}</li>
-<li><strong>{{ k.kind | upper }} history:</strong>
-{% if k.series %}{{ k.series.provenance | md }}{% else %}no run{% endif %}</li>
+<li><strong>{{ t('page.time.kind_current', kind=k.kind | upper) }}</strong>
+{% if k.point %}{{ t('page.time.run', run=k.point.run_id, osm=k.point.osm_timestamp, classifier=k.point.classifier_version, config=k.point.config_sha256[:12]) }}{% else %}{{ t('note.no_run') }}{% endif %}</li>
+<li><strong>{{ t('page.time.kind_history', kind=k.kind | upper) }}</strong>
+{% if k.series %}{{ k.series.provenance | md }}{% else %}{{ t('note.no_run') }}{% endif %}</li>
 {% endfor %}
-{% if reconcile %}<li><strong>Comparison:</strong> {{ reconcile.provenance | md }}</li>{% endif %}
+{% if reconcile %}<li><strong>{{ t('page.time.comparison') }}</strong> {{ reconcile.provenance | md }}</li>{% endif %}
 </ul>
 </section>
 {% endblock %}

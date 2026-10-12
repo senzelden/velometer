@@ -5,16 +5,8 @@ the plan documents it publishes (`config/plans/`), M8 spec §3."""
 from velometer.app.narrative import render_organisation
 from velometer.app.plans_pages import DETAIL_CITY, PROJECTS_ORG
 from velometer.content.models import Organisation, OrgMapping, Source
+from velometer.i18n import Lang, t
 from velometer.plans.models import Plan, ReportRow
-
-KIND = {
-    "official": "city or state administration",
-    "ngo": "non-governmental organisation",
-    "index": "index publisher",
-    "research": "research",
-    "parliament": "parliament",
-    "agency": "public agency",
-}
 
 
 def org_of_sources(mapping: list[OrgMapping], city_id: str, profiles: set[str]) -> dict[str, str]:
@@ -34,16 +26,17 @@ def organisations_context(
     rows: list[ReportRow],
     city_names: dict[str, str],
     source_names: dict[str, str],
+    lang: Lang = "en",
 ) -> list[dict]:
     """One entry per profile, by name: the rendered profile, its cited sources and data, the
     figures it stands behind and links to the plans it publishes or reports on."""
     out = []
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
-        doc = render_organisation(org, sources)
+        doc = render_organisation(org, sources, lang)
         cited_sources, cited_refs = doc.cited(doc.sections)
         figures = sorted(
             (
-                "all cities" if m.city == "*" else city_names.get(m.city, m.city),
+                t(lang, "org.all_cities") if m.city == "*" else city_names.get(m.city, m.city),
                 source_names.get(m.source, m.source),
             )
             for m in mapping
@@ -65,7 +58,7 @@ def organisations_context(
         out.append(
             {
                 "org": org,
-                "kind": KIND[org.kind],
+                "kind": t(lang, f"org.kind.{org.kind}"),
                 "doc": doc,
                 "cited_sources": cited_sources,
                 "cited_refs": cited_refs,

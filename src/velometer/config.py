@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from velometer.i18n import Lang, t
 from velometer.pipeline.geometry import require_projected
 from velometer.pipeline.match import validate_expr
 
@@ -63,12 +64,14 @@ class PopulationOverride(_Strict):
 REMAINDER_ID = "remainder"
 REMAINDER_NAME = "Outside the subareas (boundary edge)"
 SUBAREA_SECTION = "Bezirke"  # the subarea section title of the app, CSV and change page
-REMAINDER_LABELS = {"Bezirke": "Outside the {n} Bezirke (LAU edge)"}  # by section title
 
 
-def remainder_label(n_subareas: int, section: str = SUBAREA_SECTION) -> str:
-    """The remainder row's display name for a city with `n_subareas` configured relations."""
-    return REMAINDER_LABELS.get(section, REMAINDER_NAME).format(n=n_subareas)
+def remainder_label(n_subareas: int, section: str = SUBAREA_SECTION, lang: Lang = "en") -> str:
+    """The remainder row's display name for a city with `n_subareas` configured relations, in
+    `lang` (`subarea.remainder` of the UI catalogue for the Bezirk section)."""
+    if section != SUBAREA_SECTION:
+        return REMAINDER_NAME
+    return t(lang, "subarea.remainder", n=n_subareas)
 
 
 def subarea_display_name(names: dict[str, str], subarea_id: str, n_subareas: int) -> str:

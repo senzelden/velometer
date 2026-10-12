@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}velometer · Why the figures differ{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Why the figures differ</span></nav>{% endblock %}
+{% block title %}velometer · {{ t('page.differences.title') }}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('page.differences.title') }}</span></nav>{% endblock %}
 {% block content %}
 {% if doc %}
 <h1>{{ doc.title }}</h1>
@@ -8,12 +8,12 @@
 {% for p in doc.intro %}{{ p }}
 {% endfor %}
 </div>
-<nav class="dim-index" aria-label="The six dimensions"><ol>
+<nav class="dim-index" aria-label="{{ t('page.differences.six') }}"><ol>
 {% for s in doc.sections %}<li><a href="#dim-{{ s.role }}">{{ dimension_labels.get(s.role, s.heading) }}</a></li>
 {% endfor %}</ol></nav>
 {% for s in doc.sections %}
 <section class="narrative prose" id="dim-{{ s.role }}">
-<p class="kicker">Dimension {{ loop.index }} of {{ doc.sections | length }}</p>
+<p class="kicker">{{ t('page.differences.dimension', i=loop.index, n=doc.sections | length) }}</p>
 <h2>{{ s.heading }}</h2>
 {% for item in s.items %}{{ item }}
 {% endfor %}
@@ -23,11 +23,11 @@
 {% include "city/_cited.html" %}
 </section>
 {% else %}
-<h1>Why the figures differ</h1>
-<p class="note">{% if content_error %}the explainer could not be loaded (see the server log){% else %}no explainer yet (content/explainer.yaml){% endif %}</p>
+<h1>{{ t('page.differences.title') }}</h1>
+<p class="note">{% if content_error %}{{ t('page.differences.error') }}{% else %}{{ t('page.differences.missing') }}{% endif %}</p>
 {% endif %}
 <section>
-<h2>Each city's figures</h2>
+<h2>{{ t('page.differences.cities') }}</h2>
 <ul class="city-links">
 {% for c in cities %}<li><a href="{{ u('/city/' ~ c.id ~ '/figures') }}">{{ c.name }}</a></li>
 {% endfor %}</ul>

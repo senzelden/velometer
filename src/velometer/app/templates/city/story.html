@@ -13,35 +13,35 @@
 {% endfor %}{% endfor %}
 {% include "city/_cited.html" %}
 {% else %}
-{% if content_error %}<p class="note">the narrative for this city could not be loaded (see the server log)</p>{% else %}<p class="note">no narrative yet</p>{% endif %}
+{% if content_error %}<p class="note">{{ t('page.city.narrative_error') }}</p>{% else %}<p class="note">{{ t('page.story.no_narrative') }}</p>{% endif %}
 {% endif %}
 </article>
 <aside class="story-aside">
 <section class="aside-box">
-<h2>Headline over time</h2>
+<h2>{{ t('page.story.headline') }}</h2>
 {% if yearly %}
-<div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" aria-describedby="story-headline-sum" role="group" aria-label="Headline over time, {{ city.name }}"></div>
-<details class="table-details"><summary id="story-headline-sum">Table: headline per snapshot</summary>
+<div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" aria-describedby="story-headline-sum" role="group" aria-label="{{ t('page.city.headline_chart', city=city.name) }}"></div>
+<details class="table-details"><summary id="story-headline-sum">{{ t('page.story.table') }}</summary>
 <div class="scroll">
 <table class="stack">
-<thead><tr><th>Snapshot</th>{% for k in kinds %}<th class="num">{{ k.kind | upper }} headline</th>{% endfor %}</tr></thead>
+<thead><tr><th>{{ t('table.snapshot') }}</th>{% for k in kinds %}<th class="num">{{ t('table.kind_headline', kind=k.kind | upper) }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}
-<tr><td data-label="Snapshot">{{ row.label | when(row.osm) }}</td>{% for k in kinds %}{% set p = row.get(k.kind) %}<td class="num" data-label="{{ k.kind | upper }} headline">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}{% else %}n/a{% endif %}</td>{% endfor %}</tr>
+<tr><td data-label="{{ t('table.snapshot') }}">{{ row.label | when(row.osm) }}</td>{% for k in kinds %}{% set p = row.get(k.kind) %}<td class="num" data-label="{{ t('table.kind_headline', kind=k.kind | upper) }}">{% if p %}{{ p.headline | num }}{% if p.label in k.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}{% else %}{{ t('fmt.na') }}{% endif %}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
 </details>
-{{ cite(cite_for(city.name ~ ": headline over time, " ~ headline_unit ~ ", city proper (LAU)", city=city.id)) }}
+{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id)) }}
 {{ copy_link() }}
-{% else %}<p class="note">no run (history)</p>{% endif %}
-<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">Over time, with flagged years →</a></p>
+{% else %}<p class="note">{{ t('note.no_run_history') }}</p>{% endif %}
+<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">{{ t('page.story.over_time') }} →</a></p>
 </section>
 <section class="aside-box">
-<h2>Read on</h2>
-<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/figures') }}">Why the figures differ →</a></p>
-<p class="meta"><a href="{{ u('/stories') }}">The combined story across all cities →</a></p>
+<h2>{{ t('page.story.read_on') }}</h2>
+<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/figures') }}">{{ t('page.differences.title') }} →</a></p>
+<p class="meta"><a href="{{ u('/stories') }}">{{ t('page.story.combined') }} →</a></p>
 </section>
 </aside>
 </div>

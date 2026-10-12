@@ -14,6 +14,7 @@ import re
 import string
 from collections.abc import Callable
 from datetime import date
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Literal
 
@@ -35,8 +36,79 @@ CATALOGUE_DIR = SHIPPED_CONTENT_DIR / "ui"
 # Flipped by the task that ships complete German content; see `german_required`.
 GERMAN_CONTENT_REQUIRED: bool = False
 
-# Key families built from ids at run time (`prefix` -> live ids), declared where they are used.
-DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {}
+CONFIG = Path(__file__).resolve().parents[2] / "config"
+
+
+# --- key families built from ids ----------------------------------------------------------
+# A table in the code holds ids; the label key is composed at the call (`t(lang,
+# f"city.tab.{id}")`). Each family names the live source of its ids, imported inside the
+# callable (the modules import this one). tests/test_ui_strings.py checks that every composed
+# prefix is a family here and that every id has its key.
+
+
+def _countries() -> set[str]:
+    from velometer.config import load_cities
+
+    return {c.country_iso2 for c in load_cities(CONFIG / "cities.yaml")}
+
+
+def _tiers() -> set[str]:
+    from velometer.timeseries import TIERS
+
+    return set(TIERS)
+
+
+def _road_classes() -> set[str]:
+    from velometer.report.data import ROAD_CLASS_TEXT
+
+    return set(ROAD_CLASS_TEXT)
+
+
+def _tabs() -> set[str]:
+    from velometer.app.main import TABS
+
+    return {tab for tab, _suffix in TABS}
+
+
+def _compare(name: str) -> Callable[[], set[str]]:
+    def ids() -> set[str]:
+        from velometer.app import compare
+
+        return set(getattr(compare, name))
+
+    return ids
+
+
+def _literal(module: str, model: str, field: str) -> Callable[[], set[str]]:
+    def ids() -> set[str]:
+        import importlib
+        import typing
+
+        cls = getattr(importlib.import_module(module), model)
+        return set(typing.get_args(cls.model_fields[field].annotation))
+
+    return ids
+
+
+def _categories() -> set[str]:
+    from velometer.report.change import CATEGORIES
+
+    return set(CATEGORIES)
+
+
+DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
+    "country.": _countries,
+    "tier.": _tiers,
+    "road_class.": _road_classes,
+    "city.tab.": _tabs,
+    "compare.group.": _compare("QUICK_SETS"),
+    "compare.metric.": _compare("METRIC_IDS"),
+    "compare.view.": _compare("VIEW_IDS"),
+    "org.kind.": _literal("velometer.content.models", "Organisation", "kind"),
+    "plan.doc_type.": _literal("velometer.plans.models", "ReportRow", "doc_type"),
+    "plan.status.": _literal("velometer.plans.models", "Plan", "status"),
+    "change.category.": _categories,
+}
 
 
 def german_required(content_dir: Path) -> bool:
@@ -244,3 +316,146 @@ def and_list(items: list[str], lang: str) -> str:
     if len(items) < 2:
         return "".join(items)
     return f"{', '.join(items[:-1])} {AND[lang]} {items[-1]}"
+
+
+# --- what a reader sees (the leak test and the Chrome step) -------------------------------
+
+SKIPPED_TAGS = {"head", "script", "style", "template", "code", "pre"}
+VOID_TAGS = {"br", "img", "input", "meta", "link", "hr", "source", "wbr"}
+SEEN_ATTRS = ("aria-label", "title", "alt", "placeholder")
+# a tag that starts a new line of text: its edges separate words
+BLOCK_TAGS = {
+    "p", "div", "li", "ul", "ol", "dl", "dt", "dd", "td", "th", "tr", "table", "caption",
+    "section", "article", "aside", "nav", "header", "footer", "main", "figure", "figcaption",
+    "blockquote", "details", "summary", "h1", "h2", "h3", "h4", "h5", "h6", "label", "legend",
+    "fieldset", "option", "select", "button", "form", "body", "br",
+}  # fmt: skip
+
+
+def _squash(text: str) -> str:
+    return " ".join(text.split())
+
+
+class _Visible(HTMLParser):
+    """The text and labelled attributes of a page outside skipped subtrees. A subtree is skipped
+    from the element that opens it (attributes included) to its matching end tag, counted by
+    tag name, so an unclosed element inside it cannot end it early or late."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text: list[str] = []
+        self.attrs: list[str] = []
+        self.skip_tag: str | None = None
+        self.skip_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self.skip_tag is not None:
+            if tag == self.skip_tag and tag not in VOID_TAGS:
+                self.skip_depth += 1
+            return
+        lang = dict(attrs).get("lang")
+        if tag in SKIPPED_TAGS or (lang is not None and not lang.lower().startswith("de")):
+            if tag not in VOID_TAGS:
+                self.skip_tag, self.skip_depth = tag, 1
+            return
+        self.attrs += [_squash(v) for k, v in attrs if k in SEEN_ATTRS and v]
+        if tag in BLOCK_TAGS:
+            self.text.append(" ")
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self.skip_tag is None:
+            lang = dict(attrs).get("lang")
+            if lang is None or lang.lower().startswith("de"):
+                self.attrs += [_squash(v) for k, v in attrs if k in SEEN_ATTRS and v]
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.skip_tag is not None:
+            if tag == self.skip_tag:
+                self.skip_depth -= 1
+                if not self.skip_depth:
+                    self.skip_tag = None
+            return
+        if tag in BLOCK_TAGS:
+            self.text.append(" ")
+
+    def handle_data(self, data: str) -> None:
+        if self.skip_tag is None:
+            self.text.append(data)
+
+
+def visible_text(html: str) -> str:
+    """The text a reader of a German page sees in German: the page's text, then the
+    `aria-label`, `title`, `alt` and `placeholder` values, one per line. Skips `head`, `script`,
+    `style`, `template`, `code` and `pre`, and every subtree in another language (a `lang` that
+    does not start with `de`). Whitespace is squashed to single spaces."""
+    parser = _Visible()
+    parser.feed(html)
+    parser.close()
+    return "\n".join([_squash("".join(parser.text)), *parser.attrs])
+
+
+_TAG = re.compile(r"<[^>]*>|<[^>]*$")
+
+
+def _phrase(text: str) -> str:
+    """A catalogue value as a reader sees its fixed start: up to the first placeholder, without
+    markup, whitespace squashed."""
+    return _squash(_TAG.sub(" ", text.split("{", 1)[0]))
+
+
+def leak_phrases(min_words: int = 4) -> list[str]:
+    """Every English catalogue value (each plural form) whose German differs, cut at the first
+    placeholder, of at least `min_words` words: none may show on a German page outside a
+    `lang="en"` subtree."""
+    en, de = catalogue("en"), catalogue("de")
+    out: set[str] = set()
+    for key, value in en.items():
+        forms = value if isinstance(value, dict) else {"": value}
+        other = de.get(key)
+        theirs = other if isinstance(other, dict) else {"": other}
+        for form, text in forms.items():
+            if theirs.get(form) == text:
+                continue
+            phrase = _phrase(str(text))
+            if len(phrase.split()) >= min_words:
+                out.add(phrase)
+    return sorted(out)
+
+
+# a quotation in another language, a citation or data marker, a code span: none of it is
+# English running text, and each splits the text around it
+_NOT_PROSE = re.compile(r"<(q|blockquote)\b[^>]*>.*?</\1>|\[[@#][^\]]*\]|`[^`]*`", re.DOTALL)
+_SENTENCE_END = re.compile(r"(?<=[.!?:;])\s+")
+
+
+def _sentences(text: str, min_words: int) -> list[str]:
+    out = []
+    for part in _NOT_PROSE.split(text):
+        if part is None or part in ("q", "blockquote"):
+            continue
+        for sentence in _SENTENCE_END.split(part.replace("*", "")):
+            sentence = _squash(sentence).strip(" ,;:—–-")
+            if len(sentence.split()) >= min_words:
+                out.append(sentence)
+    return out
+
+
+def content_phrases(content_dir: Path, min_words: int = 8) -> list[str]:
+    """Every English sentence (or the stretch of one between markers, quotations and code
+    spans) of `min_words` or more words in the paragraphs, headings, titles and deks of the
+    English content: narratives, the explainer, the counters and plan documents, the
+    organisation profiles."""
+    from velometer.content.loader import load_document, load_narratives, load_organisations
+
+    texts: list[str] = []
+    for n in load_narratives(content_dir / "narratives", errors={}).values():
+        texts += [n.title, n.dek or ""]
+        texts += [t for s in n.sections for t in (s.heading or "", *s.paragraphs)]
+    for name in ("explainer.yaml", "counters.yaml", "plans/berlin.yaml"):
+        doc = load_document(content_dir / name)
+        if doc is not None:
+            texts += [doc.title, *doc.intro]
+            texts += [t for s in doc.sections for t in (s.heading, *s.paragraphs)]
+    for org in load_organisations(content_dir / "organisations", errors={}).values():
+        texts += [t for s in org.sections for t in (s.heading, *s.paragraphs)]
+    return sorted({p for text in texts for p in _sentences(text, min_words)})

@@ -14,6 +14,8 @@ from __future__ import annotations
 import html
 import re
 
+from velometer.i18n import Lang, t
+
 WRAPPER = re.compile(
     r'<(div|section)\b(?=[^>]*\bclass="[^"]*(?<![\w-])scroll(?![\w-])[^"]*")([^>]*)>'
 )
@@ -21,8 +23,6 @@ BARE_TABLE = re.compile(r"<table>")
 TAG = re.compile(r"<(/?)(div|section)\b[^>]*>")
 HEADING = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.S)
 CAPTION = re.compile(r"<caption\b[^>]*>(.*?)</caption>", re.S)
-WRAPPER_FALLBACK = "Scrollable content"
-TABLE_FALLBACK = "Table"
 
 
 def _text(fragment: str) -> str:
@@ -39,12 +39,12 @@ def _first(pattern: re.Pattern, fragment: str) -> str:
 def _extent(page: str, m: re.Match) -> int:
     """Index just past the closing tag of the element `m` opens (end of page if unclosed)."""
     depth = 1
-    for t in TAG.finditer(page, m.end()):
-        if t.group(2) != m.group(1):
+    for tag in TAG.finditer(page, m.end()):
+        if tag.group(2) != m.group(1):
             continue
-        depth += -1 if t.group(1) else 1
+        depth += -1 if tag.group(1) else 1
         if not depth:
-            return t.end()
+            return tag.end()
     return len(page)
 
 
@@ -69,18 +69,20 @@ def _attrs(attrs: str, wrapper: bool, name: str) -> str:
     return (" " + " ".join(add)) if add else ""
 
 
-def name_scroll_regions(page: str) -> str:
+def name_scroll_regions(page: str, lang: Lang = "en") -> str:
+    """The page with every scrolling region and bare table named and focusable; the fixed
+    fallback names are in `lang`."""
     wrappers = [(m, _extent(page, m)) for m in WRAPPER.finditer(page)]
     edits: list[tuple[int, int, str]] = []  # (start, end, replacement)
     for m, end in wrappers:
-        name = _name(page, m.start(), page[m.end() : end], WRAPPER_FALLBACK)
+        name = _name(page, m.start(), page[m.end() : end], t(lang, "regions.scroll"))
         edits.append((m.start(), m.end(), m.group(0)[:-1] + _attrs(m.group(2), True, name) + ">"))
     for m in BARE_TABLE.finditer(page):
         if any(w.start() < m.start() < end for w, end in wrappers):
             continue
         close = page.find("</table>", m.end())
         inner = page[m.end() : close if close >= 0 else len(page)]
-        name = _name(page, m.start(), inner, TABLE_FALLBACK)
+        name = _name(page, m.start(), inner, t(lang, "regions.table"))
         edits.append((m.start(), m.end(), "<table" + _attrs("", False, name) + ">"))
     out, last = [], 0
     for start, end, text in sorted(edits):

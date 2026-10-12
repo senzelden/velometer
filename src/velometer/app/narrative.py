@@ -22,6 +22,7 @@ from velometer.content.models import (
     Quote,
     Source,
 )
+from velometer.i18n import Lang, t
 
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
@@ -41,8 +42,20 @@ QUOTE_MARK = re.compile(_open("q") + r"(.*?)&lt;/q&gt;", re.DOTALL)
 BLOCKQUOTE_MARK = re.compile(
     _open("blockquote") + r"((?:(?!&lt;/?blockquote).)*?)&lt;/blockquote&gt;", re.DOTALL
 )
-MISSING = Markup('<span class="note">source missing</span>')
-MISSING_REF = Markup('<span class="note">data reference missing</span>')
+
+
+def _note(lang: Lang, text: str, tag: str = "span") -> Markup:
+    return Markup(f'<{tag} class="note">{{}}</{tag}>').format(text)
+
+
+def missing(lang: Lang = "en") -> Markup:
+    """The note a citation marker naming no registered source renders as."""
+    return _note(lang, t(lang, "cite.missing_source"))
+
+
+def missing_ref(lang: Lang = "en") -> Markup:
+    """The note a data marker naming no declared data reference renders as."""
+    return _note(lang, t(lang, "cite.missing_ref"))
 
 
 @dataclass
@@ -81,8 +94,14 @@ class _Numbering:
     """First-use numbering of citations over one document. `prefix` starts every citation
     anchor, so documents rendered on one page keep their anchors apart."""
 
-    def __init__(self, sources: dict[str, Source], refs: dict[str, DataRef], prefix: str = ""):
-        self.registry, self.declared, self.prefix = sources, refs, prefix
+    def __init__(
+        self,
+        sources: dict[str, Source],
+        refs: dict[str, DataRef],
+        prefix: str = "",
+        lang: Lang = "en",
+    ):
+        self.registry, self.declared, self.prefix, self.lang = sources, refs, prefix, lang
         self.source_no: dict[str, int] = {}
         self.ref_no: dict[str, int] = {}
         self.used_sources: list[int] = []
@@ -103,7 +122,7 @@ class _Numbering:
         def source(m: re.Match) -> str:
             sid = m.group(1)
             if sid not in self.registry:
-                return str(MISSING)
+                return str(missing(self.lang))
             n = self.source_no.setdefault(sid, len(self.source_no) + 1)
             self.used_sources.append(n)
             return f'<sup><a href="#{self.prefix}src-{n}">{n}</a></sup>'
@@ -111,7 +130,7 @@ class _Numbering:
         def ref(m: re.Match) -> str:
             rid = m.group(1)
             if rid not in self.declared:
-                return str(MISSING_REF)
+                return str(missing_ref(self.lang))
             n = self.ref_no.setdefault(rid, len(self.ref_no) + 1)
             self.used_refs.append(n)
             return f'<sup class="dref"><a href="#{self.prefix}ref-{n}">d{n}</a></sup>'
@@ -131,17 +150,21 @@ def _date(source: Source) -> str:
     return source.published.isoformat() if source.published else ""
 
 
-def pullquote(sources: dict[str, Source], excerpt_ref: str) -> Markup:
+def pullquote(sources: dict[str, Source], excerpt_ref: str, lang: Lang = "en") -> Markup:
     """`<figure class="pullquote">` for a `<source_id>/<excerpt_id>` reference, or a note."""
     sid, _, eid = excerpt_ref.partition("/")
     source = sources.get(sid)
     excerpt = next((e for e in source.excerpts if e.id == eid), None) if source else None
     if source is None or excerpt is None:
-        return Markup('<p class="note">source missing</p>')
+        return _note(lang, t(lang, "cite.missing_source"), "p")
     head = ", ".join(escape(p) for p in [source.publisher, source.title, _date(source)] if p)
     caption = [Markup(head)]
     if url := safe_url(source.url):
-        caption.append(Markup(f'<a href="{escape(url)}" rel="noopener noreferrer">source</a>'))
+        caption.append(
+            Markup('<a href="{}" rel="noopener noreferrer">{}</a>').format(
+                url, t(lang, "cite.source")
+            )
+        )
     if excerpt.gloss_en and source.language != "en":
         caption.append(Markup(f'<span class="gloss" lang="en">{escape(excerpt.gloss_en)}</span>'))
     return Markup(
@@ -179,12 +202,13 @@ def _build(
     data_refs: list[DataRef],
     intro: list[str] = (),
     prefix: str = "",
+    lang: Lang = "en",
 ) -> tuple[list[Markup], list[RenderedSection], _Numbering]:
     """Render the intro and the (heading, role, paragraphs[, dimensions]) groups; a group's
     dimension values are rendered (and numbered) before its paragraphs. A quote follows the
     paragraph its `after` indexes (counted over the groups' paragraphs in order, the intro and
     dimension values excluded); one out of range goes to the end of the last group."""
-    num = _Numbering(sources, {d.id: d for d in data_refs}, prefix)
+    num = _Numbering(sources, {d.id: d for d in data_refs}, prefix, lang)
     intro_html = [num.paragraph(p) for p in intro]
     total = sum(len(g[2]) for g in groups)
     after: dict[int, list[Quote]] = {}
@@ -197,30 +221,36 @@ def _build(
             sec.dimensions.append((key, _numbered(num, sec, num.inline, value)))
         for p in paragraphs:
             sec.items.append(_numbered(num, sec, num.paragraph, p))
-            sec.items += [pullquote(sources, q.excerpt) for q in after.get(index, [])]
+            sec.items += [pullquote(sources, q.excerpt, lang) for q in after.get(index, [])]
             index += 1
         sections.append(sec)
     return intro_html, sections, num
 
 
-def render_narrative(n: Narrative, sources: dict[str, Source]) -> RenderedNarrative:
+def render_narrative(
+    n: Narrative, sources: dict[str, Source], lang: Lang = "en"
+) -> RenderedNarrative:
     groups = [(s.heading, s.role, s.paragraphs) for s in n.sections]
-    _, sections, num = _build(groups, n.quotes, sources, n.data_refs)
+    _, sections, num = _build(groups, n.quotes, sources, n.data_refs, lang=lang)
     return _finish(n.title, n.dek, [], sections, num, sources, n.data_refs)
 
 
-def render_explainer(e: Explainer, sources: dict[str, Source]) -> RenderedNarrative:
+def render_explainer(
+    e: Explainer, sources: dict[str, Source], lang: Lang = "en"
+) -> RenderedNarrative:
     groups = [(s.heading, s.dimension, s.paragraphs) for s in e.sections]
-    intro, sections, num = _build(groups, e.quotes, sources, e.data_refs, intro=e.intro)
+    intro, sections, num = _build(groups, e.quotes, sources, e.data_refs, intro=e.intro, lang=lang)
     return _finish(e.title, None, intro, sections, num, sources, e.data_refs)
 
 
-def render_organisation(org: Organisation, sources: dict[str, Source]) -> RenderedNarrative:
+def render_organisation(
+    org: Organisation, sources: dict[str, Source], lang: Lang = "en"
+) -> RenderedNarrative:
     """A profile: its sections with their dimension values, citations anchored `<id>-src-<n>`
     (the organisations page shows every profile, each with its own source list)."""
     groups = [(s.heading, s.heading, s.paragraphs, s.dimensions) for s in org.sections]
     prefix = f"{org.id}-"
-    _, sections, num = _build(groups, org.quotes, sources, org.data_refs, prefix=prefix)
+    _, sections, num = _build(groups, org.quotes, sources, org.data_refs, prefix=prefix, lang=lang)
     return _finish(org.name, None, [], sections, num, sources, org.data_refs, prefix)
 
 

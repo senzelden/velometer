@@ -22,6 +22,8 @@ ATTRIBUTION = (
 # >= CIEDE2000 20 and adjacent tiers >= 25, in normal vision and simulated deuteranopia and
 # protanopia. Hue families of the M3 palette: blue, orange, green, yellow-brown, pink-purple.
 TIER_COLOURS = ["#2a78d6", "#9f3d0c", "#22a397", "#c68501", "#8d415b"]
+# the CLI charts' English tier names; pages use `tier.<A-E>` of the UI catalogue, and
+# tests/test_ui_strings.py keeps the two equal
 TIER_LABEL = {
     "A": "A separated track",
     "B": "B shared foot/cycle path",

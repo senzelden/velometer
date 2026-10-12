@@ -214,7 +214,7 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
     base = app.state.base_path
     probed = []
     for city in data.cities():
-        probed += [f"/city/{city.id}{suffix}" for _k, _l, suffix in TABS]
+        probed += [f"/city/{city.id}{suffix}" for _k, suffix in TABS]
         probed += [f"/city/{city.id}/panel", f"/plans/{city.id}"]
         probed += [f"/data/{city.id}.csv", f"/data/{city.id}_subareas.csv"]
     found = list(PAGES)

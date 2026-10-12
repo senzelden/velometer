@@ -17,17 +17,25 @@ from velometer.app.organisations import org_of_sources
 from velometer.config import load_differences
 from velometer.content.loader import load_organisation_map, load_organisations, load_sources
 from velometer.content.models import DataRef, Source
+from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
 from velometer.report.differences import difference_rows
 
-OURS_TITLE = "Our approach"
-GROUPS = {
-    "ours": "Our approach",
-    "ranking": "Cross-city rankings and datasets",
-    "city": "City sources",
-}
+GROUPS = ("ours", "ranking", "city")  # the table's row groups, in page order
 CITE_PREFIX = "cite-"  # the page's citation anchors (`cite-src-<n>`), apart from `src-<id>` rows
-MISSING_CELL = Markup('<span class="note">not in the profile</span>')
+
+
+def group_name(group: str, lang: Lang = "en") -> str:
+    """A row group's heading."""
+    if group == "ours":
+        return t(lang, "sources.ours")
+    if group == "ranking":
+        return t(lang, "sources.rankings")
+    return t(lang, "sources.city")
+
+
+def _missing_cell(lang: Lang) -> Markup:
+    return Markup('<span class="note">{}</span>').format(t(lang, "sources.missing_cell"))
 
 
 def source_anchor(source_id: str | None) -> str:
@@ -85,9 +93,10 @@ def _snapshot(data: ReportData) -> str | None:
 
 
 def source_rows(
-    data: ReportData, config_dir: Path, content_dir: Path
+    data: ReportData, config_dir: Path, content_dir: Path, lang: Lang = "en"
 ) -> tuple[list[SourceRow], CitedSources]:
-    """The Sources table's rows, in page order, and the sources their cells cite."""
+    """The Sources table's rows, in page order, and the sources their cells cite, with their
+    fixed words in `lang`."""
     config_dir, content_dir = Path(config_dir), Path(content_dir)
     diffs = load_differences(config_dir / "differences.yaml")
     dims = [d.id for d in diffs.dimensions]
@@ -95,7 +104,7 @@ def source_rows(
     registry = load_sources(content_dir / "sources")
     orgs = load_organisations(content_dir / "organisations")
     refs = {r.id: r for o in orgs.values() for r in o.data_refs}
-    num = _Numbering(registry, refs, CITE_PREFIX)
+    num = _Numbering(registry, refs, CITE_PREFIX, lang)
 
     preset_of: dict[str | None, str] = {}  # source -> the first preset that recomputes it
     for preset, source in data.preset_sources().items():
@@ -112,13 +121,13 @@ def source_rows(
     snapshot = _snapshot(data)
     ours_cells = {d: Markup.escape(diffs.ours.get(d, "")) for d in dims}
     ours_cells["date"] = Markup.escape(
-        f"OSM snapshot of {snapshot}" if snapshot else "OSM snapshot (no run yet)"
+        t(lang, "sources.snapshot", date=snapshot) if snapshot else t(lang, "sources.no_snapshot")
     )
     rows = [
         SourceRow(
             source_id=None,
             anchor=source_anchor(None),
-            title=OURS_TITLE,
+            title=t(lang, "sources.ours"),
             organisation_id=None,
             organisation_name=None,
             group="ours",
@@ -166,7 +175,9 @@ def source_rows(
         if r.group == "ours"
         else replace(
             r,
-            cells={d: MISSING_CELL if v is None else num.inline(v) for d, v in r.cells.items()},
+            cells={
+                d: _missing_cell(lang) if v is None else num.inline(v) for d, v in r.cells.items()
+            },
         )
         for r in order_rows(rows)
     ]

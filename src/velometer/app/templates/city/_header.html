@@ -2,25 +2,25 @@
 <div class="city-head">
 <div>
 <h1>{{ city.name }}</h1>
-<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %} · <a href="{{ data_u('/data/' ~ city.id ~ '.csv') }}">CSV</a>{% if bezirke %} · <a href="{{ data_u('/data/' ~ city.id ~ '_subareas.csv') }}">Bezirke CSV</a>{% endif %}{% if plan_href %} · <a href="{{ u(plan_href) }}">Cycling plan</a>{% endif %}</p>
+<p class="meta">{{ country }}{% if residents %} · {{ t('page.city.residents', n=residents | num(",d")) }}{% endif %} · <a href="{{ data_u('/data/' ~ city.id ~ '.csv') }}">CSV</a>{% if bezirke %} · <a href="{{ data_u('/data/' ~ city.id ~ '_subareas.csv') }}">{{ t('page.city.bezirke_csv') }}</a>{% endif %}{% if plan_href %} · <a href="{{ u(plan_href) }}">{{ t('page.city.plan') }}</a>{% endif %}</p>
 </div>
 <form class="compare-form" action="{{ u('/compare') }}" method="get">
 <input type="hidden" name="c" value="{{ city.id }}">
-<label for="compare-with">Compare this city with…</label>
+<label for="compare-with">{{ t('page.city.compare_with') }}</label>
 <div class="compare-row">
 <select id="compare-with" name="c" multiple size="8">
 {% for g in compare_groups %}<optgroup label="{{ g.country }}">
 {% for o in g.cities %}<option value="{{ o.id }}">{{ o.name }}</option>
 {% endfor %}</optgroup>
 {% endfor %}</select>
-<button type="submit">Compare</button>
+<button type="submit">{{ t('nav.compare') }}</button>
 </div>
 </form>
 </div>
-<div class="keynums" role="list" aria-label="Key numbers">
+<div class="keynums" role="list" aria-label="{{ t('page.index.keys') }}">
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
 {% endfor %}</div>
-{{ cite(cite_for(city.name ~ ": key numbers, city proper (LAU)", city=city.id)) }}
-<nav class="tabs" aria-label="City sections"><ul>
-{% for t in tabs %}<li><a href="{{ u(t.href) }}"{% if t.key == tab %} aria-current="page"{% endif %}>{{ t.label }}</a></li>
+{{ cite(cite_for(t('cite.title.keynums', city=city.name), city=city.id)) }}
+<nav class="tabs" aria-label="{{ t('page.city.sections') }}"><ul>
+{% for tb in tabs %}<li><a href="{{ u(tb.href) }}"{% if tb.key == tab %} aria-current="page"{% endif %}>{{ tb.label }}</a></li>
 {% endfor %}</ul></nav>

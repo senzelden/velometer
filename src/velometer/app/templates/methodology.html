@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}velometer · {% if lang == "de" %}Methodik{% else %}methodology{% endif %}{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{% if lang == "de" %}Methodik{% else %}Methodology{% endif %}</span></nav>{% endblock %}
+{% block title %}velometer · {{ t('page.methodology.title') }}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.methodology') }}</span></nav>{% endblock %}
 {% block content %}
 <article class="prose">
-{% if body %}{{ body }}{% else %}<p class="note">methodology not generated (<code>velometer report methodology</code> writes <code>docs/{{ file }}</code>)</p>{% endif %}
+{% if body %}{{ body }}{% else %}<p class="note">{{ t('page.methodology.missing', file=file) }}</p>{% endif %}
 </article>
 {% endblock %}

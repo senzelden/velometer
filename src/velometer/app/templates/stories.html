@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite, copy_link %}
-{% block title %}velometer · Stories{% endblock %}
+{% block title %}velometer · {{ t('nav.stories') }}{% endblock %}
 {% block scripts %}{% if config %}<script type="module" src="{{ data_u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.stories') }}</span></nav>{% endblock %}
 {#- A step's fallback: first and current value per city. Open without JavaScript; story.js folds it away. -#}
-{% macro step_table(t, step) %}
-{% if t %}
+{% macro step_table(tbl, step) %}
+{% if tbl %}
 <details class="step-values" open>
-<summary id="step-values-{{ step }}">Values behind the chart</summary>
-{% for n in t.notes %}<p class="note">{{ n }}</p>
+<summary id="step-values-{{ step }}">{{ t('page.stories.values') }}</summary>
+{% for n in tbl.notes %}<p class="note">{{ n }}</p>
 {% endfor %}
 <div class="scroll"><table class="step-table stack">
-<thead><tr><th scope="col">{{ t.row_head }}</th>{% for h in t.head %}<th scope="col"{% if t.rows[0].cells[loop.index0] is not string %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr></thead>
+<thead><tr><th scope="col">{{ tbl.row_head }}</th>{% for h in tbl.head %}<th scope="col"{% if tbl.rows[0].cells[loop.index0] is not string %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for r in t.rows %}<tr><th scope="row" data-label="{{ t.row_head }}">{% if t.linked %}<a href="{{ u('/city/' ~ r.id) }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td data-label="{{ t.head[loop.index0] }}">{{ c }}</td>{% else %}<td class="num" data-label="{{ t.head[loop.index0] }}">{{ c | num }}</td>{% endif %}{% endfor %}</tr>
+{% for r in tbl.rows %}<tr><th scope="row" data-label="{{ tbl.row_head }}">{% if tbl.linked %}<a href="{{ u('/city/' ~ r.id) }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td data-label="{{ tbl.head[loop.index0] }}">{{ c }}</td>{% else %}<td class="num" data-label="{{ tbl.head[loop.index0] }}">{{ c | num }}</td>{% endif %}{% endfor %}</tr>
 {% endfor %}</tbody>
 </table></div>
 </details>
@@ -25,13 +25,13 @@
 <p class="dek">{{ nar.dek }}</p>
 {{ copy_link() }}
 <div class="stories">
-  <aside class="story-sticky" data-story-chart hidden aria-label="Chart for the current step">
+  <aside class="story-sticky" data-story-chart hidden aria-label="{{ t('page.stories.aside') }}">
     <p class="eyebrow" data-story-eyebrow></p>
     <h2 data-story-title></h2>
-    <div class="chart story-plot" data-story-plot{% if first_step %} aria-describedby="step-values-{{ first_step }}"{% endif %} role="group" aria-label="Chart of the current step"></div>
+    <div class="chart story-plot" data-story-plot{% if first_step %} aria-describedby="step-values-{{ first_step }}"{% endif %} role="group" aria-label="{{ t('page.stories.chart') }}"></div>
     <p class="meta story-note-long" data-story-note></p>
     <p class="meta story-note-short" data-story-short></p>
-    <p class="meta"><a data-story-link href="{{ u('/compare') }}">Explore this chart →</a></p>
+    <p class="meta"><a data-story-link href="{{ u('/compare') }}">{{ t('page.stories.explore') }} →</a></p>
   </aside>
   <article class="narrative story-text">
   {% for s in story %}
@@ -41,8 +41,8 @@
     {% endfor %}
     {% if s.step in steps %}
     {{ step_table(steps[s.step].table, s.step) }}
-    {{ cite(cite_for((steps[s.step].title or s.sec.heading or "Stories chart") ~ " (Stories)")) }}
-    <p class="explore"><a href="{{ u(steps[s.step].href) }}">Explore this chart →</a></p>
+    {{ cite(cite_for(t('cite.title.stories', title=steps[s.step].title or s.sec.heading or t('cite.title.stories_chart')))) }}
+    <p class="explore"><a href="{{ u(steps[s.step].href) }}">{{ t('page.stories.explore') }} →</a></p>
     {% endif %}
   </section>
   {% endfor %}
@@ -60,10 +60,10 @@
 </article>
 {% if config %}<script type="application/json" id="story-config">{{ config | tojson }}</script>{% endif %}
 {% elif content_error %}
-<h1>Stories</h1>
-<p class="note">narratives could not be loaded (see the server log)</p>
+<h1>{{ t('nav.stories') }}</h1>
+<p class="note">{{ t('page.stories.error') }}</p>
 {% else %}
-<h1>Stories</h1>
-<p class="note">story not written yet</p>
+<h1>{{ t('nav.stories') }}</h1>
+<p class="note">{{ t('page.stories.missing') }}</p>
 {% endif %}
 {% endblock %}
