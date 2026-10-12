@@ -342,14 +342,7 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
     _export(rich, site, base="/velometer/")
     code, res = _run(rp, site, tmp_path / "out", "--pages", "", "--keyboard", "--themes", "light")
     (r,) = res
-    assert r["kind"] == "keyboard", r["steps"]
-    # the fixture export holds neither Kraków nor Vienna, so the jump steps of `_search` cannot
-    # land here (the real-export pass covers them); everything else must pass, including the
-    # "No match" row and axe with the list open
-    assert [e for e in r["errors"] if not e.startswith("search ")] == [], r["steps"]
-    steps = " ".join(r["steps"])
-    for done in ("zzz offers the No match option", "axe finds nothing with the list open"):
-        assert any(done in x and x.startswith("ok") for x in r["steps"]), done
+    assert r["kind"] == "keyboard" and r["errors"] == [], r["steps"]
     for needle in (
         "skip link",
         "phone menu",
@@ -357,9 +350,13 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
         "compare: Escape",
         "sort button",
         "chart view",
-        "search 1280px: Enter lands on the Kraków page",
-        "search 1280px: Enter lands on the Vienna page",
+        "search 1280px: typing opens the list with the first city first",
+        "search 1280px: Down moves aria-activedescendant",
+        "search 1280px: Enter lands on the first city page",
+        "search 1280px: Enter lands on the second city page",
         "search 320px: zzz offers the No match option",
+        "search 1280px: axe finds nothing with the list open",
     ):
-        assert needle in steps, needle
-    assert code == (1 if r["errors"] else 0)
+        lines = [x for x in r["steps"] if needle in x]
+        assert lines and all(x.startswith("ok") for x in lines), (needle, lines)
+    assert code == 0

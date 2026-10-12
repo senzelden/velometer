@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fold, rank, move } from "../search.js";
+import { fold, rank, move, keyAction } from "../search.js";
 
 const e = (label, kind, terms = [label]) => ({ label, kind, url: "/x", terms });
 const idx = [
@@ -74,4 +74,19 @@ test("move wraps Down and Up and starts from nothing", () => {
   assert.equal(move(2, 1, 3), 0);
   assert.equal(move(0, -1, 3), 2);
   assert.equal(move(0, 1, 0), -1);
+});
+
+test("with no match, Down, Up and Enter do nothing and nothing becomes active", () => {
+  for (const key of ["ArrowDown", "ArrowUp", "Enter"]) {
+    assert.equal(keyAction({ active: -1, count: 0 }, key), null, key);
+  }
+});
+
+test("keyAction moves with the arrows, wrapping, and Enter picks the active or first option", () => {
+  assert.deepEqual(keyAction({ active: -1, count: 3 }, "ArrowDown"), { type: "move", to: 0 });
+  assert.deepEqual(keyAction({ active: 2, count: 3 }, "ArrowDown"), { type: "move", to: 0 });
+  assert.deepEqual(keyAction({ active: 0, count: 3 }, "ArrowUp"), { type: "move", to: 2 });
+  assert.deepEqual(keyAction({ active: 1, count: 3 }, "Enter"), { type: "pick", index: 1 });
+  assert.deepEqual(keyAction({ active: -1, count: 3 }, "Enter"), { type: "pick", index: 0 });
+  assert.equal(keyAction({ active: -1, count: 3 }, "a"), null);
 });

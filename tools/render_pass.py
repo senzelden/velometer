@@ -1126,6 +1126,22 @@ def _compare(devtools, origin, base, theme, st: Steps) -> None:
         t.close()
 
 
+def _two_cities(t: Tab, base: str) -> tuple[list[dict], str | None]:
+    """The first two cities of the site's own search index, read in the page: the name, the first
+    three folded letters of it (what a reader types) and the path Enter must land on."""
+    got = t.js(
+        "fetch(" + json.dumps(base + "data/search.json") + ").then((r) => r.ok ? r.json() : null)"
+        ".then((d) => d && d.filter((e) => e.kind === 'city').slice(0, 2).map((e) => ({"
+        "name: e.terms[1] ?? e.label, path: e.url.replace(/^\\/+/, ''),"
+        "q: (e.terms[1] ?? e.label).normalize('NFD').replace(/\\p{M}/gu, '').toLowerCase()"
+        ".slice(0, 3)}))).catch(() => null)",
+        await_promise=True,
+    )
+    if not got or len(got) < 2:
+        return [], f"data/search.json gave {got!r}"
+    return got, None
+
+
 def _search(devtools, origin, base, theme, width, st: Steps) -> None:
     """The nav combobox: type, Escape twice, type, arrows, Enter lands on the city. At phone
     width the menu is opened first; the open list must stay inside the viewport."""
@@ -1133,6 +1149,9 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
     t, errs = _page(devtools, origin, base, theme, width, "")
     try:
         if not st.check(f"{label}: page loads", "; ".join(errs) or None):
+            return
+        cities, why = _two_cities(t, base)
+        if not st.check(f"{label}: the site's search index lists at least two cities", why):
             return
         if width <= 760:
             if not st.check(f"{label}: Tab reaches the Menu button", tab_to(t, ".menu-toggle", 10)):
@@ -1152,22 +1171,23 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
             " inside: l.left >= 0 && l.right <= innerWidth,"
             " sideways: document.documentElement.scrollWidth > innerWidth}; })()"
         )
-        t.call("Input.insertText", text="kra")
+        t.call("Input.insertText", text=cities[0]["q"])
         t.wait_js("document.querySelectorAll('#site-search-list [role=option]').length > 0", 5)
         s = t.js(state)
-        st.check(f"{label}: typing opens the list with Kraków first",
-                 None if s["expanded"] == "true" and s["n"] >= 1 and s["first"].startswith("Krak")
-                 else f"{s}")  # fmt: skip
+        st.check(f"{label}: typing opens the list with the first city first",
+                 None if s["expanded"] == "true" and s["n"] >= 1
+                 and s["first"].startswith(cities[0]["name"]) else f"{s}")  # fmt: skip
         st.check(f"{label}: the open list fits the viewport",
                  None if s["inside"] and not s["sideways"] else f"{s}")  # fmt: skip
         press(t, "Escape", wait=0.2)
         s = t.js(state)
         st.check(f"{label}: Escape closes the list and keeps the text",
-                 None if s["expanded"] == "false" and s["value"] == "kra" else f"{s}")  # fmt: skip
+                 None if s["expanded"] == "false" and s["value"] == cities[0]["q"]
+                 else f"{s}")  # fmt: skip
         press(t, "Escape", wait=0.2)
         st.check(f"{label}: a second Escape clears the box",
                  None if t.js(state)["value"] == "" else "the text stayed")  # fmt: skip
-        t.call("Input.insertText", text="kra")
+        t.call("Input.insertText", text=cities[0]["q"])
         t.wait_js("document.querySelectorAll('#site-search-list [role=option]').length > 0", 5)
         press(t, "ArrowDown", wait=0.2)
         s = t.js(state)
@@ -1179,19 +1199,21 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
                  None if t.js(state)["selected"] == 0 else f"{t.js(state)}")  # fmt: skip
         press(t, "Enter", wait=0.3)
         landed = t.wait_js(
-            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + 'city/krakow')}", 8
+            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + cities[0]['path'])}", 8
         )
-        st.check(f"{label}: Enter lands on the Kraków page",
+        st.check(f"{label}: Enter lands on the first city page",
                  None if landed else f"at {t.js('location.pathname')}")  # fmt: skip
         console = collect(t.events)[0]
         st.check(f"{label}: no console errors", "; ".join(console) or None)
     finally:
         t.close()
-    _search_again(devtools, origin, base, theme, width, st, state, label)
+    _search_again(devtools, origin, base, theme, width, st, state, label, cities)
 
 
-def _search_again(devtools, origin, base, theme, width, st: Steps, state: str, label: str) -> None:
-    """Two fresh loads: "vienna" + Down + Enter lands on /city/vienna; "zzz" offers the one
+def _search_again(
+    devtools, origin, base, theme, width, st: Steps, state: str, label: str, cities: list
+) -> None:
+    """Two fresh loads: the second city + Down + Enter lands on it; "zzz" offers the one
     "No match" option and axe finds nothing with that list open."""
 
     def to_box(t, errs, what: str) -> bool:
@@ -1207,20 +1229,20 @@ def _search_again(devtools, origin, base, theme, width, st: Steps, state: str, l
     options = "document.querySelectorAll('#site-search-list [role=option]').length > 0"
     t, errs = _page(devtools, origin, base, theme, width, "")
     try:
-        if not to_box(t, errs, "vienna page"):
+        if not to_box(t, errs, "second city page"):
             return
-        t.call("Input.insertText", text="vienna")
+        t.call("Input.insertText", text=cities[1]["q"])
         t.wait_js(options, 5)
         press(t, "ArrowDown", wait=0.2)
         s = t.js(state)
-        st.check(f"{label}: vienna lists a visible option and Down sets aria-activedescendant",
+        st.check(f"{label}: second city: a visible option, Down sets aria-activedescendant",
                  None if s["n"] >= 1 and s["expanded"] == "true" and s["active"] and s["inside"]
                  else f"{s}")  # fmt: skip
         press(t, "Enter", wait=0.3)
         landed = t.wait_js(
-            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + 'city/vienna')}", 8
+            f"location.pathname.replace(/\\/$/, '') === {json.dumps(base + cities[1]['path'])}", 8
         )
-        st.check(f"{label}: Enter lands on the Vienna page",
+        st.check(f"{label}: Enter lands on the second city page",
                  None if landed else f"at {t.js('location.pathname')}")  # fmt: skip
     finally:
         t.close()
@@ -1351,7 +1373,7 @@ def find_chrome(path: str) -> str | None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
     ap.add_argument("--site", type=Path, required=True, help="exported static edition")
     ap.add_argument("--base", default="/velometer/", help="base path the site was exported for")
     ap.add_argument("--out", type=Path, required=True, help="results.json and shots/ go here")

@@ -220,7 +220,7 @@ attribution, axe with the control open) and a **permalinks** visit (the tier map
 `tiers` and `at` from the URL, read through `window.__velometerMap`, which `map.js` exposes only
 when `<html data-test>` is set; a hostile `?tiers=XYZ` leaves the console empty). `--keyboard`
 gained `_search` (Tab to `#site-search`, type with `Input.insertText`, Down sets
-`aria-activedescendant`, Enter lands on `/city/krakow` and `/city/vienna`, "zzz" shows "No match",
+`aria-activedescendant`, Enter lands on the first and second city of `/data/search.json` (looked up in the page), "zzz" shows "No match",
 axe with the list open; at 1280 and 320 px). The static export gained `/data/search.json` (the
 search index, §9 M11).
 
@@ -311,8 +311,12 @@ How each is built, and how to verify it.
   `src-<source>-<org>` when several organisations share a source) and `col-<preset id>`. Verify:
   `tests/test_m11.py` (anchors resolve, every cited source has a row, the table stacks on a phone),
   the page in the render pass, and the screenshots at 1280 and 390 px.
-- **Labels.** Preset columns read "method on our data" and link to their source; the Figures tab
-  names the overview column it recomputes. Verify: the Sources and Figures tests in `tests/`.
+- **Labels.** The overview's preset columns are labelled in `config/report.yaml`: "velometer
+  headline", "QECIO method, our OSM data" and "Clean Cities method, our OSM data". A preset
+  without a configured label falls back to `<id>, our OSM data`. A column that recomputes a
+  quoted source (`recomputes`) links to its row on the Sources page, and the Figures tab strips
+  the `, our OSM data` suffix (`strip_ours`) to name the method. Verify: the Sources and Figures
+  tests in `tests/`.
 - **Cite** (`static/js/cite.js`, `app/cite.py`). Plain text, BibTeX and CSL-JSON from one set of
   fields, with the same cases tested in Python and JS (`tests/cite_cases.json`). **Citations use
   the address the page is served at** (`location`, base path included), so a citation made on the

@@ -33,7 +33,8 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
 - `--pages all` (default) visits every exported page. HTML fragments (the city panels) and
   `404.html` are skipped. `--pages types` keeps every page outside `/city/` plus the tabs of
   Berlin and of the first city whose tab list differs from Berlin's.
-- `--flip` is a separate mode. Each page loads in light, the emulated scheme switches to dark
+- `--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
+  run as usual). Each page loads in light, the emulated scheme switches to dark
   mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
 - `--interact` adds one visit per theme and width to `<base>compare`. It switches to the table
   view and clicks the first city link, the way a reader would, and waits for the city panel to

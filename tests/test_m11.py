@@ -707,12 +707,3 @@ def test_search_js_follows_the_rules():
     assert 'url("/data/search.json")' in src or "url('/data/search.json')" in src
     assert "announce" in src and "aria-activedescendant" in src
     assert "https://" not in src
-
-
-def test_the_no_match_row_is_a_disabled_option_not_a_stray_child_of_the_listbox():
-    # a listbox may own only options (axe aria-required-children); found by the keyboard pass
-    src = (STATIC_JS / "search.js").read_text(encoding="utf-8")
-    block = src[src.index('li.className = "none"') :].split("list.append(li)")[0]
-    assert 'setAttribute("role", "option")' in block, block
-    assert 'setAttribute("aria-disabled", "true")' in block, block
-    assert "presentation" not in src

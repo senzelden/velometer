@@ -25,6 +25,19 @@ reports, in readable form, by task. Each line reads: Ruling — why — cost.
   turn them green — plan defect: Task 1 links to a page Task 2 creates, and reordering would cost
   more than one red commit on a feature branch — cost: one non-green commit in the m11 history.
 
+## Task 1 (labels)
+
+- Ruling: the overview preset columns are labelled "velometer headline", "QECIO method, our OSM
+  data" and "Clean Cities method, our OSM data" in `config/report.yaml` — the label says whose
+  method runs on our data — cost: none.
+- Ruling: a preset without a configured label falls back to `<id>, our OSM data` — a new preset
+  stays honest without a config edit — cost: a plain id as label until configured.
+- Ruling: `PresetRanking.recomputes` names the figure source a column recomputes, validated against
+  the figure sources — a typo fails at config load, not as a dead link — cost: none.
+- Ruling: the Figures-tab `strip_ours` filter strips the `, our OSM data` suffix (it stripped an
+  "Ours:" prefix before); Task 2 later fixed its regex for rows that append a basis — cost: the
+  old tests asserting "Ours:" labels were updated.
+
 ## Task 2 (Sources page)
 
 - Ruling: the anchor of a source with several organisations is `src-<source>-<org>`
@@ -169,9 +182,16 @@ reports, in readable form, by task. Each line reads: Ruling — why — cost.
 
 ## Task 8 (render pass and docs)
 
-- Ruling: the `--keyboard` search step grew to the brief's list ("vienna" lands on `/city/vienna`;
-  "zzz" shows the "No match" option; axe with the list open) as `_search_again`, run after the
-  Kraków sequence, at 1280 and 320 px — cost: two more page loads per width and theme.
+- Ruling: the `--keyboard` search step grew to the brief's list (Enter lands on a city, "zzz" shows
+  the "No match" option, axe with the list open) as `_search_again`, at 1280 and 320 px — cost: two
+  more page loads per width and theme.
+- Ruling: the search steps do not hard-code cities: they fetch the site's own `/data/search.json` in
+  the page and use its first two cities (first three folded letters of the plain name), so the slow
+  fixture test can fail on any search regression — the first version hard-coded Kraków and Vienna,
+  which the fixture export lacks, and the test had been relaxed to ignore every `search` error
+  (review of Task 8) — cost: a step fails if the index has fewer than two cities.
+- Ruling: "No match" is a disabled option, and Down, Up and Enter on it do nothing, proven by a node
+  test of the pure `keyAction` — cost: none.
 - Ruling: the download step stays on `/city/berlin/tiers`, not `/city/berlin/time` as the brief says
   — that chart has an HTML key and a data table, so the step proves the key row, the CSV and the
   downloaded SVG all at once; Cite stays on `/city/berlin/time` — cost: none.

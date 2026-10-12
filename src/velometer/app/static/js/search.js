@@ -52,6 +52,16 @@ export function move(active, dir, count) {
   return (active + dir + count) % count;
 }
 
+/** What a key does to the list: move to an option, pick one, or nothing (null) — e.g. with no match. */
+export function keyAction({ active, count }, key) {
+  if (!count) return null;
+  if (key === "ArrowDown" || key === "ArrowUp") {
+    return { type: "move", to: move(active, key === "ArrowDown" ? 1 : -1, count) };
+  }
+  if (key === "Enter") return { type: "pick", index: active >= 0 ? active : 0 };
+  return null;
+}
+
 function mount(doc) {
   const box = doc.querySelector(".search");
   const input = box?.querySelector("input");
@@ -150,14 +160,15 @@ function mount(doc) {
   input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       if (list.hidden) update();
-      if (!shown.length) return;
+      const a = keyAction({ active, count: shown.length }, e.key);
+      if (!a) return;
       e.preventDefault();
-      setActive(move(active, e.key === "ArrowDown" ? 1 : -1, shown.length));
+      setActive(a.to);
     } else if (e.key === "Enter") {
-      const pick = shown[active >= 0 ? active : 0];
-      if (!list.hidden && pick) {
+      const a = list.hidden ? null : keyAction({ active, count: shown.length }, e.key);
+      if (a) {
         e.preventDefault();
-        go(pick);
+        go(shown[a.index]);
       }
     } else if (e.key === "Escape") {
       e.stopPropagation(); // the phone menu stays open (nav.js)
