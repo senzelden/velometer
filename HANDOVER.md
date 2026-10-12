@@ -217,8 +217,10 @@ width: a **Cite** visit (opens the first `details.cite` on `/city/berlin/time`, 
 Copy button's live region, axe), a **download** visit (on `/city/berlin/tiers`: SVG, PNG and CSV
 saved through `Browser.setDownloadBehavior`, the SVG without `var(` and with the OpenStreetMap
 attribution, axe with the control open) and a **permalinks** visit (the tier map restores `kind`,
-`tiers` and `at` from the URL, read through `window.__velometerMap`, which `map.js` exposes only
-when `<html data-test>` is set; a hostile `?tiers=XYZ` leaves the console empty). `--keyboard`
+`tiers` and `at` from the URL, the map's view read back from the tile under its centre
+(`MAP_VIEW_JS` in `render_pass.py`; `map.js` exposes no hook); a zoom and a drag rewrite `at`; a
+story `#step-` and a compare `panel=` URL reopen their state; a hostile query opens the defaults
+with an empty console). `--keyboard`
 gained `_search` (Tab to `#site-search`, type with `Input.insertText`, Down sets
 `aria-activedescendant`, Enter lands on the first and second city of `/data/search.json` (looked up in the page), "zzz" shows "No match",
 axe with the list open; at 1280 and 320 px). The static export gained `/data/search.json` (the

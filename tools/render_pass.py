@@ -16,15 +16,21 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
         [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH]
 
-`--flip` is a mode of its own: each page loads in light, the emulated scheme switches to dark
-mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
-`--interact` adds, per theme and width, a visit to `<base>compare` that opens a city panel with a
-mouse click (table view, first city link) and a visit to a city's Time tab that opens a Cite,
-checking its three blocks and its address, audits the page with the panel open, presses Escape and
-checks focus returned to the link. `--keyboard` adds, per theme, a scripted keyboard pass driven by
-real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare
-(tick, metric, view, sort, panel, Escape) and the tier and counter maps (+ and -); each step is a
-line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
+`--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
+run as usual): each page loads in light, the emulated scheme switches to dark mid-page, and after
+500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
+`--interact` adds, per theme and width, four visits: `<base>compare`, where a mouse click (table
+view, first city link) opens a city panel, the page is audited with the panel open, Escape closes
+it and focus must return to the link; a city's Time tab with its first Cite opened (three blocks,
+the address, the Copy button's live region); `city/berlin/tiers` with the Download control open,
+saving SVG, PNG and CSV (the SVG has no `var(` and names OpenStreetMap contributors); and
+`permalinks`, where the tier map, a story `#step-` and a compare `panel=` URL each open the state
+they name (the map view is read back from the tile under the map's centre, `MAP_VIEW_JS`) and a
+hostile query opens the defaults with a quiet console. `--keyboard` adds, per theme, a scripted
+keyboard pass driven by real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities
+menu, city tabs, compare (tick, metric, view, sort, panel, Escape), the nav search and the tier
+and counter maps (+ and -); each step is a line in the entry's `steps`, a failed one is an error.
+Chrome is `--chrome`, else
 `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`.
 """
 
@@ -749,12 +755,6 @@ def interact_permalink(devtools: str, origin: str, base: str, theme: str, width:
                 got = t.js(STORY_STEP_JS)
                 if got["hash"] != f"#step-{steps[1]}":
                     errors.append(f"reading step {steps[1]} did not write its hash: {got}")
-                # scrolling a step into view writes #step-<id> (replaceState)
-                t.js(f"document.getElementById('step-{steps[1]}').scrollIntoView()")
-                t.pump(1.5)
-                got = t.js(STORY_STEP_JS)
-                if got["hash"] != f"#step-{steps[1]}":
-                    errors.append(f"reading step {steps[1]} did not write its hash: {got}")
                 want = steps[2]
                 errs = navigate(t, origin + base + f"stories#step-{want}")
                 errors += errs
@@ -1382,7 +1382,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--pages", default="all", help="all, types, or comma-separated URLs (base included)"
     )
-    ap.add_argument("--flip", action="store_true", help="light, then dark mid-page (own mode)")
+    ap.add_argument(
+        "--flip", action="store_true", help="page visits load light, then switch to dark mid-page"
+    )
     ap.add_argument(
         "--interact",
         action="store_true",

@@ -31,14 +31,34 @@ def test_no_label_says_ours_colon(client):  # noqa: F811
     assert "our OSM data" in html and "velometer headline" in html
 
 
+def _ids(html):
+    """Every element id of a page, parsed (not a substring match: `id="x"` is inside `id="x-y"`
+    and `data-id="x"`)."""
+    return set(re.findall(r'(?<![\w-])id="([^"]+)"', html))
+
+
+def _text(fragment):
+    return re.sub(r"<[^>]+>", "", fragment).strip()
+
+
 def test_every_preset_and_published_header_links_to_its_sources_row(client):  # noqa: F811
-    html = client.get("/").text
-    heads = re.findall(r"<th[^>]*>(.*?)</th>", html, re.S)
-    linked = [
-        h for h in heads if "our OSM data" in h or "velometer headline" in h or "(published)" in h
-    ]
-    assert len(linked) == 8  # 3 presets in each of two tables, plus 2 published columns
-    assert all(re.search(r'href="/sources#(ours|src-[a-z0-9_]+)"', h) for h in linked)
+    # the rule, from the config: each overview column of a ranking links to the Sources row of
+    # the source it recomputes (a preset; none means our own approach) or publishes (external)
+    from velometer.app.sources import source_anchor
+    from velometer.config import default_config_dir, load_report
+
+    rankings = load_report(default_config_dir() / "report.yaml").rankings
+    heads = re.findall(r"<th[^>]*>(.*?)</th>", client.get("/").text, re.S)
+    rows = _ids(client.get("/sources").text)
+    assert rankings
+    for r in rankings:
+        want = source_anchor(r.recomputes if r.kind == "preset" else r.source)
+        # the rankings table adds " (n=<ranked>)" to the label
+        cells = [h for h in heads if re.fullmatch(rf"{re.escape(r.label)}( \(n=\d+\))?", _text(h))]
+        assert cells, r.id  # every ranking is an overview column
+        for h in cells:
+            assert f'href="/sources#{want}"' in h, (r.id, h)
+        assert want in rows, (r.id, want)
 
 
 def test_source_anchor_rule():
@@ -97,8 +117,8 @@ def test_every_sources_row_has_six_cells_and_stacks(client):  # noqa: F811
 
 def test_every_overview_header_anchor_exists_on_sources(client):  # noqa: F811
     anchors = set(re.findall(r'href="/sources#([\w-]+)"', client.get("/").text))
-    page = client.get("/sources").text
-    assert anchors and all(f'id="{a}"' in page for a in anchors)
+    page = _ids(client.get("/sources").text)
+    assert anchors and anchors <= page, anchors - page
 
 
 def test_sources_is_in_the_nav_and_the_overview_links_differences(client):  # noqa: F811
@@ -117,10 +137,16 @@ def test_sources_groups_come_in_order_ours_rankings_cities(client):  # noqa: F81
     html = client.get("/sources").text
     heads = re.findall(r'<th colspan="9" scope="rowgroup"[^>]*>(.*?)</th>', html, re.S)
     assert heads == ["Our approach", "Cross-city rankings and datasets", "City sources"]
+    from velometer.app.sources import source_anchor
+    from velometer.config import default_config_dir
+    from velometer.content.loader import load_organisation_map
+
+    mapping = load_organisation_map(default_config_dir() / "organisations.yaml")
+    ranking = {source_anchor(m.source) for m in mapping if m.city == "*"}
     ids = [i for i, _ in _rows(html)]
-    assert ids[0] == "ours"
-    ranking = {"src-clean_cities_2025", "src-qecio_v2_10", "src-bikenetkit_v1"}
-    assert set(ids[1:4]) == ranking and not ranking & set(ids[4:])
+    assert ids[0] == "ours" and ranking
+    n = len(ranking)
+    assert set(ids[1 : 1 + n]) == ranking and not ranking & set(ids[1 + n :])
 
 
 def test_rankings_sort_by_title_and_city_sources_by_city_name():
@@ -140,8 +166,8 @@ def test_rankings_sort_by_title_and_city_sources_by_city_name():
 def test_every_citation_marker_on_sources_resolves_to_the_list(client):  # noqa: F811
     html = client.get("/sources").text
     table = html.split('<table class="sources', 1)[1].split("</table>", 1)[0]
-    marks = re.findall(r'<sup><a href="#([\w-]+)">', table)
-    assert marks and all(f'id="{m}"' in html for m in marks)
+    marks = set(re.findall(r'<sup><a href="#([\w-]+)">', table))
+    assert marks and marks <= _ids(html), marks - _ids(html)
     assert '<ol class="citations">' in html
 
 
@@ -632,7 +658,7 @@ def test_search_index_anchors_exist_on_their_pages(client):  # noqa: F811
         if "#" not in e["url"]:
             continue
         path, anchor = e["url"].split("#")
-        assert f'id="{anchor}"' in client.get(path).text, e["url"]
+        assert anchor in _ids(client.get(path).text), e["url"]
 
 
 def test_search_index_city_entries_carry_name_id_aliases_and_country(client):  # noqa: F811

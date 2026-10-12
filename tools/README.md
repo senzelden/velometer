@@ -44,8 +44,10 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   opened and its Copy button pressed (three blocks, live region "Copied" or "Press Ctrl+C to
   copy"); `city/berlin/tiers` with the Download menu, saving SVG, PNG and CSV into the out
   directory (the SVG has no `var(` and names OpenStreetMap contributors); and `permalinks`, the
-  tier map loaded from `?kind&tiers&at` (state read through `window.__velometerMap`, exposed only
-  when `<html data-test>` is set before load) and a hostile `?tiers=XYZ` with a clean console.
+  tier map loaded from `?kind&tiers&at` (the view is read back from the tile under the map's
+  centre, `MAP_VIEW_JS`; `map.js` exposes no hook), a zoom and a drag that rewrite `at`, a story
+  `#step-` and a compare `panel=` URL that reopen their state, and a hostile query that opens the
+  defaults with a clean console.
 - `--keyboard` adds one scripted keyboard pass per theme (entry `kind: keyboard`, no axe or
   screenshot). It sends real key events with `Input.dispatchKeyEvent` and checks, step by step:
   the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter
