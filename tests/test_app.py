@@ -82,9 +82,9 @@ def _docs(tmp_path: Path) -> Path:
     return docs
 
 
-@pytest.fixture
-def setup(fixture_db, tmp_path):
-    db_path, cfg, _conn, _data = fixture_db
+def app_inputs(db_path: Path, cfg: Path, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+    """(db, config, maps, docs) of the `client` app: the maps and docs it reads, in `tmp_path`.
+    Shared with the session-wide rendered pages (conftest `page_site`), so both are one app."""
     maps = tmp_path / "maps"
     maps.mkdir()
     (maps / "berlin_lau.png").write_bytes(PNG)  # berlin_fua.png is deliberately missing
@@ -96,6 +96,12 @@ def setup(fixture_db, tmp_path):
     (tmp_path / "secret_lau.geojson").write_bytes(GEOJSON)
     docs = _docs(tmp_path)
     return db_path, cfg, maps, docs
+
+
+@pytest.fixture
+def setup(fixture_db, tmp_path):
+    db_path, cfg, _conn, _data = fixture_db
+    return app_inputs(db_path, cfg, tmp_path)
 
 
 @pytest.fixture
@@ -481,6 +487,15 @@ def test_the_js_literal_rule_sees_each_kind():
         assert not _js_colour_literals(f"const c = {ok};"), ok
 
 
+# the ODbL attribution (a licence requirement) and the mapped-km line, in each language
+FOOTER_TEXT = {
+    "en": ("Map data © OpenStreetMap contributors, ODbL 1.0",
+           "OSM mapped km, not built km (ADR 0006)"),
+    "de": ("Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0",
+           "kartierte km, nicht gebaute km (ADR 0006)"),
+}  # fmt: skip
+
+
 def test_footer_on_every_page(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
     pages = [("/", "en"), ("/city/berlin", "en"), ("/city/paris", "en"), ("/methodology", "en"),
@@ -489,6 +504,8 @@ def test_footer_on_every_page(client, fixture_db):
         html = client.get(path).text
         footer = html[html.index("<footer") :]
         text = _text(footer)
+        # the licence and ADR 0006 wording itself, then the catalogue the page renders from
+        assert FOOTER_TEXT[lang][0] in text and FOOTER_TEXT[lang][1] in text, path
         assert _text(i18n.t(lang, "site.footer.attribution", osm="")).strip() in text, path
         assert i18n.t(lang, "site.footer.mapped_km") in text, path
         methodology = "/methodology" if lang == "en" else "/de/methodology"

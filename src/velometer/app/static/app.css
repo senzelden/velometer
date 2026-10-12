@@ -204,7 +204,6 @@ h1 { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.3rem); line-heig
 .defn { border-left: 3px solid var(--accent); background: var(--accent-bg); padding: 0.5rem 0.75rem; font-size: 0.92rem; color: var(--ink-2); max-width: 60em; }
 .defn b { color: var(--ink); }
 .keyfacts { list-style: none; padding: 0; margin: 0.75rem 0 1.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; color: var(--ink-2); font-size: 0.95rem; }
-.langs { color: var(--ink-2); margin: 0.25rem 0 0; }
 h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--grid); }
 h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: var(--ink-2); }
 h4 { font-size: 0.95rem; margin: 0 0 0.25rem; }

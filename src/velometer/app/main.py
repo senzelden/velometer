@@ -692,7 +692,7 @@ def create_app(
         )
         return JSONResponse(payload)
 
-    @app.get("/de/data/search.json")
+    @app.get("/de/data/search.json", dependencies=[Depends(set_lang("de"))])
     async def search_json_de(request: Request, data: Data):
         """The one per-language data file: the German pages' search index."""
         payload = cache.get(
