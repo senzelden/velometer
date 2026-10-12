@@ -18,16 +18,36 @@ LEAK_DEFERRED = {
 }
 
 
+# While English content is untagged, a catalogue phrase that the English content also says
+# cannot be told apart from content, so it is left to the content source. Exactly these;
+# test_content_shared_phrases_are_the_named_ones fails on any other. Task 7 deletes this with
+# the exclusion.
+CONTENT_SHARED = {
+    "per 100 km of main roads",  # the headline, in narratives and the explainer
+    "per 100 km of main roads,",
+    "Why the figures differ",  # the explainer's title
+}
+
+
+def _content_shared() -> set[str]:
+    """The catalogue phrases the English content also says."""
+    said = i18n.content_phrases(CONTENT, min_words=1)
+    return {p for p in i18n.leak_phrases() if any(p in s for s in said)}
+
+
 def _catalogue_phrases():
-    """The catalogue's phrases, less the deferred ones. While English content is untagged, a
-    catalogue phrase that the English content also says (the headline's "per 100 km of main
-    roads", the explainer's title) cannot be told apart from content, so it is left to the
-    content source; Task 7 drops this with the exclusion."""
+    """The catalogue's phrases, less the deferred ones and, while content is excluded, the
+    named phrases English content shares."""
     phrases = [p for p in i18n.leak_phrases() if p not in LEAK_DEFERRED]
     if "content" not in LEAK_EXCLUDED:
         return phrases
-    said = i18n.content_phrases(CONTENT, min_words=1)
-    return [p for p in phrases if not any(p in s for s in said)]
+    return [p for p in phrases if p not in CONTENT_SHARED]
+
+
+def test_content_shared_phrases_are_the_named_ones():
+    """The content-shared filter cannot grow silently: a new catalogue phrase that the English
+    content also says must be named in CONTENT_SHARED (or reworded)."""
+    assert _content_shared() == CONTENT_SHARED
 
 
 def leak_sources():

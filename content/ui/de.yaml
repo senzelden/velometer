@@ -347,7 +347,7 @@ page.figures.explained: Die Dimensionen erklärt
 page.figures.config_error: Die Konfiguration der Abweichungen konnte nicht gelesen werden
 page.figures.none: keine veröffentlichten Zahlen für {city}
 table.figure: Zahl
-table.theirs: Ihre
+table.theirs: Veröffentlicht
 table.ours: Unsere
 table.gap: Abstand
 table.differs: Wo sie abweicht
@@ -355,7 +355,7 @@ page.figures.reference_date: Stichtag {date}
 page.figures.not_stated: nicht angegeben
 page.figures.scope: 'Umfang: {scope}'
 page.figures.not_compared: nicht verglichen
-page.figures.driver: 'unsere: {ours}; ihre: {theirs}'
+page.figures.driver: 'unsere: {ours}; veröffentlicht: {theirs}'
 page.figures.no_difference: keine Abweichung erfasst
 page.city.narrative_error: Der Text zu dieser Stadt konnte nicht geladen werden (siehe Serverprotokoll)
 page.figures.comparison: Vergleich mit veröffentlichten Zahlen

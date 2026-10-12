@@ -49,6 +49,7 @@ where a short UI form is used beside the methodology's longer one are listed und
 | residents | Einwohner | |
 | **Sources and actions** | | |
 | published figure | veröffentlichte Zahl | |
+| Theirs / Ours (Figures columns) | Veröffentlicht / Unsere | never "Ihre": it reads as formal address |
 | reported figure | gemeldete Zahl | a plan's progress figure |
 | source | Quelle | |
 | cite | Zitieren | the disclosure label |
