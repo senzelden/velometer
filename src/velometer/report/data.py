@@ -5,6 +5,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 `reconcile.reconcile_city` and `pipeline.measure.select_metric`.
 """
 
+import copy
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -40,6 +41,7 @@ from velometer.db import (
     subarea_names,
     subarea_rows,
 )
+from velometer.i18n import Lang
 from velometer.models import City, ExternalFigure
 from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.selection import report_selector, trusted_countries
@@ -169,8 +171,9 @@ def _fmt(v: float | None) -> str:
 class ReportData:
     """Read-only report queries over an open connection and the config directory."""
 
-    def __init__(self, conn: sqlite3.Connection, config_dir: Path):
+    def __init__(self, conn: sqlite3.Connection, config_dir: Path, lang: Lang = "en"):
         self.conn = conn
+        self.lang: Lang = lang  # the page language the display text is built in (M12)
         self.config_dir = Path(config_dir)
         self.selector = report_selector(self.config_dir)
         self.report_config = load_report(
@@ -184,6 +187,17 @@ class ReportData:
         self._all_cities: list[City] | None = None
         self._city_config: dict[str, dict] | None = None
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
+
+    def with_lang(self, lang: Lang) -> "ReportData":
+        """This data in `lang`: a shallow copy sharing the connection, the loaded config and the
+        series (numbers, the same in every language), with the caches that hold display text
+        (cities and their names, the city config) reset."""
+        if lang == self.lang:
+            return self
+        other = copy.copy(self)
+        other.lang = lang
+        other._cities = other._all_cities = other._city_config = None
+        return other
 
     def preset_labels(self) -> dict[str, str]:
         """Each preset's label, from its `kind: preset` ranking in report.yaml ("velometer

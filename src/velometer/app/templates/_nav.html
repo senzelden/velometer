@@ -1,5 +1,5 @@
-{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Plans · Organisations · Sources · Methodology. `active` names the
-    current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
+{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Plans · Organisations · Sources · Methodology, then the
+    search and the language switch (the same page in the other language). `active` names the current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
 {%- macro item(key, href, label) -%}
 <li><a href="{{ u(href) }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
 {%- endmacro %}
@@ -40,5 +40,7 @@
       <ul id="site-search-list" role="listbox" aria-label="Search results" hidden></ul>
     </div>
   </li>
+  {%- set other = 'de' if lang == 'en' else 'en' %}
+  <li class="lang-item"><a class="lang-switch" href="{{ u_in(other, here) }}" data-href="{{ u_in(other, here) }}" hreflang="{{ other }}" lang="{{ other }}">{{ t('nav.lang_switch') }}</a></li>
 </ul>
 </nav>

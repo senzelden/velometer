@@ -14,9 +14,10 @@ decision, 2026-10-02). Every response carries a Content-Security-Policy that all
 import logging
 import re
 import sqlite3
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import replace
 from datetime import UTC, datetime
+from functools import partial
 from html import unescape
 from pathlib import Path
 from typing import Annotated
@@ -33,6 +34,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from velometer import i18n
 from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
@@ -60,6 +62,7 @@ from velometer.content.loader import (
 )
 from velometer.content.models import ContentError
 from velometer.db import SchemaError, subarea_names
+from velometer.i18n import LANGS, Lang
 from velometer.plans.models import load_plans
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
@@ -137,8 +140,30 @@ log = logging.getLogger(__name__)
 OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data(?=\s*(,|$))", re.I)
 # A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
 # is the HTML "page not found" page (the static edition's 404.html).
-NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/")
+NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/", "/de/data/")
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def set_lang(lang: Lang):
+    """The route dependency that gives a request its page language (M12 spec decision 1): the
+    language comes from the route a page is registered at, never from reading the path (a base
+    path such as `/velometer/` would shift it)."""
+
+    def dependency(request: Request) -> None:
+        request.state.lang = lang
+
+    return dependency
+
+
+def register_pages(app: FastAPI, path: str, endpoint, **kw) -> None:
+    """A page at `path` (English) and at `/de` + `path` (German), the same handler: each route
+    sets `request.state.lang` through its own dependency."""
+    kw.setdefault("response_class", HTMLResponse)
+    for lang in LANGS:
+        prefix = "" if lang == "en" else urls.DE_PREFIX
+        app.add_api_route(
+            prefix + path, endpoint, methods=["GET"], dependencies=[Depends(set_lang(lang))], **kw
+        )
 
 
 def csp_meta(csp: str) -> str:
@@ -286,6 +311,14 @@ class LazyData:
         self._db_path, self._config_dir = db_path, config_dir
         self._conn: sqlite3.Connection | None = None
         self._data: ReportData | None = None
+        self._lang: Lang = "en"
+
+    def with_lang(self, lang: Lang) -> "LazyData":
+        """The data in `lang` (ReportData.with_lang), still opened on first use."""
+        self._lang = lang
+        if self._data is not None:
+            self._data = self._data.with_lang(lang)
+        return self
 
     def __getattr__(self, name: str):
         if name.startswith("_"):  # private names (and dunder probes) are not ReportData's API
@@ -297,7 +330,7 @@ class LazyData:
                 raise HTTPException(503, f"database not found: {self._db_path}") from e
             except SchemaError as e:
                 raise HTTPException(503, str(e)) from e
-            self._data = ReportData(self._conn, self._config_dir)
+            self._data = ReportData(self._conn, self._config_dir, self._lang)
         if name not in ReportData.__dict__ and name not in vars(self._data):
             raise AttributeError(f"ReportData has no attribute {name!r}")
         return getattr(self._data, name)
@@ -333,47 +366,61 @@ def create_app(
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     app.state.base_path = urls.normalise_base(base_path)
-    # Every URL that leaves the app goes through `u`: templates call it on each internal href,
-    # src and action at the point they write it; values a script reads from a JSON config (map
-    # URLs, the Stories steps' links) get it here, since the script uses them as they are.
-    u = urls.make_u(app.state.base_path)
-    templates = Jinja2Templates(directory=HERE / "templates")
-    templates.env.globals["u"] = u
-    templates.env.globals["base_path"] = app.state.base_path
-    # inside a double-quoted attribute the policy's single quotes need no escaping
-    templates.env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
-    templates.env.globals["static_edition"] = static_edition
-    templates.env.globals["cite_text"] = cite_model.cite_text
-    # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light, and
-    # the commit the source line names (the export's build commit, else the live checkout's)
-    templates.env.globals["theme_tokens"] = theme_tokens(
-        (HERE / "static" / "app.css").read_text(encoding="utf-8")
-    )
-    templates.env.globals["build_commit"] = (
-        static_edition["commit"] if static_edition else short_commit(git_commit())
-    )
-    templates.env.filters["cite_json"] = cite_model.json_fields
-    templates.env.filters["num"] = _num
-    templates.env.filters["md"] = _md
-    templates.env.filters["stack_table"] = _stack_table
-    templates.env.filters["when"] = _when
-    templates.env.filters["http_url"] = safe_url
-    templates.env.filters["host"] = _host
-    templates.env.filters["clause"] = _note_clause
-    templates.env.filters["unit"] = lambda u: UNITS.get(u, u)
-    _respond = templates.TemplateResponse
+    # Every page URL that leaves the app goes through `u`, bound to the page's language (`us`),
+    # and every data, map and static URL through `data_u`: templates call them on each internal
+    # href, src and action at the point they write it; values a script reads from a JSON config
+    # (map URLs, the Stories steps' links) get them here, since the script uses them as they are.
+    us: dict[Lang, Callable[[str], str]] = {
+        lang: urls.make_u(app.state.base_path, lang) for lang in LANGS
+    }
+    data_u = urls.make_data_u(app.state.base_path)
+    tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
+    commit = static_edition["commit"] if static_edition else short_commit(git_commit())
 
-    def respond(*args, **kwargs):
-        """Every rendered page, with its sideways-scrolling regions made keyboard-reachable."""
-        resp = _respond(*args, **kwargs)
-        resp.body = name_scroll_regions(resp.body.decode()).encode()
-        resp.headers["content-length"] = str(len(resp.body))
-        return resp
+    def _templates(lang: Lang) -> Jinja2Templates:
+        """The templates of one page language: its `u` and `t`, the shared globals and filters."""
+        templates = Jinja2Templates(directory=HERE / "templates")
+        env = templates.env
+        env.globals["lang"] = lang
+        env.globals["u"] = us[lang]
+        env.globals["u_in"] = lambda other, path: us[other](path)
+        env.globals["data_u"] = data_u
+        env.globals["t"] = partial(i18n.t_markup, lang)
+        env.globals["t_in"] = i18n.t_markup
+        env.globals["base_path"] = app.state.base_path
+        # inside a double-quoted attribute the policy's single quotes need no escaping
+        env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
+        env.globals["static_edition"] = static_edition
+        env.globals["cite_text"] = cite_model.cite_text
+        # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
+        # and the commit the source line names (the export's build commit, else the checkout's)
+        env.globals["theme_tokens"] = tokens
+        env.globals["build_commit"] = commit
+        env.filters["cite_json"] = cite_model.json_fields
+        env.filters["num"] = _num
+        env.filters["md"] = _md
+        env.filters["stack_table"] = _stack_table
+        env.filters["when"] = _when
+        env.filters["http_url"] = safe_url
+        env.filters["host"] = _host
+        env.filters["clause"] = _note_clause
+        env.filters["unit"] = lambda u: UNITS.get(u, u)
+        # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
+        # "Ours" column says it already
+        env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
+        _respond = templates.TemplateResponse
 
-    templates.TemplateResponse = respond  # type: ignore[method-assign]
-    # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
-    # "Ours" column says it already
-    templates.env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
+        def respond(*args, **kwargs):
+            """Every rendered page, with its sideways-scrolling regions keyboard-reachable."""
+            resp = _respond(*args, **kwargs)
+            resp.body = name_scroll_regions(resp.body.decode()).encode()
+            resp.headers["content-length"] = str(len(resp.body))
+            return resp
+
+        templates.TemplateResponse = respond  # type: ignore[method-assign]
+        return templates
+
+    TEMPLATES = {lang: _templates(lang) for lang in LANGS}
 
     cache = PageCache()
 
@@ -387,8 +434,9 @@ def create_app(
 
     # async: the connection is made, used and closed on the event-loop thread (sqlite3
     # connections are bound to the thread that made them).
-    async def report_data() -> AsyncIterator[LazyData]:
-        lazy = LazyData(db_path, config_dir)
+    async def report_data(request: Request) -> AsyncIterator[LazyData]:
+        # a page route set the language; a data route has none and is English
+        lazy = LazyData(db_path, config_dir).with_lang(getattr(request.state, "lang", "en"))
         try:
             yield lazy
         finally:
@@ -453,14 +501,15 @@ def create_app(
             sel = report_selector(config_dir)  # config only: the footer needs no database
             return {"classifier": sel.version, "config": sel.short_sha}
 
-        footer = cache.get("footer", fp(request), build_footer)
+        lang = request.state.lang
+        footer = cache.get(f"footer:{lang}", fp(request), build_footer)
         nav = None  # the Cities menu; a page without a database still renders, linking /cities
         if data is not None:
             try:
-                nav = cache.get("nav", fp(request), lambda: by_country(data))
+                nav = cache.get(f"nav:{lang}", fp(request), lambda: by_country(data))
             except HTTPException:
                 nav = None
-        return templates.TemplateResponse(
+        return TEMPLATES[lang].TemplateResponse(
             request,
             name,
             {
@@ -468,6 +517,8 @@ def create_app(
                 "nav_groups": nav,
                 "active": active,
                 "cite_for": cite_for(request, data),
+                # the page's route path without the language: its twins and the switch use it
+                "here": urls.strip_lang(request.url.path),
                 **ctx,
             },
             status_code=status_code,
@@ -479,9 +530,11 @@ def create_app(
         any other error, and a 404 for data, maps or static files, is FastAPI's JSON."""
         if exc.status_code != 404 or request.url.path.startswith(NOT_PAGE_PREFIXES):
             return await http_exception_handler(request, exc)
-        lazy = LazyData(db_path, config_dir)
+        # no route ran: the language is the `/de` prefix's (the page shows both anyway)
+        request.state.lang = "de" if request.url.path.split("/")[1:2] == ["de"] else "en"
+        lazy = LazyData(db_path, config_dir).with_lang(request.state.lang)
         try:
-            return page(request, "404.html", "", lazy, status_code=404)
+            return page(request, "404.html", "", lazy, status_code=404, here="/")
         finally:
             lazy.close()
 
@@ -560,7 +613,6 @@ def create_app(
             "dagger": any(c["dagger"] for row in cells.values() for c in row.values()),
         }
 
-    @app.get("/", response_class=HTMLResponse)
     async def index(request: Request, data: Data):
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
@@ -604,10 +656,11 @@ def create_app(
                 ),
             }
 
-        ctx = cache.get("index", fp(request), build)
+        ctx = cache.get(f"index:{request.state.lang}", fp(request), build)
         return page(request, "index.html", "overview", data, **ctx)
 
-    @app.get("/cities", response_class=HTMLResponse)
+    register_pages(app, "/", index)
+
     async def cities(request: Request, data: Data):
         def build() -> dict:
             summaries = {c.id: city_summary(data, c) for c in data.cities()}
@@ -620,8 +673,10 @@ def create_app(
             return {"groups": groups, "rank": rank, "n": len(summaries),
                     "headline_unit": HEADLINE_UNIT}  # fmt: skip
 
-        ctx = cache.get("cities", fp(request), build)
+        ctx = cache.get(f"cities:{request.state.lang}", fp(request), build)
         return page(request, "cities.html", "cities", data, **ctx)
+
+    register_pages(app, "/cities", cities)
 
     @app.get("/data/series.json")
     async def series_json(request: Request, data: Data):
@@ -633,7 +688,15 @@ def create_app(
     @app.get("/data/search.json")
     async def search_json(request: Request, data: Data):
         payload = cache.get(
-            "search", fp(request), lambda: search_index(data, config_dir, content_dir)
+            "search:en", fp(request), lambda: search_index(data, config_dir, content_dir)
+        )
+        return JSONResponse(payload)
+
+    @app.get("/de/data/search.json")
+    async def search_json_de(request: Request, data: Data):
+        """The one per-language data file: the German pages' search index."""
+        payload = cache.get(
+            "search:de", fp(request), lambda: search_index(data, config_dir, content_dir, "de")
         )
         return JSONResponse(payload)
 
@@ -673,7 +736,9 @@ def create_app(
             n = narratives.get(city_id)
             return None if n is None else render_narrative(n, sources)
 
-        return cache.get(f"narrative:{city_id}", fp(request), build), content_error(errors, city_id)
+        return cache.get(
+            f"narrative:{city_id}:{request.state.lang}", fp(request), build
+        ), content_error(errors, city_id)
 
     def organisations(request: Request) -> tuple[dict, dict[str, str]]:
         """(profiles, errors) of content/organisations; a broken profile is a note, not a 500."""
@@ -753,10 +818,12 @@ def create_app(
             )
             return ctx | {"doc": doc, "text_error": text_error, "config_error": cfg_error}
 
-        return cache.get(f"counts:{city_id}", fp(request), build)
+        return cache.get(f"counts:{city_id}:{request.state.lang}", fp(request), build)
 
     def city_page(request: Request, city_id: str, tab: str, data: ReportData) -> HTMLResponse:
-        ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
+        ctx = cache.get(
+            f"city:{city_id}:{request.state.lang}", fp(request), lambda: city_context(data, city_id)
+        )
         if tab == "bezirke" and not ctx["bezirke"]:
             raise HTTPException(404, f"{city_id!r} has no Bezirke")
         if tab == "counts" and not ctx["has_counts"]:
@@ -765,7 +832,9 @@ def create_app(
         if tab == "figures":
             profiles = set(organisations(request)[0])
             extra = cache.get(
-                f"figures:{city_id}", fp(request), lambda: figures_context(data, city_id, profiles)
+                f"figures:{city_id}:{request.state.lang}",
+                fp(request),
+                lambda: figures_context(data, city_id, profiles),
             )
         nar, note = narrative_of(request, city_id)
         role = {"story": "story", "figures": "figures"}.get(tab)
@@ -787,7 +856,6 @@ def create_app(
             cited_refs=cited_refs,
         )  # fmt: skip
 
-    @app.get("/compare", response_class=HTMLResponse)
     async def compare(request: Request, data: Data):
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
@@ -825,7 +893,7 @@ def create_app(
             request, "compare.html", "compare", data, state=state, table=table, quick=quick,
             compare_cite=cite_for(request, data)(
                 f"Compare: {heading}; {', '.join(names)}", cities=[r["id"] for r in table["rows"]],
-                kind=state.b, path="/compare",
+                kind=state.b, path=urls.with_lang("/compare", request.state.lang),
             ),
             groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
             href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
@@ -833,30 +901,38 @@ def create_app(
             counter={"title": cmp.counter_title, "context": cmp.COUNTER_CONTEXT},
         )  # fmt: skip
 
-    @app.get("/city/{city_id}/panel", response_class=HTMLResponse)
+    register_pages(app, "/compare", compare)
+
     async def city_panel(request: Request, city_id: str, data: Data):
         """The Compare slide-over: a fragment (no layout), fetched by panel.js. A direct visit
         shows the same fragment; the full page is /city/<id>."""
-        ctx = cache.get(f"city:{city_id}", fp(request), lambda: city_context(data, city_id))
+        ctx = cache.get(
+            f"city:{city_id}:{request.state.lang}", fp(request), lambda: city_context(data, city_id)
+        )
         # a copy: TemplateResponse adds `request` to the dict it is given, and this one is cached
         # (a tab page spreads it next to its own `request=`)
-        return templates.TemplateResponse(
+        lang = request.state.lang
+        return TEMPLATES[lang].TemplateResponse(
             request,
             "city/panel.html",
-            {**ctx, "cite_for": cite_for(request, data, f"/city/{city_id}")},
+            {**ctx, "cite_for": cite_for(request, data, urls.with_lang(f"/city/{city_id}", lang))},
         )
 
-    @app.get("/city/{city_id}", response_class=HTMLResponse)
+    register_pages(app, "/city/{city_id}/panel", city_panel)
+
     async def city(request: Request, city_id: str, data: Data):
         return city_page(request, city_id, "story", data)
 
-    @app.get("/city/{city_id}/{tab}", response_class=HTMLResponse)
+    register_pages(app, "/city/{city_id}", city)
+
     async def city_tab(request: Request, city_id: str, tab: str, data: Data):
         if tab not in {k for k, _, suffix in TABS if suffix}:
             raise HTTPException(404, f"unknown tab {tab!r}")
         return city_page(request, city_id, tab, data)
 
-    def story_context(data: ReportData, payload: dict, n, sources) -> dict:
+    register_pages(app, "/city/{city_id}/{tab}", city_tab)
+
+    def story_context(data: ReportData, payload: dict, n, sources, lang: Lang) -> dict:
         """The Stories page: the combined narrative's sections with the chart step each names."""
         nar = render_narrative(n, sources)
         metrics = cmp.metric_info(HEADLINE_UNIT, data.preset_units(), population_years(data))
@@ -879,7 +955,7 @@ def create_app(
         config = {
             step: {k: v for k, v in built.items() if k != "table"}
             | {
-                "href": u(built["href"]),  # story.js sets it as the Explore link
+                "href": us[lang](built["href"]),  # story.js sets it as the Explore link
                 # a step section may have no heading: the eyebrow then names the chart
                 "heading": next(s["sec"].heading for s in story if s["step"] == step)
                 or built.get("title")
@@ -897,7 +973,6 @@ def create_app(
             "cited_sources": sources_cited, "cited_refs": refs_cited,
         }  # fmt: skip
 
-    @app.get("/stories", response_class=HTMLResponse)
     async def stories(request: Request, data: Data):
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
@@ -907,12 +982,15 @@ def create_app(
 
         def build():
             n = narratives.get("combined")
-            return None if n is None else story_context(data, payload, n, sources)
+            if n is None:
+                return None
+            return story_context(data, payload, n, sources, request.state.lang)
 
-        ctx = cache.get("stories", fp(request), build) or {}
+        ctx = cache.get(f"stories:{request.state.lang}", fp(request), build) or {}
         return page(request, "stories.html", "stories", data, content_error=error, **ctx)
 
-    @app.get("/differences", response_class=HTMLResponse)
+    register_pages(app, "/stories", stories)
+
     async def differences(request: Request, data: Data):
         _, sources, explainer, errors = cache.get("content", fp(request), content())
         error = content_error(errors, "explainer")
@@ -920,7 +998,7 @@ def create_app(
         def build():
             return None if explainer is None else render_explainer(explainer, sources)
 
-        doc = cache.get("differences", fp(request), build)
+        doc = cache.get(f"differences:{request.state.lang}", fp(request), build)
         try:
             cfg = load_differences(config_dir / "differences.yaml")
             labels = {d.id: d.label for d in cfg.dimensions}
@@ -935,7 +1013,8 @@ def create_app(
             cities=cities,
         )  # fmt: skip
 
-    @app.get("/organisations", response_class=HTMLResponse)
+    register_pages(app, "/differences", differences)
+
     async def organisations_page(request: Request, data: Data):
         _, sources, _, errors = cache.get("content", fp(request), content())
         orgs, org_errors = organisations(request)
@@ -955,13 +1034,14 @@ def create_app(
                 "dimension_labels": labels,
             }
 
-        ctx = cache.get("organisations", fp(request), build)
+        ctx = cache.get(f"organisations:{request.state.lang}", fp(request), build)
         return page(
             request, "organisations.html", "organisations", data, **ctx,
             content_error=errors.get("*"), broken=sorted(org_errors),
         )  # fmt: skip
 
-    @app.get("/sources", response_class=HTMLResponse)
+    register_pages(app, "/organisations", organisations_page)
+
     async def sources_page(request: Request, data: Data):
         def build() -> dict:
             try:
@@ -972,7 +1052,7 @@ def create_app(
                 return {"rows": [], "cited": None, "dimensions": [], "error": str(e)}
             return {"rows": rows, "cited": cited, "dimensions": dims, "error": None}
 
-        ctx = cache.get("sources", fp(request), build)
+        ctx = cache.get(f"sources:{request.state.lang}", fp(request), build)
         groups = [
             (name, [r for r in ctx["rows"] if r.group == g]) for g, name in GROUP_NAMES.items()
         ]
@@ -981,7 +1061,8 @@ def create_app(
             cited=ctx["cited"], dimensions=ctx["dimensions"], content_error=ctx["error"],
         )  # fmt: skip
 
-    @app.get("/plans", response_class=HTMLResponse)
+    register_pages(app, "/sources", sources_page)
+
     async def plans_index(request: Request, data: Data):
         orgs, _ = organisations(request)
 
@@ -990,10 +1071,11 @@ def create_app(
             cities = sorted(((c.id, c.name) for c in data.cities()), key=lambda c: c[1])
             return {"table": plans_pages.plans_table(plans, rows, cities, orgs), "error": error}
 
-        ctx = cache.get("plans", fp(request), build)
+        ctx = cache.get(f"plans:{request.state.lang}", fp(request), build)
         return page(request, "plans.html", "plans", data, **ctx)
 
-    @app.get("/plans/{city_id}", response_class=HTMLResponse)
+    register_pages(app, "/plans", plans_index)
+
     async def plan_page(request: Request, city_id: str, data: Data):
         if city_id != plans_pages.DETAIL_CITY:
             raise HTTPException(404, f"no plan page for {city_id!r}")
@@ -1028,7 +1110,7 @@ def create_app(
                 "record_error": record_error,
             }
 
-        ctx = cache.get(f"plan:{city_id}", fp(request), build)
+        ctx = cache.get(f"plan:{city_id}:{request.state.lang}", fp(request), build)
         doc = ctx["doc"]
         return page(
             request, "plans_berlin.html", "plans", data, **ctx, nar=doc,
@@ -1036,6 +1118,8 @@ def create_app(
             cited_sources=[] if doc is None else sorted(doc.sources.items()),
             cited_refs=[] if doc is None else sorted(doc.refs.items()),
         )  # fmt: skip
+
+    register_pages(app, "/plans/{city_id}", plan_page)
 
     def keynums(summary: dict, fua, fua_now: float | None, flagged: int) -> list[dict]:
         """The five numbers of the city header's `.keynums` row (LAU unless it says FUA)."""
@@ -1070,7 +1154,7 @@ def create_app(
             geojson = f"{city_id}_{kind}.geojson"
             if (maps_dir / geojson).is_file():
                 map_kinds.append(
-                    {"kind": kind, "label": kind.upper(), "url": u(f"/maps/{geojson}")}
+                    {"kind": kind, "label": kind.upper(), "url": data_u(f"/maps/{geojson}")}
                 )
             kinds.append(
                 {
@@ -1190,7 +1274,7 @@ def create_app(
             "latest_run": latest,
             "change_table": table,
             "change_map": {
-                "url": u(f"/maps/{stem}.geojson"),
+                "url": data_u(f"/maps/{stem}.geojson"),
                 "tiles": OSM_TILES,
                 "tile_class": TILE_CLASS,
                 "weight": LINE_WEIGHT,
@@ -1203,23 +1287,30 @@ def create_app(
             else None,
         }
 
-    def methodology(request: Request, data: ReportData, lang: str) -> HTMLResponse:
-        path = docs_dir / METHODOLOGY[lang]
+    def methodology_page(request: Request, data: ReportData, **ctx) -> HTMLResponse:
+        path = docs_dir / METHODOLOGY[request.state.lang]
         try:
             body = _md(GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")))
         except OSError:
             body = None
         return page(
-            request, "methodology.html", "methodology", data, lang=lang, body=body, file=path.name
+            request, "methodology.html", "methodology", data, body=body, file=path.name, **ctx
         )
 
-    @app.get("/methodology", response_class=HTMLResponse)
-    async def methodology_en(request: Request, data: Data):
-        return methodology(request, data, "en")
+    async def methodology(request: Request, data: Data):
+        return methodology_page(request, data)
 
-    @app.get("/methodology/de", response_class=HTMLResponse)
-    async def methodology_de(request: Request, data: Data):
-        return methodology(request, data, "de")
+    register_pages(app, "/methodology", methodology)
+
+    async def methodology_legacy_de(request: Request, data: Data):
+        """The German methodology's URL before M12: the same German page, pointing search engines
+        at /de/methodology (a static site cannot redirect)."""
+        return methodology_page(request, data, canonical=us["de"]("/methodology"))
+
+    app.add_api_route(
+        "/methodology/de", methodology_legacy_de, methods=["GET"],
+        response_class=HTMLResponse, dependencies=[Depends(set_lang("de"))],
+    )  # fmt: skip
 
     def map_file(data: ReportData, name: str, suffix: str) -> Path:
         """The map file of a trusted city's run, else 404 (the city page and CSV do the same)."""

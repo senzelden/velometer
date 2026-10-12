@@ -1,2 +1,12 @@
 # Deutsche UI-Texte. Flat keys; a plural is {one, other}. Keys mirror en.yaml.
 fmt.na: k. A.
+nav.lang_switch: English
+site.footer.attribution: 'Kartendaten © <a href="{osm}">OpenStreetMap-Mitwirkende, ODbL 1.0</a>'
+site.footer.mapped_km: OSM-kartierte km, nicht gebaute km (ADR 0006)
+site.footer.methodology: Methodik
+site.footer.csv_all: CSV (alle Städte)
+site.footer.run: 'Klassifikator {classifier} · Konfiguration <code>{config}</code>'
+site.footer.static_edition: Statische Ausgabe · Build {commit}
+page.404.title: Seite nicht gefunden
+page.404.home: Übersicht
+page.404.text: 'Unter dieser Adresse gibt es keine Seite. <a href="{home}">Zur Übersicht</a>.'

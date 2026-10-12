@@ -1,7 +1,7 @@
 {% extends "city/_page.html" %}
 {% from "_cite.html" import cite %}
-{% block head %}{% if bezirke.change_map %}<link rel="stylesheet" href="{{ u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
-{% block scripts %}<script type="module" src="{{ u('/static/js/city.js') }}"></script>{% endblock %}
+{% block head %}{% if bezirke.change_map %}<link rel="stylesheet" href="{{ data_u('/static/vendor/leaflet.css') }}">{% endif %}{% endblock %}
+{% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
 <h2>Bezirke</h2>
@@ -60,8 +60,8 @@
 {% endfor %}</ul>
 <p class="meta tiermap-note" id="changemap-status">Mapped gained, lost, retiered and redrawn way-sides; click one for its way and mapped km.</p>
 <script type="application/json" id="changemap-config">{{ bezirke.change_map | tojson }}</script>
-<script src="{{ u('/static/vendor/leaflet.js') }}"></script>
-<script type="module" src="{{ u('/static/changemap.js') }}"></script>
+<script src="{{ data_u('/static/vendor/leaflet.js') }}"></script>
+<script type="module" src="{{ data_u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
 <div class="scroll">{{ bezirke.change_table | md | stack_table }}</div>

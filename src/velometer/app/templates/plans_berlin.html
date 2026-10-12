@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite %}
 {% block title %}velometer · Berlin's cycling plan{% endblock %}
-{% block scripts %}<script type="module" src="{{ u('/static/js/plan-chart.js') }}"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{{ data_u('/static/js/plan-chart.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/plans') }}">Plans</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Berlin</span></nav>{% endblock %}
 {% macro doc_ref(v) -%}
 {{ v.doc_type }} {% if v.url %}<a href="{{ v.url }}" rel="noopener noreferrer">{{ v.row.doc_id }}</a>{% else %}{{ v.row.doc_id }}{% endif %}, {{ v.row.doc_date.isoformat() }}

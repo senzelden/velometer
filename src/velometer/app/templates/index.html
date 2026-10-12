@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite %}
 {% block title %}velometer · overview{% endblock %}
-{% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{{ data_u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><span aria-current="page">Overview</span></nav>{% endblock %}
 {% block content %}
 <h1>Protected cycling infrastructure in {{ rows | length }} European cities, as mapped</h1>

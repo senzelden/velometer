@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-{% block lang %}{{ lang }}{% endblock %}
 {% block title %}velometer · {% if lang == "de" %}Methodik{% else %}methodology{% endif %}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{% if lang == "de" %}Methodik{% else %}Methodology{% endif %}</span></nav>{% endblock %}
 {% block content %}
-<p class="langs">{% if lang == "de" %}<a href="{{ u('/methodology') }}" hreflang="en">English</a> · Deutsch{% else %}English · <a href="{{ u('/methodology/de') }}" hreflang="de">Deutsch</a>{% endif %}</p>
 <article class="prose">
 {% if body %}{{ body }}{% else %}<p class="note">methodology not generated (<code>velometer report methodology</code> writes <code>docs/{{ file }}</code>)</p>{% endif %}
 </article>

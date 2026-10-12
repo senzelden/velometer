@@ -1,5 +1,5 @@
 {
- "about": "Shared py/js cases of the base-path helper: app/urls.py normalise_base + make_u and static/js/base.js base + url. Read by tests/test_urls.py and static/js/tests/base.test.mjs.",
+ "about": "Shared py/js cases of the base-path helper: app/urls.py normalise_base + make_u and static/js/base.js base + url. emit_lang/emit_data: the language-aware page helper (make_u(base, lang)) and data helper (make_data_u); emit_lang_js: JS-only cases (url() never prefixes data paths). Read by tests/test_urls.py and static/js/tests/base.test.mjs.",
  "normalise": [
   ["", "/"],
   ["/", "/"],
@@ -26,5 +26,25 @@
   "#x",
   "#"
  ],
- "relative": ["city/berlin", "", "compare?c=berlin"]
+ "relative": ["city/berlin", "", "compare?c=berlin"],
+ "emit_lang": [
+  ["/", "de", "/cities", "/de/cities"],
+  ["/", "de", "/", "/de/"],
+  ["/velometer/", "de", "/city/berlin/time", "/velometer/de/city/berlin/time"],
+  ["/velometer/", "de", "/compare?cities=berlin,vienna#t", "/velometer/de/compare?cities=berlin,vienna#t"],
+  ["/velometer/", "de", "/de/methodology", "/velometer/de/methodology"],
+  ["/velometer/", "de", "#main", "#main"],
+  ["/velometer/", "en", "/cities", "/velometer/cities"]
+ ],
+ "emit_lang_js": [
+  ["/velometer/", "de", "/data/series.json", "/velometer/data/series.json"],
+  ["/velometer/", "de", "/static/js/base.js", "/velometer/static/js/base.js"]
+ ],
+ "emit_data": [
+  ["/velometer/", null, "/data/series.json", "/velometer/data/series.json"],
+  ["/velometer/", null, "/maps/berlin_lau.de.png", "/velometer/maps/berlin_lau.de.png"],
+  ["/velometer/", "de", "/data/search.json", "/velometer/de/data/search.json"],
+  ["/velometer/", "de", "/data/series.json", "error"],
+  ["/velometer/", null, "/cities", "error"]
+ ]
 }

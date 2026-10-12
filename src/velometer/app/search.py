@@ -8,6 +8,7 @@ from pathlib import Path
 from velometer.app.names import country_name
 from velometer.config import ConfigError, load_cities
 from velometer.content.loader import load_narratives, load_organisations
+from velometer.i18n import Lang
 from velometer.report.data import ReportData
 
 log = logging.getLogger(__name__)
@@ -24,10 +25,22 @@ def _entry(label: str, kind: str, url: str, *terms: str) -> dict:
     return {"label": label, "kind": kind, "url": url, "terms": list(dict.fromkeys([label, *terms]))}
 
 
-def search_index(data: ReportData, config_dir: Path, content_dir: Path) -> list[dict]:
-    """The index for the trusted cities of `data`. A broken or missing content file leaves its
-    entries out, as the pages it feeds show a note instead."""
-    out = [_entry(label, "page", url) for label, url in PAGES]
+# the legacy German methodology URL: on a German page `/methodology` is already German, and
+# search.js puts the page's `/de` in front of every entry
+LEGACY_DE_ONLY = {"/methodology/de"}
+
+
+def search_index(
+    data: ReportData, config_dir: Path, content_dir: Path, lang: Lang = "en"
+) -> list[dict]:
+    """The index for the trusted cities of `data`, for pages in `lang` (`/de/data/search.json`).
+    A broken or missing content file leaves its entries out, as the pages it feeds show a note
+    instead."""
+    out = [
+        _entry(label, "page", url)
+        for label, url in PAGES
+        if lang == "en" or url not in LEGACY_DE_ONLY
+    ]
     cities = data.cities()
     try:
         aliases = {c.id: c.aliases for c in load_cities(Path(config_dir) / "cities.yaml")}

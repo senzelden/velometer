@@ -16,13 +16,15 @@ from typer.testing import CliRunner
 
 from tests.test_app import CONTENT
 from tests.test_app_base import BASE, rich  # noqa: F401  (`rich` is a fixture)
-from velometer.app import export
+from velometer import i18n
+from velometer.app import export, urls
 from velometer.app.main import CSP, HERE, TABS, create_app, csp_meta
 from velometer.cli import app as cli_app
 from velometer.report.data import ReportData, open_readonly
 
 BASE_URL = "http://127.0.0.1:8000"
-FOOTER = "Static edition · build "
+# the stamp in each page language (M12): a German page says it in German
+FOOTERS = {lang: i18n.t(lang, "site.footer.static_edition", commit="") for lang in i18n.LANGS}
 BUILD_KEYS = {
     "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "built_at"
 }  # fmt: skip
@@ -210,7 +212,8 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
     pages = [p for p in out.rglob("index.html") if p.parent.name != "panel"]
     assert len(pages) > 10
     for page in pages:
-        assert page.read_text().count(FOOTER + build["commit"]) == 1, page
+        lang = urls.lang_of("/" + page.relative_to(out).parent.as_posix())
+        assert page.read_text().count(FOOTERS[lang] + build["commit"]) == 1, page
     files = _files(out)
     assert result.files == len(files)
     assert result.bytes == sum(p.stat().st_size for p in files)
@@ -789,11 +792,24 @@ def test_every_internal_reference_of_an_export_carries_the_base(rich, tmp_path):
     assert export.scan_references(out, BASE) == []
 
 
+def test_export_under_a_base_renders_german(rich, tmp_path):  # noqa: F811
+    # the language comes from the route, never from the request path: under a base the export
+    # still writes German pages that link German pages
+    out = tmp_path / "dist"
+    _export(rich, out, "/velometer/")
+    for rel in ["de/cities/index.html", "de/city/berlin/time/index.html"]:
+        html = (out / rel).read_text()
+        assert '<html lang="de"' in html, rel
+        assert 'href="/velometer/de/"' in html, rel
+    assert '<html lang="en"' in (out / "cities" / "index.html").read_text()
+    assert (out / "de" / "data" / "search.json").is_file()
+
+
 def _without_footer(html: str) -> str:
     lines = html.split("\n")
-    stamps = [i for i, line in enumerate(lines) if FOOTER in line]
+    stamps = [i for i, line in enumerate(lines) if any(f in line for f in FOOTERS.values())]
     assert len(stamps) == 1
-    assert lines[stamps[0]].strip().startswith("<p>" + FOOTER)
+    assert any(lines[stamps[0]].strip().startswith("<p>" + f) for f in FOOTERS.values())
     return "\n".join(lines[: stamps[0]] + lines[stamps[0] + 1 :])
 
 
@@ -818,7 +834,7 @@ def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
                 assert text == r.text, rel  # a fragment: no footer
                 continue
             text = _without_footer(text)
-            if rel == "compare/index.html":
+            if rel in ("compare/index.html", "de/compare/index.html"):
                 static, live = text.split("\n"), r.text.split("\n")
                 differ = [i for i, (a, b) in enumerate(zip(static, live, strict=True)) if a != b]
                 assert len(differ) == 1, differ

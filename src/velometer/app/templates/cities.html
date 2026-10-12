@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · cities{% endblock %}
-{% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
+{% block scripts %}<script type="module" src="{{ data_u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Cities</span></nav>{% endblock %}
 {% block content %}
 <h1>Cities</h1>

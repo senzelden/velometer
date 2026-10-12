@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite, copy_link %}
 {% block title %}velometer · Stories{% endblock %}
-{% block scripts %}{% if config %}<script type="module" src="{{ u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
+{% block scripts %}{% if config %}<script type="module" src="{{ data_u('/static/js/story.js') }}"></script>{% endif %}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Stories</span></nav>{% endblock %}
 {#- A step's fallback: first and current value per city. Open without JavaScript; story.js folds it away. -#}
 {% macro step_table(t, step) %}

@@ -21,6 +21,7 @@ from tests.test_app import (
 )
 from tests.test_app_m8 import MEASURES, RETRIEVED
 from tests.test_app_m8_counts import _seed
+from velometer import i18n
 from velometer.app import urls
 from velometer.app.main import CSP, TABS, create_app, csp_meta
 
@@ -40,7 +41,6 @@ ROUTE = re.compile(
 META_LINE = re.compile(
     r'^<meta (?:http-equiv="Content-Security-Policy"|name="velometer-base") [^\n]*\n', re.M
 )
-FOOTER_STAMP = "Static edition · build"
 
 
 class _Refs(HTMLParser):
@@ -169,7 +169,13 @@ def test_base_root_renders_what_identity_urls_render(rich, monkeypatch):
     apart from the two meta tags: the live app's HTML does not change."""
     with _client(_app(rich)) as c:
         live = _pages(c)
-    monkeypatch.setattr(urls, "make_u", lambda base: lambda path: path)
+    # `u` the identity for English pages; the German twin links (alternates, switch) as they are
+    real = urls.make_u
+    monkeypatch.setattr(
+        urls,
+        "make_u",
+        lambda base, lang="en": (lambda path: path) if lang == "en" else real(base, lang),
+    )
     with _client(_app(rich)) as c:
         identity = _pages(c)
     assert live.keys() == identity.keys()
@@ -202,9 +208,11 @@ def test_static_edition_footer_only_when_built_for_it(rich):
     with _client(_app(rich, static_edition={"commit": "abc1234"})) as c:
         for path, html in _pages(c).items():
             if not path.endswith("/panel"):
-                assert f"{FOOTER_STAMP} abc1234" in html, path
+                stamp = i18n.t(urls.lang_of(path), "site.footer.static_edition", commit="abc1234")
+                assert stamp in html, path
     with _client(_app(rich)) as c:
-        assert all(FOOTER_STAMP not in html for html in _pages(c).values())
+        stamps = [i18n.t(lang, "site.footer.static_edition", commit="") for lang in i18n.LANGS]
+        assert all(s not in html for s in stamps for html in _pages(c).values())
 
 
 def _config(html: str, script_id: str):

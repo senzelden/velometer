@@ -1,2 +1,12 @@
 # English UI strings. Flat keys; a plural is {one, other}. Keys mirror de.yaml.
 fmt.na: n/a
+nav.lang_switch: Deutsch
+site.footer.attribution: 'Map data © <a href="{osm}">OpenStreetMap contributors, ODbL 1.0</a>'
+site.footer.mapped_km: OSM mapped km, not built km (ADR 0006)
+site.footer.methodology: Methodology
+site.footer.csv_all: CSV (all cities)
+site.footer.run: 'Classifier {classifier} · config <code>{config}</code>'
+site.footer.static_edition: Static edition · build {commit}
+page.404.title: Page not found
+page.404.home: Overview
+page.404.text: 'There is no page at this address. <a href="{home}">Go to the overview</a>.'

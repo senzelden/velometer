@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
 from tests.report_fixture import CLASSIFIER
+from velometer import i18n
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
@@ -333,7 +334,8 @@ def test_pages_load_only_static_assets_and_osm_tiles(client):
         html = client.get(path).text
         scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
         assert scripts and all(s.startswith("/static/") for s in scripts), path
-        css = re.findall(r'<link[^>]+href="([^"]+)"', html)
+        # what a page loads: the head's alternate and canonical links are not fetched
+        css = re.findall(r'<link (?!rel="(?:alternate|canonical)")[^>]*href="([^"]+)"', html)
         assert css and all(c.startswith("/static/") for c in css), path
         assert all(i.startswith("/") and not i.startswith("//")
                    for i in re.findall(r'<img[^>]+src="([^"]+)"', html)), path  # fmt: skip
@@ -425,6 +427,7 @@ def test_pages_load_our_chart_modules(client):
         "/static/js/cite-ui.js",
         "/static/js/download-ui.js",
         "/static/js/permalink-ui.js",
+        "/static/js/lang-switch.js",
     ]
     pages = {
         "/": [*base, "/static/js/overview.js"],
@@ -480,13 +483,16 @@ def test_the_js_literal_rule_sees_each_kind():
 
 def test_footer_on_every_page(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
-    for path in ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]:
+    pages = [("/", "en"), ("/city/berlin", "en"), ("/city/paris", "en"), ("/methodology", "en"),
+             ("/methodology/de", "de"), ("/de/", "de")]  # fmt: skip
+    for path, lang in pages:
         html = client.get(path).text
         footer = html[html.index("<footer") :]
         text = _text(footer)
-        assert "© OpenStreetMap contributors, ODbL 1.0" in text
-        assert "OSM mapped km, not built km (ADR 0006)" in text
-        assert 'href="/methodology"' in footer
+        assert _text(i18n.t(lang, "site.footer.attribution", osm="")).strip() in text, path
+        assert i18n.t(lang, "site.footer.mapped_km") in text, path
+        methodology = "/methodology" if lang == "en" else "/de/methodology"
+        assert f'href="{methodology}"' in footer, path
         assert data.selector.version in text and data.selector.short_sha in text
 
 
@@ -494,9 +500,11 @@ def test_methodology_rendered_with_tables_and_language_links(client):
     html = client.get("/methodology").text
     assert "<table" in html and "separated track" in html
     assert "<pre><code>velometer run" in html  # fenced_code
-    assert 'href="/methodology/de"' in html
+    # the nav's language switch leads to the twin in the other language
+    assert re.search(r'<a class="lang-switch"[^>]*\bhref="/de/methodology"', html)
     de = client.get("/methodology/de").text
-    assert "Getrennter Radweg." in de and 'href="/methodology"' in de
+    assert "Getrennter Radweg." in de
+    assert re.search(r'<a class="lang-switch"[^>]*\bhref="/methodology"', de)
 
 
 def test_missing_methodology_is_a_note_not_an_error(setup):
