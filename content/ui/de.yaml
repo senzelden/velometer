@@ -381,7 +381,7 @@ page.story.no_narrative: noch kein Text
 page.story.headline: Hauptkennzahl im Zeitverlauf
 page.city.headline_chart: Hauptkennzahl im Zeitverlauf, {city}
 page.story.table: 'Tabelle: Hauptkennzahl je Stand'
-table.kind_headline: Hauptkennzahl {kind}
+table.kind_headline: "Haupt­kennzahl {kind}"
 cite.title.city_headline: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU)'
 note.no_run_history: kein Lauf (Verlauf)
 page.story.over_time: Zeitverlauf, mit markierten Jahren
