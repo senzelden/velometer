@@ -362,7 +362,8 @@ function updateCite(model) {
   if (key === citeKey) return;
   citeKey = key;
   const f0 = fieldsOf(details);
-  const fields = multiFields(cfg.cite_runs ?? {}, ids, title, f0.path, f0.commit);
+  // the runs of the boundary shown: a metro-area chart cites the FUA runs
+  const fields = multiFields(cfg.cite_runs?.[state.b] ?? {}, ids, title, f0.path, f0.commit);
   if (fields) setFields(details, fields);
 }
 

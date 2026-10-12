@@ -4,6 +4,7 @@ import json
 import re
 
 from tests.test_app import client, client_21, setup, setup_21  # noqa: F401  (fixtures)
+from tests.test_app_base import rich  # noqa: F401  (fixture)
 
 M10_CSV_COLUMNS = [
     "city_id", "boundary_kind", "label", "run_id", "osm_timestamp", "classifier_version",
@@ -400,16 +401,56 @@ CHART = re.compile(r'<div[^>]+class="[^"]*\bchart\b[^"]*"[^>]*aria-describedby='
 CITE_DATA = re.compile(r'class="cite-data">(.*?)</script>', re.S)
 
 
+CHART_TAG = re.compile(r'<div[^>]+class="[^"]*\bchart\b[^"]*"[^>]*aria-describedby="([^"]+)"[^>]*>')
+
+
+def _charts(html):
+    """(start, end, tag, described id) of every chart container that names its data table."""
+    return [(m.start(), m.end(), m.group(0), m.group(1)) for m in CHART_TAG.finditer(html)]
+
+
 def test_every_chart_and_keynum_has_a_cite(client, all_page_urls):  # noqa: F811
+    # each chart has its own Cite: after the data table its description names (where
+    # download-ui.js looks for it), before the next chart's table
     seen = 0
     for url in all_page_urls:
         html = client.get(url).text
-        n_charts = len(CHART.findall(html))
-        seen += n_charts
-        assert html.count('<details class="cite"') >= n_charts, url
+        charts = _charts(html)
+        seen += len(charts)
+        tables = [html.find(f'id="{desc}"') for *_, desc in charts]
+        assert all(t >= 0 for t in tables), url
+        bounds = sorted(tables) + [len(html)]
+        for (*_, desc), at in zip(charts, tables, strict=True):
+            nxt = next(b for b in bounds if b > at)
+            cite = html.find('<details class="cite"', at)
+            assert 0 <= cite < nxt, (url, desc)
         if 'class="keynums"' in html:
             block = html.split('class="keynums"', 1)[1].split("</div>\n<nav", 1)[0]
             assert 'class="cite"' in block, url
+    assert seen > 5
+
+
+DOWNLOADABLE = re.compile(
+    r'data-chart="(?!sparkline")|data-compare-chart\b|data-story-plot\b|data-plan-item="'
+)
+
+
+def test_every_chart_page_offers_the_download_control(client, all_page_urls):  # noqa: F811
+    # download-ui.js adds the control after each container its SELECTOR matches; a chart page
+    # must load it, and each chart must match it and name a data table that exists (the CSV)
+    seen = 0
+    for url in all_page_urls:
+        html = client.get(url).text
+        charts = _charts(html)
+        if not charts:
+            continue
+        host = html if "<html" in html else client.get("/compare").text  # a panel's host page
+        assert "/static/js/download-ui.js" in host, url
+        ids = _ids(html)
+        for _, _, tag, desc in charts:
+            seen += 1
+            assert DOWNLOADABLE.search(tag), (url, tag)
+            assert desc in ids, (url, desc)
     assert seen > 5
 
 
@@ -456,8 +497,9 @@ def test_a_city_without_a_run_gets_no_cite_and_no_error(client, monkeypatch):  #
 def test_compare_carries_the_per_city_runs_for_its_citation(client):  # noqa: F811
     html = client.get("/compare?c=berlin").text
     cfg = json.loads(re.search(r'id="compare-config">(.*?)</script>', html, re.S).group(1))
-    assert set(cfg["cite_runs"]) >= {"berlin"}
-    assert set(cfg["cite_runs"]["berlin"]) == {"osm_timestamp", "classifier"}
+    assert set(cfg["cite_runs"]) == {"lau", "fua"}
+    assert set(cfg["cite_runs"]["lau"]) >= {"berlin"}
+    assert set(cfg["cite_runs"]["lau"]["berlin"]) == {"osm_timestamp", "classifier"}
 
 
 def test_multi_fields_agree_with_the_shared_cases(monkeypatch):
@@ -591,10 +633,12 @@ def test_every_page_ships_tokens_and_commit(client):  # noqa: F811
 def test_server_csv_guards_formula_cells_and_keeps_numbers():
     from velometer.report.csvexport import SUBAREA_CSV_COLUMNS, csv_table, safe_cell
 
-    for bad in ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "-"]:
+    for bad in ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--", "- "]:
         assert safe_cell(bad) == "'" + bad, bad
     for ok in ["-3.2", "-1,639.8", "12", "abc", "a=b", "", "2018"]:
         assert safe_cell(ok) == ok, ok
+    for mark in ["-", "\u2013", "\u2014", "\u2212"]:  # a lone dash is a no-data mark
+        assert safe_cell(mark) == mark, repr(mark)
     row = {c: "" for c in SUBAREA_CSV_COLUMNS} | {
         "name": '=HYPERLINK("http://x")',
         "length_km": "-3.2",
@@ -606,14 +650,25 @@ def test_server_csv_guards_formula_cells_and_keeps_numbers():
 
 # ---- Task 6: permalinks and "Copy link" ----
 
-COPY_LINK = re.compile(r'<button type="button" class="copy-link" hidden>Copy link</button>')
+COPY_LINK = re.compile(r'<button type="button" class="copy-link">Copy link</button>')
+PERMALINK_BOX = re.compile(r'<div class="permalink"([^>]*)>')
 
 
 def test_stateful_pages_render_a_hidden_copy_link_button(client):  # noqa: F811
     for url in ["/city/berlin/tiers", "/city/berlin", "/stories", "/compare"]:
         html = client.get(url).text
-        assert len(COPY_LINK.findall(html)) == 1, url  # hidden until permalink-ui.js reveals it
+        assert len(COPY_LINK.findall(html)) == 1, url
         assert "permalink-ui.js" in html, url
+
+
+def test_without_javascript_the_copy_link_box_takes_no_space(client, all_page_urls):  # noqa: F811
+    # the box itself is hidden until permalink-ui.js reveals it: no margin gap without JS
+    seen = 0
+    for url in all_page_urls:
+        for attrs in PERMALINK_BOX.findall(client.get(url).text):
+            seen += 1
+            assert re.search(r"(?<![\w-])hidden\b", attrs), (url, attrs)
+    assert seen
 
 
 def test_permalink_js_reveals_the_button_and_copies_through_copytext():
@@ -733,3 +788,104 @@ def test_search_js_follows_the_rules():
     assert 'url("/data/search.json")' in src or "url('/data/search.json')" in src
     assert "announce" in src and "aria-activedescendant" in src
     assert "https://" not in src
+
+
+# ---- final review: a FUA figure cites the FUA run ----
+
+
+def _two_runs(kind_dates):
+    """RunRows where a city's LAU and FUA runs differ: {city: {kind: (timestamp, classifier)}}."""
+    from velometer.app.cite import RunRows
+
+    return RunRows(
+        {
+            city: [
+                {
+                    "boundary_kind": k,
+                    "label": "current",
+                    "osm_timestamp": ts,
+                    "classifier_version": clf,
+                    "run_id": i,
+                }  # fmt: skip
+                for i, (k, (ts, clf)) in enumerate(kinds.items())
+            ]
+            for city, kinds in kind_dates.items()
+        }
+    )
+
+
+TWO_RUNS = {
+    "berlin": {"lau": ("2026-10-03T01:00:00Z", "v4"), "fua": ("2026-09-01T01:00:00Z", "v3")},
+    "paris": {"lau": ("2026-10-04T01:00:00Z", "v4"), "fua": ("2026-09-02T01:00:00Z", "v3")},
+}
+
+
+def test_multi_city_fields_and_runs_follow_the_boundary_kind():
+    from velometer.app.cite import fields_for_cities
+
+    rows = _two_runs(TWO_RUNS)
+    fua = fields_for_cities(rows, ["berlin", "paris"], "t", "/compare", kind="fua")
+    assert (
+        fua.snapshot_note == "OSM snapshots of 2026-09-01 to 2026-09-02" and fua.classifier == "v3"
+    )
+    lau = fields_for_cities(rows, ["berlin", "paris"], "t", "/compare")
+    assert lau.snapshot_note == "OSM snapshots of 2026-10-03 to 2026-10-04"
+    assert rows.runs(["berlin"], "fua") == {
+        "berlin": {"osm_timestamp": "2026-09-01T01:00:00Z", "classifier": "v3"}
+    }
+
+
+def test_compare_on_the_metro_area_cites_the_fua_runs(client, monkeypatch):  # noqa: F811
+    from velometer.app import cite
+
+    monkeypatch.setattr(cite.RunRows, "of", classmethod(lambda cls, data: _two_runs(TWO_RUNS)))
+    html = client.get("/compare?c=berlin,paris&b=fua").text
+    (blob,) = CITE_DATA.findall(html.split('class="compare-out"', 1)[1])
+    f = json.loads(blob)
+    assert "FUA" in f["title"]
+    assert f["snapshot_note"] == "OSM snapshots of 2026-09-01 to 2026-09-02", f
+    assert f["classifier"] == "v3"
+    # the browser rebuilds the Cite when the boundary changes: it gets both kinds' runs
+    cfg = json.loads(re.search(r'id="compare-config">(.*?)</script>', html, re.S).group(1))
+    assert cfg["cite_runs"]["fua"]["berlin"]["osm_timestamp"] == "2026-09-01T01:00:00Z"
+    assert cfg["cite_runs"]["lau"]["berlin"]["osm_timestamp"] == "2026-10-03T01:00:00Z"
+
+
+def test_search_index_logs_the_content_it_leaves_out(fixture_db, tmp_path, caplog):
+    import logging
+    import shutil
+    from pathlib import Path
+
+    from velometer.app.search import search_index
+
+    content = tmp_path / "content"
+    shutil.copytree(Path("content"), content)
+    broken = sorted((content / "organisations").glob("*.yaml"))[0]
+    broken.write_text("id: [not, closed\n", encoding="utf-8")
+    with caplog.at_level(logging.WARNING, logger="velometer.app.search"):
+        idx = search_index(fixture_db[3], fixture_db[1], content)
+    assert all(e["url"] != f"/organisations#{broken.stem}" for e in idx)
+    logged = [r.getMessage() for r in caplog.records if r.name == "velometer.app.search"]
+    assert any(broken.stem in m for m in logged), logged
+
+
+def test_every_exported_search_url_resolves_to_an_exported_page_and_anchor(rich, tmp_path):  # noqa: F811
+    # the static edition under a base: search.js prefixes each url with the base, and the file
+    # and the fragment it lands on must be in the export
+    from tests.test_app_base import BASE
+    from tests.test_export import _export
+
+    out = tmp_path / "site"
+    _export(rich, out, BASE)
+    idx = json.loads((out / "data" / "search.json").read_text(encoding="utf-8"))
+    assert idx and BASE != "/"
+    anchors = 0
+    for e in idx:
+        path, _, anchor = e["url"].partition("#")
+        assert path.startswith("/") and not path.startswith(BASE), e["url"]  # the base is added
+        page = out / path.strip("/") / "index.html"
+        assert page.is_file(), e["url"]
+        if anchor:
+            anchors += 1
+            assert anchor in _ids(page.read_text(encoding="utf-8")), e["url"]
+    assert anchors

@@ -84,9 +84,18 @@ export function citeCsl(f, accessed = null, url = null) {
   return item;
 }
 
-/** origin + base + path (no leading slash) + the page's query and fragment. */
+const bare = (p) => p.replace(/(^|\/)index\.html$/, "").replace(/^\/+|\/+$/g, "");
+
+/** origin + base + path (no leading slash), plus the page's query and fragment when the path is
+ * the page shown: a figure of another page (the city panel open on Compare) cites that page's own
+ * address, not this page's state. */
 export function absoluteUrl(path, loc = globalThis.location, doc = globalThis.document) {
-  return loc.origin + base(doc) + path.replace(/^\/+/, "") + loc.search + loc.hash;
+  const b = base(doc);
+  const own = path.replace(/^\/+/, "");
+  const at = String(loc.pathname ?? "");
+  const shown = at.startsWith(b) ? at.slice(b.length) : at;
+  const state = bare(shown) === bare(own) ? loc.search + loc.hash : "";
+  return loc.origin + b + own + state;
 }
 
 const natural = (s) => s.split(/(\d+)/).map((p, i) => (i % 2 ? Number(p) : p));

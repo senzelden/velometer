@@ -38,19 +38,46 @@ function keyOf(container) {
   });
 }
 
-/** The citation fields next to the chart (its section's `.cite-data`), else the page's first. */
-function citeFields(container) {
-  for (let n = container; n && n !== document.body; n = n.parentElement) {
-    const blob = n.querySelector(".cite-data");
-    if (blob) {
-      try {
-        return JSON.parse(blob.textContent);
-      } catch {
-        return null;
-      }
+/** The `.cite-data` of the chart's own Cite: the first that follows the chart's data table (the
+ * element its description names, which for a story plot is the current step's), else the chart,
+ * in document order, without leaving the section it is in. A tier page's FUA chart thus cites the
+ * FUA run, not the LAU chart's Cite above it. */
+export function citeOf(container, doc = document) {
+  const id = tableId(container);
+  const start = (id && doc.getElementById(id)) || container;
+  for (let n = start; n && n !== doc.body; n = n.parentElement) {
+    for (let s = n.nextElementSibling; s; s = s.nextElementSibling) {
+      if (s.matches?.(".cite-data")) return s;
+      const blob = s.querySelector?.(".cite-data");
+      if (blob) return blob;
     }
+    if (n.parentElement?.matches?.("section")) break; // the chart's section ends the search
   }
   return null;
+}
+
+function citeFields(container) {
+  const blob = citeOf(container);
+  if (!blob) return null;
+  try {
+    return JSON.parse(blob.textContent);
+  } catch {
+    return null;
+  }
+}
+
+// containers whose own label is generic ("Chart of the selected cities"): what they show is named
+// by their Cite (metric, boundary, cities) and by the drawn SVG
+const GENERIC = "[data-compare-chart],[data-story-plot]";
+
+/** The title a downloaded image carries: a chart's own specific label; for a generic container,
+ * its Cite's title, else the drawn SVG's label, else the container's. */
+function titleOf(container, f) {
+  const own = container.getAttribute("aria-label");
+  if (!container.matches?.(GENERIC)) return own || f?.title || document.title;
+  const svgs = [...container.querySelectorAll("svg")];
+  const drawn = svgs.length === 1 ? svgs[0].getAttribute("aria-label") : null;
+  return f?.title || drawn || own || document.title;
 }
 
 /** The light-theme ground, ink and muted ink for the text the image adds. */
@@ -74,7 +101,7 @@ export function metaOf(container) {
     .filter(Boolean)
     .join(" · ");
   return {
-    title: container.getAttribute("aria-label") || f?.title || document.title,
+    title: titleOf(container, f),
     source,
     ...light(),
     key: keyOf(container),

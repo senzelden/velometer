@@ -83,12 +83,13 @@ class RunRows:
     def city_ids(self) -> list[str]:
         return list(self._rows)
 
-    def runs(self, city_ids: list[str]) -> dict[str, dict[str, str]]:
-        """{city: {osm_timestamp, classifier}} of each city's LAU run: what a browser needs to
-        rebuild a multi-city citation when Compare changes its cities without a reload."""
+    def runs(self, city_ids: list[str], kind: str = "lau") -> dict[str, dict[str, str]]:
+        """{city: {osm_timestamp, classifier}} of each city's run of a boundary kind: what a
+        browser needs to rebuild a multi-city citation when Compare changes its cities or its
+        boundary without a reload."""
         out = {}
         for c in city_ids:
-            row = _current_row_of_kind(self, c, "lau")
+            row = _current_row_of_kind(self, c, kind)
             if row is not None:
                 out[c] = {
                     "osm_timestamp": row["osm_timestamp"],
@@ -115,9 +116,12 @@ def fields_for_city(
     )
 
 
-def fields_for_cities(data, city_ids: list[str], title: str, path: str) -> CiteFields | None:
-    """Fields for several cities; runless cities are skipped, None when none has a run."""
-    rows = [r for c in city_ids if (r := _current_row_of_kind(data, c, "lau")) is not None]
+def fields_for_cities(
+    data, city_ids: list[str], title: str, path: str, kind: str = "lau"
+) -> CiteFields | None:
+    """Fields for several cities' runs of a boundary kind; runless cities are skipped, None when
+    none has a run."""
+    rows = [r for c in city_ids if (r := _current_row_of_kind(data, c, kind)) is not None]
     if not rows:
         return None
     days = sorted(r["osm_timestamp"][:10] for r in rows)

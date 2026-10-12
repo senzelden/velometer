@@ -117,3 +117,103 @@ test("a <summary> beside its table (the tier tables) resolves to that table, a <
   const d = control(c, doc({ sum: summary }));
   assert.ok(d.children[1].children.some((b) => b.textContent === "CSV"));
 });
+
+// ---- the title and source line of a download (final review findings 2 and 4) ----
+// A small tree DOM: parentElement, nextElementSibling, matches/querySelector(All) for the simple
+// selectors download-ui.js asks with (tag, .class, [attr], tag.class, comma lists).
+function simpleMatch(el, sel) {
+  if (/\s/.test(sel)) return false; // descendant selectors: not modelled, matches nothing
+  const tag = sel.match(/^[a-z][\w-]*/)?.[0];
+  if (tag && el.tag !== tag) return false;
+  for (const c of sel.match(/\.[\w-]+/g) ?? []) if (!(el.attrs.class ?? "").split(" ").includes(c.slice(1))) return false;
+  for (const a of sel.match(/\[[^\]]+\]/g) ?? []) {
+    const [k, v] = a.slice(1, -1).split("=");
+    if (!(k in el.attrs) || (v !== undefined && el.attrs[k] !== v)) return false;
+  }
+  return true;
+}
+function h(tag, attrs = {}, ...children) {
+  const el = {
+    tag, attrs, children, parentElement: null, textContent: attrs.text ?? "",
+    getAttribute(k) { return this.attrs[k] ?? null; },
+    hasAttribute(k) { return k in this.attrs; },
+    matches(sel) { return sel.split(",").some((s) => simpleMatch(this, s.trim())); },
+    querySelectorAll(sel) {
+      return this.children.flatMap((c) => [...(c.matches(sel) ? [c] : []), ...c.querySelectorAll(sel)]);
+    },
+    querySelector(sel) { return this.querySelectorAll(sel)[0] ?? null; },
+    get nextElementSibling() {
+      const sibs = this.parentElement?.children ?? [];
+      return sibs[sibs.indexOf(this) + 1] ?? null;
+    },
+    dataset: {},
+  };
+  for (const c of children) c.parentElement = el;
+  return el;
+}
+const cite = (fields) => h("details", { class: "cite" }, h("script", { class: "cite-data", text: JSON.stringify(fields) }));
+const fieldsAt = (title, ts, extra = {}) => ({ title, osm_timestamp: ts, classifier: "v4", commit: "abc1234", ...extra });
+function page(...children) {
+  const body = h("body", {}, ...children);
+  const all = (n) => [n, ...n.children.flatMap(all)];
+  globalThis.document = {
+    body, title: "velometer page",
+    getElementById: (id) => all(body).find((n) => n.attrs.id === id) ?? null,
+    querySelector: () => null,
+  };
+  return globalThis.document;
+}
+
+test("a FUA chart's download names the run of its own Cite, not the LAU chart's above it", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const chart = (kind) => h("div", { "data-chart": "city-tiers", "data-kind": kind,
+    "aria-label": `Tier composition over time, Berlin ${kind.toUpperCase()}`, "aria-describedby": `sum-${kind}` }); // fmt: skip
+  const lau = chart("lau");
+  const fua = chart("fua");
+  page(h("section", {},
+    h("h3"), lau, h("details", {}, h("summary", { id: "sum-lau" }), h("table")),
+    cite(fieldsAt("Berlin: tiers, LAU", "2026-10-03T01:00:00Z", { classifier: "v4" })),
+    h("h3"), fua, h("details", {}, h("summary", { id: "sum-fua" }), h("table")),
+    cite(fieldsAt("Berlin: tiers, FUA", "2026-09-01T01:00:00Z", { classifier: "v3" })),
+  )); // fmt: skip
+  const m = metaOf(fua);
+  assert.match(m.source, /OSM 2026-09-01/);
+  assert.match(m.source, /classifier v3/);
+  assert.doesNotMatch(m.source, /2026-10-03/);
+  assert.match(metaOf(lau).source, /OSM 2026-10-03 · classifier v4/);
+  assert.equal(m.title, "Tier composition over time, Berlin FUA"); // a specific label is kept
+});
+
+test("a chart with no Cite in its section does not borrow the next section's", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const lone = h("div", { "data-chart": "x", "aria-label": "Lone chart" });
+  page(h("section", {}, lone), h("section", {}, cite(fieldsAt("Other", "2026-01-01T00:00:00Z"))));
+  assert.doesNotMatch(metaOf(lone).source, /2026-01-01/);
+});
+
+test("a Compare download is titled with what it shows, not the container's generic label", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const svg = h("svg", { "aria-label": "Line chart: Mapped km per 1,000, City proper (LAU)" });
+  const box = () => h("div", { "data-compare-chart": "", "aria-label": "Chart of the selected cities",
+    "aria-describedby": "compare-caption" }, svg); // fmt: skip
+  const title = "Compare: Mapped km per 1,000 · City proper (LAU); Berlin, Paris";
+  let c = box();
+  page(h("section", { class: "compare-out" }, h("h2"), c,
+    h("div", { class: "scroll" }, h("table", {}, h("caption", { id: "compare-caption" }))),
+    cite(fieldsAt(title, null, { snapshot_note: "OSM snapshot of 2026-10-03" })))); // fmt: skip
+  assert.equal(metaOf(c).title, title);
+  c = box(); // no run for the selection: no Cite, the drawn chart names itself
+  page(h("section", { class: "compare-out" }, c));
+  assert.equal(metaOf(c).title, svg.attrs["aria-label"]);
+});
+
+test("a Stories download is titled from the step it shows (the one its description names)", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const plot = h("div", { "data-story-plot": "", "aria-label": "Chart of the current step",
+    "aria-describedby": "step-values-b" }, h("svg", { "aria-label": "Line chart: B" })); // fmt: skip
+  const step = (id, title) => h("section", { class: "story-step" },
+    h("details", { class: "step-values" }, h("summary", { id: `step-values-${id}` }), h("table")),
+    cite(fieldsAt(title, "2026-10-03T01:00:00Z"))); // fmt: skip
+  page(h("div", {}, h("aside", {}, plot), h("article", {}, step("a", "A (Stories)"), step("b", "B (Stories)"))));
+  assert.equal(metaOf(plot).title, "B (Stories)");
+});

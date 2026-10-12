@@ -28,13 +28,26 @@ test("cite: the shared cases give the same text, BibTeX and CSL-JSON", () => {
 
 test("absoluteUrl: origin + base + path + search + hash", () => {
   assert.equal(
-    absoluteUrl("/city/berlin/tiers", { origin: "https://x.org", search: "?kind=fua", hash: "" }, docWithBase("/velometer/")),
+    absoluteUrl("/city/berlin/tiers", { origin: "https://x.org", pathname: "/velometer/city/berlin/tiers/", search: "?kind=fua", hash: "" }, docWithBase("/velometer/")),
     "https://x.org/velometer/city/berlin/tiers?kind=fua",
   );
   assert.equal(
-    absoluteUrl("/city/berlin", { origin: "https://x.org", search: "", hash: "#map" }, docWithBase("/")),
+    absoluteUrl("/city/berlin", { origin: "https://x.org", pathname: "/city/berlin", search: "", hash: "#map" }, docWithBase("/")),
     "https://x.org/city/berlin#map",
   );
+});
+
+test("a citation of another page (the city panel on Compare) does not take this page's query", () => {
+  const loc = { origin: "https://x.org", pathname: "/velometer/compare/", search: "?c=berlin,paris&panel=berlin", hash: "#x" };
+  assert.equal(absoluteUrl("city/berlin", loc, docWithBase("/velometer/")), "https://x.org/velometer/city/berlin");
+  assert.equal(
+    absoluteUrl("compare", loc, docWithBase("/velometer/")),
+    "https://x.org/velometer/compare?c=berlin,paris&panel=berlin#x",
+  );
+  const home = { origin: "https://x.org", pathname: "/velometer/", search: "?q=1", hash: "" };
+  assert.equal(absoluteUrl("", home, docWithBase("/velometer/")), "https://x.org/velometer/?q=1");
+  const index = { ...home, pathname: "/velometer/index.html" };
+  assert.equal(absoluteUrl("", index, docWithBase("/velometer/")), "https://x.org/velometer/?q=1");
 });
 
 test("cslJson puts every date-parts array on one line", () => {

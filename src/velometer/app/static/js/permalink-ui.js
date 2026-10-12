@@ -1,4 +1,4 @@
-// "Copy link" (M11): reveals each `.copy-link` button (hidden without JavaScript) and copies the
+// "Copy link" (M11): reveals the box of each `.copy-link` button (hidden without JavaScript) and copies the
 // page's address as it is now: base path, query and hash included, so the permalink state the
 // page wrote with history.replaceState is in it. Where the clipboard is refused, the address is
 // shown in a <pre> and selected so Ctrl+C finishes the job.
@@ -17,6 +17,7 @@ async function copy(button) {
 }
 
 for (const button of document.querySelectorAll(".copy-link")) {
-  button.hidden = false;
+  const box = button.closest(".permalink");
+  if (box) box.hidden = false;
   button.addEventListener("click", () => copy(button));
 }

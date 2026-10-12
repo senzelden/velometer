@@ -12,7 +12,6 @@ const FORMATS = [
   ["CSL-JSON", (f, a, u) => cslJson(citeCsl(f, a, u))],
 ];
 
-let serial = 0;
 const today = () => new Date().toISOString().slice(0, 10);
 
 function el(tag, attrs = {}, text) {
@@ -35,7 +34,7 @@ export function setFields(details, fields) {
 
 /** Fill the details' blocks from its fields, the date and the address of this moment (a reopen
  * redoes it, replacing the blocks). */
-function render(details) {
+export function render(details) {
   const f = fieldsOf(details);
   const accessed = today();
   const url = absoluteUrl(f.path);
@@ -44,12 +43,12 @@ function render(details) {
   const blocks = el("div", { class: "cite-blocks" });
   FORMATS.forEach(([label, make]) => {
     const text = make(f, accessed, url);
-    const id = `cite-${++serial}`;
     const block = el("div", { class: "cite-block" });
     const head = el("div", { class: "cite-head" });
-    head.append(el("h4", { id: `${id}-h` }, label));
+    // a label, not a heading: a Cite sits under h2 and h3 sections alike
+    head.append(el("p", { class: "cite-label" }, label));
     const button = el("button", { type: "button", class: "cite-copy" }, "Copy");
-    button.setAttribute("aria-label", `Copy ${label}`);
+    button.setAttribute("aria-label", `Copy ${label}, ${f.title}`); // one per figure on a page
     button.addEventListener("click", () => copyText(text));
     head.append(button);
     block.append(head, el("pre", {}, text));

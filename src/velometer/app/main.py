@@ -435,7 +435,7 @@ def create_app(
                     shared[key] = cite_model.fields_for_city(rows, city, "", where, kind)
                 else:
                     ids = cities if cities is not None else rows.city_ids()
-                    shared[key] = cite_model.fields_for_cities(rows, list(ids), "", where)
+                    shared[key] = cite_model.fields_for_cities(rows, list(ids), "", where, kind)
             base = shared[key]
             return None if base is None else replace(base, title=title, path=path or where)
 
@@ -809,7 +809,10 @@ def create_app(
             "headline_unit": HEADLINE_UNIT,
         }
         rows = cite_rows(request, data)
-        config["cite_runs"] = {} if rows is None else rows.runs(known_ids)
+        # per boundary kind: the browser rebuilds the Cite when the boundary changes
+        config["cite_runs"] = {
+            kind: {} if rows is None else rows.runs(known_ids, kind) for kind in ("lau", "fua")
+        }
         names = [r["name"] for r in table["rows"]]
         heading = (
             cmp.counter_title(info[state.m]["label"])
@@ -822,7 +825,7 @@ def create_app(
             request, "compare.html", "compare", data, state=state, table=table, quick=quick,
             compare_cite=cite_for(request, data)(
                 f"Compare: {heading}; {', '.join(names)}", cities=[r["id"] for r in table["rows"]],
-                path="/compare",
+                kind=state.b, path="/compare",
             ),
             groups=by_country(data), metrics=info, views=cmp.VIEW_LABELS, config=config,
             href=lambda **changes: "/compare?" + cmp.serialize(state, **changes),
