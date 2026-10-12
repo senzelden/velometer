@@ -263,3 +263,7 @@ New in M11 and open:
   unless they use `.legend .chip`.
 - Search covers cities, countries, organisations, stories and pages only; it does not search
   narrative text or quotes.
+- The render pass's permalink step restores the last boundary a page offers; it does not require
+  a real export to offer two, so a dropped FUA option would leave only `lau` tested.
+- A reader pan within the 200 ms resize debounce is taken for the resize's `moveend` and not
+  written to `at=`.
