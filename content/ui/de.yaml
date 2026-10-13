@@ -538,6 +538,9 @@ plan.series.in_planning: in Planung
 plan.target_by: '{value} {unit} bis {year}'
 plan.per_year: '{unit} je Jahr, {steps}'
 plan.doc_type.drucksache: Drucksache
+plan.unit.km: km
+plan.unit.initiatives: Maßnahmen
+plan.unit.operations: Vorhaben
 plan.doc_type.rote_nummer: Bericht an den Hauptausschuss (rote Nummer)
 plan.doc_type.report: Bericht
 plan.doc_type.web: Webseite

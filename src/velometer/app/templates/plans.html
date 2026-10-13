@@ -2,7 +2,7 @@
 {% block title %}velometer · {{ t('page.plans.title') }}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.plans') }}</span></nav>{% endblock %}
 {% macro figure(v) -%}
-<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.row.unit }}</b> {{ v.quantity }}
+<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.unit }}</b> {{ v.quantity }}
 {%- if v.row.suspect %} <span class="suspect-mark">{{ t('page.plans.suspect') }}</span>{% endif %}
 <br><span class="meta">{{ v.doc_type }} {{ v.row.doc_id }}, {{ v.row.doc_date | day }}{% if v.url %} · <a href="{{ v.url }}" rel="noopener noreferrer">{{ t('page.plans.document') }}</a>{% endif %}</span>
 {%- if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>

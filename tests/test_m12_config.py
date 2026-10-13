@@ -164,3 +164,43 @@ def test_german_dimension_list_keeps_its_nouns_capitalised(setup):  # noqa: F811
         en = c.get("/city/berlin/figures").text
     assert "welche Art von km" in de and "wie die Länge gemessen wird" in de
     assert "what kind of km, how length is measured" in en
+
+
+# a unit that reads the same in both languages
+NEUTRAL_UNITS = {"km", "%"}
+
+
+def test_every_reported_unit_has_a_german_form():
+    """A reported figure on a German plans page shows its unit in German: every unit of
+    reports.csv has a `plan.unit.*` form, German unless it is language-neutral."""
+    from velometer.app.plans_pages import row_view
+    from velometer.plans.models import load_plans
+
+    _plans, rows = load_plans(Path("config/plans"))
+    bad = []
+    for r in rows:
+        de, en = row_view(r, True, {}, "de")["unit"], row_view(r, True, {}, "en")["unit"]
+        assert en == r.unit  # English shows the unit as stored
+        if de == r.unit and r.unit not in NEUTRAL_UNITS:
+            bad.append(f"{r.plan_id}/{r.item_id}/{r.year}: {r.unit!r}")
+    assert bad == []
+
+
+def test_german_name_falls_back_to_the_english_display_name(setup):  # noqa: F811
+    """A city without name_de is named on German pages exactly as on English ones (the same
+    source: the database name), even when the config's name differs."""
+    db_path, cfg = setup[0], setup[1]
+    doc = yaml.safe_load((cfg / "cities.yaml").read_text(encoding="utf-8"))
+    for city in doc["cities"]:
+        if city["id"] == "paris":
+            city["name"] = "Paris-Config"  # the database keeps "Paris"
+    (cfg / "cities.yaml").write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
+    from velometer.report.data import ReportData, open_readonly
+
+    conn = open_readonly(db_path)
+    try:
+        en = {c.id: c.name for c in ReportData(conn, cfg).cities()}
+        de = {c.id: c.name for c in ReportData(conn, cfg, "de").cities()}
+    finally:
+        conn.close()
+    assert de["paris"] == en["paris"] == "Paris"

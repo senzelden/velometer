@@ -167,6 +167,7 @@ def test_german_values_differ_from_english_unless_the_same_word():
         "Tier",
         "Link",
         "Region",
+        "km",  # the unit, in both languages
     }
     en, de = i18n.catalogue("en"), i18n.catalogue("de")
     shared = [k for k in en if en[k] == de.get(k) and isinstance(en[k], str)]

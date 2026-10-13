@@ -170,10 +170,6 @@ class CityConfig(_Strict):
         names = [self.name, *([self.name_de] if self.name_de else []), *self.aliases]
         return tuple(dict.fromkeys(names))
 
-    def display_name(self, lang: Lang) -> str:
-        """The name a page in `lang` shows: the German exonym on German pages, else `name`."""
-        return (self.name_de or self.name) if lang == "de" else self.name
-
     @model_validator(mode="after")
     def _one_lau_source(self) -> "CityConfig":
         if self.lau_code and self.lau_codes:

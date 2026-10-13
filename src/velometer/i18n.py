@@ -103,6 +103,14 @@ def _figure_column(column: str) -> Callable[[], set[str]]:
     return ids
 
 
+def _report_units() -> set[str]:
+    """The units of config/plans/reports.csv (the reported figures' `plan.unit.*` keys)."""
+    import csv
+
+    with (CONFIG / "plans" / "reports.csv").open(newline="", encoding="utf-8") as f:
+        return {row["unit"] for row in csv.DictReader(f)}
+
+
 def _categories() -> set[str]:
     from velometer.report.change import CATEGORIES
 
@@ -124,6 +132,7 @@ DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "js.tier.": _tiers,
     "figure.scope.": _figure_column("network_scope"),
     "figure.basis.": _figure_column("length_basis"),
+    "plan.unit.": _report_units,
 }
 # key prefixes of the JS strings that are not catalogue keys: `js_strings` writes them from
 # MONTHS_SHORT / MONTHS, the one home of the month names

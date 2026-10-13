@@ -5,7 +5,7 @@
 # · fmt.* · city.keynum.* · counts.* · compare.* · story.* · time.* · sources.* · search.* ·
 # org.* · plan.* · regions.* · permalink.* · subarea.*. Built from ids (i18n.DYNAMIC_FAMILIES): country.* tier.* road_class.*
 # city.tab.* compare.group.* compare.metric.* compare.view.* org.kind.* plan.doc_type.*
-# plan.status.* change.category.* js.tier.* figure.scope.* figure.basis.* · preset.*
+# plan.status.* change.category.* js.tier.* figure.scope.* figure.basis.* plan.unit.* · preset.*
 # js.* (at the end): the scripts' strings, the only keys a page sends to the browser (base.html
 # #ui-strings, static/js/strings.js); i18n.js_strings adds js.month.short.* and js.month.long.*.
 fmt.na: n/a
@@ -547,6 +547,9 @@ plan.series.in_planning: in planning
 plan.target_by: '{value} {unit} by {year}'
 plan.per_year: '{unit} per year, {steps}'
 plan.doc_type.drucksache: Drucksache
+plan.unit.km: km
+plan.unit.initiatives: initiatives
+plan.unit.operations: operations
 plan.doc_type.rote_nummer: Hauptausschuss report (rote Nummer)
 plan.doc_type.report: report
 plan.doc_type.web: web page

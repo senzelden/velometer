@@ -282,7 +282,8 @@ class ReportData:
                     out.append(c.model_copy(update={"names": (c.name,)}))
                     continue
                 names = tuple(dict.fromkeys([c.name, *cfg.names]))
-                name = cfg.display_name(self.lang) if self.lang == "de" else c.name
+                # German: the exonym, else exactly the name English shows (the database's)
+                name = (cfg.name_de or c.name) if self.lang == "de" else c.name
                 out.append(c.model_copy(update={"name": name, "names": names}))
             self._all_cities = out
         return self._all_cities

@@ -65,7 +65,7 @@
 <tr>
   <td class="num" data-label="{{ t('table.year') }}">{{ y.year }}</td>
   <td class="num" data-label="{{ t('table.target') }}">{% if y.target is not none %}{{ y.target | num(",g") }} {{ i.item.unit }}{% else %}<span class="note">{{ t('page.plan.none') }}</span>{% endif %}</td>
-  <td data-label="{{ t('table.reported_in_year') }}">{% if y.reported %}<ul class="figures">{% for v in y.reported %}<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.row.unit }}</b> · {{ status(v) }} · {{ doc_ref(v) }}{% if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<span class="note">{{ t('page.plan.not_reported') }}</span>{% endif %}</td>
+  <td data-label="{{ t('table.reported_in_year') }}">{% if y.reported %}<ul class="figures">{% for v in y.reported %}<li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.unit }}</b> · {{ status(v) }} · {{ doc_ref(v) }}{% if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<span class="note">{{ t('page.plan.not_reported') }}</span>{% endif %}</td>
   {% if i.network %}<td class="num" data-label="{{ t('table.completed_projects') }}">{% if y.projects is not none %}{{ y.projects | num(",.2f") }} km{% else %}<span class="note">{% if projects_present %}{{ t('page.plan.zero_or_none') }}{% else %}{{ t('fmt.na') }}{% endif %}</span>{% endif %}</td>{% endif %}
 </tr>
 {% endfor %}
@@ -104,7 +104,7 @@
 <thead><tr><th class="num">{{ t('table.year') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.status') }}</th><th>{{ t('table.document') }}</th></tr></thead>
 <tbody>
 {% for year, views in s.years %}{% for v in views %}
-<tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num" data-label="{{ t('table.year') }}">{{ year }}</td><td class="num" data-label="{{ t('table.value') }}">{{ v.value }} {{ v.row.unit }}</td><td data-label="{{ t('table.status') }}">{% if v.row.suspect %}<span class="flagmark" aria-hidden="true">⚑</span> {% endif %}{{ status(v) }}</td><td data-label="{{ t('table.document') }}">{{ doc_ref(v) }}<br><span class="meta">{{ v.row.locator }}</span></td></tr>
+<tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num" data-label="{{ t('table.year') }}">{{ year }}</td><td class="num" data-label="{{ t('table.value') }}">{{ v.value }} {{ v.unit }}</td><td data-label="{{ t('table.status') }}">{% if v.row.suspect %}<span class="flagmark" aria-hidden="true">⚑</span> {% endif %}{{ status(v) }}</td><td data-label="{{ t('table.document') }}">{{ doc_ref(v) }}<br><span class="meta">{{ v.row.locator }}</span></td></tr>
 {% if v.row.note %}<tr class="note-row"><td colspan="4" class="meta" data-label="{{ t('table.year') }}">{{ v.row.note }}</td></tr>{% endif %}
 {% endfor %}{% endfor %}
 </tbody>

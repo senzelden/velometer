@@ -102,6 +102,7 @@ def row_view(r: ReportRow, current: bool, orgs: dict[str, Organisation], lang: L
     return {
         "row": r,
         "value": num(r.value, lang),
+        "unit": t(lang, f"plan.unit.{r.unit}"),  # the stored unit, in `lang`
         "quantity": quantity_text(r, lang),
         "series": series_text(r, lang),
         "doc_type": t(lang, f"plan.doc_type.{r.doc_type}"),
