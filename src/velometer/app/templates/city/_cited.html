@@ -2,7 +2,7 @@
 {% if cited_sources %}
 <h3>{{ t('nav.sources') }}</h3>
 <ol class="citations">
-{% for n, s in cited_sources %}<li id="{{ nar.prefix if nar else "" }}src-{{ n }}" value="{{ n }}">{{ s.publisher }}, <cite>{{ s.title }}</cite>{% if s.published %} ({{ s.published | day }}){% endif %}{% if s.url | http_url %} · <a href="{{ s.url | http_url }}" rel="noopener noreferrer">{{ t('cite.source') }}</a>{% endif %}{% if s.archive_url | http_url %} · <a href="{{ s.archive_url | http_url }}" rel="noopener noreferrer">{{ t('cite.archived') }}</a>{% endif %}</li>
+{% for n, s in cited_sources %}<li id="{{ nar.prefix if nar else "" }}src-{{ n }}" value="{{ n }}">{{ source_field(s, "publisher") }}, <cite>{{ source_field(s, "title") }}</cite>{% if s.published %} ({{ s.published | day }}){% endif %}{% if s.url | http_url %} · <a href="{{ s.url | http_url }}" rel="noopener noreferrer">{{ t('cite.source') }}</a>{% endif %}{% if s.archive_url | http_url %} · <a href="{{ s.archive_url | http_url }}" rel="noopener noreferrer">{{ t('cite.archived') }}</a>{% endif %}</li>
 {% endfor %}</ol>
 {% endif %}
 {% if cited_refs %}

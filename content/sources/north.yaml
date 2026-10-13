@@ -68,6 +68,7 @@ sources:
   - id: copenhagen-cykelfokus-2024
     publisher: Københavns Kommune
     title: "Cykelfokus 2024: Københavns Kommunes retningslinjer for cykel- og vejprojekter (council agenda annex)"
+    title_de: "Cykelfokus 2024: Københavns Kommunes retningslinjer for cykel- og vejprojekter (Anlage zur Tagesordnung des Stadtrats)"
     url: https://www.kk.dk/sites/default/files/agenda/03e7571c-7870-4344-95bf-6d33c5779242/81e1e2f8-dd62-415e-be0c-ea31526f3f0b-bilag-2.pdf
     accessed: 2026-10-06
     language: da
@@ -118,6 +119,7 @@ sources:
   - id: stockholm-cykelplan-2022
     publisher: Stockholms stad, trafikkontoret
     title: "Cykelstaden: Cykelplan för Stockholms stad (copy hosted by insynsverige.se)"
+    title_de: "Cykelstaden: Cykelplan för Stockholms stad (Kopie auf insynsverige.se)"
     url: https://insynsverige.se/documentHandler.ashx?did=2021923
     accessed: 2026-10-06
     language: sv
@@ -205,6 +207,7 @@ sources:
         locator: "body text"
   - id: oslo-ey-evaluering-2024
     publisher: EY (Ernst & Young), commissioned by Oslo kommune
+    publisher_de: "EY (Ernst & Young), im Auftrag von Oslo kommune"
     title: Evaluering av Oslo kommunes sykkelstrategi 2015-2025, sluttrapport
     url: https://www.ey.com/content/dam/ey-unified-site/ey-com/no-no/insights/government-public-sector/documents/ey-evaluering-av-oslo-kommunes-sykkelstrategi-2015-2025-sluttrapport.pdf
     accessed: 2026-10-06
@@ -457,6 +460,7 @@ sources:
   - id: utrecht-oud-utrecht-fietsstad
     publisher: Historische Vereniging Oud-Utrecht
     title: Hoe Utrecht fietsstad werd (reprint of a 2015 Tijdschrift Oud-Utrecht article)
+    title_de: "Hoe Utrecht fietsstad werd (Nachdruck eines Artikels von 2015 aus dem Tijdschrift Oud-Utrecht)"
     url: https://oud-utrecht.nl/nieuws/1049-hoe-utrecht-fietsstad-werd
     published: 2022-04-18
     accessed: 2026-10-06

@@ -140,6 +140,7 @@ cities:
     bikenetkit_id: copenhagen_dk
     nuts3_is_city: false
     nuts3_note: "DK011 is Byen København (area about 185 km2), not Københavns Kommune (about 92-104 km2); not comparable to commune-bounded runs"
+    nuts3_note_de: "DK011 ist Byen København (Fläche etwa 185 km²), nicht Københavns Kommune (etwa 92–104 km²); nicht vergleichbar mit Läufen auf der Gemeindegrenze"
   - id: wroclaw
     name: Wrocław
     country_iso2: PL
@@ -164,6 +165,7 @@ cities:
     bikenetkit_id: amsterdam_nl
     nuts3_is_city: false
     nuts3_note: "NL329 is Groot-Amsterdam (QECIO area 874.8 km2), not the gemeente (LAU 223.9 km2)"
+    nuts3_note_de: "NL329 ist Groot-Amsterdam (QECIO-Fläche 874,8 km²), nicht die gemeente (LAU 223,9 km²)"
   - id: utrecht
     name: Utrecht
     country_iso2: NL
@@ -176,6 +178,7 @@ cities:
     bikenetkit_id: utrecht_nl
     nuts3_is_city: false
     nuts3_note: "NL310 is the province of Utrecht (QECIO area 1449.8 km2), not the gemeente (LAU 99.3 km2)"
+    nuts3_note_de: "NL310 ist die Provinz Utrecht (QECIO-Fläche 1.449,8 km²), nicht die gemeente (LAU 99,3 km²)"
   - id: madrid
     name: Madrid
     country_iso2: ES
@@ -188,6 +191,7 @@ cities:
     bikenetkit_id: madrid_es
     nuts3_is_city: false
     nuts3_note: "ES300 is the Comunidad de Madrid (QECIO area 8029.5 km2), not the municipio (LAU 605.0 km2)"
+    nuts3_note_de: "ES300 ist die Comunidad de Madrid (QECIO-Fläche 8.029,5 km²), nicht das municipio (LAU 605,0 km²)"
     population_override:
       value: 3506730
       year: 2025
@@ -205,6 +209,7 @@ cities:
     bikenetkit_id: barcelona_es
     nuts3_is_city: false
     nuts3_note: "ES511 is the province of Barcelona (QECIO area 7730.1 km2), not the municipi (LAU 98.3 km2)"
+    nuts3_note_de: "ES511 ist die Provinz Barcelona (QECIO-Fläche 7.730,1 km²), nicht das municipi (LAU 98,3 km²)"
     population_override:
       value: 1731649
       year: 2025
@@ -222,6 +227,7 @@ cities:
     bikenetkit_id: stockholm_se
     nuts3_is_city: false
     nuts3_note: "SE110 is Stockholms län (QECIO area 7072.8 km2), not Stockholms kommun (LAU 194.8 km2)"
+    nuts3_note_de: "SE110 ist Stockholms län (QECIO-Fläche 7.072,8 km²), nicht Stockholms kommun (LAU 194,8 km²)"
   - id: oslo
     name: Oslo
     country_iso2: "NO"
@@ -253,6 +259,7 @@ cities:
     bikenetkit_id: helsinki_fi
     nuts3_is_city: false
     nuts3_note: "FI1B1 is Helsinki-Uusimaa (QECIO area 9419.6 km2), not the city (LAU 213.4 km2)"
+    nuts3_note_de: "FI1B1 ist Helsinki-Uusimaa (QECIO-Fläche 9.419,6 km²), nicht die Stadt (LAU 213,4 km²)"
   - id: lyon
     name: Lyon
     country_iso2: FR
@@ -265,6 +272,7 @@ cities:
     bikenetkit_id: lyon_fr
     nuts3_is_city: false
     nuts3_note: "FRK26 is the Rhône département incl. the Métropole (QECIO area 3259.8 km2), not the commune (LAU 48.0 km2)"
+    nuts3_note_de: "FRK26 ist das Département Rhône einschließlich der Métropole (QECIO-Fläche 3.259,8 km²), nicht die commune (LAU 48,0 km²)"
     population_override:
       value: 519127
       year: 2023
@@ -282,6 +290,7 @@ cities:
     bikenetkit_id: strasbourg_fr
     nuts3_is_city: false
     nuts3_note: "FRF11 is the Bas-Rhin département (QECIO area 4797.2 km2), not the commune (LAU 78.2 km2)"
+    nuts3_note_de: "FRF11 ist das Département Bas-Rhin (QECIO-Fläche 4.797,2 km²), nicht die commune (LAU 78,2 km²)"
     population_override:
       value: 293771
       year: 2023
@@ -299,6 +308,7 @@ cities:
     bikenetkit_id: bordeaux_fr
     nuts3_is_city: false
     nuts3_note: "FRI12 is the Gironde département (QECIO area 10083.8 km2), not the commune (LAU 49.7 km2)"
+    nuts3_note_de: "FRI12 ist das Département Gironde (QECIO-Fläche 10.083,8 km²), nicht die commune (LAU 49,7 km²)"
     population_override:
       value: 267991
       year: 2023
@@ -366,6 +376,7 @@ cities:
     bikenetkit_id: ljubljana_si
     nuts3_is_city: false
     nuts3_note: "SI041 is Osrednjeslovenska (QECIO area 2333.9 km2), not the Mestna občina Ljubljana (LAU 275.0 km2)"
+    nuts3_note_de: "SI041 ist Osrednjeslovenska (QECIO-Fläche 2.333,9 km²), nicht die Mestna občina Ljubljana (LAU 275,0 km²)"
   - id: bratislava
     name: Bratislava
     country_iso2: SK
@@ -396,3 +407,4 @@ cities:
     bikenetkit_id: bratislava_sk
     nuts3_is_city: false
     nuts3_note: "SK010 is Bratislavský kraj (QECIO area 2052.2 km2), not the city (17 borough LAU, 367.6 km2)"
+    nuts3_note_de: "SK010 ist Bratislavský kraj (QECIO-Fläche 2.052,2 km²), nicht die Stadt (17 LAU der Stadtteile, 367,6 km²)"

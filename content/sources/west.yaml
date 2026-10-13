@@ -46,6 +46,7 @@ sources:
 - id: paris-opendata-lineaire-km
   publisher: Ville de Paris, Paris Data
   title: Linéaire cyclable (en km), dataset description
+  title_de: "Linéaire cyclable (en km), Beschreibung des Datensatzes"
   url: https://opendata.paris.fr/explore/dataset/lineaire-cyclable-km/information/
   accessed: '2026-10-06'
   language: fr
@@ -69,6 +70,7 @@ sources:
 - id: paris-opendata-amenagements
   publisher: Ville de Paris, Direction de la Voirie et des Déplacements
   title: Linéaires d'aménagement cyclable, dataset description
+  title_de: "Linéaires d'aménagement cyclable, Beschreibung des Datensatzes"
   url: https://opendata.paris.fr/explore/dataset/amenagements-cyclables/information/
   accessed: '2026-10-06'
   language: fr
@@ -360,6 +362,7 @@ sources:
 - id: strasbourg-opendata-bnac
   publisher: Ville et Eurométropole de Strasbourg, data.strasbourg.eu
   title: Aménagements cyclables au format BNAC, dataset description
+  title_de: "Aménagements cyclables au format BNAC, Beschreibung des Datensatzes"
   url: https://data.strasbourg.eu/explore/dataset/amg_cycl_bnac/information/
   accessed: '2026-10-06'
   language: fr
@@ -437,6 +440,7 @@ sources:
   publisher: Chambre régionale des comptes Nouvelle-Aquitaine
   title: Bordeaux Métropole – Plan vélo, rapport d’observations définitives, exercices 2019 et suivants,
     deliberated 5 August 2025 (copy published by the Ville de Mérignac)
+  title_de: "Bordeaux Métropole – Plan vélo, rapport d’observations définitives, exercices 2019 et suivants, beraten am 5. August 2025 (Kopie, veröffentlicht von der Ville de Mérignac)"
   url: https://www.merignac.com/sites/default/files/2026-04/crc-bordeaux-metropole-plan-velo.pdf
   accessed: '2026-10-06'
   language: fr
@@ -519,6 +523,7 @@ sources:
 - id: madrid-opendata-infraestructura-ciclista
   publisher: Ayuntamiento de Madrid, Portal de datos abiertos
   title: Bici. Infraestructura ciclista, dataset description
+  title_de: "Bici. Infraestructura ciclista, Beschreibung des Datensatzes"
   url: https://datos.madrid.es/dataset/205107-0-vias-ciclistas
   accessed: '2026-10-06'
   language: es
@@ -551,6 +556,7 @@ sources:
   publisher: Ultima Hora
   title: La red ciclista de la capital llega a los 1.167 kilómetros y da un estirón de un 11,4% más desde
     que Almeida es alcalde (figures as reported from the city's Área de Urbanismo, Medio Ambiente y Movilidad)
+  title_de: "La red ciclista de la capital llega a los 1.167 kilómetros y da un estirón de un 11,4% más desde que Almeida es alcalde (Zahlen nach Angaben des städtischen Área de Urbanismo, Medio Ambiente y Movilidad)"
   url: https://www.ultimahora.es/noticias/comunidades/2026/03/31/2600335/red-ciclista-capital-llega-1167-kilometros-estiron-mas-desde-almeida-alcalde.html
   published: '2026-03-31'
   accessed: '2026-10-06'
@@ -675,6 +681,7 @@ sources:
 - id: barcelona-opendata-vies-ciclables
   publisher: Ajuntament de Barcelona, Open Data BCN
   title: Cycle paths in the city of Barcelona (vies ciclables), dataset description
+  title_de: "Cycle paths in the city of Barcelona (vies ciclables), Beschreibung des Datensatzes"
   url: https://opendata-ajuntament.barcelona.cat/data/en/dataset/vies-ciclables
   accessed: '2026-10-06'
   language: en

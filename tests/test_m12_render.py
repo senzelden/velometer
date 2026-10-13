@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from markupsafe import escape
 
 from tests.conftest import app_for, make_source
 from tests.content_util import fake_translate
@@ -92,6 +93,84 @@ def test_pullquote_falls_back_to_gloss_en_in_english():
 def test_german_quote_has_no_gloss_on_german_pages():
     html = str(narrative.pullquote({"s": make_source("de")}, "s/e", lang="de"))
     assert 'class="gloss"' not in html
+
+
+def _titled(language: str, **fields):
+    return make_source(language).model_copy(update=fields)
+
+
+@pytest.mark.parametrize(
+    "language,title,title_de,html",
+    [  # our note in German, the original title in the source's language
+     ("en", "City Ranking 2025 (report)", "City Ranking 2025 (Bericht)",
+      '<span lang="en">City Ranking 2025</span> (Bericht)'),
+     ("fr", "Linéaire (en km), dataset description", "Linéaire (en km), Datensatzbeschreibung",
+      '<span lang="fr">Linéaire (en km)</span>, Datensatzbeschreibung'),
+     # diverging inside a word drops the whole word from the original part
+     ("en", "Zenodo (IT University; conference proceeding)", "Zenodo (IT University; Tagung)",
+      '<span lang="en">Zenodo (IT University</span>; Tagung)'),
+     ("en", "Plan, deliberated 5 May", "Plan, beschlossen am 5. Mai",
+      '<span lang="en">Plan</span>, beschlossen am 5. Mai'),
+     # an original name closing our note is original too
+     ("fr", "Plan, deliberated 5 May (copy by the Ville de Mérignac)",
+      "Plan, beraten am 5. Mai (Kopie der Ville de Mérignac)",
+      '<span lang="fr">Plan</span>, beraten am 5. Mai (Kopie der '
+      '<span lang="fr">Ville de Mérignac</span>)'),
+     ("en", "Zenodo (GISRUK 2026 proceeding; IT University of Copenhagen)",
+      "Zenodo (Tagungsbeitrag GISRUK 2026; IT University of Copenhagen)",
+      '<span lang="en">Zenodo</span> (Tagungsbeitrag GISRUK 2026; '
+      '<span lang="en">IT University of Copenhagen</span>)'),
+     # a shared date or number alone is no original text
+     ("en", "Report (answer of 20 May 2026)", "Report (Antwort vom 20. Mai 2026)",
+      '<span lang="en">Report</span> (Antwort vom 20. Mai 2026)'),
+     # no German sibling: the whole title is original
+     ("pl", "Plan Działań Rowerowych", None, '<span lang="pl">Plan Działań Rowerowych</span>'),
+     # a German source needs no language mark
+     ("de", "Fortschrittsbericht (answer of 2 May)", "Fortschrittsbericht (Antwort vom 2. Mai)",
+      "Fortschrittsbericht (Antwort vom 2. Mai)")],
+)  # fmt: skip
+def test_source_title_on_german_pages(language, title, title_de, html):
+    source = _titled(language, title=title, title_de=title_de)
+    assert str(narrative.source_field(source, "title", "de")) == html
+    assert str(narrative.source_field(source, "title", "en")) == str(escape(title))
+
+
+def test_source_publisher_on_german_pages_and_escaping():
+    source = _titled("nb", publisher="EY & co, commissioned by Oslo kommune",
+                     publisher_de="EY & co, im Auftrag von Oslo kommune")  # fmt: skip
+    assert str(narrative.source_field(source, "publisher", "de")) == (
+        '<span lang="nb">EY &amp; co</span>, im Auftrag von <span lang="nb">Oslo kommune</span>'
+    )
+    assert str(narrative.source_field(source, "publisher", "en")) == (
+        "EY &amp; co, commissioned by Oslo kommune"
+    )
+
+
+def test_pullquote_and_cited_list_show_the_german_title(setup, tmp_path):  # noqa: F811
+    source = _titled("en", title="Ranking (report)", title_de="Ranking (Bericht)")
+    de = str(narrative.pullquote({"s": source}, "s/e", lang="de"))
+    en = str(narrative.pullquote({"s": source}, "s/e", lang="en"))
+    assert '<span lang="en">Ranking</span> (Bericht)' in de and "report" not in de
+    assert "Ranking (report)" in en and "Bericht" not in en
+    content = _content(tmp_path)  # the shipped registry: Berlin cites sources with title_de
+    with app_for(setup, content=content) as c:
+        de_page = c.get("/de/city/berlin/figures").text
+        en_page = c.get("/city/berlin/figures").text
+    assert "(Antwort vom 20. Mai 2026)" in de_page and "(answer of 20 May 2026)" not in de_page
+    assert "(answer of 20 May 2026)" in en_page and "Antwort vom" not in en_page
+
+
+@pytest.mark.parametrize("field", ["title_de", "publisher_de"])
+def test_german_source_fields_are_never_blank_or_a_copy(field):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="blank"):
+        _titled("en").model_validate({**_titled("en").model_dump(), field: " "})
+    english = field.removesuffix("_de")
+    with pytest.raises(ValidationError, match="repeats"):
+        _titled("en").model_validate(
+            {**_titled("en").model_dump(), field: getattr(_titled("en"), english)}
+        )
 
 
 def test_missing_german_explanation_falls_back_in_english(setup):  # noqa: F811
@@ -317,24 +396,49 @@ def test_suspect_note_lookup_falls_back_in_english():
     assert note_in("stored as printed", "en", notes) == ("stored as printed", False)
 
 
-def test_suspect_note_without_german_is_marked_on_german_plan_pages(setup):  # noqa: F811
+def _plan_pages(setup, notes_de: bool):  # noqa: F811
+    """(German, English) /plans/berlin of the fixture app, its config copy with or without
+    reports_notes_de.yaml."""
+    if not notes_de:
+        (setup[1] / "plans" / "reports_notes_de.yaml").unlink()
     with app_for(setup) as c:
-        de = c.get("/de/plans/berlin").text
-        en = c.get("/plans/berlin").text
-    notes = re.findall(r'<span class="meta suspect-note"([^>]*)>', de)
+        return c.get("/de/plans/berlin").text, c.get("/plans/berlin").text
+
+
+SUSPECT = r'<span class="meta suspect-note"([^>]*)>'
+NOTE_ROW = r'<tr class="note-row"><td ([^>]*)>'
+
+
+def test_suspect_note_without_german_is_marked_on_german_plan_pages(setup):  # noqa: F811
+    de, en = _plan_pages(setup, notes_de=False)
+    notes = re.findall(SUSPECT, de)
     assert notes and all('lang="en" data-fallback' in a for a in notes)
-    assert all(a == "" for a in re.findall(r'<span class="meta suspect-note"([^>]*)>', en))
+    assert all(a == "" for a in re.findall(SUSPECT, en))
 
 
 def test_every_report_note_without_german_is_marked_on_the_german_plan_page(setup):  # noqa: F811
     """Not only the suspect notes: the note row under each figure of the Berlin plan's series
-    is English on a German page until reports_notes_de.yaml has its sibling."""
-    with app_for(setup) as c:
-        de = c.get("/de/plans/berlin").text
-        en = c.get("/plans/berlin").text
-    rows = re.findall(r'<tr class="note-row"><td ([^>]*)>', de)
+    is English on a German page when reports_notes_de.yaml has no sibling for it."""
+    de, en = _plan_pages(setup, notes_de=False)
+    rows = re.findall(NOTE_ROW, de)
     assert rows and all('lang="en" data-fallback' in a for a in rows)
-    assert all("lang=" not in a for a in re.findall(r'<tr class="note-row"><td ([^>]*)>', en))
+    assert all("lang=" not in a for a in re.findall(NOTE_ROW, en))
+
+
+def test_every_report_note_has_its_german_sibling_on_the_german_plan_page(setup):  # noqa: F811
+    """The shipped reports_notes_de.yaml covers every reports.csv note: no note row or suspect
+    note of the German Berlin plan page is an English fallback, and the English page keeps the
+    English notes."""
+    from velometer.plans.models import load_plans, load_report_notes_de
+
+    de, en = _plan_pages(setup, notes_de=True)
+    assert re.findall(NOTE_ROW, de) and re.findall(SUSPECT, de)
+    assert not [a for a in re.findall(NOTE_ROW, de) + re.findall(SUSPECT, de) if "lang=" in a]
+    _plans, rows = load_plans(Path("config/plans"))
+    notes = load_report_notes_de(Path("config/plans"), rows)
+    assert {r.note for r in rows if r.note} == set(notes)
+    shown = [en_note for en_note in notes if escape(en_note) in en]
+    assert shown and all(escape(notes[n]) in de and escape(n) not in de for n in shown)
 
 
 def test_a_region_is_never_named_after_a_fallback_heading_on_a_german_page():

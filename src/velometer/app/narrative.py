@@ -186,6 +186,61 @@ class _Numbering:
         return Markup(REF_MARK.sub(ref, SOURCE_MARK.sub(source, body)))
 
 
+_TRIM = " (,;:–—-"
+
+
+def _original_parts(english: str, german: str) -> tuple[int, int, int]:
+    """(prefix end, suffix start, suffix end) of the original-language text in a German
+    publisher or title: the whole words it shares with the English field at its start and at
+    its end, without the punctuation of our note around them. "Ranking 2025 (report)" /
+    "Ranking 2025 (Bericht)": the prefix "Ranking 2025"; "(copy by the Ville de Mérignac)" /
+    "(Kopie der Ville de Mérignac)": the suffix "Ville de Mérignac"."""
+    n = 0
+    for a, b in zip(english, german, strict=False):
+        if a != b:
+            break
+        n += 1
+    if n < len(german) and n and german[n - 1].isalnum() and german[n].isalnum():
+        n = german.rfind(" ", 0, n) + 1  # diverged inside a word: drop the whole word
+    m = 0
+    for a, b in zip(reversed(english[n:]), reversed(german[n:]), strict=False):
+        if a != b:
+            break
+        m += 1
+    start, end = len(german) - m, len(german)
+    if 0 < start < end and german[start - 1].isalnum() and german[start].isalnum():
+        nxt = german.find(" ", start)
+        start = end if nxt < 0 else nxt
+    while start < end and german[start] in _TRIM:
+        start += 1
+    if german[start:end].endswith(")") and "(" not in german[start:end]:
+        end -= 1  # the bracket closing our note
+    if not any(c.isalpha() for c in german[start:end]):
+        start = end = len(german)
+    return len(german[:n].rstrip(_TRIM)), start, end
+
+
+def source_field(source: Source, field: str, lang: Lang = "en") -> Markup:
+    """A source's `publisher` or `title` as a page shows it, escaped. English pages: the field.
+    German pages: its German sibling (our notes in German) or the field, with the original-
+    language parts in `lang="<source language>"` unless that is German."""
+    text = getattr(source, field)
+    if lang != "de":
+        return escape(text)
+    german = getattr(source, f"{field}_de")
+    shown = german or text
+    if source.language.split("-")[0] == "de":
+        return escape(shown)
+    pre, start, end = (len(shown),) * 3 if german is None else _original_parts(text, german)
+
+    def original(part: str) -> Markup:
+        return Markup('<span lang="{}">{}</span>').format(source.language, part) if part else ""
+
+    return Markup("{}{}{}{}").format(
+        original(shown[:pre]), shown[pre:start], original(shown[start:end]), shown[end:]
+    )
+
+
 def _date(source: Source) -> str:
     return source.published.isoformat() if source.published else ""
 
@@ -197,7 +252,12 @@ def pullquote(sources: dict[str, Source], excerpt_ref: str, lang: Lang = "en") -
     excerpt = next((e for e in source.excerpts if e.id == eid), None) if source else None
     if source is None or excerpt is None:
         return _note(lang, t(lang, "cite.missing_source"), "p")
-    head = ", ".join(escape(p) for p in [source.publisher, source.title, _date(source)] if p)
+    parts = [
+        source_field(source, "publisher", lang) if source.publisher else "",
+        source_field(source, "title", lang) if source.title else "",
+        escape(_date(source)),
+    ]
+    head = ", ".join(p for p in parts if p)
     caption = [Markup(head)]
     if url := safe_url(source.url):
         caption.append(

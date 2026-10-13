@@ -75,11 +75,11 @@ def english_words(html: str) -> list[str]:
 
 
 def test_no_english_words_on_german_city_pages(client, all_page_urls):  # noqa: F811
-    """Every German city page but the Figures tab (its reported-figure rows quote the sources'
-    own titles and descriptions, which stay original) has no English function word outside
-    lang="en"; the Over time tab's provenance lines and flag details are built at request time."""
-    pages = [u for u in all_page_urls if u.startswith("/de/city/") and "/figures" not in u]
-    assert any(u.endswith("/time") for u in pages)
+    """Every German city page has no English function word outside lang="en": the Over time
+    tab's provenance lines and flag details are built at request time, and the Figures tab's
+    source titles show our notes in German with the original title in its own language."""
+    pages = [u for u in all_page_urls if u.startswith("/de/city/")]
+    assert any(u.endswith("/time") for u in pages) and any(u.endswith("/figures") for u in pages)
     found = {u: w for u in pages if (w := english_words(client.get(u).text))}
     assert found == {}
 

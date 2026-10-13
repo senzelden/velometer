@@ -48,6 +48,11 @@ class Source(_Strict):
     id: str
     publisher: str
     title: str
+    # German pages (M12): the publisher or title with our editorial notes in German ("answer of
+    # 20 May 2026" -> "Antwort vom 20. Mai 2026"); the original-language name or title in it is
+    # kept as it is. Omitted when the English field holds no editorial English.
+    publisher_de: str | None = None
+    title_de: str | None = None
     url: str
     published: date | None = None
     accessed: date
@@ -68,6 +73,13 @@ class Source(_Strict):
     def _external(cls, v: str | None) -> str | None:
         return _external_url(v)
 
+    @field_validator("publisher_de", "title_de")
+    @classmethod
+    def _german_not_blank(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("a German publisher or title must not be blank (omit it instead)")
+        return v
+
     @model_validator(mode="after")
     def _excerpts(self) -> "Source":
         ids = [e.id for e in self.excerpts]
@@ -80,6 +92,9 @@ class Source(_Strict):
                 raise ValueError(
                     f"excerpt {self.id}/{e.id} needs gloss_en (language {self.language})"
                 )
+        for name in ("publisher", "title"):
+            if getattr(self, f"{name}_de") == getattr(self, name):
+                raise ValueError(f"{self.id}: {name}_de repeats {name} (omit it instead)")
         return self
 
 

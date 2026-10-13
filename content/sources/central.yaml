@@ -2,7 +2,9 @@ sources:
   # -------------------------------------------------------------------- berlin
   - id: berlin-drs-19-25987
     publisher: Abgeordnetenhaus Berlin (answer of the Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)
+    publisher_de: "Abgeordnetenhaus Berlin (Antwort der Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)"
     title: "Schriftliche Anfrage 19/25987: Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und Wirklichkeit im Radverkehr (answer of 20 May 2026)"
+    title_de: "Schriftliche Anfrage 19/25987: Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und Wirklichkeit im Radverkehr (Antwort vom 20. Mai 2026)"
     url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-25987.pdf
     published: 2026-05-20
     accessed: 2026-10-06
@@ -36,6 +38,7 @@ sources:
   - id: berlin-fortschrittsbericht-2025
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
     title: "Fahrrad Berlin – Fortschrittsbericht 2025 (Anlage 1 to Hauptausschuss report rote Nr. 1733 E of 12 August 2026; scanned PDF, excerpts transcribed from the page images)"
+    title_de: "Fahrrad Berlin – Fortschrittsbericht 2025 (als Anlage 1 zum Bericht an den Hauptausschuss, rote Nr. 1733 E vom 12. August 2026; gescanntes PDF, Auszüge von den Seitenbildern abgeschrieben)"
     url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.E-v.pdf
     published: 2026-08-12
     accessed: 2026-10-06
@@ -81,6 +84,7 @@ sources:
   - id: berlin-fortschrittsbericht-2024
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt (SenMVKU)
     title: "Fahrrad Berlin – Fortschrittsbericht 2024 (sent to the Hauptausschuss on 24 June 2025, rote Nr. 1733 C)"
+    title_de: "Fahrrad Berlin – Fortschrittsbericht 2024 (am 24. Juni 2025 an den Hauptausschuss übersandt, rote Nr. 1733 C)"
     url: https://www.berlin.de/sen/uvk/_assets/verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/fortschrittsbericht-fahrrad-2024.pdf
     accessed: 2026-10-06
     language: de
@@ -126,6 +130,7 @@ sources:
   - id: berlin-radverkehrsplan-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Radverkehrsplan (berlin.de web page)
+    title_de: "Radverkehrsplan (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsplan/
     accessed: 2026-10-06
     language: de
@@ -143,6 +148,7 @@ sources:
   - id: berlin-radverkehrsnetz-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Radverkehrsnetz (berlin.de web page)
+    title_de: "Radverkehrsnetz (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radverkehrsnetz/
     accessed: 2026-10-06
     language: de
@@ -160,6 +166,7 @@ sources:
   - id: berlin-mobg-amendment-2026
     publisher: Land Berlin, Gesetz- und Verordnungsblatt für Berlin
     title: "Drittes Gesetz zur Änderung des Berliner Mobilitätsgesetzes vom 9. Juli 2026 (GVBl. 82. Jg., Nr. 25, 22 July 2026, p. 713)"
+    title_de: "Drittes Gesetz zur Änderung des Berliner Mobilitätsgesetzes vom 9. Juli 2026 (GVBl. 82. Jg., Nr. 25, 22. Juli 2026, S. 713)"
     url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/gvbl/g26250713.pdf
     published: 2026-07-22
     accessed: 2026-10-06
@@ -177,6 +184,7 @@ sources:
   - id: berlin-dpa-fortschrittsbericht-2025
     publisher: Nordkurier (dpa)
     title: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa report on the Senate's Fahrrad-Fortschrittsbericht 2025)"
+    title_de: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa-Meldung zum Fahrrad-Fortschrittsbericht 2025 des Senats)"
     url: https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
     published: 2026-09-08
     accessed: 2026-10-06
@@ -195,6 +203,7 @@ sources:
   - id: berlin-tagesspiegel-dpa-2025-12
     publisher: Der Tagesspiegel (dpa)
     title: "Senat verfehlt eigenes Ziel: In diesem Jahr wurden nur 20,5 Kilometer neue Radwege in Berlin gebaut (dpa; Senate figure given on request, before year end)"
+    title_de: "Senat verfehlt eigenes Ziel: In diesem Jahr wurden nur 20,5 Kilometer neue Radwege in Berlin gebaut (dpa; Zahl des Senats auf Anfrage, vor Jahresende)"
     url: https://www.tagesspiegel.de/berlin/senat-hangt-eigenem-ziel-hinterher-205-kilometer-neue-radwege-in-berlin-gebaut-15065944.html
     published: 2025-12-19
     accessed: 2026-10-06
@@ -217,6 +226,7 @@ sources:
   - id: berlin-changing-cities-monitor
     publisher: Changing Cities e.V.
     title: Verkehrswende-Monitor (Radnetz monitoring, as of 31 Dec 2025)
+    title_de: "Verkehrswende-Monitor (Radnetz-Monitoring, Stand 31. Dezember 2025)"
     url: https://changing-cities.org/kampagnen/verkehrswende-monitor/
     accessed: 2026-10-06
     language: de
@@ -317,6 +327,7 @@ sources:
   - id: vienna-mobilitaetsagentur-2026
     publisher: Mobilitätsagentur Wien GmbH
     title: "Radverkehrsplanung (Radwegoffensive page; fahrradwien.at/radwegoffensive-2025/ now redirects here)"
+    title_de: "Radverkehrsplanung (Seite der Radwegoffensive; fahrradwien.at/radwegoffensive-2025/ leitet jetzt hierher weiter)"
     url: https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
     accessed: 2026-10-06
     language: de
@@ -499,6 +510,7 @@ sources:
   - id: budapest-bkk-kfht-helyzetertekeles-2022
     publisher: BKK Budapesti Közlekedési Központ Zrt.
     title: "Kerékpárforgalmi Főhálózati Terv, 2. melléklet – Helyzetértékelés (7 October 2022; document of the Fővárosi Közgyűlés)"
+    title_de: "Kerékpárforgalmi Főhálózati Terv, 2. melléklet – Helyzetértékelés (7. Oktober 2022; Dokument der Fővárosi Közgyűlés)"
     url: "https://einfoszab.budapest.hu/File/DownloadDvD/118717?filename=f02_KFHT_helyzetert.pdf&prevcont=Session&prevaction=DvdItem&path=Tev%C3%A9kenys%C3%A9gre,+m%C5%B1k%C3%B6d%C3%A9sre+vonatkoz%C3%B3+adatok+/+D%C3%B6nt%C3%A9shozatal,+%C3%BCl%C3%A9sek+/+A+F%C5%91v%C3%A1rosi+K%C3%B6zgy%C5%B1l%C3%A9s+%C3%BCl%C3%A9sei&type=5&key=fovarosi-kozgyules-nyilvanos-ulesei&fileId=191823&sessionType=1&organizationtype=2&parentId=16335&parenttype=2"
     published: 2022-10-07
     accessed: 2026-10-06
@@ -550,6 +562,7 @@ sources:
   - id: ljubljana-mol-hoja-in-kolesarjenje
     publisher: Mestna občina Ljubljana
     title: Hoja in kolesarjenje (ljubljana.si web page)
+    title_de: "Hoja in kolesarjenje (Webseite auf ljubljana.si)"
     url: https://www.ljubljana.si/sl/ljubljana/mobilna/hoja-in-kolesarjenje
     accessed: 2026-10-06
     language: sl
@@ -619,6 +632,7 @@ sources:
   - id: wroclaw-portal-samorzadowy-2026
     publisher: Portal Samorządowy
     title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (figures supplied by city halls)"
+    title_de: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (Zahlen der Stadtverwaltungen)"
     url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
     published: 2026-01-04
     accessed: 2026-10-06
@@ -730,6 +744,7 @@ sources:
   - id: warsaw-portal-samorzadowy-2026
     publisher: Portal Samorządowy
     title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (citing a ZDM statement of early December 2025)"
+    title_de: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (unter Berufung auf eine Mitteilung des ZDM von Anfang Dezember 2025)"
     url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
     published: 2026-01-04
     accessed: 2026-10-06
@@ -817,6 +832,7 @@ sources:
   - id: krakow-portal-samorzadowy-2026
     publisher: Portal Samorządowy
     title: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (figures supplied by city halls)"
+    title_de: "Sieci tras rowerowych w miastach liczą już po kilkaset kilometrów. Znamy plany na 2026 rok (Zahlen der Stadtverwaltungen)"
     url: https://www.portalsamorzadowy.pl/inwestycje/sieci-tras-rowerowych-w-miastach-licza-juz-po-kilkaset-kilometrow-znamy-plany-na-2026-rok,641875.html
     published: 2026-01-04
     accessed: 2026-10-06

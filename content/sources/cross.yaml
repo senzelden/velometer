@@ -4,6 +4,7 @@ sources:
   - id: cc2025-report
     publisher: Clean Cities Campaign
     title: "Streets for Kids, Cities for All: City Ranking 2025 (report)"
+    title_de: "Streets for Kids, Cities for All: City Ranking 2025 (Bericht)"
     url: https://cleancitiescampaign.org/wp-content/uploads/2025/05/Report-Streets-For-Kids-Cities-For-All.pdf
     accessed: 2026-10-06
     language: en
@@ -69,6 +70,7 @@ sources:
   - id: cc2025-annexes
     publisher: Clean Cities Campaign
     title: "Streets for Kids, Cities for All: City Ranking 2025, Annexes (methodology)"
+    title_de: "Streets for Kids, Cities for All: City Ranking 2025, Annexes (Methodik)"
     url: https://cleancitiescampaign.org/wp-content/uploads/2025/05/Annexes_City-Ranking_Streets-For-Kids-Cities-for-All.pdf
     accessed: 2026-10-06
     language: en

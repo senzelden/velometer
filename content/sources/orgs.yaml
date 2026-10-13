@@ -30,6 +30,7 @@ sources:
   - id: cc-ranking-2025-page
     publisher: Clean Cities Campaign
     title: "City Ranking 2025: Streets for Kids, Cities for All (overview page)"
+    title_de: "City Ranking 2025: Streets for Kids, Cities for All (Übersichtsseite)"
     url: https://cleancitiescampaign.org/city-ranking-2025/
     accessed: 2026-10-07
     language: en
@@ -191,7 +192,9 @@ sources:
   # ------------------------------------------------------------ BikeNetKit
   - id: bikenetkit-github-org
     publisher: BikeNetKit (GitHub organisation profile)
+    publisher_de: "BikeNetKit (Organisationsprofil auf GitHub)"
     title: BikeNetKit organisation README
+    title_de: "README der Organisation BikeNetKit"
     url: https://github.com/BikeNetKit
     accessed: 2026-10-07
     language: en
@@ -235,6 +238,7 @@ sources:
         locator: "README, Supported by"
   - id: bikenetkit-gisruk-2026
     publisher: Zenodo (GISRUK 2026 conference proceeding; IT University of Copenhagen)
+    publisher_de: "Zenodo (Tagungsbeitrag GISRUK 2026; IT University of Copenhagen)"
     title: "BikeNetKit: Developing an open-source bicycle network software suite for urban planners"
     url: https://zenodo.org/records/19390654
     published: 2026-04-02
@@ -367,6 +371,7 @@ sources:
   - id: berlin-mobg-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Berliner Mobilitätsgesetz (berlin.de web page)
+    title_de: "Berliner Mobilitätsgesetz (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrspolitik/mobilitaetsgesetz/
     accessed: 2026-10-07
     language: de
@@ -394,6 +399,7 @@ sources:
   - id: berlin-radfortschrittsbericht-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Radfortschrittsbericht (berlin.de web page)
+    title_de: "Radfortschrittsbericht (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/
     accessed: 2026-10-07
     language: de
@@ -434,6 +440,7 @@ sources:
   - id: berlin-dpa-fortschrittsbericht-hauptausschuss
     publisher: Nordkurier (dpa)
     title: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa report on the Senate's Fahrrad-Fortschrittsbericht 2025; same article as berlin-dpa-fortschrittsbericht-2025, other passages)"
+    title_de: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa-Meldung zum Fahrrad-Fortschrittsbericht 2025 des Senats; derselbe Artikel wie berlin-dpa-fortschrittsbericht-2025, andere Passagen)"
     url: https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
     published: 2026-09-08
     accessed: 2026-10-07
@@ -653,6 +660,7 @@ sources:
         locator: "Introduction"
   - id: drahtesel-mobilitaetsagentur-2016
     publisher: Drahtesel (Radlobby Österreich magazine)
+    publisher_de: "Drahtesel (Magazin der Radlobby Österreich)"
     title: Fünf Jahre mit Blum
     url: https://www.drahtesel.or.at/fuenf-jahre-mit-blum/
     published: 2016-12-02
@@ -720,6 +728,7 @@ sources:
   - id: kk-br-cykelstrategi-2024
     publisher: Københavns Kommune, Borgerrepræsentationen
     title: "Medlemsforslag om cykelstrategi (Borgerrepræsentationen, meeting of 2 May 2024, item 15, minutes)"
+    title_de: "Medlemsforslag om cykelstrategi (Borgerrepræsentationen, Sitzung vom 2. Mai 2024, Tagesordnungspunkt 15, Protokoll)"
     url: https://www.kk.dk/dagsordener-og-referater/Borgerrepr%C3%A6sentationen/m%C3%B8de-02052024/referat/punkt-15
     published: 2024-05-02
     accessed: 2026-10-07

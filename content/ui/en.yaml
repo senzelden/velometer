@@ -395,6 +395,10 @@ figure.scope.cykelsti: cykelsti
 figure.scope.hauptradverkehrsnetz: hauptradverkehrsnetz
 figure.basis.unknown: unknown
 figure.basis.streckenlaenge: streckenlaenge
+figure.note.qecio_halves: QECIO halves unidirectional infrastructure
+figure.note.nuts3_not_city: NUTS3 unit is not the city
+figure.note.file_md5: file md5 {md5}
+figure.note.bikenetkit: "OSM/Nominatim city boundary; includes cycleway, designated paths, living streets, cycle streets and side tracks (no lanes); undirected edges counted once; snapshot 'summer 2026' (unverified); not a protected-infrastructure figure; compare against tiers A+B+E"
 
 # --- tabs
 page.story.no_narrative: no narrative yet

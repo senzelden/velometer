@@ -380,11 +380,16 @@ class ReportData:
 
     def note_in_lang(self, note: str) -> tuple[str, bool]:
         """(a stored figure's note in the data's language, whether it is the English one shown
-        for want of a German sibling). German notes are figures.csv's `note_de`; a note from
-        elsewhere (a loader's generated note) has none and stays English."""
+        for want of a German sibling). German notes are figures.csv's `note_de`, and the German
+        of a note the QECIO or BikeNetKit loader generated (`external.note_de`); any other note
+        stays English."""
         if self.lang != "de" or not note:
             return note, False
         german = figure_notes_de(self.config_dir).get(note)
+        if german is None:
+            from velometer.sources.external import note_de
+
+            german = note_de(note, load_cities(self.config_dir / "cities.yaml"))
         return (note, True) if german is None else (german, False)
 
     def _ranking_values(self, ranking) -> dict[str, float]:

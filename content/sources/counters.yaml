@@ -15,6 +15,7 @@ sources:
   - id: paris-comptage-velo
     publisher: Ville de Paris, Direction de la Voirie et des Déplacements
     title: "Comptage vélo - Données compteurs (dataset information)"
+    title_de: "Comptage vélo - Données compteurs (Angaben zum Datensatz)"
     url: https://opendata.paris.fr/explore/dataset/comptage-velo-donnees-compteurs/information/
     accessed: 2026-10-07
     language: fr
@@ -28,6 +29,7 @@ sources:
   - id: madrid-aforos-bicicletas
     publisher: Ayuntamiento de Madrid
     title: "Aforos de peatones y bicicletas (dataset 300321-0-aforos-peatones-bicicletas)"
+    title_de: "Aforos de peatones y bicicletas (Datensatz 300321-0-aforos-peatones-bicicletas)"
     url: https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas
     accessed: 2026-10-07
     language: es
@@ -41,6 +43,7 @@ sources:
   - id: vegvesen-trafikkdata
     publisher: Statens vegvesen
     title: Trafikkdata (dataset)
+    title_de: "Trafikkdata (Datensatz)"
     url: https://dataut.vegvesen.no/dataset/trafikkdata
     accessed: 2026-10-07
     language: nb
@@ -54,6 +57,7 @@ sources:
   - id: barcelona-aforaments-detall
     publisher: Ajuntament de Barcelona, Open Data BCN
     title: Detall dels aforaments de mobilitat de la ciutat de Barcelona (dataset aforaments-detall)
+    title_de: "Detall dels aforaments de mobilitat de la ciutat de Barcelona (Datensatz aforaments-detall)"
     url: https://opendata-ajuntament.barcelona.cat/data/ca/dataset/aforaments-detall
     accessed: 2026-10-07
     language: ca

@@ -50,6 +50,7 @@ from velometer.app.narrative import (
     render_explainer,
     render_narrative,
     safe_url,
+    source_field,
 )
 from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
@@ -420,6 +421,8 @@ def create_app(
         # wraps x where it sits inside other text
         env.globals["fb"] = fb
         env.globals["fb_text"] = fb_text
+        # a source's publisher or title: on a German page its German sibling, original in `lang`
+        env.globals["source_field"] = partial(source_field, lang=lang)
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
         # and the commit the source line names (the export's build commit, else the checkout's)
         env.globals["theme_tokens"] = tokens

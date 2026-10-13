@@ -144,8 +144,10 @@ class CityConfig(_Strict):
     bikenetkit_id: str | None = None
     # Is the NUTS3 unit the city itself? None = not assessed. False adds a QECIO row caveat.
     nuts3_is_city: bool | None = None
-    # Free-text caveat appended to the QECIO row notes of this city
+    # Free-text caveat appended to the QECIO row notes of this city, and its German sibling
+    # (German pages show the stored note in German, sources.external.note_de)
     nuts3_note: str | None = None
+    nuts3_note_de: str | None = None
     # Optional sub-city areas; None = the city has none
     subareas: SubareasConfig | None = None
 
@@ -169,6 +171,11 @@ class CityConfig(_Strict):
         aliases (each once, in that order)."""
         names = [self.name, *([self.name_de] if self.name_de else []), *self.aliases]
         return tuple(dict.fromkeys(names))
+
+    @model_validator(mode="after")
+    def _german_caveat(self) -> "CityConfig":
+        require_de(self, f"city {self.id!r}", "nuts3_note")
+        return self
 
     @model_validator(mode="after")
     def _one_lau_source(self) -> "CityConfig":
@@ -808,7 +815,7 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
     """`(where, en, de)` for every English reader-prose value of the config that has a German
     sibling: differences.yaml, the report.yaml rankings, plans.yaml and the German report-row
     notes, the counters.yaml `none` notes, the figures.csv notes and the cities.yaml German
-    names. ConfigError when a file is invalid."""
+    names and QECIO caveats. ConfigError when a file is invalid."""
     import csv
 
     from velometer.counters.model import COUNTERS_FILE, load_counters_config
@@ -855,9 +862,11 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
         for line, row in enumerate(csv.DictReader(f), start=2):
             if row.get("note"):
                 out.append((f"figures.csv row {line}", row["note"], row.get("note_de") or ""))
+    cities = load_cities(config_dir / "cities.yaml")
+    out += [(f"cities.yaml {c.id}.name", c.name, c.name_de) for c in cities if c.name_de]
     out += [
-        (f"cities.yaml {c.id}.name", c.name, c.name_de)
-        for c in load_cities(config_dir / "cities.yaml")
-        if c.name_de
+        (f"cities.yaml {c.id}.nuts3_note", c.nuts3_note, c.nuts3_note_de)
+        for c in cities
+        if c.nuts3_note and c.nuts3_note_de
     ]
     return out
