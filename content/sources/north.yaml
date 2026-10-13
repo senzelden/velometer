@@ -12,18 +12,22 @@ sources:
       - id: cykelsti-2025
         text: "I 2025 var der 401 km cykelsti i København. Heraf er der 66 km Grønne Ruter og 64 km supercykelsti."
         gloss_en: "In 2025 there were 401 km of cycle track (cykelsti) in Copenhagen. Of these, 66 km are Green Routes and 64 km are cycle superhighway."
+        gloss_de: "2025 gab es in Kopenhagen 401 km Radwege (cykelsti). Davon sind 66 km Grüne Routen und 64 km Radschnellwege."
         locator: "p. 15, section Cykelstier og cykelparkering"
       - id: cykelbaner-row
         text: "Cykelbaner i alt (km) 33 33 33 33 33"
         gloss_en: "Cycle lanes (cykelbaner), total (km): 33 33 33 33 33 (years 2021–2025)."
+        gloss_de: "Radfahrstreifen (cykelbaner) insgesamt (km): 33, 33, 33, 33, 33 (Jahre 2021–2025)."
         locator: "p. 15, Tabel 5 (Kilde: Forvaltningens egne opgørelser), row Cykelbaner i alt (km), columns 2021–2025; reported in a separate row from Cykelstier i alt (km)"
       - id: strategy-2011-2025
         text: "Københavns Kommunes cykelindsats fra 2011 til 2025 har været forankret i tre centrale strategiske dokumenter: Cykelstrategi 2011–2025, Cykelstiprioriteringsplan 2017–2025 og Prioriteringsplan for Cykelparkering 2018–2025."
         gloss_en: "The City of Copenhagen's cycling effort from 2011 to 2025 was anchored in three central strategic documents: the Cycling Strategy 2011–2025, the Cycle Track Priority Plan 2017–2025 and the Bicycle Parking Priority Plan 2018–2025."
+        gloss_de: "Die Radverkehrsarbeit der Kommune Kopenhagen von 2011 bis 2025 stützte sich auf drei zentrale strategische Dokumente: die Radverkehrsstrategie 2011–2025, den Prioritätenplan für Radwege 2017–2025 und den Prioritätenplan für Fahrradparken 2018–2025."
         locator: "p. 29, section Cykelindsatsen - fra god til verdens bedste"
       - id: priority-plan-status
         text: "I perioden fra 2017 til 2025 er 37 initiativer fra planen fuldt udmøntet, det vil sige de enten er færdiganlagt, finansieret eller under anlæg."
         gloss_en: "In the period 2017 to 2025, 37 initiatives from the plan have been fully implemented, meaning they are either completed, funded or under construction."
+        gloss_de: "Im Zeitraum von 2017 bis 2025 sind 37 Maßnahmen des Plans vollständig umgesetzt, das heißt, sie sind entweder fertiggestellt, finanziert oder im Bau."
         locator: "p. 33, section Cykelstisprioriteringsplanen (plan of 151 initiatives)"
   - id: copenhagen-bicycle-account-2022
     publisher: City of Copenhagen
@@ -35,6 +39,7 @@ sources:
     excerpts:
       - id: infrastructure-2022
         text: "Cycling infrastructure in the City of Copenhagen, 2022 388 km cycle tracks 33 km cycle lanes 65 km Green Cycle Routes 60 km Cycle Superhighways"
+        gloss_de: "Radinfrastruktur in der Kommune Kopenhagen, 2022: 388 km Radwege, 33 km Radfahrstreifen, 65 km Grüne Radrouten, 60 km Radschnellwege."
         locator: "PDF p. 7 (printed spread pp. 12–13), infographic 'Investments in the world's best cycling city'"
   - id: copenhagen-verdens-bedste-cykelby
     publisher: Københavns Kommune
@@ -48,14 +53,17 @@ sources:
       - id: cykelregnskab
         text: "Hvert andet år udarbejder Københavns Kommune et såkaldt cykelregnskab. Her gør vi op, hvordan det går med at nå de mål, der er besluttet i cykelstrategien."
         gloss_en: "Every second year the City of Copenhagen produces a so-called bicycle account, assessing progress towards the goals set in the cycling strategy."
+        gloss_de: "Alle zwei Jahre erstellt die Kommune Kopenhagen eine sogenannte Fahrradbilanz (cykelregnskab). Darin ziehen wir Bilanz, wie weit die in der Radverkehrsstrategie beschlossenen Ziele erreicht sind."
         locator: "section Cykelregnskaber - fakta om cyklisme i København"
       - id: mobilitetsredegorelse
         text: "Fra 2021 og frem bliver Cykelredegørelserne afløst af Mobilitetsredegørelsen."
         gloss_en: "From 2021 onwards the cycling reports (Cykelredegørelser) are replaced by the Mobility Report (Mobilitetsredegørelse)."
+        gloss_de: "Ab 2021 werden die Radverkehrsberichte (Cykelredegørelser) durch den Mobilitätsbericht (Mobilitetsredegørelse) abgelöst."
         locator: "section Mobilitetsredegørelse"
       - id: about-400-km
         text: "København har omkring 400 km cykelstier og mere end 25 cykel- og gangbroer, der binder byen tæt sammen."
         gloss_en: "Copenhagen has around 400 km of cycle tracks and more than 25 cycling and pedestrian bridges that tie the city closely together."
+        gloss_de: "Kopenhagen hat rund 400 km Radwege und mehr als 25 Rad- und Fußgängerbrücken, die die Stadt eng verbinden."
         locator: "introduction"
   - id: copenhagen-cykelfokus-2024
     publisher: Københavns Kommune
@@ -69,14 +77,17 @@ sources:
       - id: cykelsti-definition
         text: "Cykelstier er udformet med kantsten mod kørebane og fortov som fysisk adskillelse mod fodgængere og bilister."
         gloss_en: "Cycle tracks (cykelstier) are built with kerbs towards the carriageway and the pavement as physical separation from pedestrians and motorists."
+        gloss_de: "Radwege (cykelstier) sind mit Bordsteinen zur Fahrbahn und zum Gehweg als baulicher Trennung von Fußgängern und Autofahrern ausgeführt."
         locator: "PDF p. 6, section 1.1.1 Cykelstier"
       - id: cykelbane-definition
         text: "En cykelbane er et afmærket cykelareal i niveau med kørebanen. Cykelbane afmærkes med bred, ubrudt kantlinje samt cykelsymboler med ca. 100 meter afstand samt efter sideveje og kryds."
         gloss_en: "A cycle lane (cykelbane) is a marked cycling area level with the carriageway, marked with a wide unbroken edge line and cycle symbols about every 100 metres and after side roads and junctions."
+        gloss_de: "Ein Radfahrstreifen (cykelbane) ist eine markierte Radverkehrsfläche auf Höhe der Fahrbahn. Er wird mit einer breiten, durchgezogenen Randlinie sowie Fahrradsymbolen im Abstand von etwa 100 Metern und nach Seitenstraßen und Kreuzungen markiert."
         locator: "PDF p. 7, section 1.1.2 Cykelbaner"
       - id: cykelbaner-fraraades
         text: "Der findes cykelbaner i dag i København, men cykelbaner frarådes ved nyanlæg."
         gloss_en: "Cycle lanes exist in Copenhagen today, but cycle lanes are advised against in new construction."
+        gloss_de: "Radfahrstreifen gibt es in Kopenhagen heute, bei Neuanlagen wird von Radfahrstreifen aber abgeraten."
         locator: "PDF p. 7, section 1.1.2 Cykelbaner"
 
   # ----------------------------------------------------------------- stockholm
@@ -92,14 +103,17 @@ sources:
       - id: network-117-mil
         text: "Stockholm har ungefär 117 mil cykelvägar, både egna cykelbanor, kombinerade gång- och cykelbanor och cykelfält."
         gloss_en: "Stockholm has about 117 Swedish miles (about 1,170 km) of cycleways, comprising separate cycle tracks, combined walking and cycling paths, and painted cycle lanes."
+        gloss_de: "Stockholm hat etwa 117 Meilen Radwege (schwedische Meilen, etwa 1.170 km), sowohl eigene Radwege als auch kombinierte Geh- und Radwege und Radfahrstreifen."
         locator: "introduction"
       - id: primary-36-mil
         text: "De primära stråken är ungefär 36 mil totalt."
         gloss_en: "The primary routes total about 36 Swedish miles (about 360 km)."
+        gloss_de: "Die Hauptrouten umfassen insgesamt etwa 36 Meilen (schwedische Meilen, etwa 360 km)."
         locator: "section Primärt stråk"
       - id: local-network
         text: "I det lokala cykelnätet ingår bland annat vägar med 30 km/h som hastighetsbegränsning där man cyklar tillsammans med bilar och annan trafik."
         gloss_en: "The local cycle network includes, among other things, roads with a 30 km/h speed limit where people cycle together with cars and other traffic."
+        gloss_de: "Zum lokalen Radnetz gehören unter anderem Straßen mit Tempo 30 als Höchstgeschwindigkeit, auf denen man zusammen mit Autos und anderem Verkehr fährt."
         locator: "section Lokalt cykelnät"
   - id: stockholm-cykelplan-2022
     publisher: Stockholms stad, trafikkontoret
@@ -113,14 +127,17 @@ sources:
       - id: infrastructure-basis
         text: "I Stockholms stad finns ungefär 117 mil cykelbanor, cykelfält och gång- och cykelbanor. Cykelplanen pekar ut runt 36 mil som primärt nät (tidigare pendlingsnät) för successiv utbyggnad."
         gloss_en: "The City of Stockholm has about 117 Swedish miles (about 1,170 km) of cycle tracks, cycle lanes and shared walking and cycling paths. The plan designates around 36 Swedish miles as the primary network (formerly the commuter network) for gradual expansion."
+        gloss_de: "In der Stadt Stockholm gibt es etwa 117 Meilen (schwedische Meilen, etwa 1.170 km) Radwege, Radfahrstreifen sowie Geh- und Radwege. Der Radverkehrsplan weist rund 36 Meilen als Hauptnetz (früher Pendlernetz) für den schrittweisen Ausbau aus."
         locator: "PDF p. 7 (printed p. 12), section 2.1 Infrastrukturen i Stockholm"
       - id: ten-km-per-year
         text: "De senaste åren har trafikkontoret färdigställt i genomsnitt nästan 10 km nya och breddade cykelbanor per år."
         gloss_en: "In recent years the traffic office has completed on average almost 10 km of new and widened cycle tracks per year."
+        gloss_de: "In den letzten Jahren hat das Verkehrsamt im Durchschnitt fast 10 km neue und verbreiterte Radwege pro Jahr fertiggestellt."
         locator: "PDF p. 7 (printed p. 12), section 2.1 Infrastrukturen i Stockholm"
       - id: billion-2012-2018
         text: "Under 2018 slutfördes satsningen att investera 1 miljard kronor i cykelinfrastrukturåtgärder mellan åren 2012 och 2018."
         gloss_en: "In 2018 the programme to invest SEK 1 billion in cycling infrastructure measures between 2012 and 2018 was completed."
+        gloss_de: "2018 wurde das Programm abgeschlossen, zwischen 2012 und 2018 eine Milliarde Kronen in Maßnahmen für die Radinfrastruktur zu investieren."
         locator: "PDF p. 7, box Utbyggnad av cykelinfrastrukturen 2012-2022"
   - id: stockholm-ks-utlatande-cykelplan
     publisher: Stockholms stad, kommunstyrelsen
@@ -134,10 +151,12 @@ sources:
       - id: aim-2040
         text: "Cykelplanen lägger fast en långsiktig inriktning för cykelplaneringen i Stockholms stad med utblick mot 2040. Det övergripande målet är att öka såväl antalet som andelen cyklister genom att göra det enklare och säkrare att cykla."
         gloss_en: "The cycling plan sets a long-term direction for cycle planning in the City of Stockholm with an outlook to 2040. The overall goal is to increase both the number and the share of cyclists by making cycling easier and safer."
+        gloss_de: "Der Radverkehrsplan legt eine langfristige Ausrichtung der Radverkehrsplanung in der Stadt Stockholm mit Ausblick auf 2040 fest. Übergeordnetes Ziel ist es, sowohl die Zahl als auch den Anteil der Radfahrenden zu erhöhen, indem das Radfahren einfacher und sicherer wird."
         locator: "p. 1, Ärendet"
       - id: one-in-four
         text: "Vi ökar ambitionerna med målsättningen att senast år 2040 ska var fjärde resa i Stockholm ske med cykel."
         gloss_en: "We are raising our ambitions with the goal that by 2040 at the latest every fourth trip in Stockholm is made by bicycle."
+        gloss_de: "Wir erhöhen unsere Ambitionen mit dem Ziel, dass spätestens im Jahr 2040 jede vierte Fahrt in Stockholm mit dem Fahrrad erfolgt."
         locator: "p. 2, Mina synpunkter (föredragande borgarrådet)"
 
   # ---------------------------------------------------------------------- oslo
@@ -153,14 +172,17 @@ sources:
       - id: network-290
         text: "Oslo har per i dag et sykkelveinett på mer enn 290 km"
         gloss_en: "Oslo today has a cycle network of more than 290 km"
+        gloss_de: "Oslo hat heute ein Radverkehrsnetz von mehr als 290 km"
         locator: "fact box En sykkelby for alle"
       - id: target-530
         text: "Oslo skal få 530 km med sammenhengende sykkeltilrettelegging"
         gloss_en: "Oslo is to get 530 km of continuous cycling provision"
+        gloss_de: "Oslo soll 530 km durchgehende Radverkehrsanlagen erhalten"
         locator: "fact box En sykkelby for alle"
       - id: map-contents
         text: "Sykkeltilrettelegging i dag (gang- og sykkelveier, sykkelfelt og sykkelveier)"
         gloss_en: "Cycling provision today (shared walking and cycling paths, painted cycle lanes and cycle tracks)"
+        gloss_de: "Radverkehrsanlagen heute (Geh- und Radwege, Radfahrstreifen und Radwege)"
         locator: "section Hva finner du i kartet?"
   - id: oslo-press-ey-evaluation
     publisher: Oslo kommune
@@ -174,10 +196,12 @@ sources:
       - id: built-155
         text: "Oslo har bygget og oppgradert 155 kilometer sykkelvei siden 2015. EY trekker dette frem som positivt. Samtidig viser evalueringen at satsing på å bygge et høyt antall kilometer sykkelvei har gått på bekostning av andre deler av strategien."
         gloss_en: "Oslo has built and upgraded 155 km of cycleway since 2015. EY highlights this as positive. At the same time the evaluation shows that the push to build a high number of cycleway kilometres came at the expense of other parts of the strategy."
+        gloss_de: "Oslo hat seit 2015 insgesamt 155 Kilometer Radwege gebaut und aufgewertet. EY hebt dies als positiv hervor. Zugleich zeigt die Evaluierung, dass der Einsatz für eine hohe Zahl gebauter Radweg-Kilometer zulasten anderer Teile der Strategie ging."
         locator: "section Høye kilometermål"
       - id: share-goal
         text: "Selv om kommunen er langt unna sykkelstrategiens mål om én av fire hverdagsreiser på sykkel, konkluderer EY likevel med at satsingen i Oslo har vært en suksess."
         gloss_en: "Although the city is far from the cycling strategy's goal of one in four everyday trips by bike, EY nevertheless concludes that Oslo's effort has been a success."
+        gloss_de: "Obwohl die Kommune weit vom Ziel der Radverkehrsstrategie entfernt ist, dass jede vierte Alltagsfahrt mit dem Fahrrad erfolgt, kommt EY dennoch zu dem Schluss, dass der Einsatz in Oslo ein Erfolg war."
         locator: "body text"
   - id: oslo-ey-evaluering-2024
     publisher: EY (Ernst & Young), commissioned by Oslo kommune
@@ -191,14 +215,17 @@ sources:
       - id: mostly-lanes
         text: "I Oslo består sykkelveinettet hovedsakelig av markerte sykkelfelt, og ikke sykkelinfrastruktur fysisk separert fra biltrafikken"
         gloss_en: "In Oslo the cycle network consists mainly of marked cycle lanes, not cycling infrastructure physically separated from motor traffic"
+        gloss_de: "In Oslo besteht das Radverkehrsnetz hauptsächlich aus markierten Radfahrstreifen und nicht aus Radinfrastruktur, die baulich vom Autoverkehr getrennt ist"
         locator: "p. 23, section 2 (Hovedmål og innsatsområde 1)"
       - id: built-107-upgraded-48
         text: "Oslo kommune har i løpet av strategiperioden bygget omtrent 107 kilometer sykkeltilrettelegging og oppgradert rundt 48 kilometer sykkeltilrettelegging."
         gloss_en: "During the strategy period the City of Oslo built about 107 km of cycling provision and upgraded around 48 km."
+        gloss_de: "Die Kommune Oslo hat im Lauf der Strategieperiode etwa 107 Kilometer Radverkehrsanlagen gebaut und rund 48 Kilometer Radverkehrsanlagen aufgewertet."
         locator: "p. 35, section 3.2 Måloppnåelse innsatsområde 2: Kvalitet (figure source: Bymiljøetaten 2024)"
       - id: junctions-count-little
         text: "Utbedring av kryss er nedprioritert som følge av et fokus på utbygging av km sykkelvei, og dermed har det vært naturlig å prioritere enklere og rimeligere strekninger per km. Kryss innebærer relativt komplekse utredningsprosesser, men teller lite i strekningsbaserte måling."
         gloss_en: "Junction improvements were deprioritised because of the focus on building kilometres of cycleway, making it natural to prioritise simpler and cheaper stretches per km. Junctions involve relatively complex studies but count for little in length-based measurement."
+        gloss_de: "Die Verbesserung von Kreuzungen wurde wegen des Fokus auf den Ausbau von Radweg-Kilometern zurückgestellt, und so lag es nahe, einfachere und pro km günstigere Strecken vorzuziehen. Kreuzungen erfordern relativ aufwendige Planungsverfahren, zählen bei einer streckenbasierten Messung aber wenig."
         locator: "p. 46, measure 2G Tiltak i kryss, Vurdering av gjennomføring"
   - id: oslo-magasin-oslostandarden
     publisher: Oslo kommune, Byplan magasin
@@ -213,10 +240,12 @@ sources:
       - id: plan-2018
         text: "I 2018 vedtok bystyret en storstilt plan for satsing på sykkel frem mot 2025, hvor det blant annet ble planlagt bygging av mer enn 10 kilometer sykkelanlegg i året."
         gloss_en: "In 2018 the city council adopted a large-scale plan for cycling up to 2025, which among other things planned the construction of more than 10 km of cycling facilities a year."
+        gloss_de: "2018 beschloss der Stadtrat einen groß angelegten Plan für den Radverkehr bis 2025, der unter anderem den Bau von mehr als 10 Kilometern Radverkehrsanlagen pro Jahr vorsah."
         locator: "section Oslostandarden"
       - id: lanes-most-common
         text: "Så er det løsningen vi kanskje har mest av, som er sykkelfelt i en del av veien. Det kan være oppmalt og i noen tilfeller opphøyd, alt etter hva som gir den tryggheten man trenger."
         gloss_en: "Then there is the solution we perhaps have most of, which is a cycle lane in part of the road. It can be painted and in some cases raised, depending on what gives the safety needed."
+        gloss_de: "Dann gibt es die Lösung, von der wir vielleicht am meisten haben, nämlich den Radfahrstreifen auf einem Teil der Straße. Er kann aufgemalt und in manchen Fällen erhöht sein, je nachdem, was die nötige Sicherheit gibt."
         locator: "section Oslostandarden, quote from a Bymiljøetaten planner"
 
   # ------------------------------------------------------------------ helsinki
@@ -232,14 +261,17 @@ sources:
       - id: network-1200
         text: "Helsingissä on yli 1200 kilometriä erillisiä pyöräväyliä. Tämän lisäksi pyörällä ajetaan ajoradoilla siellä, missä erillisiä pyöräteitä ei ole."
         gloss_en: "Helsinki has more than 1,200 km of separate cycleways. In addition, people cycle on the carriageway where there are no separate cycle paths."
+        gloss_de: "In Helsinki gibt es mehr als 1.200 Kilometer eigene Radwege. Außerdem wird dort auf der Fahrbahn gefahren, wo es keine eigenen Radwege gibt."
         locator: "PDF p. 7 (printed p. 2), section Pyöräliikenteen yksisuuntaiset järjestelyt yleistyvät"
       - id: mostly-two-way
         text: "Suurin osa Helsingin pyöräväylistä on edelleen kaksisuuntaisia. Yksisuuntaisia pyöräväyliä on vuoden 2020 arvion mukaan hieman alle 40 kilometriä."
         gloss_en: "Most of Helsinki's cycleways are still two-way. According to a 2020 estimate there are just under 40 km of one-way cycleways."
+        gloss_de: "Die meisten Radwege Helsinkis sind weiterhin Zweirichtungsradwege. Einrichtungsradwege gibt es nach einer Schätzung von 2020 knapp 40 Kilometer."
         locator: "PDF p. 7 (printed p. 2)"
       - id: baana-2021
         text: "Vuonna 2021 baanaverkon laatutavoitteen mukaista väylää oli rakennettu 9,5 kilometriä."
         gloss_en: "By 2021, 9.5 km of route meeting the baana network's quality target had been built."
+        gloss_de: "Bis 2021 waren 9,5 Kilometer Strecke nach dem Qualitätsziel des Baana-Netzes gebaut."
         locator: "PDF p. 13 (printed p. 8)"
   - id: helsinki-seuranta-2022
     publisher: Helsingin kaupunki, kaupunkiympäristölautakunta
@@ -253,14 +285,17 @@ sources:
       - id: target-networks
         text: "Kantakaupungin tavoiteverkon yhteenlaskettu pituus on noin 140 km ja siitä on vuoteen 2022 rakennettu yhteensä 44,7 km. Baanojen tavoiteverkon yhteenlaskettu pituus on myös noin 140 km ja siitä on vuoteen 2022 rakennettu baanojen suunnitteluohjeen mukaisella laatutasolla yhteensä 16,9 km."
         gloss_en: "The inner-city target network totals about 140 km, of which 44.7 km had been built by 2022. The baana target network also totals about 140 km, of which 16.9 km had been built to the quality level of the baana design guideline by 2022."
+        gloss_de: "Das Zielnetz der Innenstadt ist insgesamt etwa 140 km lang, davon sind bis 2022 insgesamt 44,7 km gebaut. Das Zielnetz der Baanas ist ebenfalls insgesamt etwa 140 km lang, davon sind bis 2022 insgesamt 16,9 km in der Qualität der Baana-Planungsrichtlinie gebaut."
         locator: "Urban Environment Committee 33/25.10.2022, presentation text"
       - id: indicators
         text: "Kehittämisohjelman toteutumisen seurannan kannalta keskeisiä toiminnan ja vaikuttavuuden mittareita ovat rakentuneet pyöräväyläkilometrit, pyöräliikenteen kulkutapaosuus, koettu turvallisuus ja tyytyväisyys pyöräliikenteen olosuhteisiin."
         gloss_en: "Key output and impact indicators for monitoring the programme are cycleway kilometres built, cycling mode share, perceived safety and satisfaction with cycling conditions."
+        gloss_de: "Zentrale Leistungs- und Wirkungsindikatoren für das Monitoring des Entwicklungsprogramms sind die gebauten Radweg-Kilometer, der Radverkehrsanteil, die empfundene Sicherheit und die Zufriedenheit mit den Bedingungen für den Radverkehr."
         locator: "Urban Environment Committee 33/25.10.2022, presentation text"
       - id: share-2021
         text: "Vuonna 2021 pyöräliikenteen kulkutapaosuus kaikista matkoista oli 9 %, turvalliseksi pyörällä liikkumisen kokevien osuus oli 17 % ja tyytyväisten osuus oli 24 %."
         gloss_en: "In 2021 cycling's mode share of all trips was 9%, the share who felt cycling was safe was 17% and the share who were satisfied was 24%."
+        gloss_de: "2021 lag der Radverkehrsanteil an allen Wegen bei 9 %, der Anteil derer, die das Radfahren als sicher empfinden, bei 17 % und der Anteil der Zufriedenen bei 24 %."
         locator: "Urban Environment Committee 33/25.10.2022, presentation text"
   - id: helsinki-pyorailykatsaus-2021
     publisher: Helsingin kaupunki
@@ -274,6 +309,7 @@ sources:
       - id: baana-2020
         text: "Helsinkiin suunnitellaan baanoja, jotka ovat laadukkaita pyöräteitä. Vuoden 2020 lopulla baanoja oli rakennettu Helsinkiin noin kahdeksan kilometriä ja rakenteilla oli lisäksi noin 11 kilometriä baanaväylää. Koko verkon pituus tulee olemaan 130 kilometriä."
         gloss_en: "Helsinki is planning baanas, which are high-quality cycle paths. At the end of 2020 about eight kilometres of baana had been built in Helsinki and a further about 11 km were under construction. The whole network will be 130 km long."
+        gloss_de: "Für Helsinki werden Baanas geplant, hochwertige Radwege. Ende 2020 waren in Helsinki etwa acht Kilometer Baanas gebaut, und weitere etwa 11 Kilometer Baana-Strecke waren im Bau. Das gesamte Netz wird 130 Kilometer lang sein."
         locator: "PDF p. 9"
   - id: helsinki-yle-2026
     publisher: Yle
@@ -288,14 +324,17 @@ sources:
       - id: baana-33
         text: "Tällä hetkellä baanaa on valmistunut noin 33 kilometriä ja kantakaupungin tavoiteverkosta valmiina on noin 71 kilometriä."
         gloss_en: "At present about 33 km of baana has been completed, and about 71 km of the inner-city target network is complete."
+        gloss_de: "Derzeit sind etwa 33 Kilometer Baana fertig, und vom Zielnetz der Innenstadt sind etwa 71 Kilometer fertig."
         locator: "body text"
       - id: investment-share
         text: "Helsinki on panostanut pyöräverkon kehittämiseen vuoden 2013 jälkeen yhteensä 218 miljoonaa euroa. Se on noin kymmenen prosenttia kaupungin liikenneinvestoinneista."
         gloss_en: "Since 2013 Helsinki has invested a total of 218 million euros in developing the cycle network. That is about ten percent of the city's transport investment."
+        gloss_de: "Helsinki hat seit 2013 insgesamt 218 Millionen Euro in die Entwicklung des Radnetzes investiert. Das sind etwa zehn Prozent der Verkehrsinvestitionen der Stadt."
         locator: "body text"
       - id: share-flat
         text: "Pyöräliikenteen osuus matkoista on pysynyt Helsingissä kymmenessä prosentissa, vaikka kaupunki on panostanut pyöräilyyn 218 miljoonaa euroa vuodesta 2013."
         gloss_en: "Cycling's share of trips in Helsinki has stayed at ten percent, although the city has invested 218 million euros in cycling since 2013."
+        gloss_de: "Der Anteil des Radverkehrs an den Wegen ist in Helsinki bei zehn Prozent geblieben, obwohl die Stadt seit 2013 insgesamt 218 Millionen Euro in den Radverkehr investiert hat."
         locator: "summary box Juttu tiivistettynä"
 
   # ----------------------------------------------------------------- amsterdam
@@ -311,14 +350,17 @@ sources:
       - id: fietspad-definition
         text: "Verplichte fietspaden, onverplichte fietspaden en fiets/bromfietspaden zijn fysiek gescheiden van de rijbaan, dus (fysiek) niet toegankelijk voor auto’s."
         gloss_en: "Mandatory cycle paths, non-mandatory cycle paths and cycle/moped paths are physically separated from the carriageway, so (physically) not accessible to cars."
+        gloss_de: "Benutzungspflichtige Radwege, nicht benutzungspflichtige Radwege und Rad-/Mofawege sind baulich von der Fahrbahn getrennt und also (baulich) für Autos nicht zugänglich."
         locator: "Toelichting bij deze kaart, Definities Soort"
       - id: fietsstrook-definition
         text: "Fietsstroken maken deel uit van de rijbaan, gemarkeerd door een doorgetrokken of onderbroken streep en voorzien van een afbeelding van een fiets. Fietssuggestiestroken zijn geen officiële fietsstroken (ze hebben geen afbeelding van een fiets) en zijn opgenomen bij Fiets op de rijbaan."
         gloss_en: "Cycle lanes are part of the carriageway, marked by a solid or broken line and a bicycle symbol. Advisory lanes are not official cycle lanes (they have no bicycle symbol) and are counted under cycling on the carriageway."
+        gloss_de: "Radfahrstreifen sind Teil der Fahrbahn, mit einer durchgezogenen oder unterbrochenen Linie markiert und mit einem Fahrradsymbol versehen. Schutzstreifen ohne Fahrradsymbol (fietssuggestiestroken) sind keine offiziellen Radfahrstreifen und werden unter Radfahren auf der Fahrbahn geführt."
         locator: "Toelichting bij deze kaart, Definities Soort"
       - id: network-grid
         text: "Het Plus- en Hoofdnet vormen samen een fijnmazig netwerk met een rasterwijdte van ongeveer 400 m."
         gloss_en: "Together the Plus and Main networks form a fine-meshed network with a grid spacing of about 400 m."
+        gloss_de: "Plus- und Hauptnetz bilden zusammen ein engmaschiges Netz mit einer Maschenweite von etwa 400 m."
         locator: "Toelichting bij deze kaart, Inhoud"
   - id: amsterdam-meerjarenplan-fiets-2017
     publisher: Gemeente Amsterdam
@@ -332,10 +374,12 @@ sources:
       - id: width-target
         text: "Doelstelling is dat in 2025 ten minste de helft van de fietsroutes op het Plusnet Fiets binnen de Ring A10, ten zuiden van het IJ, een minimale breedte heeft van 2,50 meter (begin 2017 is dit 34%)."
         gloss_en: "The goal is that by 2025 at least half of the cycle routes on the Plusnet Fiets inside the A10 ring, south of the IJ, have a minimum width of 2.50 metres (at the start of 2017 this is 34%)."
+        gloss_de: "Ziel ist, dass 2025 mindestens die Hälfte der Radrouten im Plusnet Fiets innerhalb des Rings A10, südlich des IJ, eine Mindestbreite von 2,50 Metern hat (Anfang 2017 sind es 34 %)."
         locator: "p. 13, Comfortabel doorfietsen (footnote markers omitted)"
       - id: network-standard
         text: "Dit betekent dat fietsers gebruik kunnen maken van een fijnmazig netwerk van autoluwe fietsstraten of vrijliggende fietspaden van ten minste 2,5 meter breed, voorzien van rood asfalt."
         gloss_en: "This means cyclists can use a fine-meshed network of low-traffic cycle streets or separate cycle paths at least 2.5 metres wide, surfaced with red asphalt."
+        gloss_de: "Das bedeutet, dass Radfahrende ein engmaschiges Netz aus verkehrsarmen Fahrradstraßen oder eigenständigen Radwegen von mindestens 2,5 Metern Breite mit rotem Asphalt nutzen können."
         locator: "p. 13, Comfortabel doorfietsen"
   - id: amsterdam-rekenkamer-fietsstad-2019
     publisher: Rekenkamer Metropool Amsterdam
@@ -350,10 +394,12 @@ sources:
       - id: plusnet-cost
         text: "Daaruit blijkt dat € 200 tot € 800 miljoen euro nodig is om het hele Plusnet Fiets op de gewenste breedte te krijgen."
         gloss_en: "This shows that 200 to 800 million euros is needed to bring the whole Plusnet Fiets to the desired width."
+        gloss_de: "Daraus geht hervor, dass 200 bis 800 Millionen Euro nötig sind, um das gesamte Plusnet Fiets auf die gewünschte Breite zu bringen."
         locator: "chapter Fietsvriendelijke kruispunten, Inleiding"
       - id: width-ranks-lowest
         text: "Uit een tweejaarlijks onderzoek van de gemeente blijkt ook dat Amsterdammers in 2017 minder tevreden zijn over de fietsinfrastructuur dan in 2015. De breedte van de fietspaden scoort het laagst (5,9) gevolgd door de wachttijden bij verkeerslichten (6,2)."
         gloss_en: "A biennial city survey also shows that in 2017 Amsterdammers were less satisfied with cycling infrastructure than in 2015. Cycle path width scored lowest (5.9), followed by waiting times at traffic lights (6.2)."
+        gloss_de: "Eine alle zwei Jahre durchgeführte Befragung der Gemeinde zeigt außerdem, dass die Amsterdamer 2017 mit der Radinfrastruktur weniger zufrieden sind als 2015. Am schlechtesten schneidet die Breite der Radwege ab (5,9), gefolgt von den Wartezeiten an Ampeln (6,2)."
         locator: "chapter Fietsvriendelijke kruispunten, Inleiding"
   - id: amsterdam-uitvoeringsplan-2024
     publisher: Gemeente Amsterdam
@@ -367,10 +413,12 @@ sources:
       - id: busy-narrow-paths
         text: "Amsterdam beschikt over een uitgebreid fietsnetwerk, dat zeker een bijdrage heeft geleverd aan de populariteit van de fiets in de stad. De keerzijden daarvan zijn, zeker sinds de opkomst van de e-bike, de drukte op de vaak smalle fietspaden en toenemende snelheidsverschillen tussen de verschillende gebruikers."
         gloss_en: "Amsterdam has an extensive cycle network that has certainly contributed to the bicycle's popularity in the city. The downsides, especially since the rise of the e-bike, are crowding on the often narrow cycle paths and growing speed differences between users."
+        gloss_de: "Amsterdam verfügt über ein umfangreiches Radnetz, das sicher zur Beliebtheit des Fahrrads in der Stadt beigetragen hat. Die Kehrseiten davon sind, gerade seit dem Aufkommen des E-Bikes, das Gedränge auf den oft schmalen Radwegen und die zunehmenden Geschwindigkeitsunterschiede zwischen den verschiedenen Nutzern."
         locator: "p. 14, section 3.2 Veilig en comfortabel fietsen"
       - id: plans-expiring
         text: "De meerjarenplannen voor verkeersveiligheid (2016) en fiets (2017) die nu aflopen, hebben daarin een belangrijke rol gespeeld."
         gloss_en: "The multi-year plans for road safety (2016) and cycling (2017), which are now expiring, played an important role in this."
+        gloss_de: "Die jetzt auslaufenden Mehrjahrespläne für Verkehrssicherheit (2016) und Radverkehr (2017) haben dabei eine wichtige Rolle gespielt."
         locator: "p. 3, section 1.1"
 
   # ------------------------------------------------------------------- utrecht
@@ -386,6 +434,7 @@ sources:
       - id: gritting-400
         text: "De gemeente is verantwoordelijk voor de gladheidbestrijding en strooit bij verwachte gladheid dag en nacht op ongeveer 400 km hoofdfietspaden en belangrijke bruggen."
         gloss_en: "The city is responsible for winter maintenance and, when ice is expected, grits about 400 km of main cycle paths and important bridges day and night."
+        gloss_de: "Die Gemeinde ist für den Winterdienst zuständig und streut bei erwarteter Glätte Tag und Nacht auf etwa 400 km Hauptradwegen und wichtigen Brücken."
         locator: "p. 15"
   - id: utrecht-raadsvoorstel-mobiliteitsplan-2040
     publisher: Gemeente Utrecht, college van burgemeester en wethouders
@@ -398,10 +447,12 @@ sources:
       - id: fietsnetwerk-2040
         text: "Netwerken op orde (fiets): met het Fietsnetwerk (zoals vastgelegd op de kaart op pagina 71) bieden we fietsers de keuze uit verschillende routes om hun bestemming te bereiken."
         gloss_en: "Networks in order (cycling): with the Cycle Network (as set out on the map on page 71) we offer cyclists a choice of different routes to reach their destination."
+        gloss_de: "Netze in Ordnung (Radverkehr): Mit dem Radnetz (wie auf der Karte auf Seite 71 festgelegt) bieten wir Radfahrenden die Wahl zwischen verschiedenen Routen zu ihrem Ziel."
         locator: "p. 1, proposed decision 1"
       - id: speed-principle
         text: "We hanteren als principe: alle wegen 30 km/uur tenzij; voor verbindingswegen geldt maximumsnelheid van 50 km/u;"
         gloss_en: "Our principle is: all roads 30 km/h unless otherwise decided; connector roads have a maximum speed of 50 km/h."
+        gloss_de: "Als Grundsatz gilt: alle Straßen Tempo 30, es sei denn; für Verbindungsstraßen gilt eine Höchstgeschwindigkeit von 50 km/h;"
         locator: "p. 1, proposed decision 1 (Netwerken op orde (auto))"
   - id: utrecht-oud-utrecht-fietsstad
     publisher: Historische Vereniging Oud-Utrecht
@@ -416,6 +467,7 @@ sources:
       - id: km-2012
         text: "In 2012 telde Utrecht hierdoor 245 kilometer fietspad en 90 kilometer fietsstrook."
         gloss_en: "As a result, in 2012 Utrecht had 245 km of cycle path and 90 km of cycle lane."
+        gloss_de: "Dadurch zählte Utrecht 2012 insgesamt 245 Kilometer Radwege und 90 Kilometer Radfahrstreifen."
         locator: "body text, paragraph on the 1970s–2000s"
   - id: utrecht-rtv-fietsersbond-2025
     publisher: RTV Utrecht
@@ -430,4 +482,5 @@ sources:
       - id: narrow-paths
         text: "In de provincie Utrecht is 242 kilometer aan fietspaden niet breed genoeg. De gemeente Utrecht heeft het hoogste aantal te smalle fietspaden, Eemnes en Wijk bij Duurstede scoren het best."
         gloss_en: "In the province of Utrecht, 242 km of cycle paths are not wide enough. The municipality of Utrecht has the most too-narrow cycle paths; Eemnes and Wijk bij Duurstede score best."
+        gloss_de: "In der Provinz Utrecht sind 242 Kilometer Radwege nicht breit genug. Die Gemeinde Utrecht hat die meisten zu schmalen Radwege, Eemnes und Wijk bij Duurstede schneiden am besten ab."
         locator: "section Smalle fietspaden en gemengde wegen"

@@ -341,6 +341,7 @@ sources:
       - id: maintained-lengths
         text: "Pečujeme o 549 km značených cyklotras 74 km vyhrazených cyklopruhů 40 km cyklopruhů společných i pro bus a taxi"
         gloss_en: "We look after 549 km of signed cycle routes, 74 km of reserved cycle lanes, 40 km of cycle lanes shared with buses and taxis."
+        gloss_de: "Wir betreuen 549 km markierte Radrouten, 74 km Radfahrstreifen und 40 km Radfahrstreifen, die auch Busse und Taxis nutzen."
         locator: "section Popis a rozsah činnosti, figures panel"
   - id: prague-tsk-rocenka-2024
     publisher: Technická správa komunikací hl. m. Prahy, a.s. (TSK)
@@ -354,22 +355,27 @@ sources:
       - id: signed-routes
         text: "Celková délka značených cyklotras 549 km"
         gloss_en: "Total length of signed cycle routes: 549 km."
+        gloss_de: "Gesamtlänge der markierten Radrouten: 549 km."
         locator: "p. 28, chapter 4 Cyklistická doprava, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: protected-routes
         text: "Celková délka chráněných značených a doporučovaných cyklotras 256 km"
         gloss_en: "Total length of protected signed and recommended cycle routes: 256 km."
+        gloss_de: "Gesamtlänge der geschützten markierten und empfohlenen Radrouten: 256 km."
         locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: lanes
         text: "Cyklopruhy vyhrazené / ochranné 74,2 km / 80,1 km"
         gloss_en: "Cycle lanes, reserved / advisory (protective): 74.2 km / 80.1 km."
+        gloss_de: "Radfahrstreifen / Schutzstreifen: 74,2 km / 80,1 km."
         locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: new-2024-lanes
         text: "Cyklopruhy (V14 / V14–ochranný) 0 km / 6,6 km"
         gloss_en: "Cycle lanes (V14 reserved / V14 advisory) built in 2024: 0 km / 6.6 km."
+        gloss_de: "Radfahrstreifen (V14 / V14-Schutzstreifen): 0 km / 6,6 km."
         locator: "p. 28, table 'Nové prvky cyklistické infrastruktury realizované v roce 2024' (row)"
       - id: new-2024-contraflow
         text: "Cykloobousměrky 16,4 km"
         gloss_en: "Contraflow cycling in one-way streets added in 2024: 16.4 km."
+        gloss_de: "Radverkehr gegen die Einbahnrichtung: 16,4 km."
         locator: "p. 28, table 'Nové prvky cyklistické infrastruktury realizované v roce 2024' (row)"
   - id: prague-ipr-system-cyklotras-2021
     publisher: Institut plánování a rozvoje hl. m. Prahy (IPR Praha)
@@ -384,10 +390,12 @@ sources:
       - id: routes-not-facilities
         text: "Trasy mohou a nemusí být opatřeny orientačním značením v terénu, trasa může být realizována také za pomoci vhodných cykloopatření."
         gloss_en: "Routes may or may not carry wayfinding signs on the ground; a route can also be realised by means of suitable cycling measures."
+        gloss_de: "Routen können, müssen aber nicht vor Ort ausgeschildert sein; eine Route kann auch mithilfe geeigneter Radverkehrsmaßnahmen umgesetzt werden."
         locator: "p. 1, Shrnutí"
       - id: expansion-goal
         text: "rozšíření základní sítě pražských cyklotras (dle 2. podpůrného cíle v Koncepci rozvoje cyklistické dopravy pro období 2010-20 o dalších 300-400 km),"
         gloss_en: "expansion of the basic network of Prague cycle routes (under the 2nd supporting goal of the Cycling Development Concept 2010–20, by a further 300–400 km),"
+        gloss_de: "Erweiterung des Grundnetzes der Prager Radrouten (nach dem 2. Unterziel des Konzepts zur Entwicklung des Radverkehrs für 2010–20 um weitere 300–400 km),"
         locator: "p. 1, Shrnutí, first requirement listed"
   - id: prague-mestem-na-kole-2025
     publisher: Městem na kole
@@ -402,14 +410,17 @@ sources:
       - id: slow-2025
         text: "Rok 2025 se v Praze opět nesl ve znamení pomalého rozvoje cyklistické infrastruktury. Přibyly jen jednotky kilometrů stezek, legalizovaných chodníků a cyklopruhů a tempo zůstalo výrazně nižší než v letech 2021–2023."
         gloss_en: "In Prague, 2025 was again marked by slow development of cycling infrastructure. Only a few kilometres of paths, legalised footways and cycle lanes were added, and the pace remained well below 2021–2023."
+        gloss_de: "Auch 2025 stand in Prag im Zeichen einer langsamen Entwicklung der Radinfrastruktur. Hinzu kamen nur wenige Kilometer Wege, legalisierte Gehwege und Radfahrstreifen, und das Tempo blieb deutlich unter dem der Jahre 2021–2023."
         locator: "lead paragraph"
       - id: lanes-2025
         text: "Vyhrazených cyklopruhů byl vyznačen 1,1 kilometr, ochranných 6,5 kilometrů."
         gloss_en: "1.1 km of reserved cycle lanes and 6.5 km of advisory (protective) lanes were marked."
+        gloss_de: "Markiert wurden 1,1 Kilometer Radfahrstreifen und 6,5 Kilometer Schutzstreifen."
         locator: "article body, paragraph on cycle lanes"
       - id: own-monitoring
         text: "Data prezentovaná v tomto přehledovém článku vycházejí z našeho redakčního monitoringu nové infrastruktury. Je možné, že skutečné počty se mohou mírně lišit."
         gloss_en: "The data in this overview article come from our editorial monitoring of new infrastructure. Actual numbers may differ slightly."
+        gloss_de: "Die in diesem Überblicksartikel genannten Daten stammen aus unserem redaktionellen Monitoring neuer Infrastruktur. Die tatsächlichen Zahlen können leicht abweichen."
         locator: "closing note"
 
   # ---------------------------------------------------------------- bratislava
@@ -426,14 +437,17 @@ sources:
       - id: built-2025
         text: "Mesto investovalo v roku 2025 aj do ďalšieho rozvoja cyklodopravy na svojom území. Vybudovalo 14,2 kilometra novej cyklistickej infraštruktúry vrátane významných projektov popri predĺženej električkovej trati v Petržalke alebo na Dunajskej ulici."
         gloss_en: "In 2025 the city also invested in further development of cycling on its territory. It built 14.2 km of new cycling infrastructure, including major projects along the extended tram line in Petržalka and on Dunajská street."
+        gloss_de: "Die Stadt investierte 2025 auch in den weiteren Ausbau des Radverkehrs auf ihrem Gebiet und baute 14,2 Kilometer neue Radinfrastruktur, darunter wichtige Projekte entlang der verlängerten Straßenbahnstrecke in Petržalka und in der Dunajská-Straße."
         locator: "lead paragraph"
       - id: breakdown-total
         text: "Z vyše štrnástich kilometrov, o ktoré sa sieť rozšírila, je 6,9 kilometra samostatných cyklistických komunikácií, 2,2 kilometra ochranných pruhov, 3,6 kilometra spoločného chodníka pre chodcov a cyklistov a 1,5 kilometra bicyklovej cesty. Cyklistická infraštruktúra v meste celkovo meria viac než 205 kilometrov."
         gloss_en: "Of the more than fourteen kilometres by which the network grew, 6.9 km are separate cycle tracks, 2.2 km advisory lanes, 3.6 km shared footpaths for pedestrians and cyclists and 1.5 km bicycle road. Cycling infrastructure in the city measures more than 205 km in total."
+        gloss_de: "Von den mehr als vierzehn Kilometern, um die das Netz wuchs, sind 6,9 Kilometer eigenständige Radwege, 2,2 Kilometer Schutzstreifen, 3,6 Kilometer gemeinsame Geh- und Radwege und 1,5 Kilometer Fahrradstraße. Die Radinfrastruktur der Stadt misst insgesamt mehr als 205 Kilometer."
         locator: "article body, second paragraph"
       - id: connected-network
         text: "Týmto prvkom vznikla ucelená sieť s minimálnou dĺžkou deväťdesiat kilometrov."
         gloss_en: "This element created a connected network at least ninety kilometres long."
+        gloss_de: "Mit diesem Element entstand ein zusammenhängendes Netz von mindestens neunzig Kilometern Länge."
         locator: "closing paragraph, quote of Stanislav Skýva (city department of walking and cycling)"
   - id: bratislava-sita-akcny-plan-2025
     publisher: SITA (Slovenská tlačová agentúra)
@@ -448,14 +462,17 @@ sources:
       - id: since-2019
         text: "Bratislava od roku 2019 vybudovala približne 50 km nových cyklotrás. Magistrát deklaruje, že len tento rok pribudne ďalších 10 km technicky alebo stavebne oddelených trás, plus ďalšie kilometre vyznačených cyklopruhov."
         gloss_en: "Since 2019 Bratislava has built approximately 50 km of new cycle routes. The city hall says that this year alone a further 10 km of technically or physically separated routes will be added, plus further kilometres of marked cycle lanes."
+        gloss_de: "Bratislava hat seit 2019 etwa 50 km neue Radrouten gebaut. Der Magistrat erklärt, dass allein in diesem Jahr weitere 10 km technisch oder baulich getrennte Routen hinzukommen, dazu weitere Kilometer markierter Radfahrstreifen."
         locator: "article body, second paragraph"
       - id: target-2030
         text: "Cieľom stanoveným v dokumente Bratislava 2030 je vytvorenie hlavných mestských cyklotrás tak ako sú zadefinované v Územnom genereli dopravy. „Do roku 2030 by malo byť vybudovaných 180 kilometrov hlavných mestských cyklotrás,“ dodáva magistrát."
         gloss_en: "The goal set in the Bratislava 2030 document is to create the main city cycle routes as defined in the Transport Master Plan. 'By 2030, 180 km of main city cycle routes should be built,' the city hall adds."
+        gloss_de: "Ziel des Dokuments Bratislava 2030 ist es, die städtischen Hauptradrouten so zu schaffen, wie sie im Verkehrsentwicklungsplan festgelegt sind. „Bis 2030 sollen 180 Kilometer städtische Hauptradrouten gebaut sein“, ergänzt der Magistrat."
         locator: "article body, closing paragraph"
       - id: not-only-km
         text: "„Rozvoj novej cykloinfraštruktúry nie je len o novopostavených kilometroch. Niekedy dôležitejšie než počet kilometrov je vybudovanie aj relatívne krátkeho nového úseku, ktorý priamo prepojí už existujúce frekventované cyklotrasy,“ poznamenalo mesto"
         gloss_en: "'Developing new cycling infrastructure is not only about newly built kilometres. Sometimes more important than the number of kilometres is building even a relatively short new section that directly connects existing busy cycle routes,' the city noted"
+        gloss_de: "„Beim Ausbau neuer Radinfrastruktur geht es nicht nur um neu gebaute Kilometer. Manchmal ist wichtiger als die Zahl der Kilometer, auch einen relativ kurzen neuen Abschnitt zu bauen, der bereits bestehende, stark genutzte Radrouten direkt verbindet“, merkte die Stadt an"
         locator: "article body, third paragraph"
   - id: bratislava-cyklokoalicia-2025
     publisher: Cyklokoalícia
@@ -470,10 +487,12 @@ sources:
       - id: hundreds-of-metres
         text: "Pri pohľade na zoznam za rok 2025 vidíme prírastky v stovkách metrov, nie v kilometroch."
         gloss_en: "Looking at the list for 2025, we see additions in hundreds of metres, not in kilometres."
+        gloss_de: "Ein Blick auf die Liste für 2025 zeigt Zuwächse in Hunderten von Metern, nicht in Kilometern."
         locator: "concluding section"
       - id: both-sides
         text: "V katastri Vrakune pribudla nová zmiešaná cestička pre chodcov a cyklistov. Pred jej výstavbou tu chýbali dokonca aj chodníky. Spolu má dĺžku necelý kilometer (na jednej aj druhej strane)."
         gloss_en: "In the Vrakuňa district a new shared path for pedestrians and cyclists was added. Before it was built there were not even footways here. In total it is just under a kilometre long (on one side and the other)."
+        gloss_de: "Im Gebiet von Vrakuňa kam ein neuer gemeinsamer Weg für Fußgänger und Radfahrer hinzu. Vor seinem Bau fehlten hier sogar Gehwege. Insgesamt ist er knapp einen Kilometer lang (auf der einen und der anderen Seite)."
         locator: "article body, Vrakuňa item"
 
   # ------------------------------------------------------------------ budapest
@@ -489,10 +508,12 @@ sources:
       - id: main-network-800km
         text: "A kerékpárral megtett utazások számának jelentős növeléséhez a teljes budapesti közúthálózatot (alaphálózat, kb. 5500 km) biztonságosan kerékpározhatóvá kell tenni, ezen belül megfelelő sűrűségű és komfortú főhálózat (kb. 800 km) szükséges."
         gloss_en: "To significantly increase the number of trips made by bicycle, the whole Budapest road network (base network, approx. 5,500 km) must be made safely cyclable, and within it a main network of adequate density and comfort (approx. 800 km) is needed."
+        gloss_de: "Um die Zahl der mit dem Fahrrad zurückgelegten Wege deutlich zu erhöhen, muss das gesamte Budapester Straßennetz (Grundnetz, etwa 5.500 km) sicher befahrbar werden, und darin ist ein Hauptnetz ausreichender Dichte und ausreichenden Komforts (etwa 800 km) nötig."
         locator: "PDF p. 5, summary findings"
       - id: city-managed-235km
         text: "A Budapest Közút Zrt. által végzett kerékpáros útellenőrzési munka jelenleg 279 fővárosi kezelésű kerékpárútszakaszon és 206 fővárosi kezelésű kerékpársávszakaszon zajlik, melyek összesített hossza 235 kilométer."
         gloss_en: "The cycle-route inspection work carried out by Budapest Közút Zrt. currently covers 279 city-managed cycle track sections and 206 city-managed cycle lane sections, with a combined length of 235 km."
+        gloss_de: "Die Kontrolle der Radwege durch die Budapest Közút Zrt. umfasst derzeit 279 Radwegabschnitte und 206 Radfahrstreifenabschnitte in städtischer Verwaltung mit einer Gesamtlänge von 235 Kilometern."
         locator: "PDF p. 27, 1.5.1 Útállapot szerinti minősítés (önálló kerékpárforgalmi létesítmények)"
   - id: budapest-telex-g7-2024
     publisher: Telex (G7)
@@ -507,18 +528,22 @@ sources:
       - id: km-poor-indicator
         text: "A hálózat kilométerben kifejezett hossza pedig valójában nem túl jó mutató, mert például a fővárosban sok helyen egyszerűen a járdára húztak egy-egy sárga vonalat, és ebből lett a kerékpárút, de ez nem nagyon tekinthető minőségi, modern megoldásnak."
         gloss_en: "The length of the network in kilometres is actually not a very good indicator, because in many places in the capital a yellow line was simply painted on the footway and that became the cycle path, which can hardly be considered a quality, modern solution."
+        gloss_de: "Die in Kilometern ausgedrückte Länge des Netzes ist eigentlich kein sehr guter Indikator, denn in der Hauptstadt wurde vielerorts einfach eine gelbe Linie auf den Gehweg gezogen, und daraus wurde der Radweg; das kann aber kaum als hochwertige, moderne Lösung gelten."
         locator: "article body, paragraph on data availability"
       - id: kfht-targets
         text: "Ebből az is megtudható, hogy a fővárosban 2022-ben csupán 139 kilométernyi elfogadható színvonalú kerékpárút volt, és ezt szeretnék 2027-ig 292 km-re, majd 2030-ra 504 km-re növelni. További 395 km-t 2030 után valósítanának meg."
         gloss_en: "It also shows that in 2022 the capital had only 139 km of cycle paths of acceptable standard, which they want to increase to 292 km by 2027 and then to 504 km by 2030. A further 395 km would be built after 2030."
+        gloss_de: "Daraus geht auch hervor, dass es in der Hauptstadt 2022 nur 139 Kilometer Radwege von annehmbarem Standard gab; diese will man bis 2027 auf 292 km und bis 2030 auf 504 km steigern. Weitere 395 km sollen nach 2030 umgesetzt werden."
         locator: "article body, paragraph on the Kerékpárforgalmi főhálózati terv"
       - id: osm-vs-ksh
         text: "E szerint Budapesten 307 km kerékpárút volt 2024 januárjában, minden formát beleértve. Ez az adat harmadával magasabb, mint a KSH által 2022-ben nyilvántartott 210 km, az eltérés oka abban lehet, hogy az eltérő típusú infrastruktúrákat melyik forrás számolja kerékpárútnak és melyik nem."
         gloss_en: "According to this, Budapest had 307 km of cycle paths in January 2024, all forms included. That figure is a third higher than the 210 km recorded by the statistics office KSH for 2022; the difference may lie in which source counts which types of infrastructure as cycle paths."
+        gloss_de: "Danach gab es in Budapest im Januar 2024 insgesamt 307 km Radwege, alle Formen eingeschlossen. Diese Zahl liegt um ein Drittel über den 210 km, die das Statistikamt KSH für 2022 verzeichnete; der Unterschied könnte darin liegen, welche Quelle welche Arten von Infrastruktur als Radweg zählt und welche nicht."
         locator: "article body, paragraph after the ECF city comparison ('E szerint' refers to ECF figures compiled from OpenStreetMap data)"
       - id: bkk-main-network-built
         text: "A 2020-2024 között (azaz a jelenlegi) ciklusban összesen 52 kilométernyi kerékpárforgalmi főhálózati elem épült, ezzel szemben 2015-2019 között (azaz az előző ciklusnak köszönhetően) mindössze 34 kilométer, de 2010-2014 közötti ciklusba is csak 42 km új főhálózat jött létre."
         gloss_en: "In the 2020–2024 (i.e. current) term a total of 52 km of cycle main-network elements were built, against only 34 km in 2015–2019 (the previous term) and only 42 km of new main network in the 2010–2014 term."
+        gloss_de: "In der Periode 2020–2024 (also der jetzigen) wurden insgesamt 52 Kilometer Elemente des Radhauptnetzes gebaut, dagegen 2015–2019 (also dank der vorigen Periode) nur 34 Kilometer, und auch in der Periode 2010–2014 entstanden nur 42 km neues Hauptnetz."
         locator: "Frissítés (update) section, statement sent by BKK after publication"
 
   # ----------------------------------------------------------------- ljubljana
@@ -534,6 +559,7 @@ sources:
       - id: over-350km
         text: "V Ljubljani je več kot 350 km urejenih kolesarskih površin v obliki kolesarskih pasov na pločniku ali vozišču, ločenih kolesarskih stez ter skupnih poti za pešce in kolesarje."
         gloss_en: "Ljubljana has more than 350 km of designated cycling surfaces in the form of cycle lanes on the footway or carriageway, separated cycle tracks and shared paths for pedestrians and cyclists."
+        gloss_de: "In Ljubljana gibt es mehr als 350 km ausgewiesene Radverkehrsflächen in Form von Radfahrstreifen auf dem Gehweg oder der Fahrbahn, getrennten Radwegen sowie gemeinsamen Wegen für Fußgänger und Radfahrer."
         locator: "section Kolesarji z novimi pridobitvami"
   - id: ljubljana-cps-2025-2032
     publisher: Mestna občina Ljubljana
@@ -547,10 +573,12 @@ sources:
       - id: about-400km
         text: "Izboljšujemo in dograjujemo infrastrukturo za pešce in kolesarje, beležimo že okoli 400 km kolesarskih poti različnih tipov."
         gloss_en: "We are improving and extending infrastructure for pedestrians and cyclists; we already record about 400 km of cycle paths of various types."
+        gloss_de: "Wir verbessern und erweitern die Infrastruktur für Fußgänger und Radfahrer und verzeichnen bereits rund 400 km Radwege verschiedener Art."
         locator: "PDF p. 33, section Gradimo udobno in varno infrastrukturo"
       - id: cycling-share-counts
         text: "S štetjem prometa na izbranih lokacijah ob glavnih cestah v oktobru 2024 je bilo ugotovljeno, da je delež kolesarjev v celotni strukturi mobilnosti danes precej nizek in dosega le 4,2 %."
         gloss_en: "Traffic counts at selected locations along main roads in October 2024 found that the share of cyclists in overall mobility is currently quite low, at only 4.2%."
+        gloss_de: "Verkehrszählungen an ausgewählten Stellen an Hauptstraßen im Oktober 2024 ergaben, dass der Anteil der Radfahrer an der gesamten Mobilität heute recht niedrig ist und nur 4,2 % erreicht."
         locator: "PDF p. 57, analysis of cycling"
   - id: ljubljana-visitljubljana-kolo
     publisher: Turizem Ljubljana (visitljubljana.com)
@@ -564,6 +592,7 @@ sources:
       - id: about-230km
         text: "Ljubljana ima skupno okoli 230 kilometrov urejenih kolesarskih poti."
         gloss_en: "Ljubljana has a total of around 230 km of designated cycle paths."
+        gloss_de: "Ljubljana hat insgesamt rund 230 Kilometer ausgewiesene Radwege."
         locator: "intro paragraph"
 
   # ------------------------------------------------------------------- wroclaw
@@ -580,10 +609,12 @@ sources:
       - id: friendly-1450km
         text: "Wrocław ma obecnie 1450 km tras przyjaznych rowerzystom."
         gloss_en: "Wrocław currently has 1,450 km of cyclist-friendly routes."
+        gloss_de: "Wrocław hat derzeit 1.450 km radfreundliche Routen."
         locator: "lead paragraph"
       - id: built-since-plan
         text: "W 2025 roku mieszkańcy korzystają z blisko 40 kilometrów tras wybudowanych od momentu przyjęcia planu."
         gloss_en: "In 2025 residents are using nearly 40 km of routes built since the plan was adopted."
+        gloss_de: "2025 nutzen die Bewohner knapp 40 Kilometer Routen, die seit der Annahme des Plans gebaut wurden."
         locator: "article body, section on current investments"
   - id: wroclaw-portal-samorzadowy-2026
     publisher: Portal Samorządowy
@@ -598,10 +629,12 @@ sources:
       - id: wroclaw-428km
         text: "We Wrocławiu - jak podaje magistrat - taka infrastruktura liczy 428 km."
         gloss_en: "In Wrocław, according to the city hall, such infrastructure totals 428 km."
+        gloss_de: "In Wrocław umfasst diese Infrastruktur nach Angaben des Magistrats 428 km."
         locator: "section Kilkaset kilometrów tras rowerowych we Wrocławiu, Poznaniu, Krakowie, Łodzi i Katowicach"
       - id: wroclaw-25km-2024
         text: "2024 r. był momentem oddawania wielu inwestycji, w tym także rowerowych. Wówczas było to 25 km."
         gloss_en: "2024 was a time when many investments were opened, including cycling ones. Back then it was 25 km."
+        gloss_de: "2024 wurden viele Investitionen fertiggestellt, auch für den Radverkehr. Damals waren es 25 km."
         locator: "same section, quote of Jolanta Urbańska-Jaworska (UM Wrocławia)"
   - id: wroclaw-nik-2023
     publisher: Najwyższa Izba Kontroli (NIK)
@@ -616,14 +649,17 @@ sources:
       - id: wroclaw-most-added
         text: "W sumie przybyło 123,5 km wszystkich rodzajów tras rowerowych (najwięcej we Wrocławiu – ponad 45,5 km)."
         gloss_en: "In total 123.5 km of all types of cycle route were added (most in Wrocław, more than 45.5 km)."
+        gloss_de: "Insgesamt kamen 123,5 km Radrouten aller Art hinzu (am meisten in Wrocław, mehr als 45,5 km)."
         locator: "section Najważniejsze ustalenia kontroli (audit period 2019 to Q1 2022, ten audited cities)"
       - id: targets-unmeasurable
         text: "Założone w licznych dokumentach strategicznych cele związane z utrzymaniem i rozwojem miejskich sieci infrastruktury rowerowej na ogół nie zostały osiągnięte lub nie można było w istocie ustalić faktu ich zrealizowania, ponieważ nie określono terminu lub docelowej wartości przyjmowanych wskaźników."
         gloss_en: "The goals for maintaining and developing urban cycling networks set in numerous strategy documents were generally not achieved, or it could not actually be established whether they were achieved, because no deadline or target value was set for the indicators adopted."
+        gloss_de: "Die in zahlreichen Strategiedokumenten festgelegten Ziele zum Erhalt und Ausbau der städtischen Radnetze wurden in der Regel nicht erreicht, oder es ließ sich gar nicht feststellen, ob sie erreicht wurden, weil für die gewählten Indikatoren weder eine Frist noch ein Zielwert festgelegt war."
         locator: "section Najważniejsze ustalenia kontroli"
       - id: wroclaw-row
         text: "Wrocław 84,20 km 110,63 km (wzrost 31,39%)"
         gloss_en: "Wrocław: 84.20 km, 110.63 km (increase of 31.39%)."
+        gloss_de: "Wrocław: 84,20 km, 110,63 km (Zuwachs 31,39 %)."
         locator: "table 'Dynamika rozwoju infrastruktury rowerowej w skontrolowanych miastach w latach 2019-2022 (I kwartał) (w km)', row Wrocław, columns Drogi dla rowerów wg stanu na 31 grudnia 2018 r. / 31 marca 2022 r."
   - id: wroclaw-wroclife-nik-2023
     publisher: wroclife.pl
@@ -638,10 +674,12 @@ sources:
       - id: friendly-routes
         text: "Urząd miejski w swoim oświadczeniu zaznacza, że poza ujętymi w raporcie drogami rowerowymi, ciągami pieszo-rowerowymi i rowerowymi pasami ruchu, w mieście istnieją też inne trasy „przyjazne rowerzystom”. Urzędnicy szacują ich długość na 1,4 tys. km. Chodzi tu m.in. o kontrapasy i strefy uspokojonego ruchu."
         gloss_en: "In its statement the city hall stresses that besides the cycle tracks, shared footpath/cycle paths and cycle lanes covered by the report, there are other 'cyclist-friendly' routes in the city. Officials estimate their length at 1,400 km. These include contraflow lanes and traffic-calmed zones."
+        gloss_de: "Die Stadtverwaltung betont in ihrer Stellungnahme, dass es in der Stadt neben den im Bericht erfassten Radwegen, Geh- und Radwegen und Radfahrstreifen auch andere „radfreundliche“ Routen gibt. Die Beamten schätzen ihre Länge auf 1.400 km. Gemeint sind unter anderem Radfahrstreifen gegen die Einbahnrichtung und verkehrsberuhigte Zonen."
         locator: "article body, paragraph on the city's statement"
       - id: km-not-reality
         text: "Urząd Miejski często chwali się rosnącą liczbą kilometrów tras rowerowych. Liczby te jednak nie oddają rzeczywistości."
         gloss_en: "The city hall often boasts of the growing number of kilometres of cycle routes. These numbers, however, do not reflect reality."
+        gloss_de: "Die Stadtverwaltung rühmt sich oft der wachsenden Zahl von Kilometern an Radrouten. Diese Zahlen geben die Wirklichkeit jedoch nicht wieder."
         locator: "article body, quote of Jakub Nowotarski (Akcja Miasto)"
 
   # -------------------------------------------------------------------- warsaw
@@ -657,6 +695,7 @@ sources:
       - id: plus-55km
         text: "Ogółem w 2025 roku sieć rowerowa w stolicy wydłużyła się o aż 55 km. W międzyczasie rozpoczęliśmy też budowę kolejnych tras, m.in. w al. „Solidarności” czy al. Jana Pawła II. Rekordowa jest też długość wyremontowanych tras – aż 20 km."
         gloss_en: "Overall, in 2025 the cycle network in the capital grew by as much as 55 km. Meanwhile we also started building further routes, including on al. Solidarności and al. Jana Pawła II. The length of renovated routes is also a record, as much as 20 km."
+        gloss_de: "Insgesamt wurde das Radnetz der Hauptstadt 2025 um ganze 55 km länger. In der Zwischenzeit haben wir auch mit dem Bau weiterer Routen begonnen, unter anderem in der al. „Solidarności“ und der al. Jana Pawła II. Einen Rekord gibt es auch bei der Länge der sanierten Routen, ganze 20 km."
         locator: "section Droga dla rowerów na Andersa"
   - id: warsaw-zdm-rower-2025
     publisher: Zarząd Dróg Miejskich w Warszawie (ZDM)
@@ -671,6 +710,7 @@ sources:
       - id: network-814km
         text: "Sieć rowerowa w stolicy liczy obecnie 814 kilometrów różnego rodzaju infrastruktury."
         gloss_en: "The cycle network in the capital currently comprises 814 km of various kinds of infrastructure."
+        gloss_de: "Das Radnetz der Hauptstadt umfasst derzeit 814 Kilometer Infrastruktur verschiedener Art."
         locator: "lead paragraph"
   - id: warsaw-zdm-sezon-2018
     publisher: Zarząd Dróg Miejskich w Warszawie (ZDM)
@@ -685,6 +725,7 @@ sources:
       - id: composition-544km
         text: "Obecnie sieć rowerowa w stolicy liczy już 544 km (w tym 406 km dróg dla rowerów, 70 km ciągów pieszo-rowerowych oraz 68 km pasów i kontrapasów). 2/3 z nich ma nawierzchnię asfaltową."
         gloss_en: "The cycle network in the capital now totals 544 km (including 406 km of cycle tracks, 70 km of shared footpath/cycle paths and 68 km of cycle lanes and contraflow lanes). Two thirds of it has an asphalt surface."
+        gloss_de: "Derzeit umfasst das Radnetz der Hauptstadt bereits 544 km (darunter 406 km Radwege, 70 km Geh- und Radwege sowie 68 km Radfahrstreifen und Radfahrstreifen gegen die Einbahnrichtung). Zwei Drittel davon haben einen Asphaltbelag."
         locator: "closing paragraph"
   - id: warsaw-portal-samorzadowy-2026
     publisher: Portal Samorządowy
@@ -699,10 +740,12 @@ sources:
       - id: zdm-36-9km
         text: "W informacji z początku grudnia ZDM wskazuje, że w roku 2025 powstało 36,9 km infrastruktury rowerowej, a w trakcie budowy lub za pomocą zmian w organizacji ruchu w trakcie wyznaczania są 23 km różnego rodzaju infrastruktury rowerowej, w tym 18,8 km dróg dla rowerów."
         gloss_en: "In information from early December, ZDM states that 36.9 km of cycling infrastructure were created in 2025, and 23 km of various kinds of cycling infrastructure, including 18.8 km of cycle tracks, are under construction or being marked through traffic-organisation changes."
+        gloss_de: "In einer Mitteilung von Anfang Dezember gibt der ZDM an, dass 2025 insgesamt 36,9 km Radinfrastruktur entstanden sind; im Bau oder durch Änderungen der Verkehrsorganisation in Markierung sind 23 km Radinfrastruktur verschiedener Art, darunter 18,8 km Radwege."
         locator: "section 860 km na koniec roku w Warszawie"
       - id: estimate-860km
         text: "Wówczas nie było jeszcze wiadomo, które z realizowanych prac zakończą się do 31 grudnia, ale zdaniem zarządu szacunkowa łączna długość na koniec 2025 r. to ok. 860 km."
         gloss_en: "At that point it was not yet known which of the works under way would be finished by 31 December, but in the authority's view the estimated total length at the end of 2025 is about 860 km."
+        gloss_de: "Damals war noch nicht bekannt, welche der laufenden Arbeiten bis zum 31. Dezember abgeschlossen sein würden, nach Einschätzung der Behörde liegt die geschätzte Gesamtlänge Ende 2025 aber bei etwa 860 km."
         locator: "section 860 km na koniec roku w Warszawie"
   - id: warsaw-transinfo-2025
     publisher: TransInfo (InfoBike)
@@ -717,10 +760,12 @@ sources:
       - id: over-873km
         text: "Ponad 873 kilometry infrastruktury rowerowej – tyle na koniec 2025 roku mieli do dyspozycji warszawscy rowerzyści."
         gloss_en: "More than 873 km of cycling infrastructure: that is what Warsaw's cyclists had at their disposal at the end of 2025."
+        gloss_de: "Mehr als 873 Kilometer Radinfrastruktur – so viel stand den Warschauer Radfahrern Ende 2025 zur Verfügung."
         locator: "lead paragraph"
       - id: renovated-20-7km
         text: "W 2025 roku wyremontowano łącznie 20,7 km infrastruktury rowerowej."
         gloss_en: "In 2025 a total of 20.7 km of cycling infrastructure was renovated."
+        gloss_de: "2025 wurden insgesamt 20,7 km Radinfrastruktur saniert."
         locator: "article body, paragraph on renovations"
 
   # -------------------------------------------------------------------- krakow
@@ -737,14 +782,17 @@ sources:
       - id: from-142-to-250
         text: "W 2014 – roku referendum – w którym krakowianie opowiedzieli się za rozbudową ścieżek rowerowych, miasto miało do dyspozycji wydzieloną infrastrukturę rowerową liczącą 142,5 km. Z biegiem lat oddawane były kolejne kilometry dróg oraz wprowadzano rozwiązania projektowe, które spowodowały, że obecnie do dyspozycji mieszkańców oddanych jest około 250 km."
         gloss_en: "In 2014, the year of the referendum in which Kraków residents voted for expanding cycle paths, the city had 142.5 km of separated cycling infrastructure. Over the years further kilometres were opened and design solutions introduced, so that about 250 km are now available to residents."
+        gloss_de: "2014, im Jahr des Referendums, in dem sich die Krakauer für den Ausbau der Radwege aussprachen, verfügte die Stadt über 142,5 km eigene Radinfrastruktur. Im Lauf der Jahre wurden weitere Kilometer Wege freigegeben und planerische Lösungen eingeführt, sodass den Bewohnern heute rund 250 km zur Verfügung stehen."
         locator: "article body, second paragraph"
       - id: per-year
         text: "W 2019 r. powstało ok. 3,7 km ścieżek, w 2020 r. – 5,7 km, w 2021 r. – 0,85 km."
         gloss_en: "About 3.7 km of paths were built in 2019, 5.7 km in 2020 and 0.85 km in 2021."
+        gloss_de: "2019 entstanden etwa 3,7 km Wege, im Jahr 2020 waren es 5,7 km und im Jahr 2021 nur noch 0,85 km."
         locator: "article body, third paragraph"
       - id: definition
         text: "Na szeroko rozumianą infrastrukturę rowerową składają się: drogi dla rowerów, ciągi pieszo-rowerowe, chodniki z dopuszczonym ruchem rowerowym, pasy rowerowe, kontrapasy oraz tzw. kontraruch rowerowy, gdzie dopuszczona jest jazda rowerem „pod prąd” na ulicach jednokierunkowych w strefie uspokojonego ruchu drogowego, czyli z ograniczeniem prędkości do 30 km/h."
         gloss_en: "Cycling infrastructure in the broad sense comprises: cycle tracks, shared footpath/cycle paths, footways where cycling is permitted, cycle lanes, contraflow lanes and so-called contraflow cycling, where riding 'against the flow' is allowed on one-way streets in traffic-calmed zones, i.e. with a 30 km/h limit."
+        gloss_de: "Zur Radinfrastruktur im weiteren Sinn gehören: Radwege, Geh- und Radwege, für den Radverkehr freigegebene Gehwege, Radfahrstreifen, Radfahrstreifen gegen die Einbahnrichtung sowie der sogenannte Gegenverkehr für Räder, bei dem das Radfahren „gegen die Fahrtrichtung“ in Einbahnstraßen in verkehrsberuhigten Zonen erlaubt ist, also bei einer Höchstgeschwindigkeit von 30 km/h."
         locator: "article body, fourth paragraph"
   - id: krakow-ztp-plan-2030
     publisher: Zarząd Transportu Publicznego w Krakowie (ZTP)
@@ -759,10 +807,12 @@ sources:
       - id: not-only-km
         text: "Nie chcemy mierzyć rozwoju ruchu rowerowego wyłącznie liczbą nowych kilometrów. Najważniejsze ilu mieszkańców dzięki danej inwestycji będzie mogło przejechać swoją trasę bezpiecznie, wygodnie i bez miejsc, w których infrastruktura nagle się kończy."
         gloss_en: "We do not want to measure the development of cycling only by the number of new kilometres. What matters most is how many residents an investment lets ride their route safely, comfortably and without places where the infrastructure suddenly ends."
+        gloss_de: "Wir wollen die Entwicklung des Radverkehrs nicht nur an der Zahl neuer Kilometer messen. Am wichtigsten ist, wie viele Bewohner dank einer Investition ihre Strecke sicher, bequem und ohne Stellen fahren können, an denen die Infrastruktur plötzlich endet."
         locator: "article body, quote of Marcin Dumnicki (Kraków Miastem Rowerów), member of the city's cycling team"
       - id: budget-0-6pct
         text: "Propozycją zespołu jest przeznaczanie do 2030 r. na rozwój infrastruktury rowerowej równowartości co najmniej 0,6 proc. budżetu miasta rocznie"
         gloss_en: "The team proposes allocating to cycling infrastructure, until 2030, the equivalent of at least 0.6 percent of the city budget each year"
+        gloss_de: "Das Team schlägt vor, bis 2030 jährlich mindestens den Gegenwert von 0,6 Prozent des Stadthaushalts für den Ausbau der Radinfrastruktur bereitzustellen"
         locator: "section Zespół rekomenduje model finansowania, quote of Łukasz Gryga (ZTP deputy director, team chair)"
   - id: krakow-portal-samorzadowy-2026
     publisher: Portal Samorządowy
@@ -777,8 +827,10 @@ sources:
       - id: krakow-316km
         text: "Nieco mniej - blisko 410 km - ma Poznań. Kraków i Gdańsk to odpowiednio ok. 316 i 311 km tras rowerowych, a Łódź 260 km."
         gloss_en: "Somewhat less, close to 410 km, has Poznań. Kraków and Gdańsk have about 316 and 311 km of cycle routes respectively, and Łódź 260 km."
+        gloss_de: "Etwas weniger, knapp 410 km, hat Poznań. Krakau und Gdańsk haben etwa 316 beziehungsweise 311 km Radrouten, Łódź 260 km."
         locator: "section Kilkaset kilometrów tras rowerowych we Wrocławiu, Poznaniu, Krakowie, Łodzi i Katowicach"
       - id: krakow-plan-2026
         text: "Kraków ma w planie 9,1 km nowych tras."
         gloss_en: "Kraków plans 9.1 km of new routes."
+        gloss_de: "Krakau plant 9,1 km neue Routen."
         locator: "section 10 km lub niewiele mniej. Oto plany Łodzi, Gdańska, Krakowa i Katowic"

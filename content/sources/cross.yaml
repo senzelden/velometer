@@ -14,6 +14,7 @@ sources:
         text: >-
           Ratio of protected (i.e. physically separated through a barrier, height difference or
           distance from motorised traffic) cycling infrastructure total vs road network (in km)
+        gloss_de: "Verhältnis der geschützten Radinfrastruktur (d. h. baulich durch eine Barriere, einen Höhenunterschied oder Abstand vom Kfz-Verkehr getrennt) insgesamt zum Straßennetz (in km)"
         locator: "Table 1, Indicator 3, metric used; PDF p.10 (report p.18)"
       - id: city-data
         text: >-
@@ -21,6 +22,7 @@ sources:
           missing or incomplete information. 34 out of the 36 cities provided data for this
           ranking. For the two cities which did not provide data and for any incomplete data,
           public data sources were used instead.
+        gloss_de: "Jede Stadtverwaltung wurde gebeten, lokale Daten bereitzustellen und Rückmeldung zu fehlenden oder unvollständigen Angaben zu geben. 34 der 36 Städte lieferten Daten für dieses Ranking. Für die beiden Städte, die keine Daten lieferten, und für unvollständige Daten wurden stattdessen öffentliche Datenquellen verwendet."
         locator: "§2 How was this ranking compiled?; PDF p.9 (report p.17)"
       - id: supplemented
         text: >-
@@ -28,34 +30,40 @@ sources:
           government bodies, the European Cyclists’ Federation, and Openstreetmap. In cases where
           only estimates were available, this is clearly indicated. Each city's data quality was
           rated on a scale from poor to high to highlight potential uncertainties.
+        gloss_de: "Wo nötig, haben wir dies um öffentlich verfügbare Daten von Städten, Behörden, der European Cyclists’ Federation und OpenStreetMap ergänzt. Wo nur Schätzungen vorlagen, ist dies deutlich angegeben. Die Datenqualität jeder Stadt wurde auf einer Skala von schlecht bis hoch bewertet, um mögliche Unsicherheiten zu zeigen."
         locator: "Data sources and quality; PDF p.10 (report p.19)"
       - id: area
         text: >-
           Unless otherwise specified, each city refers to the municipality of the same name. We
           have chosen to focus on the area under the control of local authorities, particularly
           mayors.
+        gloss_de: "Sofern nicht anders angegeben, bezeichnet jede Stadt die gleichnamige Gemeinde. Wir haben uns auf das Gebiet konzentriert, das der Kontrolle der Kommunalverwaltung untersteht, insbesondere der Bürgermeister."
         locator: "City selection; PDF p.10 (report p.19)"
       - id: collection-dates
         text: >-
           Data collection took place from December 2024 to February 7, 2025, using the most
           up-to-date information
+        gloss_de: "Die Datenerhebung fand von Dezember 2024 bis zum 7. Februar 2025 statt, mit den aktuellsten verfügbaren Informationen"
         locator: "Pull quote, §3; PDF p.11 (report p.20)"
       - id: cutoff
         text: >-
           Any significant updates were incorporated only if new data was provided by cities or
           partners before April 4, 2025. More recent changes or updates were not taken into
           account.
+        gloss_de: "Wesentliche Aktualisierungen wurden nur berücksichtigt, wenn Städte oder Partner vor dem 4. April 2025 neue Daten lieferten. Spätere Änderungen oder Aktualisierungen wurden nicht berücksichtigt."
         locator: "Data sources and quality (continued); PDF p.11 (report p.20)"
       - id: average
         text: >-
           On average, protected cycling infrastructure only amounts to the equivalent of 17% of
           the road network.
+        gloss_de: "Im Durchschnitt entspricht die geschützte Radinfrastruktur nur 17 % des Straßennetzes."
         locator: "Indicator 3: Protected cycling infrastructure; PDF p.15 (report pp.28-29)"
       - id: shared-paths
         text: >-
           Shared foot and bike paths, while not ideal, still offer protection from motorised
           traffic, helping certain cities perform relatively well. These types of infrastructure
           are common in countries like Germany, Poland and Finland.
+        gloss_de: "Gemeinsame Geh- und Radwege sind nicht ideal, bieten aber dennoch Schutz vor dem Kfz-Verkehr und helfen manchen Städten zu einem relativ guten Abschneiden. Diese Art von Infrastruktur ist in Ländern wie Deutschland, Polen und Finnland verbreitet."
         locator: "Indicator 3: Protected cycling infrastructure; PDF p.15 (report pp.28-29)"
 
   - id: cc2025-annexes
@@ -72,45 +80,53 @@ sources:
           Protected cycling infrastructure is defined as any cycling infrastructure that is
           physically segregated (by a barrier, height difference or distance) and thus provides
           protection from motorised traffic, increasing actual and perceived safety.
+        gloss_de: "Als geschützte Radinfrastruktur gilt jede Radinfrastruktur, die baulich getrennt ist (durch eine Barriere, einen Höhenunterschied oder Abstand) und so Schutz vor dem Kfz-Verkehr bietet, was die tatsächliche und die empfundene Sicherheit erhöht."
         locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
       - id: included
         text: >-
           This includes cycle tracks but also shared foot and bike paths, pedestrian streets or
           greenways. It doesn't include cycle lanes that are painted on the road, nor cycle
           streets, nor living streets or shared spaces, nor shared bus lanes.
+        gloss_de: "Dazu gehören Radwege, aber auch gemeinsame Geh- und Radwege, Fußgängerzonen oder Grüne Wege. Nicht dazu gehören auf die Fahrbahn gemalte Radfahrstreifen, Fahrradstraßen, verkehrsberuhigte Bereiche oder Shared Spaces und mit dem Bus geteilte Fahrstreifen."
         locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
       - id: osm-fallback
         text: >-
           In absence of official city data, OSM data compiled by the European Cyclists’
           Federation (ECF) was used, following ECF's cycling infrastructure tracker methodology
           selecting OSM objects with key highways and the following values:
+        gloss_de: "Fehlten amtliche Daten der Stadt, wurden von der European Cyclists’ Federation (ECF) zusammengestellte OSM-Daten verwendet, nach der Methodik des ECF-Trackers für Radinfrastruktur, der OSM-Objekte mit dem Schlüssel highway und den folgenden Werten auswählt:"
         locator: "Annex 2, Protected cycling infrastructure, Additional information; PDF p.4"
       - id: ratio-not-share
         text: >-
           The figure calculated is a ratio and is comparable to, but not equivalent to, the share
           of the road network that is equipped with protected cycling infrastructure, as not all
           cycling infrastructure is necessarily adjacent to a road.
+        gloss_de: "Die berechnete Zahl ist ein Verhältnis und vergleichbar mit dem Anteil des Straßennetzes, der mit geschützter Radinfrastruktur ausgestattet ist, aber nicht gleichbedeutend damit, da nicht jede Radinfrastruktur zwingend an einer Straße liegt."
         locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
       - id: city-definitions
         text: >-
           Differences in definitions or methodologies for counting different cycling
           infrastructure types across cities can influence the figures provided by cities.
+        gloss_de: "Unterschiedliche Definitionen oder Methoden der Städte beim Zählen verschiedener Arten von Radinfrastruktur können die von den Städten gelieferten Zahlen beeinflussen."
         locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
       - id: osm-missing
         text: >-
           Missing OSM data might distort city figures, OSM tagging guidelines might not have been
           applied correctly when mapping.
+        gloss_de: "Fehlende OSM-Daten können die Zahlen einer Stadt verzerren; die OSM-Tagging-Richtlinien wurden beim Kartieren möglicherweise nicht richtig angewendet."
         locator: "Annex 2, Protected cycling infrastructure, Uncertainties and limitations; PDF p.4"
       - id: road-network-area
         text: >-
           For this indicator, the entire public road network within the city area has been
           considered.
+        gloss_de: "Für diesen Indikator wurde das gesamte öffentliche Straßennetz im Stadtgebiet berücksichtigt."
         locator: "Annex 2, Safe speeds, Additional information (applied to Indicator 3); PDF p.3"
       - id: road-lanes
         text: >-
           The number of lanes or directions on a road does not affect the road network length,
           .i.e. a road with 3 lanes counts for the same as a single-lane road, a two-way street
           the same as a one-way street.
+        gloss_de: "Die Zahl der Fahrstreifen oder Fahrtrichtungen einer Straße ändert die Länge des Straßennetzes nicht, d. h. eine Straße mit drei Fahrstreifen zählt genauso wie eine einstreifige Straße und eine Straße mit Gegenverkehr genauso wie eine Einbahnstraße."
         locator: "Annex 2, Safe speeds, Additional information (applied to Indicator 3); PDF p.3"
 
   - id: cc2025-cycling-table
@@ -128,17 +144,20 @@ sources:
           In this table, we have ranked cities based on the extent of their protected cycling
           infrastructure – dedicated bike lanes that are physically separated from motor traffic
           to ensure safe and accessible routes for cyclists of all ages.
+        gloss_de: "In dieser Tabelle haben wir die Städte nach dem Umfang ihrer geschützten Radinfrastruktur gereiht – eigene Radwege, die baulich vom Kfz-Verkehr getrennt sind, damit Radfahrende jeden Alters sichere und zugängliche Routen haben."
         locator: "Introduction above the table"
       - id: vienna-update
         text: >-
           625.1 km (previously: 384.1 km) of protected cycling infrastructure for a road network
           of 2,844 km
+        gloss_de: "625,1 km (vorher 384,1 km) geschützte Radinfrastruktur bei einem Straßennetz von 2.844 km"
         locator: "UPDATE (JULY 2025), City of Vienna"
       - id: vienna-why
         text: >-
           Explanation: A more detailed breakdown of traffic-calmed areas revealed roads with
           restricted motor vehicle access that are part of the cycling network. These have now
           been included.
+        gloss_de: "Erklärung: Eine genauere Aufschlüsselung der verkehrsberuhigten Bereiche ergab Straßen mit eingeschränkter Zufahrt für Kraftfahrzeuge, die Teil des Radnetzes sind. Diese wurden nun einbezogen."
         locator: "UPDATE (JULY 2025), City of Vienna"
 
   - id: qecio-methodology
@@ -154,17 +173,20 @@ sources:
         text: >-
           There is a great demand for data on cycling infrastructure, but as for now, no official
           source provides this kind of information on a European scale.
+        gloss_de: "Die Nachfrage nach Daten zur Radinfrastruktur ist groß, doch bislang liefert keine amtliche Quelle solche Informationen auf europäischer Ebene."
         locator: "Abstract, p.2"
       - id: nuts3
         text: >-
           We researched 37 European countries, including all 27 EU member states, and the
           information was gathered at NUTS 3 level (Nomenclature of territorial units for
           statistics).
+        gloss_de: "Wir haben 37 europäische Länder untersucht, darunter alle 27 EU-Mitgliedstaaten, und die Informationen auf der Ebene NUTS 3 (Systematik der Gebietseinheiten für die Statistik) erhoben."
         locator: "Abstract, p.2"
       - id: clip
         text: >-
           The analysis was performed at NUTS-3 level, clipping the highway per NUTS-3
           administrative boundary.
+        gloss_de: "Die Analyse erfolgte auf der Ebene NUTS-3, wobei die Straßen (highway) an der Verwaltungsgrenze jeder NUTS-3-Einheit zugeschnitten wurden."
         locator: "Methodology, Technical details, step 1, p.4"
       - id: directionality
         text: >-
@@ -172,36 +194,43 @@ sources:
           features (for example when cycleway:both is used or cycleway:left and cycleway:right on
           the same highway). For the length calculations, we divided the length of the
           unidirectional cycling infrastructure by two.
+        gloss_de: "In manchen Fällen haben wir aus einem einzelnen highway-Objekt zwei Objekte der Radinfrastruktur gemacht (zum Beispiel, wenn cycleway:both oder cycleway:left und cycleway:right an derselben Straße verwendet werden). Für die Längenberechnung haben wir die Länge der Radinfrastruktur in nur einer Fahrtrichtung durch zwei geteilt."
         locator: "Methodology, Technical details, step 4, p.5"
       - id: segregated-set
         text: >-
           The segregated cycling infrastructures considered are cycle tracks, cycle and
           pedestrian tracks and cycle lanes.
+        gloss_de: "Als getrennte Radinfrastruktur gelten Radwege, Geh- und Radwege und Radfahrstreifen."
         locator: "Explanation of the indicators, Ratio of segregated cycling infrastructure to the main road network, p.5"
       - id: ratio-100
         text: >-
           About the interpretation of the ratios: ratio of 100 can be roughly interpreted as 100%
           of main roads having bidirectional cycling infrastructure.
+        gloss_de: "Zur Deutung der Verhältniszahlen: Ein Verhältnis von 100 lässt sich grob so verstehen, dass 100 % der Hauptstraßen Radinfrastruktur in beiden Richtungen haben."
         locator: "Explanation of the indicators, p.5"
       - id: track-def
         text: >-
           Cycle infrastructure that is separated from motorised traffic by physical
           infrastructure (curbs, grass, etc.) and reserved for exclusive use for cycles.
+        gloss_de: "Radinfrastruktur, die durch bauliche Elemente (Bordsteine, Grünstreifen usw.) vom Kfz-Verkehr getrennt und ausschließlich dem Radverkehr vorbehalten ist."
         locator: "Annex II, Table 2, Cycle tracks, Definition, p.15"
       - id: lane-def
         text: >-
           Cycle infrastructure that is an inherent part of the carriageway, set aside for the use
           of bicycles by paint or other markings but without a physical separation from motorised
           traffic.
+        gloss_de: "Radinfrastruktur, die fester Bestandteil der Fahrbahn ist und durch Farbe oder andere Markierungen dem Radverkehr vorbehalten ist, aber ohne bauliche Trennung vom Kfz-Verkehr."
         locator: "Annex II, Table 2, Cycle lanes, Definition, p.15"
       - id: shared-def
         text: Track designated (signed) for use by pedestrian and cyclists.
+        gloss_de: "Für Fußgänger und Radfahrende ausgewiesener (beschilderter) Weg."
         locator: "Annex II, Table 2, Cycle and pedestrian tracks, Definition, p.15"
       - id: disclaimer
         text: >-
           The data featured in this dashboard only represents OSM contributions. The lower
           numbers may therefore reflect missing OSM data rather than the actual absence of
           cycling infrastructure in each area.
+        gloss_de: "Die in diesem Dashboard gezeigten Daten geben nur OSM-Beiträge wieder. Niedrigere Zahlen können daher eher fehlende OSM-Daten widerspiegeln als tatsächlich fehlende Radinfrastruktur im jeweiligen Gebiet."
         locator: "Disclaimer, p.8"
 
   - id: qecio-metadata
@@ -216,11 +245,13 @@ sources:
     excerpts:
       - id: data-date
         text: PBF files downloaded 10-11 January 2024 from Geofabrik.
+        gloss_de: "PBF-Dateien, am 10. und 11. Januar 2024 von Geofabrik heruntergeladen."
         locator: "General Information, Date of data collection, p.1"
       - id: units
         text: >-
           The units for the data sets are either in kilometres (km) for lengths or percentages
           (%) for ratios.
+        gloss_de: "Die Einheiten der Datensätze sind entweder Kilometer (km) für Längen oder Prozent (%) für Verhältnisse."
         locator: "Data and files overview, Units of measure, p.2"
 
   - id: bikenetkit-zenodo
@@ -236,14 +267,17 @@ sources:
         text: >-
           OpenStreetMap data sets from 403 European cities to import into BikeNetKit for running
           its tools locally.
+        gloss_de: "OpenStreetMap-Datensätze von 403 europäischen Städten zum Import in BikeNetKit, um dessen Werkzeuge lokal auszuführen."
         locator: "Description"
       - id: bike-networks
         text: "bike_networks: Bicycle networks, simplified and some tags removed"
+        gloss_de: "bike_networks: Radnetze, vereinfacht und mit einigen entfernten Tags"
         locator: "Description, list of data sets"
       - id: collected
         text: >-
           The 403 cities and their data were selected, collected, and processed over the summer
           of 2026.
+        gloss_de: "Die 403 Städte und ihre Daten wurden im Sommer 2026 ausgewählt, gesammelt und verarbeitet."
         locator: "Description"
 
   - id: bikenetkit-export-notebook
@@ -259,6 +293,7 @@ sources:
           This notebook loads pbf files of single European countries via pyrosm, then uses city
           boundary geojson files of all European cities (above 100k population) to create local
           city pbfs
+        gloss_de: "Dieses Notebook lädt pbf-Dateien einzelner europäischer Länder über pyrosm und erzeugt dann mit den GeoJSON-Dateien der Stadtgrenzen aller europäischen Städte (über 100.000 Einwohner) lokale pbf-Dateien der Städte"
         locator: "Markdown cell 1"
 
   - id: bikenetkit-pbi-filter
@@ -271,11 +306,13 @@ sources:
     excerpts:
       - id: pbi
         text: "PBI_CUSTOM_FILTER : list[str] Custom filter for protected bicycle infrastructure (pbi)."
+        gloss_de: "PBI_CUSTOM_FILTER : list[str] Eigener Filter für geschützte Radinfrastruktur (protected bicycle infrastructure, pbi)."
         locator: "Module docstring, lines 5-6"
       - id: filter-head
         text: >-
           '["highway"~"cycleway|living_street"]',
           '["highway"~"path|pedestrian|footway"]["bicycle"~"designated|yes|permissive"]["access"!~"private"]',
+        gloss_de: "Filterausdrücke: Wege mit highway=cycleway oder living_street; Wege mit highway=path, pedestrian oder footway, bei denen bicycle designated, yes oder permissive ist und access nicht private."
         locator: "PBI_CUSTOM_FILTER, lines 80-81"
 
   - id: eu-c2026-4676-act
@@ -292,12 +329,14 @@ sources:
           By 31 December 2027, and by 31 December of every fourth year afterwards, the Member
           State shall submit data for the indicators set out in the Annex in accordance with the
           data collection methods set out therein.
+        gloss_de: "Bis zum 31. Dezember 2027 und danach alle vier Jahre bis zum 31. Dezember übermittelt der Mitgliedstaat Daten zu den im Anhang aufgeführten Indikatoren nach den dort festgelegten Methoden der Datenerhebung."
         locator: "Article 5(1), p.5"
       - id: lau
         text: >-
           The geographical coverage shall align with the boundaries of the identified LAU. The
           geographical coverage of an individual urban node may be composed of one or several
           LAUs.
+        gloss_de: "Die räumliche Abdeckung richtet sich nach den Grenzen der bestimmten LAU. Die räumliche Abdeckung eines einzelnen städtischen Knotens kann aus einer oder mehreren LAU bestehen."
         locator: "Article 6(1), pp.5-6"
 
   - id: eu-c2026-4676-annex
@@ -314,11 +353,13 @@ sources:
           SU.1 Number of trips in the geographical area taken per day, broken down by the
           following five travel modes: walking, cycling, individual motorised transport, public
           transport, and other [# trips].
+        gloss_de: "SU.1 Zahl der Wege im Gebiet pro Tag, aufgeschlüsselt nach den folgenden fünf Verkehrsarten: zu Fuß, mit dem Fahrrad, motorisierter Individualverkehr, öffentlicher Verkehr und Sonstige [Zahl der Wege]."
         locator: "Annex, §2 Indicators in the area of sustainability aspects, (4), p.2"
       - id: su1-method
         text: >-
           Data collection method: the Member State shall use a survey, mobile phone data, a
           transport model or other big data sources to collect the data.
+        gloss_de: "Methode der Datenerhebung: Der Mitgliedstaat erhebt die Daten mit einer Befragung, Mobilfunkdaten, einem Verkehrsmodell oder anderen Big-Data-Quellen."
         locator: "Annex, §2, (4) SU.1, p.2"
 
   - id: eu-umi-news
@@ -335,6 +376,7 @@ sources:
         text: >-
           Member States are required to submit the first set of data by the end of 2027, with
           updates to follow every four years thereafter.
+        gloss_de: "Die Mitgliedstaaten müssen den ersten Datensatz bis Ende 2027 übermitteln, danach folgen alle vier Jahre Aktualisierungen."
         locator: "Next steps"
 
   - id: osm-wiki-key-cycleway
@@ -349,6 +391,7 @@ sources:
         text: >-
           The cycleway=* tagging is used on linear features tagged with highway=* to map cycling
           infrastructure that is an inherent part of the road.
+        gloss_de: "Das Tagging cycleway=* wird an linearen Objekten mit highway=* verwendet, um Radinfrastruktur zu kartieren, die fester Bestandteil der Straße ist."
         locator: "Introduction"
       - id: sides
         text: >-
@@ -356,6 +399,7 @@ sources:
           cycleway:left=*, cycleway:right=* or cycleway:both=* (instead of a simple cycleway=*).
           This clearly indicates which side of the road an infrastructure specification refers
           to.
+        gloss_de: "Es empfiehlt sich, cycleway-Tags mit Seitenangaben zu verwenden, also cycleway:left=*, cycleway:right=* oder cycleway:both=* (statt eines einfachen cycleway=*). So ist klar, auf welche Straßenseite sich eine Angabe zur Infrastruktur bezieht."
         locator: "§3 Bicycle infrastructure in one-way roads"
 
   - id: osm-wiki-cycleway-lane
@@ -372,12 +416,14 @@ sources:
           A cycle lane is bicycle infrastructure that is an inherent part of the road, but set
           aside for the exclusive use of bicycles, whilst being separated only by paint or other
           markings, and without a physical separation from vehicles.
+        gloss_de: "Ein Radfahrstreifen ist Radinfrastruktur, die fester Bestandteil der Straße, aber ausschließlich dem Radverkehr vorbehalten ist; er ist nur durch Farbe oder andere Markierungen und ohne bauliche Trennung von den Fahrzeugen abgegrenzt."
         locator: "Introduction"
       - id: both-sides
         text: >-
           cycleway=lane is used to tag two-way streets where there are cycle lanes on both sides
           of the road, or sometimes for one-way streets where there is only a lane operating in
           the direction of main traffic flow
+        gloss_de: "cycleway=lane wird für Straßen mit Gegenverkehr verwendet, an denen es auf beiden Straßenseiten Radfahrstreifen gibt, oder manchmal für Einbahnstraßen, in denen es nur einen Streifen in der Hauptfahrtrichtung gibt"
         locator: "Introduction"
 
   - id: osm-wiki-cycleway-track
@@ -393,6 +439,7 @@ sources:
         text: >-
           A cycle track is separated from the road by curbs, parking lots, grass verges, trees or
           another physical barrier, but is running parallel to and next to the road.
+        gloss_de: "Ein Radweg ist durch Bordsteine, Parkstreifen, Grünstreifen, Bäume oder eine andere bauliche Barriere von der Straße getrennt, verläuft aber parallel und neben der Straße."
         locator: "Introduction"
 
   - id: osm-wiki-highway-cycleway
@@ -406,4 +453,5 @@ sources:
     excerpts:
       - id: def
         text: The highway=cycleway tag indicates a separate way for the use of cyclists.
+        gloss_de: "Das Tag highway=cycleway kennzeichnet einen eigenen Weg für den Radverkehr."
         locator: "Introduction"
