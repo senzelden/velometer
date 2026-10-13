@@ -209,7 +209,8 @@ def _map_refs(html: str, base: str) -> set[str]:
 def export_urls(data: ReportData, app: FastAPI) -> list[str]:
     """Every URL the static edition has (decision 4): the fixed pages; per trusted city its page,
     each tab and plan page and CSV the app serves for it (a 404 is a page the city does not
-    have, left out), its panel; every map an exported page references. A per-city URL answered
+    have, left out), its panel; every map an exported page references (a German page with
+    maps is read too: it links the German tier map images). A per-city URL answered
     with anything but 200 or 404 is kept, so the export fails on it by name."""
     base = app.state.base_path
     probed = []
@@ -230,7 +231,10 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
             if r.headers.get("content-type", "").startswith("text/html") and url not in LEGACY_DE:
                 pages.append(url)
             if r.status_code == 200 and r.headers["content-type"].startswith("text/html"):
-                maps |= _map_refs(r.text, base)
+                refs = _map_refs(r.text, base)
+                if refs:  # its German twin links its own image (`<city>_<kind>.de.png`)
+                    refs |= _map_refs(client.get(with_lang(url, "de")).text, base)
+                maps |= refs
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 

@@ -160,6 +160,14 @@ def test_export_urls_find_maps_under_a_base(rich):  # noqa: F811
     assert "/maps/berlin_lau.geojson" in found  # referenced as /velometer/maps/…, kept as /maps/…
 
 
+def test_export_urls_find_the_german_tier_map_image(rich):  # noqa: F811
+    """A German page links `<city>_<kind>.de.png`: the export holds it."""
+    _db, _cfg, maps, _docs, _plans = rich
+    (maps / "berlin_lau.de.png").write_bytes((maps / "berlin_lau.png").read_bytes())
+    found = export.export_urls(_data(rich), _app(rich, BASE))
+    assert "/maps/berlin_lau.de.png" in found and "/maps/berlin_lau.png" in found
+
+
 # --- run_export ---
 
 
