@@ -59,15 +59,19 @@ def _german(
     fallback: Fallback = {}
     for stem, model in models.items():
         de_path = twin_path(Path(dir) / f"{stem}.yaml")
-        tr = None
-        if de_path.is_file():
+        out[stem], fallback[stem] = merge(model, None)
+        if not de_path.is_file():
+            continue
+        try:
+            tr = load_translation(de_path, model)
             try:
-                tr = load_translation(de_path, model)
-            except ContentError as e:
-                if errors is None:
-                    raise
-                errors[f"de/{stem}"] = str(e)
-        out[stem], fallback[stem] = merge(model, tr)
+                out[stem], fallback[stem] = merge(model, tr)
+            except ValueError as e:  # pydantic's ValidationError: a rule the merged text breaks
+                raise ContentError(f"{de_path}: {e}") from e
+        except ContentError as e:
+            if errors is None:
+                raise
+            errors[f"de/{stem}"] = str(e)
     return out, fallback
 
 

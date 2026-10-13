@@ -5,6 +5,10 @@ each `{text, src}`. Strings are addressed by walk paths: `title`, `dek`, `intro.
 `sections.<i>.heading`, `sections.<i>.paragraphs.<j>`, `sections.<i>.dimensions.<k>` and
 `data_refs.<id>` (a data reference's label). `src` is the stamp of the English string the text
 was translated from; `stamp` writes it, the content check compares it with the English today.
+A blank text counts as missing: it falls back to English and is a completeness gap.
+
+Translation files are machine-written and comment-free: `stamp` and `edit_path` re-dump the
+whole file, so YAML comments and hand formatting do not survive.
 """
 
 import hashlib
@@ -74,7 +78,13 @@ def walk(model: English) -> Iterator[tuple[str, str]]:
 
 
 def tr_strings(tr: Translation) -> dict[str, Tr]:
-    """walk path -> German string of a translation model (null items left out)."""
+    """walk path -> German string of a translation model (null items and blank texts left
+    out: they are missing)."""
+    out = _tr_strings(tr)
+    return {path: t for path, t in out.items() if t.text.strip()}
+
+
+def _tr_strings(tr: Translation) -> dict[str, Tr]:
     out: dict[str, Tr] = {}
     for key in ("title", "dek"):
         if getattr(tr, key, None) is not None:
@@ -192,6 +202,10 @@ def _is_tr(node: Any) -> bool:
     return isinstance(node, dict) and "text" in node and set(node) <= {"text", "src"}
 
 
+def _is_translated(node: Any) -> bool:
+    return _is_tr(node) and isinstance(node["text"], str) and bool(node["text"].strip())
+
+
 def _tr_nodes(doc: dict) -> Iterator[tuple[str, dict]]:
     """(walk path, `{text, src}` mapping) of a translation file's raw YAML."""
     for key in ("title", "dek"):
@@ -225,7 +239,7 @@ def stamp(de_path: Path, en_model: English) -> int:
     english = dict(walk(en_model))
     n = 0
     for path, node in _tr_nodes(doc):
-        if path in english:
+        if path in english and _is_translated(node):
             node["src"] = src_hash(english[path])
             n += 1
     dump(de_path, doc)

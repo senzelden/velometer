@@ -135,7 +135,8 @@ _NUMBER_TOKEN_DE = re.compile(
     r"(?:[   ]?%)?"
 )
 # An English decimal point in German prose ("78.2") reads as a thousands group: always reported
-ENGLISH_DECIMAL_IN_DE = re.compile(r"(?<![\w.,])\d+\.\d{1,2}(?![\d.,])")
+# (a sentence-final one too: "bei 78.2."); "2.500" and "21.03.2026" are not English decimals
+ENGLISH_DECIMAL_IN_DE = re.compile(r"(?<![\w.,])\d+\.\d{1,2}(?![\d,]|\.\d)")
 _ORDINAL_WORDS_DE = sorted(
     {*i18n.MONTHS["de"], *i18n.MONTHS_SHORT["de"], "Quartal", "Quartals", "Jahrhundert",
      "Jahrhunderts"},
@@ -777,7 +778,11 @@ def check_translation(
         if path not in english:
             problem(f" {path}: orphan (no English string at this path)")
 
-    merged, fallback = merge(en_model, tr)
+    try:
+        merged, fallback = merge(en_model, tr)
+    except ValueError as e:  # pydantic's ValidationError too: a rule the German text breaks
+        problem(f": the German text does not validate in the English structure: {e}")
+        return problems, notes
     prose = [
         text
         for path, text in walk(merged)

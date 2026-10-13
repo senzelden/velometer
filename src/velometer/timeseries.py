@@ -531,7 +531,9 @@ def german_explanation_problems(
     for key in sorted(de_keys - en_keys):
         problems.append(f"[de] {name} ### {key}: no English entry")
     for key in sorted(en_keys & de_keys):
-        _text, src = stamped_explanation(de_path, key)
+        text, src = stamped_explanation(de_path, key)
+        if text is None and explanation(en_path, key) is not None:
+            gaps.append(f"[de] {name} ### {key}: missing German text")
         if src is None:
             gaps.append(f"[de] {name} ### {key}: not stamped")
         elif src != explanation_hash(en_path, key):

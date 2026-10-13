@@ -274,3 +274,109 @@ def test_old_english_finds_the_version_that_was_translated():
     v2 = "title: Newer title\n"
     assert tr.old_english([v2, v1], "title", tr.src_hash("Old title")) == "Old title"
     assert tr.old_english([v2, v1], "title", tr.src_hash("Never")) is None
+
+
+def test_a_sentence_final_english_decimal_is_reported_once():
+    found = ck.undeclared_numbers("Der Wert lag bei 78.2.", {"78", "78.2"}, (), lang="de")
+    assert found == ["78.2"]
+    # a numeric date and German thousands are not English decimals (the date's day is reported
+    # by the plain number rule)
+    p = "Am 21.03.2026 lagen 2.500 km vor."
+    assert ck.undeclared_numbers(p, {"2500"}, (), lang="de") == ["21"]
+
+
+@pytest.mark.parametrize("blank", ["", "   ", "\n"])
+def test_a_blank_german_text_is_missing_and_falls_back(tree, blank):
+    tree.edit("dek", lambda s: blank, german=True)
+    problems, notes = tree.check(require_de=False)
+    assert problems == [] and any("dek: missing German text" in n for n in notes)
+    assert any("dek: missing German text" in p for p in tree.check(require_de=True)[0])
+    en = tr.load_english(tree.en)
+    merged, fallback = tr.merge(en, tr.load_translation(tree.de, en))
+    assert merged.dek == en.dek and "dek" in fallback
+
+
+def test_a_merge_the_english_model_rejects_is_a_problem_not_a_traceback(tree, monkeypatch):
+    from velometer.content.models import Narrative
+
+    real = Narrative.model_validate.__func__
+
+    def strict(cls, doc, *a, **k):
+        if str(doc.get("title", "")).startswith("Übersetzt"):
+            raise ValueError("a text rule")
+        return real(cls, doc, *a, **k)
+
+    monkeypatch.setattr(Narrative, "model_validate", classmethod(strict))
+    from velometer.content.loader import load_narratives
+
+    errors: dict[str, str] = {}
+    narratives, fallback = load_narratives(tree.root / "narratives", errors, lang="de")
+    assert "a text rule" in errors["de/berlin"] and narratives["berlin"].title == "Berlin"
+    assert "title" in fallback["berlin"]
+    problems = tree.check()[0]
+    assert any(
+        p.startswith("[de] narratives/de/berlin.yaml: ") and "a text rule" in p for p in problems
+    )
+
+
+# --- the M8 fixture tree: organisations, the explainer and the counter page ---------------
+
+
+@pytest.fixture
+def m8(tmp_path):
+    import shutil
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    root = tmp_path / "m8"
+    shutil.copytree(Path(__file__).parent / "fixtures" / "content_m8", root)
+    content, config = root / "content", root / "config"
+    english = [*content.glob("narratives/*.yaml"), *content.glob("organisations/*.yaml"),
+               content / "explainer.yaml", content / "counters.yaml",
+               content / "plans" / "berlin.yaml"]  # fmt: skip
+    for en in english:
+        if en.is_file():
+            fake_translate(en, tr.twin_path(en))
+
+    def german(require_de=True):
+        problems, notes = ck._check_german(
+            content, SimpleNamespace(config_dir=config), require_de=require_de,
+            history=lambda p: [],
+        )  # fmt: skip
+        return [p for p in problems if "gloss_de" not in p], notes
+
+    return content, config, german
+
+
+def test_an_organisation_twin_is_checked_end_to_end(m8):
+    content, _config, german = m8
+    assert german() == ([], [])
+    de = content / "organisations" / "de" / "senmvku.yaml"
+    raw = tr.yaml.safe_load(de.read_text(encoding="utf-8"))
+    assert raw["sections"][1]["dimensions"]["length"]["text"] == ck.NOT_STATED_DE
+    tr.edit_path(de, "sections.1.dimensions.length", lambda s: "nicht angegeben")
+    assert any(
+        "organisations/de/senmvku.yaml sections.1.dimensions.length" in p and ck.NOT_STATED_DE in p
+        for p in german()[0]
+    )
+    tr.edit_path(de, "sections.1.dimensions", lambda d: {k: v for k, v in d.items() if k != "area"})
+    problems, notes = german(require_de=False)
+    assert any("sections.1.dimensions.area: missing German text" in n for n in notes)
+
+
+def test_the_explainer_intro_count_must_match(m8):
+    content, _config, german = m8
+    tr.edit_path(content / "de" / "explainer.yaml", "intro", lambda ps: ps + ["Übersetzt: mehr"])
+    assert any("[de] de/explainer.yaml intro: paragraph count" in p for p in german()[0])
+
+
+def test_the_counter_page_index_rule_runs_on_the_german_text(m8):
+    content, config, german = m8
+    rules, _ = ck.counter_rule_values(config)
+    sites = next(int(v) for v, fact in rules.items() if fact == "counter.min_sites")
+    de = content / "de" / "counters.yaml"
+    tr.edit_path(de, "sections.0.paragraphs.0", lambda s: s + f" Es braucht {sites} Zählstellen.")
+    assert any(
+        p.startswith("[de] de/counters.yaml: index rule stated as literal text: ")
+        for p in german()[0]
+    )

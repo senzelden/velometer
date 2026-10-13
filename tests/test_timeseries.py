@@ -923,3 +923,14 @@ def test_german_explanations_are_required_only_for_the_shipped_report(tmp_path, 
     monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", False)
     assert not T.german_explanations_required(shipped)
     assert T.german_explanations(shipped).name == "m3_timeseries.de.md"
+
+
+def test_a_stamped_german_heading_without_text_is_a_gap(tmp_path):
+    body = "### berlin/lau/2019\n\n### berlin/lau/2022\n\nK.\n\n### berlin/lau/2026\n"
+    en, de = _pair(tmp_path, body)
+    assert T.stamp_explanations(en, de) == 3
+    problems, notes = T.german_explanation_problems(en, de, require_de=False)
+    assert problems == [] and notes == [
+        "[de] m3_timeseries.de.md ### berlin/lau/2019: missing German text"
+    ]
+    assert T.german_explanation_problems(en, de, require_de=True)[0] == notes
