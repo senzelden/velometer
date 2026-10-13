@@ -21,8 +21,8 @@
 {% endmacro %}
 {% block content %}
 {% if nar %}
-<h1>{{ nar.title }}</h1>
-<p class="dek">{{ nar.dek }}</p>
+<h1{{ fb(nar.title) }}>{{ nar.title }}</h1>
+<p class="dek"{{ fb(nar.dek) }}>{{ nar.dek }}</p>
 {{ copy_link() }}
 <div class="stories">
   <aside class="story-sticky" data-story-chart hidden aria-label="{{ t('page.stories.aside') }}">
@@ -36,7 +36,7 @@
   <article class="narrative story-text">
   {% for s in story %}
   <section class="story-step"{% if s.step %} data-step="{{ s.step }}" id="step-{{ s.step }}"{% endif %}>
-    {% if s.sec.heading %}<h2>{{ s.sec.heading }}</h2>{% endif %}
+    {% if s.sec.heading %}<h2{{ fb(s.sec.heading) }}>{{ s.sec.heading }}</h2>{% endif %}
     {% for item in s.sec.items %}{{ item }}
     {% endfor %}
     {% if s.step in steps %}
@@ -50,7 +50,7 @@
 </div>
 {% for s in figures %}
 <section class="narrative story-figures">
-  {% if s.heading %}<h2>{{ s.heading }}</h2>{% endif %}
+  {% if s.heading %}<h2{{ fb(s.heading) }}>{{ s.heading }}</h2>{% endif %}
   {% for item in s.items %}{{ item }}
   {% endfor %}
 </section>

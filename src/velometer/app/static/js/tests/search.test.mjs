@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { fold, rank, move, keyAction } from "../search.js";
 
 const e = (label, kind, terms = [label]) => ({ label, kind, url: "/x", terms });
@@ -146,4 +147,40 @@ test("clearing the input before the index arrives closes the list", async (t) =>
   input.fire("input");
   assert.equal(list.hidden, true);
   assert.equal(input.getAttribute("aria-expanded"), "false");
+});
+
+// --- M12: every name form finds its city (tests/city_names.json, kept equal to cities.yaml) ---
+
+
+const CITY_NAMES = JSON.parse(
+  readFileSync(new URL("../../../../../../tests/city_names.json", import.meta.url), "utf8"),
+);
+// the letters a reader without them types instead, written out here (not fold's mapping)
+const BY_HAND = { ó: "o", ø: "o", ł: "l", ß: "ss", ä: "a", ö: "o", ü: "u", é: "e", á: "a", ř: "r" };
+const plain = (s) => [...s].map((c) => BY_HAND[c] ?? BY_HAND[c.toLowerCase()] ?? c).join("");
+
+test("krakau, KRAKOW and kraków all rank Kraków first", () => {
+  const krakow = e("Krakau (Polen)", "city", ["Kraków", "Krakau", "Krakow", "Cracow"]);
+  const index = [...idx.filter((x) => !x.label.startsWith("Kraków")), krakow];
+  for (const q of ["krakau", "KRAKOW", "kraków"]) assert.equal(rank(index, q)[0], krakow, q);
+});
+
+test("Weißensee is found by weissensee", () => {
+  const w = e("Weißensee", "page", ["Weißensee"]);
+  assert.equal(rank([...idx, w], "weissensee")[0], w);
+});
+
+test("every name form of every city, plain, upper case and without diacritics, ranks it first", () => {
+  // the index as app/search.py builds it: the edition's name first, then the id and every form
+  const index = Object.entries(CITY_NAMES).map(([id, names]) => ({
+    label: names[0], kind: "city", url: `/city/${id}`, terms: [names[0], id, ...names],
+  }));
+  assert.ok(index.length > 10 && index.some((x) => x.terms.includes("Krakau")));
+  for (const [id, names] of Object.entries(CITY_NAMES)) {
+    for (const form of names) {
+      for (const q of [form, form.toUpperCase(), plain(form)]) {
+        assert.equal(rank(index, q)[0]?.url, `/city/${id}`, `${q} -> ${id}`);
+      }
+    }
+  }
 });

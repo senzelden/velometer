@@ -39,6 +39,7 @@ class DifferenceRow:
     basis: str | None = None  # our length basis of a gap row ("per_side", "qecio_weighted", ...)
     scope: str | None = None  # a reported figure's network scope ("whole_network", "vorrangnetz")
     note: str = ""  # the figure's own note (reported) or the comparison's (gap)
+    note_fallback: bool = False  # the note is the English one on a German page (no sibling)
 
 
 def _ours_label(data: ReportData, spec: dict | None, lang: Lang = "en") -> str | None:
@@ -156,7 +157,7 @@ def difference_rows(
     figures = fetch_external_figures(data.conn, city_id)
     rows: list[DifferenceRow] = []
     report = data.reconcile(city_id)
-    reported = data.reported_figures(city_id)
+    reported = data.with_lang("en").reported_figures(city_id)  # notes localised per row
     shown = {(f.source, f.metric_name, f.value, f.reference_date) for f in reported}
     for g in report.gaps if report else []:
         comp = comparisons[g.comparison]
@@ -179,7 +180,8 @@ def difference_rows(
                 reference_date=g.reference_date,
                 url=_url(figures, g.source, comp.metric_name, g.theirs),
                 basis=basis,
-                note=g.note,
+                note=data.note_in_lang(g.note)[0],
+                note_fallback=data.note_in_lang(g.note)[1],
                 drivers=_drivers(
                     cfg,
                     lang=lang,
@@ -209,7 +211,8 @@ def difference_rows(
                 reference_date=f.reference_date,
                 url=f.source_url,
                 scope=f.network_scope,
-                note=f.note,
+                note=data.note_in_lang(f.note)[0],
+                note_fallback=data.note_in_lang(f.note)[1],
                 drivers=_drivers(
                     cfg,
                     lang=lang,

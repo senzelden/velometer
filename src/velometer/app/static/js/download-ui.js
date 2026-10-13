@@ -74,7 +74,7 @@ const GENERIC = "[data-compare-chart],[data-story-plot]";
 
 /** The title a downloaded image carries: a chart's own specific label; for a generic container,
  * its Cite's title, else the drawn SVG's label, else the container's. */
-function titleOf(container, f) {
+export function titleOf(container, f) {
   const own = container.getAttribute("aria-label");
   if (!container.matches?.(GENERIC)) return own || f?.title || document.title;
   const svgs = [...container.querySelectorAll("svg")];

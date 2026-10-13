@@ -12,11 +12,11 @@ from pathlib import Path
 
 from markupsafe import Markup
 
-from velometer.app.narrative import _Numbering, _route
+from velometer.app.narrative import _Numbering, _route, _span
 from velometer.app.organisations import org_of_sources
 from velometer.config import load_differences
 from velometer.content.loader import load_organisation_map, load_organisations, load_sources
-from velometer.content.models import DataRef, Source
+from velometer.content.models import ContentError, DataRef, Source
 from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
 from velometer.report.differences import difference_rows
@@ -61,6 +61,7 @@ class SourceRow:
     recomputed_anchor: str | None  # the overview key-numbers column id, else None
     city_name: str | None = None  # the city of a city source (its sort key)
     recomputed_label: str | None = None  # that overview column's own header label
+    english_cells: frozenset[str] = frozenset()  # dimension ids still English on a German page
 
 
 @dataclass
@@ -71,6 +72,7 @@ class CitedSources:
     refs: list[tuple[int, DataRef]] = field(default_factory=list)
     prefix: str = CITE_PREFIX
     ref_links: dict[int, str | None] = field(default_factory=dict)
+    ref_fallback: frozenset[str] = frozenset()  # data-ref ids whose label is English (German page)
 
 
 def order_rows(rows: list) -> list:
@@ -103,8 +105,12 @@ def source_rows(
     dims = [d.id for d in diffs.dimensions]
     mapping = load_organisation_map(config_dir / "organisations.yaml")
     registry = load_sources(content_dir / "sources")
-    orgs = load_organisations(content_dir / "organisations")
+    orgs, fallback = _organisations(content_dir / "organisations", lang)
     refs = {r.id: r for o in orgs.values() for r in o.data_refs}
+    ref_fallback = frozenset(
+        r.id for o in orgs.values() for r in o.data_refs
+        if f"data_refs.{r.id}" in fallback.get(o.id, ())
+    )  # fmt: skip
     num = _Numbering(registry, refs, CITE_PREFIX, lang)
 
     preset_of: dict[str | None, str] = {}  # source -> the first preset that recomputes it
@@ -140,8 +146,12 @@ def source_rows(
     ]
     for m in mapping:
         org = orgs.get(m.organisation)
-        section = next((s for s in org.sections if s.dimensions), None) if org else None
+        index, section = next(
+            ((i, s) for i, s in enumerate(org.sections) if s.dimensions), (None, None)
+        ) if org else (None, None)  # fmt: skip
         given = section.dimensions if section else {}
+        english = fallback.get(m.organisation, frozenset())
+        english_cells = frozenset(d for d in dims if f"sections.{index}.dimensions.{d}" in english)
         cells = {d: given.get(d) for d in dims}  # rendered below, numbered in page order
         anchor = source_anchor(m.source)
         if per_source[m.source] > 1:
@@ -169,6 +179,7 @@ def source_rows(
                 ),
                 city_name=None if m.city == "*" else names.get(m.city, m.city),
                 recomputed_label=labels.get(preset_of.get(m.source)),
+                english_cells=english_cells,
             )
         )
     rows = [
@@ -177,7 +188,8 @@ def source_rows(
         else replace(
             r,
             cells={
-                d: _missing_cell(lang) if v is None else num.inline(v) for d, v in r.cells.items()
+                d: _missing_cell(lang) if v is None else _span(num.inline(v), d in r.english_cells)
+                for d, v in r.cells.items()
             },
         )
         for r in order_rows(rows)
@@ -186,5 +198,19 @@ def source_rows(
         sources=sorted((n, registry[sid]) for sid, n in num.source_no.items()),
         refs=sorted((n, refs[rid]) for rid, n in num.ref_no.items()),
         ref_links={n: _route(refs[rid].route) for rid, n in num.ref_no.items()},
+        ref_fallback=ref_fallback,
     )
     return rows, cited
+
+
+def _organisations(dir: Path, lang: Lang) -> tuple[dict, dict[str, frozenset[str]]]:
+    """The profiles in `lang` and per profile its walk paths still English. A broken English
+    profile raises ContentError, as before; a broken German one is shown in English."""
+    if lang != "de":
+        return load_organisations(dir), {}
+    errors: dict[str, str] = {}
+    orgs, fallback = load_organisations(dir, errors=errors, lang="de")
+    english = {k: v for k, v in errors.items() if not k.startswith("de/")}
+    if english:
+        raise ContentError(next(iter(english.values())))
+    return orgs, fallback

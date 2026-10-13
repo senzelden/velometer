@@ -11,6 +11,7 @@ from velometer.pipeline.extract import snapshot_name
 from velometer.report import maps
 
 MINI = Path(__file__).parent / "fixtures" / "measure" / "mini_city.osm"
+LABELS = {t: f"{t} label" for t in "ABCDE"}
 needs_osmium = pytest.mark.skipif(
     shutil.which("osmium") is None, reason="osmium-tool not installed"
 )
@@ -172,7 +173,9 @@ def test_legend_and_footer_stay_inside_the_figure(tmp_path, monkeypatch):
     figs = []
     monkeypatch.setattr(maps.plt, "close", figs.append)
     sides = {t: [LineString([(0, 0), (1000, 1000)])] for t in maps.TIERS}
-    maps._draw(sides, None, "Berlin (LAU): protected cycling tiers", "footer", tmp_path / "m.png")
+    maps._draw(
+        sides, None, "Berlin (LAU): protected cycling tiers", "footer", tmp_path / "m.png", LABELS
+    )
     (fig,) = figs
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -193,7 +196,7 @@ def test_outline_draws_interior_rings(tmp_path, monkeypatch):
     monkeypatch.setattr(maps.plt, "close", figs.append)
     hole = [(4, 4), (6, 4), (6, 6), (4, 6)]
     outline = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)], [hole])
-    maps._draw({}, outline, "title", "footer", tmp_path / "m.png")
+    maps._draw({}, outline, "title", "footer", tmp_path / "m.png", LABELS)
     (fig,) = figs
     drawn = [set(zip(*line.get_data(), strict=True)) for line in fig.axes[0].get_lines()]
     assert any({(float(x), float(y)) for x, y in hole} <= d for d in drawn)
@@ -208,12 +211,69 @@ def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
     monkeypatch.setattr(maps, "tiered", lambda *a, **k: ([], {}))
     drawn = []
     monkeypatch.setattr(
-        maps, "_draw", lambda sides, outline, title, footer, out: drawn.append(footer)
+        maps, "_draw", lambda sides, outline, title, footer, out, labels: drawn.append(footer)
     )
     maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
     assert len(drawn) == 1
     assert "© OpenStreetMap contributors, ODbL 1.0" in drawn[0]
     assert "OSM mapped km, not built km" in drawn[0]
+
+
+def test_map_texts_english_are_the_constants_and_german_is_german(fixture_db):
+    from velometer.report.charts import TIER_LABEL
+
+    _, _, _, data = fixture_db
+    point = data.current("berlin", "lau")
+    title, footer, labels = maps.map_texts(point, "Berlin", "lau", "en")
+    assert title == "Berlin (LAU): protected cycling tiers" and labels == TIER_LABEL
+    assert footer == (f"{maps.ODBL} · {maps.MAPPED_KM}\nOSM {point.osm_timestamp}, "
+                      f"classifier {point.classifier_version}")  # fmt: skip
+    title, footer, labels = maps.map_texts(point, "Krakau", "lau", "de")
+    assert title.startswith("Krakau (LAU): ") and labels["A"] == "A baulich getrennter Radweg"
+    assert footer == (
+        "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\n"
+        f"OSM-Stand {point.osm_timestamp}, Klassifikator {point.classifier_version}"
+    )
+
+
+@needs_osmium
+def test_german_map_is_its_own_file_and_leaves_the_english_alone(placed, tmp_path):
+    conn, data, data_dir, maps_dir = placed
+    _place_snapshot(conn, data, data_dir, tmp_path)
+    run_id = data.current("berlin", "lau").run_id
+    en = maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
+    geojson = maps_dir / "berlin_lau.geojson"
+    before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in (en, geojson)}
+    assert not maps.up_to_date(maps_dir, "berlin", "lau", run_id, "de")
+    de = maps.build_map(data, "berlin", "lau", data_dir, maps_dir, "de")
+    assert de == maps_dir / "berlin_lau.de.png" and de.read_bytes()[:4] == b"\x89PNG"
+    assert de.read_bytes() != en.read_bytes()
+    assert {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in (en, geojson)} == before
+    assert maps.up_to_date(maps_dir, "berlin", "lau", run_id, "de")
+    assert maps.up_to_date(maps_dir, "berlin", "lau", run_id, "en")
+
+
+def test_german_map_writes_only_its_png_and_marker(placed, monkeypatch):
+    conn, data, data_dir, maps_dir = placed
+    snap = maps.snapshot_path(_row(conn, data), data_dir)
+    snap.parent.mkdir(parents=True)
+    snap.write_bytes(b"")  # never read: the classification is stubbed
+    monkeypatch.setattr(maps, "tiered", lambda *a, **k: ([], {}))
+    drawn = []
+
+    def draw(sides, outline, title, footer, out, labels):
+        drawn.append((title, footer, labels, out))
+        out.write_bytes(b"png")
+
+    monkeypatch.setattr(maps, "_draw", draw)
+    run_id = data.current("berlin", "lau").run_id
+    maps.build_map(data, "berlin", "lau", data_dir, maps_dir, "de")
+    assert sorted(p.name for p in maps_dir.iterdir()) == ["berlin_lau.de.png", "berlin_lau.de.run"]
+    ((title, footer, labels, out),) = drawn
+    assert out.name == "berlin_lau.de.png" and "Kartendaten" in footer
+    assert labels["A"] == "A baulich getrennter Radweg" and "protected" not in title
+    assert maps.up_to_date(maps_dir, "berlin", "lau", run_id, "de")
+    assert not maps.up_to_date(maps_dir, "berlin", "lau", run_id, "en")
 
 
 # --- GeoJSON for the interactive map -----------------------------------------------------------
@@ -460,3 +520,10 @@ def test_drawn_and_counted_tier_a_km_agree_on_the_measure_fixture():
     whole_a = sum(length_km(g) for g in maps._by_tier(sides, proj)["A"])
     assert 0 < counted_a < whole_a
     assert drawn_a == pytest.approx(counted_a, rel=1e-6)
+
+
+def test_map_name_accepts_the_german_image_only():
+    from velometer.app.main import MAP_NAME
+
+    assert MAP_NAME.fullmatch("berlin_lau") and MAP_NAME.fullmatch("berlin_lau.de")
+    assert not MAP_NAME.fullmatch("berlin_lau.fr") and not MAP_NAME.fullmatch("berlin_lau.de.de")

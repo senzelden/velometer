@@ -58,14 +58,14 @@
 {% if c.text_error %}<p class="note">{{ t('page.counts.text_error') }}</p>{% endif %}
 {% if c.doc %}
 <section class="counters-text" id="counters-text">
-<h2>{{ c.doc.title }}</h2>
+<h2{{ fb(c.doc.title) }}>{{ c.doc.title }}</h2>
 <div class="narrative prose">
 {% for p in c.doc.intro %}{{ p }}
 {% endfor %}
 </div>
 {% for s in c.doc.sections %}
 <div class="narrative prose" id="counters-{{ s.role }}">
-<h3>{{ s.heading }}</h3>
+<h3{{ fb(s.heading) }}>{{ s.heading }}</h3>
 {% for item in s.items %}{{ item }}
 {% endfor %}
 </div>

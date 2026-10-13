@@ -375,8 +375,16 @@ class ReportData:
         )
         if self.lang != "de":
             return figures
-        notes = figure_notes_de(self.config_dir)
-        return [f.model_copy(update={"note": notes.get(f.note, f.note)}) for f in figures]
+        return [f.model_copy(update={"note": self.note_in_lang(f.note)[0]}) for f in figures]
+
+    def note_in_lang(self, note: str) -> tuple[str, bool]:
+        """(a stored figure's note in the data's language, whether it is the English one shown
+        for want of a German sibling). German notes are figures.csv's `note_de`; a note from
+        elsewhere (a loader's generated note) has none and stays English."""
+        if self.lang != "de" or not note:
+            return note, False
+        german = figure_notes_de(self.config_dir).get(note)
+        return (note, True) if german is None else (german, False)
 
     def _ranking_values(self, ranking) -> dict[str, float]:
         out: dict[str, float] = {}

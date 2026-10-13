@@ -19,7 +19,7 @@
 {%- if p.plans %} · {{ t('page.organisations.plans') }} {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
 <div class="narrative">
 {% for s in p.doc.sections %}
-<h3>{{ s.heading }}</h3>
+<h3{{ fb(s.heading) }}>{{ s.heading }}</h3>
 {% if s.dimensions %}<dl class="org-dims">
 {% for key, value in s.dimensions %}<div><dt>{{ dimension_labels.get(key, key) }}</dt><dd>{{ value }}</dd></div>
 {% endfor %}</dl>{% endif %}

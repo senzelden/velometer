@@ -94,7 +94,16 @@ function show(step) {
   if (!spec || step === current) return;
   current = step;
   const step_n = t("js.story.step", { n: spec.n, of: spec.of });
-  out.eyebrow.textContent = spec.heading ? `${step_n} · ${spec.heading}` : step_n;
+  if (spec.heading_fallback) {
+    // a heading still in English on a German page: in its own lang="en" span
+    const span = document.createElement("span");
+    span.lang = "en";
+    span.dataset.fallback = "";
+    span.textContent = spec.heading;
+    out.eyebrow.replaceChildren(`${step_n} · `, span);
+  } else {
+    out.eyebrow.textContent = spec.heading ? `${step_n} · ${spec.heading}` : step_n;
+  }
   out.title.textContent = spec.title;
   out.note.textContent = spec.note;
   out.short.textContent = spec.short ?? "";

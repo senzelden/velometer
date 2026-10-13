@@ -806,13 +806,13 @@ def load_differences(path: Path) -> DifferencesConfig:
 
 def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
     """`(where, en, de)` for every English reader-prose value of the config that has a German
-    sibling: differences.yaml, the report.yaml rankings, plans.yaml, the counters.yaml `none`
-    notes, the figures.csv notes and the cities.yaml German names. ConfigError when a file is
-    invalid."""
+    sibling: differences.yaml, the report.yaml rankings, plans.yaml and the German report-row
+    notes, the counters.yaml `none` notes, the figures.csv notes and the cities.yaml German
+    names. ConfigError when a file is invalid."""
     import csv
 
     from velometer.counters.model import COUNTERS_FILE, load_counters_config
-    from velometer.plans.models import load_plans
+    from velometer.plans.models import REPORT_NOTES_DE_FILE, load_plans, load_report_notes_de
 
     config_dir = Path(config_dir)
     out: list[tuple[str, str, str]] = []
@@ -832,7 +832,11 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
         out.append((f"report.yaml rankings.{r.id}.label", r.label, r.label_de or ""))
         if r.note is not None:
             out.append((f"report.yaml rankings.{r.id}.note", r.note, r.note_de or ""))
-    plans, _rows = load_plans(config_dir / "plans")
+    plans, rows = load_plans(config_dir / "plans")
+    out += [
+        (f"plans/{REPORT_NOTES_DE_FILE} {en[:40]}", en, de)
+        for en, de in load_report_notes_de(config_dir / "plans", rows).items()
+    ]
     for p in plans:
         for field in ("title", "successor", "note"):
             en, de = getattr(p, field), getattr(p, f"{field}_de")

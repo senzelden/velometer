@@ -450,6 +450,14 @@ story.own_scale: jede Stadt mit eigener Skala
 story.first: erstes
 story.bezirke_title: Hauptkennzahl nach Bezirk · {city}
 time.current: aktuell
+time.provenance.history_runs: Läufe der Zeitreihe {runs}
+time.provenance.current_run: aktueller Lauf {run} (OSM {osm})
+time.provenance.no_current_run: kein aktueller Lauf
+time.provenance.history_set: Zeitreihen-Satz `{md5}`
+time.provenance.classifier: Klassifikator {version} `{parameters}`
+time.provenance.config: Konfiguration `{sha}`
+time.provenance.population: Einwohnerzahl {year} konstant gehalten
+time.provenance.no_population: keine Einwohnerzahl (je 100.000 Einwohner k. A.)
 unit.preset: '{tiers}-km je 100 km {road_class}'
 road_class.main_excl_motorway: Hauptstraßen (ohne Autobahnen)
 road_class.main_incl_motorway: Hauptstraßen (mit Autobahnen)
@@ -461,6 +469,8 @@ tier.B: B Geh- und Radweg
 tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
 tier.E: E Fahrradstraße / Busspur
+map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
+map.footer: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle
 compare.group.pilot5: Pilot 5
 compare.group.nordic: Nordeuropa

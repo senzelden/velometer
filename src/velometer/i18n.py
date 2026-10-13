@@ -179,11 +179,17 @@ def _lookup(lang: str, key: str) -> Value:
     if lang != DEFAULT:
         fallback = catalogue(DEFAULT)
         if key in fallback:
-            if (lang, key) not in _warned:
-                _warned.add((lang, key))
-                logger.warning("ui string %s missing in %s", key, lang)
+            warn_once(lang, key, "ui string %s missing in %s", key, lang)
             return fallback[key]
     raise KeyError(key)
+
+
+def warn_once(lang: str, key: str, message: str, *args: object) -> None:
+    """Log `message` once per process for (`lang`, `key`): a UI string or a content file
+    falling back to English is said once, not on every page."""
+    if (lang, key) not in _warned:
+        _warned.add((lang, key))
+        logger.warning(message, *args)
 
 
 def _template(lang: str, key: str, vars: dict) -> str:

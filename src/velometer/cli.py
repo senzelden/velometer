@@ -1396,7 +1396,9 @@ def report_maps(
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
 ) -> None:
-    """One tier map per city and boundary kind with a current run, in <data>/maps/."""
+    """One tier map per city and boundary kind with a current run, in <data>/maps/: the
+    English image and GeoJSON, and the German image (`.de.png`)."""
+    from velometer.i18n import LANGS
     from velometer.report import maps as mp
     from velometer.report.data import ReportData, open_readonly
 
@@ -1414,14 +1416,16 @@ def report_maps(
         for cid in [city] if city else ids:
             for k in kinds:
                 point = data.current(cid, k)
-                if point is not None and mp.up_to_date(maps_dir, cid, k, point.run_id):
-                    typer.echo(f"unchanged: {maps_dir / f'{cid}_{k}.png'}")
-                    continue
-                path = mp.build_map(data, cid, k, data_dir, maps_dir)
-                if path is None:
-                    why = "no run" if point is None else "no snapshot"
-                    typer.echo(f"skipped: {cid} {k} ({why})")
-                else:
+                for lang in LANGS:  # the English image (and GeoJSON), then the German image
+                    png = maps_dir / f"{cid}_{k}{'' if lang == 'en' else '.' + lang}.png"
+                    if point is not None and mp.up_to_date(maps_dir, cid, k, point.run_id, lang):
+                        typer.echo(f"unchanged: {png}")
+                        continue
+                    path = mp.build_map(data, cid, k, data_dir, maps_dir, lang)
+                    if path is None:
+                        why = "no run" if point is None else "no snapshot"
+                        typer.echo(f"skipped: {cid} {k} ({why})")
+                        break  # the same for both languages
                     typer.echo(f"written: {path}")
     except (sqlite3.Error, ConfigError) as e:
         typer.echo(f"error: {e}", err=True)

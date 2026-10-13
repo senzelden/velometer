@@ -1,6 +1,6 @@
 // The chart data of every page: one fetch of /data/series.json, and the small helpers that turn
 // its series into chart.js models. No DOM drawing here.
-import { url } from "./base.js";
+import { lang, url } from "./base.js";
 import { xLabels } from "./chart-core.js";
 import { number } from "./fmt.js";
 import { onThemeChange } from "./theme.js";
@@ -19,13 +19,41 @@ export const mapStatus = (kind, n, p = {}, doc = globalThis.document) =>
     classifier: p.classifier, run: p.run_id,
   });
 
+// a `<key>_de` sibling replaces `<key>` on a German page (app/series.py writes them)
+const withDe = (o) => {
+  const out = { ...o };
+  for (const [k, v] of Object.entries(o ?? {})) {
+    if (k.endsWith("_de") && v != null) out[k.slice(0, -3)] = v;
+  }
+  return out;
+};
+
+/**
+ * The series payload in the page's language. English: the payload itself. German: a copy with
+ * every `<key>_de` in place of `<key>` (the cities' names and countries, `headline_unit`, the
+ * preset labels, the counter `none` notes) and `explanations` from `explanations_de`;
+ * `explanationFallback` is the Set of explanation keys still in English (mark them lang="en").
+ */
+export function localised(series, pageLang) {
+  if (pageLang !== "de") return series;
+  const out = withDe(series);
+  out.cities = Object.fromEntries(Object.entries(series.cities ?? {}).map(([id, c]) => [id, withDe(c)]));
+  out.presets = { ...series.presets, ...series.presets_de };
+  if (series.counters) out.counters = { ...series.counters, none: { ...series.counters.none, ...series.counters.none_de } };
+  const de = series.explanations_de;
+  if (de) out.explanations = { ...series.explanations, timeseries: { ...series.explanations?.timeseries, ...de.timeseries } };
+  out.explanationFallback = new Set(de?.fallback ?? []);
+  return out;
+}
+
 let pending = null;
 
-/** The payload, fetched once per page. Rejects on a non-200 answer. */
-export function loadSeries() {
+/** The payload in the page's language (`localised`), fetched once per page. Rejects on a non-200
+ * answer. */
+export function loadSeries(doc = globalThis.document) {
   pending ??= fetch(url("/data/series.json")).then((r) => {
     if (!r.ok) throw new Error(`series.json: HTTP ${r.status}`);
-    return r.json();
+    return r.json().then((D) => localised(D, lang(doc)));
   });
   return pending;
 }

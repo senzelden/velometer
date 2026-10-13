@@ -5,10 +5,10 @@
 <div class="story-layout">
 <article class="narrative">
 {% if nar %}
-<h2 class="story-title">{{ nar.title }}</h2>
-<p class="dek">{{ nar.dek }}</p>
+<h2 class="story-title"{{ fb(nar.title) }}>{{ nar.title }}</h2>
+<p class="dek"{{ fb(nar.dek) }}>{{ nar.dek }}</p>
 {% for s in nar.of_role("story") %}
-{% if s.heading %}<h3>{{ s.heading }}</h3>{% endif %}
+{% if s.heading %}<h3{{ fb(s.heading) }}>{{ s.heading }}</h3>{% endif %}
 {% for item in s.items %}{{ item }}
 {% endfor %}{% endfor %}
 {% include "city/_cited.html" %}

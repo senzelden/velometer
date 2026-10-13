@@ -27,12 +27,14 @@ def organisations_context(
     city_names: dict[str, str],
     source_names: dict[str, str],
     lang: Lang = "en",
+    fallback: dict[str, frozenset[str]] | None = None,
 ) -> list[dict]:
     """One entry per profile, by name: the rendered profile, its cited sources and data, the
-    figures it stands behind and links to the plans it publishes or reports on."""
+    figures it stands behind and links to the plans it publishes or reports on. `fallback`: per
+    profile id the walk paths still English on a German page."""
     out = []
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
-        doc = render_organisation(org, sources, lang)
+        doc = render_organisation(org, sources, lang, (fallback or {}).get(org.id, frozenset()))
         cited_sources, cited_refs = doc.cited(doc.sections)
         figures = sorted(
             (

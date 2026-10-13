@@ -43,7 +43,14 @@ from velometer.app import plans_pages, urls
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
-from velometer.app.narrative import render_explainer, render_narrative, safe_url
+from velometer.app.narrative import (
+    Fallback,
+    fb,
+    fb_text,
+    render_explainer,
+    render_narrative,
+    safe_url,
+)
 from velometer.app.organisations import org_of_sources, organisations_context
 from velometer.app.regions import name_scroll_regions
 from velometer.app.search import search_index
@@ -53,16 +60,16 @@ from velometer.app.tokens import theme_tokens
 from velometer.config import ConfigError, PresetRanking, load_differences
 from velometer.content.loader import (
     load_document,
-    load_explainer,
     load_narratives,
     load_organisation_map,
     load_organisations,
     load_sources,
 )
-from velometer.content.models import ContentError
+from velometer.content.models import ContentError, Explainer
+from velometer.content.translate import walk
 from velometer.db import SchemaError, subarea_names
 from velometer.i18n import LANGS, Lang
-from velometer.plans.models import load_plans
+from velometer.plans.models import load_plans, load_report_notes_de
 from velometer.reconcile import short_commit
 from velometer.report import change as change_report
 from velometer.report import charts
@@ -77,12 +84,14 @@ from velometer.run import git_commit
 from velometer.selection import report_selector
 
 HERE = Path(__file__).parent
-MAP_NAME = re.compile(r"^[a-z0-9_]+_(lau|fua)$")
+# a tier map: <city>_<kind>, its German image <city>_<kind>.de (PNG only)
+MAP_NAME = re.compile(r"^[a-z0-9_]+_(lau|fua)(\.de)?$")
 # a change map: <city>_change_<from>_<to>, each end a 1 January snapshot date or `current`
 CHANGE_NAME = re.compile(
     r"^([a-z0-9_]+)_change_(\d{4}-\d{2}-\d{2}|current)_(\d{4}-\d{2}-\d{2}|current)$"
 )
 EXPLANATIONS = Path("review") / "m3_timeseries.md"
+EXPLANATIONS_DE = ts.german_explanations(EXPLANATIONS)  # review/m3_timeseries.de.md
 METHODOLOGY = {"en": "methodology.md", "de": "methodology.de.md"}
 # The docs file opens with a maintainer note (a blockquote: "generated, do not edit", a link to
 # the other language's .md file). The page has its own language switch and drops it.
@@ -407,6 +416,10 @@ def create_app(
         env.globals["cite_text"] = partial(cite_model.cite_text, lang=lang)
         # the `#ui-strings` block static/js/strings.js reads: the `js.*` strings and month names
         env.globals["js_strings"] = i18n.js_strings
+        # an English fallback on a German page: `fb(x)` marks the element showing x, `fb_text(x)`
+        # wraps x where it sits inside other text
+        env.globals["fb"] = fb
+        env.globals["fb_text"] = fb_text
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
         # and the commit the source line names (the export's build commit, else the checkout's)
         env.globals["theme_tokens"] = tokens
@@ -425,7 +438,8 @@ def create_app(
         env.filters["when"] = lambda label, osm=None: _when(label, osm, lang)
         env.filters["http_url"] = safe_url
         env.filters["host"] = _host
-        env.filters["clause"] = lambda note: _note_clause(note, lang)
+        # an English fallback note (German page) is cut in English: `note | clause('en')`
+        env.filters["clause"] = lambda note, in_lang=None: _note_clause(note, in_lang or lang)
         env.filters["unit"] = lambda u: UNITS.get(u, u)
         # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
         # "Ours" column says it already
@@ -741,29 +755,62 @@ def create_app(
         )
         return JSONResponse(payload)
 
-    def content():
-        """(narratives, sources, explainer, errors) of the content dir. `errors` maps what could
-        not be read to its message: "*" for the source registry (nothing renders without it),
-        "explainer", or a narrative's file stem. Each is logged and shown as a note, never a 500;
-        one broken narrative leaves the others readable."""
+    def document(path: Path, lang: Lang) -> tuple[Explainer | None, frozenset[str]]:
+        """An explainer-shaped page in `lang` and its walk paths still English. ContentError for
+        the English file; a broken German translation is logged and the English page shown."""
+        doc = load_document(path)
+        if lang != "de" or doc is None:
+            return doc, frozenset()
+        try:
+            merged, fallback = load_document(path, "de")
+        except ContentError as e:
+            log.error("German content could not be loaded, shown in English: %s", e)
+            return doc, frozenset(p for p, _ in walk(doc))
+        return merged, fallback.get(path.stem, frozenset())
+
+    def log_fallback(lang: Lang, fallback: dict[str, frozenset[str]]) -> None:
+        for stem, paths in sorted(fallback.items()):
+            if paths:
+                i18n.warn_once(lang, f"content:{stem}", "content %s: %d strings shown in English"
+                               " on %s pages", stem, len(paths), lang)  # fmt: skip
+
+    def content(lang: Lang = "en"):
+        """(narratives, sources, explainer, errors, fallback) of the content dir, the
+        narratives and the explainer in `lang`. `errors` maps what could not be read to its
+        message: "*" for the source registry (nothing renders without it), "explainer", or a
+        narrative's file stem (a German file's under "de/<stem>": its English is shown). Each is
+        logged and shown as a note, never a 500; one broken narrative leaves the others readable.
+        `fallback` maps a narrative's stem (and "explainer") to its walk paths still English."""
 
         def build():
             try:
                 sources = load_sources(content_dir / "sources")
             except ContentError as e:
                 log.error("content could not be loaded: %s", e)
-                return {}, {}, None, {"*": str(e)}
+                return {}, {}, None, {"*": str(e)}, {}
             errors: dict[str, str] = {}
-            narratives = load_narratives(content_dir / "narratives", errors=errors)
+            fallback: dict[str, frozenset[str]] = {}
+            if lang == "de":
+                narratives, fallback = load_narratives(
+                    content_dir / "narratives", errors=errors, lang="de"
+                )
+            else:
+                narratives = load_narratives(content_dir / "narratives", errors=errors)
             try:
-                explainer = load_explainer(content_dir / "explainer.yaml")
+                explainer, fallback["explainer"] = document(content_dir / "explainer.yaml", lang)
             except ContentError as e:
                 explainer, errors["explainer"] = None, str(e)
             for msg in errors.values():
                 log.error("content could not be loaded: %s", msg)
-            return narratives, sources, explainer, errors
+            log_fallback(lang, fallback)
+            return narratives, sources, explainer, errors, fallback
 
         return build
+
+    def content_of(request: Request):
+        """The content in the request's page language, built once per fingerprint."""
+        lang = request.state.lang
+        return cache.get(f"content:{lang}", fp(request), content(lang))
 
     def content_error(errors: dict[str, str], key: str) -> str | None:
         """The load error that blanks `key` (a narrative stem or "explainer"), if any."""
@@ -771,30 +818,45 @@ def create_app(
 
     def narrative_of(request: Request, city_id: str):
         """The city's rendered narrative (None without one) and a note about unreadable content."""
-        narratives, sources, _, errors = cache.get("content", fp(request), content())
+        narratives, sources, _, errors, fallback = content_of(request)
 
         def build():
             n = narratives.get(city_id)
-            return None if n is None else render_narrative(n, sources, request.state.lang)
+            if n is None:
+                return None
+            lang = request.state.lang
+            return render_narrative(n, sources, lang, fallback.get(city_id, frozenset()))
 
         return cache.get(
             f"narrative:{city_id}:{request.state.lang}", fp(request), build
         ), content_error(errors, city_id)
 
-    def organisations(request: Request) -> tuple[dict, dict[str, str]]:
-        """(profiles, errors) of content/organisations; a broken profile is a note, not a 500."""
+    def organisations(request: Request) -> tuple[dict, dict[str, str], dict[str, frozenset]]:
+        """(profiles, errors, fallback) of content/organisations in the page language; a broken
+        profile is a note, not a 500. `fallback`: per profile id its walk paths still English."""
+
+        lang = request.state.lang
 
         def build():
             errors: dict[str, str] = {}
+            fallback: dict[str, frozenset[str]] = {}
             try:
-                orgs = load_organisations(content_dir / "organisations", errors=errors)
+                if lang == "de":
+                    orgs, fallback = load_organisations(
+                        content_dir / "organisations", errors=errors, lang="de"
+                    )
+                else:
+                    orgs = load_organisations(content_dir / "organisations", errors=errors)
             except ContentError as e:  # pragma: no cover - the loader records per file
                 orgs, errors["*"] = {}, str(e)
             for msg in errors.values():
                 log.error("organisation profile could not be loaded: %s", msg)
-            return orgs, errors
+            log_fallback(lang, fallback)
+            # a broken German profile ("de/<id>") shows its English: not a broken profile
+            broken = {k: v for k, v in errors.items() if not k.startswith("de/")}
+            return orgs, broken, fallback
 
-        return cache.get("organisations-raw", fp(request), build)
+        return cache.get(f"organisations-raw:{lang}", fp(request), build)
 
     def org_mapping() -> list:
         try:
@@ -811,6 +873,14 @@ def create_app(
             log.error("plans could not be loaded: %s", e)
             return [], [], str(e)
         return plans, rows, None
+
+    def report_notes_de(rows) -> dict[str, str]:
+        """The German report-row notes; an unreadable file leaves every note English."""
+        try:
+            return load_report_notes_de(config_dir / "plans", rows)
+        except ConfigError as e:
+            log.error("German report notes could not be loaded: %s", e)
+            return {}
 
     def figures_context(data: ReportData, city_id: str, profiles: set[str]) -> dict:
         try:
@@ -839,7 +909,7 @@ def create_app(
     def counts_context(request: Request, data: ReportData, city_id: str) -> dict:
         """The Counts tab: the counter index beside the mapped-km index, the sites, the
         attribution and content/counters.yaml (a broken text is a note, not a 500)."""
-        _, sources, _, errors = cache.get("content", fp(request), content())
+        _, sources, _, errors, _ = content_of(request)
 
         def build() -> dict:
             cfg, cfg_error = counts_model.counters_config(config_dir)
@@ -847,14 +917,14 @@ def create_app(
             lau = data.series(city_id, "lau")
             ctx = counts_model.counts_context(data, city_id, entry, lau.points if lau else [])
             try:
-                text, text_error = load_document(content_dir / COUNTERS_TEXT), None
+                (text, english), text_error = document(content_dir / COUNTERS_TEXT, data.lang), None
             except ContentError as e:
                 log.error("counters text could not be loaded: %s", e)
-                text, text_error = None, str(e)
+                text, english, text_error = None, frozenset(), str(e)
             doc = (
                 None
                 if text is None or errors.get("*")
-                else render_explainer(text, sources, data.lang)
+                else render_explainer(text, sources, data.lang, english)
             )
             ctx["site_map"] = (
                 None
@@ -985,9 +1055,12 @@ def create_app(
 
     register_pages(app, "/city/{city_id}/{tab}", city_tab)
 
-    def story_context(data: ReportData, payload: dict, n, sources, lang: Lang) -> dict:
-        """The Stories page: the combined narrative's sections with the chart step each names."""
-        nar = render_narrative(n, sources, lang)
+    def story_context(
+        data: ReportData, payload: dict, n, sources, lang: Lang, fallback=frozenset()
+    ) -> dict:
+        """The Stories page: the combined narrative's sections with the chart step each names
+        (`fallback`: its walk paths still English)."""
+        nar = render_narrative(n, sources, lang, fallback)
         metrics = cmp.metric_info(
             headline_unit(lang), data.preset_units(), population_years(data), lang
         )
@@ -1007,17 +1080,21 @@ def create_app(
             else:
                 story.append({"step": raw.step, "sec": sec})
         order = [s["step"] for s in story if s["step"] in steps]
+
+        def heading_of(step: str):
+            return next(s["sec"].heading for s in story if s["step"] == step)
+
         config = {
             step: {k: v for k, v in built.items() if k != "table"}
             | {
                 "href": us[lang](built["href"]),  # story.js sets it as the Explore link
                 # a step section may have no heading: the eyebrow then names the chart
-                "heading": next(s["sec"].heading for s in story if s["step"] == step)
-                or built.get("title")
-                or "",
+                "heading": heading_of(step) or built.get("title") or "",
                 "n": order.index(step) + 1,
                 "of": len(order),
             }
+            # an English fallback heading (German page): story.js marks it lang="en"
+            | ({"heading_fallback": True} if isinstance(heading_of(step), Fallback) else {})
             for step, built in steps.items()
             if step in order
         }
@@ -1032,14 +1109,16 @@ def create_app(
         payload = cache.get(
             "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
         )
-        narratives, sources, _, errors = cache.get("content", fp(request), content())
+        narratives, sources, _, errors, fallback = content_of(request)
         error = content_error(errors, "combined")
 
         def build():
             n = narratives.get("combined")
             if n is None:
                 return None
-            return story_context(data, named(payload, data), n, sources, request.state.lang)
+            english = fallback.get("combined", frozenset())
+            return story_context(data, named(payload, data), n, sources, request.state.lang,
+                                 english)  # fmt: skip
 
         ctx = cache.get(f"stories:{request.state.lang}", fp(request), build) or {}
         return page(request, "stories.html", "stories", data, content_error=error, **ctx)
@@ -1047,14 +1126,15 @@ def create_app(
     register_pages(app, "/stories", stories)
 
     async def differences(request: Request, data: Data):
-        _, sources, explainer, errors = cache.get("content", fp(request), content())
+        _, sources, explainer, errors, fallback = content_of(request)
         error = content_error(errors, "explainer")
 
         def build():
+            english = fallback.get("explainer", frozenset())
             return (
                 None
                 if explainer is None
-                else render_explainer(explainer, sources, request.state.lang)
+                else render_explainer(explainer, sources, request.state.lang, english)
             )
 
         doc = cache.get(f"differences:{request.state.lang}", fp(request), build)
@@ -1075,8 +1155,8 @@ def create_app(
     register_pages(app, "/differences", differences)
 
     async def organisations_page(request: Request, data: Data):
-        _, sources, _, errors = cache.get("content", fp(request), content())
-        orgs, org_errors = organisations(request)
+        _, sources, _, errors, _ = content_of(request)
+        orgs, org_errors, org_fallback = organisations(request)
 
         def build() -> dict:
             plans, rows, _ = plans_config()
@@ -1098,6 +1178,7 @@ def create_app(
                     names,
                     source_names,
                     request.state.lang,
+                    org_fallback,
                 ),
                 "dimension_labels": labels,
             }
@@ -1134,12 +1215,14 @@ def create_app(
     register_pages(app, "/sources", sources_page)
 
     async def plans_index(request: Request, data: Data):
-        orgs, _ = organisations(request)
+        orgs, _, _ = organisations(request)
 
         def build() -> dict:
             plans, rows, error = plans_config()
             cities = sorted(((c.id, c.name) for c in data.cities()), key=lambda c: c[1])
-            table = plans_pages.plans_table(plans, rows, cities, orgs, request.state.lang)
+            lang = request.state.lang
+            notes = report_notes_de(rows) if lang == "de" else None
+            table = plans_pages.plans_table(plans, rows, cities, orgs, lang, notes)
             return {"table": table, "error": error}
 
         ctx = cache.get(f"plans:{request.state.lang}", fp(request), build)
@@ -1150,30 +1233,32 @@ def create_app(
     async def plan_page(request: Request, city_id: str, data: Data):
         if city_id != plans_pages.DETAIL_CITY:
             raise HTTPException(404, f"no plan page for {city_id!r}")
-        _, sources, _, errors = cache.get("content", fp(request), content())
-        orgs, _ = organisations(request)
+        _, sources, _, errors, _ = content_of(request)
+        orgs, _, _ = organisations(request)
 
         def build() -> dict:
             plans, rows, error = plans_config()
             plan = next((p for p in plans if p.city == city_id), None)
+            lang = request.state.lang
             try:
-                text = load_document(content_dir / "plans" / f"{city_id}.yaml")
+                text, english = document(content_dir / "plans" / f"{city_id}.yaml", lang)
                 text_error = None
             except ContentError as e:
                 log.error("plan page text could not be loaded: %s", e)
-                text, text_error = None, str(e)
+                text, english, text_error = None, frozenset(), str(e)
             doc = (
                 None
                 if text is None or errors.get("*")
-                else render_explainer(text, sources, request.state.lang)
+                else render_explainer(text, sources, lang, english)
             )
             if plan is None:
                 return {"plan": None, "error": error, "doc": doc, "text_error": text_error}
             overlay = data.plan_overlay(city_id)
             dates = plans_pages.run_dates(data.conn, {r.run_id for r in overlay})
             projects = plans_pages.completed_projects(plans_data_dir / plans_pages.MEASURES_FILE)
+            notes = report_notes_de(rows) if lang == "de" else None
             ctx = plans_pages.berlin_context(
-                plan, rows, orgs, overlay, dates, projects, request.state.lang
+                plan, rows, orgs, overlay, dates, projects, lang, notes
             )
             measures, record_error = plans_pages.measures_retrieved(plans_data_dir)
             if record_error:
@@ -1231,15 +1316,15 @@ def create_app(
     def city_context(data: ReportData, city_id: str) -> dict:
         c = known(data, city_id)
         lang = data.lang
-        explanations = docs_dir / EXPLANATIONS
         kinds, map_kinds = [], []
         for kind in KINDS:
             series = data.series(city_id, kind)
             flags = [
-                {"flag": f, "explanation": ts.explanation(explanations, f.key)}
+                {"flag": f, "explanation": explanation_in(f.key, lang)}
                 for f in data.flags(city_id, kind)
             ]
-            map_name = f"{city_id}_{kind}.png"
+            # the static image in the page's language (`<city>_<kind>.de.png` on German pages)
+            map_name = f"{city_id}_{kind}{'.de' if lang == 'de' else ''}.png"
             geojson = f"{city_id}_{kind}.geojson"
             if (maps_dir / geojson).is_file():
                 map_kinds.append(
@@ -1250,6 +1335,7 @@ def create_app(
                     "kind": kind,
                     "point": data.current(city_id, kind),
                     "series": series,
+                    "provenance": None if series is None else provenance_in(data, series),
                     "flagged": {f["flag"].label: f["flag"] for f in flags},
                     "flags": flags,
                     "map": map_name if (maps_dir / map_name).is_file() else None,
@@ -1306,6 +1392,8 @@ def create_app(
             "yearly": yearly,
             "reconcile": data.reconcile(city_id),
             "reported": data.reported_figures(city_id),
+            # the reported figures' notes still English on a German page (no German sibling)
+            "english_notes": english_notes(data, city_id),
             "preset_label": data.preset_labels(),
             "preset_unit": data.preset_units(),
             "headline_unit": headline_unit(data.lang),
@@ -1314,6 +1402,34 @@ def create_app(
             "plan_href": f"/plans/{city_id}"
             if city_id == plans_pages.DETAIL_CITY
             else f"/plans#{city_id}",
+        }
+
+    def explanation_in(key: str, lang: Lang) -> str | None:
+        """A flagged year's explanation in `lang`: on a German page the stamped German entry,
+        else the English one as a `Fallback` (a stale stamp still shows the German)."""
+        text = ts.explanation(docs_dir / EXPLANATIONS, key)
+        if lang != "de" or text is None:
+            return text
+        german, stamp = ts.stamped_explanation(docs_dir / EXPLANATIONS_DE, key)
+        return Fallback(text) if german is None or stamp is None else german
+
+    def provenance_in(data: ReportData, series: ts.CitySeries) -> str:
+        """The series' provenance line in the page's language."""
+        if data.lang == "en":
+            return series.provenance
+        return ts.provenance_line(
+            data.conn, data.selector, series.set_md5, series.points, data.lang
+        )
+
+    def english_notes(data: ReportData, city_id: str) -> set[str]:
+        """The reported figures' notes a German page shows in English (none has a German
+        sibling in figures.csv); empty on an English page."""
+        if data.lang == "en":
+            return set()
+        return {
+            f.note
+            for f in data.with_lang("en").reported_figures(city_id)
+            if f.note and data.note_in_lang(f.note)[1]
         }
 
     def bezirk_series(data: ReportData, city_id: str) -> dict:
@@ -1411,10 +1527,13 @@ def create_app(
     )  # fmt: skip
 
     def map_file(data: ReportData, name: str, suffix: str) -> Path:
-        """The map file of a trusted city's run, else 404 (the city page and CSV do the same)."""
+        """The map file of a trusted city's run, else 404 (the city page and CSV do the same).
+        A German image (`<city>_<kind>.de`) is a PNG only."""
         path = maps_dir / f"{name}.{suffix}"
         change = CHANGE_NAME.fullmatch(name) if suffix == "geojson" else None
         if change is None and not MAP_NAME.fullmatch(name):
+            raise HTTPException(404, "map not found")
+        if suffix != "png" and name.endswith(".de"):
             raise HTTPException(404, "map not found")
         city_id = change.group(1) if change else name.rsplit("_", 1)[0]
         if city_id not in {c.id for c in data.cities()} or not path.is_file():

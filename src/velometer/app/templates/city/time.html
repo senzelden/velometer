@@ -44,7 +44,7 @@
 <article class="flag">
 <h4><code>{{ f.flag.key }}</code> · {{ f.flag.rules | join(", ") }}</h4>
 <p class="meta">{{ f.flag.detail }}</p>
-{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>
+{% if f.explanation %}<div class="explanation"{{ fb(f.explanation) }}>{{ f.explanation | md }}</div>
 {% else %}<p class="note">{{ t('page.time.no_explanation') }}</p>{% endif %}
 </article>
 {% endfor %}
@@ -86,7 +86,7 @@
 <li><strong>{{ t('page.time.kind_current', kind=k.kind | upper) }}</strong>
 {% if k.point %}{{ t('page.time.run', run=k.point.run_id, osm=k.point.osm_timestamp, classifier=k.point.classifier_version, config=k.point.config_sha256[:12]) }}{% else %}{{ t('note.no_run') }}{% endif %}</li>
 <li><strong>{{ t('page.time.kind_history', kind=k.kind | upper) }}</strong>
-{% if k.series %}{{ k.series.provenance | md }}{% else %}{{ t('note.no_run') }}{% endif %}</li>
+{% if k.series %}{{ k.provenance | md }}{% else %}{{ t('note.no_run') }}{% endif %}</li>
 {% endfor %}
 {% if reconcile %}<li><strong>{{ t('page.time.comparison') }}</strong> {{ reconcile.provenance | md }}</li>{% endif %}
 </ul>

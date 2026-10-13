@@ -459,6 +459,14 @@ story.own_scale: each city on its own scale
 story.first: first
 story.bezirke_title: Headline by Bezirk · {city}
 time.current: current
+time.provenance.history_runs: history runs {runs}
+time.provenance.current_run: current run {run} (OSM {osm})
+time.provenance.no_current_run: no current run
+time.provenance.history_set: history set `{md5}`
+time.provenance.classifier: classifier {version} `{parameters}`
+time.provenance.config: config `{sha}`
+time.provenance.population: population {year} held constant
+time.provenance.no_population: no population (per-100k n/a)
 unit.preset: '{tiers} km per 100 km of {road_class}'
 road_class.main_excl_motorway: main roads (excl. motorways)
 road_class.main_incl_motorway: main roads (incl. motorways)
@@ -470,6 +478,8 @@ tier.B: B shared foot/cycle path
 tier.C: C protected lane
 tier.D: D painted lane
 tier.E: E cycle street / bus lane
+map.title: '{name} ({kind}): protected cycling tiers'
+map.footer: "Map data © OpenStreetMap contributors, ODbL 1.0 · OSM mapped km, not built km\nOSM {ts}, classifier {classifier}"
 compare.group.all: All
 compare.group.pilot5: Pilot 5
 compare.group.nordic: Nordic

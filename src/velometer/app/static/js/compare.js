@@ -188,7 +188,9 @@ function showFlag(id, label, rawLabel) {
   close.addEventListener("click", () => (box.hidden = true));
   box.append(close, head);
   if (text) {
-    for (const para of text.split(/\n{2,}/)) box.append(el("p", {}, para.trim()));
+    // an explanation still in English on a German page: lang="en", as the server marks it
+    const english = D.explanationFallback?.has(key) ? { lang: "en", "data-fallback": "" } : {};
+    for (const para of text.split(/\n{2,}/)) box.append(el("p", english, para.trim()));
   } else {
     box.append(el("p", { class: "note" }, t("js.compare.no_explanation")));
   }

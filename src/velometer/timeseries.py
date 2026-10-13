@@ -334,21 +334,28 @@ def render_block(
     return "\n".join(lines)
 
 
-def provenance_line(conn, selector, set_md5: str, points: list[YearPoint]) -> str:
+def provenance_line(conn, selector, set_md5: str, points: list[YearPoint], lang: str = "en") -> str:
+    """The series' provenance in one line (the review page and the Over time tab), in `lang`."""
+    from velometer.i18n import t
+
     years = [p for p in points if p.label != CURRENT]
     cur = next((p for p in points if p.label == CURRENT), None)
     pop = fetch_run(conn, years[0].run_id).get("population_year") if years else None
-    population = (
-        "no population (per-100k n/a)" if pop is None else f"population {pop} held constant"
-    )
     runs = ", ".join(f"{p.label}={p.run_id}" for p in years)
-    return (
-        f"history runs {runs}"
-        + (f" · current run {cur.run_id} (OSM {cur.osm_timestamp})" if cur else " · no current run")
-        + f" · history set `{set_md5[:8]}` · classifier {selector.version} "
-        f"`{selector.parameters}` · config `{selector.config_sha256[:12]}`"
-        f" · {population}"
-    )
+    parts = [
+        t(lang, "time.provenance.history_runs", runs=runs),
+        t(lang, "time.provenance.current_run", run=cur.run_id, osm=cur.osm_timestamp)
+        if cur
+        else t(lang, "time.provenance.no_current_run"),
+        t(lang, "time.provenance.history_set", md5=set_md5[:8]),
+        t(lang, "time.provenance.classifier", version=selector.version,
+          parameters=selector.parameters),
+        t(lang, "time.provenance.config", sha=selector.config_sha256[:12]),
+        t(lang, "time.provenance.no_population")
+        if pop is None
+        else t(lang, "time.provenance.population", year=pop),
+    ]  # fmt: skip
+    return " · ".join(parts)
 
 
 def build_city(

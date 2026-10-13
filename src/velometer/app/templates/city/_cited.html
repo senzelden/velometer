@@ -8,6 +8,6 @@
 {% if cited_refs %}
 <h3>{{ t('cite.data') }}</h3>
 <ol class="citations drefs">
-{% for n, r in cited_refs %}<li id="{{ nar.prefix if nar else "" }}ref-{{ n }}"><span class="dnum">{{ t('cite.dref', n=n) }}</span> {% if nar.ref_links[n] %}<a href="{{ u(nar.ref_links[n]) }}">{{ r.label }}</a>{% else %}{{ r.label }}{% if r.file %}<br><span class="meta"><code>{{ r.file }}</code>{% if r.locator %} · {{ r.locator | trim("# ") }}{% endif %}</span>{% endif %}{% endif %}</li>
+{% for n, r in cited_refs %}<li id="{{ nar.prefix if nar else "" }}ref-{{ n }}"><span class="dnum">{{ t('cite.dref', n=n) }}</span> {% if nar.ref_links[n] %}<a href="{{ u(nar.ref_links[n]) }}">{{ fb_text(r.label, r.id in nar.ref_fallback) }}</a>{% else %}{{ fb_text(r.label, r.id in nar.ref_fallback) }}{% if r.file %}<br><span class="meta"><code>{{ r.file }}</code>{% if r.locator %} · {{ r.locator | trim("# ") }}{% endif %}</span>{% endif %}{% endif %}</li>
 {% endfor %}</ol>
 {% endif %}

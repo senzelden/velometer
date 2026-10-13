@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { SELECTOR, control, nameOf, scan, tableFor, upgrade } from "../download-ui.js";
+import { SELECTOR, control, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
+import { localised } from "../data.js";
+import { buildModel } from "../compare-model.js";
+import { t } from "../strings.js";
 
 // A fake DOM, enough for the control: elements with attributes, a dataset, children, after().
 // `matches` understands the selector forms SELECTOR uses ([a], [a=v], :not([a=v]), .c, commas),
@@ -237,4 +240,20 @@ test("a German page's download: German source line and attribution, the name wit
   assert.equal(de, en);
   assert.equal(en, "velometer-city-krakow-tiers-city-tiers-fua.png");
   assert.equal(nameOf(chart, "png", at("/de/"), "/"), nameOf(chart, "png", at("/"), "/"));
+});
+
+test("a German chart title names the city as the localised series does (Krakau)", () => {
+  useLang("de");
+  const D = localised({
+    cities: { krakow: { id: "krakow", name: "Kraków", name_de: "Krakau", population: 1 } },
+    series: { "krakow/lau": [{ label: "2019", headline: 2, flags: "" }] },
+  }, "de");
+  const model = buildModel(D, { c: ["krakow"], hl: [], m: "headline", b: "lau", mode: "abs" });
+  const title = t("js.compare.cite_title", {
+    heading: "Kennzahl", cities: model.series.map((s) => s.name).join(", "),
+  });
+  const container = Object.assign(make("div", { "data-compare-chart": "" }), { querySelectorAll: () => [] });
+  assert.ok(titleOf(container, { title }).includes("Krakau"));
+  assert.ok(!titleOf(container, { title }).includes("Kraków"));
+  useLang("en");
 });

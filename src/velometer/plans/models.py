@@ -21,6 +21,9 @@ PLANS_FILE = "plans.yaml"
 # 1 January 2022, not the level (M8 spec decision 9, §4.4)
 MAPPED_BASELINE = date(2022, 1, 1)
 REPORTS_FILE = "reports.csv"
+# The German report-row notes (M12): {English note as in reports.csv: German note}. Keyed by the
+# English text, so a note edited in reports.csv falls back to English until it is translated.
+REPORT_NOTES_DE_FILE = "reports_notes_de.yaml"
 
 
 class _Strict(BaseModel):
@@ -159,6 +162,27 @@ def _load_reports(path: Path) -> list[ReportRow]:
     except OSError as e:
         raise ConfigError(f"{path}: {e}") from e
     return rows
+
+
+def load_report_notes_de(dir: Path, rows: list[ReportRow]) -> dict[str, str]:
+    """{English note: German note} of `dir/reports_notes_de.yaml` ({} without the file).
+    ConfigError for a key that is no note of `rows` (a stale translation) or a blank value."""
+    path = Path(dir) / REPORT_NOTES_DE_FILE
+    if not path.is_file():
+        return {}
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as e:
+        raise ConfigError(f"{path}: {e}") from e
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{path}: expected a mapping of English note to German note")
+    notes = {r.note for r in rows if r.note}
+    for en, de in raw.items():
+        if en not in notes:
+            raise ConfigError(f"{path}: {str(en)[:60]!r} is no note of {REPORTS_FILE}")
+        if not isinstance(de, str) or not de.strip():
+            raise ConfigError(f"{path}: {str(en)[:60]!r} has no German note")
+    return {str(k): v for k, v in raw.items()}
 
 
 def load_plans(dir: Path) -> tuple[list[Plan], list[ReportRow]]:

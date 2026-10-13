@@ -5,7 +5,7 @@
 <li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.unit }}</b> {{ v.quantity }}
 {%- if v.row.suspect %} <span class="suspect-mark">{{ t('page.plans.suspect') }}</span>{% endif %}
 <br><span class="meta">{{ v.doc_type }} {{ v.row.doc_id }}, {{ v.row.doc_date | day }}{% if v.url %} · <a href="{{ v.url }}" rel="noopener noreferrer">{{ t('page.plans.document') }}</a>{% endif %}</span>
-{%- if v.row.suspect and v.row.note %}<br><span class="meta suspect-note">{{ v.row.note }}</span>{% endif %}</li>
+{%- if v.row.suspect and v.row.note %}<br><span class="meta suspect-note"{{ fb(v.note_fallback) }}>{{ v.note }}</span>{% endif %}</li>
 {%- endmacro %}
 {% block content %}
 <h1>{{ t('page.plans.title') }}</h1>

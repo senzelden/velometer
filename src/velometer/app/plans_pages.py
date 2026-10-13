@@ -98,9 +98,27 @@ def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
     return {"name": org.name if org else name, "href": f"/organisations#{name}" if org else None}
 
 
-def row_view(r: ReportRow, current: bool, orgs: dict[str, Organisation], lang: Lang = "en") -> dict:
+def note_in(note: str | None, lang: Lang, notes_de: dict[str, str] | None) -> tuple[str, bool]:
+    """(a report row's note in `lang`, whether it is the English one shown on a German page for
+    want of a German sibling in `notes_de`, config/plans/reports_notes_de.yaml)."""
+    if lang == "en" or not note:
+        return note or "", False
+    german = (notes_de or {}).get(note)
+    return (note, True) if german is None else (german, False)
+
+
+def row_view(
+    r: ReportRow,
+    current: bool,
+    orgs: dict[str, Organisation],
+    lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
+) -> dict:
+    note, note_fallback = note_in(r.note, lang, notes_de)
     return {
         "row": r,
+        "note": note,
+        "note_fallback": note_fallback,
         "value": num(r.value, lang),
         "unit": t(lang, f"plan.unit.{r.unit}"),  # the stored unit, in `lang`
         "quantity": quantity_text(r, lang),
@@ -133,11 +151,13 @@ def plans_table(
     cities: list[tuple[str, str]],
     orgs: dict[str, Organisation],
     lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
 ) -> list[dict]:
     """One entry per city (id, name) in the given order, each with its plans (none: a note on
-    the page). A plan shows every item that has a target or a reported figure, with the latest
-    current figure of each series; the plan with its own page shows only the items with a
-    target and their implemented figures, and links that page for the rest."""
+    the page); `notes_de` the German report-row notes. A plan shows every item that has a
+    target or a reported figure, with the latest current figure of each series; the plan with
+    its own page shows only the items with a target and their implemented figures, and links
+    that page for the rest."""
     out = []
     for city_id, name in cities:
         views = []
@@ -160,7 +180,7 @@ def plans_table(
                     {
                         "item": item,
                         "target": target_text(item, lang),
-                        "latest": [row_view(r, True, orgs, lang) for r in latest],
+                        "latest": [row_view(r, True, orgs, lang, notes_de) for r in latest],
                     }
                 )
             status = t(lang, f"plan.status.{plan.status}")
@@ -300,7 +320,9 @@ def _overlay_table(points: list[dict] | None, baseline: date) -> list[dict]:
     return out
 
 
-def _report_json(r: ReportRow, current: bool) -> dict:
+def _report_json(
+    r: ReportRow, current: bool, lang: Lang = "en", notes_de: dict[str, str] | None = None
+) -> dict:
     return {
         "year": r.year,
         "value": r.value,
@@ -310,7 +332,7 @@ def _report_json(r: ReportRow, current: bool) -> dict:
         "quantity": r.quantity,
         "current": current,
         "suspect": r.suspect,
-        "note": r.note,
+        "note": note_in(r.note, lang, notes_de)[0] if r.note else r.note,
     }
 
 
@@ -357,6 +379,7 @@ def berlin_context(
     dates: dict[int, str],
     projects: tuple[dict[str, dict[int, float]], int] | None,
     lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
 ) -> dict:
     """Everything `/plans/berlin` shows: per item the chart config and its tables, the document
     table, and which overlay version and measures dataset the series come from."""
@@ -374,13 +397,14 @@ def berlin_context(
         for key, (cur, revisions) in groups.items():
             if key[1] != item.id:
                 continue
-            views = [row_view(cur, True, orgs, lang)]
-            views += [row_view(r, False, orgs, lang) for r in revisions]
+            views = [row_view(cur, True, orgs, lang, notes_de)]
+            views += [row_view(r, False, orgs, lang, notes_de) for r in revisions]
             series.setdefault(
                 (QUANTITY_ORDER[key[3]], key[4] or 0, series_text(cur, lang)), []
             ).append((key[2], views))
             if key[3] == "implemented_in_year":
-                reports += [_report_json(cur, True)] + [_report_json(r, False) for r in revisions]
+                reports += [_report_json(cur, True, lang, notes_de)]
+                reports += [_report_json(r, False, lang, notes_de) for r in revisions]
         overlay = _overlay_of(item.id, latest, dates)
         cfg = {
             "id": item.id,
