@@ -5,11 +5,18 @@ shown for want of a German translation is inside `lang="en" data-fallback`, so i
 import re
 from pathlib import Path
 
+import pytest
+
 from tests.test_a11y import all_page_urls  # noqa: F401
-from tests.test_app import CONTENT, client, setup  # noqa: F401
+from tests.test_app import CONTENT, _client, client, setup  # noqa: F401
 from velometer import i18n
+from velometer import timeseries as ts
 from velometer.app import urls
+from velometer.app.main import create_app
+from velometer.app.series import german_explanations
 from velometer.config import reader_prose
+from velometer.content.check import DE, check_content_all
+from velometer.reconcile import headings
 
 
 def _config_phrases() -> list[str]:
@@ -91,3 +98,43 @@ def test_the_runtime_sniff_sees_the_over_time_generators(client):  # noqa: F811
     assert 'class="meta"' in html and i18n.t("de", "page.time.comparison") in html
     assert english_words("<p>retrieved the edits</p>") == ["edits", "retrieved", "the"]
     assert english_words("<p>activity_spike legacy_km <code>run</code></p>") == []
+
+
+# --- German content is required (M12 Task 9): the shipped edition is complete ---
+
+SHIPPED_DOCS = Path(__file__).resolve().parents[1] / "docs"
+
+
+@pytest.fixture
+def shipped_client(setup):  # noqa: F811
+    """The fixture app on the shipped content and the shipped docs (the flagged-year
+    explanations and their German twin), read-only."""
+    db_path, cfg, maps, _docs = setup
+    with _client(create_app(db_path, cfg, maps, SHIPPED_DOCS, content_dir=CONTENT)) as c:
+        yield c
+
+
+def test_no_fallback_on_german_pages(shipped_client, all_page_urls):  # noqa: F811
+    """No German page shows English for want of German (`data-fallback`), and every flagged-year
+    explanation has its stamped German entry."""
+    pages = [u for u in all_page_urls if urls.lang_of(u) == "de"]
+    assert len(pages) > 20
+    fallback = [u for u in pages if "data-fallback" in shipped_client.get(u).text]
+    assert fallback == []
+    assert shipped_client.get("/data/series.json").json()["explanations_de"]["fallback"] == []
+    # the fixture's flags are not the shipped ones: every shipped explanation, as series.json
+    # would carry it for the real flags
+    report = SHIPPED_DOCS / "review" / "m3_timeseries.md"
+    notes = {k: ts.explanation(report, k) for k in headings(report.read_text(encoding="utf-8"))}
+    assert len(notes) > 50
+    assert german_explanations(notes, report)["fallback"] == []
+
+
+def test_shipped_german_content_is_complete(fixture_db):
+    """With its default `require_de`, the content check requires German for the shipped tree:
+    no German problem and no note (a gap would be a note while German was optional). The English
+    facts are evaluated against the fixture database here, so only the German problems count."""
+    assert i18n.german_required(CONTENT)
+    problems, notes = check_content_all(CONTENT, fixture_db[3], SHIPPED_DOCS)
+    assert [p for p in problems if p.startswith(DE)] == []
+    assert notes == []
