@@ -55,6 +55,8 @@ DECIMALS = 5  # ~1 m at these latitudes: plenty for a zoomable map, a third fewe
 TAG_KEYS = frozenset({"highway", "bicycle", "foot", "segregated", "bicycle_road", "cyclestreet"})
 TAG_PREFIXES = ("cycleway", "oneway")
 DPI = 150
+LEGEND_RIGHT = 0.74  # the axes' right edge (figure fraction); the legend sits right of it
+LEGEND_PAD = 0.01  # the margin kept between the legend and the figure's right edge
 ODBL = "Map data © OpenStreetMap contributors, ODbL 1.0"
 MAPPED_KM = "OSM mapped km, not built km"  # ADR 0006
 
@@ -248,11 +250,15 @@ def _draw(sides, outline, title: str, footer: str, out: Path, labels: Mapping[st
         Line2D([], [], color=TIER_COLOURS[i], linewidth=2.5, label=labels[tier])
         for i, tier in enumerate(TIERS)
     ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False,
-              fontsize=9)  # fmt: skip
+    legend = ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0),
+                       frameon=False, fontsize=9)  # fmt: skip
     fig.text(0.02, 0.015, footer, fontsize=8, color=INK_2, va="bottom")
     # the legend sits right of the axes: leave room for its longest label inside the figure
-    fig.subplots_adjust(left=0.02, right=0.74, top=0.94, bottom=0.07)
+    fig.subplots_adjust(left=0.02, right=LEGEND_RIGHT, top=0.94, bottom=0.07)
+    fig.canvas.draw()
+    over = legend.get_window_extent().x1 - fig.bbox.x1 * (1 - LEGEND_PAD)
+    if over > 0:  # longer labels (the German ones): narrow the axes until the legend fits
+        fig.subplots_adjust(right=LEGEND_RIGHT - over / fig.bbox.width)
     plt.savefig(out, dpi=DPI)
     plt.close(fig)
 
