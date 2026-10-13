@@ -78,7 +78,9 @@ export function mount(doc) {
   let active = -1;
 
   const load = () => {
-    loading ??= fetch(url("/data/search.json"))
+    // the page names its edition's index (the German pages: /de/data/search.json)
+    const meta = doc.querySelector('meta[name="velometer-search"]')?.getAttribute("content");
+    loading ??= fetch(meta || url("/data/search.json"))
       .then((r) => {
         if (!r.ok) throw new Error(`search.json: ${r.status}`);
         return r.json();
@@ -136,7 +138,7 @@ export function mount(doc) {
       label.textContent = entry.label;
       const kind = doc.createElement("span");
       kind.className = "kind";
-      kind.textContent = entry.kind;
+      kind.textContent = entry.kind_label ?? entry.kind; // the German index names its kinds
       li.append(label, kind);
       li.addEventListener("mousedown", (e) => e.preventDefault()); // keep focus in the input
       li.addEventListener("click", () => go(entry));

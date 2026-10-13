@@ -1,6 +1,7 @@
 """The `/data/search.json` model (M11 Task 7): what the nav search can jump to. Every entry is
-`{label, kind, url, terms}`; `url` is the path without the base (search.js adds it), `terms` the
-words besides the label that find it. Display data only: the aliases are not classifier input."""
+`{label, kind, url, terms}`, plus `kind_label` in a non-English index; `url` is the path without
+the base (search.js adds it), `terms` the words besides the label that find it. Display data
+only: the aliases are not classifier input."""
 
 import logging
 from pathlib import Path
@@ -25,7 +26,13 @@ def pages(lang: Lang = "en") -> list[tuple[str, str]]:
     ]  # fmt: skip
 
 
+# the kinds of entry (search.js ranks them in this order too, KIND_ORDER); each has a
+# `search.kind.*` catalogue label
+KINDS = ("city", "country", "page", "story", "organisation")
+
+
 def _entry(label: str, kind: str, url: str, *terms: str) -> dict:
+    assert kind in KINDS, kind
     return {"label": label, "kind": kind, "url": url, "terms": list(dict.fromkeys([label, *terms]))}
 
 
@@ -74,4 +81,7 @@ def search_index(
         if c.id in narratives:
             label = t(lang, "search.story_city", city=c.name)
             out.append(_entry(label, "story", f"/city/{c.id}", c.name, c.id))
+    if lang != "en":  # the English index keeps its M11 form; search.js shows `kind` there
+        for e in out:
+            e["kind_label"] = t(lang, f"search.kind.{e['kind']}")
     return out

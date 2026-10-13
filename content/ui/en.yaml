@@ -537,6 +537,11 @@ sources.no_snapshot: OSM snapshot (no run yet)
 search.methodology_de: Methodology (Deutsch)
 search.story_combined: The story across cities
 search.story_city: The story of {city}
+search.kind.city: city
+search.kind.country: country
+search.kind.page: page
+search.kind.story: story
+search.kind.organisation: organisation
 org.all_cities: all cities
 org.kind.official: city or state administration
 org.kind.ngo: non-governmental organisation

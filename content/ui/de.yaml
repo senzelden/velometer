@@ -528,6 +528,11 @@ sources.no_snapshot: OSM-Stand (noch kein Lauf)
 search.methodology_de: Methodik (Deutsch)
 search.story_combined: Die Geschichte über alle Städte
 search.story_city: Die Geschichte von {city}
+search.kind.city: Stadt
+search.kind.country: Land
+search.kind.page: Seite
+search.kind.story: Geschichte
+search.kind.organisation: Organisation
 org.all_cities: alle Städte
 org.kind.official: Stadt- oder Landesverwaltung
 org.kind.ngo: Nichtregierungsorganisation

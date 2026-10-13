@@ -112,6 +112,12 @@ def _report_units() -> set[str]:
         return {row["unit"] for row in csv.DictReader(f)}
 
 
+def _search_kinds() -> set[str]:
+    from velometer.app.search import KINDS
+
+    return set(KINDS)
+
+
 def _categories() -> set[str]:
     from velometer.report.change import CATEGORIES
 
@@ -134,6 +140,7 @@ DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "figure.scope.": _figure_column("network_scope"),
     "figure.basis.": _figure_column("length_basis"),
     "plan.unit.": _report_units,
+    "search.kind.": _search_kinds,
 }
 # key prefixes of the JS strings that are not catalogue keys: `js_strings` writes them from
 # MONTHS_SHORT / MONTHS, the one home of the month names

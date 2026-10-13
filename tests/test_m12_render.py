@@ -159,6 +159,21 @@ def test_german_search_labels(setup):  # noqa: F811
     assert any("Berlin-Test" in e["label"] for e in de if e["kind"] == "city")
 
 
+def test_german_search_kinds_are_labelled_in_german(setup):  # noqa: F811
+    """The result's kind ("city", "story") shows in the page's language: the German index names
+    it from the catalogue; the English index keeps its M11 form, with no label field."""
+    from velometer.i18n import t
+
+    with app_for(setup) as c:
+        de = c.get("/de/data/search.json").json()
+        en = c.get("/data/search.json").json()
+    assert {e["kind"] for e in de} >= {"page", "city", "country"}
+    for e in de:
+        assert e["kind_label"] == t("de", f"search.kind.{e['kind']}")
+        assert e["kind_label"] != t("en", f"search.kind.{e['kind']}")
+    assert all("kind_label" not in e for e in en)
+
+
 def test_german_provenance_line_on_the_over_time_tab(setup):  # noqa: F811
     with app_for(setup) as c:
         de = c.get("/de/city/berlin/time").text

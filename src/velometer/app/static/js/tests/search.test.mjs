@@ -149,6 +149,37 @@ test("clearing the input before the index arrives closes the list", async (t) =>
   assert.equal(input.getAttribute("aria-expanded"), "false");
 });
 
+test("a German page loads the index its velometer-search meta names, the German one", async (t) => {
+  const { mount } = await import("../search.js");
+  const asked = [];
+  t.mock.method(globalThis, "fetch", (u) => { asked.push(u); return new Promise(() => {}); });
+  const { doc, input } = fakePage();
+  const meta = { getAttribute: (k) => (k === "content" ? "/velometer/de/data/search.json" : null) };
+  const plain = doc.querySelector;
+  doc.querySelector = (s) => (s === 'meta[name="velometer-search"]' ? meta : plain(s));
+  mount(doc);
+  input.fire("focus");
+  assert.deepEqual(asked, ["/velometer/de/data/search.json"]);
+});
+
+test("an option shows the entry's kind label (the German index's), else its kind", async (t) => {
+  const { mount } = await import("../search.js");
+  const index = [
+    { label: "Krakau (Polen)", kind: "city", kind_label: "Stadt", url: "/city/krakow", terms: ["Krakau"] },
+    { label: "Krakow story", kind: "story", url: "/city/krakow", terms: ["Krakau"] },
+  ];
+  t.mock.method(globalThis, "fetch", async () => ({ ok: true, json: async () => index }));
+  const { doc, input, list } = fakePage();
+  mount(doc);
+  input.value = "krakau";
+  input.fire("focus");
+  await settle();
+  await settle();
+  input.fire("input");
+  const kinds = list.children.map((li) => li.children[1].textContent);
+  assert.deepEqual(kinds, ["Stadt", "story"]);
+});
+
 // --- M12: every name form finds its city (tests/city_names.json, kept equal to cities.yaml) ---
 
 
