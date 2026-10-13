@@ -24,17 +24,17 @@ sections:
   - text: >-
       Die größere Veränderung liegt innerhalb von A+B. Stufe B, Geh- und Radwege,
       stieg von 28 auf 69 km, während Stufe A zwischen 156 und 172 km blieb. Ein Teil
-      davon ist Tagging, keine neuen Wege: Im Frühjahr 2024 überarbeiteten Kartierende
+      davon ist Umtaggung, keine neuen Wege: Im Frühjahr 2024 überarbeiteten Kartierende
       die Radwege der ganzen Stadt, ergänzten Tags zu Trennung und Widmung und machten
       einige Radwege zu Geh- und Radwegen [#ts-strasbourg-2025]. Stufe A fiel und
       Stufe B stieg in jenem Jahr, während sich ihre Summe normal entwickelte. Eine
-      Gehwegkampagne im Jahr 2022 zeigt sich in den Aktivitätshinweisen, aber nicht
-      in den Stufen [#ts-strasbourg-2023]. Die kartierten markierten Radfahrstreifen
-      gingen von 58 auf 45 km zurück.
+      Gehwegkampagne im Jahr 2022 zeigt sich in den Prüfhinweisen wegen ungewöhnlich
+      vieler Bearbeitungen, aber nicht in den Stufen [#ts-strasbourg-2023]. Die kartierten
+      markierten Radfahrstreifen gingen von 58 auf 45 km zurück.
     src: 6f28e91b1168
   - text: >-
-      Der weitere Stadtraum (FUA) zeigt dieselbe Verschiebung: Stufe B wuchs von 201
-      auf 426 km und kommt Stufe A mit 428 km heute fast gleich.
+      Der funktionale Stadtraum (FUA) zeigt dieselbe Verschiebung: Stufe B wuchs von
+      201 auf 426 km und kommt Stufe A mit 428 km heute fast gleich.
     src: 476a027be81c
 - heading:
     text: Warum die Zahlen abweichen

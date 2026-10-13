@@ -32,6 +32,10 @@ where a short UI form is used beside the methodology's longer one are listed und
 | reference date | Stichtag | |
 | classifier | Klassifikator | |
 | flagged year | markiertes Jahr | the flag itself: "Prüfhinweis" |
+| activity flag (activity spike) | Prüfhinweis wegen ungewöhnlich vieler Bearbeitungen | first mention in a text; "Prüfhinweis" after; never "Aktivitätshinweis" |
+| retag, retagged; a retag | neu getaggt, umgetaggt (with from/to); Tag-Änderung | |
+| retagging, tag drift | Umtaggung | "Das ist eine Umtaggung, keine neue Infrastruktur"; slow case "allmähliche Umtaggung"; never "Drift der Tags" |
+| re-mapping campaign | Neukartierungskampagne | a plain "mapping campaign" stays "Kartierungskampagne" |
 | explanation | Erklärung | |
 | provenance | Herkunft | |
 | boundary | Gebietsgrenze, Grenze | |
@@ -47,6 +51,8 @@ where a short UI form is used beside the methodology's longer one are listed und
 | index (first year = 100) | Index (erstes Jahr = 100) | |
 | COVID year | Corona-Jahr | methodology |
 | residents | Einwohner | |
+| bicycle account (Copenhagen) | Fahrradbilanz (Cykelregnskab) | the local name in brackets at first mention |
+| cycling referendum campaign (Berlin) | Volksentscheid Fahrrad | the campaign's own name; not "Radentscheid" |
 | **Sources and actions** | | |
 | published figure | veröffentlichte Zahl | |
 | Theirs / Ours (Figures columns) | Veröffentlicht / Unsere | never "Ihre": it reads as formal address |

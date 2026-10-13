@@ -1,6 +1,6 @@
 city_id: berlin
 title:
-  text: 'Berlin: eine Kartierungskampagne, danach ein langsamer Anstieg'
+  text: 'Berlin: eine Neukartierungskampagne, danach ein langsamer Anstieg'
   src: 6f92a28dabf7
 dek:
   text: >-
@@ -37,10 +37,10 @@ sections:
     src: 69045acadeda
   paragraphs:
   - text: >-
-      Die 12 Bezirke gehen auseinander [#bezirke]. Neukölln ist am dichtesten kartiert
-      (164,3), Pankow am dünnsten (62,8). Seit 2018 legten Mitte (75,2 auf 90,7) und
-      Tempelhof-Schöneberg (123,9 auf 138,3) am stärksten zu; Spandau fiel am stärksten
-      (149,3 auf 109,8), zum größten Teil im Jahr 2022.
+      Die 12 Bezirke unterscheiden sich deutlich [#bezirke]. Neukölln ist am dichtesten
+      kartiert (164,3), Pankow am dünnsten (62,8). Seit 2018 legten Mitte (75,2 auf
+      90,7) und Tempelhof-Schöneberg (123,9 auf 138,3) am stärksten zu; Spandau fiel
+      am stärksten (149,3 auf 109,8), zum größten Teil im Jahr 2022.
     src: a5ee204301d0
 - heading:
     text: Warum die Zahlen des Senats abweichen
@@ -79,7 +79,7 @@ data_refs:
     text: velometer-Bezirksreihe (12 Bezirke, Klassifikator v4)
     src: d2b51c9ecbab
   change:
-    text: velometer kartierte Änderung, Berlin, 2023-01-01 bis aktueller Stand
+    text: velometer-Kartierungsänderung, Berlin, 2023-01-01 bis aktueller Stand
     src: 10da1f913f3c
 literals:
 - 100 km

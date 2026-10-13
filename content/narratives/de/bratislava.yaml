@@ -25,11 +25,11 @@ sections:
   - text: >-
       Markierte Radfahrstreifen (D) haben sich auf der Karte mehr als verdreifacht,
       von 17 auf 55 km je Seite. Seit 2024 geht ein Teil davon auf Tag-Änderungen
-      zurück, bei denen Piktogrammspuren (shared lanes) zu echten Radfahrstreifen
+      zurück, bei denen Piktogrammketten (shared lanes) zu echten Radfahrstreifen
       wurden, neben Radfahrstreifen an Straßen, die bisher kein Radweg-Tag hatten
-      [#recon-lanes]. Der Aktivitätshinweis auf dem aktuellen Punkt ist eine Kartierungskampagne
-      für den Fußverkehr, mit Gehwegen und Überwegen; A+B entwickelte sich normal
-      [#expl-lau-current].
+      [#recon-lanes]. Der Prüfhinweis wegen ungewöhnlich vieler Bearbeitungen auf
+      dem aktuellen Punkt geht auf eine Kartierungskampagne für den Fußverkehr zurück,
+      mit Gehwegen und Überwegen; A+B entwickelte sich normal [#expl-lau-current].
     src: 5a13de5e73fb
   - text: >-
       Der funktionale Stadtraum wuchs schneller als die Stadt, A+B von 284 auf 443
@@ -42,7 +42,7 @@ sections:
   paragraphs:
   - text: >-
       Clean Cities 2025 und unsere Zahlen stimmen ungefähr überein: Clean Cities meldet
-      186 km geschützte Infrastruktur und 12 % des Straßennetzes [@cc2025-report],
+      186 km geschützter Infrastruktur und 12 % des Straßennetzes [@cc2025-report],
       gegenüber unseren 172 km und 13,2 % [#recon]. QECIO hat die ganze Region Bratislava
       gemessen, mehr als fünfmal so groß wie die Stadt, seine km sind also nicht die
       der Stadt [#recon-qecio]. Die Stadt meldet hinzugekommene km nach Typ, darunter

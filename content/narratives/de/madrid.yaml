@@ -22,20 +22,20 @@ sections:
       nicht markiert und hat keine festgehaltene Erklärung.
     src: 055e299809d2
   - text: >-
-      Ab 2024 gehen Madrids Aktivitätshinweise auf eine Kampagne für den Fußverkehr
-      zurück. Kartierende fügten Zehntausende Gehwege und Überwege hinzu, und die
-      Überwege teilten bestehende Radwege in Stücke; die Zahl der Wege mit Stufe hat
-      sich dadurch fast verdoppelt, während A+B nur um 8,5 km wuchs [#ts-madrid-2025].
-      Einige Radwege erhielten außerdem Tags für den Fußverkehr und wechselten von
-      Stufe A nach B. Der aktuelle Punkt ist dieselbe Kartierung, die weitergeht,
-      kein neues Ereignis [#ts-madrid-current]. Die Hauptkennzahl sank im Jahr 2026
-      leicht von 43,1 auf 42,5, obwohl A+B stieg, weil mehr Hauptstraßen-km kartiert
-      wurden.
+      Ab 2024 gehen Madrids Prüfhinweise wegen ungewöhnlich vieler Bearbeitungen auf
+      eine Kampagne für den Fußverkehr zurück. Kartierende fügten Zehntausende Gehwege
+      und Überwege hinzu, und die Überwege teilten bestehende Radwege in Stücke; die
+      Zahl der Wege mit Stufe hat sich dadurch fast verdoppelt, während A+B nur um
+      8,5 km wuchs [#ts-madrid-2025]. Einige Radwege erhielten außerdem Tags für den
+      Fußverkehr und wechselten von Stufe A nach B. Der aktuelle Punkt ist dieselbe
+      Kartierung, die weitergeht, kein neues Ereignis [#ts-madrid-current]. Die Hauptkennzahl
+      sank im Jahr 2026 leicht von 43,1 auf 42,5, obwohl A+B stieg, weil mehr Hauptstraßen-km
+      kartiert wurden.
     src: cc463e409144
   - text: >-
-      Der weitere Stadtraum (FUA) stieg bis 2026 von 973 auf 1.196 km A+B und ist
-      seitdem leicht auf 1.182 km gesunken; diese letzte Änderung wurde nicht markiert
-      und hat keine festgehaltene Erklärung.
+      Der funktionale Stadtraum (FUA) stieg bis 2026 von 973 auf 1.196 km A+B und
+      ist seitdem leicht auf 1.182 km gesunken; diese letzte Änderung wurde nicht
+      markiert und hat keine festgehaltene Erklärung.
     src: 7c1dd1fdcf37
 - heading:
     text: Warum die Zahlen abweichen

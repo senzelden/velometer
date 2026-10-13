@@ -29,7 +29,8 @@ sections:
       Der funktionale Stadtraum wuchs schneller, von 332 auf 701 kartierte km. Seine
       markierten Schritte von 2020, 2022 und 2023 waren Kartierungsaktivität in den
       gminas im Umland, zum Teil Wege, die von construction zu cycleway umgetaggt
-      wurden. Ein solches Umtaggen datiert die Kartierung, nicht den Weg vor Ort [#ts_fua_2023].
+      wurden. Eine solche Umtaggung datiert die Kartierung, nicht den Weg vor Ort
+      [#ts_fua_2023].
     src: 57e480059932
 - heading:
     text: Warum die Zahlen abweichen
@@ -45,7 +46,7 @@ sections:
       Basis entlang der Straßenachse 6,8 % darüber, bei anderthalb Jahren zwischen
       den beiden Daten [#rec_cc_ratio]. Das Verhältnis weicht stärker ab: Sein Straßennetz
       von 1.769 km ist weiter gefasst als unsere 1.340 km [#rec_cc_network], daher
-      stehen seine 20 % gegen unsere 29,8 %.
+      beträgt sein Verhältnis 20 % gegenüber unseren 29,8 %.
     src: 53be68e87189
 data_refs:
   ts_lau_2018:

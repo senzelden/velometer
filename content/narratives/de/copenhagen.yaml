@@ -24,7 +24,7 @@ sections:
   - text: >-
       Das einzige unregelmäßige Jahr ist 2025. Geh- und Radwege (Stufe B) sanken von
       88,8 auf 74,0 km und lagen im Stand von 2026 wieder bei 86,5 km, und die Hauptkennzahl
-      sank mit ihnen (234,5 → 227,9). Das ist eine Drift der Tags: Im Laufe des Jahres
+      sank mit ihnen (234,5 → 227,9). Das ist eine Umtaggung: Im Laufe des Jahres
       2024 verloren Schotterwege ihre Widmung als Geh- und Radweg und fielen aus den
       Stufen heraus, und im Laufe des Jahres 2025 wurden die meisten von ihnen als
       gemeinsame Geh- und Radwege neu getaggt und kehrten in B zurück [#shift-copenhagen-2025].
@@ -42,8 +42,8 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die Stadt zählt für 2025 genau 401 km cykelsti [@copenhagen-mobilitetsredegorelse-2026]
-      und Clean Cities 397 km geschützte Infrastruktur [@cc2025-report]; unser A+B-Wert
+      Für 2025 zählt die Stadt 401 km cykelsti [@copenhagen-mobilitetsredegorelse-2026]
+      und Clean Cities 397 km geschützter Infrastruktur [@cc2025-report]; unser A+B-Wert
       liegt bei 582 km. Umfang: Ein cykelsti ist ein Radweg mit Bordstein, markierte
       Radfahrstreifen stehen in einer eigenen Zeile, und unser A+B enthält auch Geh-
       und Radwege. Die Gestaltungsleitlinien der Stadt raten bei neuen Vorhaben von

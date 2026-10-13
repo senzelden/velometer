@@ -14,9 +14,9 @@ intro:
     Unsere Seite ist immer dieselbe: kartierte km in OpenStreetMap, in die Stufen
     A bis E eingeteilt, je Straßenseite, in der Kernstadt (LAU), zu einem Stichtag.
     Ein Zuwachs auf der Karte kann neue Infrastruktur sein, nachgeholte Kartierung
-    oder neu getaggte Wege. Stimmt eine veröffentlichte Zahl mit unserer überein,
-    beweist das nicht, dass eine von beiden richtig ist, und eine Abweichung beweist
-    nicht, dass eine falsch ist.
+    oder neu getaggte Wege. Deshalb beweist eine Übereinstimmung mit einer veröffentlichten
+    Zahl nicht, dass eine von beiden richtig ist, und eine Abweichung nicht, dass
+    eine falsch ist.
   src: e4bf22f75498
 sections:
 - heading:
@@ -34,14 +34,14 @@ sections:
       Klassen, jede mit eigener Definition [@qecio-methodology].
     src: 44b8465430d3
   - text: >-
-      Kopenhagen zeigt, wie weit allein der Umfang reicht. Die Stadt weist für 2025
-      genau 401 km cykelsti aus, Radwege mit Bordstein, und führt markierte Radfahrstreifen
+      Kopenhagen zeigt, wie weit allein der Umfang reicht. Für 2025 weist die Stadt
+      401 km cykelsti aus, Radwege mit Bordstein, und führt markierte Radfahrstreifen
       in einer eigenen Zeile [@copenhagen-mobilitetsredegorelse-2026]; unsere A+B-Summe
       von 582 km enthält auch Geh- und Radwege. Der Umfang kann sich auch nach der
-      Veröffentlichung noch ändern: Im Juli 2025 setzte Clean Cities Wien von 384
-      auf 625,1 km herauf, nachdem verkehrsberuhigte Straßen mit eingeschränkter Kfz-Zufahrt
-      mitgezählt wurden [@cc2025-cycling-table]. Gegenüber diesem weiteren Umfang
-      weicht unser A+B-Wert um +6,5 % von ihrem ab [#recon-vienna-cc-km].
+      Veröffentlichung noch ändern: Im Juli 2025 hob Clean Cities den Wert für Wien
+      von 384 auf 625,1 km an, nachdem verkehrsberuhigte Straßen mit eingeschränkter
+      Kfz-Zufahrt mitgezählt wurden [@cc2025-cycling-table]. Gemessen an diesem weiteren
+      Umfang liegt unser A+B-Wert um 6,5 % über dem von Clean Cities [#recon-vienna-cc-km].
     src: 571d8fd9c3da
   - text: >-
       Ein Verhältnis hat einen zweiten Umfang: das Straßennetz, durch das es teilt.
@@ -62,8 +62,8 @@ sections:
       fertiggestellt oder verbessert haben, aus einer Projektdatenbank zum Jahresende
       [@berlin-fortschrittsbericht-2025]. Sein Vorrangnetz ist ein geplantes Netz
       von rund 870 km, von dem 78,2 km bis Mai 2026 umgesetzt waren [@berlin-drs-19-25987].
-      Die 20,4 km Wiens für 2025 zählen in diesem Jahr begonnene Projekte, nicht abgeschlossene,
-      unten zitiert [@vienna-radwegeausbau-bilanz-2025].
+      Die 20,4 km Wiens für 2025 zählen die in diesem Jahr begonnenen Projekte, nicht
+      die abgeschlossenen, unten zitiert [@vienna-radwegeausbau-bilanz-2025].
     src: f3f1bf8240da
   - text: >-
       Kartierte Änderung ist wiederum eine andere Größe. Von 2023 bis Oktober 2026
@@ -164,7 +164,7 @@ data_refs:
     text: velometer-Abgleich, amsterdam/cc_network_km
     src: 21df08291188
   berlin-change:
-    text: velometer kartierte Änderung, Berlin, 2023-01-01 bis aktueller Stand
+    text: velometer-Kartierungsänderung, Berlin, 2023-01-01 bis aktueller Stand
     src: 10da1f913f3c
   recon-berlin-cc-km:
     text: velometer-Abgleich, berlin/cc_km

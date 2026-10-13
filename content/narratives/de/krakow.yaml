@@ -1,7 +1,8 @@
 city_id: krakow
 title:
   text: >-
-    Krakau: kartierte km fast verdoppelt, und ein Sprung ist zur Hälfte neues Tagging
+    Krakau: kartierte km fast verdoppelt, ein Sprung geht zur Hälfte auf Umtaggung
+    zurück
   src: a9a4ba7ceaca
 dek:
   text: >-
@@ -18,15 +19,15 @@ sections:
       Die kartierten A+B-km in Krakaus Kernstadt stiegen von 161 im Jahr 2018 auf
       296 im Oktober 2026, ein Plus von 84 %, und die Hauptkennzahl von 40,2 auf 72,6.
       Stufe A ging von 112 auf 192 km und Stufe B von 49 auf 105 km; markierte Radfahrstreifen
-      blieben gering, mit heute 22 km.
+      blieben ein kleiner Posten, heute 22 km.
     src: 991662f98cb1
   - text: >-
       Der größte Schritt ist der Punkt 2024, +33 km A+B. Etwa die Hälfte davon sind
       neue Wege, die andere Hälfte bestehende Gehwege und Wege, die als für den Radverkehr
       ausgewiesene Wege neu getaggt wurden [#ts_lau_2024]; ein Teil dieses Sprungs
       ist also eine Änderung von Tags, keine neue Infrastruktur. Der frühere Prüfhinweis,
-      auf 2022, ist eine Tag-Änderung an Radfahrstreifen gegen die Einbahnrichtung,
-      die A+B auf seinem normalen Verlauf lässt [#ts_lau_2022].
+      für 2022, betrifft eine Tag-Änderung an Radfahrstreifen gegen die Einbahnrichtung,
+      die den normalen Verlauf von A+B nicht verändert [#ts_lau_2022].
     src: fb5e91ad53ad
   - text: >-
       Der funktionale Stadtraum wuchs von 202 auf 541 kartierte km. Seine frühen Sprünge
@@ -47,7 +48,7 @@ sections:
       und unser A+B-Wert je Seite liegt 29,3 % darüber. Wie bei Warschau könnte der
       Grund sein, dass Geh- und Radwege ausgelassen werden, doch das ist eine Schlussfolgerung
       [#rec_cc_km]. Sein Straßennetz von 2.128 km ist weiter gefasst als unsere 1.718
-      km, daher steht sein Verhältnis von 11 % gegen unsere 17,2 %.
+      km, daher beträgt sein Verhältnis 11 % gegenüber unseren 17,2 %.
     src: f28416373942
 data_refs:
   ts_lau_2024:

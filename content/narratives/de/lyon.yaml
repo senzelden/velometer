@@ -22,17 +22,17 @@ sections:
       Stufe, gestiegen von 110 auf 173 km.
     src: c12182cdbcb7
   - text: >-
-      Der Punkt 2025 trägt einen Aktivitätshinweis, doch die Spitze war eine Kampagne
-      für Gehwege und Überwege im Juli 2024. Gehwege haben keine Stufe, und der Zuwachs
-      an Radinfrastruktur in diesem Jahr kam überwiegend von Radwegen, die neben Straßen
-      gezeichnet wurden [#ts-lyon-2025]. Wie viel des Anstiegs vor Ort neu ist, kann
-      die Karte nicht sagen; die Bilanz des örtlichen Radverkehrsvereins zum Programm
-      Voies Lyonnaises nennt eine eigene Zählung [@lyon-lavilleavelo-bilan-vl].
+      Der Punkt 2025 trägt einen Prüfhinweis wegen ungewöhnlich vieler Bearbeitungen,
+      doch die Spitze war eine Kampagne für Gehwege und Überwege im Juli 2024. Gehwege
+      haben keine Stufe, und der Zuwachs an Radinfrastruktur in diesem Jahr kam überwiegend
+      von Radwegen, die neben Straßen gezeichnet wurden [#ts-lyon-2025]. Wie viel
+      des Anstiegs vor Ort neu ist, kann die Karte nicht sagen; die Bilanz des örtlichen
+      Radverkehrsvereins zum Programm Voies Lyonnaises nennt eine eigene Zählung [@lyon-lavilleavelo-bilan-vl].
     src: 20b66d7fd207
   - text: >-
-      Im weiteren Stadtraum (FUA) stieg A+B von 543 auf 894 km. Sein Schritt von 2026
-      ist gewöhnliche Kartierung durch viele Kartierende, doch ein Teil davon sind
-      Tag-Änderungen: kartierte Gehwege und Wirtschaftswege, die zu ausgewiesenen
+      Im funktionalen Stadtraum (FUA) stieg A+B von 543 auf 894 km. Sein Schritt von
+      2026 ist gewöhnliche Kartierung durch viele Kartierende, doch ein Teil davon
+      sind Tag-Änderungen: kartierte Gehwege und Wirtschaftswege, die zu ausgewiesenen
       Wegen wurden [#ts-lyon-fua-2026]. Das ist eine Veränderung auf der Karte, keine
       neue Infrastruktur.
     src: 30c086ce6164

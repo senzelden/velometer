@@ -23,14 +23,14 @@ sections:
   - text: >-
       Innerhalb dieser stabilen Summe verschob sich die Aufteilung. Baulich getrennte
       Radwege (Stufe A) stiegen von 315 auf 415 km, während Geh- und Radwege (Stufe
-      B) von 629 auf 577 km fielen. Das ist eine allmähliche Drift der Tags neben
-      neu gezeichneten Wegen, kein einzelner Durchgang [#shift-stockholm]: Geh- und
-      Radwege erhielten `segregated=yes` und wechselten nach A, andere Radwege erhielten
-      Fußverkehrs-Tags und wechselten nach B, und einige Radwege wurden zu Gehwegen
-      und fielen aus den Stufen heraus. Die größten Schritte lagen zwischen 2020 und
-      2021 und zwischen 2022 und 2023, jeweils auf viele Mitwirkende verteilt. Neu
-      getaggte Wege sind keine neue Infrastruktur. Markierte Radfahrstreifen (Stufe
-      D) bleiben gering, 38 → 48 km.
+      B) von 629 auf 577 km fielen. Das ist eine allmähliche Umtaggung neben neu gezeichneten
+      Wegen, kein einzelner Durchgang [#shift-stockholm]: Geh- und Radwege erhielten
+      `segregated=yes` und wechselten nach A, andere Radwege erhielten Fußverkehrs-Tags
+      und wechselten nach B, und einige Radwege wurden zu Gehwegen und fielen aus
+      den Stufen heraus. Die größten Schritte lagen zwischen 2020 und 2021 und zwischen
+      2022 und 2023, jeweils auf viele Mitwirkende verteilt. Neu getaggte Wege sind
+      keine neue Infrastruktur. Markierte Radfahrstreifen (Stufe D) bleiben gering,
+      38 → 48 km.
     src: 36f6deb65d89
   - text: >-
       Der funktionale Stadtraum (FUA) erzählt eine Wachstumsgeschichte, die die Stadt

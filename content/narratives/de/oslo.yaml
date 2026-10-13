@@ -17,11 +17,11 @@ sections:
       In der Oslo kommune (LAU) stiegen die kartierten A+B-km von 261 km im Jahr 2018
       auf 341 km im Oktober 2026 und die Hauptkennzahl (kartierte A+B-km je 100 km
       Hauptstraßen) von 53,1 auf 70,8 [#ts-oslo]. Der einzige markierte Schritt ist
-      der Punkt 2021, als A+B von 264 auf 298 km ging. Das meiste davon ist eine Drift
-      der Tags: Im Laufe des Jahres 2020 wurden bestehende Gehwege als gemeinsame
-      Geh- und Radwege neu getaggt, so wie in Norwegen der übliche gang- og sykkelvei
-      kartiert wird, und neu gezeichnete Wege machten den Rest aus [#ts-oslo-2021].
-      Neu getaggte Wege sind keine neue Infrastruktur.
+      der Punkt 2021, als A+B von 264 auf 298 km ging. Das meiste davon ist eine Umtaggung:
+      Im Laufe des Jahres 2020 wurden bestehende Gehwege als gemeinsame Geh- und Radwege
+      neu getaggt, so wie in Norwegen der übliche gang- og sykkelvei kartiert wird,
+      und neu gezeichnete Wege machten den Rest aus [#ts-oslo-2021]. Neu getaggte
+      Wege sind keine neue Infrastruktur.
     src: 61f6f3d856b4
   - text: >-
       Geh- und Radwege (Stufe B) überwiegen durchgehend, 222 → 282 km, gegenüber 38
@@ -43,7 +43,7 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Clean Cities zählt für Oslo 307 km geschützte Infrastruktur [@cc2025-report];
+      Clean Cities zählt für Oslo 307 km geschützter Infrastruktur [@cc2025-report];
       unser A+B-Wert liegt bei 341 km je Seite, 11 % darüber [#recon-oslo-cc-ratio].
       Seine Daten stammen von Anfang 2025, unsere vom Oktober 2026, und ob die Stadt
       oder OpenStreetMap sie geliefert hat, ist nicht angegeben. Die eigene Netzzahl

@@ -14,7 +14,7 @@ sections:
     src: 570bfafa8419
   paragraphs:
   - text: >-
-      Jede Zahl hier sind kartierte km in OpenStreetMap, in jeder Kernstadt (LAU)
+      Alle Zahlen hier sind kartierte km in OpenStreetMap, in jeder Kernstadt (LAU)
       gleich gemessen, jeweils im Januar ab 2018 und im Oktober 2026 [#runset]. Die
       Stufen A (baulich getrennte Radwege) und B (Geh- und Radwege) bilden die Hauptkennzahl,
       kartierte A+B-km je 100 km Hauptstraßen, je Straßenseite gezählt. Ein Zuwachs
@@ -141,7 +141,7 @@ sections:
     src: f564d194838d
 data_refs:
   runset:
-    text: velometer-Laufsatz, LAU-Reihen aller 21 Städte (Klassifikator v4, kartierte
+    text: velometer-Läufe, LAU-Reihen aller 21 Städte (Klassifikator v4, kartierte
       km)
     src: 69357813ddb7
   expl-berlin-2022:
@@ -175,7 +175,7 @@ data_refs:
     text: velometer-Bezirksreihe (12 Bezirke, Klassifikator v4)
     src: d2b51c9ecbab
   change:
-    text: velometer kartierte Änderung, Berlin, 2023-01-01 bis aktueller Stand
+    text: velometer-Kartierungsänderung, Berlin, 2023-01-01 bis aktueller Stand
     src: 10da1f913f3c
   recon-berlin-cc-km:
     text: velometer-Abgleich, berlin/cc_km

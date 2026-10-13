@@ -1,6 +1,6 @@
 city_id: amsterdam
 title:
-  text: 'Amsterdam: eine volle Karte, die sich kaum bewegt'
+  text: 'Amsterdam: eine dichte Karte, die sich kaum bewegt'
   src: 841dfb5b18be
 dek:
   text: >-
@@ -23,9 +23,9 @@ sections:
       Verschoben hat sich die Aufteilung innerhalb von A+B. Zwischen den Punkten 2024
       und 2025 sanken baulich getrennte Radwege (Stufe A) von 704 auf 660 km, und
       Geh- und Radwege (Stufe B) stiegen von 160 auf 207 km, bei gleichbleibendem
-      A+B. Das ist eine Drift der Tags: Im September 2024 verloren Hunderte Radwege,
-      deren Gehweg auf derselben Linie verläuft, das Tag `segregated=yes`, überwiegend
-      in den Bearbeitungen eines einzelnen Mitwirkenden; der Klassifikator liest sie
+      A+B. Das ist eine Umtaggung: Im September 2024 verloren Hunderte Radwege, deren
+      Gehweg auf derselben Linie verläuft, das Tag `segregated=yes`, überwiegend in
+      den Bearbeitungen eines einzelnen Mitwirkenden; der Klassifikator liest sie
       deshalb jetzt als gemeinsam mit dem Fußverkehr genutzt [#shift-amsterdam-2025].
       Neu getaggte Wege sind keine Veränderung auf der Straße. Markierte Radfahrstreifen
       (Stufe D, 76 → 90 km) und Fahrradstraßen (Stufe E, 0,2 → 9,0 km) wuchsen langsam.
@@ -40,12 +40,12 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Clean Cities zählt 919 km geschützte Infrastruktur [@cc2025-report]; unser A+B-Wert
-      liegt bei 862 km je Seite (−6 %). Eine veröffentlichte Gesamtzahl der Stadt
-      haben wir nicht gefunden, doch die städtische Definition eines fietspad, unten
-      zitiert, entspricht diesem Umfang [@amsterdam-maps-fietsnetten]. Die Abweichung
+      Clean Cities zählt 919 km geschützter Infrastruktur [@cc2025-report]; unser
+      A+B-Wert liegt bei 862 km je Seite (−6 %). Eine veröffentlichte Gesamtzahl der
+      Stadt haben wir nicht gefunden, doch die städtische Definition eines fietspad,
+      unten zitiert, entspricht diesem Umfang [@amsterdam-maps-fietsnetten]. Die Abweichung
       liegt im Straßennetz: Clean Cities teilt durch 2.700 km, wir durch 2.041 km
-      (−24 %), daher steht sein Verhältnis von 34 % gegen unsere 42,2 % [#recon-amsterdam-cc-ratio].
+      (−24 %), daher beträgt sein Verhältnis 34 % gegenüber unseren 42,2 % [#recon-amsterdam-cc-ratio].
       Welche Straßen sein Netz umfasst und ob die Stadt oder OpenStreetMap die Daten
       geliefert hat, ist nicht angegeben. Seine Daten stammen von Anfang 2025, unsere
       vom Oktober 2026. QECIO berichtet für Groot-Amsterdam, eine Region, die größer
