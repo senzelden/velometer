@@ -29,13 +29,13 @@ belegt). Alle km sind kartierte km, keine gebauten km.
 
 Ursache: **Umtaggung** (Radfahren gegen die Einbahnrichtung neu getaggt). `legacy_km` fiel von
 10,2 auf 2,1, weil `cycleway=opposite_lane` auf Einbahnstraßen im Lauf des Jahres 2021 von
-7,10 km auf null zurückging. Von den 10,22 km Legacy-Seiten am 1. Januar 2021 bleiben 4,04 km
+7,10 km auf null zurückging. Von den 10,22 km Seiten mit veralteten Tags am 1. Januar 2021 bleiben 4,04 km
 nach dem heutigen Schema in Stufe D (`cycleway:left=lane` + `oneway:bicycle=no`, etwa Weg 7373718
 Eerste Helmersstraat, Weg 7409127 Meer en Boslaan), 1,61 km wurden zu
 `cycleway:left=shared_lane` und sind ausgeschlossen (Weg 7408896 Blekersvaartweg), und 1,89 km
 behielten nur `oneway:bicycle=no` ohne Streifen-Tag (Weg 26013236 Planetenlaan), sodass sie aus
 Stufe D herausfallen. Die 2,07 km, die 2022 übrig sind, tragen `cycleway=opposite`. Die 101
-Legacy-Wege wurden zuletzt in 44 Changesets von 20 Kartierenden bearbeitet, 47 davon im Februar
+Wege mit veralteten Tags wurden zuletzt in 44 Changesets von 20 Kartierenden bearbeitet, 47 davon im Februar
 2021; das Jahr hatte 25.937 Bearbeitungen bei einem Anteil des aktivsten Mappers von 0,09, es
 war also kein Durchgang einer einzelnen Person. Die Umtaggung betrifft nur Stufe D: A+B stieg
 normal (4.101,1 -> 4.131,0 km), und D wuchs von 676,5 auf 726,2 km.
@@ -54,7 +54,7 @@ Gehwege über das Jahr). Sie verteilen sich auf 1.176 Changesets, das größte C
 Sprung-Untergrenze von 25 km. Der Zuwachs stammt aus der Kartierung von Radwegen, nicht aus der
 Gehwegarbeit: Stufe A gewann 21,7 km, mit 204 neuen `highway=cycleway`-Wegen (36,8 km, teils neu
 gezeichnete Teilstücke älterer Wege), etwa Weg 871562924 an der Carrer d'Aragó (4,8 km) und Weg
-766736025 an der Carrer de Bilbao. Nach Regel stieg `A_segregated` um 39,6 km, und
+766736025 an der Carrer de Bilbao. Nach Regeln aufgeschlüsselt stieg `A_segregated` um 39,6 km, und
 `A_cycle_only` fiel um 17,3 km. Die meisten neuen Radwege tragen `segregated=yes` (30,0 km), und
 17,7 km bestehender Radwege erhielten das Tag im Lauf des Jahres 2020 (etwa Weg 308033675), was
 sie innerhalb von Stufe A verschiebt. Stufe E taucht auf (0,0 -> 10,0 km), durch Busspuren und
@@ -72,7 +72,7 @@ Monate Januar bis März 2021, und der Anteil des aktivsten Mappers beträgt 0,86
 Gehwege). 1.305 Changesets, das größte Changeset hält 1,7 %. A+B bewegte sich normal, von 214,4
 auf 219,1 kartierte km: Stufe A +6,1 km. Die größten Zuwächse sind Weg 867922053 und Weg 867922054
 am Passeig de la Zona Franca (+3,3 km), die von einem Lebenszyklus-Tag (ausgeschlossen) zu
-`highway=cycleway` wechselten, sowie der neue Weg 914437793 (2,6 km). Nach Regel stieg
+`highway=cycleway` wechselten, sowie der neue Weg 914437793 (2,6 km). Nach Regeln aufgeschlüsselt stieg
 `A_segregated` um 12,3 km, und `A_cycle_only` fiel um 6,4 km, weil 9,0 km bestehender Radwege im
 Lauf des Jahres 2021 `segregated=yes` erhielten (etwa Weg 459464518), was sie in Stufe A hält.
 
@@ -82,7 +82,7 @@ Lauf des Jahres 2021 `segregated=yes` erhielten (etwa Weg 459464518), was sie in
 
 Ursache: **Kartieraktivität** (nachgeholte Kartierung bestehender Radwege, zur Hälfte durch eine
 einzelne Person). A+B stieg von 656,1 auf 832,6 kartierte km (+176,5; die Schwelle liegt bei
-65,6). Nach Regel: `A_cycle_only` +91,2 km, `A_segregated` +56,9, `B_shared` +33,1,
+65,6). Nach Regeln aufgeschlüsselt: `A_cycle_only` +91,2 km, `A_segregated` +56,9, `B_shared` +33,1,
 `A_track_side` −4,9. 25,3 km des Zuwachses bei `A_segregated` sind bestehende Radwege, die
 `segregated=yes` erhielten, was sie innerhalb von Stufe A verschiebt. 215,6 km liegen auf Wegen,
 die 2020 keiner Stufe angehörten, und 187,1 km davon auf Wegen, die 2020 erstmals gezeichnet
@@ -105,7 +105,7 @@ etwa Weg 116343002, und Busspuren in der Carrer de Sants, Weg 45185735).
 
 Ursache: **Umtaggung**. `legacy_km` stieg von 13,8 auf 24,7, weil Kartierende Hauptstraßen das
 ältere Schema `sidewalk:*:bicycle=yes` hinzufügten (Regel `X_sidewalk_bicycle_permitted`, 4,3 ->
-15,9 km), etwa Weg 144884824 und Weg 31099696 (Nebenstraßen der Kategorie secondary, die
+15,9 km), etwa Weg 144884824 und Weg 31099696 (Straßen der Kategorie secondary, die
 `sidewalk:both:bicycle=yes` erhielten, 2,5 und 2,2 km). Diese Seiten sind von den Stufen
 ausgeschlossen, die Hauptkennzahl bleibt also unberührt (A+B 1.640 -> 1.612 km, unter der
 Sprungschwelle).
@@ -134,7 +134,7 @@ einzelne Person nahm 51 % davon vor (`single_mapper`).
 <!-- src: 9b8da8553d68 -->
 
 Ursache: **Umtaggung** (Bereinigung alter Tags). `legacy_km` von 19,3 auf 3,9: `cycleway=opposite`
-auf eingestuften Seiten wurde im Lauf des Jahres 2025 entfernt (9,0 -> 0,0 km, etwa Weg 4787341
+verschwand im Lauf des Jahres 2025 von eingestuften Seiten (9,0 -> 0,0 km, etwa Weg 4787341
 auf einer `bicycle_road`), und `sidewalk:*:bicycle=yes` fiel von 9,9 auf 3,1 km (Weg 111283473 ->
 `cycleway:both=no`). Der neue Wert `cycleway:*=crossing` auf Straßenseiten (etwa Weg 1133761372,
 `cycleway:right=lane` -> `crossing`) wird seit v2 erkannt (ausgeschlossen, Untertyp `crossing`)
@@ -223,7 +223,7 @@ Ursache: **Umtaggung** (Radfahren gegen die Einbahnrichtung neu getaggt). `legac
 10,0 auf 3,3, als `cycleway=opposite_lane` von 106 auf 31 Wege zurückging (9,95 -> 3,30 km). 81
 Bearbeitungen im Jahr 2021 entfernten es, verteilt auf 18 Changesets, 55 davon im Dezember. 66
 dieser Bearbeitungen verlegten den Wert nach `cycleway:left=opposite_lane` (etwa Weg 26303566
-Jana Zamoyskiego, Weg 195780180 Nadwiślańska, Weg 338492810 Świętej Anny). Der Legacy-Diagnosewert
+Jana Zamoyskiego, Weg 195780180 Nadwiślańska, Weg 338492810 Świętej Anny). Der Diagnosewert für veraltete Tags
 prüft nur den Schlüssel `cycleway` (`config/activity.yaml`); diese Seiten fallen also heraus,
 während 5,94 der 6,65 km Radfahrstreifen der Stufe D bleiben. A+B stieg normal (199,9 ->
 213,2 km).
@@ -289,8 +289,8 @@ größte Changeset hält 2,4 %.
 
 <!-- src: 2ad92803196c -->
 
-Ursache: **Umtaggung**, dieselbe Neutaggung des Radfahrens gegen die Einbahnrichtung wie bei
-`krakow/lau/2022`. Alle Legacy-km der FUA liegen in der Stadt: 9,96 -> 3,30 km, identisch mit der
+Ursache: **Umtaggung**, dieselbe Umtaggung des Radfahrens gegen die Einbahnrichtung wie bei
+`krakow/lau/2022`. Alle km mit veralteten Tags der FUA liegen in der Stadt: 9,96 -> 3,30 km, identisch mit der
 LAU-Reihe. A+B stieg von 325,1 auf 350,4 km, unter der Sprungschwelle.
 
 ### krakow/fua/2023
@@ -318,7 +318,7 @@ Ursache: **Kartieraktivität**, einschließlich eines Bahntrassenradwegs. A+B st
 474,0 km (+75,1, Schwelle 39,9): 148 neue Radwege (+32,9 km), 348 neue ausgewiesene Wege
 (+23,1 km) und Umtaggungen bestehender Wege (+24,3 km).
 - Krakau gewann 33,8 km (der Schritt von `krakow/lau/2024`).
-- Proszowice gewann 13,3 km, darunter ein asphaltierter Radweg und ein Weg mit
+- Proszowice gewann 13,3 km, darunter ein asphaltierter Radweg und ein asphaltierter Weg, beide mit
   `railway=abandoned`, `gauge=750` (Weg 767489246 mit 4,5 km; Weg 806031541 mit 3,4 km).
 - Kocmyrzów-Luborzyca gewann 10,0 km.
 
@@ -338,7 +338,7 @@ Straßenseiten das Tag verloren, als die Straßen auf `bicycle=no` + `foot=no` u
 (etwa Weg 149769844 Zaloška cesta, Weg 369157584 Letališka cesta). An ihre Stelle traten separate
 straßenbegleitende Radwege. 74,6 km neuer Seiten sind `highway=cycleway` + `foot=designated` +
 `segregated=yes` (Regel `A_segregated`, etwa Weg 869836662 Celovška cesta, Weg 866720417
-Dunajska cesta), und 17,6 km bestehender Geh- und Fußwege wurden ebenso umgetaggt (Weg 530977027
+Dunajska cesta), und 17,6 km bestehender Gehwege und Wege (`footway`, `path`) wurden ebenso umgetaggt (Weg 530977027
 Vilharjeva cesta, `highway=footway` -> `cycleway`). 26,6 km neuer Seiten sind `B_shared`, meist
 `highway=cycleway` + `foot=designated` ohne Trennung (etwa Weg 866576235 Dunajska cesta,
 `segregated=no`), und 13,3 km sind reine Radwege `highway=cycleway` (`A_cycle_only`, etwa Weg
@@ -500,7 +500,7 @@ hatte).
 <!-- src: 95cdfd58609f -->
 
 Ursache: **Kartieraktivität** (Tags für Radwege an bestehenden Straßen ergänzt, dazu neue Wege),
-an zweiter Stelle der **Klassifikator**: Die Markierung greift nur unter v4. A+B stieg von 577,5
+an zweiter Stelle der **Klassifikator**: Der Prüfhinweis greift nur unter v4. A+B stieg von 577,5
 auf 637,1 kartierte km (+59,6 km; die Schwelle liegt bei 57,8). A stieg von 268,3 auf 306,6 km
 und B von 309,2 auf 330,6 km. Im Lauf des Jahres 2020 wurden 36,6 km Straßenseiten an
 bestehenden Straßen zu straßenbegleitenden Radwegen der Stufe A (`A_track_side`):
@@ -509,12 +509,12 @@ vorher markierte Radfahrstreifen. Die längsten liegen an der Route de Paris (5,
 258511906) und der Route de Grenoble (5,1 km, etwa Weg 5078322). 7,1 km davon liegen in der
 Gemeinde Lyon. Wege, die 2020 erstmals gezeichnet wurden, bringen 49,7 km, das meiste gemeinsame
 Geh- und Radwege (`B_shared` 29,1 km, etwa Weg 780336508, ein `highway=cycleway` mit `foot=yes`)
-und Radwege (`A_cycle_only` 11,9 km, `A_segregated` 4,5 km). Bestehende Geh- und Fußwege, die mit
+und Radwege (`A_cycle_only` 11,9 km, `A_segregated` 4,5 km). Bestehende Gehwege und Wege (`footway`, `path`), die mit
 `bicycle=designated` umgetaggt wurden, bringen 6,4 km in B. Verluste gleichen einen Teil des
 Zuwachses aus. 15,1 km gemeinsamer Geh- und Radwege verließen Stufe B, vor allem Weg 129002330
 (Chemin du Bac à Traille, 4,8 km), der von `highway=cycleway` + `bicycle=designated` zu
 `highway=track` + `bicycle=yes` wechselte, und 10,2 km Radwege wurden gelöscht. Der Anteil des
-Klassifikators: `X_mtb_trail` von v4 lässt am 1. Januar 2020 ganze 8,6 km ausdrücklich als MTB-Strecke
+Klassifikators: `X_mtb_trail` von v4 lässt am 1. Januar 2020 insgesamt 8,6 km ausdrücklich als MTB-Strecke
 getaggter Wege weg, ein Jahr später aber nur noch 5,7 km. Die Voie Verte de la Bourbre (Weg
 374341061, Weg 374341073; 3,9 km) verlor im Lauf des Jahres 2020 ihre `mtb:scale=0`-Tags und kam
 in `B_shared`. Unter v3 stieg dasselbe Jahr von 586,1 auf 642,8 km (+56,7 bei einer Schwelle von
@@ -638,13 +638,13 @@ bereits als `B_shared` ein. Gelöschte A/B-Wege nahmen 35,0 km weg. Die Bearbeit
 
 <!-- src: e118d7afe2e3 -->
 
-Ursache: **Kartieraktivität**, mit **Umtaggung** im Legacy-Diagnosewert. A+B stieg von 223,9 auf
+Ursache: **Kartieraktivität**, mit **Umtaggung** im Diagnosewert für veraltete Tags. A+B stieg von 223,9 auf
 257,3 kartierte km, fast ganz durch 357 neue `highway=cycleway`-Wege (+40,8 km, etwa Weg
 744744226, Weg 701119869) und 53 neue Straßen mit `cycleway=track` (+5,6 km), die im Lauf des
-Jahres 2019 gezeichnet wurden, während der Plan Vélo der Stadt lief. Eine amtliche Zahl dazu, was
-in jenem Jahr gebaut wurde, ist hier nicht zitiert; es sind also nur kartierte km. Die Aktivität
+Jahres 2019 gezeichnet wurden, während der Plan Vélo der Stadt lief. Eine amtliche Zahl zum Ausbau
+in jenem Jahr ist hier nicht zitiert; es sind also nur kartierte km. Die Aktivität
 war normal (8.422 Bearbeitungen, Anteil des aktivsten Mappers 0,22). `legacy_km` von 49,5 auf 8,2
-ist die Neutaggung des Radfahrens gegen die Einbahnrichtung: `cycleway=opposite_lane` von 44,3
+ist die Umtaggung des Radfahrens gegen die Einbahnrichtung: `cycleway=opposite_lane` von 44,3
 auf 6,4 km (Weg 25599714 -> `cycleway:left=opposite`).
 
 ### paris/lau/2021
@@ -686,7 +686,7 @@ Ursache: **Kartieraktivität**, gewöhnliche nachgeholte Kartierung, keine Kampa
 A+B stieg von 2.325,7 auf 2.571,5 kartierte km (+10,6 %): 1.336 neue `highway=cycleway`-Wege
 (+236 km, etwa Weg 597170301), +71 km neuer `highway=path` + `bicycle=designated` und 51 km Stufe
 B durch `bicycle=yes` -> `designated` (Weg 107496601); teilweise ausgeglichen durch 65 km
-`cycleway=track`, das von Straßen entfernt wurde (Weg 188144495), und 59 km gelöschter Radwege.
+`cycleway=track`, das an Straßen gelöscht wurde (Weg 188144495), und 59 km gelöschter Radwege.
 Die 38.570 Bearbeitungen verteilen sich auf 10.445 Changesets (größtes Changeset 1,4 %, Anteil
 des aktivsten Mappers 0,10) und sind keine Spitze.
 

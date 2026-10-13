@@ -25,7 +25,7 @@ sources:
         text: >-
           Backed by research, we shape city, national and European policy, trusted by both
           policymakers and campaigners for our dedication to transformative change.
-        gloss_de: "Gestützt auf Forschung gestalten wir städtische, nationale und europäische Politik mit und genießen wegen unseres Einsatzes für grundlegenden Wandel das Vertrauen von Politik und Kampagnen gleichermaßen."
+        gloss_de: "Gestützt auf Forschung gestalten wir städtische, nationale und europäische Politik mit und genießen wegen unseres Einsatzes für grundlegenden Wandel das Vertrauen von Entscheidungsträgern wie von Aktivistinnen und Aktivisten."
         locator: "Who we are, Thought leaders"
   - id: cc-ranking-2025-page
     publisher: Clean Cities Campaign
@@ -222,7 +222,7 @@ sources:
         text: >-
           Yet, politicians often neglect their citizens, not building for cycling at all, or
           without a plan.
-        gloss_de: "Doch Politiker vernachlässigen ihre Bürger oft, indem sie gar nicht für den Radverkehr bauen oder ohne Plan."
+        gloss_de: "Doch Politiker vernachlässigen ihre Bürger oft, indem sie gar nicht oder nur planlos für den Radverkehr bauen."
         locator: "README, first paragraph"
       - id: funding
         text: Development of BikeNetKit is supported by the Innovation Fund Denmark

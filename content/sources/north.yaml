@@ -12,7 +12,7 @@ sources:
       - id: cykelsti-2025
         text: "I 2025 var der 401 km cykelsti i København. Heraf er der 66 km Grønne Ruter og 64 km supercykelsti."
         gloss_en: "In 2025 there were 401 km of cycle track (cykelsti) in Copenhagen. Of these, 66 km are Green Routes and 64 km are cycle superhighway."
-        gloss_de: "2025 gab es in Kopenhagen 401 km Radwege (cykelsti). Davon sind 66 km Grüne Routen und 64 km Radschnellwege."
+        gloss_de: "2025 gab es in Kopenhagen 401 km Radwege (cykelsti). Davon sind 66 km Grüne Radrouten und 64 km Radschnellwege."
         locator: "p. 15, section Cykelstier og cykelparkering"
       - id: cykelbaner-row
         text: "Cykelbaner i alt (km) 33 33 33 33 33"
@@ -114,7 +114,7 @@ sources:
       - id: local-network
         text: "I det lokala cykelnätet ingår bland annat vägar med 30 km/h som hastighetsbegränsning där man cyklar tillsammans med bilar och annan trafik."
         gloss_en: "The local cycle network includes, among other things, roads with a 30 km/h speed limit where people cycle together with cars and other traffic."
-        gloss_de: "Zum lokalen Radnetz gehören unter anderem Straßen mit Tempo 30 als Höchstgeschwindigkeit, auf denen man zusammen mit Autos und anderem Verkehr fährt."
+        gloss_de: "Zum lokalen Radnetz gehören unter anderem Straßen mit Tempo 30, auf denen man zusammen mit Autos und anderem Verkehr fährt."
         locator: "section Lokalt cykelnät"
   - id: stockholm-cykelplan-2022
     publisher: Stockholms stad, trafikkontoret
@@ -158,7 +158,7 @@ sources:
       - id: one-in-four
         text: "Vi ökar ambitionerna med målsättningen att senast år 2040 ska var fjärde resa i Stockholm ske med cykel."
         gloss_en: "We are raising our ambitions with the goal that by 2040 at the latest every fourth trip in Stockholm is made by bicycle."
-        gloss_de: "Wir erhöhen unsere Ambitionen mit dem Ziel, dass spätestens im Jahr 2040 jede vierte Fahrt in Stockholm mit dem Fahrrad erfolgt."
+        gloss_de: "Wir erhöhen unsere Ambitionen mit dem Ziel, dass spätestens im Jahr 2040 jeder vierte Weg in Stockholm mit dem Fahrrad zurückgelegt wird."
         locator: "p. 2, Mina synpunkter (föredragande borgarrådet)"
 
   # ---------------------------------------------------------------------- oslo
@@ -203,7 +203,7 @@ sources:
       - id: share-goal
         text: "Selv om kommunen er langt unna sykkelstrategiens mål om én av fire hverdagsreiser på sykkel, konkluderer EY likevel med at satsingen i Oslo har vært en suksess."
         gloss_en: "Although the city is far from the cycling strategy's goal of one in four everyday trips by bike, EY nevertheless concludes that Oslo's effort has been a success."
-        gloss_de: "Obwohl die Kommune weit vom Ziel der Radverkehrsstrategie entfernt ist, dass jede vierte Alltagsfahrt mit dem Fahrrad erfolgt, kommt EY dennoch zu dem Schluss, dass der Einsatz in Oslo ein Erfolg war."
+        gloss_de: "Obwohl die Kommune weit vom Ziel der Radverkehrsstrategie entfernt ist, dass jeder vierte Alltagsweg mit dem Fahrrad zurückgelegt wird, kommt EY dennoch zu dem Schluss, dass der Einsatz in Oslo ein Erfolg war."
         locator: "body text"
   - id: oslo-ey-evaluering-2024
     publisher: EY (Ernst & Young), commissioned by Oslo kommune
@@ -358,7 +358,7 @@ sources:
       - id: fietsstrook-definition
         text: "Fietsstroken maken deel uit van de rijbaan, gemarkeerd door een doorgetrokken of onderbroken streep en voorzien van een afbeelding van een fiets. Fietssuggestiestroken zijn geen officiële fietsstroken (ze hebben geen afbeelding van een fiets) en zijn opgenomen bij Fiets op de rijbaan."
         gloss_en: "Cycle lanes are part of the carriageway, marked by a solid or broken line and a bicycle symbol. Advisory lanes are not official cycle lanes (they have no bicycle symbol) and are counted under cycling on the carriageway."
-        gloss_de: "Radfahrstreifen sind Teil der Fahrbahn, mit einer durchgezogenen oder unterbrochenen Linie markiert und mit einem Fahrradsymbol versehen. Schutzstreifen ohne Fahrradsymbol (fietssuggestiestroken) sind keine offiziellen Radfahrstreifen und werden unter Radfahren auf der Fahrbahn geführt."
+        gloss_de: "Radfahrstreifen sind Teil der Fahrbahn, mit einer durchgezogenen oder unterbrochenen Linie markiert und mit einem Fahrradsymbol versehen. Angebotsstreifen (fietssuggestiestroken) sind keine offiziellen Radfahrstreifen (sie tragen kein Fahrradsymbol) und werden unter „Fiets op de rijbaan“ (Radfahren auf der Fahrbahn) geführt."
         locator: "Toelichting bij deze kaart, Definities Soort"
       - id: network-grid
         text: "Het Plus- en Hoofdnet vormen samen een fijnmazig netwerk met een rasterwijdte van ongeveer 400 m."
@@ -455,7 +455,7 @@ sources:
       - id: speed-principle
         text: "We hanteren als principe: alle wegen 30 km/uur tenzij; voor verbindingswegen geldt maximumsnelheid van 50 km/u;"
         gloss_en: "Our principle is: all roads 30 km/h unless otherwise decided; connector roads have a maximum speed of 50 km/h."
-        gloss_de: "Als Grundsatz gilt: alle Straßen Tempo 30, es sei denn; für Verbindungsstraßen gilt eine Höchstgeschwindigkeit von 50 km/h;"
+        gloss_de: "Als Grundsatz gilt: alle Straßen Tempo 30, sofern nicht anders entschieden; für Verbindungsstraßen gilt eine Höchstgeschwindigkeit von 50 km/h;"
         locator: "p. 1, proposed decision 1 (Netwerken op orde (auto))"
   - id: utrecht-oud-utrecht-fietsstad
     publisher: Historische Vereniging Oud-Utrecht

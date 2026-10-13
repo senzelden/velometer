@@ -146,7 +146,7 @@ sources:
           In this table, we have ranked cities based on the extent of their protected cycling
           infrastructure – dedicated bike lanes that are physically separated from motor traffic
           to ensure safe and accessible routes for cyclists of all ages.
-        gloss_de: "In dieser Tabelle haben wir die Städte nach dem Umfang ihrer geschützten Radinfrastruktur gereiht – eigene Radwege, die baulich vom Kfz-Verkehr getrennt sind, damit Radfahrende jeden Alters sichere und zugängliche Routen haben."
+        gloss_de: "In dieser Tabelle haben wir die Städte nach dem Umfang ihrer geschützten Radinfrastruktur geordnet – eigene Radwege, die baulich vom Kfz-Verkehr getrennt sind, damit Radfahrende jeden Alters sichere und zugängliche Routen haben."
         locator: "Introduction above the table"
       - id: vienna-update
         text: >-

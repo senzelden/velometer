@@ -352,7 +352,7 @@ sources:
       - id: maintained-lengths
         text: "Pečujeme o 549 km značených cyklotras 74 km vyhrazených cyklopruhů 40 km cyklopruhů společných i pro bus a taxi"
         gloss_en: "We look after 549 km of signed cycle routes, 74 km of reserved cycle lanes, 40 km of cycle lanes shared with buses and taxis."
-        gloss_de: "Wir betreuen 549 km markierte Radrouten, 74 km Radfahrstreifen und 40 km Radfahrstreifen, die auch Busse und Taxis nutzen."
+        gloss_de: "Wir betreuen 549 km ausgeschilderte Radrouten, 74 km Radfahrstreifen und 40 km Radfahrstreifen, die auch Busse und Taxis nutzen."
         locator: "section Popis a rozsah činnosti, figures panel"
   - id: prague-tsk-rocenka-2024
     publisher: Technická správa komunikací hl. m. Prahy, a.s. (TSK)
@@ -366,12 +366,12 @@ sources:
       - id: signed-routes
         text: "Celková délka značených cyklotras 549 km"
         gloss_en: "Total length of signed cycle routes: 549 km."
-        gloss_de: "Gesamtlänge der markierten Radrouten: 549 km."
+        gloss_de: "Gesamtlänge der ausgeschilderten Radrouten: 549 km."
         locator: "p. 28, chapter 4 Cyklistická doprava, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: protected-routes
         text: "Celková délka chráněných značených a doporučovaných cyklotras 256 km"
         gloss_en: "Total length of protected signed and recommended cycle routes: 256 km."
-        gloss_de: "Gesamtlänge der geschützten markierten und empfohlenen Radrouten: 256 km."
+        gloss_de: "Gesamtlänge der geschützten ausgeschilderten und empfohlenen Radrouten: 256 km."
         locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: lanes
         text: "Cyklopruhy vyhrazené / ochranné 74,2 km / 80,1 km"
@@ -421,7 +421,7 @@ sources:
       - id: slow-2025
         text: "Rok 2025 se v Praze opět nesl ve znamení pomalého rozvoje cyklistické infrastruktury. Přibyly jen jednotky kilometrů stezek, legalizovaných chodníků a cyklopruhů a tempo zůstalo výrazně nižší než v letech 2021–2023."
         gloss_en: "In Prague, 2025 was again marked by slow development of cycling infrastructure. Only a few kilometres of paths, legalised footways and cycle lanes were added, and the pace remained well below 2021–2023."
-        gloss_de: "Auch 2025 stand in Prag im Zeichen einer langsamen Entwicklung der Radinfrastruktur. Hinzu kamen nur wenige Kilometer Wege, legalisierte Gehwege und Radfahrstreifen, und das Tempo blieb deutlich unter dem der Jahre 2021–2023."
+        gloss_de: "Auch 2025 stand in Prag im Zeichen einer langsamen Entwicklung der Radinfrastruktur. Hinzu kamen nur wenige Kilometer Wege, für den Radverkehr freigegebene Gehwege und Radfahrstreifen, und das Tempo blieb deutlich unter dem der Jahre 2021–2023."
         locator: "lead paragraph"
       - id: lanes-2025
         text: "Vyhrazených cyklopruhů byl vyznačen 1,1 kilometr, ochranných 6,5 kilometrů."
@@ -755,7 +755,7 @@ sources:
       - id: zdm-36-9km
         text: "W informacji z początku grudnia ZDM wskazuje, że w roku 2025 powstało 36,9 km infrastruktury rowerowej, a w trakcie budowy lub za pomocą zmian w organizacji ruchu w trakcie wyznaczania są 23 km różnego rodzaju infrastruktury rowerowej, w tym 18,8 km dróg dla rowerów."
         gloss_en: "In information from early December, ZDM states that 36.9 km of cycling infrastructure were created in 2025, and 23 km of various kinds of cycling infrastructure, including 18.8 km of cycle tracks, are under construction or being marked through traffic-organisation changes."
-        gloss_de: "In einer Mitteilung von Anfang Dezember gibt der ZDM an, dass 2025 insgesamt 36,9 km Radinfrastruktur entstanden sind; im Bau oder durch Änderungen der Verkehrsorganisation in Markierung sind 23 km Radinfrastruktur verschiedener Art, darunter 18,8 km Radwege."
+        gloss_de: "In einer Mitteilung von Anfang Dezember gibt der ZDM an, dass 2025 insgesamt 36,9 km Radinfrastruktur entstanden sind; 23 km Radinfrastruktur verschiedener Art, darunter 18,8 km Radwege, sind im Bau oder werden durch Änderungen der Verkehrsorganisation gerade markiert."
         locator: "section 860 km na koniec roku w Warszawie"
       - id: estimate-860km
         text: "Wówczas nie było jeszcze wiadomo, które z realizowanych prac zakończą się do 31 grudnia, ale zdaniem zarządu szacunkowa łączna długość na koniec 2025 r. to ok. 860 km."
@@ -797,17 +797,17 @@ sources:
       - id: from-142-to-250
         text: "W 2014 – roku referendum – w którym krakowianie opowiedzieli się za rozbudową ścieżek rowerowych, miasto miało do dyspozycji wydzieloną infrastrukturę rowerową liczącą 142,5 km. Z biegiem lat oddawane były kolejne kilometry dróg oraz wprowadzano rozwiązania projektowe, które spowodowały, że obecnie do dyspozycji mieszkańców oddanych jest około 250 km."
         gloss_en: "In 2014, the year of the referendum in which Kraków residents voted for expanding cycle paths, the city had 142.5 km of separated cycling infrastructure. Over the years further kilometres were opened and design solutions introduced, so that about 250 km are now available to residents."
-        gloss_de: "2014, im Jahr des Referendums, in dem sich die Krakauer für den Ausbau der Radwege aussprachen, verfügte die Stadt über 142,5 km eigene Radinfrastruktur. Im Lauf der Jahre wurden weitere Kilometer Wege freigegeben und planerische Lösungen eingeführt, sodass den Bewohnern heute rund 250 km zur Verfügung stehen."
+        gloss_de: "2014, im Jahr des Referendums, in dem sich die Krakauer für den Ausbau der Radwege aussprachen, verfügte die Stadt über 142,5 km abgetrennte Radinfrastruktur. Im Lauf der Jahre wurden weitere Kilometer Wege freigegeben und planerische Lösungen eingeführt, sodass den Bewohnern heute rund 250 km zur Verfügung stehen."
         locator: "article body, second paragraph"
       - id: per-year
         text: "W 2019 r. powstało ok. 3,7 km ścieżek, w 2020 r. – 5,7 km, w 2021 r. – 0,85 km."
         gloss_en: "About 3.7 km of paths were built in 2019, 5.7 km in 2020 and 0.85 km in 2021."
-        gloss_de: "2019 entstanden etwa 3,7 km Wege, im Jahr 2020 waren es 5,7 km und im Jahr 2021 nur noch 0,85 km."
+        gloss_de: "2019 entstanden etwa 3,7 km Wege; 5,7 km waren es im Jahr 2020 und 0,85 km im Jahr 2021."
         locator: "article body, third paragraph"
       - id: definition
         text: "Na szeroko rozumianą infrastrukturę rowerową składają się: drogi dla rowerów, ciągi pieszo-rowerowe, chodniki z dopuszczonym ruchem rowerowym, pasy rowerowe, kontrapasy oraz tzw. kontraruch rowerowy, gdzie dopuszczona jest jazda rowerem „pod prąd” na ulicach jednokierunkowych w strefie uspokojonego ruchu drogowego, czyli z ograniczeniem prędkości do 30 km/h."
         gloss_en: "Cycling infrastructure in the broad sense comprises: cycle tracks, shared footpath/cycle paths, footways where cycling is permitted, cycle lanes, contraflow lanes and so-called contraflow cycling, where riding 'against the flow' is allowed on one-way streets in traffic-calmed zones, i.e. with a 30 km/h limit."
-        gloss_de: "Zur Radinfrastruktur im weiteren Sinn gehören: Radwege, Geh- und Radwege, für den Radverkehr freigegebene Gehwege, Radfahrstreifen, Radfahrstreifen gegen die Einbahnrichtung sowie der sogenannte Gegenverkehr für Räder, bei dem das Radfahren „gegen die Fahrtrichtung“ in Einbahnstraßen in verkehrsberuhigten Zonen erlaubt ist, also bei einer Höchstgeschwindigkeit von 30 km/h."
+        gloss_de: "Zur Radinfrastruktur im weiteren Sinn gehören: Radwege, Geh- und Radwege, für den Radverkehr freigegebene Gehwege, Radfahrstreifen, Radfahrstreifen gegen die Einbahnrichtung sowie das sogenannte Radfahren gegen die Einbahnrichtung, bei dem das Radfahren „gegen die Fahrtrichtung“ in Einbahnstraßen in verkehrsberuhigten Zonen erlaubt ist, also bei einer Höchstgeschwindigkeit von 30 km/h."
         locator: "article body, fourth paragraph"
   - id: krakow-ztp-plan-2030
     publisher: Zarząd Transportu Publicznego w Krakowie (ZTP)

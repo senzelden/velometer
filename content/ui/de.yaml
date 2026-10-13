@@ -387,9 +387,9 @@ figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz
 figure.basis.unknown: unbekannt
 figure.basis.streckenlaenge: Streckenlänge
 figure.note.qecio_halves: QECIO zählt Anlagen in nur einer Fahrtrichtung zur Hälfte
-figure.note.nuts3_not_city: NUTS3-Einheit ist nicht die Stadt
+figure.note.nuts3_not_city: NUTS-3-Einheit ist nicht die Stadt
 figure.note.file_md5: Datei-md5 {md5}
-figure.note.bikenetkit: "Stadtgrenze aus OSM/Nominatim; umfasst Radwege, für den Radverkehr ausgewiesene Wege, verkehrsberuhigte Bereiche, Fahrradstraßen und straßenbegleitende Radwege (keine Radfahrstreifen); ungerichtete Kanten einmal gezählt; Stand 'summer 2026' (nicht geprüft); keine Zahl für geschützte Infrastruktur; zu vergleichen mit den Stufen A+B+E"
+figure.note.bikenetkit: "Stadtgrenze aus OSM/Nominatim; umfasst Radwege, für den Radverkehr ausgewiesene Wege, verkehrsberuhigte Bereiche, Fahrradstraßen und straßenbegleitende Radwege (keine Radfahrstreifen); ungerichtete Kanten einmal gezählt; Stand Sommer 2026 laut Quelle (nicht geprüft); keine Zahl für geschützte Infrastruktur; zu vergleichen mit den Stufen A+B+E"
 
 # --- Reiter
 page.story.no_narrative: noch kein Text

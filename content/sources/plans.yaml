@@ -90,7 +90,7 @@ sources:
     publisher: Land Berlin, Geoportal (gdi.berlin.de); data from GB infraVelo GmbH
     publisher_de: "Land Berlin, Geoportal (gdi.berlin.de); Daten der GB infraVelo GmbH"
     title: "Radverkehrsmaßnahmen (seit 2021), WFS service metadata record (publication date 2026-09-08)"
-    title_de: "Radverkehrsmaßnahmen (seit 2021), Metadatensatz des WFS-Dienstes (Veröffentlichungsdatum 2026-09-08)"
+    title_de: "Radverkehrsmaßnahmen (seit 2021), Metadatensatz des WFS-Dienstes (Veröffentlichungsdatum 8. September 2026)"
     url: https://gdi.berlin.de/geonetwork/srv/api/records/9093d642-e2c4-4cb6-9798-4d1e3f12f3bf
     published: 2026-09-08
     accessed: 2026-10-07

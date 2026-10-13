@@ -447,7 +447,7 @@ def test_every_qecio_note_has_its_german_twin(not_city, caveat):
         md5 = r.note.rsplit(" ", 1)[1]
         parts = [r.note.split("; ")[0], "QECIO zählt Anlagen in nur einer Fahrtrichtung zur Hälfte"]
         parts += ["ein; b Vorbehalt"] if caveat else []
-        parts += ["NUTS3-Einheit ist nicht die Stadt"] if not_city else []
+        parts += ["NUTS-3-Einheit ist nicht die Stadt"] if not_city else []
         assert de == "; ".join([*parts, f"Datei-md5 {md5}"])
 
 
