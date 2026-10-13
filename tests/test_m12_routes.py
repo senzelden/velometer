@@ -178,6 +178,9 @@ def test_page_cache_keys_carry_the_language(rich, monkeypatch):  # noqa: F811
     assert missing == [], seen
 
 
+URL_ANYWHERE = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://|\bwww\.|(?<![\w.])/[a-z]+/", re.I)
+
+
 def test_ui_strings_block_has_no_url(client):  # noqa: F811
     # the M11 export-scan rule: a URL-shaped string in a page's JSON must resolve under the base;
     # the JS strings are text and hold none
@@ -197,3 +200,5 @@ def test_ui_strings_block_has_no_url(client):  # noqa: F811
         data = json.loads(block[1])
         assert data and all(k.startswith("js.") for k in data), path
         assert [s for s in strings(data) if URL_SHAPED.match(s)] == [], path
+        # nor anywhere inside a sentence: a scheme URL or a site path in text would dodge the scan
+        assert [s for s in strings(data) if URL_ANYWHERE.search(s)] == [], path

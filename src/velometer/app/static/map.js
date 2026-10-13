@@ -7,6 +7,7 @@
 import { TIERMAP, read, readerMoves, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
 import { number } from "./js/fmt.js";
+import { mapStatus } from "./js/data.js";
 import { t } from "./js/strings.js";
 
 (function () {
@@ -160,10 +161,7 @@ import { t } from "./js/strings.js";
     else if (bounds.isValid()) map.fitBounds(bounds, { animate: false });
     fitting = false;
     var p = data.properties || {};
-    say(t("js.map.status", {
-      kind: kind.toUpperCase(), n: data.features.length, osm: p.osm_timestamp,
-      classifier: p.classifier, run: p.run_id,
-    }));
+    say(mapStatus(kind, data.features.length, p));
   }
 
   function load(kind) {

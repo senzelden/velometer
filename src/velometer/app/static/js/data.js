@@ -2,6 +2,7 @@
 // its series into chart.js models. No DOM drawing here.
 import { url } from "./base.js";
 import { xLabels } from "./chart-core.js";
+import { number } from "./fmt.js";
 import { onThemeChange } from "./theme.js";
 import { t } from "./strings.js";
 
@@ -9,6 +10,14 @@ import { t } from "./strings.js";
 export const TIERS = ["A", "B", "C", "D", "E"];
 /** A tier's name in the page's language ("A separated track"). */
 export const tierName = (tier) => t(`js.tier.${tier}`);
+
+/** The tier map's status line: the boundary kind, the side count as a locale number
+ * ("31,842" / "31.842") and the run's provenance (the GeoJSON's `properties`). */
+export const mapStatus = (kind, n, p = {}, doc = globalThis.document) =>
+  t("js.map.status", {
+    kind: kind.toUpperCase(), n: number(n, 0, doc), osm: p.osm_timestamp,
+    classifier: p.classifier, run: p.run_id,
+  });
 
 let pending = null;
 

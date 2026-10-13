@@ -266,3 +266,23 @@ test("the SVG source line on a German page has the German note and attribution",
   assert.ok(!out.includes(FIXTURE.en["js.download.note"]));
   useLang("en");
 });
+
+test("tableCsv in German: formula-shaped header and cells are quoted off, converted numbers are not", () => {
+  useLang("de");
+  const table = tableOf(
+    ["=Jahr", "+A km"],
+    [
+      ["@SUMME(A1)", "=HYPERLINK(\"x\")"],
+      ["-1,5 ⚑", "−1,5"],
+      ["-1.639,8", "+1,5"],
+      ["=1+1", "-x"],
+    ],
+  );
+  const lines = tableCsv(table, "abc", "t", "de-DE").split("\r\n");
+  assert.equal(lines[2], "'=Jahr,'+A km");
+  assert.equal(lines[3], `'@SUMME(A1),"'=HYPERLINK(""x"")"`);
+  assert.equal(lines[4], `"'-1,5 ⚑",-1.5`); // the U+2212 number converts to a plain negative
+  assert.equal(lines[5], "-1639.8,1.5"); // a signed German number converts; nothing left to run
+  assert.equal(lines[6], "'=1+1,'-x");
+  useLang("en");
+});
