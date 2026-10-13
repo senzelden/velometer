@@ -1,0 +1,75 @@
+city_id: ljubljana
+title:
+  text: 'Ljubljana: Radwege neben der Fahrbahn neu gezeichnet, dann ein stetiger Anstieg'
+  src: 51976e650125
+dek:
+  text: >-
+    Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 46,5 auf 73,5 kartierte
+    A+B-km je 100 km Hauptstraßen; ihr größter Schritt sind überwiegend dieselben
+    Wege, nur anders kartiert.
+  src: 69821b1d8083
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Die kartierten A+B-km in Ljubljanas Kernstadt stiegen von 128 im Jahr 2018 auf
+      245 im Oktober 2026 und die Hauptkennzahl von 46,5 auf 73,5. Der größte Schritt
+      liegt am Punkt 2021, 138 → 194 km. Unsere Erklärung findet eine Kartierungskampagne
+      Ende 2020: Straßenseiten verloren ihre Radweg-Tags, und die Radwege daneben
+      wurden als separate Wege gezeichnet [#ts_lau_2021]. Ein großer Teil dieses Schritts
+      sind bestehende Wege, die auf neue Weise kartiert wurden, keine neue Infrastruktur.
+    src: 1a27478b859b
+  - text: >-
+      In den Jahren 2022 und 2023 wurden dieselben Wege von cycleway zu path umgetaggt,
+      was mit dem Klassifikator v4 fast nichts zwischen den Stufen verschiebt [#ts_lau_2022].
+      Die kartierten markierten Radfahrstreifen (Stufe D) gingen von 37 auf 102 km.
+      Seit dem Stand vom Januar 2026 stieg A+B wieder, von 228 auf 245 km, als an
+      einigen Straßen am Stadtrand Radwege neben der Fahrbahn als separate Wege gezeichnet
+      wurden [#shift_current]. Ob diese Wege vor Ort neu sind, lässt sich aus den
+      Daten nicht sagen.
+    src: d94ad7b5dbaa
+  - text: >-
+      Der funktionale Stadtraum hat sich fast verdreifacht, von 211 auf 617 kartierte
+      km. Nach 2021 stammen seine markierten Sprünge überwiegend aus Kartierung außerhalb
+      der Stadt; für 2025 schließt die Erklärung aus den Tags zweier Wege, dass ein
+      Teil der neuen km wahrscheinlich neue Infrastruktur ist [#ts_fua_2025].
+    src: badcfcf5c119
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Ljubljanas eigene Zahl nennt weder Längenbasis noch Zähldatum: Die Website der
+      Stadt zählt Radfahrstreifen auf Gehwegen und Fahrbahnen zusammen mit baulich
+      getrennten Radwegen und Geh- und Radwegen [@ljubljana-mol-hoja-in-kolesarjenje],
+      während unsere Hauptkennzahl Radfahrstreifen auslässt. Clean Cities 2025 zählt
+      nur geschützte Infrastruktur [@cc2025-annexes]. Seine 251 km liegen nahe an
+      unserem A+B-Wert je Seite von 245 km (−2,4 %), allerdings sagt der Bericht nicht,
+      ob die Stadt die Zahl geliefert hat. Sein Straßennetz von 1.649 km ist weiter
+      gefasst als unsere 1.172 km, daher steht sein Verhältnis von 15 % gegen unsere
+      20,9 % [#rec_cc_ratio]. QECIO zählt die ganze NUTS3-Region um die Stadt, nicht
+      die Gemeinde [#rec_qecio_main].
+    src: 4279a8621149
+data_refs:
+  ts_lau_2021:
+    text: velometer-Erklärung zur Zeitreihe, ljubljana/lau/2021
+    src: 654902abc074
+  ts_lau_2022:
+    text: velometer-Erklärung zur Zeitreihe, ljubljana/lau/2022
+    src: bc980d2b2ad1
+  shift_current:
+    text: velometer-Untersuchung einer Verschiebung, ljubljana/lau/current
+    src: d4bb4f4550c6
+  ts_fua_2025:
+    text: velometer-Erklärung zur Zeitreihe, ljubljana/fua/2025
+    src: 98f24a137935
+  rec_cc_ratio:
+    text: velometer-Abgleich, ljubljana/cc_ratio
+    src: 55d6b0674eae
+  rec_qecio_main:
+    text: velometer-Abgleich, ljubljana/qecio_main_km
+    src: 896c77e5f4f7
+literals:
+- 100 km

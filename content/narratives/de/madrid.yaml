@@ -1,0 +1,71 @@
+city_id: madrid
+title:
+  text: 'Madrid: langsames Wachstum unter drei Jahren Gehwegkartierung'
+  src: 78c5361b51ff
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 282 auf 353 km,
+    während sich die Hauptkennzahl nur von 38,1 auf 42,5 kartierte A+B-km je 100 km
+    Hauptstraßen bewegte.
+  src: 6e06267d0ca1
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Madrids kartierte A+B-km blieben von 2018 bis 2020 flach, bei 282 und dann 278
+      km, und sind seitdem jedes Jahr ein wenig gestiegen, auf heute 353 km. Die Hauptkennzahl
+      (kartierte A+B-km je 100 km Hauptstraßen) ging von 38,1 auf 42,5. Innerhalb
+      der Summe verschob sich die Karte zwischen den Stufen: Im Jahr 2021 stieg Stufe
+      A von 186 auf 225 km, während Stufe B von 93 auf 63 km fiel. Dieses Jahr wurde
+      nicht markiert und hat keine festgehaltene Erklärung.
+    src: 055e299809d2
+  - text: >-
+      Ab 2024 gehen Madrids Aktivitätshinweise auf eine Kampagne für den Fußverkehr
+      zurück. Kartierende fügten Zehntausende Gehwege und Überwege hinzu, und die
+      Überwege teilten bestehende Radwege in Stücke; die Zahl der Wege mit Stufe hat
+      sich dadurch fast verdoppelt, während A+B nur um 8,5 km wuchs [#ts-madrid-2025].
+      Einige Radwege erhielten außerdem Tags für den Fußverkehr und wechselten von
+      Stufe A nach B. Der aktuelle Punkt ist dieselbe Kartierung, die weitergeht,
+      kein neues Ereignis [#ts-madrid-current]. Die Hauptkennzahl sank im Jahr 2026
+      leicht von 43,1 auf 42,5, obwohl A+B stieg, weil mehr Hauptstraßen-km kartiert
+      wurden.
+    src: cc463e409144
+  - text: >-
+      Der weitere Stadtraum (FUA) stieg bis 2026 von 973 auf 1.196 km A+B und ist
+      seitdem leicht auf 1.182 km gesunken; diese letzte Änderung wurde nicht markiert
+      und hat keine festgehaltene Erklärung.
+    src: 7c1dd1fdcf37
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die Netzzahl der Stadt, wie die Presse sie nach Angaben der städtischen Mobilitätsabteilung
+      meldete [@madrid-ultimahora-1167km], beträgt mehr als das Dreifache unseres
+      A+B-Werts. Die amtliche Mitteilung dahinter wurde nicht gefunden, die Zahl ist
+      also eine Angabe aus zweiter Hand. Sie schließt ciclocarriles ein, Fahrstreifen,
+      die mit dem Kfz-Verkehr geteilt werden [@madrid-opendata-infraestructura-ciclista];
+      solche geteilten Fahrstreifen lassen unsere Stufen aus. Die 8 % geschützt von
+      Clean Cities liegen nahe an unseren 7,7 %, beide bezogen auf das gesamte Straßennetz
+      des municipio; ihre Daten wurden bis Anfang 2025 erhoben [@cc2025-report]. Das
+      Netz von BikeNetKit ist länger als unseres (−26,3 %), weil es verkehrsberuhigte
+      Bereiche einschließt [#rc-madrid-bnk_network_km]. QECIO berichtet für die ganze
+      Comunidad de Madrid [#rc-madrid-qecio_main_km].
+    src: bf7873ea912d
+data_refs:
+  ts-madrid-2025:
+    text: velometer-Erklärung zur Zeitreihe, madrid/lau/2025
+    src: 72b7d3025652
+  ts-madrid-current:
+    text: velometer-Erklärung zur Zeitreihe, madrid/lau/current
+    src: 20f52e8c7c45
+  rc-madrid-bnk_network_km:
+    text: velometer-Erklärung zum Abgleich, madrid/bnk_network_km
+    src: a4f5d7e1ad71
+  rc-madrid-qecio_main_km:
+    text: velometer-Erklärung zum Abgleich, madrid/qecio_main_km
+    src: 5120953df6a5
+literals:
+- 100 km

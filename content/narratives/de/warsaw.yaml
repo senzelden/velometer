@@ -1,0 +1,65 @@
+city_id: warsaw
+title:
+  text: 'Warschau: stetige Radwege und ein kürzerer Maßstab im Jahr 2025'
+  src: 45aab45e9ae4
+dek:
+  text: >-
+    Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,4 auf 82,3 kartierte
+    A+B-km je 100 km Hauptstraßen; ihr größter Schritt kam von neu getaggten Schnellstraßen,
+    nicht von Radwegen.
+  src: 92a52d18a42d
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Innerhalb der Stadt stiegen Warschaus kartierte A+B-km von 528 im Jahr 2018
+      auf 763 im Oktober 2026 und die Hauptkennzahl von 53,4 auf 82,3. Fast alles
+      davon sind baulich getrennte Radwege: Stufe A ging von 395 auf 598 km, während
+      sich Geh- und Radwege (Stufe B) von 134 auf 165 km bewegten. Markierte Radfahrstreifen
+      wuchsen von 46 auf 65 km. Kein Jahr der städtischen Reihe ist markiert.
+    src: 5362187a40f6
+  - text: >-
+      Der größte Schritt der Hauptkennzahl, von 67,9 auf 77,8 im Jahr 2025, ist keine
+      Veränderung beim Radverkehr. A+B stieg in jenem Jahr um normale 4 %, doch die
+      Hauptstraßen, durch die die Hauptkennzahl teilt, gingen von 1.039 auf 946 km
+      zurück: Schnellstraßen, die als Fernstraßen (trunk) kartiert waren, wurden Ende
+      2024 als Autobahnen neu getaggt, und Autobahnen gehören nicht zur Bezugsgröße
+      [#shift_2025]. Der größte Teil dieses Schritts ist ein kürzerer Maßstab, keine
+      zusätzlich kartierten Rad-km.
+    src: d7c90c4ef689
+  - text: >-
+      Der funktionale Stadtraum wuchs viel schneller, von 833 auf 2.033 kartierte
+      km. Seine markierten Sprünge von 2019 bis 2021 waren gewöhnliche Kartierungsaktivität,
+      verteilt über die gminas im Umland, ohne Kampagne oder Import, zum Teil Wege,
+      die von construction zu cycleway umgetaggt wurden; das datiert die Kartierung,
+      nicht den Weg [#ts_fua_2019].
+    src: db82038a0e11
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die Straßenbehörde ZDM zählt ein Netz, das Radfahrstreifen und Radfahrstreifen
+      gegen die Einbahnrichtung einschließt, die wir in Stufe D außerhalb der Hauptkennzahl
+      führen [@warsaw-zdm-sezon-2018], und ihre jährlichen Bilanzen melden im Jahr
+      hinzugekommene km, eine andere Art von km als unsere. Clean Cities 2025 zählt
+      geschützte Infrastruktur [@cc2025-annexes]; unser A+B-Wert je Seite liegt 20,9 %
+      über seinen 631 km. Jede OSM-Zählung nahe seinem Datum liegt höher, was darauf
+      hindeutet, dass es Geh- und Radwege auslässt, doch das ist eine Schlussfolgerung
+      [#rec_cc_km]. Sein Straßennetz von 4.300 km ist weiter gefasst als unsere 3.386
+      km, daher steht sein Verhältnis von 15 % gegen unsere 22,5 %.
+    src: 36e532fe095e
+data_refs:
+  shift_2025:
+    text: velometer-Untersuchung einer Verschiebung, warsaw/lau/2025
+    src: f2c89825d7cb
+  ts_fua_2019:
+    text: velometer-Erklärung zur Zeitreihe, warsaw/fua/2019
+    src: cbcb23f90ed9
+  rec_cc_km:
+    text: velometer-Abgleich, warsaw/cc_km
+    src: 6766b6b1e47c
+literals:
+- 100 km

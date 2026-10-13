@@ -1,0 +1,72 @@
+city_id: barcelona
+title:
+  text: 'Barcelona: fast nur Radwege, Wachstum bis 2024'
+  src: 1ef9fbf6ea39
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 161 auf 244 km
+    und die Hauptkennzahl von 34,6 auf 55,1 kartierte A+B-km je 100 km Hauptstraßen.
+  src: 0954fb84085e
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Barcelonas Karte besteht fast nur aus einer Stufe: Baulich getrennte Radwege
+      (Stufe A) machen 231 der 244 kartierten A+B-km aus, und markierte Radfahrstreifen
+      kommen kaum vor, weil die Radinfrastruktur der Stadt als Radwege kartiert ist
+      [#rc-barcelona-qecio_lanes_km]. A+B stieg von 2018 bis 2024 jedes Jahr, von
+      161 auf 239 km, und ist seitdem fast unverändert. Die Hauptkennzahl (kartierte
+      A+B-km je 100 km Hauptstraßen) ging von 34,6 auf 55,1.
+    src: 92dabc7141bc
+  - text: >-
+      Die Punkte 2021 und 2022 sind markiert, denn sie fallen in eine Gehwegkampagne,
+      die ein einzelner Kartierender anführte, überwiegend im Dezember 2020 und Anfang
+      2021. Gehwege haben keine Stufe. Der Zuwachs an Radinfrastruktur im Jahr 2021,
+      24,8 km, kam getrennt davon zustande, durch die Kartierung von Radwegen, etwa
+      in der Carrer d'Aragó [#ts-barcelona-2021]. Ein Teil der Bewegung dieses Jahres
+      sind bestehende Radwege, die Trennungs-Tags erhielten; das verschiebt sie innerhalb
+      der Stufe A.
+    src: 2282d1050da0
+  - text: >-
+      Im weiteren Stadtraum (FUA) ist der Schritt von 176 km im Jahr 2021 nachgeholte
+      Kartierung, verteilt über 83 Gemeinden, etwa zur Hälfte von einem einzelnen
+      Kartierenden gezeichnet [#ts-barcelona-fua-2021]. Dass es Nachkartierung war
+      und keine neuen Wege, ist aus dieser Verteilung geschlossen, nicht vor Ort geprüft.
+    src: 98a8eee536e6
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Das Radwegenetz des Ajuntament [@barcelona-premsa-42km-2025] und die 264 km
+      geschützte Infrastruktur von Clean Cities liegen beide nahe an unserem A+B-Wert;
+      unserer weicht um −7,7 % von dem von Clean Cities ab. Keine der beiden Quellen
+      sagt, ob eine Straße mit Anlagen auf beiden Seiten einmal oder zweimal zählt,
+      und die Daten von Clean Cities wurden bis Anfang 2025 erhoben [@cc2025-report].
+      Eine weiter gefasste Zählung der Radrouten, über die die Presse berichtete,
+      nimmt verkehrsberuhigte Straßen mit niedrigen Tempolimits hinzu [@barcelona-ara-32km-2021],
+      eine Kategorie, die unsere Stufen auslassen. BikeNetKit zählt mehr (−43,1 %),
+      weil es verkehrsberuhigte Bereiche einschließt [#rc-barcelona-bnk_network_km],
+      und QECIO berichtet für die ganze Provinz [#rc-barcelona-qecio_main_km].
+    src: 6255f7ae7512
+data_refs:
+  rc-barcelona-qecio_lanes_km:
+    text: velometer-Erklärung zum Abgleich, barcelona/qecio_lanes_km
+    src: 22e10075e921
+  ts-barcelona-2021:
+    text: velometer-Erklärung zur Zeitreihe, barcelona/lau/2021
+    src: 7bd7edc53cec
+  ts-barcelona-fua-2021:
+    text: velometer-Erklärung zur Zeitreihe, barcelona/fua/2021
+    src: 59d11c4daaa7
+  rc-barcelona-bnk_network_km:
+    text: velometer-Erklärung zum Abgleich, barcelona/bnk_network_km
+    src: be37a0620418
+  rc-barcelona-qecio_main_km:
+    text: velometer-Erklärung zum Abgleich, barcelona/qecio_main_km
+    src: 0bb754622f4d
+literals:
+- 100 km
+- 83 Gemeinden

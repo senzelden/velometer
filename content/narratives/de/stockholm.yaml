@@ -1,0 +1,68 @@
+city_id: stockholm
+title:
+  text: 'Stockholm: eine stabile Summe, und Radwege überholen Geh- und Radwege'
+  src: 309e760d906b
+dek:
+  text: >-
+    Die Hauptkennzahl bewegte sich zwischen 2018 und Oktober 2026 nur von 257,9 auf
+    261,0, während jahrelange kleine Tag-Änderungen km von Geh- und Radwegen zu baulich
+    getrennten Radwegen verschoben.
+  src: 114fea85b5f9
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Stockholm bleibt durchgehend nahe der Spitze der 21 Städte. In der Kernstadt
+      (LAU) gingen die kartierten A+B-km von 944 km im Jahr 2018 auf 991 km im Oktober
+      2026 (+5 %) und die Hauptkennzahl von 257,9 auf 261,0 kartierte A+B-km je 100
+      km Hauptstraßen, nie unter 249,7 und nie über 262,5 [#ts-stockholm]. Kein Jahr
+      ist markiert.
+    src: 23f3c72976f4
+  - text: >-
+      Innerhalb dieser stabilen Summe verschob sich die Aufteilung. Baulich getrennte
+      Radwege (Stufe A) stiegen von 315 auf 415 km, während Geh- und Radwege (Stufe
+      B) von 629 auf 577 km fielen. Das ist eine allmähliche Drift der Tags neben
+      neu gezeichneten Wegen, kein einzelner Durchgang [#shift-stockholm]: Geh- und
+      Radwege erhielten `segregated=yes` und wechselten nach A, andere Radwege erhielten
+      Fußverkehrs-Tags und wechselten nach B, und einige Radwege wurden zu Gehwegen
+      und fielen aus den Stufen heraus. Die größten Schritte lagen zwischen 2020 und
+      2021 und zwischen 2022 und 2023, jeweils auf viele Mitwirkende verteilt. Neu
+      getaggte Wege sind keine neue Infrastruktur. Markierte Radfahrstreifen (Stufe
+      D) bleiben gering, 38 → 48 km.
+    src: 36f6deb65d89
+  - text: >-
+      Der funktionale Stadtraum (FUA) erzählt eine Wachstumsgeschichte, die die Stadt
+      nicht erzählt: A+B stieg von 3.272 auf 3.906 km (+19 %), größtenteils in Stufe
+      B (2.022 → 2.635 km); die meisten neu kartierten km liegen also außerhalb der
+      Stadt [#ts-stockholm].
+    src: c6de33eaf031
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die eigene Netzzahl der Stadt, unten zitiert, zählt separate Radwege, gemeinsame
+      Geh- und Radwege und markierte Radfahrstreifen zusammen [@stockholm-cykelvagar].
+      Umfang: Das sind unsere Stufen A, B und D, 991 km A+B plus 48 km Radfahrstreifen.
+      Längenbasis, Datum und Methode gibt die Quelle nicht an; unsere sind je Straßenseite,
+      Oktober 2026 und OpenStreetMap. Fläche: QECIO berichtet für Stockholms län,
+      eine Provinz, die weit größer ist als die Stadt, mit 4.946 km Hauptstraßen gegenüber
+      unseren 667 km [#recon-stockholm-qecio-main]; seine Zahlen sind also keine Prüfung
+      für die Stadt. BikeNetKit, ebenfalls auf OpenStreetMap gestützt, zählt 1.102
+      km gegenüber unseren 995 km der Stufen A, B und E (−10 %) [@bikenetkit-zenodo].
+    src: d44740b9446b
+data_refs:
+  ts-stockholm:
+    text: velometer-Zeitreihe, stockholm LAU und FUA (kartierte km)
+    src: 915d075118b1
+  shift-stockholm:
+    text: velometer-Untersuchung einer Verschiebung, stockholm/lau/2018-current
+    src: f68d63fcf3de
+  recon-stockholm-qecio-main:
+    text: velometer-Abgleich, stockholm/qecio_main_km
+    src: 4365ce03234c
+literals:
+- 100 km
+- '21'

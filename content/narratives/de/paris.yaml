@@ -1,0 +1,74 @@
+city_id: paris
+title:
+  text: 'Paris: zwei schnelle Jahre, dann ein stetiger Anstieg'
+  src: 5db3fa24e248
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 209 auf 357 km
+    und die Hauptkennzahl von 34,8 auf 63,1 kartierte A+B-km je 100 km Hauptstraßen.
+  src: b166b7a9ef7c
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Der größte Teil des Anstiegs in Paris fällt in zwei Jahre. Zwischen 2019 und
+      2021 gingen die kartierten A+B-km von 224 auf 306 km und die Hauptkennzahl (kartierte
+      A+B-km je 100 km Hauptstraßen) von 37,5 auf 51,9. Der Schritt von 2020 sind
+      Radwege, die Kartierende im Laufe des Jahres 2019 zeichneten, während der Plan
+      Vélo 2015–2020 der Stadt lief; eine amtliche Zahl dazu, was in jenem Jahr fertig
+      wurde, wird nicht zitiert [#ts-paris-2020]. In denselben Jahren wurden Radfahrstreifen
+      gegen die Einbahnrichtung neu getaggt, was eine Diagnosezahl bewegte, nicht
+      die Stufen. Der Schritt von 2021 sind die vorübergehenden coronapistes von 2020,
+      wie Kartierende sie erfassten [#ts-paris-2021]; der Plan der Stadt für 2021–2026
+      nahm sich vor, sie dauerhaft zu machen.
+    src: 0b79ca8d5fec
+  - text: >-
+      Nach den flachen Jahren 2022 und 2023 tragen die Punkte 2024 und 2025 einen
+      Aktivitätshinweis. Die Aktivität war überwiegend Gehwegkartierung, allein im
+      Jahr 2023 Zehntausende neuer Gehwege; Gehwege haben keine Stufe [#ts-paris-2024].
+      Die A+B-km für den Radverkehr wuchsen im gewohnten Tempo weiter, auf 346 km
+      im Jahr 2025 und heute 357 km. Baulich getrennte Radwege (Stufe A, 181 auf 332
+      km) tragen fast den gesamten Zuwachs; markierte Radfahrstreifen (Stufe D) gingen
+      von 127 auf 147 km.
+    src: 6248e2f680bc
+  - text: >-
+      Der weitere Stadtraum (FUA) wuchs gleichmäßiger, von 2.326 auf 3.726 kartierte
+      km A+B. Sein einziges markiertes Jahr, 2019, war gewöhnliche Nachkartierung
+      durch viele Hände, keine Kampagne und kein Import [#ts-paris-fua-2019].
+    src: e413c2b36247
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die jährliche Länge der Radrouten der Stadt zählt viel mehr als unser A+B: Radfahrstreifen,
+      für Fahrräder freigegebene Busspuren, Fußgängerzonen und Radfahren gegen die
+      Einbahnrichtung ebenso wie Radwege [@paris-opendata-lineaire-km]. Sie ist auf
+      den Anfang jedes Jahres datiert; wir lesen die Karte vom Oktober 2026. Sie ist
+      auch nicht unabhängig von unserer: Die Stadt entnimmt sie OSM, der Karte, die
+      wir lesen, und kann unsere km daher weder bestätigen noch widerlegen. Die 822
+      km geschützte Infrastruktur von Clean Cities (48 % des Straßennetzes) übersteigen
+      alles, was in Paris über alle Stufen hinweg kartiert ist [#rc-paris-cc_km];
+      Clean Cities übernahm die Zahlen der meisten Städte von den Städten selbst [@cc2025-report].
+      QECIO, das ebenfalls OSM misst, liegt innerhalb von +9,3 % unserer Radwege.
+    src: 78e4624ae033
+data_refs:
+  ts-paris-2020:
+    text: velometer-Erklärung zur Zeitreihe, paris/lau/2020
+    src: 321387758a80
+  ts-paris-2021:
+    text: velometer-Erklärung zur Zeitreihe, paris/lau/2021
+    src: e0c7f0fb164f
+  ts-paris-2024:
+    text: velometer-Erklärung zur Zeitreihe, paris/lau/2024
+    src: 9d3d09b1f736
+  ts-paris-fua-2019:
+    text: velometer-Erklärung zur Zeitreihe, paris/fua/2019
+    src: 780a64df2290
+  rc-paris-cc_km:
+    text: velometer-Erklärung zum Abgleich, paris/cc_km
+    src: 62a91a269ad7
+literals:
+- 100 km

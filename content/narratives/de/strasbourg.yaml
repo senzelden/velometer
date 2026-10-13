@@ -1,0 +1,65 @@
+city_id: strasbourg
+title:
+  text: 'Strasbourg: hoch von Anfang an, umverteilt zwischen A und B'
+  src: 2ef074204fa8
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 184 auf 241 km;
+    schon 2018 lag die Hauptkennzahl bei 123,2 kartierten A+B-km je 100 km Hauptstraßen.
+  src: 5de0ed873bad
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Strasbourg startet weit vor den anderen französischen Städten: 2018 enthielt
+      die Karte schon mehr A+B-km als Hauptstraßen-km. A+B wuchs langsam und stetig,
+      von 184 auf 241 km, und die Hauptkennzahl (kartierte A+B-km je 100 km Hauptstraßen)
+      von 123,2 auf 136,1. Im Jahr 2021 sank die Hauptkennzahl von 132,6 auf 116,9,
+      obwohl A+B stieg, weil die Länge der Hauptstraßen, durch die sie teilt, in jenem
+      Jahr von 150 auf 176 kartierte km ging. Das Jahr wurde nicht markiert, daher
+      ist keine Ursache festgehalten.
+    src: 6e2e8df6d399
+  - text: >-
+      Die größere Veränderung liegt innerhalb von A+B. Stufe B, Geh- und Radwege,
+      stieg von 28 auf 69 km, während Stufe A zwischen 156 und 172 km blieb. Ein Teil
+      davon ist Tagging, keine neuen Wege: Im Frühjahr 2024 überarbeiteten Kartierende
+      die Radwege der ganzen Stadt, ergänzten Tags zu Trennung und Widmung und machten
+      einige Radwege zu Geh- und Radwegen [#ts-strasbourg-2025]. Stufe A fiel und
+      Stufe B stieg in jenem Jahr, während sich ihre Summe normal entwickelte. Eine
+      Gehwegkampagne im Jahr 2022 zeigt sich in den Aktivitätshinweisen, aber nicht
+      in den Stufen [#ts-strasbourg-2023]. Die kartierten markierten Radfahrstreifen
+      gingen von 58 auf 45 km zurück.
+    src: 6f28e91b1168
+  - text: >-
+      Der weitere Stadtraum (FUA) zeigt dieselbe Verschiebung: Stufe B wuchs von 201
+      auf 426 km und kommt Stufe A mit 428 km heute fast gleich.
+    src: 476a027be81c
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die amtliche Netzzahl [@strasbourg-a-velo] ist mehr als doppelt so hoch wie
+      unser A+B. Die Seite sagt nicht, ob sie die Gemeinde oder die ganze Eurométropole
+      abdeckt, welche Anlagen sie zählt, wie die Länge gemessen wird oder zu welchem
+      Datum. Die offenen Daten der Stadt sind auf ihrem eigenen Straßenachsennetz
+      im nationalen BNAC-Schema gezeichnet [@strasbourg-opendata-bnac], nicht aus
+      OSM übernommen; sie sind also ein von unserem unabhängiges Maß. Strasbourg ist
+      nicht in der Rangliste von Clean Cities. QECIO berichtet für das Département
+      Bas-Rhin, weshalb seine Hauptstraßen-km um −95,3 % von unseren abweichen; auf
+      dieser Fläche gemessen stimmen die Hauptstraßen überein [#rc-strasbourg-qecio_main_km].
+    src: 91d2c1994238
+data_refs:
+  ts-strasbourg-2025:
+    text: velometer-Erklärung zur Zeitreihe, strasbourg/lau/2025
+    src: a81f6487e9db
+  ts-strasbourg-2023:
+    text: velometer-Erklärung zur Zeitreihe, strasbourg/lau/2023
+    src: d7afba243449
+  rc-strasbourg-qecio_main_km:
+    text: velometer-Erklärung zum Abgleich, strasbourg/qecio_main_km
+    src: cc03ee71d16f
+literals:
+- 100 km

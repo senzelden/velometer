@@ -1,0 +1,200 @@
+city_id: combined
+title:
+  text: '21 Städte auf einer Karte: eine stabile Spitze, schnellere Aufsteiger dahinter'
+  src: d2a1a6baa68b
+dek:
+  text: >-
+    In den 21 Städten stiegen die kartierten A+B-km von 8.942 km im Januar 2018 auf
+    10.400 km im Oktober 2026. Die Spitze der Tabelle hielt ihre Plätze; mehrere Städte,
+    die niedrig begannen, legten am schnellsten zu.
+  src: 0f4d0d926300
+sections:
+- heading:
+    text: Ein Maßstab für 21 Städte
+    src: 570bfafa8419
+  paragraphs:
+  - text: >-
+      Jede Zahl hier sind kartierte km in OpenStreetMap, in jeder Kernstadt (LAU)
+      gleich gemessen, jeweils im Januar ab 2018 und im Oktober 2026 [#runset]. Die
+      Stufen A (baulich getrennte Radwege) und B (Geh- und Radwege) bilden die Hauptkennzahl,
+      kartierte A+B-km je 100 km Hauptstraßen, je Straßenseite gezählt. Ein Zuwachs
+      auf der Karte kann neue Infrastruktur sein, nachgeholte Kartierung oder dieselben
+      Wege, neu getaggt, und die Karte allein verrät selten, was davon.
+    src: e49d3f4fce82
+- heading:
+    text: Die Spitze
+    src: a4b717d41729
+  paragraphs:
+  - text: >-
+      Helsinki (262,3), Stockholm (261,0) und Kopenhagen (237,9) führen, gefolgt von
+      Amsterdam (203,0) und Utrecht (193,6) [#runset]. Jede dieser Städte hat mehr
+      km A+B kartiert als Hauptstraßen. Die ersten sieben, bis hinunter zu Strasbourg
+      und Berlin, halten dieselben Plätze wie 2018. Helsinki führt bei Geh- und Radwegen:
+      943 seiner 1.279 kartierten A+B-km sind Stufe B, eine Art von Weg, die auch
+      Clean Cities als geschützt zählt. Seine Hauptkennzahl fiel von 276,2 auf 262,3,
+      während sich seine kartierten A+B-km kaum bewegten; die Ursache liegt in den
+      Hauptstraßen, durch die geteilt wird.
+    src: 37d9ed4f86d6
+- heading:
+    text: Am anderen Ende
+    src: 5a60cb170330
+  paragraphs:
+  - text: >-
+      Budapest (22,3) und Prag (29,6) liegen hinten, hinter Bordeaux (40,3) und Madrid
+      (42,5) [#runset]. Ein niedriger Wert kann wenig Infrastruktur bedeuten, wenig
+      Kartierung oder Infrastruktur in Stufen, die die Hauptkennzahl auslässt: Prags
+      markierte Radfahrstreifen stiegen von 56 auf 190 km und Budapests von 72 auf
+      161 km, alle in Stufe D. Die Mitte der Tabelle bewegte sich stärker: Wrocław
+      zog an Wien vorbei auf Platz 8, Krakau stieg von Platz 14 auf 12, Paris von
+      16 auf 14 und Lyon von 19 auf 17, während Oslo von Platz 11 auf 13 und Madrid
+      von 15 auf 18 zurückfiel.
+    src: b42a6e03b297
+- heading:
+    text: 'Indexiert: wer auf der Karte am schnellsten wuchs'
+    src: 08519e2db3d0
+  paragraphs:
+  - text: >-
+      Gemessen am eigenen Wert von 2018 erreichen die kartierten A+B-km Ljubljanas
+      192, die Krakaus 184, die Lyons 175 und die von Paris 171 [#runset]. In km stiegen
+      die kartierten A+B-km Warschaus am stärksten, um 235 km (von 528 auf 763), vor
+      Paris (+148), Wrocław (+137), Krakau (+135) und Ljubljana (+117). Die dicht
+      kartierten nordischen und niederländischen Städte bewegten sich kaum: Helsinki
+      steht bei 100, Amsterdam bei 101, Stockholm bei 105 und Utrecht bei 106. Zwei
+      Städte haben heute weniger A+B kartiert als 2018: Helsinki nur knapp, 1.279
+      km gegenüber 1.283 km, und Berlin deutlich, bei 95, durch einen einzelnen Schritt
+      der Neukartierung, keinen Trend.
+    src: 15577fd826ea
+- heading:
+    text: Nicht jeder Sprung ist neue Infrastruktur
+    src: 93f579e5048f
+  paragraphs:
+  - text: >-
+      Sieben Stadtjahre tragen einen Prüfhinweis für einen km-Sprung, und bei den
+      meisten ist der Schritt eine Änderung daran, wie bestehende Wege kartiert sind.
+      Berlins Rückgang im Jahr 2022, von 1.677 auf 1.494 km, geht darauf zurück, dass
+      Kartierende straßenbegleitende Radwege als separate Wege neu zeichneten und
+      Geh- und Radwege als Gehwege neu taggten [#expl-berlin-2022]. Ljubljanas Schritt
+      im Jahr 2021, von 138 auf 194 km, war eine Kampagne, die Radwege neben der Fahrbahn
+      als separate Wege zeichnete [#expl-ljubljana-2021]. Der größte Teil von Oslos
+      Schritt im Jahr 2021, von 264 auf 298 km, sind Gehwege, die als gemeinsame Geh-
+      und Radwege neu getaggt wurden [#expl-oslo-2021], und der größte Teil der 31
+      km kartierter A+B-Wege, die Prag im Jahr 2020 hinzugewann, sind Gehwege in Parks
+      und am Ufer, die als Radwege neu getaggt wurden [#expl-prague-2020]. Etwa die
+      Hälfte von Krakaus Schritt von 33 km im Jahr 2024 sind Tag-Änderungen [#expl-krakow-2024].
+      Paris ist anders: Sein Anstieg von 224 auf 306 km zwischen 2019 und 2021 fällt
+      mit dem Plan Vélo und den coronapistes von 2020 zusammen, doch keine amtliche
+      Zahl zu fertiggestellten km wird zitiert; es bleiben also allein kartierte km
+      [#expl-paris-2020] [#expl-paris-2021].
+    src: a6a33698a17a
+  - text: >-
+      Manche Sprünge stecken im Maßstab und tragen keinen Prüfhinweis. In Warschau
+      gingen die kartierten Hauptstraßen zwischen den Punkten 2024 und 2025 von 1.039
+      auf 946 km zurück, als Schnellstraßen als Autobahnen neu getaggt wurden, die
+      die Hauptkennzahl nicht zählt; die Hauptkennzahl stieg von 67,9 auf 77,8, während
+      A+B um 4 % zunahm [#shift-warsaw-2025]. In Helsinki hoben Wohnstraßen, die zu
+      Tertiärstraßen (tertiary) umklassifiziert wurden, die Hauptstraßen von 467 auf
+      484 km, und die Hauptkennzahl fiel bei unverändertem A+B von 274,4 auf 264,7
+      [#shift-helsinki-2025]. Beides beschreibt die Straßenkarte, nicht die Radinfrastruktur.
+    src: fea3b14811f3
+- heading:
+    text: 'In einer Stadt: Berlins 12 Bezirke'
+    src: 0d72f6678b54
+  paragraphs:
+  - text: >-
+      Berlin hat von allen Städten am meisten A+B kartiert, 1.551 km, bei einer Hauptkennzahl
+      von 109,1, Platz 7 [#runset]. Innerhalb der Stadt ist die Spanne groß: Neukölln
+      kommt auf 164,3, Pankow auf 62,8 [#bezirke]. Mitte (75,2 auf 90,7) und Tempelhof-Schöneberg
+      (123,9 auf 138,3) legten seit 2018 am stärksten zu, während Spandau von 149,3
+      auf 109,8 fiel, größtenteils im Jahr 2022. Die Zahlen des Senats beantworten
+      eine andere Frage: Seine 21,2 km für 2025 sind km Strecke, die Projekte fertiggestellt
+      oder verbessert haben [@berlin-fortschrittsbericht-2025]. Wir zählen alle kartierte
+      Infrastruktur je Straßenseite: Von 2023 bis Oktober 2026 kamen auf der Karte
+      442 km neu kartierter Wegseiten hinzu, 656 km wurden neu gezeichnet, und A+B
+      stieg netto um 35,6 km [#change].
+    src: 0d61b8ddc0a0
+- heading:
+    text: Im Vergleich mit veröffentlichten Zahlen
+    src: b16c56d3cb3a
+  paragraphs:
+  - text: >-
+      Veröffentlichte Zahlen weichen von unseren entlang sechs Dimensionen ab, die
+      auf der Seite zu den Abweichungen dargelegt sind. Umfang: Clean Cities 2025,
+      das hier 17 Städte abdeckt, zählt nur geschützte Infrastruktur [@cc2025-annexes],
+      und seine Zahl für Wien stieg im Juli 2025 von 384 auf 625,1 km, nachdem Straßen
+      mit eingeschränkter Kfz-Zufahrt in verkehrsberuhigten Gebieten mitgezählt wurden
+      [@cc2025-cycling-table]. Länge: Clean Cities definiert das Straßennetz, durch
+      das es teilt, jede Straße einmal, gleich wie viele Fahrstreifen oder Richtungen
+      sie hat, und nennt keine Regel dafür, wie Rad-km gemessen werden. Berlins 925
+      km liegen bei unserer Basis entlang der Straßenachse, 913,5 km, nicht bei unseren
+      1.550,7 km je Seite [#recon-berlin-cc-km]; Ljubljanas 251 km liegen bei unseren
+      245 km je Seite [#recon-ljubljana-cc-ratio].
+    src: 2a3e2080fc65
+  - text: >-
+      Datum: Die Daten von Clean Cities stammen von Anfang 2025, unsere vom Oktober
+      2026. Fläche: QECIO berichtet für NUTS3-Regionen, mit Daten vom Januar 2024
+      [@qecio-metadata]. Wo die Region die Stadt ist, stimmen die Hauptstraßen eng
+      überein: 2.153 gegenüber 2.150 km für Berlin [#recon-berlin]; anderswo umfasst
+      sie eine ganze Provinz, wie Stockholms 4.946 km Hauptstraßen gegenüber unseren
+      667 km zeigen [#recon-stockholm-qecio-main]. Methode: Clean Cities übernahm
+      die meisten Zahlen von den Städten selbst [@cc2025-report], und seine 822 km
+      für Paris übersteigen alles, was dort über alle Stufen hinweg kartiert ist [#recon-paris-cc-km].
+    src: f564d194838d
+data_refs:
+  runset:
+    text: velometer-Laufsatz, LAU-Reihen aller 21 Städte (Klassifikator v4, kartierte
+      km)
+    src: 69357813ddb7
+  expl-berlin-2022:
+    text: velometer-Erklärung zur Zeitreihe, berlin/lau/2022
+    src: 18979ab33c33
+  expl-ljubljana-2021:
+    text: velometer-Erklärung zur Zeitreihe, ljubljana/lau/2021
+    src: 654902abc074
+  expl-oslo-2021:
+    text: velometer-Erklärung zur Zeitreihe, oslo/lau/2021
+    src: 1c8b7f69e28d
+  expl-prague-2020:
+    text: velometer-Erklärung zur Zeitreihe, prague/lau/2020
+    src: 9064c4a7f92d
+  expl-krakow-2024:
+    text: velometer-Erklärung zur Zeitreihe, krakow/lau/2024
+    src: 0679f49fb0f2
+  expl-paris-2020:
+    text: velometer-Erklärung zur Zeitreihe, paris/lau/2020
+    src: 321387758a80
+  expl-paris-2021:
+    text: velometer-Erklärung zur Zeitreihe, paris/lau/2021
+    src: e0c7f0fb164f
+  shift-warsaw-2025:
+    text: velometer-Untersuchung einer Verschiebung, warsaw/lau/2025
+    src: f2c89825d7cb
+  shift-helsinki-2025:
+    text: velometer-Untersuchung einer Verschiebung, helsinki/lau/2025
+    src: ef8cbf1ee6f8
+  bezirke:
+    text: velometer-Bezirksreihe (12 Bezirke, Klassifikator v4)
+    src: d2b51c9ecbab
+  change:
+    text: velometer kartierte Änderung, Berlin, 2023-01-01 bis aktueller Stand
+    src: 10da1f913f3c
+  recon-berlin-cc-km:
+    text: velometer-Abgleich, berlin/cc_km
+    src: a40ed84e7d1e
+  recon-berlin:
+    text: velometer-Abgleich, berlin (Zeile qecio_main_km)
+    src: 01bf48b4159a
+  recon-stockholm-qecio-main:
+    text: velometer-Abgleich, stockholm/qecio_main_km
+    src: 4365ce03234c
+  recon-paris-cc-km:
+    text: velometer-Abgleich, paris/cc_km
+    src: 1b6015c86cda
+  recon-ljubljana-cc-ratio:
+    text: velometer-Abgleich, ljubljana/cc_ratio
+    src: 55d6b0674eae
+literals:
+- 21 Städte
+- 21 Städten
+- 100 km
+- 12 Bezirke
+- 17 Städte

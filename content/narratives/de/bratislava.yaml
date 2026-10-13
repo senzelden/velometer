@@ -1,0 +1,79 @@
+city_id: bratislava
+title:
+  text: 'Bratislava: ein Einbruch, dann ein stetiger Anstieg'
+  src: 9d74d4ad4068
+dek:
+  text: >-
+    Die Hauptkennzahl stieg von 43,5 im Jahr 2018 auf 58,7 im Oktober 2026, nach einem
+    Rückgang im Jahr 2020, der eine Bereinigung von Tags war, kein Verlust von Wegen.
+  src: a3083ed4e8fe
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Bratislavas kartierte A+B-km gingen von 124 km im Jahr 2018 auf 172 km im Oktober
+      2026, die Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, von 43,5 auf
+      58,7 [#ts-lau]. Der Weg dahin war nicht glatt. A+B fiel von 132 km im Jahr 2019
+      auf 113 km im Jahr 2020 und erreichte das Niveau von 2019 erst 2024 wieder.
+      Dieser Rückgang waren Tag-Änderungen im Laufe des Jahres 2019: Wege fielen aus
+      den Radstufen heraus, der längste davon ein Dammweg, der als Gehweg neu getaggt
+      wurde und Ende 2024 wieder ein Radweg war [#shift-lau-2020]. Ab 2024 stieg Stufe
+      A am schnellsten, von 63 auf 90 km.
+    src: f1b610f0f6e8
+  - text: >-
+      Markierte Radfahrstreifen (D) haben sich auf der Karte mehr als verdreifacht,
+      von 17 auf 55 km je Seite. Seit 2024 geht ein Teil davon auf Tag-Änderungen
+      zurück, bei denen Piktogrammspuren (shared lanes) zu echten Radfahrstreifen
+      wurden, neben Radfahrstreifen an Straßen, die bisher kein Radweg-Tag hatten
+      [#recon-lanes]. Der Aktivitätshinweis auf dem aktuellen Punkt ist eine Kartierungskampagne
+      für den Fußverkehr, mit Gehwegen und Überwegen; A+B entwickelte sich normal
+      [#expl-lau-current].
+    src: 5a13de5e73fb
+  - text: >-
+      Der funktionale Stadtraum wuchs schneller als die Stadt, A+B von 284 auf 443
+      km. Sein Sprung von 2022 sind überwiegend neu kartierte Radwege; der Anteil
+      der Stadt daran betrug 15,5 km [#ts-fua] [#expl-fua-2022].
+    src: 855372b59d09
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities 2025 und unsere Zahlen stimmen ungefähr überein: Clean Cities meldet
+      186 km geschützte Infrastruktur und 12 % des Straßennetzes [@cc2025-report],
+      gegenüber unseren 172 km und 13,2 % [#recon]. QECIO hat die ganze Region Bratislava
+      gemessen, mehr als fünfmal so groß wie die Stadt, seine km sind also nicht die
+      der Stadt [#recon-qecio]. Die Stadt meldet hinzugekommene km nach Typ, darunter
+      Schutzstreifen, und eine eigene Gesamtzahl ohne angegebene Längenbasis [@bratislava-city-infra-2025];
+      die örtliche Radverkehrs-NGO zählte einen neuen Weg auf beiden Straßenseiten,
+      wie wir [@bratislava-cyklokoalicia-2025].
+    src: 37aaef92209e
+data_refs:
+  ts-lau:
+    text: velometer-Zeitreihe, bratislava/lau (Klassifikator v4)
+    src: f73811b2c059
+  ts-fua:
+    text: velometer-Zeitreihe, bratislava/fua (Klassifikator v4)
+    src: 3d8fb0cc68e6
+  shift-lau-2020:
+    text: velometer-Untersuchung einer Verschiebung, bratislava/lau/2020
+    src: 138c2fb6b261
+  expl-lau-current:
+    text: velometer-Erklärung zur Zeitreihe, bratislava/lau/current
+    src: 06860258a39a
+  expl-fua-2022:
+    text: velometer-Erklärung zur Zeitreihe, bratislava/fua/2022
+    src: c2c3afc7ec33
+  recon-lanes:
+    text: velometer-Abgleich, bratislava/qecio_lanes_km
+    src: 0f00435cd770
+  recon-qecio:
+    text: velometer-Abgleich, bratislava/qecio_main_km
+    src: cce6b090eac4
+  recon:
+    text: velometer-Abgleich, bratislava (cc_ratio, cc_km)
+    src: 0009e32c6445
+literals:
+- 100 km

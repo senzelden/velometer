@@ -1,0 +1,70 @@
+city_id: copenhagen
+title:
+  text: 'Kopenhagen: Radwege mit Bordstein tragen den Zuwachs'
+  src: 0ab829845d3e
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 530 auf 582 km,
+    fast ausschließlich bei baulich getrennten Radwegen; der Einbruch bei den Geh-
+    und Radwegen im Jahr 2025 war eine Tag-Änderung.
+  src: 6c793c116be9
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      In der Kernstadt (LAU) Kopenhagens ging die Hauptkennzahl (kartierte A+B-km
+      je 100 km Hauptstraßen) von 213,9 im Jahr 2018 auf 237,9 im Oktober 2026, Platz
+      3 der 21 Städte. Die kartierten A+B-km stiegen von 530 auf 582 km (+10 %), und
+      baulich getrennte Radwege (Stufe A) tragen fast den gesamten Zuwachs, 447 →
+      493 km [#ts-copenhagen]. Markierte Radfahrstreifen (Stufe D) gingen leicht zurück,
+      von 40,2 auf 36,5 km.
+    src: 7460fdc09253
+  - text: >-
+      Das einzige unregelmäßige Jahr ist 2025. Geh- und Radwege (Stufe B) sanken von
+      88,8 auf 74,0 km und lagen im Stand von 2026 wieder bei 86,5 km, und die Hauptkennzahl
+      sank mit ihnen (234,5 → 227,9). Das ist eine Drift der Tags: Im Laufe des Jahres
+      2024 verloren Schotterwege ihre Widmung als Geh- und Radweg und fielen aus den
+      Stufen heraus, und im Laufe des Jahres 2025 wurden die meisten von ihnen als
+      gemeinsame Geh- und Radwege neu getaggt und kehrten in B zurück [#shift-copenhagen-2025].
+      Neu getaggte Wege sind weder neue noch verlorene Infrastruktur.
+    src: 0388d059a375
+  - text: >-
+      Der funktionale Stadtraum (FUA) wuchs etwas schneller, A+B 4.632 → 5.234 km
+      (+13 %), doch dort verschob sich die Aufteilung in die andere Richtung: Stufe
+      A fiel von 2.903 auf 2.689 km, während Stufe B von 1.729 auf 2.545 km stieg,
+      größtenteils zwischen 2019 und 2020 [#ts-copenhagen]. Zu diesem Schritt gibt
+      es noch keine Untersuchung.
+    src: 54e83e89c6d7
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die Stadt zählt für 2025 genau 401 km cykelsti [@copenhagen-mobilitetsredegorelse-2026]
+      und Clean Cities 397 km geschützte Infrastruktur [@cc2025-report]; unser A+B-Wert
+      liegt bei 582 km. Umfang: Ein cykelsti ist ein Radweg mit Bordstein, markierte
+      Radfahrstreifen stehen in einer eigenen Zeile, und unser A+B enthält auch Geh-
+      und Radwege. Die Gestaltungsleitlinien der Stadt raten bei neuen Vorhaben von
+      markierten Radfahrstreifen ab [@copenhagen-cykelfokus-2024]. Länge: Kopenhagens
+      Radwege sind meist Paare von Einrichtungsradwegen, einer je Straßenseite; entlang
+      der Straßenachse liegt unser Wert bei 359 km (−9 % gegenüber Clean Cities) [#recon-copenhagen-cc-km].
+      Art und Datum: Die Zahlen der Stadt und von Clean Cities sind bestehende km,
+      für 2025 gezählt, unsere sind kartierte km im Oktober 2026. Fläche: Beide beziehen
+      sich auf die Gemeinde. Methode: die eigene Zählung der Stadt gegenüber OpenStreetMap;
+      ob Clean Cities die Zahl der Stadt übernommen hat, ist nicht angegeben.
+    src: a7d97cbf3b17
+data_refs:
+  ts-copenhagen:
+    text: velometer-Zeitreihe, copenhagen LAU und FUA (kartierte km)
+    src: fd6bb4b3a54e
+  shift-copenhagen-2025:
+    text: velometer-Untersuchung einer Verschiebung, copenhagen/lau/2025
+    src: aab9096a85c1
+  recon-copenhagen-cc-km:
+    text: velometer-Abgleich, copenhagen/cc_km
+    src: 3dca7b5b65d9
+literals:
+- 100 km
+- '21'
