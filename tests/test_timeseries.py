@@ -23,6 +23,7 @@ from velometer.db import (
     upsert_cities,
 )
 from velometer.models import ActivityYear
+from velometer.reconcile import headings as reconcile_headings
 from velometer.selection import trusted_countries
 
 CFG = load_activity(
@@ -872,6 +873,34 @@ def test_a_stale_german_explanation_is_a_problem_either_way(tmp_path):
         assert [p for p in problems if "stale" in p] == [
             "[de] m3_timeseries.de.md ### berlin/lau/2019: stale (English changed)"
         ]
+
+
+def test_a_construction_verb_in_a_german_explanation_is_a_problem(tmp_path):
+    """ADR 0006 for the German explanations: no construction verb in our prose, whether German
+    is required or not; code spans and quotations „…“ keep the source's words."""
+    body = (
+        "### berlin/lau/2019\n\nEine Zahl dazu, was gebaut wurde, fehlt. `entfernt`\n\n"
+        "### berlin/lau/2022\n\nDie Quelle sagt „neu eröffnet“; ein Tag verschwand.\n"
+    )
+    en, de = _pair(tmp_path, body)
+    T.stamp_explanations(en, de)
+    for required in (False, True):
+        problems, _ = T.german_explanation_problems(en, de, require_de=required)
+        assert [p for p in problems if "construction verb" in p] == [
+            "[de] m3_timeseries.de.md ### berlin/lau/2019: "
+            "construction verb outside a quote: gebaut"
+        ]
+    assert T.german_construction_verbs("Wege wurden entfernt und errichtet.") == [
+        "entfernt", "errichtet"
+    ]  # fmt: skip
+
+
+def test_the_shipped_german_explanations_use_no_construction_verb():
+    de = T.german_explanations(Path(__file__).resolve().parents[1] / "docs/review/m3_timeseries.md")
+    text = de.read_text(encoding="utf-8")
+    found = {k: v for k in reconcile_headings(text) if (v := T.german_construction_verbs(
+        T.explanation(de, k) or ""))}  # fmt: skip
+    assert found == {}
 
 
 def test_a_whitespace_only_english_change_is_not_stale(tmp_path):

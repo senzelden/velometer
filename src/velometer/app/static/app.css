@@ -440,6 +440,14 @@ table.sources th[scope="row"] { white-space: normal; min-width: 8rem; color: var
 table.sources td { min-width: 6.5rem; }
 table.sources details.src-cities summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 table.sources tr.group th { padding-top: 1rem; color: var(--ink); font-size: 1rem; white-space: normal; border-bottom: 2px solid var(--grid-2); }
+/* German pages: long compounds ("Neukartierungskampagne", "Hauptradverkehrsnetz") must not widen
+   the page. Titles hyphenate or break; the sources table hyphenates where the browser can and is
+   set smaller and tighter, so its unbroken words still fit 1280 px (headless Chrome hyphenates
+   nothing) */
+:lang(de) .story-title, :lang(de) .narrative h2, :lang(de) .narrative h3 { hyphens: auto; overflow-wrap: break-word; }
+:lang(de) table.sources { font-size: 0.8rem; }
+:lang(de) table.sources th, :lang(de) table.sources td { hyphens: auto; padding-left: 0.3rem; padding-right: 0.3rem; }
+:lang(de) table.sources td { min-width: 4.5rem; }
 dl.drivers { margin: 0; font-size: 0.88rem; }
 dl.drivers div { margin-bottom: 0.35rem; }
 dl.drivers dt { font-weight: 600; }

@@ -543,6 +543,19 @@ def stamped_explanation(de_path: Path, key: str) -> tuple[str | None, str | None
     return body[m.end() :].strip() or None, m.group(1)
 
 
+# code spans and German quotations „…“ keep the source's words; the rest is our prose
+_NOT_OUR_PROSE = re.compile(r"`[^`]*`|„[^“]*“")
+
+
+def german_construction_verbs(text: str) -> list[str]:
+    """The construction verbs (gebaut, eröffnet, entfernt …) of a German explanation outside
+    code spans and quotations: the explanations speak of mapped km only (ADR 0006), as the
+    content prose does (`content.check.construction_verbs`)."""
+    from velometer.content.check import RULES, construction_verbs
+
+    return construction_verbs(_NOT_OUR_PROSE.sub(" ", text), RULES["de"])
+
+
 def german_explanation_problems(
     en_path: Path, de_path: Path, *, require_de: bool
 ) -> tuple[list[str], list[str]]:
@@ -565,6 +578,8 @@ def german_explanation_problems(
         text, src = stamped_explanation(de_path, key)
         if text is None and explanation(en_path, key) is not None:
             gaps.append(f"[de] {name} ### {key}: missing German text")
+        for verb in german_construction_verbs(text or ""):
+            problems.append(f"[de] {name} ### {key}: construction verb outside a quote: {verb}")
         if src is None:
             gaps.append(f"[de] {name} ### {key}: not stamped")
         elif src != explanation_hash(en_path, key):

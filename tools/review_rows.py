@@ -8,10 +8,12 @@ A row is `{id, group, page, section, kind, file, path, en, de, src, quote}`:
 - `id` is `f"{file}#{path}"`, unique and stable: `file` is the file the German lives in (relative
   to `--root`), `path` the place in it (a walk path, a source field, a catalogue key, a config
   location or an explanation key);
-- `group` is Overview, Stories, a city name, Organisations, Plans, Glosses, UI, Config or Flagged
-  years; `page` and `section` place the row inside it;
+- `group` is Overview, Stories, a city name (the German one where the city has `name_de`; the
+  city groups sort by it), Organisations, Plans, Glosses, UI, Config or Flagged years; `page` and
+  `section` place the row inside it;
 - `kind` is paragraph, heading, title, label, gloss, ui, config or explanation;
-- `en` and `de` are the current texts (`de` is null where the German is missing), `src` the stamp
+- `en` and `de` are the current texts (`de` is null where the German is missing; the `en` of a
+  gloss row is `gloss_en`, or the quotation itself for an English source), `src` the stamp
   of the English the German was made from (the English's own stamp where nothing is stored);
 - `quote` is the original quotation of a gloss row, null elsewhere.
 
@@ -23,6 +25,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from collections import Counter
 from pathlib import Path
 
@@ -151,7 +154,7 @@ def source_rows(content: Path, root: Path) -> list[dict]:
             if str(s.get("language", "")).split("-")[0] == "de":
                 continue  # a German quotation needs no German gloss
             for e in s.get("excerpts", []):
-                en = e.get("gloss_en") or ""
+                en = e.get("gloss_en") or e["text"]  # an English quotation is its own gloss_en
                 rows.append(_row(
                     "Glosses", page, sid, "gloss", file, f"{sid}.{e['id']}.gloss_de", en,
                     e.get("gloss_de"), src_hash(e["text"]), quote=e["text"],
@@ -210,15 +213,21 @@ def explanation_rows(report: Path, root: Path) -> list[dict]:
     return rows
 
 
+def _fold(name: str) -> str:
+    """A sort key that reads "Kraków" as "Krakow" and "Zürich" as "Zurich"."""
+    return unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().casefold()
+
+
 def _group_rank(row: dict) -> tuple[int, str]:
     if row["group"] in GROUPS:
         return GROUPS.index(row["group"]), ""
-    return GROUPS.index(None), row["group"]
+    return GROUPS.index(None), _fold(row["group"])
 
 
 def build_rows(content: Path, config: Path, docs: Path, root: Path = ROOT) -> list[dict]:
     """Every review row, ordered by group, then page (first appearance), then file order."""
-    cities = {c.id: c.name for c in load_cities(config / "cities.yaml")}
+    # the reviewer reads German: a city group is its German name where it has one
+    cities = {c.id: c.name_de or c.name for c in load_cities(config / "cities.yaml")}
     rows = [
         *content_rows(content, root, cities),
         *source_rows(content, root),

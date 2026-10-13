@@ -39,9 +39,29 @@ GLOSSED = {
                     "locator": "p. 1",
                 }
             ],
-        }
+        },
+        {
+            "id": "en-src",
+            "publisher": "City",
+            "title": "Cycling",
+            "url": "https://example.org/en",
+            "accessed": "2026-10-01",
+            "language": "en",
+            "kind": "official",
+            "excerpts": [
+                {
+                    "id": "e1",
+                    "text": "The network is 12 km long.",
+                    "gloss_de": "Das Netz ist 12 km lang.",
+                    "locator": "p. 2",
+                }
+            ],
+        },
     ]
 }
+# a German city name that sorts before "Berlin" only when folded ("Ä" read as "A")
+PARIS_DE = "Ährenstadt"
+BERLIN_CAVEAT = ("DE300 is not only the city (test)", "DE300 ist nicht nur die Stadt (Test)")
 CATALOGUE_EN = {"same.key": "km", "page.a.title": "Figures", "n.cities": {"one": "{n} city",
                 "other": "{n} cities"}}  # fmt: skip
 CATALOGUE_DE = {"same.key": "km", "page.a.title": "Zahlen", "n.cities": {"one": "{n} Stadt",
@@ -78,6 +98,13 @@ def tree(fixture_db, tmp_path):
     for rel in ("narratives/berlin.yaml", "narratives/paris.yaml", "narratives/combined.yaml",
                 "explainer.yaml"):  # fmt: skip
         fake_translate(root / rel, root / tr.twin_path(Path(rel)))
+    cities = yaml.safe_load((config / "cities.yaml").read_text(encoding="utf-8"))
+    for c in cities["cities"]:
+        if c["id"] == "paris":
+            c["name_de"] = PARIS_DE
+        if c["id"] == "berlin":
+            c["nuts3_note"], c["nuts3_note_de"] = BERLIN_CAVEAT
+    (config / "cities.yaml").write_text(yaml.safe_dump(cities, allow_unicode=True), "utf-8")
     (root / "sources" / "glossed.yaml").write_text(
         yaml.safe_dump(GLOSSED, allow_unicode=True), encoding="utf-8"
     )
@@ -179,7 +206,8 @@ def test_ids_are_unique_and_rows_ordered_by_group(tree):
     order = [review_rows._group_rank(r) for r in rows]
     assert order == sorted(order)
     groups = list(dict.fromkeys(r["group"] for r in rows))
-    assert groups == ["Overview", "Stories", "Berlin", "Paris", "Glosses", "UI", "Config",
+    # city groups by their German name, folded: "Ährenstadt" (Paris) before "Berlin"
+    assert groups == ["Overview", "Stories", PARIS_DE, "Berlin", "Glosses", "UI", "Config",
                       "Flagged years"]  # fmt: skip
 
 
@@ -190,3 +218,29 @@ def test_the_cli_writes_the_rows(tree, tmp_path):
             str(docs), "--root", str(tmp_path)]  # fmt: skip
     assert review_rows.main(argv) == 0
     assert json.loads(out.read_text(encoding="utf-8")) == rows
+
+
+def test_an_english_quotation_is_the_english_of_its_gloss_row(tree):
+    rows, *_ = tree
+    row = _by_id(rows)["content/sources/glossed.yaml#en-src.e1.gloss_de"]
+    assert (row["en"], row["quote"], row["de"]) == (
+        "The network is 12 km long.",
+        "The network is 12 km long.",
+        "Das Netz ist 12 km lang.",
+    )
+
+
+def test_the_german_config_siblings_of_task_9_are_rows(tree):
+    """The QECIO caveats (cities.yaml nuts3_note_de) and the German reports.csv notes."""
+    from velometer.plans.models import load_plans, load_report_notes_de
+
+    rows, _root, config, _docs = tree
+    by_id = _by_id(rows)
+    caveat = by_id["config/cities.yaml#berlin.nuts3_note"]
+    assert (caveat["kind"], caveat["en"], caveat["de"]) == ("config", *BERLIN_CAVEAT)
+    _plans, report_rows = load_plans(config / "plans")
+    notes = load_report_notes_de(config / "plans", report_rows)
+    assert notes
+    for en, de in notes.items():
+        row = by_id[f"config/plans/reports_notes_de.yaml#notes.{tr.src_hash(en)}"]
+        assert (row["en"], row["de"]) == (en, de)
