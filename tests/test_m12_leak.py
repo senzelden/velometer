@@ -2,6 +2,7 @@
 page, outside `lang="en"` subtrees, holds no English phrase of a phrase source. English content
 shown for want of a German translation is inside `lang="en" data-fallback`, so it is no leak."""
 
+import re
 from pathlib import Path
 
 from tests.test_a11y import all_page_urls  # noqa: F401
@@ -51,3 +52,42 @@ def test_phrase_sources_are_real():
     """Each source gives phrases: a source that silently returned nothing would pass every page."""
     for name, source in leak_sources().items():
         assert len(source()) > 10, name
+
+
+# --- runtime text: what Python builds at request time (provenance lines, flag details) is in no
+# phrase source, so a sniff of English function words guards it, whatever the generators say ---
+
+# common English words that are no German word: function words, and the vocabulary of
+# provenance and activity notes in general (not today's generator output)
+ENGLISH_WORDS = frozenset({
+    "the", "and", "of", "with", "from", "for", "to", "is", "are", "were", "by", "not",
+    "which", "this", "that", "needs", "limit", "retrieved", "edits", "share", "sources", "none",
+    "boundary", "run", "runs", "classifier", "top", "mapper", "file", "history", "current",
+    "population", "held", "constant",
+})  # fmt: skip
+# a word standing alone: identifiers (`activity_spike`, `legacy_km`) and ids with digits are code
+WORD = re.compile(r"(?<![\w.+-])[A-Za-z]+(?![\w+-])")
+
+
+def english_words(html: str) -> list[str]:
+    """The English function words in the text a German reader sees outside lang="en"."""
+    return sorted({w for w in WORD.findall(i18n.visible_text(html)) if w.lower() in ENGLISH_WORDS})
+
+
+def test_no_english_words_on_german_city_pages(client, all_page_urls):  # noqa: F811
+    """Every German city page but the Figures tab (its reported-figure rows quote the sources'
+    own titles and descriptions, which stay original) has no English function word outside
+    lang="en"; the Over time tab's provenance lines and flag details are built at request time."""
+    pages = [u for u in all_page_urls if u.startswith("/de/city/") and "/figures" not in u]
+    assert any(u.endswith("/time") for u in pages)
+    found = {u: w for u in pages if (w := english_words(client.get(u).text))}
+    assert found == {}
+
+
+def test_the_runtime_sniff_sees_the_over_time_generators(client):  # noqa: F811
+    """The fixture's German Over time tab shows a flag detail and the comparison line, so the
+    sniff above has generated text to read."""
+    html = client.get("/de/city/berlin/time").text
+    assert 'class="meta"' in html and i18n.t("de", "page.time.comparison") in html
+    assert english_words("<p>retrieved the edits</p>") == ["edits", "retrieved", "the"]
+    assert english_words("<p>activity_spike legacy_km <code>run</code></p>") == []

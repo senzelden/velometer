@@ -151,3 +151,20 @@ test("plainText joins soft-wrapped lines but keeps paragraphs and list items", (
   assert.equal(plainText("one\n\ntwo"), "one\n\ntwo");
   assert.equal(plainText("intro\n- a\n- b"), "intro\n- a\n- b");
 });
+
+test("a flag explanation still in English on a German page is marked lang=en data-fallback", async () => {
+  const { flagParagraphs } = await import("../compare-model.js");
+  const D = {
+    explanations: { timeseries: { "b/lau/2022": "First **cause**.\n\nSecond.", "b/lau/2023": "Ursache." } },
+    explanationFallback: new Set(["b/lau/2022"]),
+  };
+  const english = { lang: "en", "data-fallback": "" };
+  assert.deepEqual(flagParagraphs(D, "b/lau/2022"), [
+    { attrs: english, text: "First cause." },
+    { attrs: english, text: "Second." },
+  ]);
+  assert.deepEqual(flagParagraphs(D, "b/lau/2023"), [{ attrs: {}, text: "Ursache." }]);
+  assert.deepEqual(flagParagraphs(D, "b/lau/2024"), []);
+  // an English page has no fallback set: nothing is marked
+  assert.deepEqual(flagParagraphs({ explanations: D.explanations }, "b/lau/2022")[0].attrs, {});
+});

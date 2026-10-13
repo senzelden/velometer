@@ -8,7 +8,7 @@ import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import { onThemeChange, seriesColours, token } from "./theme.js";
 import {
-  buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, plainText, popPlan,
+  buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, flagParagraphs, popPlan,
   queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
 import { counterContext, counterTitle } from "./counter-model.js";
@@ -179,18 +179,15 @@ const tipFor = (model) => (s, p, label) => {
 
 function showFlag(id, label, rawLabel) {
   const key = `${id}/${state.b}/${rawLabel}`;
-  const raw = D.explanations?.timeseries?.[key];
-  const text = raw ? plainText(raw) : null;
+  const paragraphs = flagParagraphs(D, key);
   const box = out.flag;
   box.replaceChildren();
   const head = el("h3", { tabindex: "-1" }, t("js.compare.flag_head", { city: D.cities[id].name, label }));
   const close = el("button", { type: "button", class: "flag-close", "aria-label": t("js.compare.dismiss") }, "×");
   close.addEventListener("click", () => (box.hidden = true));
   box.append(close, head);
-  if (text) {
-    // an explanation still in English on a German page: lang="en", as the server marks it
-    const english = D.explanationFallback?.has(key) ? { lang: "en", "data-fallback": "" } : {};
-    for (const para of text.split(/\n{2,}/)) box.append(el("p", english, para.trim()));
+  if (paragraphs.length) {
+    for (const { attrs, text } of paragraphs) box.append(el("p", attrs, text));
   } else {
     box.append(el("p", { class: "note" }, t("js.compare.no_explanation")));
   }

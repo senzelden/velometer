@@ -105,7 +105,7 @@
 <tbody>
 {% for year, views in s.years %}{% for v in views %}
 <tr{% if v.row.suspect %} class="flagged"{% endif %}><td class="num" data-label="{{ t('table.year') }}">{{ year }}</td><td class="num" data-label="{{ t('table.value') }}">{{ v.value }} {{ v.unit }}</td><td data-label="{{ t('table.status') }}">{% if v.row.suspect %}<span class="flagmark" aria-hidden="true">⚑</span> {% endif %}{{ status(v) }}</td><td data-label="{{ t('table.document') }}">{{ doc_ref(v) }}<br><span class="meta"{% if lang == 'de' %} lang="en"{% endif %}>{{ v.row.locator }}</span></td></tr>
-{% if v.row.note %}<tr class="note-row"><td colspan="4" class="meta" data-label="{{ t('table.year') }}">{{ v.row.note }}</td></tr>{% endif %}
+{% if v.note %}<tr class="note-row"><td colspan="4" class="meta" data-label="{{ t('table.year') }}"{{ fb(v.note_fallback) }}>{{ v.note }}</td></tr>{% endif %}
 {% endfor %}{% endfor %}
 </tbody>
 </table>

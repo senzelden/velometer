@@ -467,6 +467,21 @@ time.provenance.classifier: classifier {version} `{parameters}`
 time.provenance.config: config `{sha}`
 time.provenance.population: population {year} held constant
 time.provenance.no_population: no population (per-100k n/a)
+reconcile.provenance.run: run {run}
+reconcile.provenance.osm: OSM {osm}
+reconcile.provenance.classifier: classifier {version} `{parameters}`
+reconcile.provenance.config: config `{sha}`{parameters}
+reconcile.provenance.commit: commit `{commit}`
+reconcile.provenance.boundary: boundary {kind} `{sha}`
+reconcile.provenance.sources: 'sources: {sources}'
+reconcile.provenance.no_sources: none
+reconcile.provenance.source: '{source} retrieved {dates}'
+reconcile.provenance.file_md5: ', file md5 {md5}'
+time.flag.km_jump: A+B km {before} -> {after} (needs {need})
+time.flag.tag_drift: '{metric} {before} -> {after}'
+time.flag.activity_spike: '{edits} edits (limit {limit})'
+time.flag.campaign_suspected: '{jump} and {spike}'
+time.flag.single_mapper: top mapper share {share}
 unit.preset: '{tiers} km per 100 km of {road_class}'
 road_class.main_excl_motorway: main roads (excl. motorways)
 road_class.main_incl_motorway: main roads (incl. motorways)

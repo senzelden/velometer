@@ -458,6 +458,21 @@ time.provenance.classifier: Klassifikator {version} `{parameters}`
 time.provenance.config: Konfiguration `{sha}`
 time.provenance.population: Einwohnerzahl {year} konstant gehalten
 time.provenance.no_population: keine Einwohnerzahl (je 100.000 Einwohner k. A.)
+reconcile.provenance.run: Lauf {run}
+reconcile.provenance.osm: OSM {osm}
+reconcile.provenance.classifier: Klassifikator {version} `{parameters}`
+reconcile.provenance.config: Konfiguration `{sha}`{parameters}
+reconcile.provenance.commit: Commit `{commit}`
+reconcile.provenance.boundary: Gebietsgrenze {kind} `{sha}`
+reconcile.provenance.sources: 'Quellen: {sources}'
+reconcile.provenance.no_sources: keine
+reconcile.provenance.source: '{source} abgerufen {dates}'
+reconcile.provenance.file_md5: ', Datei-MD5 {md5}'
+time.flag.km_jump: A+B-km {before} -> {after} (Schwelle {need})
+time.flag.tag_drift: '{metric} {before} -> {after}'
+time.flag.activity_spike: '{edits} Bearbeitungen (Grenzwert {limit})'
+time.flag.campaign_suspected: '{jump} und {spike}'
+time.flag.single_mapper: Anteil des aktivsten Mappers {share}
 unit.preset: '{tiers}-km je 100 km {road_class}'
 road_class.main_excl_motorway: Hauptstraßen (ohne Autobahnen)
 road_class.main_incl_motorway: Hauptstraßen (mit Autobahnen)

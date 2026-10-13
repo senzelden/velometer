@@ -336,7 +336,7 @@ class ReportData:
 
     def flags(self, city_id: str, kind: str) -> list[ts.Flag]:
         cs = self.series(city_id, kind)
-        return [] if cs is None else ts.city_flags(cs, self.activity)
+        return [] if cs is None else ts.city_flags(cs, self.activity, self.lang)
 
     def reconcile(self, city_id: str) -> rc.CityReport | None:
         sel = self.selector
@@ -349,6 +349,7 @@ class ReportData:
             classifier_parameters=sel.parameters,
             config_sha256=sel.config_sha256,
             presets=sel.presets,
+            lang=self.lang,
         )
 
     # --- rankings -----------------------------------------------------------------------

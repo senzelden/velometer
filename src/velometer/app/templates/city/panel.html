@@ -33,7 +33,7 @@
 {% set shown = namespace(n=0) %}
 {% for k in kinds %}{% for f in k.flags %}{% set shown.n = shown.n + 1 %}
 <details class="flag-item"><summary>{{ f.flag.label | when }} · {{ k.kind | upper }} <span class="rule">{{ f.flag.rules | join(", ") }}</span></summary>
-{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>{% else %}<p class="note">{{ t('page.panel.no_explanation') }}</p>{% endif %}
+{% if f.explanation %}<div class="explanation"{{ fb(f.explanation) }}>{{ f.explanation | md }}</div>{% else %}<p class="note">{{ t('page.panel.no_explanation') }}</p>{% endif %}
 </details>
 {% endfor %}{% endfor %}
 {% if not shown.n %}<p class="note">{{ t('note.no_flagged_years') }}</p>{% endif %}

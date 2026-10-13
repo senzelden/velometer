@@ -21,18 +21,27 @@ WRAPPER = re.compile(
 )
 BARE_TABLE = re.compile(r"<table>")
 TAG = re.compile(r"<(/?)(div|section)\b[^>]*>")
-HEADING = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.S)
-CAPTION = re.compile(r"<caption\b[^>]*>(.*?)</caption>", re.S)
+HEADING = re.compile(r"<h[1-6]\b([^>]*)>(.*?)</h[1-6]>", re.S)
+CAPTION = re.compile(r"<caption\b([^>]*)>(.*?)</caption>", re.S)
+LANG_ATTR = re.compile(r'\blang="([^"]*)"')
 
 
 def _text(fragment: str) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", "", fragment)).split())
 
 
-def _first(pattern: re.Pattern, fragment: str) -> str:
+def _usable(attrs: str, text: str, lang: Lang) -> bool:
+    """A name source with text; on a German page also in German: a heading still in English
+    there (lang="en" data-fallback) would give the region an English name outside lang="en".
+    English pages name regions as they did before M12."""
+    other = LANG_ATTR.search(attrs)
+    return bool(text) and (lang == "en" or other is None or other.group(1) == lang)
+
+
+def _first(pattern: re.Pattern, fragment: str, lang: Lang) -> str:
     for m in pattern.finditer(fragment):
-        if _text(m.group(1)):
-            return _text(m.group(1))
+        if _usable(m.group(1), _text(m.group(2)), lang):
+            return _text(m.group(2))
     return ""
 
 
@@ -48,12 +57,12 @@ def _extent(page: str, m: re.Match) -> int:
     return len(page)
 
 
-def _name(page: str, start: int, inner: str, fallback: str) -> str:
-    name = _first(CAPTION, inner) or _first(HEADING, inner)
+def _name(page: str, start: int, inner: str, fallback: str, lang: Lang) -> str:
+    name = _first(CAPTION, inner, lang) or _first(HEADING, inner, lang)
     if name:
         return name
-    for h in reversed(HEADING.findall(page[:start])):
-        if _text(h):
+    for attrs, h in reversed(HEADING.findall(page[:start])):
+        if _usable(attrs, _text(h), lang):
             return _text(h)
     return fallback
 
@@ -75,14 +84,14 @@ def name_scroll_regions(page: str, lang: Lang = "en") -> str:
     wrappers = [(m, _extent(page, m)) for m in WRAPPER.finditer(page)]
     edits: list[tuple[int, int, str]] = []  # (start, end, replacement)
     for m, end in wrappers:
-        name = _name(page, m.start(), page[m.end() : end], t(lang, "regions.scroll"))
+        name = _name(page, m.start(), page[m.end() : end], t(lang, "regions.scroll"), lang)
         edits.append((m.start(), m.end(), m.group(0)[:-1] + _attrs(m.group(2), True, name) + ">"))
     for m in BARE_TABLE.finditer(page):
         if any(w.start() < m.start() < end for w, end in wrappers):
             continue
         close = page.find("</table>", m.end())
         inner = page[m.end() : close if close >= 0 else len(page)]
-        name = _name(page, m.start(), inner, t(lang, "regions.table"))
+        name = _name(page, m.start(), inner, t(lang, "regions.table"), lang)
         edits.append((m.start(), m.end(), "<table" + _attrs("", False, name) + ">"))
     out, last = [], 0
     for start, end, text in sorted(edits):

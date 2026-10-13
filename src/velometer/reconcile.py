@@ -23,6 +23,7 @@ from velometer.db import (
     fetch_run_results,
     latest_done_run,
 )
+from velometer.i18n import Lang, t
 from velometer.models import ExternalFigure
 from velometer.pipeline.measure import select_metric
 
@@ -233,22 +234,38 @@ def _parameters_text(parameters: PresetParameters | None) -> str:
 
 
 def provenance_line(
-    run: dict, figures: list[ExternalFigure], parameters: PresetParameters | None = None
+    run: dict,
+    figures: list[ExternalFigure],
+    parameters: PresetParameters | None = None,
+    lang: Lang = "en",
 ) -> str:
+    """One line: run, OSM time, classifier, config, commit, boundary and the sources' retrieval
+    dates, in `lang` (the `reconcile.provenance.*` keys); ids, hashes and md5s stay as code."""
     sources = []
     for source in sorted({f.source for f in figures}):
         figs = [f for f in figures if f.source == source]
         got = ", ".join(sorted({str(f.retrieved_at) for f in figs}))
         md5s = sorted({m.group(1) for f in figs for m in [_QECIO_MD5.search(f.note)] if m})
-        sources.append(f"{source} retrieved {got}" + "".join(f", file md5 {m}" for m in md5s))
-    return (
-        f"run {run['id']} · OSM {run['osm_timestamp']} · classifier "
-        f"{run['classifier_version']} `{run['classifier_parameters']}` · config "
-        f"`{(run.get('config_sha256') or 'n/a')[:12]}`{_parameters_text(parameters)} · commit "
-        f"`{short_commit(run['git_commit'])}`"
-        f" · boundary {run['boundary_kind']} `{run['boundary_sha256'][:12]}` · sources: "
-        + ("; ".join(sources) or "none")
-    )
+        sources.append(
+            t(lang, "reconcile.provenance.source", source=source, dates=got)
+            + "".join(t(lang, "reconcile.provenance.file_md5", md5=m) for m in md5s)
+        )
+    config = (run.get("config_sha256") or "")[:12] or t(lang, "fmt.na")
+    return " · ".join(
+        [
+            t(lang, "reconcile.provenance.run", run=run["id"]),
+            t(lang, "reconcile.provenance.osm", osm=run["osm_timestamp"]),
+            t(lang, "reconcile.provenance.classifier", version=run["classifier_version"],
+              parameters=run["classifier_parameters"]),
+            t(lang, "reconcile.provenance.config", sha=config,
+              parameters=_parameters_text(parameters)),
+            t(lang, "reconcile.provenance.commit", commit=short_commit(run["git_commit"])),
+            t(lang, "reconcile.provenance.boundary", kind=run["boundary_kind"],
+              sha=run["boundary_sha256"][:12]),
+            t(lang, "reconcile.provenance.sources",
+              sources="; ".join(sources) or t(lang, "reconcile.provenance.no_sources")),
+        ]
+    )  # fmt: skip
 
 
 def not_in_source_for(
@@ -326,8 +343,10 @@ def reconcile_city(
     classifier_parameters: str = DEFAULT_PARAMETERS,
     config_sha256: str | None = None,
     presets: PresetsConfig,
+    lang: Lang = "en",
 ) -> CityReport | None:
-    """The city's latest done run (for this classifier, parameters and config) vs its figures."""
+    """The city's latest done run (for this classifier, parameters and config) vs its figures;
+    the provenance line in `lang`."""
     cfg = load_config(config_path)
     run_id = latest_done_run(
         conn, city_id, boundary_kind, classifier_version, classifier_parameters, config_sha256
@@ -349,7 +368,7 @@ def reconcile_city(
         mismatch=cfg.get("boundary_mismatch") or {},
         nuts3_is_city=None if city is None else city.nuts3_is_city,
     )
-    provenance = provenance_line(fetch_run(conn, run_id), figures, presets.parameters)
+    provenance = provenance_line(fetch_run(conn, run_id), figures, presets.parameters, lang)
     return CityReport(city_id, run_id, provenance, gaps, not_in_source)
 
 

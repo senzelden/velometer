@@ -315,6 +315,30 @@ def test_suspect_note_without_german_is_marked_on_german_plan_pages(setup):  # n
     assert all(a == "" for a in re.findall(r'<span class="meta suspect-note"([^>]*)>', en))
 
 
+def test_every_report_note_without_german_is_marked_on_the_german_plan_page(setup):  # noqa: F811
+    """Not only the suspect notes: the note row under each figure of the Berlin plan's series
+    is English on a German page until reports_notes_de.yaml has its sibling."""
+    with app_for(setup) as c:
+        de = c.get("/de/plans/berlin").text
+        en = c.get("/plans/berlin").text
+    rows = re.findall(r'<tr class="note-row"><td ([^>]*)>', de)
+    assert rows and all('lang="en" data-fallback' in a for a in rows)
+    assert all("lang=" not in a for a in re.findall(r'<tr class="note-row"><td ([^>]*)>', en))
+
+
+def test_a_region_is_never_named_after_a_fallback_heading_on_a_german_page():
+    from velometer.app.regions import name_scroll_regions
+
+    page = (
+        '<h2>Deutsche Überschrift</h2><h2 lang="en" data-fallback>English heading</h2>'
+        '<div class="scroll"><table></table></div>'
+    )
+    assert 'aria-label="Deutsche Überschrift"' in name_scroll_regions(page, "de")
+    assert 'aria-label="English heading"' in name_scroll_regions(page, "en")
+    inner = '<div class="scroll"><h3 lang="en" data-fallback>Only English</h3><table></table></div>'
+    assert "Only English" not in name_scroll_regions(inner, "de").split(">", 1)[0]
+
+
 def test_report_notes_de_must_name_a_reports_csv_note(tmp_path):
     from velometer.config import ConfigError
     from velometer.plans.models import REPORT_NOTES_DE_FILE, load_plans, load_report_notes_de

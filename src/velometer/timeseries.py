@@ -250,12 +250,19 @@ def flags(
     current_fraction: float,
     city_id: str = "",
     kind: str = "",
+    lang: str = "en",
 ) -> list[Flag]:
-    """Spec §2.13. Only the km floors and the spike threshold scale for the current point.
+    """Spec §2.13. Only the km floors and the spike threshold scale for the current point. The
+    details are in `lang` (the `time.flag.*` keys); rule codes and metric names stay as code.
 
     Change rules (km_jump, tag_drift) compare consecutive points only: never across a gap.
     """
-    t = cfg.flags
+    from velometer.i18n import fmt, t
+
+    def km(v: float) -> str:
+        return fmt(v, ".1f", lang)
+
+    th = cfg.flags
     edits = [p.activity.n_edits for p in points if p.label != CURRENT and p.activity is not None]
     median = statistics.median(edits) if edits else None
     out = []
@@ -266,26 +273,42 @@ def flags(
         if i > 0 and _consecutive(points[i - 1], p):
             prev = points[i - 1]
             delta = p.ab_km - prev.ab_km
-            need = max(t.km_jump_pct / 100 * prev.ab_km, t.km_jump_min_km * scale)
+            need = max(th.km_jump_pct / 100 * prev.ab_km, th.km_jump_min_km * scale)
             jump = abs(delta) >= need
             if jump:
-                rules["km_jump"] = f"A+B km {prev.ab_km:.1f} -> {p.ab_km:.1f} (needs {need:.1f})"
+                rules["km_jump"] = t(
+                    lang, "time.flag.km_jump", before=km(prev.ab_km), after=km(p.ab_km),
+                    need=km(need),
+                )  # fmt: skip
             for name, a, b in (
                 ("legacy_km", prev.legacy_km, p.legacy_km),
                 ("unrecognised_km", prev.unrecognised_km, p.unrecognised_km),
             ):
-                if _drift(a, b, t.tag_drift_pct, t.tag_drift_min_km * scale):
-                    rules.setdefault("tag_drift", f"{name} {a:.1f} -> {b:.1f}")
+                if _drift(a, b, th.tag_drift_pct, th.tag_drift_min_km * scale):
+                    rules.setdefault(
+                        "tag_drift",
+                        t(lang, "time.flag.tag_drift", metric=name, before=km(a), after=km(b)),
+                    )
         spike = False
         if p.activity is not None and median:  # no median or 0: nothing to spike against
-            limit = t.activity_spike_factor * median * scale
+            limit = th.activity_spike_factor * median * scale
             spike = p.activity.n_edits >= limit
             if spike:
-                rules["activity_spike"] = f"{p.activity.n_edits} edits (limit {limit:.1f})"
+                rules["activity_spike"] = t(
+                    lang, "time.flag.activity_spike", edits=p.activity.n_edits, limit=km(limit)
+                )
         if jump and spike:
-            rules["campaign_suspected"] = "km_jump and activity_spike"
-        if jump and p.activity is not None and p.activity.top_mapper_share >= t.single_mapper_share:
-            rules["single_mapper"] = f"top mapper share {p.activity.top_mapper_share:.2f}"
+            rules["campaign_suspected"] = t(
+                lang, "time.flag.campaign_suspected", jump="km_jump", spike="activity_spike"
+            )
+        if (
+            jump
+            and p.activity is not None
+            and p.activity.top_mapper_share >= th.single_mapper_share
+        ):
+            rules["single_mapper"] = t(
+                lang, "time.flag.single_mapper", share=fmt(p.activity.top_mapper_share, ".2f", lang)
+            )
         if rules:
             ordered = [
                 r
@@ -413,10 +436,11 @@ def build_city(
     )
 
 
-def city_flags(cs: CitySeries, cfg: ActivityConfig) -> list[Flag]:
+def city_flags(cs: CitySeries, cfg: ActivityConfig, lang: str = "en") -> list[Flag]:
     return flags(
-        cs.points, cfg, current_fraction=cs.current_fraction, city_id=cs.city_id, kind=cs.kind
-    )
+        cs.points, cfg, current_fraction=cs.current_fraction, city_id=cs.city_id, kind=cs.kind,
+        lang=lang,
+    )  # fmt: skip
 
 
 def check_markers(path: Path) -> None:

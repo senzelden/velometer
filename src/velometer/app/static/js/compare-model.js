@@ -155,6 +155,20 @@ export function orderCities(current, checked) {
   return [...current.filter((id) => set.has(id)), ...checked.filter((id) => !current.includes(id))];
 }
 
+/**
+ * A flagged year's explanation as plain paragraphs, each with the attributes of its element:
+ * `lang="en" data-fallback` when the text is still English on a German page (as the server
+ * marks it); [] when the year has no explanation.
+ */
+export function flagParagraphs(D, key) {
+  const raw = D.explanations?.timeseries?.[key];
+  if (!raw) return [];
+  const attrs = D.explanationFallback?.has(key) ? { lang: "en", "data-fallback": "" } : {};
+  return plainText(raw)
+    .split(/\n{2,}/)
+    .map((para) => ({ attrs: { ...attrs }, text: para.trim() }));
+}
+
 /** Explanation text without Markdown markers (the note shows plain text). */
 export function plainText(md) {
   return String(md)
