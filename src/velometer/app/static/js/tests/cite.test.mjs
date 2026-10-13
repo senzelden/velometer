@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { useLang } from "./strings-fixture.mjs";
 import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson, multiFields } from "../cite.js";
 
 // shared with tests/test_m11.py, so the Python and JS formatting rules agree
@@ -18,11 +19,21 @@ const docWithBase = (content) => ({
 
 test("cite: the shared cases give the same text, BibTeX and CSL-JSON", () => {
   assert.ok(CASES.length >= 5);
+  assert.deepEqual([...new Set(CASES.map((c) => c.lang))].sort(), ["de", "en"]);
   for (const c of CASES) {
-    assert.equal(citeText(c.fields, c.accessed, c.url), c.text, c.name);
-    assert.equal(citeBibtex(c.fields, c.accessed, c.url), c.bibtex, c.name);
-    assert.deepEqual(citeCsl(c.fields, c.accessed, c.url), c.csl, c.name);
-    assert.equal(cslJson(citeCsl(c.fields, c.accessed, c.url)), c.csl_text, c.name);
+    useLang(c.lang); // a page has the strings of its own language
+    assert.equal(citeText(c.fields, c.accessed, c.url, c.lang), c.text, c.name);
+    assert.equal(citeBibtex(c.fields, c.accessed, c.url, c.lang), c.bibtex, c.name);
+    assert.deepEqual(citeCsl(c.fields, c.accessed, c.url, c.lang), c.csl, c.name);
+    assert.equal(cslJson(citeCsl(c.fields, c.accessed, c.url, c.lang)), c.csl_text, c.name);
+  }
+  useLang("en");
+});
+
+test("German BibTeX says language = {german} and CSL-JSON says language de; English neither", () => {
+  for (const c of CASES) {
+    assert.equal(c.bibtex.includes("language = {german}"), c.lang === "de", c.name);
+    assert.equal(c.csl.language === "de", c.lang === "de", c.name);
   }
 });
 
@@ -68,6 +79,8 @@ test("absoluteUrl takes the slashless path the page emits, under / and a base", 
 test("multiFields agrees with the shared cases (tests/cite_cases.json, multi)", () => {
   assert.ok(SHARED.multi.length >= 3);
   for (const c of SHARED.multi) {
+    useLang(c.lang);
     assert.deepEqual(multiFields(c.runs, c.ids, c.title, c.path, c.commit), c.expected, c.name);
   }
+  useLang("en");
 });

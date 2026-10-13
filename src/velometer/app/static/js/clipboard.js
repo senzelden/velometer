@@ -2,6 +2,7 @@
 // the permalink button. Where the clipboard is refused (an insecure origin, a denied permission,
 // no API) the text is selected in the matching <pre> so Ctrl+C finishes the job.
 import { announce as say } from "./live.js";
+import { t } from "./strings.js";
 
 /**
  * Resolve "copied" after `nav.clipboard.writeText`, or "selected" after selecting the `<pre>`
@@ -10,7 +11,7 @@ import { announce as say } from "./live.js";
 export async function copyText(text, { nav = globalThis.navigator, doc = globalThis.document, announce = say } = {}) {
   try {
     await nav.clipboard.writeText(text);
-    announce("Copied");
+    announce(t("js.clipboard.copied"));
     return "copied";
   } catch {
     const pre = [...(doc?.querySelectorAll?.("pre") ?? [])].find((p) => p.textContent === text);
@@ -21,7 +22,7 @@ export async function copyText(text, { nav = globalThis.navigator, doc = globalT
       sel.removeAllRanges();
       sel.addRange(range);
     }
-    announce("Press Ctrl+C to copy");
+    announce(t("js.clipboard.press"));
     return "selected";
   }
 }

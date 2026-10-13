@@ -42,8 +42,14 @@ QUICK_SETS: dict[str, list[str] | None] = {
 # `compare.group.<id>`, keyed by QUICK_SETS)
 METRIC_IDS: tuple[str, ...] = METRICS
 VIEW_IDS: tuple[str, ...] = VIEWS
-# The English notes and counter texts under their M8 names: tests and counter-model.js's mirror
-# read them; the pages use the `counts.*` and `compare.*` keys in the page language.
+# The English notes and counter texts under their M8 names (tests read them); the pages use the
+# `counts.*` and `compare.*` keys in the page language, counter-model.js the `js.counts.*` twins.
+# COUNTER_KEYS: the keys these constants are read from.
+COUNTER_KEYS: tuple[str, ...] = (
+    "compare.no_index", "compare.fua_note", "counts.no_counters", "counts.no_line",
+    "counts.config_error", "counts.title", "counts.context", "counts.foot", "counts.data",
+    "counts.not_recorded", "counts.avg_daily", "counts.of", "counts.any_base",
+)  # fmt: skip
 NO_INDEX = t("en", "compare.no_index")
 FUA_NOTE = t("en", "compare.fua_note")
 NO_COUNTERS = t("en", "counts.no_counters")

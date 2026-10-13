@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { copyText } from "../clipboard.js";
 
 // a document with one <pre> holding `text`, and a selection that records what is selected

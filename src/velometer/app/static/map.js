@@ -6,6 +6,8 @@
 // data: popups are built with textContent, never innerHTML.
 import { TIERMAP, read, readerMoves, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
+import { number } from "./js/fmt.js";
+import { t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -29,7 +31,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     maxZoom: 19,
     className: cfg.tile_class, // muted in app.css; the vector canvas is not
     attribution:
-      '© <a href="' + cfg.links.copyright + '">OpenStreetMap contributors</a>',
+      '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
   }).addTo(map);
 
   function say(text) {
@@ -79,17 +81,17 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
       else dd.textContent = value === null || value === undefined ? "–" : String(value);
       dl.appendChild(dd);
     }
-    var link = el("a", "way " + p.way_id, {
+    var link = el("a", t("js.map.way", { id: p.way_id }), {
       href: cfg.links.way + encodeURIComponent(p.way_id),
       target: "_blank",
       rel: "noopener noreferrer",
     });
     row("OSM", link);
-    row("side", p.side);
-    row("tier", cfg.labels[p.tier] || p.tier);
-    row("subtype", p.subtype);
-    row("rule", p.rule_id);
-    row("km", typeof p.km === "number" ? p.km.toFixed(3) : p.km);
+    row(t("js.map.side"), p.side);
+    row(t("js.map.tier"), cfg.labels[p.tier] || p.tier);
+    row(t("js.map.subtype"), p.subtype);
+    row(t("js.map.rule"), p.rule_id);
+    row("km", typeof p.km === "number" ? number(p.km, 3) : p.km);
     box.appendChild(dl);
     var keys = Object.keys(p.tags || {}).sort();
     if (keys.length) {
@@ -158,11 +160,10 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     else if (bounds.isValid()) map.fitBounds(bounds, { animate: false });
     fitting = false;
     var p = data.properties || {};
-    say(
-      kind.toUpperCase() + " · " + data.features.length + " sides · OSM " + p.osm_timestamp +
-        " · classifier " + p.classifier + " · run " + p.run_id +
-        ". Click a side for its way, tier, rule and tags."
-    );
+    say(t("js.map.status", {
+      kind: kind.toUpperCase(), n: data.features.length, osm: p.osm_timestamp,
+      classifier: p.classifier, run: p.run_id,
+    }));
   }
 
   function load(kind) {
@@ -170,7 +171,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
     if (!entry) return;
     selected = kind;
     if (cache[kind]) return show(kind, cache[kind]);
-    say("Loading " + entry.label + " map …");
+    say(t("js.map.loading", { kind: entry.label }));
     fetch(entry.url)
       .then(function (r) {
         if (!r.ok) throw new Error(r.status + " " + r.statusText);
@@ -181,7 +182,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
         if (selected === kind) show(kind, data); // else a late answer for a kind left
       })
       .catch(function (e) {
-        if (selected === kind) say("Could not load the " + entry.label + " map: " + e.message);
+        if (selected === kind) say(t("js.map.failed", { kind: entry.label, reason: e.message }));
       });
   }
 

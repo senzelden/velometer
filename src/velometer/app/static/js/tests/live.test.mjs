@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { announce } from "../live.js";
 import { compareSummary, panelAnnouncement } from "../compare-model.js";
 import { mount, releaser } from "../data.js";

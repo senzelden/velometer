@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 
 // Minimal stub DOM for renderPlanChart (as chart.test.mjs): any innerHTML write is a failure.
 class Node {

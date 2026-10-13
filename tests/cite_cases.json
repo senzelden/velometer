@@ -2,6 +2,7 @@
  "cases": [
   {
    "name": "city view with a run",
+   "lang": "en",
    "fields": {
     "title": "Berlin, headline (A+B km per 100 km of main roads), city proper (LAU), Oct 2026",
     "path": "/city/berlin/time",
@@ -49,6 +50,7 @@
   },
   {
    "name": "multi-city view, no run, snapshot note",
+   "lang": "en",
    "fields": {
     "title": "Berlin, Paris: headline, city proper (LAU), Oct 2026",
     "path": "/compare",
@@ -96,6 +98,7 @@
   },
   {
    "name": "title with & _ % { } #, dirty commit, year from the run",
+   "lang": "en",
    "fields": {
     "title": "Cologne & Bonn_x: 100% {A+B} #1",
     "path": "/city/cologne",
@@ -143,6 +146,7 @@
   },
   {
    "name": "no url: the text ends at the attribution",
+   "lang": "en",
    "fields": {
     "title": "Paris, tiers, city proper (LAU), Oct 2026",
     "path": "/city/paris/tiers",
@@ -189,6 +193,7 @@
   },
   {
    "name": "url with a query and a hash under base /velometer/",
+   "lang": "en",
    "fields": {
     "title": "Berlin, tiers, functional area (FUA), Oct 2026",
     "path": "/city/berlin/tiers",
@@ -236,6 +241,7 @@
   },
   {
    "name": "url but no accessed date, default attribution omitted from fields",
+   "lang": "en",
    "fields": {
     "title": "Paris, headline, city proper (LAU), Oct 2026",
     "path": "/city/paris",
@@ -273,6 +279,7 @@
   },
   {
    "name": "hostile query in the url, backslash dollar tilde caret in the title, specials in the note",
+   "lang": "en",
    "fields": {
     "title": "A\\B $5 ~ x^2",
     "path": "/city/berlin",
@@ -317,11 +324,149 @@
     "version": "abc1234"
    },
    "csl_text": "{\n  \"type\": \"dataset\",\n  \"id\": \"velometer_a_b_5_x_2_20261011\",\n  \"title\": \"A\\\\B $5 ~ x^2\",\n  \"author\": [\n    {\n      \"literal\": \"velometer\"\n    }\n  ],\n  \"issued\": {\n    \"date-parts\": [[2026]]\n  },\n  \"accessed\": {\n    \"date-parts\": [[2026, 10, 11]]\n  },\n  \"URL\": \"https://x.org/city/berlin?x=}\\\\input{/etc/passwd}{ a%20b#h\",\n  \"note\": \"OSM snapshot 2026-10-03T21:00:00Z; classifier v4_rc#1; run 12; commit abc1234. Map data © OpenStreetMap contributors, ODbL 1.0.\",\n  \"version\": \"abc1234\"\n}"
+  },
+  {
+   "name": "German city view with a run",
+   "lang": "de",
+   "fields": {
+    "title": "Krakau: Zeitverlauf",
+    "path": "/de/city/krakow/time",
+    "osm_timestamp": "2026-10-03T21:00:00Z",
+    "snapshot_note": null,
+    "classifier": "v4",
+    "run_id": "123",
+    "commit": "abc1234",
+    "attribution": "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0"
+   },
+   "accessed": "2026-10-12",
+   "url": "https://example.org/velometer/de/city/krakow/time",
+   "text": "velometer (2026). Krakau: Zeitverlauf [Datensatz]. OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 123; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0. https://example.org/velometer/de/city/krakow/time (abgerufen am 2026-10-12).",
+   "bibtex": "@misc{velometer_krakau_zeitverlauf_20261012,\n  author = {{velometer}},\n  title = {Krakau: Zeitverlauf},\n  year = {2026},\n  howpublished = {\\url{https://example.org/velometer/de/city/krakow/time}},\n  language = {german},\n  note = {OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 123; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0. Abgerufen am 2026-10-12}\n}",
+   "csl": {
+    "type": "dataset",
+    "id": "velometer_krakau_zeitverlauf_20261012",
+    "title": "Krakau: Zeitverlauf",
+    "author": [
+     {
+      "literal": "velometer"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    },
+    "accessed": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       12
+      ]
+     ]
+    },
+    "URL": "https://example.org/velometer/de/city/krakow/time",
+    "note": "OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 123; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.",
+    "version": "abc1234",
+    "language": "de"
+   },
+   "csl_text": "{\n  \"type\": \"dataset\",\n  \"id\": \"velometer_krakau_zeitverlauf_20261012\",\n  \"title\": \"Krakau: Zeitverlauf\",\n  \"author\": [\n    {\n      \"literal\": \"velometer\"\n    }\n  ],\n  \"issued\": {\n    \"date-parts\": [[2026]]\n  },\n  \"accessed\": {\n    \"date-parts\": [[2026, 10, 12]]\n  },\n  \"URL\": \"https://example.org/velometer/de/city/krakow/time\",\n  \"note\": \"OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 123; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.\",\n  \"version\": \"abc1234\",\n  \"language\": \"de\"\n}"
+  },
+  {
+   "name": "German multi-city view, no run, snapshot range",
+   "lang": "de",
+   "fields": {
+    "title": "Vergleich: Hauptkennzahl · Kernstadt (LAU); Berlin, Krakau",
+    "path": "/de/compare",
+    "osm_timestamp": null,
+    "snapshot_note": "OSM-Stände vom 2026-10-03 bis 2026-10-05",
+    "classifier": "v4",
+    "run_id": null,
+    "commit": "abc1234",
+    "attribution": "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0"
+   },
+   "accessed": "2026-10-12",
+   "url": "https://example.org/velometer/de/compare?c=berlin,krakow",
+   "text": "velometer (2026). Vergleich: Hauptkennzahl · Kernstadt (LAU); Berlin, Krakau [Datensatz]. OSM-Stände vom 2026-10-03 bis 2026-10-05; Klassifikator v4; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0. https://example.org/velometer/de/compare?c=berlin,krakow (abgerufen am 2026-10-12).",
+   "bibtex": "@misc{velometer_vergleich_hauptkennzahl_kernstadt_lau_be_20261012,\n  author = {{velometer}},\n  title = {Vergleich: Hauptkennzahl · Kernstadt (LAU); Berlin, Krakau},\n  year = {2026},\n  howpublished = {\\url{https://example.org/velometer/de/compare?c=berlin,krakow}},\n  language = {german},\n  note = {OSM-Stände vom 2026-10-03 bis 2026-10-05; Klassifikator v4; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0. Abgerufen am 2026-10-12}\n}",
+   "csl": {
+    "type": "dataset",
+    "id": "velometer_vergleich_hauptkennzahl_kernstadt_lau_be_20261012",
+    "title": "Vergleich: Hauptkennzahl · Kernstadt (LAU); Berlin, Krakau",
+    "author": [
+     {
+      "literal": "velometer"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    },
+    "accessed": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       12
+      ]
+     ]
+    },
+    "URL": "https://example.org/velometer/de/compare?c=berlin,krakow",
+    "note": "OSM-Stände vom 2026-10-03 bis 2026-10-05; Klassifikator v4; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.",
+    "version": "abc1234",
+    "language": "de"
+   },
+   "csl_text": "{\n  \"type\": \"dataset\",\n  \"id\": \"velometer_vergleich_hauptkennzahl_kernstadt_lau_be_20261012\",\n  \"title\": \"Vergleich: Hauptkennzahl · Kernstadt (LAU); Berlin, Krakau\",\n  \"author\": [\n    {\n      \"literal\": \"velometer\"\n    }\n  ],\n  \"issued\": {\n    \"date-parts\": [[2026]]\n  },\n  \"accessed\": {\n    \"date-parts\": [[2026, 10, 12]]\n  },\n  \"URL\": \"https://example.org/velometer/de/compare?c=berlin,krakow\",\n  \"note\": \"OSM-Stände vom 2026-10-03 bis 2026-10-05; Klassifikator v4; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.\",\n  \"version\": \"abc1234\",\n  \"language\": \"de\"\n}"
+  },
+  {
+   "name": "German, no url: the text ends at the attribution",
+   "lang": "de",
+   "fields": {
+    "title": "Krakau: Stufen",
+    "path": "/de/city/krakow/tiers",
+    "osm_timestamp": "2026-10-03T21:00:00Z",
+    "snapshot_note": null,
+    "classifier": "v4",
+    "run_id": "7",
+    "commit": "abc1234",
+    "attribution": "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0"
+   },
+   "accessed": null,
+   "url": null,
+   "text": "velometer (2026). Krakau: Stufen [Datensatz]. OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 7; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.",
+   "bibtex": "@misc{velometer_krakau_stufen_20261003,\n  author = {{velometer}},\n  title = {Krakau: Stufen},\n  year = {2026},\n  language = {german},\n  note = {OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 7; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.}\n}",
+   "csl": {
+    "type": "dataset",
+    "id": "velometer_krakau_stufen_20261003",
+    "title": "Krakau: Stufen",
+    "author": [
+     {
+      "literal": "velometer"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026
+      ]
+     ]
+    },
+    "note": "OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 7; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.",
+    "version": "abc1234",
+    "language": "de"
+   },
+   "csl_text": "{\n  \"type\": \"dataset\",\n  \"id\": \"velometer_krakau_stufen_20261003\",\n  \"title\": \"Krakau: Stufen\",\n  \"author\": [\n    {\n      \"literal\": \"velometer\"\n    }\n  ],\n  \"issued\": {\n    \"date-parts\": [[2026]]\n  },\n  \"note\": \"OSM-Stand 2026-10-03T21:00:00Z; Klassifikator v4; Lauf 7; Commit abc1234. Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0.\",\n  \"version\": \"abc1234\",\n  \"language\": \"de\"\n}"
   }
  ],
  "multi": [
   {
    "name": "day range, natural sort, runless city skipped",
+   "lang": "en",
    "runs": {
     "a": {
      "osm_timestamp": "2026-10-05T01:00:00Z",
@@ -361,6 +506,7 @@
   },
   {
    "name": "same day is singular",
+   "lang": "en",
    "runs": {
     "b": {
      "osm_timestamp": "2026-10-03T01:00:00Z",
@@ -394,6 +540,7 @@
   },
   {
    "name": "every city runless gives null",
+   "lang": "en",
    "runs": {
     "b": {
      "osm_timestamp": "2026-10-03T01:00:00Z",
@@ -409,6 +556,72 @@
    "path": "compare",
    "commit": "abc1234",
    "expected": null
+  },
+  {
+   "name": "German: same day is singular",
+   "lang": "de",
+   "runs": {
+    "b": {
+     "osm_timestamp": "2026-10-03T01:00:00Z",
+     "classifier": "v9",
+     "run_id": 1
+    },
+    "c": {
+     "osm_timestamp": "2026-10-03T22:00:00Z",
+     "classifier": "v9",
+     "run_id": 2
+    }
+   },
+   "ids": [
+    "b",
+    "c"
+   ],
+   "title": "t",
+   "path": "de/compare",
+   "commit": "abc1234",
+   "expected": {
+    "title": "t",
+    "path": "de/compare",
+    "osm_timestamp": null,
+    "snapshot_note": "OSM-Stand vom 2026-10-03",
+    "classifier": "v9",
+    "run_id": null,
+    "commit": "abc1234",
+    "attribution": "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0"
+   }
+  },
+  {
+   "name": "German: a day range",
+   "lang": "de",
+   "runs": {
+    "a": {
+     "osm_timestamp": "2026-10-05T01:00:00Z",
+     "classifier": "v4",
+     "run_id": 3
+    },
+    "b": {
+     "osm_timestamp": "2026-10-03T01:00:00Z",
+     "classifier": "v4",
+     "run_id": 1
+    }
+   },
+   "ids": [
+    "a",
+    "b"
+   ],
+   "title": "t",
+   "path": "de/compare",
+   "commit": "abc1234",
+   "expected": {
+    "title": "t",
+    "path": "de/compare",
+    "osm_timestamp": null,
+    "snapshot_note": "OSM-Stände vom 2026-10-03 bis 2026-10-05",
+    "classifier": "v4",
+    "run_id": null,
+    "commit": "abc1234",
+    "attribution": "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0"
+   }
   }
  ]
 }

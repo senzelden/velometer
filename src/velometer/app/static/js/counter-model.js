@@ -4,34 +4,28 @@
 // A city listed under `none:` in config/counters.yaml gets its note from `counters.none`.
 // app/compare.py: counter_lines computes the Compare table the same way for the no-JS page.
 
+import { t } from "./strings.js";
+
 export const COUNTER_METRIC = "counter_index";
-export const NO_COUNTERS = "no open counter data";
-export const NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)";
-// config/counters.yaml unreadable (`counters.config_error`): the no-data notes are missing
-export const COUNTER_CONFIG_ERROR = "counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such";
-export const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
-export const COVID_TEXT = "COVID year";
-// the attribution note of each city whose counter index is drawn (ADR 0008, M8 note)
-export const COUNTER_DATA = "Counter data";
-export const NOT_RECORDED = "not recorded";
-// Compare's counter metric: title, unit and footnote (app/compare.py has the same strings; a test
-// asserts it). The unit's base year comes from the drawn cities (counterUnit).
-export const COUNTER_TITLE = "counter sites"; // the counter index is the same for both boundaries
-export const COUNTER_CONTEXT = "Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.";
-export const COUNTER_FOOT = "Counter index: each city's base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected.";
-export const COUNTER_OF = "index of counts recorded at counter sites (or of their average daily intensity)";
-export const ANY_BASE = "each city's base year = 100"; // no city drawn: no year to name
+// The texts are the `js.counts.*` strings of the page's language, the twins of the `counts.*`
+// keys app/compare.py uses (a pytest runs counterLines, counterTitle and footnote against the
+// Python in both languages). The unit's base year comes from the drawn cities (counterUnit).
+
+/** Compare's line under the counter metric's title: what a counter records. */
+export const counterContext = () => t("js.counts.context");
+/** Compare's footnote for the counter metric. */
+export const counterFoot = () => t("js.counts.foot");
 
 const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i));
 
 /** The COVID-year mark of a counter chart, if the year is on the axis. */
 export function covidMarks(D, labels) {
   const y = String(D.counters?.covid_year ?? "");
-  return labels.includes(y) ? [{ label: y, text: COVID_TEXT }] : [];
+  return labels.includes(y) ? [{ label: y, text: t("js.counts.covid_year") }] : [];
 }
 
-/** The counter metric's chart and table title. */
-export const counterTitle = (label) => `${label} · ${COUNTER_TITLE}`;
+/** The counter metric's chart and table title (the index is the same for both boundaries). */
+export const counterTitle = (label) => `${label} · ${t("js.counts.title")}`;
 
 /**
  * The counter index unit for `ids`, naming the base year (= 100) of the cities drawn as a line:
@@ -47,15 +41,19 @@ export function counterUnit(D, ids) {
     if (!byBase.has(y)) byBase.set(y, []);
     byBase.get(y).push(D.cities[id].name);
   }
-  let base = ANY_BASE;
+  let base = t("js.counts.any_base"); // no city drawn: no year to name
   if (byBase.size) {
     const years = [...byBase.keys()].sort((a, b) => a - b);
     const lead = years.reduce((best, y) => (byBase.get(y).length > byBase.get(best).length ? y : best));
-    const others = years.filter((y) => y !== lead).map((y) => `${y} = 100 for ${byBase.get(y).join(", ")}`).join("; ");
+    const others = years
+      .filter((y) => y !== lead)
+      .map((y) => t("js.counts.base_for", { year: y, cities: byBase.get(y).join(", ") }))
+      .join("; ");
     base = `${lead} = 100${others ? ` (${others})` : ""}`;
   }
   const covid = D.counters?.covid_year;
-  return `${COUNTER_OF}, ${base}${covid != null ? `; ${covid} is the COVID year` : ""}`;
+  const covidNote = covid != null ? `; ${t("js.counts.covid_is", { year: covid })}` : "";
+  return `${t("js.counts.of")}, ${base}${covidNote}`;
 }
 
 /**
@@ -71,13 +69,14 @@ export function counterLines(D, ids) {
   const drawn = ids.filter((id) => counters[id]?.line);
   const years = drawn.flatMap((id) => counters[id].points.filter((p) => p.idx != null).map((p) => p.year));
   const labels = years.length ? range(Math.min(...years), Math.max(...years)) : [];
-  const notes = D.counters?.config_error ? [COUNTER_CONFIG_ERROR] : [];
+  // config/counters.yaml unreadable (`counters.config_error`): the no-data notes are missing
+  const notes = D.counters?.config_error ? [t("js.counts.config_error")] : [];
   const series = ids.map((id) => {
     const c = counters[id];
     const name = D.cities[id].name;
-    if (!c) notes.push(`${name}: ${D.counters?.none?.[id] ?? NO_COUNTERS}`);
-    else if (!c.line) notes.push(`${name}: ${NO_COUNTER_LINE}`);
-    else if (c.series === "avg_daily_intensity") notes.push(`${name}: ${AVG_DAILY}`);
+    if (!c) notes.push(`${name}: ${D.counters?.none?.[id] ?? t("js.counts.no_counters")}`);
+    else if (!c.line) notes.push(`${name}: ${t("js.counts.no_line")}`);
+    else if (c.series === "avg_daily_intensity") notes.push(`${name}: ${t("js.counts.avg_daily")}`);
     const by = new Map(c?.line ? c.points.map((p) => [String(p.year), p.idx]) : []);
     const points = labels.map((label) => {
       const v = by.get(label);
@@ -87,7 +86,11 @@ export function counterLines(D, ids) {
   });
   for (const id of drawn) {
     const c = counters[id];
-    notes.push(`${COUNTER_DATA}, ${D.cities[id].name}: ${c.source || `source ${NOT_RECORDED}`}, licence ${c.licence || NOT_RECORDED}`);
+    notes.push(t("js.counts.attribution", {
+      city: D.cities[id].name,
+      source: c.source || t("js.counts.source_not_recorded"),
+      licence: c.licence || t("js.counts.not_recorded"),
+    }));
   }
   return { labels, series, notes, marks: covidMarks(D, labels), unit: counterUnit(D, ids) };
 }
@@ -121,8 +124,10 @@ export function countsChart(D, id, names = {}) {
   });
   const series = [];
   if (counter.size) {
-    series.push(line(counter, "counter", names.counter ?? "Counter index", names.counterShort ?? "Counts"));
+    series.push(line(counter, "counter", names.counter ?? t("js.counts.index"), names.counterShort ?? t("js.counts.short_counts")));
   }
-  if (km.size) series.push(line(km, "km", names.km ?? "A+B mapped km index", names.kmShort ?? "Mapped km"));
+  if (km.size) {
+    series.push(line(km, "km", names.km ?? t("js.counts.km_index"), names.kmShort ?? t("js.counts.short_km")));
+  }
   return { labels, series, marks: covidMarks(D, labels), base };
 }

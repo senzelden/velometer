@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { displayLabels, labelsOf, pointsOn } from "../data.js";
 
 const lau = [

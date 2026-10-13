@@ -4,6 +4,7 @@
 // tokens and restyled in place when the OS theme changes (zoom and position stay). Site names
 // are portal data: tooltips are built with textContent.
 import { onThemeChange, token } from "./js/theme.js";
+import { t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -17,7 +18,7 @@ import { onThemeChange, token } from "./js/theme.js";
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,
     className: cfg.tile_class,
-    attribution: '© <a href="' + cfg.links.copyright + '">OpenStreetMap contributors</a>',
+    attribution: '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
   }).addTo(map);
 
   function markerStyle() {

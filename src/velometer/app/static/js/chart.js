@@ -4,6 +4,8 @@
 // resolved values, so a saved chart looks as it did on screen, and a redraw follows the theme.
 import { scaleLinear, niceTicks, placeLabels, tickLabel, formatValue, textWidth, tickIndices } from "./chart-core.js";
 import { seriesColours, tierColours, token } from "./theme.js";
+import { format } from "./fmt.js";
+import { t } from "./strings.js";
 
 const NS = "http://www.w3.org/2000/svg";
 // the coloured mark before a series' end label: the label text is --ink (a series colour is a
@@ -18,15 +20,15 @@ function svgEl(tag, attrs = {}, text) {
 }
 
 const widthOf = (el, opts) => Math.max(220, opts?.width ?? el.clientWidth ?? 0);
-const fit = (t, px) => {
+const fit = (text, px) => {
   const max = Math.max(3, Math.floor(px / 6.3));
-  return t.length > max ? t.slice(0, max - 1) + "…" : t;
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
 };
 
 // a series may carry a `short` name for an end label that has no room for the full one
 const endName = (s, px) => (s.short && fit(s.name, px) !== s.name ? s.short : s.name);
 
-function emptyNote(el, message = "No values for this selection.") {
+function emptyNote(el, message = t("js.chart.no_values")) {
   const p = document.createElement("p");
   p.className = "empty";
   p.textContent = message;
@@ -58,8 +60,8 @@ function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax;
   const dy = by - ay;
   const l = dx * dx + dy * dy;
-  const t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  const u = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - (ax + u * dx), py - (ay + u * dy));
 }
 
 /** A series' colour: an explicit one, else its slot (0..7) in the series palette. */
@@ -123,15 +125,15 @@ export function renderLines(el, model, opts = {}) {
   const yScale = scaleLinear([lo, hi], opts.invert ? [mt, mt + ih] : [mt + ih, mt]);
 
   const svg = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  nameSvg(svg, opts.label ?? (model.yTitle ? `Line chart: ${model.yTitle}` : "Line chart"));
-  for (const t of ticks) {
-    const ty = yScale(t);
+  nameSvg(svg, opts.label ?? (model.yTitle ? t("js.chart.line_of", { title: model.yTitle }) : t("js.chart.line")));
+  for (const tick of ticks) {
+    const ty = yScale(tick);
     svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: ty, y2: ty }));
     // compact cards: the lowest y label would sit on the first x label
-    if (compact && ticks.length > 1 && t === ticks[0]) continue;
+    if (compact && ticks.length > 1 && tick === ticks[0]) continue;
     svg.appendChild(
       svgEl("text", { class: "axis-t", x: ml - 6, y: ty + 3.5, "text-anchor": "end" },
-        opts.intTicks ? `#${t}` : tickLabel(t)),
+        opts.intTicks ? `#${tick}` : tickLabel(tick)),
     );
   }
   for (const i of tickIndices(axisTexts, step)) {
@@ -329,7 +331,7 @@ export function renderRank(el, model, opts = {}) {
     invert: true,
     intTicks: true,
     yDomain: [1, maxRank],
-    tip: opts.tip ?? ((s, p, label) => `${s.name} · ${label}: rank ${p.value}`),
+    tip: opts.tip ?? ((s, p, label) => t("js.chart.rank_tip", { name: s.name, label, rank: p.value })),
   });
 }
 
@@ -338,7 +340,7 @@ export function renderSparkline(el, points, opts = {}) {
   const W = opts.width ?? 120;
   const H = opts.height ?? 28;
   const vals = points.map((p) => p.value).filter(Number.isFinite);
-  if (!vals.length) return emptyNote(el, "No data");
+  if (!vals.length) return emptyNote(el, t("js.chart.no_data"));
   const lo = Math.min(...vals);
   const hi = Math.max(...vals);
   const x = scaleLinear([0, Math.max(1, points.length - 1)], [2, W - 2]);
@@ -353,7 +355,7 @@ export function renderSparkline(el, points, opts = {}) {
     pen = true;
   });
   const svg = svgEl("svg", { class: "spark", width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  nameSvg(svg, opts.label ?? "Sparkline");
+  nameSvg(svg, opts.label ?? t("js.chart.sparkline"));
   svg.appendChild(svgEl("path", { class: "line", d, fill: "none", stroke: "currentColor", "stroke-width": 1.5 }));
   svg.appendChild(svgEl("circle", { cx: last[0], cy: last[1], r: 2.2, fill: "currentColor" }));
   el.replaceChildren(svg);
@@ -382,10 +384,10 @@ export function renderTiers(el, model, opts = {}) {
   const tierFill = (key) => tiers[key] ?? token("--axis");
   const halo = token("--halo");
   const svg = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img" });
-  nameSvg(svg, opts.label ?? "Stacked area chart: mapped km by tier");
-  for (const t of ticks) {
-    svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: y(t), y2: y(t) }));
-    svg.appendChild(svgEl("text", { class: "axis-t", x: ml - 6, y: y(t) + 3.5, "text-anchor": "end" }, tickLabel(t)));
+  nameSvg(svg, opts.label ?? t("js.chart.tiers"));
+  for (const tick of ticks) {
+    svg.appendChild(svgEl("line", { class: "gridl", x1: ml, x2: ml + iw, y1: y(tick), y2: y(tick) }));
+    svg.appendChild(svgEl("text", { class: "axis-t", x: ml - 6, y: y(tick) + 3.5, "text-anchor": "end" }, tickLabel(tick)));
   }
   for (const i of tickIndices(model.labels, step)) {
     svg.appendChild(svgEl("text", { class: "axis-t", x: x(i), y: H - 8, "text-anchor": "middle" }, model.labels[i]));
@@ -421,10 +423,10 @@ export function renderTiers(el, model, opts = {}) {
     hx.setAttribute("x1", x(i));
     hx.setAttribute("x2", x(i));
     hx.setAttribute("visibility", "visible");
-    const fmt = (v) => km(v).toLocaleString("en-GB", { maximumFractionDigits: 0 });
-    tip.textContent = [`${model.labels[i]} · mapped km`,
+    const fmt = (v) => format(km(v), { maximumFractionDigits: 0 });
+    tip.textContent = [t("js.chart.tiers_tip", { label: model.labels[i] }),
       ...[...model.layers].reverse().map((l) => `${l.key}: ${fmt(l.values[i])}`),
-      `Total ${fmt(totals[i])}`].join("\n");
+      t("js.chart.total", { value: fmt(totals[i]) })].join("\n");
     tip.style.whiteSpace = "pre";
     tip.hidden = false; // measure only once visible
     placeTip(tip, x(i), mt + tip.offsetHeight + 10, W);

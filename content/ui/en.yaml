@@ -5,7 +5,9 @@
 # · fmt.* · city.keynum.* · counts.* · compare.* · story.* · time.* · sources.* · search.* ·
 # org.* · plan.* · regions.* · permalink.* · subarea.*. Built from ids (i18n.DYNAMIC_FAMILIES): country.* tier.* road_class.*
 # city.tab.* compare.group.* compare.metric.* compare.view.* org.kind.* plan.doc_type.*
-# plan.status.* change.category.*
+# plan.status.* change.category.* js.tier.*
+# js.* (at the end): the scripts' strings, the only keys a page sends to the browser (base.html
+# #ui-strings, static/js/strings.js); i18n.js_strings adds js.month.short.* and js.month.long.*.
 fmt.na: n/a
 nav.lang_switch: Deutsch
 site.footer.attribution: 'Map data © <a href="{osm}">OpenStreetMap contributors, ODbL 1.0</a>'
@@ -574,3 +576,172 @@ city.keynum.none_flagged: LAU, none flagged
 compare.index_heading: index, first year = 100
 cite.title.compare: 'Compare: {heading}; {cities}'
 page.bezirke.window: '{start} to {end}'
+
+# --- citations (cite.py; the js.cite.* twins below)
+cite.text: velometer ({year}). {title} [Data set]. {provenance}. {attribution}.
+cite.accessed: '{url} (accessed {accessed}).'
+cite.snapshot: OSM snapshot {timestamp}
+cite.snapshot_one: OSM snapshot of {day}
+cite.snapshot_range: OSM snapshots of {first} to {last}
+cite.classifier: classifier {version}
+cite.run: run {run}
+cite.commit: commit {commit}
+cite.attribution: Map data © OpenStreetMap contributors, ODbL 1.0
+
+# --- scripts (js.*: the #ui-strings block, static/js/strings.js; js.month.* are injected by i18n.js_strings)
+js.fmt.na: n/a
+js.fmt.thousands: k
+js.unit.lau: City proper (LAU)
+js.unit.fua: Metro area (FUA)
+js.unit.per_main_roads: per 100 km of main roads
+js.unit.headline: A+B km per 100 km of main roads
+js.tier.A: A separated track
+js.tier.B: B shared foot/cycle path
+js.tier.C: C protected lane
+js.tier.D: D painted lane
+js.tier.E: E cycle street / bus lane
+js.chart.no_values: No values for this selection.
+js.chart.no_data: No data
+js.chart.line: Line chart
+js.chart.line_of: 'Line chart: {title}'
+js.chart.sparkline: Sparkline
+js.chart.tiers: 'Stacked area chart: mapped km by tier'
+js.chart.tiers_of: 'Stacked area chart: mapped km by tier, {where}'
+js.chart.tiers_tip: '{label} · mapped km'
+js.chart.total: Total {value}
+js.chart.rank_tip: '{name} · {label}: rank {rank}'
+js.chart.index_value: index {value}
+js.chart.flagged: flagged ({flags})
+js.data.failed: Chart not available; the table on this page has the values.
+js.city.lau_short: City proper
+js.city.fua_short: Metro area
+js.city.headline_chart: 'Line chart: headline over time, {city}, LAU and FUA'
+js.city.counts_chart: 'Line chart: counter index and A+B mapped-km index, {city}, {base} = 100'
+js.city.index_axis: Index, {base} = 100
+js.city.no_counter_data: no counter data for {city}
+js.overview.chart: 'Line chart: headline over time, city proper (LAU), every city'
+js.overview.spark: '{city}: headline from {first} to {last}'
+js.overview.spark_none: '{city}: no headline series'
+js.story.step: Step {n} of {of}
+js.counts.no_counters: no open counter data
+js.counts.no_line: no counter index line (an index value for one year only; see its Counts tab)
+js.counts.config_error: 'counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such'
+js.counts.avg_daily: index of average daily intensity (monthly values), not of counts
+js.counts.covid_year: COVID year
+js.counts.title: counter sites
+js.counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
+js.counts.foot: 'Counter index: each city''s base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected.'
+js.counts.of: index of counts recorded at counter sites (or of their average daily intensity)
+js.counts.any_base: each city's base year = 100
+js.counts.base_for: '{year} = 100 for {cities}'
+js.counts.covid_is: '{year} is the COVID year'
+js.counts.attribution: 'Counter data, {city}: {source}, licence {licence}'
+js.counts.source_not_recorded: source not recorded
+js.counts.not_recorded: not recorded
+js.counts.index: Counter index
+js.counts.km_index: A+B mapped km index
+js.counts.short_counts: Counts
+js.counts.short_km: Mapped km
+js.counts.at_sites: Counts at counter sites
+js.counts.avg_at_sites: Average daily intensity at counter sites
+js.counts.km_jan: A+B mapped km (1 Jan)
+js.compare.no_index: 'no index: first year is 0 or missing'
+js.compare.fua_note: A+B km per 100k residents exists for the city proper (LAU) only; showing the headline for the metro area (FUA).
+js.compare.foot: '⚑ flagged year (automatic check). Headline: {unit}. Ranks in the Rank view depend on the cities selected.'
+js.compare.summary:
+  one: Showing {count} city, {metric}, {scale}
+  other: Showing {count} cities, {metric}, {scale}
+js.compare.scale_index: indexed to the first year = 100
+js.compare.scale_abs: absolute values
+js.compare.n_cities:
+  one: '{count} city'
+  other: '{count} cities'
+js.compare.indexed: indexed
+js.compare.absolute: absolute
+js.compare.flag_head: '{city} · {label} · flagged year'
+js.compare.dismiss: Dismiss
+js.compare.no_explanation: No explanation recorded for this flag.
+js.compare.over_time_link: Over time tab →
+js.compare.highlight_max: 'Highlight (max {max}):'
+js.compare.highlight_city: Highlight this city
+js.compare.open_panel: Open the city panel
+js.compare.rank_chart: 'Line chart: rank per year among the selected cities'
+js.compare.caption: '{metric} per city and snapshot'
+js.compare.city: City
+js.compare.flagged_year: flagged year
+js.compare.flagged: (flagged)
+js.compare.sort_by: Sort by
+js.compare.index_heading: index, first year = 100
+js.compare.mapped_not_built: Mapped km in OpenStreetMap, not built km.
+js.compare.rank_note: Rank 1 is the highest value among the selected cities; ranks change with the selection.
+js.compare.cite_title: 'Compare: {heading}; {cities}'
+js.compare.same_scale: Same y scale for every city
+js.panel.loading: Loading…
+js.panel.loading_city: Loading {name}…
+js.panel.failed: The city panel for {name} could not be loaded.
+js.panel.failed_page: The city panel could not be loaded. Its page is {url}.
+js.plan.no_figures: No figures to chart for this item; the tables list what is recorded.
+js.plan.per_year: '{unit} per year'
+js.plan.cumulative: cumulative
+js.plan.total: total
+js.plan.share: share
+js.plan.line: 'line: mapped km since 1 Jan {year}'
+js.plan.chart_of: 'Chart: {label}, target and figures by year'
+js.plan.chart: Plan chart
+js.plan.completed: Completed projects
+js.plan.mapped_point: 'Mapped on the network, {date}: {value} mapped km since 1 Jan {year}'
+js.plan.target: 'Target: {steps}'
+js.plan.target_cap: 'Target {year}: {value} {unit}, above the chart''s scale'
+js.plan.reported: 'Reported {year}: {value} {unit}, {doc}'
+js.plan.current: (current)
+js.plan.revision: (revision)
+js.plan.suspect: suspect
+js.plan.suspect_note: 'suspect: {note}'
+js.plan.not_drawn: 'The target ({unit}, {quantity}) is not drawn: the figures in the chart are per year. The table lists it.'
+js.search.no_match: No match
+js.search.results:
+  one: '{count} result'
+  other: '{count} results'
+js.clipboard.copied: Copied
+js.clipboard.press: Press Ctrl+C to copy
+js.cite.text: velometer ({year}). {title} [Data set]. {provenance}. {attribution}.
+js.cite.accessed: '{url} (accessed {accessed}).'
+js.cite.accessed_note: Accessed {accessed}
+js.cite.snapshot: OSM snapshot {timestamp}
+js.cite.snapshot_one: OSM snapshot of {day}
+js.cite.snapshot_range: OSM snapshots of {first} to {last}
+js.cite.classifier: classifier {version}
+js.cite.run: run {run}
+js.cite.commit: commit {commit}
+js.cite.attribution: Map data © OpenStreetMap contributors, ODbL 1.0
+js.cite.copy: Copy
+js.cite.copy_label: Copy {format}, {title}
+js.download.attribution: Map data © OpenStreetMap contributors, ODbL 1.0
+js.download.note: OSM mapped km, not built km
+js.download.snapshot: OSM {day}
+js.download.classifier: classifier {version}
+js.download.label: Download
+js.download.button: Download {kind}, {name}
+js.download.chart: chart
+js.download.done: Downloaded {name}
+js.download.failed: Could not make the {kind} download. {reason}
+js.download.no_chart: There is no chart to download yet
+js.download.no_table: This chart has no data table to download
+js.download.no_png: the canvas gave no PNG
+js.download.image_failed: the chart image could not be loaded
+js.map.osm_contributors: OpenStreetMap contributors
+js.map.way: way {id}
+js.map.side: side
+js.map.tier: tier
+js.map.subtype: subtype
+js.map.rule: rule
+js.map.status: '{kind} · {n} sides · OSM {osm} · classifier {classifier} · run {run}. Click a side for its way, tier, rule and tags.'
+js.map.loading: Loading {kind} map …
+js.map.failed: 'Could not load the {kind} map: {reason}'
+js.map.change: change
+js.map.way_from: way (from)
+js.map.way_to: way (to)
+js.map.mapped_km: mapped km
+js.map.change_loading: Loading the change map …
+js.map.change_status: 'Way-sides: {counts}. Click a way-side for its way and mapped km.'
+js.map.change_failed: 'Could not load the change map: {reason}'

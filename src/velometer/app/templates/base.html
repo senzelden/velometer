@@ -43,6 +43,7 @@
   <p>{{ t('site.footer.static_edition', commit=static_edition.commit) }}</p>{% endif %}
 </footer>
 <script type="application/json" id="theme-tokens">{{ theme_tokens | tojson }}</script>
+<script type="application/json" id="ui-strings">{{ js_strings(lang) | tojson }}</script>
 <div id="live" class="visually-hidden" aria-live="polite"></div>
 </body>
 </html>

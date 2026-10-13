@@ -3,13 +3,16 @@
 // `.cite-data` JSON the server wrote. The access date and the absolute address (base path, query
 // and fragment included) are taken when the disclosure opens, so a permalink state is in them.
 // Compare rebuilds its citation by calling `setFields` on the details and closing it.
+import { lang } from "./base.js";
 import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson } from "./cite.js";
 import { copyText } from "./clipboard.js";
+import { t } from "./strings.js";
 
+// the format names read the same in both languages
 const FORMATS = [
-  ["Text", (f, a, u) => citeText(f, a, u)],
-  ["BibTeX", (f, a, u) => citeBibtex(f, a, u)],
-  ["CSL-JSON", (f, a, u) => cslJson(citeCsl(f, a, u))],
+  ["Text", (f, a, u) => citeText(f, a, u, lang())],
+  ["BibTeX", (f, a, u) => citeBibtex(f, a, u, lang())],
+  ["CSL-JSON", (f, a, u) => cslJson(citeCsl(f, a, u, lang()))],
 ];
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -47,8 +50,8 @@ export function render(details) {
     const head = el("div", { class: "cite-head" });
     // a label, not a heading: a Cite sits under h2 and h3 sections alike
     head.append(el("p", { class: "cite-label" }, label));
-    const button = el("button", { type: "button", class: "cite-copy" }, "Copy");
-    button.setAttribute("aria-label", `Copy ${label}, ${f.title}`); // one per figure on a page
+    const button = el("button", { type: "button", class: "cite-copy" }, t("js.cite.copy"));
+    button.setAttribute("aria-label", t("js.cite.copy_label", { format: label, title: f.title })); // one per figure on a page
     button.addEventListener("click", () => copyText(text));
     head.append(button);
     block.append(head, el("pre", {}, text));

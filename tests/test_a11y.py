@@ -920,7 +920,7 @@ def test_the_compare_sort_bar_has_a_visible_caption_tied_to_the_table():
     js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
     body = js[js.index("function drawTable") :]
     body = body[: body.index("\nfunction ", 10)]
-    assert '"Sort by"' in body and 'class: "sort-caption"' in body
+    assert 't("js.compare.sort_by")' in body and 'class: "sort-caption"' in body
     assert "describeSort(table)" in body  # described by it only where it is on screen
     assert "out.table.replaceChildren(caption, table)" in body  # the caption sits with the table
     rules = _css_rules(_stylesheet())

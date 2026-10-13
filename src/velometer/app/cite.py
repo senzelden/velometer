@@ -2,17 +2,19 @@
 
 The formatting rule lives twice: here (the text, for server-rendered pages) and in
 `static/js/cite.js` (text, BibTeX and CSL-JSON, with the accessed date and URL of the moment).
-Both are tested against `tests/cite_cases.json`.
+Both are tested against `tests/cite_cases.json`, which has cases per language (M12): the words
+come from the UI catalogue (`cite.*` here, `js.cite.*` in the browser).
 """
 
 import re
 from dataclasses import asdict, dataclass
 from functools import cache
 
+from velometer.i18n import Lang, t
 from velometer.reconcile import short_commit
 from velometer.run import git_commit
 
-ATTRIBUTION = "Map data © OpenStreetMap contributors, ODbL 1.0"
+ATTRIBUTION = t("en", "cite.attribution")
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
@@ -25,7 +27,7 @@ class CiteFields:
     classifier: str
     run_id: str | None
     commit: str
-    attribution: str = ATTRIBUTION
+    attribution: str = ATTRIBUTION  # the page's language: `fields_for_*` set it
 
 
 @cache
@@ -99,9 +101,10 @@ class RunRows:
 
 
 def fields_for_city(
-    data, city_id: str, title: str, path: str, kind: str = "lau"
+    data, city_id: str, title: str, path: str, kind: str = "lau", lang: Lang = "en"
 ) -> CiteFields | None:
-    """The citation fields of a city's run, or None when it has none for `kind`."""
+    """The citation fields of a city's run, or None when it has none for `kind`; the
+    attribution in `lang`."""
     row = _current_row_of_kind(data, city_id, kind)
     if row is None:
         return None
@@ -113,20 +116,24 @@ def fields_for_city(
         classifier=row["classifier_version"],
         run_id=str(row["run_id"]),
         commit=_commit(),
+        attribution=t(lang, "cite.attribution"),
     )
 
 
 def fields_for_cities(
-    data, city_ids: list[str], title: str, path: str, kind: str = "lau"
+    data, city_ids: list[str], title: str, path: str, kind: str = "lau", lang: Lang = "en"
 ) -> CiteFields | None:
     """Fields for several cities' runs of a boundary kind; runless cities are skipped, None when
-    none has a run."""
+    none has a run. The snapshot note and the attribution are in `lang`."""
     rows = [r for c in city_ids if (r := _current_row_of_kind(data, c, kind)) is not None]
     if not rows:
         return None
     days = sorted(r["osm_timestamp"][:10] for r in rows)
     first, last = days[0], days[-1]
-    note = f"OSM snapshot of {first}" if first == last else f"OSM snapshots of {first} to {last}"
+    if first == last:
+        note = t(lang, "cite.snapshot_one", day=first)
+    else:
+        note = t(lang, "cite.snapshot_range", first=first, last=last)
     return CiteFields(
         title=title,
         path=path,
@@ -135,6 +142,7 @@ def fields_for_cities(
         classifier="/".join(sorted({r["classifier_version"] for r in rows}, key=_natural)),
         run_id=None,
         commit=_commit(),
+        attribution=t(lang, "cite.attribution"),
     )
 
 
@@ -145,21 +153,25 @@ def _year(f: CiteFields) -> str:
     return dates[-1][:4] if dates else ""
 
 
-def _snapshot(f: CiteFields) -> str:
-    return f.snapshot_note or f"OSM snapshot {f.osm_timestamp}"
-
-
-def _provenance(f: CiteFields) -> str:
+def _provenance(f: CiteFields, lang: Lang) -> str:
     """`<snapshot>; classifier <v>; run <id>; commit <c>` (the run part only with a run)."""
-    parts = [_snapshot(f), f"classifier {f.classifier}"]
+    snapshot = f.snapshot_note or t(lang, "cite.snapshot", timestamp=f.osm_timestamp)
+    parts = [snapshot, t(lang, "cite.classifier", version=f.classifier)]
     if f.run_id is not None:
-        parts.append(f"run {f.run_id}")
-    parts.append(f"commit {f.commit}")
+        parts.append(t(lang, "cite.run", run=f.run_id))
+    parts.append(t(lang, "cite.commit", commit=f.commit))
     return "; ".join(parts)
 
 
-def cite_text(f: CiteFields, accessed: str | None = None, url: str | None = None) -> str:
-    text = f"velometer ({_year(f)}). {f.title} [Data set]. {_provenance(f)}. {f.attribution}."
+def cite_text(
+    f: CiteFields, accessed: str | None = None, url: str | None = None, lang: Lang = "en"
+) -> str:
+    """The readable citation in `lang`, ending with the page's address (and the accessed date)
+    when there is one."""
+    text = t(lang, "cite.text", year=_year(f), title=f.title, provenance=_provenance(f, lang),
+             attribution=f.attribution)  # fmt: skip
     if url:
-        text += f" {url}" + (f" (accessed {accessed})." if accessed else ".")
+        text += " " + (
+            t(lang, "cite.accessed", url=url, accessed=accessed) if accessed else f"{url}."
+        )
     return text

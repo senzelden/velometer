@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 
 // A minimal page for panel.js: just enough DOM for show / hide, with an event log.
 function setup({ throwOnSecond = false } = {}) {

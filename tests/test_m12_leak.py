@@ -25,6 +25,7 @@ LEAK_DEFERRED = {
 CONTENT_SHARED = {
     "per 100 km of main roads",  # the headline, in narratives and the explainer
     "per 100 km of main roads,",
+    "A+B km per 100 km of main roads",  # the headline unit (js.unit.headline), in narratives
     "Why the figures differ",  # the explainer's title
 }
 

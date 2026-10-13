@@ -108,7 +108,11 @@ DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "plan.doc_type.": _literal("velometer.plans.models", "ReportRow", "doc_type"),
     "plan.status.": _literal("velometer.plans.models", "Plan", "status"),
     "change.category.": _categories,
+    "js.tier.": _tiers,
 }
+# key prefixes of the JS strings that are not catalogue keys: `js_strings` writes them from
+# MONTHS_SHORT / MONTHS, the one home of the month names
+JS_INJECTED: tuple[str, ...] = ("js.month.short.", "js.month.long.")
 
 
 def german_required(content_dir: Path) -> bool:
@@ -174,10 +178,14 @@ def t_markup(lang: str, key: str, /, **vars) -> Markup:
 
 
 def js_strings(lang: str) -> dict:
-    """The `js.*` strings for the client, English underneath the language."""
+    """The strings of the page's `#ui-strings` block (static/js/strings.js reads them): every
+    `js.*` catalogue key in `lang`, English underneath, and the month names as
+    `js.month.short.<1-12>` / `js.month.long.<1-12>` from MONTHS_SHORT / MONTHS."""
     merged: dict = {k: v for k, v in catalogue(DEFAULT).items() if k.startswith("js.")}
     if lang != DEFAULT:
         merged.update({k: v for k, v in catalogue(lang).items() if k.startswith("js.")})
+    for prefix, names in zip(JS_INJECTED, (MONTHS_SHORT[lang], MONTHS[lang]), strict=True):
+        merged.update({f"{prefix}{m}": name for m, name in enumerate(names, 1)})
     return merged
 
 

@@ -2,6 +2,7 @@
 // part (fold, rank, move) is tested under node; the DOM part runs only in a page. Without this
 // file the nav keeps its "Find a city" link to /cities.
 import { url } from "./base.js";
+import { t } from "./strings.js";
 import { announce } from "./live.js";
 
 // Letters NFD does not take apart: a keyboard without them must still find the city.
@@ -22,9 +23,9 @@ const KIND_ORDER = ["city", "country", "page", "story", "organisation"];
 
 function score(words, entry) {
   const terms = [entry.label, ...(entry.terms ?? [])].map(fold);
-  const pieces = terms.flatMap((t) => t.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+  const pieces = terms.flatMap((term) => term.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
   if (words.every((w) => pieces.some((p) => p.startsWith(w)))) return 0;
-  if (words.every((w) => terms.some((t) => t.includes(w)))) return 1;
+  if (words.every((w) => terms.some((term) => term.includes(w)))) return 1;
   return -1;
 }
 
@@ -146,13 +147,13 @@ export function mount(doc) {
       li.className = "none";
       li.setAttribute("role", "option"); // a listbox owns only options
       li.setAttribute("aria-disabled", "true");
-      li.textContent = "No match";
+      li.textContent = t("js.search.no_match");
       list.append(li);
     }
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
     setActive(-1);
-    announce(shown.length ? `${shown.length} ${shown.length === 1 ? "result" : "results"}` : "No match");
+    announce(shown.length ? t("js.search.results", { count: shown.length }) : t("js.search.no_match"));
   }
 
   const go = (entry) => {

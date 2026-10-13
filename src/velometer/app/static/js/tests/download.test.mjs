@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fileName, hex, lightOf, pngBlob, safeCell, selfContained, tableCsv } from "../download.js";
+import { FIXTURE, useLang } from "./strings-fixture.mjs";
+import { fileName, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -206,4 +207,62 @@ test("tableCsv: a cell that would run as a formula is quoted off in header and b
   assert.equal(lines[2], "'=HEAD()");
   assert.equal(lines[3], `"'=HYPERLINK(""x"")"`);
   assert.equal(lines[4], "-3.2");
+});
+
+// ---- M12: German downloads ----
+
+/** A table fake: header texts and rows of cell texts. */
+const tableOf = (head, rows) => ({
+  querySelectorAll: (q) =>
+    q === "thead th"
+      ? head.map((t) => ({ textContent: ` ${t} ` }))
+      : q === "tbody tr"
+        ? rows.map((r) => ({ querySelectorAll: () => r.map((t) => ({ textContent: t })) }))
+        : [],
+});
+
+test("slug: ß is ss before the accents go; a German title gives an ASCII name", () => {
+  assert.equal(slug("Straße"), "strasse");
+  assert.equal(slug("Größe"), "grosse");
+  const n = fileName("Krakau: Zeitverlauf", "Stufen", "kind=fua", "png");
+  assert.match(n, /^[\x20-\x7e]+$/);
+  assert.ok(n.startsWith("velometer-krakau"), n);
+  assert.equal(n, "velometer-krakau-zeitverlauf-stufen-kind-fua.png");
+});
+
+test("tableCsv in German: the header as shown, number cells as machine numbers, the preamble English", () => {
+  useLang("de");
+  const table = tableOf(["Jahr", "A+B km"], [["2019", "1.639,8", "12,3 ⚑"], ["2020", "\u22123,2", "–"]]);
+  const lines = tableCsv(table, "abc1234", "2026-10-12T10:00:00Z", "de-DE").split("\r\n");
+  assert.equal(lines[0], "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km");
+  assert.equal(lines[1], "# velometer abc1234 generated 2026-10-12T10:00:00Z");
+  assert.equal(lines[2], "Jahr,A+B km");
+  assert.equal(lines[3], '2019,1639.8,"12,3 ⚑"');
+  assert.equal(lines[4], "2020,-3.2,–");
+  useLang("en");
+});
+
+test("tableCsv in English converts nothing: no locale is en-GB, and a grouped number stays as shown", () => {
+  // "1.639" and "12,345" also read as German numbers (1639 and 12.345): English must keep them
+  const table = tableOf(
+    ["Year", "Headline, km"],
+    [["2018", "1,639.8"], ["2019", "12,3 ⚑"], ["2020", "1.639"], ["2021", "12,345"]],
+  );
+  const plain = tableCsv(table, "abc1234", "2026-10-11T10:00:00Z");
+  assert.equal(plain, tableCsv(table, "abc1234", "2026-10-11T10:00:00Z", "en-GB"));
+  const lines = plain.split("\r\n");
+  assert.equal(lines[3], '2018,"1,639.8"');
+  assert.equal(lines[4], '2019,"12,3 ⚑"');
+  assert.equal(lines[5], "2020,1.639");
+  assert.equal(lines[6], '2021,"12,345"');
+});
+
+test("the SVG source line on a German page has the German note and attribution", () => {
+  useLang("de");
+  const out = selfContained(chart(), darkStyle, null, { ...META, attribution: FIXTURE.de["js.download.attribution"] });
+  assert.ok(out.includes(FIXTURE.de["js.download.note"]), out);
+  assert.ok(out.includes("OpenStreetMap-Mitwirkende"));
+  assert.notEqual(FIXTURE.de["js.download.note"], FIXTURE.en["js.download.note"]);
+  assert.ok(!out.includes(FIXTURE.en["js.download.note"]));
+  useLang("en");
 });

@@ -567,3 +567,172 @@ city.keynum.none_flagged: LAU, keines markiert
 compare.index_heading: Index, erstes Jahr = 100
 cite.title.compare: 'Vergleich: {heading}; {cities}'
 page.bezirke.window: '{start} bis {end}'
+
+# --- Zitate (cite.py; die js.cite.*-Gegenstücke unten)
+cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.
+cite.accessed: '{url} (abgerufen am {accessed}).'
+cite.snapshot: OSM-Stand {timestamp}
+cite.snapshot_one: OSM-Stand vom {day}
+cite.snapshot_range: OSM-Stände vom {first} bis {last}
+cite.classifier: Klassifikator {version}
+cite.run: Lauf {run}
+cite.commit: Commit {commit}
+cite.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+
+# --- Skripte (js.*: der Block #ui-strings, static/js/strings.js; js.month.* fügt i18n.js_strings ein)
+js.fmt.na: k. A.
+js.fmt.thousands: ' Tsd.'
+js.unit.lau: Kernstadt (LAU)
+js.unit.fua: Funktionaler Stadtraum (FUA)
+js.unit.per_main_roads: je 100 km Hauptstraßen
+js.unit.headline: A+B-km je 100 km Hauptstraßen
+js.tier.A: A baulich getrennter Radweg
+js.tier.B: B Geh- und Radweg
+js.tier.C: C geschützter Radfahrstreifen
+js.tier.D: D markierter Radfahrstreifen
+js.tier.E: E Fahrradstraße / Busspur
+js.chart.no_values: Keine Werte für diese Auswahl.
+js.chart.no_data: Keine Daten
+js.chart.line: Liniendiagramm
+js.chart.line_of: 'Liniendiagramm: {title}'
+js.chart.sparkline: Kleines Liniendiagramm
+js.chart.tiers: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe'
+js.chart.tiers_of: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe, {where}'
+js.chart.tiers_tip: '{label} · kartierte km'
+js.chart.total: Summe {value}
+js.chart.rank_tip: '{name} · {label}: Rang {rank}'
+js.chart.index_value: Index {value}
+js.chart.flagged: markiert ({flags})
+js.data.failed: Diagramm nicht verfügbar; die Tabelle auf dieser Seite enthält die Werte.
+js.city.lau_short: Kernstadt
+js.city.fua_short: Stadtraum
+js.city.headline_chart: 'Liniendiagramm: Hauptkennzahl im Zeitverlauf, {city}, LAU und FUA'
+js.city.counts_chart: 'Liniendiagramm: Zählstellenindex und Index der kartierten A+B-km, {city}, {base} = 100'
+js.city.index_axis: Index, {base} = 100
+js.city.no_counter_data: keine Zähldaten für {city}
+js.overview.chart: 'Liniendiagramm: Hauptkennzahl im Zeitverlauf, Kernstadt (LAU), alle Städte'
+js.overview.spark: '{city}: Hauptkennzahl von {first} bis {last}'
+js.overview.spark_none: '{city}: keine Reihe der Hauptkennzahl'
+js.story.step: Schritt {n} von {of}
+js.counts.no_counters: keine offenen Zähldaten
+js.counts.no_line: keine Linie des Zählstellenindex (ein Indexwert für nur ein Jahr; siehe den Reiter Zählstellen)
+js.counts.config_error: 'Zählstellenkonfiguration nicht lesbar (config/counters.yaml; siehe Serverprotokoll): Städte ohne offene Zähldaten werden nicht als solche genannt'
+js.counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswerte), nicht der Zählwerte
+js.counts.covid_year: Corona-Jahr
+js.counts.title: Zählstellen
+js.counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
+js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchschnittlichen täglichen Stärke)
+js.counts.any_base: Basisjahr jeder Stadt = 100
+js.counts.base_for: '{year} = 100 für {cities}'
+js.counts.covid_is: '{year} ist das Corona-Jahr'
+js.counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}'
+js.counts.source_not_recorded: Quelle nicht erfasst
+js.counts.not_recorded: nicht erfasst
+js.counts.index: Zählstellenindex
+js.counts.km_index: Index kartierte A+B-km
+js.counts.short_counts: Zählwerte
+js.counts.short_km: Kartierte km
+js.counts.at_sites: Zählwerte an Zählstellen
+js.counts.avg_at_sites: Durchschnittliche tägliche Stärke an Zählstellen
+js.counts.km_jan: Kartierte A+B-km (1. Jan.)
+js.compare.no_index: 'kein Index: erstes Jahr ist 0 oder fehlt'
+js.compare.fua_note: A+B-km je 100.000 Einwohner gibt es nur für die Kernstadt (LAU); für den Funktionalen Stadtraum (FUA) wird die Hauptkennzahl gezeigt.
+js.compare.foot: '⚑ markiertes Jahr (automatische Prüfung). Hauptkennzahl: {unit}. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.compare.summary:
+  one: '{count} Stadt gezeigt, {metric}, {scale}'
+  other: '{count} Städte gezeigt, {metric}, {scale}'
+js.compare.scale_index: indexiert auf das erste Jahr = 100
+js.compare.scale_abs: absolute Werte
+js.compare.n_cities:
+  one: '{count} Stadt'
+  other: '{count} Städte'
+js.compare.indexed: indexiert
+js.compare.absolute: absolut
+js.compare.flag_head: '{city} · {label} · markiertes Jahr'
+js.compare.dismiss: Schließen
+js.compare.no_explanation: Für diese Markierung ist keine Erklärung erfasst.
+js.compare.over_time_link: Reiter Zeitverlauf →
+js.compare.highlight_max: 'Hervorheben (max. {max}):'
+js.compare.highlight_city: Diese Stadt hervorheben
+js.compare.open_panel: Stadtfenster öffnen
+js.compare.rank_chart: 'Liniendiagramm: Rang je Jahr unter den gewählten Städten'
+js.compare.caption: '{metric} je Stadt und Stand'
+js.compare.city: Stadt
+js.compare.flagged_year: markiertes Jahr
+js.compare.flagged: (markiert)
+js.compare.sort_by: Sortieren nach
+js.compare.index_heading: Index, erstes Jahr = 100
+js.compare.mapped_not_built: Kartierte km in OpenStreetMap, keine gebauten km.
+js.compare.rank_note: Rang 1 ist der höchste Wert unter den gewählten Städten; die Ränge ändern sich mit der Auswahl.
+js.compare.cite_title: 'Vergleich: {heading}; {cities}'
+js.compare.same_scale: Gleiche y-Skala für jede Stadt
+js.panel.loading: Wird geladen …
+js.panel.loading_city: '{name} wird geladen …'
+js.panel.failed: Das Stadtfenster für {name} konnte nicht geladen werden.
+js.panel.failed_page: 'Das Stadtfenster konnte nicht geladen werden. Seine Seite: {url}.'
+js.plan.no_figures: Für diesen Punkt gibt es keine Zahlen für ein Diagramm; die Tabellen zeigen, was erfasst ist.
+js.plan.per_year: '{unit} je Jahr'
+js.plan.cumulative: kumuliert
+js.plan.total: gesamt
+js.plan.share: Anteil
+js.plan.line: 'Linie: kartierte km seit 1. Jan. {year}'
+js.plan.chart_of: 'Diagramm: {label}, Ziel und Zahlen nach Jahr'
+js.plan.chart: Plandiagramm
+js.plan.completed: Fertiggestellte Projekte
+js.plan.mapped_point: 'Kartiert im Netz, {date}: {value} kartierte km seit 1. Jan. {year}'
+js.plan.target: 'Ziel: {steps}'
+js.plan.target_cap: 'Ziel {year}: {value} {unit}, oberhalb der Skala des Diagramms'
+js.plan.reported: 'Gemeldet {year}: {value} {unit}, {doc}'
+js.plan.current: (aktuell)
+js.plan.revision: (Revision)
+js.plan.suspect: zweifelhaft
+js.plan.suspect_note: 'zweifelhaft: {note}'
+js.plan.not_drawn: 'Das Ziel ({unit}, {quantity}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
+js.search.no_match: Kein Treffer
+js.search.results:
+  one: '{count} Treffer'
+  other: '{count} Treffer'
+js.clipboard.copied: Kopiert
+js.clipboard.press: Zum Kopieren Strg+C drücken
+js.cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.
+js.cite.accessed: '{url} (abgerufen am {accessed}).'
+js.cite.accessed_note: Abgerufen am {accessed}
+js.cite.snapshot: OSM-Stand {timestamp}
+js.cite.snapshot_one: OSM-Stand vom {day}
+js.cite.snapshot_range: OSM-Stände vom {first} bis {last}
+js.cite.classifier: Klassifikator {version}
+js.cite.run: Lauf {run}
+js.cite.commit: Commit {commit}
+js.cite.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+js.cite.copy: Kopieren
+js.cite.copy_label: '{format} kopieren, {title}'
+js.download.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+js.download.note: OSM-kartierte km, nicht gebaute km
+js.download.snapshot: OSM-Stand {day}
+js.download.classifier: Klassifikator {version}
+js.download.label: Herunterladen
+js.download.button: '{kind} herunterladen, {name}'
+js.download.chart: Diagramm
+js.download.done: '{name} heruntergeladen'
+js.download.failed: Der {kind}-Download konnte nicht erstellt werden. {reason}
+js.download.no_chart: Es gibt noch kein Diagramm zum Herunterladen
+js.download.no_table: Zu diesem Diagramm gibt es keine Datentabelle zum Herunterladen
+js.download.no_png: die Zeichenfläche lieferte kein PNG
+js.download.image_failed: das Diagrammbild konnte nicht geladen werden
+js.map.osm_contributors: OpenStreetMap-Mitwirkende
+js.map.way: Weg {id}
+js.map.side: Seite
+js.map.tier: Stufe
+js.map.subtype: Untertyp
+js.map.rule: Regel
+js.map.status: '{kind} · {n} Seiten · OSM {osm} · Klassifikator {classifier} · Lauf {run}. Ein Klick auf eine Seite zeigt Weg, Stufe, Regel und Tags.'
+js.map.loading: Karte {kind} wird geladen …
+js.map.failed: 'Karte {kind} konnte nicht geladen werden: {reason}'
+js.map.change: Änderung
+js.map.way_from: Weg (vorher)
+js.map.way_to: Weg (nachher)
+js.map.mapped_km: kartierte km
+js.map.change_loading: Änderungskarte wird geladen …
+js.map.change_status: 'Wegseiten: {counts}. Ein Klick auf eine Wegseite zeigt Weg und kartierte km.'
+js.map.change_failed: 'Die Änderungskarte konnte nicht geladen werden: {reason}'

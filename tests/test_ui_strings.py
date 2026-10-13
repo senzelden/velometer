@@ -2,6 +2,7 @@
 code uses exists, every defined key is used, every id-built key family is declared and complete,
 and the CLI's English constants equal the English catalogue."""
 
+import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -90,8 +91,9 @@ def test_every_used_key_exists():
 
 
 def test_every_composed_key_belongs_to_a_declared_family():
+    # the JS month names are injected into the JS strings (js_strings), not catalogue keys
     _, composed = _calls()
-    assert sorted(composed - set(i18n.DYNAMIC_FAMILIES)) == []
+    assert sorted(composed - set(i18n.DYNAMIC_FAMILIES) - set(i18n.JS_INJECTED)) == []
 
 
 def test_every_defined_key_is_used():
@@ -115,6 +117,36 @@ def test_cli_constants_equal_the_english_catalogue():
     for rc, text in data.ROAD_CLASS_TEXT.items():
         assert i18n.t("en", f"road_class.{rc}") == text
     assert data.headline_unit("en") == data.HEADLINE_UNIT
+
+
+def test_js_strings_fixture_is_generated_from_i18n():
+    data = json.loads((ROOT / "tests/ui_js_strings.json").read_text(encoding="utf-8"))
+    assert data == {lang: i18n.js_strings(lang) for lang in i18n.LANGS}
+
+
+def test_js_months_come_from_i18n():
+    for lang in i18n.LANGS:
+        js = i18n.js_strings(lang)
+        assert [js[f"js.month.short.{m}"] for m in range(1, 13)] == list(i18n.MONTHS_SHORT[lang])
+        assert [js[f"js.month.long.{m}"] for m in range(1, 13)] == list(i18n.MONTHS[lang])
+        assert not any(k.startswith(i18n.JS_INJECTED) for k in i18n.catalogue("en"))
+
+
+def test_js_strings_are_every_js_key_english_underneath():
+    en, de = i18n.catalogue("en"), i18n.catalogue("de")
+    js_keys = {k for k in en if k.startswith("js.")}
+    for lang, cat in (("en", en), ("de", de)):
+        js = i18n.js_strings(lang)
+        assert {k for k in js if not k.startswith(i18n.JS_INJECTED)} == js_keys
+        assert all(js[k] == cat.get(k, en[k]) for k in js_keys)
+
+
+def test_python_counter_label_keys_exist():
+    from velometer.app import compare, counts
+
+    en = i18n.catalogue("en")
+    keys = [*compare.COUNTER_KEYS, *counts.LABEL_KEYS]  # the keys the constants are read from
+    assert keys and all(k in en for k in keys)
 
 
 def test_catalogues_agree():

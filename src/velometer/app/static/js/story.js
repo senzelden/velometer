@@ -9,6 +9,7 @@ import { buildModel, slotPlan } from "./compare-model.js";
 import { describe } from "./describe.js";
 import { stepFromHash } from "./permalink.js";
 import { displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
+import { t } from "./strings.js";
 
 const cfg = JSON.parse(document.getElementById("story-config").textContent);
 const box = document.querySelector("[data-story-chart]");
@@ -21,7 +22,6 @@ const out = {
   link: box.querySelector("[data-story-link]"),
 };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const UNIT = "per 100 km of main roads";
 
 let D = null;
 let current = null;
@@ -42,12 +42,13 @@ function linesModel(spec) {
       points: s.points.map((p) => ({ ...p, flags: only(p.flags ?? []) })),
     }));
   const abs = state.mode === "abs";
+  const value = (v) => (abs ? formatValue(v) : t("js.chart.index_value", { value: formatValue(v) }));
   const tip = (s, p, label) =>
-    `${s.name} · ${label}: ${abs ? "" : "index "}${formatValue(p.value)}` +
-    (p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : "");
+    `${s.name} · ${label}: ${value(p.value)}` +
+    (p.flags?.length ? ` · ${t("js.chart.flagged", { flags: p.flags.join(", ") })}` : "");
   return {
     model: { labels: displayLabels(model.labels, lists), series },
-    opts: { zero: abs, tip, label: `Line chart: ${spec.title}`, small: state.view === "small" },
+    opts: { zero: abs, tip, label: t("js.chart.line_of", { title: spec.title }), small: state.view === "small" },
   };
 }
 
@@ -63,10 +64,10 @@ function bezirkeModel(spec) {
     slot: spec.hl.includes(id) ? spec.hl.indexOf(id) : undefined,
     points: pointsOn(b.points, labels, "headline"),
   }));
-  const tip = (s, p, label) => `${s.name} · ${label}: ${formatValue(p.value)} ${UNIT}`;
+  const tip = (s, p, label) => `${s.name} · ${label}: ${formatValue(p.value)} ${t("js.unit.per_main_roads")}`;
   return {
     model: { labels: displayLabels(labels, [lau, ...lists]), series },
-    opts: { zero: true, tip, label: `Line chart: ${spec.title}` },
+    opts: { zero: true, tip, label: t("js.chart.line_of", { title: spec.title }) },
   };
 }
 
@@ -92,7 +93,7 @@ function show(step) {
   box.hidden = !spec;
   if (!spec || step === current) return;
   current = step;
-  const step_n = `Step ${spec.n} of ${spec.of}`;
+  const step_n = t("js.story.step", { n: spec.n, of: spec.of });
   out.eyebrow.textContent = spec.heading ? `${step_n} · ${spec.heading}` : step_n;
   out.title.textContent = spec.title;
   out.note.textContent = spec.note;

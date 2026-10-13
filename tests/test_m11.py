@@ -299,8 +299,10 @@ def test_python_citation_text_matches_the_shared_cases():
     shared = json.loads((Path(__file__).parent / "cite_cases.json").read_text(encoding="utf-8"))
     cases = shared["cases"]
     assert len(cases) >= 5
+    assert {c["lang"] for c in cases} == {"en", "de"}  # both editions share the cases (M12)
     for c in cases:
-        assert cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"]) == c["text"], c["name"]
+        got = cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"], lang=c["lang"])
+        assert got == c["text"], c["name"]
 
 
 def test_city_fields_come_from_the_run_and_build(fixture_db):
@@ -466,6 +468,24 @@ def test_cite_data_is_valid_json_with_the_attribution(client):  # noqa: F811
         )  # no base and no leading slash: the browser adds both
 
 
+def test_german_pages_cite_in_german(client):  # noqa: F811
+    # M12 spec 4.5: the German template, the German attribution, the /de/ address
+    from velometer import i18n
+
+    html = client.get("/de/city/berlin/time").text
+    blobs = CITE_DATA.findall(html)
+    assert blobs
+    for blob in blobs:
+        f = json.loads(blob)
+        assert f["attribution"] == i18n.t("de", "cite.attribution")
+        assert f["path"].startswith("de/city/berlin")
+    texts = re.findall(r'<p class="cite-text">(.*?)</p>', html, re.S)
+    assert texts and all("[Datensatz]" in x and "OpenStreetMap-Mitwirkende" in x for x in texts)
+    assert all("Klassifikator" in x and "[Data set]" not in x for x in texts)
+    english = client.get("/city/berlin/time").text
+    assert all("[Data set]" in x for x in re.findall(r'<p class="cite-text">(.*?)</p>', english))
+
+
 def test_figures_rows_each_carry_a_cite(client):  # noqa: F811
     html = client.get("/city/berlin/figures").text
     rows = re.findall(r"<tr[^>]*>.*?</tr>", html.split("<tbody", 1)[1], re.S)
@@ -527,7 +547,7 @@ def test_multi_fields_agree_with_the_shared_cases(monkeypatch):
                 for city, r in c["runs"].items()
             }
         )
-        got = cite.fields_for_cities(rows, c["ids"], c["title"], c["path"])
+        got = cite.fields_for_cities(rows, c["ids"], c["title"], c["path"], lang=c["lang"])
         assert (None if got is None else asdict(got)) == c["expected"], c["name"]
 
 

@@ -58,9 +58,12 @@ def series_short(series: str, lang: Lang = "en") -> str:
     return series
 
 
-# the English forms under their M8 names (tests read them)
+# the English forms under their M8 names (tests read them), and the keys they are read from
 SERIES_SHORT = {s: series_short(s) for s in ("counts", "avg_daily_intensity")}
 KM_SHORT = t("en", "counts.short.km")
+LABEL_KEYS: tuple[str, ...] = (
+    "counts.short.counts", "counts.short.avg_daily_intensity", "counts.short.km",
+)  # fmt: skip
 
 
 def counters_config(config_dir: Path) -> tuple[CountersConfig | None, str | None]:

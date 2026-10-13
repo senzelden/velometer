@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { DEFAULTS } from "../state.js";
 import {
-  NO_INDEX, buildModel, slotPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
+  buildModel, slotPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
 } from "../compare-model.js";
 
 const pt = (label, o = {}) => ({ label, headline: 10, ab_km: 50, C: 0, flags: "", ...o });
@@ -40,7 +41,7 @@ test("index model: first year = 100; a zero first year gets the note and no valu
   assert.deepEqual(m.series[0].points.map((p) => p.value), [100, 200, 300]);
   assert.deepEqual(m.series[0].points[1].flags, ["spike"]);
   assert.ok(m.series[2].points.every((p) => p.value === null));
-  assert.deepEqual(m.notes, [`Zero: ${NO_INDEX}`]);
+  assert.deepEqual(m.notes, ["Zero: no index: first year is 0 or missing"]);
 });
 
 test("unknown cities are skipped; b picks the boundary", () => {

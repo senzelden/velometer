@@ -400,7 +400,9 @@ def create_app(
         # inside a double-quoted attribute the policy's single quotes need no escaping
         env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
         env.globals["static_edition"] = static_edition
-        env.globals["cite_text"] = cite_model.cite_text
+        env.globals["cite_text"] = partial(cite_model.cite_text, lang=lang)
+        # the `#ui-strings` block static/js/strings.js reads: the `js.*` strings and month names
+        env.globals["js_strings"] = i18n.js_strings
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
         # and the commit the source line names (the export's build commit, else the checkout's)
         env.globals["theme_tokens"] = tokens
@@ -483,10 +485,12 @@ def create_app(
 
     def cite_for(request: Request, data: ReportData | None, path: str | None = None):
         """`cite_for(title, city=…, kind=…)` / `cite_for(title, cities=[…])` for a template:
-        the CiteFields of that figure, None without a run (the template then shows no Cite).
-        `path` is the page's path without the base path (the browser adds the base)."""
+        the CiteFields of that figure in the page's language, None without a run (the template
+        then shows no Cite). `path` is the page's path without the base path (the browser adds
+        the base)."""
         rows = None if data is None else cite_rows(request, data)
         where = request.url.path if path is None else path
+        lang = request.state.lang
 
         shared: dict = {}  # a page's figures share one run: built once, the title varies
 
@@ -496,10 +500,12 @@ def create_app(
             key = (city, kind, None if cities is None else tuple(cities))
             if key not in shared:
                 if city is not None:
-                    shared[key] = cite_model.fields_for_city(rows, city, "", where, kind)
+                    shared[key] = cite_model.fields_for_city(rows, city, "", where, kind, lang)
                 else:
                     ids = cities if cities is not None else rows.city_ids()
-                    shared[key] = cite_model.fields_for_cities(rows, list(ids), "", where, kind)
+                    shared[key] = cite_model.fields_for_cities(
+                        rows, list(ids), "", where, kind, lang
+                    )
             base = shared[key]
             # a title built with `t()` in a template is Markup: the citation wants its plain text
             title = str(title.unescape()) if isinstance(title, Markup) else title

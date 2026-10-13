@@ -121,8 +121,17 @@ def nolabels(html: str) -> str:
     return re.sub(r' data-label="[^"]*"', "", html)
 
 
+UI_STRINGS = re.compile(r'<script type="application/json" id="ui-strings">.*?</script>', re.S)
+
+
+def without_ui_strings(html: str) -> str:
+    """The page without its JS strings block: every page carries the whole `js.*` catalogue,
+    so a "this note is absent" assertion must not read it."""
+    return UI_STRINGS.sub(" ", html)
+
+
 def _text(html: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", without_ui_strings(html)))
 
 
 @pytest.mark.parametrize(

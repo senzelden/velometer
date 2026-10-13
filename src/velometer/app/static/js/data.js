@@ -3,14 +3,12 @@
 import { url } from "./base.js";
 import { xLabels } from "./chart-core.js";
 import { onThemeChange } from "./theme.js";
+import { t } from "./strings.js";
 
-export const TIER_NAMES = {
-  A: "A separated track",
-  B: "B shared foot/cycle path",
-  C: "C protected lane",
-  D: "D painted lane",
-  E: "E cycle street / bus lane",
-};
+/** The tiers, A (bottom of a stack) to E. */
+export const TIERS = ["A", "B", "C", "D", "E"];
+/** A tier's name in the page's language ("A separated track"). */
+export const tierName = (tier) => t(`js.tier.${tier}`);
 
 let pending = null;
 
@@ -96,7 +94,7 @@ export function releaser() {
 export function failed(el, err) {
   const p = document.createElement("p");
   p.className = "empty";
-  p.textContent = "Chart not available; the table on this page has the values.";
+  p.textContent = t("js.data.failed");
   el.replaceChildren(p);
   console.warn(err);
 }

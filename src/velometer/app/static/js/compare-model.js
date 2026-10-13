@@ -3,18 +3,20 @@
 import { assignColours, indexSeries, ranks } from "./chart-core.js";
 import { LAU_ONLY_METRIC, MAX_HIGHLIGHTED, parseState, serializeState } from "./state.js";
 import { labelsOf } from "./data.js";
-import { COUNTER_FOOT, COUNTER_METRIC, counterLines } from "./counter-model.js";
+import { COUNTER_METRIC, counterFoot, counterLines } from "./counter-model.js";
 import { url } from "./base.js";
+import { t } from "./strings.js";
 
-export const NO_INDEX = "no index: first year is 0 or missing";
+/** The note of a city that has no index (app/compare.py: NO_INDEX). */
+export const noIndex = () => t("js.compare.no_index");
 
 /**
  * The footnote under the chart and table: the counter index has its own (no flagged years, not
  * the headline); every other metric the flag mark and the headline unit (app/compare.py: footnote).
  */
 export function footnote(metric, headlineUnit) {
-  if (metric === COUNTER_METRIC) return COUNTER_FOOT;
-  return `⚑ flagged year (automatic check). Headline: ${headlineUnit}. Ranks in the Rank view depend on the cities selected.`;
+  if (metric === COUNTER_METRIC) return counterFoot();
+  return t("js.compare.foot", { unit: headlineUnit });
 }
 
 /** One point's value of a metric; null where it is missing. */
@@ -53,7 +55,7 @@ export function buildModel(D, state) {
     let points = raw;
     if (state.mode === "index") {
       const idx = indexSeries(raw, base);
-      if (idx.every((p) => p.value == null)) notes.push(`${D.cities[id].name}: ${NO_INDEX}`);
+      if (idx.every((p) => p.value == null)) notes.push(`${D.cities[id].name}: ${noIndex()}`);
       points = idx.map((p, k) => ({ ...p, flags: raw[k].flags }));
     }
     return { id, name: D.cities[id].name, points };
@@ -170,14 +172,13 @@ export function plainText(md) {
 
 /** What a screen reader hears after Compare redraws: how many cities, which metric, what scale. */
 export function compareSummary(state, metrics) {
-  const n = state.c.length;
-  const scale = state.mode === "index" ? "indexed to the first year = 100" : "absolute values";
-  return `Showing ${n} ${n === 1 ? "city" : "cities"}, ${metrics[state.m]?.label ?? state.m}, ${scale}`;
+  const scale = state.mode === "index" ? t("js.compare.scale_index") : t("js.compare.scale_abs");
+  return t("js.compare.summary", { count: state.c.length, metric: metrics[state.m]?.label ?? state.m, scale });
 }
 
 /** What a screen reader hears while the city panel loads, once it has, and when it failed. */
 export function panelAnnouncement(phase, name) {
-  if (phase === "loading") return `Loading ${name}…`;
+  if (phase === "loading") return t("js.panel.loading_city", { name });
   if (phase === "loaded") return name;
-  return `The city panel for ${name} could not be loaded.`;
+  return t("js.panel.failed", { name });
 }

@@ -176,3 +176,24 @@ def test_page_cache_keys_carry_the_language(rich, monkeypatch):  # noqa: F811
     missing = [f for f in LANG_FAMILIES if not any(s.startswith(f"{f}:") and s.endswith(":de")
                                                     for s in seen)]  # fmt: skip
     assert missing == [], seen
+
+
+def test_ui_strings_block_has_no_url(client):  # noqa: F811
+    # the M11 export-scan rule: a URL-shaped string in a page's JSON must resolve under the base;
+    # the JS strings are text and hold none
+    import json
+
+    from velometer.app.export import URL_SHAPED
+
+    def strings(v):
+        return [v] if isinstance(v, str) else [s for x in v.values() for s in strings(x)]
+
+    for path in ("/de/", "/", "/de/compare"):
+        html = client.get(path).text
+        block = re.search(
+            r'<script type="application/json" id="ui-strings">(.*?)</script>', html, re.S
+        )
+        assert block, path
+        data = json.loads(block[1])
+        assert data and all(k.startswith("js.") for k in data), path
+        assert [s for s in strings(data) if URL_SHAPED.match(s)] == [], path

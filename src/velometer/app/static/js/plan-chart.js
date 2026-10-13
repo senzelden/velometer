@@ -6,6 +6,7 @@
 // tables under each chart. Built with createElementNS / textContent only.
 import { niceTicks, scaleLinear, tickLabel, formatValue, textWidth } from "./chart-core.js";
 import { mount, failed } from "./data.js";
+import { t } from "./strings.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -13,7 +14,9 @@ const NS = "http://www.w3.org/2000/svg";
 export const OFFSCALE_FACTOR = 3;
 // target kinds whose steps are km per year, the quantity of every charted figure
 const PER_YEAR = new Set(["km_per_year", "none"]);
-const QUANTITY_TEXT = { km_cumulative: "cumulative", km_total: "total", share: "share" };
+/** A target kind's word on the y label ("cumulative"); a kind without one is named by its id. */
+const quantityText = (q) =>
+  ({ km_cumulative: () => t("js.plan.cumulative"), km_total: () => t("js.plan.total"), share: () => t("js.plan.share") })[q]?.() ?? q;
 const LINE = 12; // one line of axis text, px
 
 /**
@@ -86,7 +89,7 @@ export function yDomain(values, count = 5, opts = {}) {
   const hi = up.at(-1);
   const lo = min < 0 ? min - 0.05 * (hi - min) : 0;
   const ticks = [];
-  for (let t = -step; t >= lo; t -= step) ticks.unshift(+t.toFixed(10));
+  for (let v = -step; v >= lo; v -= step) ticks.unshift(+v.toFixed(10));
   return { lo, hi, ticks: [...ticks, ...up] };
 }
 
@@ -189,7 +192,7 @@ export function renderPlanChart(host, series, opts = {}) {
   if (!years.length || !values.length) {
     const p = document.createElement("p");
     p.className = "empty";
-    p.textContent = "No figures to chart for this item; the tables list what is recorded.";
+    p.textContent = t("js.plan.no_figures");
     host.replaceChildren(p);
     return;
   }
@@ -198,10 +201,10 @@ export function renderPlanChart(host, series, opts = {}) {
   const { steps, offScale, dom } = settleScale(scaled, figures, W < 480 ? 4 : 5);
   const ticks = dom.ticks;
   // left: the widest tick label and its 6 px gap, 4 px to spare; right: the last band's edge
-  const ml = Math.ceil(Math.max(...ticks.map((t) => textWidth(tickLabel(t))))) + 10;
+  const ml = Math.ceil(Math.max(...ticks.map((tick) => textWidth(tickLabel(tick))))) + 10;
   const mr = 10;
-  const axis = perYear || !drawTarget ? `${unit} per year` : `${unit}, ${QUANTITY_TEXT[quantity] ?? quantity}`;
-  const line = mapped.length ? `line: mapped km since 1 Jan ${series.mappedFrom}` : null;
+  const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : `${unit}, ${quantityText(quantity)}`;
+  const line = mapped.length ? t("js.plan.line", { year: series.mappedFrom }) : null;
   const oneLine = line ? `${axis} · ${line}` : axis;
   const ylines = !line || textWidth(oneLine) <= W - ml - mr ? [oneLine] : [axis, line];
   // the y label's lines, then a row for the off-scale caps' values, then the plot
@@ -214,12 +217,12 @@ export function renderPlanChart(host, series, opts = {}) {
   const barW = Math.max(3, Math.min(14, band / 6));
 
   const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", class: "plan-svg" });
-  const label = opts.label ? `Chart: ${opts.label}, target and figures by year` : "Plan chart";
+  const label = opts.label ? t("js.plan.chart_of", { label: opts.label }) : t("js.plan.chart");
   svg.setAttribute("aria-label", label);
   svg.appendChild(el("title", {}, label));
-  for (const t of ticks) {
-    svg.appendChild(el("line", { class: t === 0 ? "gridl zero" : "gridl", x1: ml, x2: W - mr, y1: y(t), y2: y(t) }));
-    svg.appendChild(el("text", { class: "axis-t", x: ml - 6, y: y(t) + 3.5, "text-anchor": "end" }, tickLabel(t)));
+  for (const tick of ticks) {
+    svg.appendChild(el("line", { class: tick === 0 ? "gridl zero" : "gridl", x1: ml, x2: W - mr, y1: y(tick), y2: y(tick) }));
+    svg.appendChild(el("text", { class: "axis-t", x: ml - 6, y: y(tick) + 3.5, "text-anchor": "end" }, tickLabel(tick)));
   }
   const every = band < 34 ? 2 : 1;
   years.forEach((yr, i) => {
@@ -238,7 +241,7 @@ export function renderPlanChart(host, series, opts = {}) {
     }
     svg.appendChild(g);
   };
-  bars(series.projects, "projects", -barW * 1.6, "Completed projects");
+  bars(series.projects, "projects", -barW * 1.6, t("js.plan.completed"));
   const segments = steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) }));
 
   if (mapped.length) {
@@ -249,7 +252,7 @@ export function renderPlanChart(host, series, opts = {}) {
     g.appendChild(el("path", { class: "mapped-line", d }));
     for (const p of mapped) {
       const sign = p.value > 0 ? "+" : "";
-      const text = `Mapped on the network, ${p.date}: ${sign}${formatValue(p.value)} mapped km since 1 Jan ${series.mappedFrom}`;
+      const text = t("js.plan.mapped_point", { date: p.date, value: `${sign}${formatValue(p.value)}`, year: series.mappedFrom });
       g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y(p.value), r: 3 }), text));
     }
     const last = mapped.at(-1);
@@ -265,7 +268,8 @@ export function renderPlanChart(host, series, opts = {}) {
       const yy = y(p.value).toFixed(1);
       d += `M${(x0(p.year) + 2).toFixed(1)},${yy}H${(x0(p.year) + band - 2).toFixed(1)}`;
     }
-    g.appendChild(titled(el("path", { class: "target-step", d }), `Target: ${steps.map((p) => `${p.year} ${formatValue(p.value)} ${unit}`).join(", ")}`));
+    const list = steps.map((p) => `${p.year} ${formatValue(p.value)} ${unit}`).join(", ");
+    g.appendChild(titled(el("path", { class: "target-step", d }), t("js.plan.target", { steps: list })));
     svg.appendChild(g);
   }
   if (offScale.length) {
@@ -274,7 +278,7 @@ export function renderPlanChart(host, series, opts = {}) {
     const g = el("g", { class: "target offscale" });
     for (const p of offScale) {
       const d = `M${(x0(p.year) + 2).toFixed(1)},${mt}H${(x0(p.year) + band - 2).toFixed(1)}`;
-      const text = `Target ${p.year}: ${formatValue(p.value)} ${unit}, above the chart's scale`;
+      const text = t("js.plan.target_cap", { year: p.year, value: formatValue(p.value), unit });
       g.appendChild(titled(el("path", { class: "target-cap", d }), text));
       const wide = `↑ ${formatValue(p.value)}`;
       const value = textWidth(wide) <= band ? wide : `↑${formatValue(p.value)}`;
@@ -293,8 +297,9 @@ export function renderPlanChart(host, series, opts = {}) {
     const cls = ["rep", p.current ? "rep-current" : "rep-revision", p.suspect ? "rep-suspect" : null]
       .filter(Boolean)
       .join(" ");
-    const text = `Reported ${p.year}: ${formatValue(p.value)} ${unit}, ${p.doc}` +
-      `${p.current ? " (current)" : " (revision)"}${p.suspect ? `, suspect${p.note ? `: ${p.note}` : ""}` : ""}`;
+    const which = p.current ? t("js.plan.current") : t("js.plan.revision");
+    const suspect = p.suspect ? `, ${p.note ? t("js.plan.suspect_note", { note: p.note }) : t("js.plan.suspect")}` : "";
+    const text = `${t("js.plan.reported", { year: p.year, value: formatValue(p.value), unit, doc: p.doc })} ${which}${suspect}`;
     g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text));
   }
   svg.appendChild(g);
@@ -304,7 +309,7 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const note = document.createElement("p");
   note.className = "meta plan-chart-note";
-  note.textContent = `The target (${unit}, ${QUANTITY_TEXT[quantity] ?? quantity}) is not drawn: the figures in the chart are per year. The table lists it.`;
+  note.textContent = t("js.plan.not_drawn", { unit, quantity: quantityText(quantity) });
   host.replaceChildren(svg, note);
 }
 

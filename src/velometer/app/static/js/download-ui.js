@@ -3,7 +3,9 @@
 // light theme whatever the page shows. The cities-page sparklines have no table and get none.
 import { base } from "./base.js";
 import { fileName, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
+import { locale } from "./fmt.js";
 import { announce } from "./live.js";
+import { t } from "./strings.js";
 
 export const SELECTOR = [
   "[data-chart]:not([data-chart=sparkline])",
@@ -82,20 +84,20 @@ function titleOf(container, f) {
 
 /** The light-theme ground, ink and muted ink for the text the image adds. */
 function light() {
-  const t = tokens();
-  return { ground: t["--surface"]?.[0], ink: t["--ink"]?.[0], muted: t["--ink-2"]?.[0] };
+  const tk = tokens();
+  return { ground: tk["--surface"]?.[0], ink: tk["--ink"]?.[0], muted: tk["--ink-2"]?.[0] };
 }
 
 const day = (iso) => String(iso ?? "").slice(0, 10);
 
-/** The title, source line and attribution the image carries. */
+/** The title, source line and attribution the image carries, in the page's language. */
 export function metaOf(container) {
   const f = citeFields(container);
-  const snapshot = f?.snapshot_note ?? (f?.osm_timestamp ? `OSM ${day(f.osm_timestamp)}` : "");
+  const snapshot = f?.snapshot_note ?? (f?.osm_timestamp ? t("js.download.snapshot", { day: day(f.osm_timestamp) }) : "");
   const source = [
     "velometer",
     snapshot,
-    f?.classifier ? `classifier ${f.classifier}` : "",
+    f?.classifier ? t("js.download.classifier", { version: f.classifier }) : "",
     f?.commit ?? commit(),
   ]
     .filter(Boolean)
@@ -105,7 +107,7 @@ export function metaOf(container) {
     source,
     ...light(),
     key: keyOf(container),
-    attribution: f?.attribution ?? "Map data © OpenStreetMap contributors, ODbL 1.0",
+    attribution: t("js.download.attribution"),
   };
 }
 
@@ -139,7 +141,7 @@ function chartOf(container) {
 
 function svgFor(container) {
   const svg = chartOf(container);
-  if (!svg) throw new Error("There is no chart to download yet");
+  if (!svg) throw new Error(t("js.download.no_chart"));
   const out = selfContained(svg, styleOf, isDark() ? lightOf(tokens()) : null, metaOf(container));
   const vb = out.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
   return { out, w: +vb[1], h: +vb[2] };
@@ -156,15 +158,17 @@ const tableId = (container) => container.getAttribute("aria-describedby") || con
 function tableOf(container, doc = document) {
   const id = tableId(container);
   const table = id ? tableFor(doc.getElementById(id)) : null;
-  if (!table) throw new Error("This chart has no data table to download");
+  if (!table) throw new Error(t("js.download.no_table"));
   return table;
 }
 
-function nameOf(container, ext) {
-  const path = location.pathname.slice(base().length - 1);
+/** The file name: the page's path (without the base and without a leading `de/`, so both
+ * editions name a chart alike), the chart, its state. */
+export function nameOf(container, ext, loc = globalThis.location, b = base()) {
+  const path = loc.pathname.slice(b.length - 1).replace(/^\/de(?=\/|$)/, "");
   const chart = container.dataset.chart ?? (container.hasAttribute("data-compare-chart") ? "compare"
     : container.hasAttribute("data-story-plot") ? "story" : container.dataset.planItem) ?? "chart"; // fmt: skip
-  const state = [container.dataset.kind, location.search.replace(/^\?/, "")].filter(Boolean).join("-");
+  const state = [container.dataset.kind, loc.search.replace(/^\?/, "")].filter(Boolean).join("-");
   return fileName(path, chart, state, ext);
 }
 
@@ -186,7 +190,7 @@ const MAKE = {
     return pngBlob(out, w, h, 2);
   },
   csv: async (c) =>
-    new Blob([tableCsv(tableOf(c), commit(), new Date().toISOString().replace(/\.\d+Z$/, "Z"))], {
+    new Blob([tableCsv(tableOf(c), commit(), new Date().toISOString().replace(/\.\d+Z$/, "Z"), locale())], {
       type: "text/csv;charset=utf-8",
     }),
 };
@@ -195,9 +199,9 @@ async function download(container, kind) {
   const name = nameOf(container, kind);
   try {
     save(await MAKE[kind](container), name);
-    announce(`Downloaded ${name}`);
+    announce(t("js.download.done", { name }));
   } catch (e) {
-    announce(`Could not make the ${kind.toUpperCase()} download. ${e.message}`);
+    announce(t("js.download.failed", { kind: kind.toUpperCase(), reason: e.message }));
   }
 }
 
@@ -205,7 +209,7 @@ const labelsSeen = new Map();
 
 /** The chart's name for a screen reader, unique on the page ("... (2)" for a repeat). */
 function chartName(container) {
-  const base = container.getAttribute("aria-label") || container.dataset.chart || "chart";
+  const base = container.getAttribute("aria-label") || container.dataset.chart || t("js.download.chart");
   const n = (labelsSeen.get(base) ?? 0) + 1;
   labelsSeen.set(base, n);
   return n === 1 ? base : `${base} (${n})`;
@@ -219,7 +223,7 @@ export function control(container, doc = document) {
   const d = doc.createElement("details");
   d.className = "download";
   const s = doc.createElement("summary");
-  s.append("Download");
+  s.append(t("js.download.label"));
   const hidden = doc.createElement("span");
   hidden.className = "visually-hidden";
   hidden.textContent = ` ${name}`;
@@ -230,7 +234,7 @@ export function control(container, doc = document) {
     const b = doc.createElement("button");
     b.type = "button";
     b.textContent = kind.toUpperCase();
-    b.setAttribute("aria-label", `Download ${kind.toUpperCase()}, ${name}`);
+    b.setAttribute("aria-label", t("js.download.button", { kind: kind.toUpperCase(), name }));
     b.addEventListener("click", () => download(container, kind));
     row.append(b);
   }
