@@ -611,6 +611,7 @@ city.keynum.none_flagged: LAU, keines markiert
 compare.index_heading: Index, erstes Jahr = 100
 cite.title.compare: 'Vergleich: {heading}; {cities}'
 page.bezirke.window: '{start} bis {end}'
+page.bezirke.window_current: aktueller Lauf
 
 # --- Zitate (cite.py; die js.cite.*-Gegenstücke unten)
 cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.

@@ -3,6 +3,7 @@ comparison provenance line and the flag details. The English forms stay as they 
 ones keep source ids, md5s, run ids, rule codes and metric identifiers as code."""
 
 from tests import test_timeseries as TT
+from tests.test_app import subarea_setup  # noqa: F401
 from tests.test_m12_leak import english_words
 from tests.test_reconcile import RUN, _fig
 from velometer import reconcile as RC
@@ -77,3 +78,18 @@ def test_flag_details_in_german():
     assert "km_jump" in campaign and "activity_spike" in campaign
     assert drift == "legacy_km 100,0 -> 10,0"
     assert english_words(f"<p>{campaign}</p>") == []
+
+
+def test_german_change_window_names_the_current_run_in_german(subarea_setup):  # noqa: F811
+    """The change window's open end (report.yaml `to: current`) is a config literal; the
+    German Bezirke page names it in German, the English page as before."""
+    from tests.test_app import CONTENT, _client, _write_change
+    from velometer.app.main import create_app
+
+    db_path, cfg, maps, docs = subarea_setup
+    _write_change(maps, docs)
+    with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
+        de = c.get("/de/city/berlin/bezirke").text
+        en = c.get("/city/berlin/bezirke").text
+    assert "2023-01-01 to current" in en
+    assert "Kartierte Änderung" in de and english_words(de) == []

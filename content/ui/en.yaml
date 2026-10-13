@@ -620,6 +620,7 @@ city.keynum.none_flagged: LAU, none flagged
 compare.index_heading: index, first year = 100
 cite.title.compare: 'Compare: {heading}; {cities}'
 page.bezirke.window: '{start} to {end}'
+page.bezirke.window_current: current
 
 # --- citations (cite.py; the js.cite.* twins below)
 cite.text: velometer ({year}). {title} [Data set]. {provenance}. {attribution}.

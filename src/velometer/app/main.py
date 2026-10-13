@@ -1478,7 +1478,15 @@ def create_app(
         return {
             "rows": rows,
             "series": bezirk_series(data, city_id),
-            "window": i18n.t(lang, "page.bezirke.window", start=label_from, end=label_to),
+            "window": i18n.t(
+                lang,
+                "page.bezirke.window",
+                start=label_from,
+                # report.yaml's `to: current`: the latest current run, named in the page's language
+                end=i18n.t(lang, "page.bezirke.window_current")
+                if window.to == "current"
+                else label_to,
+            ),
             "change_runs": runs,
             # the change page does not end at the run the Bezirk table above shows
             "change_stale": (has_map or table is not None) and (runs is None or runs[1] != latest),
