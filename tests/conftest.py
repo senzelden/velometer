@@ -10,6 +10,18 @@ from velometer.config import default_config_dir
 from velometer.report.data import ReportData, open_readonly
 
 
+def make_source(language: str, gloss_en: str | None = "Gloss", gloss_de: str | None = None):
+    """A one-excerpt `Source` ("s", excerpt "e") in `language`: the shared synthetic source."""
+    from velometer.content.models import Source
+
+    excerpt = {"id": "e", "text": "Quote.", "gloss_en": gloss_en, "locator": "p. 1"}
+    if gloss_de is not None:
+        excerpt["gloss_de"] = gloss_de
+    return Source(id="s", publisher="P", title="T", url="https://example.org/",
+                  accessed="2026-01-01", language=language, kind="press",
+                  excerpts=[excerpt])  # fmt: skip
+
+
 def pytest_collection_modifyitems(items):
     """Slow tests (network, full-size data) run without the suite's per-test timeout."""
     for item in items:

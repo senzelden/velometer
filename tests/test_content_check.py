@@ -5,6 +5,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from tests.content_util import EXPR, SOURCES, _combined, _write, build_tree
 from velometer.cli import app
 from velometer.config import DIFFERENCE_DIMENSIONS, default_config_dir, load_differences
 from velometer.content.check import (
@@ -17,76 +18,11 @@ from velometer.content.check import (
 )
 from velometer.content.facts import evaluate
 from velometer.content.loader import load_sources
-from velometer.content.models import STORY_STEPS
-
-EXPR = "series.berlin.lau.current.ab_km"
-
-SOURCES = {
-    "sources": [
-        {
-            "id": "src",
-            "publisher": "Senat",
-            "title": "Radverkehr",
-            "url": "https://example.org/radverkehr",
-            "accessed": "2026-10-01",
-            "language": "de",
-            "kind": "official",
-            "excerpts": [
-                {
-                    "id": "e1",
-                    "text": "Das Netz ist 78,2 km lang.",
-                    "gloss_en": "The network is 78.2 km long.",
-                    "locator": "p. 3",
-                }
-            ],
-        }
-    ]
-}
-
-
-def _write(path: Path, doc) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
-
-
-def _berlin(value: float) -> dict:
-    return {
-        "city_id": "berlin",
-        "title": "Berlin",
-        "dek": "A dek.",
-        "sections": [
-            {"heading": "Story", "paragraphs": [f"Berlin has {value:.1f} km [#r1] [@src]."]},
-            {"role": "figures", "paragraphs": ["Figures."]},
-        ],
-        "quotes": [{"excerpt": "src/e1", "after": 0}],
-        "facts": [{"id": "ab", "expr": EXPR, "printed": f"{value:.1f}"}],
-        "data_refs": [{"id": "r1", "label": "Report", "route": "/"}],
-        "literals": ["5 m"],
-    }
-
-
-def _combined() -> dict:
-    return {
-        "city_id": "combined",
-        "title": "All",
-        "dek": "Dek.",
-        "sections": [{"step": s, "paragraphs": [f"Step {s}."]} for s in STORY_STEPS],
-    }
 
 
 @pytest.fixture
 def content(fixture_db, tmp_path):
-    _db, _cfg, _conn, data = fixture_db
-    value = evaluate(EXPR, data, tmp_path)
-    root = tmp_path / "content"
-    _write(root / "sources" / "all.yaml", SOURCES)
-    _write(root / "narratives" / "berlin.yaml", _berlin(value))
-    _write(root / "narratives" / "paris.yaml", {**_berlin(value), "city_id": "paris"})
-    _write(root / "narratives" / "combined.yaml", _combined())
-    _write(root / "explainer.yaml", {"title": "Explainer", "intro": ["Intro."], "sections": []})
-    # these tests own their dimension list (the shipped one: test_shipped_dimensions_*)
-    (_cfg / "differences.yaml").unlink(missing_ok=True)
-    return root, data, tmp_path
+    return build_tree(fixture_db, tmp_path)
 
 
 def _problems(root, data, tmp):

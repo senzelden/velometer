@@ -1,7 +1,7 @@
 """Read content YAML into validated models; every failure is a ContentError naming the file."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, overload
 
 import yaml
 from pydantic import ValidationError
@@ -14,6 +14,9 @@ from velometer.content.models import (
     OrgMapping,
     Source,
 )
+from velometer.content.translate import load_translation, merge, twin_path
+
+Fallback = dict[str, frozenset[str]]
 
 
 def _read(path: Path) -> Any:
@@ -45,11 +48,50 @@ def load_sources(dir: Path) -> dict[str, Source]:
     return out
 
 
-def load_narratives(dir: Path, errors: dict[str, str] | None = None) -> dict[str, Narrative]:
+def _german(
+    models: dict[str, Any], dir: Path, errors: dict[str, str] | None
+) -> tuple[dict[str, Any], Fallback]:
+    """The English models of `dir` merged with their translations in `dir/de/`, and per file
+    stem the walk paths still in English. A missing translation leaves the whole file in
+    English; a broken one too, its message recorded under `de/<stem>` (raised without
+    `errors`)."""
+    out: dict[str, Any] = {}
+    fallback: Fallback = {}
+    for stem, model in models.items():
+        de_path = twin_path(Path(dir) / f"{stem}.yaml")
+        tr = None
+        if de_path.is_file():
+            try:
+                tr = load_translation(de_path, model)
+            except ContentError as e:
+                if errors is None:
+                    raise
+                errors[f"de/{stem}"] = str(e)
+        out[stem], fallback[stem] = merge(model, tr)
+    return out, fallback
+
+
+@overload
+def load_narratives(
+    dir: Path, errors: dict[str, str] | None = None, lang: Literal["en"] = "en"
+) -> dict[str, Narrative]: ...
+@overload
+def load_narratives(
+    dir: Path, errors: dict[str, str] | None, lang: Literal["de"]
+) -> tuple[dict[str, Narrative], Fallback]: ...
+@overload
+def load_narratives(
+    dir: Path, errors: dict[str, str] | None = None, *, lang: Literal["de"]
+) -> tuple[dict[str, Narrative], Fallback]: ...
+def load_narratives(
+    dir: Path, errors: dict[str, str] | None = None, lang: Literal["en", "de"] = "en"
+) -> dict[str, Narrative] | tuple[dict[str, Narrative], Fallback]:
     """Load `<city_id>.yaml` files; the file stem must equal the narrative's `city_id`.
 
     Without `errors` the first bad file raises. With it, each bad file's message is recorded
     under its stem and the file is skipped, so one broken narrative leaves the others readable.
+    With `lang="de"`: (narratives in German, fallback), `fallback` the walk paths per stem that
+    are still English (`_german`).
     """
     out: dict[str, Narrative] = {}
     for path in sorted(dir.glob("*.yaml")):
@@ -59,7 +101,7 @@ def load_narratives(dir: Path, errors: dict[str, str] | None = None) -> dict[str
             if errors is None:
                 raise
             errors[path.stem] = str(e)
-    return out
+    return _german(out, dir, errors) if lang == "de" else out
 
 
 def _narrative(path: Path) -> Narrative:
@@ -74,23 +116,50 @@ def _narrative(path: Path) -> Narrative:
     return narrative
 
 
-def load_document(path: Path) -> Explainer | None:
+@overload
+def load_document(path: Path, lang: Literal["en"] = "en") -> Explainer | None: ...
+@overload
+def load_document(path: Path, lang: Literal["de"]) -> tuple[Explainer | None, Fallback]: ...
+def load_document(
+    path: Path, lang: Literal["en", "de"] = "en"
+) -> Explainer | None | tuple[Explainer | None, Fallback]:
     """An explainer-shaped page (the explainer, `plans/berlin.yaml`, `counters.yaml`), or None
-    when the file does not exist."""
-    if not path.exists():
-        return None
-    try:
-        return Explainer.model_validate(_read(path))
-    except ValidationError as e:
-        raise ContentError(f"{path}: {e}") from e
+    when the file does not exist. With `lang="de"`: (the page in German or None, fallback),
+    `fallback` keyed by the file stem as in `load_narratives`; a broken translation raises."""
+    doc = None
+    if path.exists():
+        try:
+            doc = Explainer.model_validate(_read(path))
+        except ValidationError as e:
+            raise ContentError(f"{path}: {e}") from e
+    if lang != "de":
+        return doc
+    if doc is None:
+        return None, {}
+    merged, fallback = _german({path.stem: doc}, path.parent, None)
+    return merged[path.stem], fallback
 
 
 load_explainer = load_document
 
 
-def load_organisations(dir: Path, errors: dict[str, str] | None = None) -> dict[str, Organisation]:
-    """Load `<id>.yaml` profiles; the file stem must equal the organisation's `id`. `errors` as
-    in `load_narratives`."""
+@overload
+def load_organisations(
+    dir: Path, errors: dict[str, str] | None = None, lang: Literal["en"] = "en"
+) -> dict[str, Organisation]: ...
+@overload
+def load_organisations(
+    dir: Path, errors: dict[str, str] | None, lang: Literal["de"]
+) -> tuple[dict[str, Organisation], Fallback]: ...
+@overload
+def load_organisations(
+    dir: Path, errors: dict[str, str] | None = None, *, lang: Literal["de"]
+) -> tuple[dict[str, Organisation], Fallback]: ...
+def load_organisations(
+    dir: Path, errors: dict[str, str] | None = None, lang: Literal["en", "de"] = "en"
+) -> dict[str, Organisation] | tuple[dict[str, Organisation], Fallback]:
+    """Load `<id>.yaml` profiles; the file stem must equal the organisation's `id`. `errors` and
+    `lang` as in `load_narratives`."""
     out: dict[str, Organisation] = {}
     for path in sorted(Path(dir).glob("*.yaml")):
         try:
@@ -99,7 +168,7 @@ def load_organisations(dir: Path, errors: dict[str, str] | None = None) -> dict[
             if errors is None:
                 raise
             errors[path.stem] = str(e)
-    return out
+    return _german(out, Path(dir), errors) if lang == "de" else out
 
 
 def _organisation(path: Path) -> Organisation:

@@ -6,7 +6,7 @@ from datetime import date
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 STORY_STEPS = ("all", "leaders", "tail", "growth", "jumps", "bezirke")
 INTERNAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "::1"}
@@ -38,6 +38,9 @@ class Excerpt(_Strict):
     id: str
     text: str
     gloss_en: str | None = None
+    # required for a non-German excerpt by the German completeness check, not by this model:
+    # synthetic sources and hand-built trees stay valid
+    gloss_de: str | None = None
     locator: str
 
 
@@ -206,6 +209,58 @@ class Organisation(_Strict):
         _unique("fact", [f.id for f in self.facts])
         _unique("data_ref", [d.id for d in self.data_refs])
         return self
+
+
+# --- German translation files (M12 spec §4.4) --------------------------------------------
+# A translation file holds only the translatable text, in its English file's structure. Each
+# string is `{text, src}`, `src` the stamp of the English it was translated from
+# (`translate.src_hash`). A null list item is an untranslated paragraph that keeps its place.
+
+
+class Tr(_Strict):
+    text: str
+    src: str | None = Field(None, pattern=r"^[0-9a-f]{12}$")
+
+
+class TrSection(_Strict):
+    heading: Tr | None = None
+    paragraphs: list[Tr | None] = []
+
+
+class TrOrgSection(_Strict):
+    heading: Tr | None = None
+    paragraphs: list[Tr | None] = []
+    dimensions: dict[str, Tr] | None = None
+
+
+class NarrativeTr(_Strict):
+    """`content/narratives/de/<city_id>.yaml`."""
+
+    city_id: str
+    title: Tr | None = None
+    dek: Tr | None = None
+    sections: list[TrSection] = []
+    data_refs: dict[str, Tr] = {}
+    literals: list[str] = []
+
+
+class DocumentTr(_Strict):
+    """`content/de/explainer.yaml`, `content/de/counters.yaml`, `content/plans/de/<id>.yaml`."""
+
+    title: Tr | None = None
+    intro: list[Tr | None] = []
+    sections: list[TrSection] = []
+    data_refs: dict[str, Tr] = {}
+    literals: list[str] = []
+
+
+class OrganisationTr(_Strict):
+    """`content/organisations/de/<id>.yaml`; the name is a proper name and is not translated."""
+
+    id: str
+    sections: list[TrOrgSection] = []
+    data_refs: dict[str, Tr] = {}
+    literals: list[str] = []
 
 
 class OrgMapping(_Strict):

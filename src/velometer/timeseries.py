@@ -468,6 +468,96 @@ def explanation(path: Path, key: str) -> str | None:
     return body or None
 
 
+# --- German explanations (M12 spec §4.4): `m3_timeseries.de.md`, the same `###` headings, each
+# entry stamped with its English entry's hash in an HTML comment after the heading.
+
+SRC_COMMENT = re.compile(r"\A<!-- src: ([0-9a-f]{12}) -->\s*")
+# a `### key` heading line, the blank lines after it and an existing stamp comment
+_STAMPED_HEADING = re.compile(
+    r"^### (\S+)[ \t]*(?:\n|\Z)(?:[ \t]*\n)*(?:<!-- src: [^\n]*?-->[ \t]*(?:\n|\Z)(?:[ \t]*\n)*)?",
+    re.M,
+)
+
+
+def german_explanations(report: Path) -> Path:
+    """`m3_timeseries.md` -> `m3_timeseries.de.md`."""
+    return report.with_name(f"{report.name.removesuffix('.md')}.de.md")
+
+
+def german_explanations_required(report: Path) -> bool:
+    """German explanations are mandatory only for the shipped report, never for a test file."""
+    from velometer import i18n
+
+    shipped = i18n.SHIPPED_DOCS_DIR / "review" / "m3_timeseries.md"
+    return i18n.GERMAN_CONTENT_REQUIRED and report.resolve() == shipped.resolve()
+
+
+def explanation_hash(path: Path, key: str) -> str:
+    """The stamp of the English entry `key` (its whitespace-normalised text; an entry without
+    text has the stamp of "")."""
+    from velometer.content.translate import src_hash
+
+    return src_hash(explanation(path, key) or "")
+
+
+def stamped_explanation(de_path: Path, key: str) -> tuple[str | None, str | None]:
+    """(German text, stamp) of the entry `key`: (None, None) without the file or the entry,
+    (text, None) when it is not stamped."""
+    body = explanation(de_path, key)
+    if body is None:
+        return None, None
+    m = SRC_COMMENT.match(body)
+    if m is None:
+        return body, None
+    return body[m.end() :].strip() or None, m.group(1)
+
+
+def german_explanation_problems(
+    en_path: Path, de_path: Path, *, require_de: bool
+) -> tuple[list[str], list[str]]:
+    """(problems, notes), each "[de] …": a stale stamp or a German entry without an English one
+    is a problem; a missing file, entry or stamp is a note, or a problem when `require_de`."""
+    problems: list[str] = []
+    notes: list[str] = []
+    gaps = problems if require_de else notes
+    name = de_path.name
+    if not de_path.is_file():
+        gaps.append(f"[de] {name}: missing (German flagged-year explanations)")
+        return problems, notes
+    en_keys = headings(en_path.read_text(encoding="utf-8"))
+    de_keys = headings(de_path.read_text(encoding="utf-8"))
+    for key in sorted(en_keys - de_keys):
+        gaps.append(f"[de] {name}: missing ### {key}")
+    for key in sorted(de_keys - en_keys):
+        problems.append(f"[de] {name} ### {key}: no English entry")
+    for key in sorted(en_keys & de_keys):
+        _text, src = stamped_explanation(de_path, key)
+        if src is None:
+            gaps.append(f"[de] {name} ### {key}: not stamped")
+        elif src != explanation_hash(en_path, key):
+            problems.append(f"[de] {name} ### {key}: stale (English changed)")
+    return problems, notes
+
+
+def stamp_explanations(en_path: Path, de_path: Path) -> int:
+    """Write the English entry's stamp after every German `###` heading that has one; returns
+    how many. Run by whoever translated, never as a blanket fix."""
+    en_keys = headings(en_path.read_text(encoding="utf-8"))
+    n = 0
+
+    def one(m: re.Match) -> str:
+        nonlocal n
+        key = m.group(1)
+        if key not in en_keys:
+            return m.group(0)
+        n += 1
+        return f"### {key}\n\n<!-- src: {explanation_hash(en_path, key)} -->\n\n"
+
+    text = _STAMPED_HEADING.sub(one, de_path.read_text(encoding="utf-8"))
+    de_path.write_text(text, encoding="utf-8")
+    return n
+
+
 # Markers written before schema v6 carry an `activity=<sha>` item; activity.yaml is part of the run
 # identity now, so it is ignored.
 IGNORED_MARKER_KEYS = ("activity",)

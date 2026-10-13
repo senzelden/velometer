@@ -31,6 +31,7 @@ MINUS = "−"
 NNBSP = " "
 
 SHIPPED_CONTENT_DIR = Path(__file__).resolve().parents[2] / "content"
+SHIPPED_DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
 CATALOGUE_DIR = SHIPPED_CONTENT_DIR / "ui"
 
 # Flipped by the task that ships complete German content; see `german_required`.

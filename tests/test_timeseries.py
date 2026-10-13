@@ -838,3 +838,88 @@ def test_check_needs_subarea_rows_but_not_remainder_rows(db, tmp_path):
     assert res.exit_code == 1
     assert f"berlin/{runs[0]}" in res.output
     assert not any(f"berlin/{r}" in res.output for r in runs[1:])
+
+
+# --- German explanations (M12) ---------------------------------------------------------------
+
+
+def _pair(tmp_path, de_body: str | None):
+    en = tmp_path / "m3_timeseries.md"
+    en.write_text(EXPLAINED, encoding="utf-8")
+    de = tmp_path / "m3_timeseries.de.md"
+    if de_body is not None:
+        de.write_text(de_body, encoding="utf-8")
+    return en, de
+
+
+def test_a_missing_german_heading_is_a_note_unless_required(tmp_path):
+    en, de = _pair(tmp_path, "# M3\n\n### berlin/lau/2019\n\nUrsache: Tag-Drift.\n")
+    assert T.stamp_explanations(en, de) == 1
+    problems, notes = T.german_explanation_problems(en, de, require_de=False)
+    assert problems == [] and any("berlin/lau/2022" in n and n.startswith("[de] ") for n in notes)
+    problems, _ = T.german_explanation_problems(en, de, require_de=True)
+    assert any("berlin/lau/2022" in p for p in problems)
+    de.unlink()
+    problems, notes = T.german_explanation_problems(en, de, require_de=False)
+    assert problems == [] and notes
+
+
+def test_a_stale_german_explanation_is_a_problem_either_way(tmp_path):
+    body = "### berlin/lau/2019\n\n<!-- src: 000000000000 -->\n\nU.\n\n### berlin/lau/2022\n\nK.\n"
+    en, de = _pair(tmp_path, body)
+    for required in (False, True):
+        problems, _ = T.german_explanation_problems(en, de, require_de=required)
+        assert [p for p in problems if "stale" in p] == [
+            "[de] m3_timeseries.de.md ### berlin/lau/2019: stale (English changed)"
+        ]
+
+
+def test_a_whitespace_only_english_change_is_not_stale(tmp_path):
+    body = "### berlin/lau/2019\n\nU.\n\n### berlin/lau/2022\n\nK.\n\n### berlin/lau/2026\n"
+    en, de = _pair(tmp_path, body)
+    assert T.stamp_explanations(en, de) == 3
+    en.write_text(EXPLAINED.replace("first paragraph.", "first\nparagraph.  "), encoding="utf-8")
+    assert T.german_explanation_problems(en, de, require_de=True) == ([], [])
+    en.write_text(EXPLAINED.replace("first paragraph.", "first section."), encoding="utf-8")
+    assert T.german_explanation_problems(en, de, require_de=True)[0]
+
+
+def test_stamped_explanation_reads_text_and_stamp(tmp_path):
+    en, de = _pair(
+        tmp_path, "### berlin/lau/2019\n\nUrsache.\n\nZweiter Absatz.\n\n### x/y/1\n\nZ.\n"
+    )
+    assert T.stamped_explanation(de, "berlin/lau/2019") == ("Ursache.\n\nZweiter Absatz.", None)
+    assert T.stamp_explanations(en, de) == 1  # x/y/1 has no English entry: not stamped
+    assert T.stamp_explanations(en, de) == 1  # a re-stamp replaces, never adds, the comment
+    text, src = T.stamped_explanation(de, "berlin/lau/2019")
+    assert text == "Ursache.\n\nZweiter Absatz." and src == T.explanation_hash(
+        en, "berlin/lau/2019"
+    )
+    assert de.read_text(encoding="utf-8").count("<!-- src:") == 1
+    assert T.stamped_explanation(de, "berlin/lau/2022") == (None, None)
+    assert T.stamped_explanation(tmp_path / "none.md", "berlin/lau/2019") == (None, None)
+    problems, _ = T.german_explanation_problems(en, de, require_de=False)
+    assert any("x/y/1" in p and "no English" in p for p in problems)
+
+
+def test_cli_check_reports_german_explanation_problems_only(db, tmp_path):
+    report = _report(tmp_path, "### berlin/lau/2019\n\nCause.\n", marker=f"berlin/lau={db[1][:8]}")
+    ok = _ts(db, report, "--check")  # no German file: a note, never printed
+    assert ok.exit_code == 0 and "[de]" not in ok.output
+    de = tmp_path / "r.de.md"
+    de.write_text("### berlin/lau/2019\n\n<!-- src: 000000000000 -->\n\nUrsache.\n")
+    bad = _ts(db, report, "--check")
+    assert bad.exit_code == 1
+    assert "[de] r.de.md ### berlin/lau/2019: stale (English changed)" in bad.stderr
+
+
+def test_german_explanations_are_required_only_for_the_shipped_report(tmp_path, monkeypatch):
+    from velometer import i18n
+
+    shipped = Path(__file__).parent.parent / "docs" / "review" / "m3_timeseries.md"
+    monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", True)
+    assert T.german_explanations_required(shipped)
+    assert not T.german_explanations_required(tmp_path / "m3_timeseries.md")
+    monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", False)
+    assert not T.german_explanations_required(shipped)
+    assert T.german_explanations(shipped).name == "m3_timeseries.de.md"
