@@ -1,0 +1,66 @@
+id: copenhagen_kommune
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Københavns Kommune ist die Gemeinde Kopenhagen. Die technische Verwaltung der
+      Gemeinde, die Klima-, Miljø- og Teknikforvaltningen, ist für Betrieb und Entwicklung
+      der Stadt zuständig und arbeitet nach eigener Aussage daran, dass das Vorankommen
+      mit dem Fahrrad, dem öffentlichen Verkehr oder dem Auto schnell und einfach
+      ist [@kk-klima-miljoe-teknikforvaltningen]. Der Stadtrat (Borgerrepræsentationen)
+      erteilt seinen Ausschüssen per Abstimmung Aufträge zur Strategie [@kk-br-cykelstrategi-2024].
+    src: ebe3c8c60851
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        Radwege (cykelstier), durch Bordsteine von Fahrbahn und Gehweg getrennt; Radfahrstreifen
+        stehen in einer eigenen Zeile [@copenhagen-cykelfokus-2024] [@copenhagen-mobilitetsredegorelse-2026]
+      src: 152104ce3298
+    kind:
+      text: bestehender Radweg im Jahr 2025 [@copenhagen-mobilitetsredegorelse-2026]
+      src: 6ebf91a68d15
+    length:
+      text: von der Quelle nicht angegeben
+      src: 6369b53f77a8
+    date:
+      text: das Jahr 2025 [@copenhagen-mobilitetsredegorelse-2026]
+      src: d662bdaabd0c
+    area:
+      text: die Gemeinde Kopenhagen [@copenhagen-mobilitetsredegorelse-2026]
+      src: 50709a80268a
+    method:
+      text: der eigene Bestand der Verwaltung [@copenhagen-mobilitetsredegorelse-2026]
+      src: 27b70064b6ea
+  paragraphs:
+  - text: >-
+      Unsere Zahl für Kopenhagen, 401 km Radweg im Jahr 2025, stammt aus der Mobilitetsredegørelse
+      2026 [@copenhagen-mobilitetsredegorelse-2026]. Früher berichtete die Stadt alle
+      zwei Jahre in einem Fahrradbericht über den Radverkehr; seit 2021 ersetzt ihn
+      der Mobilitätsbericht [@copenhagen-verdens-bedste-cykelby]. In den Gestaltungsleitlinien
+      der Stadt hat ein cykelsti Bordsteine zur Fahrbahn und zum Gehweg, während markierte
+      Radfahrstreifen eine eigene Kategorie sind, die neue Vorhaben vermeiden sollen
+      [@copenhagen-cykelfokus-2024].
+    src: 362d4682c122
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Kopenhagens Radverkehrsziele stammen aus der Radverkehrsstrategie 2011–2025
+      und dem Prioritätenplan für Radwege 2017–2025 [@copenhagen-mobilitetsredegorelse-2026];
+      der Fahrradbericht sollte den Fortschritt gegenüber den Zielen der Strategie
+      zeigen [@copenhagen-verdens-bedste-cykelby]. Im Mai 2024 beauftragte der Stadtrat
+      seinen technischen Ausschuss, der Stadt bei der Überarbeitung ihrer Pläne eine
+      neue, starke Radverkehrsstrategie zu geben [@kk-br-cykelstrategi-2024].
+    src: d7e24ef1eb68
+  - text: >-
+      Nach unserer Lesart stellt die Stadt die Infrastruktur bereit und führt zugleich
+      die Bilanz, und ihre km-Zahlen dienen ihren eigenen Zielen.
+    src: ebc85d2ee641
+literals:
+- 401 km

@@ -1,0 +1,78 @@
+id: senmvku
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Die SenMVKU ist die Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und
+      Umwelt des Landes Berlin; diesen Namen trägt sie seit Mai 2023 [@infravelo-ueber-uns].
+      Die Zuständigkeit für Radverkehrsinfrastruktur in Berlin liegt bei der SenMVKU
+      und den Bezirken [@infravelo-organisation]. Sie vollzieht das Mobilitätsgesetz,
+      verkündet am 5. Juli 2018 [@berlin-mobg-page], und finanziert und steuert die
+      landeseigene Radverkehrsgesellschaft infraVelo [@infravelo-faq].
+    src: e87c144db01b
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        alle im Jahr umgesetzten oder verbesserten Radverkehrsmaßnahmen, gleich wer
+        Baulastträger ist oder zahlt [@berlin-fortschrittsbericht-2025]
+      src: 45d50725962f
+    kind:
+      text: >-
+        im Jahr fertiggestellte Maßnahmen, kein Netzbestand [@berlin-fortschrittsbericht-2025]
+      src: 21aa929463f1
+    length:
+      text: >-
+        Streckenlänge seit dem Bericht 2022: Eine Straße mit Anlagen auf beiden Seiten
+        zählt als eine Länge; frühere Berichte zählten jede Richtung [@berlin-radfortschrittsbericht-page]
+      src: 7b791fb8ab03
+    date:
+      text: Stichtag 31. Dezember des Berichtsjahres [@berlin-fortschrittsbericht-2025]
+      src: 190c4e68ace0
+    area:
+      text: Land Berlin [@berlin-fortschrittsbericht-2025]
+      src: 13f6a99c9cff
+    method:
+      text: >-
+        hauptsächlich die von infraVelo geführte und von den Bezirken aktualisierte
+        Projektdatenbank [@berlin-fortschrittsbericht-2025] [@infravelo-faq]
+      src: 52fcef4f18d4
+  paragraphs:
+  - text: >-
+      Unsere Berliner Zeilen `official` stammen von der SenMVKU: aus ihrem jährlichen
+      Fahrrad-Fortschrittsbericht und ihren Antworten auf Schriftliche Anfragen im
+      Abgeordnetenhaus [@berlin-fortschrittsbericht-2025] [@berlin-drs-19-25987].
+      Der Bericht umfasst die Arbeit der Senatsverwaltung, von infraVelo und der Bezirke
+      [@berlin-radfortschrittsbericht-page]. Seine Zahlen stammen hauptsächlich aus
+      der Projektdatenbank von infraVelo, beziehen sich auf den 31. Dezember und können
+      in späteren Berichten korrigiert werden [@berlin-fortschrittsbericht-2025].
+    src: 22de72cec84d
+  - text: >-
+      Seit dem Bericht 2022 nennt er die Streckenlänge statt der Länge je Richtung;
+      nach Aussage der Verwaltung fallen die Zahlen dadurch niedriger aus und sind
+      mit früheren Jahren nicht direkt vergleichbar [@berlin-radfortschrittsbericht-page].
+    src: 1fefd4ecd7ac
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Der Fortschrittsbericht geht an den Hauptausschuss des Abgeordnetenhauses [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+      Für 2025 entnahm die dpa ihm, dass knapp 27 Millionen Euro in den Radverkehr
+      flossen, von rund 82,4 Millionen verfügbaren [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+    src: 9e13065cb025
+  - text: >-
+      Nach unserer Lesart gibt dieselbe Verwaltung das Tempo vor und berichtet darüber.
+      Im Juni 2023 bat sie die Bezirke, Radwegprojekte vorerst zu stoppen, wenn sie
+      auch nur einen Autoparkplatz kosten würden [@berlin-tagesspiegel-radwegestopp-2023].
+      Im Dezember 2025 nannte sie für das Jahr 20,5 km, weniger als ihr eigenes Ziel
+      [@berlin-tagesspiegel-dpa-2025-12].
+    src: f2d62ae37a83
+literals:
+- 27 Millionen Euro
+- 82,4 Millionen
+- 20,5 km

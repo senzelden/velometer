@@ -1,0 +1,71 @@
+id: mobilitaetsagentur_wien
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Die Mobilitätsagentur Wien ist ein Unternehmen der Stadt Wien, das sich für
+      bessere Bedingungen für den Rad- und Fußverkehr einsetzt und nach eigener Aussage
+      an die Ziele der Stadt gebunden ist [@mobilitaetsagentur-ueber-uns]. Die rot-grüne
+      Stadtregierung gründete sie bald nach ihrem Amtsantritt, und der seit Herbst
+      2011 amtierende Radverkehrsbeauftragte der Stadt leitete sie [@drahtesel-mobilitaetsagentur-2016].
+      Ein Porträt von 2016 in der Radzeitschrift Drahtesel bezifferte ihr jährliches
+      Budget auf rund zwei Millionen und nannte sie eine Art Kommunikationsabteilung
+      der Stadt, die selbst keine Infrastruktur durchsetzen könne [@drahtesel-mobilitaetsagentur-2016].
+    src: 5ee700f8c64b
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        Radverkehrsprojekte aller Anlagentypen im Hauptradverkehrsnetz, deren Umsetzung
+        im Jahr begann [@vienna-radwegeausbau-bilanz-2025]
+      src: 434a019503ac
+    kind:
+      text: begonnene Projekte, nicht abgeschlossene [@vienna-radwegeausbau-bilanz-2025]
+      src: f65a7ab7d4d5
+    length:
+      text: >-
+        in der digitalen Stadtkarte vom Anfangs- bis zum Endpunkt gemessen, jede Anlage
+        einzeln; ein Kreuzungsprojekt geht mit einem Meter ein [@vienna-radwegeausbau-bilanz-2025]
+      src: 6bd5cc9f3c54
+    date:
+      text: das Jahr, in dem das Projekt begann [@vienna-radwegeausbau-bilanz-2025]
+      src: d33063da7ded
+    area:
+      text: Stadt Wien, Hauptradverkehrsnetz [@vienna-radwegeausbau-bilanz-2025]
+      src: fde5da0edf00
+    method:
+      text: >-
+        eigene Zählung der Agentur über die Projekte der Stadt [@vienna-radwegeausbau-bilanz-2025]
+      src: 62b9ba9d2869
+  paragraphs:
+  - text: >-
+      Unsere Zahl für Wien ist die Bilanz Radwegeausbau 2025 der Agentur: 53 Projekte
+      im Hauptradverkehrsnetz, deren Umsetzung 2025 begann [@vienna-radwegeausbau-bilanz-2025].
+      Sie zählt Baubeginne, keine fertiggestellten oder bestehenden km, und die Sanierung
+      bestehender Wege bleibt außen vor [@vienna-radwegeausbau-bilanz-2025]. Die Netzstatistik
+      der Stadt ist eine eigene Reihe, die seit 2018 Anlagen auf beiden Seiten einer
+      Straße erfasst [@vienna-radverkehrsnetz-fakten].
+    src: 017ed95dcd17
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Die Agentur stellt das jährliche Radverkehrsprogramm der Stadt vor, die Radweg-Offensive;
+      für 2026 kündigte sie 33 Projekte und rund 12,5 km neue Radwege an [@vienna-mobilitaetsagentur-2026].
+      Der ORF berichtete über das Programm 2025 mit rund 24 km [@vienna-orf-radwegenetz-2025].
+    src: 7ffdb2e90080
+  - text: >-
+      Nach unserer Lesart sind das die eigene Darstellung der Stadt über ihr Programm,
+      veröffentlicht von einem städtischen Unternehmen statt von einer unabhängigen
+      Stelle, und sie messen eher Absichten und Baubeginne als fertiges Netz.
+    src: 4feb44cc2172
+literals:
+- '53'
+- '33'
+- 12,5 km
+- 24 km

@@ -1,0 +1,83 @@
+id: clean_cities
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Die Clean Cities Campaign bezeichnet sich als Europas größtes Netzwerk von Organisationen,
+      die sich dafür einsetzen, dass Städte von umweltschädlichen Autos auf aktive,
+      geteilte und elektrische Mobilität umsteigen [@cc-what-we-do]. Getragen wird
+      sie von Transport & Environment (T&E), einer europäischen NGO für sauberen Verkehr
+      [@cc-what-we-do]. Eine eigene Angabe zur Finanzierung der Kampagne haben wir
+      nicht gefunden; T&E gibt an, von Stiftungen, staatlichen Stellen, multilateralen
+      Institutionen und seinen 49 Mitgliedern finanziert zu werden [@te-funders].
+    src: b563a94e7dd1
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        baulich getrennte Radinfrastruktur, Geh- und Radwege eingeschlossen, markierte
+        Radfahrstreifen ausgeschlossen [@cc2025-annexes]
+      src: 6a4966ec31f1
+    kind:
+      text: >-
+        bestehende Infrastruktur, wie von der Stadt gemeldet, sonst öffentliche Daten
+        [@cc2025-report]
+      src: 56178f0f91f2
+    length:
+      text: für Radinfrastruktur nicht angegeben [@cc2025-annexes]
+      src: e4f849921407
+    date:
+      text: >-
+        Daten erhoben von Dezember 2024 bis 7. Februar 2025, Aktualisierungen angenommen
+        bis 4. April 2025 [@cc2025-report]
+      src: e45eb302878b
+    area:
+      text: die gleichnamige Gemeinde [@cc2025-report]
+      src: 2e19a6bac007
+    method:
+      text: >-
+        Daten der Städte, sonst öffentliche Quellen und die OpenStreetMap-Daten der
+        ECF [@cc2025-report] [@cc2025-annexes]
+      src: 547a8c13367b
+  paragraphs:
+  - text: >-
+      Die Rangliste 2025, Streets for Kids, Cities for All, bewertet 36 europäische
+      Städte nach Schulstraßen, sicheren Geschwindigkeiten und geschützter Radinfrastruktur
+      [@cc-ranking-2025-page]. Unsere Zahlen nutzen das Letzte: geschützte Radinfrastruktur
+      im Verhältnis zur Länge des Straßennetzes [@cc2025-report], was der Anhang als
+      vergleichbar mit einem Anteil am Straßennetz bezeichnet, aber nicht als gleichwertig
+      [@cc2025-annexes].
+    src: 8849303fba3e
+  - text: >-
+      Jede Stadtverwaltung wurde gebeten, Daten zu liefern, und 34 der 36 taten es;
+      Lücken wurden aus öffentlichen Quellen gefüllt [@cc2025-report], darunter OpenStreetMap-Daten,
+      die die European Cyclists' Federation zusammengestellt hat [@cc2025-annexes].
+    src: 30e7a2ba3a12
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Nach eigener Aussage prägt die Forschung der Kampagne städtische, nationale
+      und europäische Politik [@cc-what-we-do]; der Bericht 2025 fordert von den nationalen
+      Regierungen und der Europäischen Kommission stärkere rechtliche Rahmen und eine
+      bessere Datenerhebung [@cities-today-cc-ranking-2025]. Die Stadt Paris verkündete
+      ihren ersten Platz auf paris.fr [@paris-fr-cc-ranking-2025]. Wien lieferte im
+      Juli 2025 eine feinere Aufschlüsselung verkehrsberuhigter Straßen, und die Kampagne
+      setzte die geschützten km der Stadt von 384,1 auf 625,1 herauf [@cc2025-cycling-table].
+    src: e7286ded485a
+  - text: >-
+      Nach unserer Lesart zitieren Städte die Rangliste entweder oder bestreiten sie
+      mit eigenen Daten. Eine Quelle, die zeigt, dass sie den Plan einer Stadt verändert
+      hat, haben wir nicht gefunden.
+    src: b74a8a977bed
+literals:
+- '49'
+- '36'
+- '34'
+- 384,1
+- 625,1

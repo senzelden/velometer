@@ -1,0 +1,77 @@
+id: changing_cities
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Changing Cities ist ein eingetragener Verein (e.V.), gegründet 2016 [@changing-cities-transparenz].
+      Er ging aus dem Netzwerk hervor, das den Berliner Volksentscheid Fahrrad organisierte
+      [@changing-cities-verein]. Etwa 1.480 Fördermitglieder bilden seine finanzielle
+      Basis [@changing-cities-verein]; im Jahr 2025 machte eine einzelne Förderung,
+      von der European Climate Foundation, mehr als ein Zehntel seines Budgets aus
+      [@changing-cities-transparenz].
+    src: eba5ea57fbab
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        km des Berliner Radnetzes, die im Jahr neu geschaffen wurden, gemessen am
+        eigenen Zielnetz des Monitors [@berlin-changing-cities-monitor]
+      src: 4e4cd667697e
+    kind:
+      text: im Jahr neu geschaffen [@berlin-changing-cities-monitor]
+      src: 0e98188c429f
+    length:
+      text: von der Quelle nicht angegeben
+      src: 6369b53f77a8
+    date:
+      text: Stichtag 31. Dezember 2025 [@berlin-changing-cities-monitor]
+      src: 1a315b96d363
+    area:
+      text: Berlin [@berlin-changing-cities-monitor]
+      src: cf10108c8eab
+    method:
+      text: eigene Messung des Vereins [@berlin-changing-cities-monitor]
+      src: cb99766d3673
+  paragraphs:
+  - text: >-
+      Changing Cities betreibt den Verkehrswende-Monitor, der Berlins Radnetz an den
+      Vorgaben des Mobilitätsgesetzes misst [@berlin-changing-cities-monitor]. Nach
+      eigener Aussage misst er das Netz selbst, mit Stand 31. Dezember 2025 [@berlin-changing-cities-monitor].
+      Sein Zielnetz von 2.699,8 km ist länger als die 2.398,3 km im Fortschrittsbericht
+      des Senats [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
+    src: a7055ff969ce
+  - text: >-
+      Eine veröffentlichte Beschreibung, wie der Monitor misst, haben wir nicht gefunden.
+      Nach unserer Lesart beschreiben seine Jahreszahl und die des Senats verschiedene
+      Netze und lassen sich nicht eins zu eins gegeneinanderstellen.
+    src: 79d5d59b1210
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Im Jahr 2016 übergab die Kampagne des Radentscheids nach dreieinhalb Wochen
+      Sammlung 105.425 Unterschriften an das Abgeordnetenhaus und verhandelte dann
+      mit dem Senat, dem ADFC, dem BUND und FUSS e.V. ein Radgesetz [@changing-cities-volksentscheid].
+      Es wurde am 28. Juni 2018 als Teil des Berliner Mobilitätsgesetzes beschlossen
+      [@changing-cities-volksentscheid]. Dass das Gesetz auf den Radentscheid zurückgeht,
+      behauptet nicht nur der Verein [@changing-cities-verein]: Die Presse berichtete
+      am Tag der Abstimmung, die Senatsverwaltung habe das Gesetz gemeinsam mit den
+      Aktiven des Radentscheids, dem ADFC und dem BUND erarbeitet [@klimareporter-radgesetz-2018],
+      und die Seite des Senats sagt, Impulse aus der Bürgerschaft seien direkt in
+      das Gesetz eingeflossen [@berlin-mobg-page].
+    src: f1c0ca7169ab
+  - text: >-
+      Nach unserer Lesart sind sein Monitor und der Fortschrittsbericht des Senats
+      die beiden jährlichen Bilanzen des Mobilitätsgesetzes: die eine geführt von
+      seinem Fürsprecher, die andere von der Verwaltung, die es umsetzen muss.
+    src: bd346e51420b
+literals:
+- '1.480'
+- 2.699,8 km
+- 2.398,3 km
+- '105.425'

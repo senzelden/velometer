@@ -1,0 +1,76 @@
+id: bikenetkit
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      BikeNetKit ist ein quelloffenes Python-Werkzeug für die Planung von Radnetzen,
+      aus der Gruppe Networks, Data and Society (NERDS) an der IT University of Copenhagen
+      [@bikenetkit-gisruk-2026] [@bikenetkit-github-org]. Es bündelt Planungsalgorithmen
+      einer Forschungsgemeinschaft, die NERDS im Jahr 2019 angestoßen hat; die Arbeit
+      am Werkzeug selbst begann 2026 [@bikenetkit-github-org]. Seine Entwicklung wird
+      vom Innovation Fund Denmark, dem EU-Horizon-Projekt JUST STREETS und der Data
+      Science Section der Universität gefördert [@bikenetkit-github-org].
+    src: a180f5f21f4d
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        ein vereinfachtes OpenStreetMap-Radnetz, ausgewählt durch den Filter des Werkzeugs
+        für geschützte Radinfrastruktur [@bikenetkit-zenodo] [@bikenetkit-pbi-filter]
+      src: b68e2cd8a82f
+    kind:
+      text: kartiert in OpenStreetMap [@bikenetkit-zenodo]
+      src: 68c46afa4c7c
+    length:
+      text: von der Quelle nicht angegeben
+      src: 6369b53f77a8
+    date:
+      text: Daten im Sommer 2026 erhoben und verarbeitet [@bikenetkit-zenodo]
+      src: 69dbe97fd82e
+    area:
+      text: >-
+        Stadtgrenzen europäischer Städte mit mehr als 100.000 Einwohnern [@bikenetkit-export-notebook]
+      src: bdf847245175
+    method:
+      text: >-
+        OpenStreetMap-Auszüge, mit den eigenen Skripten des Projekts verarbeitet [@bikenetkit-export-notebook]
+      src: b3b66a3ea0b2
+  paragraphs:
+  - text: >-
+      Die Zahlen von BikeNetKit sind ein Nebenprodukt. Das Projekt veröffentlicht
+      Radnetze, Straßennetze und Points of Interest für 403 europäische Städte, damit
+      seine Werkzeuge lokal laufen können [@bikenetkit-zenodo]. Die Radnetze sind
+      vereinfacht und um einige Tags bereinigt [@bikenetkit-zenodo]; welche Wege zu
+      ihnen gehören, folgt dem Filter des Werkzeugs für geschützte Radinfrastruktur,
+      der Radwege, verkehrsberuhigte Bereiche sowie für Fahrräder freigegebene Wege
+      und Gehwege auswählt [@bikenetkit-pbi-filter].
+    src: 8e8ff1fdb319
+  - text: >-
+      Nach unserer Lesart lässt der Filter markierte Radfahrstreifen aus; wir vergleichen
+      BikeNetKit daher nur mit unseren Stufen A, B und E.
+    src: 1b1ff28a4746
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      BikeNetKit richtet sich an die Stadtplanung als Werkzeug zur Entscheidungsunterstützung
+      und an Bürgerinnen und Bürger, die in ihrer Stadt für den Radverkehr eintreten
+      wollen [@bikenetkit-github-org]. Seine Autoren schreiben, die Planung von Radnetzen
+      geschehe weitgehend ad hoc, manchmal ausgelagert an Beratungsfirmen mit undurchsichtigen
+      Methoden [@bikenetkit-gisruk-2026], und die Politik plane den Radverkehr oft
+      gar nicht erst ein [@bikenetkit-github-org].
+    src: 9653c829f5d4
+  - text: >-
+      Wir haben keine Quelle gefunden, in der eine Stadt oder ein Parlament Zahlen
+      von BikeNetKit zitiert. Nach unserer Lesart ist seine politische Rolle bislang
+      die, die es sich selbst zuschreibt: ein Forschungswerkzeug, das die Politik
+      erreichen soll, noch in Entwicklung.
+    src: c94ef55b690e
+literals:
+- '100.000'
+- '403'

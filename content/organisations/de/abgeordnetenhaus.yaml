@@ -1,0 +1,76 @@
+id: abgeordnetenhaus
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Das Abgeordnetenhaus ist das Parlament des Landes Berlin. Es beschließt Gesetze,
+      wählt die Regierende Bürgermeisterin oder den Regierenden Bürgermeister und
+      kontrolliert die Regierung, den Senat [@agh-arbeitsweise]. Mit dem Haushaltsgesetz
+      entscheidet es, wofür das Geld des Landes ausgegeben wird, jeweils für ein oder
+      zwei Jahre [@agh-arbeitsweise].
+    src: 6c4af7cff351
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        was eine Anfrage erfragt; für das Vorrangnetz die je Jahr und Bezirk umgesetzten
+        km [@berlin-drs-19-25987]
+      src: 15b965095efa
+    kind:
+      text: so, wie der Senat antwortet [@agh-parlamentarische-anfragen]
+      src: f8816a10ee16
+    length:
+      text: >-
+        so, wie der Senat antwortet; die Drucksache 19/25987 nennt die Streckenlänge
+        nur für das Zielnetz [@berlin-drs-19-25987]
+      src: 505813224b3a
+    date:
+      text: das Datum der Antwort des Senats [@berlin-drs-19-25987]
+      src: df02f98a13b1
+    area:
+      text: Land Berlin
+      src: 6908961d6eca
+    method:
+      text: >-
+        das Parlament misst nicht; es veröffentlicht die Antworten und Berichte des
+        Senats [@agh-parlamentarische-anfragen]
+      src: d06a02b0749e
+  paragraphs:
+  - text: >-
+      Das Parlament veröffentlicht Berlins Radverkehrszahlen, statt sie zu erheben.
+      Mit einer Schriftlichen Anfrage kann jedes Mitglied Auskunft verlangen; der
+      Senat antwortet schriftlich, in der Regel innerhalb von drei Wochen [@agh-parlamentarische-anfragen],
+      und jede Antwort bleibt in der Parlamentsdokumentation PARDOK abrufbar [@agh-parlamentarische-anfragen].
+      Die Drucksache 19/25987 vom Mai 2026 ist die Quelle unserer Zeilen zum Vorrangnetz
+      [@berlin-drs-19-25987].
+    src: 3c268d1dcbae
+  - text: >-
+      Der jährliche Fortschrittsbericht erreicht das Parlament als Bericht der Senatsverkehrsverwaltung
+      an den Hauptausschuss [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+    src: 7428fce4bcae
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Das Abgeordnetenhaus beschloss das Mobilitätsgesetz am 28. Juni 2018, nach der
+      Kampagne des Radentscheids [@changing-cities-volksentscheid] [@berlin-mobg-page].
+      Im Juli 2026 änderte es das Gesetz: Das Vorrangnetz behält seine Frist 2030,
+      das Ergänzungsnetz rückt auf 2035, und eine Hauptstraße darf ohne Radverkehrsanlage
+      bleiben, wo es in der Nähe eine qualifizierte Alternative auf Nebenstraßen gibt
+      [@berlin-mobg-amendment-2026].
+    src: 3d2fdd03b624
+  - text: >-
+      Es kontrolliert den Senat durch Anfragen und Berichtsaufträge [@agh-arbeitsweise];
+      die Drucksache 19/25987, *Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und
+      Wirklichkeit im Radverkehr*, fragte, wie viel des Vorrangnetzes besteht [@berlin-drs-19-25987].
+      Nach unserer Lesart sind Schriftliche Anfragen der Ort, an dem die Zahlen des
+      Senats an ein Dokument und ein Datum gebunden werden; deshalb zitieren wir sie
+      Dokument für Dokument.
+    src: eb63980de648
+literals:
+- Drucksache 19/25987
