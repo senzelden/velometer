@@ -1,0 +1,77 @@
+title:
+  text: Gemeldet, fertiggestellt, kartiert
+  src: 57b7f73d9a47
+intro:
+- text: >-
+    Der Berliner Radverkehrsplan legt für sein geplantes Radnetz einen jährlichen
+    Pfad fest: so viele km des Vorrangnetzes und des Ergänzungsnetzes pro Jahr bis
+    2030 [@berlin-radverkehrsplan-vo19-013]. Der Plan selbst rechnet damit, dass dieser
+    Pfad angepasst wird, unten zitiert. Diese Seite stellt ihm drei Reihen gegenüber.
+    Die drei Reihen zählen Verschiedenes, und keine von ihnen bestätigt oder widerlegt
+    eine andere.
+  src: 8b8f1d73ec2d
+sections:
+- heading:
+    text: Gemeldet
+    src: 34540bb7b089
+  paragraphs:
+  - text: >-
+      Die gemeldeten km sind die des Senats. Der jährliche Fortschrittsbericht geht
+      als Bericht (rote Nummer) an den Hauptausschuss; Schriftliche Anfragen werden
+      als Drucksachen beantwortet. Beide stützen sich auf eine von infraVelo geführte
+      Projektdatenbank [@berlin-fortschrittsbericht-2025] und zählen die Streckenlänge
+      einmal je Straßenabschnitt; eine Straße mit Anlagen auf beiden Seiten zählt
+      also einmal. Der Bericht über 2021 halbierte Anlagen an Hauptstraßen noch, um
+      auf diese Basis zu kommen, unten zitiert [@berlin-fortschrittsbericht-2021].
+    src: df0e388ecc4f
+  - text: >-
+      Dokumente korrigieren einander, und jede gedruckte Zahl wird aufbewahrt. Für
+      2025 meldet die neueste Antwort 8,6 km im Vorrangnetz, wie der Bericht über
+      2025, während eine Antwort vom Mai 2026 für dasselbe Jahr 9,8 km angab [@berlin-drs-19-27049]
+      [@berlin-drs-19-25987]. Für das Ergänzungsnetz im Jahr 2023 nennt die neueste
+      Antwort 55,1 km, was weder ihre eigene Spaltensumme noch die 5,1 km der früheren
+      Antwort stützen. Die Zahl bleibt wie gedruckt, mit einem Hinweis, und ist als
+      zweifelhaft markiert; als aktuell wird daher die frühere Zahl gezeigt [@berlin-drs-19-27049].
+    src: 22c2425ed6d6
+- heading:
+    text: Fertiggestellte Projekte
+    src: 0cbaeb18ca0d
+  paragraphs:
+  - text: >-
+      Die fertiggestellten Projekte stammen aus dem Datensatz der Radverkehrsmaßnahmen
+      im Berliner Geoportal, einer Sicht auf Planung und Umsetzung von Radverkehrsinfrastruktur,
+      die aus derselben infraVelo-Datenbank gespeist wird, unten zitiert [@berlin-gdi-radverkehrsmassnahmen].
+      Unsere Zählung nimmt die als abgeschlossen markierten Projekte, nach dem Jahr,
+      in dem ihre Bauarbeiten endeten. Es ist eine eigene Reihe; sie und die gemeldeten
+      km müssen also nicht übereinstimmen.
+    src: bb0d2d18c953
+- heading:
+    text: Im Netz kartiert
+    src: 9d7303ddc035
+  paragraphs:
+  - text: >-
+      Die dritte Reihe ist unsere: OpenStreetMap-Wegseiten der Stufen A und B, die
+      entlang eines Abschnitts des geplanten Netzes verlaufen, je Seite in kartierten
+      km gemessen [#adr-0006]. Kartierte km sind keine nach dem Standard des Plans
+      fertiggestellten km. Diese km enthalten auch Radwege, die schon lange vor dem
+      Plan bestanden. Der Stand sagt daher wenig über den Plan. Vergleichbar ist die
+      Änderung seit Anfang 2022, dem ersten Zieljahr des Plans, und selbst diese Änderung
+      ist Kontext für die gemeldeten Zahlen, keine Prüfung.
+    src: e59e8165728e
+  - text: >-
+      Die Reihe hängt davon ab, wie Kartierende Radwege zeichnen, und von der Abgleichsmethode.
+      Zwischen 2021 und 2022 wechselten die Stufen A und B in Berlin von Tags an Straßenachsen
+      zu separat gezeichneten Wegen, und die Änderung verschiebt sich mit der Methodenversion;
+      die früheren Versionen `overlay_v2` und `overlay_v3` zeigten eine kleinere und
+      eine größere Änderung als die Zahlen hier, die aus `overlay_v4` stammen. Im
+      Vorrangnetz findet das Overlay-Verfahren 438,3 kartierte km Anfang 2022 und
+      480,4 km im aktuellen Stand (Oktober 2026), eine Änderung um 42,1 km. Im Ergänzungsnetz
+      findet es 606,4 km und 620,2 km, eine Änderung um 13,7 km. Änderungen werden
+      vor dem Runden berechnet und können daher in der letzten Stelle von der Differenz
+      der gedruckten Endwerte abweichen. Es sind Änderungen dessen, was kartiert ist,
+      keine km neuer Infrastruktur.
+    src: 09010816dc3a
+data_refs:
+  adr-0006:
+    text: velometer ADR 0006, kartierte km
+    src: 0f2a9d703b04

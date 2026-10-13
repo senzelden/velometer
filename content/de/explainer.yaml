@@ -1,0 +1,195 @@
+title:
+  text: Warum die Zahlen abweichen
+  src: 8cc8463f82aa
+intro:
+- text: >-
+    Eine veröffentlichte Zahl und unsere können beide stimmen und trotzdem weit auseinanderliegen,
+    weil sie Verschiedenes messen. Jeder Vergleich im Tab „Zahlen“ einer Stadt wird
+    entlang sechs Dimensionen gelesen: was gezählt wird, welche Art von km, wie die
+    Länge gemessen wird, wann, wo und wer gemessen hat. Diese Seite geht sie einmal
+    durch, jede mit einem Beispiel aus den 21 Städten und, wo die Quelle eine nennt,
+    mit deren eigener Definition.
+  src: 2b7c5dd43dbf
+- text: >-
+    Unsere Seite ist immer dieselbe: kartierte km in OpenStreetMap, in die Stufen
+    A bis E eingeteilt, je Straßenseite, in der Kernstadt (LAU), zu einem Stichtag.
+    Ein Zuwachs auf der Karte kann neue Infrastruktur sein, nachgeholte Kartierung
+    oder neu getaggte Wege. Stimmt eine veröffentlichte Zahl mit unserer überein,
+    beweist das nicht, dass eine von beiden richtig ist, und eine Abweichung beweist
+    nicht, dass eine falsch ist.
+  src: e4bf22f75498
+sections:
+- heading:
+    text: Was gezählt wird
+    src: 4e00e8b4f4cf
+  paragraphs:
+  - text: >-
+      Jede Zahl zählt eine bestimmte Auswahl von Anlagen. Unsere Hauptkennzahl, kartierte
+      A+B-km je 100 km Hauptstraßen, umfasst die Stufen A und B, baulich getrennte
+      Radwege sowie Geh- und Radwege; markierte Radfahrstreifen (D) sowie Fahrradstraßen
+      und Busspuren (E) werden gemessen, gehen aber nicht in sie ein. Clean Cities
+      2025 zählt geschützte Infrastruktur, unten zitiert: Geh- und Radwege und Fußgängerzonen
+      gehören dazu, markierte Radfahrstreifen und Fahrradstraßen nicht [@cc2025-annexes].
+      QECIO führt Radwege, Radfahrstreifen und gemeinsame Geh- und Radwege als getrennte
+      Klassen, jede mit eigener Definition [@qecio-methodology].
+    src: 44b8465430d3
+  - text: >-
+      Kopenhagen zeigt, wie weit allein der Umfang reicht. Die Stadt weist für 2025
+      genau 401 km cykelsti aus, Radwege mit Bordstein, und führt markierte Radfahrstreifen
+      in einer eigenen Zeile [@copenhagen-mobilitetsredegorelse-2026]; unsere A+B-Summe
+      von 582 km enthält auch Geh- und Radwege. Der Umfang kann sich auch nach der
+      Veröffentlichung noch ändern: Im Juli 2025 setzte Clean Cities Wien von 384
+      auf 625,1 km herauf, nachdem verkehrsberuhigte Straßen mit eingeschränkter Kfz-Zufahrt
+      mitgezählt wurden [@cc2025-cycling-table]. Gegenüber diesem weiteren Umfang
+      weicht unser A+B-Wert um +6,5 % von ihrem ab [#recon-vienna-cc-km].
+    src: 571d8fd9c3da
+  - text: >-
+      Ein Verhältnis hat einen zweiten Umfang: das Straßennetz, durch das es teilt.
+      Unsere Hauptkennzahl teilt durch die Hauptstraßen. Clean Cities teilt durch
+      das gesamte öffentliche Straßennetz [@cc2025-annexes], und für diesen Vergleich
+      teilen auch wir durch alle öffentlichen Straßen; selbst dann unterscheiden sich
+      die Netze, für Amsterdam 2.700 km bei Clean Cities gegenüber 2.041 km bei uns
+      [#recon-amsterdam-cc-network].
+    src: d00dc0c76c85
+- heading:
+    text: Welche Art von km
+    src: 2370363de90d
+  paragraphs:
+  - text: >-
+      Unsere km sind kartierte km: was zum Stichtag in OpenStreetMap steht, gleich
+      wann Kartierende es erfasst haben. Amtliche Reihen zählen oft eine andere Art
+      von km. Der Berliner Senat meldet 21,2 km Strecke, die Projekte im Jahr 2025
+      fertiggestellt oder verbessert haben, aus einer Projektdatenbank zum Jahresende
+      [@berlin-fortschrittsbericht-2025]. Sein Vorrangnetz ist ein geplantes Netz
+      von rund 870 km, von dem 78,2 km bis Mai 2026 umgesetzt waren [@berlin-drs-19-25987].
+      Die 20,4 km Wiens für 2025 zählen in diesem Jahr begonnene Projekte, nicht abgeschlossene,
+      unten zitiert [@vienna-radwegeausbau-bilanz-2025].
+    src: f3f1bf8240da
+  - text: >-
+      Kartierte Änderung ist wiederum eine andere Größe. Von 2023 bis Oktober 2026
+      kamen auf der Berliner Karte 442 km neu kartierter Wegseiten hinzu, 656 km wurden
+      neu gezeichnet, während A+B netto um 35,6 km stieg [#berlin-change]. Fertiggestellte
+      km, begonnene km, geplante km und kartierte km beantworten verschiedene Fragen;
+      keine davon bestätigt oder widerlegt eine andere.
+    src: 5df63a5ece04
+- heading:
+    text: Wie die Länge gemessen wird
+    src: a03d97ed0849
+  paragraphs:
+  - text: >-
+      Wir zählen jede Straßenseite: Eine Straße mit einem Einrichtungsradweg auf beiden
+      Seiten geht mit der doppelten Länge ein. Clean Cities zählt im Straßennetz,
+      durch das es teilt, jede Straße einmal, gleich wie viele Fahrstreifen oder Richtungen
+      sie hat, unten zitiert [@cc2025-annexes], nennt aber keine Regel für seine Rad-km.
+      QECIO zählt Anlagen für nur eine Fahrtrichtung mit halber Länge [@qecio-methodology].
+      Wiens eigene Netzsumme zählt Anlagen auf beiden Seiten einer Straße, wie wir
+      [@vienna-radverkehrsnetz-fakten]. Auf Straßen mit Anlagen auf beiden Seiten
+      halbiert die Messung entlang der Straßenachse unsere km ungefähr.
+    src: f7423560b3be
+  - text: >-
+      Die Zahlen von Clean Cities nutzen beide Basen: Berlins 925 km liegen bei unseren
+      913,5 km entlang der Straßenachse, nicht bei unseren 1.550,7 km je Seite [#recon-berlin-cc-km],
+      Ljubljanas 251 km dagegen bei unseren 245 km je Seite [#recon-ljubljana-cc-ratio].
+      In Oslo, wo die QECIO-Region die Stadt ist, stimmt deren Summe von 413 km Radinfrastruktur
+      mit unseren 414 km überein, gezählt nach ihrer Regel der halben Länge [#recon-oslo].
+      Viele amtliche Zahlen nennen überhaupt keine Basis; im Tab „Zahlen“ steht dann
+      „Basis von der Quelle nicht angegeben“.
+    src: 873ad0213ea3
+- heading:
+    text: Wann
+    src: cf9c7aa24a26
+  paragraphs:
+  - text: >-
+      Unsere Seite ist der OpenStreetMap-Stand vom Oktober 2026, mit jährlichen Punkten
+      ab Januar 2018. Clean Cities erhob seine Daten von Dezember 2024 bis Februar
+      2025 und nahm Aktualisierungen bis April 2025 an, unten zitiert [@cc2025-report];
+      QECIO beruht auf Daten, die im Januar 2024 heruntergeladen wurden [@qecio-metadata].
+      Wo sich die Karte schnell verändert hat, macht ein Jahr oder mehr zwischen den
+      beiden Daten einen Unterschied: Warschaus kartierte A+B-km stiegen von 735 km
+      im Januar 2025 auf heute 763 km.
+    src: 8b6b1f10a7be
+  - text: >-
+      Auch unsere eigenen Jahrespunkte bewegen sich aus Gründen, die nichts mit dem
+      Radverkehr zu tun haben. Warschaus kartierte Hauptstraßen gingen zwischen den
+      Punkten 2024 und 2025 von 1.039 auf 946 km zurück, als Schnellstraßen als Autobahnen
+      neu getaggt wurden [#shift-warsaw-2025]; das Datum, auf das ein Verhältnis bezogen
+      wird, verändert es also. Und ein Kartierungsdatum ist kein Fertigstellungsdatum:
+      Ein 2026 gezeichneter Weg kann seit Jahren bestanden haben, und eine Tag-Änderung
+      datiert die Bearbeitung, nicht den Weg.
+    src: 0cd466998fda
+- heading:
+    text: Wo
+    src: 1daaa38f33cd
+  paragraphs:
+  - text: >-
+      Wir messen die Kernstadt (LAU) und, wo er eine andere Geschichte erzählt, den
+      funktionalen Stadtraum. Clean Cities bezieht sich auf die Gemeinde [@cc2025-report].
+      QECIO berichtet nach NUTS3-Regionen und schneidet jeden Weg an der Grenze der
+      Region ab, unten zitiert [@qecio-methodology]. BikeNetKit schneidet mit einer
+      Datei der Stadtgrenze zu, deren Quelle es nicht nennt [@bikenetkit-export-notebook].
+    src: d359d8df0528
+  - text: >-
+      Wo die NUTS3-Region die Stadt ist, stimmen die Hauptstraßen eng überein: für
+      Berlin 2.153 km bei uns gegenüber 2.150 km bei QECIO [#recon-berlin], und −0,6 %
+      für Warschau [#recon-warsaw]. Wo die Region größer ist, beschreiben die km von
+      QECIO einen anderen Ort: Stockholms län hat 4.946 km Hauptstraßen gegenüber
+      unseren 667 km für die Stadt [#recon-stockholm-qecio-main].
+    src: 6b7e7f002a53
+- heading:
+    text: Wer gemessen hat
+    src: 5dcaf9349243
+  paragraphs:
+  - text: >-
+      Unsere km stammen aus OpenStreetMap, ausgewertet mit dem velometer-Klassifikator.
+      Clean Cities hat die Stadtverwaltungen um Daten gebeten und, wo keine kamen,
+      öffentliche Quellen genutzt, darunter OpenStreetMap, unten zitiert [@cc2025-report];
+      für eine einzelne Stadt sagt es nicht, was davon galt [@cc2025-annexes]. QECIO
+      und BikeNetKit lesen OpenStreetMap mit eigenen Regeln [@qecio-methodology] [@bikenetkit-zenodo].
+    src: 6767be3a2bce
+  - text: >-
+      Eine aus OpenStreetMap abgeleitete Zahl kann unsere nicht bestätigen. Die amtliche
+      Radroutenreihe von Paris ist ein Auszug aus OpenStreetMap, unten zitiert [@paris-opendata-lineaire-km],
+      also aus der Karte, die wir lesen; eine Übereinstimmung zeigte nur zweimal dieselbe
+      Quelle. Die offenen Daten von Strasbourg sind auf dem eigenen Straßenachsennetz
+      der Stadt gezeichnet [@strasbourg-opendata-bnac], ein von unserem unabhängiges
+      Maß. Die 822 km von Clean Cities für Paris übersteigen alles, was dort über
+      alle Stufen hinweg kartiert ist, und lassen sich aus OpenStreetMap nicht nachbilden
+      [#recon-paris-cc-km].
+    src: 3ad92f7f9733
+data_refs:
+  recon-vienna-cc-km:
+    text: velometer-Abgleich, vienna/cc_km
+    src: 60513cc1722e
+  recon-amsterdam-cc-network:
+    text: velometer-Abgleich, amsterdam/cc_network_km
+    src: 21df08291188
+  berlin-change:
+    text: velometer kartierte Änderung, Berlin, 2023-01-01 bis aktueller Stand
+    src: 10da1f913f3c
+  recon-berlin-cc-km:
+    text: velometer-Abgleich, berlin/cc_km
+    src: a40ed84e7d1e
+  recon-oslo:
+    text: velometer-Abgleich, oslo (Zeile qecio_total_km)
+    src: 57d2e60b60aa
+  shift-warsaw-2025:
+    text: velometer-Untersuchung einer Verschiebung, warsaw/lau/2025
+    src: f2c89825d7cb
+  recon-berlin:
+    text: velometer-Abgleich, berlin (Zeile qecio_main_km)
+    src: 01bf48b4159a
+  recon-warsaw:
+    text: velometer-Abgleich, warsaw (Zeile qecio_main_km)
+    src: 4db182739992
+  recon-stockholm-qecio-main:
+    text: velometer-Abgleich, stockholm/qecio_main_km
+    src: 4365ce03234c
+  recon-paris-cc-km:
+    text: velometer-Abgleich, paris/cc_km
+    src: 1b6015c86cda
+  recon-ljubljana-cc-ratio:
+    text: velometer-Abgleich, ljubljana/cc_ratio
+    src: 55d6b0674eae
+literals:
+- 21 Städten
+- 100 km

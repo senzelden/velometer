@@ -26,6 +26,17 @@ def _content(tmp_path, drop=frozenset()):
     return content
 
 
+def _english_only(tmp_path):
+    """A copy of the shipped content without any German translation file (every `de/`
+    directory removed): the state of a tree nobody has translated yet."""
+    content = tmp_path / "english_only"
+    shutil.copytree(CONTENT, content)
+    for de_dir in sorted(content.rglob("de"), reverse=True):
+        if de_dir.is_dir():
+            shutil.rmtree(de_dir)
+    return content
+
+
 def _berlin(setup, content):  # noqa: F811
     with app_for(setup, content=content) as c:
         r = c.get("/de/city/berlin")
@@ -242,10 +253,10 @@ def test_explainer_intro_and_data_ref_label_fall_back(setup, tmp_path):  # noqa:
         assert '<span lang="en" data-fallback>' in html.split('class="citations drefs"')[1]
 
 
-def test_untranslated_pages_mark_all_english_content(setup):  # noqa: F811
+def test_untranslated_pages_mark_all_english_content(setup, tmp_path):  # noqa: F811
     """With no German files at all, every content string on a German page is a marked fallback:
     the narrative, the explainer, the profiles, the counters and plan texts."""
-    with app_for(setup) as c:
+    with app_for(setup, content=_english_only(tmp_path)) as c:
         for url in ["/de/city/berlin", "/de/differences", "/de/organisations", "/de/stories",
                     "/de/plans/berlin"]:  # fmt: skip
             html = c.get(url).text
@@ -379,8 +390,7 @@ def test_city_names_fixture_is_cities_yaml():
 
 
 def test_sources_dimension_cells_fall_back_and_translate(setup, tmp_path):  # noqa: F811
-    content = tmp_path / "content"
-    shutil.copytree(CONTENT, content)
+    content = _english_only(tmp_path)
     with app_for(setup, content=content) as c:
         before = c.get("/de/sources").text
     assert '<td data-label="' in before and '<span lang="en" data-fallback>' in before
