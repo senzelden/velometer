@@ -117,6 +117,20 @@ def test_stamped_german_explanation_renders_german(setup):  # noqa: F811
     assert "Deutsche Erklärung." in html and "data-fallback" not in html
 
 
+def test_unstamped_german_explanation_falls_back_in_english(setup):  # noqa: F811
+    """A German entry without its stamp is not known to translate today's English: English."""
+    from tests.test_app import EXPLANATION
+
+    _db, _cfg, _maps, docs = setup
+    de = docs / "review" / "m3_timeseries.de.md"
+    de.write_text("# M3\n\n### berlin/lau/2025\n\nUngestempelt.\n", encoding="utf-8")
+    with app_for(setup) as c:
+        d = c.get("/data/series.json").json()
+        html = c.get("/de/city/berlin/time").text
+    assert d["explanations_de"]["fallback"] == ["berlin/lau/2025"]
+    assert "Ungestempelt." not in html and EXPLANATION[:20] in html
+
+
 def test_series_json_has_every_de_field(setup):  # noqa: F811
     with app_for(setup, name_de={"berlin": "Berlin-Test"}) as c:
         d = c.get("/data/series.json").json()
