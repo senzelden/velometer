@@ -154,3 +154,13 @@ def test_german_figures_tab_shows_the_german_config_text(setup):  # noqa: F811
     leaks = [en_ for _w, en_, de_ in reader_prose(Path("config"))
              if len(en_.split()) >= 4 and en_ != de_ and en_ in de]  # fmt: skip
     assert leaks == []
+
+
+def test_german_dimension_list_keeps_its_nouns_capitalised(setup):  # noqa: F811
+    """The Figures tab lists the dimensions in running text: only the first letter is lowered,
+    so German nouns keep their capital ("welche Art von km")."""
+    with app_for(setup) as c:
+        de = c.get("/de/city/berlin/figures").text
+        en = c.get("/city/berlin/figures").text
+    assert "welche Art von km" in de and "wie die Länge gemessen wird" in de
+    assert "what kind of km, how length is measured" in en

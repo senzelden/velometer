@@ -7,7 +7,7 @@
 {% block tab %}
 <section>
 <h2>{{ t('page.differences.title') }}</h2>
-<p class="meta">{{ t('page.figures.dimensions') }} {% for d in dimensions %}{{ d.label | lower }}{% if not loop.last %}, {% endif %}{% endfor %}. <a href="{{ u('/differences') }}">{{ t('page.figures.explained') }} →</a></p>
+<p class="meta">{{ t('page.figures.dimensions') }} {% for d in dimensions %}{{ d.label[:1] | lower }}{{ d.label[1:] }}{% if not loop.last %}, {% endif %}{% endfor %}. <a href="{{ u('/differences') }}">{{ t('page.figures.explained') }} →</a></p>
 {% if differences is none %}
 <p class="note">{{ t('page.figures.config_error') }}</p>
 {% elif not differences %}
