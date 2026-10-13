@@ -19,33 +19,50 @@
     (Radvorrangnetz), 1.506 km (Ergänzungsnetz), 2.371 km in total. Progress reports before 2022
     count facility length with each side of a street counted (item anlagen); from the 2021 report
     on, network items count route length once per street section.
+  note_de: >-
+    Herausgegeben von der Senatsverwaltung für Umwelt, Verkehr und Klimaschutz (Vorgängerin der
+    SenMVKU). Ziele aus Tabelle 7 'Jahresausbauziele zur Errichtung des Radverkehrsnetzes Berlin'
+    (PDF S. 42, Plan S. 21): jährliche Fertigstellung in km, auf 5 km gerundet; die gedruckten
+    Summen 850 km (Vorrangnetz ohne RSV), 1.500 km (Ergänzungsnetz) und 2.350 km sind auf 25 km
+    gerundet (Fußnote 12). Tabelle 3 (PDF S. 35, Plan S. 14) nennt die Netzlängen 865 km
+    (Radvorrangnetz), 1.506 km (Ergänzungsnetz), insgesamt 2.371 km. Fortschrittsberichte vor 2022
+    zählen die Anlagenlänge mit jeder Straßenseite (Position anlagen); ab dem Bericht 2021 zählen
+    die Netzpositionen die Streckenlänge einmal je Straßenabschnitt.
   items:
     - id: vorrangnetz
       label: Vorrangnetz (ohne Radschnellverbindungen)
+      label_de: Vorrangnetz (ohne Radschnellverbindungen)
       target_kind: km_per_year
       targets: {2022: 40, 2023: 60, 2024: 100, 2025: 150, 2026: 250, 2027: 250}
     - id: ergaenzungsnetz
       label: Ergänzungsnetz
+      label_de: Ergänzungsnetz
       target_kind: km_per_year
       targets: {2025: 50, 2026: 100, 2027: 100, 2028: 350, 2029: 450, 2030: 450}
     - id: radverkehrsnetz
       label: Radverkehrsnetz (Vorrangnetz + Ergänzungsnetz)
+      label_de: Radverkehrsnetz (Vorrangnetz + Ergänzungsnetz)
       target_kind: km_per_year
       targets: {2022: 40, 2023: 60, 2024: 100, 2025: 200, 2026: 350, 2027: 350, 2028: 350, 2029: 450, 2030: 450}
     - id: hauptverkehrsstrassen
       label: Hauptverkehrsstraßen außerhalb des Radverkehrsnetzes
+      label_de: Hauptverkehrsstraßen außerhalb des Radverkehrsnetzes
       target_kind: none
     - id: sonstige_strecke
       label: Sonstige Strecke
+      label_de: Sonstige Strecke
       target_kind: none
     - id: sonstiges_netz
       label: Sonstiges Netz (as named in Drs 19/27049; outside Vorrang- and Ergänzungsnetz)
+      label_de: Sonstiges Netz (so benannt in Drs 19/27049; außerhalb von Vorrang- und Ergänzungsnetz)
       target_kind: none
     - id: total
       label: All reported routes (Summe)
+      label_de: Alle gemeldeten Strecken (Summe)
       target_kind: none
     - id: anlagen
       label: Radverkehrsanlagen, facility length with each side counted (reports on 2020 and 2021)
+      label_de: Radverkehrsanlagen, Anlagenlänge mit jeder Straßenseite gezählt (Berichte zu 2020 und 2021)
       target_kind: none
 
 - id: paris_plan_velo_2021
@@ -60,15 +77,22 @@
     adoption date of a deliberation was not confirmed. Target per the Ville de Paris press kit
     (p. 15): 180 km of protected cycle tracks, 130 km new and 52 km of coronapistes made
     permanent. No official progress figure in km found.
+  note_de: >-
+    Im Oktober 2021 dem Conseil de Paris vorgelegt (Beschreibung des Open-Data-Datensatzes); das
+    Datum eines Beschlusses wurde nicht bestätigt. Ziel laut Pressemappe der Ville de Paris (S.
+    15): 180 km geschützte Radwege, davon 130 km neu und 52 km verstetigte Coronapistes. Keine
+    amtliche Fortschrittszahl in km gefunden.
   items:
     - id: pistes_securisees
       label: Pistes cyclables sécurisées (new and made permanent)
+      label_de: Pistes cyclables sécurisées (neu und verstetigt)
       target_kind: km_total
       targets: {2026: 180}
 
 - id: vienna_radwegoffensive
   city: vienna
   title: Radwegoffensive (yearly construction programme for the Hauptradverkehrsnetz)
+  title_de: Radwegoffensive (jährliches Ausbauprogramm für das Hauptradverkehrsnetz)
   adopted: null
   url: https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
   status: current
@@ -77,28 +101,42 @@
     No single adopted cycling plan with a km target found; the city announces a programme each
     year. 2026: 33 projects and around 12.5 km of new cycle paths (Mobilitätsagentur page). The
     yearly tally counts km of projects started in the year, not completed.
+  note_de: >-
+    Kein einzelner beschlossener Radverkehrsplan mit km-Ziel gefunden; die Stadt kündigt jedes
+    Jahr ein Programm an. 2026: 33 Projekte und rund 12,5 km neue Radwege (Seite der
+    Mobilitätsagentur). Die Jahresbilanz zählt die km der im Jahr begonnenen, nicht der
+    fertiggestellten Projekte.
   items:
     - id: hauptradverkehrsnetz
       label: Hauptradverkehrsnetz, km of new cycle paths in the yearly programme
+      label_de: Hauptradverkehrsnetz, km neuer Radwege im Jahresprogramm
       target_kind: km_per_year
       targets: {2026: 12.5}
 
 - id: copenhagen_cykelstrategi_2011
   city: copenhagen
   title: Cykelstrategi 2011–2025 and Cykelstiprioriteringsplan 2017–2025
+  title_de: Cykelstrategi 2011–2025 und Cykelstiprioriteringsplan 2017–2025
   adopted: null
   url: https://byudvikling.kk.dk/mobilitet/verdens-bedste-cykelby
   status: expired
   successor: Samlet mobilitetsstrategi (decided by the Klima-, Miljø- og Teknikudvalg; political treatment expected early 2027)
+  successor_de: Samlet mobilitetsstrategi (beschlossen vom Klima-, Miljø- og Teknikudvalg; politische Behandlung für Anfang 2027 erwartet)
   publisher: Københavns Kommune
   note: >-
     Both plans ran to the end of 2025 (Mobilitetsredegørelse 2026, pp. 4 and 29). The strategy's
     targets are shares (50 % of trips to work and education by bike), not km; the priority plan
     lists 151 initiatives.
+  note_de: >-
+    Beide Pläne liefen bis Ende 2025 (Mobilitetsredegørelse 2026, S. 4 und 29). Die Ziele der
+    Strategie sind Anteile (50 % der Wege zur Arbeit und Ausbildung mit dem Rad), keine km; der
+    Prioritätenplan nennt 151 Maßnahmen.
   items:
     - id: cykelstiprioriteringsplan
       label: Initiatives of the Cykelstiprioriteringsplan 2017–2025
+      label_de: Maßnahmen des Cykelstiprioriteringsplan 2017–2025
       target_kind: none
+      unit_de: Maßnahmen
       unit: initiatives
 
 - id: amsterdam_meerjarenplan_fiets_2017
@@ -112,9 +150,14 @@
   note: >-
     The Uitvoeringsplan 2024 (p. 3) names the 2017 cycling plan as expiring. No km target; the
     plan's network target is a width share on the Plusnet Fiets (p. 13).
+  note_de: >-
+    Der Uitvoeringsplan 2024 (S. 3) nennt den Radverkehrsplan von 2017 als auslaufend. Kein
+    km-Ziel; das Netzziel des Plans ist ein Anteil ausreichend breiter Strecken im Plusnet Fiets
+    (S. 13).
   items:
     - id: plusnet_breedte
       label: Plusnet Fiets routes inside the A10 ring, south of the IJ, at least 2.50 m wide
+      label_de: Plusnet-Fiets-Strecken innerhalb des A10-Rings, südlich des IJ, mindestens 2,50 m breit
       target_kind: share
       targets: {2025: 50}
       unit: "%"
@@ -130,9 +173,14 @@
     URL is the council proposal (raadsvoorstel). Adoption by the gemeenteraad on 15 July 2021 is
     reported by APPM; the council decision itself was not opened. The plan sets a cycle network
     on a map, with no km target.
+  note_de: >-
+    Die URL ist die Ratsvorlage (raadsvoorstel). Den Beschluss des gemeenteraad am 15. Juli 2021
+    meldet APPM; der Ratsbeschluss selbst wurde nicht geöffnet. Der Plan legt ein Radnetz auf
+    einer Karte fest, ohne km-Ziel.
   items:
     - id: fietsnetwerk
       label: Fietsnetwerk
+      label_de: Fietsnetwerk
       target_kind: none
 
 - id: madrid_pdmc_2008
@@ -146,9 +194,15 @@
     Status not confirmed. The 2008 plan (Red Básica de Vías Ciclistas) and its 2016 revision are
     on madrid.es, but the revision PDF refused scripted access (HTTP 403) and no current city
     cycling plan with a km target was found; no successor confirmed.
+  note_de: >-
+    Status nicht bestätigt. Der Plan von 2008 (Red Básica de Vías Ciclistas) und seine
+    Überarbeitung von 2016 stehen auf madrid.es, doch das PDF der Überarbeitung verweigerte den
+    automatisierten Abruf (HTTP 403), und kein aktueller städtischer Radverkehrsplan mit km-Ziel
+    wurde gefunden; kein Nachfolger bestätigt.
   items:
     - id: red_basica
       label: Red Básica de Vías Ciclistas
+      label_de: Red Básica de Vías Ciclistas
       target_kind: none
 
 - id: barcelona_pmu_2024
@@ -162,10 +216,17 @@
     Final approval by the plenary of the Consell Municipal (press release of 23 December 2022).
     Bicycle measures: increase the current bike-lane network by 40 %; bicycle and VMP modal share
     from 2.28 % (2018) to 5 % in 2024. Horizon 2024 has passed; no successor confirmed.
+  note_de: >-
+    Endgültige Genehmigung durch das Plenum des Consell Municipal (Pressemitteilung vom 23.
+    Dezember 2022). Radverkehrsmaßnahmen: das bestehende Radwegenetz um 40 % erweitern; Anteil von
+    Rad und Elektrokleinstfahrzeugen (VMP) am Modal Split von 2,28 % (2018) auf 5 % im Jahr 2024.
+    Der Zielhorizont 2024 ist verstrichen; kein Nachfolger bestätigt.
   items:
     - id: xarxa_carrils_bici
       label: Increase of the bike-lane network over its size at approval
+      label_de: Erweiterung des Radwegenetzes gegenüber seinem Umfang bei der Genehmigung
       target_kind: share
+      unit_de: '% Zuwachs'
       targets: {2024: 40}
       unit: "% increase"
 
@@ -181,9 +242,15 @@
     protocol was not opened). It designates about 36 Swedish miles (about 360 km) as the primary
     network for successive expansion, with no deadline; the target is a share: every fourth trip
     by bike by 2040 (Kommunstyrelsen statement, 18 May 2022).
+  note_de: >-
+    Der Plan ist eine Anlage zur Tagesordnung des Kommunfullmäktige vom 30. Mai 2022 (das
+    Beschlussprotokoll wurde nicht geöffnet). Er weist rund 36 schwedische Meilen (rund 360 km)
+    als Hauptnetz für den schrittweisen Ausbau aus, ohne Frist; das Ziel ist ein Anteil: jeder
+    vierte Weg mit dem Rad bis 2040 (Stellungnahme des Kommunstyrelsen, 18. Mai 2022).
   items:
     - id: cykelandel
       label: Share of trips by bike
+      label_de: Anteil der Wege mit dem Rad
       target_kind: share
       targets: {2040: 25}
       unit: "%"
@@ -200,13 +267,21 @@
     Oslo 2015–2025. First phase to 2025: about 100 km of new cycle network (about 70 km by Oslo
     kommune, 30 km by Statens vegvesen), giving about 280 km in 2025; full future network about
     530 km (plan PDF p. 7). First-phase horizon has passed; no successor plan confirmed.
+  note_de: >-
+    2018 vom bystyre beschlossen (Seite der Stadt; Tag nicht angegeben). Setzt die Sykkelstrategi
+    for Oslo 2015–2025 um. Erste Phase bis 2025: rund 100 km neues Radnetz (rund 70 km durch Oslo
+    kommune, 30 km durch Statens vegvesen), zusammen rund 280 km im Jahr 2025; künftiges
+    Gesamtnetz rund 530 km (Plan-PDF S. 7). Der Horizont der ersten Phase ist verstrichen; kein
+    Nachfolgeplan bestätigt.
   items:
     - id: forste_fase
       label: New cycle network, first phase to 2025
+      label_de: Neues Radnetz, erste Phase bis 2025
       target_kind: km_total
       targets: {2025: 100}
     - id: nye_og_oppgraderte
       label: New and upgraded cycleway since 2015
+      label_de: Neue und aufgewertete Radwege seit 2015
       target_kind: none
 
 - id: helsinki_pyoraliikenne_2020
@@ -221,12 +296,19 @@
     October 2020 and approved it in November 2020 (date not confirmed at source). Target networks
     of about 140 km (inner city) and about 140 km (baana), with no km deadline; share target 20 %
     by 2035. Programme period ended 2025; no successor confirmed.
+  note_de: >-
+    2020 vom Ausschuss für Stadtumwelt vorgeschlagen; der Stadtvorstand vertagte ihn am 26.
+    Oktober 2020 und billigte ihn im November 2020 (Datum an der Quelle nicht bestätigt).
+    Zielnetze von rund 140 km (Innenstadt) und rund 140 km (Baana), ohne km-Frist; Anteilsziel 20
+    % bis 2035. Der Programmzeitraum endete 2025; kein Nachfolger bestätigt.
   items:
     - id: kantakaupunki
       label: Inner-city target cycle network (about 140 km)
+      label_de: Zielradnetz der Innenstadt (rund 140 km)
       target_kind: none
     - id: baanaverkko
       label: Baana target network (about 140 km)
+      label_de: Baana-Zielnetz (rund 140 km)
       target_kind: none
 
 - id: lyon_plan_velo_2024
@@ -241,13 +323,21 @@
     in 2030 (p. 9); 2023: 29 km 'en cours de travaux ou livrés' (not stored: mixes started and
     delivered). Cycle network objective 2 000 km, no year printed (p. 10). The earlier 250 km by
     2026 Voies Lyonnaises target is reported only by press and an NGO.
+  note_de: >-
+    Plan der Métropole (veröffentlicht im August 2024), nicht der Kernstadt. Voies Lyonnaises:
+    Ziel 355 km im Jahr 2030 (S. 9); 2023: 29 km 'en cours de travaux ou livrés' (nicht
+    gespeichert: vermischt begonnene und fertiggestellte Strecken). Ziel für das Radnetz 2 000 km,
+    ohne gedrucktes Jahr (S. 10). Das frühere Ziel von 250 km Voies Lyonnaises bis 2026 melden nur
+    Presse und eine NGO.
   items:
     - id: voies_lyonnaises
       label: Voies Lyonnaises
+      label_de: Voies Lyonnaises
       target_kind: km_total
       targets: {2030: 355}
     - id: reseau_cyclable
       label: Linéaire d'aménagements cyclables (whole Métropole network)
+      label_de: Linéaire d'aménagements cyclables (gesamtes Netz der Métropole)
       target_kind: none
 
 - id: strasbourg_plan_velo_2021
@@ -260,14 +350,20 @@
   note: >-
     Launched by the Eurométropole in 2021 (day not printed). About a hundred operations for about
     a hundred km of cycle tracks rebuilt or built by 2026, Eurométropole-wide.
+  note_de: >-
+    2021 von der Eurométropole gestartet (Tag nicht angegeben). Rund hundert Vorhaben für rund
+    hundert km umgestaltete oder neu angelegte Radwege bis 2026, in der gesamten Eurométropole.
   items:
     - id: pistes
       label: Cycle tracks rebuilt or built (about)
+      label_de: Umgestaltete oder neu angelegte Radwege (rund)
       target_kind: km_total
       targets: {2026: 100}
     - id: operations
       label: Operations of the plan (about 100)
+      label_de: Vorhaben des Plans (rund 100)
       target_kind: none
+      unit_de: Vorhaben
       unit: operations
 
 - id: bordeaux_plan_velo_2021
@@ -281,17 +377,24 @@
     Approved 25 November 2021 (Chambre régionale des comptes report, p. 35). Métropole-wide; the
     target is a share (18 % by 2030). ReVE: 14 routes, 272 km on the Métropole page, 270 km in
     the CRC report, no deadline printed.
+  note_de: >-
+    Am 25. November 2021 genehmigt (Bericht der Chambre régionale des comptes, S. 35). Für die
+    gesamte Métropole; das Ziel ist ein Anteil (18 % bis 2030). ReVE: 14 Routen, 272 km auf der
+    Seite der Métropole, 270 km im CRC-Bericht, keine Frist angegeben.
   items:
     - id: part_modale
       label: Cycling modal share
+      label_de: Radverkehrsanteil am Modal Split
       target_kind: share
       targets: {2030: 18}
       unit: "%"
     - id: reve
       label: Réseau Vélo Express (ReVE)
+      label_de: Réseau Vélo Express (ReVE)
       target_kind: none
     - id: reseau_cyclable
       label: Cycle routes of all types added since adoption
+      label_de: Seit dem Beschluss hinzugekommene Radverbindungen aller Art
       target_kind: none
 
 - id: wroclaw_plan_rowerowy_2030
@@ -304,9 +407,14 @@
   note: >-
     Presented on 11 May 2022; no adoption resolution found. Targets: about 100 km of new routes,
     25 km of modernised routes and 26 km with major transport projects by 2030 (city page).
+  note_de: >-
+    Am 11. Mai 2022 vorgestellt; kein Beschluss gefunden. Ziele bis 2030: rund 100 km neue
+    Strecken, 25 km modernisierte Strecken und 26 km im Zuge großer Verkehrsprojekte (Seite der
+    Stadt).
   items:
     - id: nowe_trasy
       label: New cycle routes (about)
+      label_de: Neue Radverbindungen (rund)
       target_kind: km_total
       targets: {2030: 100}
 
@@ -317,13 +425,18 @@
   url: https://zdm.waw.pl/aktualnosci/jaka-ma-byc-rowerowa-warszawa-2030/
   status: expired
   successor: Program Rozwoju Ruchu Rowerowego na lata 2020–2030 (tendered February 2020; adoption not found)
+  successor_de: Program Rozwoju Ruchu Rowerowego na lata 2020–2030 (im Februar 2020 ausgeschrieben; Beschluss nicht gefunden)
   publisher: Miasto Stołeczne Warszawa
   note: >-
     Prepared in 2013 (ZDM, 4 February 2020); its km target was not confirmed at the source. No
     adopted successor found.
+  note_de: >-
+    2013 erarbeitet (ZDM, 4. Februar 2020); sein km-Ziel wurde an der Quelle nicht bestätigt. Kein
+    beschlossener Nachfolger gefunden.
   items:
     - id: trasy_rowerowe
       label: New cycle routes
+      label_de: Neue Radverbindungen
       target_kind: none
 
 - id: krakow_polityka_transportowa_2016
@@ -336,9 +449,14 @@
   note: >-
     General transport policy; no cycling km target found. Period ended 2025. A city cycling team
     presented recommendations to 2030 in September 2026 (ZTP), not an adopted plan.
+  note_de: >-
+    Allgemeine Verkehrspolitik; kein km-Ziel für den Radverkehr gefunden. Der Zeitraum endete
+    2025. Ein städtisches Radverkehrsteam stellte im September 2026 Empfehlungen bis 2030 vor
+    (ZTP), keinen beschlossenen Plan.
   items:
     - id: infrastruktura_rowerowa
       label: Cycling infrastructure (city-wide)
+      label_de: Radinfrastruktur (stadtweit)
       target_kind: none
 
 - id: budapest_kfht
@@ -354,9 +472,16 @@
     Main network about 800 km within about 5 500 km of roads; share target 10 % of trips by 2030
     (Budapest Mobility Plan). The km goals 292 km by 2027 and 504 km by 2030 are reported only by
     press (Telex).
+  note_de: >-
+    Von der BKK auf Grundlage des Beschlusses 1539/2021 (X. 27.) der Fővárosi Közgyűlés
+    erarbeitet; die Bestandsaufnahme ist auf den 7. Oktober 2022 datiert; das Beschlussdatum des
+    Plans selbst wurde nicht bestätigt. Hauptnetz rund 800 km bei rund 5 500 km Straßen;
+    Anteilsziel 10 % der Wege bis 2030 (Budapest Mobility Plan). Die km-Ziele von 292 km bis 2027
+    und 504 km bis 2030 meldet nur die Presse (Telex).
   items:
     - id: kerekparos_reszarany
       label: Cycling share of trips
+      label_de: Radverkehrsanteil an den Wegen
       target_kind: share
       targets: {2030: 10}
       unit: "%"
@@ -372,9 +497,15 @@
     URL is IPR Praha's 2021 Systém pražských cyklotras (published 7 March 2022), which cites the
     Koncepce's goal of extending the base route network by a further 300–400 km; no single km
     figure or deadline. The extension of the Koncepce to 2030 was not confirmed at source.
+  note_de: >-
+    Die URL ist das Systém pražských cyklotras 2021 von IPR Praha (veröffentlicht am 7. März
+    2022), das das Ziel der Koncepce zitiert, das Grundnetz der Routen um weitere 300–400 km zu
+    erweitern; keine einzelne km-Zahl und keine Frist. Die Verlängerung der Koncepce bis 2030
+    wurde an der Quelle nicht bestätigt.
   items:
     - id: zakladni_sit_cyklotras
       label: Base network of signed cycle routes, extension by 300–400 km
+      label_de: Grundnetz beschilderter Radrouten, Erweiterung um 300–400 km
       target_kind: none
 
 - id: bratislava_zasady_2014
@@ -388,9 +519,14 @@
     Approved by the city council in September 2014 (resolution 1743/2014; day not printed in the
     council material of 2018). The target of 180 km of main city cycle routes by 2030 (Bratislava
     2030) is reported by SITA quoting the city hall, not confirmed in an official document.
+  note_de: >-
+    Im September 2014 vom Stadtrat genehmigt (Beschluss 1743/2014; Tag in den Ratsunterlagen von
+    2018 nicht angegeben). Das Ziel von 180 km städtischer Hauptradrouten bis 2030 (Bratislava
+    2030) meldet SITA unter Berufung auf das Rathaus; in keinem amtlichen Dokument bestätigt.
   items:
     - id: cyklisticka_infrastruktura
       label: New cycling infrastructure, all types
+      label_de: Neue Radinfrastruktur aller Art
       target_kind: none
 
 - id: ljubljana_cps_2025
@@ -403,7 +539,12 @@
   note: >-
     Adopted by the Mestni svet MOL on 20 October 2025. Main goal about two thirds of trips by
     walking, cycling and public transport; no cycling km target found in the strategy document.
+  note_de: >-
+    Am 20. Oktober 2025 vom Mestni svet MOL beschlossen. Hauptziel: rund zwei Drittel der Wege zu
+    Fuß, mit dem Rad und mit öffentlichen Verkehrsmitteln; im Strategiedokument kein km-Ziel für
+    den Radverkehr gefunden.
   items:
     - id: kolesarska_infrastruktura
       label: Cycling infrastructure
+      label_de: Radinfrastruktur
       target_kind: none

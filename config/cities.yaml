@@ -114,6 +114,7 @@ cities:
     nuts3_is_city: true
   - id: vienna
     name: Wien
+    name_de: Wien  # German exonym (M12): the German edition's name
     aliases: ["Vienna"]  # common English name; display data only
     country_iso2: AT
     epsg: 25833
@@ -126,6 +127,7 @@ cities:
     nuts3_is_city: true
   - id: copenhagen
     name: København
+    name_de: Kopenhagen  # German exonym (M12): the German edition's name
     aliases: ["Copenhagen"]  # common English name; display data only
     country_iso2: DK
     epsg: 25832
@@ -304,6 +306,7 @@ cities:
       source_url: "https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063"
   - id: warsaw
     name: Warszawa
+    name_de: Warschau  # German exonym (M12): the German edition's name
     aliases: ["Warsaw"]  # common English name; display data only
     country_iso2: PL
     epsg: 25834
@@ -316,6 +319,7 @@ cities:
     nuts3_is_city: true
   - id: krakow
     name: Kraków
+    name_de: Krakau  # German exonym (M12): the German edition's name
     aliases: ["Cracow"]  # common English name; display data only
     country_iso2: PL
     epsg: 25834
@@ -339,6 +343,7 @@ cities:
     nuts3_is_city: true
   - id: prague
     name: Praha
+    name_de: Prag  # German exonym (M12): the German edition's name
     aliases: ["Prague"]  # common English name; display data only
     country_iso2: CZ
     epsg: 25833

@@ -140,7 +140,7 @@ def plans_table(
     out = []
     for city_id, name in cities:
         views = []
-        for plan in (p for p in plans if p.city == city_id):
+        for plan in (p.localised(lang) for p in plans if p.city == city_id):
             plan_rows = [r for r in rows if r.plan_id == plan.id]
             groups = current_and_revisions(plan_rows)
             detail = plan.city == DETAIL_CITY
@@ -317,7 +317,7 @@ def documents(
     rows: list[ReportRow], plan: Plan, orgs: dict[str, Organisation], lang: Lang = "en"
 ) -> list[dict]:
     """The plan's progress documents, oldest first: type, number, date, what it reports, link."""
-    labels = {i.id: i.label.split(" (")[0] for i in plan.items}
+    labels = {i.id: i.label.split(" (")[0] for i in plan.localised(lang).items}
     docs: dict[tuple, dict] = {}
     for r in rows:
         d = docs.setdefault(
@@ -359,6 +359,7 @@ def berlin_context(
 ) -> dict:
     """Everything `/plans/berlin` shows: per item the chart config and its tables, the document
     table, and which overlay version and measures dataset the series come from."""
+    plan = plan.localised(lang)
     rows = [r for r in rows if r.plan_id == plan.id]
     groups = current_and_revisions(rows)
     version, latest = latest_overlay(overlay_rows)

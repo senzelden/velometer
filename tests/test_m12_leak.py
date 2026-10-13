@@ -1,21 +1,17 @@
 """No English UI phrase on a German page (M12 spec decision 2): the visible text of every `/de/`
 page, outside `lang="en"` subtrees, holds no English phrase of a phrase source."""
 
+from pathlib import Path
+
 from tests.test_a11y import all_page_urls  # noqa: F401
 from tests.test_app import CONTENT, client, setup  # noqa: F401
 from velometer import i18n
 from velometer.app import urls
+from velometer.config import reader_prose
 
 # Phrase sources that exist but are not yet enforced, with the task that enforces each. The test
 # skips them; Task 7 removes "content" and deletes this constant and the skip.
 LEAK_EXCLUDED = {"content": "Task 7: English content fallback is tagged lang=en"}
-# Catalogue phrases a German page still shows through text this task does not own, with the task
-# that localises it. Task 5 empties it and deletes it.
-LEAK_DEFERRED = {
-    "main roads (incl. motorways, per carriageway)": (
-        "Task 5: difference_rows(..., lang) builds the Figures tab's 'ours' scope"
-    ),
-}
 
 
 # While English content is untagged, a catalogue phrase that the English content also says
@@ -30,6 +26,40 @@ CONTENT_SHARED = {
 }
 
 
+# The same for the config's reader prose: English content (the explainer's headings, a profile)
+# says these config phrases too. Exactly these; test_config_shared_phrases_are_the_named_ones
+# fails on any other. Task 7 deletes this with the exclusion.
+CONFIG_SHARED = {
+    "What kind of km",  # a differences.yaml dimension label, an explainer heading
+    "How length is measured",  # likewise
+    "basis not stated by the source",  # length_bases.unknown, quoted by the explainer
+    "completed in the year",  # metric_kinds, in the senmvku profile
+}
+
+
+def _config_phrases() -> list[str]:
+    """The config's English reader prose with a German sibling, of four words or more, less,
+    while content is excluded, the named phrases English content shares."""
+    phrases = [
+        en for _w, en, de in reader_prose(Path("config")) if len(en.split()) >= 4 and en != de
+    ]
+    if "content" not in LEAK_EXCLUDED:
+        return phrases
+    return [p for p in phrases if p not in CONFIG_SHARED]
+
+
+def test_config_shared_phrases_are_the_named_ones():
+    from velometer.content.loader import load_organisations
+
+    said = i18n.content_phrases(CONTENT, min_words=1)
+    orgs = load_organisations(CONTENT / "organisations", errors={}).values()
+    said += [v for o in orgs for sec in o.sections for v in (sec.dimensions or {}).values()]
+    phrases = {
+        en for _w, en, de in reader_prose(Path("config")) if len(en.split()) >= 4 and en != de
+    }
+    assert {p for p in phrases if any(p in s for s in said)} == CONFIG_SHARED
+
+
 def _content_shared() -> set[str]:
     """The catalogue phrases the English content also says."""
     said = i18n.content_phrases(CONTENT, min_words=1)
@@ -37,9 +67,9 @@ def _content_shared() -> set[str]:
 
 
 def _catalogue_phrases():
-    """The catalogue's phrases, less the deferred ones and, while content is excluded, the
-    named phrases English content shares."""
-    phrases = [p for p in i18n.leak_phrases() if p not in LEAK_DEFERRED]
+    """The catalogue's phrases, less, while content is excluded, the named phrases English
+    content shares."""
+    phrases = i18n.leak_phrases()
     if "content" not in LEAK_EXCLUDED:
         return phrases
     return [p for p in phrases if p not in CONTENT_SHARED]
@@ -53,8 +83,13 @@ def test_content_shared_phrases_are_the_named_ones():
 
 def leak_sources():
     """Every phrase source: the name and a callable giving English phrases that must not show on
-    a German page outside a lang="en" subtree. Task 5 adds "config"."""
-    return {"catalogue": _catalogue_phrases, "content": lambda: i18n.content_phrases(CONTENT)}
+    a German page outside a lang="en" subtree. "config": the English reader prose of the config
+    that has a German sibling (config.reader_prose), of four words or more."""
+    return {
+        "catalogue": _catalogue_phrases,
+        "content": lambda: i18n.content_phrases(CONTENT),
+        "config": _config_phrases,
+    }
 
 
 def test_no_english_phrase_on_german_pages(client, all_page_urls):  # noqa: F811

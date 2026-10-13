@@ -34,7 +34,11 @@ def test_config_loads_with_the_six_dimensions():
 
 def test_wrong_dimensions_are_rejected(tmp_path):
     bad = tmp_path / "d.yaml"
-    text = (CFG / "differences.yaml").read_text().replace("  - {id: date, label: When}\n", "")
+    text = (
+        (CFG / "differences.yaml")
+        .read_text()
+        .replace("  - {id: date, label: When, label_de: Wann}\n", "")
+    )
     bad.write_text(text)
     with pytest.raises(ConfigError, match="dimension ids"):
         load_differences(bad)

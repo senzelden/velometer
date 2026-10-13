@@ -6,6 +6,7 @@ import pytest
 import yaml
 
 from tests.report_fixture import build_report_fixture, build_report_fixture_n
+from velometer.config import default_config_dir
 from velometer.report.data import ReportData, open_readonly
 
 
@@ -23,6 +24,26 @@ def fixture_db(tmp_path):
     conn = open_readonly(db_path)
     yield db_path, cfg, conn, ReportData(conn, cfg)
     conn.close()
+
+
+def app_for(setup, *, content=None, name_de: dict[str, str] | None = None):
+    """A TestClient of a fresh app on the `setup` paths (test_app's (db, config, maps, docs)),
+    reading `content` (default: the shipped content). `name_de` ({city id: German name}) is
+    written into the fixture's own config copy's cities.yaml, never the real config."""
+    from tests.test_app import CONTENT, _client
+    from velometer.app.main import create_app
+
+    db_path, cfg, maps, docs = setup
+    if name_de:
+        assert cfg.resolve() != default_config_dir().resolve(), "never edit the real config"
+        doc = yaml.safe_load((cfg / "cities.yaml").read_text(encoding="utf-8"))
+        for city in doc["cities"]:
+            if city["id"] in name_de:
+                city["name_de"] = name_de[city["id"]]
+        (cfg / "cities.yaml").write_text(
+            yaml.safe_dump(doc, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        )
+    return _client(create_app(db_path, cfg, maps, docs, content_dir=content or CONTENT))
 
 
 @dataclass(frozen=True)

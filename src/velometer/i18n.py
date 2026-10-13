@@ -90,6 +90,19 @@ def _literal(module: str, model: str, field: str) -> Callable[[], set[str]]:
     return ids
 
 
+def _figure_column(column: str) -> Callable[[], set[str]]:
+    """The distinct values of a config/external/figures.csv column (the reported figures'
+    `network_scope` / `length_basis` ids)."""
+
+    def ids() -> set[str]:
+        import csv
+
+        with (CONFIG / "external" / "figures.csv").open(newline="", encoding="utf-8") as f:
+            return {row[column] for row in csv.DictReader(f)}
+
+    return ids
+
+
 def _categories() -> set[str]:
     from velometer.report.change import CATEGORIES
 
@@ -109,6 +122,8 @@ DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "plan.status.": _literal("velometer.plans.models", "Plan", "status"),
     "change.category.": _categories,
     "js.tier.": _tiers,
+    "figure.scope.": _figure_column("network_scope"),
+    "figure.basis.": _figure_column("length_basis"),
 }
 # key prefixes of the JS strings that are not catalogue keys: `js_strings` writes them from
 # MONTHS_SHORT / MONTHS, the one home of the month names

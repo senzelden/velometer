@@ -212,8 +212,8 @@ def test_recomputes_must_name_a_figure_source(tmp_path):
     for name in ["presets.yaml", "organisations.yaml"]:
         (tmp_path / name).write_text((cfg / name).read_text(encoding="utf-8"), encoding="utf-8")
     path = tmp_path / "report.yaml"
-    body = "report_classifier: v4\nrankings:\n  - {{id: x, label: X, kind: preset, preset: " \
-        "ecf_qecio, recomputes: {}}}\n"  # fmt: skip
+    body = "report_classifier: v4\nrankings:\n  - {{id: x, label: X, label_de: X, kind: preset, " \
+        "preset: ecf_qecio, recomputes: {}}}\n"  # fmt: skip
     path.write_text(body.format("qecio_v2_10"))
     assert load_report(path).rankings[0].recomputes == "qecio_v2_10"
     path.write_text(body.format("no_such_source"))

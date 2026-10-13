@@ -19,7 +19,7 @@
 <tbody>
 {% for r in differences %}
 <tr>
-  <td data-label="{{ t('table.source') }}">{% if org_of.get(r.source) %}<a href="{{ u('/organisations#' ~ org_of[r.source]) }}">{{ source_names.get(r.source, r.source) }}</a>{% else %}{{ source_names.get(r.source, r.source) }}{% endif %}<br><span class="meta">{{ t('page.figures.reference_date', date=r.reference_date or t('page.figures.not_stated')) }}</span>{% if r.scope %}<br><span class="meta">{{ t('page.figures.scope', scope=r.scope | replace("_", " ")) }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
+  <td data-label="{{ t('table.source') }}">{% if org_of.get(r.source) %}<a href="{{ u('/organisations#' ~ org_of[r.source]) }}">{{ source_names.get(r.source, r.source) }}</a>{% else %}{{ source_names.get(r.source, r.source) }}{% endif %}<br><span class="meta">{{ t('page.figures.reference_date', date=r.reference_date or t('page.figures.not_stated')) }}</span>{% if r.scope %}<br><span class="meta">{{ t('page.figures.scope', scope=t('figure.scope.' ~ r.scope) if lang == 'de' else r.scope | replace("_", " ")) }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
   <td data-label="{{ t('table.figure') }}" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
   <td class="num" data-label="{{ t('table.theirs') }}">{{ r.theirs | num }} {{ r.unit | unit }}</td>
   <td data-label="{{ t('table.ours') }}">{% if r.ours is none %}<span class="note">{{ t('page.figures.not_compared') }}</span>{% else %}{{ r.ours | num }} {{ r.unit | unit }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
@@ -90,8 +90,8 @@
   <td data-label="{{ t('page.compare.metric') }}"><code>{{ f.metric_name }}</code></td>
   <td class="num" data-label="{{ t('table.value') }}">{{ f.value | num }}</td>
   <td data-label="{{ t('table.unit') }}">{{ f.unit }}</td>
-  <td data-label="{{ t('table.scope') }}">{{ f.network_scope }}</td>
-  <td data-label="{{ t('table.length_basis') }}">{{ f.length_basis }}</td>
+  <td data-label="{{ t('table.scope') }}">{% if lang == 'de' %}{{ t('figure.scope.' ~ f.network_scope) }}{% else %}{{ f.network_scope }}{% endif %}</td>
+  <td data-label="{{ t('table.length_basis') }}">{% if lang == 'de' %}{{ t('figure.basis.' ~ f.length_basis) }}{% else %}{{ f.length_basis }}{% endif %}</td>
   <td class="date" data-label="{{ t('table.date') }}">{{ f.reference_date or t('page.figures.not_stated') }}</td>
   <td data-label="{{ t('table.source_link') }}">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">{{ t('cite.source') }}</a>{% else %}<span class="note">{{ t('page.figures.no_url') }}</span>{% endif %}{{ row_cite(f.source, f.metric_name) }}</td>
 </tr>

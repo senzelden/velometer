@@ -155,44 +155,55 @@ cities:
     grain: monthly
 
 # Cities without an open, licensed counter series covering 2018-2025, and the portals checked
-# (feasibility log §A, 2026-10-07).
+# (feasibility log §A, 2026-10-07). `note_de` is the German note, required beside `note` (M12).
 none:
   - city: copenhagen
     checked: [data.kk.dk faste-cykeltaellinger]
     note: hourly counts 2005-2014 only, no licence stated
+    note_de: nur Stundenwerte 2005–2014, keine Lizenz angegeben
   - city: amsterdam
     checked: [data.amsterdam.nl, NDW Dexter, maps-vervoerregio.nl]
     note: no city counter dataset found; regional counts published as maps only
+    note_de: kein städtischer Zählstellendatensatz gefunden; regionale Zählwerte nur als Karten veröffentlicht
   - city: utrecht
     checked: [open.utrecht.nl fietstellingen]
     note: 2014-2016 only
+    note_de: nur 2014–2016
   - city: stockholm
     checked: [openstreetgs.stockholm.se]
     note: counter station points and weekday mean flows; no open count series verified
+    note_de: Zählstellenpunkte und mittlere Werktagsverkehre; keine offene Zählreihe bestätigt
   - city: lyon
     checked: [data.grandlyon.com]
     note: counting sites published; the count series not verified
+    note_de: Zählstellen veröffentlicht; die Zählreihe nicht bestätigt
   - city: strasbourg
     checked: [data.strasbourg.eu, data.gouv.fr]
   - city: bordeaux
     checked: [opendata.bordeaux-metropole.fr pc_velo_p]
     note: rolling window from 2024-10 only
+    note_de: nur ein gleitendes Zeitfenster ab 2024-10
   - city: wroclaw
     checked: [open-data.cui.wroclaw.pl]
   - city: warsaw
     checked: [zdm.waw.pl counter viewer]
     note: counts in a web viewer only, no dataset
+    note_de: Zählwerte nur in einer Webansicht, kein Datensatz
   - city: krakow
     checked: [otwartedane.um.krakow.pl, bip.krakow.pl]
     note: counter locations and survey reports only
+    note_de: nur Zählstellenstandorte und Erhebungsberichte
   - city: budapest
     checked: [kerekparosklub.hu/szamlalo]
     note: published by a cyclists' association, no open licence stated
+    note_de: von einem Radfahrverband veröffentlicht, keine offene Lizenz angegeben
   - city: prague
     checked: [lkod.cz/catalog/praha, api.golemio.cz]
     note: API needs a token; bulk files after 2020 not confirmed
+    note_de: API erfordert ein Token; Gesamtdateien nach 2020 nicht bestätigt
   - city: ljubljana
     checked: [podatki.gov.si pldp-stevna-mesta-kolesarji]
     note: national counts, no site in Ljubljana
+    note_de: landesweite Zählungen, keine Zählstelle in Ljubljana
   - city: bratislava
     checked: [data.bratislava.sk]

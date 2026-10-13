@@ -15,7 +15,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-from velometer.config import ConfigError
+from velometer.config import ConfigError, require_de
+from velometer.i18n import Lang
 
 COUNTERS_FILE = "counters.yaml"
 DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names another (§2.13)
@@ -131,6 +132,15 @@ class NoCounterData(_Strict):
     city: str
     checked: list[str] = Field(min_length=1)
     note: str | None = None
+    note_de: str | None = None  # the German note, required beside `note` (M12)
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "NoCounterData":
+        require_de(self, f"none {self.city!r}", "note")
+        return self
+
+    def note_in(self, lang: Lang) -> str | None:
+        return (self.note_de or self.note) if lang == "de" else self.note
 
 
 class CountersConfig(_Strict):

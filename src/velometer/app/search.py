@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 
 from velometer.app.names import country_name
-from velometer.config import ConfigError, load_cities
 from velometer.content.loader import load_narratives, load_organisations
 from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
@@ -47,25 +46,13 @@ def search_index(
         if lang == "en" or url not in LEGACY_DE_ONLY
     ]
     cities = data.cities()
-    try:
-        aliases = {c.id: c.aliases for c in load_cities(Path(config_dir) / "cities.yaml")}
-    except (ConfigError, OSError) as e:
-        log.error("search index: config/cities.yaml could not be read: %s", e)
-        aliases = {}
     countries: dict[str, str] = {}  # iso2 -> name
     for c in cities:
         country = country_name(c.country_iso2, lang)
         countries[c.country_iso2] = country
-        out.append(
-            _entry(
-                f"{c.name} ({country})",
-                "city",
-                f"/city/{c.id}",
-                c.name,
-                c.id,
-                *aliases.get(c.id, []),
-            )
-        )
+        # the edition's name first, then the id and every other form (config/cities.yaml: the
+        # local name, the German exonym, the aliases), in both editions
+        out.append(_entry(f"{c.name} ({country})", "city", f"/city/{c.id}", c.name, c.id, *c.names))
     for iso2, name in sorted(countries.items(), key=lambda kv: kv[1]):
         out.append(_entry(name, "country", f"/cities#{iso2.lower()}", iso2))
     errors: dict[str, str] = {}

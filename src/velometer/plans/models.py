@@ -13,7 +13,8 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
-from velometer.config import ConfigError
+from velometer.config import ConfigError, require_de
+from velometer.i18n import Lang
 
 PLANS_FILE = "plans.yaml"
 # The day "mapped on the network" is counted from: the comparable quantity is the change since
@@ -29,22 +30,33 @@ class _Strict(BaseModel):
 class PlanItem(_Strict):
     id: str
     label: str
+    label_de: str | None = None  # required beside `label` (M12)
     target_kind: Literal["km_per_year", "km_cumulative", "km_total", "share", "none"]
     targets: dict[int, float] = {}
     unit: str = "km"
+    unit_de: str | None = None  # a German unit only where `unit` is an English word
+
+    @model_validator(mode="after")
+    def _german_label(self) -> "PlanItem":
+        require_de(self, f"item {self.id!r}", "label")
+        return self
 
 
 class Plan(_Strict):
     id: str
     city: str
     title: str
+    # a German title only where the title holds English words; a document's own title stays
+    title_de: str | None = None
     adopted: date | None
     url: str
     status: Literal["current", "expired", "replaced"]
     successor: str | None = None
+    successor_de: str | None = None  # as title_de: only where the successor has English words
     publisher: str
     items: list[PlanItem]
     note: str | None = None
+    note_de: str | None = None  # required beside `note` (M12)
 
     @model_validator(mode="after")
     def _unique_items(self) -> "Plan":
@@ -52,6 +64,29 @@ class Plan(_Strict):
         if len(ids) != len(set(ids)):
             raise ValueError(f"duplicate item id in plan {self.id}")
         return self
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "Plan":
+        require_de(self, f"plan {self.id!r}", "note")
+        return self
+
+    def localised(self, lang: Lang) -> "Plan":
+        """This plan with the `lang` text in the English fields (itself for English)."""
+        if lang == "en":
+            return self
+        return self.model_copy(
+            update={
+                "title": self.title_de or self.title,
+                "successor": self.successor_de or self.successor,
+                "note": self.note_de or self.note,
+                "items": [
+                    i.model_copy(
+                        update={"label": i.label_de or i.label, "unit": i.unit_de or i.unit}
+                    )
+                    for i in self.items
+                ],
+            }
+        )
 
 
 class ReportRow(_Strict):

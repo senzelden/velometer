@@ -6,6 +6,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 """
 
 import copy
+import csv
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -115,6 +116,28 @@ class RankingRow(_Frozen):
     n_ranked: int  # cities with a value in this source
 
 
+def figure_notes_de(config_dir: Path) -> dict[str, str]:
+    """English note -> German note of config/external/figures.csv (the stored figures keep the
+    English note). ConfigError naming the row for a note without a German one, or for one
+    English note given two German ones."""
+    path = Path(config_dir) / "external" / "figures.csv"
+    out: dict[str, str] = {}
+    try:
+        with path.open(newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except OSError as e:
+        raise ConfigError(f"{path}: {e}") from e
+    for line, row in enumerate(rows, start=2):
+        note, de = row.get("note") or "", (row.get("note_de") or "").strip()
+        if not note:
+            continue
+        if not de:
+            raise ConfigError(f"{path}: row {line}: note_de is required beside note")
+        if out.setdefault(note, de) != de:
+            raise ConfigError(f"{path}: row {line}: note_de differs from an earlier row's")
+    return out
+
+
 def open_readonly(db_path: Path) -> sqlite3.Connection:
     """The database opened read-only (`mode=ro`).
 
@@ -208,14 +231,19 @@ class ReportData:
         return other
 
     def preset_labels(self) -> dict[str, str]:
-        """Each preset's label, from its `kind: preset` ranking in report.yaml ("velometer
-        headline", "<method>, our OSM data"): these are our values on a publisher's method, never
-        the published figure. A preset without a ranking falls back to "<id>, our OSM data"."""
+        """Each preset's label in the data's language, from its `kind: preset` ranking in
+        report.yaml ("velometer headline", "<method>, our OSM data"): these are our values on a
+        publisher's method, never the published figure. A preset without a ranking falls back to
+        "<id>, our OSM data"."""
+        lang = self.lang
         labels = {
-            r.preset: r.label for r in self.report_config.rankings if isinstance(r, PresetRanking)
+            r.preset: r.label_in(lang)
+            for r in self.report_config.rankings
+            if isinstance(r, PresetRanking)
         }
         return {
-            p.id: labels.get(p.id, f"{p.id}, our OSM data") for p in self.selector.presets.presets
+            p.id: labels.get(p.id) or t(lang, "preset.fallback_label", preset=p.id)
+            for p in self.selector.presets.presets
         }
 
     def preset_sources(self) -> dict[str, str | None]:
@@ -242,9 +270,21 @@ class ReportData:
         }
 
     def all_cities(self) -> list[City]:
-        """Every city in the database, trusted or not (only `results` shows the difference)."""
+        """Every city in the database, trusted or not (only `results` shows the difference),
+        named in the data's language (config/cities.yaml `name_de` on German pages), each with
+        every form of its name in `names`."""
         if self._all_cities is None:
-            self._all_cities = fetch_cities(self.conn)
+            configs = {c.id: c for c in load_cities(self.config_dir / "cities.yaml")}
+            out = []
+            for c in fetch_cities(self.conn):
+                cfg = configs.get(c.id)
+                if cfg is None:
+                    out.append(c.model_copy(update={"names": (c.name,)}))
+                    continue
+                names = tuple(dict.fromkeys([c.name, *cfg.names]))
+                name = cfg.display_name(self.lang) if self.lang == "de" else c.name
+                out.append(c.model_copy(update={"name": name, "names": names}))
+            self._all_cities = out
         return self._all_cities
 
     def cities(self) -> list[City]:
@@ -322,8 +362,9 @@ class ReportData:
 
     def reported_figures(self, city_id: str) -> list[ExternalFigure]:
         """Every external figure but the three comparison layers, oldest reference date first
-        (undated last); each keeps its own scope, basis and source."""
-        return sorted(
+        (undated last); each keeps its own scope, basis and source. On German pages the note is
+        the German one of figures.csv (`figure_notes_de`)."""
+        figures = sorted(
             (
                 f
                 for f in fetch_external_figures(self.conn, city_id)
@@ -331,6 +372,10 @@ class ReportData:
             ),
             key=lambda f: (f.reference_date is None, f.reference_date or date.min),
         )
+        if self.lang != "de":
+            return figures
+        notes = figure_notes_de(self.config_dir)
+        return [f.model_copy(update={"note": notes.get(f.note, f.note)}) for f in figures]
 
     def _ranking_values(self, ranking) -> dict[str, float]:
         out: dict[str, float] = {}
@@ -409,11 +454,10 @@ class ReportData:
             ]
         return out
 
-    @staticmethod
-    def _ranking_row(ranking, city_id, value, rank, n) -> RankingRow:
+    def _ranking_row(self, ranking, city_id, value, rank, n) -> RankingRow:
         return RankingRow(
             source_id=ranking.id,
-            source_label=ranking.label,
+            source_label=ranking.label_in(self.lang),
             city_id=city_id,
             value=value,
             rank=rank,

@@ -137,7 +137,7 @@ COUNTERS_TEXT = "counters.yaml"  # content/: what the counters record, under the
 UNITS = {"pct": "%"}
 CLAUSE_END = re.compile(r"[;:]|\.\s| [-–—] ")
 log = logging.getLogger(__name__)
-OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*our OSM data(?=\s*(,|$))", re.I)
+OURS_MARK = re.compile(r"^\s*ours:\s*|,\s*(our OSM data|unsere OSM-Daten)(?=\s*(,|$))", re.I)
 # A 404 under these prefixes is not a page a reader opens: it stays FastAPI's JSON; any other 404
 # is the HTML "page not found" page (the static edition's 404.html).
 NOT_PAGE_PREFIXES = ("/data/", "/maps/", "/static/", "/de/data/")
@@ -316,22 +316,28 @@ class LazyData:
     """The per-request ReportData, opened on first attribute access: a page-cache hit never
     touches the database. A missing database or a schema mismatch is a 503 at that access."""
 
-    def __init__(self, db_path: Path, config_dir: Path):
+    def __init__(self, db_path: Path, config_dir: Path, lang: Lang = "en"):
         self._db_path, self._config_dir = db_path, config_dir
         self._conn: sqlite3.Connection | None = None
         self._data: ReportData | None = None
-        self._lang: Lang = "en"
+        self._lang: Lang = lang
 
-    def with_lang(self, lang: Lang) -> "LazyData":
-        """The data in `lang` (ReportData.with_lang), still opened on first use."""
-        self._lang = lang
-        if self._data is not None:
-            self._data = self._data.with_lang(lang)
-        return self
+    def with_lang(self, lang: Lang) -> "LazyData | ReportData":
+        """The data in `lang`: itself when it is in `lang`, else a ReportData copy sharing its
+        connection (opened now). Never changes this object: the request keeps its language."""
+        if lang == self._lang:
+            return self
+        return self._open().with_lang(lang)
 
     def __getattr__(self, name: str):
         if name.startswith("_"):  # private names (and dunder probes) are not ReportData's API
             raise AttributeError(name)
+        data = self._open()
+        if name not in ReportData.__dict__ and name not in vars(data):
+            raise AttributeError(f"ReportData has no attribute {name!r}")
+        return getattr(data, name)
+
+    def _open(self) -> ReportData:
         if self._data is None:
             try:
                 self._conn = open_readonly(self._db_path)
@@ -340,9 +346,7 @@ class LazyData:
             except SchemaError as e:
                 raise HTTPException(503, str(e)) from e
             self._data = ReportData(self._conn, self._config_dir, self._lang)
-        if name not in ReportData.__dict__ and name not in vars(self._data):
-            raise AttributeError(f"ReportData has no attribute {name!r}")
-        return getattr(self._data, name)
+        return self._data
 
     def close(self) -> None:
         if self._conn is not None:
@@ -454,7 +458,7 @@ def create_app(
     # connections are bound to the thread that made them).
     async def report_data(request: Request) -> AsyncIterator[LazyData]:
         # a page route set the language; a data route has none and is English
-        lazy = LazyData(db_path, config_dir).with_lang(getattr(request.state, "lang", "en"))
+        lazy = LazyData(db_path, config_dir, getattr(request.state, "lang", "en"))
         try:
             yield lazy
         finally:
@@ -475,6 +479,15 @@ def create_app(
             }
             for name, cs in sorted(groups.items())
         ]
+
+    def named(payload: dict, data: ReportData) -> dict:
+        """The series payload (English, one shared file) with the city names of `data`'s
+        language, for the tables and steps a page builds from it."""
+        if data.lang == "en":
+            return payload
+        names = {c.id: c.name for c in data.cities()}
+        cities = {i: {**c, "name": names.get(i, c["name"])} for i, c in payload["cities"].items()}
+        return {**payload, "cities": cities}
 
     def cite_rows(request: Request, data: ReportData) -> cite_model.RunRows | None:
         """The run rows citations read, built once per fingerprint (None without a database)."""
@@ -556,7 +569,7 @@ def create_app(
             return await http_exception_handler(request, exc)
         # no route ran: the language is the `/de` prefix's (the page shows both anyway)
         request.state.lang = "de" if request.url.path.split("/")[1:2] == ["de"] else "en"
-        lazy = LazyData(db_path, config_dir).with_lang(request.state.lang)
+        lazy = LazyData(db_path, config_dir, request.state.lang)
         try:
             return page(request, "404.html", "", lazy, status_code=404, here="/")
         finally:
@@ -632,9 +645,9 @@ def create_app(
             "anchors": anchors,
             "rows": [{"id": i, "name": names.get(i, i), "cells": cells[i]} for i in order],
             "notes": [
-                f"{r.label}: {n}"
+                f"{r.label_in(data.lang)}: {n}"
                 for r in data.report_config.rankings
-                if (n := getattr(r, "note", None))
+                if (n := r.note_in(data.lang))
             ],
             "dagger": any(c["dagger"] for row in cells.values() for c in row.values()),
         }
@@ -678,7 +691,9 @@ def create_app(
                 "rankings": rankings_table(data),
                 # the values the all-cities chart draws: headline per city and snapshot, LAU
                 "chart_table": cmp.table_model(
-                    payload, cmp.CompareState(c=list(payload["cities"]), b="lau"), data.lang
+                    named(payload, data),
+                    cmp.CompareState(c=list(payload["cities"]), b="lau"),
+                    data.lang,
                 ),
             }
 
@@ -800,7 +815,8 @@ def create_app(
     def figures_context(data: ReportData, city_id: str, profiles: set[str]) -> dict:
         try:
             cfg = load_differences(config_dir / "differences.yaml")
-            rows = difference_rows(data, city_id, cfg)
+            rows = difference_rows(data, city_id, cfg, data.lang)
+            cfg = cfg.localised(data.lang)
         except (ConfigError, OSError, KeyError) as e:
             log.error("figures for %s could not be built: %r", city_id, e)
             return {
@@ -894,7 +910,7 @@ def create_app(
         known_ids = list(payload["cities"])
         state = cmp.parse_compare(request.url.query, known_ids, cmp.METRICS)
         lang = request.state.lang
-        table = cmp.table_model(payload, state, lang)
+        table = cmp.table_model(named(payload, data), state, lang)
         quick = [
             {"key": k, "label": i18n.t(lang, f"compare.group.{k}"),
              "ids": cmp.quick_set_ids(k, known_ids)}
@@ -1023,7 +1039,7 @@ def create_app(
             n = narratives.get("combined")
             if n is None:
                 return None
-            return story_context(data, payload, n, sources, request.state.lang)
+            return story_context(data, named(payload, data), n, sources, request.state.lang)
 
         ctx = cache.get(f"stories:{request.state.lang}", fp(request), build) or {}
         return page(request, "stories.html", "stories", data, content_error=error, **ctx)
@@ -1043,7 +1059,7 @@ def create_app(
 
         doc = cache.get(f"differences:{request.state.lang}", fp(request), build)
         try:
-            cfg = load_differences(config_dir / "differences.yaml")
+            cfg = load_differences(config_dir / "differences.yaml").localised(request.state.lang)
             labels = {d.id: d.label for d in cfg.dimensions}
         except (ConfigError, OSError):
             labels = {}
@@ -1065,7 +1081,9 @@ def create_app(
         def build() -> dict:
             plans, rows, _ = plans_config()
             try:
-                diffs = load_differences(config_dir / "differences.yaml")
+                diffs = load_differences(config_dir / "differences.yaml").localised(
+                    request.state.lang
+                )
                 labels, source_names = {d.id: d.label for d in diffs.dimensions}, diffs.source_names
             except (ConfigError, OSError):
                 labels, source_names = {}, {}
@@ -1096,7 +1114,8 @@ def create_app(
         def build() -> dict:
             try:
                 rows, cited = source_rows(data, config_dir, content_dir, request.state.lang)
-                dims = load_differences(config_dir / "differences.yaml").dimensions
+                diffs = load_differences(config_dir / "differences.yaml")
+                dims = diffs.localised(request.state.lang).dimensions
             except (ConfigError, ContentError, OSError) as e:
                 log.error("the sources table could not be built: %s", e)
                 return {"rows": [], "cited": None, "dimensions": [], "error": str(e)}

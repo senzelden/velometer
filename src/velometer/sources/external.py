@@ -45,6 +45,7 @@ def load_figures_csv(path: Path) -> list[ExternalFigure]:
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     for n, r in enumerate(rows, start=2):
+        r.pop("note_de", None)  # the German note is display text (report.data.figure_notes_de)
         url = r["source_url"] = (r.get("source_url") or "").strip()  # stored as validated
         if not url:
             raise ConfigError(f"row {n}: source_url is required")

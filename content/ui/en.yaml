@@ -5,7 +5,7 @@
 # · fmt.* · city.keynum.* · counts.* · compare.* · story.* · time.* · sources.* · search.* ·
 # org.* · plan.* · regions.* · permalink.* · subarea.*. Built from ids (i18n.DYNAMIC_FAMILIES): country.* tier.* road_class.*
 # city.tab.* compare.group.* compare.metric.* compare.view.* org.kind.* plan.doc_type.*
-# plan.status.* change.category.* js.tier.*
+# plan.status.* change.category.* js.tier.* figure.scope.* figure.basis.* · preset.*
 # js.* (at the end): the scripts' strings, the only keys a page sends to the browser (base.html
 # #ui-strings, static/js/strings.js); i18n.js_strings adds js.month.short.* and js.month.long.*.
 fmt.na: n/a
@@ -384,6 +384,17 @@ table.scope: Scope
 table.length_basis: Length basis
 table.source_link: Source link
 page.figures.no_url: no source URL recorded
+page.figures.latest_snapshot: latest OSM snapshot
+page.figures.ours_road_class: our km of {road_class}
+page.figures.ours_tiers: our tiers {tiers} km
+preset.fallback_label: '{preset}, our OSM data'
+figure.scope.whole_network: whole network
+figure.scope.incl_traffic_calmed_restricted_access: incl traffic calmed restricted access
+figure.scope.vorrangnetz: vorrangnetz
+figure.scope.cykelsti: cykelsti
+figure.scope.hauptradverkehrsnetz: hauptradverkehrsnetz
+figure.basis.unknown: unknown
+figure.basis.streckenlaenge: streckenlaenge
 
 # --- tabs
 page.story.no_narrative: no narrative yet

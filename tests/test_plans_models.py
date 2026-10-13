@@ -97,7 +97,7 @@ def test_duplicate_plan_and_item_ids_are_refused(plan_dir):
     path.write_text(text.replace("id: paris_plan_velo", "id: berlin_rvp_2021"))
     with pytest.raises(ConfigError, match="duplicate plan id"):
         load_plans(plan_dir)
-    item = "    - {id: total, label: Plan total, target_kind: none}\n"
+    item = "    - {id: total, label: Plan total, label_de: Plan insgesamt, target_kind: none}\n"
     path.write_text(text.replace(item, item * 2))
     with pytest.raises(ConfigError, match="duplicate item id"):
         load_plans(plan_dir)

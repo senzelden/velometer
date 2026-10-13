@@ -9,6 +9,7 @@
   items:
     - id: vorrangnetz
       label: Vorrangnetz
+      label_de: Vorrangnetz
       target_kind: km_per_year
       targets: {2025: 150}
 - id: paris_plan_velo
@@ -19,4 +20,4 @@
   status: expired
   publisher: ville_de_paris
   items:
-    - {id: total, label: Plan total, target_kind: none}
+    - {id: total, label: Plan total, label_de: Plan insgesamt, target_kind: none}

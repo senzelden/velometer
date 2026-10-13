@@ -89,7 +89,8 @@ def no_data_notes(cfg: CountersConfig | None, lang: Lang = "en") -> dict[str, st
     open counter data found", the portals checked and the config's note."""
     out = {}
     for n in cfg.none if cfg else []:
-        extra = f"; {n.note}" if n.note else ""
+        note = n.note_in(lang)
+        extra = f"; {note}" if note else ""
         out[n.city] = t(lang, "counts.none_found", portals=", ".join(n.checked), note=extra)
     return out
 

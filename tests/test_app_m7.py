@@ -1420,7 +1420,7 @@ def test_the_figures_ours_cell_shows_the_same_unit_as_theirs(setup, monkeypatch)
     row = DifferenceRow(source="official", metric="cc_share", theirs=27.6, unit="pct",
                         ours=17.0, ours_label="Ours: share", gap_pct=-0.38, reference_date=None,
                         url=None, drivers=[])  # fmt: skip
-    monkeypatch.setattr(main, "difference_rows", lambda data, city_id, cfg: [row])
+    monkeypatch.setattr(main, "difference_rows", lambda data, city_id, cfg, lang="en": [row])
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text

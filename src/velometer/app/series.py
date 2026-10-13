@@ -58,6 +58,7 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
     `headline_unit`, `explanations.timeseries` (flag key -> text of `explanations`, the
     time-series review page, for every flag that has one) and `counters` (the counter index per
     counter city, `app/counts.counter_payload`)."""
+    data = data.with_lang("en")  # one shared file in English (the pages localise it)
     cities = {
         c.id: {
             "id": c.id,

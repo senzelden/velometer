@@ -99,6 +99,7 @@ def source_rows(
     fixed words in `lang`."""
     config_dir, content_dir = Path(config_dir), Path(content_dir)
     diffs = load_differences(config_dir / "differences.yaml")
+    shown = diffs.localised(lang)  # the words; `diffs` (English) keeps the ids and rules
     dims = [d.id for d in diffs.dimensions]
     mapping = load_organisation_map(config_dir / "organisations.yaml")
     registry = load_sources(content_dir / "sources")
@@ -119,7 +120,7 @@ def source_rows(
         per_source[m.source] = per_source.get(m.source, 0) + 1
 
     snapshot = _snapshot(data)
-    ours_cells = {d: Markup.escape(diffs.ours.get(d, "")) for d in dims}
+    ours_cells = {d: Markup.escape(shown.ours.get(d, "")) for d in dims}
     ours_cells["date"] = Markup.escape(
         t(lang, "sources.snapshot", date=snapshot) if snapshot else t(lang, "sources.no_snapshot")
     )
@@ -157,7 +158,7 @@ def source_rows(
             SourceRow(
                 source_id=m.source,
                 anchor=anchor,
-                title=diffs.source_names.get(m.source, m.source),
+                title=shown.source_names.get(m.source, m.source),
                 organisation_id=m.organisation,
                 organisation_name=org.name if org else m.organisation,
                 group="ranking" if m.city == "*" else "city",

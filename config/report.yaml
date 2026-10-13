@@ -7,23 +7,30 @@ comparison_set: [paris, copenhagen, vienna, amsterdam]
 # `report change` default window (M6 decision 17): a 1 January snapshot -> the latest current run
 change_window: {from: "2023-01-01", to: current}
 rankings:
-  - {id: ours_headline, label: "velometer headline", kind: preset, preset: ours_headline}
-  - {id: ours_ecf_qecio, label: "QECIO method, our OSM data", kind: preset, preset: ecf_qecio,
+  - {id: ours_headline, label: "velometer headline", label_de: "velometer-Hauptkennzahl",
+     kind: preset, preset: ours_headline}
+  - {id: ours_ecf_qecio, label: "QECIO method, our OSM data",
+     label_de: "QECIO-Methode, unsere OSM-Daten", kind: preset, preset: ecf_qecio,
      recomputes: qecio_v2_10}
-  - {id: ours_clean_cities, label: "Clean Cities method, our OSM data", kind: preset,
+  - {id: ours_clean_cities, label: "Clean Cities method, our OSM data",
+     label_de: "Clean-Cities-Methode, unsere OSM-Daten", kind: preset,
      preset: clean_cities_2025, recomputes: clean_cities_2025}
   - id: published_clean_cities
     label: "Clean Cities 2025 (published)"
+    label_de: "Clean Cities 2025 (veröffentlicht)"
     kind: external
     source: clean_cities_2025
     metric: protected_share_pct
     scope: whole_network
     note: "city network as published"
+    note_de: "Stadtnetz wie veröffentlicht"
   - id: published_qecio
     label: "QECIO v2.10 (published)"
+    label_de: "QECIO v2.10 (veröffentlicht)"
     kind: external_ratio
     source: qecio_v2_10
     numerator: [cycle_tracks_km, cycle_lanes_km, shared_pedestrians_km]
     denominator: main_roads_km
     scope: "nuts3_{nuts3_code}"
     note: "NUTS3 region per city; † NUTS3 region is not the city"
+    note_de: "NUTS3-Region je Stadt; † NUTS3-Region ist nicht die Stadt"

@@ -375,6 +375,17 @@ table.scope: Umfang
 table.length_basis: Längenbasis
 table.source_link: Link zur Quelle
 page.figures.no_url: keine Quell-URL erfasst
+page.figures.latest_snapshot: neuester OSM-Stand
+page.figures.ours_road_class: unsere km auf {road_class}
+page.figures.ours_tiers: unsere km der Stufen {tiers}
+preset.fallback_label: '{preset}, unsere OSM-Daten'
+figure.scope.whole_network: gesamtes Netz
+figure.scope.incl_traffic_calmed_restricted_access: einschließlich verkehrsberuhigter Straßen mit beschränkter Kfz-Zufahrt
+figure.scope.vorrangnetz: Vorrangnetz
+figure.scope.cykelsti: Cykelsti (Radweg)
+figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz
+figure.basis.unknown: unbekannt
+figure.basis.streckenlaenge: Streckenlänge
 
 # --- Reiter
 page.story.no_narrative: noch kein Text

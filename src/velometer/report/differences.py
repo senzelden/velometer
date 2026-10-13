@@ -8,11 +8,12 @@ from datetime import date
 from velometer import reconcile as rc
 from velometer.config import BasisRef, DifferencesConfig
 from velometer.db import fetch_external_figures
+from velometer.i18n import Lang, t
 from velometer.models import ExternalFigure
 from velometer.report.data import ROAD_CLASS_TEXT, ReportData
 
-# Comparison tags that say the definition or scope of the source's figure is not ours.
 NOT_STATED = "basis not stated by the source"
+# Comparison tags that say the definition or scope of the source's figure is not ours.
 _SCOPE_TAGS = frozenset({"definition_mismatch", "scope_mismatch"})
 
 
@@ -40,15 +41,17 @@ class DifferenceRow:
     note: str = ""  # the figure's own note (reported) or the comparison's (gap)
 
 
-def _ours_label(data: ReportData, spec: dict | None) -> str | None:
+def _ours_label(data: ReportData, spec: dict | None, lang: Lang = "en") -> str | None:
     if not spec:
         return None
     if "preset" in spec:
-        return data.preset_labels().get(spec["preset"], spec["preset"])
+        return data.with_lang(lang).preset_labels().get(spec["preset"], spec["preset"])
     if "road_class" in spec:
-        return f"our km of {ROAD_CLASS_TEXT.get(spec['road_class'], spec['road_class'])}"
+        rc = spec["road_class"]
+        text = t(lang, f"road_class.{rc}") if rc in ROAD_CLASS_TEXT else rc
+        return t(lang, "page.figures.ours_road_class", road_class=text)
     tiers = "+".join(spec.get("tiers", []))
-    return f"our tiers {tiers} km" if tiers else None
+    return t(lang, "page.figures.ours_tiers", tiers=tiers) if tiers else None
 
 
 def _basis(data: ReportData, spec: dict | None, key: str) -> str | None:
@@ -71,6 +74,7 @@ def _basis(data: ReportData, spec: dict | None, key: str) -> str | None:
 def _drivers(
     cfg: DifferencesConfig,
     *,
+    lang: Lang = "en",
     source: str,
     metric: str,
     snapshot: date | None,
@@ -82,21 +86,26 @@ def _drivers(
     boundary_differs: bool,
     date_differs: bool | None,
 ) -> list[Driver]:
-    ours = cfg.ours
+    # each comparison reads the English config; the shown words are the `lang` ones
+    loc = cfg.localised(lang)
+    ours, shown = cfg.ours, loc.ours
     out: list[Driver] = []
-    label = cfg.labels.get(metric)
-    if scope_differs and label:
-        out.append(Driver("scope", ours["scope"], label))
+    if scope_differs and metric in cfg.labels:
+        out.append(Driver("scope", shown["scope"], loc.labels[metric]))
     if metric in cfg.metric_kinds:
-        out.append(Driver("kind", ours["kind"], cfg.metric_kinds[metric]))
+        out.append(Driver("kind", shown["kind"], loc.metric_kinds[metric]))
     if length_basis is not None:
         theirs = cfg.length_bases.get(length_basis, NOT_STATED)
         if theirs != ours["length"]:
-            out.append(Driver("length", ours["length"], theirs))
+            # an unlisted basis id is one the source does not state
+            words = loc.length_bases.get(length_basis) or loc.length_bases.get("unknown", theirs)
+            out.append(Driver("length", shown["length"], words))
     source_length = cfg.source_length_bases.get(f"{source}/{metric}")
     if source_length is not None and our_basis not in source_length.matches:
-        ours_length = cfg.bases.get(our_basis, ours["length"]) if our_basis else ours["length"]
-        out.append(Driver("length", ours_length, source_length.theirs))
+        ours_length = loc.bases.get(our_basis, shown["length"]) if our_basis else shown["length"]
+        out.append(
+            Driver("length", ours_length, loc.source_length_bases[f"{source}/{metric}"].theirs)
+        )
     if date_differs is None:
         date_differs = (
             snapshot is not None
@@ -107,15 +116,17 @@ def _drivers(
         out.append(
             Driver(
                 "date",
-                f"OSM snapshot of {snapshot.isoformat()}" if snapshot else "latest OSM snapshot",
+                t(lang, "sources.snapshot", date=snapshot.isoformat())
+                if snapshot
+                else t(lang, "page.figures.latest_snapshot"),
                 reference_date.isoformat(),
             )
         )
     if boundary_differs:
-        out.append(Driver("area", ours["area"], cfg.areas.get(source, cfg.areas["default"])))
+        out.append(Driver("area", shown["area"], loc.areas.get(source, loc.areas["default"])))
     method = cfg.source_methods.get(source)
     if method is not None and method != ours["method"]:
-        out.append(Driver("method", ours["method"], method))
+        out.append(Driver("method", shown["method"], loc.source_methods[source]))
     return out
 
 
@@ -130,9 +141,13 @@ def _url(figures: list[ExternalFigure], source: str, metric: str, value: float) 
     )
 
 
-def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> list[DifferenceRow]:
+def difference_rows(
+    data: ReportData, city_id: str, cfg: DifferencesConfig, lang: Lang = "en"
+) -> list[DifferenceRow]:
     """Reconcile gaps first (ours, theirs and the gap as `Gap` has them), then every reported
-    figure (`ours=None`); each with the drivers where its side differs from ours."""
+    figure (`ours=None`); each with the drivers where its side differs from ours, the words in
+    `lang` (the reported figures' notes too)."""
+    data = data.with_lang(lang)
     current = data.current(city_id, "lau")
     snapshot = date.fromisoformat(current.osm_timestamp[:10]) if current else None
     recon_cfg = rc.load_config(data.config_dir / "reconcile.yaml")
@@ -149,9 +164,9 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
         if g.ours is None and (g.source, comp.metric_name, g.theirs, g.reference_date) in shown:
             continue
         basis = _basis(data, comp.ours, g.key)
-        label = _ours_label(data, comp.ours)
+        label = _ours_label(data, comp.ours, lang)
         if label and basis in ("per_side", "qecio_weighted"):
-            label = f"{label}, {cfg.bases.get(basis, basis)}"
+            label = f"{label}, {cfg.localised(lang).bases.get(basis, basis)}"
         rows.append(
             DifferenceRow(
                 source=g.source,
@@ -167,6 +182,7 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                 note=g.note,
                 drivers=_drivers(
                     cfg,
+                    lang=lang,
                     source=g.source,
                     metric=comp.metric_name,
                     snapshot=snapshot,
@@ -196,6 +212,7 @@ def difference_rows(data: ReportData, city_id: str, cfg: DifferencesConfig) -> l
                 note=f.note,
                 drivers=_drivers(
                     cfg,
+                    lang=lang,
                     source=f.source,
                     metric=f.metric_name,
                     snapshot=snapshot,

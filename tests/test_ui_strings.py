@@ -26,6 +26,7 @@ JINJA = re.compile(r"\{\{.*?\}\}|\{%.*?%\}|\{#.*?#\}", re.S)
 # t_in('de', 'k'), JS t("js.k")
 KEY_CALL = re.compile(
     r"""\bt(?:_in|_markup)?\(\s*(?:(?:['"](?:en|de)['"]|lang)\s*,\s*)?['"]([a-z][\w.]*)['"]"""
+    r"""(?!\s*~)"""  # a Jinja 'prefix.' ~ id is composed (KEY_COMPOSED), not a key
 )
 # a key composed from an id: Python f"prefix.{x}", Jinja 'prefix.' ~ x, JS `prefix.${x}`
 KEY_COMPOSED = re.compile(
