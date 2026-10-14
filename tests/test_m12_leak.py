@@ -2,6 +2,7 @@
 page, outside `lang="en"` subtrees, holds no English phrase of a phrase source. English content
 shown for want of a German translation is inside `lang="en" data-fallback`, so it is no leak."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -225,3 +226,15 @@ def test_shipped_german_methodology_has_no_english_words(shipped_client):
     """The German methodology renders the stored provenance with our words in German ("union
     of 17 LAU" is "Vereinigung von 17 LAU") and the counter attributions in German."""
     assert english_words(shipped_client.get("/de/methodology").text) == []
+
+
+def test_german_figure_citations_name_an_unlabelled_metric_by_its_id(client):  # noqa: F811
+    """A figure's Cite title on a German page names a metric without a label by its id (as the
+    table's code cell), never the de-underscored id, which reads as English words; English
+    keeps its form."""
+    de, en = (client.get(f"{p}/city/berlin/figures").text for p in ("/de", ""))
+    ids = {i for i in re.findall(r"<code>([a-z0-9_@~]+)</code>", de) if "_" in i}
+    assert ids  # the fixture's figures table shows unlabelled metric ids
+    spaced = {i: i.replace("_", " ") for i in ids}
+    assert [i for i, s in spaced.items() if f", {s} (" in de] == []
+    assert any(f", {s} (" in en for s in spaced.values())

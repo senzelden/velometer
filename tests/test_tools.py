@@ -108,6 +108,7 @@ def test_lang_of_is_de_under_the_german_tree_only(rp):
         "en"
     ]
     assert rp.lang_of(b + "designs", b) == "en" and rp.lang_of(b + "city/de", b) == "en"
+    assert rp.lang_of(b + "methodology/de", b) == "de"  # the legacy German methodology
 
 
 class _FakeTab:

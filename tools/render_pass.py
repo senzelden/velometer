@@ -56,6 +56,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from velometer import i18n
+from velometer.app import urls as app_urls
 
 HERE = Path(__file__).resolve().parent
 CONTENT = HERE.parent / "content"  # the shipped content: the leak step's sentence phrases
@@ -187,9 +188,10 @@ def type_urls(urls: list[str], base: str) -> list[str]:
 
 
 def lang_of(url: str, base: str) -> str:
-    """`de` for a page under `<base>de` (the German edition), else `en`."""
+    """The language of a page URL, by the app's rule (`urls.lang_of`): `de` under `<base>de`
+    and for the legacy `<base>methodology/de`, else `en`."""
     rest = url[len(_norm_base(base)) :] if url.startswith(_norm_base(base)) else url.lstrip("/")
-    return "de" if rest == "de" or rest.startswith(("de/", "de?", "de#")) else "en"
+    return app_urls.lang_of("/" + rest)
 
 
 def _norm_base(base: str) -> str:

@@ -1,8 +1,10 @@
 {% extends "city/_page.html" %}
 {% from "_cite.html" import cite %}
-{#- One Cite per row. The row shares the city's run; only the title differs. -#}
+{#- One Cite per row. The row shares the city's run; only the title differs. A German title names
+    a metric without a label by its id, as the table's code cell does (de-underscored, an id reads
+    as English words). -#}
 {% macro row_cite(source, metric) -%}
-{{ cite(cite_for(t('cite.title.figure', city=city.name, source=source_names.get(source, source), metric=metric_labels.get(metric) or metric | replace("_", " ")), city=city.id)) }}
+{{ cite(cite_for(t('cite.title.figure', city=city.name, source=source_names.get(source, source), metric=metric_labels.get(metric) or (metric if lang == 'de' else metric | replace("_", " "))), city=city.id)) }}
 {%- endmacro %}
 {% block tab %}
 <section>
