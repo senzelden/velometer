@@ -706,7 +706,7 @@ def interact_download(devtools: str, origin: str, base: str, theme: str, width: 
         if ".png" in files and files[".png"].read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
             errors.append("the PNG is not a PNG")
         for ext, f in files.items():  # kept beside the screenshots, to be looked at
-            _keep(f, shots / f"{pre.replace('/', '-')}download-{theme}-{width}{ext}")
+            _keep(f, shots / f"{pre.replace('/', '-')}saved-{theme}-{width}{ext}")
         if ".csv" in files:
             errors += _csv_errors(files[".csv"].read_text(encoding="utf-8"), t.js(CSV_TABLE_JS),
                                   lang)  # fmt: skip

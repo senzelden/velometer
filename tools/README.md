@@ -68,7 +68,7 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   (`<base>de (search, switch)`, with `steps`) types "krakau" in the German nav search and must
   land on `de/city/krakow`, and switches a German Compare permalink to English with its query and
   hash kept. Downloaded files are kept beside the screenshots
-  (`[de-]download-<theme>-<width>.{svg,png,csv}`).
+  (`[de-]saved-<theme>-<width>.{svg,png,csv}`; the page screenshot is `[de-]download-…png`).
 - `--keyboard` adds one scripted keyboard pass per theme (entry `kind: keyboard`, no axe or
   screenshot). It sends real key events with `Input.dispatchKeyEvent` and checks, step by step:
   the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter
