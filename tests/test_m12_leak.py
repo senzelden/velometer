@@ -2,7 +2,6 @@
 page, outside `lang="en"` subtrees, holds no English phrase of a phrase source. English content
 shown for want of a German translation is inside `lang="en" data-fallback`, so it is no leak."""
 
-import re
 from pathlib import Path
 
 import pytest
@@ -77,32 +76,21 @@ def test_phrase_sources_are_real():
         assert len(source()) > 10, name
 
 
-# --- runtime text: what Python builds at request time (provenance lines, flag details) is in no
-# phrase source, so a sniff of English function words guards it, whatever the generators say ---
+# --- runtime and config text: what Python builds at request time (provenance lines, flag
+# details) and config text beside a name (an attribution) are in no phrase source, so a sniff of
+# English words guards it (`i18n.english_words`, shared with the render pass) ---
 
-# common English words that are no German word: function words, and the vocabulary of
-# provenance and activity notes in general (not today's generator output)
-ENGLISH_WORDS = frozenset({
-    "the", "and", "of", "with", "from", "for", "to", "is", "are", "were", "by", "not",
-    "which", "this", "that", "needs", "limit", "retrieved", "edits", "share", "sources", "none",
-    "boundary", "run", "runs", "classifier", "top", "mapper", "file", "history", "current",
-    "population", "held", "constant",
-})  # fmt: skip
-# a word standing alone: identifiers (`activity_spike`, `legacy_km`) and ids with digits are code
-WORD = re.compile(r"(?<![\w.+-])[A-Za-z]+(?![\w+-])")
+english_words = i18n.english_words
 
 
-def english_words(html: str) -> list[str]:
-    """The English function words in the text a German reader sees outside lang="en"."""
-    return sorted({w for w in WORD.findall(i18n.visible_text(html)) if w.lower() in ENGLISH_WORDS})
-
-
-def test_no_english_words_on_german_city_pages(client, all_page_urls):  # noqa: F811
-    """Every German city page has no English function word outside lang="en": the Over time
-    tab's provenance lines and flag details are built at request time, and the Figures tab's
-    source titles show our notes in German with the original title in its own language."""
-    pages = [u for u in all_page_urls if u.startswith("/de/city/")]
+def test_no_english_words_on_german_pages(client, all_page_urls):  # noqa: F811
+    """No German page has a common English word outside lang="en" (M12 Task 11, the English-leak
+    proof): runtime text such as the Over time tab's provenance lines and flag details, config
+    text such as an attribution, and our notes beside a source title are in no phrase source, so
+    the sniff is their net. Text in another language sits inside its lang attribute."""
+    pages = [u for u in all_page_urls if urls.lang_of(u) == "de"]
     assert any(u.endswith("/time") for u in pages) and any(u.endswith("/figures") for u in pages)
+    assert any(not u.startswith("/de/city/") for u in pages)
     found = {u: w for u in pages if (w := english_words(client.get(u).text))}
     assert found == {}
 
@@ -114,6 +102,32 @@ def test_the_runtime_sniff_sees_the_over_time_generators(client):  # noqa: F811
     assert 'class="meta"' in html and i18n.t("de", "page.time.comparison") in html
     assert english_words("<p>retrieved the edits</p>") == ["edits", "retrieved", "the"]
     assert english_words("<p>activity_spike legacy_km <code>run</code></p>") == []
+
+
+def test_the_sniff_reads_prose_not_codes_paths_or_names():
+    """Capitals are codes (AT, NO), a slash or underscore makes an id, a name in its own form
+    is no English prose; lower-case and capitalised English words are."""
+    assert english_words("<p>Österreich AT, Norwegen NO, CAN RABIA</p>") == []
+    assert english_words("<p>d1 · vienna/lau/current · cycle_street</p>") == []
+    assert english_words("<p>Statens vegvesen (state counters)</p>") == ["counters", "state"]
+    assert english_words("<p>The data of</p>") == ["The", "of"]
+    name = i18n.PROPER_NAMES[0]
+    assert english_words(f"<p>{name}</p>") == []
+    assert english_words(f'<p lang="en">{name} and the rest</p>') == []
+
+
+def _squashed(path: Path) -> str:
+    return " ".join(path.read_text(encoding="utf-8").split())
+
+
+def test_every_proper_name_of_the_sniff_is_shipped():
+    """A name the sniff passes over is one the shipped config, content or German methodology
+    holds: a name no page can show any more must leave the list, not linger as a hole."""
+    root = Path(__file__).resolve().parents[1]
+    files = [*root.glob("config/**/*.yaml"), *root.glob("content/**/*.yaml")]
+    texts = [_squashed(f) for f in [*files, root / "docs" / "methodology.de.md"]]
+    stale = [n for n in i18n.PROPER_NAMES if not any(n in text for text in texts)]
+    assert stale == []
 
 
 # --- German content is required (M12 Task 9): the shipped edition is complete ---
@@ -154,3 +168,60 @@ def test_shipped_german_content_is_complete(fixture_db):
     problems, notes = check_content_all(CONTENT, fixture_db[3], SHIPPED_DOCS)
     assert [p for p in problems if p.startswith(DE)] == []
     assert notes == []
+
+
+# --- config text beside a name: our English words in an attribution, a portal list or a
+# publisher have a German sibling (M12 Task 11; Oslo's "Statens vegvesen (state counters)") ---
+
+CONFIG = Path(__file__).resolve().parents[1] / "config"
+
+
+def test_counter_attributions_and_portals_have_no_english_words_in_german():
+    from velometer.app.counts import attribution, counters_config, no_data_notes
+
+    cfg, error = counters_config(CONFIG)
+    assert error is None and cfg.cities and cfg.none
+    for e in cfg.cities:
+        assert english_words(f"<p>{attribution(e, [], 'de')[0]}</p>") == [], e.city
+        assert attribution(e, [], "en")[0] == e.source  # English shows the config as written
+    notes = no_data_notes(cfg, "de")
+    assert {c: w for c, n in notes.items() if (w := english_words(f"<p>{n}</p>"))} == {}
+
+
+def test_plan_publishers_have_no_english_words_in_german():
+    from velometer.plans.models import load_plans
+
+    plans, _rows = load_plans(CONFIG / "plans")
+    found = {
+        p.id: w for p in plans if (w := english_words(f"<p>{p.localised('de').publisher}</p>"))
+    }
+    assert found == {}
+    assert all(p.localised("en").publisher == p.publisher for p in plans)
+
+
+def test_german_compare_counter_notes_read_the_german_siblings():
+    from velometer.app.compare import counter_lines
+
+    payload = {
+        "cities": {"oslo": {"name": "Oslo"}, "warsaw": {"name": "Warschau"}},
+        "counters": {
+            "cities": {
+                "oslo": {"line": True, "series": "counts", "source": "Statens vegvesen (state "
+                         "counters)", "source_de": "Statens vegvesen (staatliche Zählstellen)",
+                         "licence": "NLOD", "points": [{"year": 2019, "idx": 100.0}]},
+            },
+            "none": {"warsaw": "no open counter data found"},
+            "none_de": {"warsaw": "keine offenen Zähldaten gefunden"},
+        },
+    }  # fmt: skip
+    _labels, _values, de = counter_lines(payload, ["oslo", "warsaw"], "de")
+    assert any("staatliche Zählstellen" in n for n in de) and not any("state" in n for n in de)
+    assert "Warschau: keine offenen Zähldaten gefunden" in de
+    _labels, _values, en = counter_lines(payload, ["oslo", "warsaw"], "en")
+    assert any("(state counters)" in n for n in en)
+
+
+def test_shipped_german_methodology_has_no_english_words(shipped_client):
+    """The German methodology renders the stored provenance with our words in German ("union
+    of 17 LAU" is "Vereinigung von 17 LAU") and the counter attributions in German."""
+    assert english_words(shipped_client.get("/de/methodology").text) == []

@@ -845,7 +845,7 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
         for en, de in load_report_notes_de(config_dir / "plans", rows).items()
     ]
     for p in plans:
-        for field in ("title", "successor", "note"):
+        for field in ("title", "successor", "publisher", "note"):
             en, de = getattr(p, field), getattr(p, f"{field}_de")
             if en is not None and de is not None:
                 out.append((f"plans.yaml {p.id}.{field}", en, de))

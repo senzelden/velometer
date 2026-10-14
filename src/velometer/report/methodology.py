@@ -9,6 +9,7 @@ tables.
 `check` re-renders in memory and lists what is stale.
 """
 
+import re
 from datetime import date
 from pathlib import Path
 from typing import Any, Literal
@@ -128,6 +129,7 @@ class CounterCityFact(_Frozen):
     id: str
     name: str
     source: str
+    source_de: str | None = None  # config/counters.yaml: only where `source` has our English words
     licence: str
     base_year: int
     series: Literal["counts", "avg_daily_intensity"]
@@ -332,6 +334,7 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
         id=c.city,
         name=name,
         source=c.source,
+        source_de=c.source_de,
         licence=c.licence,
         base_year=c.base_year,
         series=series,
@@ -457,6 +460,24 @@ def _day(v: date, lang: Lang) -> str:
     return i18n.long_day(v, lang)
 
 
+# our own words in the stored boundary and population provenance (sources/boundaries.py), in
+# German: the stored strings are run identity in the database and stay as written
+_PROVENANCE_DE = (
+    (re.compile(r", union of (\d+) LAU\b"), r", Vereinigung von \1 LAU"),
+    (re.compile(r"\(sum of (\d+) LAU\)"), r"(Summe von \1 LAU)"),
+)
+
+
+def _provenance(v: str | None, lang: Lang) -> str | None:
+    """A stored provenance string as the page's language shows it: German replaces our own
+    English words ("union of 17 LAU"); a source's name stays as written."""
+    if v is None or lang == "en":
+        return v
+    for pattern, german in _PROVENANCE_DE:
+        v = pattern.sub(german, v)
+    return v
+
+
 def _environment(lang: Lang) -> Environment:
     env = Environment(
         loader=PackageLoader("velometer.report", "templates"),
@@ -472,6 +493,7 @@ def _environment(lang: Lang) -> Environment:
     env.filters["day"] = lambda v: _day(v, lang)
     env.filters["gaps"] = lambda v: _gaps(v, lang)
     env.filters["sites"] = lambda v: _sites(v, lang)
+    env.filters["provenance"] = lambda v: _provenance(v, lang)
     return env
 
 

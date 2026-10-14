@@ -102,7 +102,7 @@ Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons m
 | Stadt | Verwaltungsgrenze (LAU) | Quelle der Einwohnerzahl |
 |---|---|---|
 {% for c in f.cities %}
-| {{ c.name }} | {{ c.boundary_source or "nicht erfasst" }} | {{ c.population_source or "keine" }} |
+| {{ c.name }} | {{ c.boundary_source | provenance or "nicht erfasst" }} | {{ c.population_source | provenance or "keine" }} |
 {% endfor %}
 <!-- /generated:sources -->
 
@@ -196,7 +196,7 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 | Stadt | Herausgeber | Lizenz | Basisjahr (= 100) | Reihe |
 |---|---|---|---|---|
 {% for c in f.counters.cities %}
-| {{ c.name }} | {{ c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "durchschnittliche tägliche Verkehrsstärke" if c.series == "avg_daily_intensity" else "Zählwerte" }} |
+| {{ c.name }} | {{ c.source_de or c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "durchschnittliche tägliche Verkehrsstärke" if c.series == "avg_daily_intensity" else "Zählwerte" }} |
 {% endfor %}
 
 Für die übrigen {{ f.counters.n_no_data | num }} Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Figures“ nennt die geprüften Portale.

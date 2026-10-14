@@ -1,7 +1,8 @@
 # Cycling plans, one entry per plan (M8 spec §4.1); loaded by velometer.plans.models.
 # Research log with the page-level check of every value: docs/review/m8-plans.md.
 # Targets are stored as printed. A plan without a printed km target has target_kind none.
-# Berlin publishers are organisation profile ids; the other cities name their publisher.
+# Berlin publishers are organisation profile ids; the other cities name their publisher
+# (`publisher_de` only where that name holds our English words).
 
 - id: berlin_rvp_2021
   city: berlin
@@ -262,6 +263,7 @@
   url: https://www.oslo.kommune.no/slik-bygger-vi-oslo/plan-for-sykkelveinettet/
   status: expired
   publisher: Oslo kommune and Statens vegvesen
+  publisher_de: Oslo kommune und Statens vegvesen
   note: >-
     Adopted by the bystyre in 2018 (city page; day not printed). Implements the Sykkelstrategi for
     Oslo 2015–2025. First phase to 2025: about 100 km of new cycle network (about 70 km by Oslo
@@ -466,6 +468,7 @@
   url: https://bkk.hu/rolunk/strategiank/kerekparforgalmi-fohalozati-terv/
   status: current
   publisher: Budapesti Közlekedési Központ (BKK) for the Fővárosi Önkormányzat
+  publisher_de: Budapesti Közlekedési Központ (BKK) für die Fővárosi Önkormányzat
   note: >-
     Prepared by BKK under Fővárosi Közgyűlés resolution 1539/2021 (X. 27.); its situation
     assessment is dated 7 October 2022; the adoption date of the plan itself was not confirmed.

@@ -56,7 +56,10 @@ const SERIES = {
     timeseries: { "krakow/lau/2019": "Deutsche Ursache.", "paris/lau/2020": "Other." },
     fallback: ["paris/lau/2020"],
   },
-  counters: { cities: {}, none: { paris: "no open counter data found" },
+  counters: { cities: { oslo: { line: true, source: "Statens vegvesen (state counters)",
+                                source_de: "Statens vegvesen (staatliche Zählstellen)" },
+                        krakow: { line: true, source: "Ajuntament" } },
+              none: { paris: "no open counter data found" },
               none_de: { paris: "keine offenen Zähldaten gefunden" } },
 };
 
@@ -74,6 +77,13 @@ test("localised: German swaps in every _de sibling and leaves the payload alone"
   assert.equal(D.counters.none.paris, "keine offenen Zähldaten gefunden");
   assert.equal(D.explanations.timeseries["krakow/lau/2019"], "Deutsche Ursache.");
   assert.equal(JSON.stringify(SERIES), before);
+});
+
+test("localised: a counter attribution with a German sibling reads German, others keep theirs", () => {
+  const D = localised(SERIES, "de");
+  assert.equal(D.counters.cities.oslo.source, "Statens vegvesen (staatliche Zählstellen)");
+  assert.equal(D.counters.cities.krakow.source, "Ajuntament");
+  assert.equal(localised(SERIES, "en").counters.cities.oslo.source, "Statens vegvesen (state counters)");
 });
 
 test("localised: explanation keys still English are in explanationFallback", () => {

@@ -57,6 +57,9 @@ class Plan(_Strict):
     successor: str | None = None
     successor_de: str | None = None  # as title_de: only where the successor has English words
     publisher: str
+    # as title_de: only where a publisher that is no organisation id holds our English words
+    # ("Oslo kommune and Statens vegvesen"); an organisation id is never translated
+    publisher_de: str | None = None
     items: list[PlanItem]
     note: str | None = None
     note_de: str | None = None  # required beside `note` (M12)
@@ -81,6 +84,7 @@ class Plan(_Strict):
             update={
                 "title": self.title_de or self.title,
                 "successor": self.successor_de or self.successor,
+                "publisher": self.publisher_de or self.publisher,
                 "note": self.note_de or self.note,
                 "items": [
                     i.model_copy(

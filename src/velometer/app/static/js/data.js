@@ -31,7 +31,7 @@ const withDe = (o) => {
 /**
  * The series payload in the page's language. English: the payload itself. German: a copy with
  * every `<key>_de` in place of `<key>` (the cities' names and countries, `headline_unit`, the
- * preset labels, the counter `none` notes) and `explanations` from `explanations_de`;
+ * preset labels, the counter `none` notes and attributions) and `explanations` from `explanations_de`;
  * `explanationFallback` is the Set of explanation keys still in English (mark them lang="en").
  */
 export function localised(series, pageLang) {
@@ -39,7 +39,13 @@ export function localised(series, pageLang) {
   const out = withDe(series);
   out.cities = Object.fromEntries(Object.entries(series.cities ?? {}).map(([id, c]) => [id, withDe(c)]));
   out.presets = { ...series.presets, ...series.presets_de };
-  if (series.counters) out.counters = { ...series.counters, none: { ...series.counters.none, ...series.counters.none_de } };
+  if (series.counters) {
+    out.counters = {
+      ...series.counters,
+      none: { ...series.counters.none, ...series.counters.none_de },
+      cities: Object.fromEntries(Object.entries(series.counters.cities ?? {}).map(([id, c]) => [id, withDe(c)])),
+    };
+  }
   const de = series.explanations_de;
   if (de) out.explanations = { ...series.explanations, timeseries: { ...series.explanations?.timeseries, ...de.timeseries } };
   out.explanationFallback = new Set(de?.fallback ?? []);

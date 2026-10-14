@@ -201,7 +201,10 @@ def counter_lines(
     unreadable config/counters.yaml is a note before all others (counter-model.js:
     counterLines)."""
     counters = payload.get("counters", {}).get("cities", {})
-    none = payload.get("counters", {}).get("none", {})
+    # a German page reads the German siblings of the shared payload (`none_de`, `source_de`)
+    none = payload.get("counters", {}).get("none_de" if lang == "de" else "none") or payload.get(
+        "counters", {}
+    ).get("none", {})
     names = payload["cities"]
     drawn = {i: counters[i] for i in ids if i in counters and counters[i]["line"]}
     years = [p["year"] for c in drawn.values() for p in c["points"] if p["idx"] is not None]
@@ -220,7 +223,11 @@ def counter_lines(
         by_year = {str(p["year"]): p["idx"] for p in c["points"]} if i in drawn else {}
         values[i] = [by_year.get(lbl) for lbl in labels]
     for i, c in drawn.items():
-        source = c.get("source") or t(lang, "counts.source_not_recorded")
+        source = (
+            (c.get("source_de") if lang == "de" else None)
+            or c.get("source")
+            or t(lang, "counts.source_not_recorded")
+        )
         licence = c.get("licence") or t(lang, "counts.not_recorded")
         notes.append(
             t(lang, "counts.attribution", city=names[i]["name"], source=source, licence=licence)

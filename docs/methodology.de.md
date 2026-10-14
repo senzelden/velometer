@@ -163,7 +163,7 @@ Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons m
 | Barcelona | Eurostat GISCO LAU 2024 (1:1M) | INE Revisión del Padrón Municipal 2025 (1 Jan 2025) (https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/2861?nult=1) |
 | Berlin | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Bordeaux | Eurostat GISCO LAU 2024 (1:1M) | INSEE populations de référence 2023, population municipale (https://www.insee.fr/fr/statistiques/8643952?geo=COM-33063) |
-| Bratislava | Eurostat GISCO LAU 2024 (1:1M), union of 17 LAU | GISCO LAU 2024 POP_2024 (sum of 17 LAU) |
+| Bratislava | Eurostat GISCO LAU 2024 (1:1M), Vereinigung von 17 LAU | GISCO LAU 2024 POP_2024 (Summe von 17 LAU) |
 | Budapest | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | København | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
 | Helsinki | Eurostat GISCO LAU 2024 (1:1M) | GISCO LAU 2024 POP_2024 |
@@ -286,7 +286,7 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 | Wien | Stadt Wien | CC BY 4.0 | 2019 | Zählwerte |
 | Helsinki | City of Helsinki, Urban Environment Division (Helsingin kaupunkiympäristön toimiala) | CC BY 4.0 | 2019 | Zählwerte |
 | Madrid | Ayuntamiento de Madrid | CC BY 4.0 | 2020 | Zählwerte |
-| Oslo | Statens vegvesen (state counters) | NLOD | 2019 | Zählwerte |
+| Oslo | Statens vegvesen (staatliche Zählstellen) | NLOD | 2019 | Zählwerte |
 | Barcelona | Ajuntament de Barcelona | CC BY 4.0 | 2019 | durchschnittliche tägliche Verkehrsstärke |
 
 Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Figures“ nennt die geprüften Portale.

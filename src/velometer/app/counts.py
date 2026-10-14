@@ -91,15 +91,19 @@ def no_data_notes(cfg: CountersConfig | None, lang: Lang = "en") -> dict[str, st
     for n in cfg.none if cfg else []:
         note = n.note_in(lang)
         extra = f"; {note}" if note else ""
-        out[n.city] = t(lang, "counts.none_found", portals=", ".join(n.checked), note=extra)
+        portals = ", ".join(n.checked_in(lang))
+        out[n.city] = t(lang, "counts.none_found", portals=portals, note=extra)
     return out
 
 
-def attribution(entry: CounterEntry | None, sites) -> tuple[str | None, str | None]:
-    """(publisher, licence) of a city's counter data: its config/counters.yaml entry, else the
-    stored sites' (ADR 0008: every page that shows the data carries an attribution line)."""
+def attribution(
+    entry: CounterEntry | None, sites, lang: Lang = "en"
+) -> tuple[str | None, str | None]:
+    """(publisher, licence) of a city's counter data: its config/counters.yaml entry (the German
+    `source_de` on a German page), else the stored sites' (ADR 0008: every page that shows the
+    data carries an attribution line)."""
     if entry is not None:
-        return entry.source, entry.licence
+        return entry.source_in(lang), entry.licence
     return (sites[0].source, sites[0].licence) if sites else (None, None)
 
 
@@ -119,7 +123,9 @@ def counter_payload(data: ReportData) -> dict:
         if not rows:
             continue
         points = [{"year": r.year, "idx": _round(r.index), "sites": r.sites} for r in rows]
-        source, licence = attribution(_entry(cfg, city_id), data.counter_sites(city_id))
+        entry = _entry(cfg, city_id)
+        source, licence = attribution(entry, data.counter_sites(city_id))
+        german = {"source_de": entry.source_de} if entry and entry.source_de else {}
         cities[city_id] = {
             "series": rows[0].series,
             "base_year": rows[0].base_year,
@@ -127,6 +133,7 @@ def counter_payload(data: ReportData) -> dict:
             "points": points,
             "source": source,
             "licence": licence,
+            **german,
         }
     return {
         "covid_year": COVID_YEAR,
@@ -211,8 +218,8 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     sites = data.counter_sites(city_id)
     mapped = [s for s in sites if s.lat is not None and s.lon is not None]
     retrieved = max((s.retrieved_at for s in sites), default=None)
-    source, licence = attribution(entry, sites)
     lang = data.lang
+    source, licence = attribution(entry, sites, lang)
     return {
         "label": series_label(series, lang),
         "short": series_short(series, lang),

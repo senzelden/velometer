@@ -440,6 +440,53 @@ def visible_text(html: str) -> str:
     return "\n".join([_squash("".join(parser.text)), *parser.attrs])
 
 
+# Common English words that are no German word: function words ("in", "an", "so", "was",
+# "will", "also", "man", "die" are German too and stay out) and the vocabulary of the site's
+# notes, provenance lines and attributions in general (not today's generator output).
+ENGLISH_WORDS = frozenset({
+    "the", "and", "of", "with", "from", "for", "to", "is", "are", "were", "by", "not", "on", "at",
+    "or", "it", "its", "be", "been", "has", "have", "had", "can", "could", "would", "should",
+    "which", "this", "that", "these", "those", "there", "their", "they", "than", "then", "when",
+    "where", "what", "who", "how", "into", "about", "after", "before", "between", "each",
+    "every", "only", "more", "most", "other", "some", "such", "our", "your", "you", "we", "any",
+    "all", "over", "under", "since", "until", "while", "without",
+    "needs", "limit", "retrieved", "edits", "share", "sources", "source", "none", "boundary",
+    "run", "runs", "classifier", "top", "mapper", "file", "history", "current", "population",
+    "held", "constant", "state", "counters", "counter", "year", "years", "built", "mapped",
+    "report", "missing", "unknown",
+})  # fmt: skip
+# Proper names that hold such words, in the form a German page shows them: a body's own (or
+# official English) name, a publication or plan title in its language, an English term of art
+# German uses. Names are not translated (OrganisationTr; the local-name rule), so the sniff
+# passes over them; every one must be in the shipped config, content or German methodology.
+PROPER_NAMES = (
+    "City of Helsinki, Urban Environment Division",
+    "Confederation of the European Bicycle Industry",
+    "INSEE populations de référence 2023, population municipale",
+    "IT University of Copenhagen",
+    "Københavns Kommune (City of Copenhagen)",
+    "Networks, Data and Society",
+    "Plan for sykkelveinettet i Oslo",
+    "Points of Interest",
+    "Streets for Kids, Cities for All",
+    "Sykkelstrategi for Oslo",
+)
+# a word standing alone, in lower case or capitalised: identifiers (`activity_spike`,
+# `vienna/lau/current`), ids with digits and codes in capitals (`AT`, `NO`) are no prose
+_WORD = re.compile(r"(?<![\w.+/-])[A-Z]?[a-z]+(?![\w+/-])")
+
+
+def english_words(html: str) -> list[str]:
+    """The common English words (ENGLISH_WORDS) in the text a German reader sees outside
+    `lang` subtrees of another language (`visible_text`), proper names (PROPER_NAMES) left out:
+    the net for English that no phrase source holds (text built at request time or in the
+    browser, config text beside a name)."""
+    text = visible_text(html)
+    for name in PROPER_NAMES:
+        text = text.replace(name, " ")
+    return sorted({w for w in _WORD.findall(text) if w.lower() in ENGLISH_WORDS})
+
+
 _TAG = re.compile(r"<[^>]*>|<[^>]*$")
 
 
