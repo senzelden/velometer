@@ -150,6 +150,8 @@ velometer reconcile --city X                # ours vs QECIO / BikeNetKit / Clean
 velometer report tables|charts
 velometer serve                             # FastAPI read-only app
 velometer app export --out DIR [--base /velometer/] [--clean]   # static edition of the reader app (M9)
+velometer content --check                   # both editions; German problems are marked [de] (M12)
+velometer content stamp FILE                # stamp a German translation file after translating (M12)
 ```
 
 `app export` renders every page, fragment, CSV, JSON, PNG and GeoJSON the reader app serves through
@@ -162,7 +164,22 @@ unless `--clean` is given, and `--clean` replaces only a previous export (a dire
 `build.json`). The CLI refuses `--out .`, any parent of the working directory, `/`, `$HOME`, the
 repository root, a symlink, and any directory that contains one of its inputs.
 
+Since M12 the export writes both editions: the English pages at their M11 paths and the German
+twin of every page under `de/` (`de/city/krakow/time`, `de/data/search.json` with German labels;
+`data/series.json` is shared and carries German `_de` siblings). The legacy `/methodology/de`
+stays German. The export is 441 files, about 272 MB.
+
+`content stamp FILE` writes into a German translation file (`content/**/de/*.yaml`) the hashes
+of the English it was translated from (`src:`), and for `docs/review/m3_timeseries.de.md` the
+hash of each English explanation (`<!-- src: … -->`). Run it after translating, never as a
+blanket fix: a stamp says "this German matches that English".
+
 ### Re-rendering the tier maps
+
+`velometer report maps` writes, per city and boundary kind, the English PNG, the GeoJSON and the
+German PNG (`<city>_<kind>.de.png`, German legend and footer). All of them live in git-ignored
+`data/maps/`, so **a fresh checkout runs `velometer report maps` before `app export`** (it only
+reads the database and writes under `data/`); without it the export has no tier-map PNGs.
 
 After a palette change (`charts.TIER_COLOURS`), re-run `velometer report maps`; the change maps
 keep fixed colours. A tier map is skipped while its `.run` marker names the current run, and a
@@ -226,6 +243,20 @@ gained `_search` (Tab to `#site-search`, type with `Input.insertText`, Down sets
 axe with the list open; at 1280 and 320 px). The static export gained `/data/search.json` (the
 search index, §9 M11).
 
+M12 added the German edition's proofs (details in `tools/README.md`). `--pages types` keys
+city pages by language and slug, so the `de/city/…` pages are typed too. Every visit checks
+`<html lang>` (`de` under `de/`, `en` elsewhere, the legacy `/methodology/de` German) and that
+every `link[rel=alternate]` resolves; the city panel fragment's `lang` is the page's. On every
+German page the **English-leak step** reads the live document after the JS has drawn
+(`i18n.visible_text` plus the `aria-label`/`title`/`alt` a reader hears, outside subtrees in
+another language) and fails on a catalogue phrase (`i18n.leak_phrases`), a content sentence
+(`i18n.content_phrases`), a common English word (`i18n.english_words`, proper names passed over)
+or a `[data-fallback]` element. `--interact` adds the German cite, download and permalink visits
+(`[Datensatz]` and the `/de/` address, German announcements, "OpenStreetMap-Mitwirkende", the
+German source line and month labels in the SVG, the CSV's German header with dot decimals) and a
+steps entry: "krakau" in the German search lands on `de/city/krakow`, and the language switch
+keeps a German Compare permalink's query and hash. The tool now imports `velometer.i18n`.
+
 **Exit rule:** the exit status is 0 only when every visit has no axe violation (WCAG 2.1 A and AA
 tags), no overflow (a box that scrolls, clips or is spilled out of, other than a prose table, the
 map and ellipsised text), no console message, no CSP violation, no host other than `127.0.0.1` and
@@ -267,6 +298,8 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 **M10 — Polish and accessibility** (added after M9; spec `docs/superpowers/specs/2026-10-09-velometer-m10-design.md`, rulings `docs/superpowers/rulings-m10.md`). The reader app follows the OS colour scheme (`prefers-color-scheme`, no toggle) through colour tokens; the JS draws from those tokens (series, tier, axis, halo and counter-map colours) and redraws when the scheme changes. One tier palette (`charts.TIER_COLOURS`, tokens `--tier-a`…`--tier-e`) serves the maps and charts in both themes, chosen by rule (3:1 on the grounds, pairwise colour difference, tested in `tests/test_colour.py` and `tests/test_a11y.py`); the tier-map PNGs were re-rendered with it. Below 600 px wide tables stack into labelled cards (only prose tables in methodology and the explainer scroll). The page has a skip link, a visible focus ring everywhere, a live region for Compare and the city panel, heading order, scroll regions that are focusable and named, a data table behind every chart, flags and changes that do not rely on colour, and `lang` on quotes. `tools/render_pass.py` (see §8) runs axe-core over every exported page in both themes at 1280, 390 and 320 px. *Accept:* gate green including the node tests; the six checks exit 0; the full render pass (`--pages all`, both themes, 1280/390/320, `--interact`), run on the M10 head, exits 0, and so does `--pages types --flip --interact`: no axe violation (WCAG 2 A/AA and 2.1 A/AA tags), overflow, console message, CSP violation or foreign host in every exported page as loaded, plus Compare with a city panel open; the scripted keyboard pass (`--keyboard`, real key events, both themes) passes, including Compare's chart view after the table view; 200% zoom and WCAG 1.4.12 text-spacing spot checks on Compare, Figures and methodology; `velometer.sqlite` unchanged; delivered 2026-10-10.
 
 **M11 — Reader features** (added after M10; spec `docs/superpowers/specs/2026-10-11-velometer-m11-design.md`, rulings `docs/superpowers/rulings-m11.md`). A **Sources** page (`/sources`) sets every quoted report beside our approach, one row per source, dimension by dimension, with the organisation behind it, the cities it covers and, where we recompute its method on our data, a link to that overview column. Every chart, key number and Figures row has a **Cite** disclosure (plain text, BibTeX and CSL-JSON, with the address the page is served at); every chart can be **downloaded** as SVG, PNG or the CSV behind it, in the light theme with attribution; the tier map, the story steps and the compare panel have **permalinks** and a Copy link button; the nav has a **search** over cities, countries, organisations, stories and pages (`/data/search.json`, no server). No DB write, no new run, no new host, no npm. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the full render pass (`--pages all`, both themes, 1280/390/320) and `--pages types --interact --keyboard --flip`, run on the M11 head, exit 0, which audits every exported page as loaded for axe violations, overflow, console messages, CSP violations and foreign hosts, plus the Cite, download and permalink visits and the `_search` keyboard steps listed in §8; screenshots of the Sources page, an open Cite, the Download menu, a downloaded SVG and PNG, the open search list and a restored tier-map permalink were looked at in both themes. Not claimed: downloads and Cite are not checked with a screen reader, and clipboard behaviour is proven only through the live-region message. Next: M12, the German edition.
+
+**M12 — German edition** (added after M11; spec `docs/superpowers/specs/2026-10-12-velometer-m12-design.md`, rulings `docs/superpowers/rulings-m12.md`). Every reader page has a German twin under `/de/` with a language switch in the nav (keeping query and hash), `hreflang` alternates and a German 404 line. The UI words come from one catalogue (`content/ui/{en,de}.yaml`, `i18n.t`; the JS gets its `js.*` strings in a `#ui-strings` block), numbers and dates are formatted per language by our own code (`1.234,5`, `Okt. 2026`), the five exonyms (Krakau, Warschau, Prag, Kopenhagen, Wien) are shown and searchable, chart downloads and citations are German on German pages (the CSV keeps its English preamble and dot decimals under a German header), and the tier maps have German PNGs. The content (narratives, explainer, counters and plan texts, organisation profiles, source glosses, config reader prose, the flagged-year explanations) has stamped German translations, reviewed by the user (Task 10); data-reference captions stay English inside `lang="en"` by user ruling. A German translation is required for the shipped tree (`content --check`). No DB write, no new run, no new host, no npm, no new Python dependency. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the English export of the M12 head differs from the M11 base only in the categories listed in rulings-m12 (language switch and alternates, the strings block and its scripts, static JS and CSS, the `.langs` line, `/methodology/de`, the panel `lang`, additive `_de` fields, search terms, the 404 German line); the full render pass (`--pages all`, both themes, 1280/390/320, both editions) and `--pages types --interact --keyboard --flip`, run on the M12 head, exit 0, which audits every page as loaded, plus on every German page `<html lang>`, resolving alternates and the English-leak step after the JS has drawn, and the German cite, download, permalink, search and switch steps listed in §8; screenshots of `/de/` (1280, 390), a German Krakau page, a German Compare permalink, an open German Cite, a German SVG and PNG, a German tier-map PNG and the 404 page were looked at in both themes. Not claimed: the English-word sniff is a heuristic (common English words, not every English phrase), proper names (`i18n.PROPER_NAMES`) keep their own form, and German pages were not checked with a screen reader. Next: not yet decided; the M9 roadmap ends at M12.
 
 ### Accessibility statement (M10)
 
@@ -350,6 +383,36 @@ How each is built, and how to verify it.
   (including ł ø đ ð æ œ ß þ ı). Without JS, or when the index fails to load, the box is hidden
   and a "Find a city" link shows. Verify: `search.test.mjs`, `test_m11.py`, the `_search`
   keyboard steps.
+
+### German edition (M12)
+
+- **Catalogue.** Every UI word is a key in `content/ui/en.yaml` and `content/ui/de.yaml`
+  (`i18n.t(lang, key)` in Python and Jinja, `t(key)` in the JS for `js.*` keys). Month names live
+  only in `i18n.MONTHS`/`MONTHS_SHORT`. `tests/ui_js_strings.json` is generated from the catalogue
+  and kept equal to it by a test; regenerate it when a `js.*` key changes.
+- **Adding a German string.** Add the key to both catalogue files (a German value that differs
+  from the English one), use it through `t()`, and run the gate: the catalogue tests reject a key
+  missing in one language, an unused key and a literal English string in a template or script.
+  Config reader prose gets a `<field>_de` sibling (`config.require_de` makes it required beside
+  English prose; `publisher_de`, `source_de`, `checked_de`, `title_de` only where the English
+  field holds our words beside a name).
+- **Translation files and stamps.** German content sits beside the English as
+  `content/<kind>/de/<id>.yaml` (`content/de/` for the explainer and counters text), with source
+  glosses as `gloss_de` in `content/sources/*.yaml` and the explanations in
+  `docs/review/m3_timeseries.de.md`. Each translated string carries the stamp of the English it
+  came from (`velometer content stamp FILE`). Data-reference captions are never translated (user
+  ruling); proper names are not translated.
+- **The gate and its scope.** `i18n.GERMAN_CONTENT_REQUIRED` makes German required, but only for
+  the shipped tree (`i18n.german_required(content_dir)`): `content --check` reports a missing,
+  stale or unstamped German string as a `[de]` problem there, while hand-built test trees stay
+  valid without German.
+- **An English edit makes the German stale.** Changing an English sentence changes its stamp, so
+  `content --check` fails until the German is re-translated, reviewed and re-stamped. Until then a
+  German page would show the English inside `lang="en" data-fallback`, which the leak test and
+  the render pass reject. Never re-stamp without re-translating.
+- **Leak guards.** `tests/test_m12_leak.py` (phrases of the catalogue, content, config and data
+  references; the English-word sniff over every German page; config attributions, publishers
+  and the German methodology) and the render pass's English-leak step (§8).
 
 ---
 
