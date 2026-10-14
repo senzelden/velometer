@@ -42,6 +42,9 @@ _PARAMS = fp.CornerParams(buffer_m=12.0, max_angle_deg=30.0)
         (_L, [(100, 8), (108, 8)], False),  # inside the turn: the crossing street's far side
         (_L[:1], [(100, -8), (108, -8)], False),  # the same piece past a straight line's end
         (_L[:1], [(135, -8), (145, -8)], False),  # 40 m past a straight line's end
+        (_L, [(116, -8), (124, -8)], False),  # 20 m past the corner: beyond the distance bound
+        (_L, [(104, -12), (104, -4)], True),  # the north edge's outer corner, running north
+        (_L, [(101, -11), (107, -5)], False),  # at the outer corner, 45 degrees off both edges
     ],
 )
 def test_outer_corner_is_past_a_turn_on_its_outer_side(lines, piece, expected):

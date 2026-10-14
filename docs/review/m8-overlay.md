@@ -428,9 +428,11 @@ disjoint parts:
 
 Runs: the Berlin LAU runs of the current classifier (v4) with `plan_overlay` rows, queried
 2026-10-15. All ten have overlay_v4 rows: 713 (current, OSM 2026-10-03) and 735–743 (1 January
-2018–2026, commit ae704fa). Measured: 735 (2018), 739 (2022), 743 (2026) and 713, the current snapshot that the M8
-tables use. The v4 overlay km are the `plan_overlay` sums over both classes and tiers. They equal
-the "kept by overlay_v4" l| run | v4 overlay km | 1 % | holes past a turn end | outer-corner candidates | holes elsewhere | along | class boundary, neither class | sum of the four parts (Vorrangnetz / Ergänzungsnetz) | turn-recoverable |
+2018–2026, commit ae704fa). Measured: 735 (2018), 739 (2022), 743 (2026) and 713, the current
+snapshot that the M8 tables use. The v4 overlay km are the `plan_overlay` sums over both classes
+and tiers. They equal the "kept by overlay_v4" line of `--checks`.
+
+| run | v4 overlay km | 1 % | holes past a turn end | outer-corner candidates | holes elsewhere | along | class boundary, neither class | all parts, sum (Vorrangnetz / Ergänzungsnetz) | turn-recoverable |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 735 (2018-01-01) | 1,123.81 | 11.24 | 0.23 | 2.05 | 0.08 | 0.97 | 0.16 | 3.49 (1.28 / 2.21) | 0.36 |
 | 739 (2022-01-01) | 1,044.68 | 10.45 | 0.22 | 2.40 | 0.08 | 1.45 | 0.41 | 4.55 (1.64 / 2.92) | 0.37 |
@@ -477,8 +479,6 @@ line of the class continues past the turn) would mainly restore the outer-corner
 v4's intended removals. Its acceptance test counts those as real, so it would pass by
 construction. overlay_v4 stays the published version. No stored value changed: `velometer.sqlite`
 was only read.
-
-te` was only read.
 
 ## Sanity maps
 
