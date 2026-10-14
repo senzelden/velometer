@@ -134,8 +134,8 @@ sections:
       2026. Fläche: QECIO berichtet für NUTS3-Regionen, mit Daten vom Januar 2024
       [@qecio-metadata]. Wo die Region die Stadt ist, stimmen die Hauptstraßen eng
       überein: 2.153 gegenüber 2.150 km für Berlin [#recon-berlin]; anderswo umfasst
-      sie eine ganze Provinz, wie Stockholms 4.946 km Hauptstraßen gegenüber unseren
-      667 km zeigen [#recon-stockholm-qecio-main]. Methode: Clean Cities übernahm
+      sie einen Verwaltungsbezirk, wie Stockholms 4.946 km Hauptstraßen gegenüber
+      unseren 667 km zeigen [#recon-stockholm-qecio-main]. Methode: Clean Cities übernahm
       die meisten Zahlen von den Städten selbst [@cc2025-report], und seine 822 km
       für Paris übersteigen alles, was dort über alle Stufen hinweg kartiert ist [#recon-paris-cc-km].
     src: f564d194838d

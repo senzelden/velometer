@@ -24,6 +24,25 @@ Ruling — why — cost.
   meaning "nothing is missing" — cost: none. The leak test gains a `data_refs` phrase source, so
   an English label outside `lang="en"` on a German page fails it.
 - Ruling: the user accepted all other German rows as drafted.
+- Ruling: Oslo's road classes name the source's own Norwegian terms first, the translation in
+  parentheses, in both editions: English "on the statlige og fylkeskommunale vegnett (state and
+  county road network) and a few kommunale veger (municipal roads)", German "an Straßen des
+  statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz) und an einigen
+  kommunale veger (Gemeindestraßen)" (`content/counters.yaml`, `content/de/counters.yaml`, source
+  `vegvesen-trafikkdata/road-network`). A recorded exception to "English edition unchanged"; the
+  excerpt's `gloss_de` stays. The glossary's Task 10 row (fylkesvei → regionale Straße) becomes
+  the general rule: a country-specific official category keeps the source's original term first,
+  the translation in parentheses, in both editions — cost: the English `/city/<id>/counts` pages
+  change (English export diff below); the other comparability hits wait for the follow-up.
+- Ruling: three German translation errors are fixed to match their English and cited sources —
+  Stockholms län is "ein Verwaltungsbezirk" (English "a county"), not "eine Provinz", in
+  `narratives/de/stockholm.yaml` and `narratives/de/combined.yaml` (where "eine ganze Provinz"
+  becomes "einen Verwaltungsbezirk"; the explainer already says only "Stockholms län"); the
+  Mobilitätsgesetz amendment's "secondary network" is "Nebennetz", the act's word
+  (`berlin-mobg-amendment-2026`), not "Ergänzungsnetz", which the repo does not show to be the
+  same network (`organisations/de/abgeordnetenhaus.yaml`); Bratislava's "advisory lanes"
+  ("ochranných pruhov") are "Angebotsstreifen", not the German StVO term "Schutzstreifen"
+  (`narratives/de/bratislava.yaml`) — cost: none; English unchanged.
 
 ## Review notes
 
@@ -335,6 +354,29 @@ These are the controller's rulings on the pre-flight scan
   with its paragraph and adds `:lang(de)` rules, which select nothing on English pages. — Cost:
   one file.
 
+**Task 12** (content fix before the final review):
+- Ruling: the Norwegian terms carry no `lang="no"` markup. — Content prose has one language
+  markup only, the quotation (`<q lang>`, `<blockquote lang>`), which prints quotation marks and
+  claims the words verbatim ("vegnett" is not: the source says "vegnettet"); no plain language
+  span exists, and the brief says not to invent one. — Cost: screen readers read the Norwegian
+  words with the page's language; the follow-up may add a span.
+- Ruling: Bratislava's advisory lanes are "Angebotsstreifen". — It renders "advisory" (an offered
+  lane) and is no current German StVO term, while "Radfahrstreifen mit Schutzfunktion" contains
+  "Radfahrstreifen", the StVO's mandatory lane (Zeichen 237), the opposite of an advisory lane;
+  the repo already uses "Angebotsstreifen" for the Dutch advisory lane
+  (`fietssuggestiestroken`, `content/sources/north.yaml`). — Cost: the excerpt glosses
+  (`gloss_de`) of the Slovak and Czech sources still say "Schutzstreifen"; they were not in scope.
+- Ruling: "Verwaltungsbezirk" for a län, without "ganze" in `combined.yaml`. — The English says
+  "covers a county"; "Bezirk" alone is Berlin's districts in the glossary. — Cost: none.
+- Ruling: the glossary gains rows for län, advisory lane and Berlin's Nebennetz beside the
+  general rule. — The fixed terms should not drift back. — Cost: none.
+- Ruling: the counters explainer's word budget (M8 plan: 150–300 words; asserted in
+  `test_counter_explainer_length_wording_and_facts`) gains 10 words, to 310. — The user's Oslo
+  wording adds the Norwegian terms beside their translation: 298 words before, 306 after; trimming
+  other English sentences would break "English unchanged" beyond the ruled sentence. Red-proof:
+  a bound of 305 fails at 306. — Cost: the budget is a little looser; the original-terms
+  follow-up may need the same allowance for other documents.
+
 ## English export diff (Task 11)
 
 Base 60f5bf8 (merge-base with main) against the M12 head, both exported under `/velometer/` from
@@ -358,6 +400,19 @@ left out. 272 files before, 275 after, 153 differ. Per category (files):
 
 Nothing else differs.
 
+**Task 12 (Oslo road classes, user ruling above).** One more category, measured against an
+export of 72d9b2f (the head before Task 12) under `/velometer/` from the same read-only DB, commit
+hashes and timestamps normalised: 441 files both, and outside `de/` exactly 7 English files differ
+(plus `build.json`), each in one line only — the Oslo sentence of the counters document, which
+every counter city's Counts tab embeds (there is no separate `/counters` page):
+
+| Category | Files |
+| --- | --- |
+| The Oslo sentence of "What the counters record" names the source's Norwegian road classes, on `/city/<id>/counts` for barcelona, berlin, helsinki, madrid, oslo, paris and vienna | 7 |
+
+The same 7 files already differ from 60f5bf8 through the first row above (language switch and
+links), so the total of 153 differing files is unchanged.
+
 ## Render passes (Task 11)
 
 On the export of eb0f87c (441 files) under `/velometer/`: `--pages all --themes light,dark
@@ -380,3 +435,6 @@ px: 16 visits, 0 findings.
   (Task 1); `citeText`'s unused `lang` (Task 4); the German number-check thresholds in
   `RULES["de"]` are drafts (Task 6); "Strasbourg" may become "Straßburg" if the user asks.
 - The export is about 272 MB, mostly tier-map GeoJSON (the M9 hosting follow-up still stands).
+- Original national terms in both editions (48 comparability hits, sources looked up where
+  missing) — separate milestone after M12; inventory in
+  `.superpowers/followups/original-terms-inventory.md`.

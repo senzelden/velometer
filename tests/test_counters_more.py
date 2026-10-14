@@ -482,7 +482,9 @@ def test_counter_explainer_length_wording_and_facts():
     doc = load_document(ROOT / "content" / "counters.yaml")
     prose = [*doc.intro, *(p for s in doc.sections for p in s.paragraphs)]
     words = sum(len(p.split()) for p in prose)
-    assert 150 <= words <= 300, words
+    # M8 budget 150–300 words, plus 10 for the source's original road-class terms beside their
+    # translation (M12 Task 12 user ruling: original term first, translation in parentheses)
+    assert 150 <= words <= 310, words
     assert not any(causal_counter_wording(p) for p in prose)
     assert all(f.expr.startswith(("counter.", "counter_sites.")) for f in doc.facts)
     assert doc.quotes

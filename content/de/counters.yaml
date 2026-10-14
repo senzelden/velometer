@@ -16,11 +16,12 @@ sections:
   - text: >-
       Eine Dauerzählstelle erfasst jedes Fahrrad, das ihren Zählquerschnitt passiert,
       unten zitiert [@berlin-zaehlstellen]. Über Fahrten anderswo oder darüber, wer
-      fährt, sagt sie nichts. Die Zählstellen in Oslo sind die des Staates, an staatlichen
-      und regionalen Straßen und an einigen kommunalen Straßen [@vegvesen-trafikkdata].
-      Die Dateien Barcelonas geben einen Durchschnittswert je Zählgerät, Monat und
-      Tagesart an [@barcelona-aforaments-detall], indexiert als eigene Reihe.
-    src: 1160bdc236ce
+      fährt, sagt sie nichts. Die Zählstellen in Oslo sind die des Staates, an Straßen
+      des statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz)
+      und an einigen kommunale veger (Gemeindestraßen) [@vegvesen-trafikkdata]. Die
+      Dateien Barcelonas geben einen Durchschnittswert je Zählgerät, Monat und Tagesart
+      an [@barcelona-aforaments-detall], indexiert als eigene Reihe.
+    src: 0b44c4ce190f
 - heading:
     text: Wo Zählstellen stehen
     src: 3a317c035779

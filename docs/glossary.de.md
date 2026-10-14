@@ -53,7 +53,10 @@ where a short UI form is used beside the methodology's longer one are listed und
 | residents | Einwohner | |
 | bicycle account (Copenhagen) | Fahrradbilanz (Cykelregnskab) | the local name in brackets at first mention |
 | cycling referendum campaign (Berlin) | Volksentscheid Fahrrad | the campaign's own name; not "Radentscheid" |
-| county road (Norway: fylkesvei) | regionale Straße | Oslo's counters; not "Provinzstraße" (user review, M12 Task 10). "Provinz" stays for a province, län or NUTS region |
+| country-specific official category (road class, network class) | the source's original term first, the translation in parentheses | both editions (user ruling, M12 Task 12; replaces the Task 10 row "county road (fylkesvei) → regionale Straße"). Example, Oslo's counters: "statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz)", English "(state and county road network)"; "kommunale veger (Gemeindestraßen)" |
+| county (Sweden: län) | Verwaltungsbezirk | "Stockholms län, ein Verwaltungsbezirk"; never "Provinz" (M12 Task 12) |
+| advisory lane (a foreign category) | Angebotsstreifen | not "Schutzstreifen", the German StVO term (M12 Task 12) |
+| secondary network (Berlin, Mobilitätsgesetz) | Nebennetz | the act's word; "Ergänzungsnetz" is the plan's network class, not shown to be the same (M12 Task 12) |
 | **Sources and actions** | | |
 | published figure | veröffentlichte Zahl | |
 | Theirs / Ours (Figures columns) | Veröffentlicht / Unsere | never "Ihre": it reads as formal address |
