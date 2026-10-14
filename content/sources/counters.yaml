@@ -52,7 +52,7 @@ sources:
       - id: road-network
         text: "Trafikkdata.no har data fra trafikkmålinger fra det statlige og fylkeskommunale vegnettet samt noen kommunale veger."
         gloss_en: "Trafikkdata.no has data from traffic measurements on the state and county road network and on some municipal roads."
-        gloss_de: "Trafikkdata.no enthält Daten aus Verkehrsmessungen auf dem staatlichen Straßennetz und dem der Fylker (Provinzen) sowie auf einigen kommunalen Straßen."
+        gloss_de: "Trafikkdata.no enthält Daten aus Verkehrsmessungen auf dem staatlichen Straßennetz und dem regionalen Straßennetz der Fylker sowie auf einigen kommunalen Straßen."
         locator: "dataset description, first paragraph"
   - id: barcelona-aforaments-detall
     publisher: Ajuntament de Barcelona, Open Data BCN

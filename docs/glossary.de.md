@@ -53,6 +53,7 @@ where a short UI form is used beside the methodology's longer one are listed und
 | residents | Einwohner | |
 | bicycle account (Copenhagen) | Fahrradbilanz (Cykelregnskab) | the local name in brackets at first mention |
 | cycling referendum campaign (Berlin) | Volksentscheid Fahrrad | the campaign's own name; not "Radentscheid" |
+| county road (Norway: fylkesvei) | regionale Straße | Oslo's counters; not "Provinzstraße" (user review, M12 Task 10). "Provinz" stays for a province, län or NUTS region |
 | **Sources and actions** | | |
 | published figure | veröffentlichte Zahl | |
 | Theirs / Ours (Figures columns) | Veröffentlicht / Unsere | never "Ihre": it reads as formal address |
