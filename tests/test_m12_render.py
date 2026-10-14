@@ -524,3 +524,24 @@ def test_sources_dimension_cells_fall_back_and_translate(setup, tmp_path):  # no
     table = after.split("<tbody>", 1)[1].split("</table>", 1)[0]
     assert MARK in table and "data-fallback" not in table
     assert MARK not in english and "data-fallback" not in english
+
+
+def test_plan_chart_json_flags_a_note_without_german():
+    from datetime import date
+
+    from velometer.app.plans_pages import _report_json
+    from velometer.plans.models import ReportRow
+
+    row = ReportRow(
+        plan_id="p", item_id="i", year=2023, value=5.0, unit="km", quantity="implemented_in_year",
+        doc_type="drucksache", doc_id="19/1", doc_date=date(2024, 1, 1), url="https://x.test/",
+        locator="p. 1", retrieved_at=date(2024, 2, 1), note="stored as printed", publisher="X",
+        suspect=True,
+    )  # fmt: skip
+    notes = {"stored as printed": "wie gedruckt"}
+    assert _report_json(row, True, "de", notes)["note"] == "wie gedruckt"
+    assert _report_json(row, True, "de", notes)["note_fallback"] is False
+    got = _report_json(row, True, "de", {"another": "ein anderer"})
+    assert (got["note"], got["note_fallback"]) == ("stored as printed", True)
+    assert _report_json(row, True, "en", None)["note_fallback"] is False
+    assert _report_json(row.model_copy(update={"note": None}), True, "de", notes)["note"] is None

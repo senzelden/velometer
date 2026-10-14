@@ -99,7 +99,7 @@ def _drivers(
         theirs = cfg.length_bases.get(length_basis, NOT_STATED)
         if theirs != ours["length"]:
             # an unlisted basis id is one the source does not state
-            words = loc.length_bases.get(length_basis) or loc.length_bases.get("unknown", theirs)
+            words = loc.length_bases.get(length_basis, theirs)
             out.append(Driver("length", shown["length"], words))
     source_length = cfg.source_length_bases.get(f"{source}/{metric}")
     if source_length is not None and our_basis not in source_length.matches:

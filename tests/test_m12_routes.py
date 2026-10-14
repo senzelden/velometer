@@ -141,7 +141,7 @@ def test_german_routes_bind_german_data(setup, monkeypatch):  # noqa: F811
 # language-free (numbers, raw content, CSV), which a later task moves when its content is localised
 MAIN = (Path(__file__).parents[1] / "src" / "velometer" / "app" / "main.py").read_text()
 CACHE_KEY = re.compile(r'cache\.get\(\s*f?"([^"]+)"')
-LANGUAGE_FREE = {"series", "cite", "content", "organisations-raw", "csv", "csv-subareas"}
+LANGUAGE_FREE = {"series", "cite", "csv", "csv-subareas"}
 KEYS = CACHE_KEY.findall(MAIN)
 LANG_KEY = re.compile(r":(\{(request\.state\.)?lang\}|en|de)$")  # `…:{lang}`, or one per language
 LANG_FAMILIES = sorted({k.split(":")[0] for k in KEYS if LANG_KEY.search(k)})

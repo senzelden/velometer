@@ -323,6 +323,7 @@ def _overlay_table(points: list[dict] | None, baseline: date) -> list[dict]:
 def _report_json(
     r: ReportRow, current: bool, lang: Lang = "en", notes_de: dict[str, str] | None = None
 ) -> dict:
+    note, note_fallback = note_in(r.note, lang, notes_de) if r.note else (r.note, False)
     return {
         "year": r.year,
         "value": r.value,
@@ -332,7 +333,8 @@ def _report_json(
         "quantity": r.quantity,
         "current": current,
         "suspect": r.suspect,
-        "note": note_in(r.note, lang, notes_de)[0] if r.note else r.note,
+        "note": note,
+        "note_fallback": note_fallback,  # the English note shown for want of a German one
     }
 
 

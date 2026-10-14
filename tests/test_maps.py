@@ -223,6 +223,13 @@ def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
     assert "OSM mapped km, not built km" in drawn[0]
 
 
+def test_map_footer_constants_equal_the_english_catalogue():
+    from velometer import i18n
+
+    footer = i18n.catalogue("en")["map.footer"].split("\n")[0]
+    assert footer == f"{maps.ODBL} · {maps.MAPPED_KM}"
+
+
 def test_map_texts_english_are_the_constants_and_german_is_german(fixture_db):
     from velometer.report.charts import TIER_LABEL
 

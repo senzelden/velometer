@@ -42,7 +42,7 @@ from velometer.counters.model import (
     load_counters_config,
 )
 from velometer.db import fetch_boundary, fetch_run
-from velometer.i18n import AND, LANGS, MONTHS, Lang  # noqa: F401
+from velometer.i18n import LANGS, Lang
 from velometer.models import City
 from velometer.plans.models import MAPPED_BASELINE
 from velometer.plans.overlay import load_overlay_config
@@ -488,6 +488,9 @@ def _environment(lang: Lang) -> Environment:
         autoescape=False,  # Markdown, not HTML
     )
     env.filters["num"] = lambda v: _number(v, lang)
+    env.filters["pct"] = lambda v: (
+        f"{_number(v, lang)}{i18n.NNBSP}%" if lang == "de" else f"{_number(v, lang)}%"
+    )
     env.filters["and_list"] = lambda v: _and_list(v, lang)
     env.filters["month"] = lambda v: _month(v, lang)
     env.filters["day"] = lambda v: _day(v, lang)

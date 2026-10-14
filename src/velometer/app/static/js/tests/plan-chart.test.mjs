@@ -154,6 +154,22 @@ test("renderPlanChart: current markers filled, revisions hollow, suspect marked,
   assert.equal(marks(el, "target-step").length, 1);
 });
 
+test("renderPlanChart: a suspect note still in English is tagged lang=en on its tooltip", () => {
+  const el = new Node("div");
+  const s = planSeries({ 2023: 40 }, [
+    row(2023, 5.1, "a", true),
+    row(2023, 55.1, "b", false, { suspect: true, note: "stored as printed", note_fallback: true }),
+    row(2023, 56.1, "c", false, { suspect: true, note: "wie gedruckt", note_fallback: false }),
+  ], [], []);
+  renderPlanChart(el, s, { label: "Vorrangnetz", years: [2022, 2023, 2024], unit: "km" });
+  const titles = el.find((n) => n.tag === "title");
+  const tagged = titles.filter((n) => n.attrs.lang === "en");
+  assert.equal(tagged.length, 1);
+  assert.ok(tagged[0].textContent.includes("stored as printed"));
+  assert.equal(tagged[0].attrs["data-fallback"], "");
+  assert.ok(titles.filter((n) => n.attrs.lang === undefined).length >= 2);
+});
+
 test("renderPlanChart: the mapped series is a line labelled in mapped km, its last point dated", () => {
   const el = new Node("div");
   const overlay = [{ date: "2022-01-01", ab_km: 438.3 }, { date: "2026-10-03", ab_km: 480.4 }];

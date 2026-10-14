@@ -107,7 +107,6 @@ def test_methodology_formatters_delegate_and_keep_their_output(lang):
     assert methodology._day(d, lang) == i18n.long_day(d, lang)
     for v in (0, 1.5, 1639.8, 100000, 0.125):
         assert methodology._number(v, lang) == i18n.number_trimmed(v, lang)
-    assert methodology.Lang is i18n.Lang and methodology.MONTHS is i18n.MONTHS
 
 
 def test_german_required_only_for_the_shipped_tree(monkeypatch, tmp_path):

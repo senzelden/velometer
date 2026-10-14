@@ -7,6 +7,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 
 import copy
 import csv
+import functools
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -117,10 +118,22 @@ class RankingRow(_Frozen):
 
 
 def figure_notes_de(config_dir: Path) -> dict[str, str]:
+    """The notes of `_figure_notes_de`, re-read when figures.csv changes (path, mtime, size)."""
+    path = Path(config_dir) / "external" / "figures.csv"
+    try:
+        st = path.stat()
+    except OSError as e:
+        raise ConfigError(f"{path}: {e}") from e
+    return _figure_notes_de(str(path), st.st_mtime_ns, st.st_size)
+
+
+@functools.lru_cache(maxsize=8)
+def _figure_notes_de(path: str, mtime_ns: int, size: int) -> dict[str, str]:
     """English note -> German note of config/external/figures.csv (the stored figures keep the
     English note). ConfigError naming the row for a note without a German one, or for one
     English note given two German ones."""
-    path = Path(config_dir) / "external" / "figures.csv"
+    del mtime_ns, size  # cache-key parts only: an edited file reads fresh
+    path = Path(path)
     out: dict[str, str] = {}
     try:
         with path.open(newline="", encoding="utf-8") as f:

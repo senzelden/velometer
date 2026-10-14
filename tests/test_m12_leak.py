@@ -240,6 +240,13 @@ def test_german_figure_citations_name_an_unlabelled_metric_by_its_id(client):  #
     assert any(f", {s} (" in en for s in spaced.values())
 
 
+def test_german_methodology_sets_a_narrow_space_before_percent():
+    """The German edition writes 5 %, with U+202F, never a plain space, before a percent sign."""
+    text = (SHIPPED_DOCS / "methodology.de.md").read_text(encoding="utf-8")
+    assert "\u202f%" in text  # the page has percentages, so the rule has something to read
+    assert re.findall(r"\d %", text) == []
+
+
 def test_tab_names_in_the_german_methodology_are_the_german_tab_labels():
     """Every tab the German methodology names (Reiter „…“) is named by its German label
     (`city.tab.*`), never by the English one ("Figures", "Counts")."""

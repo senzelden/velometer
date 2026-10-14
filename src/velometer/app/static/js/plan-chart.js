@@ -44,6 +44,7 @@ export function planSeries(targets, reports, overlay, projects, opts = {}) {
       current: !!r.current,
       suspect: !!r.suspect,
       note: r.note ?? null,
+      noteFallback: !!r.note_fallback,
     }))
     // revisions first, so the current marker is drawn on top
     .sort((a, b) => a.year - b.year || a.current - b.current || String(a.docDate).localeCompare(String(b.docDate)));
@@ -131,8 +132,9 @@ function el(tag, attrs = {}, text) {
   return e;
 }
 
-const titled = (node, text) => {
-  node.appendChild(el("title", {}, text));
+const titled = (node, text, fallback = false) => {
+  // a note still in English on a German page is marked, as the table row marks it
+  node.appendChild(el("title", fallback ? { lang: "en", "data-fallback": "" } : {}, text));
   return node;
 };
 
@@ -300,7 +302,7 @@ export function renderPlanChart(host, series, opts = {}) {
     const which = p.current ? t("js.plan.current") : t("js.plan.revision");
     const suspect = p.suspect ? `, ${p.note ? t("js.plan.suspect_note", { note: p.note }) : t("js.plan.suspect")}` : "";
     const text = `${t("js.plan.reported", { year: p.year, value: formatValue(p.value), unit, doc: p.doc })} ${which}${suspect}`;
-    g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text));
+    g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text, p.suspect && !!p.note && p.noteFallback));
   }
   svg.appendChild(g);
   if (drawTarget || !series.target.some(inRange)) {

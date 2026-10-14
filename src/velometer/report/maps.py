@@ -57,6 +57,7 @@ TAG_PREFIXES = ("cycleway", "oneway")
 DPI = 150
 LEGEND_RIGHT = 0.74  # the axes' right edge (figure fraction); the legend sits right of it
 LEGEND_PAD = 0.01  # the margin kept between the legend and the figure's right edge
+# ODBL, MAPPED_KM: kept as the English-footer guard test_maps reads; equal to the English catalogue
 ODBL = "Map data © OpenStreetMap contributors, ODbL 1.0"
 MAPPED_KM = "OSM mapped km, not built km"  # ADR 0006
 

@@ -233,11 +233,11 @@ Ein Zuwachs an kartierten Kilometern bedeutet nicht unbedingt Bau. Der Kartierun
 Regeln über diese Werte markieren ein Jahr zur Prüfung. Ein Prüfhinweis ändert keine Zahl. Änderungsregeln vergleichen nur aufeinanderfolgende Stände, nie über ein fehlendes Jahr hinweg. Für den aktuellen Stand werden die Kilometer-Mindestwerte und die Spitzenschwelle mit dem bereits vergangenen Anteil des Jahres skaliert [M3 R14].
 
 <!-- generated:flags -->
-- `km_jump`: Die Kilometer der Stufen A+B ändern sich um mindestens 10 % des Vorwerts und um mindestens 25 km.
+- `km_jump`: Die Kilometer der Stufen A+B ändern sich um mindestens 10 % des Vorwerts und um mindestens 25 km.
 - `activity_spike`: Die Zahl der Bearbeitungen im Jahr erreicht mindestens das 2-Fache des Medians der Jahre der Reihe.
 - `campaign_suspected`: `km_jump` und `activity_spike` im selben Jahr.
 - `single_mapper`: ein Jahr mit `km_jump`, in dem der Anteil der aktivsten Person an den Bearbeitungen mindestens 0,5 beträgt.
-- `tag_drift`: Die Kilometer mit veralteten Tags oder die nicht erkannten Kilometer ändern sich um mindestens 50 % und um mindestens 5 km.
+- `tag_drift`: Die Kilometer mit veralteten Tags oder die nicht erkannten Kilometer ändern sich um mindestens 50 % und um mindestens 5 km.
 
 | Schwellenwert (`config/activity.yaml`) | Wert |
 |---|---|
@@ -291,10 +291,10 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 
 Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Zahlen“ nennt die geprüften Portale.
 
-Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
+Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
 <!-- /generated:counters -->
 
-Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die 90-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025) [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`]. Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.
+Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die 90-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025) [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`]. Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.
 
 Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Zählstellen“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 

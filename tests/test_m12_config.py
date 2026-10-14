@@ -204,3 +204,27 @@ def test_german_name_falls_back_to_the_english_display_name(setup):  # noqa: F81
     finally:
         conn.close()
     assert de["paris"] == en["paris"] == "Paris"
+
+
+def test_figure_notes_de_is_read_once_until_the_file_changes(tmp_path, monkeypatch):
+    import velometer.report.data as data
+
+    (tmp_path / "external").mkdir()
+    csv_path = tmp_path / "external" / "figures.csv"
+    csv_path.write_text("city_id,note,note_de\nberlin,a note,eine Notiz\n", encoding="utf-8")
+    data._figure_notes_de.cache_clear()
+    reads = []
+    real_open = Path.open
+
+    def counting_open(self, mode="r", *a, **k):
+        if mode == "r":  # reads only: write_text opens the file for writing
+            reads.append(self)
+        return real_open(self, mode, *a, **k)
+
+    monkeypatch.setattr(Path, "open", counting_open)
+    assert figure_notes_de(tmp_path) == {"a note": "eine Notiz"}
+    assert figure_notes_de(tmp_path) == {"a note": "eine Notiz"}
+    assert len(reads) == 1
+    csv_path.write_text("city_id,note,note_de\nberlin,a note,eine andere Notiz\n", encoding="utf-8")
+    assert figure_notes_de(tmp_path) == {"a note": "eine andere Notiz"}
+    assert len(reads) == 2
