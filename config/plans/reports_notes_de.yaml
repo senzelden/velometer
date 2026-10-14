@@ -1,0 +1,42 @@
+# German siblings of the config/plans/reports.csv notes (M12), English note -> German.
+# Read by plans.models.load_report_notes_de; a key must be a reports.csv note.
+'''derzeit'' at the time of the answer (14 Sep 2026)': '''derzeit'' zum Zeitpunkt der Antwort (14. September 2026)'
+'''derzeit'' at the time of the answer (14 Sep 2026); printed as km of Radverkehrsanlagen ''im Bau bzw. in Bauvorbereitung''': '''derzeit'' zum Zeitpunkt der Antwort (14. September 2026); gedruckt als km Radverkehrsanlagen ''im Bau bzw. in Bauvorbereitung'''
+'2026 to 1 September 2026 (Stand: 01.09.2026)': '2026 bis 1. September 2026 (gedruckt ''Stand: 01.09.2026'')'
+? Senate website edition of the report in rN 1392 I; doc_date from the imprint 'Berlin, Juli 2021' (PDF p. 2; day not printed, first of the month used); the column's cells (17.7 + 5.4 + 5.4 + 25.0) sum to 53.5, as printed in rN 1392 I
+: Fassung des Berichts aus rote Nummer 1392 I auf der Website des Senats; doc_date aus dem Impressum 'Berlin, Juli 2021' (PDF S. 2; ohne Tag gedruckt, der Monatserste verwendet); die Zellen der Spalte (17,7 + 5,4 + 5,4 + 25,0) ergeben 53,5, wie in rote Nummer 1392 I gedruckt
+city-wide paths, not tied to a plan item: stadtweite Wege, keinem Planpunkt zugeordnet
+? 'cumulative 2017–2021; scope: bezirkliches Radverkehrsprogramm only (not all actors); main-road facilities halved to network length (footnote 3)'
+: 'kumuliert 2017–2021; Umfang: nur das bezirkliche Radverkehrsprogramm (nicht alle Akteure); Anlagen an Hauptstraßen auf Netzlänge halbiert (Fußnote 3)'
+cumulative 2017–2025: kumuliert 2017–2025
+? cumulative 2022 to 1 September 2026 (Summe column, counted from 2022, not from 2017); the column totals as printed (27.5 + 25.9 + 23.6 + 21.2 + 6.22) sum to 104.42; the three row sums give 104.53
+: kumuliert 2022 bis 1. September 2026 (Spalte Summe, gezählt ab 2022, nicht ab 2017); die gedruckten Spaltensummen (27,5 + 25,9 + 23,6 + 21,2 + 6,22) ergeben 104,42; die drei Zeilensummen ergeben 104,53
+? cumulative 2022 to 1 September 2026 (Summe column, counted from 2022, not from 2017); the row cells as printed (14.4 + 13.6 + 10.8 + 8.6 + 2.3) sum to 49.7
+: kumuliert 2022 bis 1. September 2026 (Spalte Summe, gezählt ab 2022, nicht ab 2017); die gedruckten Zellen der Zeile (14,4 + 13,6 + 10,8 + 8,6 + 2,3) ergeben 49,7
+? cumulative 2022 to 1 September 2026 (Summe column, counted from 2022, not from 2017); the row cells as printed (3.1 + 7.2 + 3.2 + 5.1 + 0.15) sum to 18.75
+: kumuliert 2022 bis 1. September 2026 (Spalte Summe, gezählt ab 2022, nicht ab 2017); die gedruckten Zellen der Zeile (3,1 + 7,2 + 3,2 + 5,1 + 0,15) ergeben 18,75
+? cumulative 2022 to 1 September 2026 (Summe column, counted from 2022, not from 2017); the row cells as printed sum to 85.97 because of the 2023 cell 55.1 (suspect); 36.24 is consistent with about 5.37 for 2023
+: kumuliert 2022 bis 1. September 2026 (Spalte Summe, gezählt ab 2022, nicht ab 2017); die gedruckten Zellen der Zeile ergeben 85,97, wegen der Zelle für 2023 mit 55,1 (zweifelhaft); 36,24 passt zu etwa 5,37 für 2023
+cumulative 2022–2024: kumuliert 2022–2024
+facility length, each side counted: Anlagenlänge, jede Straßenseite gezählt
+facility length, each side counted; includes 25.0 km of pop-up cycle lanes (Straßenverkehrsrechtliche Anordnung): Anlagenlänge, jede Straßenseite gezählt; einschließlich 25,0 km Pop-up-Radfahrstreifen (Straßenverkehrsrechtliche Anordnung)
+facility length, each side counted; printed '58': Anlagenlänge, jede Straßenseite gezählt; gedruckt '58'
+? 'initiatives of the 151 in the Cykelstiprioriteringsplan 2017–2025 fully implemented 2017–2025 (completed, funded or under construction); not km; report dated ''Juni 2026''; doc_date is the PDF modification date; suspect: the count includes initiatives funded or under construction, so it is not a count of implemented initiatives'
+: 'Maßnahmen von den 151 des Cykelstiprioriteringsplan 2017–2025, die 2017–2025 vollständig umgesetzt sind (abgeschlossen, finanziert oder im Bau); keine km; Bericht datiert ''Juni 2026''; doc_date ist das Änderungsdatum des PDF; zweifelhaft: die Zahl schließt finanzierte und im Bau befindliche Maßnahmen ein und zählt daher nicht nur umgesetzte Maßnahmen'
+? km of cycle routes of all types added since the plan's adoption, per Bordeaux Métropole's monitoring tables, to end of 2024; whole Métropole; cumulative_from 2021 is the plan's adoption year (25 November 2021)
+: km Radrouten aller Art seit dem Beschluss des Plans, nach den Monitoring-Tabellen von Bordeaux Métropole, bis Ende 2024; gesamte Métropole; cumulative_from 2021 ist das Beschlussjahr des Plans (25. November 2021)
+? km of projects in the main cycle network whose realisation began in 2025 (started, not completed); header prints 20.447 m; no date printed; doc_date is the PDF creation date
+: km der Projekte im Hauptradnetz, deren Umsetzung 2025 begann (begonnen, nicht abgeschlossen); die Kopfzeile druckt '20.447 m'; kein Datum gedruckt; doc_date ist das Erstellungsdatum des PDF
+new and upgraded cycleway since 2015 ('bygget og oppgradert'), as stated with the EY evaluation of the strategy: neue und aufgewertete Radwege seit 2015 ('bygget og oppgradert'), wie mit der EY-Evaluierung der Strategie angegeben
+new cycling infrastructure built by the city in 2025, all types: von der Stadt 2025 neu angelegte Radverkehrsinfrastruktur, alle Arten
+? 'operations completed by end of 2024 (printed as ''auront été réalisées'', a forecast at publication), 30 of them outside the city of Strasbourg; not km; cumulative_from 2021 is the plan''s launch year (the article counts the plan''s operations, no start date printed); suspect: a forecast at publication, not a count of operations completed'
+: 'bis Ende 2024 abgeschlossene Vorhaben (gedruckt als ''auront été réalisées'', bei Veröffentlichung eine Prognose), 30 davon außerhalb der Stadt Strasbourg; keine km; cumulative_from 2021 ist das Startjahr des Plans (der Artikel zählt die Vorhaben des Plans, kein Startdatum gedruckt); zweifelhaft: bei Veröffentlichung eine Prognose, keine Zählung abgeschlossener Vorhaben'
+? printed 'blisko 40 kilometrów' (nearly 40 km) of routes built since the plan was adopted; cumulative_from 2022 is the year the plan was presented (11 May 2022); no adoption resolution found
+: gedruckt 'blisko 40 kilometrów' (knapp 40 km) seit Annahme des Plans angelegter Routen; cumulative_from 2022 ist das Jahr, in dem der Plan vorgestellt wurde (11. Mai 2022); kein Beschluss zur Annahme gefunden
+printed 'ok. 200 km nowych tras' (about 200 km of new routes) since the programme was prepared: gedruckt 'ok. 200 km nowych tras' (etwa 200 km neue Routen) seit Ausarbeitung des Programms
+printed 'ok. 3,7 km ścieżek'; city-wide paths, not tied to a plan item: gedruckt 'ok. 3,7 km ścieżek'; stadtweite Wege, keinem Planpunkt zugeordnet
+? printed as implemented 'insgesamt' at the time of the answer (20 May 2026), no start year stated; cumulative_from 2017 because rN 1733 E prints the same 78.2 for 2017–2025
+: zum Zeitpunkt der Antwort (20. Mai 2026) als 'insgesamt' umgesetzt gedruckt, ohne Startjahr; cumulative_from 2017, weil rote Nummer 1733 E für 2017–2025 dieselben 78,2 druckt
+'scope: bezirkliches Radverkehrsprogramm only (not all actors); main-road facilities halved to network length (footnote 3)': 'Umfang: nur das bezirkliche Radverkehrsprogramm (nicht alle Akteure); Anlagen an Hauptstraßen auf Netzlänge halbiert (Fußnote 3)'
+? stored as printed; the row total printed is 36.24 km, which with the other cells (30.87 km) leaves 5.37 for 2023, the 2023 column total 25.9 implies 5.1 (25.9 − 13.6 − 7.2), and Drs 19/25987 prints 5.1
+: wie gedruckt gespeichert; die gedruckte Zeilensumme ist 36,24 km, was mit den übrigen Zellen (30,87 km) 5,37 für 2023 lässt; die Spaltensumme für 2023 von 25,9 ergibt 5,1 (25,9 − 13,6 − 7,2), und Drucksache 19/25987 druckt 5,1

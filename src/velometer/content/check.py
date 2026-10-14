@@ -7,12 +7,15 @@ import contextlib
 import csv
 import html
 import re
+from collections import Counter
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
 import yaml
 
+from velometer import i18n
 from velometer.config import ConfigError
 from velometer.content.facts import (
     BASE_YEAR,
@@ -35,12 +38,31 @@ from velometer.content.models import (
     STORY_STEPS,
     ContentError,
     DataRef,
+    DocumentTr,
     Explainer,
     Fact,
     Narrative,
+    NarrativeTr,
     Organisation,
+    OrganisationTr,
     Quote,
     Source,
+)
+from velometer.content.translate import DE as DE_DIR
+from velometer.content.translate import (
+    English,
+    History,
+    Translation,
+    english_path,
+    git_history,
+    load_english,
+    load_translation,
+    merge,
+    old_english,
+    src_hash,
+    tr_strings,
+    twin_path,
+    walk,
 )
 from velometer.counters.model import COUNTERS_FILE, load_counters_config
 from velometer.plans.models import Plan, ReportRow, load_plans
@@ -105,20 +127,61 @@ def normalise_number(text: str) -> str:
     return f"{value:.{decimals}f}"
 
 
+# --- German numbers (M12 spec §4.6) --------------------------------------------------------
+# `.` and (narrow) no-break or plain spaces group thousands, `,` is the decimal comma, `−`/`-`
+# the sign, `%` follows with or without a space.
+_NUMBER_TOKEN_DE = re.compile(
+    r"(?<![\w.,])[+−-]?(?:\d{1,3}(?:[.   ]\d{3})+(?!\d)|\d+)(?:,\d+)?"
+    r"(?:[   ]?%)?"
+)
+# An English decimal point in German prose ("78.2") reads as a thousands group: always reported
+# (a sentence-final one too: "bei 78.2."); "2.500" and "21.03.2026" are not English decimals
+ENGLISH_DECIMAL_IN_DE = re.compile(r"(?<![\w.,])\d+\.\d{1,2}(?![\d,]|\.\d)")
+_ORDINAL_WORDS_DE = sorted(
+    {*i18n.MONTHS["de"], *i18n.MONTHS_SHORT["de"], "Quartal", "Quartals", "Jahrhundert",
+     "Jahrhunderts"},
+    key=len,
+    reverse=True,
+)  # fmt: skip
+# "1. Januar", "21. März", "3. Quartal": an ordinal in date context
+_ORDINAL_DE = re.compile(
+    r"\b\d{1,2}\.[   ]?(?:" + "|".join(map(re.escape, _ORDINAL_WORDS_DE)) + r")(?!\w)"
+)
+# a quotation in another language than German: kept byte for byte from the English (parity),
+# so it is checked there, not as German text
+_FOREIGN_QUOTE = re.compile(
+    r"""<(q|blockquote)\b[^>]*\blang\s*=\s*["'](?!de["'-])[^"']*["'][^>]*>.*?</\1>""",
+    re.S | re.IGNORECASE,
+)
+
+
+def normalise_number_de(text: str) -> str:
+    """A German printed number in `normalise_number`'s canonical form, without sign or percent:
+    "1.639,8" -> "1639.8", "12,3 %" -> "12.3"."""
+    s = text.strip().removesuffix("%").strip().lstrip("+−-")
+    s = re.sub(r"[.   ]", "", s).replace(",", ".")
+    return normalise_number(s)
+
+
 def _literal_pattern(literal: str) -> re.Pattern[str]:
     words = [re.escape(w) for w in literal.split()]
     return re.compile(r"(?<!\w)" + r"[\s\u202f\u00a0]+".join(words) + r"(?!\w)")
 
 
 def undeclared_numbers(
-    paragraph: str, allowed: set[str], literals: Iterable[str] = ()
+    paragraph: str, allowed: set[str], literals: Iterable[str] = (), lang: str = "en"
 ) -> list[str]:
     """Numbers in the prose that are neither declared (facts), inside a declared literal's exact
-    text, nor a year or ordinal."""
+    text, nor a year or ordinal. `allowed` holds the English printed values; German prose
+    (`lang="de"`) is parsed the German way and may print them in German format."""
     ok = {normalise_number(a) for a in allowed} | set(allowed)
     text = _STRIPPED.sub(" ", paragraph)
+    if lang == "de":
+        text = _FOREIGN_QUOTE.sub(" ", text)
     for lit in sorted({x for x in literals if x.split()}, key=len, reverse=True):
         text = _literal_pattern(lit).sub(" ", text)
+    if lang == "de":
+        return _undeclared_de(text, ok)
     text = _ORDINAL.sub(" ", text)
     found: list[str] = []
     for m in _NUMBER_TOKEN.finditer(text):
@@ -133,27 +196,123 @@ def undeclared_numbers(
     return found
 
 
+def _undeclared_de(text: str, ok: set[str]) -> list[str]:
+    found = list(dict.fromkeys(m.group(0) for m in ENGLISH_DECIMAL_IN_DE.finditer(text)))
+    text = ENGLISH_DECIMAL_IN_DE.sub(" ", text)
+    text = _ORDINAL_DE.sub(" ", text)
+    unsigned = {x.lstrip("+\u2212-") for x in ok}
+    for m in _NUMBER_TOKEN_DE.finditer(text):
+        raw = m.group(0).strip()
+        norm = normalise_number_de(raw)
+        if norm in unsigned or raw in ok or re.fullmatch(r"20\d\d", norm):
+            continue
+        if raw not in found:
+            found.append(raw)
+    return found
+
+
 def _full(value: float) -> str:
     """Every digit of a value (no exponent, no 6-significant-digit truncation)."""
     return f"{value:.6f}".rstrip("0").rstrip(".")
 
 
-def construction_verbs(paragraph: str) -> list[str]:
+@dataclass(frozen=True)
+class RuleFamily:
+    """The wording rules of one language, as data: construction verbs, counter words, causal
+    phrases, number words and the index-rule threshold statements (M12 spec §4.6)."""
+
+    verbs: re.Pattern[str]
+    counter_words: re.Pattern[str]
+    causal: re.Pattern[str]
+    number_words: dict[str, int]
+    word: re.Pattern[str]
+    in_ten: re.Pattern[str]  # "nine days in ten": group 1 the number word
+    sites_after: re.Pattern[str]
+    per_cent: re.Pattern[str]
+    days_after: re.Pattern[str]
+    base_after: re.Pattern[str]
+    base_before: re.Pattern[str]
+    thresholds: re.Pattern[str]  # the threshold nouns the statements above look for
+    number_token: re.Pattern[str]
+    normalise: Callable[[str], str]
+
+    def find(self, name: str, text: str) -> list[str]:
+        """The matches of family `name` in `text`; for `number_words`, the number words."""
+        if name == "number_words":
+            return [w for w in self.word.findall(text) if w.lower() in self.number_words]
+        return [m.group(0) for m in getattr(self, name).finditer(text)]
+
+
+_LETTERS = r"[^\W\d_]+"
+_ONES_DE = ("null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun",
+            "zehn", "elf", "zwölf")  # fmt: skip
+_TENS_DE = {"zwanzig": 20, "dreißig": 30, "vierzig": 40, "fünfzig": 50, "sechzig": 60,
+            "siebzig": 70, "achtzig": 80, "neunzig": 90}  # fmt: skip
+_I = re.IGNORECASE
+
+RULES: dict[i18n.Lang, RuleFamily] = {
+    "en": RuleFamily(
+        verbs=_VERBS,
+        counter_words=_COUNTER_WORDS,
+        causal=_CAUSAL,
+        number_words=_NUMBER_WORDS,
+        word=_WORD,
+        in_ten=_IN_TEN,
+        sites_after=_SITES_AFTER,
+        per_cent=_PER_CENT,
+        days_after=_DAYS_AFTER,
+        base_after=_BASE_AFTER,
+        base_before=_BASE_BEFORE,
+        thresholds=re.compile(r"\b(?:sites?|counters?|per\s?cent|days?|base\s+year)\b|%", _I),
+        number_token=_NUMBER_TOKEN,
+        normalise=normalise_number,
+    ),
+    # the twins of built/constructed/opened/removed only: "fertiggestellt" (completed) is not
+    # flagged, and "entfernt" in the distance sense is, so prose avoids it
+    "de": RuleFamily(
+        verbs=re.compile(r"\b(gebaut|baute|bauten|errichtet|eröffnet|entfernt|zurückgebaut)\b", _I),
+        counter_words=re.compile(r"\b(Zählstellen?|Zählwerte?|gezählt)\b", _I),
+        causal=re.compile(
+            r"\b(führte zu|führt zu|wegen|aufgrund|infolge|dank|verursacht|bewirkt)\b", _I
+        ),
+        number_words={w: i for i, w in enumerate(_ONES_DE)} | _TENS_DE,
+        word=re.compile(rf"\b{_LETTERS}\b"),
+        in_ten=re.compile(rf"\b({_LETTERS})\s+von\s+zehn\b", _I),  # "neun von zehn Tagen"
+        sites_after=re.compile(
+            rf"\s+(?:{_LETTERS}\s+){{0,2}}?(?:Zählstellen?|Messstellen?|Standorten?)\b", _I
+        ),
+        per_cent=re.compile(r"\s*(?:%|Prozent\b)", _I),
+        days_after=re.compile(rf"\s+(?:{_LETTERS}\s+){{0,3}}?Tag(?:e|en)?\b", _I),
+        base_after=re.compile(
+            r"\s*=\s*100\b|\s+(?:ist\s+|als\s+)?(?:das\s+)?(?:Index-?\s*)?Basis(?:jahr)?\b", _I
+        ),
+        base_before=re.compile(
+            r"(?:\bBasisjahr(?:\s+(?:ist|von))?|\bverkettet\s+ab|"
+            r"\b(?:indexiert|umbasiert|bezogen)\s+auf)\s*:?\s*(?:\d{4}\s*\([^()]*)?$",
+            _I,
+        ),
+        thresholds=re.compile(r"\b(?:Zählstellen?|Prozent|Tage[n]?|Basisjahr)\b|%", _I),
+        number_token=_NUMBER_TOKEN_DE,
+        normalise=normalise_number_de,
+    ),
+}
+
+
+def construction_verbs(paragraph: str, rules: RuleFamily = RULES["en"]) -> list[str]:
     """Construction verbs in the prose (never allowed outside quotes for mapped km)."""
     found: list[str] = []
-    for m in _VERBS.finditer(paragraph):
-        verb = m.group(1).lower()
-        if verb not in found:
-            found.append(verb)
+    for verb in rules.find("verbs", paragraph):
+        if verb.lower() not in found:
+            found.append(verb.lower())
     return found
 
 
-def causal_counter_wording(paragraph: str) -> list[str]:
+def causal_counter_wording(paragraph: str, rules: RuleFamily = RULES["en"]) -> list[str]:
     """Causal wording in prose that mentions counters (counts are context, never an outcome of
     km: M8 spec §2.12, §5.5); [] when the paragraph does not mention counters."""
-    if not _COUNTER_WORDS.search(paragraph):
+    if not rules.counter_words.search(paragraph):
         return []
-    return [m.group(1) for m in _CAUSAL.finditer(paragraph)]
+    return rules.find("causal", paragraph)
 
 
 def counter_rule_values(config_dir: Path) -> tuple[dict[float, str], str | None]:
@@ -184,20 +343,25 @@ def _rule_kind(fact: str) -> str:
     return fact.split(".")[1]
 
 
-def _threshold(kind: str, text: str, start: int, end: int, percent: bool) -> bool:
+def _threshold(
+    kind: str, text: str, start: int, end: int, percent: bool, family: RuleFamily
+) -> bool:
     """Whether the number at `text[start:end]` states the index rule's `kind` threshold rather
     than another quantity of the same value ("three cities", "2020 was the COVID year")."""
     after = text[end:]
     if kind == "min_sites":
-        return bool(_SITES_AFTER.match(after))
+        return bool(family.sites_after.match(after))
     if kind == "min_valid":
-        if not percent and (m := _PER_CENT.match(after)):
+        if not percent and (m := family.per_cent.match(after)):
             percent, after = True, after[m.end() :]
-        return percent and bool(_DAYS_AFTER.match(after))
-    return bool(_BASE_AFTER.match(after) or _BASE_BEFORE.search(text[max(0, start - 80) : start]))
+        return percent and bool(family.days_after.match(after))
+    before = text[max(0, start - 80) : start]
+    return bool(family.base_after.match(after) or family.base_before.search(before))
 
 
-def literal_counter_rules(paragraph: str, rules: dict[float, str], facts: list[Fact]) -> list[str]:
+def literal_counter_rules(
+    paragraph: str, rules: dict[float, str], facts: list[Fact], family: RuleFamily = RULES["en"]
+) -> list[str]:
     """Index-rule values the counter prose states as literal text in a threshold statement (a
     site count before "sites", a percentage of days, a base year as "= 100", "base year" or
     "chained from"): a rule value spelled out in words ("three sites", "nine days in ten"), or a
@@ -217,27 +381,28 @@ def literal_counter_rules(paragraph: str, rules: dict[float, str], facts: list[F
         if item not in found:
             found.append(item)
 
-    for m in _IN_TEN.finditer(text):
-        n = _NUMBER_WORDS.get(m.group(1).lower())
+    for m in family.in_ten.finditer(text):
+        n = family.number_words.get(m.group(1).lower())
         fact = rules.get(float(n * 10)) if n is not None else None
         if fact is not None and _rule_kind(fact) == "min_valid":
             add(m.group(0), float(n * 10))
-    for m in _WORD.finditer(text):
-        n = _NUMBER_WORDS.get(m.group(0).lower())
+    for m in family.word.finditer(text):
+        n = family.number_words.get(m.group(0).lower())
         if n is not None and float(n) in rules:
             kind = _rule_kind(rules[float(n)])
-            if _threshold(kind, text, m.start(), m.end(), percent=False):
+            if _threshold(kind, text, m.start(), m.end(), False, family):
                 add(m.group(0), float(n))
-    for m in _NUMBER_TOKEN.finditer(text):
-        raw = m.group(0).rstrip(",")
+    for m in family.number_token.finditer(text):
+        raw = m.group(0).rstrip(",").strip()
         try:
-            value = round(parse_printed(normalise_number(raw))[0], 6)
+            value = round(parse_printed(family.normalise(raw))[0], 6)
         except FactError:
             continue
         if value not in rules or value in declared:
             continue
         end = m.start() + len(raw)
-        if _threshold(_rule_kind(rules[value]), text, m.start(), end, raw.endswith("%")):
+        kind = _rule_kind(rules[value])
+        if _threshold(kind, text, m.start(), end, raw.endswith("%"), family):
             add(raw, value)
     return found
 
@@ -253,9 +418,11 @@ def _check_document(
     data: ReportData | None,
     docs_dir: Path | None,
     config_dir: Path | None = None,
+    rules: RuleFamily = RULES["en"],
+    lang: str = "en",
 ) -> list[str]:
     """The document's problems; without `data` the facts are not evaluated (their printed
-    values still declare numbers)."""
+    values still declare numbers). `rules` and `lang` are the prose's language."""
     problems: list[str] = []
 
     def add(msg: str) -> None:
@@ -285,11 +452,11 @@ def _check_document(
         for rid in _DATA_REF.findall(p):
             if rid not in ref_ids:
                 add(f"unknown data ref {rid}")
-        for n in undeclared_numbers(p, allowed, literals):
+        for n in undeclared_numbers(p, allowed, literals, lang):
             add(f"undeclared number {n}")
-        for v in construction_verbs(p):
+        for v in construction_verbs(p, rules):
             add(f"construction verb {v!r}")
-        for w in causal_counter_wording(p):
+        for w in causal_counter_wording(p, rules):
             add(f"causal wording {w!r} about counts")
     return problems
 
@@ -409,11 +576,14 @@ def _narrative_prose(n: Narrative) -> list[str]:
     return out
 
 
-def _check_lang_attributes(content_dir: Path) -> list[str]:
+def _check_lang_attributes(content_dir: Path, german: bool = False) -> list[str]:
     """A problem per `lang="…"` in a content file whose value is not a BCP 47 language tag: the
-    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`)."""
+    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`). The English
+    files, or with `german` the translation files (those in a `de/` directory)."""
     problems = []
     for path in sorted(content_dir.rglob("*.yaml")):
+        if (DE_DIR in path.relative_to(content_dir).parts[:-1]) != german:
+            continue
         text = path.read_text(encoding="utf-8")
         for m in _LANG_ATTR.finditer(text):
             value = m.group(1) if m.group(1) is not None else m.group(2)
@@ -519,6 +689,200 @@ def _check(
         problems += _check_coverage(config_dir, set(orgs) | set(org_errors), plans, rows)
         problems += _check_source_rows(config_dir, orgs)
     return problems
+
+
+# --- the German edition (M12 spec §4.6) ---------------------------------------------------
+
+DE = "[de] "  # the prefix of every German problem and note
+_MARKER = re.compile(r"\[[@#][^\]\s]+\]")
+_NO_HISTORY = "(not found in history)"
+
+
+def _foreign_quotes(text: str) -> list[str]:
+    return [m.group(0) for m in _FOREIGN_QUOTE.finditer(text)]
+
+
+def check_translation(
+    en_rel: str,
+    en_model: English,
+    tr: Translation | None,
+    data: ReportData | None,
+    *,
+    require_de: bool,
+    history: History,
+    content_dir: Path,
+    sources: dict[str, Source],
+) -> tuple[list[str], list[str]]:
+    """(problems, notes) of one translation file (None: there is none) against its English
+    file `en_rel` (relative to `content_dir`). Parity, staleness, orphans and the German content
+    rules are problems; completeness (a missing file, string or stamp) is a note, or a problem
+    when `require_de`. `history` gives the English file's earlier texts for a stale message."""
+    de_rel = twin_path(Path(en_rel)).as_posix()
+    problems: list[str] = []
+    notes: list[str] = []
+
+    def problem(msg: str) -> None:
+        problems.append(f"{DE}{de_rel}{msg}")
+
+    def incomplete(msg: str) -> None:
+        (problems if require_de else notes).append(f"{DE}{de_rel}{msg}")
+
+    if tr is None:
+        incomplete(f": missing translation of {en_rel}")
+        return problems, notes
+    if isinstance(tr, NarrativeTr) and tr.city_id != en_model.city_id:
+        problem(f": city_id {tr.city_id} is not the English file's {en_model.city_id}")
+    if isinstance(tr, OrganisationTr) and tr.id != en_model.id:
+        problem(f": id {tr.id} is not the English file's {en_model.id}")
+    if isinstance(tr, DocumentTr) and len(tr.intro) != len(en_model.intro):
+        problem(f" intro: paragraph count {len(tr.intro)}, English {len(en_model.intro)}")
+    if len(tr.sections) != len(en_model.sections):
+        problem(f": section count {len(tr.sections)}, English {len(en_model.sections)}")
+    for i, (de_sec, en_sec) in enumerate(zip(tr.sections, en_model.sections, strict=False)):
+        if len(de_sec.paragraphs) != len(en_sec.paragraphs):
+            problem(
+                f" sections.{i}: paragraph count {len(de_sec.paragraphs)}, "
+                f"English {len(en_sec.paragraphs)}"
+            )
+
+    english = dict(walk(en_model))
+    german = tr_strings(tr)
+    versions: list[str] | None = None
+    for path, en_text in english.items():
+        de = german.get(path)
+        if de is None:
+            incomplete(f" {path}: missing German text")
+            continue
+        if de.src is None:
+            incomplete(f" {path}: not stamped")
+        elif de.src != src_hash(en_text):
+            if versions is None:
+                versions = history(Path(content_dir) / en_rel)
+            was = old_english(versions, path, de.src) or _NO_HISTORY
+            problem(f" {path}: stale (English changed)\n  was: {was}\n  now: {en_text}")
+        en_markers, de_markers = (
+            Counter(_MARKER.findall(en_text)),
+            Counter(_MARKER.findall(de.text)),
+        )
+        if en_markers != de_markers:
+            problem(
+                f" {path}: markers differ from English (English {sorted(en_markers.elements())},"
+                f" German {sorted(de_markers.elements())})"
+            )
+        if Counter(_foreign_quotes(en_text)) != Counter(_foreign_quotes(de.text)):
+            problem(f" {path}: quotations differ from English (quotes are never translated)")
+        not_stated = ".dimensions." in path and " ".join(en_text.split()) == NOT_STATED
+        if not_stated and " ".join(de.text.split()) != NOT_STATED_DE:
+            problem(f" {path}: {NOT_STATED!r} is {NOT_STATED_DE!r} in German")
+    for path in german:
+        if path not in english:
+            problem(f" {path}: orphan (no English string at this path)")
+
+    try:
+        merged, fallback = merge(en_model, tr)
+    except ValueError as e:  # pydantic's ValidationError too: a rule the German text breaks
+        problem(f": the German text does not validate in the English structure: {e}")
+        return problems, notes
+    prose = [text for path, text in walk(merged) if path not in fallback]
+    config_dir = Path(data.config_dir) if data is not None else None
+    problems += _check_document(
+        f"{DE}{de_rel}",
+        prose,
+        [],
+        en_model.facts,
+        en_model.data_refs,
+        list(tr.literals),
+        sources,
+        None,
+        None,
+        config_dir,
+        rules=RULES["de"],
+        lang="de",
+    )
+    if en_rel == COUNTER_PAGE and config_dir is not None:
+        rules, _error = counter_rule_values(config_dir)  # an unreadable config: English reports it
+        for p in prose:
+            for lit in literal_counter_rules(p, rules, en_model.facts, RULES["de"]):
+                problem(f": index rule stated as literal text: {lit}")
+    return problems, notes
+
+
+def _english_files(content_dir: Path) -> list[str]:
+    """The English content files that have German twins, relative to `content_dir`."""
+    rels = [f"narratives/{p.name}" for p in sorted((content_dir / "narratives").glob("*.yaml"))]
+    rels += ["explainer.yaml", *PLAN_DOCUMENTS]
+    rels += [
+        f"organisations/{p.name}" for p in sorted((content_dir / "organisations").glob("*.yaml"))
+    ]
+    return [r for r in rels if (content_dir / r).is_file()]
+
+
+def _relative(msg: str, content_dir: Path) -> str:
+    return msg.replace(f"{content_dir}/", "")
+
+
+def _check_german(
+    content_dir: Path, data: ReportData | None, *, require_de: bool, history: History
+) -> tuple[list[str], list[str]]:
+    try:
+        sources = load_sources(content_dir / "sources")
+    except ContentError:
+        return [], []  # the English check reports it
+    problems: list[str] = [DE + p for p in _check_lang_attributes(content_dir, german=True)]
+    notes: list[str] = []
+    for rel in _english_files(content_dir):
+        try:
+            en_model = load_english(content_dir / rel)
+        except ContentError:
+            continue  # the English check reports it
+        de_path = content_dir / twin_path(Path(rel))
+        tr = None
+        if de_path.is_file():
+            try:
+                tr = load_translation(de_path, en_model)
+            except ContentError as e:
+                problems.append(DE + _relative(str(e), content_dir))
+                continue
+        p, n = check_translation(
+            rel, en_model, tr, data, require_de=require_de, history=history,
+            content_dir=content_dir, sources=sources,
+        )  # fmt: skip
+        problems += p
+        notes += n
+    for de_dir in sorted({(content_dir / r).parent / DE_DIR for r in _english_files(content_dir)}):
+        for de_path in sorted(de_dir.glob("*.yaml")):
+            en = english_path(de_path)
+            if not en.is_file():
+                rel = de_path.relative_to(content_dir).as_posix()
+                problems.append(f"{DE}{rel}: translation with no English file")
+    for s in sources.values():
+        if s.language.split("-")[0] == "de":
+            continue
+        for e in s.excerpts:
+            if not e.gloss_de:
+                msg = f"{DE}sources/{s.id}: excerpt {e.id} needs gloss_de (language {s.language})"
+                (problems if require_de else notes).append(msg)
+    return problems, notes
+
+
+def check_content_all(
+    content_dir: Path,
+    data: ReportData,
+    docs_dir: Path,
+    *,
+    require_de: bool | None = None,
+    history: History = git_history,
+) -> tuple[list[str], list[str]]:
+    """(problems, notes) of both editions: the English problems exactly as `check_content`
+    gives them, then the German ones, each prefixed "[de] ". Notes are German completeness
+    gaps; they are problems when `require_de`, which defaults to `i18n.german_required` (the
+    shipped tree once German content is required, never a test tree)."""
+    content_dir = Path(content_dir)
+    if require_de is None:
+        require_de = i18n.german_required(content_dir)
+    problems = check_content(content_dir, data, docs_dir)
+    de_problems, notes = _check_german(content_dir, data, require_de=require_de, history=history)
+    return problems + de_problems, notes
 
 
 def _https(url: str) -> bool:
@@ -636,6 +1000,7 @@ def _reconcile_sources(config_dir: Path) -> list[str]:
 
 
 NOT_STATED = "not stated by the source"
+NOT_STATED_DE = "von der Quelle nicht angegeben"
 
 
 def _check_source_rows(config_dir: Path, orgs: dict[str, Organisation]) -> list[str]:

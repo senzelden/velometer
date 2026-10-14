@@ -9,6 +9,7 @@ tables.
 `check` re-renders in memory and lists what is stale.
 """
 
+import re
 from datetime import date
 from pathlib import Path
 from typing import Any, Literal
@@ -17,6 +18,7 @@ import yaml
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from pydantic import BaseModel, ConfigDict
 
+from velometer import i18n
 from velometer import timeseries as ts
 from velometer.config import (
     CityConfig,
@@ -40,6 +42,7 @@ from velometer.counters.model import (
     load_counters_config,
 )
 from velometer.db import fetch_boundary, fetch_run
+from velometer.i18n import LANGS, Lang
 from velometer.models import City
 from velometer.plans.models import MAPPED_BASELINE
 from velometer.plans.overlay import load_overlay_config
@@ -47,8 +50,6 @@ from velometer.report.data import KINDS, ReportData
 from velometer.sources.boundaries import OSM_ADMIN_VERSION
 from velometer.trust import golden_paths
 
-Lang = Literal["en", "de"]
-LANGS: tuple[Lang, ...] = ("en", "de")
 FILES: dict[str, str] = {"en": "methodology.md", "de": "methodology.de.md"}
 
 
@@ -128,6 +129,7 @@ class CounterCityFact(_Frozen):
     id: str
     name: str
     source: str
+    source_de: str | None = None  # config/counters.yaml: only where `source` has our English words
     licence: str
     base_year: int
     series: Literal["counts", "avg_daily_intensity"]
@@ -332,6 +334,7 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
         id=c.city,
         name=name,
         source=c.source,
+        source_de=c.source_de,
         licence=c.licence,
         base_year=c.base_year,
         series=series,
@@ -423,30 +426,13 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
 # --- rendering ----------------------------------------------------------------------------
 
 
-def _number(v: float | int | None, lang: Lang) -> str:
-    """Thousands and decimal separators of the language. At most two decimals (config
-    thresholds such as 0.5 or 0.25), trailing zeros and a bare decimal point dropped."""
-    if v is None:
-        return ""
-    text = f"{v:,.2f}".rstrip("0").rstrip(".")
-    if lang == "de":
-        text = text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
-    return text
-
-
-AND: dict[str, str] = {"en": "and", "de": "und"}
-MONTHS: dict[str, tuple[str, ...]] = {
-    "en": ("January", "February", "March", "April", "May", "June", "July", "August",
-           "September", "October", "November", "December"),
-    "de": ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September",
-           "Oktober", "November", "Dezember"),
-}  # fmt: skip
+_number = i18n.number_trimmed
+_and_list = i18n.and_list
 
 
 def _month(v: str, lang: Lang) -> str:
     """A month (YYYY-MM or an ISO day) in words: "September 2019"."""
-    y, m = v.split("-")[:2]
-    return f"{MONTHS[lang][int(m) - 1]} {y}"
+    return i18n.month_year(v, lang, short=False)
 
 
 GAP: dict[str, str] = {"en": "from {} to {}", "de": "von {} bis {}"}
@@ -471,16 +457,25 @@ def _sites(n: int, lang: Lang) -> str:
 
 def _day(v: date, lang: Lang) -> str:
     """A day in words: "1 January 2022", "1. Januar 2022"."""
-    sep = ". " if lang == "de" else " "
-    return f"{v.day}{sep}{MONTHS[lang][v.month - 1]} {v.year}"
+    return i18n.long_day(v, lang)
 
 
-def _and_list(items: list[str], lang: Lang) -> str:
-    """The items joined as "A", "A and B" or "A, B and C" in the language."""
-    items = list(items)
-    if len(items) < 2:
-        return "".join(items)
-    return f"{', '.join(items[:-1])} {AND[lang]} {items[-1]}"
+# our own words in the stored boundary and population provenance (sources/boundaries.py), in
+# German: the stored strings are run identity in the database and stay as written
+_PROVENANCE_DE = (
+    (re.compile(r", union of (\d+) LAU\b"), r", Vereinigung von \1 LAU"),
+    (re.compile(r"\(sum of (\d+) LAU\)"), r"(Summe von \1 LAU)"),
+)
+
+
+def _provenance(v: str | None, lang: Lang) -> str | None:
+    """A stored provenance string as the page's language shows it: German replaces our own
+    English words ("union of 17 LAU"); a source's name stays as written."""
+    if v is None or lang == "en":
+        return v
+    for pattern, german in _PROVENANCE_DE:
+        v = pattern.sub(german, v)
+    return v
 
 
 def _environment(lang: Lang) -> Environment:
@@ -493,11 +488,16 @@ def _environment(lang: Lang) -> Environment:
         autoescape=False,  # Markdown, not HTML
     )
     env.filters["num"] = lambda v: _number(v, lang)
+    env.filters["pct"] = lambda v: (
+        f"{_number(v, lang)}{i18n.NNBSP}%" if lang == "de" else f"{_number(v, lang)}%"
+    )
     env.filters["and_list"] = lambda v: _and_list(v, lang)
     env.filters["month"] = lambda v: _month(v, lang)
     env.filters["day"] = lambda v: _day(v, lang)
     env.filters["gaps"] = lambda v: _gaps(v, lang)
     env.filters["sites"] = lambda v: _sites(v, lang)
+    env.filters["provenance"] = lambda v: _provenance(v, lang)
+    env.globals["tab"] = lambda key: i18n.t(lang, f"city.tab.{key}")  # the site's tab label
     return env
 
 

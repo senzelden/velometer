@@ -60,6 +60,8 @@ counters_app = typer.Typer(
 app.add_typer(counters_app, name="counters")
 web_app = typer.Typer(no_args_is_help=True, help="The reader app's static edition.")
 app.add_typer(web_app, name="app")
+content_app = typer.Typer(invoke_without_command=True)
+app.add_typer(content_app, name="content")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -1237,6 +1239,14 @@ def timeseries(
                 )
             for key in ts.stale_explanations(report, shown_flags, set(shown)):
                 typer.echo(f"warning: ### {key} matches no flag", err=True)
+            de_problems, _notes = ts.german_explanation_problems(
+                report,
+                ts.german_explanations(report),
+                require_de=ts.german_explanations_required(report),
+            )  # notes (German gaps while German is not required) are not printed
+            for line in de_problems:
+                problems = True
+                typer.echo(line, err=True)
             if problems:
                 raise typer.Exit(1)
     except (OSError, ValueError) as e:
@@ -1386,7 +1396,9 @@ def report_maps(
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
 ) -> None:
-    """One tier map per city and boundary kind with a current run, in <data>/maps/."""
+    """One tier map per city and boundary kind with a current run, in <data>/maps/: the
+    English image and GeoJSON, and the German image (`.de.png`)."""
+    from velometer.i18n import LANGS
     from velometer.report import maps as mp
     from velometer.report.data import ReportData, open_readonly
 
@@ -1404,14 +1416,16 @@ def report_maps(
         for cid in [city] if city else ids:
             for k in kinds:
                 point = data.current(cid, k)
-                if point is not None and mp.up_to_date(maps_dir, cid, k, point.run_id):
-                    typer.echo(f"unchanged: {maps_dir / f'{cid}_{k}.png'}")
-                    continue
-                path = mp.build_map(data, cid, k, data_dir, maps_dir)
-                if path is None:
-                    why = "no run" if point is None else "no snapshot"
-                    typer.echo(f"skipped: {cid} {k} ({why})")
-                else:
+                for lang in LANGS:  # the English image (and GeoJSON), then the German image
+                    png = maps_dir / f"{cid}_{k}{'' if lang == 'en' else '.' + lang}.png"
+                    if point is not None and mp.up_to_date(maps_dir, cid, k, point.run_id, lang):
+                        typer.echo(f"unchanged: {png}")
+                        continue
+                    path = mp.build_map(data, cid, k, data_dir, maps_dir, lang)
+                    if path is None:
+                        why = "no run" if point is None else "no snapshot"
+                        typer.echo(f"skipped: {cid} {k} ({why})")
+                        break  # the same for both languages
                     typer.echo(f"written: {path}")
     except (sqlite3.Error, ConfigError) as e:
         typer.echo(f"error: {e}", err=True)
@@ -2076,8 +2090,9 @@ def app_export(
     )
 
 
-@app.command()
+@content_app.callback(invoke_without_command=True)
 def content(
+    ctx: typer.Context,
     check: bool = typer.Option(
         False, "--check", help="Validate quotes, facts, numbers and wording; exit 1 on problems."
     ),
@@ -2092,7 +2107,11 @@ def content(
     config_dir: Path = CONFIG_OPT,
     docs: Path = DOCS_OPT,
 ) -> None:
-    """The narrative and source content the reader app renders: summary, or --check it."""
+    """The narrative and source content the reader app renders: summary, or --check it.
+
+    --check covers both editions (German problems are marked de)."""
+    if ctx.invoked_subcommand is not None:
+        return
     from velometer.content import check as ck
     from velometer.content.loader import load_sources
     from velometer.content.models import ContentError
@@ -2115,7 +2134,8 @@ def content(
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
     try:
-        problems = ck.check_content(content_dir, ReportData(conn, config_dir), docs)
+        # notes (German gaps while German is not required) are returned, never printed
+        problems, _notes = ck.check_content_all(content_dir, ReportData(conn, config_dir), docs)
     except ConfigError as e:
         raise _config_error(e) from e
     except sqlite3.Error as e:
@@ -2133,6 +2153,40 @@ def content(
     if problems:
         raise typer.Exit(1)
     typer.echo("ok")
+
+
+EXPLANATIONS_DE = "m3_timeseries.de.md"
+
+
+@content_app.command("stamp")
+def content_stamp(
+    file: Path = typer.Argument(  # noqa: B008
+        ...,
+        help="A German translation file (content/**/de/*.yaml) or docs/review/m3_timeseries.de.md.",
+    ),
+) -> None:
+    """Stamp a translation file with the hashes of the English it was translated from.
+
+    Run it after translating, never as a blanket fix for a stale check."""
+    from velometer import timeseries as ts
+    from velometer.content import translate as tr
+    from velometer.content.models import ContentError
+
+    try:
+        if file.name == EXPLANATIONS_DE:
+            en = file.with_name(file.name.removesuffix(".de.md") + ".md")
+            if not (en.is_file() and file.is_file()):
+                raise ValueError(f"{file}: needs the file and its English twin {en}")
+            n = ts.stamp_explanations(en, file)
+        else:
+            en = tr.english_path(file) if file.suffix == ".yaml" else None
+            if en is None or not en.is_file():
+                raise ValueError(f"{file}: not a translation file with an English twin")
+            n = tr.stamp(file, tr.load_english(en))
+    except (ValueError, OSError, ContentError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"stamped {n} strings in {file}")
 
 
 def _counters_config(config_dir: Path):

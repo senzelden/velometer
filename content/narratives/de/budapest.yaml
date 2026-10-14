@@ -1,0 +1,55 @@
+city_id: budapest
+title:
+  text: 'Budapest: A+B langsam, markierte Radfahrstreifen verdoppelt'
+  src: 43974ddde56a
+dek:
+  text: >-
+    Die Hauptkennzahl stieg von 19,4 im Jahr 2018 auf 22,3 im Oktober 2026, der niedrigste
+    Wert der 21 Städte, während sich die kartierten markierten Radfahrstreifen mehr
+    als verdoppelten.
+  src: 8cd4679b42e8
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Budapests Karte wuchs langsam und ohne Prüfhinweise. Die kartierten A+B-km der
+      Stadt gingen von 196 km im Jahr 2018 auf 231 km im Oktober 2026 und die Hauptkennzahl,
+      kartierte A+B-km je 100 km Hauptstraßen, von 19,4 auf 22,3, der niedrigste Wert
+      der 21 Städte [#ts-lau]. Stufe A trug den Zuwachs, von 126 auf 162 km; Stufe
+      B blieb zwischen 66 und 76 km.
+    src: cc18e13f95d9
+  - text: >-
+      Die größere Veränderung liegt außerhalb von A+B. Markierte Radfahrstreifen (D)
+      stiegen von 72 auf 161 km, mit dem größten Schritt zwischen den Punkten 2023
+      und 2024, von 118 auf 153 km. Dieser Schritt sind Radfahrstreifen-Tags an bestehenden
+      Straßen, die meisten zuletzt Ende 2023 bearbeitet; ob die Markierungen neu waren
+      oder schon bestanden und spät kartiert wurden, lässt sich aus den Daten nicht
+      sagen [#shift-lau-2024]. Für den Radverkehr freigegebene Busspuren (E) stiegen
+      von 20 auf 29 km. Die Hauptkennzahl zählt keine der beiden Stufen.
+    src: 6fb9e935143a
+  - text: >-
+      Der funktionale Stadtraum wuchs schneller als die Stadt: A+B stieg von 408 auf
+      550 km, +35 % gegenüber +18 % in der Stadt [#ts-fua].
+    src: abb109ce2215
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Externe Zahlen stimmen eng überein, wo sie dasselbe messen. Die QECIO-Region
+      ist die Stadt selbst, und unsere Hauptstraßen, Radwege, Radfahrstreifen und
+      Geh- und Radwege liegen jeweils innerhalb von 6 % ihrer Werte [#recon]. Die
+      212 km von Clean Cities liegen nahe an unseren 231 km; ihre 4 % sind aus den
+      eigenen km auf ganze Prozent gerundet [#recon-cc]. BikeNetKit zählt 588 km,
+      mehr als das Doppelte unserer 260 km der Stufen A, B und E, weil es verkehrsberuhigte
+      Bereiche einschließt, die hier keine Stufe zählt [#recon-bnk]. Die Zahlen der
+      Stadt erfassen anderes, etwa einen von der Stadt verwalteten Bestand oder ein
+      geplantes Hauptnetz [@budapest-bkk-kfht-helyzetertekeles-2022]. Eine Presseanalyse
+      von 2024 nannte km einen schlechten Indikator und stellte eine auf OpenStreetMap
+      beruhende Zählung der Zahl des Statistikamts gegenüber [@budapest-telex-g7-2024].
+    src: 57162c6b1ca3
+literals:
+- 100 km
+- 21 Städte

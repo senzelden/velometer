@@ -1,0 +1,56 @@
+city_id: utrecht
+title:
+  text: 'Utrecht: kleine Zuwächse auf einer dichten Karte'
+  src: 64c3bdef78db
+dek:
+  text: >-
+    Die Hauptkennzahl stieg von 179,7 im Jahr 2018 auf 193,6 im Oktober 2026, zum
+    Teil weil weniger Hauptstraßen-km kartiert waren; innerhalb von A+B wanderten
+    km von Radwegen zu Geh- und Radwegen.
+  src: 401d0f3483aa
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Utrechts Hauptkennzahl (kartierte A+B-km je 100 km Hauptstraßen) stieg von 179,7
+      im Jahr 2018 auf 193,6 im Oktober 2026; die kartierten A+B-km stiegen weniger
+      stark, von 341 auf 360 km [#ts-utrecht]. Der Rest ist die Bezugsgröße: Die kartierten
+      Hauptstraßen der Stadt gingen leicht zurück, von 190 auf 186 km.
+    src: 260741a156c4
+  - text: >-
+      Innerhalb von A+B verschob sich die Aufteilung. Baulich getrennte Radwege (Stufe
+      A) gingen von 336 auf 317 km, Geh- und Radwege (Stufe B) von 5,0 auf 43,6 km.
+      Fahrradstraßen (Stufe E) stiegen von 10 auf 27 km, und markierte Radfahrstreifen
+      (Stufe D) bewegten sich von 51 auf 48 km [#ts-utrecht].
+    src: d63e1b7cfe85
+  - text: >-
+      Kein Jahr der städtischen Reihe ist markiert, und die Verschiebung von A nach
+      B in der Stadt selbst wurde nicht Weg für Weg nachverfolgt. Der funktionale
+      Stadtraum (FUA), in dem A+B von 1.216 auf 1.269 km stieg, zeigt, wie solche
+      Verschiebungen entstehen: Im Laufe des Jahres 2019 stellten Kartierende Fahrradstraßen
+      von einem nicht standardmäßigen Tag auf `cyclestreet=yes` um, was km in die
+      Stufe E verschob, außerhalb der Hauptkennzahl, und Radwege, die `foot=yes` erhielten,
+      wechselten von A nach B [#ts-utrecht-fua-2020]. Neu getaggte Wege dieser Art
+      sind keine neue Infrastruktur.
+    src: b0874b1c0c30
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Eine aktuelle amtliche Gesamtzahl für die Stadt wurde nicht gefunden. Ein Artikel
+      eines Geschichtsvereins nennt ältere Zahlen, die Radwege und markierte Radfahrstreifen
+      getrennt führen, unten zitiert [@utrecht-oud-utrecht-fietsstad]; das entspricht
+      ungefähr unseren Stufen A und B gegenüber Stufe D, doch die Zahlen stammen von
+      2012 und die Quelle ist eine Sekundärquelle. Die Stadt streut im Winter ein
+      Netz von Hauptradwegen [@utrecht-actieplan-fietst-2015], ein Umfang für den
+      Unterhalt, keine Gesamtzahl. Fläche: QECIO berichtet für die ganze Provinz,
+      mit 2.324 km Hauptstraßen gegenüber unseren 423 km für die Stadt [#recon-utrecht-qecio-main],
+      und ist daher kein Maßstab. BikeNetKit, ebenfalls aus OpenStreetMap, zählt 420
+      km gegenüber unseren 387 km der Stufen A, B und E (−8 %) [@bikenetkit-zenodo];
+      welche Grenze es verwendet, gibt die Quelle nicht an.
+    src: 1c3b4c5a94d7
+literals:
+- 100 km

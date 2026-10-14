@@ -9,6 +9,7 @@ import { url } from "./base.js";
 import { setParam } from "./permalink.js";
 import { closeAction, openAction, panelAnnouncement, panelUrl } from "./compare-model.js";
 import { drawTiers } from "./tier-chart.js";
+import { t } from "./strings.js";
 
 /** The address with `panel=<id>` in its query (removed for null); path and hash stay. */
 const addressWith = (id) => location.pathname + setParam(location.search, "panel", id) + location.hash;
@@ -60,7 +61,7 @@ export function createPanel(root, opts = {}) {
     document.body.classList.add("panel-open");
     applyModal();
     charts.run();
-    body.replaceChildren(Object.assign(document.createElement("p"), { className: "empty", textContent: "Loading…" }));
+    body.replaceChildren(Object.assign(document.createElement("p"), { className: "empty", textContent: t("js.panel.loading") }));
     announce(panelAnnouncement("loading", nameOf(id)));
     closeBtn.focus();
     try {
@@ -78,7 +79,7 @@ export function createPanel(root, opts = {}) {
       charts.run();
       announce(panelAnnouncement("failed", nameOf(id)));
       body.replaceChildren(Object.assign(document.createElement("p"), {
-        className: "note", textContent: `The city panel could not be loaded. Its page is ${url(`/city/${id}`)}.`,
+        className: "note", textContent: t("js.panel.failed_page", { url: url(`/city/${id}`) }),
       }));
       console.warn(err);
     }

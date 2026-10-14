@@ -250,12 +250,19 @@ def flags(
     current_fraction: float,
     city_id: str = "",
     kind: str = "",
+    lang: str = "en",
 ) -> list[Flag]:
-    """Spec §2.13. Only the km floors and the spike threshold scale for the current point.
+    """Spec §2.13. Only the km floors and the spike threshold scale for the current point. The
+    details are in `lang` (the `time.flag.*` keys); rule codes and metric names stay as code.
 
     Change rules (km_jump, tag_drift) compare consecutive points only: never across a gap.
     """
-    t = cfg.flags
+    from velometer.i18n import fmt, t
+
+    def km(v: float) -> str:
+        return fmt(v, ".1f", lang)
+
+    th = cfg.flags
     edits = [p.activity.n_edits for p in points if p.label != CURRENT and p.activity is not None]
     median = statistics.median(edits) if edits else None
     out = []
@@ -266,26 +273,42 @@ def flags(
         if i > 0 and _consecutive(points[i - 1], p):
             prev = points[i - 1]
             delta = p.ab_km - prev.ab_km
-            need = max(t.km_jump_pct / 100 * prev.ab_km, t.km_jump_min_km * scale)
+            need = max(th.km_jump_pct / 100 * prev.ab_km, th.km_jump_min_km * scale)
             jump = abs(delta) >= need
             if jump:
-                rules["km_jump"] = f"A+B km {prev.ab_km:.1f} -> {p.ab_km:.1f} (needs {need:.1f})"
+                rules["km_jump"] = t(
+                    lang, "time.flag.km_jump", before=km(prev.ab_km), after=km(p.ab_km),
+                    need=km(need),
+                )  # fmt: skip
             for name, a, b in (
                 ("legacy_km", prev.legacy_km, p.legacy_km),
                 ("unrecognised_km", prev.unrecognised_km, p.unrecognised_km),
             ):
-                if _drift(a, b, t.tag_drift_pct, t.tag_drift_min_km * scale):
-                    rules.setdefault("tag_drift", f"{name} {a:.1f} -> {b:.1f}")
+                if _drift(a, b, th.tag_drift_pct, th.tag_drift_min_km * scale):
+                    rules.setdefault(
+                        "tag_drift",
+                        t(lang, "time.flag.tag_drift", metric=name, before=km(a), after=km(b)),
+                    )
         spike = False
         if p.activity is not None and median:  # no median or 0: nothing to spike against
-            limit = t.activity_spike_factor * median * scale
+            limit = th.activity_spike_factor * median * scale
             spike = p.activity.n_edits >= limit
             if spike:
-                rules["activity_spike"] = f"{p.activity.n_edits} edits (limit {limit:.1f})"
+                rules["activity_spike"] = t(
+                    lang, "time.flag.activity_spike", edits=p.activity.n_edits, limit=km(limit)
+                )
         if jump and spike:
-            rules["campaign_suspected"] = "km_jump and activity_spike"
-        if jump and p.activity is not None and p.activity.top_mapper_share >= t.single_mapper_share:
-            rules["single_mapper"] = f"top mapper share {p.activity.top_mapper_share:.2f}"
+            rules["campaign_suspected"] = t(
+                lang, "time.flag.campaign_suspected", jump="km_jump", spike="activity_spike"
+            )
+        if (
+            jump
+            and p.activity is not None
+            and p.activity.top_mapper_share >= th.single_mapper_share
+        ):
+            rules["single_mapper"] = t(
+                lang, "time.flag.single_mapper", share=fmt(p.activity.top_mapper_share, ".2f", lang)
+            )
         if rules:
             ordered = [
                 r
@@ -334,21 +357,28 @@ def render_block(
     return "\n".join(lines)
 
 
-def provenance_line(conn, selector, set_md5: str, points: list[YearPoint]) -> str:
+def provenance_line(conn, selector, set_md5: str, points: list[YearPoint], lang: str = "en") -> str:
+    """The series' provenance in one line (the review page and the Over time tab), in `lang`."""
+    from velometer.i18n import t
+
     years = [p for p in points if p.label != CURRENT]
     cur = next((p for p in points if p.label == CURRENT), None)
     pop = fetch_run(conn, years[0].run_id).get("population_year") if years else None
-    population = (
-        "no population (per-100k n/a)" if pop is None else f"population {pop} held constant"
-    )
     runs = ", ".join(f"{p.label}={p.run_id}" for p in years)
-    return (
-        f"history runs {runs}"
-        + (f" · current run {cur.run_id} (OSM {cur.osm_timestamp})" if cur else " · no current run")
-        + f" · history set `{set_md5[:8]}` · classifier {selector.version} "
-        f"`{selector.parameters}` · config `{selector.config_sha256[:12]}`"
-        f" · {population}"
-    )
+    parts = [
+        t(lang, "time.provenance.history_runs", runs=runs),
+        t(lang, "time.provenance.current_run", run=cur.run_id, osm=cur.osm_timestamp)
+        if cur
+        else t(lang, "time.provenance.no_current_run"),
+        t(lang, "time.provenance.history_set", md5=set_md5[:8]),
+        t(lang, "time.provenance.classifier", version=selector.version,
+          parameters=selector.parameters),
+        t(lang, "time.provenance.config", sha=selector.config_sha256[:12]),
+        t(lang, "time.provenance.no_population")
+        if pop is None
+        else t(lang, "time.provenance.population", year=pop),
+    ]  # fmt: skip
+    return " · ".join(parts)
 
 
 def build_city(
@@ -406,10 +436,11 @@ def build_city(
     )
 
 
-def city_flags(cs: CitySeries, cfg: ActivityConfig) -> list[Flag]:
+def city_flags(cs: CitySeries, cfg: ActivityConfig, lang: str = "en") -> list[Flag]:
     return flags(
-        cs.points, cfg, current_fraction=cs.current_fraction, city_id=cs.city_id, kind=cs.kind
-    )
+        cs.points, cfg, current_fraction=cs.current_fraction, city_id=cs.city_id, kind=cs.kind,
+        lang=lang,
+    )  # fmt: skip
 
 
 def check_markers(path: Path) -> None:
@@ -466,6 +497,113 @@ def explanation(path: Path, key: str) -> str | None:
     nxt = _HEADING.search(body)
     body = (body if nxt is None else body[: nxt.start()]).strip()
     return body or None
+
+
+# --- German explanations (M12 spec §4.4): `m3_timeseries.de.md`, the same `###` headings, each
+# entry stamped with its English entry's hash in an HTML comment after the heading.
+
+SRC_COMMENT = re.compile(r"\A<!-- src: ([0-9a-f]{12}) -->\s*")
+# a `### key` heading line, the blank lines after it and an existing stamp comment
+_STAMPED_HEADING = re.compile(
+    r"^### (\S+)[ \t]*(?:\n|\Z)(?:[ \t]*\n)*(?:<!-- src: [^\n]*?-->[ \t]*(?:\n|\Z)(?:[ \t]*\n)*)?",
+    re.M,
+)
+
+
+def german_explanations(report: Path) -> Path:
+    """`m3_timeseries.md` -> `m3_timeseries.de.md`."""
+    return report.with_name(f"{report.name.removesuffix('.md')}.de.md")
+
+
+def german_explanations_required(report: Path) -> bool:
+    """German explanations are mandatory only for the shipped report, never for a test file."""
+    from velometer import i18n
+
+    shipped = i18n.SHIPPED_DOCS_DIR / "review" / "m3_timeseries.md"
+    return i18n.GERMAN_CONTENT_REQUIRED and report.resolve() == shipped.resolve()
+
+
+def explanation_hash(path: Path, key: str) -> str:
+    """The stamp of the English entry `key` (its whitespace-normalised text; an entry without
+    text has the stamp of "")."""
+    from velometer.content.translate import src_hash
+
+    return src_hash(explanation(path, key) or "")
+
+
+def stamped_explanation(de_path: Path, key: str) -> tuple[str | None, str | None]:
+    """(German text, stamp) of the entry `key`: (None, None) without the file or the entry,
+    (text, None) when it is not stamped."""
+    body = explanation(de_path, key)
+    if body is None:
+        return None, None
+    m = SRC_COMMENT.match(body)
+    if m is None:
+        return body, None
+    return body[m.end() :].strip() or None, m.group(1)
+
+
+# code spans and German quotations „…“ keep the source's words; the rest is our prose
+_NOT_OUR_PROSE = re.compile(r"`[^`]*`|„[^“]*“")
+
+
+def german_construction_verbs(text: str) -> list[str]:
+    """The construction verbs (gebaut, eröffnet, entfernt …) of a German explanation outside
+    code spans and quotations: the explanations speak of mapped km only (ADR 0006), as the
+    content prose does (`content.check.construction_verbs`)."""
+    from velometer.content.check import RULES, construction_verbs
+
+    return construction_verbs(_NOT_OUR_PROSE.sub(" ", text), RULES["de"])
+
+
+def german_explanation_problems(
+    en_path: Path, de_path: Path, *, require_de: bool
+) -> tuple[list[str], list[str]]:
+    """(problems, notes), each "[de] …": a stale stamp or a German entry without an English one
+    is a problem; a missing file, entry or stamp is a note, or a problem when `require_de`."""
+    problems: list[str] = []
+    notes: list[str] = []
+    gaps = problems if require_de else notes
+    name = de_path.name
+    if not de_path.is_file():
+        gaps.append(f"[de] {name}: missing (German flagged-year explanations)")
+        return problems, notes
+    en_keys = headings(en_path.read_text(encoding="utf-8"))
+    de_keys = headings(de_path.read_text(encoding="utf-8"))
+    for key in sorted(en_keys - de_keys):
+        gaps.append(f"[de] {name}: missing ### {key}")
+    for key in sorted(de_keys - en_keys):
+        problems.append(f"[de] {name} ### {key}: no English entry")
+    for key in sorted(en_keys & de_keys):
+        text, src = stamped_explanation(de_path, key)
+        if text is None and explanation(en_path, key) is not None:
+            gaps.append(f"[de] {name} ### {key}: missing German text")
+        for verb in german_construction_verbs(text or ""):
+            problems.append(f"[de] {name} ### {key}: construction verb outside a quote: {verb}")
+        if src is None:
+            gaps.append(f"[de] {name} ### {key}: not stamped")
+        elif src != explanation_hash(en_path, key):
+            problems.append(f"[de] {name} ### {key}: stale (English changed)")
+    return problems, notes
+
+
+def stamp_explanations(en_path: Path, de_path: Path) -> int:
+    """Write the English entry's stamp after every German `###` heading that has one; returns
+    how many. Run by whoever translated, never as a blanket fix."""
+    en_keys = headings(en_path.read_text(encoding="utf-8"))
+    n = 0
+
+    def one(m: re.Match) -> str:
+        nonlocal n
+        key = m.group(1)
+        if key not in en_keys:
+            return m.group(0)
+        n += 1
+        return f"### {key}\n\n<!-- src: {explanation_hash(en_path, key)} -->\n\n"
+
+    text = _STAMPED_HEADING.sub(one, de_path.read_text(encoding="utf-8"))
+    de_path.write_text(text, encoding="utf-8")
+    return n
 
 
 # Markers written before schema v6 carry an `activity=<sha>` item; activity.yaml is part of the run

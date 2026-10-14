@@ -17,6 +17,7 @@ from velometer.app.narrative import safe_url
 from velometer.content.facts import version_key
 from velometer.content.models import Organisation
 from velometer.db import OverlayRow
+from velometer.i18n import Lang, number_trimmed, t
 from velometer.plans.berlin import NETWORK_LAYER
 from velometer.plans.models import (
     MAPPED_BASELINE,
@@ -39,59 +40,57 @@ ITEM_NETWORK = {
     "ergaenzungsnetz": ("ergaenzungsnetz", ("Ergänzungsnetz",)),
     "radverkehrsnetz": (None, ("Vorrangnetz", "Ergänzungsnetz")),
 }
-DOC_TYPE = {
-    "drucksache": "Drucksache",
-    "rote_nummer": "Hauptausschuss report (rote Nummer)",
-    "report": "report",
-    "web": "web page",
-}
 QUANTITY_ORDER = {
     "implemented_in_year": 0,
     "implemented_cumulative": 1,
     "under_construction": 2,
     "in_planning": 3,
 }
-STATUS = {"current": "current", "expired": "expired", "replaced": "replaced"}
 YEAR_END = re.compile(r"(\d{4})\s*$")  # bauende: "4. Quartal 2022"
 
 
-def num(v: float) -> str:
+def num(v: float, lang: Lang = "en") -> str:
     """A printed figure as printed: thousands separators, up to two decimals, no trailing 0."""
-    return f"{v:,.2f}".rstrip("0").rstrip(".")
+    return number_trimmed(v, lang)
 
 
-def quantity_text(r: ReportRow) -> str:
+def quantity_text(r: ReportRow, lang: Lang = "en") -> str:
     if r.quantity == "implemented_in_year":
-        return f"implemented in {r.year}"
+        return t(lang, "plan.quantity.in_year", year=r.year)
     if r.quantity == "implemented_cumulative":
-        return f"implemented, cumulative since {r.cumulative_from}, to {r.year}"
+        return t(lang, "plan.quantity.cumulative", since=r.cumulative_from, year=r.year)
     if r.quantity == "under_construction":
-        return f"under construction, {r.year}"
-    return f"in planning, {r.year}"
+        return t(lang, "plan.quantity.under_construction", year=r.year)
+    return t(lang, "plan.quantity.in_planning", year=r.year)
 
 
-def series_text(r: ReportRow) -> str:
+def series_text(r: ReportRow, lang: Lang = "en") -> str:
     """The series a row belongs to (cumulative series are told apart by their start year)."""
-    return {
-        "implemented_in_year": "implemented in the year",
-        "implemented_cumulative": f"implemented, cumulative since {r.cumulative_from}",
-        "under_construction": "under construction",
-        "in_planning": "in planning",
-    }[r.quantity]
+    if r.quantity == "implemented_in_year":
+        return t(lang, "plan.series.in_year")
+    if r.quantity == "implemented_cumulative":
+        return t(lang, "plan.series.cumulative", since=r.cumulative_from)
+    if r.quantity == "under_construction":
+        return t(lang, "plan.series.under_construction")
+    return t(lang, "plan.series.in_planning")
 
 
-def target_text(item: PlanItem) -> str:
+def target_text(item: PlanItem, lang: Lang = "en") -> str:
     """The item's target as the plan prints it, or that it states none in km."""
     years = sorted(item.targets)
     unit = item.unit
     if item.target_kind == "none" or not years:
-        return "no km target"
+        return t(lang, "plan.no_km_target")
+    by = ", ".join(
+        t(lang, "plan.target_by", value=num(item.targets[y], lang), unit=unit, year=y)
+        for y in years
+    )
     if item.target_kind == "km_per_year":
-        steps = " · ".join(f"{y}: {num(item.targets[y])}" for y in years)
-        return f"{unit} per year, {steps}"
+        steps = " · ".join(f"{y}: {num(item.targets[y], lang)}" for y in years)
+        return t(lang, "plan.per_year", unit=unit, steps=steps)
     if item.target_kind == "share":
-        return "no km target; " + ", ".join(f"{num(item.targets[y])} {unit} by {y}" for y in years)
-    return ", ".join(f"{num(item.targets[y])} {unit} by {y}" for y in years)
+        return f"{t(lang, 'plan.no_km_target')}; {by}"
+    return by
 
 
 def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
@@ -99,13 +98,32 @@ def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
     return {"name": org.name if org else name, "href": f"/organisations#{name}" if org else None}
 
 
-def row_view(r: ReportRow, current: bool, orgs: dict[str, Organisation]) -> dict:
+def note_in(note: str | None, lang: Lang, notes_de: dict[str, str] | None) -> tuple[str, bool]:
+    """(a report row's note in `lang`, whether it is the English one shown on a German page for
+    want of a German sibling in `notes_de`, config/plans/reports_notes_de.yaml)."""
+    if lang == "en" or not note:
+        return note or "", False
+    german = (notes_de or {}).get(note)
+    return (note, True) if german is None else (german, False)
+
+
+def row_view(
+    r: ReportRow,
+    current: bool,
+    orgs: dict[str, Organisation],
+    lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
+) -> dict:
+    note, note_fallback = note_in(r.note, lang, notes_de)
     return {
         "row": r,
-        "value": num(r.value),
-        "quantity": quantity_text(r),
-        "series": series_text(r),
-        "doc_type": DOC_TYPE[r.doc_type],
+        "note": note,
+        "note_fallback": note_fallback,
+        "value": num(r.value, lang),
+        "unit": t(lang, f"plan.unit.{r.unit}"),  # the stored unit, in `lang`
+        "quantity": quantity_text(r, lang),
+        "series": series_text(r, lang),
+        "doc_type": t(lang, f"plan.doc_type.{r.doc_type}"),
         "url": safe_url(r.url),
         "publisher": _publisher(r.publisher, orgs),
         "current": current,
@@ -132,15 +150,18 @@ def plans_table(
     rows: list[ReportRow],
     cities: list[tuple[str, str]],
     orgs: dict[str, Organisation],
+    lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
 ) -> list[dict]:
     """One entry per city (id, name) in the given order, each with its plans (none: a note on
-    the page). A plan shows every item that has a target or a reported figure, with the latest
-    current figure of each series; the plan with its own page shows only the items with a
-    target and their implemented figures, and links that page for the rest."""
+    the page); `notes_de` the German report-row notes. A plan shows every item that has a
+    target or a reported figure, with the latest current figure of each series; the plan with
+    its own page shows only the items with a target and their implemented figures, and links
+    that page for the rest."""
     out = []
     for city_id, name in cities:
         views = []
-        for plan in (p for p in plans if p.city == city_id):
+        for plan in (p.localised(lang) for p in plans if p.city == city_id):
             plan_rows = [r for r in rows if r.plan_id == plan.id]
             groups = current_and_revisions(plan_rows)
             detail = plan.city == DETAIL_CITY
@@ -158,16 +179,17 @@ def plans_table(
                 items.append(
                     {
                         "item": item,
-                        "target": target_text(item),
-                        "latest": [row_view(r, True, orgs) for r in latest],
+                        "target": target_text(item, lang),
+                        "latest": [row_view(r, True, orgs, lang, notes_de) for r in latest],
                     }
                 )
-            if plan.status == "current":
-                status = "current"
-            elif plan.successor:
-                status = f"{STATUS[plan.status]}; successor: {plan.successor}"
-            else:
-                status = f"{STATUS[plan.status]}; no successor found"
+            status = t(lang, f"plan.status.{plan.status}")
+            if plan.status != "current":
+                status += "; " + (
+                    t(lang, "plan.successor", successor=plan.successor)
+                    if plan.successor
+                    else t(lang, "plan.no_successor")
+                )
             views.append(
                 {
                     "plan": plan,
@@ -298,7 +320,10 @@ def _overlay_table(points: list[dict] | None, baseline: date) -> list[dict]:
     return out
 
 
-def _report_json(r: ReportRow, current: bool) -> dict:
+def _report_json(
+    r: ReportRow, current: bool, lang: Lang = "en", notes_de: dict[str, str] | None = None
+) -> dict:
+    note, note_fallback = note_in(r.note, lang, notes_de) if r.note else (r.note, False)
     return {
         "year": r.year,
         "value": r.value,
@@ -308,20 +333,23 @@ def _report_json(r: ReportRow, current: bool) -> dict:
         "quantity": r.quantity,
         "current": current,
         "suspect": r.suspect,
-        "note": r.note,
+        "note": note,
+        "note_fallback": note_fallback,  # the English note shown for want of a German one
     }
 
 
-def documents(rows: list[ReportRow], plan: Plan, orgs: dict[str, Organisation]) -> list[dict]:
+def documents(
+    rows: list[ReportRow], plan: Plan, orgs: dict[str, Organisation], lang: Lang = "en"
+) -> list[dict]:
     """The plan's progress documents, oldest first: type, number, date, what it reports, link."""
-    labels = {i.id: i.label.split(" (")[0] for i in plan.items}
+    labels = {i.id: i.label.split(" (")[0] for i in plan.localised(lang).items}
     docs: dict[tuple, dict] = {}
     for r in rows:
         d = docs.setdefault(
             (r.doc_date, r.doc_type, r.doc_id),
             {
                 "doc_id": r.doc_id,
-                "doc_type": DOC_TYPE[r.doc_type],
+                "doc_type": t(lang, f"plan.doc_type.{r.doc_type}"),
                 "doc_date": r.doc_date.isoformat(),
                 "url": safe_url(r.url),
                 "publisher": _publisher(r.publisher, orgs),
@@ -352,9 +380,12 @@ def berlin_context(
     overlay_rows: list[OverlayRow],
     dates: dict[int, str],
     projects: tuple[dict[str, dict[int, float]], int] | None,
+    lang: Lang = "en",
+    notes_de: dict[str, str] | None = None,
 ) -> dict:
     """Everything `/plans/berlin` shows: per item the chart config and its tables, the document
     table, and which overlay version and measures dataset the series come from."""
+    plan = plan.localised(lang)
     rows = [r for r in rows if r.plan_id == plan.id]
     groups = current_and_revisions(rows)
     version, latest = latest_overlay(overlay_rows)
@@ -368,12 +399,14 @@ def berlin_context(
         for key, (cur, revisions) in groups.items():
             if key[1] != item.id:
                 continue
-            views = [row_view(cur, True, orgs)] + [row_view(r, False, orgs) for r in revisions]
-            series.setdefault((QUANTITY_ORDER[key[3]], key[4] or 0, series_text(cur)), []).append(
-                (key[2], views)
-            )
+            views = [row_view(cur, True, orgs, lang, notes_de)]
+            views += [row_view(r, False, orgs, lang, notes_de) for r in revisions]
+            series.setdefault(
+                (QUANTITY_ORDER[key[3]], key[4] or 0, series_text(cur, lang)), []
+            ).append((key[2], views))
             if key[3] == "implemented_in_year":
-                reports += [_report_json(cur, True)] + [_report_json(r, False) for r in revisions]
+                reports += [_report_json(cur, True, lang, notes_de)]
+                reports += [_report_json(r, False, lang, notes_de) for r in revisions]
         overlay = _overlay_of(item.id, latest, dates)
         cfg = {
             "id": item.id,
@@ -392,7 +425,7 @@ def berlin_context(
         items.append(
             {
                 "item": item,
-                "target": target_text(item),
+                "target": target_text(item, lang),
                 "network": item.id in ITEM_NETWORK,
                 "has_overlay_class": ITEM_NETWORK.get(item.id, (None,))[0] is not None,
                 "yearly": [
@@ -425,7 +458,7 @@ def berlin_context(
         "url": safe_url(plan.url),
         "items": items,
         "config": {"items": config, "mapped_from": base_year, "overlay_version": version},
-        "documents": documents(rows, plan, orgs),
+        "documents": documents(rows, plan, orgs, lang),
         "overlay_version": version,
         "network_retrieved_at": network_retrieved,
         "base_year": base_year,

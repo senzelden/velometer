@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { SELECTOR, control, scan, tableFor, upgrade } from "../download-ui.js";
+import { FIXTURE, useLang } from "./strings-fixture.mjs";
+import { SELECTOR, control, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
+import { localised } from "../data.js";
+import { buildModel } from "../compare-model.js";
+import { t } from "../strings.js";
 
 // A fake DOM, enough for the control: elements with attributes, a dataset, children, after().
 // `matches` understands the selector forms SELECTOR uses ([a], [a=v], :not([a=v]), .c, commas),
@@ -216,4 +220,40 @@ test("a Stories download is titled from the step it shows (the one its descripti
     cite(fieldsAt(title, "2026-10-03T01:00:00Z"))); // fmt: skip
   page(h("div", {}, h("aside", {}, plot), h("article", {}, step("a", "A (Stories)"), step("b", "B (Stories)"))));
   assert.equal(metaOf(plot).title, "B (Stories)");
+});
+
+test("a German page's download: German source line and attribution, the name without de/", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  useLang("de");
+  const chart = h("div", { "data-chart": "city-tiers", "data-kind": "fua", "aria-label": "Stufen" });
+  chart.dataset = { chart: "city-tiers", kind: "fua" };
+  page(h("section", {}, chart, cite(fieldsAt("Krakau: Stufen", "2026-10-03T01:00:00Z"))));
+  const m = metaOf(chart);
+  assert.match(m.source, /OSM-Stand 2026-10-03 · Klassifikator v4/);
+  assert.equal(m.attribution, FIXTURE.de["js.download.attribution"]);
+  assert.match(m.attribution, /OpenStreetMap-Mitwirkende/);
+  useLang("en");
+  assert.match(metaOf(chart).source, /OSM 2026-10-03 · classifier v4/);
+  const at = (pathname) => ({ pathname, search: "" });
+  const de = nameOf(chart, "png", at("/velometer/de/city/krakow/tiers"), "/velometer/");
+  const en = nameOf(chart, "png", at("/velometer/city/krakow/tiers"), "/velometer/");
+  assert.equal(de, en);
+  assert.equal(en, "velometer-city-krakow-tiers-city-tiers-fua.png");
+  assert.equal(nameOf(chart, "png", at("/de/"), "/"), nameOf(chart, "png", at("/"), "/"));
+});
+
+test("a German chart title names the city as the localised series does (Krakau)", () => {
+  useLang("de");
+  const D = localised({
+    cities: { krakow: { id: "krakow", name: "Kraków", name_de: "Krakau", population: 1 } },
+    series: { "krakow/lau": [{ label: "2019", headline: 2, flags: "" }] },
+  }, "de");
+  const model = buildModel(D, { c: ["krakow"], hl: [], m: "headline", b: "lau", mode: "abs" });
+  const title = t("js.compare.cite_title", {
+    heading: "Kennzahl", cities: model.series.map((s) => s.name).join(", "),
+  });
+  const container = Object.assign(make("div", { "data-compare-chart": "" }), { querySelectorAll: () => [] });
+  assert.ok(titleOf(container, { title }).includes("Krakau"));
+  assert.ok(!titleOf(container, { title }).includes("Kraków"));
+  useLang("en");
 });

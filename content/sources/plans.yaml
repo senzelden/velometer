@@ -4,7 +4,9 @@ sources:
   # page-level check is logged in docs/review/m8-plans.md.
   - id: berlin-radverkehrsplan-vo19-013
     publisher: Abgeordnetenhaus Berlin (Vorlage zur Kenntnisnahme of the Senatsverwaltung für Umwelt, Verkehr und Klimaschutz)
+    publisher_de: "Abgeordnetenhaus Berlin (Vorlage zur Kenntnisnahme der Senatsverwaltung für Umwelt, Verkehr und Klimaschutz)"
     title: "Vorlage zur Kenntnisnahme vo19-013: Verordnung über Radverkehrsplan des Landes Berlin vom 16. November 2021 (with the Radverkehrsplan as Anlage)"
+    title_de: "Vorlage zur Kenntnisnahme vo19-013: Verordnung über Radverkehrsplan des Landes Berlin vom 16. November 2021 (mit dem Radverkehrsplan als Anlage)"
     url: https://www.parlament-berlin.de/ados/19/IIIPlen/vorgang/verordnungen/vo19-013.pdf
     published: 2021-11-16
     accessed: 2026-10-07
@@ -21,7 +23,9 @@ sources:
         locator: "PDF p. 42 (plan p. 21), 2.3.4.1 Ausbaupfade, text below Tabelle 7"
   - id: berlin-drs-19-27049
     publisher: Abgeordnetenhaus Berlin (answer of the Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)
+    publisher_de: "Abgeordnetenhaus Berlin (Antwort der Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt)"
     title: "Schriftliche Anfrage 19/27049: Verkehrspolitische Bilanz des Senats (answer of 14 September 2026)"
+    title_de: "Schriftliche Anfrage 19/27049: Verkehrspolitische Bilanz des Senats (Antwort vom 14. September 2026)"
     url: https://pardok.parlament-berlin.de/starweb/adis/citat/VT/19/SchrAnfr/S19-27049.pdf
     published: 2026-09-14
     accessed: 2026-10-07
@@ -43,6 +47,7 @@ sources:
   - id: berlin-fortschrittsbericht-2021
     publisher: Senatsverwaltung für Umwelt, Mobilität, Verbraucher- und Klimaschutz (SenUMVK)
     title: "Fahrrad Berlin – Fortschrittsbericht 2021 (Hauptausschuss report rote Nr. 0389 A of 5 July 2022)"
+    title_de: "Fahrrad Berlin – Fortschrittsbericht 2021 (Bericht an den Hauptausschuss, rote Nr. 0389 A vom 5. Juli 2022)"
     url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-0389.A-v.pdf
     published: 2022-07-05
     accessed: 2026-10-07
@@ -56,6 +61,7 @@ sources:
   - id: berlin-fortschrittsbericht-2022
     publisher: Der Senat von Berlin (SenUMVK)
     title: "Fahrrad Berlin – Fortschrittsbericht 2022 (Hauptausschuss report rote Nr. 1064 of 27 June 2023)"
+    title_de: "Fahrrad Berlin – Fortschrittsbericht 2022 (Bericht an den Hauptausschuss, rote Nr. 1064 vom 27. Juni 2023)"
     url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1064-v.pdf
     published: 2023-06-27
     accessed: 2026-10-07
@@ -69,6 +75,7 @@ sources:
   - id: berlin-fortschrittsbericht-2023
     publisher: Der Senat von Berlin (SenMVKU)
     title: "Fahrrad Berlin – Fortschrittsbericht 2023 (Hauptausschuss report rote Nr. 1733 B-1 of 28 January 2025, replacement version of 1733 B; scanned PDF, excerpt transcribed from the page image)"
+    title_de: "Fahrrad Berlin – Fortschrittsbericht 2023 (Bericht an den Hauptausschuss, rote Nr. 1733 B-1 vom 28. Januar 2025, Austauschfassung von 1733 B; gescanntes PDF, Auszug vom Seitenbild abgeschrieben)"
     url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-1733.B-1-v.pdf
     published: 2025-01-28
     accessed: 2026-10-07
@@ -81,7 +88,9 @@ sources:
         locator: "PDF p. 8 (report p. 6), 2.1.2 Umsetzung des Berliner Radverkehrsnetzes"
   - id: berlin-gdi-radverkehrsmassnahmen
     publisher: Land Berlin, Geoportal (gdi.berlin.de); data from GB infraVelo GmbH
+    publisher_de: "Land Berlin, Geoportal (gdi.berlin.de); Daten der GB infraVelo GmbH"
     title: "Radverkehrsmaßnahmen (seit 2021), WFS service metadata record (publication date 2026-09-08)"
+    title_de: "Radverkehrsmaßnahmen (seit 2021), Metadatensatz des WFS-Dienstes (Veröffentlichungsdatum 8. September 2026)"
     url: https://gdi.berlin.de/geonetwork/srv/api/records/9093d642-e2c4-4cb6-9798-4d1e3f12f3bf
     published: 2026-09-08
     accessed: 2026-10-07

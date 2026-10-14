@@ -5,6 +5,9 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 `reconcile.reconcile_city` and `pipeline.measure.select_metric`.
 """
 
+import copy
+import csv
+import functools
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -40,6 +43,7 @@ from velometer.db import (
     subarea_names,
     subarea_rows,
 )
+from velometer.i18n import Lang, t
 from velometer.models import City, ExternalFigure
 from velometer.pipeline.measure import SubareaMeasure, compute_metrics, select_metric
 from velometer.selection import report_selector, trusted_countries
@@ -53,6 +57,14 @@ ROAD_CLASS_TEXT = {
     "main_incl_motorway_raw": "main roads (incl. motorways, per carriageway)",
     "all_public": "all public roads",
 }
+
+
+def headline_unit(lang: Lang = "en") -> str:
+    """The headline's unit in words (`unit.headline` of the UI catalogue)."""
+    return t(lang, "unit.preset", tiers="A+B", road_class=t(lang, "road_class.main_excl_motorway"))
+
+
+# the CLI's English forms; tests/test_ui_strings.py keeps them equal to the English catalogue
 HEADLINE_UNIT = f"A+B km per 100 km of {ROAD_CLASS_TEXT['main_excl_motorway']}"
 
 
@@ -103,6 +115,40 @@ class RankingRow(_Frozen):
     value: float | None
     rank: int | None  # None: no figure from this source
     n_ranked: int  # cities with a value in this source
+
+
+def figure_notes_de(config_dir: Path) -> dict[str, str]:
+    """The notes of `_figure_notes_de`, re-read when figures.csv changes (path, mtime, size)."""
+    path = Path(config_dir) / "external" / "figures.csv"
+    try:
+        st = path.stat()
+    except OSError as e:
+        raise ConfigError(f"{path}: {e}") from e
+    return _figure_notes_de(str(path), st.st_mtime_ns, st.st_size)
+
+
+@functools.lru_cache(maxsize=8)
+def _figure_notes_de(path: str, mtime_ns: int, size: int) -> dict[str, str]:
+    """English note -> German note of config/external/figures.csv (the stored figures keep the
+    English note). ConfigError naming the row for a note without a German one, or for one
+    English note given two German ones."""
+    del mtime_ns, size  # cache-key parts only: an edited file reads fresh
+    path = Path(path)
+    out: dict[str, str] = {}
+    try:
+        with path.open(newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except OSError as e:
+        raise ConfigError(f"{path}: {e}") from e
+    for line, row in enumerate(rows, start=2):
+        note, de = row.get("note") or "", (row.get("note_de") or "").strip()
+        if not note:
+            continue
+        if not de:
+            raise ConfigError(f"{path}: row {line}: note_de is required beside note")
+        if out.setdefault(note, de) != de:
+            raise ConfigError(f"{path}: row {line}: note_de differs from an earlier row's")
+    return out
 
 
 def open_readonly(db_path: Path) -> sqlite3.Connection:
@@ -169,8 +215,9 @@ def _fmt(v: float | None) -> str:
 class ReportData:
     """Read-only report queries over an open connection and the config directory."""
 
-    def __init__(self, conn: sqlite3.Connection, config_dir: Path):
+    def __init__(self, conn: sqlite3.Connection, config_dir: Path, lang: Lang = "en"):
         self.conn = conn
+        self.lang: Lang = lang  # the page language the display text is built in (M12)
         self.config_dir = Path(config_dir)
         self.selector = report_selector(self.config_dir)
         self.report_config = load_report(
@@ -185,15 +232,31 @@ class ReportData:
         self._city_config: dict[str, dict] | None = None
         self._series: dict[tuple[str, str], ts.CitySeries | None] = {}
 
+    def with_lang(self, lang: Lang) -> "ReportData":
+        """This data in `lang`: a shallow copy sharing the connection, the loaded config and the
+        series (numbers, the same in every language), with the caches that hold display text
+        (cities and their names, the city config) reset."""
+        if lang == self.lang:
+            return self
+        other = copy.copy(self)
+        other.lang = lang
+        other._cities = other._all_cities = other._city_config = None
+        return other
+
     def preset_labels(self) -> dict[str, str]:
-        """Each preset's label, from its `kind: preset` ranking in report.yaml ("velometer
-        headline", "<method>, our OSM data"): these are our values on a publisher's method, never
-        the published figure. A preset without a ranking falls back to "<id>, our OSM data"."""
+        """Each preset's label in the data's language, from its `kind: preset` ranking in
+        report.yaml ("velometer headline", "<method>, our OSM data"): these are our values on a
+        publisher's method, never the published figure. A preset without a ranking falls back to
+        "<id>, our OSM data"."""
+        lang = self.lang
         labels = {
-            r.preset: r.label for r in self.report_config.rankings if isinstance(r, PresetRanking)
+            r.preset: r.label_in(lang)
+            for r in self.report_config.rankings
+            if isinstance(r, PresetRanking)
         }
         return {
-            p.id: labels.get(p.id, f"{p.id}, our OSM data") for p in self.selector.presets.presets
+            p.id: labels.get(p.id) or t(lang, "preset.fallback_label", preset=p.id)
+            for p in self.selector.presets.presets
         }
 
     def preset_sources(self) -> dict[str, str | None]:
@@ -206,16 +269,36 @@ class ReportData:
         return {p.id: sources.get(p.id) for p in self.selector.presets.presets}
 
     def preset_units(self) -> dict[str, str]:
-        """What each preset's value measures: its tiers' km per 100 km of its own denominator."""
+        """What each preset's value measures: its tiers' km per 100 km of its own denominator,
+        in the data's language."""
+        lang = self.lang
         return {
-            p.id: f"{'+'.join(p.tiers)} km per 100 km of {ROAD_CLASS_TEXT[p.denominator]}"
+            p.id: t(
+                lang,
+                "unit.preset",
+                tiers="+".join(p.tiers),
+                road_class=t(lang, f"road_class.{p.denominator}"),
+            )
             for p in self.selector.presets.presets
         }
 
     def all_cities(self) -> list[City]:
-        """Every city in the database, trusted or not (only `results` shows the difference)."""
+        """Every city in the database, trusted or not (only `results` shows the difference),
+        named in the data's language (config/cities.yaml `name_de` on German pages), each with
+        every form of its name in `names`."""
         if self._all_cities is None:
-            self._all_cities = fetch_cities(self.conn)
+            configs = {c.id: c for c in load_cities(self.config_dir / "cities.yaml")}
+            out = []
+            for c in fetch_cities(self.conn):
+                cfg = configs.get(c.id)
+                if cfg is None:
+                    out.append(c.model_copy(update={"names": (c.name,)}))
+                    continue
+                names = tuple(dict.fromkeys([c.name, *cfg.names]))
+                # German: the exonym, else exactly the name English shows (the database's)
+                name = (cfg.name_de or c.name) if self.lang == "de" else c.name
+                out.append(c.model_copy(update={"name": name, "names": names}))
+            self._all_cities = out
         return self._all_cities
 
     def cities(self) -> list[City]:
@@ -266,7 +349,7 @@ class ReportData:
 
     def flags(self, city_id: str, kind: str) -> list[ts.Flag]:
         cs = self.series(city_id, kind)
-        return [] if cs is None else ts.city_flags(cs, self.activity)
+        return [] if cs is None else ts.city_flags(cs, self.activity, self.lang)
 
     def reconcile(self, city_id: str) -> rc.CityReport | None:
         sel = self.selector
@@ -279,6 +362,7 @@ class ReportData:
             classifier_parameters=sel.parameters,
             config_sha256=sel.config_sha256,
             presets=sel.presets,
+            lang=self.lang,
         )
 
     # --- rankings -----------------------------------------------------------------------
@@ -293,8 +377,9 @@ class ReportData:
 
     def reported_figures(self, city_id: str) -> list[ExternalFigure]:
         """Every external figure but the three comparison layers, oldest reference date first
-        (undated last); each keeps its own scope, basis and source."""
-        return sorted(
+        (undated last); each keeps its own scope, basis and source. On German pages the note is
+        the German one of figures.csv (`figure_notes_de`)."""
+        figures = sorted(
             (
                 f
                 for f in fetch_external_figures(self.conn, city_id)
@@ -302,6 +387,23 @@ class ReportData:
             ),
             key=lambda f: (f.reference_date is None, f.reference_date or date.min),
         )
+        if self.lang != "de":
+            return figures
+        return [f.model_copy(update={"note": self.note_in_lang(f.note)[0]}) for f in figures]
+
+    def note_in_lang(self, note: str) -> tuple[str, bool]:
+        """(a stored figure's note in the data's language, whether it is the English one shown
+        for want of a German sibling). German notes are figures.csv's `note_de`, and the German
+        of a note the QECIO or BikeNetKit loader generated (`external.note_de`); any other note
+        stays English."""
+        if self.lang != "de" or not note:
+            return note, False
+        german = figure_notes_de(self.config_dir).get(note)
+        if german is None:
+            from velometer.sources.external import note_de
+
+            german = note_de(note, load_cities(self.config_dir / "cities.yaml"))
+        return (note, True) if german is None else (german, False)
 
     def _ranking_values(self, ranking) -> dict[str, float]:
         out: dict[str, float] = {}
@@ -380,11 +482,10 @@ class ReportData:
             ]
         return out
 
-    @staticmethod
-    def _ranking_row(ranking, city_id, value, rank, n) -> RankingRow:
+    def _ranking_row(self, ranking, city_id, value, rank, n) -> RankingRow:
         return RankingRow(
             source_id=ranking.id,
-            source_label=ranking.label,
+            source_label=ranking.label_in(self.lang),
             city_id=city_id,
             value=value,
             rank=rank,
@@ -413,11 +514,12 @@ class ReportData:
             return False
         return bool(self.city_fields().get(city_id, {}).get("subareas"))
 
-    def _subarea_names(self, city_id: str) -> dict[str, str]:
-        """Display name by subarea_id, including the remainder's label (`remainder_label`)."""
+    def _subarea_names(self, city_id: str, lang: Lang = "en") -> dict[str, str]:
+        """Display name by subarea_id, including the remainder's label (`remainder_label`) in
+        `lang`."""
         n = len(self.city_fields()[city_id]["subareas"]["relations"])
         names = subarea_names(self.conn, city_id)
-        return {**names, REMAINDER_ID: remainder_label(n)}
+        return {**names, REMAINDER_ID: remainder_label(n, lang=lang)}
 
     def _headline(self, tiers, roads) -> float | None:
         metrics = compute_metrics(SubareaMeasure(tiers, roads), self.selector.presets.presets)
@@ -433,7 +535,7 @@ class ReportData:
         parts = {} if run_id is None else subarea_rows(self.conn, run_id)
         if not parts:
             return None
-        names = self._subarea_names(city_id)
+        names = self._subarea_names(city_id, self.lang)
         rows = []
         for sid, (tiers, roads) in parts.items():
             km = {
@@ -482,9 +584,9 @@ class ReportData:
                 parts.items(), key=lambda kv: (kv[0] == REMAINDER_ID, kv[0])
             ):
                 km: dict[tuple[str, str], float] = {}
-                for t in tiers:
-                    key = (t.tier, t.length_basis)
-                    km[key] = km.get(key, 0.0) + t.length_km
+                for row in tiers:
+                    key = (row.tier, row.length_basis)
+                    km[key] = km.get(key, 0.0) + row.length_km
                 for (tier, basis), length in sorted(km.items()):
                     out.append(
                         {

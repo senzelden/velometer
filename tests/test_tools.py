@@ -50,13 +50,15 @@ def test_axe_is_never_served_or_exported(rich, tmp_path):  # noqa: F811
 
 
 def test_page_urls_finds_every_exported_page(rp, tmp_path):
-    for rel in ["index.html", "cities/index.html", "city/berlin/tiers/index.html", "404.html"]:
+    for rel in ["index.html", "cities/index.html", "city/berlin/tiers/index.html", "404.html",
+                "de/index.html", "de/city/berlin/tiers/index.html"]:  # fmt: skip
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / rel).write_text("<html></html>")
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / "x.csv").write_text("a")
     urls = rp.page_urls(tmp_path, "/velometer/")
-    assert urls == ["/velometer/", "/velometer/cities", "/velometer/city/berlin/tiers"]
+    assert urls == ["/velometer/", "/velometer/cities", "/velometer/city/berlin/tiers",
+                    "/velometer/de", "/velometer/de/city/berlin/tiers"]  # fmt: skip
 
 
 def test_page_urls_skips_fragments(rp, tmp_path):
@@ -82,6 +84,98 @@ def test_type_urls_keeps_berlin_and_the_first_city_with_other_tabs(rp):
     assert cities == {"berlin", "amsterdam"}
     assert {b, b + "plans", b + "plans/berlin", b + "city/berlin/counts"} <= set(kept)
     assert len(kept) == 3 + 3 + 2
+
+
+def test_type_urls_types_the_german_city_pages_too(rp):
+    # the German twins are typed the same way: Berlin's tabs and the first city with other tabs,
+    # never every German city page as an untyped one
+    b = "/velometer/"
+    urls = [b, b + "de", b + "de/plans"]
+    for pre in ("", "de/"):
+        for slug, tabs in [("amsterdam", ["", "/time"]), ("berlin", ["", "/time", "/counts"]),
+                           ("bordeaux", ["", "/time"])]:  # fmt: skip
+            urls += [f"{b}{pre}city/{slug}{t}" for t in tabs]
+    kept = set(rp.type_urls(sorted(urls), b))
+    de_cities = {u.split("/")[4] for u in kept if u.startswith(b + "de/city/")}
+    assert de_cities == {"berlin", "amsterdam"}
+    assert {b + "de", b + "de/plans", b + "de/city/berlin/counts", b + "de/city/amsterdam"} <= kept
+    assert len(kept) == 3 + 2 * (3 + 2)
+
+
+def test_lang_of_is_de_under_the_german_tree_only(rp):
+    b = "/velometer/"
+    assert [rp.lang_of(b + p, b) for p in ("de", "de/city/berlin", "de?x=1", "")] == ["de"] * 3 + [
+        "en"
+    ]
+    assert rp.lang_of(b + "designs", b) == "en" and rp.lang_of(b + "city/de", b) == "en"
+    assert rp.lang_of(b + "methodology/de", b) == "de"  # the legacy German methodology
+
+
+class _FakeTab:
+    """Answers render-pass page scripts from a table: the expression's constant name -> value."""
+
+    def __init__(self, rp, html="", lang="de", labels=(), fallback=0, frag=None, bad=()):
+        self.answers = {
+            "document.documentElement.outerHTML": html,
+            "document.documentElement.getAttribute('lang')": lang,
+            rp.LABELS_JS: list(labels),
+            "document.querySelectorAll('[data-fallback]').length": fallback,
+            rp.FRAGMENT_LANG_JS: frag,
+            rp.ALTERNATES_JS: {"n": 2, "bad": list(bad)},
+        }
+
+    def js(self, expr, await_promise=False):
+        return self.answers[expr]
+
+
+def test_lang_checks_want_de_under_de_and_resolving_alternates(rp):
+    b = "/velometer/"
+    assert rp._lang_checks(_FakeTab(rp, lang="de"), b + "de/cities", b) == []
+    assert rp._lang_checks(_FakeTab(rp, lang="en"), b + "cities", b) == []
+    (wrong,) = rp._lang_checks(_FakeTab(rp, lang="en"), b + "de/cities", b)
+    assert "<html lang> is 'en', want 'de'" in wrong
+    (alt,) = rp._lang_checks(_FakeTab(rp, lang="en", bad=["/velometer/de/x (HTTP 404)"]), b, b)
+    assert alt == "an alternate link does not resolve: /velometer/de/x (HTTP 404)"
+    tab = _FakeTab(rp, lang="de", frag="en")
+    (frag,) = rp._lang_checks(tab, b + "de/compare", b, fragment=True)
+    assert "the panel fragment's lang is 'en', want 'de'" in frag
+    assert rp._lang_checks(_FakeTab(rp, lang="de", frag="de"), b + "de/compare", b, True) == []
+
+
+def test_english_leak_reads_text_labels_phrases_words_and_fallbacks(rp):
+    phrase = rp._leak_phrases()[0]
+    clean = '<html lang="de"><body><p>Deutscher Text</p><p lang="en">the English quote</p></body>'
+    assert rp._english_leak(_FakeTab(rp, html=clean + "</html>"), "/de") == []
+    leak = clean + f"<p>{phrase}</p></html>"
+    errors = rp._english_leak(_FakeTab(rp, html=leak), "/de")
+    assert any(f"English phrase on a German page: {phrase!r}" in e for e in errors), errors
+    (words,) = rp._english_leak(_FakeTab(rp, html=clean, labels=["Download the chart"]), "/de")
+    assert "English words on a German page: Download" not in words and "the" in words
+    (fb,) = rp._english_leak(_FakeTab(rp, html=clean, fallback=2), "/de")
+    assert "2 element(s) marked data-fallback" in fb
+
+
+def test_csv_errors_want_the_german_header_and_dot_decimals(rp):
+    pre = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km\r\n# x\r\n"
+    head = ["Stand", "A baulich getrennter Radweg"]
+    good = pre + 'Stand,A baulich getrennter Radweg\r\n"Jan. 2019",12.5\r\n'
+    assert rp._csv_errors(good, head, "de") == []
+    assert rp._csv_errors(good.replace("# Map", "# Karte"), head, "de")  # the English preamble
+    english = pre + "Snapshot,A separated track\r\n2019,12.5\r\n"
+    assert any("not the table's" in e for e in rp._csv_errors(english, head, "de"))
+    comma = pre + 'Stand,A baulich getrennter Radweg\r\n2019,"12,5"\r\n'
+    assert any("dot-decimal" in e for e in rp._csv_errors(comma, head, "de"))
+    assert rp._csv_errors(english, None, "en") == []
+    # cells, not lines: one comma-decimal cell beside dot decimals fails, a year beside a dot
+    # decimal passes
+    mixed = pre + 'Stand,A baulich getrennter Radweg,B\r\n"Jan. 2018",1.5,"2,5"\r\n'
+    assert any("dot-decimal" in e for e in rp._csv_errors(mixed, [*head, "B"], "de"))
+    year = pre + "Stand,A baulich getrennter Radweg\r\n2018,1.5\r\n"
+    assert rp._csv_errors(year, head, "de") == []
+    no_dot = pre + 'Stand,A baulich getrennter Radweg\r\n"Jan. 2019",12\r\n'
+    assert any("dot-decimal" in e for e in rp._csv_errors(no_dot, head, "de"))
+    # a German CSV is held to the table's header: no table found is a finding, not a skip
+    assert any("no table" in e for e in rp._csv_errors(good, None, "de"))
 
 
 # --- run rules that need no browser ---
@@ -260,9 +354,25 @@ def test_a_missing_page_and_a_load_that_never_fires_are_findings(rp, tmp_path, m
     assert code == 1
 
 
+def _stamped_german_explanations(docs: Path) -> None:
+    """A stamped German twin of the fixture's flagged-year explanations, as the shipped docs
+    have one: without it the German Over time tab shows English (data-fallback)."""
+    from velometer import timeseries as ts
+
+    en = docs / "review" / "m3_timeseries.md"
+    de = ts.german_explanations(en)
+    de.write_text(
+        "# M3 Zeitreihe\n\n## Erklärungen\n\n### berlin/lau/2025\n\nFixture-Ursache: ein "
+        "Ausschlag von 50 Bearbeitungen.\n\n### paris/lau/2020\n\nKein Fixture-Hinweis.\n"
+    )
+    assert ts.stamp_explanations(en, de) == 2
+
+
 @pytest.mark.slow
 @needs_chrome
-def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path):  # noqa: F811
+def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(rp, "DE_SEARCH", ("berlin", "de/city/berlin"))  # the fixture's cities
+    _stamped_german_explanations(rich[3])
     site = tmp_path / "velometer"
     _export(rich, site, base="/velometer/")
     _, res = _run(
@@ -270,13 +380,23 @@ def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path):  #
         "--themes", "light,dark",
     )  # fmt: skip
     # --interact runs, per theme and width, the city panel and the M11 cite, download and
-    # permalinks visits; every one must come back without an error
-    visits = ["(city panel)", "(cite)", "(download)", "permalinks"]
-    want = [(v, th, w) for v in visits for th in ("light", "dark") for w in (1280, 390)]
-    got = [(next(v for v in visits if v in r["url"]), r["theme"], r["width"]) for r in res]
+    # permalinks visits, in English and (M12) in German, and the German search and switch;
+    # every one must come back without an error
+    visits = ["(city panel)", "(cite)", "(download)", "permalinks", "(search, switch)"]
+    pages = [*visits, "/de/" + "(cite)", "/de/" + "(download)", "/de/" + "permalinks"]
+    want = [(v, th, w) for v in pages for th in ("light", "dark") for w in (1280, 390)]
+
+    def kind(url):
+        v = next(v for v in visits if v in url)
+        return "/de/" + v if "/de/city/" in url or url.endswith("/de/permalinks") else v
+
+    got = [(kind(r["url"]), r["theme"], r["width"]) for r in res]
     assert sorted(got) == sorted(want)
     for r in res:
         assert r["errors"] == [], (r["url"], r["theme"], r["width"], r["errors"])
+        if "steps" in r:  # the German search and switch: steps, no page audit
+            assert r["steps"] and all(x.startswith("ok") for x in r["steps"]), r["steps"]
+            continue
         assert r["screenshot"] and Path(r["screenshot"]).is_file(), r["url"]
         assert isinstance(r["axe"], list)
 
@@ -320,17 +440,59 @@ def test_a_failed_cite_download_or_permalink_step_fails_the_run(rp, tmp_path, mo
     monkeypatch.setattr(rp, "chrome", lambda binary: contextlib.nullcontext("http://d"))
     failing = [True]
 
-    def fake(devtools, origin, base, theme, width, shots):
+    def fake(devtools, origin, base, theme, width, shots, lang="en"):
         return rp.entry(base + step, theme, width, "interact",
                         errors=["step failed"] if failing[0] else [])  # fmt: skip
 
     ok = lambda *a, **k: rp.entry("x", "light", 1280, "interact")  # noqa: E731
     for name in ("interact", "interact_cite", "interact_download", "interact_permalink"):
         monkeypatch.setattr(rp, name, ok)
+    monkeypatch.setattr(rp, "_de_search", lambda *a: None)
+    monkeypatch.setattr(rp, "_de_switch", lambda *a: None)
     monkeypatch.setattr(rp, f"interact_{step}", fake)
     args = ["--site", str(site), "--out", str(tmp_path / "out"), "--pages", "", "--interact"]
     args += ["--themes", "light", "--widths", "1280"]
     assert rp.main(args) == 1
+    failing[0] = False
+    assert rp.main(args) == 0
+
+
+@pytest.mark.parametrize("part", ["cite", "download", "permalink", "search", "switch"])
+def test_a_failed_german_interaction_fails_the_run(rp, tmp_path, monkeypatch, part):
+    site = _site(tmp_path, {"": "<p>x</p>"})
+    monkeypatch.setattr(rp, "find_chrome", lambda path: path)
+    monkeypatch.setattr(rp, "serve", lambda site, base: contextlib.nullcontext("http://x"))
+    monkeypatch.setattr(rp, "chrome", lambda binary: contextlib.nullcontext("http://d"))
+    failing = [True]
+    langs = []
+
+    def visit_kind(name):
+        def run(devtools, origin, base, theme, width, shots, lang="en"):
+            langs.append((name, lang))
+            bad = failing[0] and name == part and lang == "de"
+            return rp.entry(base + name, theme, width, "interact", errors=["no"] if bad else [])
+
+        return run
+
+    def step(name):
+        def run(devtools, origin, base, theme, width, st):
+            st.check(f"de {name}", "failed" if failing[0] and name == part else None)
+
+        return run
+
+    monkeypatch.setattr(rp, "interact", lambda *a, **k: rp.entry("x", "light", 1280, "interact"))
+    for name in ("cite", "download", "permalink"):
+        monkeypatch.setattr(rp, f"interact_{name}", visit_kind(name))
+    monkeypatch.setattr(rp, "_de_search", step("search"))
+    monkeypatch.setattr(rp, "_de_switch", step("switch"))
+    out = tmp_path / "out"
+    args = ["--site", str(site), "--out", str(out), "--pages", "", "--interact"]
+    args += ["--themes", "light", "--widths", "1280"]
+    assert rp.main(args) == 1
+    # the German cite, download and permalink visits run in German beside the English ones
+    assert {("cite", "de"), ("download", "de"), ("permalink", "de")} <= set(langs)
+    last = json.loads((out / "results.json").read_text())[-1]
+    assert last["url"].endswith("de (search, switch)") and len(last["steps"]) == 2
     failing[0] = False
     assert rp.main(args) == 0
 
@@ -360,3 +522,31 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
         lines = [x for x in r["steps"] if needle in x]
         assert lines and all(x.startswith("ok") for x in lines), (needle, lines)
     assert code == 0
+
+
+def test_a_page_visit_runs_the_language_checks_and_the_leak_step_on_german_pages(
+    rp, tmp_path, monkeypatch
+):
+    class Tab:
+        events: list = []
+
+        def pump(self, s):
+            pass
+
+        def js(self, expr, await_promise=False):
+            return []
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(rp, "open_tab", lambda devtools, width, theme: Tab())
+    monkeypatch.setattr(rp, "navigate", lambda t, url: [])
+    monkeypatch.setattr(rp, "screenshot", lambda t, path, width: str(path))
+    monkeypatch.setattr(rp, "audit", lambda t: [])
+    monkeypatch.setattr(rp, "_lang_checks", lambda t, url, base, fragment=False: [f"lang {url}"])
+    monkeypatch.setattr(rp, "_english_leak", lambda t, url: [f"leak {url}"])
+    b = "/velometer/"
+    de = rp.visit("d", "o", b + "de/cities", "light", 1280, tmp_path, b)
+    assert de["errors"] == [f"lang {b}de/cities", f"leak {b}de/cities"]
+    en = rp.visit("d", "o", b + "cities", "light", 1280, tmp_path, b)
+    assert en["errors"] == [f"lang {b}cities"]  # no leak step on an English page

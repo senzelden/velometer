@@ -12,6 +12,10 @@ same classification pass:
 
 A `.run` marker next to them holds the run id they were made from, so an unchanged run is not
 redrawn; a missing PNG or GeoJSON is.
+
+The German edition (M12) has its own image, `<city>_<kind>.de.png` with its own `.de.run`
+marker: the same drawing with the German title, legend and footer. Writing it never touches the
+English PNG, the GeoJSON or their marker.
 """
 
 import json
@@ -33,13 +37,14 @@ from shapely.prepared import prep  # noqa: E402
 
 from velometer.config import ConfigError, load_cities, load_classifier  # noqa: E402
 from velometer.db import fetch_boundary, fetch_run  # noqa: E402
+from velometer.i18n import Lang, t  # noqa: E402
 from velometer.pipeline.classify import classify_ways  # noqa: E402
 from velometer.pipeline.extract import snapshot_name  # noqa: E402
 from velometer.pipeline.geometry import Projector, length_km  # noqa: E402
 from velometer.pipeline.measure import clipped_length_km  # noqa: E402
 from velometer.pipeline.read import read_ways  # noqa: E402
 from velometer.pipeline.types import Classified  # noqa: E402
-from velometer.report.charts import INK_2, OUTLINE, TIER_COLOURS, TIER_LABEL  # noqa: E402
+from velometer.report.charts import INK_2, OUTLINE, TIER_COLOURS  # noqa: E402
 from velometer.report.data import ReportData  # noqa: E402
 from velometer.sources.boundaries import load_boundary_polygon  # noqa: E402
 
@@ -50,6 +55,9 @@ DECIMALS = 5  # ~1 m at these latitudes: plenty for a zoomable map, a third fewe
 TAG_KEYS = frozenset({"highway", "bicycle", "foot", "segregated", "bicycle_road", "cyclestreet"})
 TAG_PREFIXES = ("cycleway", "oneway")
 DPI = 150
+LEGEND_RIGHT = 0.74  # the axes' right edge (figure fraction); the legend sits right of it
+LEGEND_PAD = 0.01  # the margin kept between the legend and the figure's right edge
+# ODBL, MAPPED_KM: kept as the English-footer guard test_maps reads; equal to the English catalogue
 ODBL = "Map data © OpenStreetMap contributors, ODbL 1.0"
 MAPPED_KM = "OSM mapped km, not built km"  # ADR 0006
 
@@ -222,7 +230,9 @@ def _epsg(config_dir: Path, city_id: str) -> int:
     raise ConfigError(f"city {city_id} is not in cities.yaml")
 
 
-def _draw(sides, outline, title: str, footer: str, out: Path) -> None:
+def _draw(sides, outline, title: str, footer: str, out: Path, labels: Mapping[str, str]) -> None:
+    """The PNG: the outline, the sides per tier, `title`, the legend of the tier `labels` and
+    the `footer`, in whatever language they are given."""
     fig, ax = plt.subplots(figsize=(9, 9))
     if outline is not None:
         for poly in getattr(outline, "geoms", [outline]):
@@ -238,35 +248,57 @@ def _draw(sides, outline, title: str, footer: str, out: Path) -> None:
     ax.axis("off")
     ax.set_title(title, loc="left", fontsize=14)
     handles = [
-        Line2D([], [], color=TIER_COLOURS[i], linewidth=2.5, label=TIER_LABEL[t])
-        for i, t in enumerate(TIERS)
+        Line2D([], [], color=TIER_COLOURS[i], linewidth=2.5, label=labels[tier])
+        for i, tier in enumerate(TIERS)
     ]
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0), frameon=False,
-              fontsize=9)  # fmt: skip
+    legend = ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0),
+                       frameon=False, fontsize=9)  # fmt: skip
     fig.text(0.02, 0.015, footer, fontsize=8, color=INK_2, va="bottom")
     # the legend sits right of the axes: leave room for its longest label inside the figure
-    fig.subplots_adjust(left=0.02, right=0.74, top=0.94, bottom=0.07)
+    fig.subplots_adjust(left=0.02, right=LEGEND_RIGHT, top=0.94, bottom=0.07)
+    fig.canvas.draw()
+    over = legend.get_window_extent().x1 - fig.bbox.x1 * (1 - LEGEND_PAD)
+    if over > 0:  # longer labels (the German ones): narrow the axes until the legend fits
+        fig.subplots_adjust(right=LEGEND_RIGHT - over / fig.bbox.width)
     plt.savefig(out, dpi=DPI)
     plt.close(fig)
 
 
-def up_to_date(maps_dir: Path, city_id: str, kind: str, run_id: int) -> bool:
-    """True when the PNG and GeoJSON exist and their marker names `run_id`."""
-    stem = Path(maps_dir) / f"{city_id}_{kind}"
-    marker = stem.with_suffix(".run")
+def _files(maps_dir: Path, city_id: str, kind: str, lang: Lang) -> tuple[Path, Path]:
+    """(PNG, run marker) of a language's image: `<city>_<kind>.png` / `.run`, or `.de.png` /
+    `.de.run`."""
+    suffix = "" if lang == "en" else f".{lang}"
+    stem = Path(maps_dir) / f"{city_id}_{kind}{suffix}"
+    return stem.with_name(f"{stem.name}.png"), stem.with_name(f"{stem.name}.run")
+
+
+def up_to_date(maps_dir: Path, city_id: str, kind: str, run_id: int, lang: Lang = "en") -> bool:
+    """True when the language's PNG and its marker naming `run_id` exist, and for English the
+    GeoJSON too."""
+    png, marker = _files(maps_dir, city_id, kind, lang)
+    geojson = Path(maps_dir) / f"{city_id}_{kind}.geojson"
     return (
-        stem.with_suffix(".png").is_file()
-        and stem.with_suffix(".geojson").is_file()
+        png.is_file()
+        and (lang != "en" or geojson.is_file())
         and marker.is_file()
         and marker.read_text().strip() == str(run_id)
     )
 
 
+def map_texts(point, name: str, kind: str, lang: Lang) -> tuple[str, str, dict[str, str]]:
+    """(title, footer, tier labels) of a tier map image of the city `name` in `lang`; the footer
+    carries the ODbL attribution and "mapped km, not built km" (ADR 0006)."""
+    title = t(lang, "map.title", name=name, kind=kind.upper())
+    footer = t(lang, "map.footer", ts=point.osm_timestamp, classifier=point.classifier_version)
+    return title, footer, {tier: t(lang, f"tier.{tier}") for tier in TIERS}
+
+
 def build_map(
-    data: ReportData, city_id: str, kind: str, data_dir: Path, maps_dir: Path
+    data: ReportData, city_id: str, kind: str, data_dir: Path, maps_dir: Path, lang: Lang = "en"
 ) -> Path | None:
-    """Write maps_dir/<city>_<kind>.png, .geojson and the .run marker; None without a run or
-    snapshot. Returns the PNG's path.
+    """Write maps_dir/<city>_<kind>.png, .geojson and the .run marker (English), or only
+    <city>_<kind>.de.png and its .de.run marker (`lang="de"`); None without a run or snapshot.
+    Returns the PNG's path.
 
     Existing files whose marker holds the current run id are left alone.
     """
@@ -278,8 +310,8 @@ def build_map(
     if not snap.is_file():
         return None
     maps_dir = Path(maps_dir)
-    png, marker = maps_dir / f"{city_id}_{kind}.png", maps_dir / f"{city_id}_{kind}.run"
-    if up_to_date(maps_dir, city_id, kind, point.run_id):
+    png, marker = _files(maps_dir, city_id, kind, lang)
+    if up_to_date(maps_dir, city_id, kind, point.run_id, lang):
         return png
     epsg = _epsg(data.config_dir, city_id)
     proj = Projector(epsg)
@@ -291,24 +323,23 @@ def build_map(
         outline_4326 = boundary_geometry(Path(boundary.path))
         boundary_member = boundary_feature(Path(boundary.path), city_id, kind)
     sides = _by_tier(classified, proj, outline)
-    footer = (
-        f"{ODBL} · {MAPPED_KM}\nOSM {point.osm_timestamp}, classifier {point.classifier_version}"
-    )
+    # the city's name in `lang` (an exonym such as Krakau on the German image)
+    names = {c.id: c.name for c in data.with_lang(lang).cities()}
+    title, footer, labels = map_texts(point, names.get(city_id, point.city_name), kind, lang)
     maps_dir.mkdir(parents=True, exist_ok=True)
-    _draw(
-        sides, outline, f"{point.city_name} ({kind.upper()}): protected cycling tiers", footer, png
-    )
-    collection = {
-        "type": "FeatureCollection",
-        "properties": {
-            "run_id": point.run_id,
-            "osm_timestamp": point.osm_timestamp,
-            "classifier": point.classifier_version,
-        },
-        "boundary": boundary_member,
-        "features": side_features(classified, way_tags, proj, outline, outline_4326),
-    }
-    text = json.dumps(collection, ensure_ascii=False, separators=(",", ":"))
-    write_atomic(maps_dir / f"{city_id}_{kind}.geojson", text.encode("utf-8"))
+    _draw(sides, outline, title, footer, png, labels)
+    if lang == "en":
+        collection = {
+            "type": "FeatureCollection",
+            "properties": {
+                "run_id": point.run_id,
+                "osm_timestamp": point.osm_timestamp,
+                "classifier": point.classifier_version,
+            },
+            "boundary": boundary_member,
+            "features": side_features(classified, way_tags, proj, outline, outline_4326),
+        }
+        text = json.dumps(collection, ensure_ascii=False, separators=(",", ":"))
+        write_atomic(maps_dir / f"{city_id}_{kind}.geojson", text.encode("utf-8"))
     marker.write_text(f"{point.run_id}\n")
     return png

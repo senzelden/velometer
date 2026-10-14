@@ -1,0 +1,68 @@
+title:
+  text: Was die Zählstellen erfassen
+  src: 7220b27264d9
+intro:
+- text: >-
+    Sieben unserer Städte veröffentlichen offene Daten von Radzählstellen, und der
+    Tab „Zählstellen“ stellt einen Index daraus neben unsere kartierten km. Er ist
+    Kontext: Er zeigt, wie viele Fahrräder an Zählstellen erfasst wurden, nicht, wie
+    viel Radverkehr eine Stadt hat.
+  src: c1affdd761cf
+sections:
+- heading:
+    text: Was eine Zählstelle misst
+    src: 6e502fe3276a
+  paragraphs:
+  - text: >-
+      Eine Dauerzählstelle erfasst jedes Fahrrad, das ihren Zählquerschnitt passiert,
+      unten zitiert [@berlin-zaehlstellen]. Über Fahrten anderswo oder darüber, wer
+      fährt, sagt sie nichts. Die Zählstellen in Oslo sind die des Staates, an Straßen
+      des statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz)
+      und an einigen kommunale veger (Gemeindestraßen) [@vegvesen-trafikkdata]. Die
+      Dateien Barcelonas geben einen Durchschnittswert je Zählgerät, Monat und Tagesart
+      an [@barcelona-aforaments-detall], indexiert als eigene Reihe.
+    src: 0b44c4ce190f
+- heading:
+    text: Wo Zählstellen stehen
+    src: 3a317c035779
+  paragraphs:
+  - text: >-
+      Jede Stadt wählt selbst, wo ihre Zählstellen stehen; die Standorte sprechen
+      also für sich, nicht für die Straßen der Stadt. Der Bestand ändert sich, wenn
+      Zählstellen hinzukommen, für Bauarbeiten abgeschaltet werden oder ausfallen,
+      unten zitiert [@paris-comptage-velo]. Der Index vergleicht daher nur Zählstellen,
+      die in beiden Jahren jedes Schritts an mindestens 90 % der Tage vollständig
+      sind (Barcelona: alle zwölf Monate), verkettet ab 2019 (Madrid: 2020). Ein Jahr
+      mit weniger als 3 solchen Zählstellen hat keinen Wert.
+    src: 576024484c84
+- heading:
+    text: Das Corona-Jahr
+    src: 7b4cd95ff997
+  paragraphs:
+  - text: >-
+      2020 war das Corona-Jahr. Die an Zählstellen erfassten Zählwerte wichen in jeder
+      Stadt, die beide Jahre hat, von ihrem Niveau von 2019 ab; Berlins Index lag
+      bei 114,6. Die Diagramme markieren das Jahr, und ein Schritt in dieses Jahr
+      hinein oder aus ihm heraus ist kein Trend.
+    src: c45b60a76395
+- heading:
+    text: Brüche in einer Reihe
+    src: 10c4bb115b82
+  paragraphs:
+  - text: >-
+      Ein Portal kann seine Messweise ändern. Die Dateien Madrids enthalten von Juli
+      2021 bis August 2022 keine Daten; das Portal meldet für diese Zeit einen Wechsel
+      der Detektoren und rät davon ab, Daten über diesen Bruch hinweg zu vergleichen,
+      unten zitiert [@madrid-aforos-bicicletas]. Sein Index hat nur für 2020 einen
+      Wert.
+    src: 326907a07ef2
+- heading:
+    text: Zählwerte neben kartierten km
+    src: 78c8046d968d
+  paragraphs:
+  - text: >-
+      Beide Linien sind Indizes, ihre Verläufe lassen sich also zusammen lesen. Doch
+      sie beschreiben Verschiedenes: wenige Straßenabschnitte gegenüber dem kartierten
+      Netz einer ganzen Stadt. Ein Anstieg in beiden kann zusammenfallen, ohne dass
+      das eine das andere erklärt.
+    src: 7b7e3989c037

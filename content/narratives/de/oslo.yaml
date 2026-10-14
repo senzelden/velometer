@@ -1,0 +1,57 @@
+city_id: oslo
+title:
+  text: 'Oslo: eine Tag-Änderung im Jahr 2020, dann stetige Kartierung'
+  src: bd1139a82b73
+dek:
+  text: >-
+    Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,1 auf 70,8; ihr
+    einziger großer Schritt kam von Gehwegen, die als gemeinsame Geh- und Radwege
+    neu getaggt wurden.
+  src: bcb0e02ed752
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      In der Oslo kommune (LAU) stiegen die kartierten A+B-km von 261 km im Jahr 2018
+      auf 341 km im Oktober 2026 und die Hauptkennzahl (kartierte A+B-km je 100 km
+      Hauptstraßen) von 53,1 auf 70,8 [#ts-oslo]. Der einzige markierte Schritt ist
+      der Punkt 2021, als A+B von 264 auf 298 km ging. Das meiste davon ist eine Umtaggung:
+      Im Laufe des Jahres 2020 wurden bestehende Gehwege als gemeinsame Geh- und Radwege
+      neu getaggt, so wie in Norwegen der übliche gang- og sykkelvei kartiert wird,
+      und neu gezeichnete Wege machten den Rest aus [#ts-oslo-2021]. Neu getaggte
+      Wege sind keine neue Infrastruktur.
+    src: 61f6f3d856b4
+  - text: >-
+      Geh- und Radwege (Stufe B) überwiegen durchgehend, 222 → 282 km, gegenüber 38
+      → 60 km baulich getrennter Radwege (Stufe A). Markierte Radfahrstreifen (Stufe
+      D) stiegen von 111 auf 161 km, größtenteils am Punkt 2023 (128 → 160 km). Eine
+      von der Stadt beauftragte Evaluation beschreibt das Netz als überwiegend markierte
+      Radfahrstreifen [@oslo-ey-evaluering-2024]; in den kartierten Daten sind Geh-
+      und Radwege die größte Gruppe.
+    src: cf91a66a6802
+  - text: >-
+      Der funktionale Stadtraum (FUA) wuchs stärker, A+B 1.546 → 2.071 km, mit einem
+      eigenen markierten Schritt im Jahr 2021: in den umliegenden Gemeinden neu gezeichnete
+      gemeinsame Geh- und Radwege, dazu Tag-Änderungen [#ts-oslo-fua-2021]. Stufe
+      A fiel dort von 268 auf 161 km, zum Teil, weil Radwege Fußverkehrs-Tags erhielten
+      und nach B wechselten.
+    src: b1d7876ed4fc
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities zählt für Oslo 307 km geschützter Infrastruktur [@cc2025-report];
+      unser A+B-Wert liegt bei 341 km je Seite, 11 % darüber [#recon-oslo-cc-ratio].
+      Seine Daten stammen von Anfang 2025, unsere vom Oktober 2026, und ob die Stadt
+      oder OpenStreetMap sie geliefert hat, ist nicht angegeben. Die eigene Netzzahl
+      der Stadt, unten zitiert, schließt Geh- und Radwege, markierte Radfahrstreifen
+      und Radwege ein [@oslo-sykkelkart], ihr Umfang entspricht also unseren Stufen
+      A, B und D. Längenbasis und Methode gibt die Quelle nicht an. Die QECIO-Region
+      ist hier die Stadt selbst, und ihre Summe von 413 km Radinfrastruktur stimmt
+      mit unseren 414 km überein, gezählt nach ihrer Regel der halben Länge [#recon-oslo-qecio-tracks].
+    src: c7cdd94bb4ba
+literals:
+- 100 km

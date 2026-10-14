@@ -420,3 +420,51 @@ def test_comparison_sources_are_the_ids_the_loaders_emit(tmp_path):
     emitted |= {f.source for f in X.qecio_figures(FIX / "qecio_summary_head.csv", BERLIN)}
     emitted |= {f.source for f in X.bikenetkit_figures(tmp_path, BERLIN)}
     assert emitted >= COMPARISON_SOURCES
+
+
+# --- German pages (M12): the stored English notes are rebuilt in German from the same parts ---
+
+
+def test_the_stored_english_notes_are_unchanged():
+    """The loaders' English parts now come from the catalogue: the stored notes keep their text."""
+    assert X.QECIO_HALVES == "QECIO halves unidirectional infrastructure"
+    assert X.NUTS3_NOT_CITY == "NUTS3 unit is not the city"
+    assert X.BIKENETKIT_NOTE.startswith("OSM/Nominatim city boundary; includes cycleway, ")
+    assert X.BIKENETKIT_NOTE.endswith("not a protected-infrastructure figure; compare against "
+                                      "tiers A+B+E")  # fmt: skip
+
+
+@pytest.mark.parametrize("not_city,caveat", [(False, None), (True, None), (True, "a; b caveat")])
+def test_every_qecio_note_has_its_german_twin(not_city, caveat):
+    city = BERLIN[0].model_copy(
+        update={"nuts3_is_city": not not_city, "nuts3_note": caveat,
+                "nuts3_note_de": caveat and "ein; b Vorbehalt"}
+    )  # fmt: skip
+    rows = X.qecio_figures(FIX / "qecio_summary_head.csv", [city])
+    assert rows
+    for r in rows:
+        de = X.note_de(r.note, [city])
+        md5 = r.note.rsplit(" ", 1)[1]
+        parts = [r.note.split("; ")[0], "QECIO zählt Anlagen in nur einer Fahrtrichtung zur Hälfte"]
+        parts += ["ein; b Vorbehalt"] if caveat else []
+        parts += ["NUTS-3-Einheit ist nicht die Stadt"] if not_city else []
+        assert de == "; ".join([*parts, f"Datei-md5 {md5}"])
+
+
+def test_a_qecio_caveat_without_german_or_another_note_has_no_twin():
+    city = BERLIN[0].model_copy(update={"nuts3_note": "custom caveat"})
+    note = X.qecio_figures(FIX / "qecio_summary_head.csv", [city])[0].note
+    assert X.note_de(note, [city]) is None  # no nuts3_note_de: the English shows, marked
+    assert X.note_de("Table 5, report p.16", [city]) is None
+    assert X.note_de(X.BIKENETKIT_NOTE, []).startswith("Stadtgrenze aus OSM/Nominatim; ")
+
+
+def test_a_city_caveat_needs_its_german_sibling():
+    from pydantic import ValidationError
+
+    from velometer.config import CityConfig
+
+    doc = BERLIN[0].model_dump() | {"nuts3_note": "custom caveat"}
+    with pytest.raises(ValidationError, match="nuts3_note_de is required"):
+        CityConfig.model_validate(doc)
+    assert CityConfig.model_validate(doc | {"nuts3_note_de": "Vorbehalt"}).nuts3_note_de

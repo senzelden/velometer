@@ -14,46 +14,55 @@ from __future__ import annotations
 import html
 import re
 
+from velometer.i18n import Lang, t
+
 WRAPPER = re.compile(
     r'<(div|section)\b(?=[^>]*\bclass="[^"]*(?<![\w-])scroll(?![\w-])[^"]*")([^>]*)>'
 )
 BARE_TABLE = re.compile(r"<table>")
 TAG = re.compile(r"<(/?)(div|section)\b[^>]*>")
-HEADING = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.S)
-CAPTION = re.compile(r"<caption\b[^>]*>(.*?)</caption>", re.S)
-WRAPPER_FALLBACK = "Scrollable content"
-TABLE_FALLBACK = "Table"
+HEADING = re.compile(r"<h[1-6]\b([^>]*)>(.*?)</h[1-6]>", re.S)
+CAPTION = re.compile(r"<caption\b([^>]*)>(.*?)</caption>", re.S)
+LANG_ATTR = re.compile(r'\blang="([^"]*)"')
 
 
 def _text(fragment: str) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", "", fragment)).split())
 
 
-def _first(pattern: re.Pattern, fragment: str) -> str:
+def _usable(attrs: str, text: str, lang: Lang) -> bool:
+    """A name source with text; on a German page also in German: a heading still in English
+    there (lang="en" data-fallback) would give the region an English name outside lang="en".
+    English pages name regions as they did before M12."""
+    other = LANG_ATTR.search(attrs)
+    return bool(text) and (lang == "en" or other is None or other.group(1) == lang)
+
+
+def _first(pattern: re.Pattern, fragment: str, lang: Lang) -> str:
     for m in pattern.finditer(fragment):
-        if _text(m.group(1)):
-            return _text(m.group(1))
+        if _usable(m.group(1), _text(m.group(2)), lang):
+            return _text(m.group(2))
     return ""
 
 
 def _extent(page: str, m: re.Match) -> int:
     """Index just past the closing tag of the element `m` opens (end of page if unclosed)."""
     depth = 1
-    for t in TAG.finditer(page, m.end()):
-        if t.group(2) != m.group(1):
+    for tag in TAG.finditer(page, m.end()):
+        if tag.group(2) != m.group(1):
             continue
-        depth += -1 if t.group(1) else 1
+        depth += -1 if tag.group(1) else 1
         if not depth:
-            return t.end()
+            return tag.end()
     return len(page)
 
 
-def _name(page: str, start: int, inner: str, fallback: str) -> str:
-    name = _first(CAPTION, inner) or _first(HEADING, inner)
+def _name(page: str, start: int, inner: str, fallback: str, lang: Lang) -> str:
+    name = _first(CAPTION, inner, lang) or _first(HEADING, inner, lang)
     if name:
         return name
-    for h in reversed(HEADING.findall(page[:start])):
-        if _text(h):
+    for attrs, h in reversed(HEADING.findall(page[:start])):
+        if _usable(attrs, _text(h), lang):
             return _text(h)
     return fallback
 
@@ -69,18 +78,20 @@ def _attrs(attrs: str, wrapper: bool, name: str) -> str:
     return (" " + " ".join(add)) if add else ""
 
 
-def name_scroll_regions(page: str) -> str:
+def name_scroll_regions(page: str, lang: Lang = "en") -> str:
+    """The page with every scrolling region and bare table named and focusable; the fixed
+    fallback names are in `lang`."""
     wrappers = [(m, _extent(page, m)) for m in WRAPPER.finditer(page)]
     edits: list[tuple[int, int, str]] = []  # (start, end, replacement)
     for m, end in wrappers:
-        name = _name(page, m.start(), page[m.end() : end], WRAPPER_FALLBACK)
+        name = _name(page, m.start(), page[m.end() : end], t(lang, "regions.scroll"), lang)
         edits.append((m.start(), m.end(), m.group(0)[:-1] + _attrs(m.group(2), True, name) + ">"))
     for m in BARE_TABLE.finditer(page):
         if any(w.start() < m.start() < end for w, end in wrappers):
             continue
         close = page.find("</table>", m.end())
         inner = page[m.end() : close if close >= 0 else len(page)]
-        name = _name(page, m.start(), inner, TABLE_FALLBACK)
+        name = _name(page, m.start(), inner, t(lang, "regions.table"), lang)
         edits.append((m.start(), m.end(), "<table" + _attrs("", False, name) + ">"))
     out, last = [], 0
     for start, end, text in sorted(edits):

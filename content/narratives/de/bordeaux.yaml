@@ -1,0 +1,53 @@
+city_id: bordeaux
+title:
+  text: >-
+    Bordeaux: eine Stadt der markierten Radfahrstreifen, langsam bei getrennten Wegen
+  src: 41373b562c3b
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 53 auf 65 km
+    und die Hauptkennzahl von 31,8 auf 40,3 kartierte A+B-km je 100 km Hauptstraßen.
+  src: ef9d436319ff
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Innerhalb der Gemeinde hat Bordeaux die kleinste Veränderung der französischen
+      Städte hier. Die kartierten A+B-km bewegten sich von 2018 bis 2024 zwischen
+      51 und 57 km und stiegen erst danach, auf heute 65 km; die Hauptkennzahl (kartierte
+      A+B-km je 100 km Hauptstraßen) ging von 31,8 auf 40,3. Markierte Radfahrstreifen
+      (Stufe D) bestimmen die Karte und blieben ungefähr auf gleichem Niveau, zwischen
+      99 und 107 km. Gewachsen ist die Stufe E, Busspuren und Fahrradstraßen, von
+      21 auf 49 kartierte km. Der Rückgang der Stufe B im Jahr 2021, von 17 auf 10
+      km, wurde nicht markiert und hat keine festgehaltene Erklärung.
+    src: 674eb0217b1d
+  - text: >-
+      Der funktionale Stadtraum (FUA) erzählt eine bewegtere Geschichte: A+B stieg
+      von 850 auf 1.278 km. Den Schritt von 2019 trug ein einzelner Kartierender,
+      der Radwege neben Straßen zeichnete, die schon auf der Karte waren. Im selben
+      Jahr fiel ein langer Radweg, die Piste Roger Lapébie, durch eine Tag-Änderung
+      aus allen Stufen heraus und war ein Jahr später wieder da [#ts-bordeaux-fua-2019].
+      Das ist eine Veränderung auf der Karte, nicht vor Ort. Seit 2019 ist der FUA
+      jedes Jahr gewachsen, vor allem bei Geh- und Radwegen (Stufe B, von 218 auf
+      515 km).
+    src: 1d62cbd24e96
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die eigene Zahl der Ville de Bordeaux schließt Busspuren ein [@bordeaux-ville-circuler-a-velo]
+      und sagt nicht, wie die Länge gemessen wird oder ob eine Straße mit Anlagen
+      auf beiden Seiten doppelt zählt. Die Zahlen der Métropole umfassen alle ihre
+      Gemeinden und schließen verkehrsberuhigte Straßen und Fußgängerzonen ein [@bordeaux-plan-velo-2021-2026],
+      die keine unserer Stufen zählt; der regionale Rechnungshof beschreibt dieselbe
+      Reihe als Summe aller Typen [@bordeaux-crc-plan-velo-2025]. Bordeaux ist nicht
+      in der Rangliste von Clean Cities. QECIO berichtet für das Département Gironde,
+      daher seine Abweichung von −97,6 % bei den Hauptstraßen; auf dieser Fläche stimmen
+      die Hauptstraßen überein, und die Gemeinde hat mehr markierte Radfahrstreifen
+      und weniger separate Radwege als der Rest der Gironde [#rc-bordeaux-qecio_main_km].
+    src: aebe2b5de6de
+literals:
+- 100 km

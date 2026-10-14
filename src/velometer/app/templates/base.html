@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{% block lang %}en{% endblock %}">
+<html lang="{{ lang }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,22 +7,28 @@
 <meta name="velometer-base" content="{{ base_path }}">
 <meta name="velometer-commit" content="{{ build_commit }}">
 <title>{% block title %}velometer{% endblock %}</title>
-<link rel="icon" href="{{ u('/static/favicon.svg') }}" type="image/svg+xml">
-<link rel="stylesheet" href="{{ u('/static/app.css') }}">
+<link rel="alternate" hreflang="en" href="{{ u_in('en', here) }}">
+<link rel="alternate" hreflang="de" href="{{ u_in('de', here) }}">
+<link rel="alternate" hreflang="x-default" href="{{ u_in('en', here) }}">
+{% if canonical %}<link rel="canonical" href="{{ canonical }}">
+{% endif %}<meta name="velometer-search" content="{{ data_u('/data/search.json', lang) }}">
+<link rel="icon" href="{{ data_u('/static/favicon.svg') }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ data_u('/static/app.css') }}">
 {% block head %}{% endblock %}
-<script type="module" src="{{ u('/static/js/nav.js') }}"></script>
-<script type="module" src="{{ u('/static/js/search.js') }}"></script>
-<script type="module" src="{{ u('/static/js/cite-ui.js') }}"></script>
-<script type="module" src="{{ u('/static/js/download-ui.js') }}"></script>
-<script type="module" src="{{ u('/static/js/permalink-ui.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/nav.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/search.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/cite-ui.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/download-ui.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/permalink-ui.js') }}"></script>
+<script type="module" src="{{ data_u('/static/js/lang-switch.js') }}"></script>
 {% block scripts %}{% endblock %}
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">{{ t('site.skip') }}</a>
 <header class="site">
   <div class="bar">
     <a class="brand" href="{{ u('/') }}">velo<span>meter</span></a>
-    <button class="menu-toggle" type="button" hidden aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <button class="menu-toggle" type="button" hidden aria-expanded="false" aria-controls="site-nav">{{ t('site.menu') }}</button>
     {% include "_nav.html" %}
   </div>
 </header>
@@ -31,12 +37,13 @@
 {% block content %}{% endblock %}
 </main>
 <footer>
-  <p>Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors, ODbL 1.0</a>
-  · OSM mapped km, not built km (ADR 0006) · <a href="{{ u('/methodology') }}">Methodology</a> · <a href="{{ u('/data/all.csv') }}">CSV (all cities)</a></p>
-  <p>Classifier {{ footer.classifier }} · config <code>{{ footer.config }}</code></p>{% if static_edition %}
-  <p>Static edition · build {{ static_edition.commit }}</p>{% endif %}
+  <p>{{ t('site.footer.attribution', osm="https://www.openstreetmap.org/copyright") }}
+  · {{ t('site.footer.mapped_km') }} · <a href="{{ u('/methodology') }}">{{ t('site.footer.methodology') }}</a> · <a href="{{ data_u('/data/all.csv') }}">{{ t('site.footer.csv_all') }}</a></p>
+  <p>{{ t('site.footer.run', classifier=footer.classifier, config=footer.config) }}</p>{% if static_edition %}
+  <p>{{ t('site.footer.static_edition', commit=static_edition.commit) }}</p>{% endif %}
 </footer>
 <script type="application/json" id="theme-tokens">{{ theme_tokens | tojson }}</script>
+<script type="application/json" id="ui-strings">{{ js_strings(lang) | tojson }}</script>
 <div id="live" class="visually-hidden" aria-live="polite"></div>
 </body>
 </html>

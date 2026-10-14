@@ -5,6 +5,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from tests.conftest import make_source
 from velometer.content.loader import load_explainer, load_narratives, load_sources
 from velometer.content.models import ContentError, Narrative, Source
 
@@ -129,5 +130,4 @@ def test_a_source_language_must_be_a_language_tag(tag):
 
 
 def _lang_source(language):
-    return Source(id="s", publisher="P", title="T", url="https://example.org/",
-                  accessed="2026-01-01", language=language, kind="press", excerpts=[])  # fmt: skip
+    return make_source(language)

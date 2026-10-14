@@ -15,7 +15,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-from velometer.config import ConfigError
+from velometer.config import ConfigError, require_de
+from velometer.i18n import Lang
 
 COUNTERS_FILE = "counters.yaml"
 DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names another (§2.13)
@@ -98,6 +99,9 @@ class CounterEntry(_Strict):
     city: str
     adapter: str
     source: str  # the publishing body, as shown in the attribution line
+    # the German attribution, only where `source` holds our English words beside the name
+    # (Oslo's "(state counters)"); a publisher's own name is not translated (M12)
+    source_de: str | None = None
     licence: str
     licence_url: str
     page: str  # the dataset's portal page
@@ -124,13 +128,32 @@ class CounterEntry(_Strict):
             raise ValueError(f"unknown timezone {v!r}") from e
         return v
 
+    def source_in(self, lang: Lang) -> str:
+        return (self.source_de or self.source) if lang == "de" else self.source
+
 
 class NoCounterData(_Strict):
     """A city without an open, licensed counter dataset, and the portals checked."""
 
     city: str
     checked: list[str] = Field(min_length=1)
+    # the portals in German, only where `checked` holds our English words (M12)
+    checked_de: list[str] | None = None
     note: str | None = None
+    note_de: str | None = None  # the German note, required beside `note` (M12)
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "NoCounterData":
+        require_de(self, f"none {self.city!r}", "note")
+        if self.checked_de is not None and len(self.checked_de) != len(self.checked):
+            raise ValueError(f"none {self.city!r}: checked_de must list each portal of checked")
+        return self
+
+    def note_in(self, lang: Lang) -> str | None:
+        return (self.note_de or self.note) if lang == "de" else self.note
+
+    def checked_in(self, lang: Lang) -> list[str]:
+        return (self.checked_de or self.checked) if lang == "de" else self.checked
 
 
 class CountersConfig(_Strict):

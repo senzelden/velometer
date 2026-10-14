@@ -5,6 +5,8 @@
 // restyled in place when the OS theme changes (zoom and position stay). Figures are mapped km
 // (ADR 0006). OSM tag values are user data: popups are built with textContent, never innerHTML.
 import { onThemeChange, token } from "./js/theme.js";
+import { number } from "./js/fmt.js";
+import { leafletPrefix, t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -15,11 +17,12 @@ import { onThemeChange, token } from "./js/theme.js";
   var status = document.getElementById("changemap-status");
 
   var map = L.map(mapEl, { preferCanvas: true });
+  map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 });
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,
     className: cfg.tile_class,
-    attribution: '© <a href="' + cfg.links.copyright + '">OpenStreetMap contributors</a>',
+    attribution: '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
   }).addTo(map);
 
   function say(text) {
@@ -56,7 +59,7 @@ import { onThemeChange, token } from "./js/theme.js";
   }
 
   function wayLink(id) {
-    var a = el("a", "way " + id);
+    var a = el("a", t("js.map.way", { id: id }));
     a.setAttribute("href", cfg.links.way + encodeURIComponent(id));
     a.setAttribute("target", "_blank");
     a.setAttribute("rel", "noopener noreferrer");
@@ -74,17 +77,17 @@ import { onThemeChange, token } from "./js/theme.js";
       else dd.textContent = value === null || value === undefined ? "–" : String(value);
       dl.appendChild(dd);
     }
-    row("change", cfg.labels[p.category] || p.category);
-    if (p.way_id_from) row("way (from)", wayLink(p.way_id_from));
-    if (p.way_id_to) row("way (to)", wayLink(p.way_id_to));
-    row("side", p.side);
-    row("tier", p.tier_from === p.tier_to ? p.tier_to : (p.tier_from || "–") + " → " + (p.tier_to || "–"));
-    row("mapped km", typeof p.km === "number" ? p.km.toFixed(3) : p.km);
+    row(t("js.map.change"), cfg.labels[p.category] || p.category);
+    if (p.way_id_from) row(t("js.map.way_from"), wayLink(p.way_id_from));
+    if (p.way_id_to) row(t("js.map.way_to"), wayLink(p.way_id_to));
+    row(t("js.map.side"), p.side);
+    row(t("js.map.tier"), p.tier_from === p.tier_to ? p.tier_to : (p.tier_from || "–") + " → " + (p.tier_to || "–"));
+    row(t("js.map.mapped_km"), typeof p.km === "number" ? number(p.km, 3) : p.km);
     box.appendChild(dl);
     return box;
   }
 
-  say("Loading the change map …");
+  say(t("js.map.change_loading"));
   fetch(cfg.url)
     .then(function (r) {
       if (!r.ok) throw new Error(r.status + " " + r.statusText);
@@ -106,14 +109,13 @@ import { onThemeChange, token } from "./js/theme.js";
         var c = f.properties.category;
         if (drawn(c)) counts[c] = (counts[c] || 0) + 1;
       });
-      say(
-        "Way-sides: " +
-        CATEGORIES
-          .map(function (c) { return (counts[c] || 0).toLocaleString("en-GB") + " " + cfg.labels[c]; })
-          .join(" · ") + ". Click a way-side for its way and mapped km."
-      );
+      say(t("js.map.change_status", {
+        counts: CATEGORIES
+          .map(function (c) { return number(counts[c] || 0, 0) + " " + cfg.labels[c]; })
+          .join(" · "),
+      }));
     })
     .catch(function (e) {
-      say("Could not load the change map: " + e.message);
+      say(t("js.map.change_failed", { reason: e.message }));
     });
 })();

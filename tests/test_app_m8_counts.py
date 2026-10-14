@@ -362,36 +362,33 @@ def test_counter_lines_and_unit_match_the_shared_cases(case):
     assert {"labels": labels, "values": values, "notes": notes, "unit": unit} == case["expect"]
 
 
+STRINGS_JS = (ROOT / "src/velometer/app/static/js/strings.js").as_uri()
+JS_STRINGS = (ROOT / "tests" / "ui_js_strings.json").read_text(encoding="utf-8")
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is needed to run counter-model.js")
-def test_js_counter_title_footnote_unit_and_notes_equal_the_python_ones():
-    # the no-JS page and compare.js show the same title, footnote, unit and notes
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_js_counter_title_footnote_unit_and_notes_equal_the_python_ones(lang):
+    # the no-JS page and compare.js show the same title, footnote, unit and notes, in the page's
+    # language: the JS reads the `js.counts.*` strings of tests/ui_js_strings.json, as a page does
     cases = [(_case_payload(c), c["ids"]) for c in COUNTER_CASES["cases"]]
     script = (
-        f"Promise.all([import('{COUNTER_JS}'), import('{COMPARE_JS}')]).then(([c, m]) => "
+        f"Promise.all([import('{STRINGS_JS}'), import('{COUNTER_JS}'), import('{COMPARE_JS}')])"
+        f".then(([s, c, m]) => {{ const S = {JS_STRINGS}; s.setStrings(S['{lang}'], S.en); "
         f"console.log(JSON.stringify({{"
         f"lines: {json.dumps(cases)}.map(([payload, ids]) => {{ const r = c.counterLines("
         f"payload, ids); return [r.notes, r.unit]; }}), "
         f"title: c.counterTitle('Counter index'), "
-        f"foot: ['counter_index', 'headline', 'ab_km'].map(k => m.footnote(k, 'HU'))}})))"
+        f"foot: ['counter_index', 'headline', 'ab_km'].map(k => m.footnote(k, 'HU'))}})) }})"
     )
     js = _node(script)
     assert js["lines"] == [
-        [compare.counter_lines(payload, ids)[2], compare.counter_unit(payload, ids)]
+        [compare.counter_lines(payload, ids, lang)[2], compare.counter_unit(payload, ids, lang)]
         for payload, ids in cases
     ]
-    assert js["title"] == compare.counter_title("Counter index")
-    assert js["foot"] == [compare.footnote(k, "HU") for k in ("counter_index", "headline", "ab_km")]
-
-
-def test_js_counter_notes_equal_the_python_ones():
-    js = (ROOT / "src/velometer/app/static/js/counter-model.js").read_text(encoding="utf-8")
-    names = (
-        "NO_COUNTERS", "NO_COUNTER_LINE", "AVG_DAILY", "COUNTER_DATA", "NOT_RECORDED",
-        "COUNTER_TITLE", "COUNTER_CONTEXT", "COUNTER_FOOT", "COUNTER_OF", "ANY_BASE",
-        "COUNTER_CONFIG_ERROR",
-    )  # fmt: skip
-    for name in names:
-        assert f'export const {name} = "{getattr(compare, name)}";' in js, name
+    assert js["title"] == compare.counter_title("Counter index", lang)
+    feet = [compare.footnote(k, "HU", lang) for k in ("counter_index", "headline", "ab_km")]
+    assert js["foot"] == feet
 
 
 def _foot(html: str) -> str:
@@ -581,21 +578,27 @@ def test_counts_tables_fit_a_phone_width():
 # ---------- an unreadable config/counters.yaml (M8 follow-ups, Task 2) ----------
 
 
+def _page_text(html: str) -> str:
+    """The page's text without its scripts: every page carries the JS strings (`#ui-strings`),
+    the counter notes among them."""
+    return _text(re.sub(r"<script\b.*?</script>", " ", html, flags=re.S))
+
+
 def test_an_unreadable_counter_configuration_is_a_note_on_figures_compare_and_counts(setup, caplog):  # noqa: F811
     db_path, cfg_dir, _, _ = setup
     _seed(db_path)
     note = "counter configuration unreadable"
     with _client(_app(setup)) as c:  # readable: no note anywhere
-        assert note not in _text(c.get("/city/paris/figures").text).lower()
-        assert note not in _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+        assert note not in _page_text(c.get("/city/paris/figures").text).lower()
+        assert note not in _page_text(c.get("/compare?c=berlin,paris&m=counter_index").text)
         assert c.get("/data/series.json").json()["counters"]["config_error"] is False
     (cfg_dir / "counters.yaml").write_text("cities: [unclosed\n")
     with _client(_app(setup)) as c:
         figures = c.get("/city/paris/figures").text
-        compare_page = _text(c.get("/compare?c=berlin,paris&m=counter_index").text)
-        counts = _text(c.get("/city/berlin/counts").text)
+        compare_page = _page_text(c.get("/compare?c=berlin,paris&m=counter_index").text)
+        counts = _page_text(c.get("/city/berlin/counts").text)
         payload = c.get("/data/series.json").json()
-    assert note in _text(_section_of(figures, "counter-data")).lower()
+    assert note in _page_text(_section_of(figures, "counter-data")).lower()
     assert compare.COUNTER_CONFIG_ERROR in compare_page
     assert note in counts.lower()
     assert payload["counters"]["config_error"] is True

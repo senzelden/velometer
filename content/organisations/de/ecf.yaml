@@ -1,0 +1,77 @@
+id: ecf
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Die European Cyclists' Federation ist ein unabhängiger gemeinnütziger Verband
+      mit Sitz in Brüssel, gegründet 1983 [@ecf-about]. Sie bezeichnet sich als den
+      einzigen europäischen Dachverband für den Radverkehr, mit mehr als 70 Mitgliedsorganisationen
+      in über 40 Ländern [@ecf-about]. Die Website der ECF nennt finanzielle Unterstützung
+      durch das LIFE-Programm der EU und die europäische Fahrradindustrie [@ecf-about].
+    src: 5469e90782c7
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        Radwege, Radfahrstreifen sowie gemeinsame Geh- und Radwege, wie in OpenStreetMap
+        getaggt [@qecio-methodology]
+      src: 4009475cda51
+    kind:
+      text: >-
+        kartiert in OpenStreetMap; niedrige Werte können fehlende Daten statt fehlender
+        Infrastruktur widerspiegeln [@qecio-methodology]
+      src: 3f6914af8048
+    length:
+      text: Anlagen für nur eine Fahrtrichtung mit halber Länge [@qecio-methodology]
+      src: b238e0eee821
+    date:
+      text: >-
+        OpenStreetMap-Auszüge, heruntergeladen am 10. und 11. Januar 2024 [@qecio-metadata]
+      src: 9bcd0b5e483b
+    area:
+      text: NUTS3-Regionen, keine Gemeinden [@qecio-methodology]
+      src: fa4d500283f6
+    method:
+      text: eigene Auswertung von OpenStreetMap durch die ECF (QECIO) [@qecio-site]
+      src: cd49e1b09bab
+  paragraphs:
+  - text: >-
+      QECIO, Quantifying Europe's Cycling Infrastructure using OpenStreetMap, antwortet
+      auf eine Lücke, die die ECF selbst benennt: Keine amtliche Quelle liefert Daten
+      zur Radinfrastruktur im europäischen Maßstab [@qecio-site]. Es schneidet OpenStreetMap-Wege
+      an den NUTS3-Grenzen ab und ordnet sie Radwegen, Radfahrstreifen und gemeinsamen
+      Geh- und Radwegen zu [@qecio-methodology]. Sein Haftungsausschluss sagt, die
+      Zahlen zeigten nur Beiträge zu OpenStreetMap [@qecio-methodology].
+    src: a360ffb2bb3b
+  - text: >-
+      Die Clean Cities Campaign nutzt die OpenStreetMap-Daten der ECF, wo eine Stadt
+      keine liefert [@cc2025-annexes]; die Methode der ECF steht also auch hinter
+      einigen Zahlen von Clean Cities.
+    src: b6a4caf48976
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Die ECF arbeitet auf EU-Ebene. Mit ihren Partnern aus der Industrie setzte sie
+      sich für eine einheitliche europäische Radverkehrspolitik ein [@ecf-2024-breakthroughs],
+      und im Jahr 2024 unterzeichneten Europäisches Parlament, Rat und Kommission
+      die Europäische Erklärung zum Radverkehr [@ec-declaration-cycling]. Die Expertengruppe
+      der Kommission für urbane Mobilität, deren Vorsitz die ECF mitführt, gab 2024
+      Empfehlungen zur Verkehrssicherheit für Menschen zu Fuß und auf dem Rad heraus
+      [@ecf-2024-breakthroughs].
+    src: 3659774b5d22
+  - text: >-
+      Nach unserer Lesart dient QECIO dieser Interessenvertretung: Es liefert vergleichbare
+      Zahlen, wo Regierungen keine veröffentlichen. Eine Quelle, nach der eine Stadt
+      oder Regierung QECIO-Zahlen als eigene übernommen hat, haben wir nicht gefunden.
+    src: 0fdb1b719386
+literals:
+- '1983'
+- '70'
+- '40'
+- 10. und 11. Januar 2024

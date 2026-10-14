@@ -2,10 +2,15 @@
 // CSV. Built in the browser from what the page holds. A download is always the light theme: the
 // page may show the dark one, so every colour is resolved through computed style and mapped back
 // to its light token value. Pure apart from the DOM it is given; download-ui.js wires the page.
+// The image's text is the page's language (M12); the CSV keeps machine number formats and its
+// English two-line preamble (spec 4.5).
+import { machine } from "./fmt.js";
+import { t } from "./strings.js";
 
 const NS = "http://www.w3.org/2000/svg";
+// the CSV preamble, English in both editions
 export const ATTRIBUTION = "Map data © OpenStreetMap contributors, ODbL 1.0";
-const NOTE = "OSM mapped km, not built km";
+const CSV_NOTE = "OSM mapped km, not built km";
 // the added text and ground use the light tokens the caller passes in `meta` (no colour literal in a script)
 const FALLBACK = { ground: "white", ink: "black", muted: "gray" };
 
@@ -159,7 +164,7 @@ function layoutKey(chips, width) {
 }
 
 /** A swatch and a label per chip: the key of a chart whose key is HTML beside the SVG. */
-function keySvg(rows, top, toLight, ink, t) {
+function keySvg(rows, top, toLight, ink, txt) {
   if (!rows.length) return [];
   const out = ['<g id="velometer-key">'];
   rows.forEach((row, i) => {
@@ -167,7 +172,7 @@ function keySvg(rows, top, toLight, ink, t) {
     for (const c of row) {
       const col = colour(c.colour, toLight);
       out.push(`<rect${attrs([["x", c.x], ["y", y], ["width", 10], ["height", 10], ["fill", col?.value ?? "none"]])}/>`); // fmt: skip
-      out.push(t(c.x + 14, y + 9, "11px", "400", ink, c.text));
+      out.push(txt(c.x + 14, y + 9, "11px", "400", ink, c.text));
     }
   });
   out.push("</g>");
@@ -189,19 +194,20 @@ export function selfContained(svg, styleOf, toLight, meta) {
   const height = h + TOP + keyH + BOTTOM;
   const inner = [];
   for (const k of Array.from(svg.children ?? [])) walk(k, styleOf, toLight, inner);
-  const t = (x, y, size, weight, fill, text) =>
+  const txt = (x, y, size, weight, fill, text) =>
     `<text${attrs([["x", x], ["y", y], ["font-size", size], ["font-weight", weight], ["fill", fill]])}>${esc(text)}</text>`; // fmt: skip
   return [
     `<svg xmlns="${NS}"${attrs([["viewBox", `0 0 ${w} ${height}`], ["width", w], ["height", height], ["font-family", "system-ui, sans-serif"]])}>`, // fmt: skip
     `<rect${attrs([["width", w], ["height", height], ["fill", ground]])}/>`,
-    t(8, 20, "15px", "600", ink, meta.title),
+    txt(8, 20, "15px", "600", ink, meta.title),
     `<g transform="translate(0,${TOP})">`,
     ...inner,
     "</g>",
-    ...keySvg(keyRows, h + TOP, toLight, ink, t),
+    ...keySvg(keyRows, h + TOP, toLight, ink, txt),
     `<g id="velometer-meta">`,
-    t(8, h + TOP + keyH + 18, "11px", "400", muted, meta.source),
-    t(8, h + TOP + keyH + 33, "11px", "400", muted, `${meta.attribution} · ${NOTE}`),
+    txt(8, h + TOP + keyH + 18, "11px", "400", muted, meta.source),
+    txt(8, h + TOP + keyH + 33, "11px", "400", muted,
+      `${meta.attribution ?? t("js.download.attribution")} · ${t("js.download.note")}`),
     "</g>",
     "</svg>",
   ].join("");
@@ -224,23 +230,34 @@ const cell = (raw) => {
   return /[",\r\n]|^\s|\s$/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-/** The table as shown: a two-line preamble, the header texts, the rows (RFC 4180, CRLF). */
-export function tableCsv(table, commit, generatedAt) {
-  const head = Array.from(table.querySelectorAll("thead th")).map(text);
+/**
+ * The table as shown: a two-line preamble, the header texts, the rows (RFC 4180, CRLF). For a
+ * German page (`loc` "de-DE") a cell that is wholly a German number is written as a machine
+ * number (dot decimal, no grouping: "1.639,8" is 1639.8); every other cell, and every cell of an
+ * English page, as shown.
+ */
+export function tableCsv(table, commit, generatedAt, loc = "en-GB") {
+  const shown = (n) => {
+    const s = text(n);
+    return loc === "de-DE" ? (machine(s, loc) ?? s) : s;
+  };
+  const head = Array.from(table.querySelectorAll("thead th")).map(shown);
   const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
-    Array.from(tr.querySelectorAll("th, td")).map(text),
+    Array.from(tr.querySelectorAll("th, td")).map(shown),
   );
   return (
     [
-      `# ${ATTRIBUTION} — ${NOTE}`,
+      `# ${ATTRIBUTION} — ${CSV_NOTE}`,
       `# velometer ${commit} generated ${generatedAt}`,
       ...[head, ...rows].map((r) => r.map(cell).join(",")),
     ].join("\r\n") + "\r\n"
   );
 }
 
-const slug = (s) =>
+/** An ASCII file-name part: ß is "ss", accents go, every other run of characters is one "-". */
+export const slug = (s) =>
   String(s ?? "")
+    .replace(/ß/g, "ss")
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
@@ -263,12 +280,12 @@ export function pngBlob(svgString, width, height, scale = 2, doc = document, Ima
         canvas.height = Math.round(height * scale);
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("the canvas gave no PNG"))), "image/png");
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(t("js.download.no_png")))), "image/png");
       } catch (e) {
         reject(e);
       }
     };
-    img.onerror = () => reject(new Error("the chart image could not be loaded"));
+    img.onerror = () => reject(new Error(t("js.download.image_failed")));
     img.width = Math.round(width * scale);
     img.height = Math.round(height * scale);
     img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;

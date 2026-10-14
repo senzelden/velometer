@@ -1,0 +1,67 @@
+city_id: berlin
+title:
+  text: 'Berlin: eine Neukartierungskampagne, danach ein langsamer Anstieg'
+  src: 6f92a28dabf7
+dek:
+  text: >-
+    Die kartierten A+B-km je 100 km Hauptstraßen gingen von 113,7 im Jahr 2018 auf
+    109,1 im Oktober 2026 zurück: ein Schritt nach unten in einer Kartierungskampagne
+    im Jahr 2022, seitdem ein langsamer Anstieg.
+  src: dc7d5d98f86b
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Berlins Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, lag 2018 bei
+      113,7 und im Oktober 2026 bei 109,1; die kartierten A+B-km gingen von 1.640
+      auf 1.551 km zurück [#ts-lau]. Der Rückgang ist ein einzelner Schritt, kein
+      Trend. Die Hauptkennzahl erreichte 2021 mit 117,0 ihren Höchstwert und lag im
+      Januar 2022 bei 104,3, nachdem Kartierende straßenbegleitende Radwege als separate
+      Wege neu gezeichnet und viele Geh- und Radwege als Gehwege neu getaggt hatten,
+      auf denen Radfahren nur erlaubt ist. Das war eine Kartierungskampagne, kein
+      Verlust an Infrastruktur [#expl-lau-2022]. Seitdem ist die Hauptkennzahl in
+      jedem Jahr außer 2024 gestiegen.
+    src: 373a67bd43df
+  - text: >-
+      Auch außerhalb von A+B kam auf der Karte etwas hinzu. Markierte Radfahrstreifen
+      (Stufe D) stiegen von 403 auf 461 km, Fahrradstraßen und Busspuren (E) von 53
+      auf 117 km, und Radfahrstreifen, die mit baulicher Trennung kartiert sind (C),
+      2018 noch nicht vorhanden, kommen heute auf 29 km [#ts-lau]. Der funktionale
+      Stadtraum fiel mit derselben Kampagne, die bis nach Brandenburg reichte, von
+      71,5 im Jahr 2021 auf 64,7 im Jahr 2022 und liegt heute bei 64,5 [#ts-fua] [#expl-fua-2022].
+    src: d55acf04cca1
+- heading:
+    text: Die 12 Bezirke
+    src: 69045acadeda
+  paragraphs:
+  - text: >-
+      Die 12 Bezirke unterscheiden sich deutlich [#bezirke]. Neukölln ist am dichtesten
+      kartiert (164,3), Pankow am dünnsten (62,8). Seit 2018 legten Mitte (75,2 auf
+      90,7) und Tempelhof-Schöneberg (123,9 auf 138,3) am stärksten zu; Spandau fiel
+      am stärksten (149,3 auf 109,8), zum größten Teil im Jahr 2022.
+    src: a5ee204301d0
+- heading:
+    text: Warum die Zahlen des Senats abweichen
+    src: 092802484edf
+  paragraphs:
+  - text: >-
+      Die Zahlen des Senats beantworten eine andere Frage [@berlin-fortschrittsbericht-2025].
+      Seine 21,2 km für 2025 sind km Strecke, die Projekte fertiggestellt oder verbessert
+      haben, entnommen einer Projektdatenbank zum Jahresende. Die 20,5 km waren eine
+      vorläufige Zahl, die die Verwaltung als möglicherweise unvollständig bezeichnete
+      [@berlin-tagesspiegel-dpa-2025-12]; die 9,8 km betreffen allein das Vorrangnetz
+      [@berlin-drs-19-25987], für das der Fortschrittsbericht selbst eine kleinere
+      Zahl nennt.
+    src: d2410052bf7b
+  - text: >-
+      Wir zählen alle kartierte Infrastruktur je Straßenseite, gleich wann Kartierende
+      sie erfassen. Von 2023 bis Oktober 2026 wurden 442 km Wegseiten neu kartiert
+      und 656 km neu gezeichnet, und A+B stieg netto um 35,6 km [#change]. Die Bestandsaufnahme
+      des Vorrangnetzes im Bericht nutzte ebenfalls OpenStreetMap, aber nur innerhalb
+      dieses Netzes. Keine der beiden Reihen bestätigt oder widerlegt die andere.
+    src: 406958f81788
+literals:
+- 100 km
+- 12 Bezirke

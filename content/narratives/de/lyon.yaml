@@ -1,0 +1,57 @@
+city_id: lyon
+title:
+  text: 'Lyon: flach bis 2020, dann ein Anstieg, der schneller wurde'
+  src: 15516188a022
+dek:
+  text: >-
+    Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 64 auf 113 km
+    und die Hauptkennzahl von 31,0 auf 52,3 kartierte A+B-km je 100 km Hauptstraßen.
+  src: a175f639cc41
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Lyons Karte bewegte sich anfangs kaum: A+B blieb von 2018 bis 2020 zwischen
+      61 und 64 km, und die Hauptkennzahl (kartierte A+B-km je 100 km Hauptstraßen)
+      sank leicht von 31,0 auf 28,4. Danach ging es aufwärts, bis 2023 langsam und
+      seitdem schneller: von 74 km im Jahr 2023 auf heute 113 km, die Hauptkennzahl
+      von 33,9 auf 52,3. Baulich getrennte Radwege (Stufe A) haben sich mehr als verdoppelt,
+      von 40 auf 93 km. Markierte Radfahrstreifen (Stufe D) sind noch immer die größte
+      Stufe, gestiegen von 110 auf 173 km.
+    src: c12182cdbcb7
+  - text: >-
+      Der Punkt 2025 trägt einen Prüfhinweis wegen ungewöhnlich vieler Bearbeitungen,
+      doch die Spitze war eine Kampagne für Gehwege und Überwege im Juli 2024. Gehwege
+      haben keine Stufe, und der Zuwachs an Radinfrastruktur in diesem Jahr kam überwiegend
+      von Radwegen, die neben Straßen gezeichnet wurden [#ts-lyon-2025]. Wie viel
+      des Anstiegs vor Ort neu ist, kann die Karte nicht sagen; die Bilanz des örtlichen
+      Radverkehrsvereins zum Programm Voies Lyonnaises nennt eine eigene Zählung [@lyon-lavilleavelo-bilan-vl].
+    src: 20b66d7fd207
+  - text: >-
+      Im funktionalen Stadtraum (FUA) stieg A+B von 543 auf 894 km. Sein Schritt von
+      2026 ist gewöhnliche Kartierung durch viele Kartierende, doch ein Teil davon
+      sind Tag-Änderungen: kartierte Gehwege und Wirtschaftswege, die zu ausgewiesenen
+      Wegen wurden [#ts-lyon-fua-2026]. Das ist eine Veränderung auf der Karte, keine
+      neue Infrastruktur.
+    src: 30c086ce6164
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities gibt für Lyon 14 % geschützt an, ein Verhältnis von geschützten
+      km zum gesamten Straßennetz [@cc2025-report]. Unsere 17,7 % zählen jede Straßenseite.
+      Auf der Basis entlang der Straßenachse schrumpft die Abweichung auf +7,6 %,
+      und gegenüber dem eigenen Straßennetz von Clean Cities trifft unser Wert ihre
+      Zahl [#rc-lyon-cc_ratio]. Beide beziehen sich auf die Gemeinde; ihre Daten wurden
+      bis Anfang 2025 erhoben, unsere stammen von der Karte vom Oktober 2026. Die
+      eigene Summe der Métropole umfasst die ganze Métropole und nimmt Straßen mit
+      Radverkehr gegen die Einbahnrichtung, Voies vertes und befestigte Seitenstreifen
+      hinzu [@lyon-plan-velo-2024]; sie weicht also in Fläche und Umfang ab. QECIO
+      berichtet für das Département Rhône; auf dieser Fläche gemessen stimmen die
+      Hauptstraßen überein [#rc-lyon-qecio_main_km].
+    src: a0ef4783ed95
+literals:
+- 100 km

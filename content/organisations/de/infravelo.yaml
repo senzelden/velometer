@@ -1,0 +1,70 @@
+id: infravelo
+sections:
+- heading:
+    text: Wer sie sind
+    src: e74d1fb7aefb
+  paragraphs:
+  - text: >-
+      Die GB infraVelo GmbH wurde Mitte 2017 im Auftrag der Senatsverkehrsverwaltung
+      gegründet [@infravelo-ueber-uns]. Sie ist eine hundertprozentige Tochter der
+      landeseigenen Grün Berlin GmbH [@infravelo-ueber-uns] und wird aus Zuweisungen
+      des Berliner Landeshaushalts finanziert [@infravelo-faq]. Sie stößt keine Projekte
+      an: Die SenMVKU weist sie zu und priorisiert sie, und infraVelo steuert als
+      Bauherrin ihre Planung und ihren Bau [@infravelo-faq]. Auch die Bezirke und
+      die SenMVKU führen selbst Radverkehrsprojekte durch [@infravelo-faq].
+    src: 1576620de02d
+- heading:
+    text: Wie sie messen
+    src: 961f30415384
+  dimensions:
+    scope:
+      text: >-
+        Radverkehrsmaßnahmen aller Berliner Bezirke, als Projekte erfasst [@infravelo-faq]
+      src: 870374399b9c
+    kind:
+      text: Projekte, vor allem nach Terminen und Finanzen überwacht [@infravelo-faq]
+      src: 53fb07d1767b
+    length:
+      text: von der Quelle nicht angegeben
+      src: 6369b53f77a8
+    date:
+      text: von den Bezirken vierteljährlich aktualisiert [@infravelo-faq]
+      src: 416dfaec37fa
+    area:
+      text: Land Berlin [@infravelo-faq]
+      src: a2602256d4c2
+    method:
+      text: >-
+        eine von infraVelo entwickelte Cloud-Projektdatenbank, die von den Projektleitungen
+        der Bezirke gepflegt wird [@infravelo-faq]
+      src: 6e85ba048bce
+  paragraphs:
+  - text: >-
+      Seit Januar 2020 führt infraVelo eine zentrale Datenbank aller Radverkehrsmaßnahmen
+      in Berlin, die die Bezirke jedes Quartal aktualisieren [@infravelo-faq]. Der
+      Fortschrittsbericht des Senats stützt sich hauptsächlich auf diese Datenbank
+      [@berlin-fortschrittsbericht-2025]; die gemeldeten km und die Projektliste von
+      infraVelo haben also eine gemeinsame Quelle.
+    src: 2b58cbddfcd2
+  - text: >-
+      Nach unserer Lesart ist das ein Register von Projekten, keine Erhebung auf der
+      Straße: Eine Maßnahme kommt hinzu, wenn ein Bezirk sie erfasst, mit der Länge,
+      die ihr Projekt angibt.
+    src: ded543c59e80
+- heading:
+    text: Politische Rolle
+    src: 38a02bd1c37e
+  paragraphs:
+  - text: >-
+      Ausrichtung und Prioritäten der Projekte von infraVelo liegen bei der SenMVKU
+      [@infravelo-organisation]; nach unserer Lesart hat infraVelo kein eigenes politisches
+      Mandat. infraVelo leitet drei bis vier Lenkungsrunden im Jahr mit jedem Bezirk
+      und der SenMVKU [@infravelo-faq] und zeigt die Datenbank auf einer öffentlichen
+      Projektkarte [@infravelo-faq].
+    src: ffc720d0a113
+  - text: >-
+      Weil der Bericht an den Hauptausschuss auf seiner Datenbank beruht [@berlin-fortschrittsbericht-2025]
+      [@berlin-dpa-fortschrittsbericht-hauptausschuss], gehört nach unserer Lesart
+      die Vollständigkeit der Daten von infraVelo zu dem, was das Parlament prüft,
+      wenn es die Zahlen des Senats liest.
+    src: d07c1a00973c

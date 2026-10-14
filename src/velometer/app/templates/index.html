@@ -1,39 +1,37 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite %}
-{% block title %}velometer · overview{% endblock %}
-{% block scripts %}<script type="module" src="{{ u('/static/js/overview.js') }}"></script>{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><span aria-current="page">Overview</span></nav>{% endblock %}
+{% block title %}velometer · {{ t('page.index.title') }}{% endblock %}
+{% block scripts %}<script type="module" src="{{ data_u('/static/js/overview.js') }}"></script>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><span aria-current="page">{{ t('nav.overview') }}</span></nav>{% endblock %}
 {% block content %}
-<h1>Protected cycling infrastructure in {{ rows | length }} European cities, as mapped</h1>
-<p class="dek">How many kilometres of separated tracks and shared foot/cycle paths OpenStreetMap shows
-per 100 km of main roads{% if years %}, from 1 January {{ years[0] }} to the latest snapshot{% endif %}.</p>
-<p class="defn"><b>Headline</b> = {{ headline_unit }}. A = separated track, B = shared foot/cycle path.
-All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not what was built.</p>
+<h1>{{ t('page.index.h1', n=rows | length) }}</h1>
+<p class="dek">{{ t('page.index.dek') }}{% if years %}{{ t('page.index.dek_years', year=years[0]) }}{% endif %}.</p>
+<p class="defn">{{ t('page.index.defn', unit=headline_unit) }}</p>
 <ul class="keyfacts">
-  <li><b>{{ rows | length }}</b> cities</li>
-  <li><b>{{ countries }}</b> countries</li>
-  {% if years %}<li>snapshots <b>1 Jan {{ years[0] }}–{{ years[-1] }}</b> and the current run</li>{% endif %}
+  <li>{{ t('page.index.n_cities', count=rows | length) }}</li>
+  <li>{{ t('page.index.n_countries', count=countries) }}</li>
+  {% if years %}<li>{{ t('page.index.snapshots', first=years[0], last=years[-1]) }}</li>{% endif %}
 </ul>
-{{ cite(cite_for("Headline ranking, " ~ headline_unit ~ ", city proper (LAU), all cities")) }}
+{{ cite(cite_for(t('cite.title.ranking', unit=headline_unit))) }}
 
 <section class="panel" id="ranking" aria-labelledby="ranking-h">
 <div class="panel-head">
-  <h2 id="ranking-h">Headline ranking, city proper (LAU)</h2>
-  <p class="legend-inline"><span class="dot then"></span>first year <span class="dot now"></span>current run</p>
+  <h2 id="ranking-h">{{ t('page.index.ranking') }}</h2>
+  <p class="legend-inline"><span class="dot then"></span>{{ t('page.index.legend_first') }} <span class="dot now"></span>{{ t('page.index.legend_now') }}</p>
 </div>
-<p class="meta">{{ headline_unit }}. Each city's first series year against its current run; click a city for its page.</p>
+<p class="meta">{{ t('page.index.ranking_meta', unit=headline_unit) }}</p>
 <div class="scroll">
 <table class="ranking stack">
 <thead><tr>
-  <th class="num">#</th><th>City</th><th class="bar-col"><span class="sr-only">First year to current run</span></th>
-  <th class="num first-col">First year</th><th class="num">Current</th><th class="num">Change</th>
+  <th class="num">#</th><th>{{ t('table.city') }}</th><th class="bar-col"><span class="sr-only">{{ t('table.first_to_current') }}</span></th>
+  <th class="num first-col">{{ t('table.first_year') }}</th><th class="num">{{ t('table.current') }}</th><th class="num">{{ t('table.change') }}</th>
 </tr></thead>
 <tbody>
 {% for s in ranking %}
 <tr>
   <td class="num" data-label="#">{% if s.now is not none %}{{ loop.index }}{% endif %}</td>
-  <td data-label="City"><a href="{{ u('/city/' ~ s.city.id) }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
-  <td class="bar-col" data-label="First year to current run">{% if s.now is not none and s.first is not none %}
+  <td data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ s.city.id) }}">{{ s.city.name }}</a> <span class="cc">{{ s.city.country_iso2 }}</span></td>
+  <td class="bar-col" data-label="{{ t('table.first_to_current') }}">{% if s.now is not none and s.first is not none %}
     {%- set a = 2 + 96 * s.first / scale_max %}{% set b = 2 + 96 * s.now / scale_max -%}
     <svg class="dumbbell" width="100%" height="14" aria-hidden="true" focusable="false">
       <line x1="{{ '%.2f' % ([a, b] | min) }}%" x2="{{ '%.2f' % ([a, b] | max) }}%" y1="7" y2="7"></line>
@@ -41,11 +39,11 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
       <circle class="now" cx="{{ '%.2f' % b }}%" cy="7" r="4.5"></circle>
     </svg>{% endif %}</td>
   {% if s.now is none %}
-  <td class="note" colspan="3" data-label="First year">no run (LAU current)</td>
+  <td class="note" colspan="3" data-label="{{ t('table.first_year') }}">{{ t('note.no_run_lau_current') }}</td>
   {% else %}
-  <td class="num first-col" data-label="First year">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
-  <td class="num" data-label="Current"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
-  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}" data-label="Change">{% if s.change is none %}n/a{% else %}{{ "%+.1f" | format(s.change) }}{% endif %}</td>
+  <td class="num first-col" data-label="{{ t('table.first_year') }}">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
+  <td class="num" data-label="{{ t('table.current') }}"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
+  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}" data-label="{{ t('table.change') }}">{{ s.change | signed }}</td>
   {% endif %}
 </tr>
 {% endfor %}
@@ -55,63 +53,59 @@ All lengths are <b>mapped km</b> in OpenStreetMap: what mappers recorded, not wh
 </section>
 
 <section aria-labelledby="time-h">
-<h2 id="time-h">Over time</h2>
-<p class="meta">Headline, city proper (LAU), every city; the pilot five in colour. Mapped km in OpenStreetMap, not built km.
-The ranking above lists every city's values.</p>
-<div class="chart" data-chart="overview-lines" aria-describedby="overview-sum" role="group" aria-label="Headline over time, all cities"></div>
-<details class="table-details"><summary id="overview-sum">Table: headline per city and snapshot</summary>
+<h2 id="time-h">{{ t('city.tab.time') }}</h2>
+<p class="meta">{{ t('page.index.time_meta') }}</p>
+<div class="chart" data-chart="overview-lines" aria-describedby="overview-sum" role="group" aria-label="{{ t('page.index.time_chart') }}"></div>
+<details class="table-details"><summary id="overview-sum">{{ t('page.index.time_table') }}</summary>
 <div class="scroll">
 <table class="stack">
-<thead><tr><th scope="col">City</th>{% for col in chart_table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
+<thead><tr><th scope="col">{{ t('table.city') }}</th>{% for col in chart_table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for row in chart_table.rows %}<tr><th scope="row" data-label="City"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ chart_table.columns[loop.index0].text }}">{{ v | num }}{% if chart_table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="flagged year">⚑</span><span class="sr-only"> (flagged)</span>{% endif %}</td>{% endfor %}</tr>
+{% for row in chart_table.rows %}<tr><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ chart_table.columns[loop.index0].text }}">{{ v | num }}{% if chart_table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}</td>{% endfor %}</tr>
 {% endfor %}</tbody>
 </table>
 </div>
 </details>
-{{ cite(cite_for("Headline over time, " ~ headline_unit ~ ", city proper (LAU), all cities")) }}
-<p class="meta chartnote"><span class="ring"></span> ringed point = flagged year (automatic check); its explanation is on the city page.</p>
+{{ cite(cite_for(t('cite.title.over_time', unit=headline_unit))) }}
+<p class="meta chartnote"><span class="ring"></span> {{ t('page.index.ring_note') }}</p>
 </section>
 
 <section aria-labelledby="explore-h">
-<h2 id="explore-h">Explore</h2>
+<h2 id="explore-h">{{ t('page.index.explore') }}</h2>
 <div class="cards">
-  <a class="card" href="{{ u('/compare') }}"><span class="kicker">Compare</span><span class="card-title">Cities side by side</span>
-    <span class="card-text">Any set of cities on one chart, LAU or FUA, absolute or indexed to 2018.</span><span class="more">Open Compare →</span></a>
-  <a class="card" href="{{ u('/stories') }}"><span class="kicker">Stories</span><span class="card-title">What the map shows</span>
-    <span class="card-text">The combined narrative across all cities, with quotes and sources.</span><span class="more">Read the stories →</span></a>
-  <a class="card" href="{{ u('/cities') }}"><span class="kicker">Cities</span><span class="card-title">All cities by country</span>
-    <span class="card-text">Each city with its headline and a sparkline, leading to its own page.</span><span class="more">Browse the cities →</span></a>
-  <a class="card" href="{{ u('/methodology') }}"><span class="kicker">Methodology</span><span class="card-title">How the numbers are made</span>
-    <span class="card-text">Tiers A–E, the headline, LAU and FUA boundaries, and the limits of mapped km.</span><span class="more">Read the methodology →</span></a>
+  <a class="card" href="{{ u('/compare') }}"><span class="kicker">{{ t('nav.compare') }}</span><span class="card-title">{{ t('page.index.card_compare_title') }}</span>
+    <span class="card-text">{{ t('page.index.card_compare_text') }}</span><span class="more">{{ t('page.index.card_compare_more') }} →</span></a>
+  <a class="card" href="{{ u('/stories') }}"><span class="kicker">{{ t('nav.stories') }}</span><span class="card-title">{{ t('page.index.card_stories_title') }}</span>
+    <span class="card-text">{{ t('page.index.card_stories_text') }}</span><span class="more">{{ t('page.index.card_stories_more') }} →</span></a>
+  <a class="card" href="{{ u('/cities') }}"><span class="kicker">{{ t('nav.cities') }}</span><span class="card-title">{{ t('page.index.card_cities_title') }}</span>
+    <span class="card-text">{{ t('page.index.card_cities_text') }}</span><span class="more">{{ t('page.index.card_cities_more') }} →</span></a>
+  <a class="card" href="{{ u('/methodology') }}"><span class="kicker">{{ t('nav.methodology') }}</span><span class="card-title">{{ t('page.index.card_method_title') }}</span>
+    <span class="card-text">{{ t('page.index.card_method_text') }}</span><span class="more">{{ t('page.index.card_method_more') }} →</span></a>
 </div>
 </section>
 
 <section aria-labelledby="keys-h">
-<h2 id="keys-h">Key numbers</h2>
-<p class="lede">Current LAU run per city, on the report classifier. The headline is
-{{ headline_unit }}. Each preset divides by its own denominator (see the
-<a href="{{ u('/methodology') }}">methodology</a>); all values are ours, computed on each publisher's method,
-not the published figures. km are OSM mapped km per side.</p>
+<h2 id="keys-h">{{ t('page.index.keys') }}</h2>
+<p class="lede">{{ t('page.index.keys_lede', unit=headline_unit, methodology=u('/methodology')) }}</p>
 <div class="scroll">
 <table class="stack">
 <thead><tr>
-  <th>City</th>
+  <th>{{ t('table.city') }}</th>
   {% for p in preset_label %}<th class="num" id="{{ preset_column[p] }}" title="{{ preset_unit[p] }}"><a href="{{ u('/sources') }}#{{ preset_anchor[p] }}">{{ preset_label[p] }}</a></th>{% endfor %}
   <th class="num">A+B km</th>
-  <th class="num">Flagged years (LAU)</th>
+  <th class="num">{{ t('table.flagged_years_lau') }}</th>
 </tr></thead>
 <tbody>
 {% for r in rows %}
 <tr>
-  <td data-label="City"><a href="{{ u('/city/' ~ r.city.id) }}">{{ r.city.name }}</a></td>
+  <td data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ r.city.id) }}">{{ r.city.name }}</a></td>
   {% if r.point %}
   {% for p in preset_label %}<td class="num" data-label="{{ preset_label[p] }}">{{ r.presets.get(p) | num }}</td>{% endfor %}
   <td class="num" data-label="A+B km">{{ r.point.ab_km | num }}</td>
   {% else %}
-  <td class="note" colspan="{{ preset_label | length + 1 }}" data-label="{{ preset_label.values() | first }}">no run (LAU current)</td>
+  <td class="note" colspan="{{ preset_label | length + 1 }}" data-label="{{ preset_label.values() | first }}">{{ t('note.no_run_lau_current') }}</td>
   {% endif %}
-  <td class="num" data-label="Flagged years (LAU)">{{ r.flags }}</td>
+  <td class="num" data-label="{{ t('table.flagged_years_lau') }}">{{ r.flags }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -120,23 +114,22 @@ not the published figures. km are OSM mapped km per side.</p>
 <ul class="meta units">
 {% for p in preset_label %}<li><strong>{{ preset_label[p] }}:</strong> {{ preset_unit[p] }}</li>
 {% endfor %}</ul>
-<p class="meta">How each source measures: <a href="{{ u('/sources') }}">Sources</a> · why the figures differ: <a href="{{ u('/differences') }}">the six dimensions</a></p>
+<p class="meta">{{ t('page.index.how_measure', sources=u('/sources'), differences=u('/differences')) }}</p>
 </section>
 
 <section aria-labelledby="ranks-h">
-<h2 id="ranks-h">Rankings by source</h2>
+<h2 id="ranks-h">{{ t('page.index.ranks') }}</h2>
 {% if rankings %}
-<p class="meta">Rank of each city (1 = highest) in our presets and in the published rankings. Ranks depend on
-which cities a source covers; each source has its own measure and scope.</p>
+<p class="meta">{{ t('page.index.ranks_meta') }}</p>
 <div class="scroll">
 <table class="ranks stack">
-<thead><tr><th>City</th>{% for sid, col in rankings.columns.items() %}<th class="num"><a href="{{ u('/sources') }}#{{ rankings.anchors[sid] }}">{{ col }}</a></th>{% endfor %}</tr></thead>
+<thead><tr><th>{{ t('table.city') }}</th>{% for sid, col in rankings.columns.items() %}<th class="num"><a href="{{ u('/sources') }}#{{ rankings.anchors[sid] }}">{{ col }}</a></th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in rankings.rows %}
 <tr>
-  <td data-label="City"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></td>
+  <td data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></td>
   {% for sid in rankings.columns %}{% set cell = row.cells.get(sid) %}
-  <td class="num" data-label="{{ rankings.columns[sid] }}">{% if cell and cell.rank is not none %}{{ cell.rank }}{% if cell.dagger %} †{% endif %}{% else %}<span class="note">not published</span>{% endif %}</td>
+  <td class="num" data-label="{{ rankings.columns[sid] }}">{% if cell and cell.rank is not none %}{{ cell.rank }}{% if cell.dagger %} †{% endif %}{% else %}<span class="note">{{ t('table.not_published') }}</span>{% endif %}</td>
   {% endfor %}
 </tr>
 {% endfor %}
@@ -145,7 +138,7 @@ which cities a source covers; each source has its own measure and scope.</p>
 </div>
 {% if rankings.notes %}<ul class="meta">{% for n in rankings.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
 {% else %}
-<p class="note">no run or figures to rank</p>
+<p class="note">{{ t('page.index.no_ranks') }}</p>
 {% endif %}
 </section>
 {% endblock %}

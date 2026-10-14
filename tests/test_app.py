@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
 from tests.report_fixture import CLASSIFIER
+from velometer import i18n
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
@@ -81,9 +82,9 @@ def _docs(tmp_path: Path) -> Path:
     return docs
 
 
-@pytest.fixture
-def setup(fixture_db, tmp_path):
-    db_path, cfg, _conn, _data = fixture_db
+def app_inputs(db_path: Path, cfg: Path, tmp_path: Path) -> tuple[Path, Path, Path, Path]:
+    """(db, config, maps, docs) of the `client` app: the maps and docs it reads, in `tmp_path`.
+    Shared with the session-wide rendered pages (conftest `page_site`), so both are one app."""
     maps = tmp_path / "maps"
     maps.mkdir()
     (maps / "berlin_lau.png").write_bytes(PNG)  # berlin_fua.png is deliberately missing
@@ -95,6 +96,12 @@ def setup(fixture_db, tmp_path):
     (tmp_path / "secret_lau.geojson").write_bytes(GEOJSON)
     docs = _docs(tmp_path)
     return db_path, cfg, maps, docs
+
+
+@pytest.fixture
+def setup(fixture_db, tmp_path):
+    db_path, cfg, _conn, _data = fixture_db
+    return app_inputs(db_path, cfg, tmp_path)
 
 
 @pytest.fixture
@@ -114,8 +121,17 @@ def nolabels(html: str) -> str:
     return re.sub(r' data-label="[^"]*"', "", html)
 
 
+UI_STRINGS = re.compile(r'<script type="application/json" id="ui-strings">.*?</script>', re.S)
+
+
+def without_ui_strings(html: str) -> str:
+    """The page without its JS strings block: every page carries the whole `js.*` catalogue,
+    so a "this note is absent" assertion must not read it."""
+    return UI_STRINGS.sub(" ", html)
+
+
 def _text(html: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", without_ui_strings(html)))
 
 
 @pytest.mark.parametrize(
@@ -333,7 +349,8 @@ def test_pages_load_only_static_assets_and_osm_tiles(client):
         html = client.get(path).text
         scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
         assert scripts and all(s.startswith("/static/") for s in scripts), path
-        css = re.findall(r'<link[^>]+href="([^"]+)"', html)
+        # what a page loads: the head's alternate and canonical links are not fetched
+        css = re.findall(r'<link (?!rel="(?:alternate|canonical)")[^>]*href="([^"]+)"', html)
         assert css and all(c.startswith("/static/") for c in css), path
         assert all(i.startswith("/") and not i.startswith("//")
                    for i in re.findall(r'<img[^>]+src="([^"]+)"', html)), path  # fmt: skip
@@ -425,6 +442,7 @@ def test_pages_load_our_chart_modules(client):
         "/static/js/cite-ui.js",
         "/static/js/download-ui.js",
         "/static/js/permalink-ui.js",
+        "/static/js/lang-switch.js",
     ]
     pages = {
         "/": [*base, "/static/js/overview.js"],
@@ -478,15 +496,29 @@ def test_the_js_literal_rule_sees_each_kind():
         assert not _js_colour_literals(f"const c = {ok};"), ok
 
 
+# the ODbL attribution (a licence requirement) and the mapped-km line, in each language
+FOOTER_TEXT = {
+    "en": ("Map data © OpenStreetMap contributors, ODbL 1.0",
+           "OSM mapped km, not built km (ADR 0006)"),
+    "de": ("Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0",
+           "kartierte km, nicht gebaute km (ADR 0006)"),
+}  # fmt: skip
+
+
 def test_footer_on_every_page(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
-    for path in ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]:
+    pages = [("/", "en"), ("/city/berlin", "en"), ("/city/paris", "en"), ("/methodology", "en"),
+             ("/methodology/de", "de"), ("/de/", "de")]  # fmt: skip
+    for path, lang in pages:
         html = client.get(path).text
         footer = html[html.index("<footer") :]
         text = _text(footer)
-        assert "© OpenStreetMap contributors, ODbL 1.0" in text
-        assert "OSM mapped km, not built km (ADR 0006)" in text
-        assert 'href="/methodology"' in footer
+        # the licence and ADR 0006 wording itself, then the catalogue the page renders from
+        assert FOOTER_TEXT[lang][0] in text and FOOTER_TEXT[lang][1] in text, path
+        assert _text(i18n.t(lang, "site.footer.attribution", osm="")).strip() in text, path
+        assert i18n.t(lang, "site.footer.mapped_km") in text, path
+        methodology = "/methodology" if lang == "en" else "/de/methodology"
+        assert f'href="{methodology}"' in footer, path
         assert data.selector.version in text and data.selector.short_sha in text
 
 
@@ -494,9 +526,11 @@ def test_methodology_rendered_with_tables_and_language_links(client):
     html = client.get("/methodology").text
     assert "<table" in html and "separated track" in html
     assert "<pre><code>velometer run" in html  # fenced_code
-    assert 'href="/methodology/de"' in html
+    # the nav's language switch leads to the twin in the other language
+    assert re.search(r'<a class="lang-switch"[^>]*\bhref="/de/methodology"', html)
     de = client.get("/methodology/de").text
-    assert "Getrennter Radweg." in de and 'href="/methodology"' in de
+    assert "Getrennter Radweg." in de
+    assert re.search(r'<a class="lang-switch"[^>]*\bhref="/methodology"', de)
 
 
 def test_missing_methodology_is_a_note_not_an_error(setup):

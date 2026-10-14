@@ -1,0 +1,59 @@
+city_id: helsinki
+title:
+  text: 'Helsinki: eine flache Karte an der Spitze'
+  src: 83c9d3a4ae52
+dek:
+  text: >-
+    Die kartierten A+B-km blieben von 2018 bis Oktober 2026 zwischen 1.279 und 1.292
+    km; die Hauptkennzahl fiel von 276,2 auf 262,3, weil mehr Straßen als Hauptstraßen
+    getaggt wurden, nicht weil Radwege verschwanden.
+  src: eac496779071
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Helsinki hat die höchste Hauptkennzahl der 21 Städte, und seine Karte der Stadt
+      hat sich kaum bewegt. Die kartierten A+B-km in der Kernstadt (LAU) lagen 2018
+      bei 1.283 km und im Oktober 2026 bei 1.279 km [#ts-helsinki]. Die Hauptkennzahl
+      fiel dennoch, von 276,2 auf 262,3 kartierte A+B-km je 100 km Hauptstraßen, größtenteils
+      zwischen den Punkten 2024 und 2025 (274,4 → 264,7).
+    src: ba0e78f5156d
+  - text: >-
+      Dieser Rückgang ist eine Änderung der Bezugsgröße, kein Verlust von Radwegen.
+      A+B blieb an beiden Punkten bei 1.282 km, während die kartierten Hauptstraßen
+      von 467 auf 484 km stiegen, weil im Laufe des Jahres 2024 Hunderte Wohnstraßen
+      zu Tertiärstraßen (tertiary) umklassifiziert wurden [#shift-helsinki-2025].
+      Mit den Hauptstraßen-km von 2024 wäre die Hauptkennzahl von 2025 gleich geblieben.
+    src: 4d79bd16bb21
+  - text: >-
+      Der größte Teil des städtischen Netzes sind Geh- und Radwege: 943 der 1.279
+      km sind Stufe B, gegenüber 336 km baulich getrennter Radwege (Stufe A). Markierte
+      Radfahrstreifen (Stufe D) gibt es wenige, doch sie nehmen zu, 14 → 38 km.
+    src: 52699c9d7def
+  - text: >-
+      Der funktionale Stadtraum (FUA) erzählt eine andere Geschichte. A+B stieg von
+      5.018 auf 5.742 km, während Stufe A von 909 auf 589 km fiel. Ein Teil dieses
+      Rückgangs sind Tag-Änderungen: Seit 2024 erhielten Radwege außerhalb der Stadt
+      Fußverkehrs-Tags und wechselten von A nach B [#recon-helsinki-qecio-tracks].
+    src: 35969c4aa90c
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities zählt für Helsinki 783 km geschützter Infrastruktur [@cc2025-report];
+      unser A+B-Wert liegt bei 1.279 km je Seite (+63 %). An der Länge liegt es nicht:
+      Die meisten Wege der Stadt sind Zweirichtungswege [@helsinki-priorisointiohjelma-2021],
+      die Messung entlang der Straßenachse ändert unseren Wert also kaum. Am Umfang
+      schon: Die Zahl von Clean Cities liegt zwischen unserer Stufe A und A+B, sie
+      zählt also weniger Geh- und Radwege, welche, ist allerdings nicht angegeben
+      [#recon-helsinki-cc-km]. Die eigene Zahl der Stadt für separate Radwege, unten
+      zitiert, liegt nahe an unserem A+B; ihr Datum und ihre Methode sind nicht angegeben.
+      QECIO berichtet für die Region Helsinki-Uusimaa, nicht für die Stadt. Die Baana-Zahlen
+      zählen fertiggestellte hochwertige Routen, eine Art von km, die wir nicht messen.
+    src: 81e96f0a2712
+literals:
+- 100 km
+- '21'

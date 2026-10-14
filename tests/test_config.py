@@ -252,14 +252,14 @@ def test_load_report_rejects_a_preset_not_in_presets_yaml(tmp_path: Path):
     path = _report(
         tmp_path,
         "report_classifier: v2\nrankings:\n"
-        "  - {id: x, label: X, kind: preset, preset: no_such_preset}\n",
+        "  - {id: x, label: X, label_de: X, kind: preset, preset: no_such_preset}\n",
     )
     with pytest.raises(ConfigError, match=r"(?s)report\.yaml.*no_such_preset.*presets\.yaml"):
         load_report(path)
 
 
 def test_load_report_rejects_duplicate_ranking_ids(tmp_path: Path):
-    row = "  - {id: x, label: X, kind: preset, preset: ours_headline}\n"
+    row = "  - {id: x, label: X, label_de: X, kind: preset, preset: ours_headline}\n"
     path = _report(tmp_path, "report_classifier: v2\nrankings:\n" + row + row)
     with pytest.raises(ConfigError, match="duplicate ranking ids"):
         load_report(path)

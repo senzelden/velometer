@@ -204,7 +204,6 @@ h1 { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.3rem); line-heig
 .defn { border-left: 3px solid var(--accent); background: var(--accent-bg); padding: 0.5rem 0.75rem; font-size: 0.92rem; color: var(--ink-2); max-width: 60em; }
 .defn b { color: var(--ink); }
 .keyfacts { list-style: none; padding: 0; margin: 0.75rem 0 1.25rem; display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; color: var(--ink-2); font-size: 0.95rem; }
-.langs { color: var(--ink-2); margin: 0.25rem 0 0; }
 h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--grid); }
 h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: var(--ink-2); }
 h4 { font-size: 0.95rem; margin: 0 0 0.25rem; }
@@ -441,6 +440,14 @@ table.sources th[scope="row"] { white-space: normal; min-width: 8rem; color: var
 table.sources td { min-width: 6.5rem; }
 table.sources details.src-cities summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 table.sources tr.group th { padding-top: 1rem; color: var(--ink); font-size: 1rem; white-space: normal; border-bottom: 2px solid var(--grid-2); }
+/* German pages: long compounds ("Neukartierungskampagne", "Hauptradverkehrsnetz") must not widen
+   the page. Titles hyphenate or break; the sources table hyphenates where the browser can and is
+   set smaller and tighter, so its unbroken words still fit 1280 px (headless Chrome hyphenates
+   nothing) */
+:lang(de) .story-title, :lang(de) .narrative h2, :lang(de) .narrative h3 { hyphens: auto; overflow-wrap: break-word; }
+:lang(de) table.sources { font-size: 0.8rem; }
+:lang(de) table.sources th, :lang(de) table.sources td { hyphens: auto; padding-left: 0.3rem; padding-right: 0.3rem; }
+:lang(de) table.sources td { min-width: 4.5rem; }
 dl.drivers { margin: 0; font-size: 0.88rem; }
 dl.drivers div { margin-bottom: 0.35rem; }
 dl.drivers dt { font-weight: 600; }

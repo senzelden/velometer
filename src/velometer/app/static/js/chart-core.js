@@ -1,6 +1,6 @@
-// Pure chart maths: no DOM, no I/O. chart.js draws what these functions compute.
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Pure chart maths: no DOM drawing, no I/O. chart.js draws what these functions compute. Numbers
+// and month names are the page's language (fmt.js).
+import { compact, format, monthYear } from "./fmt.js";
 
 /** Linear scale from a domain to a range; a zero-width domain maps to the range start. */
 export function scaleLinear([d0, d1], [r0, r1]) {
@@ -102,27 +102,25 @@ export function assignColours(prev, highlighted, palette) {
   return Object.fromEntries(highlighted.filter((id) => id in out).map((id) => [id, out[id]]));
 }
 
-/** X-axis labels; the `current` run is shown as the snapshot month ("Oct 2026"). */
+/** X-axis labels; the `current` run is shown as the snapshot month ("Oct 2026", "Okt. 2026"). */
 export function xLabels(labels, snapshot) {
   let text = null;
-  if (snapshot instanceof Date) {
-    text = `${MONTHS[snapshot.getUTCMonth()]} ${snapshot.getUTCFullYear()}`;
-  } else if (typeof snapshot === "string" && /^\d{4}-\d{2}/.test(snapshot)) {
-    text = `${MONTHS[Number(snapshot.slice(5, 7)) - 1]} ${snapshot.slice(0, 4)}`;
+  if (snapshot instanceof Date || (typeof snapshot === "string" && /^\d{4}-\d{2}/.test(snapshot))) {
+    text = monthYear(snapshot);
   }
   return labels.map((l) => (l === "current" && text ? text : l));
 }
 
-/** Compact y-axis tick text, en-GB. */
+/** Compact y-axis tick text in the page's locale ("12k" / "12 Tsd." from 10,000 on). */
 export function tickLabel(v) {
   const a = Math.abs(v);
-  if (a >= 10000) return (v / 1000).toLocaleString("en-GB", { maximumFractionDigits: 0 }) + "k";
-  return v.toLocaleString("en-GB", { maximumFractionDigits: a < 10 && v % 1 ? 1 : 0 });
+  if (a >= 10000) return compact(v);
+  return format(v, { maximumFractionDigits: a < 10 && v % 1 ? 1 : 0 });
 }
 
 /** Exact value for tooltips: thousands separators, at most one decimal, never "12k". */
 export function formatValue(v) {
-  return v.toLocaleString("en-GB", { maximumFractionDigits: 1 });
+  return format(v, { maximumFractionDigits: 1 });
 }
 
 /** Estimated rendered width of axis text, px (the axis font is small and proportional). */

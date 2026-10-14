@@ -6,7 +6,7 @@ from datetime import date
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 STORY_STEPS = ("all", "leaders", "tail", "growth", "jumps", "bezirke")
 INTERNAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "::1"}
@@ -38,6 +38,9 @@ class Excerpt(_Strict):
     id: str
     text: str
     gloss_en: str | None = None
+    # required for a non-German excerpt by the German completeness check, not by this model:
+    # synthetic sources and hand-built trees stay valid
+    gloss_de: str | None = None
     locator: str
 
 
@@ -45,6 +48,11 @@ class Source(_Strict):
     id: str
     publisher: str
     title: str
+    # German pages (M12): the publisher or title with our editorial notes in German ("answer of
+    # 20 May 2026" -> "Antwort vom 20. Mai 2026"); the original-language name or title in it is
+    # kept as it is. Omitted when the English field holds no editorial English.
+    publisher_de: str | None = None
+    title_de: str | None = None
     url: str
     published: date | None = None
     accessed: date
@@ -65,6 +73,13 @@ class Source(_Strict):
     def _external(cls, v: str | None) -> str | None:
         return _external_url(v)
 
+    @field_validator("publisher_de", "title_de")
+    @classmethod
+    def _german_not_blank(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("a German publisher or title must not be blank (omit it instead)")
+        return v
+
     @model_validator(mode="after")
     def _excerpts(self) -> "Source":
         ids = [e.id for e in self.excerpts]
@@ -77,6 +92,9 @@ class Source(_Strict):
                 raise ValueError(
                     f"excerpt {self.id}/{e.id} needs gloss_en (language {self.language})"
                 )
+        for name in ("publisher", "title"):
+            if getattr(self, f"{name}_de") == getattr(self, name):
+                raise ValueError(f"{self.id}: {name}_de repeats {name} (omit it instead)")
         return self
 
 
@@ -206,6 +224,71 @@ class Organisation(_Strict):
         _unique("fact", [f.id for f in self.facts])
         _unique("data_ref", [d.id for d in self.data_refs])
         return self
+
+
+# --- German translation files (M12 spec §4.4) --------------------------------------------
+# A translation file holds only the translatable text, in its English file's structure. Each
+# string is `{text, src}`, `src` the stamp of the English it was translated from
+# (`translate.src_hash`). A null list item is an untranslated paragraph that keeps its place.
+
+
+class _TrFile(_Strict):
+    """A translation file. It has no `data_refs`: a data reference's label comes only from the
+    English file and shows in English on German pages (spec §4.4), so a German copy is an
+    error, never a stale caption."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _no_data_refs(cls, data: object) -> object:
+        if isinstance(data, dict) and "data_refs" in data:
+            raise ValueError(
+                "data_refs: data-reference labels are not translated; they come only from the "
+                "English file (remove the German data_refs)"
+            )
+        return data
+
+
+class Tr(_Strict):
+    text: str
+    src: str | None = Field(None, pattern=r"^[0-9a-f]{12}$")
+
+
+class TrSection(_Strict):
+    heading: Tr | None = None
+    paragraphs: list[Tr | None] = []
+
+
+class TrOrgSection(_Strict):
+    heading: Tr | None = None
+    paragraphs: list[Tr | None] = []
+    dimensions: dict[str, Tr] | None = None
+
+
+class NarrativeTr(_TrFile):
+    """`content/narratives/de/<city_id>.yaml`."""
+
+    city_id: str
+    title: Tr | None = None
+    dek: Tr | None = None
+    sections: list[TrSection] = []
+    literals: list[str] = []
+
+
+class DocumentTr(_TrFile):
+    """`content/de/explainer.yaml`, `content/de/counters.yaml`, `content/plans/de/<id>.yaml`."""
+
+    title: Tr | None = None
+    intro: list[Tr | None] = []
+    sections: list[TrSection] = []
+    literals: list[str] = []
+
+
+class OrganisationTr(_TrFile):
+    """`content/organisations/de/<id>.yaml`; the name is a proper name and is not translated."""
+
+    id: str
+    sections: list[TrOrgSection] = []
+    literals: list[str] = []
 
 
 class OrgMapping(_Strict):

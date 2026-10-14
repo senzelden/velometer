@@ -1,10 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { DEFAULTS } from "../state.js";
 import { buildModel } from "../compare-model.js";
-import {
-  AVG_DAILY, COUNTER_DATA, NO_COUNTERS, NO_COUNTER_LINE, NOT_RECORDED, counterLines, countsChart,
-} from "../counter-model.js";
+import { counterLines, countsChart } from "../counter-model.js";
+
+// the English texts (js.counts.*) an English page shows
+const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
+const COUNTER_DATA = "Counter data";
+const NO_COUNTERS = "no open counter data";
+const NO_COUNTER_LINE = "no counter index line (an index value for one year only; see its Counts tab)";
+const NOT_RECORDED = "not recorded";
 
 const r = (v) => (v == null ? v : +v.toFixed(6));
 const pts = (o) => Object.entries(o).map(([year, idx]) => ({ year: Number(year), idx, sites: idx == null ? 0 : 5 }));

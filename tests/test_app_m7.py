@@ -20,6 +20,7 @@ from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtur
     setup_21,
     subarea_client,
     subarea_setup,
+    without_ui_strings,
 )
 from velometer.app import story
 from velometer.app.cache import fingerprint
@@ -802,7 +803,7 @@ def test_the_filter_sheet_is_a_real_get_form_with_the_cities_and_quick_sets(clie
 def test_index_mode_notes_a_city_whose_first_year_is_zero(client):
     html = client.get("/compare?mode=index&m=C&c=berlin").text  # tier C is 0 in berlin
     assert "Berlin: no index: first year is 0 or missing" in html
-    assert "no index" not in client.get("/compare?mode=index&c=berlin").text
+    assert "no index" not in without_ui_strings(client.get("/compare?mode=index&c=berlin").text)
 
 
 def test_index_mode_rebases_the_first_year_to_100(client):
@@ -816,7 +817,9 @@ def test_the_lau_only_metric_is_dropped_for_the_metro_area_with_a_visible_note(c
     html = client.get("/compare?b=fua&m=ab_per_100k&c=berlin").text
     assert "exists for the city proper (LAU) only" in html
     assert "<h2>Headline · Metro area (FUA)</h2>" in html
-    assert "exists for the city proper" not in client.get("/compare?m=ab_per_100k&c=berlin").text
+    assert "exists for the city proper" not in without_ui_strings(
+        client.get("/compare?m=ab_per_100k&c=berlin").text
+    )
 
 
 def test_the_table_marks_flagged_years(client):
@@ -1417,7 +1420,7 @@ def test_the_figures_ours_cell_shows_the_same_unit_as_theirs(setup, monkeypatch)
     row = DifferenceRow(source="official", metric="cc_share", theirs=27.6, unit="pct",
                         ours=17.0, ours_label="Ours: share", gap_pct=-0.38, reference_date=None,
                         url=None, drivers=[])  # fmt: skip
-    monkeypatch.setattr(main, "difference_rows", lambda data, city_id, cfg: [row])
+    monkeypatch.setattr(main, "difference_rows", lambda data, city_id, cfg, lang="en": [row])
     db_path, cfg, maps, docs = setup
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text

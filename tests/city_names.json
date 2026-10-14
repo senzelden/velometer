@@ -1,0 +1,74 @@
+{
+ "berlin": [
+  "Berlin"
+ ],
+ "paris": [
+  "Paris"
+ ],
+ "vienna": [
+  "Wien",
+  "Vienna"
+ ],
+ "copenhagen": [
+  "København",
+  "Kopenhagen",
+  "Copenhagen"
+ ],
+ "wroclaw": [
+  "Wrocław"
+ ],
+ "amsterdam": [
+  "Amsterdam"
+ ],
+ "utrecht": [
+  "Utrecht"
+ ],
+ "madrid": [
+  "Madrid"
+ ],
+ "barcelona": [
+  "Barcelona"
+ ],
+ "stockholm": [
+  "Stockholm"
+ ],
+ "oslo": [
+  "Oslo"
+ ],
+ "helsinki": [
+  "Helsinki"
+ ],
+ "lyon": [
+  "Lyon"
+ ],
+ "strasbourg": [
+  "Strasbourg"
+ ],
+ "bordeaux": [
+  "Bordeaux"
+ ],
+ "warsaw": [
+  "Warszawa",
+  "Warschau",
+  "Warsaw"
+ ],
+ "krakow": [
+  "Kraków",
+  "Krakau",
+  "Cracow"
+ ],
+ "budapest": [
+  "Budapest"
+ ],
+ "prague": [
+  "Praha",
+  "Prag",
+  "Prague"
+ ],
+ "ljubljana": [
+  "Ljubljana"
+ ],
+ "bratislava": [
+  "Bratislava"
+ ]
+}

@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 import { DEFAULTS } from "../state.js";
 import {
-  NO_INDEX, buildModel, slotPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
+  buildModel, slotPlan, colouredIds, metricValue, nextSort, rankSeries, sortRows,
 } from "../compare-model.js";
 
 const pt = (label, o = {}) => ({ label, headline: 10, ab_km: 50, C: 0, flags: "", ...o });
@@ -40,7 +41,7 @@ test("index model: first year = 100; a zero first year gets the note and no valu
   assert.deepEqual(m.series[0].points.map((p) => p.value), [100, 200, 300]);
   assert.deepEqual(m.series[0].points[1].flags, ["spike"]);
   assert.ok(m.series[2].points.every((p) => p.value === null));
-  assert.deepEqual(m.notes, [`Zero: ${NO_INDEX}`]);
+  assert.deepEqual(m.notes, ["Zero: no index: first year is 0 or missing"]);
 });
 
 test("unknown cities are skipped; b picks the boundary", () => {
@@ -149,4 +150,21 @@ test("plainText joins soft-wrapped lines but keeps paragraphs and list items", (
   assert.equal(plainText("only part of\nthe separate ways"), "only part of the separate ways");
   assert.equal(plainText("one\n\ntwo"), "one\n\ntwo");
   assert.equal(plainText("intro\n- a\n- b"), "intro\n- a\n- b");
+});
+
+test("a flag explanation still in English on a German page is marked lang=en data-fallback", async () => {
+  const { flagParagraphs } = await import("../compare-model.js");
+  const D = {
+    explanations: { timeseries: { "b/lau/2022": "First **cause**.\n\nSecond.", "b/lau/2023": "Ursache." } },
+    explanationFallback: new Set(["b/lau/2022"]),
+  };
+  const english = { lang: "en", "data-fallback": "" };
+  assert.deepEqual(flagParagraphs(D, "b/lau/2022"), [
+    { attrs: english, text: "First cause." },
+    { attrs: english, text: "Second." },
+  ]);
+  assert.deepEqual(flagParagraphs(D, "b/lau/2023"), [{ attrs: {}, text: "Ursache." }]);
+  assert.deepEqual(flagParagraphs(D, "b/lau/2024"), []);
+  // an English page has no fallback set: nothing is marked
+  assert.deepEqual(flagParagraphs({ explanations: D.explanations }, "b/lau/2022")[0].attrs, {});
 });

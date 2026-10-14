@@ -142,8 +142,8 @@ limitations:
     de: >-
       QECIO v2.10 veröffentlicht Ergebnisse je NUTS-3-Region. Ist diese Region nicht die Stadt,
       bezieht sich die QECIO-Zahl auf ein anderes Gebiet als die eigenen Läufe. Die
-      QECIO-Vergleichszeilen der Stadt tragen dann den Hinweis „NUTS3 unit is not the city“
-      (NUTS-3-Einheit ist nicht die Stadt), und das Ranglistendiagramm kennzeichnet die Stadt
+      QECIO-Vergleichszeilen der Stadt tragen dann den Hinweis „NUTS-3-Einheit ist nicht die
+      Stadt“, und das Ranglistendiagramm kennzeichnet die Stadt
       mit † [M5-Spezifikation §4.3].
   - id: subareas_osm
     en: >-

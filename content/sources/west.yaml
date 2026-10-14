@@ -15,12 +15,14 @@ sources:
       et voies à contre-sens cyclistes).
     gloss_en: 1,094 km of cycle ways recorded in 2021 (counting cycle tracks, reserved lanes and contraflow
       cycle lanes).
+    gloss_de: "1.094 km Radverkehrsanlagen, 2021 erfasst (einschließlich Radwegen, Sonderfahrstreifen und Radfahrstreifen gegen die Einbahnrichtung)."
     locator: p. 8, sidebar 'Plan Vélo 2021-2026'
   - id: network-2020-observatoire
     text: Le linéaire cyclable fait 1404km en 2020 selon le bilan de l’Observatoire de l’Agence de la
       Moblité.
     gloss_en: The cycle network length is 1,404 km in 2020 according to the review of the Mobility Agency's
       Observatory.
+    gloss_de: "Das Radnetz ist 2020 nach der Bilanz des Observatoriums der Mobilitätsagentur 1.404 km lang."
     locator: p. 8, sidebar 'Plan Vélo 2021-2026' (text layer overlaps a budget graphic; sentence read
       in order from the PDF text layer)
   - id: edito-2014-2021
@@ -28,19 +30,23 @@ sources:
       temporaires ont été aménagés portant à plus de 1 000 kilomètres le réseau cyclable à Paris.
     gloss_en: between 2014 and 2021, 300 kilometres of new cycle routes and 52 kilometres of temporary
       tracks were laid out, bringing the cycle network in Paris to more than 1,000 kilometres.
+    gloss_de: "zwischen 2014 und 2021 wurden 300 Kilometer neue Radrouten und 52 Kilometer provisorische Radwege angelegt, womit das Radnetz in Paris auf mehr als 1.000 Kilometer anwuchs."
     locator: p. 3, editorial by Anne Hidalgo
   - id: targets-2026
     text: La Ville compte plus de 1 000 km d’aménagements cyclables dont plus de 300 km de pistes sécurisées.
     gloss_en: The City has more than 1,000 km of cycle facilities, of which more than 300 km are protected
       cycle tracks.
+    gloss_de: "Die Stadt zählt mehr als 1.000 km Radverkehrsanlagen, davon mehr als 300 km geschützte Radwege."
     locator: p. 15, 'Un maillage cyclable complet' infographic
   - id: targets-180km
     text: 180km de pistes cyclables sécurisées - 130 km de nouvelles pistes - 52 km de coronapistes pérénisées
     gloss_en: '180 km of protected cycle tracks: 130 km of new tracks, 52 km of coronapistes made permanent.'
+    gloss_de: "180 km geschützte Radwege: 130 km neue Radwege, 52 km dauerhaft gemachte Coronapistes."
     locator: p. 15, 'Un maillage cyclable complet'
 - id: paris-opendata-lineaire-km
   publisher: Ville de Paris, Paris Data
   title: Linéaire cyclable (en km), dataset description
+  title_de: "Linéaire cyclable (en km), Beschreibung des Datensatzes"
   url: https://opendata.paris.fr/explore/dataset/lineaire-cyclable-km/information/
   accessed: '2026-10-06'
   language: fr
@@ -54,14 +60,17 @@ sources:
     gloss_en: The length for a given year is the total at 1 January of cycle routes in the form of tracks,
       greenways, lanes, bus lanes open to bicycles, roads and paths closed to general traffic, pedestrian
       streets open to bicycles and simple contraflow cycling on the territory of the City of Paris.
+    gloss_de: "Die Länge für ein bestimmtes Jahr entspricht der Summe zum 1. Januar der Radrouten in Form von Radwegen, Grünen Wegen, Radfahrstreifen, für Räder freigegebenen Busspuren, für den allgemeinen Verkehr gesperrten Straßen und Wegen, für Räder freigegebenen Fußgängerzonen und einfachen Freigaben gegen die Einbahnrichtung auf dem Gebiet der Stadt Paris."
     locator: dataset description (Informations tab; text read via the Paris Data catalogue API)
   - id: osm-basis
     text: Ces données sont une extraction de la base de OSM © Les Contributeurs d’OpenStreetMap
     gloss_en: These data are an extract of the OSM database © OpenStreetMap contributors.
+    gloss_de: "Diese Daten sind ein Auszug aus der OSM-Datenbank © OpenStreetMap-Mitwirkende"
     locator: dataset description, last sentence
 - id: paris-opendata-amenagements
   publisher: Ville de Paris, Direction de la Voirie et des Déplacements
   title: Linéaires d'aménagement cyclable, dataset description
+  title_de: "Linéaires d'aménagement cyclable, Beschreibung des Datensatzes"
   url: https://opendata.paris.fr/explore/dataset/amenagements-cyclables/information/
   accessed: '2026-10-06'
   language: fr
@@ -73,16 +82,19 @@ sources:
       les autres utilisateurs (hors vélorues).
     gloss_en: The City of Paris chooses to define as a cycle route each road and/or direction of travel
       that, while open to bicycles, is closed or restricted for other users (except cycle streets).
+    gloss_de: "Die Stadt Paris hat sich entschieden, als Radroute jede Straße und/oder Fahrtrichtung zu definieren, die für Räder zugelassen, für andere Nutzer aber gesperrt oder eingeschränkt ist (ohne Fahrradstraßen)."
     locator: dataset description, 'Contenu du jeu de donnée'
   - id: superposed
     text: 'dans certains cas, deux aménagements différents sont superposés (ex : piste cyclable côté droit
       et gauche de la voie).'
     gloss_en: in some cases two different facilities are superposed (e.g. a cycle track on the right and
       on the left side of the road).
+    gloss_de: "in manchen Fällen liegen zwei verschiedene Anlagen übereinander (z. B. Radweg auf der rechten und der linken Straßenseite)."
     locator: dataset description, 'Points d'attention' 1
   - id: paths-excluded
     text: 'NB : donnée non prise en compte dans le calcul dans le chiffre du bilan des itinéraires cyclables'
     gloss_en: 'Note: these data are not counted in the cycle route review figure.'
+    gloss_de: "Hinweis: Diese Daten gehen nicht in die Zahl der Bilanz der Radrouten ein"
     locator: dataset description, typology table, row 'Chemin interdit aux véhicules motorisés'
 - id: paris-notice-amenagements
   publisher: Ville de Paris, Mission Vélo
@@ -96,6 +108,7 @@ sources:
     text: Les données aménagements cyclables sont issues de la base de données libre et ouverte OpenStreetMap
       (OSM) ©Les contributeurs d'OSM.
     gloss_en: The cycle facility data come from the free and open OpenStreetMap (OSM) database © OSM contributors.
+    gloss_de: "Die Daten zu Radverkehrsanlagen stammen aus der freien und offenen Datenbank OpenStreetMap (OSM) © OSM-Mitwirkende."
     locator: p. 1, first paragraph
   - id: validation
     text: Les données sont extraites de la base OSM telles qu'elles y étaient présentes à la "date export",
@@ -104,6 +117,7 @@ sources:
     gloss_en: The data are extracted from OSM as they stood at the 'export date', except the most recent
       data, which contain only OSM elements first validated by the cycling unit with the 'LeBonTag' quality-control
       tool.
+    gloss_de: "Die Daten werden aus der OSM-Datenbank so entnommen, wie sie zum „Exportdatum“ vorlagen, außer den neuesten Daten, die nur OSM-Elemente enthalten, die zuvor von der Mission vélo mit dem Qualitätskontrollwerkzeug „LeBonTag“ geprüft wurden."
     locator: p. 1, 'Processus'
 - id: paris-lessentiel-1565km
   publisher: L'essentiel Paris
@@ -119,10 +133,12 @@ sources:
       d'aménagements cyclables.
     gloss_en: Among these figures we learn that on 1 January this year there were 1,565 kilometres of
       cycle facilities.
+    gloss_de: "Unter diesen Zahlen erfährt man, dass es am 1. Januar dieses Jahres 1.565 Kilometer Radverkehrsanlagen gibt."
     locator: article body, 'À retenir'
   - id: figure-2015
     text: Au 1er janvier 2015, on comptait 935 km de linéaire cyclable.
     gloss_en: On 1 January 2015 there were 935 km of cycle network.
+    gloss_de: "Am 1. Januar 2015 zählte man 935 km Radnetz."
     locator: article body, 'Une évolution constante'
 - id: paris-parisenselle-observatoire
   publisher: Paris en Selle
@@ -138,6 +154,7 @@ sources:
       avait atteint 55 % du linéaire promis en 2015.
     gloss_en: The previous 2015-2020 Cycling Plan, whose delivery we tracked through our Observatory,
       reached 55% of the length promised in 2015.
+    gloss_de: "Der vorige Plan Vélo 2015–2020, dessen Umsetzung wir mit unserem Observatorium verfolgt hatten, hatte 55 % der 2015 versprochenen Länge erreicht."
     locator: opening paragraph
   - id: plan-2021-2026
     text: 'Doté d’un budget de 250 millions d’euros, son objectif est de faire de Paris une ville 100
@@ -146,6 +163,7 @@ sources:
     gloss_en: 'With a budget of 250 million euros, its aim is to make Paris 100% cyclable by deploying
       180 km of cycle facilities by the end of the term: 130 km of new cycle tracks and making the 52
       km of coronapistes permanent by 2024.'
+    gloss_de: "Mit einem Budget von 250 Millionen Euro soll er Paris zu einer zu 100 % fahrradfreundlichen Stadt machen, mit insgesamt 180 km Radverkehrsanlagen bis zum Ende der Amtszeit: 130 km neue Radwege und bis 2024 die dauerhafte Umwandlung der 52 km Coronapistes."
     locator: section 'Le Plan Vélo 2021-2026'
 - id: lyon-plan-velo-2024
   publisher: Métropole de Lyon
@@ -159,6 +177,7 @@ sources:
   - id: network-2020
     text: 1 013 kilomètres d’aménagements cyclables fin 2020 + 525 km entre 2014 et 2020
     gloss_en: 1,013 kilometres of cycle facilities at the end of 2020; +525 km between 2014 and 2020.
+    gloss_de: "1.013 Kilometer Radverkehrsanlagen Ende 2020, +525 km zwischen 2014 und 2020"
     locator: p. 4, 'Plus d'infrastructures'
   - id: breakdown-2023
     text: Répartition des 1 208 kilomètres d’aménagements cyclables 57 km en accotement revêtu 367 km
@@ -166,6 +185,7 @@ sources:
       228 km en voie verte
     gloss_en: 'Breakdown of the 1,208 kilometres of cycle facilities: 57 km paved shoulder, 367 km cycle
       lane, 234 km cycle track, 92 km bus/bike lane, 229 km contraflow cycling, 228 km greenway.'
+    gloss_de: "Aufteilung der 1.208 Kilometer Radverkehrsanlagen: 57 km befestigter Seitenstreifen, 367 km Radfahrstreifen, 234 km Radweg, 92 km Bus- und Radspur, 229 km Radverkehr gegen die Einbahnrichtung, 228 km Grüner Weg"
     locator: p. 10, infographic 'Linéaire d'aménagements cyclables' (chart labels in PDF text-layer order,
       interleaved figures omitted)
   - id: target-2000km
@@ -173,6 +193,7 @@ sources:
       dédiés aux vélos.
     gloss_en: The Métropole de Lyon aims to double the cycle network to reach 2,000 kilometres of facilities
       dedicated to bicycles.
+    gloss_de: "Die Métropole de Lyon will das Radnetz verdoppeln und 2.000 Kilometer Anlagen für den Radverkehr erreichen."
     locator: p. 10, action 2 'Améliorer la cyclabilité'
   - id: facility-types
     text: l’ensemble des projets d’aménagements de voirie comporte un aménagement cyclable, tel qu’une
@@ -180,10 +201,12 @@ sources:
       sens cyclable.
     gloss_en: every road project includes a cycle facility, such as a cycle track, a cycle lane, a greenway,
       a bus lane open to bicycles or contraflow cycling.
+    gloss_de: "jedes Straßenbauprojekt umfasst eine Radverkehrsanlage, etwa einen Radweg, einen Radfahrstreifen, einen Grünen Weg, eine für Räder freigegebene Busspur oder eine Freigabe gegen die Einbahnrichtung."
     locator: p. 10, action 2
   - id: vl-target-2030
     text: 'Objectif 2030 : 355 km'
     gloss_en: '2030 target: 355 km (Voies Lyonnaises).'
+    gloss_de: "Ziel 2030: 355 km (Voies Lyonnaises)"
     locator: p. 9, action 1, chart 'Évolution du linéaire des Voies lyonnaises'
 - id: lyon-grandlyon-circuler-a-velo
   publisher: Métropole de Lyon
@@ -200,10 +223,12 @@ sources:
       pour les cycliste.
     gloss_en: See the cycling infrastructure network, expanding with the Voies Lyonnaises, which has nearly
       1,250 km of cycle facilities and more than 40,000 secure parking spaces for cyclists.
+    gloss_de: "Das mit den Voies Lyonnaises wachsende Netz der Radinfrastruktur ansehen: Es umfasst fast 1.250 km Radverkehrsanlagen und mehr als 40.000 sichere Abstellplätze für Radfahrende."
     locator: page body, map section
   - id: pistes-1100
     text: La sécurité a été développée grâce à plus de 1 100 km de pistes cyclables.
     gloss_en: Safety has been improved thanks to more than 1,100 km of cycle tracks.
+    gloss_de: "Die Sicherheit wurde dank mehr als 1.100 km Radwegen verbessert."
     locator: page body, introduction
 - id: lyon-lavilleavelo-bilan-vl
   publisher: La Ville à Vélo
@@ -223,12 +248,14 @@ sources:
     gloss_en: 'Of the 250 km promised for 2026, only 170 km (including 60 km that already existed) will
       be delivered in 2026: the network still has many gaps, each a black spot raised by cyclists in the
       2025 Baromètre Vélo survey.'
+    gloss_de: "Von den 250 km, die für 2026 versprochen waren, werden 2026 nur 170 km (davon 60 km bereits bestehende) fertig: Das Netz hat noch viele Lücken, jede ein Gefahrenpunkt, den Radfahrende in der Umfrage des Baromètre Vélo 2025 angeben."
     locator: section 'Un projet inachevé'
   - id: new-110km
     text: Avec un peu moins de 200 M€ investis, soit l’équivalent de quelques kilomètres d’une ligne de
       tramway, c’est près de 110 km de nouvelles infrastructures cyclables sécurisées qui auront été réalisées.
     gloss_en: With a little under €200m invested, the equivalent of a few kilometres of tram line, nearly
       110 km of new protected cycle infrastructure will have been delivered.
+    gloss_de: "Mit knapp 200 Mio. € Investitionen, dem Gegenwert von wenigen Kilometern Straßenbahnstrecke, werden fast 110 km neue geschützte Radinfrastruktur umgesetzt sein."
     locator: section 'Une volonté politique sans précédent'
 - id: lyon-lyoncapitale-vl-2025
   publisher: Lyon Capitale
@@ -248,10 +275,12 @@ sources:
     gloss_en: 'The milestone of 396 km of cycle tracks across 13 Voies Lyonnaises is set for 2030. Besides
       that deadline, the green-led authority headed by Bruno Bernard had set a first target: 250 km during
       the term, i.e. until March 2026.'
+    gloss_de: "Die Marke von 396 km Radwegen, verteilt auf 13 Voies lyonnaises, bleibt zudem auf 2030 festgelegt. Zusätzlich zu dieser Frist hatte die grün geführte Gebietskörperschaft unter Bruno Bernard ein erstes Ziel gesetzt: 250 km in der Amtszeit, also bis März 2026."
     locator: article body, paragraph 2
   - id: revised
     text: Ambition revue à la baisse en janvier dernier à 200 km. Puis dernièrement à 180 km.
     gloss_en: Ambition lowered last January to 200 km. Then recently to 180 km.
+    gloss_de: "Im vergangenen Januar wurde das Ziel auf 200 km gesenkt. Dann zuletzt auf 180 km."
     locator: section 'Près de 100 km réalisés à la mi-mai'
 - id: strasbourg-premiere-agglomeration
   publisher: Ville et Eurométropole de Strasbourg
@@ -265,10 +294,12 @@ sources:
   - id: network-600
     text: 600 km eN RÉSEAU CYCLABLE
     gloss_en: 600 km of cycle network.
+    gloss_de: "600 km RADNETZ"
     locator: 'key-figures band at top of page (source line: Ville et Eurométropole de Strasbourg et INSEE)'
   - id: pama
     text: Doubler la part modale vélo, de 8 % à 16 %, à l’horizon 2030.
     gloss_en: Double the cycling modal share, from 8% to 16%, by 2030.
+    gloss_de: "Den Radverkehrsanteil bis 2030 verdoppeln, von 8 % auf 16 %."
     locator: section 'Le Plan d'Actions des Mobilités Actives (PAMA)'
 - id: strasbourg-a-velo
   publisher: Ville et Eurométropole de Strasbourg
@@ -282,6 +313,7 @@ sources:
   - id: network-600
     text: Avec plus de 600 km d’itinéraires cyclables, Strasbourg propose le 1er réseau vélo de France.
     gloss_en: With more than 600 km of cycle routes, Strasbourg offers France's leading cycle network.
+    gloss_de: "Mit mehr als 600 km Radrouten bietet Strasbourg das größte Radnetz Frankreichs."
     locator: page introduction
 - id: strasbourg-plan-velo-2024
   publisher: Ville et Eurométropole de Strasbourg
@@ -300,12 +332,14 @@ sources:
     gloss_en: About a hundred operations for about a hundred kilometres of cycle tracks rebuilt or built
       in the Strasbourg conurbation by 2026. That is the aim of the cycling plan launched by the Eurométropole
       in 2021.
+    gloss_de: "Rund hundert Vorhaben für rund hundert Kilometer umgebaute oder neu gebaute Radwege im Großraum Strasbourg bis 2026. Das ist das Ziel des 2021 von der Eurométropole gestarteten Radverkehrsplans."
     locator: article lead
   - id: progress-2024
     text: A la fin d’année 2024, 52 opérations du plan vélo auront été réalisées, dont 30 opérations concernant
       des communes autres que la ville centre.
     gloss_en: By the end of 2024, 52 operations of the cycling plan will have been completed, 30 of them
       in municipalities other than the central city.
+    gloss_de: "Ende 2024 werden 52 Vorhaben des Radverkehrsplans umgesetzt sein, davon 30 Vorhaben in anderen Gemeinden als der Kernstadt."
     locator: article body, paragraph 2
 - id: strasbourg-velostras
   publisher: Ville et Eurométropole de Strasbourg
@@ -323,10 +357,12 @@ sources:
     gloss_en: Since 2013 the Eurométropole de Strasbourg has been building an express cycle network, Vélostras.
       This backbone network covers the whole territory, links the municipalities and bypasses the city
       centre. It will finally total more than 130 km.
+    gloss_de: "Die Eurométropole de Strasbourg baut seit 2013 an einem Radschnellnetz, Vélostras. Dieses tragende Radnetz überzieht das ganze Gebiet, verbindet die Gemeinden untereinander und umgeht die Innenstadt von Strasbourg. Es wird am Ende mehr als 130 km umfassen"
     locator: page introduction
 - id: strasbourg-opendata-bnac
   publisher: Ville et Eurométropole de Strasbourg, data.strasbourg.eu
   title: Aménagements cyclables au format BNAC, dataset description
+  title_de: "Aménagements cyclables au format BNAC, Beschreibung des Datensatzes"
   url: https://data.strasbourg.eu/explore/dataset/amg_cycl_bnac/information/
   accessed: '2026-10-06'
   language: fr
@@ -339,6 +375,7 @@ sources:
     gloss_en: 'Data derived from the Eurométropole de Strasbourg road centreline network, structured in
       a schema for modelling and defining cycle facilities nationally: the national cycle facility database
       (BNAC).'
+    gloss_de: "Daten aus dem Straßenachsennetz der Eurométropole de Strasbourg, strukturiert nach einem Schema, mit dem sich Radverkehrsanlagen landesweit modellieren und definieren lassen: der Base Nationale des Aménagements Cyclables (BNAC)."
     locator: dataset description, first paragraph (text read via the data.strasbourg.eu catalogue API)
 - id: strasbourg-rue89-plan-velo-2021
   publisher: Rue89 Strasbourg
@@ -355,12 +392,14 @@ sources:
       part de déplacements à vélo d’ici 2030, contre 11% actuellement.'
     gloss_en: 'Target: 120 additional kilometres of cycle tracks in 5 years and a 20% cycling share of
       trips by 2030, against 11% today.'
+    gloss_de: "Ziel: 120 Kilometer zusätzliche Radwege in fünf Jahren und bis 2030 ein Radverkehrsanteil von 20 % an den Wegen, gegenüber derzeit 11 %."
     locator: article body, paragraph 1
   - id: junctions
     text: Mais plus que les kilomètres, c’est aussi « une cinquantaine de jonctions » qui doivent être
       réalisé, afin de relier les pistes existantes des 33 communes de la métropole.
     gloss_en: But beyond kilometres, 'about fifty junctions' must also be built to link the existing tracks
       of the metropolis's 33 municipalities.
+    gloss_de: "Doch mehr noch als um Kilometer geht es auch um „rund fünfzig Lückenschlüsse“, die umgesetzt werden müssen, um die bestehenden Radwege der 33 Gemeinden der Metropole zu verbinden."
     locator: article body
 - id: strasbourg-cityra-mi-chemin
   publisher: Cityra
@@ -376,6 +415,7 @@ sources:
       des 33 communes de l’Eurométropole.
     gloss_en: It will add about a hundred kilometres to the 750 kilometres of tracks already existing
       across the Eurométropole's 33 municipalities.
+    gloss_de: "Er wird den 750 Kilometern bereits bestehender Radwege in allen 33 Gemeinden der Eurométropole rund hundert Kilometer hinzufügen."
     locator: article body, paragraph 2
 - id: bordeaux-plan-velo-2021-2026
   publisher: Bordeaux Métropole
@@ -394,11 +434,13 @@ sources:
     gloss_en: 'In June 2021 the Métropole had 1,506 km of cycle facilities against 1,022 km in 2015, a
       47% increase (+100% in 10 years): 348 km of cycle tracks and greenways, 367 km of cycle lanes and
       bus lanes, 624 km of traffic-calmed streets, 167 km of pedestrian streets.'
+    gloss_de: "Im Juni 2021 verfügte die Métropole über 1.506 km Radverkehrsanlagen, gegenüber 1.022 km im Jahr 2015, ein Zuwachs von 47 % (+100 % in zehn Jahren): 348 km Radwege und Grüne Wege, 367 km Radfahrstreifen und Busspuren, 624 km verkehrsberuhigte Straßen, 167 km Fußgängerstraßen"
     locator: PDF p. 8, action 1.1 'État des lieux'
 - id: bordeaux-crc-plan-velo-2025
   publisher: Chambre régionale des comptes Nouvelle-Aquitaine
   title: Bordeaux Métropole – Plan vélo, rapport d’observations définitives, exercices 2019 et suivants,
     deliberated 5 August 2025 (copy published by the Ville de Mérignac)
+  title_de: "Bordeaux Métropole – Plan vélo, rapport d’observations définitives, exercices 2019 et suivants, beschlossen am 5. August 2025 (Kopie, veröffentlicht von der Ville de Mérignac)"
   url: https://www.merignac.com/sites/default/files/2026-04/crc-bordeaux-metropole-plan-velo.pdf
   accessed: '2026-10-06'
   language: fr
@@ -411,18 +453,21 @@ sources:
     gloss_en: Bordeaux Métropole's monitoring tables show 107 km of additional cycle routes since the
       2021-2026 cycling plan was adopted. At the end of 2024 the cycle network within Bordeaux Métropole
       amounted to 1,700 km.
+    gloss_de: "Die Monitoring-Tabellen von Bordeaux Métropole zeigen 107 km zusätzliche Radrouten seit der Annahme des Plan vélo 2021–2026. Ende 2024 umfasste das Radnetz innerhalb des Gebiets von Bordeaux Métropole 1.700 km."
     locator: p. 46 (PDF p. 47), §3.4.1
   - id: network-basis
     text: évolution du linéaire des voies cyclables tous types confondus (bandes, pistes, zones apaisées,
       couloirs « bus&vélo ») sur le territoire de Bordeaux Métropole
     gloss_en: change in the length of cycle ways of all types combined (lanes, tracks, traffic-calmed
       zones, bus-and-bike lanes) in Bordeaux Métropole.
+    gloss_de: "Entwicklung der Länge der Radverkehrsanlagen aller Arten zusammen (Radfahrstreifen, Radwege, verkehrsberuhigte Zonen, Bus- und Radspuren) im Gebiet von Bordeaux Métropole"
     locator: p. 46 (PDF p. 47), title of Graphique n° 9
   - id: reve-progress
     text: À date, avec 36 kilomètres mis en service sur les 270 kilomètres prévus, il reste à réaliser
       86 % du programme du ReVE.
     gloss_en: To date, with 36 kilometres opened out of the 270 kilometres planned, 86% of the ReVE programme
       remains to be built.
+    gloss_de: "Mit 36 in Betrieb genommenen von 270 geplanten Kilometern bleiben bislang 86 % des ReVE-Programms umzusetzen."
     locator: p. 47 (PDF p. 48), §3.4.1
   - id: plan-2017-2020
     text: Au-delà, c’est plus de 406 km d’aménagements favorables aux vélos (+ 38 % entre fin 2016 et
@@ -431,6 +476,7 @@ sources:
     gloss_en: Beyond that, more than 406 km of bicycle-friendly facilities (+38% between end 2016 and
       end 2020) and 62 km more of dedicated cycle facilities as cycle lanes, cycle tracks and bus-bike
       lanes (+10% between end 2016 and end 2020).
+    gloss_de: "Darüber hinaus sind es mehr als 406 km fahrradfreundliche Anlagen (+38 % zwischen Ende 2016 und Ende 2020) und 62 km zusätzliche eigene Radverkehrsanlagen als Radfahrstreifen, Radweg oder Bus- und Radspur (+10 % zwischen Ende 2016 und Ende 2020)"
     locator: p. 30 (PDF p. 31), §2.2.1
 - id: bordeaux-metropole-reve
   publisher: Bordeaux Métropole
@@ -446,12 +492,14 @@ sources:
       larges, sécurisées et dotés d’un jalonnement spécifique.
     gloss_en: The Réseau Vélo Express is a planned network of 14 routes (272 km) of wide, protected cycle
       ways with dedicated signposting.
+    gloss_de: "Das Réseau Vélo Express ist ein geplantes Netz aus 14 Routen (272 km) breiter, geschützter Radwege mit eigener Wegweisung."
     locator: page introduction
   - id: network-1000
     text: En attendant la mise en service des itinéraires du ReVE, la Métropole dispose déjà de plus de
       1000 kms d’aménagements cyclables.
     gloss_en: While the ReVE routes are being opened, the Métropole already has more than 1,000 km of
       cycle facilities.
+    gloss_de: "Bis die Routen des ReVE in Betrieb gehen, verfügt die Métropole bereits über mehr als 1.000 km Radverkehrsanlagen."
     locator: section on the ReVE lines
 - id: bordeaux-ville-circuler-a-velo
   publisher: Ville de Bordeaux
@@ -465,14 +513,17 @@ sources:
   - id: city-378
     text: 378 km d'aménagements cyclables (dont couloirs bus), soit + 36 km depuis 2020
     gloss_en: 378 km of cycle facilities (including bus lanes), i.e. +36 km since 2020.
+    gloss_de: "378 km Radverkehrsanlagen (einschließlich Busspuren), also +36 km seit 2020"
     locator: box 'Le vélo à Bordeaux en quelques chiffres'
   - id: city-vs-metro
     text: Bordeaux dispose de 378 km d'aménagements cyclables, la métropole en compte plus de 1 000.
     gloss_en: Bordeaux has 378 km of cycle facilities; the métropole has more than 1,000.
+    gloss_de: "Bordeaux verfügt über 378 km Radverkehrsanlagen, die Métropole über mehr als 1.000."
     locator: section 'Pistes cyclables et réseau express (ReVE)'
 - id: madrid-opendata-infraestructura-ciclista
   publisher: Ayuntamiento de Madrid, Portal de datos abiertos
   title: Bici. Infraestructura ciclista, dataset description
+  title_de: "Bici. Infraestructura ciclista, Beschreibung des Datensatzes"
   url: https://datos.madrid.es/dataset/205107-0-vias-ciclistas
   accessed: '2026-10-06'
   language: es
@@ -485,23 +536,27 @@ sources:
       ciclista en secciones compartidas.
     gloss_en: The layout and definition of the city's different types of cycling infrastructure, both
       exclusive and preferential use, as well as roads or streets adapted for cycling in shared sections.
+    gloss_de: "Verlauf und Definition der verschiedenen Arten von Radinfrastruktur der Stadt, sowohl zur ausschließlichen als auch zur bevorzugten Nutzung, sowie der für den Radverkehr hergerichteten Straßen mit gemeinsam genutzten Abschnitten."
     locator: dataset description, first bullet
   - id: senda-ciclable
     text: 'Senda ciclable: Vías para peatones y ciclos que discurren por espacios abiertos, parques, jardines
       o bosques con independencia del trazado de las vías motorizadas.'
     gloss_en: 'Senda ciclable: ways for pedestrians and cycles running through open spaces, parks, gardens
       or woods independently of the motor road layout.'
+    gloss_de: "Senda ciclable: Wege für Fußgänger und Räder, die unabhängig vom Verlauf der Straßen für Kraftfahrzeuge durch offenes Gelände, Parks, Gärten oder Wälder führen."
     locator: dataset description, 'Vía uso exclusivo para bicicleta'
   - id: ciclocarril
     text: 'Ciclocarril: Carril especialmente acondicionado para el uso de la bicicleta en donde la circulación
       es compartida con el resto de vehículos, el ciclista no disfruta de un uso exclusivo o preferente.'
     gloss_en: 'Ciclocarril: a lane specially adapted for cycling where traffic is shared with other vehicles;
       the cyclist has no exclusive or preferential use.'
+    gloss_de: "Ciclocarril: eigens für das Fahrrad hergerichteter Fahrstreifen, auf dem der Verkehr mit den übrigen Fahrzeugen geteilt wird; Radfahrende haben keine ausschließliche oder bevorzugte Nutzung."
     locator: dataset description, 'Vía uso compartido para el uso ciclista'
 - id: madrid-ultimahora-1167km
   publisher: Ultima Hora
   title: La red ciclista de la capital llega a los 1.167 kilómetros y da un estirón de un 11,4% más desde
     que Almeida es alcalde (figures as reported from the city's Área de Urbanismo, Medio Ambiente y Movilidad)
+  title_de: "La red ciclista de la capital llega a los 1.167 kilómetros y da un estirón de un 11,4% más desde que Almeida es alcalde (Zahlen nach Angaben des städtischen Área de Urbanismo, Medio Ambiente y Movilidad)"
   url: https://www.ultimahora.es/noticias/comunidades/2026/03/31/2600335/red-ciclista-capital-llega-1167-kilometros-estiron-mas-desde-almeida-alcalde.html
   published: '2026-03-31'
   accessed: '2026-10-06'
@@ -516,18 +571,21 @@ sources:
     gloss_en: The capital's cycle network reaches 1,167 kilometres, 11.4% more than when José Luis Martínez-Almeida
       became mayor in 2019, the Urban Planning, Environment and Mobility department headed by Borja Carabante
       reported.
+    gloss_de: "Das Radnetz der Hauptstadt erreicht 1.167 Kilometer, ein Plus von 11,4 %, seit José Luis Martínez-Almeida 2019 Bürgermeister wurde, teilte das Ressort für Stadtplanung, Umwelt und Mobilität unter Borja Carabante mit."
     locator: article body, paragraph 1
   - id: breakdown
     text: También ha dado un estirón el carril bici segregado con 764,7 kilómetros, esto es, un 9,3% más
       que en 2019, cuando eran 699 los kilómetros.
     gloss_en: Segregated cycle lanes have also grown, to 764.7 kilometres, 9.3% more than in 2019, when
       there were 699 kilometres.
+    gloss_de: "Einen Schub gab es auch beim baulich getrennten Radweg (carril bici segregado) mit 764,7 Kilometern, also 9,3 % mehr als 2019, als es 699 Kilometer waren."
     locator: article body, paragraph 2
   - id: ciclocarriles
     text: Algo similar pasa con los kilómetros de los ciclocarriles, hasta 402,4 kilómetros, lo que supone
       un incremento del 15,9% respecto a 2019, cuando eran 347 kilómetros.
     gloss_en: Something similar has happened with ciclocarriles, up to 402.4 kilometres, a 15.9% increase
       on 2019, when there were 347 kilometres.
+    gloss_de: "Ähnlich ist es bei den Kilometern der Ciclocarriles, die auf 402,4 Kilometer stiegen, ein Zuwachs von 15,9 % gegenüber 2019, als es 347 Kilometer waren."
     locator: article body, paragraph 3
 - id: madrid-enbici-300km-segregadas
   publisher: En bici por Madrid
@@ -544,6 +602,7 @@ sources:
       del tráfico, sino compartidas). Si se cuentan ambos, suman 692 km.
     gloss_en: These 347 km do not include another 345 km of ciclocarriles (since they are shared with
       traffic, not segregated from it). Counting both gives 692 km.
+    gloss_de: "Diese 347 km schließen weitere 345 km Ciclocarriles nicht ein (denn das sind keine vom Verkehr getrennten, sondern gemeinsam genutzte Fahrstreifen). Zählt man beide, ergeben sich 692 km."
     locator: section 'Madrid tiene oficialmente 347 km de vías ciclistas segregadas'
   - id: carril-bici-only
     text: Sólo los clasificados como "carril-bici" (En calzada junto a otros carriles de circulación,
@@ -552,6 +611,7 @@ sources:
     gloss_en: Only those classed as 'carril-bici' (on the carriageway next to other traffic lanes, with
       or without separation) are being counted. This omission produces unrealistic comparisons with other
       cities where all categories of segregated cycle ways are counted.
+    gloss_de: "Berücksichtigt werden nur die als „carril-bici“ eingestuften Anlagen (auf der Fahrbahn neben anderen Fahrstreifen, mit oder ohne Trennung). Diese Auslassung führt zu unrealistischen Vergleichen mit anderen Städten, in denen alle Kategorien vom Verkehr getrennter Radverkehrsanlagen gezählt werden"
     locator: opening paragraphs
 - id: madrid-enbici-red-continua-247km
   publisher: En bici por Madrid
@@ -568,6 +628,7 @@ sources:
       aunque en algunos casos también tienen presencia peatonal.
     gloss_en: What appears in yellow are 247 km of interconnected cycle ways (of the 360 km Madrid has).
       These are not ciclocarriles but cycle ways without motor traffic, though some also carry pedestrians.
+    gloss_de: "Gelb dargestellt sind 247 km miteinander verbundene Radverkehrsanlagen (von den 360 km, über die Madrid verfügt). Es handelt sich nicht um Ciclocarriles, sondern um Radverkehrsanlagen ohne Kraftverkehr, auch wenn auf manchen auch Fußgänger unterwegs sind."
     locator: article body, below the map
 - id: madrid-eldiario-carriles-2019
   publisher: eldiario.es
@@ -587,6 +648,7 @@ sources:
     gloss_en: Ciclocarriles are mixed lanes for cars and bicycles with a 30 km/h speed limit. The model
       is very rare in European cities with a stronger cycling culture because it gives more space to motor
       vehicles.
+    gloss_de: "Ciclocarriles sind gemischte Fahrstreifen für Autos und Fahrräder mit einer Höchstgeschwindigkeit von 30 Kilometern pro Stunde. Das Modell ist in europäischen Städten mit ausgeprägterer Radkultur sehr selten, weil es Kraftfahrzeugen mehr Raum gibt."
     locator: article body
 - id: barcelona-premsa-42km-2025
   publisher: Ajuntament de Barcelona, Servei de Premsa
@@ -605,6 +667,7 @@ sources:
     gloss_en: These works will add to the 15.4 km of new bike lanes already built this term and the 5.24
       km improved, under the strategy to improve connectivity and infrastructure. Barcelona's bike lane
       network is currently 268 km.
+    gloss_de: "Diese Maßnahmen kommen zu den 15,4 km neuer Radwege hinzu, die in dieser Amtszeit bereits gebaut wurden, und zu den 5,24 km verbesserten, im Rahmen der Strategie zur Verbesserung von Konnektivität und Infrastruktur. Derzeit umfasst das Radwegenetz Barcelonas 268 km."
     locator: press release body
   - id: plan
     text: L’Ajuntament de Barcelona intervindrà en els pròxims anys en 21.770 metres de carrils bici per
@@ -613,10 +676,12 @@ sources:
     gloss_en: Barcelona City Council will work on 21,770 metres of bike lanes in the coming years to improve
       cycling connectivity and infrastructure, adding to the 20,640 metres completed so far this term,
       for a total of 42,410 metres.
+    gloss_de: "Das Ajuntament de Barcelona wird in den kommenden Jahren an 21.770 Metern Radwegen arbeiten, um Konnektivität und Infrastruktur des Radverkehrs zu verbessern; sie kommen zu den 20.640 Metern hinzu, die in dieser Amtszeit bisher umgesetzt wurden, insgesamt also 42.410 Meter Radwege."
     locator: press release, first paragraph
 - id: barcelona-opendata-vies-ciclables
   publisher: Ajuntament de Barcelona, Open Data BCN
   title: Cycle paths in the city of Barcelona (vies ciclables), dataset description
+  title_de: "Cycle paths in the city of Barcelona (vies ciclables), Beschreibung des Datensatzes"
   url: https://opendata-ajuntament.barcelona.cat/data/en/dataset/vies-ciclables
   accessed: '2026-10-06'
   language: en
@@ -626,6 +691,7 @@ sources:
   - id: scope
     text: Cycle paths in the city of Barcelona. Streets 30, 20, 10 or bike paths not included in zones
       30.
+    gloss_de: "Radwege in der Stadt Barcelona. Straßen mit Tempo 30, 20 oder 10 oder Radwege, die nicht in Tempo-30-Zonen liegen."
     locator: dataset description
 - id: barcelona-naciodigital-frena
   publisher: Nació Digital
@@ -642,6 +708,7 @@ sources:
       30 i 147 km de prioritat invertida'
     gloss_en: 'Current bike lanes: 271.1 km. Other safe cycle routes (2024 data): 801 km of 30 km/h streets
       and 147 km of reversed-priority streets.'
+    gloss_de: "Heutige Radwege: 271,1 km. Weitere sichere Radverkehrsanlagen (Daten von 2024): 801 km Tempo-30-Straßen und 147 km Straßen mit umgekehrtem Vorrang"
     locator: box 'Els carrils bicis de Barcelona, en xifres'
   - id: colau
     text: l'etapa de BComú al capdavant del consistori -amb el PSC com a soci durant gran part de l'acció
@@ -649,6 +716,7 @@ sources:
       26,4.
     gloss_en: the BComú period at the head of the council, with the PSC as partner for much of it, left
       up to 143 new km dedicated to cycling. Under Trias (CiU) 26.4 were built.
+    gloss_de: "Die Zeit von BComú an der Spitze des Rathauses, mit der PSC als Partner während eines Großteils der Regierungszeit, hinterließ bis zu 143 km neue Strecken für das Fahrrad. In der Amtszeit von Trias (CiU) waren es 26,4."
     locator: section 'Només 16 km en el primer mandat de Collboni'
 - id: barcelona-ara-32km-2021
   publisher: Ara
@@ -665,6 +733,7 @@ sources:
       de 30, 20 o 10 km/h, entre els quals s'inclouen les superilles i les plataformes úniques.
     gloss_en: Besides the bike lanes, the city already has a network of cycle routes on streets limited
       to 30, 20 or 10 km/h, including the superblocks and single-surface streets.
+    gloss_de: "Neben den Radwegen hat die Stadt bereits ein Netz von Radrouten auf Straßen mit Tempo 30, 20 oder 10, darunter die Superblocks und die niveaugleichen Mischverkehrsflächen."
     locator: article body, last section
   - id: total-1150
     text: D'aquesta manera, sumant tots els recorreguts, carrers i carrils bici aptes per desplaçar-se
@@ -672,10 +741,12 @@ sources:
       ciutadans.
     gloss_en: Thus, adding up all routes, streets and bike lanes suitable for cycling, Barcelona already
       has nearly 1,150 kilometres of cycle routes available to residents.
+    gloss_de: "Zählt man alle Strecken, Straßen und Radwege zusammen, die sich zum Radfahren eignen, verfügt Barcelona so bereits über fast 1.150 Kilometer Radrouten für die Bevölkerung."
     locator: article body, last section
   - id: plan-2023
     text: Amb aquestes actuacions previstes, la ciutat arribarà als 270 quilòmetres de carrils bici a
       finals de l'actual legislatura.
     gloss_en: With these planned works, the city will reach 270 kilometres of bike lanes by the end of
       the current term.
+    gloss_de: "Mit diesen geplanten Maßnahmen wird die Stadt am Ende der laufenden Amtszeit 270 Kilometer Radwege erreichen."
     locator: article lead

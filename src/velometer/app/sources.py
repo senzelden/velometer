@@ -12,22 +12,30 @@ from pathlib import Path
 
 from markupsafe import Markup
 
-from velometer.app.narrative import _Numbering, _route
+from velometer.app.narrative import _Numbering, _route, _span
 from velometer.app.organisations import org_of_sources
 from velometer.config import load_differences
 from velometer.content.loader import load_organisation_map, load_organisations, load_sources
-from velometer.content.models import DataRef, Source
+from velometer.content.models import ContentError, DataRef, Source
+from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
 from velometer.report.differences import difference_rows
 
-OURS_TITLE = "Our approach"
-GROUPS = {
-    "ours": "Our approach",
-    "ranking": "Cross-city rankings and datasets",
-    "city": "City sources",
-}
+GROUPS = ("ours", "ranking", "city")  # the table's row groups, in page order
 CITE_PREFIX = "cite-"  # the page's citation anchors (`cite-src-<n>`), apart from `src-<id>` rows
-MISSING_CELL = Markup('<span class="note">not in the profile</span>')
+
+
+def group_name(group: str, lang: Lang = "en") -> str:
+    """A row group's heading."""
+    if group == "ours":
+        return t(lang, "sources.ours")
+    if group == "ranking":
+        return t(lang, "sources.rankings")
+    return t(lang, "sources.city")
+
+
+def _missing_cell(lang: Lang) -> Markup:
+    return Markup('<span class="note">{}</span>').format(t(lang, "sources.missing_cell"))
 
 
 def source_anchor(source_id: str | None) -> str:
@@ -53,6 +61,7 @@ class SourceRow:
     recomputed_anchor: str | None  # the overview key-numbers column id, else None
     city_name: str | None = None  # the city of a city source (its sort key)
     recomputed_label: str | None = None  # that overview column's own header label
+    english_cells: frozenset[str] = frozenset()  # dimension ids still English on a German page
 
 
 @dataclass
@@ -85,17 +94,19 @@ def _snapshot(data: ReportData) -> str | None:
 
 
 def source_rows(
-    data: ReportData, config_dir: Path, content_dir: Path
+    data: ReportData, config_dir: Path, content_dir: Path, lang: Lang = "en"
 ) -> tuple[list[SourceRow], CitedSources]:
-    """The Sources table's rows, in page order, and the sources their cells cite."""
+    """The Sources table's rows, in page order, and the sources their cells cite, with their
+    fixed words in `lang`."""
     config_dir, content_dir = Path(config_dir), Path(content_dir)
     diffs = load_differences(config_dir / "differences.yaml")
+    shown = diffs.localised(lang)  # the words; `diffs` (English) keeps the ids and rules
     dims = [d.id for d in diffs.dimensions]
     mapping = load_organisation_map(config_dir / "organisations.yaml")
     registry = load_sources(content_dir / "sources")
-    orgs = load_organisations(content_dir / "organisations")
+    orgs, fallback = _organisations(content_dir / "organisations", lang)
     refs = {r.id: r for o in orgs.values() for r in o.data_refs}
-    num = _Numbering(registry, refs, CITE_PREFIX)
+    num = _Numbering(registry, refs, CITE_PREFIX, lang)
 
     preset_of: dict[str | None, str] = {}  # source -> the first preset that recomputes it
     for preset, source in data.preset_sources().items():
@@ -110,15 +121,15 @@ def source_rows(
         per_source[m.source] = per_source.get(m.source, 0) + 1
 
     snapshot = _snapshot(data)
-    ours_cells = {d: Markup.escape(diffs.ours.get(d, "")) for d in dims}
+    ours_cells = {d: Markup.escape(shown.ours.get(d, "")) for d in dims}
     ours_cells["date"] = Markup.escape(
-        f"OSM snapshot of {snapshot}" if snapshot else "OSM snapshot (no run yet)"
+        t(lang, "sources.snapshot", date=snapshot) if snapshot else t(lang, "sources.no_snapshot")
     )
     rows = [
         SourceRow(
             source_id=None,
             anchor=source_anchor(None),
-            title=OURS_TITLE,
+            title=t(lang, "sources.ours"),
             organisation_id=None,
             organisation_name=None,
             group="ours",
@@ -130,8 +141,12 @@ def source_rows(
     ]
     for m in mapping:
         org = orgs.get(m.organisation)
-        section = next((s for s in org.sections if s.dimensions), None) if org else None
+        index, section = next(
+            ((i, s) for i, s in enumerate(org.sections) if s.dimensions), (None, None)
+        ) if org else (None, None)  # fmt: skip
         given = section.dimensions if section else {}
+        english = fallback.get(m.organisation, frozenset())
+        english_cells = frozenset(d for d in dims if f"sections.{index}.dimensions.{d}" in english)
         cells = {d: given.get(d) for d in dims}  # rendered below, numbered in page order
         anchor = source_anchor(m.source)
         if per_source[m.source] > 1:
@@ -148,7 +163,7 @@ def source_rows(
             SourceRow(
                 source_id=m.source,
                 anchor=anchor,
-                title=diffs.source_names.get(m.source, m.source),
+                title=shown.source_names.get(m.source, m.source),
                 organisation_id=m.organisation,
                 organisation_name=org.name if org else m.organisation,
                 group="ranking" if m.city == "*" else "city",
@@ -159,6 +174,7 @@ def source_rows(
                 ),
                 city_name=None if m.city == "*" else names.get(m.city, m.city),
                 recomputed_label=labels.get(preset_of.get(m.source)),
+                english_cells=english_cells,
             )
         )
     rows = [
@@ -166,7 +182,10 @@ def source_rows(
         if r.group == "ours"
         else replace(
             r,
-            cells={d: MISSING_CELL if v is None else num.inline(v) for d, v in r.cells.items()},
+            cells={
+                d: _missing_cell(lang) if v is None else _span(num.inline(v), d in r.english_cells)
+                for d, v in r.cells.items()
+            },
         )
         for r in order_rows(rows)
     ]
@@ -176,3 +195,16 @@ def source_rows(
         ref_links={n: _route(refs[rid].route) for rid, n in num.ref_no.items()},
     )
     return rows, cited
+
+
+def _organisations(dir: Path, lang: Lang) -> tuple[dict, dict[str, frozenset[str]]]:
+    """The profiles in `lang` and per profile its walk paths still English. A broken English
+    profile raises ContentError, as before; a broken German one is shown in English."""
+    if lang != "de":
+        return load_organisations(dir), {}
+    errors: dict[str, str] = {}
+    orgs, fallback = load_organisations(dir, errors=errors, lang="de")
+    english = {k: v for k, v in errors.items() if not k.startswith("de/")}
+    if english:
+        raise ContentError(next(iter(english.values())))
+    return orgs, fallback

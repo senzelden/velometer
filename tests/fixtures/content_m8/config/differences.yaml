@@ -2,20 +2,27 @@
 # Read by `velometer content --check` (dimension ids) and by report/differences.py.
 # `ours` is our side of each dimension (the date is the run's OSM snapshot). Everything that
 # states a source's definition follows content/sources/*.yaml; where the source does not say,
-# the value is "not stated by the source".
+# the value is "not stated by the source". Every prose value has a German sibling (M12):
+# `label_de`, `theirs_de` and a `<map>_de` map with the same keys as its English map.
 dimensions:
-  - {id: scope, label: What is counted}
-  - {id: kind, label: What kind of km}
-  - {id: length, label: How length is measured}
-  - {id: date, label: When}
-  - {id: area, label: Where}
-  - {id: method, label: Who measured}
+  - {id: scope, label: What is counted, label_de: Was gezählt wird}
+  - {id: kind, label: What kind of km, label_de: Welche Art von km}
+  - {id: length, label: How length is measured, label_de: Wie die Länge gemessen wird}
+  - {id: date, label: When, label_de: Wann}
+  - {id: area, label: Where, label_de: Wo}
+  - {id: method, label: Who measured, label_de: Wer gemessen hat}
 ours:
   scope: all mapped cycling infrastructure, tiers A–E (headline A+B)
   kind: mapped in OpenStreetMap at the snapshot date
   length: per road side
   area: city proper (LAU)
   method: OpenStreetMap, velometer classifier
+ours_de:
+  scope: die gesamte kartierte Radinfrastruktur, Stufen A–E (Hauptkennzahl A+B)
+  kind: in OpenStreetMap kartiert, Stand des Datenauszugs
+  length: je Straßenseite
+  area: Kernstadt (LAU)
+  method: OpenStreetMap, velometer-Klassifikator
 # What a figure's km are: the metric's own kind. Only metrics whose kind differs from ours.
 metric_kinds:
   new_cycle_infra_km: completed in the year
@@ -26,19 +33,34 @@ metric_kinds:
   radverkehrsnetz_completed_share_pct: share of the planned network completed
   radwegeausbau_started_km: projects started in the year, not completed
   cycle_track_km: existing cycle track counted for the year 2025
+metric_kinds_de:
+  new_cycle_infra_km: im Jahr fertiggestellt
+  vorrangnetz_implemented_km: bisher fertiggestellt
+  vorrangnetz_target_km: geplantes Netz
+  radverkehrsnetz_completed_km: bisher fertiggestellt
+  radverkehrsnetz_target_km: geplantes Netz
+  radverkehrsnetz_completed_share_pct: fertiggestellter Anteil des geplanten Netzes
+  radwegeausbau_started_km: im Jahr begonnene, nicht fertiggestellte Projekte
+  cycle_track_km: bestehende Radwege, gezählt für das Jahr 2025
 # How we count our own length when a comparison names a basis (our side of the length dimension).
 bases:
   per_side: per road side
   qecio_weighted: unidirectional infrastructure at half length, as QECIO counts
   road_class: length of the road network
+bases_de:
+  per_side: je Straßenseite
+  qecio_weighted: Infrastruktur in nur einer Richtung zur halben Länge, wie QECIO zählt
+  road_class: Länge des Straßennetzes
 # How a source measures length, where it states it (cc2025-annexes road-lanes; qecio-methodology
 # directionality). `matches`: our bases that are already the source's; no driver for those.
 source_length_bases:
   clean_cities_2025/network_km:
     theirs: road network length; the number of lanes or directions does not change it
+    theirs_de: Länge des Straßennetzes; die Zahl der Fahrstreifen oder Richtungen ändert sie nicht
     matches: [road_class]
   qecio_v2_10/cycle_tracks_km: &qecio_length
     theirs: unidirectional cycling infrastructure counted at half length
+    theirs_de: Radinfrastruktur in nur einer Richtung zur halben Länge gezählt
     matches: [qecio_weighted]
   qecio_v2_10/cycle_lanes_km: *qecio_length
   qecio_v2_10/shared_pedestrians_km: *qecio_length
@@ -62,6 +84,24 @@ labels:
   radverkehrsnetz_completed_share_pct: planned Radverkehrsnetz
   cycle_track_km: cycle track (Cykelsti), municipal definition not stated by the source
   radwegeausbau_started_km: projects of the Radwegoffensive in the main cycle network
+labels_de:
+  protected_km: geschützte Radinfrastruktur (baulich getrennt durch Barriere, Höhenunterschied oder Abstand)
+  network_km: das gesamte öffentliche Straßennetz im Stadtgebiet
+  protected_share_pct: geschützte Radinfrastruktur im Verhältnis zum Straßennetz
+  main_roads_km: Hauptstraßen
+  cycle_tracks_km: Radwege (durch bauliche Infrastruktur vom Kfz-Verkehr getrennt)
+  cycle_lanes_km: Radfahrstreifen (auf der Fahrbahn markiert, ohne bauliche Trennung)
+  shared_pedestrians_km: Geh- und Radwege (für Fuß- und Radverkehr beschildert)
+  total_cycle_infra_km: Summe der Radinfrastrukturklassen von QECIO
+  bike_network_km: Radnetz von BikeNetKit (vereinfachtes OpenStreetMap-Netz)
+  new_cycle_infra_km: neu geschaffene Radinfrastruktur
+  vorrangnetz_implemented_km: Radvorrangnetz
+  vorrangnetz_target_km: Radvorrangnetz
+  radverkehrsnetz_completed_km: geplantes Radverkehrsnetz
+  radverkehrsnetz_target_km: geplantes Radverkehrsnetz
+  radverkehrsnetz_completed_share_pct: geplantes Radverkehrsnetz
+  cycle_track_km: Radweg (Cykelsti); kommunale Definition von der Quelle nicht angegeben
+  radwegeausbau_started_km: Projekte der Radwegoffensive im Hauptradverkehrsnetz
 source_methods:
   clean_cities_2025: figures submitted by the city, OSM as fallback
   qecio_v2_10: OpenStreetMap, QECIO method
@@ -69,20 +109,42 @@ source_methods:
   official: the administration's published figures; method not stated by the source
   changing_cities: an NGO's own measurement
   mobilitaetsagentur_wien: Mobilitätsagentur Wien; counts projects started in the year
+source_methods_de:
+  clean_cities_2025: von der Stadt gemeldete Zahlen, OSM als Ersatz
+  qecio_v2_10: OpenStreetMap, QECIO-Methode
+  bikenetkit_v1: OpenStreetMap, BikeNetKit-Methode
+  official: veröffentlichte Zahlen der Verwaltung; Methode von der Quelle nicht angegeben
+  changing_cities: eigene Messung einer NGO
+  mobilitaetsagentur_wien: Mobilitätsagentur Wien; zählt im Jahr begonnene Projekte
 length_bases:
   streckenlaenge: route length (Streckenlänge)
   reallaenge: real length
   unknown: basis not stated by the source
+length_bases_de:
+  streckenlaenge: Streckenlänge
+  reallaenge: Reallänge
+  unknown: Basis von der Quelle nicht angegeben
 # The area a source covers; shown as a driver only where the comparison is tagged boundary_mismatch.
 areas:
   qecio_v2_10: NUTS3 region
   bikenetkit_v1: a city boundary file (which boundary is not stated by the source)
   default: the city as the source defines it
+areas_de:
+  qecio_v2_10: NUTS3-Region
+  bikenetkit_v1: eine Datei mit Stadtgrenzen (welche Grenze, gibt die Quelle nicht an)
+  default: die Stadt, wie die Quelle sie abgrenzt
 # What a reader calls each source (the Figures tab; an id not listed is shown as it is).
 source_names:
   clean_cities_2025: Clean Cities Campaign, Cycling Ranking 2025
   qecio_v2_10: ECF QECIO v2.10
   bikenetkit_v1: BikeNetKit
   official: Official / press figures
+  changing_cities: Changing Cities
+  mobilitaetsagentur_wien: Mobilitätsagentur Wien
+source_names_de:
+  clean_cities_2025: Clean Cities Campaign, Cycling Ranking 2025
+  qecio_v2_10: ECF QECIO v2.10
+  bikenetkit_v1: BikeNetKit
+  official: Amtliche Zahlen / Pressezahlen
   changing_cities: Changing Cities
   mobilitaetsagentur_wien: Mobilitätsagentur Wien

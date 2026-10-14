@@ -800,7 +800,7 @@ def test_the_index_rule_text_follows_the_constants(fixture_db, monkeypatch, lang
     text = render(methodology_facts(fixture_db[3]), lang)
     block = _generated(text, "counters")
     assert ("fewer than 7 qualifying" if lang == "en" else "weniger als 7 solchen") in block
-    assert f"{_number(80, lang)} %" in block
+    assert f"{_number(80, lang)}{'\u202f' if lang == 'de' else ' '}%" in block
     assert ("The 80 % rule" if lang == "en" else "Die 80-%-Regel") in text
 
 
@@ -832,8 +832,9 @@ STEP_DOWN = {
     "it keeps counting (Teststelle from March 2023). The Counts tab gives, as our reading of the "
     "daily data, the index without it from that year on",
     "de": "- Berlin: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte einer "
-    "Zählstelle fallen ab, während sie weiterzählt (Teststelle ab März 2023). Der Reiter „Counts“ "
-    "gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesem Jahr an",
+    "Zählstelle fallen ab, während sie weiterzählt (Teststelle ab März 2023). "
+    "Der Reiter „Zählstellen“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesem "
+    "Jahr an",
 }
 
 

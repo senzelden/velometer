@@ -1,41 +1,41 @@
 {% from "_cite.html" import cite %}
 {% from "city/_tier_table.html" import tier_series_table %}
-<div class="panel-frag">
+<div class="panel-frag" lang="{{ lang }}">
 <header class="panel-head">
 <div>
 <h2>{{ city.name }}</h2>
-<p class="meta">{{ country }}{% if residents %} · {{ residents | num(",d") }} residents (city proper){% endif %}</p>
+<p class="meta">{{ country }}{% if residents %} · {{ t('page.city.residents', n=residents | num(",d")) }}{% endif %}</p>
 </div>
-<a class="panel-full" href="{{ u('/city/' ~ city.id) }}">Open full page →</a>
+<a class="panel-full" href="{{ u('/city/' ~ city.id) }}">{{ t('page.panel.full') }} →</a>
 </header>
-<div class="keynums" role="list" aria-label="Key numbers">
+<div class="keynums" role="list" aria-label="{{ t('page.index.keys') }}">
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
 {% endfor %}</div>
-{{ cite(cite_for(city.name ~ ": key numbers, city proper (LAU)", city=city.id)) }}
+{{ cite(cite_for(t('cite.title.keynums', city=city.name), city=city.id)) }}
 {% for k in kinds if k.kind == "lau" and k.series %}
-<h3>Tier composition over time ({{ k.kind | upper }})</h3>
-<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="panel-tiers-sum-{{ k.kind }}" role="group" aria-label="Tier composition over time, {{ city.name }} {{ k.kind | upper }}"></div>
+<h3>{{ t('page.panel.tiers_over_time', kind=k.kind | upper) }}</h3>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ k.kind }}" aria-describedby="panel-tiers-sum-{{ k.kind }}" role="group" aria-label="{{ t('page.city.tiers_chart', city=city.name, kind=k.kind | upper) }}"></div>
 {{ tier_series_table(k, tiers, "panel-tiers-sum-" ~ k.kind) }}
-{{ cite(cite_for(city.name ~ ": tier composition over time, mapped km by tier, " ~ (k.kind | upper), city=city.id, kind=k.kind)) }}
+{{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=k.kind | upper), city=city.id, kind=k.kind)) }}
 {% endfor %}
-<h3>Tiers, mapped km now</h3>
+<h3>{{ t('page.panel.tiers_now') }}</h3>
 <div class="scroll">
 <table class="panel-tiers stack">
-<thead><tr><th>Boundary</th>{% for t in tiers %}<th class="num">{{ t }}</th>{% endfor %}</tr></thead>
+<thead><tr><th>{{ t('table.boundary') }}</th>{% for tier in tiers %}<th class="num">{{ tier }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for k in kinds %}<tr><td data-label="Boundary">{{ k.kind | upper }}</td>
-{% if k.point %}{% for t in tiers %}<td class="num" data-label="{{ t }}">{{ k.point.tiers_km[t] | num(",.0f") }}</td>{% endfor %}
-{% else %}<td class="note" colspan="{{ tiers | length }}" data-label="{{ tiers | first }}">no run</td>{% endif %}</tr>
+{% for k in kinds %}<tr><td data-label="{{ t('table.boundary') }}">{{ k.kind | upper }}</td>
+{% if k.point %}{% for tier in tiers %}<td class="num" data-label="{{ tier }}">{{ k.point.tiers_km[tier] | num(",.0f") }}</td>{% endfor %}
+{% else %}<td class="note" colspan="{{ tiers | length }}" data-label="{{ tiers | first }}">{{ t('note.no_run') }}</td>{% endif %}</tr>
 {% endfor %}</tbody>
 </table>
 </div>
-<h3>Flagged years</h3>
+<h3>{{ t('page.city.flagged_years') }}</h3>
 {% set shown = namespace(n=0) %}
 {% for k in kinds %}{% for f in k.flags %}{% set shown.n = shown.n + 1 %}
 <details class="flag-item"><summary>{{ f.flag.label | when }} · {{ k.kind | upper }} <span class="rule">{{ f.flag.rules | join(", ") }}</span></summary>
-{% if f.explanation %}<div class="explanation">{{ f.explanation | md }}</div>{% else %}<p class="note">no explanation recorded</p>{% endif %}
+{% if f.explanation %}<div class="explanation"{{ fb(f.explanation) }}>{{ f.explanation | md }}</div>{% else %}<p class="note">{{ t('page.panel.no_explanation') }}</p>{% endif %}
 </details>
 {% endfor %}{% endfor %}
-{% if not shown.n %}<p class="note">no flagged years</p>{% endif %}
-<p class="meta">Mapped km in OpenStreetMap, not built km.</p>
+{% if not shown.n %}<p class="note">{{ t('note.no_flagged_years') }}</p>{% endif %}
+<p class="meta">{{ t('note.mapped_not_built') }}</p>
 </div>

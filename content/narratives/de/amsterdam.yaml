@@ -1,0 +1,55 @@
+city_id: amsterdam
+title:
+  text: 'Amsterdam: eine dichte Karte, die sich kaum bewegt'
+  src: 841dfb5b18be
+dek:
+  text: >-
+    Die Hauptkennzahl ging von 205,6 im Jahr 2018 auf 203,0 im Oktober 2026 zurück;
+    die einzige sichtbare Verschiebung, von Radwegen zu Geh- und Radwegen im Jahr
+    2025, war eine Tag-Änderung.
+  src: aae11fd0cfe8
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Amsterdams Karte ist dicht und ändert sich wenig. In der Kernstadt (LAU) lag
+      die Hauptkennzahl (kartierte A+B-km je 100 km Hauptstraßen) 2018 bei 205,6 und
+      im Oktober 2026 bei 203,0, und die kartierten A+B-km blieben durchgehend zwischen
+      852 und 867 km [#ts-amsterdam].
+    src: 06b109e6b638
+  - text: >-
+      Verschoben hat sich die Aufteilung innerhalb von A+B. Zwischen den Punkten 2024
+      und 2025 sanken baulich getrennte Radwege (Stufe A) von 704 auf 660 km, und
+      Geh- und Radwege (Stufe B) stiegen von 160 auf 207 km, bei gleichbleibendem
+      A+B. Das ist eine Umtaggung: Im September 2024 verloren Hunderte Radwege, deren
+      Gehweg auf derselben Linie verläuft, das Tag `segregated=yes`, überwiegend in
+      den Bearbeitungen eines einzelnen Mitwirkenden; der Klassifikator liest sie
+      deshalb jetzt als gemeinsam mit dem Fußverkehr genutzt [#shift-amsterdam-2025].
+      Neu getaggte Wege sind keine Veränderung auf der Straße. Markierte Radfahrstreifen
+      (Stufe D, 76 → 90 km) und Fahrradstraßen (Stufe E, 0,2 → 9,0 km) wuchsen langsam.
+    src: ffa945eab2d9
+  - text: >-
+      Der funktionale Stadtraum (FUA) stieg langsam, 134,1 → 138,6. Sein einziges
+      markiertes Jahr, 2022, war eine Tag-Änderung an Radfahrstreifen gegen die Einbahnrichtung,
+      die nur markierte Radfahrstreifen betraf [#ts-amsterdam-fua-2022].
+    src: 19cfd5e5cb70
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities zählt 919 km geschützter Infrastruktur [@cc2025-report]; unser
+      A+B-Wert liegt bei 862 km je Seite (−6 %). Eine veröffentlichte Gesamtzahl der
+      Stadt haben wir nicht gefunden, doch die städtische Definition eines fietspad,
+      unten zitiert, entspricht diesem Umfang [@amsterdam-maps-fietsnetten]. Die Abweichung
+      liegt im Straßennetz: Clean Cities teilt durch 2.700 km, wir durch 2.041 km
+      (−24 %), daher beträgt sein Verhältnis 34 % gegenüber unseren 42,2 % [#recon-amsterdam-cc-ratio].
+      Welche Straßen sein Netz umfasst und ob die Stadt oder OpenStreetMap die Daten
+      geliefert hat, ist nicht angegeben. Seine Daten stammen von Anfang 2025, unsere
+      vom Oktober 2026. QECIO berichtet für Groot-Amsterdam, eine Region, die größer
+      ist als die Stadt [#recon-amsterdam-qecio-main].
+    src: 6d007739a0c3
+literals:
+- 100 km

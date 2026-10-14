@@ -13,7 +13,13 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
-DOC_FILES = ("review/m3_timeseries.md", "reconciliation.md", "methodology.md", "methodology.de.md")
+DOC_FILES = (
+    "review/m3_timeseries.md",
+    "review/m3_timeseries.de.md",  # the German flagged-year explanations (M12)
+    "reconciliation.md",
+    "methodology.md",
+    "methodology.de.md",
+)
 MAP_GLOBS = ("*.png", "*.geojson")
 CHANGE_DOCS = ("*_change_*.md",)  # docs/review: the change pages' per-Bezirk tables
 PLANS_GLOBS = ("*.geojson", "*.json")  # data/plans/<city>: the datasets the plan pages read
@@ -40,7 +46,7 @@ def fingerprint(
     content_dir: Path = Path("content"),
     plans_data_dir: Path | None = None,
 ) -> tuple:
-    """Everything a page reads: the DB, every config file, four docs files, the change pages,
+    """Everything a page reads: the DB, every config file, five docs files, the change pages,
     the map files, every content file and the plan datasets (GeoJSON and their retrieval
     records) when a plans data directory is given."""
     db_path, config_dir, docs_dir, maps_dir, content_dir = map(

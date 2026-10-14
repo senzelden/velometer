@@ -1,17 +1,17 @@
-{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Plans · Organisations · Sources · Methodology. `active` names the
-    current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
+{#- Top navigation: Overview · Compare · Cities ▾ · Stories · Plans · Organisations · Sources · Methodology, then the
+    search and the language switch (the same page in the other language). `active` names the current item. The Cities menu is a <details> (works without JS); nav.js adds the filter. -#}
 {%- macro item(key, href, label) -%}
 <li><a href="{{ u(href) }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
 {%- endmacro %}
-<nav class="site-nav" id="site-nav" aria-label="Main">
+<nav class="site-nav" id="site-nav" aria-label="{{ t('nav.label') }}">
 <ul>
-  {{ item("overview", "/", "Overview") }}
-  {{ item("compare", "/compare", "Compare") }}
+  {{ item("overview", "/", t('nav.overview')) }}
+  {{ item("compare", "/compare", t('nav.compare')) }}
   <li class="cities-item">
     <details class="cities-menu">
-      <summary{% if active == "cities" %} aria-current="page"{% elif active == "city" %} aria-current="true"{% endif %}>Cities ▾</summary>
+      <summary{% if active == "cities" %} aria-current="page"{% elif active == "city" %} aria-current="true"{% endif %}>{{ t('nav.cities') }} ▾</summary>
       <div class="cities-panel">
-        <input type="search" class="city-filter" hidden placeholder="Filter cities or countries" aria-label="Filter cities">
+        <input type="search" class="city-filter" hidden placeholder="{{ t('nav.city_filter_placeholder') }}" aria-label="{{ t('nav.city_filter') }}">
         {% if nav_groups %}
         <div class="groups">
         {% for g in nav_groups %}
@@ -21,24 +21,26 @@
           </div>
         {% endfor %}
         </div>
-        <p class="no-match" hidden>No city matches.</p>
+        <p class="no-match" hidden>{{ t('nav.no_match') }}</p>
         {% endif %}
-        <a class="all" href="{{ u('/cities') }}">All cities, with headline values →</a>
+        <a class="all" href="{{ u('/cities') }}">{{ t('nav.all_cities') }} →</a>
       </div>
     </details>
   </li>
-  {{ item("stories", "/stories", "Stories") }}
-  {{ item("plans", "/plans", "Plans") }}
-  {{ item("organisations", "/organisations", "Organisations") }}
-  {{ item("sources", "/sources", "Sources") }}
-  {{ item("methodology", "/methodology", "Methodology") }}
+  {{ item("stories", "/stories", t('nav.stories')) }}
+  {{ item("plans", "/plans", t('nav.plans')) }}
+  {{ item("organisations", "/organisations", t('nav.organisations')) }}
+  {{ item("sources", "/sources", t('nav.sources')) }}
+  {{ item("methodology", "/methodology", t('nav.methodology')) }}
   <li class="search-item">
-    <a class="search-fallback" href="{{ u('/cities') }}">Find a city</a>
+    <a class="search-fallback" href="{{ u('/cities') }}">{{ t('nav.find_city') }}</a>
     <div class="search" hidden>
-      <label for="site-search" class="visually-hidden">Search cities and pages</label>
-      <input id="site-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="site-search-list" placeholder="Search cities and pages" autocomplete="off" spellcheck="false">
-      <ul id="site-search-list" role="listbox" aria-label="Search results" hidden></ul>
+      <label for="site-search" class="visually-hidden">{{ t('nav.search') }}</label>
+      <input id="site-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="site-search-list" placeholder="{{ t('nav.search') }}" autocomplete="off" spellcheck="false">
+      <ul id="site-search-list" role="listbox" aria-label="{{ t('nav.search_results') }}" hidden></ul>
     </div>
   </li>
+  {%- set other = 'de' if lang == 'en' else 'en' %}
+  <li class="lang-item"><a class="lang-switch" href="{{ u_in(other, here) }}" data-href="{{ u_in(other, here) }}" hreflang="{{ other }}" lang="{{ other }}">{{ t('nav.lang_switch') }}</a></li>
 </ul>
 </nav>

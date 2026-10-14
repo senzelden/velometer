@@ -33,6 +33,14 @@ def test_ranks_highest_first_and_ties_share_rank():
     assert _rank([("a", 1.0), ("b", 1.0000001), ("c", 2.0)]) == {"c": 1, "a": 2, "b": 2}
 
 
+def test_with_lang_shares_the_connection_and_keeps_the_original(fixture_db):
+    _, _, conn, data = fixture_db
+    de = data.with_lang("de")
+    assert de.conn is conn and de.lang == "de"
+    assert data.lang == "en"
+    assert de is not data
+
+
 def test_current_point_matches_cli_headline(fixture_db):
     _, cfg, conn, data = fixture_db
     cur = data.current("berlin", "lau")

@@ -29,7 +29,14 @@ from urllib.parse import unquote, urlsplit
 from fastapi import FastAPI
 
 from velometer.app.main import HERE, TABS, create_app
-from velometer.app.urls import make_u, normalise_base
+from velometer.app.urls import (
+    DATA_ROOTS,
+    LEGACY_DE,
+    make_data_u,
+    make_u,
+    normalise_base,
+    with_lang,
+)
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
@@ -50,6 +57,9 @@ PAGES = [
     "/plans", "/methodology", "/methodology/de", "/data/series.json", "/data/search.json",
     "/data/all.csv",
 ]  # fmt: skip
+# M12: every HTML page has a German twin under /de/ (the legacy /methodology/de is one already);
+# the search index is the one data file written per language
+GERMAN_DATA = ["/de/data/search.json"]
 NOT_FOUND_PROBE = "/404"  # no route: the app's 404 response, written as 404.html
 BUILD_FILE = "build.json"
 BUILD_KEYS = (
@@ -199,15 +209,17 @@ def _map_refs(html: str, base: str) -> set[str]:
 def export_urls(data: ReportData, app: FastAPI) -> list[str]:
     """Every URL the static edition has (decision 4): the fixed pages; per trusted city its page,
     each tab and plan page and CSV the app serves for it (a 404 is a page the city does not
-    have, left out), its panel; every map an exported page references. A per-city URL answered
+    have, left out), its panel; every map an exported page references (a German page with
+    maps is read too: it links the German tier map images). A per-city URL answered
     with anything but 200 or 404 is kept, so the export fails on it by name."""
     base = app.state.base_path
     probed = []
     for city in data.cities():
-        probed += [f"/city/{city.id}{suffix}" for _k, _l, suffix in TABS]
+        probed += [f"/city/{city.id}{suffix}" for _k, suffix in TABS]
         probed += [f"/city/{city.id}/panel", f"/plans/{city.id}"]
         probed += [f"/data/{city.id}.csv", f"/data/{city.id}_subareas.csv"]
     found = list(PAGES)
+    pages: list[str] = []  # the HTML URLs, each given its German twin
     maps: set[str] = set()
     with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as client:
         for url in PAGES + probed:
@@ -216,9 +228,14 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
                 continue
             if url not in PAGES:
                 found.append(url)
+            if r.headers.get("content-type", "").startswith("text/html") and url not in LEGACY_DE:
+                pages.append(url)
             if r.status_code == 200 and r.headers["content-type"].startswith("text/html"):
-                maps |= _map_refs(r.text, base)
-    return found + sorted(maps)
+                refs = _map_refs(r.text, base)
+                if refs:  # its German twin links its own image (`<city>_<kind>.de.png`)
+                    refs |= _map_refs(client.get(with_lang(url, "de")).text, base)
+                maps |= refs
+    return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
 def build_stamp(data: ReportData, base: str) -> dict:
@@ -372,7 +389,11 @@ def _js_refs(text: str, base: str) -> list[tuple[str, bool]]:
     new URL(). Whole-line comments are skipped. A built URL (`${…}`) passed to url() carries the
     base by construction and is not resolved; anywhere else it is checked as written. XML
     namespace names are not references."""
-    u = make_u(base)
+    page_u, data_u = make_u(base), make_data_u(base)
+
+    def u(path: str) -> str:  # url() of an English page: data paths shared, no prefix
+        return data_u(path) if path.startswith(DATA_ROOTS) else page_u(path)
+
     code = JS_COMMENTS.sub("", text)
     refs = [(m.group(2), True) for m in JS_IMPORT.finditer(code)]
     for m in JS_URL_LITERAL.finditer(code):

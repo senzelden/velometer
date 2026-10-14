@@ -17,6 +17,7 @@ from tests.test_app import (
     subarea_setup,  # noqa: F401 - the fixture
 )
 from tests.test_app_m8 import _stylesheet
+from velometer import i18n
 from velometer.report import change, charts
 from velometer.report.colour import contrast, delta
 
@@ -315,19 +316,17 @@ def test_every_token_the_js_reads_is_defined_in_both_themes():
 
 
 @pytest.fixture
-def all_page_urls(client, fixture_db):  # noqa: F811
-    from velometer.app import export
-
-    urls = export.export_urls(fixture_db[3], client.app)
-    return [u for u in urls if client.get(u).headers["content-type"].startswith("text/html")]
+def all_page_urls(page_site):
+    """The HTML URLs of the export (both language trees); their bodies are `page_site.html`."""
+    return list(page_site.html)
 
 
-def test_every_map_png_sits_on_a_plate(client, all_page_urls):  # noqa: F811
+def test_every_map_png_sits_on_a_plate(all_page_urls, page_site):  # noqa: F811
     # light PNGs read as figures in the dark theme; the pages link them today, so this guards
     # any page that shows one inline
     assert all_page_urls
     for url in all_page_urls:
-        html = client.get(url).text
+        html = page_site.html[url]
         for img in re.finditer(r'<img[^>]+src="[^"]*/maps/[^"]+\.png"', html):
             before = html[: img.start()]
             assert before.rfind('<figure class="map-png') > before.rfind("</figure>"), url
@@ -456,12 +455,12 @@ def _stack_violations(html: str) -> tuple[int, list]:
     return len(p.tables), bad
 
 
-def test_every_data_table_stacks_with_labels(client, all_page_urls):  # noqa: F811
+def test_every_data_table_stacks_with_labels(all_page_urls, page_site):  # noqa: F811
     # spec decision 5: data tables outside prose stack; every body cell, row header included,
     # names its column with data-label equal to that column's header text
     seen = 0
     for url in all_page_urls:
-        n, bad = _stack_violations(client.get(url).text)
+        n, bad = _stack_violations(page_site.html[url])
         seen += n
         assert not bad, (url, bad[:3])
     assert seen > 10  # the parser found the tables at all
@@ -584,11 +583,11 @@ def _split_fragments(urls):
     return [u for u in urls if not u.endswith("/panel")], [u for u in urls if u.endswith("/panel")]
 
 
-def test_every_page_has_a_skip_link_main_and_live_region(client, all_page_urls):  # noqa: F811
+def test_every_page_has_a_skip_link_main_and_live_region(all_page_urls, page_site):  # noqa: F811
     pages, _ = _split_fragments(all_page_urls)
     assert pages
     for url in pages:
-        html = client.get(url).text
+        html = page_site.html[url]
         body = html.split("<body>", 1)[1]
         first = re.search(r"<(a|button|input|select|textarea)\b[^>]*>", body)
         assert first and 'class="skip"' in first.group(0) and 'href="#main"' in first.group(0), url
@@ -597,12 +596,12 @@ def test_every_page_has_a_skip_link_main_and_live_region(client, all_page_urls):
         assert html.rfind('id="live"') > html.rfind("</main>"), url  # outside main, before </body>
 
 
-def test_one_h1_and_no_skipped_levels(client, all_page_urls):  # noqa: F811
+def test_one_h1_and_no_skipped_levels(all_page_urls, page_site):  # noqa: F811
     pages, panels = _split_fragments(all_page_urls)
     assert panels
     for url in [*pages, *panels]:
         panel = url.endswith("/panel")
-        levels = [int(n) for n in re.findall(r"<h([1-6])\b", client.get(url).text)]
+        levels = [int(n) for n in re.findall(r"<h([1-6])\b", page_site.html[url])]
         if not panel:
             assert levels.count(1) == 1, url
         prev = 1 if panel else 0  # a panel sits under compare's h2 title, so it starts at h2
@@ -663,11 +662,11 @@ class _Scrolls(HTMLParser):
             self.depth_prose -= self._stack.pop()
 
 
-def test_every_sideways_scrolling_region_is_focusable_and_named(client, all_page_urls):  # noqa: F811
+def test_every_sideways_scrolling_region_is_focusable_and_named(all_page_urls, page_site):  # noqa: F811
     seen = 0
     for url in all_page_urls:  # panels included: they are in the export
         p = _Scrolls()
-        p.feed(client.get(url).text)
+        p.feed(page_site.html[url])
         for tag, a in p.found:
             seen += 1
             assert a.get("tabindex") == "0", (url, tag, a)
@@ -745,11 +744,11 @@ class _Groups(HTMLParser):
             self.groups.append(a["aria-labelledby"])
 
 
-def test_every_group_label_labels_a_group_and_ids_are_unique(client, all_page_urls):  # noqa: F811
+def test_every_group_label_labels_a_group_and_ids_are_unique(all_page_urls, page_site):  # noqa: F811
     seen = 0
     for url in all_page_urls:
         p = _Groups()
-        p.feed(client.get(url).text)
+        p.feed(page_site.html[url])
         assert len(p.ids) == len(set(p.ids)), url
         for name_id in p.names:
             seen += 1
@@ -803,10 +802,10 @@ def _chart_gaps(html: str) -> tuple[int, list]:
     return len(p.charts), bad
 
 
-def test_every_chart_has_its_data_in_the_page(client, all_page_urls):  # noqa: F811
+def test_every_chart_has_its_data_in_the_page(all_page_urls, page_site):  # noqa: F811
     seen = 0
     for url in all_page_urls:
-        n, bad = _chart_gaps(client.get(url).text)
+        n, bad = _chart_gaps(page_site.html[url])
         seen += n
         assert not bad, (url, bad[:2])
     assert seen > 8  # the parser found the charts at all
@@ -835,22 +834,34 @@ def test_the_chart_check_catches_a_chart_without_its_table():
     assert _chart_gaps('<span class="spark-mount" data-chart="sparkline"></span>') == (0, [])
 
 
-def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(client, all_page_urls):  # noqa: F811
+FLAG_WORDS = "|".join(
+    re.escape(text)
+    for lang in ("en", "de")
+    for text in (
+        i18n.t(lang, "table.flagged"),
+        f'data-label="{i18n.t(lang, "table.flagged_col")}"',
+        i18n.t(lang, "page.plans.suspect"),
+    )
+)
+
+
+def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, page_site):  # noqa: F811
     rows = 0
     for url in all_page_urls:
-        html = client.get(url).text
+        html = page_site.html[url]
         for row in re.findall(r'<tr class="[^"]*\bflagged\b[^"]*"[^>]*>(.*?)</tr>', html, re.S):
             rows += 1
             assert 'class="flagmark"' in row and "⚑" in row, (url, row[:120])
-            # and said to a screen reader: in words, or by a cell headed "Flagged" / a status
-            assert re.search(r"\(flagged\)|data-label=\"Flagged\"|suspect", row), (url, row[:120])
+            # and said to a screen reader: in words, or by a cell headed "Flagged" / a status, in
+            # the page's language
+            assert re.search(FLAG_WORDS, row), (url, row[:120])
     assert rows  # the fixtures have flagged rows
 
 
-def test_every_up_and_down_value_carries_a_sign(client, all_page_urls):  # noqa: F811
+def test_every_up_and_down_value_carries_a_sign(all_page_urls, page_site):  # noqa: F811
     seen = 0
     for url in all_page_urls:
-        html = client.get(url).text
+        html = page_site.html[url]
         for m in re.finditer(r'class="[^"]*\b(?:up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<', html):
             seen += 1
             assert m.group(1).strip()[0] in "+−-" or m.group(1).strip() == "n/a", (url, m[0])
@@ -909,7 +920,7 @@ def test_the_compare_sort_bar_has_a_visible_caption_tied_to_the_table():
     js = re.sub(r"/\*.*?\*/|//[^\n]*", "", (STATIC / "js" / "compare.js").read_text(), flags=re.S)
     body = js[js.index("function drawTable") :]
     body = body[: body.index("\nfunction ", 10)]
-    assert '"Sort by"' in body and 'class: "sort-caption"' in body
+    assert 't("js.compare.sort_by")' in body and 'class: "sort-caption"' in body
     assert "describeSort(table)" in body  # described by it only where it is on screen
     assert "out.table.replaceChildren(caption, table)" in body  # the caption sits with the table
     rules = _css_rules(_stylesheet())

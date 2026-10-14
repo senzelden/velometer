@@ -1,12 +1,12 @@
 {#- A "Cite" disclosure for one figure (M11). `fields` are CiteFields or None: no run, no Cite.
     cite-ui.js upgrades it on first open into Text, BibTeX and CSL-JSON blocks with Copy buttons,
     dated and with the page's absolute address of that moment. -#}
-{% macro cite(fields, label="Cite") %}{% if fields %}<details class="cite">
-<summary>{{ label }}<span class="visually-hidden"> {{ fields.title }}</span></summary>
+{% macro cite(fields, label=None) %}{% if fields %}<details class="cite">
+<summary>{{ label or t('cite.label') }}<span class="visually-hidden"> {{ fields.title }}</span></summary>
 <p class="cite-text">{{ cite_text(fields) }}</p>
 <script type="application/json" class="cite-data">{{ fields | cite_json | tojson }}</script>
 </details>{% endif %}{% endmacro %}
 {#- "Copy link" (M11): the page's address with its permalink state. The box is hidden until
     permalink-ui.js reveals it, so without JavaScript it leaves no gap; the address bar is the
     link then. -#}
-{% macro copy_link() %}<div class="permalink" hidden><button type="button" class="copy-link">Copy link</button></div>{% endmacro %}
+{% macro copy_link() %}<div class="permalink" hidden><button type="button" class="copy-link">{{ t('permalink.copy') }}</button></div>{% endmacro %}

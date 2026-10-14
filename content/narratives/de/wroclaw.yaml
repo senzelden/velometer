@@ -1,0 +1,52 @@
+city_id: wroclaw
+title:
+  text: 'Wrocław: kartierte km an jedem Punkt gestiegen'
+  src: 88f44fb403fa
+dek:
+  text: >-
+    Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 62,0 auf 95,3 kartierte
+    A+B-km je 100 km Hauptstraßen, ohne ungeklärten Sprung auf dem Weg.
+  src: b98f0ca9ad55
+sections:
+- heading:
+    text: Von 2018 bis heute
+    src: 75c16b3a0a92
+  paragraphs:
+  - text: >-
+      Wrocławs Karte zeigt einen gleichmäßigen Anstieg. Die kartierten A+B-km in der
+      Kernstadt stiegen von 261 im Jahr 2018 auf 399 im Oktober 2026, an jedem Jahrespunkt
+      höher, und die Hauptkennzahl ging von 62,0 auf 95,3. Baulich getrennte Radwege
+      (Stufe A) wuchsen von 178 auf 258 km und Geh- und Radwege (Stufe B) von 83 auf
+      141 km. Markierte Radfahrstreifen bleiben eine Nebensache, 22 auf 32 km.
+    src: abf006cb4911
+  - text: >-
+      Der einzige Prüfhinweis der städtischen Reihe liegt auf dem Startpunkt 2018:
+      Im Jahr 2017 zeichnete ein einzelner Kartierender einen großen Teil des Fußwegenetzes,
+      Gehwege, keine Radwege [#ts_lau_2018]. Da 2018 der erste Punkt ist, wird ihm
+      keine Änderung an km zugeschrieben.
+    src: b81c0f73d08a
+  - text: >-
+      Der funktionale Stadtraum wuchs schneller, von 332 auf 701 kartierte km. Seine
+      markierten Schritte von 2020, 2022 und 2023 waren Kartierungsaktivität in den
+      gminas im Umland, zum Teil Wege, die von construction zu cycleway umgetaggt
+      wurden. Eine solche Umtaggung datiert die Kartierung, nicht den Weg vor Ort
+      [#ts_fua_2023].
+    src: 57e480059932
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Die Zahlen des Rathauses erfassen weiter gefasste Netze als unsere: Seine „radfreundlichen
+      Routen“ schließen Radfahrstreifen gegen die Einbahnrichtung und verkehrsberuhigte
+      Zonen ein, die unsere Hauptkennzahl nicht zählt [@wroclaw-wroclife-nik-2023],
+      und seine anderen Summen nennen weder Definition noch Längenbasis. Clean Cities
+      2025 zählt geschützte Infrastruktur, Geh- und Radwege eingeschlossen [@cc2025-annexes].
+      Unser A+B-Wert je Seite von 399 km liegt 12,3 % über seinen 355 km und auf der
+      Basis entlang der Straßenachse 6,8 % darüber, bei anderthalb Jahren zwischen
+      den beiden Daten [#rec_cc_ratio]. Das Verhältnis weicht stärker ab: Sein Straßennetz
+      von 1.769 km ist weiter gefasst als unsere 1.340 km [#rec_cc_network], daher
+      beträgt sein Verhältnis 20 % gegenüber unseren 29,8 %.
+    src: 53be68e87189
+literals:
+- 100 km

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 
 // A fake DOM, enough for cite-ui.js to render a Cite's blocks: elements with attributes,
 // children and text. The module upgrades the page's cites at import, so the globals come first.

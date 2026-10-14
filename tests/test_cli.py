@@ -1291,3 +1291,94 @@ def test_report_change_without_a_run_at_the_date_fails(tmp_path):
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 1
     assert "2023-01-01" in result.output
+
+
+# --- velometer content: both editions (M12) --------------------------------------------------
+
+
+def _content_args(tree, fixture_db, *extra):
+    root, _data, docs = tree
+    db, cfg, _conn, _d = fixture_db
+    return ["content", "--check", *extra, "--content", str(root), "--db", str(db),
+            "--config-dir", str(cfg), "--docs", str(docs)]  # fmt: skip
+
+
+@pytest.fixture
+def content_tree(fixture_db, tmp_path):
+    from tests.content_util import build_tree
+
+    return build_tree(fixture_db, tmp_path)
+
+
+def test_content_help_keeps_its_options_and_stamp_has_help():
+    assert "Implies --check" in CliRunner().invoke(app, ["content", "--help"]).output
+    res = CliRunner().invoke(app, ["content", "stamp", "--help"])
+    assert res.exit_code == 0 and "translation file" in res.output
+
+
+def test_content_check_prints_ok_while_german_is_only_notes(content_tree, fixture_db):
+    # the synthetic tree has no German twins: completeness notes only, never printed
+    res = CliRunner().invoke(app, _content_args(content_tree, fixture_db))
+    assert res.exit_code == 0 and res.output.strip() == "ok", res.output
+
+
+def test_content_online_runs_when_there_are_only_notes(content_tree, fixture_db, monkeypatch):
+    import velometer.content.check as ck
+
+    calls: list[str] = []
+    real = ck.check_online
+    monkeypatch.setattr(
+        ck, "check_online", lambda sources: real(sources, fetch=lambda u: calls.append(u) or "")
+    )
+    res = CliRunner().invoke(app, _content_args(content_tree, fixture_db, "--online"))
+    assert res.exit_code == 1 and calls == ["https://example.org/radverkehr"]
+
+
+def test_content_check_prints_a_german_problem_with_its_prefix(content_tree, fixture_db):
+    from tests.content_util import fake_translate
+    from velometer.content import translate as tr
+
+    en = content_tree[0] / "narratives" / "berlin.yaml"
+    fake_translate(en, tr.twin_path(en))
+    tr.edit_path(tr.twin_path(en), "sections.0.paragraphs.0", lambda s: s.replace("[#r1]", ""))
+    res = CliRunner().invoke(app, _content_args(content_tree, fixture_db))
+    assert res.exit_code == 1
+    assert any(
+        line.startswith("[de] narratives/de/berlin.yaml sections.0.paragraphs.0: markers")
+        for line in res.stderr.splitlines()
+    )
+
+
+def test_content_stamp_stamps_a_translation_file(content_tree):
+    from tests.content_util import fake_translate
+    from velometer.content import translate as tr
+
+    en = content_tree[0] / "narratives" / "berlin.yaml"
+    de = tr.twin_path(en)
+    fake_translate(en, de)
+    tr.edit_path(en, "title", lambda s: s + " (new)")
+    res = CliRunner().invoke(app, ["content", "stamp", str(de)])
+    # title, dek, a heading and two paragraphs; the data reference's label is not translated
+    assert res.exit_code == 0 and res.output.strip() == f"stamped 5 strings in {de}"
+    raw = tr.yaml.safe_load(de.read_text(encoding="utf-8"))
+    assert raw["title"]["src"] == tr.src_hash("Berlin (new)")
+
+
+def test_content_stamp_stamps_the_german_explanations(tmp_path):
+    en, de = tmp_path / "m3_timeseries.md", tmp_path / "m3_timeseries.de.md"
+    en.write_text("### berlin/lau/2019\n\nCause.\n", encoding="utf-8")
+    de.write_text("### berlin/lau/2019\n\nUrsache.\n", encoding="utf-8")
+    res = CliRunner().invoke(app, ["content", "stamp", str(de)])
+    assert res.exit_code == 0 and res.output.strip() == f"stamped 1 strings in {de}"
+    assert "<!-- src: " in de.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("name", ["narratives/berlin.yaml", "narratives/de/lisbon.yaml", "x.md"])
+def test_content_stamp_refuses_other_files(content_tree, name):
+    path = content_tree[0] / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+    before = path.read_bytes()
+    res = CliRunner().invoke(app, ["content", "stamp", str(path)])
+    assert res.exit_code == 1 and res.stderr.startswith("error:")
+    assert path.read_bytes() == before

@@ -1,0 +1,52 @@
+city_id: prague
+title:
+  text: 'Prag: Geh- und Radwege und markierte Radfahrstreifen'
+  src: 73a609be5957
+dek:
+  text: >-
+    Die Hauptkennzahl stieg von 18,7 im Jahr 2018 auf 29,6 im Oktober 2026, während
+    sich die kartierten km markierter Radfahrstreifen mehr als verdreifachten.
+  src: 03555e8a4358
+sections:
+- heading:
+    text: Seit 2018
+    src: 310f41f80f38
+  paragraphs:
+  - text: >-
+      Prags kartierte A+B-km stiegen von 182 km im Jahr 2018 auf 289 km im Oktober
+      2026 und die Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, von 18,7
+      auf 29,6, Platz 20 der 21 Städte [#ts-lau]. Die meiste Veränderung der Karte
+      liegt auf der Fahrbahn: Markierte Radfahrstreifen (D) gingen von 56 auf 190
+      km je Seite, Fahrradstraßen und Busspuren (E) von 20 auf 42 km.
+    src: 59cf6beb45a0
+  - text: >-
+      Der einzige markierte Sprung, 2020, besteht überwiegend aus Tag-Änderungen.
+      Anfang 2019 machten Kartierende aus Gehwegen in Parks und am Ufer, auf denen
+      Radfahren erlaubt war, Radwege, die zu Fuß Gehende weiterhin nutzen dürfen,
+      und fügten einige neue Radwege hinzu [#expl-lau-2020]. Weil der Fußverkehr auf
+      diesen Wegen zugelassen ist, stuft der Klassifikator sie als Stufe B ein, wie
+      die meisten kartierten Radwege Prags: Stufe B (245 km) ist mehr als fünfmal
+      so lang wie Stufe A (45 km) und war schon 2018 über viermal so lang [#ts-lau].
+    src: 5bfdb737c866
+  - text: >-
+      Der funktionale Stadtraum folgt demselben Muster: A+B stieg von 325 auf 540
+      km, größtenteils in Stufe B, und sein Schritt von 2020 sind dieselben Tag-Änderungen
+      und dazu neue Radwege in den Vororten [#ts-fua] [#expl-fua-2020].
+    src: 29ce5247d651
+- heading:
+    text: Warum die Zahlen abweichen
+    src: 8cc8463f82aa
+  paragraphs:
+  - text: >-
+      Clean Cities 2025 gibt für Prag 248 km geschützter Infrastruktur und 6 % des
+      Straßennetzes an [@cc2025-report]. Nach seiner Methode kommen wir auf 8,5 %:
+      Unser A+B-Wert ist 17 % höher, und unser Straßennetz umfasst 3.423 km gegenüber
+      seinen 4.093 km; beide Abweichungen verstärken sich [#recon]. An der Längenbasis
+      liegt es nicht, und der Zeitabstand erklärt die km nicht: Wir hatten schon Anfang
+      2025 mehr. Eine veröffentlichte Gesamtzahl der Stadt für Radverkehrsanlagen
+      haben wir nicht gefunden; das Routensystem der Stadt zählt Routen, die weder
+      beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
+    src: 526c4d699a94
+literals:
+- 100 km
+- 21 Städte

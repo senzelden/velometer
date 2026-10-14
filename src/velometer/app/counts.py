@@ -33,22 +33,37 @@ from velometer.counters.model import (
     data_gaps,
     load_counters_config,
 )
+from velometer.i18n import Lang, month_year, t
 from velometer.report.data import ReportData
 
 log = logging.getLogger(__name__)
 
-SERIES_LABEL = {
-    "counts": "counts recorded at counter sites",
-    "avg_daily_intensity": "average daily intensity recorded at counter sites",
-}
-# the lines' short names: the chart's end labels (city.js reads them off the chart mount) and
-# the key under the chart, which gives each its full name
-SERIES_SHORT = {"counts": "Counts", "avg_daily_intensity": "Intensity"}
-KM_SHORT = "Mapped km"
-MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June", "July", "August", "September",
-    "October", "November", "December",
-]  # fmt: skip
+
+def series_label(series: str, lang: Lang = "en") -> str:
+    """What a counter series records, in words."""
+    if series == "counts":
+        return t(lang, "counts.series.counts")
+    if series == "avg_daily_intensity":
+        return t(lang, "counts.series.avg_daily_intensity")
+    return series
+
+
+def series_short(series: str, lang: Lang = "en") -> str:
+    """A line's short name: the chart's end label (city.js reads it off the chart mount) and the
+    key under the chart, which gives each its full name."""
+    if series == "counts":
+        return t(lang, "counts.short.counts")
+    if series == "avg_daily_intensity":
+        return t(lang, "counts.short.avg_daily_intensity")
+    return series
+
+
+# the English forms under their M8 names (tests read them), and the keys they are read from
+SERIES_SHORT = {s: series_short(s) for s in ("counts", "avg_daily_intensity")}
+KM_SHORT = t("en", "counts.short.km")
+LABEL_KEYS: tuple[str, ...] = (
+    "counts.short.counts", "counts.short.avg_daily_intensity", "counts.short.km",
+)  # fmt: skip
 
 
 def counters_config(config_dir: Path) -> tuple[CountersConfig | None, str | None]:
@@ -69,21 +84,26 @@ def has_line(points: list[dict]) -> bool:
     return sum(p["idx"] is not None for p in points) >= MIN_LINE_YEARS
 
 
-def no_data_notes(cfg: CountersConfig | None) -> dict[str, str]:
+def no_data_notes(cfg: CountersConfig | None, lang: Lang = "en") -> dict[str, str]:
     """city -> the note of a city listed under `none:` in config/counters.yaml (spec §5.1): "no
     open counter data found", the portals checked and the config's note."""
     out = {}
     for n in cfg.none if cfg else []:
-        extra = f"; {n.note}" if n.note else ""
-        out[n.city] = f"no open counter data found (portals checked: {', '.join(n.checked)}{extra})"
+        note = n.note_in(lang)
+        extra = f"; {note}" if note else ""
+        portals = ", ".join(n.checked_in(lang))
+        out[n.city] = t(lang, "counts.none_found", portals=portals, note=extra)
     return out
 
 
-def attribution(entry: CounterEntry | None, sites) -> tuple[str | None, str | None]:
-    """(publisher, licence) of a city's counter data: its config/counters.yaml entry, else the
-    stored sites' (ADR 0008: every page that shows the data carries an attribution line)."""
+def attribution(
+    entry: CounterEntry | None, sites, lang: Lang = "en"
+) -> tuple[str | None, str | None]:
+    """(publisher, licence) of a city's counter data: its config/counters.yaml entry (the German
+    `source_de` on a German page), else the stored sites' (ADR 0008: every page that shows the
+    data carries an attribution line)."""
     if entry is not None:
-        return entry.source, entry.licence
+        return entry.source_in(lang), entry.licence
     return (sites[0].source, sites[0].licence) if sites else (None, None)
 
 
@@ -103,7 +123,9 @@ def counter_payload(data: ReportData) -> dict:
         if not rows:
             continue
         points = [{"year": r.year, "idx": _round(r.index), "sites": r.sites} for r in rows]
-        source, licence = attribution(_entry(cfg, city_id), data.counter_sites(city_id))
+        entry = _entry(cfg, city_id)
+        source, licence = attribution(entry, data.counter_sites(city_id))
+        german = {"source_de": entry.source_de} if entry and entry.source_de else {}
         cities[city_id] = {
             "series": rows[0].series,
             "base_year": rows[0].base_year,
@@ -111,6 +133,7 @@ def counter_payload(data: ReportData) -> dict:
             "points": points,
             "source": source,
             "licence": licence,
+            **german,
         }
     return {
         "covid_year": COVID_YEAR,
@@ -130,13 +153,12 @@ def km_index(points, base_year: int) -> dict[int, float | None]:
     return {y: None if v is None else v / base * 100 for y, v in sorted(km.items())}
 
 
-def _month(since: str) -> str:
-    y, m = since.split("-")
-    return f"{MONTH_NAMES[int(m) - 1]} {y}"
-
-
 def step_down_note(
-    entry: CounterEntry, days: list[DayCount], stored: dict[int, float | None], base_year: int
+    entry: CounterEntry,
+    days: list[DayCount],
+    stored: dict[int, float | None],
+    base_year: int,
+    lang: Lang = "en",
 ):
     """The step-down sites (present in the data) and the index without them from their `since`
     year on (chained from `base_year`, the stored index's), for every year from the first
@@ -154,7 +176,7 @@ def step_down_note(
         if y >= first and v is not None
     ]
     return {
-        "sites": [{"site": s.site, "since": _month(s.since)} for s in steps],
+        "sites": [{"site": s.site, "since": month_year(s.since, lang, short=False)} for s in steps],
         "years": alt,
     }
 
@@ -196,11 +218,12 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     sites = data.counter_sites(city_id)
     mapped = [s for s in sites if s.lat is not None and s.lon is not None]
     retrieved = max((s.retrieved_at for s in sites), default=None)
-    source, licence = attribution(entry, sites)
+    lang = data.lang
+    source, licence = attribution(entry, sites, lang)
     return {
-        "label": SERIES_LABEL.get(series, series),
-        "short": SERIES_SHORT.get(series, series),
-        "km_short": KM_SHORT,
+        "label": series_label(series, lang),
+        "short": series_short(series, lang),
+        "km_short": t(lang, "counts.short.km"),
         "series": series,
         "base_year": base,
         "line": line,
@@ -208,7 +231,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
         "table": table,
         "km_base_missing": not km,
         "gaps": [] if line else data_gaps(days),
-        "step_down": None if entry is None else step_down_note(entry, days, stored, base),
+        "step_down": None if entry is None else step_down_note(entry, days, stored, base, lang),
         "sites": sites,
         "site_map": {
             "sites": [{"name": s.name, "lat": s.lat, "lon": s.lon} for s in mapped],

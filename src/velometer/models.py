@@ -29,6 +29,9 @@ class City(_Model):
     epsg: int
     geofabrik_region: str
     population: Population | None = None
+    # every form of the name a reader may search for (config: name, name_de, aliases); display
+    # data set by ReportData, never stored
+    names: tuple[str, ...] = ()
 
 
 class Boundary(_Model):

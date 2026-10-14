@@ -1,32 +1,34 @@
 {% extends "city/_page.html" %}
 {% from "_cite.html" import cite %}
-{#- One Cite per row. The row shares the city's run; only the title differs. -#}
+{#- One Cite per row. The row shares the city's run; only the title differs. A German title names
+    a metric without a label by its id, as the table's code cell does (de-underscored, an id reads
+    as English words). -#}
 {% macro row_cite(source, metric) -%}
-{{ cite(cite_for(city.name ~ ": " ~ source_names.get(source, source) ~ ", " ~ (metric_labels.get(metric) or metric | replace("_", " ")) ~ " (published figure, with our comparison)", city=city.id)) }}
+{{ cite(cite_for(t('cite.title.figure', city=city.name, source=source_names.get(source, source), metric=metric_labels.get(metric) or (metric if lang == 'de' else metric | replace("_", " "))), city=city.id)) }}
 {%- endmacro %}
 {% block tab %}
 <section>
-<h2>Why the figures differ</h2>
-<p class="meta">Each published figure is read along six dimensions: {% for d in dimensions %}{{ d.label | lower }}{% if not loop.last %}, {% endif %}{% endfor %}. <a href="{{ u('/differences') }}">The dimensions explained →</a></p>
+<h2>{{ t('page.differences.title') }}</h2>
+<p class="meta">{{ t('page.figures.dimensions') }} {% for d in dimensions %}{{ d.label[:1] | lower }}{{ d.label[1:] }}{% if not loop.last %}, {% endif %}{% endfor %}. <a href="{{ u('/differences') }}">{{ t('page.figures.explained') }} →</a></p>
 {% if differences is none %}
-<p class="note">the differences configuration could not be read</p>
+<p class="note">{{ t('page.figures.config_error') }}</p>
 {% elif not differences %}
-<p class="note">no published figures for {{ city.name }}</p>
+<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
 {% else %}
 <div class="scroll">
 <table class="diffs stack">
-<thead><tr><th>Source</th><th>Figure</th><th class="num">Theirs</th><th>Ours</th><th class="num">Gap</th><th>Where it differs</th></tr></thead>
+<thead><tr><th>{{ t('table.source') }}</th><th>{{ t('table.figure') }}</th><th class="num">{{ t('table.theirs') }}</th><th>{{ t('table.ours') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.differs') }}</th></tr></thead>
 <tbody>
 {% for r in differences %}
 <tr>
-  <td data-label="Source">{% if org_of.get(r.source) %}<a href="{{ u('/organisations#' ~ org_of[r.source]) }}">{{ source_names.get(r.source, r.source) }}</a>{% else %}{{ source_names.get(r.source, r.source) }}{% endif %}<br><span class="meta">reference date {{ r.reference_date or "not stated" }}</span>{% if r.scope %}<br><span class="meta">scope: {{ r.scope | replace("_", " ") }}</span>{% endif %}{% if r.note %}<br><span class="meta">{{ r.note | clause }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
-  <td data-label="Figure" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
-  <td class="num" data-label="Theirs">{{ r.theirs | num }} {{ r.unit | unit }}</td>
-  <td data-label="Ours">{% if r.ours is none %}<span class="note">not compared</span>{% else %}{{ r.ours | num }} {{ r.unit | unit }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
-  <td class="num" data-label="Gap">{% if r.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(r.gap_pct * 100) }}%{% endif %}</td>
-  <td class="drivers-cell" data-label="Where it differs">{% if r.drivers %}<dl class="drivers">
-{% for d in r.drivers %}<div data-dimension="{{ d.dimension }}"><dt>{{ dimension_labels.get(d.dimension, d.dimension) }}</dt><dd>ours: {{ d.ours }}; theirs: {{ d.theirs }}</dd></div>
-{% endfor %}</dl>{% else %}<span class="note">no difference recorded</span>{% endif %}{{ row_cite(r.source, r.metric) }}</td>
+  <td data-label="{{ t('table.source') }}">{% if org_of.get(r.source) %}<a href="{{ u('/organisations#' ~ org_of[r.source]) }}">{{ source_names.get(r.source, r.source) }}</a>{% else %}{{ source_names.get(r.source, r.source) }}{% endif %}<br><span class="meta">{{ t('page.figures.reference_date', date=r.reference_date or t('page.figures.not_stated')) }}</span>{% if r.scope %}<br><span class="meta">{{ t('page.figures.scope', scope=t('figure.scope.' ~ r.scope) if lang == 'de' else r.scope | replace("_", " ")) }}</span>{% endif %}{% if r.note %}<br><span class="meta"{{ fb(r.note_fallback) }}>{{ r.note | clause('en' if r.note_fallback else lang) }}</span>{% endif %}{% if r.url | http_url %}<br><a href="{{ r.url | http_url }}" rel="noopener noreferrer">{{ r.url | host }}</a>{% endif %}</td>
+  <td data-label="{{ t('table.figure') }}" title="{{ r.metric }}">{{ metric_labels.get(r.metric) or r.metric | replace("_", " ") }}</td>
+  <td class="num" data-label="{{ t('table.theirs') }}">{{ r.theirs | num }} {{ r.unit | unit }}</td>
+  <td data-label="{{ t('table.ours') }}">{% if r.ours is none %}<span class="note">{{ t('page.figures.not_compared') }}</span>{% else %}{{ r.ours | num }} {{ r.unit | unit }}<br><span class="meta">{{ r.ours_label | strip_ours }}</span>{% endif %}</td>
+  <td class="num" data-label="{{ t('table.gap') }}">{% if r.gap_pct is none %}{{ t('fmt.na') }}{% else %}{{ (r.gap_pct * 100) | pct(signed=true) }}{% endif %}</td>
+  <td class="drivers-cell" data-label="{{ t('table.differs') }}">{% if r.drivers %}<dl class="drivers">
+{% for d in r.drivers %}<div data-dimension="{{ d.dimension }}"><dt>{{ dimension_labels.get(d.dimension, d.dimension) }}</dt><dd>{{ t('page.figures.driver', ours=d.ours, theirs=d.theirs) }}</dd></div>
+{% endfor %}</dl>{% else %}<span class="note">{{ t('page.figures.no_difference') }}</span>{% endif %}{{ row_cite(r.source, r.metric) }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -35,10 +37,10 @@
 {% endif %}
 </section>
 
-{% if content_error %}<p class="note">the narrative for this city could not be loaded (see the server log)</p>{% endif %}
+{% if content_error %}<p class="note">{{ t('page.city.narrative_error') }}</p>{% endif %}
 {% if nar %}{% for s in nar.of_role("figures") %}
 <section class="narrative">
-{% if s.heading and s.heading | lower != "why the figures differ" %}<h2>{{ s.heading }}</h2>{% endif %}
+{% if s.heading and s.heading | lower != t('page.differences.title') | lower %}<h2{{ fb(s.heading) }}>{{ s.heading }}</h2>{% endif %}
 {% for item in s.items %}{{ item }}
 {% endfor %}
 </section>
@@ -48,24 +50,24 @@
 </section>{% endif %}{% endif %}
 
 <section>
-<h2>Comparison with published figures</h2>
+<h2>{{ t('page.figures.comparison') }}</h2>
 {% if reconcile is none %}
-<p class="note">no run (LAU current) to compare</p>
+<p class="note">{{ t('page.figures.no_run') }}</p>
 {% elif not reconcile.gaps %}
-<p class="note">no published figures for {{ city.name }}</p>
+<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
 {% else %}
 <div class="scroll">
 <table class="stack">
-<thead><tr><th>Comparison</th><th class="num">Ours</th><th class="num">Theirs</th><th class="num">Gap</th><th>Flagged</th><th>Source (date)</th></tr></thead>
+<thead><tr><th>{{ t('table.comparison') }}</th><th class="num">{{ t('table.ours') }}</th><th class="num">{{ t('table.theirs') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.flagged_col') }}</th><th>{{ t('table.source_date') }}</th></tr></thead>
 <tbody>
 {% for g in reconcile.gaps %}
 <tr{% if g.flagged %} class="flagged"{% endif %}>
-  <td data-label="Comparison"><code>{{ g.key.split("/", 1)[1] }}</code></td>
-  <td class="num" data-label="Ours">{{ g.ours | num }}</td>
-  <td class="num" data-label="Theirs">{{ g.theirs | num }}</td>
-  <td class="num" data-label="Gap">{% if g.gap_pct is none %}n/a{% else %}{{ "%+.1f" | format(g.gap_pct * 100) }}%{% endif %}</td>
-  <td data-label="Flagged">{% if g.informational %}info{% elif g.flagged %}<span class="flagmark" aria-hidden="true">⚑</span> yes{% else %}no{% endif %}</td>
-  <td data-label="Source (date)">{{ g.source }} ({{ g.reference_date or "date not stated" }}){{ row_cite(g.source, g.key.split("/", 1)[1]) }}</td>
+  <td data-label="{{ t('table.comparison') }}"><code>{{ g.key.split("/", 1)[1] }}</code></td>
+  <td class="num" data-label="{{ t('table.ours') }}">{{ g.ours | num }}</td>
+  <td class="num" data-label="{{ t('table.theirs') }}">{{ g.theirs | num }}</td>
+  <td class="num" data-label="{{ t('table.gap') }}">{% if g.gap_pct is none %}{{ t('fmt.na') }}{% else %}{{ (g.gap_pct * 100) | pct(signed=true) }}{% endif %}</td>
+  <td data-label="{{ t('table.flagged_col') }}">{% if g.informational %}{{ t('page.figures.info') }}{% elif g.flagged %}<span class="flagmark" aria-hidden="true">⚑</span> {{ t('page.figures.yes') }}{% else %}{{ t('page.figures.no') }}{% endif %}</td>
+  <td data-label="{{ t('table.source_date') }}">{{ g.source }} ({{ g.reference_date or t('page.figures.date_not_stated') }}){{ row_cite(g.source, g.key.split("/", 1)[1]) }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -75,27 +77,27 @@
 </section>
 
 <section>
-<h2>Official and reported figures</h2>
+<h2>{{ t('page.figures.official') }}</h2>
 {% if not reported %}
-<p class="note">no official or reported figures for {{ city.name }}</p>
+<p class="note">{{ t('page.figures.no_official', city=city.name) }}</p>
 {% else %}
-<p class="meta">Figures as published by their sources, each with its own scope and length basis. They are not mapped km and are not equal to the velometer numbers above.</p>
+<p class="meta">{{ t('page.figures.official_meta') }}</p>
 <div class="scroll">
 <table class="stack">
-<thead><tr><th>Source</th><th>Metric</th><th class="num">Value</th><th>Unit</th><th>Scope</th><th>Length basis</th><th>Date</th><th>Source link</th></tr></thead>
+<thead><tr><th>{{ t('table.source') }}</th><th>{{ t('page.compare.metric') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.unit') }}</th><th>{{ t('table.scope') }}</th><th>{{ t('table.length_basis') }}</th><th>{{ t('table.date') }}</th><th>{{ t('table.source_link') }}</th></tr></thead>
 <tbody>
 {% for f in reported %}
 <tr>
-  <td data-label="Source">{% if org_of.get(f.source) %}<a href="{{ u('/organisations#' ~ org_of[f.source]) }}">{{ f.source }}</a>{% else %}{{ f.source }}{% endif %}</td>
-  <td data-label="Metric"><code>{{ f.metric_name }}</code></td>
-  <td class="num" data-label="Value">{{ f.value | num }}</td>
-  <td data-label="Unit">{{ f.unit }}</td>
-  <td data-label="Scope">{{ f.network_scope }}</td>
-  <td data-label="Length basis">{{ f.length_basis }}</td>
-  <td class="date" data-label="Date">{{ f.reference_date or "not stated" }}</td>
-  <td data-label="Source link">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">source</a>{% else %}<span class="note">no source URL recorded</span>{% endif %}{{ row_cite(f.source, f.metric_name) }}</td>
+  <td data-label="{{ t('table.source') }}">{% if org_of.get(f.source) %}<a href="{{ u('/organisations#' ~ org_of[f.source]) }}">{{ f.source }}</a>{% else %}{{ f.source }}{% endif %}</td>
+  <td data-label="{{ t('page.compare.metric') }}"><code>{{ f.metric_name }}</code></td>
+  <td class="num" data-label="{{ t('table.value') }}">{{ f.value | num }}</td>
+  <td data-label="{{ t('table.unit') }}">{{ f.unit }}</td>
+  <td data-label="{{ t('table.scope') }}">{% if lang == 'de' %}{{ t('figure.scope.' ~ f.network_scope) }}{% else %}{{ f.network_scope }}{% endif %}</td>
+  <td data-label="{{ t('table.length_basis') }}">{% if lang == 'de' %}{{ t('figure.basis.' ~ f.length_basis) }}{% else %}{{ f.length_basis }}{% endif %}</td>
+  <td class="date" data-label="{{ t('table.date') }}">{{ f.reference_date or t('page.figures.not_stated') }}</td>
+  <td data-label="{{ t('table.source_link') }}">{% if f.source_url.lower().startswith(('http://', 'https://')) %}<a href="{{ f.source_url }}" rel="noopener noreferrer">{{ t('cite.source') }}</a>{% else %}<span class="note">{{ t('page.figures.no_url') }}</span>{% endif %}{{ row_cite(f.source, f.metric_name) }}</td>
 </tr>
-{% if f.note %}<tr class="note-row"><td colspan="8" class="meta" data-label="Source">{{ f.note }}</td></tr>{% endif %}
+{% if f.note %}<tr class="note-row"><td colspan="8" class="meta" data-label="{{ t('table.source') }}"{{ fb(f.note in english_notes) }}>{{ f.note }}</td></tr>{% endif %}
 {% endfor %}
 </tbody>
 </table>
@@ -104,7 +106,7 @@
 </section>
 {% if (no_counters or counters_error) and not has_counts %}
 <section id="counter-data">
-<h2>Counter data</h2>
+<h2>{{ t('counts.data') }}</h2>
 {% for n in [counters_error, no_counters] if n %}<p class="note">{{ n[:1] | upper }}{{ n[1:] }}.</p>
 {% endfor %}</section>
 {% endif %}

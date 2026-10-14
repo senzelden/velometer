@@ -7,10 +7,12 @@ import { drawTiers } from "./tier-chart.js";
 import { formatValue } from "./chart-core.js";
 import { displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
 import { countsChart } from "./counter-model.js";
+import { t } from "./strings.js";
 
-const BOUNDARY = { lau: "City proper (LAU)", fua: "Metro area (FUA)" };
-const BOUNDARY_SHORT = { lau: "City proper", fua: "Metro area" }; // end labels of narrow charts
-const UNIT = "per 100 km of main roads";
+const BOUNDARY = { lau: () => t("js.unit.lau"), fua: () => t("js.unit.fua") };
+// end labels of narrow charts
+const BOUNDARY_SHORT = { lau: () => t("js.city.lau_short"), fua: () => t("js.city.fua_short") };
+const flagged = (p) => (p.flags?.length ? ` · ${t("js.chart.flagged", { flags: p.flags.join(", ") })}` : "");
 
 function headline(el, D) {
   const id = el.dataset.city;
@@ -19,11 +21,11 @@ function headline(el, D) {
   const labels = labelsOf(lists);
   const model = {
     labels: displayLabels(labels, lists),
-    yTitle: "A+B km per 100 km of main roads",
+    yTitle: t("js.unit.headline"),
     series: kinds.map((k, i) => ({
       id: k,
-      name: BOUNDARY[k],
-      short: BOUNDARY_SHORT[k],
+      name: BOUNDARY[k](),
+      short: BOUNDARY_SHORT[k](),
       slot: i,
       points: pointsOn(lists[i], labels, "headline"),
     })),
@@ -32,10 +34,9 @@ function headline(el, D) {
     renderLines(el, model, {
       height: Number(el.dataset.height) || 300,
       zero: true,
-      label: `Line chart: headline over time, ${D.cities[id]?.name ?? id}, LAU and FUA`,
+      label: t("js.city.headline_chart", { city: D.cities[id]?.name ?? id }),
       tip: (s, p, label) =>
-        `${s.name} · ${label}: ${formatValue(p.value)} ${UNIT}` +
-        (p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : ""),
+        `${s.name} · ${label}: ${formatValue(p.value)} ${t("js.unit.per_main_roads")}${flagged(p)}`,
     }),
   );
 }
@@ -57,7 +58,7 @@ function bezirke(el, D) {
   mount(el, () =>
     renderSmallMultiples(el, model, {
       shared: true,
-      tip: (s, p, label) => `${s.name} · ${label}: ${formatValue(p.value)} ${UNIT}`,
+      tip: (s, p, label) => `${s.name} · ${label}: ${formatValue(p.value)} ${t("js.unit.per_main_roads")}`,
     }),
   );
 }
@@ -66,23 +67,23 @@ function counts(el, D) {
   const id = el.dataset.city;
   const avg = D.counters?.cities?.[id]?.series === "avg_daily_intensity";
   const model = countsChart(D, id, {
-    counter: avg ? "Average daily intensity at counter sites" : "Counts at counter sites",
+    counter: avg ? t("js.counts.avg_at_sites") : t("js.counts.at_sites"),
     counterShort: el.dataset.counterShort, // the server's short names, as in the key
-    km: "A+B mapped km (1 Jan)",
+    km: t("js.counts.km_jan"),
     kmShort: el.dataset.kmShort,
   });
-  if (!model) throw new Error(`no counter data for ${id}`);
+  if (!model) throw new Error(t("js.city.no_counter_data", { city: id }));
   const lines = {
     labels: model.labels,
-    yTitle: `Index, ${model.base} = 100`,
+    yTitle: t("js.city.index_axis", { base: model.base }),
     series: model.series.map((s, i) => ({ ...s, slot: i })),
   };
   mount(el, () =>
     renderLines(el, lines, {
       height: Number(el.dataset.height) || 300,
       marks: model.marks,
-      label: `Line chart: counter index and A+B mapped-km index, ${D.cities[id]?.name ?? id}, ${model.base} = 100`,
-      tip: (s, p, label) => `${s.name} · ${label}: index ${formatValue(p.value)}`,
+      label: t("js.city.counts_chart", { city: D.cities[id]?.name ?? id, base: model.base }),
+      tip: (s, p, label) => `${s.name} · ${label}: ${t("js.chart.index_value", { value: formatValue(p.value) })}`,
     }),
   );
 }

@@ -1,6 +1,7 @@
 """External comparison figures: curated CSV, ECF QECIO v2.10 summary, BikeNetKit (Zenodo)."""
 
 import csv
+import re
 import sqlite3
 import zipfile
 from collections import Counter
@@ -10,6 +11,7 @@ from pathlib import Path
 import pyogrio
 import shapely
 
+from velometer import i18n
 from velometer.config import CityConfig, ConfigError, load_cities
 from velometer.db import replace_external_figures
 from velometer.models import ExternalFigure
@@ -31,7 +33,41 @@ BIKENETKIT_FILES = {
     "bike_networks.zip": "ffccda3c4fa40953a31d4cb8d88930d5",
     "boundaries.zip": "655c204a16f17b644e6a22d40cf1f68a",
 }
-NUTS3_NOT_CITY = "NUTS3 unit is not the city"
+# the parts of the notes the QECIO and BikeNetKit loaders store (English, in the database);
+# `note_de` builds a German page's note from the same catalogue parts
+NUTS3_NOT_CITY = i18n.t("en", "figure.note.nuts3_not_city")
+QECIO_HALVES = i18n.t("en", "figure.note.qecio_halves")
+BIKENETKIT_NOTE = i18n.t("en", "figure.note.bikenetkit")
+_QECIO_NOTE = re.compile(
+    r"(?P<nuts>NUTS3 \S+ \([^()]*\)); "
+    + re.escape(QECIO_HALVES)
+    + r"(?P<rest>(?:; .*?)??)(?P<not_city>; "
+    + re.escape(NUTS3_NOT_CITY)
+    + r")?; "
+    + re.escape(i18n.t("en", "figure.note.file_md5", md5=""))
+    + r"(?P<md5>[0-9a-f]{32})"
+)
+
+
+def note_de(note: str, cities: list[CityConfig]) -> str | None:
+    """The German of a note `qecio_figures` or `bikenetkit_figures` stored, built from the same
+    parts (a city's `nuts3_note` from its `nuts3_note_de`); None for any other note, or for a
+    caveat that is no city's `nuts3_note`."""
+    if note == BIKENETKIT_NOTE:
+        return i18n.t("de", "figure.note.bikenetkit")
+    m = _QECIO_NOTE.fullmatch(note)
+    if m is None:
+        return None
+    parts = [m["nuts"], i18n.t("de", "figure.note.qecio_halves")]
+    if caveat := m["rest"].removeprefix("; "):
+        german = next((c.nuts3_note_de for c in cities if c.nuts3_note == caveat), None)
+        if german is None:
+            return None
+        parts.append(german)
+    if m["not_city"]:
+        parts.append(i18n.t("de", "figure.note.nuts3_not_city"))
+    parts.append(i18n.t("de", "figure.note.file_md5", md5=m["md5"]))
+    return "; ".join(parts)
 
 
 def retrieved_at(path: Path) -> date:
@@ -45,6 +81,7 @@ def load_figures_csv(path: Path) -> list[ExternalFigure]:
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     for n, r in enumerate(rows, start=2):
+        r.pop("note_de", None)  # the German note is display text (report.data.figure_notes_de)
         url = r["source_url"] = (r.get("source_url") or "").strip()  # stored as validated
         if not url:
             raise ConfigError(f"row {n}: source_url is required")
@@ -89,7 +126,7 @@ def qecio_figures(csv_path: Path, cities: list[CityConfig]) -> list[ExternalFigu
                         p
                         for p in (
                             f"NUTS3 {row['NUTS_ID']} ({row['City']})",
-                            "QECIO halves unidirectional infrastructure",
+                            QECIO_HALVES,
                             city.nuts3_note,
                             NUTS3_NOT_CITY if city.nuts3_is_city is False else None,
                             f"file md5 {digest}",
@@ -133,10 +170,7 @@ def bikenetkit_figures(zip_dir: Path, cities: list[CityConfig]) -> list[External
                     length_basis="unknown",
                     source_url="https://doi.org/10.5281/zenodo.22271229",
                     retrieved_at=got,
-                    note="OSM/Nominatim city boundary; includes cycleway, designated paths, "
-                    "living streets, cycle streets and side tracks (no lanes); undirected "
-                    "edges counted once; snapshot 'summer 2026' (unverified); not a "
-                    "protected-infrastructure figure; compare against tiers A+B+E",
+                    note=BIKENETKIT_NOTE,
                 )
             )
     return out

@@ -9,6 +9,7 @@ from typing import Annotated, Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from velometer.i18n import Lang, t
 from velometer.pipeline.geometry import require_projected
 from velometer.pipeline.match import validate_expr
 
@@ -63,12 +64,14 @@ class PopulationOverride(_Strict):
 REMAINDER_ID = "remainder"
 REMAINDER_NAME = "Outside the subareas (boundary edge)"
 SUBAREA_SECTION = "Bezirke"  # the subarea section title of the app, CSV and change page
-REMAINDER_LABELS = {"Bezirke": "Outside the {n} Bezirke (LAU edge)"}  # by section title
 
 
-def remainder_label(n_subareas: int, section: str = SUBAREA_SECTION) -> str:
-    """The remainder row's display name for a city with `n_subareas` configured relations."""
-    return REMAINDER_LABELS.get(section, REMAINDER_NAME).format(n=n_subareas)
+def remainder_label(n_subareas: int, section: str = SUBAREA_SECTION, lang: Lang = "en") -> str:
+    """The remainder row's display name for a city with `n_subareas` configured relations, in
+    `lang` (`subarea.remainder` of the UI catalogue for the Bezirk section)."""
+    if section != SUBAREA_SECTION:
+        return REMAINDER_NAME
+    return t(lang, "subarea.remainder", n=n_subareas)
 
 
 def subarea_display_name(names: dict[str, str], subarea_id: str, n_subareas: int) -> str:
@@ -109,6 +112,9 @@ class SubareasConfig(_Strict):
 class CityConfig(_Strict):
     id: str = Field(pattern=r"^[a-z0-9_]+$")
     name: str
+    # The German exonym (Prag, Warschau): the name of the German edition; None: `name`. Display
+    # data only, like the aliases
+    name_de: str | None = None
     # Other names the search matches (the common English one): display data, not classifier input
     aliases: list[str] = []
     country_iso2: str = Field(pattern=r"^[A-Z]{2}$")
@@ -138,8 +144,10 @@ class CityConfig(_Strict):
     bikenetkit_id: str | None = None
     # Is the NUTS3 unit the city itself? None = not assessed. False adds a QECIO row caveat.
     nuts3_is_city: bool | None = None
-    # Free-text caveat appended to the QECIO row notes of this city
+    # Free-text caveat appended to the QECIO row notes of this city, and its German sibling
+    # (German pages show the stored note in German, sources.external.note_de)
     nuts3_note: str | None = None
+    nuts3_note_de: str | None = None
     # Optional sub-city areas; None = the city has none
     subareas: SubareasConfig | None = None
 
@@ -149,6 +157,25 @@ class CityConfig(_Strict):
         if any(not a.strip() for a in v):
             raise ValueError("aliases: a blank alias")
         return v
+
+    @field_validator("name_de")
+    @classmethod
+    def _name_de_not_blank(cls, v: str | None) -> str | None:
+        if v is not None and not v.strip():
+            raise ValueError("name_de must not be blank (omit it to use name)")
+        return v
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        """Every form of the name a reader may search for: the name, the German one, the
+        aliases (each once, in that order)."""
+        names = [self.name, *([self.name_de] if self.name_de else []), *self.aliases]
+        return tuple(dict.fromkeys(names))
+
+    @model_validator(mode="after")
+    def _german_caveat(self) -> "CityConfig":
+        require_de(self, f"city {self.id!r}", "nuts3_note")
+        return self
 
     @model_validator(mode="after")
     def _one_lau_source(self) -> "CityConfig":
@@ -420,42 +447,78 @@ def load_history(path: Path) -> HistoryConfig:
     return _parse(path, HistoryConfig.model_validate)
 
 
-class PresetRanking(_Strict):
+def require_de(obj: BaseModel, where: str, *fields: str) -> None:
+    """Each English reader-prose `field` of `obj` that is set needs its German sibling
+    `<field>_de` (M12): a ValueError naming the missing sibling and `where` it is missing."""
+    for field in fields:
+        if getattr(obj, field) is None:
+            continue
+        de = getattr(obj, f"{field}_de")
+        if de is None or not str(de).strip():
+            raise ValueError(f"{where}: {field}_de is required beside {field}")
+
+
+def require_de_map(en: dict[str, str], de: dict[str, str], where: str) -> None:
+    """A German map (`<field>_de`) mirrors its English map key for key."""
+    missing, extra = sorted(set(en) - set(de)), sorted(set(de) - set(en))
+    if missing or extra:
+        raise ValueError(
+            f"{where}_de must mirror {where} key for key (missing: {missing}, extra: {extra})"
+        )
+    blank = sorted(k for k, v in de.items() if not str(v).strip())
+    if blank:
+        raise ValueError(f"{where}_de: blank German text for {blank}")
+
+
+class _RankingProse(_Strict):
+    """The display text of a ranking row, in both languages."""
+
+    id: str
+    label: str
+    label_de: str | None = None
+    note: str | None = None
+    note_de: str | None = None
+
+    @model_validator(mode="after")
+    def _german_siblings(self):
+        require_de(self, f"ranking {self.id!r}", "label", "note")
+        return self
+
+    def label_in(self, lang: Lang) -> str:
+        return (self.label_de or self.label) if lang == "de" else self.label
+
+    def note_in(self, lang: Lang) -> str | None:
+        return (self.note_de or self.note) if lang == "de" else self.note
+
+
+class PresetRanking(_RankingProse):
     """A ranking row computed by us: a preset of config/presets.yaml."""
 
     kind: Literal["preset"]
-    id: str
-    label: str
     preset: str
     # the figure-source id this preset recomputes on our data (None: our own headline)
     recomputes: str | None = None
 
 
-class ExternalRanking(_Strict):
+class ExternalRanking(_RankingProse):
     """A ranking row read from one stored external figure per city."""
 
     kind: Literal["external"]
-    id: str
-    label: str
     source: str
     metric: str
     scope: str
-    note: str | None = None
 
 
-class ExternalRatioRanking(_Strict):
+class ExternalRatioRanking(_RankingProse):
     """A ranking row that is a ratio of two stored external metrics of one source."""
 
     kind: Literal["external_ratio"]
-    id: str
-    label: str
     source: str
     numerator: list[str] = Field(min_length=1)
     denominator: str
     # format string over city config fields, e.g. "nuts3_{nuts3_code}"; a city whose field is
     # None has no value in this ranking
     scope: str
-    note: str | None = None
 
 
 RankingSource = Annotated[
@@ -658,15 +721,36 @@ DIFFERENCE_DIMENSIONS = ("scope", "kind", "length", "date", "area", "method")
 class Dimension(_Strict):
     id: str
     label: str
+    label_de: str | None = None
+
+    @model_validator(mode="after")
+    def _german_label(self):
+        require_de(self, f"dimensions {self.id!r}", "label")
+        return self
 
 
 class SourceLength(_Strict):
     theirs: str
+    theirs_de: str | None = None
     matches: list[str]  # our bases (`bases` keys) that already are the source's
+
+    @model_validator(mode="after")
+    def _german_theirs(self):
+        require_de(self, "source_length_bases", "theirs")
+        return self
+
+
+# the prose maps of differences.yaml; each has a German twin `<name>_de` with the same keys
+DIFFERENCE_MAPS = (
+    "ours", "metric_kinds", "source_methods", "length_bases", "bases", "labels", "areas",
+    "source_names",
+)  # fmt: skip
 
 
 class DifferencesConfig(_Strict):
-    """config/differences.yaml: why a published figure differs from our mapped km."""
+    """config/differences.yaml: why a published figure differs from our mapped km. Every prose
+    value has a German sibling (`label_de`, `theirs_de`, the `<map>_de` maps); `localised("de")`
+    is the same config with the German text in the English fields."""
 
     dimensions: list[Dimension]
     ours: dict[str, str]  # our side of each dimension (date: the run's snapshot, not listed)
@@ -678,6 +762,14 @@ class DifferencesConfig(_Strict):
     labels: dict[str, str]  # metric_name -> what it counts
     areas: dict[str, str]  # source id (or "default") -> the area it covers
     source_names: dict[str, str] = {}  # source id -> the name a reader knows it by
+    ours_de: dict[str, str] = {}
+    metric_kinds_de: dict[str, str] = {}
+    source_methods_de: dict[str, str] = {}
+    length_bases_de: dict[str, str] = {}
+    bases_de: dict[str, str] = {}
+    labels_de: dict[str, str] = {}
+    areas_de: dict[str, str] = {}
+    source_names_de: dict[str, str] = {}
 
     @model_validator(mode="after")
     def _dimensions(self):
@@ -693,7 +785,88 @@ class DifferencesConfig(_Strict):
                 raise ValueError(f"source_length_bases {key!r} matches unknown bases: {bad}")
         return self
 
+    @model_validator(mode="after")
+    def _german_maps(self):
+        for name in DIFFERENCE_MAPS:
+            require_de_map(getattr(self, name), getattr(self, f"{name}_de"), name)
+        return self
+
+    def localised(self, lang: Lang) -> "DifferencesConfig":
+        """This config with the `lang` text in the English fields (itself for English)."""
+        if lang == "en":
+            return self
+        update: dict[str, Any] = {name: getattr(self, f"{name}_de") for name in DIFFERENCE_MAPS}
+        update["dimensions"] = [
+            d.model_copy(update={"label": d.label_de or d.label}) for d in self.dimensions
+        ]
+        update["source_length_bases"] = {
+            k: sl.model_copy(update={"theirs": sl.theirs_de or sl.theirs})
+            for k, sl in self.source_length_bases.items()
+        }
+        return self.model_copy(update=update)
+
 
 def load_differences(path: Path) -> DifferencesConfig:
     """config/differences.yaml; ConfigError when it is missing or invalid."""
     return _parse(path, DifferencesConfig.model_validate)
+
+
+def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
+    """`(where, en, de)` for every English reader-prose value of the config that has a German
+    sibling: differences.yaml, the report.yaml rankings, plans.yaml and the German report-row
+    notes, the counters.yaml `none` notes, the figures.csv notes and the cities.yaml German
+    names and QECIO caveats. ConfigError when a file is invalid."""
+    import csv
+
+    from velometer.counters.model import COUNTERS_FILE, load_counters_config
+    from velometer.plans.models import REPORT_NOTES_DE_FILE, load_plans, load_report_notes_de
+
+    config_dir = Path(config_dir)
+    out: list[tuple[str, str, str]] = []
+    diffs = load_differences(config_dir / "differences.yaml")
+    out += [
+        (f"differences.yaml dimensions.{d.id}", d.label, d.label_de or "") for d in diffs.dimensions
+    ]
+    for name in DIFFERENCE_MAPS:
+        de = getattr(diffs, f"{name}_de")
+        out += [(f"differences.yaml {name}.{k}", v, de[k]) for k, v in getattr(diffs, name).items()]
+    out += [
+        (f"differences.yaml source_length_bases.{k}", sl.theirs, sl.theirs_de or "")
+        for k, sl in diffs.source_length_bases.items()
+    ]
+    report = _parse(config_dir / "report.yaml", ReportConfig.model_validate)
+    for r in report.rankings:
+        out.append((f"report.yaml rankings.{r.id}.label", r.label, r.label_de or ""))
+        if r.note is not None:
+            out.append((f"report.yaml rankings.{r.id}.note", r.note, r.note_de or ""))
+    plans, rows = load_plans(config_dir / "plans")
+    out += [
+        (f"plans/{REPORT_NOTES_DE_FILE} {en[:40]}", en, de)
+        for en, de in load_report_notes_de(config_dir / "plans", rows).items()
+    ]
+    for p in plans:
+        for field in ("title", "successor", "publisher", "note"):
+            en, de = getattr(p, field), getattr(p, f"{field}_de")
+            if en is not None and de is not None:
+                out.append((f"plans.yaml {p.id}.{field}", en, de))
+        out += [(f"plans.yaml {p.id}.{i.id}.label", i.label, i.label_de or "") for i in p.items]
+        out += [(f"plans.yaml {p.id}.{i.id}.unit", i.unit, i.unit_de) for i in p.items if i.unit_de]
+    counters = load_counters_config(config_dir / COUNTERS_FILE)
+    out += [
+        (f"counters.yaml none.{n.city}.note", n.note, n.note_de or "")
+        for n in counters.none
+        if n.note is not None
+    ]
+    path = config_dir / "external" / "figures.csv"
+    with path.open(newline="", encoding="utf-8") as f:
+        for line, row in enumerate(csv.DictReader(f), start=2):
+            if row.get("note"):
+                out.append((f"figures.csv row {line}", row["note"], row.get("note_de") or ""))
+    cities = load_cities(config_dir / "cities.yaml")
+    out += [(f"cities.yaml {c.id}.name", c.name, c.name_de) for c in cities if c.name_de]
+    out += [
+        (f"cities.yaml {c.id}.nuts3_note", c.nuts3_note, c.nuts3_note_de)
+        for c in cities
+        if c.nuts3_note and c.nuts3_note_de
+    ]
+    return out

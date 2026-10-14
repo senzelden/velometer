@@ -1,0 +1,788 @@
+# Deutsche UI-Texte. Flat keys; a plural is {one, other}. Keys mirror en.yaml.
+fmt.na: k. A.
+nav.lang_switch: English
+site.footer.attribution: 'Kartendaten © <a href="{osm}">OpenStreetMap-Mitwirkende, ODbL 1.0</a>'
+site.footer.mapped_km: OSM-kartierte km, nicht gebaute km (ADR 0006)
+site.footer.methodology: Methodik
+site.footer.csv_all: CSV (alle Städte)
+site.footer.run: 'Klassifikator {classifier} · Konfiguration <code>{config}</code>'
+site.footer.static_edition: Statische Ausgabe · Build {commit}
+page.404.title: Seite nicht gefunden
+page.404.home: Übersicht
+page.404.text: 'Unter dieser Adresse gibt es keine Seite. <a href="{home}">Zur Übersicht</a>.'
+
+# --- Seitenrahmen und Überblick
+site.skip: Zum Inhalt springen
+site.menu: Menü
+nav.label: Hauptnavigation
+nav.overview: Überblick
+nav.compare: Vergleich
+nav.cities: Städte
+nav.city_filter_placeholder: Städte oder Länder filtern
+nav.city_filter: Städte filtern
+nav.no_match: Keine Stadt passt.
+nav.all_cities: Alle Städte, mit Hauptkennzahl
+nav.stories: Geschichten
+nav.plans: Pläne
+nav.organisations: Organisationen
+nav.sources: Quellen
+nav.methodology: Methodik
+nav.find_city: Stadt finden
+nav.search: Städte und Seiten suchen
+nav.search_results: Suchergebnisse
+crumbs.label: Brotkrumen
+cite.label: Zitieren
+permalink.copy: Link kopieren
+page.index.title: Überblick
+page.index.h1: Geschützte Radinfrastruktur in {n} europäischen Städten, wie kartiert
+page.index.dek: Wie viele Kilometer baulich getrennter Radwege und Geh- und Radwege OpenStreetMap je 100 km Hauptstraßen zeigt
+page.index.dek_years: ', vom 1. Januar {year} bis zum aktuellen Stand'
+page.index.defn: "<b>Hauptkennzahl</b> = {unit}. A = baulich getrennter Radweg, B = Geh- und Radweg.\nAlle Längen sind <b>kartierte km</b> in OpenStreetMap: was Kartierende erfasst haben, nicht was gebaut wurde."
+page.index.n_cities:
+  one: <b>{count}</b> Stadt
+  other: <b>{count}</b> Städte
+page.index.n_countries:
+  one: <b>{count}</b> Land
+  other: <b>{count}</b> Länder
+page.index.snapshots: Stände <b>1. Jan. {first}–{last}</b> und der aktuelle Lauf
+cite.title.ranking: Rangfolge der Hauptkennzahl, {unit}, Kernstadt (LAU), alle Städte
+page.index.ranking: Rangfolge der Hauptkennzahl, Kernstadt (LAU)
+page.index.legend_first: erstes Jahr
+page.index.legend_now: aktueller Lauf
+page.index.ranking_meta: "{unit}. Das erste Jahr der Reihe jeder Stadt gegen ihren aktuellen Lauf; ein Klick auf eine Stadt öffnet ihre Seite."
+table.city: Stadt
+table.first_to_current: Erstes Jahr bis aktueller Lauf
+table.first_year: Erstes Jahr
+table.current: Aktuell
+table.change: Änderung
+note.no_run_lau_current: kein Lauf (LAU aktuell)
+page.index.time_meta: "Hauptkennzahl, Kernstadt (LAU), alle Städte; die fünf Pilotstädte farbig. Kartierte km in OpenStreetMap, keine gebauten km.\nDie Rangfolge oben nennt die Werte jeder Stadt."
+page.index.time_chart: Hauptkennzahl im Zeitverlauf, alle Städte
+page.index.time_table: 'Tabelle: Hauptkennzahl je Stadt und Stand'
+table.flagged_year: markiertes Jahr
+table.flagged: (markiert)
+cite.title.over_time: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU), alle Städte
+page.index.ring_note: Punkt mit Ring = markiertes Jahr (automatische Prüfung); die Erklärung steht auf der Stadtseite.
+page.index.explore: Weiterlesen
+page.index.card_compare_title: Städte nebeneinander
+page.index.card_compare_text: Beliebige Städte in einem Diagramm, LAU oder FUA, absolut oder als Index auf 2018.
+page.index.card_compare_more: Vergleich öffnen
+page.index.card_stories_title: Was die Karte zeigt
+page.index.card_stories_text: Die Geschichte über alle Städte hinweg, mit Zitaten und Quellen.
+page.index.card_stories_more: Geschichten lesen
+page.index.card_cities_title: Alle Städte nach Land
+page.index.card_cities_text: Jede Stadt mit Hauptkennzahl und Verlaufslinie, mit Link zur eigenen Seite.
+page.index.card_cities_more: Städte durchsehen
+page.index.card_method_title: Wie die Zahlen entstehen
+page.index.card_method_text: Stufen A–E, die Hauptkennzahl, LAU- und FUA-Grenzen und die Grenzen kartierter km.
+page.index.card_method_more: Methodik lesen
+page.index.keys: Kennzahlen
+page.index.keys_lede: "Aktueller LAU-Lauf je Stadt, mit dem Berichtsklassifikator. Die Hauptkennzahl ist\n{unit}. Jede Kennzahlvariante teilt durch ihre eigene Bezugsgröße (siehe\n<a href=\"{methodology}\">Methodik</a>); alle Werte sind unsere, nach der Methode der jeweiligen Herausgeber berechnet,\nnicht die veröffentlichten Zahlen. km sind kartierte OSM-km je Seite."
+table.flagged_years_lau: Markierte Jahre (LAU)
+page.index.how_measure: 'Wie jede Quelle misst: <a href="{sources}">Quellen</a> · warum die Zahlen abweichen: <a href="{differences}">die sechs Dimensionen</a>'
+page.index.ranks: Rangfolgen nach Quelle
+page.index.ranks_meta: "Rang jeder Stadt (1 = höchster Wert) in unseren Kennzahlvarianten und in den veröffentlichten Rangfolgen. Ränge hängen davon ab,\nwelche Städte eine Quelle abdeckt; jede Quelle hat ihr eigenes Maß und ihren eigenen Umfang."
+table.not_published: nicht veröffentlicht
+page.index.no_ranks: kein Lauf und keine Zahlen für eine Rangfolge
+
+# --- Städte
+page.cities.title: Städte
+page.cities.dek: "{n} Städte in {countries} Ländern. Hauptkennzahl der Kernstadt (LAU), aktueller Lauf:\n{unit}, in kartierten km."
+page.cities.per_main_roads: je 100 km Hauptstraßen, {when}
+page.cities.rank: Rang {rank} von {n}
+page.cities.open: '{city} öffnen'
+
+# --- Vergleich
+page.compare.h1: Städte vergleichen
+page.compare.lede: Städte, Kennzahl und Gebietsgrenze wählen; die Ansichten zeigen dieselben Zahlen auf vier Arten.
+page.compare.nojs_static: Ohne JavaScript zeigt diese statische Ausgabe die Standardauswahl; die Tabelle unten enthält ihre Werte.
+page.compare.nojs_live: Ohne JavaScript lädt das Formular die Seite neu, und die Tabelle unten enthält die Werte.
+page.compare.n_cities:
+  one: '{count} Stadt'
+  other: '{count} Städte'
+page.compare.indexed: indexiert
+page.compare.absolute: absolut
+page.compare.filters: Filter
+page.compare.quick: Schnellauswahl
+page.compare.metric: Kennzahl
+page.compare.lau_only: (nur LAU)
+table.boundary: Gebietsgrenze
+unit.lau: Kernstadt (LAU)
+unit.fua: Funktionaler Stadtraum (FUA)
+page.compare.scale: Skala
+page.compare.scale_abs: Absolut
+page.compare.scale_index: Index, erstes Jahr = 100
+page.compare.apply: Anwenden
+page.compare.views: Ansichten
+page.compare.index_first: Index, erstes Jahr = 100
+note.mapped_not_built: Kartierte km in OpenStreetMap, keine gebauten km.
+page.compare.chart: Diagramm der gewählten Städte
+page.compare.table_region: Werte je Stadt und Stand
+page.compare.caption: '{metric} je Stadt und Stand'
+page.compare.none: Keine Stadt gewählt.
+page.compare.panel: Stadtfenster
+page.compare.panel_close: Fenster schließen
+
+# --- Seiten
+page.differences.title: Warum die Zahlen abweichen
+page.differences.six: Die sechs Dimensionen
+page.differences.dimension: Dimension {i} von {n}
+page.differences.error: Die Erläuterung konnte nicht geladen werden (siehe Serverprotokoll)
+page.differences.missing: noch keine Erläuterung (content/explainer.yaml)
+page.differences.cities: Die Zahlen jeder Stadt
+page.methodology.title: Methodik
+page.methodology.missing: 'Methodik nicht erzeugt (<code>velometer report methodology</code> schreibt <code>docs/{file}</code>)'
+page.organisations.h1: Wer die Zahlen erhebt
+page.organisations.dek: "Die Stellen hinter den veröffentlichten Zahlen, mit denen diese Anwendung unsere kartierten km vergleicht, und hinter dem Berliner Radverkehrsplan und seinen Fortschrittsberichten: wer sie sind, wie sie messen und welche Rolle ihre Zahlen spielen."
+note.registry_error: Das Quellenverzeichnis konnte nicht geladen werden (siehe Serverprotokoll)
+page.organisations.broken: 'nicht gezeigt, das Profil konnte nicht geladen werden (siehe Serverprotokoll): {names}'
+page.organisations.figures: 'Zahlen in dieser Anwendung:'
+page.organisations.plans: 'Pläne:'
+page.organisations.none: keine Organisationsprofile (content/organisations/)
+page.sources.h1: Quellen und wie sie messen
+page.sources.dek: velometer stellt veröffentlichte Zahlen neben unsere eigenen OpenStreetMap-Zahlen. Jede Zeile ist eine Quelle; jede Spalte eine der sechs Dimensionen, in denen Zahlen voneinander abweichen.
+page.sources.error: Die Quellentabelle konnte nicht erstellt werden (siehe Serverprotokoll)
+page.sources.caption: 'Jede Zahlenquelle der Anwendung neben unserem Ansatz, entlang der sechs Dimensionen (<a href="{differences}">warum die Zahlen abweichen</a>)'
+table.source: Quelle
+table.recomputed: Von uns nachgerechnet
+page.sources.every_city: jede Stadt
+page.sources.n_cities:
+  one: '{count} Stadt'
+  other: '{count} Städte'
+page.sources.no_city: keine Stadt in dieser Ausgabe
+page.sources.cited: Was die Zellen zitieren
+page.sources.none: keine Zahlenquellen (config/organisations.yaml)
+
+# --- Geschichten
+page.stories.values: Werte hinter dem Diagramm
+page.stories.aside: Diagramm zum aktuellen Schritt
+page.stories.chart: Diagramm des aktuellen Schritts
+page.stories.explore: Dieses Diagramm erkunden
+cite.title.stories: '{title} (Geschichten)'
+cite.title.stories_chart: Diagramm der Geschichten
+page.stories.error: Die Texte konnten nicht geladen werden (siehe Serverprotokoll)
+page.stories.missing: Geschichte noch nicht geschrieben
+
+# --- Pläne
+page.plans.title: Radverkehrspläne
+page.plans.suspect: zweifelhaft
+page.plans.document: Dokument
+page.plans.dek: "Der Radverkehrsplan jeder Stadt, sein Ziel und der letzte vom Herausgeber gemeldete Fortschritt. Gemeldete Zahlen sind die der Herausgeber, gespeichert wie gedruckt; sie sind keine kartierten km und keine velometer-Zahlen."
+page.plans.meta: "Eine als <span class=\"suspect-mark\">zweifelhaft</span> markierte Zahl bleibt wie gedruckt, mit dem Grund des Zweifels. Der Berliner Plan hat eine eigene Seite, mit den Zahlen jedes Dokuments und zwei weiteren Reihen: <a href=\"{berlin}\">Berlin: gemeldet, fertiggestellt, kartiert →</a>"
+page.plans.error: Die Pläne konnten nicht geladen werden (siehe Serverprotokoll)
+table.plan: Plan
+table.status: Status
+table.target: Ziel
+table.latest_reported: Zuletzt gemeldet
+page.plans.no_plan: kein Plan erfasst
+page.plans.adopted: beschlossen {date}
+page.plans.adoption_unknown: Beschlussdatum nicht bestätigt
+page.plans.every_item: Alle Maßnahmen und Dokumente
+page.plans.notes: Hinweise
+plan.no_km_target: kein km-Ziel
+page.plans.no_figure: keine gemeldete Zahl gefunden
+
+# --- Berliner Plan
+page.plan.title: Berliner Radverkehrsplan
+page.plan.crumb: Berlin
+page.plan.current: aktuell
+page.plan.revision: Revision
+page.plan.h1: 'Berlin: {title}'
+page.plan.h1_default: gemeldet, fertiggestellt, kartiert
+page.plan.all_plans: Pläne aller Städte
+page.plan.text_error: Der Seitentext konnte nicht geladen werden (siehe Serverprotokoll)
+page.plan.key: So sind die Diagramme zu lesen
+page.plan.key_target: Ziel je Jahr (die Stufen des Plans)
+page.plan.key_cap: "↑ Wert: Ziel über der Skala des Diagramms, am oberen Rand gezeichnet; die Tabelle unter dem Diagramm nennt jedes Ziel"
+page.plan.key_current: gemeldet, aktuelle Zahl
+page.plan.key_revision: in einem anderen Dokument gemeldet (Revision)
+page.plan.key_suspect: zweifelhaft, wie gedruckt
+page.plan.key_projects: fertiggestellte Projekte (infraVelo)
+page.plan.key_mapped: im Netz kartiert, kartierte km seit dem 1. Januar {year} (unsere Zahlen; eine Linie, ein Punkt je OpenStreetMap-Stand, der letzte beim aktuellen Stand)
+page.plan.three: 'Drei Reihen, drei Wörter: {reported} (Senatsdokumente), {completed} (Maßnahmendatensatz von infraVelo) und {mapped} (OpenStreetMap, unsere Zahlen). Sie zählen Verschiedenes.'
+page.plan.reported: gemeldet
+page.plan.completed: fertiggestellte Projekte
+page.plan.mapped: im Netz kartiert
+page.plan.items: Maßnahmen des Plans
+page.plan.documents: Dokumente
+page.plan.target: 'Ziel: {target}'
+page.plan.chart: '{item}: Ziel, gemeldete und fertiggestellte km je Jahr'
+page.plan.no_yearly: Für diese Maßnahme gibt es keine Jahreszahlen und daher kein Diagramm.
+page.plan.projects_note: 'Fertiggestellte Projekte: km der im Maßnahmendatensatz als fertiggestellt markierten Projekte'
+page.plan.projects_fed: ' (gespeist aus der Projektdatenbank <a href="{href}">{name}</a>)'
+page.plan.projects_note_end: ', nach dem Jahr des Bauendes, je Abschnitt in diesem Netz.'
+page.plan.no_measures: Der Maßnahmendatensatz fehlt (<code>velometer plans fetch berlin</code>); keine Reihe fertiggestellter Projekte.
+page.plan.mapped_note: 'Im Netz kartiert: die Änderung der kartierten A+B-km in OpenStreetMap (je Seite) in diesem Netz seit dem 1. Januar {year}'
+page.plan.mapped_change: ', {km} kartierte km bis zum aktuellen Stand vom {date}'
+page.plan.mapped_note_end: ". Die Linie hat einen Punkt je Stand: jeweils am 1. Januar, dann der aktuelle Stand, ihr letzter Abschnitt deckt also einen Teil eines Jahres ab. Methode: Overlay-Version <code>{version}</code>, die neueste. Die Reihe hängt davon ab, wie Kartierende Radwege zeichnen und wie abgeglichen wird: Sie ändert sich, wenn Wege neu gezeichnet werden, und mit jeder Methodenversion. Es sind Änderungen dessen, was kartiert ist, keine km neuer Infrastruktur; kartierte km sind keine nach dem Standard des Plans fertiggestellten km"
+page.plan.why: warum
+page.plan.no_overlay: kein Plan-Overlay in der Datenbank (<code>velometer plans overlay berlin</code>); keine Reihe „im Netz kartiert“.
+page.plan.no_overlay_whole: 'Keine Reihe „im Netz kartiert“ für das gesamte Netz: Ein Weg entlang beider Netze würde in jedem einmal zählen.'
+table.year: Jahr
+table.reported_in_year: Gemeldet, im Jahr umgesetzt
+table.completed_projects: Fertiggestellte Projekte
+page.plan.none: keine
+page.plan.not_reported: nicht gemeldet
+page.plan.zero_or_none: 0 oder keine
+cite.title.plan: 'Berliner Radverkehrsplan, {item}: Ziel, gemeldete und fertiggestellte km je Jahr'
+page.plan.other_years: 'Fertiggestellte Projekte in anderen Jahren:'
+page.plan.overlay_caption: '{item}: kartierte A+B-km im Netz je Stand, {version}'
+table.snapshot: Stand
+table.ab_on_network: Kartierte A+B-km im Netz
+table.change_previous: Änderung zum vorigen Stand
+table.difference_from: Differenz zum 1. Jan. {year}
+page.plan.every_figure: Alle gedruckten Zahlen ({n})
+table.value: Wert
+table.document: Dokument
+page.plan.why_differ: Warum die drei Reihen abweichen
+page.plan.documents_meta: "Jedes Fortschrittsdokument, aus dem eine Zahl oben stammt, das älteste zuerst. Berichte an den Hauptausschuss (rote Nummer) sind die jährlichen Fortschrittsberichte des Senats; Drucksachen sind Antworten auf schriftliche Anfragen."
+table.type: Art
+table.number: Nummer
+table.date: Datum
+table.publisher: Herausgeber
+table.reports_on: Gegenstand
+table.figures: Zahlen
+page.plan.n_suspect: '{n} zweifelhaft'
+page.plan.data: Daten
+page.plan.measures: 'Maßnahmendatensatz: Radverkehrsmaßnahmen, Geoportal Berlin'
+page.plan.licence_retrieved: ', Lizenz {licence}, abgerufen {retrieved}'
+page.plan.not_present: (nicht vorhanden)
+page.plan.network: 'Geplantes Netz: Radverkehrsnetz, Geoportal Berlin'
+page.plan.licence: ', Lizenz {licence}'
+page.plan.licence_unknown: ', Lizenz nicht erfasst'
+page.plan.retrieved: ', abgerufen {retrieved}'
+page.plan.matched: '; abgeglichen mit OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL 1.0)'
+page.plan.matched_with: mit <code>{version}</code>
+page.plan.record_error: 'Datenquellen-Eintrag nicht lesbar (<code>retrieved.json</code> der Berliner Datensätze; siehe Serverprotokoll): Lizenz und Abrufdatum können nicht gezeigt werden.'
+
+# --- Stadtseite
+page.city.residents: '{n} Einwohner (Kernstadt)'
+page.city.bezirke_csv: Bezirke als CSV
+page.city.plan: Radverkehrsplan
+page.city.compare_with: Diese Stadt vergleichen mit…
+cite.title.keynums: '{city}: Kennzahlen, Kernstadt (LAU)'
+page.city.sections: Abschnitte der Stadtseite
+page.panel.full: Ganze Seite öffnen
+page.panel.tiers_over_time: Stufen im Zeitverlauf ({kind})
+page.city.tiers_chart: Stufen im Zeitverlauf, {city} {kind}
+cite.title.tiers: '{city}: Stufen im Zeitverlauf, kartierte km je Stufe, {kind}'
+page.panel.tiers_now: Stufen, kartierte km heute
+note.no_run: kein Lauf
+page.city.flagged_years: Markierte Jahre
+page.panel.no_explanation: keine Erklärung erfasst
+note.no_flagged_years: keine markierten Jahre
+page.city.tier_table: 'Tabelle: kartierte km je Stufe ({kind})'
+cite.source: Quelle
+cite.archived: archiviert
+cite.data: velometer-Daten
+cite.dref: d{n}
+page.bezirke.meta: 'Neuester aktueller LAU-Lauf, je Teilgebiet. Hauptkennzahl: {unit}. Anteil Stufe A ist A an den kartierten A+B-km je Seite.'
+table.bezirk: Bezirk
+table.headline_per_100: Hauptkennzahl je 100 km
+table.a_share: Anteil A an A+B
+unit.pct_spaced: "{value} %"
+page.bezirke.remainder: "Straßen- und Wege-km innerhalb der LAU-Grenze der Stadt, aber außerhalb jedes Bezirkspolygons; die LAU ist im Maßstab 1:1 Mio. generalisiert (ADR 0004)."
+page.bezirke.chart: Hauptkennzahl je Bezirk im Zeitverlauf, {city}
+page.bezirke.table: 'Tabelle: Hauptkennzahl je Bezirk und Stand'
+cite.title.bezirke: '{city}: Hauptkennzahl je Bezirk im Zeitverlauf, {unit}'
+page.bezirke.no_history: kein Bezirksverlauf
+page.bezirke.change: Kartierte Änderung {window}
+page.bezirke.runs: Lauf {run_from} → Lauf {run_to}
+page.bezirke.stale_runs: Diese Änderungskarte endet bei Lauf {run}, nicht beim Lauf {latest} der Zahlen oben.
+page.bezirke.stale_unnamed: Diese Änderungskarte nennt ihre Läufe nicht und passt daher womöglich nicht zu den Zahlen oben.
+page.bezirke.regenerate: Neu erzeugen mit <code>velometer report change --city {city}</code>.
+page.bezirke.map: Interaktive Änderungskarte, {city}
+page.bezirke.map_key: Legende
+page.bezirke.map_note: Kartiert hinzugekommene, weggefallene, umgestufte und neu gezeichnete Wegseiten; ein Klick zeigt Weg und kartierte km.
+page.bezirke.table_note: 'Kartierte km je Bezirk und Kategorie, aus der Änderungsseite <code>docs/review</code>; „{geometry}“ ist die vorzeichenbehaftete Längenänderung einer Wegseite gleicher Stufe.'
+page.bezirke.no_map: Noch keine Änderungskarte erzeugt (<code>velometer report change --city {city}</code>)
+
+# --- Zählstellen
+counts.index: Zählstellenindex
+page.counts.meta: Index der {label}, {base} = 100, neben dem Index der kartierten A+B-km der Kernstadt (Stände zum 1. Januar, {base} = 100).
+page.counts.covid: '{year} ist das Corona-Jahr.'
+page.counts.chart: Zählstellenindex und Index der kartierten km im Zeitverlauf, {city}
+page.counts.key_counter: '{short}: Index der {label}'
+page.counts.key_km: '{short}: Index der kartierten A+B-km der Kernstadt, Stände zum 1. Januar'
+page.counts.no_line: "Keine Indexlinie: Der Zählstellenindex hat nur für {years} einen Wert, weil kein anderes Jahr mit einem Nachbarjahr verknüpft ist, in dem {sites} Zählstellen an mindestens {pct} % der Tage vollständig sind."
+page.counts.no_year: kein Jahr
+page.counts.gaps: Die Dateien enthalten keine Zählwerte vom
+page.counts.gap: '{start} bis {end}'
+page.counts.breaks: "Zur Darstellung des Portals für diese Zeit, einem Wechsel der Detektoren, siehe <a href=\"#counters-breaks\">Brüche in einer Reihe</a> unten."
+page.counts.config_error: "Zählstellenkonfiguration nicht lesbar (<code>config/counters.yaml</code>; siehe Serverprotokoll): Es kann kein Hinweis auf Rückgänge gegeben werden, und die Quellenangabe unten ist die der gespeicherten Zählstellen."
+page.counts.step_down_start: Nach unserer Auswertung der Tageszählwerte gehen die Zählwerte von
+page.counts.step_site: '{site} (ab {since})'
+page.counts.and: und
+page.counts.step_down_body: 'zurück, während weiter gezählt wird. Möglicherweise Bauarbeiten oder Umleitungen; die Daten sagen nicht, warum. Der Index oben behält sie, da die Indexregel jede geeignete Zählstelle zählt. Hier aus den gespeicherten Tageszählwerten ohne diese Zählstellen ab diesen Jahren berechnet (die Liste steht in <code>config/counters.yaml</code>),'
+page.counts.step_index: beträgt der Index
+page.counts.step_year: '{idx} im Jahr {year} ({sites} Zählstellen; oben: {stored})'
+page.counts.step_none: hat der Index in diesen Jahren keinen Wert
+page.counts.km_base_missing: 'Kein Stand der kartierten A+B-km zum 1. Januar {year}: kein Index der kartierten km.'
+page.counts.caption: Zählstellenindex und Index der kartierten km je Jahr, {city}
+table.qualifying_sites: Geeignete Zählstellen
+table.km_index: Index kartierte A+B-km (1. Jan.)
+counts.covid_year: Corona-Jahr
+cite.title.counts: '{city}: Index der {label} und Index der kartierten A+B-km, {base} = 100'
+page.counts.na_note: "k. A.: kein Wert (weniger als {sites} Zählstellen an mindestens {pct} % der Tage in beiden Jahren einer Verknüpfung vollständig, oder eine unterbrochene Kette), nicht null. Die Zahl der Zählstellen eines Jahres ist die seiner Verknüpfung mit dem Nachbarjahr in Richtung {base}."
+page.counts.sites: Zählstellen
+page.counts.map: Karte der Zählstellen, {city}
+page.counts.coords: '{n} von {of} Zählstellen haben Koordinaten.'
+page.counts.no_coords: 'Das Portal veröffentlicht für diese Zählstellen keine Koordinaten: eine Liste statt einer Karte.'
+page.counts.n_sites:
+  one: '{count} Zählstelle'
+  other: '{count} Zählstellen'
+table.site: Zählstelle
+table.first_day: Erster Tag
+table.last_day: Letzter Tag
+counts.data: Zähldaten
+page.counts.licence: Lizenz
+page.counts.retrieved: abgerufen {date}
+page.counts.map_credit: 'Karte: © <a href="{href}" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>.'
+page.counts.text_error: Der Zählstellentext konnte nicht geladen werden (siehe Serverprotokoll)
+
+# --- Zahlen
+cite.title.figure: '{city}: {source}, {metric} (veröffentlichte Zahl, mit unserem Vergleich)'
+page.figures.dimensions: 'Jede veröffentlichte Zahl wird entlang von sechs Dimensionen gelesen:'
+page.figures.explained: Die Dimensionen erklärt
+page.figures.config_error: Die Konfiguration der Abweichungen konnte nicht gelesen werden
+page.figures.none: keine veröffentlichten Zahlen für {city}
+table.figure: Zahl
+table.theirs: Veröffentlicht
+table.ours: Unsere
+table.gap: Abstand
+table.differs: Wo sie abweicht
+page.figures.reference_date: Stichtag {date}
+page.figures.not_stated: nicht angegeben
+page.figures.scope: 'Umfang: {scope}'
+page.figures.not_compared: nicht verglichen
+page.figures.driver: 'unsere: {ours}; veröffentlicht: {theirs}'
+page.figures.no_difference: keine Abweichung erfasst
+page.city.narrative_error: Der Text zu dieser Stadt konnte nicht geladen werden (siehe Serverprotokoll)
+page.figures.comparison: Vergleich mit veröffentlichten Zahlen
+page.figures.no_run: kein Lauf (LAU aktuell) zum Vergleich
+table.comparison: Vergleich
+table.flagged_col: Markiert
+table.source_date: Quelle (Datum)
+page.figures.info: Info
+page.figures.yes: ja
+page.figures.no: nein
+page.figures.date_not_stated: Datum nicht angegeben
+page.figures.official: Amtliche und gemeldete Zahlen
+page.figures.no_official: keine amtlichen oder gemeldeten Zahlen für {city}
+page.figures.official_meta: Zahlen, wie ihre Quellen sie veröffentlichen, jede mit eigenem Umfang und eigener Längenbasis. Sie sind keine kartierten km und entsprechen nicht den velometer-Zahlen oben.
+table.unit: Einheit
+table.scope: Umfang
+table.length_basis: Längenbasis
+table.source_link: Link zur Quelle
+page.figures.no_url: keine Quell-URL erfasst
+page.figures.latest_snapshot: neuester OSM-Stand
+page.figures.ours_road_class: unsere km auf {road_class}
+page.figures.ours_tiers: unsere km der Stufen {tiers}
+preset.fallback_label: '{preset}, unsere OSM-Daten'
+figure.scope.whole_network: gesamtes Netz
+figure.scope.incl_traffic_calmed_restricted_access: einschließlich verkehrsberuhigter Straßen mit beschränkter Kfz-Zufahrt
+figure.scope.vorrangnetz: Vorrangnetz
+figure.scope.cykelsti: Cykelsti (Radweg)
+figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz
+figure.basis.unknown: unbekannt
+figure.basis.streckenlaenge: Streckenlänge
+figure.note.qecio_halves: QECIO zählt Anlagen in nur einer Fahrtrichtung zur Hälfte
+figure.note.nuts3_not_city: NUTS-3-Einheit ist nicht die Stadt
+figure.note.file_md5: Datei-md5 {md5}
+figure.note.bikenetkit: "Stadtgrenze aus OSM/Nominatim; umfasst Radwege, für den Radverkehr ausgewiesene Wege, verkehrsberuhigte Bereiche, Fahrradstraßen und straßenbegleitende Radwege (keine Radfahrstreifen); ungerichtete Kanten einmal gezählt; Stand Sommer 2026 laut Quelle (nicht geprüft); keine Zahl für geschützte Infrastruktur; zu vergleichen mit den Stufen A+B+E"
+
+# --- Reiter
+page.story.no_narrative: noch kein Text
+page.story.headline: Hauptkennzahl im Zeitverlauf
+page.city.headline_chart: Hauptkennzahl im Zeitverlauf, {city}
+page.story.table: 'Tabelle: Hauptkennzahl je Stand'
+table.kind_headline: "Haupt­kennzahl {kind}"
+cite.title.city_headline: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU)'
+note.no_run_history: kein Lauf (Verlauf)
+page.story.over_time: Zeitverlauf, mit markierten Jahren
+page.story.read_on: Weiterlesen
+page.story.combined: Die Geschichte über alle Städte
+page.time.meta: 'Hauptkennzahl: {unit}, Kernstadt (LAU) und Funktionaler Stadtraum (FUA).'
+page.time.caption: 'Hauptkennzahl und A+B-km je Stand, {city}: die Werte des Diagramms oben'
+page.time.flag_note: markiertes Jahr (automatische Prüfung); die Erklärung steht unten im Abschnitt zu markierten Jahren.
+note.no_run_kind_history: kein Lauf ({kind}-Verlauf)
+page.time.no_explanation: keine Erklärung in <code>docs/review/m3_timeseries.md</code>
+page.time.presets: Hauptkennzahl und Kennzahlvarianten
+table.preset: Kennzahlvariante
+table.measure: Maß
+table.per_100k: km je 100.000 Einwohner
+table.population_year: (Einwohner {year})
+page.time.population: Einwohner
+note.no_run_kind_current: kein Lauf ({kind} aktuell)
+page.time.provenance: Herkunft
+page.time.kind_current: '{kind} aktuell:'
+page.time.run: 'Lauf {run} · OSM {osm} · Klassifikator {classifier} · Konfiguration <code>{config}</code>'
+page.time.kind_history: '{kind}-Verlauf:'
+page.time.comparison: 'Vergleich:'
+page.tiers.h2: Zusammensetzung nach Stufen
+page.tiers.meta: Kartierte km je Seite nach Stufe.
+page.tiers.lau_fua: LAU und FUA
+page.tiers.headline: 'Hauptkennzahl: {unit}.'
+page.tiers.map: Stufenkarte
+page.tiers.map_label: Interaktive Stufenkarte, {city}
+page.tiers.map_note: Ein Klick auf eine Seite zeigt Weg, Stufe, Regel und Tags.
+page.tiers.no_map: Karte nicht erzeugt (<code>velometer report maps</code>)
+page.tiers.static_image: '{kind} als statisches Bild'
+
+# --- aus dem Python-Code
+country.AT: Österreich
+country.CZ: Tschechien
+country.DE: Deutschland
+country.DK: Dänemark
+country.ES: Spanien
+country.FI: Finnland
+country.FR: Frankreich
+country.HU: Ungarn
+country.NL: Niederlande
+country.NO: Norwegen
+country.PL: Polen
+country.SE: Schweden
+country.SI: Slowenien
+country.SK: Slowakei
+regions.scroll: Scrollbarer Inhalt
+regions.table: Tabelle
+story.km_before: A+B-km davor
+story.km_after: A+B-km danach
+story.change_km: Änderung, km
+story.km_at: A+B-km {when}
+story.own_scale: jede Stadt mit eigener Skala
+story.first: erstes
+story.bezirke_title: Hauptkennzahl nach Bezirk · {city}
+time.current: aktuell
+time.provenance.history_runs: Läufe der Zeitreihe {runs}
+time.provenance.current_run: aktueller Lauf {run} (OSM {osm})
+time.provenance.no_current_run: kein aktueller Lauf
+time.provenance.history_set: Zeitreihen-Satz `{md5}`
+time.provenance.classifier: Klassifikator {version} `{parameters}`
+time.provenance.config: Konfiguration `{sha}`
+time.provenance.population: Einwohnerzahl {year} konstant gehalten
+time.provenance.no_population: keine Einwohnerzahl (je 100.000 Einwohner k. A.)
+reconcile.provenance.run: Lauf {run}
+reconcile.provenance.osm: OSM {osm}
+reconcile.provenance.classifier: Klassifikator {version} `{parameters}`
+reconcile.provenance.config: Konfiguration `{sha}`{parameters}
+reconcile.provenance.commit: Commit `{commit}`
+reconcile.provenance.boundary: Gebietsgrenze {kind} `{sha}`
+reconcile.provenance.sources: 'Quellen: {sources}'
+reconcile.provenance.no_sources: keine
+reconcile.provenance.source: '{source} abgerufen {dates}'
+reconcile.provenance.file_md5: ', Datei-MD5 {md5}'
+time.flag.km_jump: A+B-km {before} -> {after} (Schwelle {need})
+time.flag.tag_drift: '{metric} {before} -> {after}'
+time.flag.activity_spike: '{edits} Bearbeitungen (Grenzwert {limit})'
+time.flag.campaign_suspected: '{jump} und {spike}'
+time.flag.single_mapper: Anteil des aktivsten Mappers {share}
+unit.preset: '{tiers}-km je 100 km {road_class}'
+road_class.main_excl_motorway: Hauptstraßen (ohne Autobahnen)
+road_class.main_incl_motorway: Hauptstraßen (mit Autobahnen)
+road_class.main_incl_motorway_raw: Hauptstraßen (mit Autobahnen, je Fahrbahn)
+road_class.all_public: alle öffentlichen Straßen
+subarea.remainder: Außerhalb der {n} Bezirke (LAU-Rand)
+tier.A: A baulich getrennter Radweg
+tier.B: B Geh- und Radweg
+tier.C: C geschützter Radfahrstreifen
+tier.D: D markierter Radfahrstreifen
+tier.E: E Fahrradstraße / Busspur
+map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
+map.footer: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\nOSM-Stand {ts}, Klassifikator {classifier}"
+compare.group.all: Alle
+compare.group.pilot5: Pilot 5
+compare.group.nordic: Nordeuropa
+compare.group.dach: DACH
+compare.group.west: West und Süd
+compare.group.central: Mittel und Ost
+compare.metric.headline: Hauptkennzahl
+compare.metric.ab_km: A+B-km
+compare.metric.A: km Stufe A
+compare.metric.B: km Stufe B
+compare.metric.C: km Stufe C
+compare.metric.D: km Stufe D
+compare.metric.E: km Stufe E
+compare.metric.ecf_qecio: QECIO-Methode
+compare.metric.clean_cities: Clean-Cities-Methode
+compare.metric.ab_per_100k: A+B-km je 100.000 Einwohner
+compare.metric.counter_index: Zählstellenindex
+compare.view.lines: Linien
+compare.view.small: Kleine Diagramme
+compare.view.rank: Rang
+compare.view.table: Tabelle
+compare.no_index: 'kein Index: erstes Jahr ist 0 oder fehlt'
+compare.fua_note: A+B-km je 100.000 Einwohner gibt es nur für die Kernstadt (LAU); für den Funktionalen Stadtraum (FUA) wird die Hauptkennzahl gezeigt.
+counts.no_counters: keine offenen Zähldaten
+counts.no_line: keine Linie des Zählstellenindex (ein Indexwert für nur ein Jahr; siehe den Reiter Zählstellen)
+counts.config_error: 'Zählstellenkonfiguration nicht lesbar (config/counters.yaml; siehe Serverprotokoll): Städte ohne offene Zähldaten werden nicht als solche genannt'
+counts.title: Zählstellen
+counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
+counts.foot: "Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab."
+counts.not_recorded: nicht erfasst
+counts.source_not_recorded: Quelle nicht erfasst
+counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswerte), nicht der Zählwerte
+counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchschnittlichen täglichen Stärke)
+counts.any_base: Basisjahr jeder Stadt = 100
+counts.base_for: '{year} = 100 für {cities}'
+counts.covid_is: '{year} ist das Corona-Jahr'
+counts.covid_column: '{year} (Corona-Jahr)'
+counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}'
+unit.per_100k: "Kartierte A+B-km je 100.000 Einwohner (Einwohnerzahl {span}jeder Stadt, für alle Jahre gleich)"
+unit.ab_km: Kartierte A+B-km, je Seite
+unit.tier_km: kartierte km der Stufe {tier}, je Seite
+compare.foot: '⚑ markiertes Jahr (automatische Prüfung). Hauptkennzahl: {unit}. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+counts.series.counts: an Zählstellen erfassten Zählwerte
+counts.series.avg_daily_intensity: an Zählstellen erfassten durchschnittlichen täglichen Stärke
+counts.short.counts: Zählwerte
+counts.short.avg_daily_intensity: Stärke
+counts.short.km: Kartierte km
+counts.none_found: 'keine offenen Zähldaten gefunden (geprüfte Portale: {portals}{note})'
+sources.ours: Unser Ansatz
+sources.rankings: Städteübergreifende Rangfolgen und Datensätze
+sources.city: Quellen der Städte
+sources.missing_cell: nicht im Profil
+sources.snapshot: OSM-Stand vom {date}
+sources.no_snapshot: OSM-Stand (noch kein Lauf)
+search.methodology_de: Methodik (Deutsch)
+search.story_combined: Die Geschichte über alle Städte
+search.story_city: Die Geschichte von {city}
+search.kind.city: Stadt
+search.kind.country: Land
+search.kind.page: Seite
+search.kind.story: Geschichte
+search.kind.organisation: Organisation
+org.all_cities: alle Städte
+org.kind.official: Stadt- oder Landesverwaltung
+org.kind.ngo: Nichtregierungsorganisation
+org.kind.index: Herausgeber eines Index
+org.kind.research: Forschung
+org.kind.parliament: Parlament
+org.kind.agency: Behörde
+cite.missing_source: Quelle fehlt
+cite.missing_ref: Datenverweis fehlt
+plan.quantity.in_year: umgesetzt im Jahr {year}
+plan.quantity.cumulative: umgesetzt, kumuliert seit {since}, bis {year}
+plan.quantity.under_construction: im Bau, {year}
+plan.quantity.in_planning: in Planung, {year}
+plan.series.in_year: im Jahr umgesetzt
+plan.series.cumulative: umgesetzt, kumuliert seit {since}
+plan.series.under_construction: im Bau
+plan.series.in_planning: in Planung
+plan.target_by: '{value} {unit} bis {year}'
+plan.per_year: '{unit} je Jahr, {steps}'
+plan.doc_type.drucksache: Drucksache
+plan.unit.km: km
+plan.unit.initiatives: Maßnahmen
+plan.unit.operations: Vorhaben
+plan.doc_type.rote_nummer: Bericht an den Hauptausschuss (rote Nummer)
+plan.doc_type.report: Bericht
+plan.doc_type.web: Webseite
+plan.status.current: aktuell
+plan.status.expired: ausgelaufen
+plan.status.replaced: ersetzt
+plan.successor: 'Nachfolger: {successor}'
+plan.no_successor: kein Nachfolger gefunden
+
+# --- Reiter, Änderungen, Kennzahlenzeile
+city.tab.story: Geschichte
+city.tab.time: Zeitverlauf
+city.tab.tiers: Stufen
+city.tab.figures: Zahlen
+city.tab.counts: Zählstellen
+city.tab.bezirke: Bezirke
+change.category.gained: hinzugekommen
+change.category.lost: weggefallen
+change.category.retiered: umgestuft
+change.category.redrawn: neu gezeichnet
+change.category.geometry: Geometrie
+change.mapped: kartiert {category}
+note.prefix.primary: Primärquelle
+note.prefix.secondary: Sekundärquelle
+note.prefix.primary_by_agency: Primärquelle, von der Behörde veröffentlicht
+city.keynum.headline: Hauptkennzahl, {when}
+city.keynum.now: heute
+city.keynum.headline_sub: je 100 km Hauptstraßen
+city.keynum.since: Seit {when}
+city.keynum.first_year: dem ersten Jahr
+city.keynum.from: von {value}
+city.keynum.ab_km: Kartierte A+B-km
+city.keynum.per_side: je Seite
+city.keynum.fua_sub: Hauptkennzahl
+city.keynum.flagged: Markierte Jahre
+city.keynum.flagged_sub: LAU, mit Erklärungen
+city.keynum.none_flagged: LAU, keines markiert
+compare.index_heading: Index, erstes Jahr = 100
+cite.title.compare: 'Vergleich: {heading}; {cities}'
+page.bezirke.window: '{start} bis {end}'
+page.bezirke.window_current: aktueller Lauf
+
+# --- Zitate (cite.py; die js.cite.*-Gegenstücke unten)
+cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.
+cite.accessed: '{url} (abgerufen am {accessed}).'
+cite.snapshot: OSM-Stand {timestamp}
+cite.snapshot_one: OSM-Stand vom {day}
+cite.snapshot_range: OSM-Stände vom {first} bis {last}
+cite.classifier: Klassifikator {version}
+cite.run: Lauf {run}
+cite.commit: Commit {commit}
+cite.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+
+# --- Skripte (js.*: der Block #ui-strings, static/js/strings.js; js.month.* fügt i18n.js_strings ein)
+js.fmt.na: k. A.
+js.fmt.thousands: ' Tsd.'
+js.unit.lau: Kernstadt (LAU)
+js.unit.fua: Funktionaler Stadtraum (FUA)
+js.unit.per_main_roads: je 100 km Hauptstraßen
+js.unit.headline: A+B-km je 100 km Hauptstraßen
+js.tier.A: A baulich getrennter Radweg
+js.tier.B: B Geh- und Radweg
+js.tier.C: C geschützter Radfahrstreifen
+js.tier.D: D markierter Radfahrstreifen
+js.tier.E: E Fahrradstraße / Busspur
+js.chart.no_values: Keine Werte für diese Auswahl.
+js.chart.no_data: Keine Daten
+js.chart.line: Liniendiagramm
+js.chart.line_of: 'Liniendiagramm: {title}'
+js.chart.sparkline: Kleines Liniendiagramm
+js.chart.tiers: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe'
+js.chart.tiers_of: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe, {where}'
+js.chart.tiers_tip: '{label} · kartierte km'
+js.chart.total: Summe {value}
+js.chart.rank_tip: '{name} · {label}: Rang {rank}'
+js.chart.index_value: Index {value}
+js.chart.flagged: markiert ({flags})
+js.data.failed: Diagramm nicht verfügbar; die Tabelle auf dieser Seite enthält die Werte.
+js.city.lau_short: Kernstadt
+js.city.fua_short: Stadtraum
+js.city.headline_chart: 'Liniendiagramm: Hauptkennzahl im Zeitverlauf, {city}, LAU und FUA'
+js.city.counts_chart: 'Liniendiagramm: Zählstellenindex und Index der kartierten A+B-km, {city}, {base} = 100'
+js.city.index_axis: Index, {base} = 100
+js.city.no_counter_data: keine Zähldaten für {city}
+js.overview.chart: 'Liniendiagramm: Hauptkennzahl im Zeitverlauf, Kernstadt (LAU), alle Städte'
+js.overview.spark: '{city}: Hauptkennzahl von {first} bis {last}'
+js.overview.spark_none: '{city}: keine Reihe der Hauptkennzahl'
+js.story.step: Schritt {n} von {of}
+js.counts.no_counters: keine offenen Zähldaten
+js.counts.no_line: keine Linie des Zählstellenindex (ein Indexwert für nur ein Jahr; siehe den Reiter Zählstellen)
+js.counts.config_error: 'Zählstellenkonfiguration nicht lesbar (config/counters.yaml; siehe Serverprotokoll): Städte ohne offene Zähldaten werden nicht als solche genannt'
+js.counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswerte), nicht der Zählwerte
+js.counts.covid_year: Corona-Jahr
+js.counts.title: Zählstellen
+js.counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
+js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchschnittlichen täglichen Stärke)
+js.counts.any_base: Basisjahr jeder Stadt = 100
+js.counts.base_for: '{year} = 100 für {cities}'
+js.counts.covid_is: '{year} ist das Corona-Jahr'
+js.counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}'
+js.counts.source_not_recorded: Quelle nicht erfasst
+js.counts.not_recorded: nicht erfasst
+js.counts.index: Zählstellenindex
+js.counts.km_index: Index kartierte A+B-km
+js.counts.short_counts: Zählwerte
+js.counts.short_km: Kartierte km
+js.counts.at_sites: Zählwerte an Zählstellen
+js.counts.avg_at_sites: Durchschnittliche tägliche Stärke an Zählstellen
+js.counts.km_jan: Kartierte A+B-km (1. Jan.)
+js.compare.no_index: 'kein Index: erstes Jahr ist 0 oder fehlt'
+js.compare.fua_note: A+B-km je 100.000 Einwohner gibt es nur für die Kernstadt (LAU); für den Funktionalen Stadtraum (FUA) wird die Hauptkennzahl gezeigt.
+js.compare.foot: '⚑ markiertes Jahr (automatische Prüfung). Hauptkennzahl: {unit}. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.compare.summary:
+  one: '{count} Stadt gezeigt, {metric}, {scale}'
+  other: '{count} Städte gezeigt, {metric}, {scale}'
+js.compare.scale_index: indexiert auf das erste Jahr = 100
+js.compare.scale_abs: absolute Werte
+js.compare.n_cities:
+  one: '{count} Stadt'
+  other: '{count} Städte'
+js.compare.indexed: indexiert
+js.compare.absolute: absolut
+js.compare.flag_head: '{city} · {label} · markiertes Jahr'
+js.compare.dismiss: Schließen
+js.compare.no_explanation: Für diese Markierung ist keine Erklärung erfasst.
+js.compare.over_time_link: Reiter Zeitverlauf →
+js.compare.highlight_max: 'Hervorheben (max. {max}):'
+js.compare.highlight_city: Diese Stadt hervorheben
+js.compare.open_panel: Stadtfenster öffnen
+js.compare.rank_chart: 'Liniendiagramm: Rang je Jahr unter den gewählten Städten'
+js.compare.caption: '{metric} je Stadt und Stand'
+js.compare.city: Stadt
+js.compare.flagged_year: markiertes Jahr
+js.compare.flagged: (markiert)
+js.compare.sort_by: Sortieren nach
+js.compare.index_heading: Index, erstes Jahr = 100
+js.compare.mapped_not_built: Kartierte km in OpenStreetMap, keine gebauten km.
+js.compare.rank_note: Rang 1 ist der höchste Wert unter den gewählten Städten; die Ränge ändern sich mit der Auswahl.
+js.compare.cite_title: 'Vergleich: {heading}; {cities}'
+js.compare.same_scale: Gleiche y-Skala für jede Stadt
+js.panel.loading: Wird geladen …
+js.panel.loading_city: '{name} wird geladen …'
+js.panel.failed: Das Stadtfenster für {name} konnte nicht geladen werden.
+js.panel.failed_page: 'Das Stadtfenster konnte nicht geladen werden. Seine Seite: {url}.'
+js.plan.no_figures: Für diesen Punkt gibt es keine Zahlen für ein Diagramm; die Tabellen zeigen, was erfasst ist.
+js.plan.per_year: '{unit} je Jahr'
+js.plan.cumulative: kumuliert
+js.plan.total: gesamt
+js.plan.share: Anteil
+js.plan.line: 'Linie: kartierte km seit 1. Jan. {year}'
+js.plan.chart_of: 'Diagramm: {label}, Ziel und Zahlen nach Jahr'
+js.plan.chart: Plandiagramm
+js.plan.completed: Fertiggestellte Projekte
+js.plan.mapped_point: 'Kartiert im Netz, {date}: {value} kartierte km seit 1. Jan. {year}'
+js.plan.target: 'Ziel: {steps}'
+js.plan.target_cap: 'Ziel {year}: {value} {unit}, oberhalb der Skala des Diagramms'
+js.plan.reported: 'Gemeldet {year}: {value} {unit}, {doc}'
+js.plan.current: (aktuell)
+js.plan.revision: (Revision)
+js.plan.suspect: zweifelhaft
+js.plan.suspect_note: 'zweifelhaft: {note}'
+js.plan.not_drawn: 'Das Ziel ({unit}, {quantity}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
+js.search.no_match: Kein Treffer
+js.search.results:
+  one: '{count} Treffer'
+  other: '{count} Treffer'
+js.clipboard.copied: Kopiert
+js.clipboard.press: Zum Kopieren Strg+C drücken
+js.cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.
+js.cite.accessed: '{url} (abgerufen am {accessed}).'
+js.cite.accessed_note: Abgerufen am {accessed}
+js.cite.snapshot: OSM-Stand {timestamp}
+js.cite.snapshot_one: OSM-Stand vom {day}
+js.cite.snapshot_range: OSM-Stände vom {first} bis {last}
+js.cite.classifier: Klassifikator {version}
+js.cite.run: Lauf {run}
+js.cite.commit: Commit {commit}
+js.cite.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+js.cite.copy: Kopieren
+js.cite.copy_label: '{format} kopieren, {title}'
+js.download.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+js.download.note: OSM-kartierte km, nicht gebaute km
+js.download.snapshot: OSM-Stand {day}
+js.download.classifier: Klassifikator {version}
+js.download.label: Herunterladen
+js.download.button: '{kind} herunterladen, {name}'
+js.download.chart: Diagramm
+js.download.done: '{name} heruntergeladen'
+js.download.failed: Der {kind}-Download konnte nicht erstellt werden. {reason}
+js.download.no_chart: Es gibt noch kein Diagramm zum Herunterladen
+js.download.no_table: Zu diesem Diagramm gibt es keine Datentabelle zum Herunterladen
+js.download.no_png: die Zeichenfläche lieferte kein PNG
+js.download.image_failed: das Diagrammbild konnte nicht geladen werden
+js.map.osm_contributors: OpenStreetMap-Mitwirkende
+js.map.leaflet_title: Eine JavaScript-Bibliothek für interaktive Karten
+js.map.way: Weg {id}
+js.map.side: Seite
+js.map.tier: Stufe
+js.map.subtype: Untertyp
+js.map.rule: Regel
+js.map.status: '{kind} · {n} Seiten · OSM {osm} · Klassifikator {classifier} · Lauf {run}. Ein Klick auf eine Seite zeigt Weg, Stufe, Regel und Tags.'
+js.map.loading: Karte {kind} wird geladen …
+js.map.failed: 'Karte {kind} konnte nicht geladen werden: {reason}'
+js.map.change: Änderung
+js.map.way_from: Weg (vorher)
+js.map.way_to: Weg (nachher)
+js.map.mapped_km: kartierte km
+js.map.change_loading: Änderungskarte wird geladen …
+js.map.change_status: 'Wegseiten: {counts}. Ein Klick auf eine Wegseite zeigt Weg und kartierte km.'
+js.map.change_failed: 'Die Änderungskarte konnte nicht geladen werden: {reason}'

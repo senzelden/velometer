@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import "./strings-fixture.mjs";
 
 // Minimal stub DOM: enough for chart.js to build a tree. Any innerHTML write is a failure.
 class Node {

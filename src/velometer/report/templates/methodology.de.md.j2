@@ -102,7 +102,7 @@ Bei der Freigabe je Land (siehe unten) wird die Fläche des GISCO-LAU-Polygons m
 | Stadt | Verwaltungsgrenze (LAU) | Quelle der Einwohnerzahl |
 |---|---|---|
 {% for c in f.cities %}
-| {{ c.name }} | {{ c.boundary_source or "nicht erfasst" }} | {{ c.population_source or "keine" }} |
+| {{ c.name }} | {{ c.boundary_source | provenance or "nicht erfasst" }} | {{ c.population_source | provenance or "keine" }} |
 {% endfor %}
 <!-- /generated:sources -->
 
@@ -146,11 +146,11 @@ Ein Zuwachs an kartierten Kilometern bedeutet nicht unbedingt Bau. Der Kartierun
 Regeln über diese Werte markieren ein Jahr zur Prüfung. Ein Prüfhinweis ändert keine Zahl. Änderungsregeln vergleichen nur aufeinanderfolgende Stände, nie über ein fehlendes Jahr hinweg. Für den aktuellen Stand werden die Kilometer-Mindestwerte und die Spitzenschwelle mit dem bereits vergangenen Anteil des Jahres skaliert [M3 R14].
 
 <!-- generated:flags -->
-- `km_jump`: Die Kilometer der Stufen A+B ändern sich um mindestens {{ t.km_jump_pct | num }} % des Vorwerts und um mindestens {{ t.km_jump_min_km | num }} km.
+- `km_jump`: Die Kilometer der Stufen A+B ändern sich um mindestens {{ t.km_jump_pct | pct }} des Vorwerts und um mindestens {{ t.km_jump_min_km | num }} km.
 - `activity_spike`: Die Zahl der Bearbeitungen im Jahr erreicht mindestens das {{ t.activity_spike_factor | num }}-Fache des Medians der Jahre der Reihe.
 - `campaign_suspected`: `km_jump` und `activity_spike` im selben Jahr.
 - `single_mapper`: ein Jahr mit `km_jump`, in dem der Anteil der aktivsten Person an den Bearbeitungen mindestens {{ t.single_mapper_share | num }} beträgt.
-- `tag_drift`: Die Kilometer mit veralteten Tags oder die nicht erkannten Kilometer ändern sich um mindestens {{ t.tag_drift_pct | num }} % und um mindestens {{ t.tag_drift_min_km | num }} km.
+- `tag_drift`: Die Kilometer mit veralteten Tags oder die nicht erkannten Kilometer ändern sich um mindestens {{ t.tag_drift_pct | pct }} und um mindestens {{ t.tag_drift_min_km | num }} km.
 
 | Schwellenwert (`config/activity.yaml`) | Wert |
 |---|---|
@@ -190,25 +190,25 @@ Die Reihe auf der Seite ist die Veränderung der kartierten A+B-Kilometer je Sei
 
 ## Zählstellenindex
 
-Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die die Standorte der Zählstellen passieren, nicht den Radverkehr einer ganzen Stadt, und nichts hier verknüpft Zählwerte und kartierte Kilometer als Ursache und Wirkung [M8-Spezifikation, Entscheidung 12]. Die Städte der folgenden Tabelle veröffentlichen offene, lizenzierte Zählstellendaten; die kostenpflichtige Eco-Counter-API wird nicht verwendet [M8-Spezifikation, Entscheidung 2]. Portal, Lizenz und Abrufzeit werden je heruntergeladener Datei festgehalten, und der Reiter „Counts“ jeder Stadt nennt seine Quelle.
+Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die die Standorte der Zählstellen passieren, nicht den Radverkehr einer ganzen Stadt, und nichts hier verknüpft Zählwerte und kartierte Kilometer als Ursache und Wirkung [M8-Spezifikation, Entscheidung 12]. Die Städte der folgenden Tabelle veröffentlichen offene, lizenzierte Zählstellendaten; die kostenpflichtige Eco-Counter-API wird nicht verwendet [M8-Spezifikation, Entscheidung 2]. Portal, Lizenz und Abrufzeit werden je heruntergeladener Datei festgehalten, und der Reiter „{{ tab('counts') }}“ jeder Stadt nennt seine Quelle.
 
 <!-- generated:counters -->
 | Stadt | Herausgeber | Lizenz | Basisjahr (= 100) | Reihe |
 |---|---|---|---|---|
 {% for c in f.counters.cities %}
-| {{ c.name }} | {{ c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "durchschnittliche tägliche Verkehrsstärke" if c.series == "avg_daily_intensity" else "Zählwerte" }} |
+| {{ c.name }} | {{ c.source_de or c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "durchschnittliche tägliche Verkehrsstärke" if c.series == "avg_daily_intensity" else "Zählwerte" }} |
 {% endfor %}
 
-Für die übrigen {{ f.counters.n_no_data | num }} Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Figures“ nennt die geprüften Portale.
+Für die übrigen {{ f.counters.n_no_data | num }} Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „{{ tab('figures') }}“ nennt die geprüften Portale.
 
-Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens {{ f.counters.min_valid_pct | num }} % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als {{ f.counters.min_sites | num }} solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
+Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens {{ f.counters.min_valid_pct | pct }} gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als {{ f.counters.min_sites | num }} solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
 <!-- /generated:counters -->
 
 {% set counter_ids = f.counters.cities | map(attribute="id") | list %}
-Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die {{ f.counters.min_valid_pct | num }}-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %{% if "paris" in counter_ids and "helsinki" in counter_ids %}; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025){% endif %} [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`].{% if "barcelona" in counter_ids %} Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.{% endif %}
+Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die {{ f.counters.min_valid_pct | num }}-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %{% if "paris" in counter_ids and "helsinki" in counter_ids %}; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025){% endif %} [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`].{% if "barcelona" in counter_ids %} Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.{% endif %}
 
 
-Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist {{ f.counters.default_base_year }} oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert {{ f.counters.covid_year }} als Corona-Jahr. Der Reiter „Counts“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
+Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist {{ f.counters.default_base_year }} oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert {{ f.counters.covid_year }} als Corona-Jahr. Der Reiter „{{ tab('counts') }}“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 
 Je Stadt:
 
@@ -238,7 +238,7 @@ Je Stadt:
 {% endif %}
 {% for c in f.counters.cities if c.step_downs %}
 {% set n = c.step_downs | length %}
-- {{ c.name }}: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte {{ n | sites }} fallen ab, während {{ "sie weiterzählt" if n == 1 else "sie weiterzählen" }} ({% for s in c.step_downs %}{{ s.site }} ab {{ s.since | month }}{{ ", " if not loop.last }}{% endfor %}). Der Reiter „Counts“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab {{ "diesem Jahr" if n == 1 else "diesen Jahren" }} an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
+- {{ c.name }}: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte {{ n | sites }} fallen ab, während {{ "sie weiterzählt" if n == 1 else "sie weiterzählen" }} ({% for s in c.step_downs %}{{ s.site }} ab {{ s.since | month }}{{ ", " if not loop.last }}{% endfor %}). Der Reiter „{{ tab('counts') }}“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab {{ "diesem Jahr" if n == 1 else "diesen Jahren" }} an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
 {% endfor %}
 
 ## Herkunft der Zahlen

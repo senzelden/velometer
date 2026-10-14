@@ -1,7 +1,13 @@
 {% extends "base.html" %}
-{% block title %}velometer · Page not found{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ u('/') }}">Overview</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Page not found</span></nav>{% endblock %}
+{#- One 404.html for both editions (a static host serves one): the page's language first, then
+    the same text in the other language, in its own `lang`. -#}
+{% block title %}velometer · {{ t('page.404.title') }}{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('page.404.home') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('page.404.title') }}</span></nav>{% endblock %}
 {% block content %}
-<h1>Page not found</h1>
-<p class="dek">There is no page at this address. <a href="{{ u('/') }}">Go to the overview</a>.</p>
+{% set other = 'de' if lang == 'en' else 'en' %}
+<h1>{{ t('page.404.title') }}</h1>
+<p class="dek">{{ t('page.404.text', home=u('/')) }}</p>
+<div lang="{{ other }}">
+<p class="dek"><strong>{{ t_in(other, 'page.404.title') }}.</strong> {{ t_in(other, 'page.404.text', home=u_in(other, '/')) }}</p>
+</div>
 {% endblock %}

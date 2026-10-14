@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, relative, sep } from "node:path";
-import { base, url } from "../base.js";
+import { base, lang, url } from "../base.js";
 import { compareUrl, panelUrl } from "../compare-model.js";
 
 // shared with tests/test_urls.py, so the JS helper and the Python `u` agree
@@ -11,8 +11,10 @@ const CASES = JSON.parse(
   readFileSync(new URL("../../../../../../tests/url_cases.json", import.meta.url), "utf8"),
 );
 
-/** A document whose <meta name="velometer-base"> says `content` (none when undefined). */
-const docWith = (content) => ({
+/** A document whose <meta name="velometer-base"> says `content` (none when undefined) and whose
+ * root element has `lang` (default "en"). */
+const docWith = (content, lang_ = "en") => ({
+  documentElement: { lang: lang_ },
   querySelector: (sel) =>
     sel === 'meta[name="velometer-base"]' && content !== undefined
       ? { getAttribute: (name) => (name === "content" ? content : null) }
@@ -33,6 +35,20 @@ test("base: the meta tag's content, normalised as the Python side normalises it"
 
 test("url: the shared emit table", () => {
   for (const [b, path, expected] of CASES.emit) assert.equal(url(path, docWith(b)), expected, `${b} ${path}`);
+});
+
+test("lang: the root element's language, `en` unless it is German", () => {
+  assert.equal(lang(), "en");
+  assert.equal(lang(docWith("/", "de")), "de");
+  assert.equal(lang(docWith("/", "de-DE")), "de");
+  assert.equal(lang(docWith("/", "en")), "en");
+  assert.equal(lang(docWith("/", "")), "en");
+});
+
+test("url: the shared language table; data, map and static paths never get the prefix", () => {
+  for (const [b, l, path, expected] of [...CASES.emit_lang, ...CASES.emit_lang_js]) {
+    assert.equal(url(path, docWith(b, l)), expected, `${b} ${l} ${path}`);
+  }
 });
 
 test("url: external and fragment-only URLs are left alone under any base", () => {

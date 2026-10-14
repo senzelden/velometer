@@ -2,6 +2,7 @@
 // part (fold, rank, move) is tested under node; the DOM part runs only in a page. Without this
 // file the nav keeps its "Find a city" link to /cities.
 import { url } from "./base.js";
+import { t } from "./strings.js";
 import { announce } from "./live.js";
 
 // Letters NFD does not take apart: a keyboard without them must still find the city.
@@ -22,9 +23,9 @@ const KIND_ORDER = ["city", "country", "page", "story", "organisation"];
 
 function score(words, entry) {
   const terms = [entry.label, ...(entry.terms ?? [])].map(fold);
-  const pieces = terms.flatMap((t) => t.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+  const pieces = terms.flatMap((term) => term.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
   if (words.every((w) => pieces.some((p) => p.startsWith(w)))) return 0;
-  if (words.every((w) => terms.some((t) => t.includes(w)))) return 1;
+  if (words.every((w) => terms.some((term) => term.includes(w)))) return 1;
   return -1;
 }
 
@@ -77,7 +78,9 @@ export function mount(doc) {
   let active = -1;
 
   const load = () => {
-    loading ??= fetch(url("/data/search.json"))
+    // the page names its edition's index (the German pages: /de/data/search.json)
+    const meta = doc.querySelector('meta[name="velometer-search"]')?.getAttribute("content");
+    loading ??= fetch(meta || url("/data/search.json"))
       .then((r) => {
         if (!r.ok) throw new Error(`search.json: ${r.status}`);
         return r.json();
@@ -135,7 +138,7 @@ export function mount(doc) {
       label.textContent = entry.label;
       const kind = doc.createElement("span");
       kind.className = "kind";
-      kind.textContent = entry.kind;
+      kind.textContent = entry.kind_label ?? entry.kind; // the German index names its kinds
       li.append(label, kind);
       li.addEventListener("mousedown", (e) => e.preventDefault()); // keep focus in the input
       li.addEventListener("click", () => go(entry));
@@ -146,13 +149,13 @@ export function mount(doc) {
       li.className = "none";
       li.setAttribute("role", "option"); // a listbox owns only options
       li.setAttribute("aria-disabled", "true");
-      li.textContent = "No match";
+      li.textContent = t("js.search.no_match");
       list.append(li);
     }
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
     setActive(-1);
-    announce(shown.length ? `${shown.length} ${shown.length === 1 ? "result" : "results"}` : "No match");
+    announce(shown.length ? t("js.search.results", { count: shown.length }) : t("js.search.no_match"));
   }
 
   const go = (entry) => {

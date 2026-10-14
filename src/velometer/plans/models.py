@@ -13,13 +13,17 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
-from velometer.config import ConfigError
+from velometer.config import ConfigError, require_de
+from velometer.i18n import Lang
 
 PLANS_FILE = "plans.yaml"
 # The day "mapped on the network" is counted from: the comparable quantity is the change since
 # 1 January 2022, not the level (M8 spec decision 9, §4.4)
 MAPPED_BASELINE = date(2022, 1, 1)
 REPORTS_FILE = "reports.csv"
+# The German report-row notes (M12): {English note as in reports.csv: German note}. Keyed by the
+# English text, so a note edited in reports.csv falls back to English until it is translated.
+REPORT_NOTES_DE_FILE = "reports_notes_de.yaml"
 
 
 class _Strict(BaseModel):
@@ -29,22 +33,36 @@ class _Strict(BaseModel):
 class PlanItem(_Strict):
     id: str
     label: str
+    label_de: str | None = None  # required beside `label` (M12)
     target_kind: Literal["km_per_year", "km_cumulative", "km_total", "share", "none"]
     targets: dict[int, float] = {}
     unit: str = "km"
+    unit_de: str | None = None  # a German unit only where `unit` is an English word
+
+    @model_validator(mode="after")
+    def _german_label(self) -> "PlanItem":
+        require_de(self, f"item {self.id!r}", "label")
+        return self
 
 
 class Plan(_Strict):
     id: str
     city: str
     title: str
+    # a German title only where the title holds English words; a document's own title stays
+    title_de: str | None = None
     adopted: date | None
     url: str
     status: Literal["current", "expired", "replaced"]
     successor: str | None = None
+    successor_de: str | None = None  # as title_de: only where the successor has English words
     publisher: str
+    # as title_de: only where a publisher that is no organisation id holds our English words
+    # ("Oslo kommune and Statens vegvesen"); an organisation id is never translated
+    publisher_de: str | None = None
     items: list[PlanItem]
     note: str | None = None
+    note_de: str | None = None  # required beside `note` (M12)
 
     @model_validator(mode="after")
     def _unique_items(self) -> "Plan":
@@ -52,6 +70,30 @@ class Plan(_Strict):
         if len(ids) != len(set(ids)):
             raise ValueError(f"duplicate item id in plan {self.id}")
         return self
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "Plan":
+        require_de(self, f"plan {self.id!r}", "note")
+        return self
+
+    def localised(self, lang: Lang) -> "Plan":
+        """This plan with the `lang` text in the English fields (itself for English)."""
+        if lang == "en":
+            return self
+        return self.model_copy(
+            update={
+                "title": self.title_de or self.title,
+                "successor": self.successor_de or self.successor,
+                "publisher": self.publisher_de or self.publisher,
+                "note": self.note_de or self.note,
+                "items": [
+                    i.model_copy(
+                        update={"label": i.label_de or i.label, "unit": i.unit_de or i.unit}
+                    )
+                    for i in self.items
+                ],
+            }
+        )
 
 
 class ReportRow(_Strict):
@@ -124,6 +166,27 @@ def _load_reports(path: Path) -> list[ReportRow]:
     except OSError as e:
         raise ConfigError(f"{path}: {e}") from e
     return rows
+
+
+def load_report_notes_de(dir: Path, rows: list[ReportRow]) -> dict[str, str]:
+    """{English note: German note} of `dir/reports_notes_de.yaml` ({} without the file).
+    ConfigError for a key that is no note of `rows` (a stale translation) or a blank value."""
+    path = Path(dir) / REPORT_NOTES_DE_FILE
+    if not path.is_file():
+        return {}
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as e:
+        raise ConfigError(f"{path}: {e}") from e
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{path}: expected a mapping of English note to German note")
+    notes = {r.note for r in rows if r.note}
+    for en, de in raw.items():
+        if en not in notes:
+            raise ConfigError(f"{path}: {str(en)[:60]!r} is no note of {REPORTS_FILE}")
+        if not isinstance(de, str) or not de.strip():
+            raise ConfigError(f"{path}: {str(en)[:60]!r} has no German note")
+    return {str(k): v for k, v in raw.items()}
 
 
 def load_plans(dir: Path) -> tuple[list[Plan], list[ReportRow]]:

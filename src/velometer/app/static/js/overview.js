@@ -6,6 +6,7 @@ import { renderLines, renderSparkline } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { PILOT5 } from "./state.js";
 import { displayLabels, drawAll, labelsOf, mount, pointsOn } from "./data.js";
+import { t } from "./strings.js";
 
 function overviewLines(el, D) {
   const ids = Object.keys(D.cities).sort((a, b) => D.cities[a].name.localeCompare(D.cities[b].name));
@@ -14,7 +15,7 @@ function overviewLines(el, D) {
   const coloured = PILOT5.filter((id) => ids.includes(id));
   const model = {
     labels: displayLabels(labels, lists),
-    yTitle: "A+B km per 100 km of main roads",
+    yTitle: t("js.unit.headline"),
     series: ids.map((id, i) => ({
       id,
       name: D.cities[id].name,
@@ -26,10 +27,10 @@ function overviewLines(el, D) {
     renderLines(el, model, {
       height: 360,
       zero: true,
-      label: "Line chart: headline over time, city proper (LAU), every city",
+      label: t("js.overview.chart"),
       tip: (s, p, label) =>
-        `${s.name} · ${label}: ${formatValue(p.value)} per 100 km of main roads` +
-        (p.flags?.length ? ` · flagged (${p.flags.join(", ")})` : ""),
+        `${s.name} · ${label}: ${formatValue(p.value)} ${t("js.unit.per_main_roads")}` +
+        (p.flags?.length ? ` · ${t("js.chart.flagged", { flags: p.flags.join(", ") })}` : ""),
       onPick: (id) => {
         location.href = url(`/city/${encodeURIComponent(id)}`);
       },
@@ -44,8 +45,8 @@ function sparkline(el, D) {
   const points = pts.map((p) => ({ label: p.label, value: p.headline }));
   const vals = points.map((p) => p.value).filter(Number.isFinite);
   const label = vals.length
-    ? `${name}: headline from ${formatValue(vals[0])} to ${formatValue(vals.at(-1))}`
-    : `${name}: no headline series`;
+    ? t("js.overview.spark", { city: name, first: formatValue(vals[0]), last: formatValue(vals.at(-1)) })
+    : t("js.overview.spark_none", { city: name });
   renderSparkline(el, points, { width: 140, height: 30, label });
 }
 

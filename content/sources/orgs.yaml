@@ -15,18 +15,22 @@ sources:
         text: >-
           We are Europe’s largest network of organisations on a mission to build public support
           for cities to shift from polluting cars to active, shared and electric mobility.
+        gloss_de: "Wir sind Europas größtes Netzwerk von Organisationen, die öffentliche Unterstützung dafür gewinnen wollen, dass Städte vom umweltschädlichen Auto auf aktive, geteilte und elektrische Mobilität umsteigen."
         locator: "Introduction"
       - id: hosted
         text: Clean Cities is hosted by T&E
+        gloss_de: "Clean Cities ist bei T&E angesiedelt"
         locator: "Introduction, second sentence"
       - id: policy
         text: >-
           Backed by research, we shape city, national and European policy, trusted by both
           policymakers and campaigners for our dedication to transformative change.
+        gloss_de: "Gestützt auf Forschung gestalten wir städtische, nationale und europäische Politik mit und genießen wegen unseres Einsatzes für grundlegenden Wandel das Vertrauen von Entscheidungsträgern wie von Aktivistinnen und Aktivisten."
         locator: "Who we are, Thought leaders"
   - id: cc-ranking-2025-page
     publisher: Clean Cities Campaign
     title: "City Ranking 2025: Streets for Kids, Cities for All (overview page)"
+    title_de: "City Ranking 2025: Streets for Kids, Cities for All (Übersichtsseite)"
     url: https://cleancitiescampaign.org/city-ranking-2025/
     accessed: 2026-10-07
     language: en
@@ -36,11 +40,13 @@ sources:
         text: >-
           We’ve analysed 36 European cities to see how they’re progressing in creating transport
           systems that prioritise the needs of children.
+        gloss_de: "Wir haben 36 europäische Städte daraufhin untersucht, wie weit sie mit Verkehrssystemen vorankommen, die die Bedürfnisse von Kindern in den Vordergrund stellen."
         locator: "Introduction"
       - id: indicators
         text: >-
           The table below shows the combined ranking of the 36 cities, based on their performance
           across all three key indicators.
+        gloss_de: "Die Tabelle unten zeigt das Gesamtranking der 36 Städte, beruhend auf ihrem Abschneiden bei allen drei Hauptindikatoren."
         locator: "Overall results"
   - id: te-funders
     publisher: Transport & Environment (T&E)
@@ -55,6 +61,7 @@ sources:
           We receive funding from a diverse range of donors, including foundations, government
           agencies, multilateral institutions, and our own membership of 49 independent
           environmental organisations across Europe.
+        gloss_de: "Wir erhalten Mittel von vielfältigen Geldgebern, darunter Stiftungen, Behörden, multilaterale Institutionen und unsere eigenen Mitglieder, 49 unabhängige Umweltorganisationen in ganz Europa."
         locator: "Our funding (page last updated April 17, 2026)"
   - id: paris-fr-cc-ranking-2025
     publisher: Ville de Paris
@@ -71,6 +78,7 @@ sources:
         gloss_en: >-
           Paris is the most child-friendly European capital: that is the result of a study by
           the Clean Cities association of 36 European cities.
+        gloss_de: "Paris ist die kinderfreundlichste europäische Hauptstadt: Das ist das Ergebnis einer Studie des Vereins Clean Cities zu 36 europäischen Städten."
         locator: "News item, first paragraph (page updated 17/06/2025)"
   - id: cities-today-cc-ranking-2025
     publisher: Cities Today
@@ -86,6 +94,7 @@ sources:
           The report calls on national governments and the European Commission to strengthen
           legal frameworks, promote best practice and improve data collection to support safe,
           child-focused mobility across the continent.
+        gloss_de: "Der Bericht fordert die nationalen Regierungen und die Europäische Kommission auf, den Rechtsrahmen zu stärken, gute Praxis zu fördern und die Datenerhebung zu verbessern, um sichere, an Kindern ausgerichtete Mobilität auf dem ganzen Kontinent zu unterstützen."
         locator: "Article body, last paragraph"
 
   # ------------------------------------------------------------ European Cyclists' Federation
@@ -101,23 +110,28 @@ sources:
         text: >-
           We are the single European umbrella organisation for cycling for both transportation
           and leisure.
+        gloss_de: "Wir sind der einzige europäische Dachverband für das Radfahren, im Alltagsverkehr wie in der Freizeit."
         locator: "About ECF, first sentence"
       - id: founded
         text: >-
           Founded in 1983, the European Cyclists’ Federation is a Brussels-based independent
           non-profit association dedicated to achieving more and better cycling for all in
           Europe.
+        gloss_de: "Die 1983 gegründete European Cyclists’ Federation ist ein unabhängiger, gemeinnütziger Verband mit Sitz in Brüssel, der sich für mehr und besseres Radfahren für alle in Europa einsetzt."
         locator: "About ECF, second sentence"
       - id: members
         text: >-
           With more than 70 member organisations in over 40 countries, we unite the European
           cycling movements as the only civil society voice at the pan-European level
+        gloss_de: "Mit mehr als 70 Mitgliedsorganisationen in über 40 Ländern vereinen wir die europäischen Radverkehrsbewegungen als einzige Stimme der Zivilgesellschaft auf gesamteuropäischer Ebene"
         locator: "About ECF, third sentence"
       - id: funding-life
         text: ECF gratefully acknowledges financial support from the LIFE Programme of the European Union
+        gloss_de: "Die ECF dankt für die finanzielle Unterstützung durch das LIFE-Programm der Europäischen Union"
         locator: "Page footer"
       - id: funding-industry
         text: ECF gratefully acknowledges financial support from the European Cycling Industries
+        gloss_de: "Die ECF dankt für die finanzielle Unterstützung durch die European Cycling Industries"
         locator: "Page footer"
   - id: ecf-2024-breakthroughs
     publisher: European Cyclists' Federation (ECF)
@@ -134,12 +148,14 @@ sources:
           industry partners Cycling Industries Europe and Confederation of the European Bicycle
           Industry (CONEBI) had long advocated for a unified cycling policy at the European
           level and were at the forefront every step of the way
+        gloss_de: "Die ECF als einzige europaweite Stimme der Zivilgesellschaft für den Radverkehr hatte sich zusammen mit ihren Industriepartnern Cycling Industries Europe und Confederation of the European Bicycle Industry (CONEBI) lange für eine einheitliche Radverkehrspolitik auf europäischer Ebene eingesetzt und war bei jedem Schritt an vorderster Front dabei"
         locator: "Section The historic European Declaration on Cycling"
       - id: egum
         text: >-
           In August, the European Commission’s Expert Group on Urban Mobility (EGUM), co-chaired
           by ECF, issued a set of recommendation to improve road safety for people walking,
           cycling, and using light electric vehicles.
+        gloss_de: "Im August legte die Expertengruppe der Europäischen Kommission für urbane Mobilität (EGUM), deren Ko-Vorsitz die ECF innehat, eine Reihe von Empfehlungen vor, um die Verkehrssicherheit für Menschen zu verbessern, die zu Fuß gehen, Rad fahren oder leichte Elektrofahrzeuge nutzen."
         locator: "Section Advancing road safety"
   - id: ec-declaration-cycling
     publisher: European Commission, DG Mobility and Transport
@@ -154,6 +170,7 @@ sources:
           The European declaration on cycling, signed in 2024 by the European Parliament,
           Council and Commission, recognises cycling as a sustainable, accessible, and
           affordable means of transport, with strong added value for the EU economy.
+        gloss_de: "Die Europäische Erklärung zum Radverkehr, 2024 von Europäischem Parlament, Rat und Kommission unterzeichnet, erkennt das Radfahren als nachhaltiges, zugängliches und erschwingliches Verkehrsmittel mit großem Mehrwert für die Wirtschaft der EU an."
         locator: "Boosting cycling across the EU, first paragraph"
   - id: qecio-site
     publisher: European Cyclists' Federation (ECF)
@@ -169,12 +186,15 @@ sources:
           source provides this kind of information on a European scale. This data project
           responds to this need by extracting data about cycling infrastructure from
           OpenStreetMap (OSM).
+        gloss_de: "Die Nachfrage nach Daten zur Radinfrastruktur ist groß, doch derzeit liefert keine amtliche Quelle solche Informationen auf europäischer Ebene. Dieses Datenprojekt antwortet auf diesen Bedarf, indem es Daten zur Radinfrastruktur aus OpenStreetMap (OSM) extrahiert."
         locator: "Introduction"
 
   # ------------------------------------------------------------ BikeNetKit
   - id: bikenetkit-github-org
     publisher: BikeNetKit (GitHub organisation profile)
+    publisher_de: "BikeNetKit (Organisationsprofil auf GitHub)"
     title: BikeNetKit organisation README
+    title_de: "README der Organisation BikeNetKit"
     url: https://github.com/BikeNetKit
     accessed: 2026-10-07
     language: en
@@ -185,32 +205,40 @@ sources:
           this digital toolkit compiles state-of-the-art bicycle network planning algorithms by
           the bicycle network research community, kick-started by NERDS since 2019, packaged as
           a Python software suite
+        gloss_de: "dieses digitale Werkzeugpaket bündelt moderne Algorithmen zur Planung von Radnetzen aus der Forschungsgemeinschaft zu Radnetzen, 2019 von NERDS angestoßen, als Python-Softwarepaket"
         locator: "README, The toolkit to design and improve bike networks"
       - id: started
         text: We started developing BikeNetKit in 2026.
+        gloss_de: "Wir haben 2026 mit der Entwicklung von BikeNetKit begonnen."
         locator: "README, Contributing to the ecosystem"
       - id: audience
         text: >-
           BikeNetKit is aimed at urban planners as a decision support tool for various network
           planning tasks, or for proactive citizens to create a compelling vision for urban
           cycling in their city.
+        gloss_de: "BikeNetKit richtet sich an Stadtplaner als Entscheidungshilfe für verschiedene Aufgaben der Netzplanung, oder an engagierte Bürger, die eine überzeugende Vision für den Radverkehr in ihrer Stadt entwickeln wollen."
         locator: "README, User-friendly software for planners and advocates"
       - id: stance
         text: >-
           Yet, politicians often neglect their citizens, not building for cycling at all, or
           without a plan.
+        gloss_de: "Doch Politiker vernachlässigen ihre Bürger oft, indem sie gar nicht oder nur planlos für den Radverkehr bauen."
         locator: "README, first paragraph"
       - id: funding
         text: Development of BikeNetKit is supported by the Innovation Fund Denmark
+        gloss_de: "Die Entwicklung von BikeNetKit wird vom Innovation Fund Denmark gefördert"
         locator: "README, Supported by"
       - id: funding-more
         text: the EU HORIZON project JUST STREETS
+        gloss_de: "das EU-HORIZON-Projekt JUST STREETS"
         locator: "README, Supported by"
       - id: funding-itu
         text: the Data Science Section of IT University of Copenhagen.
+        gloss_de: "die Data Science Section der IT University of Copenhagen."
         locator: "README, Supported by"
   - id: bikenetkit-gisruk-2026
     publisher: Zenodo (GISRUK 2026 conference proceeding; IT University of Copenhagen)
+    publisher_de: "Zenodo (Tagungsbeitrag GISRUK 2026; IT University of Copenhagen)"
     title: "BikeNetKit: Developing an open-source bicycle network software suite for urban planners"
     url: https://zenodo.org/records/19390654
     published: 2026-04-02
@@ -220,17 +248,20 @@ sources:
     excerpts:
       - id: affiliation
         text: Networks, Data and Society (NERDS), IT University of Copenhagen
+        gloss_de: "Networks, Data and Society (NERDS), IT University of Copenhagen"
         locator: "Authors, affiliation 1"
       - id: ad-hoc
         text: >-
           Contemporary bicycle network planning is largely an ad hoc process based on little
           empirical evidence, sometimes outsourced to for-profit consultancies working with
           opaque methods.
+        gloss_de: "Die heutige Planung von Radnetzen ist weitgehend ein Ad-hoc-Prozess auf wenig empirischer Grundlage, mitunter an gewinnorientierte Beratungsfirmen mit undurchsichtigen Methoden ausgelagert."
         locator: "Description, first sentence"
       - id: policy
         text: >-
           BikeNetKit is targeted at, and developed with the input of, urban planners and
           policy-makers.
+        gloss_de: "BikeNetKit richtet sich an Stadtplaner und politische Entscheidungsträger und wird mit ihren Beiträgen entwickelt."
         locator: "Description"
 
   # ------------------------------------------------------------ Changing Cities
@@ -340,6 +371,7 @@ sources:
   - id: berlin-mobg-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Berliner Mobilitätsgesetz (berlin.de web page)
+    title_de: "Berliner Mobilitätsgesetz (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrspolitik/mobilitaetsgesetz/
     accessed: 2026-10-07
     language: de
@@ -367,6 +399,7 @@ sources:
   - id: berlin-radfortschrittsbericht-page
     publisher: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt
     title: Radfortschrittsbericht (berlin.de web page)
+    title_de: "Radfortschrittsbericht (Webseite auf berlin.de)"
     url: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/radprojekte/radfortschrittsbericht/
     accessed: 2026-10-07
     language: de
@@ -407,6 +440,7 @@ sources:
   - id: berlin-dpa-fortschrittsbericht-hauptausschuss
     publisher: Nordkurier (dpa)
     title: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa report on the Senate's Fahrrad-Fortschrittsbericht 2025; same article as berlin-dpa-fortschrittsbericht-2025, other passages)"
+    title_de: "Bericht: Senat ließ viele Mittel für Radverkehr liegen (dpa-Meldung zum Fahrrad-Fortschrittsbericht 2025 des Senats; derselbe Artikel wie berlin-dpa-fortschrittsbericht-2025, andere Passagen)"
     url: https://www.nordkurier.de/regional/brandenburg/bericht-senat-liess-viele-mittel-fuer-radverkehr-liegen-4840670
     published: 2026-09-08
     accessed: 2026-10-07
@@ -626,6 +660,7 @@ sources:
         locator: "Introduction"
   - id: drahtesel-mobilitaetsagentur-2016
     publisher: Drahtesel (Radlobby Österreich magazine)
+    publisher_de: "Drahtesel (Magazin der Radlobby Österreich)"
     title: Fünf Jahre mit Blum
     url: https://www.drahtesel.or.at/fuenf-jahre-mit-blum/
     published: 2016-12-02
@@ -679,6 +714,7 @@ sources:
           The Climate, Environment and Technical Administration is responsible for operating and
           developing the city for the benefit of residents, businesses and other users of the
           city.
+        gloss_de: "Die Verwaltung für Klima, Umwelt und Technik ist für Betrieb und Entwicklung der Stadt zum Nutzen der Bürger, der Wirtschaft und der anderen Nutzer der Stadt zuständig."
         locator: "Introduction"
       - id: cycling
         text: >-
@@ -687,10 +723,12 @@ sources:
         gloss_en: >-
           We make a great effort to make it quick and easy to get around the city by bicycle, by
           public transport or by car.
+        gloss_de: "Wir setzen uns sehr dafür ein, dass man sich schnell und einfach in der Stadt bewegen kann, mit dem Fahrrad, mit öffentlichen Verkehrsmitteln oder mit dem Auto."
         locator: "Afdelinger, Mobilitet, Klimatilpasning og Byvedligehold"
   - id: kk-br-cykelstrategi-2024
     publisher: Københavns Kommune, Borgerrepræsentationen
     title: "Medlemsforslag om cykelstrategi (Borgerrepræsentationen, meeting of 2 May 2024, item 15, minutes)"
+    title_de: "Medlemsforslag om cykelstrategi (Borgerrepræsentationen, Sitzung vom 2. Mai 2024, Tagesordnungspunkt 15, Protokoll)"
     url: https://www.kk.dk/dagsordener-og-referater/Borgerrepr%C3%A6sentationen/m%C3%B8de-02052024/referat/punkt-15
     published: 2024-05-02
     accessed: 2026-10-07
@@ -706,8 +744,10 @@ sources:
           It is proposed that the City Council instructs the Technical and Environmental
           Committee that, in revising plans, policies and strategies in the technical and
           environmental field, the City of Copenhagen gets a new, strong cycling strategy
+        gloss_de: "Es wird vorgeschlagen, dass die Bürgerschaft (Borgerrepræsentationen) den Ausschuss für Technik und Umwelt beauftragt, bei der Überarbeitung von Plänen, Politiken und Strategien im Bereich Technik und Umwelt einzubeziehen, dass die Kommune Kopenhagen eine neue, starke Radverkehrsstrategie erhält"
         locator: "Medlemsforslag, first point"
       - id: adopted
         text: Indstillingens 1. at-punkt blev således godkendt med 45 stemmer imod 9.
         gloss_en: The first point of the recommendation was thus approved by 45 votes to 9.
+        gloss_de: "Der erste Punkt der Beschlussvorlage wurde damit mit 45 zu 9 Stimmen angenommen."
         locator: "Beslutning"

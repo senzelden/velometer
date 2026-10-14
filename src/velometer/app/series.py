@@ -3,15 +3,19 @@
 One payload for the whole app (21 cities x 2 boundaries x 10 labels is small): the cities, each
 city's yearly series per boundary, the subarea (Bezirk) series, the preset labels and the
 explanations of flagged years. Values are the CSV export's (mapped km, ADR 0006).
+
+The file is shared by both editions (M12): the display text is English, and each text a German
+page shows differently has an additive `<key>_de` sibling, which static/js/data.js `localised`
+swaps in on a German page.
 """
 
 from pathlib import Path
 
 from velometer import timeseries as ts
-from velometer.app.counts import counter_payload
+from velometer.app.counts import counter_payload, counters_config, no_data_notes
 from velometer.app.names import country_name
 from velometer.db import subarea_names
-from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData
+from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, headline_unit
 
 # CSV column -> payload key (the spike's names)
 PRESET_KEYS = {"ours_headline": "headline", "ecf_qecio": "ecf_qecio"}
@@ -57,7 +61,11 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
     `bezirke` (city id -> subarea id -> name and points; cities with subareas only), `presets`,
     `headline_unit`, `explanations.timeseries` (flag key -> text of `explanations`, the
     time-series review page, for every flag that has one) and `counters` (the counter index per
-    counter city, `app/counts.counter_payload`)."""
+    counter city, `app/counts.counter_payload`). The German siblings: per city `name_de` and
+    `country_name_de`, `headline_unit_de`, `presets_de`, `counters.none_de` and
+    `explanations_de` (`german_explanations`)."""
+    data = data.with_lang("en")  # one shared file in English (the pages localise it)
+    names_de = {c.id: c.name for c in data.with_lang("de").cities()}
     cities = {
         c.id: {
             "id": c.id,
@@ -65,6 +73,8 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
             "country": c.country_iso2,
             "country_name": country_name(c.country_iso2),
             "population": c.population.value if c.population else None,
+            "name_de": names_de.get(c.id, c.name),
+            "country_name_de": country_name(c.country_iso2, "de"),
         }
         for c in data.cities()
     }
@@ -80,6 +90,8 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
                     text = ts.explanation(explanations, flag.key)
                     if text:
                         notes[flag.key] = text
+    counters = counter_payload(data)
+    counters["none_de"] = no_data_notes(counters_config(data.config_dir)[0], "de")
     return {
         "cities": cities,
         "series": series,
@@ -87,5 +99,25 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
         "presets": data.preset_labels(),
         "headline_unit": HEADLINE_UNIT,
         "explanations": {"timeseries": notes},
-        "counters": counter_payload(data),
+        "counters": counters,
+        "headline_unit_de": headline_unit("de"),
+        "presets_de": data.with_lang("de").preset_labels(),
+        "explanations_de": german_explanations(notes, explanations),
     }
+
+
+def german_explanations(notes: dict[str, str], explanations: Path | None) -> dict:
+    """`explanations_de`: `timeseries` with the keys of `notes` (the English explanations), each
+    the stamped German entry of the `.de.md` beside `explanations`, else the English one, and
+    `fallback` the keys still English (a missing or unstamped German entry)."""
+    de_path = None if explanations is None else ts.german_explanations(Path(explanations))
+    german: dict[str, str] = {}
+    fallback: list[str] = []
+    for key, text in notes.items():
+        de, stamp = (None, None) if de_path is None else ts.stamped_explanation(de_path, key)
+        if de is None or stamp is None:
+            german[key] = text
+            fallback.append(key)
+        else:
+            german[key] = de
+    return {"timeseries": german, "fallback": sorted(fallback)}

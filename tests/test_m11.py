@@ -212,8 +212,8 @@ def test_recomputes_must_name_a_figure_source(tmp_path):
     for name in ["presets.yaml", "organisations.yaml"]:
         (tmp_path / name).write_text((cfg / name).read_text(encoding="utf-8"), encoding="utf-8")
     path = tmp_path / "report.yaml"
-    body = "report_classifier: v4\nrankings:\n  - {{id: x, label: X, kind: preset, preset: " \
-        "ecf_qecio, recomputes: {}}}\n"  # fmt: skip
+    body = "report_classifier: v4\nrankings:\n  - {{id: x, label: X, label_de: X, kind: preset, " \
+        "preset: ecf_qecio, recomputes: {}}}\n"  # fmt: skip
     path.write_text(body.format("qecio_v2_10"))
     assert load_report(path).rankings[0].recomputes == "qecio_v2_10"
     path.write_text(body.format("no_such_source"))
@@ -299,8 +299,10 @@ def test_python_citation_text_matches_the_shared_cases():
     shared = json.loads((Path(__file__).parent / "cite_cases.json").read_text(encoding="utf-8"))
     cases = shared["cases"]
     assert len(cases) >= 5
+    assert {c["lang"] for c in cases} == {"en", "de"}  # both editions share the cases (M12)
     for c in cases:
-        assert cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"]) == c["text"], c["name"]
+        got = cite_text(CiteFields(**c["fields"]), c["accessed"], c["url"], lang=c["lang"])
+        assert got == c["text"], c["name"]
 
 
 def test_city_fields_come_from_the_run_and_build(fixture_db):
@@ -409,12 +411,12 @@ def _charts(html):
     return [(m.start(), m.end(), m.group(0), m.group(1)) for m in CHART_TAG.finditer(html)]
 
 
-def test_every_chart_and_keynum_has_a_cite(client, all_page_urls):  # noqa: F811
+def test_every_chart_and_keynum_has_a_cite(all_page_urls, page_site):  # noqa: F811
     # each chart has its own Cite: after the data table its description names (where
     # download-ui.js looks for it), before the next chart's table
     seen = 0
     for url in all_page_urls:
-        html = client.get(url).text
+        html = page_site.html[url]
         charts = _charts(html)
         seen += len(charts)
         tables = [html.find(f'id="{desc}"') for *_, desc in charts]
@@ -435,16 +437,16 @@ DOWNLOADABLE = re.compile(
 )
 
 
-def test_every_chart_page_offers_the_download_control(client, all_page_urls):  # noqa: F811
+def test_every_chart_page_offers_the_download_control(all_page_urls, page_site):  # noqa: F811
     # download-ui.js adds the control after each container its SELECTOR matches; a chart page
     # must load it, and each chart must match it and name a data table that exists (the CSV)
     seen = 0
     for url in all_page_urls:
-        html = client.get(url).text
+        html = page_site.html[url]
         charts = _charts(html)
         if not charts:
             continue
-        host = html if "<html" in html else client.get("/compare").text  # a panel's host page
+        host = html if "<html" in html else page_site.html["/compare"]  # a panel's host page
         assert "/static/js/download-ui.js" in host, url
         ids = _ids(html)
         for _, _, tag, desc in charts:
@@ -466,6 +468,24 @@ def test_cite_data_is_valid_json_with_the_attribution(client):  # noqa: F811
         )  # no base and no leading slash: the browser adds both
 
 
+def test_german_pages_cite_in_german(client):  # noqa: F811
+    # M12 spec 4.5: the German template, the German attribution, the /de/ address
+    from velometer import i18n
+
+    html = client.get("/de/city/berlin/time").text
+    blobs = CITE_DATA.findall(html)
+    assert blobs
+    for blob in blobs:
+        f = json.loads(blob)
+        assert f["attribution"] == i18n.t("de", "cite.attribution")
+        assert f["path"].startswith("de/city/berlin")
+    texts = re.findall(r'<p class="cite-text">(.*?)</p>', html, re.S)
+    assert texts and all("[Datensatz]" in x and "OpenStreetMap-Mitwirkende" in x for x in texts)
+    assert all("Klassifikator" in x and "[Data set]" not in x for x in texts)
+    english = client.get("/city/berlin/time").text
+    assert all("[Data set]" in x for x in re.findall(r'<p class="cite-text">(.*?)</p>', english))
+
+
 def test_figures_rows_each_carry_a_cite(client):  # noqa: F811
     html = client.get("/city/berlin/figures").text
     rows = re.findall(r"<tr[^>]*>.*?</tr>", html.split("<tbody", 1)[1], re.S)
@@ -473,11 +493,11 @@ def test_figures_rows_each_carry_a_cite(client):  # noqa: F811
     assert rows and all('class="cite"' in r for r in rows)
 
 
-def test_no_cite_title_says_built(client, all_page_urls):  # noqa: F811
+def test_no_cite_title_says_built(all_page_urls, page_site):  # noqa: F811
     # ADR 0006: mapped km, never a construction verb
     titles = 0
     for url in all_page_urls:
-        for blob in CITE_DATA.findall(client.get(url).text):
+        for blob in CITE_DATA.findall(page_site.html[url]):
             title = json.loads(blob)["title"]
             titles += 1
             assert not re.search(r"\bbuil[dt]|construct", title, re.I), (url, title)
@@ -527,7 +547,7 @@ def test_multi_fields_agree_with_the_shared_cases(monkeypatch):
                 for city, r in c["runs"].items()
             }
         )
-        got = cite.fields_for_cities(rows, c["ids"], c["title"], c["path"])
+        got = cite.fields_for_cities(rows, c["ids"], c["title"], c["path"], lang=c["lang"])
         assert (None if got is None else asdict(got)) == c["expected"], c["name"]
 
 
@@ -567,13 +587,12 @@ def test_cite_pre_blocks_are_not_scroll_regions():
 
 
 def test_a_cite_names_only_the_boundary_whose_run_it_cites(
-    client,  # noqa: F811
     all_page_urls,  # noqa: F811
-    fixture_db,
+    page_site,
 ):
     # a citation is built from one run (LAU unless it says FUA): its title may name that
     # boundary only. A title naming both, or FUA with the LAU run, cites a run it does not name.
-    data = fixture_db[3]
+    data = page_site.data  # the run ids of the app that rendered the pages
     runs = {
         (c.id, k): next(
             str(r["run_id"])
@@ -586,7 +605,7 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
     }
     seen_fua = 0
     for url in all_page_urls:
-        for blob in CITE_DATA.findall(client.get(url).text):
+        for blob in CITE_DATA.findall(page_site.html[url]):
             f = json.loads(blob)
             title = f["title"]
             names_lau, names_fua = "LAU" in title, bool(re.search(r"\bFUA\b", title))
@@ -661,11 +680,11 @@ def test_stateful_pages_render_a_hidden_copy_link_button(client):  # noqa: F811
         assert "permalink-ui.js" in html, url
 
 
-def test_without_javascript_the_copy_link_box_takes_no_space(client, all_page_urls):  # noqa: F811
+def test_without_javascript_the_copy_link_box_takes_no_space(all_page_urls, page_site):  # noqa: F811
     # the box itself is hidden until permalink-ui.js reveals it: no margin gap without JS
     seen = 0
     for url in all_page_urls:
-        for attrs in PERMALINK_BOX.findall(client.get(url).text):
+        for attrs in PERMALINK_BOX.findall(page_site.html[url]):
             seen += 1
             assert re.search(r"(?<![\w-])hidden\b", attrs), (url, attrs)
     assert seen
