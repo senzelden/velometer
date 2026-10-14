@@ -166,6 +166,16 @@ def test_csv_errors_want_the_german_header_and_dot_decimals(rp):
     comma = pre + 'Stand,A baulich getrennter Radweg\r\n2019,"12,5"\r\n'
     assert any("dot-decimal" in e for e in rp._csv_errors(comma, head, "de"))
     assert rp._csv_errors(english, None, "en") == []
+    # cells, not lines: one comma-decimal cell beside dot decimals fails, a year beside a dot
+    # decimal passes
+    mixed = pre + 'Stand,A baulich getrennter Radweg,B\r\n"Jan. 2018",1.5,"2,5"\r\n'
+    assert any("dot-decimal" in e for e in rp._csv_errors(mixed, [*head, "B"], "de"))
+    year = pre + "Stand,A baulich getrennter Radweg\r\n2018,1.5\r\n"
+    assert rp._csv_errors(year, head, "de") == []
+    no_dot = pre + 'Stand,A baulich getrennter Radweg\r\n"Jan. 2019",12\r\n'
+    assert any("dot-decimal" in e for e in rp._csv_errors(no_dot, head, "de"))
+    # a German CSV is held to the table's header: no table found is a finding, not a skip
+    assert any("no table" in e for e in rp._csv_errors(good, None, "de"))
 
 
 # --- run rules that need no browser ---

@@ -832,8 +832,9 @@ STEP_DOWN = {
     "it keeps counting (Teststelle from March 2023). The Counts tab gives, as our reading of the "
     "daily data, the index without it from that year on",
     "de": "- Berlin: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte einer "
-    "Zählstelle fallen ab, während sie weiterzählt (Teststelle ab März 2023). Der Reiter „Counts“ "
-    "gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesem Jahr an",
+    "Zählstelle fallen ab, während sie weiterzählt (Teststelle ab März 2023). "
+    "Der Reiter „Zählstellen“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesem "
+    "Jahr an",
 }
 
 

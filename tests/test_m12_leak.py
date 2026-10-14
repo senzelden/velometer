@@ -238,3 +238,13 @@ def test_german_figure_citations_name_an_unlabelled_metric_by_its_id(client):  #
     spaced = {i: i.replace("_", " ") for i in ids}
     assert [i for i, s in spaced.items() if f", {s} (" in de] == []
     assert any(f", {s} (" in en for s in spaced.values())
+
+
+def test_tab_names_in_the_german_methodology_are_the_german_tab_labels():
+    """Every tab the German methodology names (Reiter „…“) is named by its German label
+    (`city.tab.*`), never by the English one ("Figures", "Counts")."""
+    text = (SHIPPED_DOCS / "methodology.de.md").read_text(encoding="utf-8")
+    quoted = re.findall(r"Reiter „([^“]+)“", text)
+    assert quoted  # the page names tabs, so the rule has something to read
+    labels = {v for k, v in i18n.catalogue("de").items() if k.startswith("city.tab.")}
+    assert [q for q in quoted if q not in labels] == []

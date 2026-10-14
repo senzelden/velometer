@@ -494,6 +494,7 @@ def _environment(lang: Lang) -> Environment:
     env.filters["gaps"] = lambda v: _gaps(v, lang)
     env.filters["sites"] = lambda v: _sites(v, lang)
     env.filters["provenance"] = lambda v: _provenance(v, lang)
+    env.globals["tab"] = lambda key: i18n.t(lang, f"city.tab.{key}")  # the site's tab label
     return env
 
 

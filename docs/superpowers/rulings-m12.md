@@ -349,10 +349,10 @@ These are the controller's rulings on the pre-flight scan
   notes on the before pages, and the CLI reads plans data from the working directory. — Cost:
   the before state is the base's own English content, which is the comparison that matters.
 - Ruling: the 404 page's German line is accepted in the English diff. — One `404.html` serves
-  both editions on a static host, so it carries the German line in `lang="de"`. — Cost: one file.
+  both editions on a static host, so it carries the German line in `lang="de"`. — Cost: one file. Ratified in the Task 11 review.
 - Ruling: the `app.css` change is accepted in the English diff. — It removes the `.langs` rule
   with its paragraph and adds `:lang(de)` rules, which select nothing on English pages. — Cost:
-  one file.
+  one file. Ratified in the Task 11 review.
 
 **Task 12** (content fix before the final review):
 - Ruling: the Norwegian terms carry no `lang="no"` markup. — Content prose has one language

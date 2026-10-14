@@ -276,7 +276,7 @@ Die Reihe auf der Seite ist die Veränderung der kartierten A+B-Kilometer je Sei
 
 ## Zählstellenindex
 
-Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die die Standorte der Zählstellen passieren, nicht den Radverkehr einer ganzen Stadt, und nichts hier verknüpft Zählwerte und kartierte Kilometer als Ursache und Wirkung [M8-Spezifikation, Entscheidung 12]. Die Städte der folgenden Tabelle veröffentlichen offene, lizenzierte Zählstellendaten; die kostenpflichtige Eco-Counter-API wird nicht verwendet [M8-Spezifikation, Entscheidung 2]. Portal, Lizenz und Abrufzeit werden je heruntergeladener Datei festgehalten, und der Reiter „Counts“ jeder Stadt nennt seine Quelle.
+Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die die Standorte der Zählstellen passieren, nicht den Radverkehr einer ganzen Stadt, und nichts hier verknüpft Zählwerte und kartierte Kilometer als Ursache und Wirkung [M8-Spezifikation, Entscheidung 12]. Die Städte der folgenden Tabelle veröffentlichen offene, lizenzierte Zählstellendaten; die kostenpflichtige Eco-Counter-API wird nicht verwendet [M8-Spezifikation, Entscheidung 2]. Portal, Lizenz und Abrufzeit werden je heruntergeladener Datei festgehalten, und der Reiter „Zählstellen“ jeder Stadt nennt seine Quelle.
 
 <!-- generated:counters -->
 | Stadt | Herausgeber | Lizenz | Basisjahr (= 100) | Reihe |
@@ -289,14 +289,14 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 | Oslo | Statens vegvesen (staatliche Zählstellen) | NLOD | 2019 | Zählwerte |
 | Barcelona | Ajuntament de Barcelona | CC BY 4.0 | 2019 | durchschnittliche tägliche Verkehrsstärke |
 
-Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Figures“ nennt die geprüften Portale.
+Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Zahlen“ nennt die geprüften Portale.
 
 Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
 <!-- /generated:counters -->
 
 Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die 90-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025) [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`]. Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.
 
-Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Counts“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
+Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Zählstellen“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 
 Je Stadt:
 
@@ -304,7 +304,7 @@ Je Stadt:
 - Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.
 - Madrid: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die Dateien enthalten von Juli 2021 bis August 2022, während die Detektoren getauscht wurden, keine Zählwerte. Nur 2020 hat einen Indexwert, daher wird keine Indexlinie gezeichnet.
 - Barcelona veröffentlicht die monatliche durchschnittliche tägliche Verkehrsstärke je Zählstelle und Tagestyp, keine Zählwerte. Sein Index verwendet den Mittelwert einer Zählstelle über die zwölf Werktagsmonate, wobei eine Zählstelle in einem Jahr nur mit allen zwölf gültig ist, und heißt durchschnittliche tägliche Verkehrsstärke [M8-Spezifikation, Entscheidung 14].
-- Helsinki: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte zweier Zählstellen fallen ab, während sie weiterzählen (Kaivokatu ab April 2024, Pitkäsilta länsipuoli ab Mai 2025). Der Reiter „Counts“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesen Jahren an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
+- Helsinki: Der Index behält jede Zählstelle, die die Regel erfüllt. Die Zählwerte zweier Zählstellen fallen ab, während sie weiterzählen (Kaivokatu ab April 2024, Pitkäsilta länsipuoli ab Mai 2025). Der Reiter „Zählstellen“ gibt als unsere Lesart der Tageswerte den Index ohne sie ab diesen Jahren an [Entscheidung vom 7. Oktober 2026 zu den Zählstellen, `docs/superpowers/rulings-m8.md`].
 
 ## Herkunft der Zahlen
 

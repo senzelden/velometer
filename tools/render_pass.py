@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import base64
 import contextlib
+import csv
 import functools
 import json
 import os
@@ -622,26 +623,30 @@ def _around(lang: str, key: str, name: str) -> tuple[str, str]:
     return before, after
 
 
-def _csv_errors(csv: str, header: list[str] | None, lang: str) -> list[str]:
+def _csv_errors(text: str, header: list[str] | None, lang: str) -> list[str]:
     """A chart CSV: the English attribution preamble, then (German) the table's German header
-    and dot-decimal number cells, no comma decimal."""
-    lines = csv.splitlines()
-    errors = [] if csv.startswith("# Map data") else ["the CSV does not start with the attribution"]
+    and dot-decimal number cells: no cell has a comma decimal and at least one has a dot
+    decimal. A German CSV is held to its table's header, so no table found is a finding."""
+    errors = (
+        [] if text.startswith("# Map data") else ["the CSV does not start with the attribution"]
+    )
     if lang != "de":
         return errors
-    rows = [ln for ln in lines if ln and not ln.startswith("#")]
+    lines = [ln for ln in text.splitlines() if ln and not ln.startswith("#")]
+    rows = list(csv.reader(lines))
     if not rows:
         return [*errors, "the CSV has no header"]
-    got = [c.strip('"') for c in rows[0].split(",")]
-    if header and got != header:
+    got = rows[0]
+    if header is None:
+        errors.append("no table found beside the chart, so the CSV header cannot be checked")
+    elif got != header:
         errors.append(f"the CSV header {got} is not the table's {header}")
-    if words := i18n.english_words("<p>" + html_escape(rows[0]) + "</p>"):
+    if words := i18n.english_words("<p>" + html_escape(",".join(got)) + "</p>"):
         errors.append(f"the CSV header has English words: {words}")
-    cells = [c.strip('"') for r in rows[1:] for c in r.split(",")]
-    if any(re.fullmatch(r"-?\d+,\d+.*", c) for c in rows[1:]) or not any(
-        re.fullmatch(r"-?\d+\.\d+", c) for c in cells
-    ):
-        errors.append(f"the CSV cells are not dot-decimal: {rows[1:3]}")
+    cells = [c.strip() for r in rows[1:] for c in r]
+    comma = [c for c in cells if re.fullmatch(r"-?\d+,\d+", c)]
+    if comma or not any(re.fullmatch(r"-?\d+\.\d+", c) for c in cells):
+        errors.append(f"the CSV cells are not dot-decimal: {comma[:3] or rows[1:3]}")
     return errors
 
 
