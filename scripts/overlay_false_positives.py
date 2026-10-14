@@ -42,12 +42,15 @@ and among the pieces whose midpoint lies past a *turn end* of a matching line (a
 overlay_v4's rule, 30°, that another line's end lies within 1 m of: the network turns there rather
 than stops).
 
-`--real-loss` prints, per network class, the dropped pieces that lie along the network across a
-turn (M13), in four disjoint parts: the pieces in a hole (as `--checks`, any class); outside holes,
-the `along` class; the `class_boundary` pieces the base keeps in neither class; and the
+`--real-loss` prints, per network class, the dropped pieces that may lie along the network across
+a turn (M13), in four disjoint parts: the pieces in a hole (as `--checks`, any class); outside
+holes, the `along` class; the `class_boundary` pieces the base keeps in neither class; and the
 `beyond_network_end` pieces at an *outer corner* (`outer_corner`: past the end of a line of the
 class within the piece's buffer, at a joint of two edges turning more than `TURN_DEG`, on the
-outer side of the turn), with their sum.
+outer side of the turn). They are printed as turn-recoverable (holes past a turn end, plus outer
+corners a visual check confirms), outer-corner candidates (mostly false positives: the far side of
+a street continuing past the turn, M13 log) and the non-turn residual; their sum is an upper
+bound, not the real loss.
 
 `--crops` draws the six densest non-overlapping 800 m cells (1.2 km windows) to
 data/maps/berlin_<version>_vs_<base>_crops.png; `--detail CLASS` (repeatable) draws 16 pieces of
@@ -420,35 +423,48 @@ def outer_flags(out, meta, network, cfg) -> dict:
 
 
 def real_loss(out, meta, network, cfg, base: str) -> None:
-    """The dropped pieces that lie along the network across a turn, per class, in four disjoint
-    parts: those in a hole of a chain the base keeps (any class); then, outside holes, the
-    `along` class, the `class_boundary` pieces the base keeps in neither class, and the
+    """The dropped pieces that may lie along the network across a turn, per class, in four
+    disjoint parts: the pieces in a hole of a chain the base keeps (any class); then, outside
+    holes, the `along` class, the `class_boundary` pieces the base keeps in neither class, and the
     `beyond_network_end` pieces at an outer corner (`outer_corner`, with `cfg`'s buffers and
-    angle)."""
+    angle). Printed as what a turn rule could recover (holes past a turn end; outer corners only
+    where a visual check confirms them, which this script does not do), the outer-corner
+    candidates (mostly the continuing street's far side, M13 log), and the non-turn residual.
+    The four parts' sum is an upper bound, not the real loss."""
     a, b = sorted(meta)
     outer_by = outer_flags(out, meta, network, cfg)
-    total = 0.0
+    km = lambda cls, mask: float(meta[cls]["plen"][meta[cls]["only"][mask]].sum()) / 1000  # noqa: E731
+    totals: dict[str, float] = defaultdict(float)
     for cls in (a, b):
         other = b if cls == a else a
         m, names = meta[cls], out[cls][1]
         hole, outer = m["hole"], outer_by[cls]
-        beyond = np.flatnonzero((names == "beyond_network_end") & ~hole)
         parts = {
-            "holes": hole,
+            "holes past a turn end": hole & m["turn"],
+            "outer-corner candidates": outer,
+            "holes elsewhere": hole & ~m["turn"],
             "along": (names == "along") & ~hole,
-            "class_boundary_neither": (names == "class_boundary")
+            "class boundary in neither class": (names == "class_boundary")
             & ~meta[other]["keep_base"][m["only"]]
             & ~hole,
-            "outer_corner": outer,
         }
-        km = {k: float(m["plen"][m["only"][v]].sum()) / 1000 for k, v in parts.items()}
-        total += sum(km.values())
-        print(f"  real loss {cls}: " + ", ".join(f"{k} {v:.2f}" for k, v in km.items())
-              + f"; sum {sum(km.values()):.2f} km (outer corners of "
-              f"{float(m['plen'][m['only'][beyond]].sum()) / 1000:.2f} km beyond_network_end "
-              "outside holes)")  # fmt: skip
-    print(f"  real loss, both classes: {total:.2f} km (pieces kept by {cfg.version}, dropped by "
-          f"{base})")  # fmt: skip
+        k = {name: km(cls, mask) for name, mask in parts.items()}
+        for name, v in k.items():
+            totals[name] += v
+        beyond = km(cls, (names == "beyond_network_end") & ~hole)
+        residual = k["holes elsewhere"] + k["along"] + k["class boundary in neither class"]
+        print(f"  {cls}: turn-recoverable (holes past turn ends + verified corners): holes past "
+              f"turn ends {k['holes past a turn end']:.2f} km + verified corners (a visual "
+              "check; not computed)")  # fmt: skip
+        print(f"  {cls}: outer-corner candidates (mostly false positives): "
+              f"{k['outer-corner candidates']:.2f} km of {beyond:.2f} km beyond_network_end "
+              "outside holes")  # fmt: skip
+        print(f"  {cls}: non-turn residual: {residual:.2f} km (holes elsewhere "
+              f"{k['holes elsewhere']:.2f}, along {k['along']:.2f}, class boundary in neither "
+              f"class {k['class boundary in neither class']:.2f})")  # fmt: skip
+    print("  both classes: " + ", ".join(f"{n} {v:.2f}" for n, v in totals.items())
+          + f"; the four parts sum to {sum(totals.values()):.2f} km, an upper bound, not the "
+          f"real loss (pieces kept by {cfg.version}, dropped by {base})")  # fmt: skip
 
 
 def report(out, version: str, base: str, run_id: int) -> None:
