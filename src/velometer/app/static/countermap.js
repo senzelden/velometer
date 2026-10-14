@@ -4,7 +4,7 @@
 // tokens and restyled in place when the OS theme changes (zoom and position stay). Site names
 // are portal data: tooltips are built with textContent.
 import { onThemeChange, token } from "./js/theme.js";
-import { t } from "./js/strings.js";
+import { leafletPrefix, t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -14,6 +14,7 @@ import { t } from "./js/strings.js";
   var cfg = JSON.parse(configEl.textContent);
 
   var map = L.map(mapEl, { preferCanvas: true });
+  map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 4 });
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { FIXTURE, fakeDoc, useLang } from "./strings-fixture.mjs";
-import { loadStrings, setStrings, t } from "../strings.js";
+import { leafletPrefix, loadStrings, setStrings, t } from "../strings.js";
 import { offenders } from "./js-literals.mjs";
 
 test("with the German strings, t gives the German value", () => {
@@ -79,5 +79,26 @@ test("every JS key a script reads exists in the strings (counter-model.js among 
   assert.ok(counterKeys.filter((k) => k.startsWith("js.counts.")).length >= 10);
   for (const lang of ["en", "de"]) {
     assert.deepEqual([...used].filter((k) => !(k in FIXTURE[lang])), [], lang);
+  }
+});
+
+// Leaflet's own attribution prefix (vendor/leaflet.js, 1.9): an English link title
+const LEAFLET_PREFIX = '<a href="https://leafletjs.com" title="A JavaScript library for interactive maps">'
+  + '<svg aria-hidden="true" width="12"></svg> Leaflet</a>';
+
+test("leafletPrefix: English keeps Leaflet's prefix as it is, German gives the link a German title", () => {
+  useLang("en");
+  assert.equal(leafletPrefix(LEAFLET_PREFIX), LEAFLET_PREFIX);
+  useLang("de");
+  const de = leafletPrefix(LEAFLET_PREFIX);
+  assert.ok(de.includes(`title="${FIXTURE.de["js.map.leaflet_title"]}"`), de);
+  assert.ok(!de.includes("A JavaScript library") && de.includes("<svg") && de.endsWith("Leaflet</a>"));
+  useLang("en");
+});
+
+test("the three Leaflet maps set the localised prefix", () => {
+  for (const name of ["map.js", "countermap.js", "changemap.js"]) {
+    const src = readFileSync(new URL(`../../${name}`, import.meta.url), "utf8");
+    assert.match(src, /attributionControl\.setPrefix\(leafletPrefix\(/, name);
   }
 });

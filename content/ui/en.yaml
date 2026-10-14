@@ -779,6 +779,7 @@ js.download.no_table: This chart has no data table to download
 js.download.no_png: the canvas gave no PNG
 js.download.image_failed: the chart image could not be loaded
 js.map.osm_contributors: OpenStreetMap contributors
+js.map.leaflet_title: A JavaScript library for interactive maps
 js.map.way: way {id}
 js.map.side: side
 js.map.tier: tier

@@ -8,7 +8,7 @@ import { TIERMAP, read, readerMoves, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
 import { number } from "./js/fmt.js";
 import { mapStatus } from "./js/data.js";
-import { t } from "./js/strings.js";
+import { leafletPrefix, t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -27,6 +27,7 @@ import { t } from "./js/strings.js";
   var fitting = false; // true while the app moves the map itself: that is not the reader's view
 
   var map = L.map(mapEl, { preferCanvas: true });
+  map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,

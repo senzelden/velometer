@@ -1,6 +1,9 @@
 # tools
 
 Developer tools that are not part of the velometer package and stay out of the gate.
+`render_pass.py` imports `velometer.i18n` (M12): its English-leak step uses the same phrase,
+visibility and word rules as `tests/test_m12_leak.py`, so it runs in the project environment
+(`uv run --group dev`), not as a stdlib-only script.
 
 ## render_pass.py
 
@@ -30,9 +33,17 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
     [--pages all|types|/velometer/compare,...] [--flip] [--interact] [--keyboard] [--chrome PATH]
 ```
 
-- `--pages all` (default) visits every exported page. HTML fragments (the city panels) and
-  `404.html` are skipped. `--pages types` keeps every page outside `/city/` plus the tabs of
-  Berlin and of the first city whose tab list differs from Berlin's.
+- `--pages all` (default) visits every exported page, the German `/de/` tree included. HTML
+  fragments (the city panels) and `404.html` are skipped. `--pages types` keeps every page
+  outside `/city/` and `/de/city/` plus, in each language, the tabs of Berlin and of the first
+  city whose tab list differs from Berlin's.
+- Every page visit checks the language (M12): `<html lang>` is `de` under `<base>de` and `en`
+  elsewhere, and every `link[rel=alternate]` resolves to an exported page (fetched from the
+  server). On a German page it also runs the English-leak step after the JS has drawn: the live
+  document's visible text (`i18n.visible_text`) and the labels a reader hears (`aria-label`,
+  `title`, `img[alt]`) outside subtrees in another language hold no phrase of
+  `i18n.leak_phrases()` or `i18n.content_phrases()`, no common English word
+  (`i18n.english_words`, proper names passed over) and no `[data-fallback]` element.
 - `--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
   run as usual). Each page loads in light, the emulated scheme switches to dark
   mid-page, and after 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
@@ -47,7 +58,17 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
   tier map loaded from `?kind&tiers&at` (the view is read back from the tile under the map's
   centre, `MAP_VIEW_JS`; `map.js` exposes no hook), a zoom and a drag that rewrite `at`, a story
   `#step-` and a compare `panel=` URL that reopen their state, and a hostile query that opens the
-  defaults with a clean console.
+  defaults with a clean console. The city panel's fragment root must carry the page's `lang`.
+  The German edition gets the same cite, download and permalink visits on its own pages
+  (`de/city/berlin/time`, `de/city/berlin/tiers`, `de/stories`, `de/compare`), with German
+  expectations: the citation says "[Datensatz]" and carries the `/de/` address, Copy and the
+  downloads announce in German, the SVG names "OpenStreetMap-Mitwirkende" with the German source
+  line and German month labels ("Okt. 2026"), and the CSV keeps the English preamble over the
+  table's German header with dot-decimal cells. One more entry per theme and width
+  (`<base>de (search, switch)`, with `steps`) types "krakau" in the German nav search and must
+  land on `de/city/krakow`, and switches a German Compare permalink to English with its query and
+  hash kept. Downloaded files are kept beside the screenshots
+  (`[de-]download-<theme>-<width>.{svg,png,csv}`).
 - `--keyboard` adds one scripted keyboard pass per theme (entry `kind: keyboard`, no axe or
   screenshot). It sends real key events with `Input.dispatchKeyEvent` and checks, step by step:
   the skip link (first Tab, visible ring, Enter moves focus to `main`), the Cities menu (Enter

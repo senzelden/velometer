@@ -6,7 +6,7 @@
 // (ADR 0006). OSM tag values are user data: popups are built with textContent, never innerHTML.
 import { onThemeChange, token } from "./js/theme.js";
 import { number } from "./js/fmt.js";
-import { t } from "./js/strings.js";
+import { leafletPrefix, t } from "./js/strings.js";
 
 (function () {
   "use strict";
@@ -17,6 +17,7 @@ import { t } from "./js/strings.js";
   var status = document.getElementById("changemap-status");
 
   var map = L.map(mapEl, { preferCanvas: true });
+  map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 });
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,

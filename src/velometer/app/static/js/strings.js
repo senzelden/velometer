@@ -41,3 +41,12 @@ export function t(key, vars = {}) {
   if (typeof value === "object") value = vars.count === 1 ? value.one : value.other;
   return value.replace(/\{(\w+)\}/g, (all, name) => (name in vars ? String(vars[name]) : all));
 }
+
+/**
+ * Leaflet's attribution prefix (its "Leaflet" link) with the link's title in the page's
+ * language: Leaflet writes an English title, which a German reader would hear.
+ */
+export function leafletPrefix(prefix) {
+  const title = t("js.map.leaflet_title").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return String(prefix ?? "").replace(/title="[^"]*"/, () => `title="${title}"`);
+}

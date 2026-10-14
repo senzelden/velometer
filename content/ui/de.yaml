@@ -770,6 +770,7 @@ js.download.no_table: Zu diesem Diagramm gibt es keine Datentabelle zum Herunter
 js.download.no_png: die Zeichenfläche lieferte kein PNG
 js.download.image_failed: das Diagrammbild konnte nicht geladen werden
 js.map.osm_contributors: OpenStreetMap-Mitwirkende
+js.map.leaflet_title: Eine JavaScript-Bibliothek für interaktive Karten
 js.map.way: Weg {id}
 js.map.side: Seite
 js.map.tier: Stufe
