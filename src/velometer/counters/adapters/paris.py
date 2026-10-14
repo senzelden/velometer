@@ -9,11 +9,12 @@ local wall clock (`2022-01-01T00:00:00`), with an offset (`2019-01-01T07:00:00+0
 
 The site (`Identifiant du site de comptage`) is the unit: counter ids within a site are
 renumbered between yearly files, so each hour is the sum of the site's counters in that file. A
-site-hour is present only when every counter of the site in service that day reports it; a
-counter is in service from its first to its last reported day in the file (in the real files a
+site-hour is present only when every counter of the site in service at that hour reports it; a
+counter is in service from its first to its last reported hour in the file (in the real files a
 counter missing a day inside that span is an outage: 26, 39 and 30 counter-days in 2023-2025;
-none is missing outside it), so a day with a counter's hours missing is incomplete. A counter
-that lists one hour twice in a file (the spring-forward placeholder row, written as a
+none is missing outside it), so a day with a counter's hours missing inside its span is
+incomplete, while hours before a counter starts or after it ends do not count against the day.
+A counter that lists one hour twice in a file (the spring-forward placeholder row, written as a
 second `03:00+02:00`) keeps the larger count. Rows without a site id (an all-counters total per
 hour in the 2024 and 2025 archives) are skipped.
 """

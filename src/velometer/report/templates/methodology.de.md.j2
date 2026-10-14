@@ -213,7 +213,7 @@ Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstu
 Je Stadt:
 
 {% if "paris" in counter_ids %}
-- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der an diesem Tag in Betrieb ist, sie meldet; ein Zähler ist von seinem ersten bis zu seinem letzten gemeldeten Tag einer Datei in Betrieb.
+- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der in dieser Stunde in Betrieb ist, sie meldet; ein Zähler ist von seiner ersten bis zu seiner letzten gemeldeten Stunde einer Datei in Betrieb.
 {% endif %}
 {% if "oslo" in counter_ids %}
 - Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.

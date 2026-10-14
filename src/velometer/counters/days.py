@@ -68,15 +68,17 @@ CounterHours = dict[tuple[str, str, datetime, int], int]  # (site, counter, loca
 
 def sum_counters(per_counter: CounterHours) -> list[HourCount]:
     """The site-hours of one file: the sum of the site's counters, kept only when every counter of
-    the site in service that day reports the hour. A counter is in service on the days from its
-    first to its last reported day in the file; a site-hour one of them lacks is left out, so
-    to_days marks the day incomplete."""
-    span: dict[tuple[str, str], tuple[date, date]] = {}
-    for site, counter, t, _ in per_counter:
-        d = t.date()
-        lo, hi = span.get((site, counter), (d, d))
-        span[site, counter] = (min(lo, d), max(hi, d))
-    counters: dict[str, list[tuple[date, date]]] = defaultdict(list)
+    the site in service at that hour reports it. A counter is in service from its first to its last
+    reported hour in the file (naive local time, fold breaking the tie of a repeated hour); a
+    site-hour one of them lacks inside that span is left out, so to_days marks the day
+    incomplete."""
+    Key = tuple[datetime, int]
+    span: dict[tuple[str, str], tuple[Key, Key]] = {}
+    for site, counter, t, fold in per_counter:
+        k = (t, fold)
+        lo, hi = span.get((site, counter), (k, k))
+        span[site, counter] = (min(lo, k), max(hi, k))
+    counters: dict[str, list[tuple[Key, Key]]] = defaultdict(list)
     for (site, _), lo_hi in span.items():
         counters[site].append(lo_hi)
     total: dict[tuple[str, datetime, int], int] = defaultdict(int)
@@ -84,12 +86,9 @@ def sum_counters(per_counter: CounterHours) -> list[HourCount]:
     for (site, _, t, fold), count in per_counter.items():
         total[site, t, fold] += count
         reporting[site, t, fold] += 1
-    in_service: dict[tuple[str, date], int] = {}
     out = []
     for (site, t, fold), count in total.items():
-        d = t.date()
-        if (site, d) not in in_service:
-            in_service[site, d] = sum(lo <= d <= hi for lo, hi in counters[site])
-        if reporting[site, t, fold] == in_service[site, d]:
+        k = (t, fold)
+        if reporting[site, t, fold] == sum(lo <= k <= hi for lo, hi in counters[site]):
             out.append(HourCount(site, t.replace(fold=fold), count))
     return out

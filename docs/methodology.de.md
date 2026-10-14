@@ -300,7 +300,7 @@ Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstu
 
 Je Stadt:
 
-- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der an diesem Tag in Betrieb ist, sie meldet; ein Zähler ist von seinem ersten bis zu seinem letzten gemeldeten Tag einer Datei in Betrieb.
+- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der in dieser Stunde in Betrieb ist, sie meldet; ein Zähler ist von seiner ersten bis zu seiner letzten gemeldeten Stunde einer Datei in Betrieb.
 - Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.
 - Madrid: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die Dateien enthalten von Juli 2021 bis August 2022, während die Detektoren getauscht wurden, keine Zählwerte. Nur 2020 hat einen Indexwert, daher wird keine Indexlinie gezeichnet.
 - Barcelona veröffentlicht die monatliche durchschnittliche tägliche Verkehrsstärke je Zählstelle und Tagestyp, keine Zählwerte. Sein Index verwendet den Mittelwert einer Zählstelle über die zwölf Werktagsmonate, wobei eine Zählstelle in einem Jahr nur mit allen zwölf gültig ist, und heißt durchschnittliche tägliche Verkehrsstärke [M8-Spezifikation, Entscheidung 14].

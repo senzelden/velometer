@@ -400,6 +400,63 @@ def test_paris_counter_in_service_is_its_reported_span():
     assert (days["s", d3].count, days["s", d3].complete) == (72, True)
 
 
+def test_a_counter_starting_mid_day_leaves_the_earlier_hours_complete():
+    d1, d2 = date(2023, 6, 1), date(2023, 6, 2)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "a", d2, range(24))
+    per |= _pc("s", "b", d1, range(14, 24)) | _pc("s", "b", d2, range(24))  # b starts 14:00
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", d1].complete  # hours 0-13: only a in service, and a reports them
+    assert days["s", d1].count == 24 + 10
+
+
+def test_a_counter_ending_mid_day_leaves_the_later_hours_complete():
+    d1, d2 = date(2023, 6, 1), date(2023, 6, 2)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "a", d2, range(24))
+    per |= _pc("s", "b", d1, range(24)) | _pc("s", "b", d2, range(0, 9))  # b ends 08:00
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", d2].complete and days["s", d2].count == 24 + 9
+
+
+def test_an_hour_missing_inside_the_span_is_still_an_outage():
+    d1 = date(2023, 6, 1)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "b", d1, [h for h in range(24) if h != 12])
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert not days["s", d1].complete
+
+
+def test_a_counter_starting_at_the_repeated_hour_is_ordered_by_fold():
+    day = date(2023, 10, 29)  # fall-back day: 02:00 occurs twice in Europe/Paris
+    per = _pc("s", "a", day, range(24))
+    per[("s", "a", datetime(2023, 10, 29, 2), 1)] = 1
+    # b's first reported hour is the second 02:00 (fold 1)
+    per[("s", "b", datetime(2023, 10, 29, 2), 1)] = 1
+    per |= {("s", "b", datetime(2023, 10, 29, h), 0): 1 for h in range(3, 24)}
+    out = {(h.local_hour.replace(fold=0), h.local_hour.fold) for h in sum_counters(per)}
+    assert len(out) == 25  # a alone in service before the second 02:00: nothing dropped
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", day].complete
+    # b starting at the *first* 02:00 instead makes the first 02:00 an outage hour for b
+    per[("s", "b", datetime(2023, 10, 29, 2), 0)] = 1
+    del per[("s", "b", datetime(2023, 10, 29, 2), 1)]
+    out = {(h.local_hour.replace(fold=0), h.local_hour.fold) for h in sum_counters(per)}
+    assert (datetime(2023, 10, 29, 2), 1) not in out
+
+
+def test_paris_rolling_export_drops_no_site_hour_for_a_counter_not_yet_started():
+    entry = _entry("paris", "paris", "Europe/Paris")
+    rolling = FIX / "paris" / "rolling.csv"
+    _, hours = paris.parse([rolling], entry)
+    stamps: dict[str, set[str]] = {}
+    for line in rolling.read_text(encoding="utf-8-sig").splitlines()[1:]:
+        cells = line.split(";")
+        stamps.setdefault(cells[2], set()).add(cells[5])
+    for site, ts in stamps.items():
+        assert len([h for h in hours if h.site_id == site]) == len(ts)
+    # the export's first UTC hour is 00:00 local on 2025-10-25, so no earlier hour exists
+    days = _by_key(to_days(hours, entry.timezone))
+    assert days["100003096", date(2025, 10, 25)].complete
+
+
 def _vienna_entry():
     return _entry("vienna", "vienna", "Europe/Vienna", "daily", exclude_columns=["Opernring"])
 
