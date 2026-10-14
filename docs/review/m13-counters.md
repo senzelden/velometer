@@ -145,3 +145,21 @@ a complete-day boundary that mattered. The M8 defect therefore did not exist in 
 form that changed any stored complete-day figure; the hour rule is a correctness fix for the
 rule, not for the numbers.
 
+
+### Overlapping files: the fuller reading wins (controller ruling)
+
+Ruling: when two files hold the same site-hour, `to_days` keeps the reading summed from more
+counters; on a tie the later file, as before. `HourCount` gained `counters: int = 1` (set by
+`sum_counters` to the number of counters that reported the hour; other adapters keep 1, so their
+behaviour is unchanged). Helsinki reads one workbook, so no cross-file merge happens there: its
+numbers are unchanged. Paris was reloaded from the same raw files
+(`uv run velometer counters load paris helsinki`).
+
+Result against the pre-M13 database: Paris site 100047545 on 2025-09-08 is back to 3825 (the
+archive's four-counter reading is kept for 00:00). The ruling reaches further than that one hour:
+119 Paris site-days from 2025-09-06 to 2025-12-31 (8 sites) now hold a higher count than before
+(together +31,520), because wherever the rolling export lists fewer counters of a site than the
+2025 archive for the same hours, the archive's fuller sum now stands. None of the 119 changes its
+completeness. Helsinki: no change. Complete site-days are still identical in every city and year.
+Stored Paris index v1: 2025 = 205.244892 (74 sites), was 205.156574; every other Paris year and
+all Helsinki years are unchanged. The printed 205.2 in content/counters.yaml still matches.

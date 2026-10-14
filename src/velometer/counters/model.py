@@ -40,6 +40,7 @@ class HourCount:
     site_id: str
     local_hour: datetime  # naive local wall clock; fold=1 on the repeated fall-back hour
     count: int
+    counters: int = 1  # counters that reported the hour (a summed site-hour: how many were summed)
 
 
 @dataclass(frozen=True, slots=True)

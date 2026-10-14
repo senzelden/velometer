@@ -116,6 +116,38 @@ def test_duplicate_hours_from_overlapping_files_count_once_last_wins():
     assert (d.count, d.complete) == (12 * 1 + 12 * 3, True)
 
 
+def _overlap_day(first, second):
+    """One day, 24 hours of count 1 from an earlier file; hour 10 read again by a later file.
+    `first` and `second` are (count, counters) for hour 10; returns the stored day count."""
+    day = date(2023, 6, 1)
+    base = [HourCount("a", datetime(2023, 6, 1, h), 1) for h in range(24) if h != 10]
+    early = HourCount("a", datetime(2023, 6, 1, 10), first[0], first[1])
+    late = HourCount("a", datetime(2023, 6, 1, 10), second[0], second[1])
+    (d,) = to_days(base + [early] + [late], "Europe/Paris")
+    assert d.day == day and d.complete
+    return d.count - 23
+
+
+def test_a_later_file_with_fewer_counters_does_not_overwrite_a_fuller_reading():
+    assert _overlap_day((53, 4), (42, 1)) == 53
+
+
+def test_equal_counter_counts_the_later_file_wins():
+    assert _overlap_day((20, 2), (30, 2)) == 30
+
+
+def test_a_later_file_with_more_counters_wins():
+    assert _overlap_day((42, 1), (53, 4)) == 53
+
+
+def test_sum_counters_carries_how_many_counters_reported_the_hour():
+    d = date(2023, 6, 1)
+    per = _pc("s", "a", d, range(24)) | _pc("s", "b", d, [5])
+    # b has a one-hour span: only hour 5 has both counters
+    got = {h.local_hour.hour: h.counters for h in sum_counters(per)}
+    assert got[5] == 2 and got[6] == 1
+
+
 def test_zero_day_is_an_outage():
     days = [DayCount("a", date(2024, 1, 1), 0, True), DayCount("a", date(2024, 1, 2), 5, True)]
     assert [d.complete for d in zero_days_invalid(days)] == [False, True]

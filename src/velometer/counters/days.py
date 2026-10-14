@@ -1,11 +1,12 @@
 """Hourly counts to daily totals (M8 spec §5.2).
 
-`to_days` de-duplicates on (site, local hour, fold), keeping the last record seen, so files
-that overlap (a yearly archive and a rolling window) count each hour once; pass them in load
-order. A day is complete when it holds every local hour that exists on that date in the
-timezone: 23 on the spring-forward day, 25 on the fall-back day (the repeated hour twice, the
-second with fold=1), else 24. A record for an hour that does not exist (the skipped hour of a
-spring-forward day, which some portals fill with a placeholder row) is ignored.
+`to_days` de-duplicates on (site, local hour, fold), so files that overlap (a yearly archive and a
+rolling window) count each hour once; pass them in load order. Of two readings of one hour it
+keeps the one summed from more counters (a file edge can hold only some of a site's counters),
+and the later one on a tie. A day is complete when it holds every local hour that exists on that
+date in the timezone: 23 on the spring-forward day, 25 on the fall-back day (the repeated hour
+twice, the second with fold=1), else 24. A record for an hour that does not exist (the skipped
+hour of a spring-forward day, which some portals fill with a placeholder row) is ignored.
 
 `sum_counters` turns the hours of several counters of one site into site-hours (Paris: the
 counters of a counting site; Helsinki: the two sides of a bridge).
@@ -39,13 +40,16 @@ def local_hours(day: date, tz: str) -> frozenset[HourKey]:
 
 
 def to_days(hours: Iterable[HourCount], tz: str) -> list[DayCount]:
-    latest: dict[str, dict[HourKey, int]] = defaultdict(dict)
+    latest: dict[str, dict[HourKey, tuple[int, int]]] = defaultdict(dict)
     for h in hours:
-        latest[h.site_id][(h.local_hour.replace(fold=0), h.local_hour.fold)] = h.count
+        by_hour = latest[h.site_id]
+        key = (h.local_hour.replace(fold=0), h.local_hour.fold)
+        if key not in by_hour or h.counters >= by_hour[key][1]:
+            by_hour[key] = (h.count, h.counters)
     out = []
     for site_id, by_hour in latest.items():
         per_day: dict[date, dict[HourKey, int]] = defaultdict(dict)
-        for key, count in by_hour.items():
+        for key, (count, _) in by_hour.items():
             per_day[key[0].date()][key] = count
         for day in sorted(per_day):
             got = per_day[day]
@@ -90,5 +94,5 @@ def sum_counters(per_counter: CounterHours) -> list[HourCount]:
     for (site, t, fold), count in total.items():
         k = (t, fold)
         if reporting[site, t, fold] == sum(lo <= k <= hi for lo, hi in counters[site]):
-            out.append(HourCount(site, t.replace(fold=fold), count))
+            out.append(HourCount(site, t.replace(fold=fold), count, reporting[site, t, fold]))
     return out
