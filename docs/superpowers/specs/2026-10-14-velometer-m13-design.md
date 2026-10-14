@@ -75,6 +75,8 @@ methodology, and the changed prose gets one user review stop.
 - An outage inside the span still makes a day incomplete (unchanged, as documented).
 - Reload Paris from the raw files already in `data/counters/paris/`. Re-download only a file that
   is missing.
+- Ruling (2026-10-15, planning): `sum_counters` is shared with Helsinki (bridge sides), so the
+  hour rule applies there too. Helsinki is reloaded the same way and its effect is reported.
 - Report the change in complete days per year and the Paris index before and after, separately
   from the v2 effect (§4.2).
 - The adapter docstring and the methodology sentence on Paris are updated.
@@ -245,7 +247,7 @@ Execution runs everything else in parallel with the wait for this review.
 - The six checks exit 0.
 - `velometer.sqlite` changes only in:
   - the `counter_index` method column and its v2 rows;
-  - Paris `counter_sites`/`counter_daily`;
+  - Paris and Helsinki `counter_sites`/`counter_daily`;
   - `plan_overlay` v5 rows, only if built.
   A `velometer results` diff shows no other change.
 - The full render pass (`--pages all`, both themes, 1280/390/320, both editions) and
