@@ -161,10 +161,30 @@ def test_a_missing_string_and_a_missing_stamp_are_completeness(tree):
 
 
 def test_a_german_string_without_english_twin_is_an_orphan_problem(tree):
-    tree.edit("data_refs", lambda refs: {**refs, "r9": "Übersetzt: Geist"}, german=True)
-    assert any("data_refs.r9" in p and "orphan" in p for p in tree.check()[0])
+    tree.edit("sections.1.paragraphs", lambda ps: [*ps, "Übersetzt: Geist"], german=True)
+    assert any("sections.1.paragraphs.1" in p and "orphan" in p for p in tree.check()[0])
     (tree.root / "narratives" / "de" / "lisbon.yaml").write_text("city_id: lisbon\n")
     assert any("lisbon.yaml" in p and "no English" in p for p in tree.check()[0])
+
+
+def test_data_reference_labels_are_not_translatable(tree):
+    """A data reference's label comes only from the English file (spec §4.4): walk yields no
+    data_refs path, so no German label is asked for, merged or stamped."""
+    en = tr.load_english(tree.en)
+    assert en.data_refs  # the fixture narrative has a data reference
+    assert not [p for p, _ in tr.walk(en) if p.startswith("data_refs")]
+    german = tr.load_translation(tree.de, en)
+    merged, _fallback = tr.merge(en, german)
+    assert merged.data_refs == en.data_refs
+
+
+def test_a_german_data_refs_copy_is_a_problem(tree):
+    """A German file that still carries data_refs is reported, so a stale copy can't linger."""
+    doc = tr.yaml.safe_load(tree.de.read_text(encoding="utf-8"))
+    doc["data_refs"] = {"r1": {"text": "Bericht"}}
+    tr.dump(tree.de, doc)
+    problems = tree.check()[0]
+    assert any(p.startswith("[de] ") and "berlin.yaml" in p and "data_refs" in p for p in problems)
 
 
 def test_german_content_rules_run_on_the_german_text(tree):

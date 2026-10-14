@@ -50,25 +50,6 @@ sections:
       von 2024 nannte km einen schlechten Indikator und stellte eine auf OpenStreetMap
       beruhende Zählung der Zahl des Statistikamts gegenüber [@budapest-telex-g7-2024].
     src: 57162c6b1ca3
-data_refs:
-  ts-lau:
-    text: velometer-Zeitreihe, budapest/lau (Klassifikator v4)
-    src: e697abb3334c
-  ts-fua:
-    text: velometer-Zeitreihe, budapest/fua (Klassifikator v4)
-    src: f84abd78b003
-  shift-lau-2024:
-    text: velometer-Untersuchung einer Verschiebung, budapest/lau/2024
-    src: 1f137aa12513
-  recon:
-    text: velometer-Abgleich, budapest (QECIO-Zeilen)
-    src: df4f7c506084
-  recon-cc:
-    text: velometer-Abgleich, budapest/cc_ratio
-    src: 5a2fa2949e67
-  recon-bnk:
-    text: velometer-Abgleich, budapest/bnk_network_km
-    src: ab3ed8cb6d27
 literals:
 - 100 km
 - 21 Städte

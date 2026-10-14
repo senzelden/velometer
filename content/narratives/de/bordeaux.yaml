@@ -49,12 +49,5 @@ sections:
       die Hauptstraßen überein, und die Gemeinde hat mehr markierte Radfahrstreifen
       und weniger separate Radwege als der Rest der Gironde [#rc-bordeaux-qecio_main_km].
     src: aebe2b5de6de
-data_refs:
-  ts-bordeaux-fua-2019:
-    text: velometer-Erklärung zur Zeitreihe, bordeaux/fua/2019
-    src: 665ea50ffedb
-  rc-bordeaux-qecio_main_km:
-    text: velometer-Erklärung zum Abgleich, bordeaux/qecio_main_km
-    src: 05a7dc5af3b3
 literals:
 - 100 km

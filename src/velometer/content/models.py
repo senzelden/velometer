@@ -232,6 +232,22 @@ class Organisation(_Strict):
 # (`translate.src_hash`). A null list item is an untranslated paragraph that keeps its place.
 
 
+class _TrFile(_Strict):
+    """A translation file. It has no `data_refs`: a data reference's label comes only from the
+    English file and shows in English on German pages (spec §4.4), so a German copy is an
+    error, never a stale caption."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _no_data_refs(cls, data: object) -> object:
+        if isinstance(data, dict) and "data_refs" in data:
+            raise ValueError(
+                "data_refs: data-reference labels are not translated; they come only from the "
+                "English file (remove the German data_refs)"
+            )
+        return data
+
+
 class Tr(_Strict):
     text: str
     src: str | None = Field(None, pattern=r"^[0-9a-f]{12}$")
@@ -248,33 +264,30 @@ class TrOrgSection(_Strict):
     dimensions: dict[str, Tr] | None = None
 
 
-class NarrativeTr(_Strict):
+class NarrativeTr(_TrFile):
     """`content/narratives/de/<city_id>.yaml`."""
 
     city_id: str
     title: Tr | None = None
     dek: Tr | None = None
     sections: list[TrSection] = []
-    data_refs: dict[str, Tr] = {}
     literals: list[str] = []
 
 
-class DocumentTr(_Strict):
+class DocumentTr(_TrFile):
     """`content/de/explainer.yaml`, `content/de/counters.yaml`, `content/plans/de/<id>.yaml`."""
 
     title: Tr | None = None
     intro: list[Tr | None] = []
     sections: list[TrSection] = []
-    data_refs: dict[str, Tr] = {}
     literals: list[str] = []
 
 
-class OrganisationTr(_Strict):
+class OrganisationTr(_TrFile):
     """`content/organisations/de/<id>.yaml`; the name is a proper name and is not translated."""
 
     id: str
     sections: list[TrOrgSection] = []
-    data_refs: dict[str, Tr] = {}
     literals: list[str] = []
 
 

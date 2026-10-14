@@ -53,21 +53,5 @@ sections:
       ist hier die Stadt selbst, und ihre Summe von 413 km Radinfrastruktur stimmt
       mit unseren 414 km überein, gezählt nach ihrer Regel der halben Länge [#recon-oslo-qecio-tracks].
     src: c7cdd94bb4ba
-data_refs:
-  ts-oslo:
-    text: velometer-Zeitreihe, oslo LAU und FUA (kartierte km)
-    src: 6b2a3ea0df6f
-  ts-oslo-2021:
-    text: velometer-Erklärung zur Zeitreihe, oslo/lau/2021
-    src: 1c8b7f69e28d
-  ts-oslo-fua-2021:
-    text: velometer-Erklärung zur Zeitreihe, oslo/fua/2021
-    src: 3e351ac1e292
-  recon-oslo-cc-ratio:
-    text: velometer-Abgleich, oslo/cc_ratio
-    src: aa19e0f2fe8c
-  recon-oslo-qecio-tracks:
-    text: velometer-Abgleich, oslo/qecio_tracks_km
-    src: fdf2769ae3e3
 literals:
 - 100 km

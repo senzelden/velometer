@@ -313,23 +313,42 @@ def test_organisation_profile_dimension_and_heading_fall_back(setup, tmp_path): 
     assert len(re.findall(r'<dd><span lang="en" data-fallback>', org)) == 1
 
 
-def test_explainer_intro_and_data_ref_label_fall_back(setup, tmp_path):  # noqa: F811
+def test_explainer_intro_and_title_fall_back(setup, tmp_path):  # noqa: F811
     content = tmp_path / "content"
     shutil.copytree(CONTENT, content)
-    from velometer.content import translate as tr
-
     en = content / "explainer.yaml"
-    model = tr.load_english(en)
-    refs = [p for p, _ in tr.walk(model) if p.startswith("data_refs.")]
-    drop = frozenset({"intro.0", "title", *refs[:1]})
-    fake_translate(en, content / "de" / "explainer.yaml", drop=drop)
+    fake_translate(en, content / "de" / "explainer.yaml", drop=frozenset({"intro.0", "title"}))
     with app_for(setup, content=content) as c:
         html = c.get("/de/differences").text
     assert MARK in html
     assert re.search(r'<h1 lang="en" data-fallback>', html)
     assert len(re.findall(r'<p lang="en" data-fallback>', html)) == 1
-    if refs:
-        assert '<span lang="en" data-fallback>' in html.split('class="citations drefs"')[1]
+
+
+def _drefs(html: str) -> list[str]:
+    """The items of a page's data-reference list(s)."""
+    lists = [part.split("</ol>", 1)[0] for part in html.split('class="citations drefs"')[1:]]
+    return [li for ol in lists for li in re.findall(r"<li\b.*?</li>", ol, re.S)]
+
+
+def test_data_reference_labels_stay_english_on_german_pages(setup, tmp_path):  # noqa: F811
+    """Spec §4.4: a data reference's label comes only from the English file. On a fully
+    translated German page every label is the English one inside `lang="en"` (by design, so no
+    `data-fallback`); the English page shows it bare."""
+    from velometer.content import translate as tr
+
+    content = tmp_path / "content"
+    shutil.copytree(CONTENT, content)
+    en = content / "explainer.yaml"
+    labels = [d.label for d in tr.load_english(en).data_refs]
+    fake_translate(en, content / "de" / "explainer.yaml")
+    with app_for(setup, content=content) as c:
+        de, en_html = c.get("/de/differences").text, c.get("/differences").text
+    items = _drefs(de)
+    assert items and "data-fallback" not in "".join(items)
+    shown = [m for li in items for m in re.findall(r'<span lang="en">([^<]*)</span>', li)]
+    assert len(shown) == len(items) and set(shown) <= {str(escape(x)) for x in labels}
+    assert 'lang="en"' not in "".join(_drefs(en_html)) and _drefs(en_html)
 
 
 def test_untranslated_pages_mark_all_english_content(setup, tmp_path):  # noqa: F811

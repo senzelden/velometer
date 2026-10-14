@@ -47,22 +47,6 @@ sections:
       haben wir nicht gefunden; das Routensystem der Stadt zählt Routen, die weder
       beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
     src: 526c4d699a94
-data_refs:
-  ts-lau:
-    text: velometer-Zeitreihe, prague/lau (Klassifikator v4)
-    src: 8b70c073cf9a
-  ts-fua:
-    text: velometer-Zeitreihe, prague/fua (Klassifikator v4)
-    src: db87175c4a5e
-  expl-lau-2020:
-    text: velometer-Erklärung zur Zeitreihe, prague/lau/2020
-    src: 9064c4a7f92d
-  expl-fua-2020:
-    text: velometer-Erklärung zur Zeitreihe, prague/fua/2020
-    src: 414cc9cd88c3
-  recon:
-    text: velometer-Abgleich, prague/cc_ratio
-    src: 064aa246e6ac
 literals:
 - 100 km
 - 21 Städte

@@ -148,6 +148,13 @@ def test_each_translated_string_is_one_row_with_its_current_texts(tree):
     assert not [r for r in by_id.values() if "/de/" in r["file"]]
 
 
+def test_data_references_have_no_rows(tree):
+    """Data-reference labels stay English (spec §4.4): no review row asks for a German one."""
+    rows, root, _config, _docs = tree
+    assert tr.load_english(root / "narratives" / "berlin.yaml").data_refs
+    assert not [r for r in rows if "data_refs" in r["path"] or r["section"] == "Data references"]
+
+
 def test_a_gloss_row_shows_the_quote_and_both_glosses(tree):
     rows, *_ = tree
     row = _by_id(rows)["content/sources/glossed.yaml#oslo-src.e1.gloss_de"]

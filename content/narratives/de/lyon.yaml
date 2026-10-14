@@ -53,18 +53,5 @@ sections:
       berichtet für das Département Rhône; auf dieser Fläche gemessen stimmen die
       Hauptstraßen überein [#rc-lyon-qecio_main_km].
     src: a0ef4783ed95
-data_refs:
-  ts-lyon-2025:
-    text: velometer-Erklärung zur Zeitreihe, lyon/lau/2025
-    src: 34674d4ea63b
-  ts-lyon-fua-2026:
-    text: velometer-Erklärung zur Zeitreihe, lyon/fua/2026
-    src: 18895bb35470
-  rc-lyon-cc_ratio:
-    text: velometer-Erklärung zum Abgleich, lyon/cc_ratio
-    src: 3c684dee8038
-  rc-lyon-qecio_main_km:
-    text: velometer-Erklärung zum Abgleich, lyon/qecio_main_km
-    src: 9f6ef48d84a1
 literals:
 - 100 km

@@ -50,18 +50,5 @@ sections:
       [#rec_cc_km]. Sein Straßennetz von 2.128 km ist weiter gefasst als unsere 1.718
       km, daher beträgt sein Verhältnis 11 % gegenüber unseren 17,2 %.
     src: f28416373942
-data_refs:
-  ts_lau_2024:
-    text: velometer-Erklärung zur Zeitreihe, krakow/lau/2024
-    src: 0679f49fb0f2
-  ts_lau_2022:
-    text: velometer-Erklärung zur Zeitreihe, krakow/lau/2022
-    src: ca7784bf2656
-  ts_fua_2019:
-    text: velometer-Erklärung zur Zeitreihe, krakow/fua/2019
-    src: b0aa516426e5
-  rec_cc_km:
-    text: velometer-Abgleich, krakow/cc_km
-    src: 36713fbad751
 literals:
 - 100 km

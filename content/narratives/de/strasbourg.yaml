@@ -51,15 +51,5 @@ sections:
       Bas-Rhin, weshalb seine Hauptstraßen-km um −95,3 % von unseren abweichen; auf
       dieser Fläche gemessen stimmen die Hauptstraßen überein [#rc-strasbourg-qecio_main_km].
     src: 91d2c1994238
-data_refs:
-  ts-strasbourg-2025:
-    text: velometer-Erklärung zur Zeitreihe, strasbourg/lau/2025
-    src: a81f6487e9db
-  ts-strasbourg-2023:
-    text: velometer-Erklärung zur Zeitreihe, strasbourg/lau/2023
-    src: d7afba243449
-  rc-strasbourg-qecio_main_km:
-    text: velometer-Erklärung zum Abgleich, strasbourg/qecio_main_km
-    src: cc03ee71d16f
 literals:
 - 100 km

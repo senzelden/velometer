@@ -783,11 +783,7 @@ def check_translation(
     except ValueError as e:  # pydantic's ValidationError too: a rule the German text breaks
         problem(f": the German text does not validate in the English structure: {e}")
         return problems, notes
-    prose = [
-        text
-        for path, text in walk(merged)
-        if path not in fallback and not path.startswith("data_refs.")
-    ]
+    prose = [text for path, text in walk(merged) if path not in fallback]
     config_dir = Path(data.config_dir) if data is not None else None
     problems += _check_document(
         f"{DE}{de_rel}",

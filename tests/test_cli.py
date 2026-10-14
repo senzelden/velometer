@@ -1358,7 +1358,8 @@ def test_content_stamp_stamps_a_translation_file(content_tree):
     fake_translate(en, de)
     tr.edit_path(en, "title", lambda s: s + " (new)")
     res = CliRunner().invoke(app, ["content", "stamp", str(de)])
-    assert res.exit_code == 0 and res.output.strip() == f"stamped 6 strings in {de}"
+    # title, dek, a heading and two paragraphs; the data reference's label is not translated
+    assert res.exit_code == 0 and res.output.strip() == f"stamped 5 strings in {de}"
     raw = tr.yaml.safe_load(de.read_text(encoding="utf-8"))
     assert raw["title"]["src"] == tr.src_hash("Berlin (new)")
 

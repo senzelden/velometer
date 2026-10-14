@@ -156,40 +156,6 @@ sections:
       alle Stufen hinweg kartiert ist, und lassen sich aus OpenStreetMap nicht nachbilden
       [#recon-paris-cc-km].
     src: 3ad92f7f9733
-data_refs:
-  recon-vienna-cc-km:
-    text: velometer-Abgleich, vienna/cc_km
-    src: 60513cc1722e
-  recon-amsterdam-cc-network:
-    text: velometer-Abgleich, amsterdam/cc_network_km
-    src: 21df08291188
-  berlin-change:
-    text: velometer-Kartierungsänderung, Berlin, 2023-01-01 bis aktueller Stand
-    src: 10da1f913f3c
-  recon-berlin-cc-km:
-    text: velometer-Abgleich, berlin/cc_km
-    src: a40ed84e7d1e
-  recon-oslo:
-    text: velometer-Abgleich, oslo (Zeile qecio_total_km)
-    src: 57d2e60b60aa
-  shift-warsaw-2025:
-    text: velometer-Untersuchung einer Verschiebung, warsaw/lau/2025
-    src: f2c89825d7cb
-  recon-berlin:
-    text: velometer-Abgleich, berlin (Zeile qecio_main_km)
-    src: 01bf48b4159a
-  recon-warsaw:
-    text: velometer-Abgleich, warsaw (Zeile qecio_main_km)
-    src: 4db182739992
-  recon-stockholm-qecio-main:
-    text: velometer-Abgleich, stockholm/qecio_main_km
-    src: 4365ce03234c
-  recon-paris-cc-km:
-    text: velometer-Abgleich, paris/cc_km
-    src: 1b6015c86cda
-  recon-ljubljana-cc-ratio:
-    text: velometer-Abgleich, ljubljana/cc_ratio
-    src: 55d6b0674eae
 literals:
 - 21 Städten
 - 100 km

@@ -49,18 +49,5 @@ sections:
       Verhältnis bei 22,7 %, +3 % gegenüber der korrigierten Zahl, und die Straßennetze
       stimmen überein [#recon].
     src: 75c96a2289bc
-data_refs:
-  ts-lau:
-    text: velometer-Zeitreihe, vienna/lau (Klassifikator v4)
-    src: c5553f78a5d1
-  ts-fua:
-    text: velometer-Zeitreihe, vienna/fua (Klassifikator v4)
-    src: 6ef20e5e73e3
-  expl-lau-2025:
-    text: velometer-Erklärung zur Zeitreihe, vienna/lau/2025
-    src: 16126fafb159
-  recon:
-    text: velometer-Abgleich, vienna (cc_ratio, cc_network_km)
-    src: ca9b8b789b31
 literals:
 - 100 km

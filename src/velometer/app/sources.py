@@ -72,7 +72,6 @@ class CitedSources:
     refs: list[tuple[int, DataRef]] = field(default_factory=list)
     prefix: str = CITE_PREFIX
     ref_links: dict[int, str | None] = field(default_factory=dict)
-    ref_fallback: frozenset[str] = frozenset()  # data-ref ids whose label is English (German page)
 
 
 def order_rows(rows: list) -> list:
@@ -107,10 +106,6 @@ def source_rows(
     registry = load_sources(content_dir / "sources")
     orgs, fallback = _organisations(content_dir / "organisations", lang)
     refs = {r.id: r for o in orgs.values() for r in o.data_refs}
-    ref_fallback = frozenset(
-        r.id for o in orgs.values() for r in o.data_refs
-        if f"data_refs.{r.id}" in fallback.get(o.id, ())
-    )  # fmt: skip
     num = _Numbering(registry, refs, CITE_PREFIX, lang)
 
     preset_of: dict[str | None, str] = {}  # source -> the first preset that recomputes it
@@ -198,7 +193,6 @@ def source_rows(
         sources=sorted((n, registry[sid]) for sid, n in num.source_no.items()),
         refs=sorted((n, refs[rid]) for rid, n in num.ref_no.items()),
         ref_links={n: _route(refs[rid].route) for rid, n in num.ref_no.items()},
-        ref_fallback=ref_fallback,
     )
     return rows, cited
 

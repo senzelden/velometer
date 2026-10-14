@@ -2,8 +2,9 @@
 
 A translation file mirrors its English file's structure and holds only the translatable strings,
 each `{text, src}`. Strings are addressed by walk paths: `title`, `dek`, `intro.<i>`,
-`sections.<i>.heading`, `sections.<i>.paragraphs.<j>`, `sections.<i>.dimensions.<k>` and
-`data_refs.<id>` (a data reference's label). `src` is the stamp of the English string the text
+`sections.<i>.heading`, `sections.<i>.paragraphs.<j>` and `sections.<i>.dimensions.<k>`.
+Data references are not translated: their labels come only from the English file and show in
+English (inside `lang="en"`) on German pages. `src` is the stamp of the English string the text
 was translated from; `stamp` writes it, the content check compares it with the English today.
 A blank text counts as missing: it falls back to English and is a completeness gap.
 
@@ -73,8 +74,6 @@ def walk(model: English) -> Iterator[tuple[str, str]]:
             yield f"sections.{i}.paragraphs.{j}", p
         for k, v in (getattr(sec, "dimensions", None) or {}).items():
             yield f"sections.{i}.dimensions.{k}", v
-    for d in model.data_refs:
-        yield f"data_refs.{d.id}", d.label
 
 
 def tr_strings(tr: Translation) -> dict[str, Tr]:
@@ -100,8 +99,6 @@ def _tr_strings(tr: Translation) -> dict[str, Tr]:
                 out[f"sections.{i}.paragraphs.{j}"] = p
         for k, v in (getattr(sec, "dimensions", None) or {}).items():
             out[f"sections.{i}.dimensions.{k}"] = v
-    for rid, label in tr.data_refs.items():
-        out[f"data_refs.{rid}"] = label
     return out
 
 
@@ -115,10 +112,6 @@ def translation_model(en_model: English) -> type[Translation]:
 
 def _set(doc: dict, path: str, text: str) -> None:
     """Set the string at a walk path of an English model's dump."""
-    head, _, rest = path.partition(".")
-    if head == "data_refs":
-        next(d for d in doc["data_refs"] if d["id"] == rest)["label"] = text
-        return
     node: Any = doc
     parts = path.split(".")
     for part in parts[:-1]:
@@ -132,8 +125,8 @@ def _set(doc: dict, path: str, text: str) -> None:
 
 def merge(en_model: English, tr: Translation | None) -> tuple[English, frozenset[str]]:
     """The English model with the German text and the German `literals`, and the walk paths
-    that fell back to English (no German string). Facts, quotes, data-ref targets, roles,
-    steps and ids stay the English file's."""
+    that fell back to English (no German string). Facts, quotes, data references (labels
+    included), roles, steps and ids stay the English file's."""
     english = dict(walk(en_model))
     if tr is None:
         return en_model, frozenset(english)
@@ -225,9 +218,6 @@ def _tr_nodes(doc: dict) -> Iterator[tuple[str, dict]]:
         for k, v in (sec.get("dimensions") or {}).items():
             if _is_tr(v):
                 yield f"sections.{i}.dimensions.{k}", v
-    for rid, label in (doc.get("data_refs") or {}).items():
-        if _is_tr(label):
-            yield f"data_refs.{rid}", label
 
 
 def stamp(de_path: Path, en_model: English) -> int:
@@ -278,11 +268,6 @@ def skeleton(en_model: English, texts: dict[str, str], literals: list[str]) -> d
             }
         sections.append(out)
     doc["sections"] = sections
-    refs = {
-        d.id: s(f"data_refs.{d.id}") for d in en_model.data_refs if f"data_refs.{d.id}" in texts
-    }
-    if refs:
-        doc["data_refs"] = refs
     if literals:
         doc["literals"] = list(literals)
     return doc
@@ -358,13 +343,10 @@ def git_history(path: Path) -> list[str]:
 def _english_at(doc: Any, walk_path: str) -> str | None:
     """The string at a walk path of a raw English file, None when it has none."""
     try:
-        head, _, rest = walk_path.partition(".")
-        if head == "data_refs":
-            return next(d["label"] for d in doc["data_refs"] if d["id"] == rest)
         node: Any = doc
         for part in walk_path.split("."):
             node = node[int(part)] if isinstance(node, list) else node[part]
-    except (KeyError, IndexError, TypeError, ValueError, StopIteration):
+    except (KeyError, IndexError, TypeError, ValueError):
         return None
     return node if isinstance(node, str) else None
 

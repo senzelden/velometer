@@ -48,18 +48,5 @@ sections:
       von 1.769 km ist weiter gefasst als unsere 1.340 km [#rec_cc_network], daher
       beträgt sein Verhältnis 20 % gegenüber unseren 29,8 %.
     src: 53be68e87189
-data_refs:
-  ts_lau_2018:
-    text: velometer-Erklärung zur Zeitreihe, wroclaw/lau/2018
-    src: 112e468d5649
-  ts_fua_2023:
-    text: velometer-Erklärung zur Zeitreihe, wroclaw/fua/2023
-    src: b8e07b2531b3
-  rec_cc_ratio:
-    text: velometer-Abgleich, wroclaw/cc_ratio
-    src: bec4cb6bbab3
-  rec_cc_network:
-    text: velometer-Abgleich, wroclaw/cc_network_km
-    src: a3790ffdff22
 literals:
 - 100 km

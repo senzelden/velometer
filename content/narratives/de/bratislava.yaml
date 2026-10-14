@@ -50,30 +50,5 @@ sections:
       die örtliche Radverkehrs-NGO zählte einen neuen Weg auf beiden Straßenseiten,
       wie wir [@bratislava-cyklokoalicia-2025].
     src: 37aaef92209e
-data_refs:
-  ts-lau:
-    text: velometer-Zeitreihe, bratislava/lau (Klassifikator v4)
-    src: f73811b2c059
-  ts-fua:
-    text: velometer-Zeitreihe, bratislava/fua (Klassifikator v4)
-    src: 3d8fb0cc68e6
-  shift-lau-2020:
-    text: velometer-Untersuchung einer Verschiebung, bratislava/lau/2020
-    src: 138c2fb6b261
-  expl-lau-current:
-    text: velometer-Erklärung zur Zeitreihe, bratislava/lau/current
-    src: 06860258a39a
-  expl-fua-2022:
-    text: velometer-Erklärung zur Zeitreihe, bratislava/fua/2022
-    src: c2c3afc7ec33
-  recon-lanes:
-    text: velometer-Abgleich, bratislava/qecio_lanes_km
-    src: 0f00435cd770
-  recon-qecio:
-    text: velometer-Abgleich, bratislava/qecio_main_km
-    src: cce6b090eac4
-  recon:
-    text: velometer-Abgleich, bratislava (cc_ratio, cc_km)
-    src: 0009e32c6445
 literals:
 - 100 km

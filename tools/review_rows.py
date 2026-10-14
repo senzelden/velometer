@@ -83,7 +83,7 @@ def _kind(walk_path: str) -> str:
         return "title"
     if walk_path.endswith(".heading"):
         return "heading"
-    if walk_path.startswith("data_refs.") or last == "dimensions":
+    if last == "dimensions":
         return "label"
     return "paragraph"
 
@@ -105,7 +105,7 @@ def _place(model, rel: str, cities: dict[str, str]) -> tuple[str, str]:
 def _section(model, walk_path: str) -> str:
     parts = walk_path.split(".")
     if parts[0] != "sections":
-        return {"data_refs": "Data references"}.get(parts[0], "Top")
+        return "Top"
     i = int(parts[1])
     sec = model.sections[i]
     head = getattr(sec, "heading", None)

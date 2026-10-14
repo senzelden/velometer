@@ -54,21 +54,5 @@ sections:
       Clean Cities übernahm die Zahlen der meisten Städte von den Städten selbst [@cc2025-report].
       QECIO, das ebenfalls OSM misst, liegt innerhalb von +9,3 % unserer Radwege.
     src: 78e4624ae033
-data_refs:
-  ts-paris-2020:
-    text: velometer-Erklärung zur Zeitreihe, paris/lau/2020
-    src: 321387758a80
-  ts-paris-2021:
-    text: velometer-Erklärung zur Zeitreihe, paris/lau/2021
-    src: e0c7f0fb164f
-  ts-paris-2024:
-    text: velometer-Erklärung zur Zeitreihe, paris/lau/2024
-    src: 9d3d09b1f736
-  ts-paris-fua-2019:
-    text: velometer-Erklärung zur Zeitreihe, paris/fua/2019
-    src: 780a64df2290
-  rc-paris-cc_km:
-    text: velometer-Erklärung zum Abgleich, paris/cc_km
-    src: 62a91a269ad7
 literals:
 - 100 km

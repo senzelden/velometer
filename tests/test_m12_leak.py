@@ -24,14 +24,30 @@ def _config_phrases() -> list[str]:
     return [en for _w, en, de in reader_prose(Path("config")) if len(en.split()) >= 4 and en != de]
 
 
+def _data_ref_labels() -> list[str]:
+    """Every English data-reference label: German pages show them in English (spec §4.4), so
+    each must sit inside lang="en"."""
+    from velometer.content import translate as tr
+
+    labels = set()
+    for path in CONTENT.rglob("*.yaml"):
+        rel = path.relative_to(CONTENT)
+        if tr.DE in rel.parts or rel.parts[0] in ("sources", "ui"):
+            continue
+        labels |= {d.label for d in tr.load_english(path).data_refs}
+    return sorted(labels)
+
+
 def leak_sources():
     """Every phrase source: the name and a callable giving English phrases that must not show on
     a German page outside a lang="en" subtree. "config": the English reader prose of the config
-    that has a German sibling (config.reader_prose), of four words or more."""
+    that has a German sibling (config.reader_prose), of four words or more. "data_refs": the
+    data-reference labels, which German pages show in English inside lang="en"."""
     return {
         "catalogue": i18n.leak_phrases,
         "content": lambda: i18n.content_phrases(CONTENT),
         "config": _config_phrases,
+        "data_refs": _data_ref_labels,
     }
 
 

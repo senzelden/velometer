@@ -52,24 +52,5 @@ sections:
       20,9 % [#rec_cc_ratio]. QECIO zählt die ganze NUTS3-Region um die Stadt, nicht
       die Gemeinde [#rec_qecio_main].
     src: 4279a8621149
-data_refs:
-  ts_lau_2021:
-    text: velometer-Erklärung zur Zeitreihe, ljubljana/lau/2021
-    src: 654902abc074
-  ts_lau_2022:
-    text: velometer-Erklärung zur Zeitreihe, ljubljana/lau/2022
-    src: bc980d2b2ad1
-  shift_current:
-    text: velometer-Untersuchung einer Verschiebung, ljubljana/lau/current
-    src: d4bb4f4550c6
-  ts_fua_2025:
-    text: velometer-Erklärung zur Zeitreihe, ljubljana/fua/2025
-    src: 98f24a137935
-  rec_cc_ratio:
-    text: velometer-Abgleich, ljubljana/cc_ratio
-    src: 55d6b0674eae
-  rec_qecio_main:
-    text: velometer-Abgleich, ljubljana/qecio_main_km
-    src: 896c77e5f4f7
 literals:
 - 100 km

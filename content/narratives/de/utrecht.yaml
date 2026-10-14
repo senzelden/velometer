@@ -52,15 +52,5 @@ sections:
       km gegenüber unseren 387 km der Stufen A, B und E (−8 %) [@bikenetkit-zenodo];
       welche Grenze es verwendet, gibt die Quelle nicht an.
     src: 1c3b4c5a94d7
-data_refs:
-  ts-utrecht:
-    text: velometer-Zeitreihe, utrecht LAU und FUA (kartierte km)
-    src: 4d054176fa48
-  ts-utrecht-fua-2020:
-    text: velometer-Erklärung zur Zeitreihe, utrecht/fua/2020
-    src: ec63f9739a29
-  recon-utrecht-qecio-main:
-    text: velometer-Abgleich, utrecht/qecio_main_km
-    src: d9749d445ea1
 literals:
 - 100 km

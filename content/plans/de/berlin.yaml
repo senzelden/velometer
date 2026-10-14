@@ -71,7 +71,3 @@ sections:
       der gedruckten Endwerte abweichen. Es sind Änderungen dessen, was kartiert ist,
       keine km neuer Infrastruktur.
     src: 09010816dc3a
-data_refs:
-  adr-0006:
-    text: velometer ADR 0006, kartierte km
-    src: 0f2a9d703b04

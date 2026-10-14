@@ -55,16 +55,6 @@ sections:
       sich auf die Gemeinde. Methode: die eigene Zählung der Stadt gegenüber OpenStreetMap;
       ob Clean Cities die Zahl der Stadt übernommen hat, ist nicht angegeben.
     src: a7d97cbf3b17
-data_refs:
-  ts-copenhagen:
-    text: velometer-Zeitreihe, copenhagen LAU und FUA (kartierte km)
-    src: fd6bb4b3a54e
-  shift-copenhagen-2025:
-    text: velometer-Untersuchung einer Verschiebung, copenhagen/lau/2025
-    src: aab9096a85c1
-  recon-copenhagen-cc-km:
-    text: velometer-Abgleich, copenhagen/cc_km
-    src: 3dca7b5b65d9
 literals:
 - 100 km
 - '21'

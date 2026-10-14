@@ -62,25 +62,6 @@ sections:
       des Vorrangnetzes im Bericht nutzte ebenfalls OpenStreetMap, aber nur innerhalb
       dieses Netzes. Keine der beiden Reihen bestätigt oder widerlegt die andere.
     src: 406958f81788
-data_refs:
-  ts-lau:
-    text: velometer-Zeitreihe, berlin/lau (Klassifikator v4)
-    src: 26ebbd30a932
-  ts-fua:
-    text: velometer-Zeitreihe, berlin/fua (Klassifikator v4)
-    src: 6919efa82576
-  expl-lau-2022:
-    text: velometer-Erklärung zur Zeitreihe, berlin/lau/2022
-    src: 18979ab33c33
-  expl-fua-2022:
-    text: velometer-Erklärung zur Zeitreihe, berlin/fua/2022
-    src: b39b70ceabbb
-  bezirke:
-    text: velometer-Bezirksreihe (12 Bezirke, Klassifikator v4)
-    src: d2b51c9ecbab
-  change:
-    text: velometer-Kartierungsänderung, Berlin, 2023-01-01 bis aktueller Stand
-    src: 10da1f913f3c
 literals:
 - 100 km
 - 12 Bezirke

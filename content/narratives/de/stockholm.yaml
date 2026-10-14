@@ -53,16 +53,6 @@ sections:
       für die Stadt. BikeNetKit, ebenfalls auf OpenStreetMap gestützt, zählt 1.102
       km gegenüber unseren 995 km der Stufen A, B und E (−10 %) [@bikenetkit-zenodo].
     src: d44740b9446b
-data_refs:
-  ts-stockholm:
-    text: velometer-Zeitreihe, stockholm LAU und FUA (kartierte km)
-    src: 915d075118b1
-  shift-stockholm:
-    text: velometer-Untersuchung einer Verschiebung, stockholm/lau/2018-current
-    src: f68d63fcf3de
-  recon-stockholm-qecio-main:
-    text: velometer-Abgleich, stockholm/qecio_main_km
-    src: 4365ce03234c
 literals:
 - 100 km
 - '21'

@@ -51,22 +51,6 @@ sections:
       weil es verkehrsberuhigte Bereiche einschließt [#rc-barcelona-bnk_network_km],
       und QECIO berichtet für die ganze Provinz [#rc-barcelona-qecio_main_km].
     src: 6255f7ae7512
-data_refs:
-  rc-barcelona-qecio_lanes_km:
-    text: velometer-Erklärung zum Abgleich, barcelona/qecio_lanes_km
-    src: 22e10075e921
-  ts-barcelona-2021:
-    text: velometer-Erklärung zur Zeitreihe, barcelona/lau/2021
-    src: 7bd7edc53cec
-  ts-barcelona-fua-2021:
-    text: velometer-Erklärung zur Zeitreihe, barcelona/fua/2021
-    src: 59d11c4daaa7
-  rc-barcelona-bnk_network_km:
-    text: velometer-Erklärung zum Abgleich, barcelona/bnk_network_km
-    src: be37a0620418
-  rc-barcelona-qecio_main_km:
-    text: velometer-Erklärung zum Abgleich, barcelona/qecio_main_km
-    src: 0bb754622f4d
 literals:
 - 100 km
 - 83 Gemeinden

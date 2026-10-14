@@ -74,6 +74,13 @@ def fb_text(text: object, english: bool | None = None) -> object:
     return Markup('<span lang="en" data-fallback>{}</span>').format(text) if english else text
 
 
+def data_ref_label(label: str, lang: Lang) -> object:
+    """A data reference's label as a page shows it. Labels are never translated (spec §4.4):
+    on a German page the English label sits in a `lang="en"` span. It is the design, not a
+    fallback, so it carries no `data-fallback`."""
+    return label if lang == "en" else Markup('<span lang="en">{}</span>').format(label)
+
+
 def _text(text: str | None, english: bool) -> str | None:
     return Fallback(text) if english and text is not None else text
 
@@ -117,7 +124,6 @@ class RenderedNarrative:
     refs: dict[int, DataRef]  # data-reference number -> reference
     ref_links: dict[int, str | None]  # data-reference number -> its route link, if usable
     prefix: str = ""  # of the citation anchors (`<prefix>src-<n>`), for several documents a page
-    ref_fallback: frozenset[str] = frozenset()  # data-ref ids whose label is English (German page)
 
     def of_role(self, role: str) -> list[RenderedSection]:
         return [s for s in self.sections if s.role == role]
@@ -362,7 +368,7 @@ def render_narrative(
     _, sections, num = _build(groups, n.quotes, sources, n.data_refs, lang=lang, fallback=fallback)
     return _finish(
         _text(n.title, "title" in fallback), _text(n.dek, "dek" in fallback), [], sections, num,
-        sources, n.data_refs, fallback=fallback,
+        sources, n.data_refs,
     )  # fmt: skip
 
 
@@ -377,7 +383,7 @@ def render_explainer(
         groups, e.quotes, sources, e.data_refs, intro=e.intro, lang=lang, fallback=fallback
     )
     title = _text(e.title, "title" in fallback)
-    return _finish(title, None, intro, sections, num, sources, e.data_refs, fallback=fallback)
+    return _finish(title, None, intro, sections, num, sources, e.data_refs)
 
 
 def render_organisation(
@@ -393,14 +399,10 @@ def render_organisation(
     _, sections, num = _build(
         groups, org.quotes, sources, org.data_refs, prefix=prefix, lang=lang, fallback=fallback
     )
-    return _finish(
-        org.name, None, [], sections, num, sources, org.data_refs, prefix, fallback=fallback
-    )
+    return _finish(org.name, None, [], sections, num, sources, org.data_refs, prefix)
 
 
-def _finish(
-    title, dek, intro, sections, num, sources, data_refs, prefix="", fallback=frozenset()
-) -> RenderedNarrative:
+def _finish(title, dek, intro, sections, num, sources, data_refs, prefix="") -> RenderedNarrative:
     by_ref = {d.id: d for d in data_refs}
     return RenderedNarrative(
         title=title,
@@ -411,5 +413,4 @@ def _finish(
         refs={n: by_ref[rid] for rid, n in num.ref_no.items()},
         ref_links={n: _route(by_ref[rid].route) for rid, n in num.ref_no.items()},
         prefix=prefix,
-        ref_fallback=frozenset(rid for rid in by_ref if f"data_refs.{rid}" in fallback),
     )

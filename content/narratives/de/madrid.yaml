@@ -54,18 +54,5 @@ sections:
       Bereiche einschließt [#rc-madrid-bnk_network_km]. QECIO berichtet für die ganze
       Comunidad de Madrid [#rc-madrid-qecio_main_km].
     src: bf7873ea912d
-data_refs:
-  ts-madrid-2025:
-    text: velometer-Erklärung zur Zeitreihe, madrid/lau/2025
-    src: 72b7d3025652
-  ts-madrid-current:
-    text: velometer-Erklärung zur Zeitreihe, madrid/lau/current
-    src: 20f52e8c7c45
-  rc-madrid-bnk_network_km:
-    text: velometer-Erklärung zum Abgleich, madrid/bnk_network_km
-    src: a4f5d7e1ad71
-  rc-madrid-qecio_main_km:
-    text: velometer-Erklärung zum Abgleich, madrid/qecio_main_km
-    src: 5120953df6a5
 literals:
 - 100 km

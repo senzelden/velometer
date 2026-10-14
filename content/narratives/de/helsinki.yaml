@@ -54,19 +54,6 @@ sections:
       QECIO berichtet für die Region Helsinki-Uusimaa, nicht für die Stadt. Die Baana-Zahlen
       zählen fertiggestellte hochwertige Routen, eine Art von km, die wir nicht messen.
     src: 81e96f0a2712
-data_refs:
-  ts-helsinki:
-    text: velometer-Zeitreihe, helsinki LAU und FUA (kartierte km)
-    src: 11f6d1347dde
-  shift-helsinki-2025:
-    text: velometer-Untersuchung einer Verschiebung, helsinki/lau/2025
-    src: ef8cbf1ee6f8
-  recon-helsinki-cc-km:
-    text: velometer-Abgleich, helsinki/cc_km
-    src: 3e6659e1a4f6
-  recon-helsinki-qecio-tracks:
-    text: velometer-Abgleich, helsinki/qecio_tracks_km
-    src: 079dd4bceeac
 literals:
 - 100 km
 - '21'

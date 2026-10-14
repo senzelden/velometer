@@ -51,15 +51,5 @@ sections:
       [#rec_cc_km]. Sein Straßennetz von 4.300 km ist weiter gefasst als unsere 3.386
       km, daher beträgt sein Verhältnis 15 % gegenüber unseren 22,5 %.
     src: 36e532fe095e
-data_refs:
-  shift_2025:
-    text: velometer-Untersuchung einer Verschiebung, warsaw/lau/2025
-    src: f2c89825d7cb
-  ts_fua_2019:
-    text: velometer-Erklärung zur Zeitreihe, warsaw/fua/2019
-    src: cbcb23f90ed9
-  rec_cc_km:
-    text: velometer-Abgleich, warsaw/cc_km
-    src: 6766b6b1e47c
 literals:
 - 100 km

@@ -51,21 +51,5 @@ sections:
       vom Oktober 2026. QECIO berichtet für Groot-Amsterdam, eine Region, die größer
       ist als die Stadt [#recon-amsterdam-qecio-main].
     src: 6d007739a0c3
-data_refs:
-  ts-amsterdam:
-    text: velometer-Zeitreihe, amsterdam LAU und FUA (kartierte km)
-    src: 7bf38b7b8bd9
-  shift-amsterdam-2025:
-    text: velometer-Untersuchung einer Verschiebung, amsterdam/lau/2025
-    src: 65771052aa6c
-  ts-amsterdam-fua-2022:
-    text: velometer-Erklärung zur Zeitreihe, amsterdam/fua/2022
-    src: 6759e66fdc7d
-  recon-amsterdam-cc-ratio:
-    text: velometer-Abgleich, amsterdam/cc_ratio und amsterdam/cc_network_km
-    src: cd52bcbe86e0
-  recon-amsterdam-qecio-main:
-    text: velometer-Abgleich, amsterdam/qecio_main_km
-    src: a0f7ebb5f35c
 literals:
 - 100 km

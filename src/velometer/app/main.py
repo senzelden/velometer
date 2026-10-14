@@ -45,6 +45,7 @@ from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import (
     Fallback,
+    data_ref_label,
     fb,
     fb_text,
     render_explainer,
@@ -421,6 +422,8 @@ def create_app(
         # wraps x where it sits inside other text
         env.globals["fb"] = fb
         env.globals["fb_text"] = fb_text
+        # a data reference's label: always the English one, in `lang="en"` on a German page
+        env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
         # a source's publisher or title: on a German page its German sibling, original in `lang`
         env.globals["source_field"] = partial(source_field, lang=lang)
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
