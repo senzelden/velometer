@@ -23,6 +23,10 @@ DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names an
 COVID_YEAR = 2020  # marked on every counter chart (spec decision 12)
 MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line (user ruling, Task 8)
 GAP_DAYS = 31  # a run of days without any count longer than this is a gap in the data
+# the counter index rule readers show (M13 spec §4.2): v2 pools counts per complete day; the
+# stored v1 rows (M8-M12: summed counts) feed only the methodology's v1->v2 table
+INDEX_METHOD = "v2"
+INDEX_METHODS = ("v1", "v2")
 
 Grain = Literal["hourly", "daily", "monthly"]
 

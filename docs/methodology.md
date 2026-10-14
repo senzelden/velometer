@@ -291,10 +291,25 @@ Counter data are context, not an outcome. They record the bicycles passing the s
 
 For the other 14 cities no open counter data were found; their Figures tab names the portals checked.
 
-Index rule: a site qualifies for the link between two years when both years have at least 90 % valid days. The link is the ratio of the qualifying sites' summed counts, and links are chained from the base year. A link with fewer than 3 qualifying sites has no value, and no year beyond it in the chain has one either.
-<!-- /generated:counters -->
+Index rule: a site qualifies for the link between two years when both years have at least 90 % valid days. The link is the ratio of the mean count per complete day, pooled over the sites that qualify in both years: their counts summed over their complete days and divided by the number of those days, in the later year over the earlier one. Links are chained from the base year. A link with fewer than 3 qualifying sites has no value, and no year beyond it in the chain has one either.
 
-A known property of this rule: a site's counts are summed over its valid days only, so a site with fewer valid days in one year of a link than in the other moves the ratio by that difference in coverage. The 90 % rule bounds the effect. Measured on the stored daily data against a mean per valid day of the same sites, most links move by less than 0.5 %; the largest are +2.1 % (Paris, 2019 to 2020) and −2.0 % (Helsinki, 2024 to 2025) [M8 final review, `docs/superpowers/rulings-m8.md`]. Barcelona's monthly series is not affected, as a gauge needs all twelve months.
+Method change (M13): up to M12 the link was the ratio of the qualifying sites' counts summed over their complete days (v1). A site with fewer complete days in one year of a link than in the other therefore moved the ratio by that difference in coverage, and a leap year added a day. The rule above (v2) divides by the complete days, so a missing day no longer counts as missing traffic; a difference in coverage now moves the ratio only through the weight a site's days carry in the pooled mean. The index is v2 from M13 on [M13 spec §4.2]. The table lists every link whose ratio moved by at least 0.5 % from v1 to v2; v1 and v2 give the link as the change on the year before, and the last column the change of the ratio itself. Barcelona's monthly series is the same under both rules, as a gauge needs all twelve months in both years.
+
+| City | Link | v1 | v2 | Change |
+|---|---|---|---|---|
+| Berlin | 2016–2017 | −4.5 % | −4.0 % | +0.5 % |
+| Berlin | 2024–2025 | −1.3 % | −0.6 % | +0.7 % |
+| Paris | 2018–2019 | +49.4 % | +48.6 % | −0.5 % |
+| Paris | 2019–2020 | +30.2 % | +27.5 % | −2.1 % |
+| Paris | 2020–2021 | +8.5 % | +9.5 % | +0.8 % |
+| Paris | 2023–2024 | +2.7 % | +1.0 % | −1.6 % |
+| Helsinki | 2022–2023 | +8.5 % | +10.5 % | +1.9 % |
+| Helsinki | 2023–2024 | +0.3 % | −0.6 % | −1.0 % |
+| Helsinki | 2024–2025 | −2.1 % | −0.1 % | +2.1 % |
+| Oslo | 2017–2018 | +17.5 % | +16.7 % | −0.7 % |
+| Oslo | 2018–2019 | −8.0 % | −6.8 % | +1.3 % |
+| Oslo | 2019–2020 | +28.3 % | +27.4 % | −0.7 % |
+<!-- /generated:counters -->
 
 Hourly data are summed to days. A day is valid when it holds every local hour of its date (23, 24 or 25), and a site-day with a total of 0 is an outage, not a count. Sites a portal lists under two ids, such as a renumbered counter or the two sides of a bridge, are summed as one site. The base year is 2019, or the first full year for a city whose data start later; the table gives each city's [M8 spec, decision 13]. Every counter chart marks 2020 as the COVID year. The Counts tab sets the index beside the index of A+B mapped km in the city proper (1 January snapshots, same base year).
 

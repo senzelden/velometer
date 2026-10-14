@@ -33,7 +33,7 @@ from velometer.app.counts import (
 )
 from velometer.app.main import create_app
 from velometer.counters import index as counter_index
-from velometer.counters.model import CounterEntry, DayCount, StepDown
+from velometer.counters.model import INDEX_METHOD, CounterEntry, DayCount, StepDown
 from velometer.db import (
     CounterDay,
     CounterIndexYear,
@@ -52,8 +52,8 @@ def _site(city, sid, lat=52.5, lon=13.4):
                        "2026-10-07T13:12:12Z", "2019-01-01", "2025-12-31")  # fmt: skip
 
 
-def _index(city, values: dict, base=2019, series="counts"):
-    return [CounterIndexYear(city, y, v, 0 if v is None else 4, base, series)
+def _index(city, values: dict, base=2019, series="counts", method=INDEX_METHOD):
+    return [CounterIndexYear(city, y, v, 0 if v is None else 4, base, series, method)
             for y, v in values.items()]  # fmt: skip
 
 

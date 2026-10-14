@@ -555,9 +555,9 @@ def test_overlay_facts(fixture_db, tmp_path):
 def test_counter_facts(fixture_db, tmp_path):
     db_path, _cfg, _conn, data = fixture_db
     rows = [
-        CounterIndexYear("berlin", 2019, 100.0, 12, 2019, "counts"),
-        CounterIndexYear("berlin", 2020, 87.25, 11, 2019, "counts"),
-        CounterIndexYear("berlin", 2021, None, 2, 2019, "counts"),
+        CounterIndexYear("berlin", 2019, 100.0, 12, 2019, "counts", "v2"),
+        CounterIndexYear("berlin", 2020, 87.25, 11, 2019, "counts", "v2"),
+        CounterIndexYear("berlin", 2021, None, 2, 2019, "counts", "v2"),
     ]
     _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
     assert evaluate("counter.berlin.2020", data, tmp_path) == 87.25
@@ -626,7 +626,7 @@ def test_counter_rule_facts_follow_the_constants_and_the_stored_base_year(
     from velometer.counters import index
 
     db_path, _cfg, _conn, data = fixture_db
-    rows = [CounterIndexYear("berlin", y, 100.0, 12, 2020, "counts") for y in (2020, 2021)]
+    rows = [CounterIndexYear("berlin", y, 100.0, 12, 2020, "counts", "v2") for y in (2020, 2021)]
     _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
     assert evaluate("counter.min_valid", data, tmp_path) == pytest.approx(index.MIN_VALID * 100)
     assert evaluate("counter.min_sites", data, tmp_path) == index.MIN_SITES

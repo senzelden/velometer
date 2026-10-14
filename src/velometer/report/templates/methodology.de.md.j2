@@ -201,12 +201,22 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 
 Für die übrigen {{ f.counters.n_no_data | num }} Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „{{ tab('figures') }}“ nennt die geprüften Portale.
 
-Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens {{ f.counters.min_valid_pct | pct }} gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als {{ f.counters.min_sites | num }} solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
-<!-- /generated:counters -->
+Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens {{ f.counters.min_valid_pct | pct }} gültige Tage haben. Das Kettenglied ist das Verhältnis des mittleren Zählwerts je vollständigem Tag, gepoolt über die Zählstellen, die in beiden Jahren eingehen: ihre Zählwerte, über ihre vollständigen Tage summiert und durch die Zahl dieser Tage geteilt, im späteren Jahr gegenüber dem früheren. Die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als {{ f.counters.min_sites | num }} solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
 
 {% set counter_ids = f.counters.cities | map(attribute="id") | list %}
-Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die {{ f.counters.min_valid_pct | num }}-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %{% if "paris" in counter_ids and "helsinki" in counter_ids %}; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025){% endif %} [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`].{% if "barcelona" in counter_ids %} Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.{% endif %}
+Methodenwechsel (M13): Bis M12 war das Kettenglied das Verhältnis der über ihre vollständigen Tage summierten Zählwerte dieser Zählstellen (v1). Eine Zählstelle mit weniger vollständigen Tagen in einem Jahr eines Kettenglieds als im anderen verschob das Verhältnis daher um diesen Unterschied der Abdeckung, und ein Schaltjahr fügte einen Tag hinzu. Die obige Regel (v2) teilt durch die vollständigen Tage, sodass ein fehlender Tag nicht mehr als fehlender Verkehr zählt; ein Unterschied der Abdeckung verschiebt das Verhältnis nur noch über das Gewicht, das die Tage einer Zählstelle im gepoolten Mittelwert haben. Der Index folgt ab M13 der Regel v2 [M13-Spezifikation §4.2]. Die Tabelle nennt jedes Kettenglied, dessen Verhältnis sich von v1 zu v2 um mindestens {{ f.counters.method_change_pct | pct }} verschoben hat; v1 und v2 geben das Glied als Veränderung gegenüber dem Vorjahr an, die letzte Spalte die Veränderung des Verhältnisses selbst.{% if "barcelona" in counter_ids %} Barcelonas Monatsreihe ist unter beiden Regeln gleich, da eine Zählstelle in beiden Jahren alle zwölf Monate braucht.{% endif %}
 
+
+{% if f.counters.method_changes %}
+| Stadt | Kettenglied | v1 | v2 | Veränderung |
+|---|---|---|---|---|
+{% for r in f.counters.method_changes %}
+| {{ r.city }} | {{ r.years[0] }}–{{ r.years[1] }} | {{ ((r.v1 - 1) * 100) | signed_pct }} | {{ ((r.v2 - 1) * 100) | signed_pct }} | {{ r.change_pct | signed_pct }} |
+{% endfor %}
+{% else %}
+Kein Kettenglied hat sich um {{ f.counters.method_change_pct | pct }} oder mehr verschoben.
+{% endif %}
+<!-- /generated:counters -->
 
 Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist {{ f.counters.default_base_year }} oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert {{ f.counters.covid_year }} als Corona-Jahr. Der Reiter „{{ tab('counts') }}“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 

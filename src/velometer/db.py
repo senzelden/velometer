@@ -27,7 +27,7 @@ from velometer.models import (
 if TYPE_CHECKING:
     from velometer.pipeline.measure import SubareaMeasure
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 _RESULT_TABLES = (
     "duplicates",
     "completeness",
@@ -61,6 +61,14 @@ _ACTIVITY_TABLE_COLUMNS = """
   top_mapper_share REAL NOT NULL, n_ways_created_cycling INTEGER NOT NULL,
   n_ways_deleted_cycling INTEGER NOT NULL,
   PRIMARY KEY (city_id, boundary_kind, year, history_set_md5, activity_sha256)
+"""
+
+# v10: the index method (M13 spec §4.2) is part of the key; rows of each method are stored.
+_COUNTER_INDEX_COLUMNS = """
+  city_id TEXT NOT NULL, year INTEGER NOT NULL, idx REAL, sites INTEGER NOT NULL,
+  base_year INTEGER NOT NULL, series TEXT NOT NULL,
+  method TEXT NOT NULL CHECK (method IN ('v1','v2')),
+  PRIMARY KEY (city_id, year, series, method)
 """
 
 _SCHEMA = """
@@ -173,13 +181,12 @@ CREATE TABLE IF NOT EXISTS counter_monthly (
   city_id TEXT NOT NULL, site_id TEXT NOT NULL, month TEXT NOT NULL, day_type TEXT NOT NULL,
   avg_daily REAL NOT NULL, PRIMARY KEY (city_id, site_id, month, day_type)
 );
-CREATE TABLE IF NOT EXISTS counter_index (
-  city_id TEXT NOT NULL, year INTEGER NOT NULL, idx REAL, sites INTEGER NOT NULL,
-  base_year INTEGER NOT NULL, series TEXT NOT NULL, PRIMARY KEY (city_id, year, series)
-);
+CREATE TABLE IF NOT EXISTS counter_index (@COUNTER_INDEX@);
 """
-_SCHEMA = _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS).replace(
-    "@ACTIVITY@", _ACTIVITY_TABLE_COLUMNS
+_SCHEMA = (
+    _SCHEMA.replace("@METRICS@", _METRICS_COLUMNS)
+    .replace("@ACTIVITY@", _ACTIVITY_TABLE_COLUMNS)
+    .replace("@COUNTER_INDEX@", _COUNTER_INDEX_COLUMNS)
 )
 
 
@@ -313,6 +320,21 @@ def _migrate_8_to_9(conn: sqlite3.Connection) -> None:
     """Additive: tables come from the schema script."""
 
 
+def _migrate_9_to_10(conn: sqlite3.Connection) -> None:
+    """Rebuild counter_index with the index method in the key; existing rows (M8-M12's summed
+    counts) become method 'v1'."""
+    if "counter_index" not in _tables(conn):
+        return
+    conn.execute("DROP TABLE IF EXISTS counter_index_v10")
+    conn.execute(f"CREATE TABLE counter_index_v10 ({_COUNTER_INDEX_COLUMNS})")
+    conn.execute(
+        "INSERT INTO counter_index_v10 (city_id, year, idx, sites, base_year, series, method) "
+        "SELECT city_id, year, idx, sites, base_year, series, 'v1' FROM counter_index"
+    )
+    conn.execute("DROP TABLE counter_index")
+    conn.execute("ALTER TABLE counter_index_v10 RENAME TO counter_index")
+
+
 _MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
@@ -321,6 +343,7 @@ _MIGRATIONS = {
     6: _migrate_6_to_7,
     7: _migrate_7_to_8,
     8: _migrate_8_to_9,
+    9: _migrate_9_to_10,
 }  # 5 -> 6 takes the activity sha and is called by create_schema directly
 
 
@@ -1053,6 +1076,7 @@ class CounterIndexYear:
     sites: int
     base_year: int
     series: str  # 'counts' or 'avg_daily_intensity'
+    method: str  # the index rule, 'v1' or 'v2' (counters.model.INDEX_METHODS)
 
 
 def _same_city(table: str, city_id: str, rows: Iterable) -> Iterator:
@@ -1155,14 +1179,29 @@ def replace_counter_monthly(
 
 
 def replace_counter_index(
-    conn: sqlite3.Connection, city_id: str, rows: list[CounterIndexYear]
+    conn: sqlite3.Connection,
+    city_id: str,
+    rows: list[CounterIndexYear],
+    method: str | None = None,
 ) -> None:
+    """Replace the city's index rows of one method (`method`, or the one every row has) with
+    `rows`; the city's rows of the other method and other cities' rows stay. ValueError, and
+    nothing written, on rows of two methods, a row of another method than `method`, or no rows
+    and no `method`."""
+    methods = {r.method for r in rows} | ({method} if method is not None else set())
+    if len(methods) != 1:
+        raise ValueError(
+            f"counter_index: rows replace one method at a time, got {sorted(methods)}"
+            if methods
+            else "counter_index: no rows and no method to replace"
+        )
+    (scope,) = methods
     with conn:
-        conn.execute("DELETE FROM counter_index WHERE city_id=?", (city_id,))
+        conn.execute("DELETE FROM counter_index WHERE city_id=? AND method=?", (city_id, scope))
         conn.executemany(
-            "INSERT INTO counter_index VALUES (?,?,?,?,?,?)",
+            "INSERT INTO counter_index VALUES (?,?,?,?,?,?,?)",
             (
-                (r.city_id, r.year, r.index, r.sites, r.base_year, r.series)
+                (r.city_id, r.year, r.index, r.sites, r.base_year, r.series, r.method)
                 for r in _same_city("counter_index", city_id, rows)
             ),
         )

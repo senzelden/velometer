@@ -23,7 +23,12 @@ from velometer.counters.adapters import barcelona, helsinki, madrid, oslo
 from velometer.counters.check import check_counters
 from velometer.counters.days import to_days
 from velometer.counters.index import MIN_SITES, chain_index_monthly
-from velometer.counters.model import CounterFormatError, MonthValue, load_counters_config
+from velometer.counters.model import (
+    INDEX_METHODS,
+    CounterFormatError,
+    MonthValue,
+    load_counters_config,
+)
 from velometer.db import CounterMonth, create_schema, replace_counter_monthly
 
 FIX = Path(__file__).parent / "fixtures" / "counters"
@@ -434,6 +439,17 @@ def test_barcelona_load_stores_monthly_values_and_their_series(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM counter_daily").fetchone() == (0,)
     series = {r[0] for r in conn.execute("SELECT series FROM counter_index")}
     assert series == {"avg_daily_intensity"}
+    # the monthly links are unchanged by pooling (each site has twelve values in both years of
+    # a link): one chain_index_monthly result, stored for both methods
+    by_method = {
+        m: conn.execute(
+            "SELECT year, idx, sites, base_year, series FROM counter_index "
+            "WHERE city_id='barcelona' AND method=? ORDER BY year",
+            (m,),
+        ).fetchall()
+        for m in INDEX_METHODS
+    }
+    assert by_method["v1"] and by_method["v1"] == by_method["v2"]
     span = conn.execute(
         "SELECT first_day, last_day FROM counter_sites WHERE site_id='20012'"
     ).fetchone()

@@ -801,7 +801,6 @@ def test_the_index_rule_text_follows_the_constants(fixture_db, monkeypatch, lang
     block = _generated(text, "counters")
     assert ("fewer than 7 qualifying" if lang == "en" else "weniger als 7 solchen") in block
     assert f"{_number(80, lang)}{'\u202f' if lang == 'de' else ' '}%" in block
-    assert ("The 80 % rule" if lang == "en" else "Die 80-%-Regel") in text
 
 
 @pytest.mark.parametrize("lang", LANGS)
@@ -885,7 +884,7 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
 
     site = CounterSite("berlin", "s1", "S1", None, None, "x", "y", "u", "t", "2019-09-14", None)
     days = span(date(2019, 9, 14), date(2021, 6, 30)) + span(date(2022, 9, 1), date(2022, 12, 31))
-    index = [CounterIndexYear("berlin", y, v, 4, 2020, "counts") for y, v in
+    index = [CounterIndexYear("berlin", y, v, 4, 2020, "counts", "v2") for y, v in
              ((2019, None), (2020, 100.0), (2021, None), (2022, None))]  # fmt: skip
     with closing(sqlite3.connect(db_path)) as c:
         replace_counter_sites(c, "berlin", [site])
@@ -896,3 +895,52 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
     for lang in LANGS:
         assert NO_LINE[lang] in render(facts, lang)
     assert check(tmp_path, facts)
+
+
+# --- counter index v2 (M13 Task 2) ---------------------------------------------------------
+
+
+def test_method_changes_list_the_links_v2_moved_by_half_a_percent_or_more(fixture_db, tmp_path):
+    """The v1->v2 table comes from the stored rows of both methods: a link (two consecutive years
+    with values in both) whose ratio moved by at least 0.5 % (M13 spec §4.2)."""
+    from velometer.db import CounterIndexYear, replace_counter_index
+    from velometer.report.methodology import CounterMethodRow
+
+    db_path, _cfg, _conn, data = fixture_db
+
+    def rows(method, values):
+        return [CounterIndexYear("berlin", y, v, 4, 2019, "counts", method) for y, v in values]
+
+    # links: v1 1.10, 1.10, 1.00 and a break; v2 1.1033 (+0.3 %), 1.12 (+1.8 %), 0.99 (-1.0 %)
+    v1 = rows("v1", [(2019, 100.0), (2020, 110.0), (2021, 121.0), (2022, 121.0), (2023, None)])
+    v2_2020 = 110.33
+    v2 = rows(
+        "v2",
+        [(2019, 100.0), (2020, v2_2020), (2021, v2_2020 * 1.12), (2022, v2_2020 * 1.12 * 0.99),
+         (2023, None)],
+    )  # fmt: skip
+    with closing(sqlite3.connect(db_path)) as c:
+        replace_counter_index(c, "berlin", v1)
+        replace_counter_index(c, "berlin", v2)
+    got = methodology_facts(data).counters.method_changes
+    assert [(r.city, r.years) for r in got] == [("Berlin", (2020, 2021)), ("Berlin", (2021, 2022))]
+    assert got[0].v1 == pytest.approx(1.10) and got[0].v2 == pytest.approx(1.12)
+    assert got[0].change_pct == pytest.approx((1.12 / 1.10 - 1) * 100)
+    assert got[1].change_pct == pytest.approx(-1.0)
+    assert all(isinstance(r, CounterMethodRow) for r in got)
+    facts = methodology_facts(data)
+    en, de = render(facts, "en"), render(facts, "de")
+    assert "| Berlin | 2020–2021 | +10.0 % | +12.0 % | +1.8 % |" in en
+    assert "| Berlin | 2021–2022 | +0.0 % | −1.0 % | −1.0 % |" in en
+    assert "| Berlin | 2020–2021 | +10,0 % | +12,0 % | +1,8 % |" in de
+    for text in (en, de):
+        assert "2019–2020" not in text  # +0.3 %: below the threshold
+
+
+def test_methodology_states_the_v2_rule_and_drops_the_known_property_paragraph(facts):
+    en, de = render(facts, "en"), render(facts, "de")
+    assert "mean count per complete day" in en and "Method change (M13)" in en
+    assert "mittleren Zählwerts je vollständigem Tag" in de and "Methodenwechsel (M13)" in de
+    assert "summed counts" not in en.split("## Counter index")[1].split("Method change")[0]
+    assert "A known property of this rule" not in en
+    assert "Eine bekannte Eigenschaft dieser Regel" not in de

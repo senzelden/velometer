@@ -35,6 +35,7 @@ from pathlib import Path
 
 from velometer.config import ConfigError
 from velometer.counters import index as counter_index
+from velometer.counters.model import INDEX_METHOD
 from velometer.plans.models import (
     PLANS_FILE,
     REPORTS_FILE,
@@ -369,7 +370,7 @@ def _overlay_change(expr, args, data, docs_dir):
 def _counter_year(expr: str, args: list[str], data: ReportData):
     _arity(expr, args, 2, "<city>.<year>")
     city, year = args
-    rows = data.counter_index(city)
+    rows = data.counter_index(city, INDEX_METHOD)  # the headline rows only
     if not rows:
         raise _err(expr, f"no counter index for city {city!r}")
     at = [r for r in rows if str(r.year) == year]
@@ -393,7 +394,7 @@ def counter_rule(name: str) -> float:
 
 
 def _counter_base_year(expr: str, city: str, data: ReportData) -> float:
-    rows = data.counter_index(city)
+    rows = data.counter_index(city, INDEX_METHOD)  # the headline rows only
     if not rows:
         raise _err(expr, f"no counter index for city {city!r}")
     years = sorted({r.base_year for r in rows})

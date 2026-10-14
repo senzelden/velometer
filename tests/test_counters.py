@@ -22,7 +22,7 @@ from velometer.counters.adapters import berlin, paris, vienna
 from velometer.counters.adapters import download as download_files
 from velometer.counters.check import check_counters
 from velometer.counters.days import sum_counters, to_days, zero_days_invalid
-from velometer.counters.index import MIN_SITES, chain_index, chain_index_monthly
+from velometer.counters.index import MIN_SITES, chain_index, chain_index_monthly, chain_index_v1
 from velometer.counters.model import (
     CounterEntry,
     CounterFormatError,
@@ -203,7 +203,9 @@ def test_a_break_before_the_base_year_stays_broken_backwards():
             if not (y == 2023 and s == "c"):  # 2023 has only a and b
                 days += _year(s, y, 10)
     out = {y: (idx, n) for y, idx, n in chain_index(days, 2025)}
-    assert out[2024] == (pytest.approx(100.0 * 366 / 365), 3)  # 2024 has 366 days of 10
+    assert out[2024] == (pytest.approx(100.0), 3)  # v2: 10 per complete day in both years
+    v1 = {y: idx for y, idx, _ in chain_index_v1(days, 2025)}
+    assert v1[2024] == pytest.approx(100.0 * 366 / 365)  # v1 summed 2024's 366 days of 10
     assert out[2023] == (None, 2)
     assert out[2022] == (None, 2)
     # 2021 -> 2022 has three qualifying sites, but the chain is not re-based before the base
@@ -702,8 +704,8 @@ def test_check_passes_a_complete_city(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == []
@@ -717,8 +719,8 @@ def test_check_flags_missing_sites_base_not_100_and_a_site_under_two_cities(tmp_
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     problems = check_counters(conn, _cfg("berlin", "paris", "vienna"))
@@ -736,8 +738,8 @@ def test_check_flags_a_step_down_site_absent_from_the_data(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     entry = {**BERLIN_ENTRY, "step_downs": [{"site": "a", "since": "2020-04"},
@@ -779,8 +781,8 @@ def test_check_accepts_no_value_on_a_base_year_with_too_few_sites(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, None, few, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, None, few, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, None, few, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, None, few, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == ["berlin: no index year"]
@@ -794,8 +796,8 @@ def test_check_flags_a_value_on_a_base_year_with_too_few_sites(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == [

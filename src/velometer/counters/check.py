@@ -1,8 +1,9 @@
 """`velometer counters --check` (M8 spec §5.4): every configured city has sites and at least one
 index year; no site appears under two cities; daily counts (and monthly values) are non-negative;
 the index base year equals 100 (no value when fewer than `MIN_SITES` sites qualify in it,
-spec §2.13); every `step_downs` site of an entry is one of its stored sites
-(else the Counts tab's step-down note would drop it silently).
+spec §2.13); a city with v1 index rows has `INDEX_METHOD` rows too (M13 spec §4.2: the index
+checks read the headline method's rows); every `step_downs` site of an entry is one of its
+stored sites (else the Counts tab's step-down note would drop it silently).
 
 "An index year" is a year with a value carried by at least `MIN_SITES` qualifying sites: the
 base year is 100 by definition, so it counts only when enough sites qualify in it.
@@ -12,7 +13,7 @@ import sqlite3
 from collections import defaultdict
 
 from velometer.counters.index import MIN_SITES
-from velometer.counters.model import CountersConfig
+from velometer.counters.model import INDEX_METHOD, CountersConfig
 
 
 def check_counters(conn: sqlite3.Connection, cfg: CountersConfig) -> list[str]:
@@ -29,8 +30,13 @@ def check_counters(conn: sqlite3.Connection, cfg: CountersConfig) -> list[str]:
         for step in entry.step_downs:
             if step.site not in stored:
                 problems.append(f"{city}: step_downs site {step.site!r} is not a stored site")
+        methods = {m for (m,) in conn.execute(
+            "SELECT DISTINCT method FROM counter_index WHERE city_id=?", (city,))}  # fmt: skip
+        if "v1" in methods and INDEX_METHOD not in methods:
+            problems.append(f"{city}: v1 index rows but no {INDEX_METHOD} rows")
         rows = conn.execute(
-            "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id=?", (city,)
+            "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id=? AND method=?",
+            (city, INDEX_METHOD),
         ).fetchall()
         if not any(idx is not None and sites >= MIN_SITES for _, idx, sites, _ in rows):
             problems.append(f"{city}: no index year")

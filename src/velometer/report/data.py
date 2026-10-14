@@ -29,6 +29,7 @@ from velometer.config import (
     load_report,
     remainder_label,
 )
+from velometer.counters.model import INDEX_METHOD
 from velometer.db import (
     SCHEMA_VERSION,
     CounterDay,
@@ -687,12 +688,14 @@ class ReportData:
         )
         return [CounterSite(*r) for r in rows]
 
-    def counter_index(self, city_id: str) -> list[CounterIndexYear]:
+    def counter_index(self, city_id: str, method: str = INDEX_METHOD) -> list[CounterIndexYear]:
+        """The city's stored index rows of one method: the headline method unless the caller
+        names another (the methodology's v1->v2 table)."""
         rows = self._optional_rows(
             "counter_index",
-            "SELECT city_id, year, idx, sites, base_year, series FROM counter_index "
-            "WHERE city_id=? ORDER BY series, year",
-            (city_id,),
+            "SELECT city_id, year, idx, sites, base_year, series, method FROM counter_index "
+            "WHERE city_id=? AND method=? ORDER BY series, year",
+            (city_id, method),
         )
         return [CounterIndexYear(*r) for r in rows]
 
