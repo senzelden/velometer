@@ -42,10 +42,18 @@ and among the pieces whose midpoint lies past a *turn end* of a matching line (a
 overlay_v4's rule, 30°, that another line's end lies within 1 m of: the network turns there rather
 than stops).
 
+`--real-loss` prints, per network class, the dropped pieces that lie along the network across a
+turn (M13), in four disjoint parts: the pieces in a hole (as `--checks`, any class); outside holes,
+the `along` class; the `class_boundary` pieces the base keeps in neither class; and the
+`beyond_network_end` pieces at an *outer corner* (`outer_corner`: past the end of a line of the
+class within the piece's buffer, at a joint of two edges turning more than `TURN_DEG`, on the
+outer side of the turn), with their sum.
+
 `--crops` draws the six densest non-overlapping 800 m cells (1.2 km windows) to
 data/maps/berlin_<version>_vs_<base>_crops.png; `--detail CLASS` (repeatable) draws 16 pieces of
 the class drawn at random (numpy default_rng(`--seed`), 120 m windows) to
-data/maps/berlin_<version>_vs_<base>_detail_<CLASS>.png.
+data/maps/berlin_<version>_vs_<base>_detail_<CLASS>.png; `--detail outer_corner` draws the outer
+corners of `--real-loss` (each a `beyond_network_end` piece).
 """
 
 import argparse
@@ -54,6 +62,7 @@ import sqlite3
 import time
 from collections import defaultdict
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 import shapely
@@ -69,6 +78,7 @@ END_TOL_M = 1.0  # a midpoint at most this far past a line's end still runs alon
 NEAR_NET_M = 15.0  # a parallel road this close to the network line is the network's road
 ROAD_SEARCH_M = 30.0  # search radius for the road a piece runs beside
 HOLE_PIECES = 3  # --checks: a base-kept piece this many chained pieces away closes a hole
+TURN_DEG = 30.0  # --real-loss: a joint turning more than this is a turn (overlay_v4's angle)
 CLASSES = ["along", "junction_crossing", "parallel_or_crossing_street", "class_boundary",
            "beyond_network_end"]  # fmt: skip
 LABEL = {
@@ -206,6 +216,73 @@ def past_turn_end(lines, qp, qn, mids, n_pieces) -> np.ndarray:
     return res
 
 
+class CornerParams(NamedTuple):
+    buffer_m: float  # the piece's buffer (`buffer_m` or `buffer_separate_m`)
+    max_angle_deg: float  # the overlay's match angle
+
+
+_CORNER_INDEX: dict[int, tuple] = {}
+
+
+def _corner_index(lines):
+    """(lines, STRtree, end points, outward directions, owner, end tree) of `lines`, cached by
+    identity (the list is kept, so its id stays valid)."""
+    from velometer.plans import overlay as ov
+
+    key = id(lines)
+    if key not in _CORNER_INDEX:
+        end, out = ov._end_directions(lines)
+        _CORNER_INDEX[key] = (lines, STRtree(lines), end, out,
+                              np.tile(np.arange(len(lines)), 2),
+                              STRtree(shapely.points(end)))  # fmt: skip
+    return _CORNER_INDEX[key]
+
+
+def outer_corner(piece, lines, params: CornerParams) -> bool:
+    """The piece lies at the outer corner of a turning network line: its midpoint lies within
+    `params.buffer_m` of a line of `lines` (one network class), past one of its ends, at most
+    `END_TOL_M` + the buffer from it, and the piece runs within `params.max_angle_deg` of the
+    line's outward direction there; at that end exactly one other line of the class has an end
+    within `_JOINT_M` (a joint of two edges) and leaves it turning more than `TURN_DEG`; and the
+    midpoint lies on the outer side of that turn (the side of the line opposite the way the
+    network turns). A way-side following the network round the corner has such pieces; so has,
+    within the buffer, the far side of a street continuing straight past the turn, which this
+    test cannot tell apart."""
+    from velometer.plans import overlay as ov
+
+    lines, tree, end, out, owner, end_tree = _corner_index(lines)
+    a, b = np.asarray(piece.coords)[[0, -1]]
+    d = (b - a) / max(float(np.hypot(*(b - a))), 1e-9)
+    m = (a + b) / 2
+    mid = shapely.Point(m)
+    n = len(lines)
+    cos_turn = np.cos(np.radians(TURN_DEG))
+    for i in tree.query(mid, predicate="dwithin", distance=params.buffer_m).tolist():
+        line = lines[i]
+        t = line.project(mid)
+        if INSIDE_M < t < line.length - INSIDE_M:
+            continue  # alongside the line, not past an end
+        e = i + n if t > line.length / 2 else i
+        rel = m - end[e]
+        past = float(rel @ out[e])
+        if past <= 0 or np.hypot(*rel) > END_TOL_M + params.buffer_m:
+            continue
+        if float(angle(d[None], out[e][None])[0]) > params.max_angle_deg:
+            continue
+        near = end_tree.query(shapely.Point(end[e]), predicate="dwithin", distance=ov._JOINT_M)
+        joined = [j for j in near.tolist() if owner[j] != i]
+        if len(joined) != 1:
+            continue  # a free end, or a junction of three or more edges
+        leave = -out[joined[0]]  # the other line leaves the joint against its outward direction
+        if float(out[e] @ leave) >= cos_turn:
+            continue  # a continuation, not a turn
+        turn_side = out[e][0] * leave[1] - out[e][1] * leave[0]
+        piece_side = out[e][0] * rel[1] - out[e][1] * rel[0]
+        if turn_side * piece_side < 0:
+            return True
+    return False
+
+
 def in_hole(seg_all, keep_base, only, reach: int = HOLE_PIECES) -> np.ndarray:
     """Per piece in `only`: within `reach` consecutive pieces before and after it (pieces that
     chain end to start, i.e. one way-side part, or touching ways in input order) there is a
@@ -295,6 +372,7 @@ def classify(sides, boundary, network, cfg, base, roads):
             "keep": keep, "keep_base": keep_base, "plen": plen, "only": only,
             "turn": past_turn_end(lines, qp, qn, mids, len(only)),
             "hole": in_hole(shapely.get_coordinates(pieces).reshape(-1, 2, 2), keep_base, only),
+            "pieces": pieces[only], "buffer": buf,
         }  # fmt: skip
     return out, np.concatenate(kept_all), road_tree, meta
 
@@ -325,6 +403,52 @@ def checks(out, meta, version: str, base: str) -> None:
             print(f"  {cls} {label}: {km(m['only'][sel], cls):.2f} km, of which in a hole of a "
                   f"chain {base} keeps {km(m['only'][hole], cls):.2f} km ("
                   + ", ".join(f"{c} {v:.2f}" for c, v in by.items() if v) + ")")  # fmt: skip
+
+
+def outer_flags(out, meta, network, cfg) -> dict:
+    """Per network class: bool per dropped piece, True for a `beyond_network_end` piece outside a
+    hole that `outer_corner` finds at an outer corner (`cfg`'s buffers and angle)."""
+    res = {}
+    for cls, (_, names, _) in out.items():
+        m = meta[cls]
+        flags = np.zeros(len(names), bool)
+        for k in np.flatnonzero((names == "beyond_network_end") & ~m["hole"]).tolist():
+            params = CornerParams(float(m["buffer"][k]), cfg.max_angle_deg)
+            flags[k] = outer_corner(m["pieces"][k], network[cls], params)
+        res[cls] = flags
+    return res
+
+
+def real_loss(out, meta, network, cfg, base: str) -> None:
+    """The dropped pieces that lie along the network across a turn, per class, in four disjoint
+    parts: those in a hole of a chain the base keeps (any class); then, outside holes, the
+    `along` class, the `class_boundary` pieces the base keeps in neither class, and the
+    `beyond_network_end` pieces at an outer corner (`outer_corner`, with `cfg`'s buffers and
+    angle)."""
+    a, b = sorted(meta)
+    outer_by = outer_flags(out, meta, network, cfg)
+    total = 0.0
+    for cls in (a, b):
+        other = b if cls == a else a
+        m, names = meta[cls], out[cls][1]
+        hole, outer = m["hole"], outer_by[cls]
+        beyond = np.flatnonzero((names == "beyond_network_end") & ~hole)
+        parts = {
+            "holes": hole,
+            "along": (names == "along") & ~hole,
+            "class_boundary_neither": (names == "class_boundary")
+            & ~meta[other]["keep_base"][m["only"]]
+            & ~hole,
+            "outer_corner": outer,
+        }
+        km = {k: float(m["plen"][m["only"][v]].sum()) / 1000 for k, v in parts.items()}
+        total += sum(km.values())
+        print(f"  real loss {cls}: " + ", ".join(f"{k} {v:.2f}" for k, v in km.items())
+              + f"; sum {sum(km.values()):.2f} km (outer corners of "
+              f"{float(m['plen'][m['only'][beyond]].sum()) / 1000:.2f} km beyond_network_end "
+              "outside holes)")  # fmt: skip
+    print(f"  real loss, both classes: {total:.2f} km (pieces kept by {cfg.version}, dropped by "
+          f"{base})")  # fmt: skip
 
 
 def report(out, version: str, base: str, run_id: int) -> None:
@@ -467,8 +591,13 @@ def main() -> None:
         help="print cross-class counts and pieces in holes of chains the base keeps",
     )  # fmt: skip
     ap.add_argument(
-        "--detail", choices=CLASSES, action="append", default=[],
-        help="write 16 pieces of a class to data/maps/ (repeatable)",
+        "--detail", choices=[*CLASSES, "outer_corner"], action="append", default=[],
+        help="write 16 pieces of a class (or the outer corners of --real-loss) to data/maps/ "
+        "(repeatable)",
+    )  # fmt: skip
+    ap.add_argument(
+        "--real-loss", action="store_true",
+        help="print the dropped km along the network across a turn, in four parts per class",
     )  # fmt: skip
     ap.add_argument("--seed", type=int, default=1, help="random seed of --detail (default 1)")
     args = ap.parse_args()
@@ -478,6 +607,8 @@ def main() -> None:
     report(out, args.version, args.base, args.run)
     if args.checks:
         checks(out, meta, args.version, args.base)
+    if args.real_loss:
+        real_loss(out, meta, network, cfg, args.base)
     what = f"pieces kept by {args.version}, dropped by {args.base}, run {args.run}"
     stem = f"berlin_{args.version}_vs_{args.base}"
     if args.crops or args.detail:
@@ -485,6 +616,10 @@ def main() -> None:
     if args.crops:
         draw_crops(out, kept_all, road_tree, network, MAPS / f"{stem}_crops.png",
                    f"{what}: the six densest areas")  # fmt: skip
+    if "outer_corner" in args.detail:  # relabel the outer corners for drawing
+        flags = outer_flags(out, meta, network, cfg)
+        out = {cls: (seg, np.where(flags[cls], "outer_corner", names), lens)
+               for cls, (seg, names, lens) in out.items()}  # fmt: skip
     for name in args.detail:
         draw_detail(out, road_tree, network, sides, name, args.seed,
                     MAPS / f"{stem}_detail_{name}.png",
