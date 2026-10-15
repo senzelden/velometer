@@ -503,9 +503,49 @@ def test_the_markdown_change_table_stacks_with_labels(subarea_setup):  # noqa: F
 
 
 def _phone_rules():
+    """The rules of the 600 px phone blocks and of the 700 px Figures-table block (anchored on
+    its first selector, so the 700 px compare-filters block is not read)."""
     css = _css_outside_tokens(_stylesheet())
-    blocks = re.findall(r"@media \(max-width: (?:600|700)px\) \{(.*?)\n\}", css, re.S)
+    blocks = re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+    blocks += _figures_blocks(css)
     return [r for b in blocks for r in _css_rules(b)]
+
+
+def _figures_blocks(css: str) -> list[str]:
+    return re.findall(
+        r"@media \(max-width: 700px\) \{(\n  table\.stack\.figures\b.*?)\n\}", css, re.S
+    )
+
+
+def test_the_phone_rules_are_the_stack_blocks_only():
+    # M13 carry-over: the 700 px pattern also read the compare filters' 700 px block
+    sel = {s for ss, _ in _phone_rules() for s in ss}
+    assert ".country-grid" not in sel and ".compare-js .filters-body" not in sel
+    assert "table.stack.figures td" in sel and "table.stack td" in sel
+
+
+def _card_lines(block: str, prefixes: tuple[str, ...]) -> list[str]:
+    """The card declarations of a stack block, the table selector written as one name."""
+    return [
+        re.sub(r"(?:table)?\.stack(?:\.figures)?", "STACK", " ".join(ln.split()))
+        for ln in block.splitlines()
+        if ln.startswith(tuple("  " + p for p in prefixes))
+    ]
+
+
+def test_the_figures_cards_are_the_phone_cards_from_700_px():
+    # M13 carry-over: the 700 px Figures block copies the 600 px card rules, scoped to .figures;
+    # a change to one copy must reach the other
+    css = _css_outside_tokens(_stylesheet())
+    (figures,) = _figures_blocks(css)
+    phone = next(
+        b
+        for b in re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+        if "table.stack td" in b
+    )
+    ours = _card_lines(figures, ("table.stack.figures",))
+    theirs = [ln for ln in _card_lines(phone, ("table.stack", ".stack")) if ln.startswith("STACK")]
+    assert len(ours) > 15 and ours == theirs
 
 
 def test_the_stack_pattern_is_one_phone_rule_set():
@@ -746,7 +786,7 @@ def test_a_single_quoted_wrapper_is_a_wrapper_and_a_nested_one_is_no_stop():
         '<div class="scroll"><p>y</p></div>'
     )
     assert nested.count('tabindex="0"') == 2  # the outer one and the later sibling
-    assert "<section class=\"scroll\">" in nested
+    assert '<section class="scroll">' in nested
 
 
 def test_tags_inside_scripts_and_comments_are_not_counted():
