@@ -57,7 +57,8 @@ quotes:
   - {excerpt: agh-parlamentarische-anfragen/control, after: 1}
 data_refs:
   - {id: main-roads, label: "velometer methodology, main roads (Headline and presets)",
-     file: docs/methodology.md, locator: "## Headline and presets", route: /methodology}
+     file: docs/methodology.md, locator: "## Headline and presets",
+     route: /methodology#headline-and-presets}
 literals:
   - "Drucksache 19/25987"
   - "28 June 2018"

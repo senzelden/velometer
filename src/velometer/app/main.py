@@ -248,8 +248,59 @@ class _EscapeHtml(markdown.Extension):
         md.preprocessors.register(_DropComments(md), "drop_comments", 30)
 
 
-def _md(text: str) -> Markup:
-    html = markdown.markdown(text, extensions=["tables", "fenced_code", _EscapeHtml()])
+MD_HEADING = re.compile(r"^(#{2,3}) +(.+?) *#*$", re.M)  # the h2/h3 lines of a markdown file
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "section"
+
+
+def heading_ids(text: str) -> list[tuple[str, str]]:
+    """(level, id) of each h2/h3 heading of markdown `text`, in order: the heading's slug, made
+    unique with `-2`, `-3`, …. Code blocks are skipped (a `## ` line in a fence is no heading)."""
+    seen: dict[str, int] = {}
+    out = []
+    for m in MD_HEADING.finditer(re.sub(r"^```.*?^```", "", text, flags=re.M | re.S)):
+        slug = _slug(m.group(2))
+        seen[slug] = seen.get(slug, 0) + 1
+        out.append((m.group(1), slug if seen[slug] == 1 else f"{slug}-{seen[slug]}"))
+    return out
+
+
+class _HeadingIds(markdown.treeprocessors.Treeprocessor):
+    def __init__(self, md, ids: list[str]):
+        super().__init__(md)
+        self.ids = ids
+
+    def run(self, root):
+        for el, slug in zip(
+            (e for e in root.iter() if e.tag in ("h2", "h3")), self.ids, strict=False
+        ):
+            el.set("id", slug)
+
+
+class _Ids(markdown.Extension):
+    def __init__(self, ids: list[str]):
+        super().__init__()
+        self.ids = ids
+
+    def extendMarkdown(self, md):
+        md.treeprocessors.register(_HeadingIds(md, self.ids), "heading_ids", 5)
+
+
+def methodology_html(text: str, english: str) -> Markup:
+    """The methodology page body of `text`, its h2/h3 headings carrying the ids of the English
+    file `english`'s headings at the same position, so a link `/methodology#id` lands on the
+    same section in both editions (M13 Task 13b). Ids are set only when both files have the same
+    heading outline (a test holds the shipped files to it)."""
+    own, en = heading_ids(text), heading_ids(english)
+    same = [lvl for lvl, _ in own] == [lvl for lvl, _ in en]
+    return _md(text, ids=[slug for _, slug in en] if same else [])
+
+
+def _md(text: str, ids: list[str] | None = None) -> Markup:
+    extensions = ["tables", "fenced_code", _EscapeHtml()] + ([_Ids(ids)] if ids else [])
+    html = markdown.markdown(text, extensions=extensions)
     return Markup(
         ALIGN_STYLE.sub(
             lambda m: ' class="num"' if m.group(1) == "right" else f' class="align-{m.group(1)}"',
@@ -1535,7 +1586,9 @@ def create_app(
     def methodology_page(request: Request, data: ReportData, **ctx) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[request.state.lang]
         try:
-            body = _md(GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")))
+            text = GENERATED_NOTE.sub("", path.read_text(encoding="utf-8"))
+            english = docs_dir / METHODOLOGY["en"]
+            body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:
             body = None
         return page(
