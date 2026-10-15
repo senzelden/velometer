@@ -7,6 +7,8 @@ import contextlib
 import csv
 import html
 import re
+import shutil
+import subprocess
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable
 from dataclasses import dataclass
@@ -1139,27 +1141,84 @@ def _check_coverage(
     return problems
 
 
-def _http_get(url: str) -> str:
+TIMEOUT = 30.0  # seconds; a timeout is retried once with RETRY_TIMEOUT
+RETRY_TIMEOUT = 90.0
+UNREACHABLE = "unreachable (network problem)"
+NO_PDF_READER = "skipped: no PDF reader"
+_SKIPPED = object()  # a page check_online cannot read (a PDF without pdftotext)
+
+
+class Unreachable(Exception):
+    """The host did not answer (a timeout twice, or no connection): a network problem, not a
+    verdict on the excerpt."""
+
+
+class NoPdfReader(Exception):
+    """A PDF source, and no `pdftotext` to read it."""
+
+
+def _is_pdf(body: bytes) -> bool:
+    return body.lstrip()[:5] == b"%PDF-"
+
+
+def _http_get(url: str) -> str | bytes:
+    """The page at `url`: its text, or its bytes when it is a PDF (by content type or by the
+    `%PDF-` signature). A timeout is retried once with a longer timeout; a transport failure
+    after that raises Unreachable. An HTTP error status raises httpx.HTTPStatusError."""
     from velometer.sources.download import user_agent
 
-    resp = httpx.get(url, follow_redirects=True, timeout=30.0, headers={"User-Agent": user_agent()})
+    headers = {"User-Agent": user_agent()}
+    try:
+        try:
+            resp = httpx.get(url, follow_redirects=True, timeout=TIMEOUT, headers=headers)
+        except httpx.TimeoutException:
+            resp = httpx.get(url, follow_redirects=True, timeout=RETRY_TIMEOUT, headers=headers)
+    except httpx.TransportError as e:
+        raise Unreachable(str(e) or type(e).__name__) from e
     resp.raise_for_status()
-    return resp.text
+    pdf = "application/pdf" in resp.headers.get("content-type", "")
+    return resp.content if pdf or _is_pdf(resp.content) else resp.text
+
+
+def _pdf_text(body: bytes) -> str:
+    """The text of PDF `body`, read by the `pdftotext` CLI (poppler); NoPdfReader without it."""
+    exe = shutil.which("pdftotext")
+    if exe is None:
+        raise NoPdfReader
+    done = subprocess.run([exe, "-q", "-", "-"], input=body, capture_output=True, check=True)
+    return done.stdout.decode("utf-8", errors="replace")
+
+
+def _page_text(body: str | bytes) -> str:
+    if isinstance(body, str):
+        return body
+    return _pdf_text(body) if _is_pdf(body) else body.decode("utf-8", errors="replace")
 
 
 def _squash(text: str) -> str:
     return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", text)).split())
 
 
-def check_online(sources: dict[str, Source], fetch: Callable[[str], str] = _http_get) -> list[str]:
-    """Fetch each source URL once and report excerpts whose text is not on the page
-    (whitespace-normalised). Never archives anything."""
+def check_online(
+    sources: dict[str, Source], fetch: Callable[[str], str | bytes] = _http_get
+) -> tuple[list[str], list[str]]:
+    """(problems, notes): fetch each source URL once and report excerpts whose text is not on
+    the page (whitespace-normalised). A PDF is read as text by `pdftotext`; without it each of
+    its excerpts is a note ("skipped: no PDF reader"), not a problem. A host that does not
+    answer is "unreachable", apart from a page that does not hold the excerpt. Never archives
+    anything."""
     problems: list[str] = []
-    pages: dict[str, str | None] = {}
+    notes: list[str] = []
+    pages: dict[str, str | object | None] = {}  # url -> text, _SKIPPED or None
     for s in sources.values():
         if s.url not in pages:
             try:
-                pages[s.url] = _squash(fetch(s.url))
+                pages[s.url] = _squash(_page_text(fetch(s.url)))
+            except NoPdfReader:
+                pages[s.url] = _SKIPPED
+            except Unreachable as e:
+                pages[s.url] = None
+                problems.append(f"sources/{s.id}: {UNREACHABLE} {s.url}: {e}")
             except Exception as e:  # noqa: BLE001 - any fetch failure is a reported problem
                 pages[s.url] = None
                 problems.append(f"sources/{s.id}: cannot fetch {s.url}: {e}")
@@ -1167,9 +1226,11 @@ def check_online(sources: dict[str, Source], fetch: Callable[[str], str] = _http
         if page is None:
             continue
         for e in s.excerpts:
-            if _squash(e.text) not in page:
+            if page is _SKIPPED:
+                notes.append(f"sources/{s.id}: excerpt {e.id} {NO_PDF_READER}")
+            elif _squash(e.text) not in page:
                 problems.append(f"sources/{s.id}: excerpt not found online: {e.id}")
-    return problems
+    return problems, notes
 
 
 def counts(content_dir: Path) -> tuple[int, int, int]:

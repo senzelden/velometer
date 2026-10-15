@@ -227,14 +227,14 @@ def test_check_online_with_fake_fetch():
         return "<p>other   text</p>"
 
     out = check_online(src, fetch=without)
-    assert out == ["sources/src: excerpt not found online: e1"]
+    assert out == (["sources/src: excerpt not found online: e1"], [])
     assert calls == ["https://example.org/radverkehr"]
-    assert check_online(src, fetch=lambda u: "<p>Das  Netz\nist 78,2 km   lang.</p>") == []
+    assert check_online(src, fetch=lambda u: "<p>Das  Netz\nist 78,2 km   lang.</p>") == ([], [])
 
     def boom(url):
         raise OSError("down")
 
-    assert "cannot fetch" in check_online(src, fetch=boom)[0]
+    assert "cannot fetch" in check_online(src, fetch=boom)[0][0]
 
 
 def load_sources_from(doc):
@@ -501,3 +501,99 @@ def test_the_source_rows_say_a_cause_no_other_check_said(shipped):
     (config_dir / "differences.yaml").write_text("dimensions: [unclosed\n", encoding="utf-8")
     problems = _source_row_problems(content_dir, config_dir)
     assert any("not checked" in p and "differences.yaml" in p for p in problems), problems
+
+
+# --- content --check --online: PDF sources and timeouts (M13 Task 13b) ---------------------
+
+PDF = Path(__file__).parent / "fixtures/content_online/excerpt.pdf"  # "Das Netz ist 78,2 km lang."
+needs_pdftotext = pytest.mark.skipif(
+    __import__("shutil").which("pdftotext") is None, reason="no pdftotext"
+)
+
+
+@needs_pdftotext
+def test_check_online_reads_the_text_of_a_pdf_source():
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: PDF.read_bytes()) == ([], [])
+    other = copy.deepcopy(SOURCES)
+    other["sources"][0]["excerpts"][0]["text"] = "Das Netz ist 99 km lang."
+    problems, _ = check_online(load_sources_from(other), fetch=lambda u: PDF.read_bytes())
+    assert problems == ["sources/src: excerpt not found online: e1"]
+
+
+def test_a_pdf_without_a_reader_is_skipped_not_failed(monkeypatch):
+    import velometer.content.check as ck
+
+    monkeypatch.setattr(ck.shutil, "which", lambda name: None)
+    problems, notes = check_online(load_sources_from(SOURCES), fetch=lambda u: PDF.read_bytes())
+    assert problems == []
+    assert notes == ["sources/src: excerpt e1 skipped: no PDF reader"]
+
+
+def _response(content: bytes, ctype: str):
+    import httpx
+
+    req = httpx.Request("GET", "https://example.org/radverkehr")
+    return httpx.Response(200, content=content, headers={"content-type": ctype}, request=req)
+
+
+def test_http_get_hands_a_pdf_over_as_bytes(monkeypatch):
+    import httpx
+
+    import velometer.content.check as ck
+
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: _response(PDF.read_bytes(), "text/plain"))
+    assert ck._http_get("https://example.org/x") == PDF.read_bytes()  # sniffed by `%PDF`
+    page = _response(b"<p>Das Netz</p>", "text/html; charset=utf-8")
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: page)
+    assert ck._http_get("https://example.org/x") == "<p>Das Netz</p>"
+
+
+def test_a_timeout_is_retried_once_with_a_longer_timeout(monkeypatch):
+    import httpx
+
+    timeouts: list[float] = []
+
+    def slow_then_ok(url, **kw):
+        timeouts.append(kw["timeout"])
+        if len(timeouts) == 1:
+            raise httpx.ReadTimeout("timed out")
+        return _response(b"<p>Das Netz ist 78,2 km lang.</p>", "text/html")
+
+    monkeypatch.setattr(httpx, "get", slow_then_ok)
+    assert check_online(load_sources_from(SOURCES)) == ([], [])
+    assert len(timeouts) == 2 and timeouts[1] > timeouts[0]
+
+
+def test_a_source_that_times_out_twice_is_unreachable_not_missing(monkeypatch):
+    import httpx
+
+    import velometer.content.check as ck
+
+    calls: list[str] = []
+
+    def never(url, **kw):
+        calls.append(url)
+        raise httpx.ConnectTimeout("timed out")
+
+    monkeypatch.setattr(httpx, "get", never)
+    problems, notes = check_online(load_sources_from(SOURCES))
+    assert len(calls) == 2 and notes == []
+    assert problems == [
+        "sources/src: unreachable (network problem) https://example.org/radverkehr: timed out"
+    ]
+    assert ck.UNREACHABLE in problems[0] and "not found" not in problems[0]
+
+
+def test_cli_online_prints_a_skipped_pdf_and_passes(content, fixture_db, monkeypatch):
+    import velometer.content.check as ck
+
+    real = ck.check_online
+    monkeypatch.setattr(ck.shutil, "which", lambda name: None)
+    monkeypatch.setattr(
+        ck, "check_online", lambda sources: real(sources, fetch=lambda u: PDF.read_bytes())
+    )
+    res = CliRunner().invoke(app, _check_args(content, fixture_db, "--online"))
+    assert res.exit_code == 0, res.output
+    assert "sources/src: excerpt e1 skipped: no PDF reader" in res.stderr
+    assert res.stdout.strip() == "ok"

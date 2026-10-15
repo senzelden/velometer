@@ -2156,9 +2156,12 @@ def content(
         conn.close()
     if online and not problems:
         try:
-            problems = ck.check_online(load_sources(content_dir / "sources"))
+            # skipped excerpts (a PDF without a reader) are printed, but do not fail the check
+            problems, skipped = ck.check_online(load_sources(content_dir / "sources"))
         except ContentError as e:
-            problems = [str(e)]
+            problems, skipped = [str(e)], []
+        for s in skipped:
+            typer.echo(s, err=True)
     for p in problems:
         typer.echo(p, err=True)
     if problems:
