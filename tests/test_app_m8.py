@@ -271,6 +271,24 @@ def test_an_item_whose_only_row_is_suspect_still_shows_flagged_with_its_note(
     assert 'href="https://example.org/paris"' in sec
 
 
+@pytest.mark.parametrize("suspect", [True, False])
+def test_a_figure_is_flagged_suspect_exactly_when_its_row_says_so(
+    setup,  # noqa: F811
+    plans_data,
+    suspect,
+):
+    # M8-6: the suspect rule (the reports.csv `suspect` column; Copenhagen 37 and Strasbourg 52
+    # carry it) on a fixture figure, not the two shipped values: the mark and its note appear for a
+    # suspect row and for no other
+    _add_rows(setup[1], {**PARIS_ROW, "suspect": "true" if suspect else ""})
+    with _client(_app(setup, plans_data)) as c:
+        sec = _section(c.get("/plans").text, "paris")
+    item = next(li for li in re.findall(r"<li\b.*?</li>", sec, re.S) if "<b>99 km</b>" in li)
+    assert ('class="suspect"' in item) is suspect
+    assert ('class="suspect-mark"' in item) is suspect
+    assert ("a forecast, not a count" in item) is suspect
+
+
 # ---------- the Berlin plan page ----------
 
 
