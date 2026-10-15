@@ -29,6 +29,7 @@ velometer = "velometer.cli:app"
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.13.1",
     "pytest>=8",
     "pytest-timeout>=2.4.0",
     "ruff>=0.6",

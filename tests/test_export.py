@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
@@ -1179,3 +1180,30 @@ def test_the_exported_404_is_the_html_page_and_resolves(rich, tmp_path):  # noqa
     assert text.startswith("<!doctype html>") and "Page not found" in text
     assert 'href="/velometer/"' in text
     assert [u for u in export.scan_references(out, BASE) if u.file == "404.html"] == []
+
+
+# --- M8-10: Starlette's httpx deprecation -----------------------------------------------------
+
+_BLOCK_HTTPX2 = "import sys; sys.modules['httpx2'] = None; "
+
+
+def _imports_without_warning(code: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, "-W", "error", "-c", code], capture_output=True, text=True, check=False
+    )
+
+
+def test_the_test_client_runs_on_httpx2_so_starlette_does_not_warn():
+    """The dev group has `httpx2`, so Starlette's TestClient (which every app test uses) takes it
+    and the gate's pytest output carries no `httpx` deprecation warning."""
+    r = _imports_without_warning("import fastapi.testclient")
+    assert r.returncode == 0, r.stderr
+
+
+def test_the_export_does_not_warn_where_only_httpx_is_installed():
+    """`httpx2` is a dev dependency only: an install without the dev group falls back to `httpx`,
+    so the export keeps its own targeted filter for the notice (a command, not a test suite)."""
+    plain = _imports_without_warning(_BLOCK_HTTPX2 + "import fastapi.testclient")
+    assert "install `httpx2` instead" in plain.stderr  # the fallback this guards does warn
+    r = _imports_without_warning(_BLOCK_HTTPX2 + "import velometer.app.export")
+    assert r.returncode == 0, r.stderr

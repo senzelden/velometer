@@ -43,7 +43,8 @@ from velometer.report.data import ReportData, open_readonly
 from velometer.run import git_commit
 
 # Starlette's notice that its TestClient will move from httpx to httpx2 is for test suites; the
-# export is a command, and the line would only be noise on every run.
+# export is a command, and the line would only be noise on every run. `httpx2` is a dev
+# dependency only (M13), so an install without the dev group still takes this fallback.
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", message="Using `httpx` with `starlette.testclient`")
     from fastapi.testclient import TestClient
