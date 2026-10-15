@@ -130,20 +130,28 @@ On the Figures tab, Orca read each metric cell as "… road network. protected_s
   table names "Hauptkennzahl je Stadt und Stand.", "Hauptkennzahl und Kennzahlvarianten.".
   - Text content, link and button names switch correctly ("Städte und Seiten suchen" [de],
     "Zitieren Berlin: …" [de]).
-  - Orca takes the language of an object without text from AT-SPI's object locale. Chrome reports
-    that as `en_US` for every object (Orca's log: "Reported locale of [landmark] is en_US";
-    "[column header: 'Stadt'] is en_US"), whatever the `lang` in the page.
-  - The markup is right: `<html lang="de">`, and the labels are German text. This is a
-    Chrome/Orca limitation, not something markup can change. A German reader runs a German Orca
-    voice by default, so these labels would sound right there.
+  - Orca takes the language of an object without text from AT-SPI's object locale
+    (`speech_generator.py`, `AXObject.get_locale`). In this run that was `en_US` for every object
+    (847 of run9's 848 "Reported locale" lines; the other names no object), for example
+    "[column header: 'Stadt'] is en_US", whatever the `lang` in the page.
+  - The cause is the run's process locale, not the DOM language: the pass inherited
+    `LANG=en_US.UTF-8`, and Chrome's renderers ran with `--lang=en-US` (seen in the process list
+    by the Task 11 review). Every element on a de page already inherits `lang="de"` from
+    `<html>`, so a `lang` on the labelled element would add nothing.
+  - The markup is right: `<html lang="de">`, and the labels are German text. A run with a German
+    process locale was not made, so whether a German reader hears these labels in a German voice
+    is not verified here.
 - **R2: city endonyms in the English edition carry no `lang`.** For example, "København" is spoken
   with the English voice. These are proper names. WCAG 3.1.2 exempts proper names, and organisation
   names got `lang` by an explicit M13 decision (Task 10). City names were not in that decision.
 - **R3: the panel is announced by its content, not its name.** On opening, Orca said "Loading…"
   (the dialog's placeholder text, as its "new ancestor") and not "City panel dialog".
   - AX tree: `dialog 'City panel'`, `modal: false`.
-  - The markup is standard (`role="dialog"`, `aria-label`). This is how Orca 50 presents a
-    non-modal dialog entered by focus. "Loading Berlin…" and "Berlin" then come through `#live`.
+  - The markup is standard (`role="dialog"`, `aria-label`). Orca 50 speaks an unfocused
+    ancestor dialog by its text content whenever it has any (`speech_generator.py`,
+    `_generate_dialog`), modal or not, and by name and role only when it has none. The panel's
+    text at that moment is the "Loading…" placeholder, so that is what Orca said; modality plays
+    no part. "Loading Berlin…" and "Berlin" then come through `#live`.
 - **R4: Sources' "source" links have a generic name.** Tab on Sources gives "source link." three
   times. The purpose is clear from the list item they end ("3. BikeNetKit (GitHub, …) · source"),
   so WCAG 2.4.4 (in context) is met, but Orca's links list would show 15 "source" entries. This

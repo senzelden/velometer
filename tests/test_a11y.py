@@ -1130,6 +1130,8 @@ def test_every_page_is_one_banner_and_a_panel_adds_none(all_page_urls, page_site
         assert len(re.findall(r"<header\b", page_site.html[url])) == 1, url
     for url in panels:
         assert not re.search(r"<header\b", page_site.html[url]), url
+        # the fix dropped the panel's <header>, not its heading: panel.js announces the <h2>
+        assert re.search(r"<h2\b", page_site.html[url]), url
 
 
 def test_no_title_attribute_carries_a_raw_id(all_page_urls, page_site):  # noqa: F811

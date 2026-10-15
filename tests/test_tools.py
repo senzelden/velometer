@@ -636,11 +636,12 @@ def test_the_orca_pass_environment_cannot_reach_the_desktop_or_the_speakers(
     for k, v in {"DISPLAY": ":0", "WAYLAND_DISPLAY": "wayland-0", "XAUTHORITY": "/x",
                  "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1/bus",
                  "AT_SPI_BUS_ADDRESS": "unix:path=/a", "PULSE_SERVER": "unix:/p",
-                 "SPEECHD_ADDRESS": "unix_socket:/s"}.items():  # fmt: skip
+                 "SPEECHD_ADDRESS": "unix_socket:/s", "SSH_AUTH_SOCK": "/run/ssh",
+                 "GPG_AGENT_INFO": "/run/gpg:1:1", "GTK_MODULES": "gail"}.items():  # fmt: skip
         monkeypatch.setenv(k, v)
     env = op.isolated_env(tmp_path)
     for k in ("DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS", "AT_SPI_BUS_ADDRESS",
-              "SPEECHD_ADDRESS"):  # fmt: skip
+              "SPEECHD_ADDRESS", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GTK_MODULES"):  # fmt: skip
         assert k not in env, k
     assert not Path(env["WAYLAND_DISPLAY"]).exists()  # a socket name that leads nowhere
     assert Path(env["WAYLAND_DISPLAY"]).is_relative_to(tmp_path)
