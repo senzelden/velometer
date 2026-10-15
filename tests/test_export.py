@@ -298,6 +298,38 @@ def test_cli_app_export(rich, tmp_path, monkeypatch):  # noqa: F811
     assert CliRunner().invoke(cli_app, [*args, "--clean"]).exit_code == 0
 
 
+@pytest.mark.parametrize("given", [None, "elsewhere/plans"])
+def test_export_and_serve_take_the_plans_data_dir(tmp_path, monkeypatch, given):
+    """`--plans-data-dir` reaches the app on `app export` and `serve`; both default to
+    data/plans (M9-7)."""
+    import uvicorn
+
+    import velometer.app.export as export_mod
+    import velometer.app.main as main_mod
+
+    db = tmp_path / "v.sqlite"
+    db.write_bytes(b"")
+    seen = {}
+
+    def fake_export(out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean):
+        seen["export"] = plans_data_dir
+        return export.ExportResult(0, 0, {"commit": "x", "base": "/"})
+
+    def fake_app(*args, **kw):
+        seen["serve"] = kw.get("plans_data_dir")
+        return object()
+
+    monkeypatch.setattr(export_mod, "run_export", fake_export)
+    monkeypatch.setattr(main_mod, "create_app", fake_app)
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: None)
+    extra = [] if given is None else ["--plans-data-dir", given]
+    out = ["app", "export", "--out", str(tmp_path / "site"), "--db", str(db), *extra]
+    assert CliRunner().invoke(cli_app, out).exit_code == 0
+    assert CliRunner().invoke(cli_app, ["serve", "--db", str(db), *extra]).exit_code == 0
+    want = Path("data") / "plans" if given is None else Path(given)
+    assert seen == {"export": want, "serve": want}
+
+
 # --- deletion safety (review fix round 1) ---
 
 

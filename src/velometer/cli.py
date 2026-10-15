@@ -71,6 +71,12 @@ CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config dir
 CONFIG_EXPORT_OPT = typer.Option(
     default_config_dir(), "--config", "--config-dir", help="Config directory."
 )
+# the Berlin plan page's fetched data (`velometer plans fetch` writes data/plans/<city>/)
+PLANS_DATA_OPT = typer.Option(
+    Path("data") / "plans",
+    "--plans-data-dir",
+    help="Plan data directory (berlin/ with the measures layer and retrieved.json).",
+)
 CC_BASIS_OPT = typer.Option(
     None,
     "--clean-cities-basis",
@@ -2035,6 +2041,7 @@ def serve(
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
+    plans_data_dir: Path = PLANS_DATA_OPT,
 ) -> None:
     """The private, read-only web app on a loopback address (never exposed to the network)."""
     if host not in LOOPBACK_HOSTS:
@@ -2051,7 +2058,10 @@ def serve(
 
     from velometer.app.main import create_app
 
-    uvicorn.run(create_app(db, config_dir, maps, docs, content_dir), host=host, port=port)
+    app_ = create_app(
+        db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir
+    )
+    uvicorn.run(app_, host=host, port=port)
 
 
 @web_app.command("export")
@@ -2068,6 +2078,7 @@ def app_export(
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
+    plans_data_dir: Path = PLANS_DATA_OPT,
 ) -> None:
     """The reader app's static edition: every page the data has, rendered by the app, as files
     (read-only on the database)."""
@@ -2078,7 +2089,7 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, Path("data") / "plans", clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
         )
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)
