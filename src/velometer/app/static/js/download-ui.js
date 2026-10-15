@@ -34,16 +34,18 @@ function styleOf(el) {
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-/** A key label's width in px as the downloaded image sets it (11px system-ui), measured by the
- * browser (getComputedTextLength) in a hidden SVG; null where that is not available, and the
- * image then estimates it. */
-export function labelWidth(text, doc = document) {
+/** A text's width in px as the downloaded image sets it (system-ui, at `size` and `weight`: 11px
+ * for a key label and the meta lines, 15px 600 for the title), measured by the browser
+ * (getComputedTextLength) in a hidden SVG; null where that is not available, and the image then
+ * estimates it. */
+export function labelWidth(text, doc = document, size = "11px", weight = "400") {
   try {
     const svg = doc.createElementNS(SVG_NS, "svg");
     svg.setAttribute("aria-hidden", "true");
     Object.assign(svg.style, { position: "absolute", visibility: "hidden", width: "0", height: "0" });
     const el = doc.createElementNS(SVG_NS, "text");
-    el.setAttribute("font-size", "11px");
+    el.setAttribute("font-size", size);
+    el.setAttribute("font-weight", weight);
     el.setAttribute("font-family", "system-ui, sans-serif");
     el.textContent = text;
     svg.append(el);
@@ -148,6 +150,7 @@ export function metaOf(container) {
     ...light(),
     key: keyOf(container),
     attribution: t("js.download.attribution"),
+    measure: (text, size, weight) => labelWidth(text, document, size, weight),
   };
 }
 

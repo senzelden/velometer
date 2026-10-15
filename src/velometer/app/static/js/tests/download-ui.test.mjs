@@ -328,3 +328,27 @@ test("keyOf reads the key list a chart names (data-download-key): the plan and C
     globalThis.getComputedStyle = before;
   }
 });
+
+test("labelWidth measures at the size and weight it is asked for (the title is 15px, 600)", () => {
+  const doc = measuringDoc((s) => s.length * 5);
+  const seen = [];
+  const create = doc.createElementNS;
+  doc.createElementNS = (ns, tag) => {
+    const el = create(ns, tag);
+    if (tag === "text") seen.push(el.attrs);
+    return el;
+  };
+  labelWidth("abcd", doc);
+  labelWidth("abcd", doc, "15px", "600");
+  assert.deepEqual(seen.map((a) => [a["font-size"], a["font-weight"]]), [["11px", "400"], ["15px", "600"]]);
+});
+
+test("metaOf hands the image a measure for its title and meta lines", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const chart = h("div", { "data-chart": "city-tiers", "aria-label": "Tiers" });
+  chart.dataset = { chart: "city-tiers" };
+  page(h("section", {}, chart));
+  const m = metaOf(chart);
+  assert.equal(typeof m.measure, "function");
+  assert.equal(m.measure("abc", "15px", "600"), null); // no layout in this fake page: estimate
+});

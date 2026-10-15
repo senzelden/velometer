@@ -144,6 +144,9 @@ const BOTTOM = 44;
 const KEY_ROW = 18;
 const KEY_LINE = 14; // a wrapped key label's next line
 const CHAR = 6.6; // an estimate of the width of a character at 11px, where none was measured
+const TITLE_CHAR = 15 * 0.62; // the same at 15px, weight 600 (the title)
+const TITLE_LINE = 19; // a wrapped title's next line
+const META_LINE = 15; // the next source or attribution line
 
 /**
  * A key entry's glyph, from the computed style (camelCase, as getComputedStyle gives it) of its
@@ -182,6 +185,13 @@ function wrap(text, perChar, room) {
   }
   if (line) lines.push(line);
   return lines;
+}
+
+/** `text` in lines at most `room` px wide: by `measured` (its width in the page), else by `perChar`
+ * px a character. */
+function fit(text, measured, perChar, room) {
+  const width = Number.isFinite(measured) && measured > 0 ? measured : text.length * perChar;
+  return width <= room ? [text] : wrap(text, width / Math.max(1, text.length), room);
 }
 
 /** The key chips ({shape?, colour, fill?, text, width?}) in rows that fit the width, each chip with
@@ -240,14 +250,24 @@ function keySvg(rows, top, toLight, ink, txt) {
  * `styleOf(el)` (computed style, one object keyed by CSS property name), written as an attribute,
  * mapped through `toLight` (a Map, or null for the identity). No class, style, `var()`, external
  * reference or custom attribute is kept. A title, a source line and the attribution are added as
- * text, on a light ground.
+ * text, on a light ground. Each of them wraps at spaces where it is wider than the image: by the
+ * width `meta.measure(text, size, weight)` gives (the page measures it, getComputedTextLength),
+ * else by an estimate from its length. The chart moves down by the extra title lines, and the
+ * canvas grows by them and by the extra meta lines.
  */
 export function selfContained(svg, styleOf, toLight, meta) {
   const { w, h } = sizeOf(svg);
   const { ground, ink, muted } = { ...FALLBACK, ...Object.fromEntries(Object.entries(meta).filter(([k, v]) => k in FALLBACK && v)) };
+  const measure = (text, size, weight) => (typeof meta.measure === "function" ? meta.measure(text, size, weight) : null);
+  const room = Math.max(40, w - 16);
+  const title = String(meta.title ?? "");
+  const titleLines = fit(title, measure(title, "15px", "600"), TITLE_CHAR, room);
+  const notes = [String(meta.source ?? ""), `${meta.attribution ?? t("js.download.attribution")} · ${t("js.download.note")}`];
+  const metaLines = notes.flatMap((line) => fit(line, measure(line, "11px", "400"), CHAR, room));
+  const top = TOP + (titleLines.length - 1) * TITLE_LINE;
   const keyRows = layoutKey(meta.key ?? [], w);
   const keyH = keyRows.reduce((sum, r) => sum + r.h, 0) + (keyRows.length ? 6 : 0);
-  const height = h + TOP + keyH + BOTTOM;
+  const height = h + top + keyH + BOTTOM + (metaLines.length - 2) * META_LINE;
   const inner = [];
   for (const k of Array.from(svg.children ?? [])) walk(k, styleOf, toLight, inner);
   const txt = (x, y, size, weight, fill, text) =>
@@ -255,15 +275,13 @@ export function selfContained(svg, styleOf, toLight, meta) {
   return [
     `<svg xmlns="${NS}"${attrs([["viewBox", `0 0 ${w} ${height}`], ["width", w], ["height", height], ["font-family", "system-ui, sans-serif"]])}>`, // fmt: skip
     `<rect${attrs([["width", w], ["height", height], ["fill", ground]])}/>`,
-    txt(8, 20, "15px", "600", ink, meta.title),
-    `<g transform="translate(0,${TOP})">`,
+    ...titleLines.map((line, i) => txt(8, 20 + i * TITLE_LINE, "15px", "600", ink, line)),
+    `<g transform="translate(0,${top})">`,
     ...inner,
     "</g>",
-    ...keySvg(keyRows, h + TOP, toLight, ink, txt),
+    ...keySvg(keyRows, h + top, toLight, ink, txt),
     `<g id="velometer-meta">`,
-    txt(8, h + TOP + keyH + 18, "11px", "400", muted, meta.source),
-    txt(8, h + TOP + keyH + 33, "11px", "400", muted,
-      `${meta.attribution ?? t("js.download.attribution")} · ${t("js.download.note")}`),
+    ...metaLines.map((line, i) => txt(8, h + top + keyH + 18 + i * META_LINE, "11px", "400", muted, line)),
     "</g>",
     "</svg>",
   ].join("");

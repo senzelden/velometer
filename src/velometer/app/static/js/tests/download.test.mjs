@@ -349,3 +349,58 @@ test("selfContained: a key label wider than the image wraps inside the image", (
     assert.ok(Math.max(...ys) + 8 <= src, `key ends at ${Math.max(...ys)}, source at ${src}`);
   }
 });
+
+// M13 Task 13b: at phone width the title and the two meta lines wrap inside the image
+const LONG = {
+  ...META,
+  title: "Vorrangnetz (ohne Radschnellverbindungen): Zielvorgaben je Jahr, gemeldete Kilometer und kartierte Kilometer",
+  source: "velometer · OSM-Stand 2026-10-03 · Klassifikator v4 · 64759cb-dirty",
+  attribution: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0",
+};
+const textsOf = (s) => [...s.matchAll(/<text x="([\d.]+)" y="([\d.]+)" font-size="([\d.]+)px"[^>]*>([^<]*)<\/text>/g)]
+  .map((m) => ({ x: Number(m[1]), y: Number(m[2]), size: Number(m[3]), text: m[4] }));
+
+test("selfContained: a title and meta lines wider than the image wrap inside it (390 px)", () => {
+  useLang("de");
+  const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+  const out = selfContained(svg, darkStyle, null, LONG);
+  const [, , w, h] = out.match(/<svg[^>]* viewBox="([^"]+)"/)[1].split(" ").map(Number);
+  const head = out.split("<g transform=")[0];
+  const meta = out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1];
+  const title = textsOf(head);
+  const lines = textsOf(meta);
+  assert.ok(title.length >= 2, "the title wraps");
+  assert.equal(title.map((l) => l.text).join(" "), LONG.title);
+  const full = `${LONG.attribution} · ${FIXTURE.de["js.download.note"]}`;
+  assert.equal(lines.map((l) => l.text).join(" "), `${LONG.source} ${full}`.replace(/&/g, "&amp;"));
+  // every line fits by the estimate: 0.6 em a character (bold title 0.62 em)
+  for (const l of [...title, ...lines]) {
+    const per = l.size === 15 ? 15 * 0.62 : 6.6;
+    assert.ok(l.x + l.text.length * per <= w, `"${l.text}" ends at ${l.x + l.text.length * per}`);
+  }
+  // the chart moves down below the last title line, and the meta lines stay inside the canvas
+  const top = Number(out.match(/<g transform="translate\(0,([\d.]+)\)">/)[1]);
+  assert.ok(Math.max(...title.map((l) => l.y)) + 8 <= top, `title ends ${Math.max(...title.map((l) => l.y))}, chart at ${top}`);
+  assert.ok(Math.min(...lines.map((l) => l.y)) - 11 >= top + 200);
+  assert.ok(Math.max(...lines.map((l) => l.y)) + 4 <= h, "the last line is inside the image");
+  useLang("en");
+});
+
+test("selfContained: the title and meta lines wrap by the width the page measured", () => {
+  const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+  const short = { ...META, title: "Headline", source: "velometer", attribution: "OSM" };
+  const count = (measure) => textsOf(selfContained(svg, darkStyle, null, { ...short, measure })).length;
+  const plain = count(undefined);
+  assert.equal(plain, 3); // one title line, the source and the attribution
+  // a page that measures every text as very wide breaks each into one word a line
+  const wide = count((text) => text.length * 100);
+  assert.ok(wide > plain, `${wide} lines with a wide measure`);
+  // a measure the page could not take (null) falls back to the estimate
+  assert.equal(count(() => null), plain);
+});
+
+test("selfContained: a short title and meta lines keep the one-line layout", () => {
+  const out = selfContained(node("svg", { viewBox: "0 0 800 200" }, []), darkStyle, null, META);
+  assert.match(out, /<g transform="translate\(0,30\)">/);
+  assert.equal(textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]).length, 2);
+});
