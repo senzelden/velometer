@@ -998,3 +998,24 @@ def test_a_signed_percentage_that_rounds_to_zero_has_no_sign():
         assert _signed_pct(v, "en") == "0.0 %", v
         assert _signed_pct(v, "de") == "0,0\u202f%", v
     assert _signed_pct(-0.05, "en") == "\u22120.1 %" and _signed_pct(0.05, "de") == "+0,1\u202f%"
+
+
+# M13 Task 13b (user review "index-wording"): one term for the day concept of the counter index,
+# "complete day" / "vollständiger Tag", in every reader-visible text
+_OTHER_DAY_TERM = re.compile(
+    r"\bvalid[- ]days?\b|\bday is valid\b|\bgültigen? Tage?\b|\bTag ist gültig\b", re.IGNORECASE
+)
+
+
+def test_the_counter_day_is_called_complete_in_every_reader_visible_text(facts):
+    root = Path(__file__).parents[1]
+    texts = {f"render:{lang}": render(facts, lang) for lang in ("en", "de")}
+    for path in [
+        *(root / "src/velometer/report/templates").glob("methodology.*.j2"),
+        *(root / "content").rglob("*.yaml"),
+        *(root / "src/velometer/app/static/js").glob("*.js"),
+    ]:
+        texts[str(path.relative_to(root))] = path.read_text(encoding="utf-8")
+    hits = {k: _OTHER_DAY_TERM.findall(v) for k, v in texts.items() if _OTHER_DAY_TERM.search(v)}
+    assert hits == {}
+    assert "complete days" in texts["render:en"] and "vollständige Tage" in texts["render:de"]

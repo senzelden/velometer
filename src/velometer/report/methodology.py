@@ -156,7 +156,7 @@ class CounterMethodRow(_Frozen):
 class CounterFacts(_Frozen):
     cities: list[CounterCityFact]  # cities with an open counter portal, in config order
     n_no_data: int  # cities listed as checked without open counter data
-    min_valid_pct: float  # valid days a site needs in both years of a link
+    min_valid_pct: float  # complete days a site needs in both years of a link
     min_sites: int  # qualifying sites a link needs
     default_base_year: int  # the base year of a city whose entry names none
     covid_year: int
