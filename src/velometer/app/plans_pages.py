@@ -28,7 +28,8 @@ from velometer.plans.models import (
 )
 
 DETAIL_CITY = "berlin"  # the one city with a plan page of its own (spec §4.4)
-MEASURES_FILE = Path("berlin") / "radverkehrsmassnahmen.geojson"
+MEASURES_LAYER = "radverkehrsmassnahmen"  # the layer the completed projects are read from
+MEASURES_FILE = Path("berlin") / f"{MEASURES_LAYER}.geojson"
 MEASURES_RETRIEVED = Path("berlin") / "retrieved.json"
 PROJECTS_ORG = "infravelo"  # the measures dataset is fed from infraVelo's project database
 COMPLETED = "Abgeschlossen"
@@ -253,10 +254,15 @@ def measures_retrieved(plans_data_dir: Path) -> tuple[dict | None, str | None]:
     return record, None
 
 
-def network_licence(record: dict | None) -> str | None:
-    """The planned-network layer's licence: the record's, when the record lists that layer."""
+def layer_licence(record: dict | None, layer: str) -> str | None:
+    """A fetched layer's licence: the record's, when the record lists that layer."""
     layers = (record or {}).get("layers")
-    return record["licence"] if isinstance(layers, dict) and NETWORK_LAYER in layers else None
+    return record["licence"] if isinstance(layers, dict) and layer in layers else None
+
+
+def network_licence(record: dict | None) -> str | None:
+    """The planned-network layer's licence (layer_licence)."""
+    return layer_licence(record, NETWORK_LAYER)
 
 
 def _projects_of(item_id: str, metres: dict[str, dict[int, float]] | None) -> list[dict] | None:

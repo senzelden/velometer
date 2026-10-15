@@ -253,7 +253,7 @@ page.plan.licence_unknown: ', Lizenz nicht erfasst'
 page.plan.retrieved: ', abgerufen {retrieved}'
 page.plan.matched: '; abgeglichen mit OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL 1.0)'
 page.plan.matched_with: mit <code>{version}</code>
-page.plan.record_error: 'Datenquellen-Eintrag nicht lesbar (<code>retrieved.json</code> der Berliner Datensätze; siehe Serverprotokoll): Lizenz und Abrufdatum können nicht gezeigt werden.'
+page.plan.record_error: 'Datenquellen-Eintrag nicht lesbar (<code>retrieved.json</code> der Berliner Datensätze; siehe Serverprotokoll): Die Lizenzen und das Abrufdatum des Maßnahmendatensatzes können nicht gezeigt werden.'
 
 # --- Stadtseite
 page.city.residents: '{n} Einwohner (Kernstadt)'

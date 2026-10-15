@@ -153,7 +153,7 @@
 </div>
 <h3>{{ t('page.plan.data') }}</h3>
 <ul class="meta data-sources">
-<li>{{ t('page.plan.measures') }}{% if measures %}{{ t('page.plan.licence_retrieved', licence=measures.licence, retrieved=measures.retrieved_at) }}{% elif not projects_present %} {{ t('page.plan.not_present') }}{% endif %}.</li>
+<li>{{ t('page.plan.measures') }}{% if measures_licence %}{{ t('page.plan.licence_retrieved', licence=measures_licence, retrieved=measures.retrieved_at) }}{% elif measures %}{{ t('page.plan.licence_unknown') }}{{ t('page.plan.retrieved', retrieved=measures.retrieved_at) }}{% elif not projects_present %} {{ t('page.plan.not_present') }}{% endif %}.</li>
 <li>{{ t('page.plan.network') }}{% if network_licence %}{{ t('page.plan.licence', licence=network_licence) }}{% elif measures or overlay_version %}{{ t('page.plan.licence_unknown') }}{% endif %}{% if network_retrieved_at %}{{ t('page.plan.retrieved', retrieved=network_retrieved_at) }}{% endif %}{{ t('page.plan.matched') }}{% if overlay_version %} {{ t('page.plan.matched_with', version=overlay_version) }}{% endif %}.</li>
 </ul>
 {% if record_error %}<p class="note">{{ t('page.plan.record_error') }}</p>{% endif -%}

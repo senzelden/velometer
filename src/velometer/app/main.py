@@ -1275,6 +1275,7 @@ def create_app(
                 "text_error": text_error,
                 "measures": measures,
                 "network_licence": plans_pages.network_licence(measures),
+                "measures_licence": plans_pages.layer_licence(measures, plans_pages.MEASURES_LAYER),
                 "record_error": record_error,
             }
 

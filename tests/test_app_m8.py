@@ -544,6 +544,32 @@ def test_a_record_without_the_network_layer_does_not_lend_it_its_licence(setup, 
     assert RETRIEVED["licence"] not in line and "licence not recorded" in line
 
 
+def test_a_record_without_the_measures_layer_does_not_lend_it_its_licence(setup, plans_data):  # noqa: F811
+    # M8-15: the measures line took the record's licence without checking its layer, as the
+    # planned-network line does
+    record = {**RETRIEVED, "layers": {"radverkehrsnetz": RETRIEVED["layers"]["radverkehrsnetz"]}}
+    (plans_data / "berlin" / "retrieved.json").write_text(json.dumps(record))
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    line = _data_line(html, "Measures dataset:")
+    assert RETRIEVED["licence"] not in line and "licence not recorded" in line
+    assert f"licence {RETRIEVED['licence']}" in _data_line(html, "Planned network:")
+
+
+def test_an_unreadable_record_note_claims_only_what_the_page_cannot_show(setup, plans_data):  # noqa: F811
+    # M8-15: the note said the retrieval date "cannot be shown" while the planned-network line
+    # still shows its stored date (from the overlay rows, not the record)
+    _overlay(setup[0], "overlay_v4", 50.0)
+    (plans_data / "berlin" / "retrieved.json").write_text("{not json")
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    note = _text(_section(html, "documents")).split("data source record unreadable", 1)[1]
+    network = _data_line(html, "Planned network:")
+    assert "retrieved" in network  # the stored date of the overlay rows
+    # so the date the note gives up on is the measures dataset's alone
+    assert "measures dataset's retrieval date cannot be shown" in note, note
+
+
 @pytest.mark.parametrize(
     "body",
     ["{not json", "[]", json.dumps({"retrieved_at": "2026-10-07T10:40:42Z"})],

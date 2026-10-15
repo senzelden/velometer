@@ -262,7 +262,7 @@ page.plan.licence_unknown: ', licence not recorded'
 page.plan.retrieved: ', retrieved {retrieved}'
 page.plan.matched: '; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0)'
 page.plan.matched_with: with <code>{version}</code>
-page.plan.record_error: 'data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licence and retrieval date cannot be shown.'
+page.plan.record_error: 'data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licences and the measures dataset''s retrieval date cannot be shown.'
 
 # --- city
 page.city.residents: '{n} residents (city proper)'
