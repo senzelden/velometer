@@ -34,7 +34,7 @@ The net change (to − from) is the change in mapped km per tier. The categories
 | Steglitz-Zehlendorf | 39.705 | 27.542 | 9.271 | 106.784 | -60.609 |
 | Tempelhof-Schöneberg | 45.102 | 23.081 | 5.040 | 65.751 | -37.270 |
 | Treptow-Köpenick | 52.443 | 39.367 | 5.034 | 51.103 | -29.451 |
-| Outside the 12 Bezirke (LAU edge) | 0.903 | 3.147 | 0.000 | 0.009 | -0.046 |
+| Outside the 12 Bezirke (districts), at the LAU edge | 0.903 | 3.147 | 0.000 | 0.009 | -0.046 |
 | **Berlin** | 442.311 | 320.242 | 47.413 | 655.905 | -364.365 |
 
 ## gained: 6111 way-sides (top 20 by mapped km)

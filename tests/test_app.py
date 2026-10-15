@@ -1190,7 +1190,7 @@ def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
     rows = body.split("<tr")[1:]
     assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]
     assert len(rows) == 3 and 'class="remainder"' in rows[2]
-    assert "<td>Outside the 2 Bezirke (LAU edge)</td>" in rows[2]
+    assert "<td>Outside the 2 Bezirke (districts), at the LAU edge</td>" in rows[2]
     assert 'class="remainder"' not in "".join(rows[:2])
     note = bezirke.split("</table>")[1]
     assert (
@@ -1299,7 +1299,7 @@ def test_subarea_csv_has_provenance_columns_the_odbl_line_and_a_row_per_tier(sub
     assert {(r["subarea_id"], r["name"]) for r in rows} == {
         ("west", "West"),
         ("east", "East"),
-        ("remainder", "Outside the 2 Bezirke (LAU edge)"),
+        ("remainder", "Outside the 2 Bezirke (districts), at the LAU edge"),
     }
     for run_id in {r["run_id"] for r in rows}:  # the remainder's rows close each run's block
         ids = [r["subarea_id"] for r in rows if r["run_id"] == run_id]

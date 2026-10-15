@@ -492,7 +492,7 @@ road_class.main_excl_motorway: main roads (excl. motorways)
 road_class.main_incl_motorway: main roads (incl. motorways)
 road_class.main_incl_motorway_raw: main roads (incl. motorways, per carriageway)
 road_class.all_public: all public roads
-subarea.remainder: Outside the {n} Bezirke (LAU edge)
+subarea.remainder: Outside the {n} Bezirke (districts), at the LAU edge
 tier.A: A separated track
 tier.B: B shared foot/cycle path
 tier.C: C protected lane
