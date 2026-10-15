@@ -95,9 +95,35 @@ export function yDomain(values, count = 5, opts = {}) {
 }
 
 /**
+ * Two y domains (yDomain) with their 0 at the same height: the one whose 0 sits lower gets more
+ * room below 0 (and the ticks of its step that fit there). A domain with no room above 0 first
+ * gets one step of it, so that 0 can lie inside both.
+ */
+export function alignZero(a, b) {
+  const up = (d) => {
+    if (d.hi > 0) return d;
+    const step = d.ticks.length > 1 ? d.ticks[1] - d.ticks[0] : 1;
+    return { lo: d.lo, hi: step, ticks: [...d.ticks.filter((v) => v <= 0), step] };
+  };
+  const at = (d) => -d.lo / (d.hi - d.lo); // 0's height above the bottom, as a share of the span
+  const lower = (d, f) => {
+    const lo = (-f * d.hi) / (1 - f);
+    const step = d.ticks[1] - d.ticks[0];
+    const ticks = [...d.ticks];
+    for (let v = ticks[0] - step; v >= lo - 1e-9; v -= step) ticks.unshift(+v.toFixed(10));
+    return { lo, hi: d.hi, ticks };
+  };
+  const [p, q] = [up(a), up(b)];
+  const f = Math.max(at(p), at(q));
+  return [at(p) < f ? lower(p, f) : p, at(q) < f ? lower(q, f) : q];
+}
+
+/**
  * Which target steps the y axis holds. A step above OFFSCALE_FACTOR x the largest figure
- * (reported, completed or mapped) is off scale: the axis is set by the figures and the nearer
- * steps, and the far ones are drawn as caps on the top edge. No figure above 0: all on scale.
+ * (reported, completed or mapped; the mapped line has its own axis but still counts here, so a
+ * target near the mapped change stays on the scale) is off scale: the axis is set by the figures
+ * and the nearer steps, and the far ones are drawn as caps on the top edge. No figure above 0: all
+ * on scale.
  */
 export function targetScale(steps, figures) {
   const top = Math.max(0, ...figures);
@@ -162,7 +188,9 @@ export function labelSpot(x, y, w, segments, [left, right, top, bottom]) {
 /**
  * Draw `series` (planSeries) into `host`: one band per year (opts.years, else every year with a
  * value), target steps across each band, completed-project bars beside the reported markers and
- * the mapped line (positioned by snapshot date, its last point labelled with the date).
+ * the mapped line (positioned by snapshot date, its last point labelled with the date). The
+ * mapped line is a change since a date, not km per year: it is read on its own labelled axis on
+ * the right, its 0 on the per-year axis's 0 (alignZero).
  * opts: {label, years, unit, quantity, width, height}; quantity is the item's target_kind, and
  * the y label says it. The charted figures are per year: a cumulative or total target is not
  * drawn against them (a note under the chart says so; the table lists it), only on its own.
@@ -180,17 +208,13 @@ export function renderPlanChart(host, series, opts = {}) {
   years.sort((a, b) => a - b);
   const inRange = (p) => years.includes(p.year);
   const mapped = series.mapped.filter(inRange);
-  const figures = [
-    ...series.reported.filter(inRange),
-    ...series.projects.filter(inRange),
-    ...mapped,
-  ].map((p) => p.value);
+  const figures = [...series.reported.filter(inRange), ...series.projects.filter(inRange)].map((p) => p.value);
   const perYear = PER_YEAR.has(quantity);
   const drawTarget = perYear || !figures.length;
   const scaled = drawTarget
-    ? targetScale(series.target.filter(inRange), figures)
+    ? targetScale(series.target.filter(inRange), [...figures, ...mapped.map((p) => p.value)])
     : { onScale: [], offScale: [] };
-  const values = [...scaled.onScale.map((p) => p.value), ...figures];
+  const values = [...scaled.onScale.map((p) => p.value), ...figures, ...mapped.map((p) => p.value)];
   if (!years.length || !values.length) {
     const p = document.createElement("p");
     p.className = "empty";
@@ -200,19 +224,34 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const W = Math.max(280, opts.width ?? host.clientWidth ?? 0);
   const H = opts.height ?? 240;
-  const { steps, offScale, dom } = settleScale(scaled, figures, W < 480 ? 4 : 5);
+  const count = W < 480 ? 4 : 5;
+  const settled = settleScale(scaled, figures, count);
+  const { steps, offScale } = settled;
+  let dom = settled.dom;
+  // the mapped line's own axis (right), its 0 level with the per-year 0
+  let dom2 = null;
+  if (mapped.length) {
+    const own = yDomain(mapped.map((p) => p.value), count, { headroom: offScale.length > 0 });
+    [dom, dom2] = figures.length || steps.length ? alignZero(dom, own) : [own, own];
+  }
   const ticks = dom.ticks;
-  // left: the widest tick label and its 6 px gap, 4 px to spare; right: the last band's edge
-  const ml = Math.ceil(Math.max(...ticks.map((tick) => textWidth(tickLabel(tick))))) + 10;
-  const mr = 10;
+  const ticks2 = dom2?.ticks ?? [];
+  // each side: the widest tick label and its 6 px gap, 4 px to spare; no right axis: the last
+  // band's edge
+  const widest = (ts) => Math.ceil(Math.max(...ts.map((tick) => textWidth(tickLabel(tick))))) + 10;
+  const ml = widest(ticks);
+  const mr = dom2 ? widest(ticks2) : 10;
   const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : `${unit}, ${quantityText(quantity)}`;
   const line = mapped.length ? t("js.plan.line", { year: series.mappedFrom }) : null;
-  const oneLine = line ? `${axis} · ${line}` : axis;
-  const ylines = !line || textWidth(oneLine) <= W - ml - mr ? [oneLine] : [axis, line];
-  // the y label's lines, then a row for the off-scale caps' values, then the plot
-  const mt = 14 + (ylines.length - 1) * LINE + (offScale.length ? LINE : 0);
+  // the left label from the left axis, the line's label ending over the right axis; one row if
+  // both fit side by side, else two
+  const oneRow = !line || textWidth(axis) + 12 + textWidth(line) <= W - ml - Math.round(mr / 2);
+  const rows = oneRow ? 1 : 2;
+  // the y labels' rows, then a row for the off-scale caps' values, then the plot
+  const mt = 14 + (rows - 1) * LINE + (offScale.length ? LINE : 0);
   const mb = 26;
   const y = scaleLinear([dom.lo, dom.hi], [H - mb, mt]);
+  const y2 = dom2 ? scaleLinear([dom2.lo, dom2.hi], [H - mb, mt]) : y;
   const band = (W - ml - mr) / years.length;
   const x0 = (yr) => ml + years.indexOf(yr) * band;
   const mid = (yr) => x0(yr) + band / 2;
@@ -231,7 +270,12 @@ export function renderPlanChart(host, series, opts = {}) {
     if ((years.length - 1 - i) % every) return;
     svg.appendChild(el("text", { class: "axis-t", x: mid(yr), y: H - mb + 16, "text-anchor": "middle" }, String(yr)));
   });
-  ylines.forEach((text, i) => svg.appendChild(el("text", { class: "ylab", x: ml, y: 10 + i * LINE }, text)));
+  for (const tick of ticks2) {
+    svg.appendChild(el("text", { class: "axis-t axis-r", x: W - mr + 6, y: y2(tick) + 3.5, "text-anchor": "start" }, tickLabel(tick)));
+  }
+  // the line's label ends half the right margin inside the svg edge, over its tick labels
+  svg.appendChild(el("text", { class: "ylab", x: ml, y: 10 }, axis));
+  if (line) svg.appendChild(el("text", { class: "ylab", x: W - Math.round(mr / 2), y: 10 + (rows - 1) * LINE, "text-anchor": "end" }, line));
 
   const bars = (points, cls, dx, what) => {
     const g = el("g", { class: cls });
@@ -250,15 +294,15 @@ export function renderPlanChart(host, series, opts = {}) {
     // a snapshot sits at its date: 1 January of Y on the left edge of Y's band
     const xAt = (p) => x0(p.year) + (p.at - p.year) * band;
     const g = el("g", { class: "mapped" });
-    const d = mapped.map((p, i) => `${i ? "L" : "M"}${xAt(p).toFixed(1)},${y(p.value).toFixed(1)}`).join("");
+    const d = mapped.map((p, i) => `${i ? "L" : "M"}${xAt(p).toFixed(1)},${y2(p.value).toFixed(1)}`).join("");
     g.appendChild(el("path", { class: "mapped-line", d }));
     for (const p of mapped) {
       const sign = p.value > 0 ? "+" : "";
       const text = t("js.plan.mapped_point", { date: p.date, value: `${sign}${formatValue(p.value)}`, year: series.mappedFrom });
-      g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y(p.value), r: 3 }), text));
+      g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y2(p.value), r: 3 }), text));
     }
     const last = mapped.at(-1);
-    const spot = labelSpot(xAt(last), y(last.value), textWidth(last.date), segments, [ml, W - mr, mt, H - mb]);
+    const spot = labelSpot(xAt(last), y2(last.value), textWidth(last.date), segments, [ml, W - mr, mt, H - mb]);
     g.appendChild(el("text", { class: "mapped-label", ...spot }, last.date));
     svg.appendChild(g);
   }

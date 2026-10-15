@@ -396,3 +396,71 @@ test("renderPlanChart: a target at or below the axis top is drawn on the scale, 
     assert.equal(steps + caps.length, 2, "every target drawn once, as a step or a cap");
   }
 });
+
+// ---------- M13 Task 8 (M8-2): the mapped line has its own labelled axis ----------
+
+const tickTexts = (el, anchor) =>
+  texts(el).filter((n) => n.attrs.class?.split(" ").includes("axis-t") && n.attrs["text-anchor"] === anchor);
+const tickY = (n) => Number(n.attrs.y) - 3.5;
+
+const mappedChart = (overlay, reports, width = 640) => {
+  const el = new Node("div");
+  const s = planSeries({ 2022: 40, 2023: 60 }, reports, overlay, [], { mappedFrom: 2022 });
+  renderPlanChart(el, s, { label: "Vorrangnetz", years: [2022, 2023, 2024], unit: "km", width });
+  return el;
+};
+
+test("renderPlanChart: the cumulative mapped line is read on its own right axis, not the per-year axis", () => {
+  // the mapped change (a cumulative quantity) ten times the per-year figures: it must not set the
+  // per-year axis, and its points must be readable against a labelled axis of their own
+  const overlay = [
+    { date: "2022-01-01", ab_km: 400 }, { date: "2023-01-01", ab_km: 600 },
+    { date: "2024-07-01", ab_km: 820 },
+  ];
+  for (const width of [640, 358]) {
+    const el = mappedChart(overlay, [row(2022, 14.4, "a", true), row(2023, 13.6, "b", true)], width);
+    const left = tickTexts(el, "end").map((n) => Number(n.textContent.replace(",", "")));
+    assert.ok(Math.max(...left) <= 60, `per-year axis top ${Math.max(...left)}: set by the targets and figures`);
+    const right = tickTexts(el, "start").filter((n) => n.attrs.class.includes("axis-r"));
+    assert.ok(right.length >= 3, "the right axis has tick labels");
+    const svg = svgOf(el);
+    const plotRight = Math.max(...marks(el, "gridl").map((n) => Number(n.attrs.x2)));
+    assert.ok(right.every((n) => Number(n.attrs.x) > plotRight), "right tick labels sit right of the plot");
+    // each mapped point lies where the right axis says its value is
+    const [a, b] = [right[0], right.at(-1)].map((n) => [Number(n.textContent.replace(",", "")), tickY(n)]);
+    const at = (v) => a[1] + ((v - a[0]) / (b[0] - a[0])) * (b[1] - a[1]);
+    const pts = marks(el, "mapped-pt");
+    const values = [0, 200, 420];
+    pts.forEach((p, i) => assert.ok(Math.abs(Number(p.attrs.cy) - at(values[i])) < 0.6, `point ${i}`));
+    const gridYs = marks(el, "gridl").map((n) => Number(n.attrs.y1));
+    for (const p of pts) {
+      const cy = Number(p.attrs.cy);
+      assert.ok(cy >= Math.min(...gridYs) - 0.5 && cy <= Math.max(...gridYs) + 0.5, `point at ${cy} inside the plot`);
+    }
+    // the right axis is labelled as the line's
+    const ylab = texts(el).filter((n) => n.attrs.class === "ylab");
+    const rlab = ylab.find((n) => n.textContent.includes("mapped km since 1 Jan 2022"));
+    assert.ok(rlab && rlab.attrs["text-anchor"] === "end", ylab.map((n) => n.textContent).join(" | "));
+    assert.ok(!ylab.some((n) => n.textContent.includes("per year") && n.textContent.includes("mapped")),
+      "the per-year label does not claim the line");
+    assert.ok(Number(rlab.attrs.x) <= Number(svg.attrs.width));
+  }
+});
+
+test("renderPlanChart: the two axes share their zero line", () => {
+  // a mapped change below zero: both axes keep 0 on the same gridline, so bars and the line
+  // start from one baseline
+  const overlay = [
+    { date: "2022-01-01", ab_km: 400 }, { date: "2023-01-01", ab_km: 380 },
+    { date: "2024-01-01", ab_km: 520 },
+  ];
+  const el = mappedChart(overlay, [row(2022, 14.4, "a", true)]);
+  const zeroL = tickTexts(el, "end").find((n) => n.textContent === "0");
+  const zeroR = tickTexts(el, "start").find((n) => n.attrs.class.includes("axis-r") && n.textContent === "0");
+  assert.ok(zeroL && zeroR, "both axes label 0");
+  assert.ok(Math.abs(tickY(zeroL) - tickY(zeroR)) < 0.01, `${tickY(zeroL)} vs ${tickY(zeroR)}`);
+  const low = marks(el, "mapped-pt")[1];
+  assert.ok(Number(low.attrs.cy) > tickY(zeroR), "the negative change lies below the zero line");
+  const svg = svgOf(el);
+  assert.ok(Number(low.attrs.cy) <= Number(svg.attrs.height) - 26, "and inside the plot");
+});
