@@ -315,9 +315,9 @@ sources:
       avec un organe délibérant et un exécutif élus.
     gloss_en: Created by the Revolution (law of 22 December 1789), the département is an administrative
       district of the State. The Prefect represents the various State administrations at territorial
-      level. Since the law of 10 August 1871 it is also an autonomous local authority with an elected
+      level. By the law of 10 August 1871 it is also an autonomous local authority with an elected
       deliberative body and executive.
-    gloss_de: "Als Schöpfung der Revolution (Gesetz vom 22. Dezember 1789) ist das Département ein Verwaltungsbezirk des Staates. Der Präfekt vertritt die verschiedenen staatlichen Verwaltungen auf territorialer Ebene. Seit dem Gesetz vom 10. August 1871 ist es zudem eine autonome Gebietskörperschaft mit einem gewählten beschließenden Organ und einer gewählten Exekutive."
+    gloss_de: "Als Schöpfung der Revolution (Gesetz vom 22. Dezember 1789) ist das Département ein Verwaltungsbezirk des Staates. Der Präfekt vertritt die verschiedenen staatlichen Verwaltungen auf territorialer Ebene. Durch das Gesetz vom 10. August 1871 ist es zudem eine autonome Gebietskörperschaft mit einem gewählten beschließenden Organ und einer gewählten Exekutive."
     locator: Définition, first paragraph
 - id: strasbourg-premiere-agglomeration
   publisher: Ville et Eurométropole de Strasbourg
@@ -466,7 +466,8 @@ sources:
     text: La Ville et l'Eurométropole de Strasbourg sont deux institutions distinctes. Elles ont la
       particularité d'avoir à leur service une seule administration et un siège commun.
     gloss_en: The City (Ville) and the Eurométropole de Strasbourg (the metropolitan authority) are two
-      separate institutions. They share a single administration and a common headquarters.
+      separate institutions. They have the particularity of sharing a single administration and a common
+      headquarters.
     gloss_de: "Die Stadt (Ville) und die Eurométropole de Strasbourg (der Metropolverband) sind zwei getrennte Institutionen. Sie haben die Besonderheit, eine einzige Verwaltung und einen gemeinsamen Sitz zu teilen."
     locator: intro text of the section Ville & Eurométropole
 - id: bordeaux-plan-velo-2021-2026

@@ -27,6 +27,14 @@ Accessed 2026-10-15. Nothing was archived. All new excerpts are 60 words or fewe
 | PL1 | https://stat.gov.pl/metainformacje/slownik-pojec/pojecia-stosowane-w-statystyce-publicznej/813,pojecie.html | `gus-pojecie-gmina/definition` | "Gmina Nazwa angielska: Gmina Definicja: Podstawowa jednostka najniższego szczebla zasadniczego trójstopniowego podziału terytorialnego państwa." |
 | G8 | https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-0389.A-v.pdf (existing source, PDF p. 17) | `berlin-fortschrittsbericht-2021/main-road-facilities` | "Im Jahr 2021 wurden im Berliner Radverkehrsprogramm 18,7 Kilometer Radverkehrsanlagen an Hauptverkehrsstraßen gebaut." |
 
+Bordeaux: Task 7 cites `bordeaux-metropole-que-fait/epci-28-communes` with `[@…]` and does not
+quote it. Its text keeps "( EPCI )" with spaces because that is how the page text reads once
+normalised: EPCI is an `<abbr>` element.
+
+`berlin-fortschrittsbericht-2021`: `accessed` moved from 2026-10-07 to 2026-10-15. Today's PDF
+download is byte-identical (`cmp`) to the copy checked in this task. Both the existing `halved`
+excerpt and the new `main-road-facilities` excerpt are found in its `pdftotext` text.
+
 What I tried and could not use:
 - ES4: every comunidad.madrid page tried (`/administracion-local/municipios-comunidad-madrid`,
   `/servicios/municipios`, `/taxonomy/term/2032`, a 2026 news page, the Estatuto page and a
@@ -85,11 +93,13 @@ with a comma gloss; R = English first with the original in parentheses.
 | G2 | organisations/abgeordnetenhaus.yaml:17; organisations/infravelo.yaml:14,18,21,24,29,34,40; organisations/senmvku.yaml:12,27,34,50 | Bezirke(n) | as G1 | P |
 | G4 | narratives/berlin.yaml:35,40; explainer.yaml:46; organisations/abgeordnetenhaus.yaml:16,41,48; plans/berlin.yaml:5,22,24,51,53 | Radvorrangnetz / Vorrangnetz; Ergänzungsnetz; Nebennetz | `berlin-drs-19-25987/vorrangnetz-target`, `berlin-fortschrittsbericht-2025/network-share` (Vorrangnetz, Ergänzungsnetz), `berlin-mobg-amendment-2026/deadline-2030-2035` (Nebennetz) | German abgeordnetenhaus "Nebennetz" done in M12. **English still needs work**: abgeordnetenhaus.yaml:41 says "the secondary network"; the source term is "Nebennetz". No source shows Nebennetz to be the same as the Ergänzungsnetz, so keep the two terms apart. |
 | G6 | organisations/abgeordnetenhaus.yaml:9,23; organisations/infravelo.yaml:22; organisations/senmvku.yaml:25 | Landes Berlin (Land Berlin) | `infravelo-faq/funding` | O |
+| G6 (borderline) | organisations/abgeordnetenhaus.yaml:11 ("what the Land's money is spent on") | Landes Berlin | `infravelo-faq/funding` | Borderline: it refers back to "the Land Berlin" two lines earlier, in the same paragraph. If Task 7 glosses line 9, line 11 can stay as it is. |
 | G7 | organisations/abgeordnetenhaus.yaml:42 | Hauptverkehrsstraßen | `berlin-radverkehrsplan-2021/not-in-table-3` | P. HIGH: the Berlin legal category differs from velometer "main roads". |
 | G8 | plans/berlin.yaml:18 | Radverkehrsanlagen an Hauptverkehrsstraßen | **new** `berlin-fortschrittsbericht-2021/main-road-facilities` | P. The sentence already cites this source. |
 | G9 | organisations/senmvku.yaml:22,39; organisations/abgeordnetenhaus.yaml:20 | Streckenlänge | `berlin-radfortschrittsbericht-page/streckenlaenge` | P. The inventory's other G9 lines (plans/berlin.yaml, explainer.yaml, narratives/berlin.yaml, narratives/combined.yaml) no longer contain "route length" at d609ebc. Task 7 should re-grep them. |
-| G13 | organisations/changing_cities.yaml:19; organisations/abgeordnetenhaus.yaml:20 | planerisches Zielnetz | `berlin-drs-19-25987/vorrangnetz-target` | P |
-| A1 | narratives/vienna.yaml:29-30; organisations/mobilitaetsagentur_wien.yaml:20,27 | Hauptradverkehrsnetz | `vienna-radwegeausbau-bilanz-2025/started-not-completed` | P |
+| G13 | organisations/abgeordnetenhaus.yaml:20 | planerisches Zielnetz | `berlin-drs-19-25987/vorrangnetz-target` | P |
+| G13 (Changing Cities) | organisations/changing_cities.yaml:18-19 (scope), 29-30 (paragraph, "Its target network of 2,699.8 km") | Berliner Radnetz (bis 2030) | `berlin-changing-cities-monitor/target-network` ("2.699,8 Kilometer: So lang soll das Berliner Radnetz bis 2030 sein.") | P. This is the NGO monitor's own target figure, not the Senate's Zielnetz, and its source never says "Zielnetz". Task 7 must not attach "Zielnetz" here; the only source term is "Berliner Radnetz". |
+| A1 | narratives/vienna.yaml:29-30; organisations/mobilitaetsagentur_wien.yaml:20,27,31-32 | Hauptradverkehrsnetz | `vienna-radwegeausbau-bilanz-2025/started-not-completed` | P |
 | A2 | narratives/vienna.yaml:27-28 | Radfahren gegen die Einbahn; Verkehrsberuhigter Bereich; Radroute | `vienna-radverkehrsnetz-fakten/types-mixed`, `vienna-radverkehrsnetz-fakten/types-calmed` | P |
 | PL1 | narratives/warsaw.yaml:22; narratives/wroclaw.yaml:20 | gmina (GUS: "Nazwa angielska: Gmina") | **new** `gus-pojecie-gmina/definition` | O. Statistics Poland's official English name for the unit is "Gmina", left untranslated. The German twins also leave "construction"/"cycleway" in English (inventory note). |
 | PL3 | narratives/warsaw.yaml:29-30 | pasów i kontrapasów | `warsaw-zdm-sezon-2018/composition-544km` | P |
