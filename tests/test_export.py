@@ -184,7 +184,8 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
     found = export.export_urls(data, app)
     with TestClient(app, base_url=BASE_URL) as c:
         for url in found:
-            r = c.get(url)
+            r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
+            assert r.status_code == 200, url
             path = out / export.url_to_path(url, r.headers["content-type"])
             assert path.is_file(), url
             if not r.headers["content-type"].startswith(("text/html", "text/csv")):
@@ -961,11 +962,15 @@ def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
     _export(rich, out)
     pages = [p for p in _files(out) if p.suffix == ".html"]
     assert len(pages) > 10
+    # each page file's URL, as the export rendered it (`/de/` keeps its slash: `/de` redirects)
+    url_of = {"404.html": "/404"}
+    for url in export.export_urls(_data(rich), _app(rich)):
+        url_of.setdefault(str(export.url_to_path(url, "text/html")), url)
     with TestClient(_app(rich), base_url=BASE_URL) as c:
         for page in pages:
             rel = page.relative_to(out).as_posix()
-            url = "/404" if rel == "404.html" else "/" + rel.removesuffix("index.html").rstrip("/")
-            r = c.get(url)
+            url = url_of[rel]
+            r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
             assert r.status_code == (404 if rel == "404.html" else 200), rel
             text = page.read_text()
             if rel.endswith("panel/index.html"):
