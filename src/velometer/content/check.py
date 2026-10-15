@@ -1013,14 +1013,20 @@ def _check_source_rows(config_dir: Path, orgs: dict[str, Organisation]) -> list[
     """Every quoted figure source has its /sources row (M11 spec decision 1): the organisation
     behind each mapping entry whose (city, source) figures.csv or reconcile.yaml quotes has a
     "How they measure" section with all six dimensions, each cited or "not stated by the
-    source". A missing profile or an unreadable file is `_check_coverage`'s problem."""
+    source". A missing profile is `_check_coverage`'s problem. A file the check needs that
+    cannot be read is said in one line naming it, so the rows are never passed unchecked in
+    silence (the same file usually fails `_check_coverage` too)."""
     try:
         mapping = load_organisation_map(Path(config_dir) / "organisations.yaml")
-        dims = _read_dimensions(config_dir)
         pairs = _figure_pairs(config_dir)
         reconciled = set(_reconcile_sources(config_dir))
-    except (ContentError, *_DIMENSION_ERRORS):
-        return []
+    except ContentError as e:
+        return [f"organisations: the 'How they measure' rows were not checked: {e}"]
+    try:
+        dims = _read_dimensions(config_dir)
+    except _DIMENSION_ERRORS as e:
+        diff = Path(config_dir) / "differences.yaml"
+        return [f"organisations: the 'How they measure' rows were not checked: {diff}: {e}"]
     if dims is None:
         return []
     problems: list[str] = []

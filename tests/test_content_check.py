@@ -469,3 +469,19 @@ def test_an_unquoted_mapping_entry_is_not_checked(shipped):
     dims_of("senmvku", lambda d: d.update(area="Berlin"))
     problems = _source_row_problems(content_dir, config_dir)
     assert problems and all("unquoted_source" not in p for p in problems)
+
+
+@pytest.mark.parametrize(
+    ("rel", "text", "says"),
+    [
+        ("external/figures.csv", "city\nberlin\n", "figures.csv"),
+        ("differences.yaml", "dimensions: [unclosed\n", "differences.yaml"),
+    ],
+)
+def test_a_file_the_source_rows_need_unreadable_is_said_not_skipped(shipped, rel, text, says):
+    """The "How they measure" check cannot run without its inputs: it says so and why, instead
+    of passing in silence (M13 M11-7)."""
+    content_dir, config_dir, _ = shipped
+    (config_dir / rel).write_text(text, encoding="utf-8")
+    problems = _source_row_problems(content_dir, config_dir)
+    assert any("not checked" in p and says in p for p in problems), problems

@@ -25,7 +25,13 @@ def test_csv_and_series_ids_are_unchanged(client):  # noqa: F811
     # spec decision 2: only display labels change; scripts keep working
     assert _header(client.get("/data/all.csv").text) == M10_CSV_COLUMNS
     series = client.get("/data/series.json").json()
-    assert {"ours_headline", "ecf_qecio", "clean_cities_2025"} <= set(json.dumps(series).split('"'))
+    # the preset ids as the scripts read them, by exact key (M13 M11-7): the labels by preset id,
+    # and each point's value under its fixed key
+    assert {"ours_headline", "ecf_qecio", "clean_cities_2025"} <= set(series["presets"])
+    points = [p for pts in series["series"].values() for p in pts]
+    assert points
+    for p in points:
+        assert {"headline", "ecf_qecio", "clean_cities"} <= set(p), sorted(p)
 
 
 def test_no_label_says_ours_colon(client):  # noqa: F811
