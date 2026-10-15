@@ -209,8 +209,43 @@ test("renderPlanChart: the date label of the last snapshot never sits on a targe
     const crosses = sx < x2 && ex > x1 && sy >= y1 && sy <= y2;
     assert.ok(!crosses, `label [${x1}..${x2}]x[${y1}..${y2}] crosses the step at y=${sy} [${sx}..${ex}]`);
   }
-  const svg = svgOf(el);
-  assert.ok(x1 >= 0 && x2 <= Number(svg.attrs.width), "the label stays inside the svg");
+  // inside the plot, as labelSpot places it (M8-17: the test had been relaxed to the svg)
+  const grid = marks(el, "gridl");
+  const [left, right] = [Number(grid[0].attrs.x1), Number(grid[0].attrs.x2)];
+  const top = Math.min(...grid.map((n) => Number(n.attrs.y1)));
+  const bottom = Number(svgOf(el).attrs.height) - 26;
+  assert.ok(x1 >= left && x2 <= right && y1 >= top && y2 <= bottom, `label [${x1}..${x2}]x[${y1}..${y2}]`);
+});
+
+test("renderPlanChart: the date label keeps off the cap lines; cap labels never overlap", () => {
+  // M8-17: labelSpot was given the on-scale steps only, and adjacent caps' values were untested
+  const boxes = (el, cls) =>
+    marks(el, cls).map((n) => {
+      const w = n.textContent.length * 6.2;
+      const x = Number(n.attrs.x);
+      const anchor = n.attrs["text-anchor"];
+      const [x1, x2] = anchor === "end" ? [x - w, x] : anchor === "middle" ? [x - w / 2, x + w / 2] : [x, x + w];
+      return { x1, x2, y1: Number(n.attrs.y) - 9, y2: Number(n.attrs.y) + 2 };
+    });
+  for (const width of [640, 358, 280]) {
+    // the last snapshot high in a band whose target is capped: the label's first spot is the cap
+    const el = new Node("div");
+    const overlay = [{ date: "2022-01-01", ab_km: 100 }, { date: "2026-10-03", ab_km: 160 }];
+    const targets = { 2025: 50, 2026: 900, 2027: 900, 2028: 1200, 2029: 1200, 2030: 1200, 2031: 1500 };
+    const s = planSeries(targets, [row(2022, 10, "b", true), row(2026, 60, "c", true)], overlay, [], { mappedFrom: 2022 });
+    const years = Array.from({ length: 10 }, (_, i) => 2022 + i);
+    renderPlanChart(el, s, { years, unit: "km", width });
+    assert.equal(marks(el, "target-cap").length, 6, "a cap per off-scale target");
+    const caps = boxes(el, "target-cap-label");
+    assert.ok(caps.length >= 3, "cap values labelled");
+    caps.slice(1).forEach((c, i) => assert.ok(c.x1 >= caps[i].x2, `cap labels overlap at ${width}`));
+    const [label] = boxes(el, "mapped-label");
+    const capYs = marks(el, "target-cap").map((n) => [...n.attrs.d.matchAll(/M([\d.]+),([\d.]+)H([\d.]+)/g)].map((m) => m.slice(1).map(Number))).flat();
+    for (const [sx, sy, ex] of capYs) {
+      const crosses = sx < label.x2 && ex > label.x1 && sy >= label.y1 && sy <= label.y2;
+      assert.ok(!crosses, `${width}: the date label crosses the cap at y=${sy}`);
+    }
+  }
 });
 
 test("renderPlanChart: no target line for an item without a target", () => {

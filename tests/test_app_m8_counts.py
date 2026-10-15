@@ -556,7 +556,7 @@ def test_counter_short_names_come_from_one_place(setup, series, short):  # noqa:
 
 
 def _key_line_colour(rules, cls: str) -> str:
-    """The border-top colour of `<p class="chart-key"><span class="key {cls}">`: the matching
+    """The border-top colour of `<ul class="chart-key"><li><span class="key {cls}">`: the matching
     rule of highest specificity wins, a later one on ties; a shorthand without a colour resets
     it to currentColor."""
     matching = {".key", f".{cls}", ".chart-key .key", f".chart-key .{cls}", f".key.{cls}"}

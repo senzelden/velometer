@@ -292,7 +292,11 @@ export function renderPlanChart(host, series, opts = {}) {
     svg.appendChild(g);
   };
   bars(series.projects, "projects", -barW * 1.6, t("js.plan.completed"));
-  const segments = steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) }));
+  // the date label keeps off the target steps and the caps on the top edge
+  const segments = [
+    ...steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) })),
+    ...offScale.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: mt })),
+  ];
 
   if (mapped.length) {
     // a snapshot sits at its date: 1 January of Y on the left edge of Y's band
@@ -324,16 +328,21 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   if (offScale.length) {
     // off the scale: a cap on the top edge of the band, the value above it (every target is
-    // also in the table under the chart)
+    // also in the table under the chart). A value wider than its band: the compact form; still
+    // wider, every other cap is labelled (counted from the last), as the year labels thin out
     const g = el("g", { class: "target offscale" });
-    for (const p of offScale) {
+    const compact = (p) => `↑${formatValue(p.value)}`;
+    const thin = offScale.some((p) => textWidth(compact(p)) > band - 2);
+    offScale.forEach((p, i) => {
       const d = `M${(x0(p.year) + 2).toFixed(1)},${mt}H${(x0(p.year) + band - 2).toFixed(1)}`;
       const text = t("js.plan.target_cap", { year: p.year, value: formatValue(p.value), unit });
       g.appendChild(titled(el("path", { class: "target-cap", d }), text));
+      const next = offScale[i + 1];
+      if (thin && (offScale.length - 1 - i) % 2 && next?.year === p.year + 1) return;
       const wide = `↑ ${formatValue(p.value)}`;
-      const value = textWidth(wide) <= band ? wide : `↑${formatValue(p.value)}`;
+      const value = textWidth(wide) <= band ? wide : compact(p);
       g.appendChild(el("text", { class: "target-cap-label", x: mid(p.year), y: mt - 3, "text-anchor": "middle" }, value));
-    }
+    });
     svg.appendChild(g);
   }
 
