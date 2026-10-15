@@ -582,12 +582,12 @@ sources:
   kind: official
   excerpts:
   - id: epci-28-communes
-    text: Bordeaux Métropole est un Établissement Public de Coopération Intercommunale ( EPCI ). Au
+    text: Bordeaux Métropole est un Établissement Public de Coopération Intercommunale (EPCI). Au
       service des 28 communes qui la composent
     gloss_en: Bordeaux Métropole is a public body for inter-municipal cooperation (Établissement Public
       de Coopération Intercommunale, EPCI), serving the 28 municipalities (communes) that make it up.
     gloss_de: "Bordeaux Métropole ist ein öffentlicher Zweckverband für interkommunale Zusammenarbeit (Établissement Public de Coopération Intercommunale, EPCI), im Dienst der 28 Gemeinden (communes), aus denen er besteht."
-    locator: intro text below the heading Institution (the page renders EPCI as an abbreviation, hence the spaces)
+    locator: intro text below the heading Institution
 - id: madrid-opendata-infraestructura-ciclista
   publisher: Ayuntamiento de Madrid, Portal de datos abiertos
   title: Bici. Infraestructura ciclista, dataset description
