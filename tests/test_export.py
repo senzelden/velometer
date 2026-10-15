@@ -508,18 +508,23 @@ def _set_aside(tmp_path: Path) -> list[Path]:
     return [p for p in _staging(tmp_path) if "-old-" in p.name]
 
 
-def _failing_moves(monkeypatch, fail):
+def _failing_moves(monkeypatch, fail, after=None):
     """os.rename and os.replace (whichever the swap uses) that call `fail(src, dst)` first; it
-    raises to simulate a failure at that move."""
+    raises to simulate a failure at that move. `after(src, dst)` runs once the move is done: it
+    raises to simulate an interrupt between a move and its bookkeeping."""
     real_rename, real_replace = os.rename, os.replace
 
     def rename(src, dst, *a, **k):
         fail(Path(src), Path(dst))
-        return real_rename(src, dst, *a, **k)
+        real_rename(src, dst, *a, **k)
+        if after:
+            after(Path(src), Path(dst))
 
     def replace(src, dst, *a, **k):
         fail(Path(src), Path(dst))
-        return real_replace(src, dst, *a, **k)
+        real_replace(src, dst, *a, **k)
+        if after:
+            after(Path(src), Path(dst))
 
     monkeypatch.setattr(os, "rename", rename)
     monkeypatch.setattr(os, "replace", replace)
@@ -564,6 +569,80 @@ def test_a_failed_rollback_names_the_set_aside_directory(tmp_path, monkeypatch):
     [aside] = _set_aside(tmp_path)
     assert str(aside) in str(caught.value)
     assert _snapshot(aside) == before_out  # the previous export, whole, where the message says
+
+
+def test_a_ctrl_c_during_the_rollback_still_names_the_set_aside_directory(tmp_path, monkeypatch):
+    """An interrupt while the previous export is being put back is reported like any other
+    failure of it: the error names the directory that still holds it (M13 review M2a)."""
+    out, site = _swap(tmp_path)
+    before_out = _snapshot(out)
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            raise OSError(28, "No space left on device")
+        if "-old-" in src.parent.name and dst.parent == out:
+            raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=True)
+    [aside] = _set_aside(tmp_path)
+    assert str(aside) in str(caught.value)
+    assert _snapshot(aside) == before_out
+
+
+@pytest.mark.parametrize("direction", ["in", "out"])
+def test_an_interrupt_right_after_a_move_is_rolled_back_too(tmp_path, monkeypatch, direction):
+    """Ctrl-C lands after an entry was moved and before the move was noted: that entry is put
+    back as well, so `out` holds no stray new file and the new site is whole (M13 review M2b)."""
+    out, site = _swap(tmp_path)
+    before_out, before_site = _snapshot(out), _snapshot(site)
+
+    def after(src, dst):
+        into_out = src.parent == site and dst.parent == out
+        set_aside = src.parent == out and "-old-" in dst.parent.name
+        if into_out if direction == "in" else set_aside:
+            raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, lambda src, dst: None, after)
+    with pytest.raises(KeyboardInterrupt):
+        export._install(site, out, clean=True)
+    assert _snapshot(out) == before_out
+    assert _snapshot(site) == before_site
+    assert _set_aside(tmp_path) == []
+
+
+def test_a_failed_rollback_of_a_new_out_names_no_set_aside_directory(tmp_path, monkeypatch):
+    """`out` was new, so there was no previous export: when the new `out` cannot be removed,
+    the error does not send the reader to a set-aside directory that is already gone (M13
+    review M2c)."""
+    out = tmp_path / "dist"
+    site = tmp_path / "site-new"
+    site.mkdir()
+    for name in ("a.html", "b.html"):
+        (site / name).write_text("new")
+    moved = []
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            moved.append(src.name)
+            if len(moved) == 2:
+                raise OSError(28, "No space left on device")
+
+    _failing_moves(monkeypatch, fail)
+    real_rmdir = Path.rmdir
+
+    def rmdir(self, *a, **k):
+        if self == out:
+            raise OSError(16, "Device or resource busy")
+        return real_rmdir(self, *a, **k)
+
+    monkeypatch.setattr(Path, "rmdir", rmdir)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=False)
+    assert _set_aside(tmp_path) == []
+    assert export.STAGING_PREFIX not in str(caught.value), caught.value
+    assert "previous export" not in str(caught.value), caught.value
 
 
 def test_a_failed_set_aside_leaves_no_new_out(tmp_path, monkeypatch):

@@ -498,12 +498,13 @@ def _install(site: Path, out: Path, clean: bool) -> None:
     try:
         out.mkdir(exist_ok=True)
         old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
+        # each name is noted before its move: an interrupt between the two is undone too
         for entry in list(out.iterdir()):
-            entry.rename(old / entry.name)
             moved_out.append(entry.name)
+            entry.rename(old / entry.name)
         for entry in list(site.iterdir()):
-            entry.rename(out / entry.name)
             moved_in.append(entry.name)
+            entry.rename(out / entry.name)
     except BaseException as failure:
         _roll_back(site, out, old, moved_in, moved_out, created, failure)
         raise
@@ -521,19 +522,26 @@ def _roll_back(
     failure: BaseException,
 ) -> None:
     """Undo a partial swap: the new entries back into `site`, the old ones back into `out`, the
-    set-aside directory and a newly made `out` removed. ExportError naming the set-aside
-    directory when that fails (the previous export is still in it)."""
+    set-aside directory and a newly made `out` removed. A noted name whose move had not happened
+    yet is skipped. When that fails, an interrupt included, ExportError naming the set-aside
+    directory while it still exists (the previous export is in it)."""
+
+    def back(src: Path, dst: Path) -> None:
+        if os.path.lexists(src):
+            src.rename(dst)
+
     try:
         for name in reversed(moved_in):
-            (out / name).rename(site / name)
+            back(out / name, site / name)
         if old is not None:
             for name in reversed(moved_out):
-                (old / name).rename(out / name)
+                back(old / name, out / name)
             old.rmdir()
         if created and out.exists():
             out.rmdir()
-    except OSError as e:
-        where = "" if old is None else f"; the previous export's entries are in {old}"
+    except BaseException as e:
+        kept = old is not None and old.exists()
+        where = f"; the previous export's entries are in {old}" if kept else ""
         raise ExportError(
             f"export to {out} failed ({failure!r}) and putting {out} back failed too ({e}){where}"
         ) from failure
