@@ -187,6 +187,45 @@ def test_causal_wording_in_a_profile(m8):
     assert _problems(m8) == ["organisations/senmvku.yaml: causal wording 'drove' about counts"]
 
 
+@pytest.mark.parametrize(
+    "mark",
+    [
+        '<i lang="da" >cykelsti</i>',  # a space before ">"
+        '<I lang="da">cykelsti</I>',  # capitals
+        "<i>cykelsti</i>",  # no language
+        "<i lang='da'>cykelsti</i>",  # single quotes
+        '<i lang="d a">cykelsti</i>',  # no language tag
+        '<i lang="da">cykelsti',  # unclosed
+        "cykelsti</i>",  # a close without an open
+        '<span lang="da">cykelsti</span>',  # no mark at all
+        '<q lang="da">a <i lang="da">b</q></i>',  # crossed
+    ],
+)
+def test_a_malformed_mark_in_prose_is_a_problem(m8, mark):
+    # M13 carry-over: each of these passed the check and then rendered as escaped text
+    _edit(
+        _senmvku(m8),
+        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, f"Ours: {mark}."),
+    )
+    problems = _problems(m8)
+    assert any(p.startswith("organisations/senmvku.yaml: malformed mark ") for p in problems), (
+        problems
+    )
+
+
+def test_the_marks_the_renderer_reads_pass(m8):
+    from velometer.content.check import malformed_marks
+
+    ok = (
+        'Ours: <i lang="da">cykelsti</i>, <q lang="de-AT">Radweg</q>, '
+        '<q lang="fr">les <i lang="fr">voies</i></q>, `<b>` in code, a < b and c > d.'
+    )
+    assert malformed_marks(ok) == []
+    assert malformed_marks('<blockquote lang="de">Zitat</blockquote>') == []
+    _edit(_senmvku(m8), lambda d: d["sections"][1]["paragraphs"].__setitem__(0, ok))
+    assert _problems(m8) == []
+
+
 def test_plan_page_follows_the_document_rules(m8):
     _edit(
         m8[0] / "plans" / "berlin.yaml",

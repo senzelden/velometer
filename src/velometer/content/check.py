@@ -156,6 +156,31 @@ _FOREIGN_QUOTE = re.compile(
 )
 
 
+# the markup content may write, exactly as the renderer reads it (app/narrative.py): a quotation,
+# a block quotation or an original term, each with one double-quoted BCP 47 `lang` and nothing
+# else, and its own closing tag. Any other tag renders as escaped text, so it is a problem
+_ANY_TAG = re.compile(r"</?[A-Za-z][^<>]*>")
+_MARK_OPEN = re.compile(rf'<(q|i|blockquote) lang="(?:{LANG_TAG.pattern})">')
+_MARK_CLOSE = re.compile(r"</(q|i|blockquote)>")
+_CODE_SPAN = re.compile(r"`[^`\n]+`")
+
+
+def malformed_marks(text: str) -> list[str]:
+    """Every tag of `text` (outside code spans) that is no well-formed, properly nested mark:
+    another tag or form, a close without its open, an open left unclosed."""
+    out: list[str] = []
+    stack: list[tuple[str, str]] = []  # (tag name, open tag)
+    for m in _ANY_TAG.finditer(_CODE_SPAN.sub(" ", text)):
+        tag = m.group(0)
+        if opened := _MARK_OPEN.fullmatch(tag):
+            stack.append((opened.group(1), tag))
+        elif (closed := _MARK_CLOSE.fullmatch(tag)) and stack and stack[-1][0] == closed.group(1):
+            stack.pop()
+        else:
+            out.append(tag)
+    return out + [tag for _name, tag in stack]
+
+
 def normalise_number_de(text: str) -> str:
     """A German printed number in `normalise_number`'s canonical form, without sign or percent:
     "1.639,8" -> "1639.8", "12,3 %" -> "12.3"."""
@@ -454,6 +479,11 @@ def _check_document(
         for rid in _DATA_REF.findall(p):
             if rid not in ref_ids:
                 add(f"unknown data ref {rid}")
+        for tag in malformed_marks(p):
+            add(
+                f'malformed mark {tag!r}: content writes only <q lang="…">, <i lang="…"> '
+                'and <blockquote lang="…">, each closed'
+            )
         for n in undeclared_numbers(p, allowed, literals, lang):
             add(f"undeclared number {n}")
         for v in construction_verbs(p, rules):
