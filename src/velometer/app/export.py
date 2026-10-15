@@ -111,7 +111,7 @@ JS_CALL_LITERAL = re.compile(r"""\b(?:fetch|new\s+URL)\s*\(\s*(["'`])([^"'`\n]*)
 JS_COMMENTS = re.compile(r"^[ \t]*//[^\n]*$|^[ \t]*/\*.*?\*/", re.M | re.S)
 SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
 # a base path is `/`-separated segments of these characters (no `..`, `//`, scheme, query, ...)
-BASE_SEGMENT = re.compile(r"^[A-Za-z0-9._~-]+$")
+BASE_SEGMENT = re.compile(r"[A-Za-z0-9._~-]+")
 
 
 class ExportError(Exception):
@@ -162,7 +162,7 @@ def validate_base(base: str) -> None:
             return  # `/` or ""
         if segment in (".", ".."):
             raise ExportError(f"--base {base!r}: a '{segment}' segment is not allowed")
-        if not BASE_SEGMENT.match(segment):
+        if not BASE_SEGMENT.fullmatch(segment):
             raise ExportError(
                 f"--base {base!r}: segment {segment!r} may hold only letters, digits and . _ ~ - "
                 "(no scheme, query, fragment or space)"

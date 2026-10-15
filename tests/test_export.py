@@ -493,7 +493,7 @@ def test_the_staging_directory_is_git_ignored(rich, tmp_path, monkeypatch):  # n
 
 @pytest.mark.parametrize(
     "base", ["/a/../b", "..", "//cdn.example", "/a//b", "https://x.org/", "/a?b=1", "/a#top",
-             "/a b/", '/a"b/']
+             "/a b/", '/a"b/', "/a\n", "/a\n/b"]
 )  # fmt: skip
 def test_a_bad_base_is_refused(rich, tmp_path, base):  # noqa: F811
     with pytest.raises(export.ExportError, match="--base"):
