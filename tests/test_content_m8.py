@@ -567,6 +567,22 @@ def test_overlay_facts(fixture_db, tmp_path):
         evaluate(f"overlay.paris.vorrangnetz.{d1}.ab_km", data, tmp_path)
 
 
+def test_a_reader_opened_before_a_write_sees_the_write(fixture_db, tmp_path):
+    """M8-5: the fixture's read-only connection is opened before the test writes. It reads
+    each statement afresh (rollback journal, no transaction held between statements), so an
+    overlay evaluated before and after a write gives the written value, never a stale one."""
+    db_path, _cfg, conn, data = fixture_db
+    assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+    (r1, d1), *_ = _berlin_lau_runs(db_path)
+    expr = f"overlay.berlin.vorrangnetz.{d1}.ab_km"
+    with pytest.raises(FactError, match="no plan overlay"):
+        evaluate(expr, data, tmp_path)
+    for km in (10.0, 12.5):
+        row = OverlayRow(r1, "berlin", "vorrangnetz", "A", km, 150.0, "v1", "2026-10-07")
+        _write(db_path, lambda c, row=row: replace_plan_overlay(c, "berlin", "v1", [row]))
+        assert evaluate(expr, data, tmp_path) == km
+
+
 def test_counter_facts(fixture_db, tmp_path):
     db_path, _cfg, _conn, data = fixture_db
     rows = [
