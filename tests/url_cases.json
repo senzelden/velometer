@@ -24,9 +24,11 @@
   "mailto:someone@example.org",
   "//tile.openstreetmap.org/1/2/3.png",
   "#x",
-  "#"
+  "#",
+  "web+foo:bar",
+  "a1.b-c+d:x"
  ],
- "relative": ["city/berlin", "", "compare?c=berlin"],
+ "relative": ["city/berlin", "", "compare?c=berlin", "1a:b", "+x:y"],
  "emit_lang": [
   ["/", "de", "/cities", "/de/cities"],
   ["/", "de", "/", "/de/"],

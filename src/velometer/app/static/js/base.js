@@ -13,11 +13,12 @@ function normalise(b) {
   return inner ? `/${inner}/` : "/";
 }
 
-/** A scheme (`https:`, `mailto:`) or a protocol-relative `//host`: not ours to prefix. */
+/** An RFC 3986 scheme: a letter, then letters, digits, `+`, `.` or `-`, then `:`. */
+const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+
+/** A scheme (`https:`, `mailto:`, `web+foo:`) or a protocol-relative `//host`: not ours to prefix. */
 function isExternal(u) {
-  if (u.startsWith("//")) return true;
-  const colon = u.indexOf(":");
-  return colon > 0 && /^\p{L}+$/u.test(u.slice(0, colon));
+  return u.startsWith("//") || SCHEME.test(u);
 }
 
 /** Data, map and static paths: one file for both languages. */
