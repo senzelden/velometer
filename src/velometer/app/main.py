@@ -446,7 +446,7 @@ def create_app(
         env.filters["host"] = _host
         # an English fallback note (German page) is cut in English: `note | clause('en')`
         env.filters["clause"] = lambda note, in_lang=None: _note_clause(note, in_lang or lang)
-        env.filters["unit"] = lambda u: UNITS.get(u, u)
+        env.filters["unit"] = lambda unit: UNITS.get(unit, unit)
         # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
         # "Ours" column says it already
         env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
