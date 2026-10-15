@@ -1446,8 +1446,8 @@ def _search_again(
     devtools, origin, base, theme, width, st: Steps, state: str, label: str, cities: list
 ) -> None:
     """Two fresh loads: the second city + Down + Enter lands on it; "zzz" says "No match" in
-    the status under the box, outside the listbox, the list closed and empty, and axe finds
-    nothing then."""
+    the status under the box, outside the listbox, the list closed and empty, axe finds
+    nothing then, and Escape empties the box and the status."""
 
     def to_box(t, errs, what: str) -> bool:
         if not st.check(f"{label}: {what} loads", "; ".join(errs) or None):
@@ -1492,6 +1492,10 @@ def _search_again(
                  None if ok else f"{s}")  # fmt: skip
         bad = [v["id"] for v in audit(t)]
         st.check(f"{label}: axe finds nothing with No match shown", ", ".join(bad) or None)
+        press(t, "Escape", wait=0.2)
+        s = t.js(NO_MATCH_JS) | {"value": t.js("document.getElementById('site-search').value")}
+        st.check(f"{label}: Escape after No match empties the box and the status",
+                 None if s["value"] == "" and s["status"] == "" else f"{s}")  # fmt: skip
     finally:
         t.close()
 

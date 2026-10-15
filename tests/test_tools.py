@@ -518,6 +518,7 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
         "search 1280px: Enter lands on the second city page",
         "search 320px: zzz says No match in the status, outside the closed list",
         "search 1280px: axe finds nothing with No match shown",
+        "search 320px: Escape after No match empties the box and the status",
     ):
         lines = [x for x in r["steps"] if needle in x]
         assert lines and all(x.startswith("ok") for x in lines), (needle, lines)

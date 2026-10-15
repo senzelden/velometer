@@ -110,8 +110,10 @@ function fakeNode(tag, extra = {}) {
   };
 }
 function fakePage() {
-  const doc = { activeElement: null, listeners: {}, addEventListener() {}, createElement: (t) => fakeNode(t),
-    getElementById: () => null }; // fmt: skip
+  const live = fakeNode("div"); // #live, the page's polite live region (live.js)
+  const doc = { activeElement: null, listeners: {}, createElement: (t) => fakeNode(t),
+    addEventListener(t, f) { (this.listeners[t] ??= []).push(f); },
+    getElementById: (id) => (id === "live" ? live : null) }; // fmt: skip
   const focusable = (n) => Object.assign(n, { focus() { if (!this.hidden) doc.activeElement = this; } });
   const input = focusable(fakeNode("input"));
   const list = fakeNode("ul", { hidden: true });
@@ -121,7 +123,7 @@ function fakePage() {
     s === "input" ? input : s === "[role=listbox]" ? list : s === ".search-status" ? status : null;
   const fallback = focusable(fakeNode("a"));
   doc.querySelector = (s) => (s === ".search" ? box : s === ".search-fallback" ? fallback : null);
-  return { doc, box, input, list, status, fallback };
+  return { doc, box, input, list, status, fallback, live };
 }
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
@@ -284,4 +286,44 @@ test("keys: Down and Up move the active option, wrapping; Enter goes to it; Esca
   assert.equal(input.value, "ber", "the first Escape closes the list");
   key(input, "Escape");
   assert.equal(input.value, "", "the second clears the box");
+});
+
+// M13 fix round (review I1, I2, M4): every way out of the search clears "No match", and the
+// no-match is also said through #live, since the status may not be in the AX tree in time.
+
+test("no match, then Escape: the box is cleared and so is the status", async (t) => {
+  const { input, status } = await typed(t, INDEX, "zzz");
+  assert.equal(status.textContent, "No match");
+  key(input, "Escape");
+  assert.equal(input.value, "");
+  assert.equal(status.textContent, "", "no No match under an empty box");
+});
+
+test("no match, then focus leaves the search: the status is cleared", async (t) => {
+  const { doc, input, status } = await typed(t, INDEX, "zzz");
+  doc.activeElement = null; // focus went elsewhere on the page
+  input.fire("blur");
+  await settle();
+  assert.equal(status.textContent, "");
+});
+
+test("no match, then a click outside the search: the status is cleared", async (t) => {
+  const { doc, status } = await typed(t, INDEX, "zzz");
+  for (const f of doc.listeners.click ?? []) f({ target: {} });
+  assert.equal(status.textContent, "");
+});
+
+test("no match is also announced through #live", async (t) => {
+  const { live } = await typed(t, INDEX, "zzz");
+  await settle();
+  assert.equal(live.textContent, "No match");
+});
+
+test("the search status is never display:none, so its live region is in the AX tree empty", () => {
+  const css = readFileSync(repoFile("src/velometer/app/static/app.css"), "utf8");
+  const rules = [...css.matchAll(/([^{}]*\.search-status[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(rules.length >= 2, "the status is styled (and its empty state)");
+  for (const [, sel, body] of rules) {
+    assert.doesNotMatch(body, /display\s*:\s*none|visibility\s*:\s*hidden/, sel.trim());
+  }
 });

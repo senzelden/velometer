@@ -115,10 +115,12 @@ export function mount(doc) {
     }
   };
 
+  // every way out (Escape, blur, a click outside, an empty query) also clears "No match"
   const close = () => {
     list.hidden = true;
     input.setAttribute("aria-expanded", "false");
     setActive(-1);
+    if (status) status.textContent = "";
   };
 
   function update() {
@@ -126,7 +128,6 @@ export function mount(doc) {
     if (!input.value.trim()) {
       shown = [];
       list.replaceChildren();
-      if (status) status.textContent = "";
       return close();
     }
     if (!index) return;
@@ -148,15 +149,17 @@ export function mount(doc) {
       list.append(li);
     });
     if (!shown.length) {
-      // the status (role=status) says it, and a screen reader hears it from there
+      // shown in the status (role=status, never display:none), and said through #live too:
+      // a live region is not always heard the first time it is filled
+      close();
       if (status) status.textContent = t("js.search.no_match");
-      return close();
+      return announce(t("js.search.no_match"), doc);
     }
     if (status) status.textContent = "";
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
     setActive(-1);
-    announce(t("js.search.results", { count: shown.length }));
+    announce(t("js.search.results", { count: shown.length }), doc);
   }
 
   const go = (entry) => {
@@ -186,7 +189,10 @@ export function mount(doc) {
       e.stopPropagation(); // the phone menu stays open (nav.js)
       e.preventDefault(); // a search field would clear itself on the first Escape
       if (!list.hidden) close();
-      else input.value = "";
+      else {
+        input.value = ""; // a set value fires no input event: close says the rest
+        close();
+      }
     }
   });
   doc.addEventListener("click", (e) => {
