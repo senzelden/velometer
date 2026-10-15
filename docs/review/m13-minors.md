@@ -7,7 +7,7 @@ triaged by the M13 spec §4.8 rule:
 - **close**: obsolete or already fixed;
 - **keep**: a deliberate trade-off.
 
-Tasks 9 and 10 add the M9, M11, M10 and M12 sections.
+Tasks 9 and 10 add the M9, M11, M10 and M12 sections. Task 10 also adds the M13 carry-overs.
 
 ## M8
 
@@ -66,12 +66,12 @@ gives them one row per item (14a, 14b, …).
 | M8-2 | Cumulative mapped line shares the "km per year" axis | fix | The mapped line now has its own labelled right axis, with its 0 aligned to the per-year 0. A second panel would have changed the chart's height, margins and label fitting. The off-scale cap rule still counts the mapped values, so the targets near the line stay on the scale. | `7da510e` |
 | M8-3 | Paris in-service by day; rolling UTC export | close | M13 Task 1 made in-service hourly (Paris, Helsinki) | `4466d9d` |
 | M8-4 | Unreachable km-only Counts chart branch | fix | Removed. `countsChart` returns null without a line, as the tab draws no chart then. The test now asserts that. | `ff2bb02` |
-| M8-5 | Unexplained `test_overlay_facts` failure | keep (Task 10) | Spec §4.8: Task 10 runs it 200 times, then fixes it or closes it | n/a |
+| M8-5 | Unexplained `test_overlay_facts` failure | close | No repro in 200 runs: 100 alone and 100 inside `tests/test_content_m8.py` in shuffled order, 0 failures (commands below). A reader opened before a write cannot read stale data: the database uses a rollback journal and Python's sqlite3 holds no read transaction between statements. A new test opens the reader first, evaluates, writes twice and evaluates after each write. The one failure mode found needs a reader that keeps a statement open: then the write waits 5 s and fails with "database is locked". Red-proof: the test fails that way when it keeps a cursor open. Nothing in the test's path keeps one. | `e91150f` |
 | M8-6 | No test that Copenhagen 37 / Strasbourg 52 are suspect | fix | The test asserts the rule on a fixture figure: the `suspect` column of `reports.csv` gives the mark and the note exactly when it is set, both ways | `a8789f5` |
 | M8-7 | Mean-per-day link (counter index v2) | close | M13 Task 2 built index v2 | `b5b76dd` |
 | M8-8 | Madrid detector clause hand-written inside a generated block | fix | `note:` / `note_de:` on the Madrid entry in `config/counters.yaml`, rendered from the facts. A changed note makes the committed methodology stale. `require_de` enforces the German clause, and `reader_prose` lists it. | `ff80efe` |
 | M8-9 | Phone-width CSS tests assert the rule, not the cascade | close | M13 Task 5 added browser tests for the phone cascade | `d609ebc` |
-| M8-10 | Starlette `httpx` deprecation warning | keep (Task 10) | Spec §4.8: Task 10 | n/a |
+| M8-10 | Starlette `httpx` deprecation warning | fix | `httpx2` is in the dev group. Starlette 1.7's TestClient takes it, so `pytest tests/test_app.py -W error::DeprecationWarning` passes, and the gate's pytest output has no warning. The export keeps its targeted `catch_warnings`: `httpx2` is a dev dependency only, and an install without the dev group falls back to `httpx` and warns. Tests: the TestClient imports with no warning (red: with `httpx2` uninstalled), and the export imports with no warning while `httpx2` is blocked (red: without the filter). `content --check --online` still fetches: 147 lines against the baseline of 143 (142 not found, as before; 3 "cannot fetch" from the remote hosts: telex.hu 403, grandlyon timeout, cityramag 503, with 2 continuation lines). | `5ee00fe` |
 | M8-11 | Process notes (Task 7 gate, Task 10 test order) | close | Process notes, not code (brief ruling) | n/a |
 | M8-12 | Figures tables scroll at 390 px | close | M13 Task 5: the tables stack below 700 px | `d609ebc` |
 | M8-13 | No dark theme | close | Delivered in M10 (brief ruling) | n/a |
@@ -124,8 +124,8 @@ These came up in the areas this task touched. They are not fixed here.
 |---|---|---|---|
 | M13-T1a | The rolling-export test passes under both in-service rules (day and hour) | fix candidate | controller (Task 1 follow-up) |
 | M13-T1b | The outage test has no red-proof | fix candidate | controller (Task 1 follow-up) |
-| M13-T2a | `_signed_pct` prints −0.0 % | fix candidate | Task 10 |
-| M13-T2b | Unclosed sqlite connection in `tests/test_counter_index_v2.py` (~1702) | fix candidate | Task 10 |
+| M13-T2a | `_signed_pct` prints −0.0 % | fixed in Task 10, see the M13 carry-overs section | Task 10 (`e7dc007`) |
+| M13-T2b | Unclosed sqlite connection in `tests/test_counter_index_v2.py` (~1702) | fixed in Task 10, see the M13 carry-overs section | Task 10 (`900b980`) |
 
 ## M9
 
@@ -241,3 +241,135 @@ This matches every item the Task 9 brief names, 1 to 11. No number was ambiguous
 - Search over narrative text and quotes (M11-9).
 - The Counts and plan keys in a downloaded image (M11-8). They are HTML lists beside the chart,
   and their glyphs are lines, rings and dots, not the tier key's swatches.
+
+### M8-5: the commands
+
+The 200 runs used a worktree at `8c18c5b` (`data/scratch-m13/t10/wt`, removed after), so later
+edits could not change the code under test. The script is
+`data/scratch-m13/t10/shuffle_m8.py` (git-ignored). It collects the node ids with
+`uv run pytest tests/test_content_m8.py --collect-only -q` (81 ids), then runs:
+
+- 100 times `uv run pytest -q -p no:cacheprovider tests/test_content_m8.py::test_overlay_facts`;
+- 100 times `uv run pytest -q -p no:cacheprovider <the 81 ids>`, shuffled with
+  `random.Random(i)` for run `i` = 0 … 99.
+
+Result: `{'isolated': 0, 'shuffled': 0}`. All 200 runs exited 0.
+
+## M10
+
+### How the M10-N numbers map
+
+`docs/superpowers/rulings-m10.md`, section "Follow-ups", read top to bottom, plus the bullet that
+`rulings-m11.md` lists under "M10 follow-ups left open" beyond those of rulings-m10. Each bullet
+gets the next number. Two kinds of bullet get none:
+
+- a bullet marked as out of scope: "Dark PNG maps were not made (out of scope)". Its own text
+  says what would reopen it (a page that embeds a PNG). No page does.
+- the M11 bullet that repeats rulings-m10 ("Light change-map colours …; the deferred minors and
+  the hosting size (see rulings-m10)"). It adds nothing new.
+
+The numbers:
+
+| N | Bullet |
+|---|---|
+| 1 | Light change-map colours under 3:1 on white |
+| 2 | Series palette: normal-vision ΔE only |
+| 3 | `report maps` `.run` marker ignores palette changes |
+| 4 | Figures tables scroll at 200 % zoom on a 1280 px screen |
+| 5 | Missing-token fallback wording (spec §5 versus the ruling) |
+| 6 | Screen-reader testing with real assistive technology was not done |
+| 7 | Deferred minors (split a, b, … below) |
+| 8 | Render-pass cost: `--pages all` with `--interact` takes about an hour |
+| 9 | From rulings-m11: `regions.py` tag counting inside `<script>` and comments (a); source-grep tests that could become behaviour tests (b); `.sr-only` / `.visually-hidden` as one rule twice (c) |
+
+This matches every number the Task 10 brief names: 5 = missing-token wording, 7 = the deferred
+minors, 8 = render-pass cost, 9 = `regions.py` and the hiding rule. No number was ambiguous.
+
+### Items
+
+| id | item | ruling | reason | commit |
+|---|---|---|---|---|
+| M10-1 | Light change-map colours under 3:1 | close | M13 Task 4: the change colours are ≥ 3:1 on all three light grounds, and the PNGs are regenerated | `ffa9675` |
+| M10-2 | Series palette normal-vision only | close | M13 Task 4: the rule holds under normal vision, deuteranopia and protanopia, in both themes | `ffa9675` |
+| M10-3 | `.run` marker ignores the palette | close | M13 Task 4: the marker holds a palette hash | `ffa9675` |
+| M10-4 | Figures tables scroll at 200 % zoom | close | M13 Task 5: they stack below 700 px | `d609ebc` |
+| M10-5 | Missing-token fallback wording | fix (doc) | The behaviour stays: a neutral grey and one `console.error`, which fails the render pass. M10 spec §5 now describes it, with a dated note saying why the spec's "light value" was not built. | `5360161` |
+| M10-6 | No screen-reader test | keep (owned by spec §4.7) | M13 spec §4.7 is the screen-reader pass (or its labelled AX-tree fallback), a task of its own | n/a |
+| M10-7a | The `importlib` loader copied into the tests | fix | `tests/helpers.load_script(rel_path)`. All six copies use it now. A guard test finds no other `spec_from_file_location(` in `tests/`. Red: the guard listed five test files before the change. | `cfcf9a5` |
+| M10-7b | `lab()` white point off by about 0.01 | close | Done in M13 Task 4 | `ffa9675` |
+| M10-7c | `ciede2000` unannotated, unused 3-digit hex branch | close | Done in M13 Task 4 | `ffa9675` |
+| M10-7d | `CITY_COLOURS[:7]` leaves series 8 unused | close | Done in M13 Task 4: `CITY_COLOURS == SERIES_COLOURS` (8) | `ffa9675` |
+| M10-7e | Text-colour scanner sees inline attributes only; its hex regex could hit `#add` | fix (regex) | The JS colour-literal scan (`tests/test_app.py`) takes a hex colour only as 3, 4, 6 or 8 digits standing alone. It passes over the string argument of a selector call (`querySelector`, `closest`, `matches`), where `"#add"` is an id. Tested both ways: `querySelector("#add")` is no colour, and `el.style.fill = "#add"` is one. Red: the old regex flagged `querySelector("#add")`. The computed-fill side is covered by the Chrome render pass (axe colour contrast on drawn charts). | `0e3ca8e` |
+| M10-7f | A chart redraw resets the hover state | fix | `renderLines` and `renderTiers` keep the hovered series and point (lines) or year (tiers) per element. A redraw shows it again until the pointer leaves, and a redraw without that series shows nothing. Node tests. Red: after the redraw the hover line was hidden and the tip was empty. | `62aa785` |
+| M10-7g | `regions.py` reads double-quoted wrappers only; a nested `.scroll` gets its own stop | fix | Single or double quotes. A wrapper inside a wrapper gets no stop of its own: one per scroller, as for a table inside one. Red: no stop for `class='wide scroll'`, and three stops for the nested case (the guard was also broken by hand to show it). | `aa5591b` |
+| M10-7h | `panel.js` draw/load test seams | keep | `createPanel(root, {draw, load})` takes the two functions as options that default to the real ones. This is how the node test checks the release of charts without a DOM chart or a fetch. The seams are documented in the file, and pages never pass them. | n/a |
+| M10-7i | `QUOTE_MARK` before `CODE_MARK` can misnest | fix | `_Numbering.inline` splits the code spans first and holds each as a numbered slot while the quotation and term marks are read. A mark holds whole code spans or none, and a mark inside a code span stays text. Renderer test. Red: `<q lang="de">a `b</q>` c` gave `<q …><code>b</q></code>`. | `ca37a45` |
+| M10-7j | Tier key and popup tests grep the source | fix | The popup is now a module, `static/js/tier-popup.js` (`tierPopup(p, cfg)`), and `map.js` imports it. A node test asserts its DOM: the first child is the tier's full name, then the rows, the way link and the tags as text. The tier key's node test already existed (`chart.test.mjs` "renderTiers keys every tier by name …"), so both Python source greps are removed. Red: the module did not exist. | `870574b` |
+| M10-7k | The plans "suspect" alt text is unproven | fix | A test asserts that the mark of a suspect figure is the word `page.plans.suspect` in the page's language, inside the row (en and de). Red: with the word removed from the template, both cases failed. | `05937a4` |
+| M10-7l | The axe interact test asserts a list only | fix | `r["axe"] == []` for every visit. Red: an image without alt planted on every exported page failed it (`image-alt`, critical). The old assertion passed in that case. Slow test, run here: 1 passed in 205 s. | `5d0a962` |
+| M10-8 | Render-pass cost (about an hour) | keep | Runtime cost, recorded. The gate runs the fast tests; the full pass runs on demand. | n/a |
+| M10-9a | `regions.py` counts tags inside `<script>` and comments | fix | Each script and each comment is blanked, at the same length, before the parse, and the edits go into the page at the same indices. Red: a `</div>` in a script string and a `<div class="scroll">` in a comment gave 5 stops instead of 2. | `aa5591b` |
+| M10-9b | Source-grep tests that could be behaviour tests | fix | The same tests as M10-7j | `870574b` |
+| M10-9c | `.sr-only` and `.visually-hidden` as one rule twice | fix | One rule with both selectors. A test asserts that exactly one rule names either. Red: two rules. | `aa5591b` |
+
+## M12
+
+### How the M12-N numbers map
+
+`docs/superpowers/rulings-m12.md`. The section "Follow-ups" is read top to bottom, and the "Parked
+from earlier tasks" bullet gives one number per part. After it come the three costs that
+the Task 12 rulings leave to a follow-up, under "Ledger rulings by task". Each item gets the next
+number. These get none:
+
+- "The English-word sniff is a heuristic …": a statement of what the sniff is (its phrase sources
+  are listed), not an open item;
+- the export size, which is the M9 hosting follow-up (HANDOVER §12 Q4), as in the M9 section;
+- the original national terms, which M13 Tasks 6 and 7 delivered (`0734764`).
+
+The numbers:
+
+| N | Item |
+|---|---|
+| 1 | Proper names passed over by a pinned list; a `lang` field would let the sniff drop it |
+| 2 | German pages were not checked with a screen reader |
+| 3 | `signed()` of a value rounding to zero prints "+0.0"/"+0,0" (Task 1) |
+| 4 | `citeText`'s unused `lang` (Task 4) |
+| 5 | The German number-check thresholds in `RULES["de"]` are drafts (Task 6) |
+| 6 | "Strasbourg" may become "Straßburg" if the user asks |
+| 7 | Task 12: the Norwegian terms carry no `lang="no"` markup |
+| 8 | Task 12: the Slovak and Czech `gloss_de` still say "Schutzstreifen" |
+| 9 | Task 12: the counters explainer's word budget is 310 (an allowance) |
+
+This matches every number the Task 10 brief names: 1, 3, 4 and 5, 8 = Schutzstreifen and
+9 = the allowance. No number was ambiguous.
+
+### Items
+
+| id | item | ruling | reason | commit |
+|---|---|---|---|---|
+| M12-1 | Proper names passed over by a pinned list | fix | New BCP 47 fields: `lang` on organisations (all nine shipped profiles), `source_lang` on counter entries and `title_lang` on plans. A title or publisher that holds our own words beside the name gets none: Oslo's "(state counters)", and the Vienna, Copenhagen and Lyon titles. A name with its original-language form in brackets takes the lead name's language (Helsinki `en`). Pages write the language as the element's `lang`: the organisations list and headings, the publisher links, the Sources page, the plan titles and the counts attribution. A German `title_de` or `source_de` is ours, so it gets none. The sniff skips other-language subtrees (`visible_text`). `PROPER_NAMES` drops "Københavns Kommune (City of Copenhagen)" and "Plan for sykkelveinettet i Oslo". The other eight stay, because each also shows without a `lang`: in prose (IT University of Copenhagen, Networks, Data and Society, Points of Interest, Streets for Kids, Cities for All, Sykkelstrategi for Oslo), in a source excerpt gloss (Confederation of the European Bicycle Industry), in the methodology tables and the Compare counters note the browser builds (City of Helsinki, Urban Environment Division), or in the population source of the methodology (INSEE …). Red: the models had no field. The sniff of the real German export finds no English word on 123 pages. | `75df53b` |
+| M12-2 | German pages not checked with a screen reader | keep (owned by spec §4.7) | As M10-6 | n/a |
+| M12-3 | `signed()` of a value rounding to zero prints "+0.0" | fix | `_localise` drops a `+` as it drops a `-` when no digit is non-zero. Python test over 0, −0, ±0.04 and ±1e-9 in both languages, plus `percent(signed=True)`. The JS `signed` already did this, and a node test now pins it. Red: `signed(0, "en")` was "+0.0". One methodology test pinned "+0.0 %" for a 0.0 % change; it now reads "0.0 %". No committed methodology line held "+0.0". | `e7dc007` |
+| M12-4 | `citeText`'s unused `lang` | fix | Removed, with the call in `cite-ui.js`. A node test pins the parameters `(f, accessed, url)`. Red: it read four. | `ec66aef` |
+| M12-5 | `RULES["de"]` thresholds are drafts | fix (confirmed) | Confirmed against the German corpus. With its rule facts the German counters page has no literal rule statement (no false positive). With the facts taken away, every rule it states is caught. German twins of all 15 English seeded cases (6 that must pass, 9 that must be caught) behave as the English ones do. No pattern needed a change, so the rules are no longer drafts. Red: with "Zählstellen" taken out of `sites_after`, 4 of the 16 tests failed. | `231d1ef` |
+| M12-6 | "Strasbourg" may become "Straßburg" | keep | Only if the user asks (rulings-m12) | n/a |
+| M12-7 | Norwegian terms without `lang` markup | close | M13 Task 7 added the term mark `<i lang="nb">…</i>`, and the Oslo terms use it in both editions | `0734764` |
+| M12-8 | Slovak and Czech `gloss_de` say "Schutzstreifen" | close | Done in M13 Task 7 | `0734764`, `4df09ac` |
+| M12-9 | Counters explainer word budget 310 | keep | An allowance, recorded in rulings-m12. The budget test asserts it (150–310). | n/a |
+
+## M13 carry-overs
+
+Items an earlier M13 task or the controller deferred to Task 10 (M13-T2a and M13-T2b are listed
+in the M8 section's "Logged here" table). The leak test change is in this section too: Task 7's
+term mark left it open.
+
+| id | item | ruling | reason | commit |
+|---|---|---|---|---|
+| M13-a (T2b) | Unclosed sqlite connections in `tests/test_counter_index_v2.py` | fix | The v1/v2 reader test closes its connection (`closing`), and the four check tests use a `check_conn` fixture that closes. A guard test runs the rest of the file in a subprocess with `-W always::ResourceWarning` and finds no "unclosed database". Red: the guard failed on the four check tests after the first fix, and the first test alone gave 1 warning before and 0 after. | `900b980` |
+| M13-b (T2a) | `_signed_pct` prints "−0.0 %" | fix | At `8c18c5b` it printed "0.0 %" for a small negative, because `i18n.signed` already dropped the minus, but "+0.0 %" for a small positive. With M12-3, all of 0, −0, ±0.04 and ±1e-9 print "0.0 %" / "0,0 %". Test in `test_methodology.py`. Red: `+0.0 %`. | `e7dc007` |
+| M13-c | `tools/pick_palette.py` defaults to seed 13, which does not reproduce the pick | fix | `SEEDS = {"series-light": 2, "series-dark": 1, "change-light": 1, "change-dark": 1}`, checked against the Task 4 report. `search` and `main` use the palette's seed unless one is given. Fast test: `main([])` runs each palette at its `SEEDS` seed, and `--seed` overrides (red: no `SEEDS`). Slow test (`@slow`, 3 to 4 minutes a palette): each default search returns the committed palette, `charts.SERIES_COLOURS`, the dark `--series-*` tokens, `change.CATEGORY_COLOURS` and the dark `--change-*` tokens. Run here: 4 passed, 193 to 236 s each. | `ef6b33e` |
+| M13-d | The 700 px Figures block copies the 600 px card rules | fix (test) | A test asserts that the card declarations of the two blocks are the same line for line, with the table selector written as one name. Red: one changed declaration in the Figures block failed it. | `bb29349` |
+| M13-e | Browser tests: Compare at 390 px, Figures at 701 px | fix (test) | Chrome: the compare table cells are `block` at 390 px, and the Figures cells are `table-cell` at 701 px. Red: with the Figures media query at 701 px and the 600 px `td` rule dropped, both failed. | `f1988a2` |
+| M13-f | `_phone_rules`' 700 px regex reads the compare-filters block | fix | It reads the 600 px blocks and the 700 px block that opens with `table.stack.figures`. A test asserts that `.country-grid` and `.filters-body` are not among its selectors. Red: with the old regex they were. | `bb29349` |
+| M13-g | A malformed mark passes `content --check` | fix | `malformed_marks` (in `content/check.py`): every tag outside code spans must be an exact renderer mark, `<q|i|blockquote lang="<BCP 47>">` with its closing tag, properly nested. Anything else is a "malformed mark" problem of the document, in both languages (`_check_document`). It reads the parsed text, so a tag that a re-stamp broke across lines is the same YAML and reads as one line. Red: 9 malformed forms (`<i lang="da" >`, `<I …>`, a bare `<i>`, single quotes, `lang="d a"`, unclosed, a close alone, `<span lang>`, crossed marks) all passed before. | `454eca9` |
+| M13-h | The leak test's content phrases keep `<i lang>` markup | fix | `i18n._NOT_PROSE` splits at an original term as at a quotation (`<q|blockquote|i …>…</…>`, across line breaks). Before, a sentence holding a term kept its markup, so the phrase could never match a page and caught nothing. Red: one sentence with `<i lang="da">` came back whole. | `5b19885` |
