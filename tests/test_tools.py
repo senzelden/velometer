@@ -395,7 +395,7 @@ def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path, mon
             assert r["steps"] and all(x.startswith("ok") for x in r["steps"]), r["steps"]
             continue
         assert r["screenshot"] and Path(r["screenshot"]).is_file(), r["url"]
-        assert isinstance(r["axe"], list)
+        assert r["axe"] == [], (r["url"], r["theme"], r["width"])  # M10-7: no violation at all
 
 
 def test_key_params_send_a_real_key_press(rp):
