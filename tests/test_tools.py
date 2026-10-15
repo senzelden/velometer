@@ -579,3 +579,41 @@ def test_scripts_load_through_the_one_helper():
         if p.name != "helpers.py" and LOADER in p.read_text(encoding="utf-8")
     ]
     assert copies == []
+
+
+# --- M13 carry-over: tools/pick_palette.py reproduces the committed palettes by default ----------
+
+
+def _committed_palettes() -> dict[str, list[str]]:
+    from tests.test_a11y import SERIES, _css_tokens, _stylesheet
+    from velometer.report import change, charts
+
+    dark = _css_tokens(_stylesheet(), "dark")
+    return {
+        "series-light": list(charts.SERIES_COLOURS),
+        "series-dark": [dark[x] for x in SERIES],
+        "change-light": list(change.CATEGORY_COLOURS.values()),
+        "change-dark": [dark[f"--change-{k}"] for k in change.CATEGORY_COLOURS],
+    }
+
+
+def test_pick_palette_runs_each_palette_at_its_committed_seed(monkeypatch):
+    """A run without --seed searches each palette at the seed of its committed pick (fast: the
+    search itself is replaced; the reproduction is the slow test below)."""
+    tool = load_script("tools/pick_palette.py")
+    assert set(tool.SEEDS) == set(tool.CURRENT) == set(_committed_palettes())
+    calls = []
+    monkeypatch.setattr(tool, "report", lambda name, seed: calls.append((name, seed)))
+    tool.main([])
+    assert calls == list(tool.SEEDS.items())
+    calls.clear()
+    tool.main(["change-dark", "--seed", "7"])
+    assert calls == [("change-dark", 7)]
+
+
+@pytest.mark.slow  # about 3-5 minutes a palette, 6000 restarts each (task 4 report)
+@pytest.mark.parametrize("name", ["series-light", "series-dark", "change-light", "change-dark"])
+def test_pick_palette_reproduces_the_committed_palette(name):
+    tool = load_script("tools/pick_palette.py")
+    colours, short, *_ = tool.search(name, tries=6000)
+    assert short == 0 and colours == _committed_palettes()[name]

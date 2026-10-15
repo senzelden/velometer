@@ -10,11 +10,13 @@ Candidates are an OKLCH grid (gamut-clipped to sRGB) plus the current colours. T
 local search with restarts over a precomputed pairwise matrix (numpy CIEDE2000); the winner is
 re-checked with velometer.report.colour, the code the tests use.
 
-    uv run python tools/pick_palette.py                         # all four palettes, seed 13
-    uv run python tools/pick_palette.py series-light --seed 2   # one, another restart seed
+    uv run python tools/pick_palette.py                         # all four, each at its SEEDS seed
+    uv run python tools/pick_palette.py series-light --seed 3   # one, another restart seed
 
 The search is randomised (restarts from greedy passing palettes), so seeds can land on different
-local optima; the M13 pick is the best of seeds 1-4 per palette (task 4 report).
+local optima; the M13 pick is the best of seeds 1-4 per palette (task 4 report), and SEEDS holds
+each palette's best seed, so a default run reproduces the committed palettes (about 3-5 minutes
+a palette).
 """
 
 import itertools
@@ -42,6 +44,8 @@ CURRENT = {
     "change-light": ["#1baf7a", "#eb6834", "#eda100", "#2a78d6"],
     "change-dark": ["#58c394", "#e77648", "#ffb948", "#6895e8"],
 }  # fmt: skip
+# the restart seed of each committed pick (M13 Task 4: the best of seeds 1-4)
+SEEDS = {"series-light": 2, "series-dark": 1, "change-light": 1, "change-dark": 1}
 # light: the series rule's two grounds (the panel never grounds a series mark, test_a11y.py's
 # NOT_ON_PANEL); the change colours are graphics on all three. Dark: all three grounds
 GROUNDS = {
@@ -153,9 +157,9 @@ def _assign(colours: list[int], to_current: np.ndarray) -> list[int]:
     return pick
 
 
-def search(name: str, tries: int = 4000, seed: int = 13, keep: tuple[int, ...] = ()):
+def search(name: str, tries: int = 4000, seed: int | None = None, keep: tuple[int, ...] = ()):
     """(colours, shortfall, summed Delta E to current, min pairwise Delta E, candidates).
-    `keep`: slots (0-based) whose current colour stays as it is."""
+    `keep`: slots (0-based) whose current colour stays as it is; `seed`: SEEDS[name] if None."""
     theme = name.split("-")[1]
     current, grounds = CURRENT[name], GROUNDS[name]
     cands = candidates(theme, grounds)
@@ -170,7 +174,7 @@ def search(name: str, tries: int = 4000, seed: int = 13, keep: tuple[int, ...] =
         pair_floor[0, 1] = pair_floor[1, 0] = GAINED_LOST + MARGIN  # gained, lost
     ok = worst >= FLOOR + MARGIN
     ok_strict = worst >= GAINED_LOST + MARGIN
-    rng = random.Random(seed)
+    rng = random.Random(SEEDS[name] if seed is None else seed)
 
     def shortfall(pick) -> float:
         return sum(
@@ -296,9 +300,15 @@ def report(name: str, seed: int) -> None:
         print(f"  {cur} -> {new}  (Delta E {delta(cur, new):5.1f}, min contrast {c:.2f})")
 
 
-if __name__ == "__main__":
-    args = sys.argv[1:]
-    seed = int(args.pop(args.index("--seed") + 1)) if "--seed" in args else 13
+def main(argv: list[str]) -> None:
+    """Report each named palette (all four without names), each at its SEEDS seed unless
+    `--seed N` names one."""
+    args = list(argv)
+    seed = int(args.pop(args.index("--seed") + 1)) if "--seed" in args else None
     args = [a for a in args if a != "--seed"]
     for name in args or CURRENT:
-        report(name, seed)
+        report(name, SEEDS[name] if seed is None else seed)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
