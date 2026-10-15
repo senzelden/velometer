@@ -284,8 +284,8 @@ def check_catalogues(directory: Path | None = None) -> list[str]:
 
 
 def _localise(text: str, lang: str) -> str:
-    if text.startswith("-") and not any(c in "123456789" for c in text):
-        text = text[1:]  # a value that rounds to zero carries no sign
+    if text[:1] in "+-" and not any(c in "123456789" for c in text):
+        text = text[1:]  # a value that rounds to zero carries no sign, neither - nor +
     if lang != "de":
         return text
     text = text.replace(",", "\x00").replace(".", ",").replace("\x00", ".")

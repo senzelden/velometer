@@ -962,7 +962,7 @@ def test_method_changes_list_the_links_v2_moved_by_half_a_percent_or_more(fixtur
     facts = methodology_facts(data)
     en, de = render(facts, "en"), render(facts, "de")
     assert "| Berlin | 2020–2021 | +10.0 % | +12.0 % | +1.8 % |" in en
-    assert "| Berlin | 2021–2022 | +0.0 % | −1.0 % | −1.0 % |" in en
+    assert "| Berlin | 2021–2022 | 0.0 % | −1.0 % | −1.0 % |" in en
     assert "| Berlin | 2020–2021 | +10,0 % | +12,0 % | +1,8 % |" in de
     for text in (en, de):
         assert "2019–2020" not in text  # +0.3 %: below the threshold
@@ -988,3 +988,13 @@ def test_the_mapped_baseline_is_the_plans_first_target_year_as_the_prose_says():
     first = min(int(y) for i in plan.items for y in i.targets)
     assert (MAPPED_BASELINE.month, MAPPED_BASELINE.day) == (1, 1)
     assert MAPPED_BASELINE.year == first
+
+
+def test_a_signed_percentage_that_rounds_to_zero_has_no_sign():
+    # M13-T2a (M12-3): the counter-index methodology's signed percentages print a zero bare
+    from velometer.report.methodology import _signed_pct
+
+    for v in (0.0, -0.0, 0.04, -0.04, 1e-9, -1e-9):
+        assert _signed_pct(v, "en") == "0.0 %", v
+        assert _signed_pct(v, "de") == "0,0\u202f%", v
+    assert _signed_pct(-0.05, "en") == "\u22120.1 %" and _signed_pct(0.05, "de") == "+0,1\u202f%"

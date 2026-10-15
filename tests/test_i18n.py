@@ -162,3 +162,14 @@ def test_rounded_negative_zero_has_no_sign():
         assert i18n.signed(-0.04, lang) == zero
         assert i18n.percent(-0.04, lang, signed=True).startswith(zero)
     assert i18n.fmt(-0.06, ",.1f", "de") == "−0,1"
+
+
+def test_a_signed_value_that_rounds_to_zero_has_no_sign():
+    # M12-3: "+0.0" claimed a rise; zero is neither up nor down, from either side
+    for lang, zero in (("en", "0.0"), ("de", "0,0")):
+        for v in (0, 0.0, -0.0, 0.04, -0.04, 1e-9, -1e-9):
+            assert i18n.signed(v, lang) == zero, (v, lang)
+            assert i18n.percent(v, lang, signed=True).startswith(zero), (v, lang)
+        assert i18n.signed(0.004, lang, 2) == zero + "0"
+    assert i18n.signed(0.05, "en") == "+0.1" and i18n.signed(-0.05, "de") == "−0,1"
+    assert i18n.signed(0.006, "de", 2) == "+0,01"
