@@ -92,11 +92,9 @@ test("Counts tab: counter index beside the A+B km index, both base year = 100", 
   assert.deepEqual(m.marks, [{ label: "2020", text: "COVID year" }]);
 });
 
-test("Counts tab without an index line (Madrid): the km line alone, rebased to its base year", () => {
-  const m = countsChart(D, "mad");
-  assert.equal(m.base, 2020);
-  assert.deepEqual(m.series.map((s) => s.id), ["km"]);
-  assert.deepEqual(m.series[0].points.map((p) => r(p.value)), [80, 100, 110]);
+test("Counts tab: no index line (Madrid), no chart: the tab shows a note instead (counts.html)", () => {
+  // M8-4: the tab mounts the chart only for a city with a line; a km line alone was unreachable
+  assert.equal(countsChart(D, "mad"), null);
   assert.equal(countsChart(D, "cph"), null);
 });
 

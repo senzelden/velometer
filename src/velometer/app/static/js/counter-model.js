@@ -98,15 +98,16 @@ export function counterLines(D, ids) {
 /**
  * The Counts tab chart of one city: the counter index and the A+B mapped-km index of the city
  * proper (1 January snapshots), both base year = 100 (the counter index's base year). Years run
- * from the first to the last with either value. No counter line (one year only): the km line
- * alone. No km for the base year: the counter line alone. `names`: {counter, km, counterShort,
- * kmShort}, the short ones for end labels at phone width.
+ * from the first to the last with either value. No counter line: no chart (the tab mounts one
+ * only for a city with a line and shows a note otherwise). No km for the base year: the counter
+ * line alone. `names`: {counter, km, counterShort, kmShort}, the short ones for end labels at
+ * phone width.
  */
 export function countsChart(D, id, names = {}) {
   const c = D.counters?.cities?.[id];
-  if (!c) return null;
+  if (!c?.line) return null;
   const base = c.base_year;
-  const counter = new Map(c.line ? c.points.filter((p) => p.idx != null).map((p) => [p.year, p.idx]) : []);
+  const counter = new Map(c.points.filter((p) => p.idx != null).map((p) => [p.year, p.idx]));
   const km = new Map();
   const snaps = (D.series?.[`${id}/lau`] ?? []).filter((p) => p.label !== "current");
   const b = snaps.find((p) => Number(p.label) === base)?.ab_km;
@@ -114,7 +115,6 @@ export function countsChart(D, id, names = {}) {
     for (const p of snaps) if (Number.isFinite(p.ab_km)) km.set(Number(p.label), (p.ab_km / b) * 100);
   }
   const years = [...counter.keys(), ...km.keys()];
-  if (!years.length) return null;
   const labels = range(Math.min(...years), Math.max(...years));
   const line = (map, sid, name, short) => ({
     id: sid,
@@ -122,10 +122,7 @@ export function countsChart(D, id, names = {}) {
     short, // the end label when the full name has no room; the key under the chart names it
     points: labels.map((l) => ({ label: l, value: map.has(Number(l)) ? map.get(Number(l)) : null, flags: [] })),
   });
-  const series = [];
-  if (counter.size) {
-    series.push(line(counter, "counter", names.counter ?? t("js.counts.index"), names.counterShort ?? t("js.counts.short_counts")));
-  }
+  const series = [line(counter, "counter", names.counter ?? t("js.counts.index"), names.counterShort ?? t("js.counts.short_counts"))];
   if (km.size) {
     series.push(line(km, "km", names.km ?? t("js.counts.km_index"), names.kmShort ?? t("js.counts.short_km")));
   }
