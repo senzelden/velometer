@@ -402,7 +402,12 @@ def _js_refs(text: str, base: str) -> list[tuple[str, bool]]:
     under `base`; one written as an `href="…"` in markup is a link); the literal of a fetch() or
     new URL(). Whole-line comments are skipped. A built URL (`${…}`) passed to url() carries the
     base by construction and is not resolved; anywhere else it is checked as written. XML
-    namespace names are not references."""
+    namespace names are not references.
+
+    What it cannot do: resolve a URL a script builds at run time (`url(`/city/${id}/panel`)`,
+    the Compare panel and city links). Those name a page per city, and the scan cannot know
+    which ids a script will use. They rely on `export_urls` writing every city's page and panel
+    instead, which `test_export_urls_are_what_the_app_serves` asserts for every city."""
     page_u, data_u = make_u(base), make_data_u(base)
 
     def u(path: str) -> str:  # url() of an English page: data paths shared, no prefix
