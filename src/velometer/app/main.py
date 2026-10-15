@@ -45,6 +45,7 @@ from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import (
     Fallback,
+    bracketed,
     data_ref_label,
     fb,
     fb_text,
@@ -425,6 +426,8 @@ def create_app(
         env.globals["fb_text"] = fb_text
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
+        # its bracketed form in another language, in its own `lang` (review 10, I1)
+        env.globals["bracketed"] = bracketed
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
         # a source's publisher or title: on a German page its German sibling, original in `lang`

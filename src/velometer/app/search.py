@@ -1,6 +1,8 @@
 """The `/data/search.json` model (M11 Task 7): what the nav search can jump to. Every entry is
-`{label, kind, url, terms}`, plus `kind_label` in a non-English index; `url` is the path without
-the base (search.js adds it), `terms` the words besides the label that find it. Display data
+`{label, kind, url, terms}`, plus `kind_label` in a non-English index and an organisation's
+`lang` and `bracket_lang` (its name's language, and its bracket's where that differs); `url`
+is the path without the base (search.js adds it), `terms` the words besides the label that
+find it. Display data
 only: the aliases are not classifier input."""
 
 import logging
@@ -74,7 +76,14 @@ def search_index(
     for name, why in sorted(errors.items()):  # the pages show a note; the index says it here
         log.warning("search index: left out content %s: %s", name, why)
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
-        out.append(_entry(org.name, "organisation", f"/organisations#{org.id}", org.id))
+        e = _entry(org.name, "organisation", f"/organisations#{org.id}", org.id)
+        # the name's own language, and its bracket's where that differs (search.js writes them
+        # as the option's `lang`; review 10, I1): a body's name is not in the page's language
+        if org.lang:
+            e["lang"] = org.lang
+        if org.bracket_lang:
+            e["bracket_lang"] = org.bracket_lang
+        out.append(e)
     if "combined" in narratives:
         out.append(
             _entry(t(lang, "search.story_combined"), "story", "/stories", "stories", "narrative")

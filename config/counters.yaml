@@ -70,6 +70,7 @@ cities:
     adapter: helsinki
     source: City of Helsinki, Urban Environment Division (Helsingin kaupunkiympäristön toimiala)
     source_lang: en
+    source_bracket_lang: fi
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/
     page: https://hri.fi/data/en_GB/dataset/helsingin-pyorailijamaarat

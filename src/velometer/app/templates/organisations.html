@@ -8,12 +8,12 @@
 {% if broken %}<p class="note">{{ t('page.organisations.broken', names=broken | join(", ")) }}</p>{% endif %}
 {% if profiles %}
 <nav class="org-index" aria-label="{{ t('nav.organisations') }}"><ul>
-{% for p in profiles %}<li><a href="#{{ p.org.id }}"{{ lang_attr(p.org.lang) }}>{{ p.org.name }}</a></li>
+{% for p in profiles %}<li><a href="#{{ p.org.id }}"{{ lang_attr(p.org.lang) }}>{{ bracketed(p.org.name, p.org.bracket_lang) }}</a></li>
 {% endfor %}</ul></nav>
 {% for p in profiles %}
 <section class="org" id="{{ p.org.id }}">
 <p class="kicker">{{ p.kind }}</p>
-<h2{{ lang_attr(p.org.lang) }}>{{ p.org.name }}</h2>
+<h2{{ lang_attr(p.org.lang) }}>{{ bracketed(p.org.name, p.org.bracket_lang) }}</h2>
 <p class="meta">{% if p.org.url | http_url %}<a href="{{ p.org.url | http_url }}" rel="noopener noreferrer">{{ p.org.url | host }}</a>{% endif %}
 {%- if p.figures %} · {{ t('page.organisations.figures') }} {% for city, source in p.figures %}{{ source }} ({{ city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
 {%- if p.plans %} · {{ t('page.organisations.plans') }} {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>

@@ -799,7 +799,12 @@ def test_search_index_covers_every_city_country_org_story_and_page(client, fixtu
     assert all(client.get(u.split("#")[0]).status_code == 200 for u in urls)
     assert {e["kind"] for e in idx} == {"city", "country", "organisation", "story", "page"}
     for e in idx:
-        assert set(e) == {"label", "kind", "url", "terms"} and e["url"].startswith("/")
+        # an organisation also names its language (review 10, I1: search.js writes it)
+        extra = {"lang", "bracket_lang"} if e["kind"] == "organisation" else set()
+        assert (
+            {"label", "kind", "url", "terms"} <= set(e) <= {"label", "kind", "url", "terms"} | extra
+        )
+        assert e["url"].startswith("/")
 
 
 def test_search_index_anchors_exist_on_their_pages(client):  # noqa: F811

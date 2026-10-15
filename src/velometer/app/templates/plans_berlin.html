@@ -17,7 +17,7 @@
 {% set why_roles = doc.sections | map(attribute="role") | list if doc else [] %}
 <h1>{{ t('page.plan.h1', title=(doc.title | lower if lang == 'en' else fb_text(doc.title)) if doc else t('page.plan.h1_default')) }}</h1>
 {% if plan %}
-<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ publisher.name }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
+<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ bracketed(publisher.name, publisher.bracket_lang) }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
 {% endif %}
 {% if content_error %}<p class="note">{{ t('note.registry_error') }}</p>{% endif -%}
 {% if text_error %}<p class="note">{{ t('page.plan.text_error') }}</p>{% endif %}
@@ -143,7 +143,7 @@
   <td data-label="{{ t('table.type') }}">{{ d.doc_type }}</td>
   <td data-label="{{ t('table.number') }}">{% if d.url %}<a href="{{ d.url }}" rel="noopener noreferrer">{{ d.doc_id }}</a>{% else %}{{ d.doc_id }}{% endif %}</td>
   <td class="date" data-label="{{ t('table.date') }}">{{ d.doc_date }}</td>
-  <td data-label="{{ t('table.publisher') }}">{% if d.publisher.href %}<a href="{{ u(d.publisher.href) }}"{{ lang_attr(d.publisher.lang) }}>{{ d.publisher.name }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
+  <td data-label="{{ t('table.publisher') }}">{% if d.publisher.href %}<a href="{{ u(d.publisher.href) }}"{{ lang_attr(d.publisher.lang) }}>{{ bracketed(d.publisher.name, d.publisher.bracket_lang) }}</a>{% else %}{{ d.publisher.name }}{% endif %}</td>
   <td data-label="{{ t('table.reports_on') }}">{{ d.reports_on | join(", ") }}; {{ d.years }}</td>
   <td class="num" data-label="{{ t('table.figures') }}">{{ d.figures }}{% if d.suspect %} <span class="suspect-mark">{{ t('page.plan.n_suspect', n=d.suspect) }}</span>{% endif %}</td>
 </tr>

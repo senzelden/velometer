@@ -327,3 +327,24 @@ test("the search status is never display:none, so its live region is in the AX t
     assert.doesNotMatch(body, /display\s*:\s*none|visibility\s*:\s*hidden/, sel.trim());
   }
 });
+
+// ---- M13 fix round (review 10, I1): an organisation's option is in its name's language ----
+
+test("an organisation's option label carries its lang, its bracket its own", async (t) => {
+  const index = [
+    { label: "Københavns Kommune (City of Copenhagen)", kind: "organisation", lang: "da",
+      bracket_lang: "en", url: "/organisations#copenhagen_kommune", terms: ["copenhagen_kommune"] },
+    { label: "Stadt Wien", kind: "organisation", lang: "de", url: "/organisations#wien", terms: [] },
+    { label: "Wien (Österreich)", kind: "city", url: "/city/vienna", terms: ["Wien"] },
+  ]; // fmt: skip
+  const kk = (await typed(t, index, "kobenhavns")).list.children[0].children[0];
+  assert.equal(kk.getAttribute("lang"), "da");
+  const [lead, bracket, close] = kk.children;
+  assert.equal(lead, "Københavns Kommune (");
+  assert.equal(bracket.getAttribute("lang"), "en");
+  assert.equal(bracket.textContent, "City of Copenhagen");
+  assert.equal(close, ")");
+  const wien = (await typed(t, index, "wien")).list.children.map((li) => li.children[0]);
+  assert.deepEqual(wien.map((l) => [l.textContent, l.getAttribute("lang")]),
+    [["Wien (Österreich)", null], ["Stadt Wien", "de"]]); // a city is in the page's language
+});

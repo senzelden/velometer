@@ -100,6 +100,7 @@ def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
         "name": org.name if org else name,
         "href": f"/organisations#{name}" if org else None,
         "lang": org.lang if org else None,
+        "bracket_lang": org.bracket_lang if org else None,
     }
 
 

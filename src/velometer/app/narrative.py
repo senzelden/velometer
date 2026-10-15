@@ -20,6 +20,7 @@ from functools import partial
 from markupsafe import Markup, escape
 
 from velometer.content.models import (
+    BRACKETED,
     LANG_TAG,
     DataRef,
     Explainer,
@@ -76,6 +77,16 @@ def lang_attr(code: str | None) -> Markup:
     """` lang="<code>"` for a name in its own language (M12-1: an organisation, a counter
     publisher, a plan title), else nothing: the page's language applies."""
     return Markup(' lang="{}"').format(code) if code and LANG_TAG.fullmatch(code) else Markup("")
+
+
+def bracketed(name: str, code: str | None) -> Markup:
+    """`name`, escaped, its bracketed form at the end in a `<span lang="<code>">` when `code`
+    names that bracket's language (review 10, I1: the lead's `lang` sits on the element that
+    shows the name, `lang_attr`; Copenhagen's English bracket must not read as Danish)."""
+    m = BRACKETED.fullmatch(name) if code and LANG_TAG.fullmatch(code) else None
+    if m is None:
+        return escape(name)
+    return Markup('{} (<span lang="{}">{}</span>)').format(m["lead"], code, m["bracket"])
 
 
 def fb_text(text: object, english: bool | None = None) -> object:

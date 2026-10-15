@@ -16,7 +16,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from velometer.config import ConfigError, require_de
-from velometer.content.models import name_lang
+from velometer.content.models import bracket_lang, name_lang
 from velometer.i18n import Lang
 
 COUNTERS_FILE = "counters.yaml"
@@ -119,6 +119,9 @@ class CounterEntry(_Strict):
     # the language of `source` (BCP 47) where it is the body's own name (an original-language
     # form in brackets beside it shares it), written as its `lang` (M12-1); not used for source_de
     source_lang: str | None = None
+    # the language of the bracketed form ending `source` where it is not `source_lang`
+    # (Helsinki's Finnish name beside the English one; review 10, I1); not used for source_de
+    source_bracket_lang: str | None = None
     licence: str
     licence_url: str
     page: str  # the dataset's portal page
@@ -146,6 +149,11 @@ class CounterEntry(_Strict):
         require_de(self, f"city {self.city!r}", "note")
         return self
 
+    @model_validator(mode="after")
+    def _source_bracket_lang(self) -> "CounterEntry":
+        bracket_lang(self.source_bracket_lang, self.source, "source_bracket_lang")
+        return self
+
     @field_validator("timezone")
     @classmethod
     def _known_zone(cls, v: str) -> str:
@@ -161,6 +169,10 @@ class CounterEntry(_Strict):
     def source_lang_in(self, lang: Lang) -> str | None:
         """The `lang` of what `source_in(lang)` shows: none for our German `source_de`."""
         return None if lang == "de" and self.source_de else self.source_lang
+
+    def source_bracket_lang_in(self, lang: Lang) -> str | None:
+        """The language of the bracket in what `source_in(lang)` shows: none for `source_de`."""
+        return None if lang == "de" and self.source_de else self.source_bracket_lang
 
     @field_validator("source_lang")
     @classmethod

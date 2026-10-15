@@ -63,6 +63,29 @@ export function keyAction({ active, count }, key) {
   return null;
 }
 
+// a name with a bracketed form at its end (content/models.py BRACKETED)
+const BRACKETED = /^(.+?) \(([^()]+)\)$/s;
+
+/**
+ * An option's label: the entry's label, in the entry's `lang` when it names one (an
+ * organisation's own name), its bracketed form in `bracket_lang` where that differs (review
+ * 10, I1: Copenhagen's English bracket is not Danish). Text only, never markup.
+ */
+export function optionLabel(doc, entry) {
+  const label = doc.createElement("span");
+  if (entry.lang) label.setAttribute("lang", entry.lang);
+  const m = entry.bracket_lang ? BRACKETED.exec(entry.label) : null;
+  if (!m) {
+    label.textContent = entry.label;
+    return label;
+  }
+  const bracket = doc.createElement("span");
+  bracket.setAttribute("lang", entry.bracket_lang);
+  bracket.textContent = m[2];
+  label.append(`${m[1]} (`, bracket, ")");
+  return label;
+}
+
 export function mount(doc) {
   const box = doc.querySelector(".search");
   const input = box?.querySelector("input");
@@ -138,8 +161,7 @@ export function mount(doc) {
       li.id = `site-search-opt-${n}`;
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", "false");
-      const label = doc.createElement("span");
-      label.textContent = entry.label;
+      const label = optionLabel(doc, entry);
       const kind = doc.createElement("span");
       kind.className = "kind";
       kind.textContent = entry.kind_label ?? entry.kind; // the German index names its kinds

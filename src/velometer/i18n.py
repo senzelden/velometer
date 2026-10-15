@@ -485,7 +485,9 @@ ENGLISH_WORDS = frozenset({
 # German uses. Names are not translated (OrganisationTr; the local-name rule), so the sniff
 # passes over them; every one must be in the shipped config, content or German methodology.
 # An organisation, counter publisher or plan title with a `lang` field is written in its own
-# language (`lang` attribute), which the sniff skips (M12-1); the names left here are shown
+# language (`lang` attribute), which the sniff skips (M12-1), and a bracketed form in another
+# language than the lead's sits in its own (`bracket_lang`; Copenhagen's English bracket, on the
+# pages and in the search options, review 10); the names left here are shown
 # somewhere without one: in prose, in a source's excerpt, in the methodology tables, or in text
 # the browser builds (the Compare counters note).
 PROPER_NAMES = (

@@ -1,6 +1,7 @@
 id: copenhagen_kommune
 name: Københavns Kommune (City of Copenhagen)
 lang: da
+bracket_lang: en
 kind: official
 url: https://www.kk.dk/
 sections:

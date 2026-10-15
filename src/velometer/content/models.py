@@ -30,6 +30,21 @@ def name_lang(v: str | None, field: str) -> str | None:
     return v
 
 
+# a name with a bracketed form at its end: "Københavns Kommune (City of Copenhagen)"
+BRACKETED = re.compile(r"(?P<lead>.+?) \((?P<bracket>[^()]+)\)", re.DOTALL)
+
+
+def bracket_lang(v: str | None, name: str, field: str) -> str | None:
+    """A `*bracket_lang` field (review 10, I1): the language of the bracketed form that ends
+    `name` where it differs from the lead's (Copenhagen: an English bracket beside the Danish
+    name; Helsinki: a Finnish bracket beside the English one). ValueError when it is no language
+    tag or `name` has no bracketed form."""
+    name_lang(v, field)
+    if v is not None and not BRACKETED.fullmatch(name):
+        raise ValueError(f"{field} {v!r} is set, but {name!r} has no bracketed form at its end")
+    return v
+
+
 class ContentError(Exception):
     """A content file is missing or invalid; the message names the file."""
 
@@ -211,6 +226,8 @@ class Organisation(_Strict):
     # the language of `name` (BCP 47), written as the name's `lang` on every page (M12-1): a
     # body's own name is not translated, so a German page must not claim it is German
     lang: str | None = None
+    # the language of the bracketed form ending `name` where it is not `lang` (review 10, I1)
+    bracket_lang: str | None = None
     kind: Literal["official", "ngo", "index", "research", "parliament", "agency"]
     url: str
     sections: list[OrgSection]
@@ -229,6 +246,11 @@ class Organisation(_Strict):
     @classmethod
     def _lang(cls, v: str | None) -> str | None:
         return name_lang(v, "lang")
+
+    @model_validator(mode="after")
+    def _bracket_lang(self) -> "Organisation":
+        bracket_lang(self.bracket_lang, self.name, "bracket_lang")
+        return self
 
     @property
     def prose(self) -> list[str]:
