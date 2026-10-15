@@ -208,3 +208,47 @@ test("a series without a colour is drawn in its slot's token, a tier in its tier
 test("no chart drew from the missing-token fallback", () => {
   assert.deepEqual(consoleErrors, []);
 });
+
+// M10-7: a redraw (a resize, a theme switch) under a resting pointer keeps what it showed
+const hitOf = (el) => el.children[0].find("rect").find((r) => r.attrs.class === "hit");
+const hoverX = (el) => el.children[0].find("line").find((l) => l.attrs.class === "hover-x");
+const tipOf = (el) => el.children.find((c) => c.className === "tip");
+const firstPoint = (el, i) => {
+  const d = el.children[0].find("path").filter((p) => p.attrs.class === "line")[i].attrs.d;
+  const [x, y] = d.slice(1).split(/[L ]/)[0].split(",").map(Number);
+  return { clientX: x, clientY: y };
+};
+
+test("renderLines: a redraw keeps the hovered series and point, until the pointer leaves", () => {
+  const el = new Node("div");
+  const model = { labels, series: [mk("a", "A", [1, 2, 3], "#111"), mk("b", "B", [9, 8, 7], "#222")] };
+  renderLines(el, model, { height: 200 });
+  hitOf(el).listeners.pointermove(firstPoint(el, 1));
+  const shown = tipOf(el).textContent;
+  assert.match(shown, /^B · 2018/);
+  renderLines(el, model, { height: 200 });
+  assert.equal(hoverX(el).attrs.visibility, "visible");
+  assert.equal(tipOf(el).hidden, false);
+  assert.equal(tipOf(el).textContent, shown);
+  hitOf(el).listeners.pointerleave();
+  renderLines(el, model, { height: 200 });
+  assert.equal(hoverX(el).attrs.visibility, "hidden");
+  assert.equal(tipOf(el).hidden, true);
+  // a redraw without the hovered series shows nothing
+  hitOf(el).listeners.pointermove(firstPoint(el, 1));
+  renderLines(el, { labels, series: [model.series[0]] }, { height: 200 });
+  assert.equal(tipOf(el).hidden, true);
+});
+
+test("renderTiers: a redraw keeps the hovered year", () => {
+  const el = new Node("div");
+  const model = { labels, layers: [{ key: "a", name: "A", values: [1, 2, 3] }] };
+  renderTiers(el, model, { width: 600 });
+  const svgOf = () => el.children[0];
+  const hit = svgOf().find("rect").find((r) => r.attrs.class === "hit");
+  hit.listeners.pointermove({ clientX: 600 });
+  const shown = tipOf(el).textContent;
+  renderTiers(el, model, { width: 600 });
+  assert.equal(tipOf(el).hidden, false);
+  assert.equal(tipOf(el).textContent, shown);
+});
