@@ -13,11 +13,12 @@ function normalise(b) {
   return inner ? `/${inner}/` : "/";
 }
 
-/** A scheme (`https:`, `mailto:`) or a protocol-relative `//host`: not ours to prefix. */
+/** An RFC 3986 scheme: a letter, then letters, digits, `+`, `.` or `-`, then `:`. */
+const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+
+/** A scheme (`https:`, `mailto:`, `web+foo:`) or a protocol-relative `//host`: not ours to prefix. */
 function isExternal(u) {
-  if (u.startsWith("//")) return true;
-  const colon = u.indexOf(":");
-  return colon > 0 && /^\p{L}+$/u.test(u.slice(0, colon));
+  return u.startsWith("//") || SCHEME.test(u);
 }
 
 /** Data, map and static paths: one file for both languages. */
@@ -30,10 +31,22 @@ export function lang(doc = globalThis.document) {
   return String(doc?.documentElement?.lang ?? "").toLowerCase().startsWith("de") ? "de" : "en";
 }
 
+// the base of each document, read once: the meta tag never changes after the page is served
+let seen = new WeakMap();
+
 /** The page's base path, normalised; `/` when there is no document or no meta tag. */
 export function base(doc = globalThis.document) {
-  const content = doc?.querySelector('meta[name="velometer-base"]')?.getAttribute("content");
-  return normalise(content ?? "/");
+  if (!doc) return "/";
+  if (!seen.has(doc)) {
+    const content = doc.querySelector?.('meta[name="velometer-base"]')?.getAttribute("content");
+    seen.set(doc, normalise(content ?? "/"));
+  }
+  return seen.get(doc);
+}
+
+/** Tests only: forget every document's base. */
+export function _resetBase() {
+  seen = new WeakMap();
 }
 
 /**

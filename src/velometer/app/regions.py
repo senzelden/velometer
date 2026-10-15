@@ -3,8 +3,10 @@
 Every element whose class list holds `scroll` gets `tabindex="0"`, `role="region"` and an
 accessible name; every bare `<table>` outside such a wrapper (markdown tables of prose pages
 scroll themselves) gets `tabindex="0"` and a name. A table inside a wrapper gets nothing of its
-own: one tab stop per scroller. A name comes from a caption or heading inside the region, else
-from the heading above it, else a fixed fallback; never from a caption outside the region.
+own: one tab stop per scroller, so a wrapper inside a wrapper gets nothing either. A name comes
+from a caption or heading inside the region, else from the heading above it, else a fixed
+fallback; never from a caption outside the region. Tags inside a script or a comment are not
+the page's: they are not counted.
 Attributes a template already sets are kept. Done once, on the rendered page, so no page needs
 an edit of its own.
 """
@@ -17,8 +19,11 @@ import re
 from velometer.i18n import Lang, t
 
 WRAPPER = re.compile(
-    r'<(div|section)\b(?=[^>]*\bclass="[^"]*(?<![\w-])scroll(?![\w-])[^"]*")([^>]*)>'
+    r"<(div|section)\b(?=[^>]*\bclass=([\"'])(?:(?!\2).)*?(?<![\w-])scroll(?![\w-])(?:(?!\2).)*\2)"
+    r"([^>]*)>"
 )
+# a script's text and a comment hold no tags of the page: blanked (same length) before parsing
+OPAQUE = re.compile(r"<!--.*?-->|<script\b[^>]*>.*?</script\s*>", re.S | re.I)
 BARE_TABLE = re.compile(r"<table>")
 TAG = re.compile(r"<(/?)(div|section)\b[^>]*>")
 HEADING = re.compile(r"<h[1-6]\b([^>]*)>(.*?)</h[1-6]>", re.S)
@@ -78,20 +83,30 @@ def _attrs(attrs: str, wrapper: bool, name: str) -> str:
     return (" " + " ".join(add)) if add else ""
 
 
+def _blank(page: str) -> str:
+    """`page` with each script's text and each comment as spaces, every index kept."""
+    return OPAQUE.sub(lambda m: " " * len(m.group(0)), page)
+
+
 def name_scroll_regions(page: str, lang: Lang = "en") -> str:
     """The page with every scrolling region and bare table named and focusable; the fixed
     fallback names are in `lang`."""
-    wrappers = [(m, _extent(page, m)) for m in WRAPPER.finditer(page)]
+    seen = _blank(page)  # parsed; the edits go into `page` at the same indices
+    wrappers: list[tuple[re.Match, int]] = []
+    for m in WRAPPER.finditer(seen):
+        if not any(w.start() < m.start() < end for w, end in wrappers):  # not nested
+            wrappers.append((m, _extent(seen, m)))
     edits: list[tuple[int, int, str]] = []  # (start, end, replacement)
     for m, end in wrappers:
-        name = _name(page, m.start(), page[m.end() : end], t(lang, "regions.scroll"), lang)
-        edits.append((m.start(), m.end(), m.group(0)[:-1] + _attrs(m.group(2), True, name) + ">"))
-    for m in BARE_TABLE.finditer(page):
+        name = _name(seen, m.start(), seen[m.end() : end], t(lang, "regions.scroll"), lang)
+        tag = page[m.start() : m.end()]
+        edits.append((m.start(), m.end(), tag[:-1] + _attrs(m.group(3), True, name) + ">"))
+    for m in BARE_TABLE.finditer(seen):
         if any(w.start() < m.start() < end for w, end in wrappers):
             continue
-        close = page.find("</table>", m.end())
-        inner = page[m.end() : close if close >= 0 else len(page)]
-        name = _name(page, m.start(), inner, t(lang, "regions.table"), lang)
+        close = seen.find("</table>", m.end())
+        inner = seen[m.end() : close if close >= 0 else len(seen)]
+        name = _name(seen, m.start(), inner, t(lang, "regions.table"), lang)
         edits.append((m.start(), m.end(), "<table" + _attrs("", False, name) + ">"))
     out, last = [], 0
     for start, end, text in sorted(edits):

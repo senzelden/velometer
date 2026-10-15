@@ -29,6 +29,15 @@ test("signed: always a sign; German uses U+2212", () => {
   assert.equal(signed(3.2, 1, EN), "+3.2");
 });
 
+test("signed: a value that rounds to zero has no sign, from either side (M12-3)", () => {
+  for (const v of [0, -0, 0.04, -0.04, 1e-9, -1e-9]) {
+    assert.equal(signed(v, 1, EN), "0.0", String(v));
+    assert.equal(signed(v, 1, DE), "0,0", String(v));
+  }
+  assert.equal(signed(0.05, 1, EN), "+0.1");
+  assert.equal(signed(-0.05, 1, DE), "−0,1");
+});
+
 test("percent: German puts a narrow no-break space before %", () => {
   assert.equal(percent(12.3, 1, DE), "12,3 %");
   assert.equal(percent(12.3, 1, EN), "12.3%");

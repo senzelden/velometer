@@ -10,7 +10,7 @@ import { t } from "./strings.js";
 
 // the format names read the same in both languages
 const FORMATS = [
-  ["Text", (f, a, u) => citeText(f, a, u, lang())],
+  ["Text", (f, a, u) => citeText(f, a, u)],
   ["BibTeX", (f, a, u) => citeBibtex(f, a, u, lang())],
   ["CSL-JSON", (f, a, u) => cslJson(citeCsl(f, a, u, lang()))],
 ];

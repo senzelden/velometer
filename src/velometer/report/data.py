@@ -8,6 +8,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 import copy
 import csv
 import functools
+import re
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -29,6 +30,7 @@ from velometer.config import (
     load_report,
     remainder_label,
 )
+from velometer.counters.model import INDEX_METHOD, DayCount
 from velometer.db import (
     SCHEMA_VERSION,
     CounterDay,
@@ -660,7 +662,10 @@ class ReportData:
 
     def _optional_rows(self, table: str, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
         """`sql`'s rows, or [] when `table` is not in the schema (a v8 database); any error of
-        the query itself is raised."""
+        the query itself is raised. `sql` must read `table` (named as a word in it): a ValueError
+        otherwise, as a mismatch would answer [] for a table the query does not read."""
+        if not re.search(rf"\b{re.escape(table)}\b", sql):
+            raise ValueError(f"_optional_rows: the SQL does not read {table!r}: {sql}")
         present = self.conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
         ).fetchone()
@@ -687,12 +692,14 @@ class ReportData:
         )
         return [CounterSite(*r) for r in rows]
 
-    def counter_index(self, city_id: str) -> list[CounterIndexYear]:
+    def counter_index(self, city_id: str, method: str = INDEX_METHOD) -> list[CounterIndexYear]:
+        """The city's stored index rows of one method: the headline method unless the caller
+        names another (the methodology's v1->v2 table)."""
         rows = self._optional_rows(
             "counter_index",
-            "SELECT city_id, year, idx, sites, base_year, series FROM counter_index "
-            "WHERE city_id=? ORDER BY series, year",
-            (city_id,),
+            "SELECT city_id, year, idx, sites, base_year, series, method FROM counter_index "
+            "WHERE city_id=? AND method=? ORDER BY series, year",
+            (city_id, method),
         )
         return [CounterIndexYear(*r) for r in rows]
 
@@ -706,6 +713,13 @@ class ReportData:
             (city_id,),
         )
         return [CounterDay(r[0], r[1], r[2], r[3], bool(r[4])) for r in rows]
+
+    def counter_day_counts(self, city_id: str) -> list[DayCount]:
+        """`counter_days` as the counters package reads days (data gaps, step-downs)."""
+        return [
+            DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
+            for d in self.counter_days(city_id)
+        ]
 
     def counter_cities(self) -> list[str]:
         rows = self._optional_rows(

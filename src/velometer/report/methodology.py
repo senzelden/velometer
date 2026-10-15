@@ -28,22 +28,22 @@ from velometer.config import (
     load_limitations,
     load_trust,
 )
-from velometer.content.facts import version_key
+from velometer.content.facts import latest_overlay
 from velometer.counters import MONTHLY_SERIES, SERIES
 from velometer.counters import index as counter_index
 from velometer.counters.model import (
     COUNTERS_FILE,
     COVID_YEAR,
     DEFAULT_BASE_YEAR,
-    MIN_LINE_YEARS,
     CounterEntry,
-    DayCount,
     data_gaps,
+    has_line,
     load_counters_config,
 )
 from velometer.db import fetch_boundary, fetch_run
 from velometer.i18n import LANGS, Lang
 from velometer.models import City
+from velometer.plans.berlin import CITY as OVERLAY_CITY
 from velometer.plans.models import MAPPED_BASELINE
 from velometer.plans.overlay import load_overlay_config
 from velometer.report.data import KINDS, ReportData
@@ -137,16 +137,31 @@ class CounterCityFact(_Frozen):
     index_years: list[int] = []  # stored years with an index value
     line: bool = True  # whether the index is drawn as a line (`MIN_LINE_YEARS` valued years)
     gaps: list[tuple[str, str]] = []  # (YYYY-MM, YYYY-MM) runs without counts, of a no-line city
+    note: str | None = None  # config/counters.yaml: the clause after the gaps (M8-8)
+    note_de: str | None = None
     step_downs: list[StepDownFact] = []  # config/counters.yaml: our reading of the daily data
+
+
+class CounterMethodRow(_Frozen):
+    """A link of a daily-count city whose ratio moved by at least METHOD_CHANGE_PCT between the
+    stored v1 and v2 rows (M13 spec §4.2)."""
+
+    city: str  # the city's name
+    years: tuple[int, int]  # the link's earlier and later year
+    v1: float  # the v1 link ratio (later index over earlier)
+    v2: float  # the v2 link ratio
+    change_pct: float  # (v2 / v1 - 1) * 100
 
 
 class CounterFacts(_Frozen):
     cities: list[CounterCityFact]  # cities with an open counter portal, in config order
     n_no_data: int  # cities listed as checked without open counter data
-    min_valid_pct: float  # valid days a site needs in both years of a link
+    min_valid_pct: float  # complete days a site needs in both years of a link
     min_sites: int  # qualifying sites a link needs
     default_base_year: int  # the base year of a city whose entry names none
     covid_year: int
+    method_changes: list[CounterMethodRow]  # links v2 moved by >= method_change_pct (M13)
+    method_change_pct: float  # the threshold of `method_changes`, in percent
 
 
 class MethodologyFacts(_Frozen):
@@ -293,16 +308,12 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
     return out
 
 
-OVERLAY_CITY = "berlin"  # the one city with a plan network overlay (spec §4.3)
-
-
 def _overlay_facts(data: ReportData) -> OverlayFacts | None:
     """The latest overlay version stored for Berlin (numeric order, as the plan page picks it)
     with the parameters of its config file; None when no overlay is stored."""
-    rows = data.plan_overlay(OVERLAY_CITY)
-    if not rows:
+    version, _ = latest_overlay(data.plan_overlay(OVERLAY_CITY))
+    if version is None:
         return None
-    version = max((r.overlay_version for r in rows), key=version_key)
     cfg = load_overlay_config(data.config_dir / "plans", version)
     return OverlayFacts(
         version=cfg.version,
@@ -321,15 +332,12 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
     series = MONTHLY_SERIES if c.grain == "monthly" else SERIES
     rows = data.counter_index(c.city)
     years = [r.year for r in rows if r.index is not None]
-    line = len(years) >= MIN_LINE_YEARS
+    line = has_line(r.index for r in rows)
     firsts = [s.first_day for s in data.counter_sites(c.city) if s.first_day]
     gaps: list[tuple[str, str]] = []
-    if rows and not line and series == SERIES:
-        days = [
-            DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
-            for d in data.counter_days(c.city)
-        ]
-        gaps = [(a[:7], b[:7]) for a, b in data_gaps(days)]
+    # as the Counts tab: gaps of daily counts (the stored series), of a city without a line
+    if rows and not line and rows[0].series == SERIES:
+        gaps = [(a[:7], b[:7]) for a, b in data_gaps(data.counter_day_counts(c.city))]
     return CounterCityFact(
         id=c.city,
         name=name,
@@ -342,8 +350,38 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
         index_years=years,
         line=line,
         gaps=gaps,
+        note=c.note,
+        note_de=c.note_de,
         step_downs=[StepDownFact(site=s.site, since=s.since) for s in c.step_downs],
     )
+
+
+METHOD_CHANGE_PCT = 0.5  # a link whose ratio moved by at least this much is listed (§4.2)
+
+
+def _links(rows) -> dict[tuple[int, int], float]:
+    """(earlier, later) -> ratio, for consecutive years that both have a value."""
+    idx = {r.year: r.index for r in rows}
+    return {
+        (y - 1, y): idx[y] / idx[y - 1]
+        for y in idx
+        if idx[y] is not None and idx.get(y - 1) not in (None, 0)
+    }
+
+
+def _method_changes(data: ReportData, c: CounterEntry, name: str) -> list[CounterMethodRow]:
+    """The links of a daily-count city whose ratio moved by at least METHOD_CHANGE_PCT from the
+    stored v1 rows to the v2 rows; a link counts when both methods have it."""
+    if c.grain == "monthly":
+        return []
+    v1, v2 = _links(data.counter_index(c.city, "v1")), _links(data.counter_index(c.city, "v2"))
+    out = []
+    for years in sorted(v1.keys() & v2.keys()):
+        change = (v2[years] / v1[years] - 1) * 100
+        if abs(change) >= METHOD_CHANGE_PCT:
+            out.append(CounterMethodRow(city=name, years=years, v1=v1[years], v2=v2[years],
+                                        change_pct=change))  # fmt: skip
+    return out
 
 
 def _counter_facts(data: ReportData, names: dict[str, str]) -> CounterFacts:
@@ -351,8 +389,11 @@ def _counter_facts(data: ReportData, names: dict[str, str]) -> CounterFacts:
     holds back appears in neither the table nor the no-data count. The index rule is read from
     `counters.index` when the facts are gathered."""
     cfg = load_counters_config(data.config_dir / COUNTERS_FILE)
+    reported = [c for c in cfg.cities if c.city in names]
     return CounterFacts(
-        cities=[_counter_city(data, c, names[c.city]) for c in cfg.cities if c.city in names],
+        cities=[_counter_city(data, c, names[c.city]) for c in reported],
+        method_changes=[row for c in reported for row in _method_changes(data, c, names[c.city])],
+        method_change_pct=METHOD_CHANGE_PCT,
         n_no_data=sum(1 for n in cfg.none if n.city in names),
         min_valid_pct=counter_index.MIN_VALID * 100,
         min_sites=counter_index.MIN_SITES,
@@ -478,6 +519,14 @@ def _provenance(v: str | None, lang: Lang) -> str | None:
     return v
 
 
+def _signed_pct(v: float, lang: Lang) -> str:
+    """A signed percentage to one decimal, spaced as the page's other percentages: "+1.8 %",
+    "−1.0 %" (a true minus in both languages), "+1,8 %" with a narrow space in German."""
+    text = i18n.signed(v, lang, 1)
+    text = i18n.MINUS + text[1:] if text.startswith("-") else text
+    return f"{text}{i18n.NNBSP if lang == 'de' else ' '}%"
+
+
 def _environment(lang: Lang) -> Environment:
     env = Environment(
         loader=PackageLoader("velometer.report", "templates"),
@@ -491,6 +540,7 @@ def _environment(lang: Lang) -> Environment:
     env.filters["pct"] = lambda v: (
         f"{_number(v, lang)}{i18n.NNBSP}%" if lang == "de" else f"{_number(v, lang)}%"
     )
+    env.filters["signed_pct"] = lambda v: _signed_pct(v, lang)
     env.filters["and_list"] = lambda v: _and_list(v, lang)
     env.filters["month"] = lambda v: _month(v, lang)
     env.filters["day"] = lambda v: _day(v, lang)

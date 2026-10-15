@@ -38,6 +38,7 @@
       <label for="site-search" class="visually-hidden">{{ t('nav.search') }}</label>
       <input id="site-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="site-search-list" placeholder="{{ t('nav.search') }}" autocomplete="off" spellcheck="false">
       <ul id="site-search-list" role="listbox" aria-label="{{ t('nav.search_results') }}" hidden></ul>
+      <p class="search-status" role="status"></p>
     </div>
   </li>
   {%- set other = 'de' if lang == 'en' else 'en' %}

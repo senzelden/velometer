@@ -71,6 +71,12 @@ CONFIG_OPT = typer.Option(default_config_dir(), "--config-dir", help="Config dir
 CONFIG_EXPORT_OPT = typer.Option(
     default_config_dir(), "--config", "--config-dir", help="Config directory."
 )
+# the Berlin plan page's fetched data (`velometer plans fetch` writes data/plans/<city>/)
+PLANS_DATA_OPT = typer.Option(
+    Path("data") / "plans",
+    "--plans-data-dir",
+    help="Plan data directory (berlin/ with the measures layer and retrieved.json).",
+)
 CC_BASIS_OPT = typer.Option(
     None,
     "--clean-cities-basis",
@@ -133,12 +139,18 @@ def migrate(
         typer.echo("error: --activity-sha must be 64 lowercase hex characters", err=True)
         raise typer.Exit(2)
     with open_db(db) as conn:
+        before = conn.execute("PRAGMA user_version").fetchone()[0]
         try:
             create_schema(conn, activity_sha256_for_v5=activity_sha)
         except SchemaError as e:
             typer.echo(f"database error: {e}", err=True)
             raise typer.Exit(1) from e
+        tagged = before < 10 and conn.execute("SELECT 1 FROM counter_index LIMIT 1").fetchone()
     typer.echo(f"{db}: schema v{SCHEMA_VERSION}")
+    if tagged:
+        typer.echo(
+            "counter_index rows are tagged v1; run `velometer counters load` to write the v2 rows"
+        )
 
 
 @app.command()
@@ -2035,6 +2047,7 @@ def serve(
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
+    plans_data_dir: Path = PLANS_DATA_OPT,
 ) -> None:
     """The private, read-only web app on a loopback address (never exposed to the network)."""
     if host not in LOOPBACK_HOSTS:
@@ -2051,7 +2064,10 @@ def serve(
 
     from velometer.app.main import create_app
 
-    uvicorn.run(create_app(db, config_dir, maps, docs, content_dir), host=host, port=port)
+    app_ = create_app(
+        db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir
+    )
+    uvicorn.run(app_, host=host, port=port)
 
 
 @web_app.command("export")
@@ -2068,6 +2084,7 @@ def app_export(
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
+    plans_data_dir: Path = PLANS_DATA_OPT,
 ) -> None:
     """The reader app's static edition: every page the data has, rendered by the app, as files
     (read-only on the database)."""
@@ -2078,7 +2095,7 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, Path("data") / "plans", clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
         )
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)
@@ -2145,9 +2162,12 @@ def content(
         conn.close()
     if online and not problems:
         try:
-            problems = ck.check_online(load_sources(content_dir / "sources"))
+            # skipped excerpts (a PDF without a reader) are printed, but do not fail the check
+            problems, skipped = ck.check_online(load_sources(content_dir / "sources"))
         except ContentError as e:
-            problems = [str(e)]
+            problems, skipped = [str(e)], []
+        for s in skipped:
+            typer.echo(s, err=True)
     for p in problems:
         typer.echo(p, err=True)
     if problems:

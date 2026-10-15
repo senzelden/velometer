@@ -28,7 +28,7 @@ sections:
       den Bearbeitungen eines einzelnen Mitwirkenden; der Klassifikator liest sie
       deshalb jetzt als gemeinsam mit dem Fußverkehr genutzt [#shift-amsterdam-2025].
       Neu getaggte Wege sind keine Veränderung auf der Straße. Markierte Radfahrstreifen
-      (Stufe D, 76 → 90 km) und Fahrradstraßen (Stufe E, 0,2 → 9,0 km) wuchsen langsam.
+      (Stufe D, 76 → 90 km) und Fahrradstraßen o. Ä. (Stufe E, 0,2 → 9,0 km) wuchsen langsam.
     src: ffa945eab2d9
   - text: >-
       Der funktionale Stadtraum (FUA) stieg langsam, 134,1 → 138,6. Sein einziges
@@ -42,14 +42,16 @@ sections:
   - text: >-
       Clean Cities zählt 919 km geschützter Infrastruktur [@cc2025-report]; unser
       A+B-Wert liegt bei 862 km je Seite (−6 %). Eine veröffentlichte Gesamtzahl der
-      Stadt haben wir nicht gefunden, doch die städtische Definition eines fietspad,
-      unten zitiert, entspricht diesem Umfang [@amsterdam-maps-fietsnetten]. Die Abweichung
-      liegt im Straßennetz: Clean Cities teilt durch 2.700 km, wir durch 2.041 km
-      (−24 %), daher beträgt sein Verhältnis 34 % gegenüber unseren 42,2 % [#recon-amsterdam-cc-ratio].
-      Welche Straßen sein Netz umfasst und ob die Stadt oder OpenStreetMap die Daten
-      geliefert hat, ist nicht angegeben. Seine Daten stammen von Anfang 2025, unsere
-      vom Oktober 2026. QECIO berichtet für Groot-Amsterdam, eine Region, die größer
-      ist als die Stadt [#recon-amsterdam-qecio-main].
-    src: 6d007739a0c3
+      Stadt haben wir nicht gefunden, doch die städtische Definition eines <i lang="nl">fietspad</i>
+      (Radweg), unten zitiert, entspricht diesem Umfang [@amsterdam-maps-fietsnetten].
+      Die Abweichung liegt im Straßennetz: Clean Cities teilt durch 2.700 km, wir
+      durch 2.041 km (−24 %), daher beträgt sein Verhältnis 34 % gegenüber unseren
+      42,2 % [#recon-amsterdam-cc-ratio]. Welche Straßen sein Netz umfasst und ob
+      die Stadt oder OpenStreetMap die Daten geliefert hat, ist nicht angegeben. Seine
+      Daten stammen von Anfang 2025, unsere vom Oktober 2026. QECIO berichtet für
+      das <i lang="nl">COROP-gebied</i> (COROP-Region zwischen Gemeinde und Provinz)
+      Groot-Amsterdam [@cbs-regionale-economie-2018-begrippen], das größer ist als
+      die Stadt [#recon-amsterdam-qecio-main].
+    src: 1afbc1db6299
 literals:
 - 100 km

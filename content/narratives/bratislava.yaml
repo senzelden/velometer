@@ -29,10 +29,10 @@ sections:
         Clean Cities 2025 and our figures roughly agree: it reports 186 km of protected
         infrastructure and 12% of the road network [@cc2025-report], against our 172 km and 13.2%
         [#recon]. QECIO measured the whole Bratislava region, more than five times the city's area,
-        so its km are not the city's [#recon-qecio]. The city reports km added by type, advisory
-        lanes among them, and a total of its own without a stated length basis
-        [@bratislava-city-infra-2025]; the local cycling NGO counted a new path on both sides of the
-        road, as we do [@bratislava-cyklokoalicia-2025].
+        so its km are not the city's [#recon-qecio]. The city reports km added by type, km of
+        <i lang="sk">ochranných pruhov</i> (advisory lanes) among them, and a total of its own
+        without a stated length basis [@bratislava-city-infra-2025]; the local cycling NGO counted a
+        new path on both sides of the road, as we do [@bratislava-cyklokoalicia-2025].
 quotes:
   - {excerpt: bratislava-city-infra-2025/breakdown-total, after: 3}
   - {excerpt: bratislava-cyklokoalicia-2025/both-sides, after: 3}

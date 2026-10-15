@@ -46,9 +46,9 @@ sections:
       gegenüber unseren 172 km und 13,2 % [#recon]. QECIO hat die ganze Region Bratislava
       gemessen, mehr als fünfmal so groß wie die Stadt, seine km sind also nicht die
       der Stadt [#recon-qecio]. Die Stadt meldet hinzugekommene km nach Typ, darunter
-      Angebotsstreifen, und eine eigene Gesamtzahl ohne angegebene Längenbasis [@bratislava-city-infra-2025];
-      die örtliche Radverkehrs-NGO zählte einen neuen Weg auf beiden Straßenseiten,
-      wie wir [@bratislava-cyklokoalicia-2025].
-    src: 37aaef92209e
+      km <i lang="sk">ochranných pruhov</i> (Angebotsstreifen), und eine eigene Gesamtzahl
+      ohne angegebene Längenbasis [@bratislava-city-infra-2025]; die örtliche Radverkehrs-NGO
+      zählte einen neuen Weg auf beiden Straßenseiten, wie wir [@bratislava-cyklokoalicia-2025].
+    src: acd0aeba3bae
 literals:
 - 100 km

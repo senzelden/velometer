@@ -28,25 +28,27 @@ sections:
   - text: >-
       Der funktionale Stadtraum wuchs schneller, von 332 auf 701 kartierte km. Seine
       markierten Schritte von 2020, 2022 und 2023 waren Kartierungsaktivität in den
-      gminas im Umland, zum Teil Wege, die von construction zu cycleway umgetaggt
-      wurden. Eine solche Umtaggung datiert die Kartierung, nicht den Weg vor Ort
-      [#ts_fua_2023].
-    src: 57e480059932
+      Gebieten der <i lang="pl">gmina</i> (Gemeinde) im Umland [@gus-pojecie-gmina],
+      zum Teil Wege, die von `construction` zu `cycleway` umgetaggt wurden. Eine solche
+      Umtaggung datiert die Kartierung, nicht den Weg vor Ort [#ts_fua_2023].
+    src: dd648f1cadd5
 - heading:
     text: Warum die Zahlen abweichen
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die Zahlen des Rathauses erfassen weiter gefasste Netze als unsere: Seine „radfreundlichen
-      Routen“ schließen Radfahrstreifen gegen die Einbahnrichtung und verkehrsberuhigte
-      Zonen ein, die unsere Hauptkennzahl nicht zählt [@wroclaw-wroclife-nik-2023],
-      und seine anderen Summen nennen weder Definition noch Längenbasis. Clean Cities
-      2025 zählt geschützte Infrastruktur, Geh- und Radwege eingeschlossen [@cc2025-annexes].
-      Unser A+B-Wert je Seite von 399 km liegt 12,3 % über seinen 355 km und auf der
-      Basis entlang der Straßenachse 6,8 % darüber, bei anderthalb Jahren zwischen
-      den beiden Daten [#rec_cc_ratio]. Das Verhältnis weicht stärker ab: Sein Straßennetz
-      von 1.769 km ist weiter gefasst als unsere 1.340 km [#rec_cc_network], daher
-      beträgt sein Verhältnis 20 % gegenüber unseren 29,8 %.
-    src: 53be68e87189
+      Die Zahlen des Rathauses erfassen weiter gefasste Netze als unsere: Seine <i
+      lang="pl">trasy „przyjazne rowerzystom”</i> („radfreundliche“ Routen) schließen
+      <i lang="pl">kontrapasy</i> (Radfahrstreifen gegen die Einbahnrichtung) und
+      <i lang="pl">strefy uspokojonego ruchu</i> (verkehrsberuhigte Zonen) ein, die
+      unsere Hauptkennzahl nicht zählt [@wroclaw-wroclife-nik-2023], und seine anderen
+      Summen nennen weder Definition noch Längenbasis. Clean Cities 2025 zählt geschützte
+      Infrastruktur, Geh- und Radwege eingeschlossen [@cc2025-annexes]. Unser A+B-Wert
+      je Seite von 399 km liegt 12,3 % über seinen 355 km und auf der Basis entlang
+      der Straßenachse 6,8 % darüber, bei anderthalb Jahren zwischen den beiden Daten
+      [#rec_cc_ratio]. Das Verhältnis weicht stärker ab: Sein Straßennetz von 1.769
+      km ist weiter gefasst als unsere 1.340 km [#rec_cc_network], daher beträgt sein
+      Verhältnis 20 % gegenüber unseren 29,8 %.
+    src: 93293886f34d
 literals:
 - 100 km

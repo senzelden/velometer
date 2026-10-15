@@ -24,14 +24,18 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The Ville de Bordeaux's own figure includes bus lanes [@bordeaux-ville-circuler-a-velo] and
-        does not say how length is measured or whether a two-sided street counts twice. The
-        Métropole's figures cover all its communes and include traffic-calmed and pedestrian streets
-        [@bordeaux-plan-velo-2021-2026], which none of our tiers counts; the regional audit chamber
-        describes the same series as all types combined [@bordeaux-crc-plan-velo-2025]. Bordeaux is
-        not in the Clean Cities ranking. QECIO reports the Gironde département, hence its −97.6% gap
-        on main roads; on that area the main roads agree, and the commune has more painted lanes and
-        fewer separate tracks than the rest of Gironde [#rc-bordeaux-qecio_main_km].
+        The Ville de Bordeaux's own figure includes <i lang="fr">couloirs bus</i> (bus lanes)
+        [@bordeaux-ville-circuler-a-velo] and does not say how length is measured or whether a
+        two-sided street counts twice. The figures of <i lang="fr">Bordeaux Métropole</i> (the
+        inter-municipal authority) [@bordeaux-metropole-que-fait] cover all its communes and include
+        <i lang="fr">voies de circulation apaisée</i> (traffic-calmed streets) and
+        <i lang="fr">voies piétonnes</i> (pedestrian streets) [@bordeaux-plan-velo-2021-2026], which
+        none of our tiers counts; the regional audit chamber describes the same series as all types
+        combined [@bordeaux-crc-plan-velo-2025]. Bordeaux is not in the Clean Cities ranking. QECIO
+        reports the Gironde <i lang="fr">département</i> (administrative district)
+        [@insee-departement], hence its −97.6% gap on main roads; on that area the main roads agree,
+        and the commune has more painted lanes and fewer separate tracks than the rest of Gironde
+        [#rc-bordeaux-qecio_main_km].
 quotes:
   - excerpt: bordeaux-ville-circuler-a-velo/city-378
     after: 2

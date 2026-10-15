@@ -1,5 +1,7 @@
 id: copenhagen_kommune
 name: Københavns Kommune (City of Copenhagen)
+lang: da
+bracket_lang: en
 kind: official
 url: https://www.kk.dk/
 sections:
@@ -15,22 +17,23 @@ sections:
   - heading: How they measure
     dimensions:
       scope: >-
-        cycle tracks (cykelstier), separated by kerbs from carriageway and pavement; cycle lanes
-        are reported in a separate row [@copenhagen-cykelfokus-2024]
-        [@copenhagen-mobilitetsredegorelse-2026]
-      kind: existing cycle track in 2025 [@copenhagen-mobilitetsredegorelse-2026]
+        <i lang="da">cykelstier</i> (kerbed cycle tracks), separated by kerbs from carriageway and
+        pavement; <i lang="da">cykelbaner</i> (painted cycle lanes) are reported in a separate row
+        [@copenhagen-cykelfokus-2024] [@copenhagen-mobilitetsredegorelse-2026]
+      kind: existing <i lang="da">cykelsti</i> in 2025 [@copenhagen-mobilitetsredegorelse-2026]
       length: not stated by the source
       date: the year 2025 [@copenhagen-mobilitetsredegorelse-2026]
       area: the municipality of Copenhagen [@copenhagen-mobilitetsredegorelse-2026]
       method: the administration's own inventory [@copenhagen-mobilitetsredegorelse-2026]
     paragraphs:
       - >-
-        Our Copenhagen figure, 401 km of cycle track in 2025, comes from the
-        Mobilitetsredegørelse 2026 [@copenhagen-mobilitetsredegorelse-2026]. The city used to
-        report on cycling every second year in a bicycle account; since 2021 the mobility report
-        has replaced it [@copenhagen-verdens-bedste-cykelby]. In the city's design guidelines a
-        cykelsti has kerbs towards the carriageway and the pavement, while painted cycle lanes
-        are a separate category that new schemes should avoid [@copenhagen-cykelfokus-2024].
+        Our Copenhagen figure, 401 km of <i lang="da">cykelsti</i> in 2025, comes from the
+        Mobilitetsredegørelse 2026 [@copenhagen-mobilitetsredegorelse-2026]. The city used to report
+        on cycling every second year in a bicycle account; since 2021 the mobility report has
+        replaced it [@copenhagen-verdens-bedste-cykelby]. In the city's design guidelines a
+        <i lang="da">cykelsti</i> has kerbs towards the carriageway and the pavement, while
+        <i lang="da">cykelbaner</i> are a separate category that new schemes should avoid
+        [@copenhagen-cykelfokus-2024].
   - heading: Political role
     paragraphs:
       - >-

@@ -13,13 +13,12 @@ sections:
     src: 310f41f80f38
   paragraphs:
   - text: >-
-      Wiens Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, stieg von 74,6
-      im Jahr 2018 auf 89,1 im Oktober 2026 und die kartierten A+B-km von 558 auf
-      666 km [#ts-lau]. Bis 2024 blieb sie zwischen 73,8 und 79,7; seitdem ist sie
-      jedes Jahr gestiegen, auf 83,0 im Jahr 2025 und 87,3 im Jahr 2026. Kartierte
-      baulich getrennte Radwege (Stufe A) tragen den größten Teil des Zuwachses, von
-      239 auf 314 km. Geh- und Radwege (B) stiegen von 320 auf 352 km, Fahrradstraßen
-      und Busspuren (E) von 18 auf 41 km.
+      Wiens Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, stieg von 74,6 im Jahr 2018 auf
+      89,1 im Oktober 2026 und die kartierten A+B-km von 558 auf 666 km [#ts-lau]. Bis 2024 blieb
+      sie zwischen 73,8 und 79,7; seitdem ist sie jedes Jahr gestiegen, auf 83,0 im Jahr 2025 und
+      87,3 im Jahr 2026. Kartierte baulich getrennte Radwege (Stufe A) tragen den größten Teil des
+      Zuwachses, von 239 auf 314 km. Geh- und Radwege (B) stiegen von 320 auf 352 km, Fahrradstraßen
+      o. Ä. und Busspuren (E) von 18 auf 41 km.
     src: d396c92ae56f
   - text: >-
       Das einzige markierte Jahr, 2025, ist eine Umtaggung, keine neue Infrastruktur:
@@ -38,16 +37,16 @@ sections:
   paragraphs:
   - text: >-
       Wiens eigene Netzsumme zählt jede Art von Anlage auf beiden Seiten einer Straße,
-      einschließlich Straßen mit Radverkehr gegen die Einbahnrichtung, verkehrsberuhigter
-      Gebiete und beschilderter Routen [@vienna-radverkehrsnetz-fakten], und umfasst
-      damit weit mehr als A+B. Die Bilanz 2025 von 20,4 km zählt Projekte im Hauptradverkehrsnetz,
-      die in diesem Jahr begonnen wurden, nicht solche, die in diesem Jahr abgeschlossen
+      einschließlich der Typen Radfahren gegen die Einbahn, Verkehrsberuhigter Bereich
+      und Radroute [@vienna-radverkehrsnetz-fakten], und umfasst damit weit mehr als
+      A+B. Die Bilanz 2025 von 20,4 km zählt Projekte im Hauptradverkehrsnetz, die
+      in diesem Jahr begonnen wurden, nicht solche, die in diesem Jahr abgeschlossen
       wurden [@vienna-radwegeausbau-bilanz-2025]. Clean Cities veröffentlichte zunächst
       14 %; im Juli 2025 hob es den Wert für Wien auf 22,0 % an, nachdem Straßen mit
       eingeschränkter Kfz-Zufahrt in verkehrsberuhigten Gebieten in die Zählung aufgenommen
       wurden [@cc2025-cycling-table]. Nach der Methode von Clean Cities liegt unser
       Verhältnis bei 22,7 %, +3 % gegenüber der korrigierten Zahl, und die Straßennetze
       stimmen überein [#recon].
-    src: 75c96a2289bc
+    src: 40fc56ebbd86
 literals:
 - 100 km

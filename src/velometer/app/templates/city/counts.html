@@ -8,8 +8,8 @@
 <h2>{{ t('counts.index') }}</h2>
 <p class="meta">{{ t('page.counts.meta', label=c.label, base=c.base_year) }} {{ t('counts.context') }} {{ t('page.counts.covid', year=c.covid_year) }}</p>
 {% if c.line %}
-<div class="chart" data-chart="city-counts" data-city="{{ city.id }}" data-counter-short="{{ c.short }}" data-km-short="{{ c.km_short }}" aria-describedby="counts-caption" role="group" aria-label="{{ t('page.counts.chart', city=city.name) }}"></div>
-<ul class="meta chart-key"><li><span class="key key-counter"></span> {{ t('page.counts.key_counter', short=c.short, label=c.label) }}</li>{% if not c.km_base_missing %}<li><span class="key key-km"></span> {{ t('page.counts.key_km', short=c.km_short) }}</li>{% endif %}</ul>
+<div class="chart" data-chart="city-counts" data-city="{{ city.id }}" data-download-key="counts-key-{{ city.id }}" data-counter-short="{{ c.short }}" data-km-short="{{ c.km_short }}" aria-describedby="counts-caption" role="group" aria-label="{{ t('page.counts.chart', city=city.name) }}"></div>
+<ul class="meta chart-key" id="counts-key-{{ city.id }}"><li><span class="key key-counter"></span> {{ t('page.counts.key_counter', short=c.short, label=c.label) }}</li>{% if not c.km_base_missing %}<li><span class="key key-km"></span> {{ t('page.counts.key_km', short=c.km_short) }}</li>{% endif %}</ul>
 {% else %}
 <p class="note" id="counts-no-line">{{ t('page.counts.no_line', years=c.index_years | join(", ") or t('page.counts.no_year'), sites=c.min_sites, pct=c.min_valid_pct | trimmed) }}{% if c.gaps %} {{ t('page.counts.gaps') }} {% for a, b in c.gaps %}{{ t('page.counts.gap', start=a, end=b) }}{% if not loop.last %}, {% endif %}{% endfor %}. {{ t('page.counts.breaks') }}{% endif %}</p>
 {% endif %}
@@ -52,7 +52,7 @@
 </table>
 </div>
 </details>
-<p class="meta counts-attribution">{{ t('counts.data') }}: {% if c.entry %}<a href="{{ c.entry.page | http_url }}" rel="noopener noreferrer">{{ c.source }}</a>, {{ t('page.counts.licence') }} <a href="{{ c.entry.licence_url | http_url }}" rel="noopener noreferrer">{{ c.licence }}</a>{% else %}{{ c.source }}, {{ t('page.counts.licence') }} {{ c.licence }}{% endif %}{% if c.retrieved %}, {{ t('page.counts.retrieved', date=c.retrieved) }}{% endif %}.{% if c.site_map %} {{ t('page.counts.map_credit', href=c.site_map.links.copyright) }}{% endif %}</p>
+<p class="meta counts-attribution">{{ t('counts.data') }}: {% if c.entry %}<a href="{{ c.entry.page | http_url }}" rel="noopener noreferrer"{{ lang_attr(c.source_lang) }}>{{ bracketed(c.source, c.source_bracket_lang) }}</a>, {{ t('page.counts.licence') }} <a href="{{ c.entry.licence_url | http_url }}" rel="noopener noreferrer">{{ c.licence }}</a>{% else %}{{ c.source }}, {{ t('page.counts.licence') }} {{ c.licence }}{% endif %}{% if c.retrieved %}, {{ t('page.counts.retrieved', date=c.retrieved) }}{% endif %}.{% if c.site_map %} {{ t('page.counts.map_credit', href=c.site_map.links.copyright) }}{% endif %}</p>
 </section>
 
 {% if c.text_error %}<p class="note">{{ t('page.counts.text_error') }}</p>{% endif %}

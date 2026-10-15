@@ -23,8 +23,8 @@
 {% for p in c.plans %}
 <tr{% if loop.first %} id="{{ c.id }}"{% endif %}>
   <th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></th>
-  <td data-label="{{ t('table.plan') }}">{% if p.url %}<a href="{{ p.url }}" rel="noopener noreferrer">{{ p.plan.title }}</a>{% else %}{{ p.plan.title }}{% endif %}
-    <br><span class="meta">{% if p.plan.adopted %}{{ t('page.plans.adopted', date=p.plan.adopted | day) }}{% else %}{{ t('page.plans.adoption_unknown') }}{% endif %} · {% if p.publisher.href %}<a href="{{ u(p.publisher.href) }}">{{ p.publisher.name }}</a>{% else %}{{ p.publisher.name }}{% endif %}</span>
+  <td data-label="{{ t('table.plan') }}">{% if p.url %}<a href="{{ p.url }}" rel="noopener noreferrer"{{ lang_attr(p.plan.title_lang) }}>{{ p.plan.title }}</a>{% else %}<span{{ lang_attr(p.plan.title_lang) }}>{{ p.plan.title }}</span>{% endif %}
+    <br><span class="meta">{% if p.plan.adopted %}{{ t('page.plans.adopted', date=p.plan.adopted | day) }}{% else %}{{ t('page.plans.adoption_unknown') }}{% endif %} · {% if p.publisher.href %}<a href="{{ u(p.publisher.href) }}"{{ lang_attr(p.publisher.lang) }}>{{ bracketed(p.publisher.name, p.publisher.bracket_lang) }}</a>{% else %}{{ p.publisher.name }}{% endif %}</span>
     {% if p.detail_href %}<br><a href="{{ u(p.detail_href) }}">{{ t('page.plans.every_item') }} →</a>{% endif %}
     {% if p.plan.note %}<details class="plan-note"><summary>{{ t('page.plans.notes') }}</summary><p class="meta">{{ p.plan.note }}</p></details>{% endif %}</td>
   <td data-label="{{ t('table.status') }}"><span class="status status-{{ p.plan.status }}">{{ p.status_text }}</span></td>

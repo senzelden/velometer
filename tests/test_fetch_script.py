@@ -1,13 +1,12 @@
-import importlib.util
 import re
 from pathlib import Path
 
 import pytest
 
+from tests.helpers import load_script
+
 _PATH = Path(__file__).resolve().parent.parent / "scripts" / "fetch_berlin_golden.py"
-_spec = importlib.util.spec_from_file_location("fetch_berlin_golden", _PATH)
-fetch = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(fetch)
+fetch = load_script("scripts/fetch_berlin_golden.py")
 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 

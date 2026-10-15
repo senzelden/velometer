@@ -3,9 +3,10 @@
 // module loads the English strings, as an English page's #ui-strings block does; `useLang` swaps.
 import { readFileSync } from "node:fs";
 import { setStrings } from "../strings.js";
+import { repoFile } from "./repo.mjs";
 
 export const FIXTURE = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/ui_js_strings.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/ui_js_strings.json"), "utf8"),
 );
 
 /** The page's strings for `lang`, English underneath (what the block holds). */

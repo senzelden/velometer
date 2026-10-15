@@ -34,9 +34,9 @@ function provenance(f) {
 
 const attribution = (f) => f.attribution ?? t("js.cite.attribution");
 
-/** The readable citation (app/cite.py: cite_text). Its words are the page's strings; `lang` (the
- * page's language, as citeBibtex and citeCsl take it) changes nothing here. */
-export function citeText(f, accessed = null, url = null, lang = "en") {
+/** The readable citation (app/cite.py: cite_text). Its words are the page's strings, so it takes
+ * no language (citeBibtex and citeCsl do). */
+export function citeText(f, accessed = null, url = null) {
   let text = t("js.cite.text", { year: year(f), title: f.title, provenance: provenance(f), attribution: attribution(f) });
   if (url) text += " " + (accessed ? t("js.cite.accessed", { url, accessed }) : `${url}.`);
   return text;

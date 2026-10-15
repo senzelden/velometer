@@ -829,6 +829,24 @@ def _at(search: str) -> list[float] | None:
     return [float(x) for x in got["at"].split(",")] if "at" in got else None
 
 
+# the boundaries the tier page lists with a map: its file list names each boundary, with a note
+# where it has no run or no map (independent of the map's radio buttons)
+TIER_MAPPED_JS = (
+    "[...document.querySelectorAll('.tiermap-files li')].filter((li) => !li.querySelector('.note'))"
+    ".map((li) => (li.querySelector('strong')?.textContent || '').replace(':', '').trim()"
+    ".toLowerCase())"
+)
+
+
+def boundary_errors(offered: list[str], mapped: list[str]) -> list[str]:
+    """The tier map offers exactly the boundaries its page lists with a map, so where the page
+    has two (LAU and FUA) the permalink step restores the second, a non-default boundary; a
+    dropped option would otherwise leave only the default tested."""
+    if sorted(offered) == sorted(mapped):
+        return []
+    return [f"the tier map offers {offered}, but the page lists a map for {mapped}"]
+
+
 def _permalink_tiers(devtools, origin, base, theme, width, shots, lang: str = "en"
                      ) -> tuple[Tab, list[str], list]:  # fmt: skip
     """The tier map opened from a permalink shows that state; a pan or zoom rewrites `at`; a
@@ -842,7 +860,9 @@ def _permalink_tiers(devtools, origin, base, theme, width, shots, lang: str = "e
     kinds = t.js(TIER_KINDS_JS)
     if not kinds:
         return t, ["the tier map offers no boundary"], []
-    kind = kinds[-1]
+    if errors := boundary_errors(kinds, t.js(TIER_MAPPED_JS) or []):
+        return t, errors, []
+    kind = kinds[-1]  # with two, the non-default one
     errors = navigate(t, origin + base + pre + PERMALINK_TIERS.format(kind=kind))
     errors += _wait_map(t, "the tier map did not draw from a permalink", lang)
     if errors:
@@ -1414,11 +1434,20 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
     _search_again(devtools, origin, base, theme, width, st, state, label, cities)
 
 
+# the search's "No match" status (M13): its text, role, place and whether it is drawn
+NO_MATCH_JS = """(() => { const p = document.querySelector('.search .search-status');
+  return {status: p ? p.textContent : null, role: p && p.getAttribute('role'),
+          in_list: !!(p && p.closest('[role=listbox]')),
+          shown: !!(p && p.getClientRects().length)}; })()"""
+NO_MATCH_SHOWN = "!!document.querySelector('.search .search-status')?.textContent"
+
+
 def _search_again(
     devtools, origin, base, theme, width, st: Steps, state: str, label: str, cities: list
 ) -> None:
-    """Two fresh loads: the second city + Down + Enter lands on it; "zzz" offers the one
-    "No match" option and axe finds nothing with that list open."""
+    """Two fresh loads: the second city + Down + Enter lands on it; "zzz" says "No match" in
+    the status under the box, outside the listbox, the list closed and empty, axe finds
+    nothing then, and Escape empties the box and the status."""
 
     def to_box(t, errs, what: str) -> bool:
         if not st.check(f"{label}: {what} loads", "; ".join(errs) or None):
@@ -1455,13 +1484,18 @@ def _search_again(
         if not to_box(t, errs, "no-match page"):
             return
         t.call("Input.insertText", text="zzz")
-        t.wait_js(options, 5)
-        s = t.js(state)
-        st.check(f"{label}: zzz offers the No match option",
-                 None if s["n"] == 1 and s["first"] == "No match" and s["expanded"] == "true"
-                 else f"{s}")  # fmt: skip
+        t.wait_js(NO_MATCH_SHOWN, 5)
+        s = t.js(state) | t.js(NO_MATCH_JS)
+        ok = s["n"] == 0 and s["expanded"] == "false" and s["status"] == "No match"
+        ok = ok and s["role"] == "status" and not s["in_list"] and s["shown"]
+        st.check(f"{label}: zzz says No match in the status, outside the closed list",
+                 None if ok else f"{s}")  # fmt: skip
         bad = [v["id"] for v in audit(t)]
-        st.check(f"{label}: axe finds nothing with the list open", ", ".join(bad) or None)
+        st.check(f"{label}: axe finds nothing with No match shown", ", ".join(bad) or None)
+        press(t, "Escape", wait=0.2)
+        s = t.js(NO_MATCH_JS) | {"value": t.js("document.getElementById('site-search').value")}
+        st.check(f"{label}: Escape after No match empties the box and the status",
+                 None if s["value"] == "" and s["status"] == "" else f"{s}")  # fmt: skip
     finally:
         t.close()
 

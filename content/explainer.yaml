@@ -23,13 +23,13 @@ sections:
         painted lanes and cycle streets out [@cc2025-annexes]. QECIO keeps cycle tracks, cycle lanes
         and shared paths as separate classes, each with its own definition [@qecio-methodology].
       - >-
-        Copenhagen shows how far scope alone goes. The city counts 401 km of cykelsti for 2025,
-        kerbed tracks, with painted lanes in a separate row
-        [@copenhagen-mobilitetsredegorelse-2026]; our A+B of 582 km also holds shared paths.
-        Scope can change after publication, too: in July 2025 Clean Cities raised Vienna from
-        384 to 625.1 km once traffic-calmed roads with restricted motor access were counted
-        [@cc2025-cycling-table]. Against that wider scope our A+B is +6.5% from theirs
-        [#recon-vienna-cc-km].
+        Copenhagen shows how far scope alone goes. The city counts 401 km of
+        <i lang="da">cykelsti</i> (kerbed cycle track) for 2025, with <i lang="da">cykelbaner</i>
+        (painted cycle lanes) in a separate row [@copenhagen-mobilitetsredegorelse-2026]; our A+B of
+        582 km also holds shared paths. Scope can change after publication, too: in July 2025 Clean
+        Cities raised Vienna from 384 to 625.1 km once traffic-calmed roads with restricted motor
+        access were counted [@cc2025-cycling-table]. Against that wider scope our A+B is +6.5% from
+        theirs [#recon-vienna-cc-km].
       - >-
         A ratio has a second scope: the road network it divides by. Our headline divides by
         main roads. Clean Cities divides by the entire public road network
@@ -41,12 +41,12 @@ sections:
     paragraphs:
       - >-
         Our km are mapped km: what is in OpenStreetMap at the snapshot date, whenever mappers
-        recorded it. Official series often count another kind of km. Berlin's Senate reports
-        21.2 km of route that projects completed or improved in 2025, from a project database at
-        year end [@berlin-fortschrittsbericht-2025]. Its priority network is a planned network of
-        about 870 km, of which 78.2 km had been implemented by May 2026 [@berlin-drs-19-25987].
-        Vienna's 20.4 km for 2025 counts projects started that year, not finished ones, quoted
-        below [@vienna-radwegeausbau-bilanz-2025].
+        recorded it. Official series often count another kind of km. Berlin's Senate reports 21.2 km
+        of route that projects completed or improved in 2025, from a project database at year end
+        [@berlin-fortschrittsbericht-2025]. Its <i lang="de">Radvorrangnetz</i> (priority network)
+        is a planned network of about 870 km, of which 78.2 km had been implemented by May 2026
+        [@berlin-drs-19-25987]. Vienna's 20.4 km for 2025 counts projects started that year, not
+        finished ones, quoted below [@vienna-radwegeausbau-bilanz-2025].
       - >-
         Mapped change is a different quantity again. From 2023 to October 2026 Berlin's map
         gained 442 km of newly mapped way-sides and redrew 656 km, while A+B rose 35.6 km net
@@ -95,11 +95,11 @@ sections:
         [@qecio-methodology]. BikeNetKit cuts with a city boundary file whose source it does
         not state [@bikenetkit-export-notebook].
       - >-
-        Where the NUTS3 region is the city, the main roads agree closely: 2,153 km in ours
-        against 2,150 km in theirs for Berlin [#recon-berlin], and −0.6% for Warsaw
-        [#recon-warsaw]. Where the region is larger, QECIO's km describe another place:
-        Stockholms län has 4,946 km of main roads against our 667 km for the city
-        [#recon-stockholm-qecio-main].
+        Where the NUTS3 region is the city, the main roads agree closely: 2,153 km in ours against
+        2,150 km in theirs for Berlin [#recon-berlin], and −0.6% for Warsaw [#recon-warsaw]. Where
+        the region is larger, QECIO's km describe another place: <i lang="sv">Stockholms län</i>
+        (Stockholm County) [@lansstyrelsen-stockholm-om-lanet] has 4,946 km of main roads against
+        our 667 km for the city [#recon-stockholm-qecio-main].
   - dimension: method
     heading: Who measured
     paragraphs:

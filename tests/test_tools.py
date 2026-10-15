@@ -1,15 +1,16 @@
 import contextlib
 import hashlib
-import importlib.util
 import io
 import json
 import shutil
 import socket
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
+from tests.helpers import load_script
 from tests.test_app_base import rich  # noqa: F401  (`rich` is a fixture)
 from tests.test_export import _export
 from velometer.app import export
@@ -22,10 +23,7 @@ needs_chrome = pytest.mark.skipif(not HAS_CHROME, reason="needs Chrome")
 
 @pytest.fixture(scope="module")
 def rp():
-    spec = importlib.util.spec_from_file_location("render_pass", ROOT / "tools" / "render_pass.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    return load_script("tools/render_pass.py")
 
 
 def test_axe_is_pinned_and_unchanged():
@@ -398,7 +396,7 @@ def test_interact_opens_audits_and_closes_the_city_panel(rp, rich, tmp_path, mon
             assert r["steps"] and all(x.startswith("ok") for x in r["steps"]), r["steps"]
             continue
         assert r["screenshot"] and Path(r["screenshot"]).is_file(), r["url"]
-        assert isinstance(r["axe"], list)
+        assert r["axe"] == [], (r["url"], r["theme"], r["width"])  # M10-7: no violation at all
 
 
 def test_key_params_send_a_real_key_press(rp):
@@ -516,8 +514,9 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
         "search 1280px: Down moves aria-activedescendant",
         "search 1280px: Enter lands on the first city page",
         "search 1280px: Enter lands on the second city page",
-        "search 320px: zzz offers the No match option",
-        "search 1280px: axe finds nothing with the list open",
+        "search 320px: zzz says No match in the status, outside the closed list",
+        "search 1280px: axe finds nothing with No match shown",
+        "search 320px: Escape after No match empties the box and the status",
     ):
         lines = [x for x in r["steps"] if needle in x]
         assert lines and all(x.startswith("ok") for x in lines), (needle, lines)
@@ -550,3 +549,129 @@ def test_a_page_visit_runs_the_language_checks_and_the_leak_step_on_german_pages
     assert de["errors"] == [f"lang {b}de/cities", f"leak {b}de/cities"]
     en = rp.visit("d", "o", b + "cities", "light", 1280, tmp_path, b)
     assert en["errors"] == [f"lang {b}cities"]  # no leak step on an English page
+
+
+def test_the_permalink_step_needs_every_boundary_the_page_maps(rp):
+    """Where the tier page lists maps for LAU and FUA, the map must offer both, so the step
+    restores the non-default one (M13 M11-10)."""
+    assert rp.boundary_errors(["lau", "fua"], ["lau", "fua"]) == []
+    assert rp.boundary_errors(["lau"], ["lau"]) == []  # one map: one boundary to test
+    (msg,) = rp.boundary_errors(["lau"], ["lau", "fua"])  # a dropped FUA option
+    assert "fua" in msg
+    assert rp.boundary_errors(["lau", "fua"], ["lau"]) != []
+
+
+# --- M10-7: one loader for repository scripts (tests/helpers.py) -----------------------------
+
+
+LOADER = "spec_from_" + "file_location("  # split, so this file does not match itself
+
+
+def test_scripts_load_through_the_one_helper():
+    from tests.helpers import load_script
+
+    tool = load_script("tools/pick_palette.py")
+    assert tool.__name__ == "pick_palette" and tool.__file__ == str(ROOT / "tools/pick_palette.py")
+    with pytest.raises(FileNotFoundError):
+        load_script("tools/no_such_tool.py")
+    copies = [
+        p.name
+        for p in (ROOT / "tests").glob("*.py")
+        if p.name != "helpers.py" and LOADER in p.read_text(encoding="utf-8")
+    ]
+    assert copies == []
+
+
+# --- M13 carry-over: tools/pick_palette.py reproduces the committed palettes by default ----------
+
+
+def _committed_palettes() -> dict[str, list[str]]:
+    from tests.test_a11y import SERIES, _css_tokens, _stylesheet
+    from velometer.report import change, charts
+
+    dark = _css_tokens(_stylesheet(), "dark")
+    return {
+        "series-light": list(charts.SERIES_COLOURS),
+        "series-dark": [dark[x] for x in SERIES],
+        "change-light": list(change.CATEGORY_COLOURS.values()),
+        "change-dark": [dark[f"--change-{k}"] for k in change.CATEGORY_COLOURS],
+    }
+
+
+def test_pick_palette_runs_each_palette_at_its_committed_seed(monkeypatch):
+    """A run without --seed searches each palette at the seed of its committed pick (fast: the
+    search itself is replaced; the reproduction is the slow test below)."""
+    tool = load_script("tools/pick_palette.py")
+    assert set(tool.SEEDS) == set(tool.CURRENT) == set(_committed_palettes())
+    calls = []
+    monkeypatch.setattr(tool, "report", lambda name, seed: calls.append((name, seed)))
+    tool.main([])
+    assert calls == list(tool.SEEDS.items())
+    calls.clear()
+    tool.main(["change-dark", "--seed", "7"])
+    assert calls == [("change-dark", 7)]
+
+
+@pytest.mark.slow  # about 3-5 minutes a palette, 6000 restarts each (task 4 report)
+@pytest.mark.parametrize("name", ["series-light", "series-dark", "change-light", "change-dark"])
+def test_pick_palette_reproduces_the_committed_palette(name):
+    tool = load_script("tools/pick_palette.py")
+    colours, short, *_ = tool.search(name, tries=6000)
+    assert short == 0 and colours == _committed_palettes()[name]
+
+
+# ---------- orca_pass (M13 Task 11) ----------
+
+
+@pytest.fixture(scope="module")
+def op():
+    return load_script("tools/orca_pass.py")
+
+
+def test_the_orca_pass_environment_cannot_reach_the_desktop_or_the_speakers(
+    op, tmp_path, monkeypatch
+):
+    # the pass runs inside dbus-run-session next to a live desktop: nothing of the session's
+    # display, bus, a11y bus or audio may leak into the private one
+    for k, v in {"DISPLAY": ":0", "WAYLAND_DISPLAY": "wayland-0", "XAUTHORITY": "/x",
+                 "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1/bus",
+                 "AT_SPI_BUS_ADDRESS": "unix:path=/a", "PULSE_SERVER": "unix:/p",
+                 "SPEECHD_ADDRESS": "unix_socket:/s", "SSH_AUTH_SOCK": "/run/ssh",
+                 "GPG_AGENT_INFO": "/run/gpg:1:1", "GTK_MODULES": "gail"}.items():  # fmt: skip
+        monkeypatch.setenv(k, v)
+    env = op.isolated_env(tmp_path)
+    for k in ("DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS", "AT_SPI_BUS_ADDRESS",
+              "SPEECHD_ADDRESS", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GTK_MODULES"):  # fmt: skip
+        assert k not in env, k
+    assert not Path(env["WAYLAND_DISPLAY"]).exists()  # a socket name that leads nowhere
+    assert Path(env["WAYLAND_DISPLAY"]).is_relative_to(tmp_path)
+    for k in ("HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR"):
+        assert Path(env[k]).is_relative_to(tmp_path), k
+    assert env["GSETTINGS_BACKEND"] == "memory"  # Orca's settings never reach the user's dconf
+    assert "nonexistent" in env["PULSE_SERVER"] and "nonexistent" in env["PIPEWIRE_REMOTE"]
+    stub = Path(env["ORCA_PASS_STUB"])
+    blocked = subprocess.run(
+        [sys.executable, "-c", "import speechd"],
+        cwd=tmp_path, env={"PYTHONPATH": str(stub)}, capture_output=True, text=True,
+    )  # fmt: skip
+    assert blocked.returncode and "blocked" in blocked.stderr  # no speech-dispatcher, no audio
+
+
+def test_the_orca_pass_reads_what_orca_said_and_in_which_language(op, tmp_path):
+    log = tmp_path / "orca-debug.log"
+    log.write_text(
+        "10:00:00.1 - SPEECH GENERATOR: something else\n"
+        "10:00:00.2 - SPEECH OUTPUT: 'cykelsti' {'established': False, 'family': {'name': '',"
+        " 'gender': None, 'lang': 'da', 'dialect': '', 'variant': None}}\n"
+        "10:00:00.3 - SPEECH OUTPUT: 'link.' {'established': False}\n"
+        "10:00:00.4 - SPEECH OUTPUT: 'Seite' {'family': {'lang': 'de'}} [say all]\n"
+        "10:00:00.5 - FOCUS MANAGER: Locus of focus is [link: 'Story' (0x1)] \n"
+    )
+    orca = op.Orca.__new__(op.Orca)
+    orca.log = log
+    assert orca.said(0) == [
+        {"text": "cykelsti", "lang": "da", "sayall": False},
+        {"text": "link.", "lang": "", "sayall": False},
+        {"text": "Seite", "lang": "de", "sayall": True},
+    ]
+    assert orca.locus(0) == "link: 'Story' (0x1)"

@@ -137,12 +137,9 @@ def test_the_panel_grounds_are_the_known_ones():
 
 def _graphics() -> set[str]:
     # gridlines, dividers and halos are decoration (WCAG 1.4.11 exempts them)
-    # the change colours are exempt in light: they are fixed at their M9 values (decision 3) and
-    # the key swatch beside each carries its text label; in dark they are held to 3:1 by
-    # test_the_dark_change_colours_stand_apart_and_out
     return (
-        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2", *CHANGES}
-        | set(SERIES) | set(TIERS)
+        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2"}
+        | set(SERIES) | set(TIERS) | set(CHANGES)
         | {"--outline", "--focus", "--accent", "--flag", "--mapped", "--completed",
            "--control-border", "--marker-fill"}
     )  # fmt: skip
@@ -213,20 +210,24 @@ def test_the_dark_tier_palette_follows_the_rule():
             assert delta(a, b, vision) >= 25, (a, b, vision)
 
 
-def test_the_dark_series_palette_follows_the_rule():
+@pytest.mark.parametrize("vision", VISIONS)
+def test_the_dark_series_palette_follows_the_rule(vision):
+    # the light rule (tests/test_colour.py) on the dark tokens; 3:1 is the graphics test above
     t = _css_tokens(_stylesheet(), "dark")
     for a, b in itertools.combinations([t[x] for x in SERIES], 2):
-        assert delta(a, b) >= 20, (a, b)
+        assert delta(a, b, vision) >= 20, (a, b, vision)
 
 
-def test_the_dark_change_colours_stand_apart_and_out():
-    # the light change colours are fixed at their M9 values (decision 3); the dark ones are
-    # free, so they follow the series rule: 3:1 on the dark grounds, pairwise >= Delta E 20
+@pytest.mark.parametrize("vision", VISIONS)
+def test_the_dark_change_colours_stand_apart_and_out(vision):
+    # the light rule (tests/test_colour.py) on the dark grounds: 3:1, pairwise >= Delta E 20 and
+    # gained/lost >= 25, in each vision
     t = _css_tokens(_stylesheet(), "dark")
     for c, bg in itertools.product(CHANGES, ("--paper", "--surface")):
         assert contrast(t[c], t[bg]) >= 3.0, (c, bg)
     for a, b in itertools.combinations(CHANGES, 2):
-        assert delta(t[a], t[b]) >= 20, (a, b)
+        assert delta(t[a], t[b], vision) >= 20, (a, b, vision)
+    assert delta(t["--change-gained"], t["--change-lost"], vision) >= 25, vision
 
 
 def test_every_colour_token_has_a_dark_value():
@@ -502,9 +503,49 @@ def test_the_markdown_change_table_stacks_with_labels(subarea_setup):  # noqa: F
 
 
 def _phone_rules():
+    """The rules of the 600 px phone blocks and of the 700 px Figures-table block (anchored on
+    its first selector, so the 700 px compare-filters block is not read)."""
     css = _css_outside_tokens(_stylesheet())
     blocks = re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+    blocks += _figures_blocks(css)
     return [r for b in blocks for r in _css_rules(b)]
+
+
+def _figures_blocks(css: str) -> list[str]:
+    return re.findall(
+        r"@media \(max-width: 700px\) \{(\n  table\.stack\.figures\b.*?)\n\}", css, re.S
+    )
+
+
+def test_the_phone_rules_are_the_stack_blocks_only():
+    # M13 carry-over: the 700 px pattern also read the compare filters' 700 px block
+    sel = {s for ss, _ in _phone_rules() for s in ss}
+    assert ".country-grid" not in sel and ".compare-js .filters-body" not in sel
+    assert "table.stack.figures td" in sel and "table.stack td" in sel
+
+
+def _card_lines(block: str, prefixes: tuple[str, ...]) -> list[str]:
+    """The card declarations of a stack block, the table selector written as one name."""
+    return [
+        re.sub(r"(?:table)?\.stack(?:\.figures)?", "STACK", " ".join(ln.split()))
+        for ln in block.splitlines()
+        if ln.startswith(tuple("  " + p for p in prefixes))
+    ]
+
+
+def test_the_figures_cards_are_the_phone_cards_from_700_px():
+    # M13 carry-over: the 700 px Figures block copies the 600 px card rules, scoped to .figures;
+    # a change to one copy must reach the other
+    css = _css_outside_tokens(_stylesheet())
+    (figures,) = _figures_blocks(css)
+    phone = next(
+        b
+        for b in re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+        if "table.stack td" in b
+    )
+    ours = _card_lines(figures, ("table.stack.figures",))
+    theirs = [ln for ln in _card_lines(phone, ("table.stack", ".stack")) if ln.startswith("STACK")]
+    assert len(ours) > 15 and ours == theirs
 
 
 def test_the_stack_pattern_is_one_phone_rule_set():
@@ -641,6 +682,13 @@ def test_skip_link_is_hidden_until_focused_and_visually_hidden_exists():
     assert any(s == [".visually-hidden"] or ".visually-hidden" in s for s, _ in rules)
 
 
+def test_the_two_hiding_classes_are_one_rule():
+    # M10-9: `.sr-only` and `.visually-hidden` hide the same way, from one rule with both
+    hiding = [(s, d) for s, d in _rules() if {".sr-only", ".visually-hidden"} & set(s)]
+    assert [sorted(s) for s, _ in hiding] == [[".sr-only", ".visually-hidden"]]
+    assert hiding[0][1]["clip"] == "rect(0 0 0 0)" and hiding[0][1]["position"] == "absolute"
+
+
 class _Scrolls(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -727,6 +775,32 @@ def test_a_table_inside_a_wrapper_gets_no_tab_stop_of_its_own():
     assert inside.count('tabindex="0"') == 1
     nested = name_scroll_regions('<div class="scroll"><div>x</div><table></table></div>')
     assert nested.count('tabindex="0"') == 1  # a nested div does not end the wrapper early
+
+
+def test_a_single_quoted_wrapper_is_a_wrapper_and_a_nested_one_is_no_stop():
+    # M10-7: the class may be single-quoted; a scroller inside a scroller is one tab stop
+    out = name_scroll_regions("<h2>H</h2><div class='wide scroll'><table></table></div>")
+    assert out.count('tabindex="0"') == 1 and 'role="region"' in out.split("<table")[0]
+    nested = name_scroll_regions(
+        '<h2>H</h2><div class="scroll"><section class="scroll"><p>x</p></section></div>'
+        '<div class="scroll"><p>y</p></div>'
+    )
+    assert nested.count('tabindex="0"') == 2  # the outer one and the later sibling
+    assert '<section class="scroll">' in nested
+
+
+def test_tags_inside_scripts_and_comments_are_not_counted():
+    # M10-9: a tag in a script string or a comment neither opens nor closes a wrapper
+    page = (
+        '<h2>H</h2><div class="scroll"><script>const s = "</div><table>";</script>'
+        "<!-- <div> --><p>x</p></div><table><caption>Out</caption></table>"
+        '<!-- <div class="scroll"></div> --><script>x = \'<div class="scroll">\';</script>'
+    )
+    out = name_scroll_regions(page)
+    assert out.count('tabindex="0"') == 2  # the wrapper and the table after it
+    assert '<!-- <div class="scroll"></div> -->' in out
+    assert "x = '<div class=\"scroll\">';" in out and '"</div><table>"' in out
+    assert re.search(r'<table tabindex="0" aria-label="Out">', out)
 
 
 class _Groups(HTMLParser):
@@ -858,14 +932,61 @@ def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, pag
     assert rows  # the fixtures have flagged rows
 
 
+_UP_DOWN = re.compile(r'class="[^"]*\b(up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<')
+_ZERO_CELL = re.compile(r'<td class="([^"]*)" data-label="[^"]*">(0[.,]0)<')
+
+
+def _up_down_and_zeros(url: str, html: str) -> tuple[list[str], int]:
+    """The up/down classes of `html` (each value asserted signed) and the count of its change
+    cells that print as zero (each asserted to be neither up nor down, M12-3)."""
+    kinds = []
+    for m in _UP_DOWN.finditer(html):
+        kinds.append(m.group(1))
+        value = m.group(2).strip()
+        assert value[0] in "+−-" or value == "n/a", (url, m[0])
+        assert value[0] == ("+" if m.group(1) == "up" else "−") or value == "n/a", (url, m[0])
+    zeros = 0
+    for m in _ZERO_CELL.finditer(html):
+        zeros += 1
+        assert not {"up", "down"} & set(m.group(1).split()), (url, m[0])
+    return kinds, zeros
+
+
 def test_every_up_and_down_value_carries_a_sign(all_page_urls, page_site):  # noqa: F811
-    seen = 0
+    # and a change that prints as zero (M12-3: no sign) is neither up nor down; the fixture's
+    # changes all print as zero, so this is the zero side (the nonzero side: the test below)
+    zeros = 0
     for url in all_page_urls:
-        html = page_site.html[url]
-        for m in re.finditer(r'class="[^"]*\b(?:up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<', html):
-            seen += 1
-            assert m.group(1).strip()[0] in "+−-" or m.group(1).strip() == "n/a", (url, m[0])
-    assert seen
+        kinds, n = _up_down_and_zeros(url, page_site.html[url])
+        zeros += n
+    assert zeros
+
+
+def test_a_nonzero_change_is_up_or_down_and_signed(client, monkeypatch):  # noqa: F811
+    # review 10, M1: the overview with the first-year headlines moved, so its changes print as
+    # nonzero: up on the English page, down on the German one (the fixture alone has only zeros)
+    import dataclasses
+
+    from velometer.report import data as report_data
+
+    real = report_data.ts.build_city
+    shift = {"by": 0.0}
+
+    def build_city(conn, city_id, kind, *a, **kw):
+        cs = real(conn, city_id, kind, *a, **kw)
+        if cs is None or kind != "lau":
+            return cs
+        i = next(i for i, p in enumerate(cs.points) if p.headline is not None)
+        points = list(cs.points)
+        points[i] = dataclasses.replace(points[i], headline=points[i].headline + shift["by"])
+        return dataclasses.replace(cs, points=points)
+
+    monkeypatch.setattr(report_data.ts, "build_city", build_city)
+    for url, by, want in (("/", -5.0, "up"), ("/de/", 5.0, "down")):
+        shift["by"] = by  # the first year lower: the change is up; higher: down
+        kinds, zeros = _up_down_and_zeros(url, client.get(url).text)
+        assert kinds and set(kinds) == {want}, (url, kinds)
+        assert zeros == 0, url
 
 
 def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noqa: F811
@@ -875,20 +996,9 @@ def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noq
     assert "⚑" in table and "stack" in table and 'data-label="' in table
 
 
-def test_the_tier_chart_names_every_tier_in_a_visible_key():
-    # chart.js renderTiers draws a legend chip per tier layer; the node test proves it renders
-    src = (STATIC / "js" / "chart.js").read_text()
-    assert 'legend.className = "legend"' in src and "layer.name" in src
-
-
-def test_the_tier_map_popup_names_the_tier_of_the_side():
-    # the side's tier opens the popup, by its full name ("A separated track"), not a colour
-    src = (STATIC / "map.js").read_text()
-    popup = src[src.index("function popup(p)") : src.index("function checked")]
-    head = "\n".join(
-        ln for ln in popup[: popup.index("var dl")].splitlines() if not ln.strip().startswith("//")
-    )
-    assert "cfg.labels[p.tier]" in head and "tiermap-popup-tier" in head
+# the tier chart's key (a legend chip per tier, beside its colour) and the tier map popup (it
+# opens with the tier's full name) are asserted on the rendered DOM in node: chart.test.mjs
+# "renderTiers keys every tier by name …" and tier-popup.test.mjs (M10-7)
 
 
 def test_the_tier_names_are_the_popup_labels(client):  # noqa: F811
@@ -1002,3 +1112,32 @@ def test_an_empty_card_cell_keeps_its_label_and_says_there_is_no_value():
     marked = {k: v for s, d in rules if any("td:empty" in x and "::after" in x for x in s)
               for k, v in d.items()}  # fmt: skip
     assert "no value" in marked.get("content", "")  # a visible dash with a spoken alternative
+
+
+# ---------- M13 screen-reader pass (Orca, docs/review/m13-screen-reader.md) ----------
+
+# a raw id as a reader never sees it written: lower-case words joined by underscores
+RAW_ID = re.compile(r"[a-z0-9]+(?:_[a-z0-9]+)+")
+
+
+def test_every_page_is_one_banner_and_a_panel_adds_none(all_page_urls, page_site):  # noqa: F811
+    # Orca said "banner" when Tab entered the open city panel: compare puts the fragment in a
+    # role=dialog, where a <header> is not scoped by sectioning content and maps to a second
+    # banner landmark
+    pages, panels = _split_fragments(all_page_urls)
+    assert pages and panels
+    for url in pages:
+        assert len(re.findall(r"<header\b", page_site.html[url])) == 1, url
+    for url in panels:
+        assert not re.search(r"<header\b", page_site.html[url]), url
+        # the fix dropped the panel's <header>, not its heading: panel.js announces the <h2>
+        assert re.search(r"<h2\b", page_site.html[url]), url
+
+
+def test_no_title_attribute_carries_a_raw_id(all_page_urls, page_site):  # noqa: F811
+    # a title is the element's accessible description: Orca read the Figures metric cells as
+    # "... road network. protected_share_pct", an internal id a sighted reader never sees
+    assert all_page_urls
+    for url in all_page_urls:
+        for title in re.findall(r'\btitle="([^"]*)"', page_site.html[url]):
+            assert not RAW_ID.fullmatch(title.strip()), (url, title)

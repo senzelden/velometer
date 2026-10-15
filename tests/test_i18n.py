@@ -109,6 +109,16 @@ def test_methodology_formatters_delegate_and_keep_their_output(lang):
         assert methodology._number(v, lang) == i18n.number_trimmed(v, lang)
 
 
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_key_defined_twice_is_a_problem_naming_it(tmp_path, lang):
+    """YAML keeps the last of two equal keys in silence, so an edit to the first copy would be
+    lost (M13 review): the catalogue refuses a duplicate key, in either language."""
+    once, twice = "a.b: x\nc.d: y\n", "a.b: x\nc.d: y\na.b: x\n"
+    _write(tmp_path, twice if lang == "en" else once, twice if lang == "de" else once)
+    problems = i18n.check_catalogues(tmp_path)
+    assert any(f"catalogue {lang}" in p and "a.b" in p and "twice" in p for p in problems), problems
+
+
 def test_german_required_only_for_the_shipped_tree(monkeypatch, tmp_path):
     monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", True)
     assert i18n.german_required(i18n.SHIPPED_CONTENT_DIR)
@@ -152,3 +162,21 @@ def test_rounded_negative_zero_has_no_sign():
         assert i18n.signed(-0.04, lang) == zero
         assert i18n.percent(-0.04, lang, signed=True).startswith(zero)
     assert i18n.fmt(-0.06, ",.1f", "de") == "−0,1"
+
+
+def test_a_signed_value_that_rounds_to_zero_has_no_sign():
+    # M12-3: "+0.0" claimed a rise; zero is neither up nor down, from either side
+    for lang, zero in (("en", "0.0"), ("de", "0,0")):
+        for v in (0, 0.0, -0.0, 0.04, -0.04, 1e-9, -1e-9):
+            assert i18n.signed(v, lang) == zero, (v, lang)
+            assert i18n.percent(v, lang, signed=True).startswith(zero), (v, lang)
+        assert i18n.signed(0.004, lang, 2) == zero + "0"
+    assert i18n.signed(0.05, "en") == "+0.1" and i18n.signed(-0.05, "de") == "−0,1"
+    assert i18n.signed(0.006, "de", 2) == "+0,01"
+
+
+def test_a_change_that_prints_as_zero_is_neither_up_nor_down():
+    # the up/down classes follow the printed sign (test_a11y: every up/down value has a sign)
+    assert [i18n.tone(v) for v in (None, 0, 0.04, -0.04, 0.05, -0.05, 3)] == [
+        None, None, None, None, "up", "down", "up",
+    ]  # fmt: skip

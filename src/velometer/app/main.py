@@ -45,9 +45,11 @@ from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import (
     Fallback,
+    bracketed,
     data_ref_label,
     fb,
     fb_text,
+    lang_attr,
     render_explainer,
     render_narrative,
     safe_url,
@@ -246,8 +248,59 @@ class _EscapeHtml(markdown.Extension):
         md.preprocessors.register(_DropComments(md), "drop_comments", 30)
 
 
-def _md(text: str) -> Markup:
-    html = markdown.markdown(text, extensions=["tables", "fenced_code", _EscapeHtml()])
+MD_HEADING = re.compile(r"^(#{2,3}) +(.+?) *#*$", re.M)  # the h2/h3 lines of a markdown file
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "section"
+
+
+def heading_ids(text: str) -> list[tuple[str, str]]:
+    """(level, id) of each h2/h3 heading of markdown `text`, in order: the heading's slug, made
+    unique with `-2`, `-3`, …. Code blocks are skipped (a `## ` line in a fence is no heading)."""
+    seen: dict[str, int] = {}
+    out = []
+    for m in MD_HEADING.finditer(re.sub(r"^```.*?^```", "", text, flags=re.M | re.S)):
+        slug = _slug(m.group(2))
+        seen[slug] = seen.get(slug, 0) + 1
+        out.append((m.group(1), slug if seen[slug] == 1 else f"{slug}-{seen[slug]}"))
+    return out
+
+
+class _HeadingIds(markdown.treeprocessors.Treeprocessor):
+    def __init__(self, md, ids: list[str]):
+        super().__init__(md)
+        self.ids = ids
+
+    def run(self, root):
+        for el, slug in zip(
+            (e for e in root.iter() if e.tag in ("h2", "h3")), self.ids, strict=False
+        ):
+            el.set("id", slug)
+
+
+class _Ids(markdown.Extension):
+    def __init__(self, ids: list[str]):
+        super().__init__()
+        self.ids = ids
+
+    def extendMarkdown(self, md):
+        md.treeprocessors.register(_HeadingIds(md, self.ids), "heading_ids", 5)
+
+
+def methodology_html(text: str, english: str) -> Markup:
+    """The methodology page body of `text`, its h2/h3 headings carrying the ids of the English
+    file `english`'s headings at the same position, so a link `/methodology#id` lands on the
+    same section in both editions (M13 Task 13b). Ids are set only when both files have the same
+    heading outline (a test holds the shipped files to it)."""
+    own, en = heading_ids(text), heading_ids(english)
+    same = [lvl for lvl, _ in own] == [lvl for lvl, _ in en]
+    return _md(text, ids=[slug for _, slug in en] if same else [])
+
+
+def _md(text: str, ids: list[str] | None = None) -> Markup:
+    extensions = ["tables", "fenced_code", _EscapeHtml()] + ([_Ids(ids)] if ids else [])
+    html = markdown.markdown(text, extensions=extensions)
     return Markup(
         ALIGN_STYLE.sub(
             lambda m: ' class="num"' if m.group(1) == "right" else f' class="align-{m.group(1)}"',
@@ -422,6 +475,10 @@ def create_app(
         # wraps x where it sits inside other text
         env.globals["fb"] = fb
         env.globals["fb_text"] = fb_text
+        # a name in its own language (an organisation, a counter publisher, a plan title)
+        env.globals["lang_attr"] = lang_attr
+        # its bracketed form in another language, in its own `lang` (review 10, I1)
+        env.globals["bracketed"] = bracketed
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
         # a source's publisher or title: on a German page its German sibling, original in `lang`
@@ -433,6 +490,7 @@ def create_app(
         env.filters["cite_json"] = cite_model.json_fields
         env.filters["num"] = lambda v, spec=",.1f": _num(v, spec, lang)
         env.filters["signed"] = lambda v, decimals=1: i18n.signed(v, lang, decimals)
+        env.filters["tone"] = i18n.tone
         env.filters["pct"] = lambda v, decimals=1, signed=False: i18n.percent(
             v, lang, decimals, signed
         )
@@ -446,7 +504,7 @@ def create_app(
         env.filters["host"] = _host
         # an English fallback note (German page) is cut in English: `note | clause('en')`
         env.filters["clause"] = lambda note, in_lang=None: _note_clause(note, in_lang or lang)
-        env.filters["unit"] = lambda u: UNITS.get(u, u)
+        env.filters["unit"] = lambda unit: UNITS.get(unit, unit)
         # a preset label says ", our OSM data" (a gap row's basis may follow it); a Figures row's
         # "Ours" column says it already
         env.filters["strip_ours"] = lambda v: OURS_MARK.sub("", v or "")
@@ -527,10 +585,19 @@ def create_app(
 
         shared: dict = {}  # a page's figures share one run: built once, the title varies
 
-        def make(title, city=None, cities=None, kind="lau", path=None):
+        def make(title, city=None, cities=None, kind="lau", path=None, both=None):
+            """`both`: the title of a city figure drawn from its LAU and FUA runs; with both
+            runs present it cites both under that title, else the `kind` run under `title`."""
             if rows is None:
                 return None
             key = (city, kind, None if cities is None else tuple(cities))
+            if both is not None and city is not None:
+                if ("both", city) not in shared:
+                    shared[("both", city)] = cite_model.fields_for_city_runs(
+                        rows, city, "", where, lang=lang
+                    )
+                if shared[("both", city)] is not None:
+                    key, title = ("both", city), both
             if key not in shared:
                 if city is not None:
                     shared[key] = cite_model.fields_for_city(rows, city, "", where, kind, lang)
@@ -1275,6 +1342,7 @@ def create_app(
                 "text_error": text_error,
                 "measures": measures,
                 "network_licence": plans_pages.network_licence(measures),
+                "measures_licence": plans_pages.layer_licence(measures, plans_pages.MEASURES_LAYER),
                 "record_error": record_error,
             }
 
@@ -1304,7 +1372,7 @@ def create_app(
             {"label": i18n.t(lang, "city.keynum.since",
                              when=summary["first_label"] or i18n.t(lang, "city.keynum.first_year")),
              "value": na if change is None else i18n.signed(change, lang).replace("-", i18n.MINUS),
-             "tone": None if change is None else ("up" if change >= 0 else "down"),
+             "tone": i18n.tone(change),
              "sub": na if summary["first"] is None
              else i18n.t(lang, "city.keynum.from", value=_num(summary["first"], lang=lang))},
             {"label": i18n.t(lang, "city.keynum.ab_km"),
@@ -1518,7 +1586,9 @@ def create_app(
     def methodology_page(request: Request, data: ReportData, **ctx) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[request.state.lang]
         try:
-            body = _md(GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")))
+            text = GENERATED_NOTE.sub("", path.read_text(encoding="utf-8"))
+            english = docs_dir / METHODOLOGY["en"]
+            body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:
             body = None
         return page(

@@ -857,6 +857,11 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
         for n in counters.none
         if n.note is not None
     ]
+    out += [
+        (f"counters.yaml cities.{c.city}.note", c.note, c.note_de or "")
+        for c in counters.cities
+        if c.note is not None
+    ]
     path = config_dir / "external" / "figures.csv"
     with path.open(newline="", encoding="utf-8") as f:
         for line, row in enumerate(csv.DictReader(f), start=2):

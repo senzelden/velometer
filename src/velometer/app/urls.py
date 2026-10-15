@@ -24,6 +24,8 @@ PER_LANGUAGE_DATA = frozenset({"/data/search.json"})
 DATA_ROOTS = ("/data/", "/maps/", "/static/")
 _DATA_PATH = re.compile(r"^/(data|maps|static)(?=[/?#]|$)")
 _QUERY_OR_HASH = re.compile(r"[?#]")
+# an RFC 3986 scheme: a letter, then letters, digits, `+`, `.` or `-`, then `:`
+_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 def normalise_base(base: str) -> str:
@@ -33,11 +35,9 @@ def normalise_base(base: str) -> str:
 
 
 def _is_external(url: str) -> bool:
-    """A scheme (`https:`, `mailto:`) or a protocol-relative `//host`: not ours to prefix."""
-    if url.startswith("//"):
-        return True
-    scheme, colon, _ = url.partition(":")
-    return bool(colon) and scheme.isalpha() and "/" not in scheme
+    """A scheme (`https:`, `mailto:`, `web+foo:`; RFC 3986) or a protocol-relative `//host`:
+    not ours to prefix."""
+    return url.startswith("//") or _SCHEME.match(url) is not None
 
 
 def _split(path: str) -> tuple[str, str]:

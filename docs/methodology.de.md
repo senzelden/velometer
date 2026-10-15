@@ -18,7 +18,7 @@ Jede Seite erhält eine Stufe oder wird ausgeschlossen:
 | B | Geh- und Radweg (gemeinsam oder getrennt) |
 | C | Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr |
 | D | markierter Radfahrstreifen, einschließlich Schutzstreifen |
-| E | Fahrradstraße sowie für den Radverkehr freigegebene Busspuren |
+| E | Fahrradstraßen und vergleichbare Straßen sowie für den Radverkehr freigegebene Busspuren |
 | `excluded` (ausgeschlossen) | für die Diagnose erfasst, in keiner Kennzahlvariante gezählt |
 
 Die Stufen leiten sich aus der Tag-Logik der ECF-Methode QECIO ab, mit dokumentierten Abweichungen. So gilt ein Geh- und Radweg mit `segregated=yes` (getrennter Geh- und Radweg) hier als Stufe B, während QECIO ihn als Radweg zählt [ADR 0002].
@@ -291,16 +291,31 @@ Zählstellendaten sind Kontext, kein Ergebnis. Sie erfassen die Fahrräder, die 
 
 Für die übrigen 14 Städte wurden keine offenen Zählstellendaten gefunden; ihr Reiter „Zahlen“ nennt die geprüften Portale.
 
-Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % gültige Tage haben. Das Kettenglied ist das Verhältnis der summierten Zählwerte dieser Zählstellen, und die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
+Indexregel: Eine Zählstelle geht in die Verkettung zweier Jahre ein, wenn beide Jahre mindestens 90 % vollständige Tage haben. Das Kettenglied ist das Verhältnis des mittleren Zählwerts je vollständigem Tag, gepoolt über die Zählstellen, die in beiden Jahren eingehen: ihre Zählwerte, über ihre vollständigen Tage summiert und durch die Zahl dieser Tage geteilt, im späteren Jahr gegenüber dem früheren. Die Glieder werden vom Basisjahr aus verkettet. Ein Glied mit weniger als 3 solchen Zählstellen hat keinen Wert, und kein späteres Jahr der Kette hat dann einen.
+
+Methodenwechsel (M13): Bis M12 war das Kettenglied das Verhältnis der über ihre vollständigen Tage summierten Zählwerte dieser Zählstellen (v1). Eine Zählstelle mit weniger vollständigen Tagen in einem Jahr eines Kettenglieds als im anderen verschob das Verhältnis daher um diesen Unterschied der Abdeckung, und ein Schaltjahr fügte einen Tag hinzu. Die obige Regel (v2) teilt durch die vollständigen Tage, sodass ein fehlender Tag nicht mehr als fehlender Verkehr zählt; ein Unterschied der Abdeckung verschiebt das Verhältnis nur noch über das Gewicht, das die Tage einer Zählstelle im gepoolten Mittelwert haben. Der Index folgt ab M13 der Regel v2 [M13-Spezifikation §4.2]. Die Tabelle nennt jedes Kettenglied, dessen Verhältnis sich von v1 zu v2 um mindestens 0,5 % verschoben hat; v1 und v2 geben das Glied als Veränderung gegenüber dem Vorjahr an, die letzte Spalte die Veränderung des Verhältnisses selbst. Barcelonas Monatsreihe ist unter beiden Regeln gleich, da eine Zählstelle in beiden Jahren alle zwölf Monate braucht.
+
+| Stadt | Kettenglied | v1 | v2 | Veränderung |
+|---|---|---|---|---|
+| Berlin | 2016–2017 | −4,5 % | −4,0 % | +0,5 % |
+| Berlin | 2024–2025 | −1,3 % | −0,6 % | +0,7 % |
+| Paris | 2018–2019 | +49,4 % | +48,6 % | −0,5 % |
+| Paris | 2019–2020 | +30,2 % | +27,5 % | −2,1 % |
+| Paris | 2020–2021 | +8,5 % | +9,5 % | +0,8 % |
+| Paris | 2023–2024 | +2,7 % | +1,0 % | −1,6 % |
+| Helsinki | 2022–2023 | +8,5 % | +10,5 % | +1,9 % |
+| Helsinki | 2023–2024 | +0,3 % | −0,6 % | −1,0 % |
+| Helsinki | 2024–2025 | −2,1 % | −0,1 % | +2,1 % |
+| Oslo | 2017–2018 | +17,5 % | +16,7 % | −0,7 % |
+| Oslo | 2018–2019 | −8,0 % | −6,8 % | +1,3 % |
+| Oslo | 2019–2020 | +28,3 % | +27,4 % | −0,7 % |
 <!-- /generated:counters -->
 
-Eine bekannte Eigenschaft dieser Regel: Die Zählwerte einer Zählstelle werden nur über ihre gültigen Tage summiert, sodass eine Zählstelle mit weniger gültigen Tagen in einem Jahr eines Kettenglieds als im anderen das Verhältnis um diesen Unterschied der Abdeckung verschiebt. Die 90-%-Regel begrenzt den Effekt. Gemessen an den gespeicherten Tageswerten gegen einen Mittelwert je gültigem Tag derselben Zählstellen verschieben sich die meisten Glieder um weniger als 0,5 %; die größten Abweichungen sind +2,1 % (Paris, 2019 auf 2020) und −2,0 % (Helsinki, 2024 auf 2025) [M8-Abschlussprüfung, `docs/superpowers/rulings-m8.md`]. Barcelonas Monatsreihe ist nicht betroffen, da eine Zählstelle alle zwölf Monate braucht.
-
-Stundenwerte werden zu Tagen summiert. Ein Tag ist gültig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Zählstellen“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
+Stundenwerte werden zu Tagen summiert. Ein Tag ist vollständig, wenn er jede Ortsstunde seines Datums enthält (23, 24 oder 25), und ein Zählstellentag mit der Summe 0 ist ein Ausfall, kein Zählwert. Zählstellen, die ein Portal unter zwei Kennungen führt, etwa eine umnummerierte Zählstelle oder die beiden Seiten einer Brücke, werden als eine Zählstelle summiert. Das Basisjahr ist 2019 oder, wenn die Daten einer Stadt später beginnen, das erste volle Jahr; die Tabelle nennt es je Stadt [M8-Spezifikation, Entscheidung 13]. Jedes Zählstellendiagramm markiert 2020 als Corona-Jahr. Der Reiter „Zählstellen“ stellt den Index neben den Index der kartierten A+B-Kilometer im Stadtgebiet (Stände zum 1. Januar, gleiches Basisjahr).
 
 Je Stadt:
 
-- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der an diesem Tag in Betrieb ist, sie meldet; ein Zähler ist von seinem ersten bis zu seinem letzten gemeldeten Tag einer Datei in Betrieb.
+- Paris: Eine Stunde einer Zählstelle liegt nur vor, wenn jeder Zähler der Zählstelle, der in dieser Stunde in Betrieb ist, sie meldet; ein Zähler ist von seiner ersten bis zu seiner letzten gemeldeten Stunde einer Datei in Betrieb.
 - Oslo: Die Zählstellen sind staatliche Zählstellen von Statens vegvesen, beschränkt auf Standorte innerhalb der LAU-Grenze der Stadt [M8-Spezifikation, Entscheidung 15]. Ein Tag ist vollständig, wenn die Stundenwerte jeder Ortsstunde ein Verkehrsaufkommen zuweisen; der tägliche Abdeckungsanteil der API wird nicht verwendet, da in einer Stichprobe kein Schwellenwert darauf dieser Regel entsprach.
 - Madrid: Die Daten beginnen im September 2019, das Basisjahr ist daher 2020. Die Dateien enthalten von Juli 2021 bis August 2022, während die Detektoren getauscht wurden, keine Zählwerte. Nur 2020 hat einen Indexwert, daher wird keine Indexlinie gezeichnet.
 - Barcelona veröffentlicht die monatliche durchschnittliche tägliche Verkehrsstärke je Zählstelle und Tagestyp, keine Zählwerte. Sein Index verwendet den Mittelwert einer Zählstelle über die zwölf Werktagsmonate, wobei eine Zählstelle in einem Jahr nur mit allen zwölf gültig ist, und heißt durchschnittliche tägliche Verkehrsstärke [M8-Spezifikation, Entscheidung 14].

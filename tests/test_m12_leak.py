@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import pytest
+from markupsafe import escape
 
 from tests.test_a11y import all_page_urls  # noqa: F401
 from tests.test_app import CONTENT, _client, client, setup  # noqa: F401
@@ -13,6 +14,7 @@ from velometer import i18n
 from velometer import timeseries as ts
 from velometer.app import urls
 from velometer.app.main import create_app
+from velometer.app.narrative import bracketed
 from velometer.app.series import german_explanations
 from velometer.config import reader_prose
 from velometer.content.check import DE, check_content_all
@@ -255,3 +257,172 @@ def test_tab_names_in_the_german_methodology_are_the_german_tab_labels():
     assert quoted  # the page names tabs, so the rule has something to read
     labels = {v for k, v in i18n.catalogue("de").items() if k.startswith("city.tab.")}
     assert [q for q in quoted if q not in labels] == []
+
+
+def test_content_phrases_split_at_an_original_term_as_at_a_quotation():
+    # M13: an original term (`<i lang="da">…</i>`, Task 7) is no English, and its markup is not
+    # on the page: a phrase holding it could never be found, so it never caught a leak
+    text = (
+        'Our Copenhagen figure, 401 km of <i lang="da">cykelsti</i> in 2025, comes from the '
+        'city\'s own mobility report of the year, as we read it. Then <i\n lang="nb">'
+        "kommunale veger</i> follow."
+    )
+    parts = i18n._sentences(text, 3)
+    assert parts == [
+        "Our Copenhagen figure, 401 km of",
+        "in 2025, comes from the city's own mobility report of the year, as we read it.",
+    ]
+    assert not [p for p in i18n.content_phrases(CONTENT) if "<" in p]
+
+
+# --- M12-1: names in their own language carry it, so the sniff needs no list for them ---
+
+
+def test_names_with_a_language_are_written_in_it_on_german_pages(client):  # noqa: F811
+    from velometer.content.loader import load_organisations
+    from velometer.plans.models import load_plans
+
+    orgs = load_organisations(CONTENT / "organisations", errors={})
+    assert orgs and all(o.lang for o in orgs.values())  # every shipped profile names its language
+    html = client.get("/de/organisations").text
+    for o in orgs.values():
+        name = bracketed(o.name, o.bracket_lang)  # a bracket in another language: its own span
+        assert f'<h2 lang="{o.lang}">{name}</h2>' in html, o.id
+    plans, _rows = load_plans(CONFIG / "plans")
+    oslo = next(p for p in plans if p.id == "oslo_sykkelveinettet_2018")
+    assert oslo.title_lang == "nb" and oslo.localised("de").title_lang == "nb"
+    vienna = next(p for p in plans if p.title_de)  # our German title is not the document's
+    assert vienna.localised("de").title_lang is None
+    plans_html = client.get("/de/plans").text
+    shown = [p.localised("de") for p in plans if str(escape(p.localised("de").title)) in plans_html]
+    assert any(p.title_lang for p in shown)
+    for p in shown:
+        title = re.escape(str(escape(p.title)))
+        assert re.search(rf'(?:lang="{p.title_lang}")?>{title}<', plans_html), p.id
+        if p.title_lang:
+            assert re.search(rf'lang="{p.title_lang}">{title}<', plans_html), p.id
+    name = "Plan for sykkelveinettet i Oslo"
+    assert name not in i18n.PROPER_NAMES
+    assert english_words(f"<p>{name}</p>")  # untagged, the sniff would see its English
+    assert english_words(f'<p lang="nb">{name}</p>') == []
+    # Copenhagen's English bracket: test_copenhagens_english_bracket_is_english_on_every_page
+
+
+def test_a_counter_publisher_is_written_in_its_language_unless_ours_is_shown():
+    from velometer.app.counts import counters_config
+
+    cfg, error = counters_config(CONFIG)
+    assert error is None
+    by_city = {e.city: e for e in cfg.cities}
+    assert by_city["berlin"].source_lang_in("de") == "de"
+    assert by_city["helsinki"].source_lang_in("en") == "en"
+    oslo = by_city["oslo"]  # "Statens vegvesen (state counters)": our words beside the name
+    assert oslo.source_lang is None and oslo.source_lang_in("de") is None
+
+
+@pytest.mark.parametrize("bad", ["d a", "DE", "deutsch-", ""])
+def test_a_name_language_must_be_a_language_tag(bad):
+    from velometer.content.models import name_lang
+
+    with pytest.raises(ValueError, match="BCP 47"):
+        name_lang(bad, "lang")
+    assert name_lang(None, "lang") is None and name_lang("pt-BR", "lang") == "pt-BR"
+
+
+# --- M13 fix round (review 10, I1): a bracket in another language than the name's lead ---
+
+COPENHAGEN_DE = 'Københavns Kommune (<span lang="en">City of Copenhagen</span>)'
+
+
+def test_a_bracket_in_another_language_than_the_lead_is_marked_in_it():
+    assert bracketed("Københavns Kommune (City of Copenhagen)", "en") == COPENHAGEN_DE
+    assert bracketed("A & B (C)", None) == "A &amp; B (C)"  # no bracket language: the name
+    assert bracketed("A (B) & C", "en") == "A (B) &amp; C"  # no closing bracket: the name
+    assert bracketed("<x> (<y>)", "en") == '&lt;x&gt; (<span lang="en">&lt;y&gt;</span>)'
+
+
+def test_a_bracket_language_needs_a_bracket():
+    from velometer.content.models import Organisation
+
+    base = {"id": "x", "name": "Plain Name", "lang": "da", "kind": "official",
+            "url": "https://example.org/", "sections": []}  # fmt: skip
+    with pytest.raises(ValueError, match="no bracketed form"):
+        Organisation(**base, bracket_lang="en")
+    with pytest.raises(ValueError, match="BCP 47"):
+        Organisation(**{**base, "name": "A (B)"}, bracket_lang="E N")
+    assert Organisation(**{**base, "name": "A (B)"}, bracket_lang="en").bracket_lang == "en"
+
+
+def test_copenhagens_english_bracket_is_english_on_every_page_that_names_it(client):  # noqa: F811
+    from velometer.content.loader import load_organisations
+
+    kk = load_organisations(CONTENT / "organisations", errors={})["copenhagen_kommune"]
+    assert (kk.lang, kk.bracket_lang) == ("da", "en")
+    for path in ("/de/organisations", "/organisations"):
+        html = client.get(path).text
+        assert f'<h2 lang="da">{COPENHAGEN_DE}</h2>' in html, path
+        assert '<h2 lang="da">Københavns Kommune (City of Copenhagen)' not in html, path
+    # the sniff: tagged this way the English words are no leak, so no PROPER_NAMES entry
+    assert english_words(f'<p lang="da">{COPENHAGEN_DE}</p>') == []
+    assert "City of Copenhagen" not in " ".join(i18n.PROPER_NAMES)
+
+
+def test_helsinkis_finnish_bracket_is_finnish_in_the_counts_attribution(setup):  # noqa: F811
+    import yaml
+
+    from tests.test_app_m8_counts import _seed
+    from velometer.app.counts import counters_config
+
+    cfg_all, _ = counters_config(CONFIG)
+    hel = next(e for e in cfg_all.cities if e.city == "helsinki")
+    assert (hel.source_lang, hel.source_bracket_lang) == ("en", "fi")
+    assert hel.source_bracket_lang_in("de") == "fi"
+    # Berlin's fixture attribution, given Helsinki's form (the fixture has no Helsinki)
+    db_path, cfg = setup[0], setup[1]
+    assert cfg.resolve() != CONFIG.resolve(), "never edit the real config"
+    doc = yaml.safe_load((cfg / "counters.yaml").read_text(encoding="utf-8"))
+    berlin = next(e for e in doc["cities"] if e["city"] == "berlin")
+    berlin.pop("source_de", None)
+    berlin.update(source=hel.source, source_lang="en", source_bracket_lang="fi")
+    (cfg / "counters.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+    _seed(db_path)
+    with _client(create_app(*setup, content_dir=CONTENT)) as c:
+        html = c.get("/de/city/berlin/counts").text
+    want = ('lang="en">City of Helsinki, Urban Environment Division '
+            '(<span lang="fi">Helsingin kaupunkiympäristön toimiala</span>)</a>')  # fmt: skip
+    assert want in html
+
+
+def test_search_names_an_organisations_language_and_its_brackets(client):  # noqa: F811
+    from velometer.content.loader import load_organisations
+
+    orgs = load_organisations(CONTENT / "organisations", errors={})
+    for path in ("/data/search.json", "/de/data/search.json"):
+        entries = {e["url"]: e for e in client.get(path).json() if e["kind"] == "organisation"}
+        assert entries
+        for o in orgs.values():
+            e = entries[f"/organisations#{o.id}"]
+            assert e["lang"] == o.lang, (path, o.id)
+            assert e.get("bracket_lang") == o.bracket_lang, (path, o.id)
+    city = next(e for e in client.get("/data/search.json").json() if e["kind"] == "city")
+    assert "lang" not in city  # a city's label is in the page's language
+
+
+# --- M13 fix round (review 10, M3): a plan title without a link still carries its language ---
+
+
+def test_a_plan_title_without_a_web_link_is_a_span_in_its_language(setup):  # noqa: F811
+    import yaml
+
+    cfg = setup[1]
+    assert cfg.resolve() != CONFIG.resolve(), "never edit the real config"
+    path = cfg / "plans" / "plans.yaml"
+    plans = yaml.safe_load(path.read_text(encoding="utf-8"))
+    rvp = next(p for p in plans if p["id"] == "berlin_rvp_2021")
+    rvp.update(url="ftp://example.org/rvp.pdf", title="Radverkehrsplan", title_lang="de")
+    path.write_text(yaml.safe_dump(plans, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    with _client(create_app(*setup, content_dir=CONTENT)) as c:
+        for page in ("/plans", "/plans/berlin", "/de/plans", "/de/plans/berlin"):
+            html = c.get(page).text
+            assert '<span lang="de">Radverkehrsplan</span>' in html, page
+            assert "ftp://example.org" not in html, page

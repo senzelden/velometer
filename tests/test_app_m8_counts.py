@@ -33,7 +33,7 @@ from velometer.app.counts import (
 )
 from velometer.app.main import create_app
 from velometer.counters import index as counter_index
-from velometer.counters.model import CounterEntry, DayCount, StepDown
+from velometer.counters.model import INDEX_METHOD, CounterEntry, DayCount, StepDown
 from velometer.db import (
     CounterDay,
     CounterIndexYear,
@@ -52,8 +52,8 @@ def _site(city, sid, lat=52.5, lon=13.4):
                        "2026-10-07T13:12:12Z", "2019-01-01", "2025-12-31")  # fmt: skip
 
 
-def _index(city, values: dict, base=2019, series="counts"):
-    return [CounterIndexYear(city, y, v, 0 if v is None else 4, base, series)
+def _index(city, values: dict, base=2019, series="counts", method=INDEX_METHOD):
+    return [CounterIndexYear(city, y, v, 0 if v is None else 4, base, series, method)
             for y, v in values.items()]  # fmt: skip
 
 
@@ -402,10 +402,40 @@ def test_compare_footnote_is_metric_aware(client):
     counter = _foot(client.get("/compare?c=berlin&m=counter_index").text)
     assert "flagged year" not in counter and "Headline:" not in counter
     assert counter == compare.COUNTER_FOOT
-    assert "base year = 100" in counter and "recorded at counter sites" in counter
+    assert "base year = 100" in counter
     for m in ("headline", "ab_km"):
         foot = _foot(client.get(f"/compare?c=berlin&m={m}").text)
         assert "flagged year" in foot and "Headline:" in foot, m
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_the_counter_compare_view_says_counters_are_context_once(client, lang):
+    # M8-14: the subtitle states it; the footnote does not repeat it
+    from velometer.i18n import t
+
+    lead = t(lang, "counts.context").split(":")[0]  # "Counters are context"
+    prefix = "/de" if lang == "de" else ""
+    html = client.get(f"{prefix}/compare?c=berlin&m=counter_index").text
+    assert _text(html).count(lead) == 1, lead
+    assert lead not in t(lang, "counts.foot") and lead not in t(lang, "js.counts.foot")
+
+
+def test_counter_unit_and_lines_skip_a_city_without_line_as_the_js_does():
+    # M8-14: compare.py read cities[i]["line"]; counter-model.js reads `?.line` and skips it
+    payload = {
+        "cities": {"x": {"name": "X"}, "y": {"name": "Y"}},
+        "counters": {
+            "covid_year": 2020,
+            "cities": {
+                "x": {"base_year": 2019, "series": "counts", "points": []},
+                "y": {"base_year": 2019, "series": "counts", "line": True,
+                      "points": [{"year": 2019, "idx": 100.0}, {"year": 2020, "idx": 90.0}]},
+            },
+        },
+    }  # fmt: skip
+    labels, values, _notes = compare.counter_lines(payload, ["x", "y"])
+    assert labels == ["2019", "2020"] and values["x"] == [None, None]
+    assert "2019 = 100" in compare.counter_unit(payload, ["x", "y"])
 
 
 def test_compare_counter_unit_names_the_base_year_of_each_drawn_city(setup):  # noqa: F811
@@ -526,7 +556,7 @@ def test_counter_short_names_come_from_one_place(setup, series, short):  # noqa:
 
 
 def _key_line_colour(rules, cls: str) -> str:
-    """The border-top colour of `<p class="chart-key"><span class="key {cls}">`: the matching
+    """The border-top colour of `<ul class="chart-key"><li><span class="key {cls}">`: the matching
     rule of highest specificity wins, a later one on ties; a shorthand without a colour resets
     it to currentColor."""
     matching = {".key", f".{cls}", ".chart-key .key", f".chart-key .{cls}", f".key.{cls}"}
@@ -622,3 +652,17 @@ def test_the_counts_tab_states_the_index_rule_from_its_constants(setup, monkeypa
     assert "links to a neighbouring one with 7 sites complete on at least 80% of days." in text
     assert "fewer than 7 sites complete on at least 80% of days in both years of a link" in text
     assert "nine days in ten" not in text and "three sites" not in text
+
+
+def test_the_counts_chart_names_the_key_its_download_carries(setup):  # noqa: F811
+    # M13 Task 13a (M11-8, user review): a downloaded Counts chart carries its key. download-ui
+    # reads the list the chart names in data-download-key
+    _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    chart = re.search(r'<div class="chart" data-chart="city-counts"[^>]*>', html).group(0)
+    key_id = re.search(r'data-download-key="([^"]+)"', chart).group(1)
+    start = html.index(f'id="{key_id}"')
+    assert html[html.rfind("<", 0, start) : start].startswith('<ul class="meta chart-key"')
+    items = re.findall(r'<li><span class="key key-[\w-]+"></span>', _chart_key(html))
+    assert len(items) == 2

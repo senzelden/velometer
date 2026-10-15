@@ -10,11 +10,11 @@ sections:
     paragraphs:
       - >-
         A permanent counter records each bicycle that crosses its counting line, quoted below
-        [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's
-        sites are the state's counters, on the statlige og fylkeskommunale vegnett (state and
-        county road network) and a few kommunale veger (municipal roads)
-        [@vegvesen-trafikkdata]. Barcelona's files give one average value per gauge, month and
-        type of day [@barcelona-aforaments-detall], indexed as a separate series.
+        [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's sites are
+        the state's counters, on the <i lang="nb">statlige og fylkeskommunale vegnett</i> (state and
+        county road network) and a few <i lang="nb">kommunale veger</i> (municipal roads)
+        [@vegvesen-trafikkdata]. Barcelona's files give one average value per gauge, month and type
+        of day [@barcelona-aforaments-detall], indexed as a separate series.
   - dimension: selection
     heading: Where counters stand
     paragraphs:
@@ -29,7 +29,7 @@ sections:
     paragraphs:
       - >-
         2020 was the COVID year. Counts recorded at counter sites moved away from their 2019
-        level in every city with both years; Berlin's index stood at 114.6. Charts mark the
+        level in every city with both years; Berlin's index stood at 114.2. Charts mark the
         year, and a step into or out of it is no trend.
   - dimension: breaks
     heading: Breaks in a series
@@ -51,7 +51,7 @@ quotes:
   - {excerpt: paris-comptage-velo/counters-change, after: 1}
   - {excerpt: madrid-aforos-bicicletas/not-comparable, after: 3}
 facts:
-  - {id: berlin-2020, expr: counter.berlin.2020, printed: "114.6"}
+  - {id: berlin-2020, expr: counter.berlin.2020, printed: "114.2"}
   # the index rule (spec §2.13): stated through facts, so the check follows the constants
   - {id: min-valid, expr: counter.min_valid, printed: "90%"}
   - {id: min-sites, expr: counter.min_sites, printed: "3"}

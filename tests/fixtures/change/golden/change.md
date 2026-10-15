@@ -24,7 +24,7 @@ The net change (to − from) is the change in mapped km per tier. The categories
 |---|---:|---:|---:|---:|---:|
 | Ostend | 0.051 | 0.051 | 0.051 | 0.051 | 0.000 |
 | Westend | 0.102 | 0.107 | 0.097 | 0.092 | 0.000 |
-| Outside the 2 Bezirke (LAU edge) | 0.051 | 0.046 | 0.056 | 0.258 | 0.050 |
+| Outside the 2 Bezirke (districts), at the LAU edge | 0.051 | 0.046 | 0.056 | 0.258 | 0.050 |
 | **berlin** | 0.204 | 0.204 | 0.204 | 0.400 | 0.050 |
 
 ## gained: 1 way-side (top 20 by mapped km)

@@ -11,7 +11,7 @@ import {
   buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, flagParagraphs, popPlan,
   queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
-import { counterContext, counterTitle } from "./counter-model.js";
+import { counterContext, counterTip, counterTitle } from "./counter-model.js";
 import { createPanel } from "./panel.js";
 import { announce } from "./live.js";
 import { multiFields } from "./cite.js";
@@ -172,7 +172,7 @@ toggle.addEventListener("click", () => setSheet(!sheetOpen));
 const unitOf = () => cfg.metrics[state.m].unit;
 const tipFor = (model) => (s, p, label) => {
   const index = t("js.chart.index_value", { value: formatValue(p.value) });
-  if (model.counter) return `${s.name} · ${label}: ${index}`;
+  if (model.counter) return counterTip(D, s.id, p.value, label);
   const value = state.mode === "index" ? index : `${formatValue(p.value)} ${unitOf()}`;
   return `${s.name} · ${label}: ${value}${flagged(p)}`;
 };

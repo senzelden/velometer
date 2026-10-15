@@ -20,6 +20,7 @@ from functools import partial
 from markupsafe import Markup, escape
 
 from velometer.content.models import (
+    BRACKETED,
     LANG_TAG,
     DataRef,
     Explainer,
@@ -33,18 +34,24 @@ from velometer.i18n import Lang, t
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
 CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
-# *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text
-EM_MARK = re.compile(r"(?<![\w*])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>])\*(?![\w*])")
+CODE_SLOT = re.compile(r"\0(\d+)\0")  # a code span held aside while the other marks are read
+# *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text,
+# and a star after "=" (a tag's wildcard value) neither opens nor closes one, so two wildcards in a
+# paragraph (`left=*, right=*`) are never paired
+EM_MARK = re.compile(r"(?<![\w*=])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>=])\*(?![\w*])")
 
 
-# the one markup content may write: a quotation in another language, `<q lang="de">…</q>` inside
-# a paragraph or a paragraph that is wholly `<blockquote lang="de">…</blockquote>`. Matched on the
-# escaped text, the language only ever a plain tag (LANG_TAG), nothing else is let through
+# the only markup content may write: a quotation in another language, `<q lang="de">…</q>` inside
+# a paragraph or a paragraph that is wholly `<blockquote lang="de">…</blockquote>`, and an
+# original term (an official category in its own language, M13), `<i lang="da">cykelsti</i>`,
+# italic. Matched on the escaped text, the language only ever a plain tag (LANG_TAG), nothing
+# else is let through
 def _open(tag: str) -> str:
     return f"&lt;{tag} lang=&#34;({LANG_TAG.pattern})&#34;&gt;"
 
 
 QUOTE_MARK = re.compile(_open("q") + r"(.*?)&lt;/q&gt;", re.DOTALL)
+TERM_MARK = re.compile(_open("i") + r"(.*?)&lt;/i&gt;", re.DOTALL)
 BLOCKQUOTE_MARK = re.compile(
     _open("blockquote") + r"((?:(?!&lt;/?blockquote).)*?)&lt;/blockquote&gt;", re.DOTALL
 )
@@ -64,6 +71,22 @@ def fb(text: object) -> Markup:
     English fallback (a `Fallback` string, or True), else nothing."""
     english = text is True or getattr(text, "fallback", False)
     return Markup(FALLBACK_ATTRS) if english else Markup("")
+
+
+def lang_attr(code: str | None) -> Markup:
+    """` lang="<code>"` for a name in its own language (M12-1: an organisation, a counter
+    publisher, a plan title), else nothing: the page's language applies."""
+    return Markup(' lang="{}"').format(code) if code and LANG_TAG.fullmatch(code) else Markup("")
+
+
+def bracketed(name: str, code: str | None) -> Markup:
+    """`name`, escaped, its bracketed form at the end in a `<span lang="<code>">` when `code`
+    names that bracket's language (review 10, I1: the lead's `lang` sits on the element that
+    shows the name, `lang_attr`; Copenhagen's English bracket must not read as Danish)."""
+    m = BRACKETED.fullmatch(name) if code and LANG_TAG.fullmatch(code) else None
+    if m is None:
+        return escape(name)
+    return Markup('{} (<span lang="{}">{}</span>)').format(m["lead"], code, m["bracket"])
 
 
 def fb_text(text: object, english: bool | None = None) -> object:
@@ -182,14 +205,27 @@ class _Numbering:
             return f'<sup class="dref"><a href="#{self.prefix}ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
-        body = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', body)  # the only markup content may write
-        # code spans first and kept whole: `*` inside one is text, and no *...* spans across one
+
+        # code spans first and kept whole: `*` inside one is text, and no *...* spans across one;
+        # nor is a citation marker inside one replaced, nor a quotation or term mark read from
+        # it. Each is held as a NUL-numbered slot (escaped text has no NUL) while the quotation
+        # and term marks are read, so a mark holds whole code spans or none (M10-7)
         parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
-        body = "".join(
-            f"<code>{part}</code>" if i % 2 else EM_MARK.sub(r"<em>\1</em>", part)
-            for i, part in enumerate(parts)
+        codes = parts[1::2]
+        held = "".join(p if i % 2 == 0 else f"\0{i // 2}\0" for i, p in enumerate(parts))
+        held = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', held)  # the only markup content may write
+        held = TERM_MARK.sub(r'<i lang="\1">\2</i>', held)
+
+        def prose(part: str) -> str:
+            return REF_MARK.sub(ref, SOURCE_MARK.sub(source, EM_MARK.sub(r"<em>\1</em>", part)))
+
+        pieces = CODE_SLOT.split(held)  # text, slot, text, slot, ..., text
+        return Markup(
+            "".join(
+                f"<code>{codes[int(piece)]}</code>" if i % 2 else prose(piece)
+                for i, piece in enumerate(pieces)
+            )
         )
-        return Markup(REF_MARK.sub(ref, SOURCE_MARK.sub(source, body)))
 
 
 _TRIM = " (,;:–—-"

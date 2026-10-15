@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import "./strings-fixture.mjs";
 import { fold, rank, move, keyAction } from "../search.js";
+import { repoFile } from "./repo.mjs";
 
 const e = (label, kind, terms = [label]) => ({ label, kind, url: "/x", terms });
 const idx = [
@@ -108,16 +110,20 @@ function fakeNode(tag, extra = {}) {
   };
 }
 function fakePage() {
-  const doc = { activeElement: null, listeners: {}, addEventListener() {}, createElement: (t) => fakeNode(t),
-    getElementById: () => null }; // fmt: skip
+  const live = fakeNode("div"); // #live, the page's polite live region (live.js)
+  const doc = { activeElement: null, listeners: {}, createElement: (t) => fakeNode(t),
+    addEventListener(t, f) { (this.listeners[t] ??= []).push(f); },
+    getElementById: (id) => (id === "live" ? live : null) }; // fmt: skip
   const focusable = (n) => Object.assign(n, { focus() { if (!this.hidden) doc.activeElement = this; } });
   const input = focusable(fakeNode("input"));
   const list = fakeNode("ul", { hidden: true });
-  const box = fakeNode("div", { hidden: true, kids: [input, list] });
-  box.querySelector = (s) => (s === "input" ? input : list);
+  const status = fakeNode("p");
+  const box = fakeNode("div", { hidden: true, kids: [input, list, status] });
+  box.querySelector = (s) =>
+    s === "input" ? input : s === "[role=listbox]" ? list : s === ".search-status" ? status : null;
   const fallback = focusable(fakeNode("a"));
   doc.querySelector = (s) => (s === ".search" ? box : s === ".search-fallback" ? fallback : null);
-  return { doc, box, input, list, fallback };
+  return { doc, box, input, list, status, fallback, live };
 }
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
@@ -184,7 +190,7 @@ test("an option shows the entry's kind label (the German index's), else its kind
 
 
 const CITY_NAMES = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/city_names.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/city_names.json"), "utf8"),
 );
 // the letters a reader without them types instead, written out here (not fold's mapping)
 const BY_HAND = { ó: "o", ø: "o", ł: "l", ß: "ss", ä: "a", ö: "o", ü: "u", é: "e", á: "a", ř: "r" };
@@ -214,4 +220,131 @@ test("every name form of every city, plain, upper case and without diacritics, r
       }
     }
   }
+});
+
+// ---- M13 (M11-6): No match is a status outside the listbox; the keys, dispatched ----
+
+/** A mounted search over `index`, the index loaded, `query` typed. */
+async function typed(t, index, query) {
+  const { mount } = await import("../search.js");
+  t.mock.method(globalThis, "fetch", async () => ({ ok: true, json: async () => index }));
+  const page = fakePage();
+  mount(page.doc);
+  page.input.fire("focus");
+  await settle();
+  await settle();
+  page.input.value = query;
+  page.input.fire("input");
+  return page;
+}
+const key = (input, k) => {
+  let prevented = false;
+  input.fire("keydown", { key: k, preventDefault() { prevented = true; } });
+  return prevented;
+};
+const INDEX = [
+  { label: "Berlin (Germany)", kind: "city", url: "/city/berlin", terms: ["Berlin"] },
+  { label: "Bern (Switzerland)", kind: "city", url: "/city/bern", terms: ["Bern"] },
+];
+
+test("no match: the status says so outside the listbox, the list stays closed and empty", async (t) => {
+  const { input, list, status } = await typed(t, INDEX, "zzz");
+  assert.equal(status.textContent, "No match");
+  assert.deepEqual(list.children, [], "a listbox holds options only");
+  assert.equal(list.hidden, true);
+  assert.equal(input.getAttribute("aria-expanded"), "false");
+  assert.equal(key(input, "ArrowDown"), false, "Down does nothing");
+  assert.equal(input.getAttribute("aria-activedescendant"), null);
+  input.value = "ber";
+  input.fire("input");
+  assert.equal(status.textContent, "", "a match clears it");
+  assert.equal(list.children.length, 2);
+});
+
+test("keys: Down and Up move the active option, wrapping; Enter goes to it; Escape closes, then clears", async (t) => {
+  const { input, list } = await typed(t, INDEX, "ber");
+  assert.equal(list.hidden, false);
+  assert.equal(input.getAttribute("aria-expanded"), "true");
+  assert.equal(key(input, "ArrowDown"), true);
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-0");
+  key(input, "ArrowDown");
+  key(input, "ArrowDown");
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-0", "wraps");
+  key(input, "ArrowUp");
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-1");
+  assert.deepEqual(list.children.map((li) => li.getAttribute("aria-selected")), ["false", "true"]);
+  const before = globalThis.location;
+  globalThis.location = { href: "" };
+  try {
+    assert.equal(key(input, "Enter"), true);
+    assert.equal(globalThis.location.href, "/city/bern");
+  } finally {
+    globalThis.location = before;
+  }
+  key(input, "Escape");
+  assert.equal(list.hidden, true);
+  assert.equal(input.value, "ber", "the first Escape closes the list");
+  key(input, "Escape");
+  assert.equal(input.value, "", "the second clears the box");
+});
+
+// M13 fix round (review I1, I2, M4): every way out of the search clears "No match", and the
+// no-match is also said through #live, since the status may not be in the AX tree in time.
+
+test("no match, then Escape: the box is cleared and so is the status", async (t) => {
+  const { input, status } = await typed(t, INDEX, "zzz");
+  assert.equal(status.textContent, "No match");
+  key(input, "Escape");
+  assert.equal(input.value, "");
+  assert.equal(status.textContent, "", "no No match under an empty box");
+});
+
+test("no match, then focus leaves the search: the status is cleared", async (t) => {
+  const { doc, input, status } = await typed(t, INDEX, "zzz");
+  doc.activeElement = null; // focus went elsewhere on the page
+  input.fire("blur");
+  await settle();
+  assert.equal(status.textContent, "");
+});
+
+test("no match, then a click outside the search: the status is cleared", async (t) => {
+  const { doc, status } = await typed(t, INDEX, "zzz");
+  for (const f of doc.listeners.click ?? []) f({ target: {} });
+  assert.equal(status.textContent, "");
+});
+
+test("no match is also announced through #live", async (t) => {
+  const { live } = await typed(t, INDEX, "zzz");
+  await settle();
+  assert.equal(live.textContent, "No match");
+});
+
+test("the search status is never display:none, so its live region is in the AX tree empty", () => {
+  const css = readFileSync(repoFile("src/velometer/app/static/app.css"), "utf8");
+  const rules = [...css.matchAll(/([^{}]*\.search-status[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(rules.length >= 2, "the status is styled (and its empty state)");
+  for (const [, sel, body] of rules) {
+    assert.doesNotMatch(body, /display\s*:\s*none|visibility\s*:\s*hidden/, sel.trim());
+  }
+});
+
+// ---- M13 fix round (review 10, I1): an organisation's option is in its name's language ----
+
+test("an organisation's option label carries its lang, its bracket its own", async (t) => {
+  const index = [
+    { label: "Københavns Kommune (City of Copenhagen)", kind: "organisation", lang: "da",
+      bracket_lang: "en", url: "/organisations#copenhagen_kommune", terms: ["copenhagen_kommune"] },
+    { label: "Stadt Wien", kind: "organisation", lang: "de", url: "/organisations#wien", terms: [] },
+    { label: "Wien (Österreich)", kind: "city", url: "/city/vienna", terms: ["Wien"] },
+  ]; // fmt: skip
+  const kk = (await typed(t, index, "kobenhavns")).list.children[0].children[0];
+  assert.equal(kk.getAttribute("lang"), "da");
+  const [lead, bracket, close] = kk.children;
+  assert.equal(lead, "Københavns Kommune (");
+  assert.equal(bracket.getAttribute("lang"), "en");
+  assert.equal(bracket.textContent, "City of Copenhagen");
+  assert.equal(close, ")");
+  const wien = (await typed(t, index, "wien")).list.children.map((li) => li.children[0]);
+  assert.deepEqual(wien.map((l) => [l.textContent, l.getAttribute("lang")]),
+    [["Wien (Österreich)", null], ["Stadt Wien", "de"]]); // a city is in the page's language
 });

@@ -1,4 +1,4 @@
-"""Schema v9: plan overlay and counter tables, their repositories and the ReportData accessors."""
+"""Schemas v9 and v10: plan overlay and counter tables, their repositories, ReportData accessors."""
 
 import re
 import sqlite3
@@ -62,9 +62,9 @@ def _overlay(version="v1", km=1.0, run_id=1, cls="primary", tier="A"):
     return OverlayRow(run_id, "berlin", cls, tier, km, km * 2, version, "2026-10-07T00:00:00Z")
 
 
-def test_fresh_db_has_the_five_tables_at_v9(conn):
-    assert SCHEMA_VERSION == 9
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 9
+def test_fresh_db_has_the_five_tables_at_the_current_version(conn):
+    assert SCHEMA_VERSION == 10
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
     assert set(NEW_TABLES) <= _tables(conn)
 
 
@@ -96,7 +96,7 @@ def test_v8_db_migrates_with_row_counts_unchanged(tmp_path):
     assert before and all(n > 0 for n in before.values())  # every preserved table has rows
     assert not set(NEW_TABLES) & _tables(c)
     create_schema(c)
-    assert c.execute("PRAGMA user_version").fetchone()[0] == 9
+    assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
     assert set(NEW_TABLES) <= _tables(c)
     for t, n in before.items():
         assert c.execute(f"SELECT count(*) FROM {t}").fetchone()[0] == n
@@ -183,9 +183,9 @@ def test_replace_counter_tables_are_per_city(conn):
     replace_counter_monthly(conn, "berlin", [CounterMonth("berlin", "s3", "2024-02", "all", 6.0)])
     assert [r[0] for r in conn.execute("SELECT month FROM counter_monthly")] == ["2024-02"]
 
-    y = CounterIndexYear("berlin", 2020, None, 3, 2019, "counts")
+    y = CounterIndexYear("berlin", 2020, None, 3, 2019, "counts", "v2")
     replace_counter_index(
-        conn, "berlin", [y, CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts")]
+        conn, "berlin", [y, CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts", "v2")]
     )
     replace_counter_index(conn, "berlin", [y])
     rows = conn.execute("SELECT year, idx, series FROM counter_index").fetchall()
@@ -204,7 +204,7 @@ def _another_citys(table):
             c, "berlin", [CounterMonth("paris", "p1", "2024-01", "all", 5.0)]
         ),
         "counter_index": lambda c: replace_counter_index(
-            c, "berlin", [CounterIndexYear("paris", 2020, 1.0, 3, 2019, "counts")]
+            c, "berlin", [CounterIndexYear("paris", 2020, 1.0, 3, 2019, "counts", "v2")]
         ),
     }
     return paris[table]
@@ -219,7 +219,7 @@ def _berlin_row(table):
             c, "berlin", [CounterMonth("berlin", "s1", "2024-01", "all", 5.0)]
         ),
         "counter_index": lambda c: replace_counter_index(
-            c, "berlin", [CounterIndexYear("berlin", 2020, 1.0, 3, 2019, "counts")]
+            c, "berlin", [CounterIndexYear("berlin", 2020, 1.0, 3, 2019, "counts", "v2")]
         ),
     }[table]
 
@@ -242,6 +242,17 @@ def test_optional_rows_tells_a_missing_table_by_the_schema_not_the_message(fixtu
         data._optional_rows("counter_sites", "SELECT * FROM counter_sites JOIN gone")
 
 
+@pytest.mark.parametrize("table", ["plan_overlay", "no_such_table_here"])
+def test_optional_rows_refuses_sql_that_does_not_read_its_table(fixture_db, table):
+    # M8-23: a mismatch returned [] for a missing `table` while the SQL read another one (and,
+    # for a present one, ran a query the caller did not mean); the SQL must name the table
+    data = fixture_db[3]
+    with pytest.raises(ValueError, match=f"{table}.*SELECT \\* FROM counter_sites"):
+        data._optional_rows(table, "SELECT * FROM counter_sites")
+    with pytest.raises(ValueError):
+        data._optional_rows("counter", "SELECT * FROM counter_sites")  # a word, not a prefix
+
+
 def _data(conn, cfg):
     return ReportData(conn, cfg)
 
@@ -253,7 +264,9 @@ def test_reportdata_accessors_roundtrip(fixture_db):
     run_id = w.execute("SELECT id FROM runs LIMIT 1").fetchone()[0]
     replace_plan_overlay(w, "berlin", "v1", [_overlay(run_id=run_id)])
     replace_counter_sites(w, "berlin", [_site()])
-    replace_counter_index(w, "berlin", [CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts")])
+    replace_counter_index(
+        w, "berlin", [CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts", "v2")]
+    )
     w.close()
     ro = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     ro.row_factory = sqlite3.Row
@@ -261,7 +274,7 @@ def test_reportdata_accessors_roundtrip(fixture_db):
     assert data.plan_overlay("berlin") == [_overlay(run_id=run_id)]
     assert data.counter_sites("berlin") == [_site()]
     assert data.counter_index("berlin") == [
-        CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts")
+        CounterIndexYear("berlin", 2021, 1.1, 3, 2019, "counts", "v2")
     ]
     assert data.counter_cities() == ["berlin"]
     assert data.plan_overlay("paris") == []
@@ -280,3 +293,110 @@ def test_reportdata_on_a_v8_db_returns_empty_everywhere(fixture_db, tmp_path):
     assert data.counter_index("berlin") == []
     assert data.counter_cities() == []
     ro.close()
+
+
+# --- v10: counter_index keyed by method (M13 Task 2) -------------------------------------------
+
+V9_COUNTER_INDEX = """CREATE TABLE counter_index (
+  city_id TEXT NOT NULL, year INTEGER NOT NULL, idx REAL, sites INTEGER NOT NULL,
+  base_year INTEGER NOT NULL, series TEXT NOT NULL, PRIMARY KEY (city_id, year, series)
+)"""
+V9_ROWS = [
+    ("berlin", 2019, 100.0, 12, 2019, "counts"),
+    ("berlin", 2020, 114.6, 11, 2019, "counts"),
+    ("berlin", 2021, None, 2, 2019, "counts"),
+    ("barcelona", 2019, 100.0, 4, 2019, "avg_daily_intensity"),
+]
+
+
+def v9_db(path, rows=V9_ROWS):
+    """A schema-9 database: the current schema with M8's counter_index (no method), filled."""
+    conn = sqlite3.connect(path)
+    create_schema(conn)
+    conn.execute("DROP TABLE counter_index")
+    conn.execute(V9_COUNTER_INDEX)
+    conn.executemany("INSERT INTO counter_index VALUES (?,?,?,?,?,?)", rows)
+    conn.execute("PRAGMA user_version = 9")
+    conn.commit()
+    return conn
+
+
+def test_v9_db_migrates_with_every_index_row_tagged_v1(tmp_path):
+    c = v9_db(tmp_path / "v9.sqlite")
+    create_schema(c)
+    assert c.execute("PRAGMA user_version").fetchone()[0] == 10
+    got = c.execute(
+        "SELECT city_id, year, idx, sites, base_year, series, method FROM counter_index"
+    ).fetchall()
+    assert sorted(got, key=repr) == sorted([(*r, "v1") for r in V9_ROWS], key=repr)
+    cols = [r[1] for r in c.execute("PRAGMA table_info(counter_index)")]
+    assert cols[-1] == "method"
+    # the method is part of the key: a v2 row of the same year sits beside the v1 row
+    c.execute("INSERT INTO counter_index VALUES ('berlin', 2020, 99.0, 11, 2019, 'counts', 'v2')")
+    with pytest.raises(sqlite3.IntegrityError):
+        c.execute("INSERT INTO counter_index VALUES ('berlin', 2020, 1, 1, 2019, 'counts', 'v3')")
+    c.close()
+
+
+def _iy(year, idx, method, city="berlin"):
+    return CounterIndexYear(city, year, idx, 4, 2019, "counts", method)
+
+
+def test_replace_counter_index_with_v2_rows_leaves_the_v1_rows(conn):
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v1"), _iy(2020, 90.0, "v1")])
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v2"), _iy(2020, 95.0, "v2")])
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v2")])
+    rows = conn.execute("SELECT year, idx, method FROM counter_index ORDER BY 3, 1").fetchall()
+    assert [tuple(r) for r in rows] == [
+        (2019, 100.0, "v1"),
+        (2020, 90.0, "v1"),
+        (2019, 100.0, "v2"),
+    ]
+
+
+def test_replace_counter_index_refuses_rows_of_two_methods(conn):
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v1")])
+    with pytest.raises(ValueError, match="method"):
+        replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v2"), _iy(2020, 1.0, "v1")])
+    with pytest.raises(ValueError, match="method"):
+        replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v2")], method="v1")
+    assert conn.execute("SELECT method FROM counter_index").fetchall()[0][0] == "v1"
+
+
+def test_replace_counter_index_with_no_rows_clears_the_named_method(conn):
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v1")])
+    replace_counter_index(conn, "berlin", [_iy(2019, 100.0, "v2")])
+    replace_counter_index(conn, "berlin", [], method="v2")
+    assert [r[0] for r in conn.execute("SELECT method FROM counter_index")] == ["v1"]
+    with pytest.raises(ValueError, match="method"):
+        replace_counter_index(conn, "berlin", [])  # no rows and no method: no scope to clear
+
+
+def test_the_plan_page_methodology_and_facts_share_one_latest_overlay_rule():
+    # M8-16: the latest-version rule was written out three times; one function, so the plan
+    # page, the methodology and the facts cannot disagree on the version
+    from velometer.app import plans_pages
+    from velometer.content import facts
+    from velometer.report import methodology
+
+    assert plans_pages.latest_overlay is facts.latest_overlay
+    assert methodology.latest_overlay is facts.latest_overlay
+    rows = [
+        OverlayRow(1, "berlin", "v", "A", 1.0, 2.0, v, "2026-01-01")
+        for v in ("overlay_v2", "overlay_v10", "overlay_v9")
+    ]
+    version, latest = facts.latest_overlay(rows)
+    assert version == "overlay_v10" and [r.overlay_version for r in latest] == ["overlay_v10"]
+    assert facts.latest_overlay([]) == (None, [])
+
+
+def test_the_counts_tab_and_the_methodology_share_the_line_rule_and_the_day_reading():
+    # M8-16: the methodology re-implemented `has_line` and `_days` of app/counts.py and asked
+    # for gaps under another condition (the configured grain, not the stored series)
+    from velometer.app import counts
+    from velometer.counters import model
+    from velometer.report import methodology
+
+    assert counts.has_line is model.has_line and methodology.has_line is model.has_line
+    assert model.has_line([None, 100.0, 104.0]) and not model.has_line([None, 100.0, None])
+    assert not hasattr(counts, "_days")  # ReportData.counter_day_counts for both

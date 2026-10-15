@@ -63,10 +63,35 @@ export function keyAction({ active, count }, key) {
   return null;
 }
 
+// a name with a bracketed form at its end (content/models.py BRACKETED)
+const BRACKETED = /^(.+?) \(([^()]+)\)$/s;
+
+/**
+ * An option's label: the entry's label, in the entry's `lang` when it names one (an
+ * organisation's own name), its bracketed form in `bracket_lang` where that differs (review
+ * 10, I1: Copenhagen's English bracket is not Danish). Text only, never markup.
+ */
+export function optionLabel(doc, entry) {
+  const label = doc.createElement("span");
+  if (entry.lang) label.setAttribute("lang", entry.lang);
+  const m = entry.bracket_lang ? BRACKETED.exec(entry.label) : null;
+  if (!m) {
+    label.textContent = entry.label;
+    return label;
+  }
+  const bracket = doc.createElement("span");
+  bracket.setAttribute("lang", entry.bracket_lang);
+  bracket.textContent = m[2];
+  label.append(`${m[1]} (`, bracket, ")");
+  return label;
+}
+
 export function mount(doc) {
   const box = doc.querySelector(".search");
   const input = box?.querySelector("input");
   const list = box?.querySelector("[role=listbox]");
+  // "No match" is said here, outside the listbox (a listbox owns only options)
+  const status = box?.querySelector(".search-status");
   const fallback = doc.querySelector(".search-fallback");
   if (!box || !input || !list) return;
   box.hidden = false;
@@ -113,10 +138,12 @@ export function mount(doc) {
     }
   };
 
+  // every way out (Escape, blur, a click outside, an empty query) also clears "No match"
   const close = () => {
     list.hidden = true;
     input.setAttribute("aria-expanded", "false");
     setActive(-1);
+    if (status) status.textContent = "";
   };
 
   function update() {
@@ -134,8 +161,7 @@ export function mount(doc) {
       li.id = `site-search-opt-${n}`;
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", "false");
-      const label = doc.createElement("span");
-      label.textContent = entry.label;
+      const label = optionLabel(doc, entry);
       const kind = doc.createElement("span");
       kind.className = "kind";
       kind.textContent = entry.kind_label ?? entry.kind; // the German index names its kinds
@@ -145,17 +171,17 @@ export function mount(doc) {
       list.append(li);
     });
     if (!shown.length) {
-      const li = doc.createElement("li");
-      li.className = "none";
-      li.setAttribute("role", "option"); // a listbox owns only options
-      li.setAttribute("aria-disabled", "true");
-      li.textContent = t("js.search.no_match");
-      list.append(li);
+      // shown in the status (role=status, never display:none), and said through #live too:
+      // a live region is not always heard the first time it is filled
+      close();
+      if (status) status.textContent = t("js.search.no_match");
+      return announce(t("js.search.no_match"), doc);
     }
+    if (status) status.textContent = "";
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
     setActive(-1);
-    announce(shown.length ? t("js.search.results", { count: shown.length }) : t("js.search.no_match"));
+    announce(t("js.search.results", { count: shown.length }), doc);
   }
 
   const go = (entry) => {
@@ -185,7 +211,10 @@ export function mount(doc) {
       e.stopPropagation(); // the phone menu stays open (nav.js)
       e.preventDefault(); // a search field would clear itself on the first Escape
       if (!list.hidden) close();
-      else input.value = "";
+      else {
+        input.value = ""; // a set value fires no input event: close says the rest
+        close();
+      }
     }
   });
   doc.addEventListener("click", (e) => {

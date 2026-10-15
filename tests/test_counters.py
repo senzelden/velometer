@@ -22,7 +22,7 @@ from velometer.counters.adapters import berlin, paris, vienna
 from velometer.counters.adapters import download as download_files
 from velometer.counters.check import check_counters
 from velometer.counters.days import sum_counters, to_days, zero_days_invalid
-from velometer.counters.index import MIN_SITES, chain_index, chain_index_monthly
+from velometer.counters.index import MIN_SITES, chain_index, chain_index_monthly, chain_index_v1
 from velometer.counters.model import (
     CounterEntry,
     CounterFormatError,
@@ -116,6 +116,38 @@ def test_duplicate_hours_from_overlapping_files_count_once_last_wins():
     assert (d.count, d.complete) == (12 * 1 + 12 * 3, True)
 
 
+def _overlap_day(first, second):
+    """One day, 24 hours of count 1 from an earlier file; hour 10 read again by a later file.
+    `first` and `second` are (count, counters) for hour 10; returns the stored day count."""
+    day = date(2023, 6, 1)
+    base = [HourCount("a", datetime(2023, 6, 1, h), 1) for h in range(24) if h != 10]
+    early = HourCount("a", datetime(2023, 6, 1, 10), first[0], first[1])
+    late = HourCount("a", datetime(2023, 6, 1, 10), second[0], second[1])
+    (d,) = to_days(base + [early] + [late], "Europe/Paris")
+    assert d.day == day and d.complete
+    return d.count - 23
+
+
+def test_a_later_file_with_fewer_counters_does_not_overwrite_a_fuller_reading():
+    assert _overlap_day((53, 4), (42, 1)) == 53
+
+
+def test_equal_counter_counts_the_later_file_wins():
+    assert _overlap_day((20, 2), (30, 2)) == 30
+
+
+def test_a_later_file_with_more_counters_wins():
+    assert _overlap_day((42, 1), (53, 4)) == 53
+
+
+def test_sum_counters_carries_how_many_counters_reported_the_hour():
+    d = date(2023, 6, 1)
+    per = _pc("s", "a", d, range(24)) | _pc("s", "b", d, [5])
+    # b has a one-hour span: only hour 5 has both counters
+    got = {h.local_hour.hour: h.counters for h in sum_counters(per)}
+    assert got[5] == 2 and got[6] == 1
+
+
 def test_zero_day_is_an_outage():
     days = [DayCount("a", date(2024, 1, 1), 0, True), DayCount("a", date(2024, 1, 2), 5, True)]
     assert [d.complete for d in zero_days_invalid(days)] == [False, True]
@@ -171,7 +203,9 @@ def test_a_break_before_the_base_year_stays_broken_backwards():
             if not (y == 2023 and s == "c"):  # 2023 has only a and b
                 days += _year(s, y, 10)
     out = {y: (idx, n) for y, idx, n in chain_index(days, 2025)}
-    assert out[2024] == (pytest.approx(100.0 * 366 / 365), 3)  # 2024 has 366 days of 10
+    assert out[2024] == (pytest.approx(100.0), 3)  # v2: 10 per complete day in both years
+    v1 = {y: idx for y, idx, _ in chain_index_v1(days, 2025)}
+    assert v1[2024] == pytest.approx(100.0 * 366 / 365)  # v1 summed 2024's 366 days of 10
     assert out[2023] == (None, 2)
     assert out[2022] == (None, 2)
     # 2021 -> 2022 has three qualifying sites, but the chain is not re-based before the base
@@ -400,6 +434,86 @@ def test_paris_counter_in_service_is_its_reported_span():
     assert (days["s", d3].count, days["s", d3].complete) == (72, True)
 
 
+def test_a_counter_starting_mid_day_leaves_the_earlier_hours_complete():
+    d1, d2 = date(2023, 6, 1), date(2023, 6, 2)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "a", d2, range(24))
+    per |= _pc("s", "b", d1, range(14, 24)) | _pc("s", "b", d2, range(24))  # b starts 14:00
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", d1].complete  # hours 0-13: only a in service, and a reports them
+    assert days["s", d1].count == 24 + 10
+
+
+def test_a_counter_ending_mid_day_leaves_the_later_hours_complete():
+    d1, d2 = date(2023, 6, 1), date(2023, 6, 2)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "a", d2, range(24))
+    per |= _pc("s", "b", d1, range(24)) | _pc("s", "b", d2, range(0, 9))  # b ends 08:00
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", d2].complete and days["s", d2].count == 24 + 9
+
+
+def test_an_hour_missing_inside_the_span_is_still_an_outage():
+    d1 = date(2023, 6, 1)
+    per = _pc("s", "a", d1, range(24)) | _pc("s", "b", d1, [h for h in range(24) if h != 12])
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert not days["s", d1].complete
+
+
+def test_a_counter_starting_at_the_repeated_hour_is_ordered_by_fold():
+    day = date(2023, 10, 29)  # fall-back day: 02:00 occurs twice in Europe/Paris
+    per = _pc("s", "a", day, range(24))
+    per[("s", "a", datetime(2023, 10, 29, 2), 1)] = 1
+    # b's first reported hour is the second 02:00 (fold 1)
+    per[("s", "b", datetime(2023, 10, 29, 2), 1)] = 1
+    per |= {("s", "b", datetime(2023, 10, 29, h), 0): 1 for h in range(3, 24)}
+    out = {(h.local_hour.replace(fold=0), h.local_hour.fold) for h in sum_counters(per)}
+    assert len(out) == 25  # a alone in service before the second 02:00: nothing dropped
+    days = _by_key(to_days(sum_counters(per), "Europe/Paris"))
+    assert days["s", day].complete
+    # b starting at the *first* 02:00 instead makes the first 02:00 an outage hour for b
+    per[("s", "b", datetime(2023, 10, 29, 2), 0)] = 1
+    del per[("s", "b", datetime(2023, 10, 29, 2), 1)]
+    out = {(h.local_hour.replace(fold=0), h.local_hour.fold) for h in sum_counters(per)}
+    assert (datetime(2023, 10, 29, 2), 1) not in out
+
+
+def test_paris_rolling_export_drops_no_site_hour_for_a_counter_not_yet_started():
+    entry = _entry("paris", "paris", "Europe/Paris")
+    rolling = FIX / "paris" / "rolling.csv"
+    _, hours = paris.parse([rolling], entry)
+    stamps: dict[str, set[str]] = {}
+    for line in rolling.read_text(encoding="utf-8-sig").splitlines()[1:]:
+        cells = line.split(";")
+        stamps.setdefault(cells[2], set()).add(cells[5])
+    for site, ts in stamps.items():
+        assert len([h for h in hours if h.site_id == site]) == len(ts)
+    # the export's first UTC hour is 00:00 local on 2025-10-25, so no earlier hour exists
+    days = _by_key(to_days(hours, entry.timezone))
+    assert days["100003096", date(2025, 10, 25)].complete
+
+
+def test_paris_rolling_export_counter_starting_mid_day_keeps_the_first_local_day(tmp_path):
+    """The rolling export's first UTC hours, converted to local time, follow the hour rule: a
+    counter first reported at 14:00 local is not in service before it, so the day stays complete
+    (the day rule would call the hours 0-13 an outage)."""
+    entry = _entry("paris", "paris", "Europe/Paris")
+    src = (FIX / "paris" / "rolling.csv").read_text(encoding="utf-8-sig").splitlines()
+    ids = {"a": "100003096-353242251", "b": "100003096-999999999"}
+
+    def row(counter, utc):
+        return f"{ids[counter]};x;100003096;97 avenue Denfert Rochereau;1.0;{utc};48.83504, 2.33314"
+
+    # local 2025-10-25 is UTC+2: local 00:00 is 2025-10-24T22:00Z, local 14:00 is 12:00Z
+    a = [row("a", f"2025-10-24T{h}:00:00+00:00") for h in (22, 23)]
+    a += [row("a", f"2025-10-25T{h:02d}:00:00+00:00") for h in range(22)]
+    b = [row("b", f"2025-10-25T{h:02d}:00:00+00:00") for h in range(12, 22)]
+    f = tmp_path / "rolling.csv"
+    f.write_text("\n".join([src[0], *a, *b]) + "\n", encoding="utf-8")
+    _, hours = paris.parse([f], entry)
+    days = _by_key(to_days(hours, entry.timezone))
+    assert days["100003096", date(2025, 10, 25)].complete
+    assert days["100003096", date(2025, 10, 25)].count == 24 + 10
+
+
 def _vienna_entry():
     return _entry("vienna", "vienna", "Europe/Vienna", "daily", exclude_columns=["Opernring"])
 
@@ -581,6 +695,34 @@ def test_a_failed_replace_keeps_the_previous_daily_rows(tmp_path, monkeypatch):
     assert _dump(db) == rows
 
 
+def test_an_interrupt_between_the_two_methods_keeps_the_previous_rows_of_both(
+    tmp_path, monkeypatch
+):
+    import velometer.db as db_module
+    from velometer.counters import _store_index
+
+    conn = _check_db(tmp_path)
+    entry = _entry("berlin", "berlin", "Europe/Berlin")
+    _store_index(conn, entry, {"v1": [(2019, 100.0, 4)], "v2": [(2019, 100.0, 4)]}, "counts")
+    before = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+    real = db_module.replace_counter_index_nocommit
+    calls = []
+
+    def fail_on_the_second(*a, **kw):
+        if calls:
+            raise KeyboardInterrupt
+        calls.append(1)
+        return real(*a, **kw)
+
+    monkeypatch.setattr(db_module, "replace_counter_index_nocommit", fail_on_the_second)
+    new = {"v1": [(2019, 100.0, 5)], "v2": [(2019, 100.0, 5)]}
+    with pytest.raises(KeyboardInterrupt):
+        _store_index(conn, entry, new, "counts")
+    assert calls  # the first method was written before the interrupt
+    after = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+    assert after == before
+
+
 def test_counters_check_flags_a_city_with_no_index_year(tmp_path):
     cfg_dir, data, db = _setup_city(tmp_path, "berlin", BERLIN_ENTRY, [BERLIN_XLSX])
     common = ["--db", str(db), "--config-dir", str(cfg_dir)]
@@ -613,8 +755,8 @@ def test_check_passes_a_complete_city(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == []
@@ -628,8 +770,8 @@ def test_check_flags_missing_sites_base_not_100_and_a_site_under_two_cities(tmp_
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     problems = check_counters(conn, _cfg("berlin", "paris", "vienna"))
@@ -647,8 +789,8 @@ def test_check_flags_a_step_down_site_absent_from_the_data(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
         ],
     )
     entry = {**BERLIN_ENTRY, "step_downs": [{"site": "a", "since": "2020-04"},
@@ -690,8 +832,8 @@ def test_check_accepts_no_value_on_a_base_year_with_too_few_sites(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, None, few, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, None, few, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, None, few, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, None, few, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == ["berlin: no index year"]
@@ -705,8 +847,8 @@ def test_check_flags_a_value_on_a_base_year_with_too_few_sites(tmp_path):
         conn,
         "berlin",
         [
-            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts"),
-            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts"),
+            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts", "v2"),
+            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts", "v2"),
         ],
     )
     assert check_counters(conn, _cfg("berlin")) == [

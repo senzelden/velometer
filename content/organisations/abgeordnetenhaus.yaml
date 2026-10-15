@@ -1,35 +1,38 @@
 id: abgeordnetenhaus
 name: Abgeordnetenhaus Berlin
+lang: de
 kind: parliament
 url: https://www.parlament-berlin.de/
 sections:
   - heading: Who they are
     paragraphs:
       - >-
-        The Abgeordnetenhaus is the parliament of the Land Berlin. It legislates, elects the
-        governing mayor and scrutinises the government, the Senate [@agh-arbeitsweise]. Its
-        budget act decides what the Land's money is spent on, for one or two years at a time
-        [@agh-arbeitsweise].
+        The Abgeordnetenhaus is the parliament of the <i lang="de">Land Berlin</i> (state of Berlin)
+        [@infravelo-faq]. It legislates, elects the governing mayor and scrutinises the government,
+        the Senate [@agh-arbeitsweise]. Its budget act decides what the Land's money is spent on,
+        for one or two years at a time [@agh-arbeitsweise].
   - heading: How they measure
     dimensions:
       scope: >-
-        whatever a question asks; for the priority network, km implemented per year and
-        district [@berlin-drs-19-25987]
+        whatever a question asks; for the <i lang="de">Radvorrangnetz</i> (priority network), km
+        implemented per year and for each of the <i lang="de">Bezirke</i> (districts)
+        [@berlin-drs-19-25987] [@infravelo-faq]
       kind: as the Senate answers it [@agh-parlamentarische-anfragen]
       length: >-
-        as the Senate answers it; Drucksache 19/25987 gives route length for the target network
-        only [@berlin-drs-19-25987]
+        as the Senate answers it; Drucksache 19/25987 gives <i lang="de">Streckenlänge</i> (route
+        length) for the <i lang="de">planerisches Zielnetz</i> (planned target network) only
+        [@berlin-drs-19-25987]
       date: the date of the Senate's answer [@berlin-drs-19-25987]
-      area: Land Berlin
+      area: <i lang="de">Land Berlin</i> (state of Berlin) [@infravelo-faq]
       method: parliament does not measure; it publishes the Senate's answers and reports [@agh-parlamentarische-anfragen]
     paragraphs:
       - >-
         Parliament publishes Berlin's cycling figures rather than producing them. In a written
-        question (Schriftliche Anfrage) any member can demand information; the Senate answers
-        in writing, normally within three weeks [@agh-parlamentarische-anfragen], and every
-        answer stays available in the parliamentary documentation system PARDOK
+        question (Schriftliche Anfrage) any member can demand information; the Senate answers in
+        writing, normally within three weeks [@agh-parlamentarische-anfragen], and every answer
+        stays available in the parliamentary documentation system PARDOK
         [@agh-parlamentarische-anfragen]. Drucksache 19/25987 of May 2026 is the source of our
-        priority-network rows [@berlin-drs-19-25987].
+        <i lang="de">Radvorrangnetz</i> rows [@berlin-drs-19-25987].
       - >-
         The yearly progress report reaches parliament as a report of the Senate transport
         administration to the Hauptausschuss [@berlin-dpa-fortschrittsbericht-hauptausschuss].
@@ -37,19 +40,25 @@ sections:
     paragraphs:
       - >-
         The Abgeordnetenhaus passed the Mobilitätsgesetz on 28 June 2018, after the cycling
-        referendum campaign [@changing-cities-volksentscheid] [@berlin-mobg-page]. In July 2026
-        it amended the act: the priority network keeps its 2030 deadline, the secondary network
-        moves to 2035, and a main road may go without a cycling facility where a qualified
-        alternative on minor streets exists nearby [@berlin-mobg-amendment-2026].
+        referendum campaign [@changing-cities-volksentscheid] [@berlin-mobg-page]. In July 2026 it
+        amended the act: the <i lang="de">Radvorrangnetz</i> (priority network) keeps its 2030
+        deadline, the <i lang="de">Nebennetz</i> (secondary network) moves to 2035, and on
+        <i lang="de">Hauptverkehrsstraßen</i> (Berlin's road classes I–III, not our main roads
+        [#main-roads]) [@berlin-radverkehrsplan-2021] a cycling facility may be left out where a
+        qualified alternative on minor streets exists nearby [@berlin-mobg-amendment-2026].
       - >-
-        It scrutinises the Senate through questions and requests for reports
-        [@agh-arbeitsweise]; Drucksache 19/25987, *Acht Jahre Mobilitätsgesetz – Zwischen
-        Anspruch und Wirklichkeit im Radverkehr* (Eight years of the Mobility Act: between
-        ambition and reality in cycling), asked how much of the priority network exists
-        [@berlin-drs-19-25987]. In our reading, written questions are where the Senate's figures
-        get tied to a document and a date, which is why we cite them one document at a time.
+        It scrutinises the Senate through questions and requests for reports [@agh-arbeitsweise];
+        Drucksache 19/25987, *Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und Wirklichkeit im
+        Radverkehr* (Eight years of the Mobility Act: between ambition and reality in cycling),
+        asked how much of the <i lang="de">Radvorrangnetz</i> exists [@berlin-drs-19-25987]. In our
+        reading, written questions are where the Senate's figures get tied to a document and a date,
+        which is why we cite them one document at a time.
 quotes:
   - {excerpt: agh-parlamentarische-anfragen/control, after: 1}
+data_refs:
+  - {id: main-roads, label: "velometer methodology, main roads (Headline and presets)",
+     file: docs/methodology.md, locator: "## Headline and presets",
+     route: /methodology#headline-and-presets}
 literals:
   - "Drucksache 19/25987"
   - "28 June 2018"

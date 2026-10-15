@@ -43,7 +43,8 @@ from velometer.report.data import ReportData, open_readonly
 from velometer.run import git_commit
 
 # Starlette's notice that its TestClient will move from httpx to httpx2 is for test suites; the
-# export is a command, and the line would only be noise on every run.
+# export is a command, and the line would only be noise on every run. `httpx2` is a dev
+# dependency only (M13), so an install without the dev group still takes this fallback.
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", message="Using `httpx` with `starlette.testclient`")
     from fastapi.testclient import TestClient
@@ -111,7 +112,7 @@ JS_CALL_LITERAL = re.compile(r"""\b(?:fetch|new\s+URL)\s*\(\s*(["'`])([^"'`\n]*)
 JS_COMMENTS = re.compile(r"^[ \t]*//[^\n]*$|^[ \t]*/\*.*?\*/", re.M | re.S)
 SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
 # a base path is `/`-separated segments of these characters (no `..`, `//`, scheme, query, ...)
-BASE_SEGMENT = re.compile(r"^[A-Za-z0-9._~-]+$")
+BASE_SEGMENT = re.compile(r"[A-Za-z0-9._~-]+")
 
 
 class ExportError(Exception):
@@ -162,7 +163,7 @@ def validate_base(base: str) -> None:
             return  # `/` or ""
         if segment in (".", ".."):
             raise ExportError(f"--base {base!r}: a '{segment}' segment is not allowed")
-        if not BASE_SEGMENT.match(segment):
+        if not BASE_SEGMENT.fullmatch(segment):
             raise ExportError(
                 f"--base {base!r}: segment {segment!r} may hold only letters, digits and . _ ~ - "
                 "(no scheme, query, fragment or space)"
@@ -206,12 +207,14 @@ def _map_refs(html: str, base: str) -> set[str]:
     return {"/" + m.removeprefix(base) for m in re.findall(pattern, html)}
 
 
-def export_urls(data: ReportData, app: FastAPI) -> list[str]:
+def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) -> list[str]:
     """Every URL the static edition has (decision 4): the fixed pages; per trusted city its page,
     each tab and plan page and CSV the app serves for it (a 404 is a page the city does not
     have, left out), its panel; every map an exported page references (a German page with
     maps is read too: it links the German tier map images). A per-city URL answered
-    with anything but 200 or 404 is kept, so the export fails on it by name."""
+    with anything but 200 or 404 is kept, so the export fails on it by name. Each response
+    of a URL kept goes into `rendered` (URL -> response) when given, so `_write_site` need not
+    render it again."""
     base = app.state.base_path
     probed = []
     for city in data.cities():
@@ -226,6 +229,8 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
             r = client.get(url, follow_redirects=False)
             if r.status_code == 404 and url not in PAGES:
                 continue
+            if rendered is not None:
+                rendered[url] = r
             if url not in PAGES:
                 found.append(url)
             if r.headers.get("content-type", "").startswith("text/html") and url not in LEGACY_DE:
@@ -233,7 +238,11 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
             if r.status_code == 200 and r.headers["content-type"].startswith("text/html"):
                 refs = _map_refs(r.text, base)
                 if refs:  # its German twin links its own image (`<city>_<kind>.de.png`)
-                    refs |= _map_refs(client.get(with_lang(url, "de")).text, base)
+                    twin = with_lang(url, "de")
+                    german = client.get(twin, follow_redirects=False)
+                    if rendered is not None:
+                        rendered[twin] = german
+                    refs |= _map_refs(german.text, base)
                 maps |= refs
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
@@ -291,12 +300,18 @@ def _ignore_tests(static: Path):
     return ignore
 
 
-def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
-    """Every URL's response to its file, `static/`, `404.html` and `build.json` into `site`."""
+def _write_site(
+    site: Path, app: FastAPI, urls: list[str], build: dict, rendered: dict | None = None
+) -> None:
+    """Every URL's response to its file, `static/`, `404.html` and `build.json` into `site`; a
+    URL's response is taken from `rendered` when `export_urls` already had it."""
     written: dict[PurePosixPath, str] = {}
+    rendered = {} if rendered is None else rendered
     with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as client:
         for url in urls:
-            r = client.get(url, follow_redirects=False)
+            r = rendered.pop(url, None)
+            if r is None:
+                r = client.get(url, follow_redirects=False)
             if r.status_code != 200:
                 raise ExportError(f"{url}: HTTP {r.status_code}")
             rel = url_to_path(url, r.headers["content-type"])
@@ -388,7 +403,12 @@ def _js_refs(text: str, base: str) -> list[tuple[str, bool]]:
     under `base`; one written as an `href="…"` in markup is a link); the literal of a fetch() or
     new URL(). Whole-line comments are skipped. A built URL (`${…}`) passed to url() carries the
     base by construction and is not resolved; anywhere else it is checked as written. XML
-    namespace names are not references."""
+    namespace names are not references.
+
+    What it cannot do: resolve a URL a script builds at run time (`url(`/city/${id}/panel`)`,
+    the Compare panel and city links). Those name a page per city, and the scan cannot know
+    which ids a script will use. They rely on `export_urls` writing every city's page and panel
+    instead, which `test_export_urls_are_what_the_app_serves` asserts for every city."""
     page_u, data_u = make_u(base), make_data_u(base)
 
     def u(path: str) -> str:  # url() of an English page: data paths shared, no prefix
@@ -468,31 +488,64 @@ def scan_references(out: Path, base: str) -> list[Unresolved]:
 def _install(site: Path, out: Path, clean: bool) -> None:
     """The complete `site` in place of `out`'s contents. The guard is checked again first (`out`
     may have changed during the render); `out`'s old entries are set aside in a sibling
-    directory and deleted only once the new ones are in, else they are put back."""
+    directory and deleted only once the new ones are in. Anything that stops the swap, an
+    interrupt (Ctrl-C) included, puts them back and is raised again; when putting them back
+    fails too, the ExportError names the directory that still holds them."""
     _check_out(out, clean)
     created = not out.exists()
-    out.mkdir(exist_ok=True)
-    old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
+    old: Path | None = None
     moved_out: list[str] = []
     moved_in: list[str] = []
     try:
+        out.mkdir(exist_ok=True)
+        old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
+        # each name is noted before its move: an interrupt between the two is undone too
         for entry in list(out.iterdir()):
-            entry.rename(old / entry.name)
             moved_out.append(entry.name)
+            entry.rename(old / entry.name)
         for entry in list(site.iterdir()):
-            entry.rename(out / entry.name)
             moved_in.append(entry.name)
-    except OSError:
-        for name in moved_in:
-            (out / name).rename(site / name)
-        for name in moved_out:
-            (old / name).rename(out / name)
-        old.rmdir()
-        if created:
-            out.rmdir()
+            entry.rename(out / entry.name)
+    except BaseException as failure:
+        _roll_back(site, out, old, moved_in, moved_out, created, failure)
         raise
     shutil.rmtree(old)
     site.rmdir()
+
+
+def _roll_back(
+    site: Path,
+    out: Path,
+    old: Path | None,
+    moved_in: list[str],
+    moved_out: list[str],
+    created: bool,
+    failure: BaseException,
+) -> None:
+    """Undo a partial swap: the new entries back into `site`, the old ones back into `out`, the
+    set-aside directory and a newly made `out` removed. A noted name whose move had not happened
+    yet is skipped. When that fails, an interrupt included, ExportError naming the set-aside
+    directory while it still exists (the previous export is in it)."""
+
+    def back(src: Path, dst: Path) -> None:
+        if os.path.lexists(src):
+            src.rename(dst)
+
+    try:
+        for name in reversed(moved_in):
+            back(out / name, site / name)
+        if old is not None:
+            for name in reversed(moved_out):
+                back(old / name, out / name)
+            old.rmdir()
+        if created and out.exists():
+            out.rmdir()
+    except BaseException as e:
+        kept = old is not None and old.exists()
+        where = f"; the previous export's entries are in {old}" if kept else ""
+        raise ExportError(
+            f"export to {out} failed ({failure!r}) and putting {out} back failed too ({e}){where}"
+        ) from failure
 
 
 def run_export(
@@ -542,13 +595,14 @@ def _run_export(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base, static_edition={"commit": build["commit"]},
         )  # fmt: skip
-        urls = export_urls(data, app)
+        rendered: dict = {}  # each page is rendered once: listing it and writing it
+        urls = export_urls(data, app, rendered)
     finally:
         conn.close()
     out.parent.mkdir(parents=True, exist_ok=True)
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
-        _write_site(site, app, urls, build)
+        _write_site(site, app, urls, build, rendered)
         unresolved = scan_references(site, build["base"])
         if unresolved:
             lines = "\n".join(f"  {x.file}: {x.ref}" for x in unresolved)

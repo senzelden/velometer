@@ -27,22 +27,23 @@ sections:
       Jede Zahl zählt eine bestimmte Auswahl von Anlagen. Unsere Hauptkennzahl, kartierte
       A+B-km je 100 km Hauptstraßen, umfasst die Stufen A und B, baulich getrennte
       Radwege sowie Geh- und Radwege; markierte Radfahrstreifen (D) sowie Fahrradstraßen
-      und Busspuren (E) werden gemessen, gehen aber nicht in sie ein. Clean Cities
-      2025 zählt geschützte Infrastruktur, unten zitiert: Geh- und Radwege und Fußgängerzonen
-      gehören dazu, markierte Radfahrstreifen und Fahrradstraßen nicht [@cc2025-annexes].
-      QECIO führt Radwege, Radfahrstreifen und gemeinsame Geh- und Radwege als getrennte
-      Klassen, jede mit eigener Definition [@qecio-methodology].
+      o. Ä. und Busspuren (E) werden gemessen, gehen aber nicht in sie ein. Clean
+      Cities 2025 zählt geschützte Infrastruktur, unten zitiert: Geh- und Radwege
+      und Fußgängerzonen gehören dazu, markierte Radfahrstreifen und Fahrradstraßen
+      nicht [@cc2025-annexes]. QECIO führt Radwege, Radfahrstreifen und gemeinsame
+      Geh- und Radwege als getrennte Klassen, jede mit eigener Definition [@qecio-methodology].
     src: 44b8465430d3
   - text: >-
       Kopenhagen zeigt, wie weit allein der Umfang reicht. Für 2025 weist die Stadt
-      401 km cykelsti aus, Radwege mit Bordstein, und führt markierte Radfahrstreifen
-      in einer eigenen Zeile [@copenhagen-mobilitetsredegorelse-2026]; unsere A+B-Summe
-      von 582 km enthält auch Geh- und Radwege. Der Umfang kann sich auch nach der
-      Veröffentlichung noch ändern: Im Juli 2025 hob Clean Cities den Wert für Wien
-      von 384 auf 625,1 km an, nachdem verkehrsberuhigte Straßen mit eingeschränkter
-      Kfz-Zufahrt mitgezählt wurden [@cc2025-cycling-table]. Gemessen an diesem weiteren
-      Umfang liegt unser A+B-Wert um 6,5 % über dem von Clean Cities [#recon-vienna-cc-km].
-    src: 571d8fd9c3da
+      401 km <i lang="da">cykelsti</i> (Hochbordradwege) aus und führt <i lang="da">cykelbaner</i>
+      (markierte Radfahrstreifen) in einer eigenen Zeile [@copenhagen-mobilitetsredegorelse-2026];
+      unsere A+B-Summe von 582 km enthält auch Geh- und Radwege. Der Umfang kann sich
+      auch nach der Veröffentlichung noch ändern: Im Juli 2025 hob Clean Cities den
+      Wert für Wien von 384 auf 625,1 km an, nachdem verkehrsberuhigte Straßen mit
+      eingeschränkter Kfz-Zufahrt mitgezählt wurden [@cc2025-cycling-table]. Gemessen
+      an diesem weiteren Umfang liegt unser A+B-Wert um 6,5 % über dem von Clean Cities
+      [#recon-vienna-cc-km].
+    src: c3f5289de424
   - text: >-
       Ein Verhältnis hat einen zweiten Umfang: das Straßennetz, durch das es teilt.
       Unsere Hauptkennzahl teilt durch die Hauptstraßen. Clean Cities teilt durch
@@ -60,11 +61,11 @@ sections:
       wann Kartierende es erfasst haben. Amtliche Reihen zählen oft eine andere Art
       von km. Der Berliner Senat meldet 21,2 km Strecke, die Projekte im Jahr 2025
       fertiggestellt oder verbessert haben, aus einer Projektdatenbank zum Jahresende
-      [@berlin-fortschrittsbericht-2025]. Sein Vorrangnetz ist ein geplantes Netz
+      [@berlin-fortschrittsbericht-2025]. Sein Radvorrangnetz ist ein geplantes Netz
       von rund 870 km, von dem 78,2 km bis Mai 2026 umgesetzt waren [@berlin-drs-19-25987].
       Die 20,4 km Wiens für 2025 zählen die in diesem Jahr begonnenen Projekte, nicht
       die abgeschlossenen, unten zitiert [@vienna-radwegeausbau-bilanz-2025].
-    src: f3f1bf8240da
+    src: 97a82d84d608
   - text: >-
       Kartierte Änderung ist wiederum eine andere Größe. Von 2023 bis Oktober 2026
       kamen auf der Berliner Karte 442 km neu kartierter Wegseiten hinzu, 656 km wurden
@@ -132,9 +133,10 @@ sections:
       Wo die NUTS3-Region die Stadt ist, stimmen die Hauptstraßen eng überein: für
       Berlin 2.153 km bei uns gegenüber 2.150 km bei QECIO [#recon-berlin], und −0,6 %
       für Warschau [#recon-warsaw]. Wo die Region größer ist, beschreiben die km von
-      QECIO einen anderen Ort: Stockholms län hat 4.946 km Hauptstraßen gegenüber
+      QECIO einen anderen Ort: <i lang="sv">Stockholms län</i> (Verwaltungsbezirk
+      Stockholm) [@lansstyrelsen-stockholm-om-lanet] hat 4.946 km Hauptstraßen gegenüber
       unseren 667 km für die Stadt [#recon-stockholm-qecio-main].
-    src: 6b7e7f002a53
+    src: 7c7e11d69fd7
 - heading:
     text: Wer gemessen hat
     src: 5dcaf9349243

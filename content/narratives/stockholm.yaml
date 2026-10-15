@@ -27,14 +27,16 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The city's own network figure, quoted below, counts separate cycle tracks, shared walking
-        and cycling paths and painted lanes together [@stockholm-cykelvagar]. Scope: that is our
-        tiers A, B and D, 991 km of A+B plus 48 km of lanes. Its length basis, date and method
-        are not stated by the source; ours are per road side, October 2026 and OpenStreetMap.
-        Area: QECIO reports Stockholms län, a county far larger than the city, with 4,946 km of
-        main roads against our 667 km [#recon-stockholm-qecio-main], so its figures are no
-        check on the city. BikeNetKit, also based on OpenStreetMap, counts 1,102 km against our
-        995 km of tiers A, B and E (−10%) [@bikenetkit-zenodo].
+        The city's own network figure, quoted below, counts <i lang="sv">egna cykelbanor,
+        kombinerade gång- och cykelbanor och cykelfält</i> (separate cycle tracks, combined walking
+        and cycling paths and painted cycle lanes) together [@stockholm-cykelvagar]. Scope: that is
+        our tiers A, B and D, 991 km of A+B plus 48 km of lanes. Its length basis, date and method
+        are not stated by the source; ours are per road side, October 2026 and OpenStreetMap. Area:
+        QECIO reports <i lang="sv">Stockholms län</i> (Stockholm County)
+        [@lansstyrelsen-stockholm-om-lanet], far larger than the city, with 4,946 km of main roads
+        against our 667 km [#recon-stockholm-qecio-main], so its figures are no check on the city.
+        BikeNetKit, also based on OpenStreetMap, counts 1,102 km against our 995 km of tiers A, B
+        and E (−10%) [@bikenetkit-zenodo].
 quotes:
   - {excerpt: stockholm-cykelvagar/network-117-mil, after: 3}
 facts:

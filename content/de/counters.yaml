@@ -17,11 +17,12 @@ sections:
       Eine Dauerzählstelle erfasst jedes Fahrrad, das ihren Zählquerschnitt passiert,
       unten zitiert [@berlin-zaehlstellen]. Über Fahrten anderswo oder darüber, wer
       fährt, sagt sie nichts. Die Zählstellen in Oslo sind die des Staates, an Straßen
-      des statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz)
-      und an einigen kommunale veger (Gemeindestraßen) [@vegvesen-trafikkdata]. Die
-      Dateien Barcelonas geben einen Durchschnittswert je Zählgerät, Monat und Tagesart
-      an [@barcelona-aforaments-detall], indexiert als eigene Reihe.
-    src: 0b44c4ce190f
+      des <i lang="nb">statlige og fylkeskommunale vegnett</i> (staatliches und regionales
+      Straßennetz) und an einigen <i lang="nb">kommunale veger</i> (Gemeindestraßen)
+      [@vegvesen-trafikkdata]. Die Dateien Barcelonas geben einen Durchschnittswert
+      je Zählgerät, Monat und Tagesart an [@barcelona-aforaments-detall], indexiert
+      als eigene Reihe.
+    src: 1d230a010117
 - heading:
     text: Wo Zählstellen stehen
     src: 3a317c035779
@@ -42,9 +43,9 @@ sections:
   - text: >-
       2020 war das Corona-Jahr. Die an Zählstellen erfassten Zählwerte wichen in jeder
       Stadt, die beide Jahre hat, von ihrem Niveau von 2019 ab; Berlins Index lag
-      bei 114,6. Die Diagramme markieren das Jahr, und ein Schritt in dieses Jahr
+      bei 114,2. Die Diagramme markieren das Jahr, und ein Schritt in dieses Jahr
       hinein oder aus ihm heraus ist kein Trend.
-    src: c45b60a76395
+    src: 01cb664147f9
 - heading:
     text: Brüche in einer Reihe
     src: 10c4bb115b82

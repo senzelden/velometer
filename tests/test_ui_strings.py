@@ -219,3 +219,12 @@ def test_german_bezirk_table_parses_back_to_the_english_values():
     assert i18n.t("de", "subarea.remainder", n=12) in names
     assert i18n.t("en", "subarea.remainder", n=12) not in names
     assert bezirk_table(text) == bezirk_table(text, "en")
+
+
+def test_the_english_remainder_label_glosses_the_original_term():
+    # M13 G1 (user review): the original term first, its translation in brackets, as Task 7's UI
+    # labels do ("Vorrangnetz (priority network)"); the gloss is the excerpt's, "the districts"
+    # (`infravelo-organisation/responsibility`). German needs no gloss.
+    en = i18n.t("en", "subarea.remainder", n=12)
+    assert "12 Bezirke (districts)" in en
+    assert "(districts)" not in i18n.t("de", "subarea.remainder", n=12)

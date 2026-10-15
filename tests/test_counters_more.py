@@ -10,6 +10,7 @@ import shutil
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import openpyxl
 import pytest
@@ -23,7 +24,12 @@ from velometer.counters.adapters import barcelona, helsinki, madrid, oslo
 from velometer.counters.check import check_counters
 from velometer.counters.days import to_days
 from velometer.counters.index import MIN_SITES, chain_index_monthly
-from velometer.counters.model import CounterFormatError, MonthValue, load_counters_config
+from velometer.counters.model import (
+    INDEX_METHODS,
+    CounterFormatError,
+    MonthValue,
+    load_counters_config,
+)
 from velometer.db import CounterMonth, create_schema, replace_counter_monthly
 
 FIX = Path(__file__).parent / "fixtures" / "counters"
@@ -185,20 +191,37 @@ def _setup(tmp_path, city: str, files: list[Path], boundary: Path | None = None)
 
 def _madrid_year(path: Path, year: int, sites: int) -> Path:
     """A synthetic Madrid file in the 2019-2021 schema: `sites` counters, every whole hour of
-    `year` with 1 bicycle, the two clock-change days left out (no counter needs them: 364 of 366
-    days is above MIN_VALID)."""
+    `year` with 1 bicycle, the year's two clock-change days left out (no counter needs them: 364
+    of 366 days is above MIN_VALID)."""
     header = (FIX / "madrid" / "2020.csv").read_bytes().decode("utf-8-sig").splitlines()[0]
     tail = "2;Arganzuela;Calle Toledo ;133;28005;Sentido Sur ;40,40547173;-3,711960704"
     lines = [header]
+    zone = ZoneInfo(CONFIG.entry("madrid").timezone)
+
+    def offset(d: date):
+        return datetime(d.year, d.month, d.day, tzinfo=zone).utcoffset()
+
     day = date(year, 1, 1)
     while day.year == year:
-        if (day.month, day.day) not in ((3, 29), (10, 25)):  # 2020's clock changes
+        if offset(day) == offset(date.fromordinal(day.toordinal() + 1)):  # no clock change
             for h in range(24):
                 stamp = f"{day:%d/%m/%Y} {h}:00;{h}:00"
                 lines += [f"{stamp};PERM_BICI{n:02d}_PM01;1;{tail}" for n in range(sites)]
         day = date.fromordinal(day.toordinal() + 1)
     path.write_bytes(("\ufeff" + "\r\n".join(lines) + "\r\n").encode("utf-8"))
     return path
+
+
+@pytest.mark.parametrize(
+    ("year", "changes"), [(2020, {"29/03", "25/10"}), (2021, {"28/03", "31/10"})]
+)
+def test_the_synthetic_madrid_year_leaves_out_that_years_clock_changes(tmp_path, year, changes):
+    # M8-20: the left-out days come from the zone's rules, not 2020's dates typed in
+    path = _madrid_year(tmp_path / f"{year}.csv", year, 1)
+    seen = {line[:5] for line in path.read_text(encoding="utf-8-sig").splitlines()[1:]}
+    start, end = date(year, 1, 1), date(year + 1, 1, 1)
+    every = {f"{date.fromordinal(d):%d/%m}" for d in range(start.toordinal(), end.toordinal())}
+    assert every - seen == changes
 
 
 def test_madrid_index_base_year_2020_is_100(tmp_path):
@@ -377,6 +400,24 @@ def test_counters_fetch_hands_the_data_dir_to_the_adapter(tmp_path, monkeypatch)
     assert seen == {"out_dir": data / "counters" / "oslo", "data_dir": data}
 
 
+def test_counters_fetch_names_the_url_when_the_portal_answers_html(tmp_path, monkeypatch):
+    # M8-19, M8-26: an HTML page where JSON was expected was "error: oslo: Expecting value";
+    # the adapter raises a CounterFormatError naming the URL, and the CLI exits 1 with it
+    import httpx
+
+    def post(url, **kw):
+        req = httpx.Request("POST", url)
+        return httpx.Response(200, text="<!doctype html><p>maintenance</p>", request=req)
+
+    monkeypatch.setattr(oslo.httpx, "post", post)
+    res = CliRunner().invoke(app, ["counters", "fetch", "oslo", "--data", str(tmp_path)])
+    assert res.exit_code == 1, res.output
+    assert "error: oslo: https://trafikkdata-api.atlas.vegvesen.no/" in res.output
+    assert "not JSON" in res.output
+    with pytest.raises(CounterFormatError, match="not JSON"):
+        oslo._graphql("https://example.org/", "query { x }", {})
+
+
 def test_oslo_fetch_without_a_data_dir_is_refused():
     with pytest.raises(ValueError, match="data directory"):
         oslo.fetch(CONFIG.entry("oslo"), Path("x"), post=lambda *a: pytest.fail("posted"))
@@ -434,6 +475,17 @@ def test_barcelona_load_stores_monthly_values_and_their_series(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM counter_daily").fetchone() == (0,)
     series = {r[0] for r in conn.execute("SELECT series FROM counter_index")}
     assert series == {"avg_daily_intensity"}
+    # the monthly links are unchanged by pooling (each site has twelve values in both years of
+    # a link): one chain_index_monthly result, stored for both methods
+    by_method = {
+        m: conn.execute(
+            "SELECT year, idx, sites, base_year, series FROM counter_index "
+            "WHERE city_id='barcelona' AND method=? ORDER BY year",
+            (m,),
+        ).fetchall()
+        for m in INDEX_METHODS
+    }
+    assert by_method["v1"] and by_method["v1"] == by_method["v2"]
     span = conn.execute(
         "SELECT first_day, last_day FROM counter_sites WHERE site_id='20012'"
     ).fetchone()

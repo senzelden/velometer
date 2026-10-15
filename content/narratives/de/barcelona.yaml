@@ -40,17 +40,19 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Das Radwegenetz des Ajuntament [@barcelona-premsa-42km-2025] und die 264 km
-      geschützter Infrastruktur von Clean Cities liegen beide nahe an unserem A+B-Wert;
-      unserer weicht um −7,7 % von dem von Clean Cities ab. Keine der beiden Quellen
-      sagt, ob eine Straße mit Anlagen auf beiden Seiten einmal oder zweimal zählt,
-      und die Daten von Clean Cities wurden bis Anfang 2025 erhoben [@cc2025-report].
-      Eine weiter gefasste Zählung der Radrouten, über die die Presse berichtete,
-      nimmt verkehrsberuhigte Straßen mit niedrigen Tempolimits hinzu [@barcelona-ara-32km-2021],
+      Die <i lang="ca">xarxa de carrils bici</i> (Radwegenetz) des Ajuntament [@barcelona-premsa-42km-2025]
+      und die 264 km geschützter Infrastruktur von Clean Cities liegen beide nahe
+      an unserem A+B-Wert; unserer weicht um −7,7 % von dem von Clean Cities ab. Keine
+      der beiden Quellen sagt, ob eine Straße mit Anlagen auf beiden Seiten einmal
+      oder zweimal zählt, und die Daten von Clean Cities wurden bis Anfang 2025 erhoben
+      [@cc2025-report]. Eine weiter gefasste Zählung der Radrouten, über die die Presse
+      berichtete, nimmt eine <i lang="ca">xarxa de vies ciclables</i> (Netz von Radrouten)
+      auf verkehrsberuhigten Straßen mit niedrigen Tempolimits hinzu [@barcelona-ara-32km-2021],
       eine Kategorie, die unsere Stufen auslassen. BikeNetKit zählt mehr (−43,1 %),
       weil es verkehrsberuhigte Bereiche einschließt [#rc-barcelona-bnk_network_km],
-      und QECIO berichtet für die ganze Provinz [#rc-barcelona-qecio_main_km].
-    src: 6255f7ae7512
+      und QECIO berichtet für die ganze <i lang="ca">província de Barcelona</i> (Provinz
+      Barcelona) [@diba-institucio] [#rc-barcelona-qecio_main_km].
+    src: 3f92f2a5480c
 literals:
 - 100 km
 - 83 Gemeinden

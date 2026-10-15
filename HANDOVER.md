@@ -181,10 +181,10 @@ German PNG (`<city>_<kind>.de.png`, German legend and footer). All of them live 
 `data/maps/`, so **a fresh checkout runs `velometer report maps` before `app export`** (it only
 reads the database and writes under `data/`); without it the export has no tier-map PNGs.
 
-After a palette change (`charts.TIER_COLOURS`), re-run `velometer report maps`; the change maps
-keep fixed colours. A tier map is skipped while its `.run` marker names the current run, and a
-palette change does not touch the run, so delete `data/maps/*_{lau,fua}.run` first (the PNGs and
-GeoJSON stay; the database is opened read-only).
+After a palette change (`charts.TIER_COLOURS`, `charts.OUTLINE` or `change.CATEGORY_COLOURS`),
+re-run `velometer report maps`: a tier map is skipped only while its `.run` marker names the current
+run and the current palette hash (`maps.palette_hash`), so a palette change redraws every map. The
+change maps are redrawn with `velometer report change`.
 
 ### Serving the static edition
 
@@ -262,8 +262,6 @@ tags), no overflow (a box that scrolls, clips or is spilled out of, other than a
 map and ellipsised text), no console message, no CSP violation, no host other than `127.0.0.1` and
 `tile.openstreetmap.org`, and no error; `--keyboard` adds its own steps, each of which must pass.
 Run it before reporting UI work done. axe-core is vendored and never shipped (`tools/axe/`).
-`velometer report maps` skips a map whose `.run` marker names the current run, and the marker
-ignores palette changes: after a palette change delete `data/maps/*.run` first (see above).
 
 Runs must be resumable and idempotent: skip a (city, date, boundary, classifier_version) tuple that already has a completed `Run`.
 
@@ -299,7 +297,9 @@ Build for **5 pilot cities first: Berlin, Paris, Vienna, Copenhagen, Wrocław** 
 
 **M11 — Reader features** (added after M10; spec `docs/superpowers/specs/2026-10-11-velometer-m11-design.md`, rulings `docs/superpowers/rulings-m11.md`). A **Sources** page (`/sources`) sets every quoted report beside our approach, one row per source, dimension by dimension, with the organisation behind it, the cities it covers and, where we recompute its method on our data, a link to that overview column. Every chart, key number and Figures row has a **Cite** disclosure (plain text, BibTeX and CSL-JSON, with the address the page is served at); every chart can be **downloaded** as SVG, PNG or the CSV behind it, in the light theme with attribution; the tier map, the story steps and the compare panel have **permalinks** and a Copy link button; the nav has a **search** over cities, countries, organisations, stories and pages (`/data/search.json`, no server). No DB write, no new run, no new host, no npm. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the full render pass (`--pages all`, both themes, 1280/390/320) and `--pages types --interact --keyboard --flip`, run on the M11 head, exit 0, which audits every exported page as loaded for axe violations, overflow, console messages, CSP violations and foreign hosts, plus the Cite, download and permalink visits and the `_search` keyboard steps listed in §8; screenshots of the Sources page, an open Cite, the Download menu, a downloaded SVG and PNG, the open search list and a restored tier-map permalink were looked at in both themes. Not claimed: downloads and Cite are not checked with a screen reader, and clipboard behaviour is proven only through the live-region message. Next: M12, the German edition.
 
-**M12 — German edition** (added after M11; spec `docs/superpowers/specs/2026-10-12-velometer-m12-design.md`, rulings `docs/superpowers/rulings-m12.md`). Every reader page has a German twin under `/de/` with a language switch in the nav (keeping query and hash), `hreflang` alternates and a German 404 line. The UI words come from one catalogue (`content/ui/{en,de}.yaml`, `i18n.t`; the JS gets its `js.*` strings in a `#ui-strings` block), numbers and dates are formatted per language by our own code (`1.234,5`, `Okt. 2026`), the five exonyms (Krakau, Warschau, Prag, Kopenhagen, Wien) are shown and searchable, chart downloads and citations are German on German pages (the CSV keeps its English preamble and dot decimals under a German header), and the tier maps have German PNGs. The content (narratives, explainer, counters and plan texts, organisation profiles, source glosses, config reader prose, the flagged-year explanations) has stamped German translations, reviewed by the user (Task 10); data-reference captions stay English inside `lang="en"` by user ruling. A German translation is required for the shipped tree (`content --check`). No DB write, no new run, no new host, no npm, no new Python dependency. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the English export of the M12 head differs from the M11 base only in the categories listed in rulings-m12 (language switch and alternates, the strings block and its scripts, static JS and CSS, the `.langs` line, `/methodology/de`, the panel `lang`, additive `_de` fields, search terms, the 404 German line); the full render pass (`--pages all`, both themes, 1280/390/320, both editions) and `--pages types --interact --keyboard --flip`, run on the M12 head, exit 0, which audits every page as loaded, plus on every German page `<html lang>`, resolving alternates and the English-leak step after the JS has drawn, and the German cite, download, permalink, search and switch steps listed in §8; screenshots of `/de/` (1280, 390), a German Krakau page, a German Compare permalink, an open German Cite, a German SVG and PNG, a German tier-map PNG and the 404 page were looked at in both themes. Not claimed: the English-word sniff is a heuristic (common English words, not every English phrase), proper names (`i18n.PROPER_NAMES`) keep their own form, and German pages were not checked with a screen reader. Next: not yet decided; the M9 roadmap ends at M12.
+**M12 — German edition** (added after M11; spec `docs/superpowers/specs/2026-10-12-velometer-m12-design.md`, rulings `docs/superpowers/rulings-m12.md`). Every reader page has a German twin under `/de/` with a language switch in the nav (keeping query and hash), `hreflang` alternates and a German 404 line. The UI words come from one catalogue (`content/ui/{en,de}.yaml`, `i18n.t`; the JS gets its `js.*` strings in a `#ui-strings` block), numbers and dates are formatted per language by our own code (`1.234,5`, `Okt. 2026`), the five exonyms (Krakau, Warschau, Prag, Kopenhagen, Wien) are shown and searchable, chart downloads and citations are German on German pages (the CSV keeps its English preamble and dot decimals under a German header), and the tier maps have German PNGs. The content (narratives, explainer, counters and plan texts, organisation profiles, source glosses, config reader prose, the flagged-year explanations) has stamped German translations, reviewed by the user (Task 10); data-reference captions stay English inside `lang="en"` by user ruling. A German translation is required for the shipped tree (`content --check`). No DB write, no new run, no new host, no npm, no new Python dependency. *Accept:* gate green including the node tests; the six checks exit 0; `velometer.sqlite` unchanged; the English export of the M12 head differs from the M11 base only in the categories listed in rulings-m12 (language switch and alternates, the strings block and its scripts, static JS and CSS, the `.langs` line, `/methodology/de`, the panel `lang`, additive `_de` fields, search terms, the 404 German line); the full render pass (`--pages all`, both themes, 1280/390/320, both editions) and `--pages types --interact --keyboard --flip`, run on the M12 head, exit 0, which audits every page as loaded, plus on every German page `<html lang>`, resolving alternates and the English-leak step after the JS has drawn, and the German cite, download, permalink, search and switch steps listed in §8; screenshots of `/de/` (1280, 390), a German Krakau page, a German Compare permalink, an open German Cite, a German SVG and PNG, a German tier-map PNG and the 404 page were looked at in both themes. Not claimed: the English-word sniff is a heuristic (common English words, not every English phrase), proper names (`i18n.PROPER_NAMES`) keep their own form, and German pages were not checked with a screen reader. Next: M13, the open follow-ups.
+
+**M13 — Open follow-ups** (added after M12; spec `docs/superpowers/specs/2026-10-14-velometer-m13-design.md`, plan `docs/superpowers/plans/2026-10-15-velometer-m13.md`, rulings `docs/superpowers/rulings-m13.md`, evidence in `docs/review/m13-*.md`). A batch of everything left open after M12 except hosting and deployment. Paris and Helsinki counters decide "in service" per hour, and overlapping counter files keep the reading with more reporting counters (restoring 31,520 Paris counts the rolling export had overwritten). The counter index has a second method (`counter_index.method`, schema v10); the site shows v2 and the methodology sets v1 beside it. Overlay v5 was measured and not built (user ruling). The chart series palette is colour-blind safe in both themes, the change map meets WCAG 1.4.11 in light, the Figures table stacks below 700 px, and the plan chart's mapped km sit on a second panel. Country-specific categories are given in the original term first with a translation, in both editions (`<i lang>` marks, `docs/review/m13-terms.md`). The deferred review minors from M8 to M12 are each fixed, closed or kept (`docs/review/m13-minors.md`), and Orca read the site in an isolated session (`docs/review/m13-screen-reader.md`). **Upgrade step:** `velometer migrate` takes an M12 database to schema v10 but writes only v1 index rows; run `velometer counters load` for all seven counter cities before the counter lines show again (migrate prints this). *Accept:* gate green including the node tests; the six checks exit 0; the full render pass (`--pages all`, both themes, 1280/390/320, both editions) and `--pages types --interact --keyboard --flip`, run on the M13 head, exit 0; every changed sentence (107 rows, 5 methodology rows) was reviewed by the user; screenshots of the palette, the plan chart's two panels, the stacked Figures table and the Sources page were looked at in both themes. Not claimed: `content --check --online` still misses 14 excerpts (scanned PDFs, table columns; none wrong), and German pages under Orca were heard in the English voice (process locale). Next: not yet decided.
 
 ### Accessibility statement (M10)
 
@@ -317,24 +317,27 @@ conformance, not a certification.
 
 **Known limits:**
 
-- **WCAG 1.4.11 (non-text contrast) is not met for the change map in the light theme:** its
-  colours fall below 3:1 against white. The spec fixes them at their M9 values so the change PNGs
-  are not regenerated; they draw over greyed tiles, and the key swatches carry text labels
-  (ruling, rulings-m10).
+- The change-map colours meet WCAG 1.4.11 (3:1) against white, paper and panel in both themes
+  since M13 (they fell short in the light theme from M9 to M12); the graphics test enforces it.
 - The PNG maps stay light: they are drawn for a white ground and are linked, not embedded, so a
   reader who opens one in the dark theme sees it on the browser's own background. No dark PNGs
   were made.
 - Prose tables (methodology, explainer) scroll sideways inside a named, focusable region. At 200%
-  zoom on a 1280 px screen (640 CSS px) and under WCAG 1.4.12 text spacing the Figures tables also
-  scroll inside their region, because stacking starts at 600 px; nothing is lost or clipped.
-- The series palette (8 city colours) is held only to normal-vision colour difference (CIEDE2000
-  at least 20); only the tier palette is checked under simulated colour blindness, and tiers B and
-  E are only 20.5 apart under deuteranopia. Charts also label series directly and have tables.
+  zoom on a 1280 px screen (640 CSS px) other data tables also scroll inside their region, because
+  they stack only below 600 px; the Figures tables stack below 700 px since M13 (browser tests in
+  `tests/test_layout_browser.py`). Nothing is lost or clipped.
+- The tier, series (8 city colours) and change-map palettes are checked under simulated
+  deuteranopia and protanopia as well as normal vision (CIEDE2000 at least 20 pairwise, M13), but
+  the floor is narrow: tiers B and E are 20.5 apart under deuteranopia, and eight series colours
+  pass only with some very dark ones (picked by `tools/pick_palette.py`). Charts also label series
+  directly and have tables.
 - If a colour token is missing, the JS falls back to a neutral grey and logs one console error
   (spec §5 said "the light value"; ruling in rulings-m10). The render pass fails on that error.
-- `velometer report maps` skips a map when its `.run` marker names the current run; the marker
-  ignores palette changes, so re-rendering after one needs the markers deleted (§8).
-- Not covered: screen-reader testing with real assistive technology, and a German interface (M12).
+- Screen reader (M13): Orca 50 read a sample of both editions (28 steps, `tools/orca_pass.py`, log
+  `docs/review/m13-screen-reader.md`), headless and isolated from the desktop, speech to a log.
+  Its two defects are fixed. Not covered: other screen readers, and language switching under a
+  German process locale (that run spoke German UI labels in the English voice because the process
+  locale was `en_US`).
 
 ### Reader features (M11)
 

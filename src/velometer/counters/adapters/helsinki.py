@@ -12,8 +12,8 @@ read as the second pass of the fall-back hour (fold=1) when that hour exists, el
 `CounterFormatError`.
 
 Columns mapped to one site by `site_aliases` are summed (`days.sum_counters`): an hour counts
-only when every mapped column in service that day reports it (a column is in service from its
-first to its last reported day). The config maps the two sides of three bridges this way: the
+only when every mapped column in service at that hour reports it (a column is in service from its
+first to its last reported hour). The config maps the two sides of three bridges this way: the
 file moves counts between their columns (publisher note: in 2016 both sides of the Kulosaari
 bridge are in one column; docs/review/m8-counters.md).
 

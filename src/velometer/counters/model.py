@@ -16,13 +16,26 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from velometer.config import ConfigError, require_de
+from velometer.content.models import bracket_lang, name_lang
 from velometer.i18n import Lang
 
 COUNTERS_FILE = "counters.yaml"
 DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names another (§2.13)
 COVID_YEAR = 2020  # marked on every counter chart (spec decision 12)
 MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line (user ruling, Task 8)
+
+
+def has_line(values) -> bool:
+    """Whether an index with these yearly values (None: no value) is drawn as a line: at least
+    `MIN_LINE_YEARS` years with a value. The Counts tab, Compare and the methodology."""
+    return sum(v is not None for v in values) >= MIN_LINE_YEARS
+
+
 GAP_DAYS = 31  # a run of days without any count longer than this is a gap in the data
+# the counter index rule readers show (M13 spec §4.2): v2 pools counts per complete day; the
+# stored v1 rows (M8-M12: summed counts) feed only the methodology's v1->v2 table
+INDEX_METHOD = "v2"
+INDEX_METHODS = ("v1", "v2")
 
 Grain = Literal["hourly", "daily", "monthly"]
 
@@ -40,6 +53,7 @@ class HourCount:
     site_id: str
     local_hour: datetime  # naive local wall clock; fold=1 on the repeated fall-back hour
     count: int
+    counters: int = 1  # counters that reported the hour (a summed site-hour: how many were summed)
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,6 +116,12 @@ class CounterEntry(_Strict):
     # the German attribution, only where `source` holds our English words beside the name
     # (Oslo's "(state counters)"); a publisher's own name is not translated (M12)
     source_de: str | None = None
+    # the language of `source` (BCP 47) where it is the body's own name (an original-language
+    # form in brackets beside it shares it), written as its `lang` (M12-1); not used for source_de
+    source_lang: str | None = None
+    # the language of the bracketed form ending `source` where it is not `source_lang`
+    # (Helsinki's Finnish name beside the English one; review 10, I1); not used for source_de
+    source_bracket_lang: str | None = None
     licence: str
     licence_url: str
     page: str  # the dataset's portal page
@@ -118,6 +138,21 @@ class CounterEntry(_Strict):
     # are dropped, with their counts (Oslo: state counters, county-wide query)
     boundary: Literal["lau"] | None = None
     step_downs: list[StepDown] = []
+    # a clause the methodology adds after the gaps of a city drawn without an index line, in
+    # the portal's words as we read them (Madrid: "while the detectors were changed"); the German
+    # clause is required beside it (M12)
+    note: str | None = None
+    note_de: str | None = None
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "CounterEntry":
+        require_de(self, f"city {self.city!r}", "note")
+        return self
+
+    @model_validator(mode="after")
+    def _source_bracket_lang(self) -> "CounterEntry":
+        bracket_lang(self.source_bracket_lang, self.source, "source_bracket_lang")
+        return self
 
     @field_validator("timezone")
     @classmethod
@@ -130,6 +165,19 @@ class CounterEntry(_Strict):
 
     def source_in(self, lang: Lang) -> str:
         return (self.source_de or self.source) if lang == "de" else self.source
+
+    def source_lang_in(self, lang: Lang) -> str | None:
+        """The `lang` of what `source_in(lang)` shows: none for our German `source_de`."""
+        return None if lang == "de" and self.source_de else self.source_lang
+
+    def source_bracket_lang_in(self, lang: Lang) -> str | None:
+        """The language of the bracket in what `source_in(lang)` shows: none for `source_de`."""
+        return None if lang == "de" and self.source_de else self.source_bracket_lang
+
+    @field_validator("source_lang")
+    @classmethod
+    def _source_lang(cls, v: str | None) -> str | None:
+        return name_lang(v, "source_lang")
 
 
 class NoCounterData(_Strict):

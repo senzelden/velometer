@@ -253,7 +253,7 @@ page.plan.licence_unknown: ', Lizenz nicht erfasst'
 page.plan.retrieved: ', abgerufen {retrieved}'
 page.plan.matched: '; abgeglichen mit OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL 1.0)'
 page.plan.matched_with: mit <code>{version}</code>
-page.plan.record_error: 'Datenquellen-Eintrag nicht lesbar (<code>retrieved.json</code> der Berliner Datensätze; siehe Serverprotokoll): Lizenz und Abrufdatum können nicht gezeigt werden.'
+page.plan.record_error: 'Datenquellen-Eintrag nicht lesbar (<code>retrieved.json</code> der Berliner Datensätze; siehe Serverprotokoll): Die Lizenzen und das Abrufdatum des Maßnahmendatensatzes können nicht gezeigt werden.'
 
 # --- Stadtseite
 page.city.residents: '{n} Einwohner (Kernstadt)'
@@ -398,6 +398,7 @@ page.city.headline_chart: Hauptkennzahl im Zeitverlauf, {city}
 page.story.table: 'Tabelle: Hauptkennzahl je Stand'
 table.kind_headline: "Haupt­kennzahl {kind}"
 cite.title.city_headline: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU)'
+cite.title.city_headline_both: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU) und Funktionaler Stadtraum (FUA)'
 note.no_run_history: kein Lauf (Verlauf)
 page.story.over_time: Zeitverlauf, mit markierten Jahren
 page.story.read_on: Weiterlesen
@@ -487,7 +488,7 @@ tier.A: A baulich getrennter Radweg
 tier.B: B Geh- und Radweg
 tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
-tier.E: E Fahrradstraße / Busspur
+tier.E: E Fahrradstraße o. Ä. / Busspur
 map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
 map.footer: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle
@@ -518,7 +519,7 @@ counts.no_line: keine Linie des Zählstellenindex (ein Indexwert für nur ein Ja
 counts.config_error: 'Zählstellenkonfiguration nicht lesbar (config/counters.yaml; siehe Serverprotokoll): Städte ohne offene Zähldaten werden nicht als solche genannt'
 counts.title: Zählstellen
 counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
-counts.foot: "Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab."
+counts.foot: "Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Ränge in der Ansicht Rang hängen von den gewählten Städten ab."
 counts.not_recorded: nicht erfasst
 counts.source_not_recorded: Quelle nicht erfasst
 counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswerte), nicht der Zählwerte
@@ -623,6 +624,7 @@ cite.accessed: '{url} (abgerufen am {accessed}).'
 cite.snapshot: OSM-Stand {timestamp}
 cite.snapshot_one: OSM-Stand vom {day}
 cite.snapshot_range: OSM-Stände vom {first} bis {last}
+cite.snapshot_two: '{kind_a}-Lauf {run_a}, OSM-Stand {ts_a}, und {kind_b}-Lauf {run_b}, OSM-Stand {ts_b}'
 cite.classifier: Klassifikator {version}
 cite.run: Lauf {run}
 cite.commit: Commit {commit}
@@ -639,7 +641,7 @@ js.tier.A: A baulich getrennter Radweg
 js.tier.B: B Geh- und Radweg
 js.tier.C: C geschützter Radfahrstreifen
 js.tier.D: D markierter Radfahrstreifen
-js.tier.E: E Fahrradstraße / Busspur
+js.tier.E: E Fahrradstraße o. Ä. / Busspur
 js.chart.no_values: Keine Werte für diese Auswahl.
 js.chart.no_data: Keine Daten
 js.chart.line: Liniendiagramm
@@ -670,7 +672,7 @@ js.counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswert
 js.counts.covid_year: Corona-Jahr
 js.counts.title: Zählstellen
 js.counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
-js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
 js.counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchschnittlichen täglichen Stärke)
 js.counts.any_base: Basisjahr jeder Stadt = 100
 js.counts.base_for: '{year} = 100 für {cities}'
@@ -724,8 +726,10 @@ js.plan.no_figures: Für diesen Punkt gibt es keine Zahlen für ein Diagramm; di
 js.plan.per_year: '{unit} je Jahr'
 js.plan.cumulative: kumuliert
 js.plan.total: gesamt
-js.plan.share: Anteil
-js.plan.line: 'Linie: kartierte km seit 1. Jan. {year}'
+js.plan.share_in: Anteil in {unit}
+js.plan.mapped_axis: kartierte km seit 1. Jan. {year}
+js.plan.mapped_chart_of: 'Diagramm: {label}, im Netz kartierte km seit 1. Jan. {year}'
+js.plan.mapped_chart: 'Diagramm: im Netz kartierte km seit 1. Jan. {year}'
 js.plan.chart_of: 'Diagramm: {label}, Ziel und Zahlen nach Jahr'
 js.plan.chart: Plandiagramm
 js.plan.completed: Fertiggestellte Projekte
@@ -737,7 +741,7 @@ js.plan.current: (aktuell)
 js.plan.revision: (Revision)
 js.plan.suspect: zweifelhaft
 js.plan.suspect_note: 'zweifelhaft: {note}'
-js.plan.not_drawn: 'Das Ziel ({unit}, {quantity}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
+js.plan.not_drawn: 'Das Ziel ({measure}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
 js.search.no_match: Kein Treffer
 js.search.results:
   one: '{count} Treffer'

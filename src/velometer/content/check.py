@@ -7,8 +7,10 @@ import contextlib
 import csv
 import html
 import re
+import shutil
+import subprocess
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -104,10 +106,11 @@ _SITES_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,2}?(?:sites?|counters?)\b", re
 # A share of days: a percentage followed within three words by "days" ("90% of days").
 _PER_CENT = re.compile(r"\s*(?:%|per\s?cent\b)", re.IGNORECASE)
 _DAYS_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,3}?days?\b", re.IGNORECASE)
-# A base year: "2019 = 100", "2019 is the base (year)", "base year (is) 2019", "chained from
-# 2019", "indexed/rebased to 2019", and a year in the parenthesis after one ("(Madrid: 2020)").
+# A base year: "2019 = 100" or "2019 (= 100)", "2019 is the base (year)", "base year (is) 2019",
+# "chained from 2019", "indexed/rebased to 2019", and a year in the parenthesis after one
+# ("(Madrid: 2020)").
 _BASE_AFTER = re.compile(
-    r"\s*=\s*100\b|\s+(?:is\s+|as\s+)?(?:the\s+)?(?:index\s+)?base\b", re.IGNORECASE
+    r"\s*\(?\s*=\s*100\b|\s+(?:is\s+|as\s+)?(?:the\s+)?(?:index\s+)?base\b", re.IGNORECASE
 )
 _BASE_BEFORE = re.compile(
     r"(?:\bbase\s+year(?:\s+(?:is|of))?|\bchained\s+from|\b(?:indexed|rebased)\s+to)\s*:?\s*"
@@ -147,12 +150,53 @@ _ORDINAL_WORDS_DE = sorted(
 _ORDINAL_DE = re.compile(
     r"\b\d{1,2}\.[   ]?(?:" + "|".join(map(re.escape, _ORDINAL_WORDS_DE)) + r")(?!\w)"
 )
-# a quotation in another language than German: kept byte for byte from the English (parity),
-# so it is checked there, not as German text
+# a quotation or an original term (`<i lang>`) in another language than German: kept byte for
+# byte from the English (parity), so it is checked there, not as German text
 _FOREIGN_QUOTE = re.compile(
-    r"""<(q|blockquote)\b[^>]*\blang\s*=\s*["'](?!de["'-])[^"']*["'][^>]*>.*?</\1>""",
+    r"""<(q|blockquote|i)\b[^>]*\blang\s*=\s*["'](?!de["'-])[^"']*["'][^>]*>.*?</\1>""",
     re.S | re.IGNORECASE,
 )
+
+
+# the markup content may write, exactly as the renderer reads it (app/narrative.py): a quotation,
+# a block quotation or an original term, each with one double-quoted BCP 47 `lang` and nothing
+# else, and its own closing tag. Any other tag renders as escaped text, so it is a problem
+_ANY_TAG = re.compile(r"</?[A-Za-z][^<>]*>")
+_MARK_OPEN = re.compile(rf'<(q|i|blockquote) lang="(?:{LANG_TAG.pattern})">')
+_MARK_CLOSE = re.compile(r"</(q|i|blockquote)>")
+_CODE_SPAN = re.compile(r"`[^`\n]+`")
+
+
+_BLOCKQUOTE_WHOLE = re.compile(
+    rf'<blockquote lang="(?:{LANG_TAG.pattern})">(.*)</blockquote>', re.DOTALL
+)
+
+
+def malformed_marks(text: str) -> list[str]:
+    """Every tag of the paragraph `text` (outside code spans) that is no well-formed, properly
+    nested mark: another tag or form, a close without its open, an open left unclosed, a mark
+    opened inside the same mark (the renderer pairs the first open with the first close), and
+    a block quotation that is not the whole paragraph (review 10, M2)."""
+    out: list[str] = []
+    stack: list[tuple[str, str]] = []  # (tag name, open tag)
+    # a paragraph that is wholly one block quotation is read as its inside; any other
+    # `blockquote` tag is malformed
+    whole = _BLOCKQUOTE_WHOLE.fullmatch(_CODE_SPAN.sub(" ", text).strip())
+    body = whole.group(1) if whole else _CODE_SPAN.sub(" ", text)
+    for m in _ANY_TAG.finditer(body):
+        tag = m.group(0)
+        opened = _MARK_OPEN.fullmatch(tag)
+        closed = _MARK_CLOSE.fullmatch(tag)
+        name = (opened or closed).group(1) if (opened or closed) else None
+        if name == "blockquote" or (opened and any(n == name for n, _t in stack)):
+            out.append(tag)
+        elif opened:
+            stack.append((name, tag))
+        elif closed and stack and stack[-1][0] == name:
+            stack.pop()
+        else:
+            out.append(tag)
+    return out + [tag for _name, tag in stack]
 
 
 def normalise_number_de(text: str) -> str:
@@ -284,7 +328,8 @@ RULES: dict[i18n.Lang, RuleFamily] = {
         per_cent=re.compile(r"\s*(?:%|Prozent\b)", _I),
         days_after=re.compile(rf"\s+(?:{_LETTERS}\s+){{0,3}}?Tag(?:e|en)?\b", _I),
         base_after=re.compile(
-            r"\s*=\s*100\b|\s+(?:ist\s+|als\s+)?(?:das\s+)?(?:Index-?\s*)?Basis(?:jahr)?\b", _I
+            r"\s*\(?\s*=\s*100\b|\s+(?:ist\s+|als\s+)?(?:das\s+)?(?:Index-?\s*)?Basis(?:jahr)?\b",
+            _I,
         ),
         base_before=re.compile(
             r"(?:\bBasisjahr(?:\s+(?:ist|von))?|\bverkettet\s+ab|"
@@ -452,6 +497,11 @@ def _check_document(
         for rid in _DATA_REF.findall(p):
             if rid not in ref_ids:
                 add(f"unknown data ref {rid}")
+        for tag in malformed_marks(p):
+            add(
+                f'malformed mark {tag!r}: content writes only <q lang="…">, <i lang="…"> '
+                'and <blockquote lang="…">, each closed'
+            )
         for n in undeclared_numbers(p, allowed, literals, lang):
             add(f"undeclared number {n}")
         for v in construction_verbs(p, rules):
@@ -578,7 +628,8 @@ def _narrative_prose(n: Narrative) -> list[str]:
 
 def _check_lang_attributes(content_dir: Path, german: bool = False) -> list[str]:
     """A problem per `lang="…"` in a content file whose value is not a BCP 47 language tag: the
-    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`). The English
+    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`) or an original
+    term (`<i lang>`). The English
     files, or with `german` the translation files (those in a `de/` directory)."""
     problems = []
     for path in sorted(content_dir.rglob("*.yaml")):
@@ -687,7 +738,7 @@ def _check(
         for org in orgs.values():
             problems += _check_organisation(org, sources, data, docs_dir, config_dir)
         problems += _check_coverage(config_dir, set(orgs) | set(org_errors), plans, rows)
-        problems += _check_source_rows(config_dir, orgs)
+        problems += _check_source_rows(config_dir, orgs, said=problems)
     return problems
 
 
@@ -770,7 +821,10 @@ def check_translation(
                 f" German {sorted(de_markers.elements())})"
             )
         if Counter(_foreign_quotes(en_text)) != Counter(_foreign_quotes(de.text)):
-            problem(f" {path}: quotations differ from English (quotes are never translated)")
+            problem(
+                f" {path}: quotations or original terms differ from English"
+                " (neither is ever translated)"
+            )
         not_stated = ".dimensions." in path and " ".join(en_text.split()) == NOT_STATED
         if not_stated and " ".join(de.text.split()) != NOT_STATED_DE:
             problem(f" {path}: {NOT_STATED!r} is {NOT_STATED_DE!r} in German")
@@ -1003,18 +1057,29 @@ NOT_STATED = "not stated by the source"
 NOT_STATED_DE = "von der Quelle nicht angegeben"
 
 
-def _check_source_rows(config_dir: Path, orgs: dict[str, Organisation]) -> list[str]:
+def _check_source_rows(
+    config_dir: Path, orgs: dict[str, Organisation], said: Collection[str] = ()
+) -> list[str]:
     """Every quoted figure source has its /sources row (M11 spec decision 1): the organisation
     behind each mapping entry whose (city, source) figures.csv or reconcile.yaml quotes has a
     "How they measure" section with all six dimensions, each cited or "not stated by the
-    source". A missing profile or an unreadable file is `_check_coverage`'s problem."""
+    source". A missing profile is `_check_coverage`'s problem. A file the check needs that
+    cannot be read is said in one line naming it, so the rows are never passed unchecked in
+    silence; unless that cause is already among the problems `said` (the coverage check
+    reads figures.csv and reconcile.yaml too), since a broken file is one problem."""
     try:
         mapping = load_organisation_map(Path(config_dir) / "organisations.yaml")
-        dims = _read_dimensions(config_dir)
         pairs = _figure_pairs(config_dir)
         reconciled = set(_reconcile_sources(config_dir))
-    except (ContentError, *_DIMENSION_ERRORS):
-        return []
+    except ContentError as e:
+        if str(e) in said:
+            return []
+        return [f"organisations: the 'How they measure' rows were not checked: {e}"]
+    try:
+        dims = _read_dimensions(config_dir)
+    except _DIMENSION_ERRORS as e:
+        diff = Path(config_dir) / "differences.yaml"
+        return [f"organisations: the 'How they measure' rows were not checked: {diff}: {e}"]
     if dims is None:
         return []
     problems: list[str] = []
@@ -1076,27 +1141,144 @@ def _check_coverage(
     return problems
 
 
-def _http_get(url: str) -> str:
+TIMEOUT = 30.0  # seconds; a timeout is retried once with RETRY_TIMEOUT
+RETRY_TIMEOUT = 90.0
+UNREACHABLE = "unreachable (network problem)"
+NO_PDF_READER = "skipped: no PDF reader"
+_SKIPPED = object()  # a page check_online cannot read (a PDF without pdftotext)
+PDF_TIMEOUT = 60  # seconds for one pdftotext run: a malformed PDF never hangs the check
+# inline elements: a tag of one sits inside a word or before its punctuation ("1<sup>er</sup>",
+# "<em>lang</em>."), so it is dropped; any other tag (a block, a cell) still separates words
+_INLINE = re.compile(
+    r"</?(?:a|abbr|b|bdi|bdo|cite|code|data|dfn|em|font|i|kbd|mark|q|s|samp|small|span|strong"
+    r"|sub|sup|time|u|var|wbr)\b[^>]*>",
+    re.I,
+)
+
+
+class Unreachable(Exception):
+    """The host did not answer (a timeout twice, or no connection): a network problem, not a
+    verdict on the excerpt."""
+
+
+class NoPdfReader(Exception):
+    """A PDF source, and no `pdftotext` to read it."""
+
+
+class PdfUnreadable(Exception):
+    """`pdftotext` failed on a PDF or took longer than PDF_TIMEOUT."""
+
+
+def _is_pdf(body: bytes) -> bool:
+    return body.lstrip()[:5] == b"%PDF-"
+
+
+def _http_get(url: str) -> str | bytes:
+    """The page at `url`: its text, or its bytes when it is a PDF (by content type or by the
+    `%PDF-` signature). A timeout is retried once with a longer timeout; a transport failure
+    after that raises Unreachable. An HTTP error status raises httpx.HTTPStatusError."""
     from velometer.sources.download import user_agent
 
-    resp = httpx.get(url, follow_redirects=True, timeout=30.0, headers={"User-Agent": user_agent()})
+    headers = {"User-Agent": user_agent()}
+    try:
+        try:
+            resp = httpx.get(url, follow_redirects=True, timeout=TIMEOUT, headers=headers)
+        except httpx.TimeoutException:
+            resp = httpx.get(url, follow_redirects=True, timeout=RETRY_TIMEOUT, headers=headers)
+    except httpx.TransportError as e:
+        raise Unreachable(str(e) or type(e).__name__) from e
     resp.raise_for_status()
-    return resp.text
+    pdf = "application/pdf" in resp.headers.get("content-type", "")
+    return resp.content if pdf or _is_pdf(resp.content) else resp.text
+
+
+PDF_ORDERS = ([], ["-raw"])  # pdftotext's reading order, then the content-stream order
+_ORDER_BREAK = " \u241e "  # between the two readings: no excerpt spans it
+
+
+def _pdf_text(body: bytes) -> str:
+    """The text of PDF `body`, read by the `pdftotext` CLI (poppler) twice: in reading order and
+    in content-stream order (`-raw`), joined, so an excerpt is found in either. A header, a page
+    number or a table cell drawn out of reading order splits a sentence or a row in one of them.
+    NoPdfReader without pdftotext."""
+    exe = shutil.which("pdftotext")
+    if exe is None:
+        raise NoPdfReader
+    try:
+        texts = [
+            subprocess.run(
+                [exe, "-q", *o, "-", "-"],
+                input=body,
+                capture_output=True,
+                check=True,
+                timeout=PDF_TIMEOUT,
+            ).stdout.decode("utf-8", errors="replace")
+            for o in PDF_ORDERS
+        ]
+    except subprocess.TimeoutExpired as e:
+        raise PdfUnreadable(f"pdftotext took more than {PDF_TIMEOUT} s") from e
+    except subprocess.CalledProcessError as e:
+        raise PdfUnreadable(f"pdftotext exit {e.returncode}") from e
+    return _ORDER_BREAK.join(texts)
+
+
+class _Page:
+    """A fetched page's text, and how an excerpt is looked for in it."""
+
+    def __init__(self, text: str, pdf: bool):
+        self.pdf = pdf
+        # PDF text is compared without any whitespace: pdftotext drops the spaces of justified
+        # text ("voiesréservées"). HTML keeps its spaces: "21 47 km" must not match "2 147 km".
+        self.text = _no_space(text) if pdf else text
+
+    def holds(self, excerpt: str) -> bool:
+        ex = _squash(excerpt)
+        return (_no_space(ex) if self.pdf else ex) in self.text
+
+
+def _no_space(text: str) -> str:
+    return "".join(text.split())
+
+
+def _page_text(body: str | bytes) -> _Page:
+    """A fetched page as the text an excerpt is looked for in: a PDF's text as pdftotext reads
+    it (plain text: a `<` in it is not markup), else the HTML without its tags and entities."""
+    if isinstance(body, bytes) and _is_pdf(body):
+        return _Page(" ".join(_pdf_text(body).split()), pdf=True)
+    text = body if isinstance(body, str) else body.decode("utf-8", errors="replace")
+    return _Page(_squash(text), pdf=False)
 
 
 def _squash(text: str) -> str:
-    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", text)).split())
+    """Text without tags and entities, whitespace-normalised: an inline element's tag is dropped,
+    any other tag is a space."""
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", _INLINE.sub("", text))).split())
 
 
-def check_online(sources: dict[str, Source], fetch: Callable[[str], str] = _http_get) -> list[str]:
-    """Fetch each source URL once and report excerpts whose text is not on the page
-    (whitespace-normalised). Never archives anything."""
+def check_online(
+    sources: dict[str, Source], fetch: Callable[[str], str | bytes] = _http_get
+) -> tuple[list[str], list[str]]:
+    """(problems, notes): fetch each source URL once and report excerpts whose text is not on
+    the page (HTML: tags dropped, whitespace-normalised; PDF: compared without whitespace). A PDF
+    is read as text by `pdftotext`; without it each of its excerpts is a note ("skipped: no PDF
+    reader"), not a problem, and a PDF it fails on is "cannot read PDF". A host that does not
+    answer is "unreachable", apart from a page that does not hold the excerpt. Never archives
+    anything."""
     problems: list[str] = []
-    pages: dict[str, str | None] = {}
+    notes: list[str] = []
+    pages: dict[str, _Page | object | None] = {}  # url -> page, _SKIPPED or None
     for s in sources.values():
         if s.url not in pages:
             try:
-                pages[s.url] = _squash(fetch(s.url))
+                pages[s.url] = _page_text(fetch(s.url))
+            except NoPdfReader:
+                pages[s.url] = _SKIPPED
+            except PdfUnreadable as e:
+                pages[s.url] = None
+                problems.append(f"sources/{s.id}: cannot read PDF {s.url}: {e}")
+            except Unreachable as e:
+                pages[s.url] = None
+                problems.append(f"sources/{s.id}: {UNREACHABLE} {s.url}: {e}")
             except Exception as e:  # noqa: BLE001 - any fetch failure is a reported problem
                 pages[s.url] = None
                 problems.append(f"sources/{s.id}: cannot fetch {s.url}: {e}")
@@ -1104,9 +1286,11 @@ def check_online(sources: dict[str, Source], fetch: Callable[[str], str] = _http
         if page is None:
             continue
         for e in s.excerpts:
-            if _squash(e.text) not in page:
+            if page is _SKIPPED:
+                notes.append(f"sources/{s.id}: excerpt {e.id} {NO_PDF_READER}")
+            elif not page.holds(e.text):
                 problems.append(f"sources/{s.id}: excerpt not found online: {e.id}")
-    return problems
+    return problems, notes
 
 
 def counts(content_dir: Path) -> tuple[int, int, int]:

@@ -5,35 +5,35 @@ sections:
     src: e74d1fb7aefb
   paragraphs:
   - text: >-
-      Das Abgeordnetenhaus ist das Parlament des Landes Berlin. Es beschließt Gesetze,
-      wählt die Regierende Bürgermeisterin oder den Regierenden Bürgermeister und
-      kontrolliert die Regierung, den Senat [@agh-arbeitsweise]. Mit dem Haushaltsgesetz
-      entscheidet es, wofür das Geld des Landes ausgegeben wird, jeweils für ein oder
-      zwei Jahre [@agh-arbeitsweise].
-    src: 6c4af7cff351
+      Das Abgeordnetenhaus ist das Parlament des Landes Berlin [@infravelo-faq]. Es
+      beschließt Gesetze, wählt die Regierende Bürgermeisterin oder den Regierenden
+      Bürgermeister und kontrolliert die Regierung, den Senat [@agh-arbeitsweise].
+      Mit dem Haushaltsgesetz entscheidet es, wofür das Geld des Landes ausgegeben
+      wird, jeweils für ein oder zwei Jahre [@agh-arbeitsweise].
+    src: abd59b16a4a2
 - heading:
     text: Wie sie messen
     src: 961f30415384
   dimensions:
     scope:
       text: >-
-        was eine Anfrage erfragt; für das Vorrangnetz die je Jahr und Bezirk umgesetzten
-        km [@berlin-drs-19-25987]
-      src: 15b965095efa
+        was eine Anfrage erfragt; für das Radvorrangnetz die je Jahr und Bezirk umgesetzten
+        km [@berlin-drs-19-25987] [@infravelo-faq]
+      src: fe291672eea8
     kind:
       text: so, wie der Senat antwortet [@agh-parlamentarische-anfragen]
       src: f8816a10ee16
     length:
       text: >-
         so, wie der Senat antwortet; die Drucksache 19/25987 nennt die Streckenlänge
-        nur für das Zielnetz [@berlin-drs-19-25987]
-      src: 505813224b3a
+        nur für das planerische Zielnetz [@berlin-drs-19-25987]
+      src: c35904073f33
     date:
       text: das Datum der Antwort des Senats [@berlin-drs-19-25987]
       src: df02f98a13b1
     area:
-      text: Land Berlin
-      src: 6908961d6eca
+      text: Land Berlin [@infravelo-faq]
+      src: 50cead5704e6
     method:
       text: >-
         das Parlament misst nicht; es veröffentlicht die Antworten und Berichte des
@@ -45,9 +45,9 @@ sections:
       Mit einer Schriftlichen Anfrage kann jedes Mitglied Auskunft verlangen; der
       Senat antwortet schriftlich, in der Regel innerhalb von drei Wochen [@agh-parlamentarische-anfragen],
       und jede Antwort bleibt in der Parlamentsdokumentation PARDOK abrufbar [@agh-parlamentarische-anfragen].
-      Die Drucksache 19/25987 vom Mai 2026 ist die Quelle unserer Zeilen zum Vorrangnetz
+      Die Drucksache 19/25987 vom Mai 2026 ist die Quelle unserer Zeilen zum Radvorrangnetz
       [@berlin-drs-19-25987].
-    src: 3c268d1dcbae
+    src: 399e5e03dd8d
   - text: >-
       Der jährliche Fortschrittsbericht erreicht das Parlament als Bericht der Senatsverkehrsverwaltung
       an den Hauptausschuss [@berlin-dpa-fortschrittsbericht-hauptausschuss].
@@ -59,18 +59,19 @@ sections:
   - text: >-
       Das Abgeordnetenhaus beschloss das Mobilitätsgesetz am 28. Juni 2018, nach der
       Kampagne des Volksentscheids Fahrrad [@changing-cities-volksentscheid] [@berlin-mobg-page].
-      Im Juli 2026 änderte es das Gesetz: Das Vorrangnetz behält seine Frist 2030,
-      die Frist für das Nebennetz wird auf 2035 verschoben, und eine Hauptstraße darf
-      ohne Radverkehrsanlage bleiben, wo es in der Nähe eine qualifizierte Alternative
-      auf Nebenstraßen gibt [@berlin-mobg-amendment-2026].
-    src: 3d2fdd03b624
+      Im Juli 2026 änderte es das Gesetz: Das Radvorrangnetz behält seine Frist 2030,
+      die Frist für das Nebennetz wird auf 2035 verschoben, und an Hauptverkehrsstraßen
+      (Berliner Straßen der Stufen I–III, nicht unsere Hauptstraßen [#main-roads])
+      [@berlin-radverkehrsplan-2021] darf eine Radverkehrsanlage entfallen, wo es
+      in der Nähe eine qualifizierte Alternative auf Nebenstraßen gibt [@berlin-mobg-amendment-2026].
+    src: d7eecce68af6
   - text: >-
       Es kontrolliert den Senat durch Anfragen und Berichtsaufträge [@agh-arbeitsweise];
       die Drucksache 19/25987, *Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und
-      Wirklichkeit im Radverkehr*, fragte, wie viel des Vorrangnetzes besteht [@berlin-drs-19-25987].
+      Wirklichkeit im Radverkehr*, fragte, wie viel des Radvorrangnetzes besteht [@berlin-drs-19-25987].
       Nach unserer Lesart sind Schriftliche Anfragen der Ort, an dem die Zahlen des
       Senats an ein Dokument und ein Datum gebunden werden; deshalb zitieren wir sie
       Dokument für Dokument.
-    src: eb63980de648
+    src: f364de295f33
 literals:
 - Drucksache 19/25987

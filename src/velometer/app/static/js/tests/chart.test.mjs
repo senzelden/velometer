@@ -117,6 +117,21 @@ test("renderLines uses a series' short name when the full end label would be cut
   assert.ok(wide.children[0].find("text").some((t) => t.textContent === "City proper (LAU)"));
 });
 
+test("more than 8 series: only the focus series get end labels, at any width; 8 or fewer: all", () => {
+  const focus = [mk("a", "Focus A", [1, 2, 3], "#111"), mk("b", "Focus B", [3, 2, 1], "#222")];
+  const grey = Array.from({ length: 8 }, (_, i) => mk(`g${i}`, `Context ${i}`, [i, i, i]));
+  const ends = (series, width) => {
+    const el = new Node("div");
+    renderLines(el, { labels, series }, { height: 300, width });
+    return el.children[0].find("text").filter((t) => t.attrs.class === "el").map((t) => t.textContent).sort();
+  };
+  for (const width of [400, 900, 1400]) {
+    assert.deepEqual(ends([...focus, ...grey], width), ["Focus A", "Focus B"], `width ${width}`);
+  }
+  const few = [...focus, ...grey.slice(0, 6)];
+  assert.equal(ends(few, 900).length, 8, "8 series: every line is labelled");
+});
+
 /** Every attribute value and text of a stub tree. */
 const strings = (n, out = []) => {
   out.push(...Object.values(n.attrs ?? {}), n._text ?? "");
@@ -165,6 +180,13 @@ test("renderTiers keys every tier by name beside its colour, in the order they s
   assert.ok(legend, "a visible key under the chart");
   const text = (n) => (n._text ?? "") + (n.children ?? []).map(text).join("");
   assert.deepEqual(legend.children.map(text), Object.values(names).reverse());
+  // the one HTML key form a download reads (download-ui.js keyOf): `.legend` > `.chip` > `<i>`
+  assert.equal(legend.className, "legend");
+  for (const chip of legend.children) {
+    assert.equal(chip.className, "chip");
+    assert.equal(chip.children[0].tag, "i");
+    assert.match(chip.children[0].style.background, /^#/);
+  }
 });
 
 test("a series without a colour is drawn in its slot's token, a tier in its tier's token", () => {
@@ -185,4 +207,48 @@ test("a series without a colour is drawn in its slot's token, a tier in its tier
 
 test("no chart drew from the missing-token fallback", () => {
   assert.deepEqual(consoleErrors, []);
+});
+
+// M10-7: a redraw (a resize, a theme switch) under a resting pointer keeps what it showed
+const hitOf = (el) => el.children[0].find("rect").find((r) => r.attrs.class === "hit");
+const hoverX = (el) => el.children[0].find("line").find((l) => l.attrs.class === "hover-x");
+const tipOf = (el) => el.children.find((c) => c.className === "tip");
+const firstPoint = (el, i) => {
+  const d = el.children[0].find("path").filter((p) => p.attrs.class === "line")[i].attrs.d;
+  const [x, y] = d.slice(1).split(/[L ]/)[0].split(",").map(Number);
+  return { clientX: x, clientY: y };
+};
+
+test("renderLines: a redraw keeps the hovered series and point, until the pointer leaves", () => {
+  const el = new Node("div");
+  const model = { labels, series: [mk("a", "A", [1, 2, 3], "#111"), mk("b", "B", [9, 8, 7], "#222")] };
+  renderLines(el, model, { height: 200 });
+  hitOf(el).listeners.pointermove(firstPoint(el, 1));
+  const shown = tipOf(el).textContent;
+  assert.match(shown, /^B · 2018/);
+  renderLines(el, model, { height: 200 });
+  assert.equal(hoverX(el).attrs.visibility, "visible");
+  assert.equal(tipOf(el).hidden, false);
+  assert.equal(tipOf(el).textContent, shown);
+  hitOf(el).listeners.pointerleave();
+  renderLines(el, model, { height: 200 });
+  assert.equal(hoverX(el).attrs.visibility, "hidden");
+  assert.equal(tipOf(el).hidden, true);
+  // a redraw without the hovered series shows nothing
+  hitOf(el).listeners.pointermove(firstPoint(el, 1));
+  renderLines(el, { labels, series: [model.series[0]] }, { height: 200 });
+  assert.equal(tipOf(el).hidden, true);
+});
+
+test("renderTiers: a redraw keeps the hovered year", () => {
+  const el = new Node("div");
+  const model = { labels, layers: [{ key: "a", name: "A", values: [1, 2, 3] }] };
+  renderTiers(el, model, { width: 600 });
+  const svgOf = () => el.children[0];
+  const hit = svgOf().find("rect").find((r) => r.attrs.class === "hit");
+  hit.listeners.pointermove({ clientX: 600 });
+  const shown = tipOf(el).textContent;
+  renderTiers(el, model, { width: 600 });
+  assert.equal(tipOf(el).hidden, false);
+  assert.equal(tipOf(el).textContent, shown);
 });

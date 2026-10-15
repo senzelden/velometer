@@ -49,11 +49,13 @@ sections:
       die Messung entlang der Straßenachse ändert unseren Wert also kaum. Am Umfang
       schon: Die Zahl von Clean Cities liegt zwischen unserer Stufe A und A+B, sie
       zählt also weniger Geh- und Radwege, welche, ist allerdings nicht angegeben
-      [#recon-helsinki-cc-km]. Die eigene Zahl der Stadt für separate Radwege, unten
-      zitiert, liegt nahe an unserem A+B; ihr Datum und ihre Methode sind nicht angegeben.
-      QECIO berichtet für die Region Helsinki-Uusimaa, nicht für die Stadt. Die Baana-Zahlen
-      zählen fertiggestellte hochwertige Routen, eine Art von km, die wir nicht messen.
-    src: 81e96f0a2712
+      [#recon-helsinki-cc-km]. Die eigene Zahl der Stadt für <i lang="fi">erillisiä
+      pyöräväyliä</i> (eigene Radwege), unten zitiert, liegt nahe an unserem A+B;
+      ihr Datum und ihre Methode sind nicht angegeben. QECIO berichtet für die Region
+      Helsinki-Uusimaa, nicht für die Stadt. Die Zahlen zu <i lang="fi">baana</i>
+      (hochwertige Radroute) zählen fertiggestellte Routen, eine Art von km, die wir
+      nicht messen [@helsinki-pyorailykatsaus-2021].
+    src: 8a0595dec5fb
 literals:
 - 100 km
 - '21'

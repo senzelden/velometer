@@ -1,5 +1,6 @@
 id: mobilitaetsagentur_wien
 name: Mobilitätsagentur Wien GmbH
+lang: de
 kind: agency
 url: https://mobilitaetsagentur.at/
 sections:
@@ -17,23 +18,24 @@ sections:
   - heading: How they measure
     dimensions:
       scope: >-
-        cycling projects of all facility types in the main cycle network whose realisation
-        began in the year [@vienna-radwegeausbau-bilanz-2025]
+        cycling projects of all facility types in the <i lang="de">Hauptradverkehrsnetz</i> (main
+        cycle network) whose realisation began in the year [@vienna-radwegeausbau-bilanz-2025]
       kind: projects started, not completed [@vienna-radwegeausbau-bilanz-2025]
       length: >-
         measured in the city's digital map from start to end point, each facility separately; a
         junction project enters as one metre [@vienna-radwegeausbau-bilanz-2025]
       date: the year in which the project started [@vienna-radwegeausbau-bilanz-2025]
-      area: City of Vienna, main cycle network [@vienna-radwegeausbau-bilanz-2025]
+      area: >-
+        City of Vienna, <i lang="de">Hauptradverkehrsnetz</i> [@vienna-radwegeausbau-bilanz-2025]
       method: the agency's own tally of the city's projects [@vienna-radwegeausbau-bilanz-2025]
     paragraphs:
       - >-
-        Our Vienna figure is the agency's Bilanz Radwegeausbau 2025: 53 projects in the main
-        cycle network whose realisation began in 2025 [@vienna-radwegeausbau-bilanz-2025]. It is
-        a tally of starts, not of completed or existing km, and renovation of existing paths is
-        left out [@vienna-radwegeausbau-bilanz-2025]. The city's network statistics are a
-        separate series, which has recorded facilities on both sides of a street since 2018
-        [@vienna-radverkehrsnetz-fakten].
+        Our Vienna figure is the agency's Bilanz Radwegeausbau 2025: 53 projects in the
+        <i lang="de">Hauptradverkehrsnetz</i> whose realisation began in 2025
+        [@vienna-radwegeausbau-bilanz-2025]. It is a tally of starts, not of completed or existing
+        km, and renovation of existing paths is left out [@vienna-radwegeausbau-bilanz-2025]. The
+        city's network statistics are a separate series, which has recorded facilities on both sides
+        of a street since 2018 [@vienna-radverkehrsnetz-fakten].
   - heading: Political role
     paragraphs:
       - >-

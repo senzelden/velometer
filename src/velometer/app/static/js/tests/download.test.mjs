@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { fileName, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
+import { fileName, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -187,6 +187,15 @@ test("selfContained: a long key wraps to a second row", () => {
   assert.ok(ys.size >= 2);
 });
 
+test("selfContained: the key wraps by each chip's measured width when the page gave one", () => {
+  const rows = (key) =>
+    new Set([...selfContained(chart(), darkStyle, null, { ...META, key }).matchAll(/<rect x="[\d.]+" y="([\d.]+)" width="10"/g)].map((m) => m[1])).size;
+  const long = "x".repeat(40); // estimated at 6.6 px a character: two of these do not fit in 400 px
+  assert.equal(rows([{ colour: "red", text: long }, { colour: "red", text: long }]), 2, "estimated");
+  assert.equal(rows([{ colour: "red", text: long, width: 60 }, { colour: "red", text: long, width: 60 }]), 1, "measured narrow");
+  assert.equal(rows([{ colour: "red", text: "A", width: 300 }, { colour: "red", text: "B", width: 300 }]), 2, "measured wide");
+});
+
 test("safeCell: formula starters get a quote, a plain number does not", () => {
   for (const bad of ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--x", "--", "- "])
     assert.equal(safeCell(bad), `'${bad}`, bad);
@@ -285,4 +294,113 @@ test("tableCsv in German: formula-shaped header and cells are quoted off, conver
   assert.equal(lines[5], "-1639.8,1.5"); // a signed German number converts; nothing left to run
   assert.equal(lines[6], "'=1+1,'-x");
   useLang("en");
+});
+
+// ---- the plan and Counts keys in the image (M13 Task 13a: M11-8, user review) ----
+
+// the computed style of a key mark (`<span class="key key-...">`) as app.css draws it, dark theme;
+// with border-box sizing a line mark's computed height is its border's (the render check found
+// the lines drawn as swatches when the rule read height 0)
+const MARK = {
+  target: { borderTopStyle: "dashed", borderBottomStyle: "none", borderTopColor: "rgb(163, 161, 154)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "2px" },
+  current: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(94, 152, 237)", borderRadius: "50%", backgroundColor: "rgba(0, 0, 0, 0)", height: "12px" },
+  revision: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(94, 152, 237)", borderRadius: "50%", backgroundColor: "rgb(236, 235, 230)", height: "12px" },
+  projects: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(163, 161, 154)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "12px" },
+  mapped: { borderTopStyle: "solid", borderBottomStyle: "none", borderTopColor: "rgb(94, 152, 237)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "3px" },
+};
+
+test("glyphOf: a key mark's computed style says its glyph: line, dashed line, dot, ring or swatch", () => {
+  assert.deepEqual(glyphOf(MARK.target), { shape: "dash", colour: "rgb(163, 161, 154)" });
+  assert.deepEqual(glyphOf(MARK.mapped), { shape: "line", colour: "rgb(94, 152, 237)" });
+  assert.deepEqual(glyphOf(MARK.current), { shape: "dot", colour: "rgb(94, 152, 237)" });
+  assert.deepEqual(glyphOf(MARK.revision), { shape: "ring", colour: "rgb(94, 152, 237)", fill: "rgb(236, 235, 230)" });
+  assert.deepEqual(glyphOf(MARK.projects), { shape: "swatch", colour: "rgb(163, 161, 154)" });
+  // a mark coloured by its ground (no border) is a swatch of that ground
+  assert.deepEqual(glyphOf({ borderTopStyle: "none", borderTopColor: "rgb(0, 0, 0)", borderRadius: "0px", backgroundColor: "rgb(1, 2, 3)", height: "12px" }),
+    { shape: "swatch", colour: "rgb(1, 2, 3)" });
+});
+
+test("selfContained: line, dashed, dot and ring key glyphs are drawn as such, in light colours", () => {
+  const key = Object.entries(MARK).map(([k, st]) => ({ ...glyphOf(st), text: `key ${k}` }));
+  const out = selfContained(chart(), darkStyle, lightOf({ ...TOKENS, "--surface": ["#ffffff", "#ecebe6"] }), { ...META, key });
+  const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+  for (const k of Object.keys(MARK)) assert.ok(g.includes(`key ${k}`), k);
+  assert.match(g, /<line[^>]*stroke="#6b6a66"[^>]*stroke-dasharray="[^"]+"/, "the target's dashed line");
+  assert.match(g, /<line(?![^>]*dasharray)[^>]*stroke="#2a78d6"/, "the mapped line, solid");
+  assert.match(g, /<circle[^>]*fill="#2a78d6"(?![^>]*stroke=)/, "the current figure's dot");
+  assert.match(g, /<circle[^>]*fill="#ffffff"[^>]*stroke="#2a78d6"/, "the revision's ring, on the light ground");
+  assert.match(g, /<rect[^>]*fill="#6b6a66"/, "the projects' swatch");
+  assert.doesNotMatch(g, /rgb\(|NaN/);
+});
+
+test("selfContained: a key label wider than the image wraps inside the image", () => {
+  const text = "mapped on the network, mapped km since 1 Jan 2022 (ours; a line, one point per OpenStreetMap snapshot, the last at the current snapshot)";
+  for (const w of [400, 300]) {
+    const svg = node("svg", { viewBox: `0 0 ${w} 200` }, []);
+    const out = selfContained(svg, darkStyle, null, { ...META, key: [{ shape: "line", colour: "rgb(1, 2, 3)", text }] });
+    const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+    const lines = [...g.matchAll(/<text x="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => [Number(m[1]), m[2]]);
+    assert.ok(lines.length >= 2, `${w}: wrapped`);
+    assert.equal(lines.map((l) => l[1]).join(" "), text.replace(/&/g, "&amp;"));
+    for (const [x, s] of lines) assert.ok(x + s.length * 6.6 <= w, `${w}: "${s}" ends at ${x + s.length * 6.6}`);
+    // the source line stays below the wrapped key
+    const ys = [...g.matchAll(/<text x="[\d.]+" y="([\d.]+)"/g)].map((m) => Number(m[1]));
+    const src = Number(out.match(/<g id="velometer-meta"><text x="8" y="([\d.]+)"/)[1]);
+    assert.ok(Math.max(...ys) + 8 <= src, `key ends at ${Math.max(...ys)}, source at ${src}`);
+  }
+});
+
+// M13 Task 13b: at phone width the title and the two meta lines wrap inside the image
+const LONG = {
+  ...META,
+  title: "Vorrangnetz (ohne Radschnellverbindungen): Zielvorgaben je Jahr, gemeldete Kilometer und kartierte Kilometer",
+  source: "velometer · OSM-Stand 2026-10-03 · Klassifikator v4 · 64759cb-dirty",
+  attribution: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0",
+};
+const textsOf = (s) => [...s.matchAll(/<text x="([\d.]+)" y="([\d.]+)" font-size="([\d.]+)px"[^>]*>([^<]*)<\/text>/g)]
+  .map((m) => ({ x: Number(m[1]), y: Number(m[2]), size: Number(m[3]), text: m[4] }));
+
+test("selfContained: a title and meta lines wider than the image wrap inside it (390 px)", () => {
+  useLang("de");
+  const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+  const out = selfContained(svg, darkStyle, null, LONG);
+  const [, , w, h] = out.match(/<svg[^>]* viewBox="([^"]+)"/)[1].split(" ").map(Number);
+  const head = out.split("<g transform=")[0];
+  const meta = out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1];
+  const title = textsOf(head);
+  const lines = textsOf(meta);
+  assert.ok(title.length >= 2, "the title wraps");
+  assert.equal(title.map((l) => l.text).join(" "), LONG.title);
+  const full = `${LONG.attribution} · ${FIXTURE.de["js.download.note"]}`;
+  assert.equal(lines.map((l) => l.text).join(" "), `${LONG.source} ${full}`.replace(/&/g, "&amp;"));
+  // every line fits by the estimate: 0.6 em a character (bold title 0.62 em)
+  for (const l of [...title, ...lines]) {
+    const per = l.size === 15 ? 15 * 0.62 : 6.6;
+    assert.ok(l.x + l.text.length * per <= w, `"${l.text}" ends at ${l.x + l.text.length * per}`);
+  }
+  // the chart moves down below the last title line, and the meta lines stay inside the canvas
+  const top = Number(out.match(/<g transform="translate\(0,([\d.]+)\)">/)[1]);
+  assert.ok(Math.max(...title.map((l) => l.y)) + 8 <= top, `title ends ${Math.max(...title.map((l) => l.y))}, chart at ${top}`);
+  assert.ok(Math.min(...lines.map((l) => l.y)) - 11 >= top + 200);
+  assert.ok(Math.max(...lines.map((l) => l.y)) + 4 <= h, "the last line is inside the image");
+  useLang("en");
+});
+
+test("selfContained: the title and meta lines wrap by the width the page measured", () => {
+  const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+  const short = { ...META, title: "Headline", source: "velometer", attribution: "OSM" };
+  const count = (measure) => textsOf(selfContained(svg, darkStyle, null, { ...short, measure })).length;
+  const plain = count(undefined);
+  assert.equal(plain, 3); // one title line, the source and the attribution
+  // a page that measures every text as very wide breaks each into one word a line
+  const wide = count((text) => text.length * 100);
+  assert.ok(wide > plain, `${wide} lines with a wide measure`);
+  // a measure the page could not take (null) falls back to the estimate
+  assert.equal(count(() => null), plain);
+});
+
+test("selfContained: a short title and meta lines keep the one-line layout", () => {
+  const out = selfContained(node("svg", { viewBox: "0 0 800 200" }, []), darkStyle, null, META);
+  assert.match(out, /<g transform="translate\(0,30\)">/);
+  assert.equal(textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]).length, 2);
 });

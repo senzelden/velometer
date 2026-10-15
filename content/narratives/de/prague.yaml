@@ -17,7 +17,7 @@ sections:
       2026 und die Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen, von 18,7
       auf 29,6, Platz 20 der 21 Städte [#ts-lau]. Die meiste Veränderung der Karte
       liegt auf der Fahrbahn: Markierte Radfahrstreifen (D) gingen von 56 auf 190
-      km je Seite, Fahrradstraßen und Busspuren (E) von 20 auf 42 km.
+      km je Seite, Fahrradstraßen o. Ä. und Busspuren (E) von 20 auf 42 km.
     src: 59cf6beb45a0
   - text: >-
       Der einzige markierte Sprung, 2020, besteht überwiegend aus Tag-Änderungen.
@@ -44,9 +44,9 @@ sections:
       seinen 4.093 km; beide Abweichungen verstärken sich [#recon]. An der Längenbasis
       liegt es nicht, und der Zeitabstand erklärt die km nicht: Wir hatten schon Anfang
       2025 mehr. Eine veröffentlichte Gesamtzahl der Stadt für Radverkehrsanlagen
-      haben wir nicht gefunden; das Routensystem der Stadt zählt Routen, die weder
-      beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
-    src: 526c4d699a94
+      haben wir nicht gefunden; das Routensystem der Stadt zählt <i lang="cs">trasy</i>
+      (Routen), die weder beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
+    src: 31b46a320c86
 literals:
 - 100 km
 - 21 Städte

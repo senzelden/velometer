@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { SELECTOR, control, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
+import { SELECTOR, control, keyOf, labelWidth, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
 import { localised } from "../data.js";
 import { buildModel } from "../compare-model.js";
 import { t } from "../strings.js";
@@ -256,4 +256,99 @@ test("a German chart title names the city as the localised series does (Krakau)"
   assert.ok(titleOf(container, { title }).includes("Krakau"));
   assert.ok(!titleOf(container, { title }).includes("Kraków"));
   useLang("en");
+});
+
+// ---- the key in the image (M13: M11-4, M11-8) ----
+
+/** A page that measures text as `measure` says (undefined: no getComputedTextLength). */
+function measuringDoc(measure) {
+  const appended = [];
+  const el = (tag) => ({
+    tag, style: {}, children: [], attrs: {}, textContent: "",
+    setAttribute(k, v) { this.attrs[k] = v; },
+    append(...n) { this.children.push(...n); },
+    remove() { appended.splice(appended.indexOf(this), 1); },
+    ...(tag === "text" && measure ? { getComputedTextLength() { return measure(this.textContent); } } : {}),
+  });
+  return { appended, createElementNS: (_ns, tag) => el(tag), body: { append: (n) => appended.push(n) } };
+}
+
+test("labelWidth: the browser's measure of the label at the image's font, else null", () => {
+  const doc = measuringDoc((s) => s.length * 5);
+  assert.equal(labelWidth("abcd", doc), 20);
+  assert.deepEqual(doc.appended, [], "the measuring SVG is removed again");
+  assert.equal(labelWidth("abcd", measuringDoc(undefined)), null, "no getComputedTextLength");
+  assert.equal(labelWidth("abcd", measuringDoc(() => 0)), null, "nothing laid out");
+  assert.equal(labelWidth("abcd", {}), null, "no DOM at all");
+});
+
+test("keyOf reads the .legend .chip key chart.js draws: colour, text and measured width", () => {
+  const chip = (colour, text) => ({
+    textContent: ` ${text} `,
+    querySelector: (sel) => (sel === "i" ? { colour } : null),
+  });
+  const chips = [chip("rgb(1, 2, 3)", "A separated track"), chip("rgb(4, 5, 6)", "B shared path")];
+  const container = { querySelectorAll: (sel) => (sel === ".legend .chip" ? chips : []) };
+  const before = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = (i) => ({ backgroundColor: i.colour });
+  try {
+    assert.deepEqual(keyOf(container, measuringDoc((s) => s.length * 6)), [
+      { colour: "rgb(1, 2, 3)", text: "A separated track", width: 102 },
+      { colour: "rgb(4, 5, 6)", text: "B shared path", width: 78 },
+    ]);
+  } finally {
+    globalThis.getComputedStyle = before;
+  }
+});
+
+test("keyOf reads the key list a chart names (data-download-key): the plan and Counts keys", () => {
+  // M13 Task 13a (M11-8, user review): the plan page's key and a Counts tab's key are lists beside
+  // the chart; the chart names its list, and each entry's mark gives its glyph
+  const mark = (style) => ({ style });
+  const li = (style, text) => ({ textContent: `  ${text}\n `, querySelector: (sel) => (sel === ".key" ? mark(style) : null) });
+  const dashed = { borderTopStyle: "dashed", borderTopColor: "rgb(9, 9, 9)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "0px" };
+  const ring = { borderTopStyle: "solid", borderTopColor: "rgb(1, 2, 3)", borderRadius: "50%", backgroundColor: "rgb(255, 255, 255)", height: "12px" };
+  const list = { querySelectorAll: (sel) => (sel === "li" ? [li(dashed, "target per year"), li(ring, "reported,   revision")] : []) };
+  const page = { ...measuringDoc((s) => s.length * 6), getElementById: (id) => (id === "plan-key" ? list : null) };
+  const container = {
+    querySelectorAll: () => [],
+    getAttribute: (k) => (k === "data-download-key" ? "plan-key" : null),
+  };
+  const before = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = (m) => m.style;
+  try {
+    assert.deepEqual(keyOf(container, page), [
+      { shape: "dash", colour: "rgb(9, 9, 9)", text: "target per year", width: 90 },
+      { shape: "ring", colour: "rgb(1, 2, 3)", fill: "rgb(255, 255, 255)", text: "reported, revision", width: 108 },
+    ]);
+    // a chart that names no key, or a key not on the page: no entries
+    assert.deepEqual(keyOf({ ...container, getAttribute: () => null }, page), []);
+    assert.deepEqual(keyOf({ ...container, getAttribute: () => "gone" }, page), []);
+  } finally {
+    globalThis.getComputedStyle = before;
+  }
+});
+
+test("labelWidth measures at the size and weight it is asked for (the title is 15px, 600)", () => {
+  const doc = measuringDoc((s) => s.length * 5);
+  const seen = [];
+  const create = doc.createElementNS;
+  doc.createElementNS = (ns, tag) => {
+    const el = create(ns, tag);
+    if (tag === "text") seen.push(el.attrs);
+    return el;
+  };
+  labelWidth("abcd", doc);
+  labelWidth("abcd", doc, "15px", "600");
+  assert.deepEqual(seen.map((a) => [a["font-size"], a["font-weight"]]), [["11px", "400"], ["15px", "600"]]);
+});
+
+test("metaOf hands the image a measure for its title and meta lines", async () => {
+  const { metaOf } = await import("../download-ui.js");
+  const chart = h("div", { "data-chart": "city-tiers", "aria-label": "Tiers" });
+  chart.dataset = { chart: "city-tiers" };
+  page(h("section", {}, chart));
+  const m = metaOf(chart);
+  assert.equal(typeof m.measure, "function");
+  assert.equal(m.measure("abc", "15px", "600"), null); // no layout in this fake page: estimate
 });

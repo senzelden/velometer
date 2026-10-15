@@ -43,16 +43,18 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die eigene Netzzahl der Stadt, unten zitiert, zählt separate Radwege, gemeinsame
-      Geh- und Radwege und markierte Radfahrstreifen zusammen [@stockholm-cykelvagar].
-      Umfang: Das sind unsere Stufen A, B und D, 991 km A+B plus 48 km Radfahrstreifen.
-      Längenbasis, Datum und Methode gibt die Quelle nicht an; unsere sind je Straßenseite,
-      Oktober 2026 und OpenStreetMap. Fläche: QECIO berichtet für Stockholms län,
-      einen Verwaltungsbezirk, der weit größer ist als die Stadt, mit 4.946 km Hauptstraßen
-      gegenüber unseren 667 km [#recon-stockholm-qecio-main]; seine Zahlen sind also
-      keine Prüfung für die Stadt. BikeNetKit, ebenfalls auf OpenStreetMap gestützt,
-      zählt 1.102 km gegenüber unseren 995 km der Stufen A, B und E (−10 %) [@bikenetkit-zenodo].
-    src: d44740b9446b
+      Die eigene Netzzahl der Stadt, unten zitiert, zählt <i lang="sv">egna cykelbanor,
+      kombinerade gång- och cykelbanor och cykelfält</i> (eigene Radwege, kombinierte
+      Geh- und Radwege und Radfahrstreifen) zusammen [@stockholm-cykelvagar]. Umfang:
+      Das sind unsere Stufen A, B und D, 991 km A+B plus 48 km Radfahrstreifen. Längenbasis,
+      Datum und Methode gibt die Quelle nicht an; unsere sind je Straßenseite, Oktober
+      2026 und OpenStreetMap. Fläche: QECIO berichtet für <i lang="sv">Stockholms
+      län</i> (Verwaltungsbezirk Stockholm) [@lansstyrelsen-stockholm-om-lanet], der
+      weit größer ist als die Stadt, mit 4.946 km Hauptstraßen gegenüber unseren 667
+      km [#recon-stockholm-qecio-main]; seine Zahlen sind also keine Prüfung für die
+      Stadt. BikeNetKit, ebenfalls auf OpenStreetMap gestützt, zählt 1.102 km gegenüber
+      unseren 995 km der Stufen A, B und E (−10 %) [@bikenetkit-zenodo].
+    src: 8ff1ff51b5fd
 literals:
 - 100 km
 - '21'

@@ -64,6 +64,10 @@ function segDist(px, py, ax, ay, bx, by) {
   return Math.hypot(px - (ax + u * dx), py - (ay + u * dy));
 }
 
+// what each chart element shows under a resting pointer ({id, i} for lines, {i} for tiers): a
+// redraw (a resize, a theme switch) shows it again, until the pointer leaves
+const hovered = new WeakMap();
+
 /** A series' colour: an explicit one, else its slot (0..7) in the series palette. */
 const colourOf = (s, palette) => s.colour ?? (Number.isInteger(s.slot) ? palette[s.slot] : undefined);
 
@@ -103,7 +107,9 @@ export function renderLines(el, model, opts = {}) {
     hi = ticks.at(-1);
   }
 
-  const labelled = compact ? [] : narrow && live.length > 8 ? coloured : live;
+  // end labels: every line, or with more than 8 the focus (coloured) series only, at any width;
+  // the grey context lines stay unlabelled (their names are in the tooltip and the table)
+  const labelled = compact ? [] : live.length > 8 ? coloured : live;
   const longest = Math.max(0, ...labelled.map((s) => s.name.length));
   const axisTexts = labels.map((l) =>
     compact && /\d{4}$/.test(l) && l.length > 4 ? l.replace(/ \d{2}(\d{2})$/, " $1") : l,
@@ -232,6 +238,7 @@ export function renderLines(el, model, opts = {}) {
     hx.setAttribute("visibility", "hidden");
     hp.setAttribute("visibility", "hidden");
     cur = null;
+    hovered.delete(el);
   };
   const nearest = (mx, my) => {
     let best = null;
@@ -259,7 +266,12 @@ export function renderLines(el, model, opts = {}) {
       if (!have.length) return;
       i = have.reduce((a, b) => (Math.abs(b - i) < Math.abs(a - i) ? b : a));
     }
+    highlight(s, i);
+  };
+  const highlight = (s, i) => {
+    const pts = geo[s.id];
     cur = { s, i };
+    hovered.set(el, { id: s.id, i });
     if (model.series.length > 1) {
       svg.classList.add("dim");
       for (const [id, g] of Object.entries(groups)) g.classList.toggle("on", id === s.id);
@@ -277,6 +289,10 @@ export function renderLines(el, model, opts = {}) {
   hit.addEventListener("pointermove", show);
   hit.addEventListener("pointerdown", show);
   hit.addEventListener("pointerleave", clear);
+  const kept = hovered.get(el);
+  const again = kept && pool.find((s) => s.id === kept.id);
+  if (again && geo[again.id][kept.i]) highlight(again, kept.i);
+  else hovered.delete(el);
   hit.addEventListener("click", (e) => {
     if (opts.hoverOnly || !cur || !opts.onPick) return;
     e.stopPropagation();
@@ -419,7 +435,10 @@ export function renderTiers(el, model, opts = {}) {
   const tip = makeTip(el);
   const move = (e) => {
     const r = svg.getBoundingClientRect();
-    const i = Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left - ml) / step)));
+    show(Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left - ml) / step))));
+  };
+  const show = (i) => {
+    hovered.set(el, { i });
     hx.setAttribute("x1", x(i));
     hx.setAttribute("x2", x(i));
     hx.setAttribute("visibility", "visible");
@@ -436,5 +455,9 @@ export function renderTiers(el, model, opts = {}) {
   hit.addEventListener("pointerleave", () => {
     tip.hidden = true;
     hx.setAttribute("visibility", "hidden");
+    hovered.delete(el);
   });
+  const kept = hovered.get(el);
+  if (kept && kept.i < n && kept.id === undefined) show(kept.i);
+  else hovered.delete(el);
 }

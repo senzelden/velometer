@@ -43,16 +43,19 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die jährliche Länge der Radrouten der Stadt zählt viel mehr als unser A+B: Radfahrstreifen,
-      für Fahrräder freigegebene Busspuren, Fußgängerzonen und Radfahren gegen die
-      Einbahnrichtung ebenso wie Radwege [@paris-opendata-lineaire-km]. Sie ist auf
-      den Anfang jedes Jahres datiert; wir lesen die Karte vom Oktober 2026. Sie ist
-      auch nicht unabhängig von unserer: Die Stadt entnimmt sie OSM, der Karte, die
-      wir lesen, und kann unsere km daher weder bestätigen noch widerlegen. Die 822
-      km geschützter Infrastruktur von Clean Cities (48 % des Straßennetzes) übersteigen
-      alles, was in Paris über alle Stufen hinweg kartiert ist [#rc-paris-cc_km];
+      Die jährliche Länge der Radrouten der Stadt zählt viel mehr als unser A+B: neben
+      <i lang="fr">piste</i> (Radweg) auch <i lang="fr">voie verte</i> (Grüner Weg),
+      <i lang="fr">bande</i> (Radfahrstreifen), <i lang="fr">couloir bus ouverts aux
+      vélos</i> (für Fahrräder freigegebene Busspuren), <i lang="fr">voies piétonnes
+      ouvertes aux vélos</i> (für Fahrräder freigegebene Fußgängerzonen) und <i lang="fr">doubles
+      sens cyclable</i> (Radfahren gegen die Einbahnrichtung) [@paris-opendata-lineaire-km].
+      Sie ist auf den Anfang jedes Jahres datiert; wir lesen die Karte vom Oktober
+      2026. Sie ist auch nicht unabhängig von unserer: Die Stadt entnimmt sie OSM,
+      der Karte, die wir lesen, und kann unsere km daher weder bestätigen noch widerlegen.
+      Die 822 km geschützter Infrastruktur von Clean Cities (48 % des Straßennetzes)
+      übersteigen alles, was in Paris über alle Stufen hinweg kartiert ist [#rc-paris-cc_km];
       Clean Cities übernahm die Zahlen der meisten Städte von den Städten selbst [@cc2025-report].
       QECIO, das ebenfalls OSM misst, liegt innerhalb von +9,3 % unserer Radwege.
-    src: 78e4624ae033
+    src: fac8b554c28f
 literals:
 - 100 km

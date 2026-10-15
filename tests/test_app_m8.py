@@ -20,6 +20,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
 )
 from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
 from velometer.app.main import create_app
+from velometer.app.narrative import bracketed
 from velometer.content.loader import load_organisations
 from velometer.db import OverlayRow, replace_plan_overlay
 from velometer.plans.models import load_plans
@@ -124,10 +125,11 @@ def test_nav_links_plans_and_organisations_and_marks_the_current_one(client):
 
 
 def _plain(paragraph: str) -> str:
-    """The start of a paragraph as the page shows it: escaped, `code` marked, up to its first
-    citation marker."""
+    """The start of a paragraph as the page shows it: escaped, `code` and original terms
+    (`<i lang>`) marked, up to its first citation marker."""
     text = " ".join(paragraph.split()).split(" [", 1)[0].split("[", 1)[0]
-    return re.sub(r"`([^`]+)`", r"<code>\1</code>", str(escape(text)))
+    html = re.sub(r"`([^`]+)`", r"<code>\1</code>", str(escape(text)))
+    return re.sub(r"&lt;i lang=&#34;([\w-]+)&#34;&gt;(.*?)&lt;/i&gt;", r'<i lang="\1">\2</i>', html)
 
 
 def test_the_german_document_title_renders_in_italics_with_its_translation(client):
@@ -141,7 +143,8 @@ def test_every_profile_renders_with_its_anchor_text_and_quotes(client):
     assert ORGS  # the shipped profiles
     for org in ORGS.values():
         sec = " ".join(_section(html, org.id).split())
-        assert str(escape(org.name)) in sec, org.id
+        # a bracket in another language than the name's sits in its own lang (review 10, I1)
+        assert str(bracketed(org.name, org.bracket_lang)) in sec, org.id
         for s in org.sections:
             assert str(escape(s.heading)) in sec, (org.id, s.heading)
             for p in s.paragraphs:
@@ -173,7 +176,7 @@ def test_a_profile_names_the_figures_it_stands_behind(client):
 
 def test_figures_rows_link_to_the_organisation_anchor(client):
     html = client.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') : html.index("</table>")]
+    table = html[html.index('<table class="diffs stack figures">') : html.index("</table>")]
     assert 'href="/organisations#clean_cities"' in table
     assert 'href="/organisations#ecf"' in table
 
@@ -268,6 +271,42 @@ def test_an_item_whose_only_row_is_suspect_still_shows_flagged_with_its_note(
     assert "99" in text and "suspect" in text and "a forecast, not a count" in text
     assert "since 2021" in text  # a cumulative figure names its start year
     assert 'href="https://example.org/paris"' in sec
+
+
+@pytest.mark.parametrize("suspect", [True, False])
+def test_a_figure_is_flagged_suspect_exactly_when_its_row_says_so(
+    setup,  # noqa: F811
+    plans_data,
+    suspect,
+):
+    # M8-6: the suspect rule (the reports.csv `suspect` column; Copenhagen 37 and Strasbourg 52
+    # carry it) on a fixture figure, not the two shipped values: the mark and its note appear for a
+    # suspect row and for no other
+    _add_rows(setup[1], {**PARIS_ROW, "suspect": "true" if suspect else ""})
+    with _client(_app(setup, plans_data)) as c:
+        sec = _section(c.get("/plans").text, "paris")
+    item = next(li for li in re.findall(r"<li\b.*?</li>", sec, re.S) if "<b>99 km</b>" in li)
+    assert ('class="suspect"' in item) is suspect
+    assert ('class="suspect-mark"' in item) is suspect
+    assert ("a forecast, not a count" in item) is suspect
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_suspect_figure_says_so_in_words_not_only_by_its_style(
+    setup,  # noqa: F811
+    plans_data,
+    lang,
+):
+    # M10-7: the mark beside a suspect figure is its text alternative to the row's styling: the
+    # word in the page's language, read inside the row
+    from velometer import i18n
+
+    _add_rows(setup[1], {**PARIS_ROW, "suspect": "true"})
+    with _client(_app(setup, plans_data)) as c:
+        sec = _section(c.get("/plans" if lang == "en" else "/de/plans").text, "paris")
+    item = next(li for li in re.findall(r"<li\b.*?</li>", sec, re.S) if "<b>99 km</b>" in li)
+    word = str(escape(i18n.t(lang, "page.plans.suspect")))
+    assert word.strip() and f'<span class="suspect-mark">{word}</span>' in item
 
 
 # ---------- the Berlin plan page ----------
@@ -525,6 +564,32 @@ def test_a_record_without_the_network_layer_does_not_lend_it_its_licence(setup, 
     assert RETRIEVED["licence"] not in line and "licence not recorded" in line
 
 
+def test_a_record_without_the_measures_layer_does_not_lend_it_its_licence(setup, plans_data):  # noqa: F811
+    # M8-15: the measures line took the record's licence without checking its layer, as the
+    # planned-network line does
+    record = {**RETRIEVED, "layers": {"radverkehrsnetz": RETRIEVED["layers"]["radverkehrsnetz"]}}
+    (plans_data / "berlin" / "retrieved.json").write_text(json.dumps(record))
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    line = _data_line(html, "Measures dataset:")
+    assert RETRIEVED["licence"] not in line and "licence not recorded" in line
+    assert f"licence {RETRIEVED['licence']}" in _data_line(html, "Planned network:")
+
+
+def test_an_unreadable_record_note_claims_only_what_the_page_cannot_show(setup, plans_data):  # noqa: F811
+    # M8-15: the note said the retrieval date "cannot be shown" while the planned-network line
+    # still shows its stored date (from the overlay rows, not the record)
+    _overlay(setup[0], "overlay_v4", 50.0)
+    (plans_data / "berlin" / "retrieved.json").write_text("{not json")
+    with _client(_app(setup, plans_data)) as c:
+        html = c.get("/plans/berlin").text
+    note = _text(_section(html, "documents")).split("data source record unreadable", 1)[1]
+    network = _data_line(html, "Planned network:")
+    assert "retrieved" in network  # the stored date of the overlay rows
+    # so the date the note gives up on is the measures dataset's alone
+    assert "measures dataset's retrieval date cannot be shown" in note, note
+
+
 @pytest.mark.parametrize(
     "body",
     ["{not json", "[]", json.dumps({"retrieved_at": "2026-10-07T10:40:42Z"})],
@@ -722,8 +787,8 @@ def _rgb(hexcolour: str) -> tuple[float, float, float]:
     return tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb)
 
 
-def _lch_hue(hexcolour: str) -> float:
-    """The CIELAB hue angle (D65) of an sRGB colour, in degrees."""
+def _lch(hexcolour: str) -> tuple[float, float]:
+    """The CIELAB chroma and hue angle (D65, degrees) of an sRGB colour."""
     import math
 
     r, g, b = _rgb(hexcolour)
@@ -735,7 +800,7 @@ def _lch_hue(hexcolour: str) -> float:
         return t ** (1 / 3) if t > 216 / 24389 else (24389 / 27 * t + 16) / 116
 
     a_, b_ = 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
-    return math.degrees(math.atan2(b_, a_)) % 360
+    return math.hypot(a_, b_), math.degrees(math.atan2(b_, a_)) % 360
 
 
 # Hue distance between the mapped line and the plan chart's other colours. The M8 amber was
@@ -743,6 +808,9 @@ def _lch_hue(hexcolour: str) -> float:
 # degrees, a sixth of the circle, puts two colours in different hue families (orange, magenta,
 # blue, green), whatever their lightness
 MIN_HUE_DEGREES = 60
+# below this CIELAB chroma a colour reads as grey and its hue angle is noise (M8-18): the mapped
+# colour must stay above it for the hue test to mean anything
+MIN_CHROMA = 20
 
 
 @pytest.mark.parametrize("theme", ["light", "dark"])
@@ -761,9 +829,13 @@ def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours(theme):
         for t in re.findall(r"var\((--[\w-]+)\)", v)
     } - {"--ink", "--ink-2", "--grid", "--grid-2", "--halo"}
     assert {"--mapped", "--series-1", "--flag", "--completed"} <= drawn
-    mapped = _lch_hue(tokens["--mapped"])
+    chroma, mapped = _lch(tokens["--mapped"])
+    assert chroma >= MIN_CHROMA, ("--mapped", round(chroma))
     for other in sorted(drawn - {"--mapped"}):
-        d = abs(mapped - _lch_hue(tokens[other])) % 360
+        c, hue = _lch(tokens[other])
+        if c < MIN_CHROMA:
+            continue  # a grey: no hue family to be confused with
+        d = abs(mapped - hue) % 360
         assert min(d, 360 - d) >= MIN_HUE_DEGREES, (other, round(min(d, 360 - d)))
 
 
@@ -795,7 +867,8 @@ def test_the_plan_key_explains_the_capped_marker(client):
     cap = [i for i in items if 'class="key key-cap"' in i]
     assert len(cap) == 1
     text = _text(cap[0])
-    assert "↑" in text and "above the chart's scale" in text and "table" in text
+    assert "↑" in text and "above the chart's scale" in text
+    assert re.search(r"\bthe table under the chart\b", text), text  # M8-18: a word, not "notable"
 
 
 # --- quote language (M10 spec decision 6, Language) ---
@@ -834,9 +907,69 @@ def test_content_may_mark_an_inline_quote_with_its_language():
     )
 
 
+def test_content_may_mark_an_original_term_with_its_language():
+    """An official category in its own language (M13 original-terms rule): `<i lang="da">…</i>`,
+    italic and in that language, inside the paragraph's own text."""
+    assert _para('the <i lang="da">cykelsti</i> (kerbed track) and *a title*') == (
+        '<p>the <i lang="da">cykelsti</i> (kerbed track) and <em>a title</em></p>'
+    )
+    assert _para('<i lang="nb">gang- og sykkelveier</i>, <i lang="sv">län</i>') == (
+        '<p><i lang="nb">gang- og sykkelveier</i>, <i lang="sv">län</i></p>'
+    )
+    quote = _para('<blockquote lang="fr">Les <i lang="fr">voies vertes</i>.</blockquote>')
+    assert quote == '<blockquote lang="fr"><p>Les <i lang="fr">voies vertes</i>.</p></blockquote>'
+
+
+def test_citation_markers_inside_a_code_span_are_text():
+    # M8-20: `[@id]` and `[#id]` in backticks were still replaced (by "source missing" marks)
+    html = _para("write `[@a-source]` or `[#a-ref]` to cite")
+    assert "<code>[@a-source]</code>" in html and "<code>[#a-ref]</code>" in html
+    assert "<sup" not in html
+
+
+def _well_nested(html: str) -> bool:
+    stack = []
+    for close, tag in re.findall(r"<(/?)([a-z]+)\b[^>]*>", html):
+        if not close:
+            stack.append(tag)
+        elif not stack or stack.pop() != tag:
+            return False
+    return not stack
+
+
+def test_a_code_span_and_a_quotation_never_misnest():
+    # M10-7: the quotation mark was read before the code spans, so a code span holding a
+    # quotation's end gave <q …><code>…</q></code>
+    html = _para('<q lang="de">a `b</q>` c')
+    assert _well_nested(html) and "<code>b&lt;/q&gt;</code>" in html, html
+    html = _para('`<i lang="da">x` y</i>')
+    assert _well_nested(html) and "<code>&lt;i lang=&#34;da&#34;&gt;x</code>" in html, html
+    # a code span inside a quotation or a term is still one
+    assert _para('<q lang="de">nimm `highway=*` hier</q>') == (
+        '<p><q lang="de">nimm <code>highway=*</code> hier</q></p>'
+    )
+    assert _para('<i lang="nb">`a`</i>') == '<p><i lang="nb"><code>a</code></i></p>'
+
+
+def test_two_osm_wildcards_outside_backticks_are_text_not_an_italic():
+    # M8-21: `cycleway:left=*, cycleway:right=*` without backticks paired its two stars into
+    # <em>, cycleway:right=</em>; a star after "=" is a tag value, never an emphasis mark
+    assert _para("cycleway:left=*, cycleway:right=* or *a title*") == (
+        "<p>cycleway:left=*, cycleway:right=* or <em>a title</em></p>"
+    )
+    assert _para("*a=* b*") == "<p>*a=* b*</p>"  # a closing star after "=" is text too
+    assert _para('<i lang="de">Radweg</i>=* and *x*') == (
+        '<p><i lang="de">Radweg</i>=* and <em>x</em></p>'
+    )
+
+
 @pytest.mark.parametrize(
     "text",
     [
+        '<i lang="da" class="x">a</i>',  # an original term: no other attribute either
+        "<i>a</i>",  # an italic needs a language: plain emphasis is `*…*`
+        '<i lang="d a">a</i>',
+        '<i lang="da">unclosed',
         '<q lang="de" onclick="x()">a</q>',  # no other attribute
         '<q lang="de&quot; onclick=&quot;x">a</q>',  # the value is a language tag, nothing else
         '<q lang="d e">a</q>',
@@ -850,3 +983,17 @@ def test_content_may_mark_an_inline_quote_with_its_language():
 def test_nothing_but_a_language_marked_quote_reaches_the_page_as_markup(text):
     out = _para(text)
     assert "<" not in re.sub(r"</?p>", "", out), out  # every tag was escaped to text
+
+
+def test_every_plan_chart_names_the_key_its_download_carries(client):
+    # M13 Task 13a (M11-8, user review): a downloaded plan chart carries the page's key. download-ui
+    # reads the list the chart names in data-download-key, an `li` with a `.key` mark per entry
+    html = client.get("/plans/berlin").text
+    charts = re.findall(r'<div class="chart plan-chart"[^>]*>', html)
+    assert charts, "the page draws plan charts"
+    for c in charts:
+        m = re.search(r'data-download-key="([^"]+)"', c)
+        assert m, c
+        start = html.index(f'id="{m.group(1)}"')
+        key = html[start : html.index("</ul>", start)]
+        assert len(re.findall(r'<li><span class="key key-[\w-]+"></span>', key)) >= 5, key

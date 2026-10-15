@@ -760,6 +760,45 @@ def test_commands_on_a_v5_db_with_activity_rows_point_to_migrate(tmp_path):
         assert hint in out.output, args
 
 
+def test_read_only_commands_on_a_v9_db_with_counter_index_rows_point_to_migrate(tmp_path):
+    """Schema 10 keys counter_index by method; a schema-9 database is not read as if it had one
+    (M13 Task 2, review focus 1)."""
+    from tests.test_db_m8 import v9_db
+
+    db = tmp_path / "v9.sqlite"
+    v9_db(db).close()
+    before = db.read_bytes()
+    report = tmp_path / "r.md"
+    report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
+    for args in (
+        ["results"],
+        ["reconcile", "--report", str(report)],
+        ["timeseries", "--report", str(report)],
+        ["counters", "--check"],
+    ):
+        out = CliRunner().invoke(app, [*args, "--db", str(db)])
+        assert out.exit_code == 1, (args, out.output)
+        assert out.exception.__class__ is SystemExit, args
+        assert "velometer migrate" in out.output, (args, out.output)
+    assert db.read_bytes() == before  # never migrated by a read-only command
+    out = CliRunner().invoke(app, ["migrate", "--db", str(db)])
+    assert out.exit_code == 0, out.output
+    with sqlite3.connect(db) as c:
+        assert {m for (m,) in c.execute("SELECT method FROM counter_index")} == {"v1"}
+
+
+def test_migrate_from_v9_hints_that_counters_load_writes_the_v2_rows(tmp_path):
+    from tests.test_db_m8 import v9_db
+
+    db = tmp_path / "v9.sqlite"
+    v9_db(db).close()
+    out = CliRunner().invoke(app, ["migrate", "--db", str(db)])
+    assert out.exit_code == 0, out.output
+    assert "velometer counters load" in out.output
+    again = CliRunner().invoke(app, ["migrate", "--db", str(db)])  # already v10: no hint
+    assert again.exit_code == 0 and "counters load" not in again.output
+
+
 def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
     from tests.test_db import _make_v5_db_with_activity
 
@@ -1100,8 +1139,8 @@ def test_results_subareas_ends_with_the_remainder_after_a_separator(tmp_path):
     rest = lines[next(i for i, ln in enumerate(lines) if ln.startswith("subarea")) + 1 :]
     assert [ln.split()[0] for ln in rest[:2]] == ["East", "Ölberg"]
     assert set(rest[2]) == {"-"}  # the separator line
-    assert rest[3].startswith("Outside the 2 Bezirke (LAU edge)")
-    assert rest[3].split("(LAU edge)")[1].split()[0] == "5.0"  # 0.5 / 10 main_excl_motorway
+    assert rest[3].startswith("Outside the 2 Bezirke (districts), at the LAU edge")
+    assert rest[3].split("at the LAU edge")[1].split()[0] == "5.0"  # 0.5 / 10 main_excl_motorway
     assert rest[4].startswith("per 100k")
 
 

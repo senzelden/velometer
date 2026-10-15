@@ -25,13 +25,15 @@ sections:
     paragraphs:
       - >-
         Vienna's own network total counts every facility type on both sides of a street, including
-        contraflow streets, traffic-calmed areas and signed routes [@vienna-radverkehrsnetz-fakten],
-        so it covers far more than A+B. The 2025 tally of 20.4 km counts projects in the main
-        network that started that year, not finished ones [@vienna-radwegeausbau-bilanz-2025]. Clean
-        Cities first printed 14%; in July 2025 it raised Vienna to 22.0% after roads with restricted
-        motor access in traffic-calmed areas were included in the count [@cc2025-cycling-table]. On
-        Clean Cities' method our ratio is 22.7%, +3% against the corrected figure, and the road
-        networks agree [#recon].
+        <i lang="de">Radfahren gegen die Einbahn</i> (contraflow cycling),
+        <i lang="de">Verkehrsberuhigter Bereich</i> (traffic-calmed area) and
+        <i lang="de">Radroute</i> (cycle route) [@vienna-radverkehrsnetz-fakten], so it covers far
+        more than A+B. The 2025 tally of 20.4 km counts projects in the
+        <i lang="de">Hauptradverkehrsnetz</i> (main cycle network) that started that year, not
+        finished ones [@vienna-radwegeausbau-bilanz-2025]. Clean Cities first printed 14%; in July
+        2025 it raised Vienna to 22.0% after roads with restricted motor access in traffic-calmed
+        areas were included in the count [@cc2025-cycling-table]. On Clean Cities' method our ratio
+        is 22.7%, +3% against the corrected figure, and the road networks agree [#recon].
 quotes:
   - {excerpt: vienna-radverkehrsnetz-fakten/definition, after: 3}
   - {excerpt: vienna-radwegeausbau-bilanz-2025/started-not-completed, after: 3}

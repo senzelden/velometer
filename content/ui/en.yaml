@@ -262,7 +262,7 @@ page.plan.licence_unknown: ', licence not recorded'
 page.plan.retrieved: ', retrieved {retrieved}'
 page.plan.matched: '; matched against OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0)'
 page.plan.matched_with: with <code>{version}</code>
-page.plan.record_error: 'data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licence and retrieval date cannot be shown.'
+page.plan.record_error: 'data source record unreadable (<code>retrieved.json</code> of the Berlin datasets; see the server log): their licences and the measures dataset''s retrieval date cannot be shown.'
 
 # --- city
 page.city.residents: '{n} residents (city proper)'
@@ -390,11 +390,11 @@ page.figures.ours_tiers: our tiers {tiers} km
 preset.fallback_label: '{preset}, our OSM data'
 figure.scope.whole_network: whole network
 figure.scope.incl_traffic_calmed_restricted_access: incl traffic calmed restricted access
-figure.scope.vorrangnetz: vorrangnetz
-figure.scope.cykelsti: cykelsti
-figure.scope.hauptradverkehrsnetz: hauptradverkehrsnetz
+figure.scope.vorrangnetz: Vorrangnetz (priority network)
+figure.scope.cykelsti: cykelsti (kerbed cycle track)
+figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz (main cycle network)
 figure.basis.unknown: unknown
-figure.basis.streckenlaenge: streckenlaenge
+figure.basis.streckenlaenge: Streckenlänge (route length)
 figure.note.qecio_halves: QECIO halves unidirectional infrastructure
 figure.note.nuts3_not_city: NUTS3 unit is not the city
 figure.note.file_md5: file md5 {md5}
@@ -407,6 +407,7 @@ page.city.headline_chart: Headline over time, {city}
 page.story.table: 'Table: headline per snapshot'
 table.kind_headline: '{kind} headline'
 cite.title.city_headline: '{city}: headline over time, {unit}, city proper (LAU)'
+cite.title.city_headline_both: '{city}: headline over time, {unit}, city proper (LAU) and metro area (FUA)'
 note.no_run_history: no run (history)
 page.story.over_time: Over time, with flagged years
 page.story.read_on: Read on
@@ -491,7 +492,7 @@ road_class.main_excl_motorway: main roads (excl. motorways)
 road_class.main_incl_motorway: main roads (incl. motorways)
 road_class.main_incl_motorway_raw: main roads (incl. motorways, per carriageway)
 road_class.all_public: all public roads
-subarea.remainder: Outside the {n} Bezirke (LAU edge)
+subarea.remainder: Outside the {n} Bezirke (districts), at the LAU edge
 tier.A: A separated track
 tier.B: B shared foot/cycle path
 tier.C: C protected lane
@@ -527,7 +528,7 @@ counts.no_line: no counter index line (an index value for one year only; see its
 counts.config_error: 'counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such'
 counts.title: counter sites
 counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
-counts.foot: "Counter index: each city's base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected."
+counts.foot: "Counter index: each city's base year = 100, never rebased. Ranks in the Rank view depend on the cities selected."
 counts.not_recorded: not recorded
 counts.source_not_recorded: source not recorded
 counts.avg_daily: index of average daily intensity (monthly values), not of counts
@@ -632,6 +633,7 @@ cite.accessed: '{url} (accessed {accessed}).'
 cite.snapshot: OSM snapshot {timestamp}
 cite.snapshot_one: OSM snapshot of {day}
 cite.snapshot_range: OSM snapshots of {first} to {last}
+cite.snapshot_two: '{kind_a} run {run_a}, OSM snapshot {ts_a}, and {kind_b} run {run_b}, OSM snapshot {ts_b}'
 cite.classifier: classifier {version}
 cite.run: run {run}
 cite.commit: commit {commit}
@@ -679,7 +681,7 @@ js.counts.avg_daily: index of average daily intensity (monthly values), not of c
 js.counts.covid_year: COVID year
 js.counts.title: counter sites
 js.counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
-js.counts.foot: 'Counter index: each city''s base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected.'
+js.counts.foot: 'Counter index: each city''s base year = 100, never rebased. Ranks in the Rank view depend on the cities selected.'
 js.counts.of: index of counts recorded at counter sites (or of their average daily intensity)
 js.counts.any_base: each city's base year = 100
 js.counts.base_for: '{year} = 100 for {cities}'
@@ -733,8 +735,10 @@ js.plan.no_figures: No figures to chart for this item; the tables list what is r
 js.plan.per_year: '{unit} per year'
 js.plan.cumulative: cumulative
 js.plan.total: total
-js.plan.share: share
-js.plan.line: 'line: mapped km since 1 Jan {year}'
+js.plan.share_in: share in {unit}
+js.plan.mapped_axis: mapped km since 1 Jan {year}
+js.plan.mapped_chart_of: 'Chart: {label}, mapped km on the network since 1 Jan {year}'
+js.plan.mapped_chart: 'Chart: mapped km on the network since 1 Jan {year}'
 js.plan.chart_of: 'Chart: {label}, target and figures by year'
 js.plan.chart: Plan chart
 js.plan.completed: Completed projects
@@ -746,7 +750,7 @@ js.plan.current: (current)
 js.plan.revision: (revision)
 js.plan.suspect: suspect
 js.plan.suspect_note: 'suspect: {note}'
-js.plan.not_drawn: 'The target ({unit}, {quantity}) is not drawn: the figures in the chart are per year. The table lists it.'
+js.plan.not_drawn: 'The target ({measure}) is not drawn: the figures in the chart are per year. The table lists it.'
 js.search.no_match: No match
 js.search.results:
   one: '{count} result'

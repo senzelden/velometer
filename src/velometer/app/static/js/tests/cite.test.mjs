@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { useLang } from "./strings-fixture.mjs";
 import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson, multiFields } from "../cite.js";
+import { repoFile } from "./repo.mjs";
 
 // shared with tests/test_m11.py, so the Python and JS formatting rules agree
 const SHARED = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/cite_cases.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/cite_cases.json"), "utf8"),
 );
 const CASES = SHARED.cases;
 
@@ -22,7 +23,7 @@ test("cite: the shared cases give the same text, BibTeX and CSL-JSON", () => {
   assert.deepEqual([...new Set(CASES.map((c) => c.lang))].sort(), ["de", "en"]);
   for (const c of CASES) {
     useLang(c.lang); // a page has the strings of its own language
-    assert.equal(citeText(c.fields, c.accessed, c.url, c.lang), c.text, c.name);
+    assert.equal(citeText(c.fields, c.accessed, c.url), c.text, c.name);
     assert.equal(citeBibtex(c.fields, c.accessed, c.url, c.lang), c.bibtex, c.name);
     assert.deepEqual(citeCsl(c.fields, c.accessed, c.url, c.lang), c.csl, c.name);
     assert.equal(cslJson(citeCsl(c.fields, c.accessed, c.url, c.lang)), c.csl_text, c.name);
@@ -83,4 +84,9 @@ test("multiFields agrees with the shared cases (tests/cite_cases.json, multi)", 
     assert.deepEqual(multiFields(c.runs, c.ids, c.title, c.path, c.commit), c.expected, c.name);
   }
   useLang("en");
+});
+
+test("citeText takes no language: its text is the page's strings (M12-4)", () => {
+  const params = citeText.toString().match(/^function citeText\(([^)]*)\)/)[1];
+  assert.deepEqual(params.split(",").map((p) => p.split("=")[0].trim()), ["f", "accessed", "url"]);
 });

@@ -101,7 +101,11 @@ def _graphql(url: str, query: str, variables: dict) -> dict:
         headers={"User-Agent": user_agent()},
     )
     r.raise_for_status()
-    body = r.json()
+    try:
+        body = r.json()
+    except ValueError as e:  # a portal page (HTML) where the API's JSON was expected
+        kind = r.headers.get("content-type", "no content type")
+        raise CounterFormatError(url, f"answer is not JSON ({kind}): {e}") from e
     if body.get("errors"):
         raise CounterFormatError(url, f"GraphQL errors: {body['errors']}")
     return body["data"]

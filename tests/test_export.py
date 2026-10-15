@@ -4,9 +4,11 @@ guarded `--clean`."""
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
@@ -183,7 +185,8 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
     found = export.export_urls(data, app)
     with TestClient(app, base_url=BASE_URL) as c:
         for url in found:
-            r = c.get(url)
+            r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
+            assert r.status_code == 200, url
             path = out / export.url_to_path(url, r.headers["content-type"])
             assert path.is_file(), url
             if not r.headers["content-type"].startswith(("text/html", "text/csv")):
@@ -228,7 +231,9 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
 
 
 def test_a_non_200_fails_the_export_naming_url_and_status(rich, tmp_path, monkeypatch):  # noqa: F811
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/city/nowhere"])
+    monkeypatch.setattr(
+        export, "export_urls", lambda data, app, rendered=None: ["/", "/city/nowhere"]
+    )
     out = tmp_path / "dist"
     with pytest.raises(export.ExportError, match=r"/city/nowhere.*404"):
         _export(rich, out)
@@ -298,6 +303,38 @@ def test_cli_app_export(rich, tmp_path, monkeypatch):  # noqa: F811
     assert CliRunner().invoke(cli_app, [*args, "--clean"]).exit_code == 0
 
 
+@pytest.mark.parametrize("given", [None, "elsewhere/plans"])
+def test_export_and_serve_take_the_plans_data_dir(tmp_path, monkeypatch, given):
+    """`--plans-data-dir` reaches the app on `app export` and `serve`; both default to
+    data/plans (M9-7)."""
+    import uvicorn
+
+    import velometer.app.export as export_mod
+    import velometer.app.main as main_mod
+
+    db = tmp_path / "v.sqlite"
+    db.write_bytes(b"")
+    seen = {}
+
+    def fake_export(out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean):
+        seen["export"] = plans_data_dir
+        return export.ExportResult(0, 0, {"commit": "x", "base": "/"})
+
+    def fake_app(*args, **kw):
+        seen["serve"] = kw.get("plans_data_dir")
+        return object()
+
+    monkeypatch.setattr(export_mod, "run_export", fake_export)
+    monkeypatch.setattr(main_mod, "create_app", fake_app)
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kw: None)
+    extra = [] if given is None else ["--plans-data-dir", given]
+    out = ["app", "export", "--out", str(tmp_path / "site"), "--db", str(db), *extra]
+    assert CliRunner().invoke(cli_app, out).exit_code == 0
+    assert CliRunner().invoke(cli_app, ["serve", "--db", str(db), *extra]).exit_code == 0
+    want = Path("data") / "plans" if given is None else Path(given)
+    assert seen == {"export": want, "serve": want}
+
+
 # --- deletion safety (review fix round 1) ---
 
 
@@ -322,7 +359,9 @@ def test_a_failed_export_leaves_out_dot_as_it_was(rich, tmp_path, monkeypatch): 
     monkeypatch.chdir(site)
     _export(rich, Path("."))
     before = _snapshot(site)
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/city/nowhere"])
+    monkeypatch.setattr(
+        export, "export_urls", lambda data, app, rendered=None: ["/", "/city/nowhere"]
+    )
     with pytest.raises(export.ExportError, match="/city/nowhere"):
         _export(rich, Path("."), clean=True)
     assert _snapshot(site) == before
@@ -344,6 +383,29 @@ def test_a_symlinked_out_is_refused(rich, tmp_path):  # noqa: F811
         _export(rich, dangling)
 
 
+def test_the_export_renders_each_url_once(rich, tmp_path, monkeypatch):  # noqa: F811
+    """A page found while listing the URLs is written from that response, not rendered again
+    (M9-10)."""
+    asked: dict[str, int] = {}
+    real = export.create_app
+
+    def counting(*args, **kw):
+        app = real(*args, **kw)
+
+        @app.middleware("http")
+        async def count(request, call_next):
+            asked[request.url.path] = asked.get(request.url.path, 0) + 1
+            return await call_next(request)
+
+        return app
+
+    monkeypatch.setattr(export, "create_app", counting)
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    assert len(asked) > 50
+    assert {url: n for url, n in asked.items() if n != 1} == {}
+
+
 def test_a_route_exception_names_its_url(rich, tmp_path, monkeypatch):  # noqa: F811
     real = export.create_app
 
@@ -357,7 +419,7 @@ def test_a_route_exception_names_its_url(rich, tmp_path, monkeypatch):  # noqa: 
         return app
 
     monkeypatch.setattr(export, "create_app", with_boom)
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/boom"])
+    monkeypatch.setattr(export, "export_urls", lambda data, app, rendered=None: ["/", "/boom"])
     out = tmp_path / "dist"
     with pytest.raises(export.ExportError, match="/boom: HTTP 500"):
         _export(rich, out)
@@ -427,6 +489,181 @@ def test_a_dangerous_out_is_refused(rich, tmp_path, monkeypatch, which, clean): 
         assert _snapshot(out) == before
 
 
+# --- the swap's rollback (M13: M9-12, M9-13, M9-14) ---
+
+
+def _swap(tmp_path: Path) -> tuple[Path, Path]:
+    """A previous export in `dist` and a complete new site beside it, for `_install`."""
+    out = tmp_path / "dist"
+    out.mkdir()
+    (out / "build.json").write_text(json.dumps(dict.fromkeys(BUILD_KEYS, "old")))
+    (out / "old.html").write_text("old page")
+    site = tmp_path / "site-new"
+    site.mkdir()
+    for name in ("a.html", "b.html", "build.json"):
+        (site / name).write_text(f"new {name}")
+    return out, site
+
+
+def _set_aside(tmp_path: Path) -> list[Path]:
+    return [p for p in _staging(tmp_path) if "-old-" in p.name]
+
+
+def _failing_moves(monkeypatch, fail, after=None):
+    """os.rename and os.replace (whichever the swap uses) that call `fail(src, dst)` first; it
+    raises to simulate a failure at that move. `after(src, dst)` runs once the move is done: it
+    raises to simulate an interrupt between a move and its bookkeeping."""
+    real_rename, real_replace = os.rename, os.replace
+
+    def rename(src, dst, *a, **k):
+        fail(Path(src), Path(dst))
+        real_rename(src, dst, *a, **k)
+        if after:
+            after(Path(src), Path(dst))
+
+    def replace(src, dst, *a, **k):
+        fail(Path(src), Path(dst))
+        real_replace(src, dst, *a, **k)
+        if after:
+            after(Path(src), Path(dst))
+
+    monkeypatch.setattr(os, "rename", rename)
+    monkeypatch.setattr(os, "replace", replace)
+
+
+def test_a_ctrl_c_mid_swap_puts_the_previous_export_back(tmp_path, monkeypatch):
+    """A KeyboardInterrupt between two moves into `out` restores `out` and the new site, removes
+    the set-aside directory, and is raised again (M9-12)."""
+    out, site = _swap(tmp_path)
+    before_out, before_site = _snapshot(out), _snapshot(site)
+    moved_in = []
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            moved_in.append(src.name)
+            if len(moved_in) == 2:
+                raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(KeyboardInterrupt):
+        export._install(site, out, clean=True)
+    assert _snapshot(out) == before_out
+    assert _snapshot(site) == before_site
+    assert _set_aside(tmp_path) == []
+
+
+def test_a_failed_rollback_names_the_set_aside_directory(tmp_path, monkeypatch):
+    """When putting the previous export back fails too, the error names the directory that
+    holds it, and that directory is kept (M9-13)."""
+    out, site = _swap(tmp_path)
+    before_out = _snapshot(out)
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            raise OSError(28, "No space left on device")
+        if "-old-" in src.parent.name and dst.parent == out:
+            raise OSError(5, "Input/output error")
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=True)
+    [aside] = _set_aside(tmp_path)
+    assert str(aside) in str(caught.value)
+    assert _snapshot(aside) == before_out  # the previous export, whole, where the message says
+
+
+def test_a_ctrl_c_during_the_rollback_still_names_the_set_aside_directory(tmp_path, monkeypatch):
+    """An interrupt while the previous export is being put back is reported like any other
+    failure of it: the error names the directory that still holds it (M13 review M2a)."""
+    out, site = _swap(tmp_path)
+    before_out = _snapshot(out)
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            raise OSError(28, "No space left on device")
+        if "-old-" in src.parent.name and dst.parent == out:
+            raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=True)
+    [aside] = _set_aside(tmp_path)
+    assert str(aside) in str(caught.value)
+    assert _snapshot(aside) == before_out
+
+
+@pytest.mark.parametrize("direction", ["in", "out"])
+def test_an_interrupt_right_after_a_move_is_rolled_back_too(tmp_path, monkeypatch, direction):
+    """Ctrl-C lands after an entry was moved and before the move was noted: that entry is put
+    back as well, so `out` holds no stray new file and the new site is whole (M13 review M2b)."""
+    out, site = _swap(tmp_path)
+    before_out, before_site = _snapshot(out), _snapshot(site)
+
+    def after(src, dst):
+        into_out = src.parent == site and dst.parent == out
+        set_aside = src.parent == out and "-old-" in dst.parent.name
+        if into_out if direction == "in" else set_aside:
+            raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, lambda src, dst: None, after)
+    with pytest.raises(KeyboardInterrupt):
+        export._install(site, out, clean=True)
+    assert _snapshot(out) == before_out
+    assert _snapshot(site) == before_site
+    assert _set_aside(tmp_path) == []
+
+
+def test_a_failed_rollback_of_a_new_out_names_no_set_aside_directory(tmp_path, monkeypatch):
+    """`out` was new, so there was no previous export: when the new `out` cannot be removed,
+    the error does not send the reader to a set-aside directory that is already gone (M13
+    review M2c)."""
+    out = tmp_path / "dist"
+    site = tmp_path / "site-new"
+    site.mkdir()
+    for name in ("a.html", "b.html"):
+        (site / name).write_text("new")
+    moved = []
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            moved.append(src.name)
+            if len(moved) == 2:
+                raise OSError(28, "No space left on device")
+
+    _failing_moves(monkeypatch, fail)
+    real_rmdir = Path.rmdir
+
+    def rmdir(self, *a, **k):
+        if self == out:
+            raise OSError(16, "Device or resource busy")
+        return real_rmdir(self, *a, **k)
+
+    monkeypatch.setattr(Path, "rmdir", rmdir)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=False)
+    assert _set_aside(tmp_path) == []
+    assert export.STAGING_PREFIX not in str(caught.value), caught.value
+    assert "previous export" not in str(caught.value), caught.value
+
+
+def test_a_failed_set_aside_leaves_no_new_out(tmp_path, monkeypatch):
+    """`out` did not exist and the set-aside directory cannot be made: `out` is not left behind
+    empty (M9-14)."""
+    out = tmp_path / "dist"
+    site = tmp_path / "site-new"
+    site.mkdir()
+    (site / "index.html").write_text("new")
+
+    def no_room(*a, **k):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(export.tempfile, "mkdtemp", no_room)
+    with pytest.raises(OSError):
+        export._install(site, out, clean=False)
+    assert not out.exists()
+    assert (site / "index.html").read_text() == "new"
+
+
 def test_clean_rechecks_the_guard_before_deleting(rich, tmp_path, monkeypatch):  # noqa: F811
     """Between the first check and the swap `out` stops being an export: nothing is deleted
     (M-3)."""
@@ -461,7 +698,7 @@ def test_the_staging_directory_is_git_ignored(rich, tmp_path, monkeypatch):  # n
 
 @pytest.mark.parametrize(
     "base", ["/a/../b", "..", "//cdn.example", "/a//b", "https://x.org/", "/a?b=1", "/a#top",
-             "/a b/", '/a"b/']
+             "/a b/", '/a"b/', "/a\n", "/a\n/b"]
 )  # fmt: skip
 def test_a_bad_base_is_refused(rich, tmp_path, base):  # noqa: F811
     with pytest.raises(export.ExportError, match="--base"):
@@ -769,6 +1006,32 @@ def test_the_unvendored_leaflet_images_are_unused():
     uses = re.compile(r"\bL\.(marker|icon|Icon|control)\b")
     for js in [*static.glob("*.js"), *static.glob("js/*.js")]:
         assert not uses.search(js.read_text()), js
+    # L.geoJSON draws a Point feature as the default marker unless its options name a
+    # pointToLayer (M9-15): every call names one
+    calls = 0
+    for js in [*static.glob("*.js"), *static.glob("js/*.js")]:
+        for args in _call_args(js.read_text(), "L.geoJSON"):
+            calls += 1
+            assert "pointToLayer" in args, f"{js.name}: L.geoJSON({args[:60]}…) has no pointToLayer"
+    assert calls >= 3  # the tier map (boundary, tiers) and the change map
+
+
+def _call_args(text: str, name: str) -> list[str]:
+    """The argument text of every call of `name(…)` in `text`, parentheses balanced."""
+    out = []
+    for m in re.finditer(re.escape(name) + r"\s*\(", text):
+        depth, i = 1, m.end()
+        while depth and i < len(text):
+            depth += {"(": 1, ")": -1}.get(text[i], 0)
+            i += 1
+        out.append(text[m.end() : i - 1])
+    return out
+
+
+def test_the_geojson_guard_sees_a_call_without_point_to_layer():
+    args = _call_args("x = L.geoJSON(data, { style: s(1), filter: f });\nL.geoJSON(b)", "L.geoJSON")
+    assert args == ["data, { style: s(1), filter: f }", "b"]
+    assert not any("pointToLayer" in a for a in args)
 
 
 # --- the whole export: base rule, equality, CSP, the static compare note ---
@@ -832,11 +1095,15 @@ def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
     _export(rich, out)
     pages = [p for p in _files(out) if p.suffix == ".html"]
     assert len(pages) > 10
+    # each page file's URL, as the export rendered it (`/de/` keeps its slash: `/de` redirects)
+    url_of = {"404.html": "/404"}
+    for url in export.export_urls(_data(rich), _app(rich)):
+        url_of.setdefault(str(export.url_to_path(url, "text/html")), url)
     with TestClient(_app(rich), base_url=BASE_URL) as c:
         for page in pages:
             rel = page.relative_to(out).as_posix()
-            url = "/404" if rel == "404.html" else "/" + rel.removesuffix("index.html").rstrip("/")
-            r = c.get(url)
+            url = url_of[rel]
+            r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
             assert r.status_code == (404 if rel == "404.html" else 200), rel
             text = page.read_text()
             if rel.endswith("panel/index.html"):
@@ -913,3 +1180,30 @@ def test_the_exported_404_is_the_html_page_and_resolves(rich, tmp_path):  # noqa
     assert text.startswith("<!doctype html>") and "Page not found" in text
     assert 'href="/velometer/"' in text
     assert [u for u in export.scan_references(out, BASE) if u.file == "404.html"] == []
+
+
+# --- M8-10: Starlette's httpx deprecation -----------------------------------------------------
+
+_BLOCK_HTTPX2 = "import sys; sys.modules['httpx2'] = None; "
+
+
+def _imports_without_warning(code: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, "-W", "error", "-c", code], capture_output=True, text=True, check=False
+    )
+
+
+def test_the_test_client_runs_on_httpx2_so_starlette_does_not_warn():
+    """The dev group has `httpx2`, so Starlette's TestClient (which every app test uses) takes it
+    and the gate's pytest output carries no `httpx` deprecation warning."""
+    r = _imports_without_warning("import fastapi.testclient")
+    assert r.returncode == 0, r.stderr
+
+
+def test_the_export_does_not_warn_where_only_httpx_is_installed():
+    """`httpx2` is a dev dependency only: an install without the dev group falls back to `httpx`,
+    so the export keeps its own targeted filter for the notice (a command, not a test suite)."""
+    plain = _imports_without_warning(_BLOCK_HTTPX2 + "import fastapi.testclient")
+    assert "install `httpx2` instead" in plain.stderr  # the fallback this guards does warn
+    r = _imports_without_warning(_BLOCK_HTTPX2 + "import velometer.app.export")
+    assert r.returncode == 0, r.stderr

@@ -1,5 +1,6 @@
 id: changing_cities
 name: Changing Cities e.V.
+lang: de
 kind: ngo
 url: https://changing-cities.org/
 sections:
@@ -15,8 +16,8 @@ sections:
   - heading: How they measure
     dimensions:
       scope: >-
-        km of Berlin's cycle network newly created in the year, against the monitor's own
-        target network [@berlin-changing-cities-monitor]
+        km of the <i lang="de">Berliner Radnetz</i> (Berlin cycle network) newly created in the
+        year, against the monitor's own target for it [@berlin-changing-cities-monitor]
       kind: newly created in the year [@berlin-changing-cities-monitor]
       length: not stated by the source
       date: reference date 31 December 2025 [@berlin-changing-cities-monitor]
@@ -24,11 +25,11 @@ sections:
       method: the association's own measurement [@berlin-changing-cities-monitor]
     paragraphs:
       - >-
-        Changing Cities runs the Verkehrswende-Monitor, which tracks Berlin's cycle network
-        against the Mobilitätsgesetz [@berlin-changing-cities-monitor]. It says it measures the
-        network itself, as of 31 December 2025 [@berlin-changing-cities-monitor]. Its target
-        network of 2,699.8 km is longer than the 2,398.3 km in the Senate's progress report
-        [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
+        Changing Cities runs the Verkehrswende-Monitor, which tracks Berlin's cycle network against
+        the Mobilitätsgesetz [@berlin-changing-cities-monitor]. It says it measures the network
+        itself, as of 31 December 2025 [@berlin-changing-cities-monitor]. Its target of 2,699.8 km
+        for the <i lang="de">Berliner Radnetz</i> is longer than the 2,398.3 km in the Senate's
+        progress report [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
       - >-
         We found no published description of how the monitor measures. In our reading its
         yearly figure and the Senate's describe different networks and cannot be set against

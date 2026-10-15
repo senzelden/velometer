@@ -14,11 +14,11 @@ from datetime import date
 from pathlib import Path
 
 from velometer.app.narrative import safe_url
-from velometer.content.facts import version_key
+from velometer.content.facts import latest_overlay
 from velometer.content.models import Organisation
 from velometer.db import OverlayRow
 from velometer.i18n import Lang, number_trimmed, t
-from velometer.plans.berlin import NETWORK_LAYER
+from velometer.plans.berlin import CITY, NETWORK_LAYER
 from velometer.plans.models import (
     MAPPED_BASELINE,
     Plan,
@@ -27,8 +27,9 @@ from velometer.plans.models import (
     current_and_revisions,
 )
 
-DETAIL_CITY = "berlin"  # the one city with a plan page of its own (spec §4.4)
-MEASURES_FILE = Path("berlin") / "radverkehrsmassnahmen.geojson"
+DETAIL_CITY = CITY  # the one city with a plan page of its own (spec §4.4), the overlay's
+MEASURES_LAYER = "radverkehrsmassnahmen"  # the layer the completed projects are read from
+MEASURES_FILE = Path("berlin") / f"{MEASURES_LAYER}.geojson"
 MEASURES_RETRIEVED = Path("berlin") / "retrieved.json"
 PROJECTS_ORG = "infravelo"  # the measures dataset is fed from infraVelo's project database
 COMPLETED = "Abgeschlossen"
@@ -95,7 +96,12 @@ def target_text(item: PlanItem, lang: Lang = "en") -> str:
 
 def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
     org = orgs.get(name)
-    return {"name": org.name if org else name, "href": f"/organisations#{name}" if org else None}
+    return {
+        "name": org.name if org else name,
+        "href": f"/organisations#{name}" if org else None,
+        "lang": org.lang if org else None,
+        "bracket_lang": org.bracket_lang if org else None,
+    }
 
 
 def note_in(note: str | None, lang: Lang, notes_de: dict[str, str] | None) -> tuple[str, bool]:
@@ -253,10 +259,15 @@ def measures_retrieved(plans_data_dir: Path) -> tuple[dict | None, str | None]:
     return record, None
 
 
-def network_licence(record: dict | None) -> str | None:
-    """The planned-network layer's licence: the record's, when the record lists that layer."""
+def layer_licence(record: dict | None, layer: str) -> str | None:
+    """A fetched layer's licence: the record's, when the record lists that layer."""
     layers = (record or {}).get("layers")
-    return record["licence"] if isinstance(layers, dict) and NETWORK_LAYER in layers else None
+    return record["licence"] if isinstance(layers, dict) and layer in layers else None
+
+
+def network_licence(record: dict | None) -> str | None:
+    """The planned-network layer's licence (layer_licence)."""
+    return layer_licence(record, NETWORK_LAYER)
 
 
 def _projects_of(item_id: str, metres: dict[str, dict[int, float]] | None) -> list[dict] | None:
@@ -268,14 +279,6 @@ def _projects_of(item_id: str, metres: dict[str, dict[int, float]] | None) -> li
         {"year": y, "km": round(sum(metres.get(c, {}).get(y, 0.0) for c in classes) / 1000, 2)}
         for y in years
     ]
-
-
-def latest_overlay(rows: list[OverlayRow]) -> tuple[str | None, list[OverlayRow]]:
-    """The latest overlay version (numeric order, `overlay_v10` after `overlay_v2`) and its rows."""
-    if not rows:
-        return None, []
-    version = max((r.overlay_version for r in rows), key=version_key)
-    return version, [r for r in rows if r.overlay_version == version]
 
 
 def run_dates(conn: sqlite3.Connection, run_ids: set[int]) -> dict[int, str]:

@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import "./strings-fixture.mjs";
 import { DEFAULTS } from "../state.js";
 import { buildModel } from "../compare-model.js";
-import { counterLines, countsChart } from "../counter-model.js";
+import { readFileSync } from "node:fs";
+import { counterLines, counterTip, countsChart } from "../counter-model.js";
+import { repoFile } from "./repo.mjs";
 
 // the English texts (js.counts.*) an English page shows
 const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
@@ -92,12 +94,25 @@ test("Counts tab: counter index beside the A+B km index, both base year = 100", 
   assert.deepEqual(m.marks, [{ label: "2020", text: "COVID year" }]);
 });
 
-test("Counts tab without an index line (Madrid): the km line alone, rebased to its base year", () => {
-  const m = countsChart(D, "mad");
-  assert.equal(m.base, 2020);
-  assert.deepEqual(m.series.map((s) => s.id), ["km"]);
-  assert.deepEqual(m.series[0].points.map((p) => r(p.value)), [80, 100, 110]);
+test("Counts tab: no index line (Madrid), no chart: the tab shows a note instead (counts.html)", () => {
+  // M8-4: the tab mounts the chart only for a city with a line; a km line alone was unreachable
+  assert.equal(countsChart(D, "mad"), null);
   assert.equal(countsChart(D, "cph"), null);
+});
+
+test("Compare's counter tooltip names the city's base year = 100 and, on its point, the COVID year", () => {
+  // M8-14: the unit's "2019 = 100; 2020 is the COVID year", per point and per city
+  assert.equal(counterTip(D, "ber", 114.6, "2020"), "Berlin · 2020: index 114.6 (2019 = 100; 2020 is the COVID year)");
+  assert.equal(counterTip(D, "ber", 90, "2017"), "Berlin · 2017: index 90 (2019 = 100)");
+  const mad = { ...D, counters: { ...D.counters, cities: { mad: { ...D.counters.cities.mad, line: true } } } };
+  assert.equal(counterTip(mad, "mad", 100, "2020"), "Madrid · 2020: index 100 (2020 = 100; 2020 is the COVID year)");
+});
+
+test("Compare's counter tooltip names no base year a city does not have", () => {
+  // review M3: a city without base_year printed "(undefined = 100)"
+  const bare = { ...D, counters: { ...D.counters, cities: { ber: { ...D.counters.cities.ber, base_year: null } } } };
+  assert.equal(counterTip(bare, "ber", 114.6, "2020"), "Berlin · 2020: index 114.6 (2020 is the COVID year)");
+  assert.equal(counterTip(bare, "ber", 90, "2017"), "Berlin · 2017: index 90");
 });
 
 test("a city listed without open counter data gets its config note with the portals checked", () => {
@@ -117,10 +132,9 @@ test("Counts tab end labels: each series has a short name that fits the narrow c
 });
 
 // ---- the cases table shared with the Python suite (tests/test_app_m8_counts.py) ----
-import { readFileSync } from "node:fs";
 
 const shared = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/counter_cases.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/counter_cases.json"), "utf8"),
 );
 
 for (const c of shared.cases) {

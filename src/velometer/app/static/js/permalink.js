@@ -72,6 +72,21 @@ export function stepFromHash(hash, steps) {
   }
 }
 
+/** The Stories permalink: which step in view is written to the address. `next(step)` is the
+ * hash to write (`#step-<id>`), or null when there is nothing to write: the step written last
+ * (or the one the address came with), or the first step while the page came without a step and
+ * none has been written (its top is the page itself). */
+export function stepMemory(steps, hash) {
+  let written = stepFromHash(hash, steps);
+  return {
+    next(step) {
+      if (step === written || (step === steps[0] && written === null)) return null;
+      written = step;
+      return `#step-${encodeURIComponent(step)}`;
+    },
+  };
+}
+
 /** `search` with `key` set to `value` (or removed for null); the other pairs stay as written. */
 export function setParam(search, key, value) {
   const parts = String(search).replace(/^\?/, "").split("&").filter(Boolean);
@@ -96,18 +111,23 @@ export function currentAddress(loc = globalThis.location, doc = globalThis.docum
 }
 
 /** Which map `moveend`s are the reader's: not one while the app fits the map itself (`fitting`),
- * and not the one a resize sends (Leaflet's `invalidateSize` keeps the centre and fires `moveend`
- * after `resize`, 200 ms later for a window resize), so resizing never writes `at`. */
+ * and not the one a resize sends (Leaflet's `invalidateSize` keeps the view and fires `moveend`,
+ * 200 ms later for a window resize), so resizing never writes `at`. A resize's moveend is told
+ * from a reader's by the view: `resize(view)` records the view the resize left ([lat, lon, z]);
+ * the next `moveend(fitting, view)` showing that same view (as `at` writes it) is the resize's,
+ * any other is the reader's, so a pan or zoom inside the 200 ms is written, not lost. */
 export function readerMoves() {
-  let resized = false;
+  let left = null; // the view the last resize left, until the next moveend
+  const at = (view) => (view ? TIERMAP.at.format(view) : "");
   return {
-    resize() {
-      resized = true;
+    resize(view) {
+      left = view ?? null;
     },
-    moveend(fitting) {
-      const reader = !fitting && !resized;
-      resized = false;
-      return reader;
+    moveend(fitting, view) {
+      const after = left;
+      left = null;
+      if (fitting) return false;
+      return after === null || at(after) !== at(view);
     },
   };
 }

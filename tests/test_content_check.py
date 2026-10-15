@@ -227,14 +227,14 @@ def test_check_online_with_fake_fetch():
         return "<p>other   text</p>"
 
     out = check_online(src, fetch=without)
-    assert out == ["sources/src: excerpt not found online: e1"]
+    assert out == (["sources/src: excerpt not found online: e1"], [])
     assert calls == ["https://example.org/radverkehr"]
-    assert check_online(src, fetch=lambda u: "<p>Das  Netz\nist 78,2 km   lang.</p>") == []
+    assert check_online(src, fetch=lambda u: "<p>Das  Netz\nist 78,2 km   lang.</p>") == ([], [])
 
     def boom(url):
         raise OSError("down")
 
-    assert "cannot fetch" in check_online(src, fetch=boom)[0]
+    assert "cannot fetch" in check_online(src, fetch=boom)[0][0]
 
 
 def load_sources_from(doc):
@@ -469,3 +469,216 @@ def test_an_unquoted_mapping_entry_is_not_checked(shipped):
     dims_of("senmvku", lambda d: d.update(area="Berlin"))
     problems = _source_row_problems(content_dir, config_dir)
     assert problems and all("unquoted_source" not in p for p in problems)
+
+
+@pytest.mark.parametrize(
+    ("rel", "text", "says"),
+    [
+        ("external/figures.csv", "city\nberlin\n", "figures.csv"),
+        ("differences.yaml", "dimensions: [unclosed\n", "differences.yaml"),
+    ],
+)
+def test_a_file_the_source_rows_need_unreadable_is_said_not_skipped(shipped, rel, text, says):
+    """The "How they measure" check cannot run without its inputs: the check fails naming the
+    file, never passes in silence (M13 M11-7); and a cause another check already said is not
+    said twice (a broken file is one problem, test_content_m8)."""
+    from velometer.content.check import check_content_offline
+
+    content_dir, config_dir, _ = shipped
+    (config_dir / rel).write_text(text, encoding="utf-8")
+    problems = check_content_offline(content_dir, config_dir)
+    assert any(says in p for p in problems), problems
+    not_checked = "organisations: the 'How they measure' rows were not checked: "
+    for p in problems:
+        if p.startswith(not_checked):
+            assert says in p and p.removeprefix(not_checked) not in problems, problems
+
+
+def test_the_source_rows_say_a_cause_no_other_check_said(shipped):
+    """differences.yaml is read by the explainer and the profiles under their own words, so the
+    rows' own line is the one that says the rows went unchecked."""
+    content_dir, config_dir, _ = shipped
+    (config_dir / "differences.yaml").write_text("dimensions: [unclosed\n", encoding="utf-8")
+    problems = _source_row_problems(content_dir, config_dir)
+    assert any("not checked" in p and "differences.yaml" in p for p in problems), problems
+
+
+# --- content --check --online: PDF sources and timeouts (M13 Task 13b) ---------------------
+
+PDF = Path(__file__).parent / "fixtures/content_online/excerpt.pdf"  # "Das Netz ist 78,2 km lang."
+needs_pdftotext = pytest.mark.skipif(
+    __import__("shutil").which("pdftotext") is None, reason="no pdftotext"
+)
+
+
+@needs_pdftotext
+def test_check_online_reads_the_text_of_a_pdf_source():
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: PDF.read_bytes()) == ([], [])
+    other = copy.deepcopy(SOURCES)
+    other["sources"][0]["excerpts"][0]["text"] = "Das Netz ist 99 km lang."
+    problems, _ = check_online(load_sources_from(other), fetch=lambda u: PDF.read_bytes())
+    assert problems == ["sources/src: excerpt not found online: e1"]
+
+
+@needs_pdftotext
+def test_a_pdf_excerpt_is_found_in_the_content_stream_order_too():
+    # a header or a table cell drawn out of reading order splits the excerpt in pdftotext's
+    # reading order; its raw (content-stream) order keeps it whole, as the source printed it
+    stream_order = Path(__file__).parent / "fixtures/content_online/stream-order.pdf"
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: stream_order.read_bytes()) == ([], [])
+
+
+@needs_pdftotext
+def test_a_pdf_text_is_not_read_as_markup():
+    # "< 5 km" and "> 1 km" are text in a PDF: stripping them as a tag swallowed the sentence
+    # between them (the Berlin Radverkehrsplan lost two excerpts that way)
+    angles = Path(__file__).parent / "fixtures/content_online/angle-brackets.pdf"
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: angles.read_bytes()) == ([], [])
+
+
+def test_a_pdf_without_a_reader_is_skipped_not_failed(monkeypatch):
+    import velometer.content.check as ck
+
+    monkeypatch.setattr(ck.shutil, "which", lambda name: None)
+    problems, notes = check_online(load_sources_from(SOURCES), fetch=lambda u: PDF.read_bytes())
+    assert problems == []
+    assert notes == ["sources/src: excerpt e1 skipped: no PDF reader"]
+
+
+def _response(content: bytes, ctype: str):
+    import httpx
+
+    req = httpx.Request("GET", "https://example.org/radverkehr")
+    return httpx.Response(200, content=content, headers={"content-type": ctype}, request=req)
+
+
+def test_http_get_hands_a_pdf_over_as_bytes(monkeypatch):
+    import httpx
+
+    import velometer.content.check as ck
+
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: _response(PDF.read_bytes(), "text/plain"))
+    assert ck._http_get("https://example.org/x") == PDF.read_bytes()  # sniffed by `%PDF`
+    page = _response(b"<p>Das Netz</p>", "text/html; charset=utf-8")
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: page)
+    assert ck._http_get("https://example.org/x") == "<p>Das Netz</p>"
+
+
+def test_a_timeout_is_retried_once_with_a_longer_timeout(monkeypatch):
+    import httpx
+
+    timeouts: list[float] = []
+
+    def slow_then_ok(url, **kw):
+        timeouts.append(kw["timeout"])
+        if len(timeouts) == 1:
+            raise httpx.ReadTimeout("timed out")
+        return _response(b"<p>Das Netz ist 78,2 km lang.</p>", "text/html")
+
+    monkeypatch.setattr(httpx, "get", slow_then_ok)
+    assert check_online(load_sources_from(SOURCES)) == ([], [])
+    assert len(timeouts) == 2 and timeouts[1] > timeouts[0]
+
+
+def test_a_source_that_times_out_twice_is_unreachable_not_missing(monkeypatch):
+    import httpx
+
+    import velometer.content.check as ck
+
+    calls: list[str] = []
+
+    def never(url, **kw):
+        calls.append(url)
+        raise httpx.ConnectTimeout("timed out")
+
+    monkeypatch.setattr(httpx, "get", never)
+    problems, notes = check_online(load_sources_from(SOURCES))
+    assert len(calls) == 2 and notes == []
+    assert problems == [
+        "sources/src: unreachable (network problem) https://example.org/radverkehr: timed out"
+    ]
+    assert ck.UNREACHABLE in problems[0] and "not found" not in problems[0]
+
+
+def test_cli_online_prints_a_skipped_pdf_and_passes(content, fixture_db, monkeypatch):
+    import velometer.content.check as ck
+
+    real = ck.check_online
+    monkeypatch.setattr(ck.shutil, "which", lambda name: None)
+    monkeypatch.setattr(
+        ck, "check_online", lambda sources: real(sources, fetch=lambda u: PDF.read_bytes())
+    )
+    res = CliRunner().invoke(app, _check_args(content, fixture_db, "--online"))
+    assert res.exit_code == 0, res.output
+    assert "sources/src: excerpt e1 skipped: no PDF reader" in res.stderr
+    assert res.stdout.strip() == "ok"
+
+
+# --- review 13b: PDF read failures, inline tags, PDF spacing ------------------------------
+
+
+def _with_text(text: str):
+    doc = copy.deepcopy(SOURCES)
+    doc["sources"][0]["excerpts"][0]["text"] = text
+    return load_sources_from(doc)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        __import__("subprocess").TimeoutExpired(["pdftotext"], 60),
+        __import__("subprocess").CalledProcessError(1, ["pdftotext"]),
+    ],
+)
+def test_a_pdf_pdftotext_cannot_read_is_its_own_problem(monkeypatch, error):
+    import velometer.content.check as ck
+
+    seen: list[dict] = []
+
+    def run(*args, **kw):
+        seen.append(kw)
+        raise error
+
+    monkeypatch.setattr(ck.shutil, "which", lambda name: "/usr/bin/pdftotext")
+    monkeypatch.setattr(ck.subprocess, "run", run)
+    problems, notes = check_online(load_sources_from(SOURCES), fetch=lambda u: PDF.read_bytes())
+    assert notes == [] and len(problems) == 1
+    assert problems[0].startswith("sources/src: cannot read PDF https://example.org/radverkehr:")
+    assert "cannot fetch" not in problems[0]
+    assert seen and seen[0]["timeout"] == ck.PDF_TIMEOUT == 60  # poppler never hangs the check
+
+
+@pytest.mark.parametrize(
+    ("excerpt", "page"),
+    [
+        ("au 1er janvier 2025", "<p>au 1<sup>er</sup> janvier 2025</p>"),  # Paris l'essentiel
+        (
+            "Das Netz ist 78,2 km lang.",
+            '<p>Das <a href="/n">Netz</a> ist 78,2 km <em>lang</em>.</p>',
+        ),
+        ("Das Netz ist 78,2 km lang.", '<p>Das Netz ist 78,<span class="x">2</span> km lang.</p>'),
+        ("Das Netz ist 78,2 km lang.", "<p>Das Netz</p><p>ist 78,2 km lang.</p>"),  # block: a space
+    ],
+)
+def test_an_inline_tag_leaves_no_space_and_a_block_tag_does(excerpt, page):
+    assert check_online(_with_text(excerpt), fetch=lambda u: page) == ([], [])
+
+
+def test_html_is_not_compared_without_spaces():
+    # "21 47 km" is not "2 147 km": without spaces both read "2147km", so the whitespace-free
+    # form is for PDF text only, never for HTML
+    page = "<table><tr><td>Netz 2</td><td>147 km</td></tr></table>"
+    out, _ = check_online(_with_text("Netz 21 47 km"), fetch=lambda u: page)
+    assert out == ["sources/src: excerpt not found online: e1"]
+
+
+@needs_pdftotext
+def test_a_pdf_that_lost_its_inter_word_spaces_still_holds_the_excerpt():
+    no_spaces = Path(__file__).parent / "fixtures/content_online/no-spaces.pdf"
+    assert check_online(load_sources_from(SOURCES), fetch=lambda u: no_spaces.read_bytes()) == (
+        [],
+        [],
+    )

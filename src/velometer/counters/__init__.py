@@ -9,8 +9,15 @@ from pathlib import Path
 
 from velometer.counters.adapters import adapter, boundary_polygon, read_retrieved, sites_inside
 from velometer.counters.days import to_days, zero_days_invalid
-from velometer.counters.index import chain_index, chain_index_monthly
-from velometer.counters.model import CounterEntry, DayCount, MonthValue, Site
+from velometer.counters.index import chain_index, chain_index_monthly, chain_index_v1
+from velometer.counters.model import (
+    INDEX_METHOD,
+    INDEX_METHODS,
+    CounterEntry,
+    DayCount,
+    MonthValue,
+    Site,
+)
 
 SERIES = "counts"
 MONTHLY_SERIES = "avg_daily_intensity"  # spec §2.14: Barcelona
@@ -80,8 +87,12 @@ def load_city(conn, entry: CounterEntry, data_dir: Path) -> LoadResult:
         lo, hi = span.get(d.site_id, (day, day))
         span[d.site_id] = (min(lo, day), max(hi, day))
     _store_sites(conn, entry, sites, span, retrieved_at)
-    index = chain_index(stored, entry.base_year)
-    _store_index(conn, entry, index, SERIES)
+    by_method = {
+        "v1": chain_index_v1(stored, entry.base_year),
+        "v2": chain_index(stored, entry.base_year),
+    }
+    _store_index(conn, entry, by_method, SERIES)
+    index = by_method[INDEX_METHOD]
     all_days = sorted(d.day for d in stored)
     return LoadResult(
         sites=len(sites),
@@ -113,7 +124,8 @@ def _load_monthly(conn, entry, sites: list[Site], months: list[MonthValue], retr
         span[m.site_id] = (min(lo, first), max(hi, last))
     _store_sites(conn, entry, sites, span, retrieved_at)
     index = chain_index_monthly(months, entry.base_year, MONTHLY_DAY_TYPE)
-    _store_index(conn, entry, index, MONTHLY_SERIES)
+    # pooling changes no monthly link (every site has twelve values): one chain for both
+    _store_index(conn, entry, dict.fromkeys(INDEX_METHODS, index), MONTHLY_SERIES)
     bounds = sorted(x for lo_hi in span.values() for x in lo_hi)
     return LoadResult(
         sites=len(sites),
@@ -150,11 +162,18 @@ def _store_sites(conn, entry, sites: list[Site], span, retrieved_at: str) -> Non
     )
 
 
-def _store_index(conn, entry, index, series: str) -> None:
-    from velometer.db import CounterIndexYear, replace_counter_index
+def _store_index(conn, entry, index_by_method: dict[str, list], series: str) -> None:
+    """Replace the city's index rows of each method in `index_by_method` (method -> chain)."""
+    from velometer.db import CounterIndexYear, replace_counter_index_nocommit
 
-    replace_counter_index(
-        conn,
-        entry.city,
-        [CounterIndexYear(entry.city, y, v, n, entry.base_year, series) for y, v, n in index],
-    )
+    with conn:  # one transaction: an interrupt leaves the old rows of every method
+        for method, index in index_by_method.items():
+            replace_counter_index_nocommit(
+                conn,
+                entry.city,
+                [
+                    CounterIndexYear(entry.city, y, v, n, entry.base_year, series, method)
+                    for y, v, n in index
+                ],
+                method=method,
+            )

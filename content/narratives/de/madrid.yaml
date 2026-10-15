@@ -45,14 +45,15 @@ sections:
       Die Netzzahl der Stadt, wie die Presse sie nach Angaben der städtischen Mobilitätsabteilung
       meldete [@madrid-ultimahora-1167km], beträgt mehr als das Dreifache unseres
       A+B-Werts. Die amtliche Mitteilung dahinter wurde nicht gefunden, die Zahl ist
-      also eine Angabe aus zweiter Hand. Sie schließt ciclocarriles ein, Fahrstreifen,
-      die mit dem Kfz-Verkehr geteilt werden [@madrid-opendata-infraestructura-ciclista];
+      also eine Angabe aus zweiter Hand. Sie schließt <i lang="es">ciclocarriles</i>
+      (mit dem Kfz-Verkehr geteilte Fahrstreifen) ein [@madrid-opendata-infraestructura-ciclista];
       solche geteilten Fahrstreifen lassen unsere Stufen aus. Die 8 % geschützt von
       Clean Cities liegen nahe an unseren 7,7 %, beide bezogen auf das gesamte Straßennetz
       des municipio; ihre Daten wurden bis Anfang 2025 erhoben [@cc2025-report]. Das
       Netz von BikeNetKit ist länger als unseres (−26,3 %), weil es verkehrsberuhigte
       Bereiche einschließt [#rc-madrid-bnk_network_km]. QECIO berichtet für die ganze
-      Comunidad de Madrid [#rc-madrid-qecio_main_km].
-    src: bf7873ea912d
+      <i lang="es">Comunidad de Madrid</i> (Autonome Gemeinschaft Madrid) [@boe-estatuto-autonomia-madrid]
+      [#rc-madrid-qecio_main_km].
+    src: b580d86c0ae7
 literals:
 - 100 km

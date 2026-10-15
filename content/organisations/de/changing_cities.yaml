@@ -19,8 +19,8 @@ sections:
     scope:
       text: >-
         km des Berliner Radnetzes, die im Jahr neu geschaffen wurden, gemessen am
-        eigenen Zielnetz des Monitors [@berlin-changing-cities-monitor]
-      src: 4e4cd667697e
+        eigenen Ziel des Monitors für dieses Netz [@berlin-changing-cities-monitor]
+      src: fcb3ab5ce6b2
     kind:
       text: im Jahr neu geschaffen [@berlin-changing-cities-monitor]
       src: 0e98188c429f
@@ -41,9 +41,9 @@ sections:
       Changing Cities betreibt den Verkehrswende-Monitor, der Berlins Radnetz an den
       Vorgaben des Mobilitätsgesetzes misst [@berlin-changing-cities-monitor]. Nach
       eigener Aussage misst er das Netz selbst, mit Stand 31. Dezember 2025 [@berlin-changing-cities-monitor].
-      Sein Zielnetz von 2.699,8 km ist länger als die 2.398,3 km im Fortschrittsbericht
-      des Senats [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
-    src: a7055ff969ce
+      Sein Ziel von 2.699,8 km für das Berliner Radnetz ist länger als die 2.398,3
+      km im Fortschrittsbericht des Senats [@berlin-changing-cities-monitor] [@berlin-fortschrittsbericht-2025].
+    src: a6142519d06f
   - text: >-
       Eine veröffentlichte Beschreibung, wie der Monitor misst, haben wir nicht gefunden.
       Nach unserer Lesart beschreiben seine Jahreszahl und die des Senats verschiedene

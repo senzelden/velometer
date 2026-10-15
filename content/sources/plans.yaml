@@ -50,7 +50,7 @@ sources:
     title_de: "Fahrrad Berlin – Fortschrittsbericht 2021 (Bericht an den Hauptausschuss, rote Nr. 0389 A vom 5. Juli 2022)"
     url: https://www.parlament-berlin.de/adosservice/19/Haupt/vorgang/h19-0389.A-v.pdf
     published: 2022-07-05
-    accessed: 2026-10-07
+    accessed: 2026-10-15
     language: de
     kind: official
     excerpts:
@@ -58,6 +58,10 @@ sources:
         text: "Da an beiden Straßenseiten Radverkehrsanlagen bestehen, entspricht dies einer Länge im Radnetz von 9,4 Kilometern (18,7 geteilt durch 2)."
         gloss_en: "As there are cycling facilities on both sides of the street, this corresponds to a length in the cycle network of 9.4 km (18.7 divided by 2)."
         locator: "PDF p. 17 (report p. 15), 3.3.1 Umsetzung des Berliner Radverkehrsnetzes"
+      - id: main-road-facilities
+        text: "Im Jahr 2021 wurden im Berliner Radverkehrsprogramm 18,7 Kilometer Radverkehrsanlagen an Hauptverkehrsstraßen gebaut."
+        gloss_en: "In 2021, 18.7 km of cycling facilities on main roads (Radverkehrsanlagen an Hauptverkehrsstraßen) were built under the Berlin cycling programme."
+        locator: "PDF p. 17 (report p. 15), 3.3.1 Umsetzung des Berliner Radverkehrsnetzes, sentence before the halving"
   - id: berlin-fortschrittsbericht-2022
     publisher: Der Senat von Berlin (SenUMVK)
     title: "Fahrrad Berlin – Fortschrittsbericht 2022 (Hauptausschuss report rote Nr. 1064 of 27 June 2023)"

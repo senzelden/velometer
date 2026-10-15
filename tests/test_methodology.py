@@ -801,7 +801,6 @@ def test_the_index_rule_text_follows_the_constants(fixture_db, monkeypatch, lang
     block = _generated(text, "counters")
     assert ("fewer than 7 qualifying" if lang == "en" else "weniger als 7 solchen") in block
     assert f"{_number(80, lang)}{'\u202f' if lang == 'de' else ' '}%" in block
-    assert ("The 80 % rule" if lang == "en" else "Die 80-%-Regel") in text
 
 
 @pytest.mark.parametrize("lang", LANGS)
@@ -860,9 +859,9 @@ NO_LINE = {
 }
 
 
-def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture_db, tmp_path):
-    """The Madrid bullet is generated: the first month, the gaps and the years with a value come
-    from the stored counter tables, the base year from config/counters.yaml."""
+def _store_berlin_without_a_line(db_path) -> None:
+    """Berlin as Madrid is stored: data from September 2019, no counts from July 2021 to August
+    2022, an index value for 2020 only."""
     from datetime import date, timedelta
 
     from velometer.db import (
@@ -874,9 +873,6 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
         replace_counter_sites,
     )
 
-    db_path, cfg_dir, _conn, data = fixture_db
-    write(tmp_path, methodology_facts(data))
-
     def span(a: date, b: date) -> list[CounterDay]:
         n = (b - a).days + 1
         return [
@@ -885,14 +881,142 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
 
     site = CounterSite("berlin", "s1", "S1", None, None, "x", "y", "u", "t", "2019-09-14", None)
     days = span(date(2019, 9, 14), date(2021, 6, 30)) + span(date(2022, 9, 1), date(2022, 12, 31))
-    index = [CounterIndexYear("berlin", y, v, 4, 2020, "counts") for y, v in
+    index = [CounterIndexYear("berlin", y, v, 4, 2020, "counts", "v2") for y, v in
              ((2019, None), (2020, 100.0), (2021, None), (2022, None))]  # fmt: skip
     with closing(sqlite3.connect(db_path)) as c:
         replace_counter_sites(c, "berlin", [site])
         replace_counter_daily(c, "berlin", days)
         replace_counter_index(c, "berlin", index)
+
+
+def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture_db, tmp_path):
+    """The Madrid bullet is generated: the first month, the gaps and the years with a value come
+    from the stored counter tables, the base year from config/counters.yaml."""
+    db_path, cfg_dir, _conn, data = fixture_db
+    write(tmp_path, methodology_facts(data))
+    _store_berlin_without_a_line(db_path)
     _edit_counters(cfg_dir, "berlin", base_year=2020)
     facts = methodology_facts(data)
     for lang in LANGS:
         assert NO_LINE[lang] in render(facts, lang)
     assert check(tmp_path, facts)
+
+
+GAP_NOTE = {
+    "en": "The files hold no counts from July 2021 to August 2022, while the portal was moved. ",
+    "de": "Die Dateien enthalten von Juli 2021 bis August 2022, während das Portal umzog, keine "
+    "Zählwerte. ",
+}
+
+
+def test_the_gap_clause_of_a_city_without_a_line_comes_from_its_counters_yaml_note(
+    fixture_db, tmp_path
+):
+    """M8-8: the clause after a no-line city's gaps (Madrid: "while the detectors were changed")
+    is its counters.yaml `note`, not template text keyed on the city: a changed note makes the
+    committed methodology stale, so `content --check` sees it."""
+    db_path, cfg_dir, _conn, data = fixture_db
+    _store_berlin_without_a_line(db_path)
+    _edit_counters(cfg_dir, "berlin", base_year=2020)
+    write(tmp_path, methodology_facts(data))
+    _edit_counters(
+        cfg_dir, "berlin", note="while the portal was moved", note_de="während das Portal umzog"
+    )
+    facts = methodology_facts(data)
+    for lang in LANGS:
+        assert GAP_NOTE[lang] in render(facts, lang)
+    assert check(tmp_path, facts)
+
+
+# --- counter index v2 (M13 Task 2) ---------------------------------------------------------
+
+
+def test_method_changes_list_the_links_v2_moved_by_half_a_percent_or_more(fixture_db, tmp_path):
+    """The v1->v2 table comes from the stored rows of both methods: a link (two consecutive years
+    with values in both) whose ratio moved by at least 0.5 % (M13 spec §4.2)."""
+    from velometer.db import CounterIndexYear, replace_counter_index
+    from velometer.report.methodology import CounterMethodRow
+
+    db_path, _cfg, _conn, data = fixture_db
+
+    def rows(method, values):
+        return [CounterIndexYear("berlin", y, v, 4, 2019, "counts", method) for y, v in values]
+
+    # links: v1 1.10, 1.10, 1.00 and a break; v2 1.1033 (+0.3 %), 1.12 (+1.8 %), 0.99 (-1.0 %)
+    v1 = rows("v1", [(2019, 100.0), (2020, 110.0), (2021, 121.0), (2022, 121.0), (2023, None)])
+    v2_2020 = 110.33
+    v2 = rows(
+        "v2",
+        [(2019, 100.0), (2020, v2_2020), (2021, v2_2020 * 1.12), (2022, v2_2020 * 1.12 * 0.99),
+         (2023, None)],
+    )  # fmt: skip
+    with closing(sqlite3.connect(db_path)) as c:
+        replace_counter_index(c, "berlin", v1)
+        replace_counter_index(c, "berlin", v2)
+    got = methodology_facts(data).counters.method_changes
+    assert [(r.city, r.years) for r in got] == [("Berlin", (2020, 2021)), ("Berlin", (2021, 2022))]
+    assert got[0].v1 == pytest.approx(1.10) and got[0].v2 == pytest.approx(1.12)
+    assert got[0].change_pct == pytest.approx((1.12 / 1.10 - 1) * 100)
+    assert got[1].change_pct == pytest.approx(-1.0)
+    assert all(isinstance(r, CounterMethodRow) for r in got)
+    facts = methodology_facts(data)
+    en, de = render(facts, "en"), render(facts, "de")
+    assert "| Berlin | 2020–2021 | +10.0 % | +12.0 % | +1.8 % |" in en
+    assert "| Berlin | 2021–2022 | 0.0 % | −1.0 % | −1.0 % |" in en
+    assert "| Berlin | 2020–2021 | +10,0 % | +12,0 % | +1,8 % |" in de
+    for text in (en, de):
+        assert "2019–2020" not in text  # +0.3 %: below the threshold
+
+
+def test_methodology_states_the_v2_rule_and_drops_the_known_property_paragraph(facts):
+    en, de = render(facts, "en"), render(facts, "de")
+    assert "mean count per complete day" in en and "Method change (M13)" in en
+    assert "mittleren Zählwerts je vollständigem Tag" in de and "Methodenwechsel (M13)" in de
+    assert "summed counts" not in en.split("## Counter index")[1].split("Method change")[0]
+    assert "A known property of this rule" not in en
+    assert "Eine bekannte Eigenschaft dieser Regel" not in de
+
+
+def test_the_mapped_baseline_is_the_plans_first_target_year_as_the_prose_says():
+    # M8-16: the methodology (and content/plans/berlin.yaml) call MAPPED_BASELINE "the plan's
+    # first target year" in hand-written words beside the generated date; the claim must hold
+    from velometer.plans.berlin import CITY
+    from velometer.plans.models import MAPPED_BASELINE, load_plans
+
+    plans, _ = load_plans(Path(__file__).parents[1] / "config" / "plans")
+    (plan,) = [p for p in plans if p.city == CITY and p.status == "current"]
+    first = min(int(y) for i in plan.items for y in i.targets)
+    assert (MAPPED_BASELINE.month, MAPPED_BASELINE.day) == (1, 1)
+    assert MAPPED_BASELINE.year == first
+
+
+def test_a_signed_percentage_that_rounds_to_zero_has_no_sign():
+    # M13-T2a (M12-3): the counter-index methodology's signed percentages print a zero bare
+    from velometer.report.methodology import _signed_pct
+
+    for v in (0.0, -0.0, 0.04, -0.04, 1e-9, -1e-9):
+        assert _signed_pct(v, "en") == "0.0 %", v
+        assert _signed_pct(v, "de") == "0,0\u202f%", v
+    assert _signed_pct(-0.05, "en") == "\u22120.1 %" and _signed_pct(0.05, "de") == "+0,1\u202f%"
+
+
+# M13 Task 13b (user review "index-wording"): one term for the day concept of the counter index,
+# "complete day" / "vollständiger Tag", in every reader-visible text
+_OTHER_DAY_TERM = re.compile(
+    r"\bvalid[- ]days?\b|\bday is valid\b|\bgültigen? Tage?\b|\bTag ist gültig\b", re.IGNORECASE
+)
+
+
+def test_the_counter_day_is_called_complete_in_every_reader_visible_text(facts):
+    root = Path(__file__).parents[1]
+    texts = {f"render:{lang}": render(facts, lang) for lang in ("en", "de")}
+    for path in [
+        *(root / "src/velometer/report/templates").glob("methodology.*.j2"),
+        *(root / "content").rglob("*.yaml"),
+        *(root / "src/velometer/app/static/js").glob("*.js"),
+        *(root / "src/velometer/app/templates").rglob("*.html"),
+    ]:
+        texts[str(path.relative_to(root))] = path.read_text(encoding="utf-8")
+    hits = {k: _OTHER_DAY_TERM.findall(v) for k, v in texts.items() if _OTHER_DAY_TERM.search(v)}
+    assert hits == {}
+    assert "complete days" in texts["render:en"] and "vollständige Tage" in texts["render:de"]

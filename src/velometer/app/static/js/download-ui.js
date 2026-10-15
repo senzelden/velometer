@@ -2,7 +2,7 @@
 // CSV buttons. The file is built from the chart on the page at the moment of the click, in the
 // light theme whatever the page shows. The cities-page sparklines have no table and get none.
 import { base } from "./base.js";
-import { fileName, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
+import { fileName, glyphOf, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
 import { locale } from "./fmt.js";
 import { announce } from "./live.js";
 import { t } from "./strings.js";
@@ -32,12 +32,54 @@ function styleOf(el) {
   return Object.fromEntries(STYLE_PROPS.map((p) => [p, cs.getPropertyValue(p)]));
 }
 
-/** The key chips of a chart whose key is an HTML `.legend` beside its SVG: colour (computed) and text. */
-function keyOf(container) {
-  return [...container.querySelectorAll(".legend .chip")].map((chip) => {
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** A text's width in px as the downloaded image sets it (system-ui, at `size` and `weight`: 11px
+ * for a key label and the meta lines, 15px 600 for the title), measured by the browser
+ * (getComputedTextLength) in a hidden SVG; null where that is not available, and the image then
+ * estimates it. */
+export function labelWidth(text, doc = document, size = "11px", weight = "400") {
+  try {
+    const svg = doc.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("aria-hidden", "true");
+    Object.assign(svg.style, { position: "absolute", visibility: "hidden", width: "0", height: "0" });
+    const el = doc.createElementNS(SVG_NS, "text");
+    el.setAttribute("font-size", size);
+    el.setAttribute("font-weight", weight);
+    el.setAttribute("font-family", "system-ui, sans-serif");
+    el.textContent = text;
+    svg.append(el);
+    doc.body.append(svg);
+    try {
+      const w = typeof el.getComputedTextLength === "function" ? el.getComputedTextLength() : NaN;
+      return Number.isFinite(w) && w > 0 ? w : null;
+    } finally {
+      svg.remove();
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** The key chips of a chart whose key is HTML: colour (computed), text and the text's measured
+ * width. Two forms are read. A `.legend` inside the container with a `.chip` per entry, its
+ * colour on the chip's `<i>` (chart.js renderTiers draws it). And a list beside the chart that the
+ * container names by id in `data-download-key` (the plan page's key, a Counts tab's key): an `li`
+ * per entry, its mark the `.key` in it, whose computed style gives the glyph (glyphOf). */
+export function keyOf(container, doc = document) {
+  const tiers = [...container.querySelectorAll(".legend .chip")].map((chip) => {
     const sw = chip.querySelector("i");
-    return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text: chip.textContent.trim() };
+    const text = chip.textContent.trim();
+    return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text, width: labelWidth(text, doc) };
   });
+  const id = container.getAttribute?.("data-download-key");
+  const list = id ? doc.getElementById?.(id) : null;
+  const beside = [...(list?.querySelectorAll("li") ?? [])].map((li) => {
+    const mark = li.querySelector(".key");
+    const text = li.textContent.replace(/\s+/g, " ").trim();
+    return { ...(mark ? glyphOf(getComputedStyle(mark)) : { shape: "swatch", colour: "" }), text, width: labelWidth(text, doc) };
+  });
+  return [...tiers, ...beside];
 }
 
 /** The `.cite-data` of the chart's own Cite: the first that follows the chart's data table (the
@@ -108,6 +150,7 @@ export function metaOf(container) {
     ...light(),
     key: keyOf(container),
     attribution: t("js.download.attribution"),
+    measure: (text, size, weight) => labelWidth(text, document, size, weight),
   };
 }
 

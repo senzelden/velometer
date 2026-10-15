@@ -3,6 +3,8 @@ import io
 import json
 import re
 
+import pytest
+
 from tests.test_app import client, client_21, setup, setup_21  # noqa: F401  (fixtures)
 from tests.test_app_base import rich  # noqa: F401  (fixture)
 
@@ -23,7 +25,13 @@ def test_csv_and_series_ids_are_unchanged(client):  # noqa: F811
     # spec decision 2: only display labels change; scripts keep working
     assert _header(client.get("/data/all.csv").text) == M10_CSV_COLUMNS
     series = client.get("/data/series.json").json()
-    assert {"ours_headline", "ecf_qecio", "clean_cities_2025"} <= set(json.dumps(series).split('"'))
+    # the preset ids as the scripts read them, by exact key (M13 M11-7): the labels by preset id,
+    # and each point's value under its fixed key
+    assert {"ours_headline", "ecf_qecio", "clean_cities_2025"} <= set(series["presets"])
+    points = [p for pts in series["series"].values() for p in pts]
+    assert points
+    for p in points:
+        assert {"headline", "ecf_qecio", "clean_cities"} <= set(p), sorted(p)
 
 
 def test_no_label_says_ours_colon(client):  # noqa: F811
@@ -581,6 +589,63 @@ def test_the_keynums_cite_is_titled_for_the_run_it_cites(client):  # noqa: F811
     assert "LAU" in title and "FUA" not in title
 
 
+def _current_run(client, city, kind):  # noqa: F811
+    lines = [x for x in client.get(f"/data/{city}.csv").text.splitlines() if not x.startswith("#")]
+    rows = [r for r in csv.DictReader(lines) if r["boundary_kind"] == kind]
+    current = [r for r in rows if r["label"] == "current"] or rows
+    return current[-1]
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+@pytest.mark.parametrize("tab", ["/time", ""])
+def test_a_two_line_headline_chart_cites_both_runs(client, lang, tab):  # noqa: F811
+    """The headline chart draws LAU and FUA: its Cite names both boundaries and both runs, each
+    with its OSM snapshot (M13 M11-3)."""
+    from velometer import i18n
+
+    pre = "/de" if lang == "de" else ""
+    html = client.get(f"{pre}/city/berlin{tab}").text
+    chart = html.index('data-chart="city-headline"')
+    (blob,) = CITE_DATA.findall(html[chart:])[:1]
+    f = json.loads(blob)
+    lau, fua = _current_run(client, "berlin", "lau"), _current_run(client, "berlin", "fua")
+    assert lau["run_id"] != fua["run_id"]
+    both = i18n.t(lang, "cite.title.city_headline_both", city="Berlin", unit="{unit}")
+    assert f["title"].startswith(both.split("{unit}")[0]), f["title"]
+    assert f["title"].endswith(both.split("{unit}")[1]), f["title"]
+    assert "LAU" in f["title"] and "FUA" in f["title"]
+    assert f["run_id"] is None and f["osm_timestamp"] is None
+    for row in (lau, fua):
+        assert (
+            f"{row['run_id']}, " in f["snapshot_note"]
+            and row["osm_timestamp"] in f["snapshot_note"]
+        )
+    assert f["snapshot_note"].index(lau["run_id"]) < f["snapshot_note"].index(fua["run_id"])
+    text = html[chart:].split('<p class="cite-text">', 1)[1].split("</p>", 1)[0]
+    assert f["snapshot_note"] in text
+
+
+def test_a_headline_cite_without_a_fua_run_cites_the_lau_run(client, monkeypatch):  # noqa: F811
+    """One run, one boundary: a city without a FUA run keeps the LAU title and run."""
+    from velometer.app import cite as cite_model
+
+    real = cite_model.RunRows.of
+
+    def lau_only(data):
+        rows = real(data)
+        rows._rows = {
+            c: [r for r in rs if r["boundary_kind"] == "lau"] for c, rs in rows._rows.items()
+        }
+        return rows
+
+    monkeypatch.setattr(cite_model.RunRows, "of", staticmethod(lau_only))
+    html = client.get("/city/berlin/time").text
+    (blob,) = CITE_DATA.findall(html[html.index('data-chart="city-headline"') :])[:1]
+    f = json.loads(blob)
+    assert "LAU" in f["title"] and "FUA" not in f["title"]
+    assert f["run_id"] == _current_run(client, "berlin", "lau")["run_id"]
+
+
 def test_cite_pre_blocks_are_not_scroll_regions():
     js = (STATIC_JS / "cite-ui.js").read_text(encoding="utf-8")
     assert "scroll" not in js
@@ -591,7 +656,9 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
     page_site,
 ):
     # a citation is built from one run (LAU unless it says FUA): its title may name that
-    # boundary only. A title naming both, or FUA with the LAU run, cites a run it does not name.
+    # boundary only. A title naming FUA with the LAU run cites a run it does not name. A title
+    # naming both (the two-line headline chart, M13) cites both runs: no single run id, and its
+    # snapshot note names the city's LAU and FUA runs.
     data = page_site.data  # the run ids of the app that rendered the pages
     runs = {
         (c.id, k): next(
@@ -603,20 +670,28 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
         for k in ("lau", "fua")
         if any(r["boundary_kind"] == k and r["label"] == "current" for r in data.csv_rows(c.id))
     }
-    seen_fua = 0
+    seen_fua = seen_both = 0
     for url in all_page_urls:
         for blob in CITE_DATA.findall(page_site.html[url]):
             f = json.loads(blob)
             title = f["title"]
             names_lau, names_fua = "LAU" in title, bool(re.search(r"\bFUA\b", title))
-            assert not (names_lau and names_fua), (url, title)
+            if names_lau and names_fua:
+                seen_both += 1
+                assert f["run_id"] is None, (url, title)
+                note = f["snapshot_note"] or ""
+                cited = {(c, k) for (c, k), rid in runs.items() if re.search(rf"\b{rid}, ", note)}
+                cities = {c for c, _k in cited}
+                assert len(cities) == 1, (url, title, note)
+                assert cited == {(c, k) for c in cities for k in ("lau", "fua")}, (url, note)
+                continue
             if names_fua and f["run_id"] is not None:
                 seen_fua += 1
                 city = next(c for (c, k), rid in runs.items() if k == "fua" and rid == f["run_id"])
                 assert f["run_id"] == runs[(city, "fua")] and f["run_id"] != runs.get(
                     (city, "lau")
                 ), (url, title)
-    assert seen_fua
+    assert seen_fua and seen_both
 
 
 def test_theme_tokens_cover_both_themes_and_dark_maps_unambiguously(client):  # noqa: F811
@@ -724,7 +799,12 @@ def test_search_index_covers_every_city_country_org_story_and_page(client, fixtu
     assert all(client.get(u.split("#")[0]).status_code == 200 for u in urls)
     assert {e["kind"] for e in idx} == {"city", "country", "organisation", "story", "page"}
     for e in idx:
-        assert set(e) == {"label", "kind", "url", "terms"} and e["url"].startswith("/")
+        # an organisation also names its language (review 10, I1: search.js writes it)
+        extra = {"lang", "bracket_lang"} if e["kind"] == "organisation" else set()
+        assert (
+            {"label", "kind", "url", "terms"} <= set(e) <= {"label", "kind", "url", "terms"} | extra
+        )
+        assert e["url"].startswith("/")
 
 
 def test_search_index_anchors_exist_on_their_pages(client):  # noqa: F811
@@ -799,6 +879,10 @@ def test_nav_search_is_a_hidden_combobox_with_a_working_fallback_link(client):  
     assert 'role="combobox"' in html and 'aria-expanded="false"' in html
     assert 'aria-controls="site-search-list"' in html and 'role="listbox"' in html
     assert re.search(r'<label for="site-search" class="visually-hidden">', html)
+    # "No match" is a status outside the listbox (M13 M11-6): the list holds options only
+    listbox = re.search(r'<ul id="site-search-list" role="listbox"[^>]*></ul>', html)
+    assert listbox, "the listbox is empty in the page; search.js fills it with options"
+    assert re.search(r'<p class="search-status" role="status"></p>', html)
 
 
 def test_search_js_follows_the_rules():
@@ -908,3 +992,16 @@ def test_every_exported_search_url_resolves_to_an_exported_page_and_anchor(rich,
             anchors += 1
             assert anchor in _ids(page.read_text(encoding="utf-8")), e["url"]
     assert anchors
+
+
+def test_original_terms_in_the_sources_table_may_break():
+    """An original term (`<i lang>`) is one unbroken word in an English cell, where no German
+    hyphenation rule reaches it: "Hauptradverkehrsnetz" alone set the table to 1169 px against
+    the 1120 px column at 1280 (M13 render pass). It hyphenates where the browser has the
+    language's dictionary and may break anywhere where it has none (headless Chrome)."""
+    from tests.test_app import _css_rules
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    decl = {k: v for sels, d in rules if "table.sources i[lang]" in sels for k, v in d.items()}
+    assert decl.get("hyphens") == "auto"
+    assert decl.get("overflow-wrap") == "anywhere"

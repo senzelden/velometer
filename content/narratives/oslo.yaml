@@ -7,18 +7,19 @@ sections:
   - heading: From 2018 to now
     paragraphs:
       - >-
-        In Oslo kommune (LAU) mapped A+B rose from 261 km in 2018 to 341 km in October 2026, and
-        the headline (mapped A+B km per 100 km of main roads) from 53.1 to 70.8 [#ts-oslo]. The one
-        flagged step is the 2021 point, when A+B went from 264 to 298 km. Most of it is tag
-        drift: during 2020 existing footways were retagged as combined foot and cycle paths, the
-        way Norway's standard gang- og sykkelvei is mapped, and newly drawn ways added the rest
-        [#ts-oslo-2021]. Retagging is not new infrastructure.
+        In Oslo kommune (LAU) mapped A+B rose from 261 km in 2018 to 341 km in October 2026, and the
+        headline (mapped A+B km per 100 km of main roads) from 53.1 to 70.8 [#ts-oslo]. The one
+        flagged step is the 2021 point, when A+B went from 264 to 298 km. Most of it is tag drift:
+        during 2020 existing footways were retagged as combined foot and cycle paths, the way
+        Norway's standard <i lang="nb">gang- og sykkelvei</i> (shared walking and cycling path)
+        [@oslo-sykkelkart] is mapped, and newly drawn ways added the rest [#ts-oslo-2021]. Retagging
+        is not new infrastructure.
       - >-
         Shared paths (tier B) dominate throughout, 222 → 282 km, against 38 → 60 km of separated
         tracks (tier A). Painted lanes (tier D) rose from 111 to 161 km, most of it at the 2023
-        point (128 → 160 km). An evaluation commissioned by the city describes the network as
-        mainly marked lanes [@oslo-ey-evaluering-2024]; in the mapped data shared paths are the
-        largest group.
+        point (128 → 160 km). An evaluation commissioned by the city describes the network as mainly
+        <i lang="nb">markerte sykkelfelt</i> (marked cycle lanes) [@oslo-ey-evaluering-2024]; in the
+        mapped data shared paths are the largest group.
       - >-
         The functional urban area (FUA) grew more, A+B 1,546 → 2,071 km, with its own flagged
         step in 2021: combined foot and cycle paths newly drawn in the surrounding
@@ -28,14 +29,15 @@ sections:
     role: figures
     paragraphs:
       - >-
-        Clean Cities counts 307 km of protected infrastructure for Oslo [@cc2025-report]; our
-        A+B is 341 km per side, 11% above [#recon-oslo-cc-ratio]. Its data date from early 2025,
-        ours from October 2026, and whether the city or OpenStreetMap supplied it is not stated.
-        The city's own network figure, quoted below, includes shared paths, painted lanes and
-        cycle tracks [@oslo-sykkelkart], so its scope is our tiers A, B and D; its length basis
-        and method are not stated by the source. QECIO's region here is the city itself, and its
-        total of 413 km of cycle infrastructure matches our 414 km counted on its half-length
-        rule [#recon-oslo-qecio-tracks].
+        Clean Cities counts 307 km of protected infrastructure for Oslo [@cc2025-report]; our A+B is
+        341 km per side, 11% above [#recon-oslo-cc-ratio]. Its data date from early 2025, ours from
+        October 2026, and whether the city or OpenStreetMap supplied it is not stated. The city's
+        own figure for its <i lang="nb">sykkelveinett</i> (cycle network), quoted below, includes
+        <i lang="nb">gang- og sykkelveier, sykkelfelt og sykkelveier</i> (shared walking and cycling
+        paths, painted cycle lanes and cycle tracks) [@oslo-sykkelkart], so its scope is our tiers
+        A, B and D; its length basis and method are not stated by the source. QECIO's region here is
+        the city itself, and its total of 413 km of cycle infrastructure matches our 414 km counted
+        on its half-length rule [#recon-oslo-qecio-tracks].
 quotes:
   - {excerpt: oslo-ey-evaluering-2024/mostly-lanes, after: 1}
   - {excerpt: oslo-sykkelkart/network-290, after: 3}

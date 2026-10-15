@@ -33,7 +33,7 @@
 </table>
 </div>
 </details>
-{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id)) }}
+{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id, both=t('cite.title.city_headline_both', city=city.name, unit=headline_unit))) }}
 {{ copy_link() }}
 {% else %}<p class="note">{{ t('note.no_run_history') }}</p>{% endif %}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">{{ t('page.story.over_time') }} →</a></p>

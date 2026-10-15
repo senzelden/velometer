@@ -2,28 +2,32 @@ title: Reported, completed, mapped
 intro:
   - >-
     Berlin's Radverkehrsplan sets a yearly path for its planned cycle network: so many km of the
-    priority network (Vorrangnetz) and of the supplementary network (Ergänzungsnetz) per year up to
-    2030 [@berlin-radverkehrsplan-vo19-013]. The plan itself expects that path to be adjusted,
-    quoted below. This page sets three series against it. They count different things, and none
-    of them confirms or refutes another.
+    <i lang="de">Vorrangnetz</i> (priority network) and of the <i lang="de">Ergänzungsnetz</i>
+    (supplementary network) per year up to 2030 [@berlin-radverkehrsplan-vo19-013]
+    [@berlin-fortschrittsbericht-2025]. The plan itself expects that path to be adjusted, quoted
+    below. This page sets three series against it. They count different things, and none of them
+    confirms or refutes another.
 sections:
   - dimension: reported
     heading: Reported
     paragraphs:
       - >-
-        Reported km are the Senate's own. The yearly progress report goes to the main committee as
-        a report (rote Nummer); written questions are answered as Drucksachen. Both draw on a
-        project database run by infraVelo [@berlin-fortschrittsbericht-2025] and count route
-        length once per street section, so a street with facilities on both sides counts once.
-        The report on 2021 still halved main-road facilities to reach that basis, quoted below
+        Reported km are the Senate's own. The yearly progress report goes to the main committee as a
+        report (rote Nummer); written questions are answered as Drucksachen. Both draw on a project
+        database run by infraVelo [@berlin-fortschrittsbericht-2025] and count
+        <i lang="de">Streckenlänge</i> (route length) [@berlin-radfortschrittsbericht-page] once per
+        street section, so a street with facilities on both sides counts once. The report on 2021
+        still halved <i lang="de">Radverkehrsanlagen an Hauptverkehrsstraßen</i> (cycling facilities
+        on Berlin's main roads) to reach that basis, quoted below
         [@berlin-fortschrittsbericht-2021].
       - >-
         Documents revise one another, and every printed figure is kept. For 2025 the latest answer
-        reports 8.6 km on the priority network, as the 2025 report does, while an answer of May
-        2026 printed 9.8 km for the same year [@berlin-drs-19-27049] [@berlin-drs-19-25987]. For
-        the supplementary network in 2023 the latest answer prints 55.1 km, which neither its own
-        column total nor the earlier answer's 5.1 km supports. It stays as printed, with a note,
-        and is marked suspect, so the earlier figure is shown as current [@berlin-drs-19-27049].
+        reports 8.6 km on the <i lang="de">Radvorrangnetz</i> (priority network), as the 2025 report
+        does, while an answer of May 2026 printed 9.8 km for the same year [@berlin-drs-19-27049]
+        [@berlin-drs-19-25987]. For the <i lang="de">Ergänzungsnetz</i> (supplementary network) in
+        2023 the latest answer prints 55.1 km, which neither its own column total nor the earlier
+        answer's 5.1 km supports. It stays as printed, with a note, and is marked suspect, so the
+        earlier figure is shown as current [@berlin-drs-19-27049].
   - dimension: completed
     heading: Completed projects
     paragraphs:
@@ -45,16 +49,16 @@ sections:
         context for the reported figures, not a check on them.
       - >-
         The series is sensitive to how mappers draw cycleways and to the matching method. Between
-        2021 and 2022 Berlin's tiers A and B moved from tags on road centrelines to separately
-        drawn ways, and the change moves with the method version; the earlier versions
-        `overlay_v2` and `overlay_v3` showed a smaller and a larger change than the figures here,
-        which come from `overlay_v4`. On the priority network the overlay finds 438.3 mapped km
-        at the start of 2022 and 480.4 km in the current snapshot (October 2026), a change of
-        42.1 km. On the supplementary network it finds 606.4 km and 620.2 km, a change of
-        13.7 km.
-        Changes are computed before rounding, so they can differ in the last digit from the
-        difference of the printed endpoints. These are changes in what is mapped, not km of new
-        infrastructure.
+        2021 and 2022 Berlin's tiers A and B moved from tags on road centrelines to separately drawn
+        ways, and the change moves with the method version; the earlier versions `overlay_v2` and
+        `overlay_v3` showed a smaller and a larger change than the figures here, which come from
+        `overlay_v4`. On the <i lang="de">Vorrangnetz</i> (priority network)
+        [@berlin-fortschrittsbericht-2025] the overlay finds 438.3 mapped km at the start of 2022
+        and 480.4 km in the current snapshot (October 2026), a change of 42.1 km. On the
+        <i lang="de">Ergänzungsnetz</i> (supplementary network) it finds 606.4 km and 620.2 km, a
+        change of 13.7 km. Changes are computed before rounding, so they can differ in the last
+        digit from the difference of the printed endpoints. These are changes in what is mapped, not
+        km of new infrastructure.
 quotes:
   - {excerpt: berlin-radverkehrsplan-vo19-013/paths-adjusted, after: 0}
   - {excerpt: berlin-fortschrittsbericht-2021/halved, after: 0}

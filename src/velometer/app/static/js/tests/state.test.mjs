@@ -74,9 +74,10 @@ test("default metric is checked against known.metrics", () => {
 // ---- the cases table shared with the Python suite (tests/test_compare.py) ----
 import { readFileSync } from "node:fs";
 import { QUICK_SETS, METRICS, droppedMetric } from "../state.js";
+import { repoFile } from "./repo.mjs";
 
 const shared = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/compare_cases.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/compare_cases.json"), "utf8"),
 );
 
 for (const c of shared.cases) {

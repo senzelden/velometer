@@ -406,6 +406,80 @@ about 6.5 km from the latest year: it trims 11.7 / 19.2 km on run 743 and 7.1 / 
 tuned (no tolerance, the existing 30° as the joint angle, the 1 m joint distance chosen before the
 run; free-end counts above are with these values).
 
+## M13: v4's real loss measured
+
+The M8 estimate above (about 0.5 to 3 km on run 743) left out the outer-corner pieces. M13 measures
+the real loss and applies the user's rule ("measure first"): v5 is needed if, on any measured run,
+v4 loses more than 2.0 km of real along-network km, or more than 1 % of that run's v4 overlay km.
+
+**Measure.** `uv run python scripts/overlay_false_positives.py --run <id> --version overlay_v3
+--base overlay_v4 --real-loss` (with `--checks`; 11–31 s per run). The candidates for real loss
+are the pieces v3 keeps and v4 drops that may lie along the network across a turn, in four
+disjoint parts:
+
+1. holes: pieces in a hole of a chain v4 keeps (as `--checks`, any class);
+2. outside holes, the `along` class;
+3. outside holes, the `class_boundary` pieces v4 keeps in neither class;
+4. outside holes, the `beyond_network_end` pieces at an **outer corner** (`outer_corner`): the
+   midpoint lies within the piece's buffer of a line of its class, past one of its ends and at
+   most `END_TOL_M` + the buffer from it. The piece runs within 30° of the line there. At that
+   end exactly one other line of the class has an end within 1 m and leaves it turning by more
+   than 30°. The midpoint lies on the outer side of that turn.
+
+Runs: the Berlin LAU runs of the current classifier (v4) with `plan_overlay` rows, queried
+2026-10-15. All ten have overlay_v4 rows: 713 (current, OSM 2026-10-03) and 735–743 (1 January
+2018–2026, commit ae704fa). Measured: 735 (2018), 739 (2022), 743 (2026) and 713, the current
+snapshot that the M8 tables use. The v4 overlay km are the `plan_overlay` sums over both classes
+and tiers. They equal the "kept by overlay_v4" line of `--checks`.
+
+| run | v4 overlay km | 1 % | holes past a turn end | outer-corner candidates | holes elsewhere | along | class boundary, neither class | all parts, sum (Vorrangnetz / Ergänzungsnetz) | turn-recoverable |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 735 (2018-01-01) | 1,123.81 | 11.24 | 0.23 | 2.05 | 0.08 | 0.97 | 0.16 | 3.49 (1.28 / 2.21) | 0.36 |
+| 739 (2022-01-01) | 1,044.68 | 10.45 | 0.22 | 2.40 | 0.08 | 1.45 | 0.41 | 4.55 (1.64 / 2.92) | 0.37 |
+| 743 (2026-01-01) | 1,082.08 | 10.82 | 0.37 | 3.47 | 0.09 | 1.90 | 0.63 | 6.46 (2.32 / 4.13) | 0.59 |
+| 713 (current) | 1,100.51 | 11.01 | 0.37 | 3.49 | 0.09 | 1.89 | 0.66 | 6.50 (2.37 / 4.13) | 0.59 |
+
+All values are km (mapped km, EPSG:25833), as printed by `--real-loss` (both-classes line; the
+per-class sums are its per-class lines). The script prints the parts as turn-recoverable (holes
+past a turn end, plus outer corners only where a visual check confirms them), outer-corner
+candidates (mostly false positives) and the non-turn residual (holes elsewhere, along, class
+boundary in neither class). The holes on run 743 match the M8 figure (0.46 km, 0.37 past a turn
+end). The class-boundary pieces in neither class are 0.63 km outside holes (M8: 0.7 km including
+holes).
+
+**The outer-corner candidates are mostly not real loss.** Two samples of 16 outer-corner pieces on
+run 743 ([seed 1](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_outer_corner_seed1.png),
+[seed 2](../../data/maps/berlin_overlay_v3_vs_overlay_v4_detail_outer_corner_seed2.png);
+`--detail outer_corner --seed N`) show mostly pieces on the street that continues straight past
+the network's turn. They lie on its far side, within the buffer of the turning edge's end: the
+sidepaths of the continuing street that v4 exists to drop. On a visual reading, at most 2 of the
+32 pieces follow the network round the corner. That is expected: a way-side that follows the turn
+usually shows up as a hole, because v4 keeps it before and after the corner. A piece alone cannot
+tell the follower's corner from the continuing street's far side.
+
+**Decision.** The literal sum of the four parts crosses the 2 km threshold on every measured run
+(3.49 to 6.50 km); the 1 % threshold (10.45 to 11.24 km) is crossed on none. The threshold is
+meant for real turns clipped, pieces dropped while a matching network line runs along them
+(spec §4.3), and the sum overstates those:
+
+- Outer-corner candidates: the visual check of 32 sampled pieces found at most 2 following the
+  network.
+- Turn-recoverable km per run: the holes past a turn end, plus 2/32 of the outer-corner candidates
+  as verified corners. The 2/32 rate comes from the check on run 743 and is extrapolated to the
+  other runs. This gives 0.36 (735), 0.37 (739), 0.59 (743) and 0.59 (713) km.
+- On run 743, the `along` pieces 0–1 m past a free end (0.4 km, M8 figure above, free ends of any
+  kind) are the most a turn rule could add. Even with them, run 743 stays near 1.0 km, below 2 km.
+- The rest is not a turn question. Most `along` km (1.5 km on run 743) are stubs whose clipped run
+  falls below `min_part_m` (20 m) and short pieces inside junctions. The class-boundary pieces in
+  neither class are crossings inside junctions and the street continuing past both classes' line
+  ends. A rule that keeps pieces across turns does not recover either.
+
+Ruling (controller, 2026-10-15): **v5 not built.** The planned rule (no clipping where the nearest
+line of the class continues past the turn) would mainly restore the outer-corner candidates, i.e.
+v4's intended removals. Its acceptance test counts those as real, so it would pass by
+construction. overlay_v4 stays the published version. No stored value changed: `velometer.sqlite`
+was only read.
+
 ## Sanity maps
 
 [Vorrangnetz and Ergänzungsnetz, matched vs unmatched, run 743 (2026-01-01)](../../data/maps/berlin_overlay_v1_2026-01-01.png)

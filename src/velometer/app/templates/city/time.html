@@ -24,7 +24,7 @@
 </tbody>
 </table>
 </div>
-{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id)) }}
+{{ cite(cite_for(t('cite.title.city_headline', city=city.name, unit=headline_unit), city=city.id, both=t('cite.title.city_headline_both', city=city.name, unit=headline_unit))) }}
 <p class="meta">⚑ {{ t('page.time.flag_note') }}</p>
 {% else %}
 <p class="note">{{ t('note.no_run_history') }}</p>

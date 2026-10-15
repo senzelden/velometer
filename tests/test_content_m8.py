@@ -91,6 +91,21 @@ def test_an_internal_profile_url_is_refused(m8):
     assert "organisation url must be" in problem and "source url" not in problem, problem
 
 
+def test_an_internal_archive_url_is_named_as_the_archive_url():
+    # M8-20: the archive_url error said "source url"
+    from pydantic import ValidationError
+
+    from velometer.content.models import Source
+
+    base = {"id": "s", "publisher": "P", "title": "T", "url": "https://example.org/",
+            "accessed": "2026-01-01", "language": "en", "kind": "press"}  # fmt: skip
+    with pytest.raises(ValidationError, match="source archive_url must be an external") as e:
+        Source(**base, archive_url="http://127.0.0.1/x")
+    assert "source url must" not in str(e.value)
+    with pytest.raises(ValidationError, match="source url must be an external"):
+        Source(**(base | {"url": "http://localhost/"}))
+
+
 # --- profile document rules ----------------------------------------------------------------
 
 
@@ -170,6 +185,54 @@ def test_causal_wording_in_a_profile(m8):
         lambda d: d["sections"][1]["paragraphs"].__setitem__(0, "Counted trips drove demand."),
     )
     assert _problems(m8) == ["organisations/senmvku.yaml: causal wording 'drove' about counts"]
+
+
+@pytest.mark.parametrize(
+    "mark",
+    [
+        '<i lang="da" >cykelsti</i>',  # a space before ">"
+        '<I lang="da">cykelsti</I>',  # capitals
+        "<i>cykelsti</i>",  # no language
+        "<i lang='da'>cykelsti</i>",  # single quotes
+        '<i lang="d a">cykelsti</i>',  # no language tag
+        '<i lang="da">cykelsti',  # unclosed
+        "cykelsti</i>",  # a close without an open
+        '<span lang="da">cykelsti</span>',  # no mark at all
+        '<q lang="da">a <i lang="da">b</q></i>',  # crossed
+        # review 10, M2: a block quotation is a whole paragraph, so not one inside a sentence
+        '<blockquote lang="de">Zitat</blockquote> more',
+        '<q lang="de">a <q lang="de">b</q> c</q>',  # a mark inside the same mark
+    ],
+)
+def test_a_malformed_mark_in_prose_is_a_problem(m8, mark):
+    # M13 carry-over: each of these passed the check and then rendered as escaped text
+    _edit(
+        _senmvku(m8),
+        lambda d: d["sections"][1]["paragraphs"].__setitem__(0, f"Ours: {mark}."),
+    )
+    problems = _problems(m8)
+    assert any(p.startswith("organisations/senmvku.yaml: malformed mark ") for p in problems), (
+        problems
+    )
+
+
+def test_the_marks_the_renderer_reads_pass(m8):
+    from velometer.content.check import malformed_marks
+
+    ok = (
+        'Ours: <i lang="da">cykelsti</i>, <q lang="de-AT">Radweg</q>, '
+        '<q lang="fr">les <i lang="fr">voies</i></q>, `<b>` in code, a < b and c > d.'
+    )
+    assert malformed_marks(ok) == []
+    assert malformed_marks('<blockquote lang="de">Zitat</blockquote>') == []
+    # a whole-paragraph block quotation, around spaces and with an original term inside it
+    assert (
+        malformed_marks(' <blockquote lang="de">Ein <i lang="de">Radweg</i></blockquote>\n') == []
+    )
+    two = '<blockquote lang="de">a</blockquote> <blockquote lang="de">b</blockquote>'
+    assert malformed_marks(two)  # two block quotations make no whole paragraph
+    _edit(_senmvku(m8), lambda d: d["sections"][1]["paragraphs"].__setitem__(0, ok))
+    assert _problems(m8) == []
 
 
 def test_plan_page_follows_the_document_rules(m8):
@@ -552,12 +615,28 @@ def test_overlay_facts(fixture_db, tmp_path):
         evaluate(f"overlay.paris.vorrangnetz.{d1}.ab_km", data, tmp_path)
 
 
+def test_a_reader_opened_before_a_write_sees_the_write(fixture_db, tmp_path):
+    """M8-5: the fixture's read-only connection is opened before the test writes. It reads
+    each statement afresh (rollback journal, no transaction held between statements), so an
+    overlay evaluated before and after a write gives the written value, never a stale one."""
+    db_path, _cfg, conn, data = fixture_db
+    assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+    (r1, d1), *_ = _berlin_lau_runs(db_path)
+    expr = f"overlay.berlin.vorrangnetz.{d1}.ab_km"
+    with pytest.raises(FactError, match="no plan overlay"):
+        evaluate(expr, data, tmp_path)
+    for km in (10.0, 12.5):
+        row = OverlayRow(r1, "berlin", "vorrangnetz", "A", km, 150.0, "v1", "2026-10-07")
+        _write(db_path, lambda c, row=row: replace_plan_overlay(c, "berlin", "v1", [row]))
+        assert evaluate(expr, data, tmp_path) == km
+
+
 def test_counter_facts(fixture_db, tmp_path):
     db_path, _cfg, _conn, data = fixture_db
     rows = [
-        CounterIndexYear("berlin", 2019, 100.0, 12, 2019, "counts"),
-        CounterIndexYear("berlin", 2020, 87.25, 11, 2019, "counts"),
-        CounterIndexYear("berlin", 2021, None, 2, 2019, "counts"),
+        CounterIndexYear("berlin", 2019, 100.0, 12, 2019, "counts", "v2"),
+        CounterIndexYear("berlin", 2020, 87.25, 11, 2019, "counts", "v2"),
+        CounterIndexYear("berlin", 2021, None, 2, 2019, "counts", "v2"),
     ]
     _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
     assert evaluate("counter.berlin.2020", data, tmp_path) == 87.25
@@ -626,7 +705,7 @@ def test_counter_rule_facts_follow_the_constants_and_the_stored_base_year(
     from velometer.counters import index
 
     db_path, _cfg, _conn, data = fixture_db
-    rows = [CounterIndexYear("berlin", y, 100.0, 12, 2020, "counts") for y in (2020, 2021)]
+    rows = [CounterIndexYear("berlin", y, 100.0, 12, 2020, "counts", "v2") for y in (2020, 2021)]
     _write(db_path, lambda c: replace_counter_index(c, "berlin", rows))
     assert evaluate("counter.min_valid", data, tmp_path) == pytest.approx(index.MIN_VALID * 100)
     assert evaluate("counter.min_sites", data, tmp_path) == index.MIN_SITES
@@ -738,21 +817,41 @@ def test_a_rule_value_in_a_threshold_statement_is_a_literal_rule(sentence, found
     assert found in literal_counter_rules(sentence, RULES, [])
 
 
+@pytest.mark.parametrize(
+    ("lang", "sentence"),
+    [("en", "The index sets 2019 (= 100) for most cities."),
+     ("de", "Der Index setzt 2019 (= 100) für die meisten Städte.")],
+)  # fmt: skip
+def test_a_base_year_with_a_bracketed_equals_100_is_a_literal_rule(lang, sentence):
+    # M8-20: "2019 (= 100)" slipped past the "2019 = 100" pattern
+    from velometer.content.check import RULES as FAMILIES
+    from velometer.content.check import literal_counter_rules
+
+    found = literal_counter_rules(sentence, RULES, [], FAMILIES[lang])
+    assert "2019 (counter.base_year.berlin)" in found
+
+
 def test_the_shipped_counter_page_states_the_rule_through_its_facts():
     # the follow-up Task 3 wording ("90% of days", "chained from 2019 (Madrid: 2020)", "fewer
-    # than 3 such sites") passes because the rule facts print those numbers, and only then
-    from velometer.content.check import _is_rule_fact, literal_counter_rules
+    # than 3 such sites") passes because the rule facts print those numbers, and only then.
+    # M8-25: the rule values are config's and the constants' (counter_rule_values), not typed here
+    from velometer.content.check import _is_rule_fact, counter_rule_values, literal_counter_rules
 
-    doc = load_document(Path(__file__).parents[1] / "content" / "counters.yaml")
+    root = Path(__file__).parents[1]
+    rules, error = counter_rule_values(root / "config")
+    assert error is None
+    doc = load_document(root / "content" / "counters.yaml")
     prose = [p for s in doc.sections for p in s.paragraphs]
-    assert [x for p in prose for x in literal_counter_rules(p, RULES, doc.facts)] == []
+    assert [x for p in prose for x in literal_counter_rules(p, rules, doc.facts)] == []
+    # without its rule facts, every rule value the page prints is a literal of its rule
+    declared = {f.expr.strip() for f in doc.facts if _is_rule_fact(f.expr)}
     others = [f for f in doc.facts if not _is_rule_fact(f.expr)]
-    assert sorted(x for p in prose for x in literal_counter_rules(p, RULES, others)) == [
-        "2019 (counter.base_year.berlin)",
-        "2020 (counter.base_year.madrid)",
-        "3 (counter.min_sites)",
-        "90% (counter.min_valid)",
-    ]
+    found = {
+        x.rsplit(" (", 1)[1].rstrip(")")
+        for p in prose
+        for x in literal_counter_rules(p, rules, others)
+    }
+    assert declared and found == declared
 
 
 def test_the_online_check_fetches_with_the_shared_user_agent(agent_server):

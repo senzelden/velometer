@@ -4,6 +4,7 @@
 // A city listed under `none:` in config/counters.yaml gets its note from `counters.none`.
 // app/compare.py: counter_lines computes the Compare table the same way for the no-JS page.
 
+import { formatValue } from "./chart-core.js";
 import { t } from "./strings.js";
 
 export const COUNTER_METRIC = "counter_index";
@@ -26,6 +27,22 @@ export function covidMarks(D, labels) {
 
 /** The counter metric's chart and table title (the index is the same for both boundaries). */
 export const counterTitle = (label) => `${label} · ${t("js.counts.title")}`;
+
+/**
+ * Compare's tooltip on one counter index point: the value, the city's base year = 100 and, on
+ * the COVID year's point, that it is the COVID year ("Berlin · 2020: index 114.6 (2019 = 100;
+ * 2020 is the COVID year)"): the unit line's facts, for the city under the pointer.
+ */
+export function counterTip(D, id, value, label) {
+  const covid = D.counters?.covid_year;
+  const baseYear = D.counters?.cities?.[id]?.base_year;
+  const parts = [
+    baseYear != null ? `${baseYear} = 100` : null,
+    covid != null && String(covid) === String(label) ? t("js.counts.covid_is", { year: covid }) : null,
+  ].filter(Boolean);
+  const note = parts.length ? ` (${parts.join("; ")})` : "";
+  return `${D.cities[id].name} · ${label}: ${t("js.chart.index_value", { value: formatValue(value) })}${note}`;
+}
 
 /**
  * The counter index unit for `ids`, naming the base year (= 100) of the cities drawn as a line:
@@ -98,15 +115,16 @@ export function counterLines(D, ids) {
 /**
  * The Counts tab chart of one city: the counter index and the A+B mapped-km index of the city
  * proper (1 January snapshots), both base year = 100 (the counter index's base year). Years run
- * from the first to the last with either value. No counter line (one year only): the km line
- * alone. No km for the base year: the counter line alone. `names`: {counter, km, counterShort,
- * kmShort}, the short ones for end labels at phone width.
+ * from the first to the last with either value. No counter line: no chart (the tab mounts one
+ * only for a city with a line and shows a note otherwise). No km for the base year: the counter
+ * line alone. `names`: {counter, km, counterShort, kmShort}, the short ones for end labels at
+ * phone width.
  */
 export function countsChart(D, id, names = {}) {
   const c = D.counters?.cities?.[id];
-  if (!c) return null;
+  if (!c?.line) return null;
   const base = c.base_year;
-  const counter = new Map(c.line ? c.points.filter((p) => p.idx != null).map((p) => [p.year, p.idx]) : []);
+  const counter = new Map(c.points.filter((p) => p.idx != null).map((p) => [p.year, p.idx]));
   const km = new Map();
   const snaps = (D.series?.[`${id}/lau`] ?? []).filter((p) => p.label !== "current");
   const b = snaps.find((p) => Number(p.label) === base)?.ab_km;
@@ -114,7 +132,6 @@ export function countsChart(D, id, names = {}) {
     for (const p of snaps) if (Number.isFinite(p.ab_km)) km.set(Number(p.label), (p.ab_km / b) * 100);
   }
   const years = [...counter.keys(), ...km.keys()];
-  if (!years.length) return null;
   const labels = range(Math.min(...years), Math.max(...years));
   const line = (map, sid, name, short) => ({
     id: sid,
@@ -122,10 +139,7 @@ export function countsChart(D, id, names = {}) {
     short, // the end label when the full name has no room; the key under the chart names it
     points: labels.map((l) => ({ label: l, value: map.has(Number(l)) ? map.get(Number(l)) : null, flags: [] })),
   });
-  const series = [];
-  if (counter.size) {
-    series.push(line(counter, "counter", names.counter ?? t("js.counts.index"), names.counterShort ?? t("js.counts.short_counts")));
-  }
+  const series = [line(counter, "counter", names.counter ?? t("js.counts.index"), names.counterShort ?? t("js.counts.short_counts"))];
   if (km.size) {
     series.push(line(km, "km", names.km ?? t("js.counts.km_index"), names.kmShort ?? t("js.counts.short_km")));
   }
