@@ -926,6 +926,32 @@ def test_the_unvendored_leaflet_images_are_unused():
     uses = re.compile(r"\bL\.(marker|icon|Icon|control)\b")
     for js in [*static.glob("*.js"), *static.glob("js/*.js")]:
         assert not uses.search(js.read_text()), js
+    # L.geoJSON draws a Point feature as the default marker unless its options name a
+    # pointToLayer (M9-15): every call names one
+    calls = 0
+    for js in [*static.glob("*.js"), *static.glob("js/*.js")]:
+        for args in _call_args(js.read_text(), "L.geoJSON"):
+            calls += 1
+            assert "pointToLayer" in args, f"{js.name}: L.geoJSON({args[:60]}…) has no pointToLayer"
+    assert calls >= 3  # the tier map (boundary, tiers) and the change map
+
+
+def _call_args(text: str, name: str) -> list[str]:
+    """The argument text of every call of `name(…)` in `text`, parentheses balanced."""
+    out = []
+    for m in re.finditer(re.escape(name) + r"\s*\(", text):
+        depth, i = 1, m.end()
+        while depth and i < len(text):
+            depth += {"(": 1, ")": -1}.get(text[i], 0)
+            i += 1
+        out.append(text[m.end() : i - 1])
+    return out
+
+
+def test_the_geojson_guard_sees_a_call_without_point_to_layer():
+    args = _call_args("x = L.geoJSON(data, { style: s(1), filter: f });\nL.geoJSON(b)", "L.geoJSON")
+    assert args == ["data, { style: s(1), filter: f }", "b"]
+    assert not any("pointToLayer" in a for a in args)
 
 
 # --- the whole export: base rule, equality, CSP, the static compare note ---

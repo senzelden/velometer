@@ -19,6 +19,11 @@ import { leafletPrefix, t } from "./js/strings.js";
   var map = L.map(mapEl, { preferCanvas: true });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 });
+  // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image
+  // is not vendored); no map draws Point features today
+  function pointAsCircle(feature, latlng) {
+    return L.circleMarker(latlng, { renderer: renderer, radius: 4 });
+  }
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,
     className: cfg.tile_class,
@@ -95,6 +100,7 @@ import { leafletPrefix, t } from "./js/strings.js";
     })
     .then(function (data) {
       layer = L.geoJSON(data, {
+        pointToLayer: pointAsCircle,
         renderer: renderer,
         filter: function (f) { return drawn(f.properties.category); },
         style: style,

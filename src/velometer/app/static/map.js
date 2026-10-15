@@ -29,6 +29,11 @@ import { leafletPrefix, t } from "./js/strings.js";
   var map = L.map(mapEl, { preferCanvas: true });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
+  // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image
+  // is not vendored); no map draws Point features today
+  function pointAsCircle(feature, latlng) {
+    return L.circleMarker(latlng, { renderer: renderer, radius: 4 });
+  }
   L.tileLayer(cfg.tiles, {
     maxZoom: 19,
     className: cfg.tile_class, // muted in app.css; the vector canvas is not
@@ -134,6 +139,7 @@ import { leafletPrefix, t } from "./js/strings.js";
     }
     var boundary = data.boundary
       ? L.geoJSON(data.boundary, {
+          pointToLayer: pointAsCircle,
           interactive: false,
           renderer: renderer,
           style: boundaryStyle(),
@@ -144,6 +150,7 @@ import { leafletPrefix, t } from "./js/strings.js";
     // E first, A last: A draws on top where sides overlap (as in the PNG)
     TIERS.slice().reverse().forEach(function (t) {
       tiers[t] = L.geoJSON(data, {
+        pointToLayer: pointAsCircle,
         renderer: renderer,
         filter: function (f) { return f.properties.tier === t; },
         style: tierStyle(colours, t),
