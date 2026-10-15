@@ -2,13 +2,13 @@
 // raster tiles, with a LAU/FUA switch and tier checkboxes. Every URL comes from the
 // #tiermap-config blob the server renders, so this file names no host; every colour is a
 // stylesheet token (--tier-a … --tier-e, --outline) read when it draws, and the layers are
-// restyled in place when the OS theme changes (zoom and position stay). OSM tag values are user
-// data: popups are built with textContent, never innerHTML.
+// restyled in place when the OS theme changes (zoom and position stay). A side's popup is
+// js/tier-popup.js.
 import { TIERMAP, read, readerMoves, write } from "./js/permalink.js";
 import { onThemeChange, tierColours, token } from "./js/theme.js";
-import { number } from "./js/fmt.js";
 import { mapStatus } from "./js/data.js";
 import { leafletPrefix, t } from "./js/strings.js";
+import { tierPopup } from "./js/tier-popup.js";
 
 (function () {
   "use strict";
@@ -68,52 +68,6 @@ import { leafletPrefix, t } from "./js/strings.js";
     if (current.boundary) current.boundary.setStyle(boundaryStyle());
   }
 
-  function el(tag, text, attrs) {
-    var node = document.createElement(tag);
-    if (text !== undefined && text !== null) node.textContent = String(text);
-    for (var k in attrs || {}) node.setAttribute(k, attrs[k]);
-    return node;
-  }
-
-  function popup(p) {
-    var box = el("div", null, { class: "tiermap-popup" });
-    // the tier opens the popup, by name ("A separated track"): the line's colour is not the only
-    // thing that says which tier a side is
-    box.appendChild(el("p", cfg.labels[p.tier] || p.tier, { class: "tiermap-popup-tier" }));
-    var dl = el("dl");
-    function row(label, value) {
-      dl.appendChild(el("dt", label));
-      var dd = el("dd");
-      if (value instanceof Node) dd.appendChild(value);
-      else dd.textContent = value === null || value === undefined ? "–" : String(value);
-      dl.appendChild(dd);
-    }
-    var link = el("a", t("js.map.way", { id: p.way_id }), {
-      href: cfg.links.way + encodeURIComponent(p.way_id),
-      target: "_blank",
-      rel: "noopener noreferrer",
-    });
-    row("OSM", link);
-    row(t("js.map.side"), p.side);
-    row(t("js.map.tier"), cfg.labels[p.tier] || p.tier);
-    row(t("js.map.subtype"), p.subtype);
-    row(t("js.map.rule"), p.rule_id);
-    row("km", typeof p.km === "number" ? number(p.km, 3) : p.km);
-    box.appendChild(dl);
-    var keys = Object.keys(p.tags || {}).sort();
-    if (keys.length) {
-      var table = el("table");
-      keys.forEach(function (k) {
-        var tr = el("tr");
-        tr.appendChild(el("td", k));
-        tr.appendChild(el("td", p.tags[k]));
-        table.appendChild(tr);
-      });
-      box.appendChild(table);
-    }
-    return box;
-  }
-
   // write the state into the address (replaceState: the Back button is not flooded)
   function sync() {
     var radio = document.querySelector('input[name="kind"]:checked');
@@ -155,7 +109,7 @@ import { leafletPrefix, t } from "./js/strings.js";
         filter: function (f) { return f.properties.tier === t; },
         style: tierStyle(colours, t),
         onEachFeature: function (f, layer) {
-          layer.bindPopup(function () { return popup(f.properties); }, { maxWidth: 360 });
+          layer.bindPopup(function () { return tierPopup(f.properties, cfg); }, { maxWidth: 360 });
         },
       });
       if (checked(t)) tiers[t].addTo(map);

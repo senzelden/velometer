@@ -909,20 +909,9 @@ def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noq
     assert "⚑" in table and "stack" in table and 'data-label="' in table
 
 
-def test_the_tier_chart_names_every_tier_in_a_visible_key():
-    # chart.js renderTiers draws a legend chip per tier layer; the node test proves it renders
-    src = (STATIC / "js" / "chart.js").read_text()
-    assert 'legend.className = "legend"' in src and "layer.name" in src
-
-
-def test_the_tier_map_popup_names_the_tier_of_the_side():
-    # the side's tier opens the popup, by its full name ("A separated track"), not a colour
-    src = (STATIC / "map.js").read_text()
-    popup = src[src.index("function popup(p)") : src.index("function checked")]
-    head = "\n".join(
-        ln for ln in popup[: popup.index("var dl")].splitlines() if not ln.strip().startswith("//")
-    )
-    assert "cfg.labels[p.tier]" in head and "tiermap-popup-tier" in head
+# the tier chart's key (a legend chip per tier, beside its colour) and the tier map popup (it
+# opens with the tier's full name) are asserted on the rendered DOM in node: chart.test.mjs
+# "renderTiers keys every tier by name …" and tier-popup.test.mjs (M10-7)
 
 
 def test_the_tier_names_are_the_popup_labels(client):  # noqa: F811
