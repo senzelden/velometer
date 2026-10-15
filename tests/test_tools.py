@@ -550,3 +550,13 @@ def test_a_page_visit_runs_the_language_checks_and_the_leak_step_on_german_pages
     assert de["errors"] == [f"lang {b}de/cities", f"leak {b}de/cities"]
     en = rp.visit("d", "o", b + "cities", "light", 1280, tmp_path, b)
     assert en["errors"] == [f"lang {b}cities"]  # no leak step on an English page
+
+
+def test_the_permalink_step_needs_every_boundary_the_page_maps(rp):
+    """Where the tier page lists maps for LAU and FUA, the map must offer both, so the step
+    restores the non-default one (M13 M11-10)."""
+    assert rp.boundary_errors(["lau", "fua"], ["lau", "fua"]) == []
+    assert rp.boundary_errors(["lau"], ["lau"]) == []  # one map: one boundary to test
+    (msg,) = rp.boundary_errors(["lau"], ["lau", "fua"])  # a dropped FUA option
+    assert "fua" in msg
+    assert rp.boundary_errors(["lau", "fua"], ["lau"]) != []

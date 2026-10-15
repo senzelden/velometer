@@ -829,6 +829,24 @@ def _at(search: str) -> list[float] | None:
     return [float(x) for x in got["at"].split(",")] if "at" in got else None
 
 
+# the boundaries the tier page lists with a map: its file list names each boundary, with a note
+# where it has no run or no map (independent of the map's radio buttons)
+TIER_MAPPED_JS = (
+    "[...document.querySelectorAll('.tiermap-files li')].filter((li) => !li.querySelector('.note'))"
+    ".map((li) => (li.querySelector('strong')?.textContent || '').replace(':', '').trim()"
+    ".toLowerCase())"
+)
+
+
+def boundary_errors(offered: list[str], mapped: list[str]) -> list[str]:
+    """The tier map offers exactly the boundaries its page lists with a map, so where the page
+    has two (LAU and FUA) the permalink step restores the second, a non-default boundary; a
+    dropped option would otherwise leave only the default tested."""
+    if sorted(offered) == sorted(mapped):
+        return []
+    return [f"the tier map offers {offered}, but the page lists a map for {mapped}"]
+
+
 def _permalink_tiers(devtools, origin, base, theme, width, shots, lang: str = "en"
                      ) -> tuple[Tab, list[str], list]:  # fmt: skip
     """The tier map opened from a permalink shows that state; a pan or zoom rewrites `at`; a
@@ -842,7 +860,9 @@ def _permalink_tiers(devtools, origin, base, theme, width, shots, lang: str = "e
     kinds = t.js(TIER_KINDS_JS)
     if not kinds:
         return t, ["the tier map offers no boundary"], []
-    kind = kinds[-1]
+    if errors := boundary_errors(kinds, t.js(TIER_MAPPED_JS) or []):
+        return t, errors, []
+    kind = kinds[-1]  # with two, the non-default one
     errors = navigate(t, origin + base + pre + PERMALINK_TIERS.format(kind=kind))
     errors += _wait_map(t, "the tier map did not draw from a permalink", lang)
     if errors:
