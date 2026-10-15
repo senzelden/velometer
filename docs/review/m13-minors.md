@@ -63,7 +63,7 @@ gives them one row per item (14a, 14b, …).
 | id | item | ruling | reason | commit |
 |---|---|---|---|---|
 | M8-1 | Overlay v3 bends / v4 drop along turning networks (v5 question) | close | M13 Task 3 measured v4's real loss and closed v5 as not built | `2996d19`, `c487671` |
-| M8-2 | Cumulative mapped line shares the "km per year" axis | fix | The mapped line now has its own labelled right axis, with its 0 aligned to the per-year 0. A second panel would have changed the chart's height, margins and label fitting. The off-scale cap rule still counts the mapped values, so the targets near the line stay on the scale. | `7da510e` |
+| M8-2 | Cumulative mapped line shares the "km per year" axis | fix (user review: panel) | The mapped line is a second panel below the per-year chart, on the same years (one x scale): its own labelled axis ("mapped km since 1 Jan {year}"), a zero line, nice ticks over the change from below 0 to above it. The per-year panel has one axis again; the right axis, `alignZero` and `thinTicks` are gone. The panel is an image with its own name. The off-scale cap rule still counts the mapped values, so the targets near the line stay on the scale. First built as a right axis (`7da510e`). | `7da510e`, `f317a19` |
 | M8-3 | Paris in-service by day; rolling UTC export | close | M13 Task 1 made in-service hourly (Paris, Helsinki) | `4466d9d` |
 | M8-4 | Unreachable km-only Counts chart branch | fix | Removed. `countsChart` returns null without a line, as the tab draws no chart then. The test now asserts that. | `ff2bb02` |
 | M8-5 | Unexplained `test_overlay_facts` failure | close | No repro in 200 runs: 100 alone and 100 inside `tests/test_content_m8.py` in shuffled order, 0 failures (commands below). A reader opened before a write cannot read stale data: the database uses a rollback journal and Python's sqlite3 holds no read transaction between statements. A new test opens the reader first, evaluates, writes twice and evaluates after each write. The one failure mode found needs a reader that keeps a statement open: then the write waits 5 s and fails with "database is locked". Red-proof: the test fails that way when it keeps a cursor open. Nothing in the test's path keeps one. | `e91150f` |
@@ -232,7 +232,7 @@ This matches every item the Task 9 brief names, 1 to 11. No number was ambiguous
 | M11-7b | Fixture owners are synthetic | keep | The fixtures test the rule. The shipped content is checked by `test_shipped_figure_sources_have_complete_cited_dimensions`. | n/a |
 | M11-7c | The content check covers quoted entries only | keep | By design: only a quoted source has a Sources row (`test_an_unquoted_mapping_entry_is_not_checked`) | n/a |
 | M11-7d | Series-id check is loose | fix | It reads the exact keys the scripts use: `series.presets` ids and each point's `headline` / `ecf_qecio` / `clean_cities`. Red: a renamed point key passed the old string search. | `05966e7` |
-| M11-8 | HTML legends other than the tier key not in downloads | fix (documented) | One form is read, `.legend .chip` inside the container, the one `chart.js` draws. `keyOf` says so, a node test pins `renderTiers`' form, and another pins `keyOf`'s reading of it. The Counts and plan keys sit beside their charts, outside the container, and are not in the image (open idea below). | `9a8aa07` |
+| M11-8 | HTML legends other than the tier key not in downloads | fix (user review: panel) | Two forms are read: `.legend .chip` inside the container (chart.js), and a list beside the chart that the container names in `data-download-key` (the plan page key, a Counts tab key). Each entry's mark gives its glyph (`glyphOf`: line, dashed line, dot, ring or swatch) and a label wider than the image wraps. Node tests pin both readings and the glyphs; pytest pins that each plan and Counts chart names its key. | `9a8aa07`, `b645570` |
 | M11-9 | Search over narrative text and quotes | keep | Brief ruling: a new feature that would change search scope and index size. Recorded as an open idea. | n/a |
 | M11-10 | Permalink step does not require two boundaries | fix | The step reads the boundaries the tier page lists with a map (its file list, independent of the radios). The map must offer exactly those. Where the page has LAU and FUA, the step restores FUA, the non-default one. | `7d2e5ed` |
 | M11-11 | A pan within the resize debounce is lost | fix | `readerMoves` records the view a resize leaves. The next `moveend` is the resize's only when it shows that same view (as `at=` writes it), so a pan or zoom inside the 200 ms is written at once. Node test. | `28aaa59` |
@@ -240,8 +240,6 @@ This matches every item the Task 9 brief names, 1 to 11. No number was ambiguous
 ### Open ideas (not built)
 
 - Search over narrative text and quotes (M11-9).
-- The Counts and plan keys in a downloaded image (M11-8). They are HTML lists beside the chart,
-  and their glyphs are lines, rings and dots, not the tier key's swatches.
 
 ### M8-5: the commands
 
