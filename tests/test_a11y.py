@@ -932,19 +932,61 @@ def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, pag
     assert rows  # the fixtures have flagged rows
 
 
+_UP_DOWN = re.compile(r'class="[^"]*\b(up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<')
+_ZERO_CELL = re.compile(r'<td class="([^"]*)" data-label="[^"]*">(0[.,]0)<')
+
+
+def _up_down_and_zeros(url: str, html: str) -> tuple[list[str], int]:
+    """The up/down classes of `html` (each value asserted signed) and the count of its change
+    cells that print as zero (each asserted to be neither up nor down, M12-3)."""
+    kinds = []
+    for m in _UP_DOWN.finditer(html):
+        kinds.append(m.group(1))
+        value = m.group(2).strip()
+        assert value[0] in "+−-" or value == "n/a", (url, m[0])
+        assert value[0] == ("+" if m.group(1) == "up" else "−") or value == "n/a", (url, m[0])
+    zeros = 0
+    for m in _ZERO_CELL.finditer(html):
+        zeros += 1
+        assert not {"up", "down"} & set(m.group(1).split()), (url, m[0])
+    return kinds, zeros
+
+
 def test_every_up_and_down_value_carries_a_sign(all_page_urls, page_site):  # noqa: F811
     # and a change that prints as zero (M12-3: no sign) is neither up nor down; the fixture's
-    # changes all print as zero, so the zero side is what it shows
-    seen = zeros = 0
+    # changes all print as zero, so this is the zero side (the nonzero side: the test below)
+    zeros = 0
     for url in all_page_urls:
-        html = page_site.html[url]
-        for m in re.finditer(r'class="[^"]*\b(?:up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<', html):
-            seen += 1
-            assert m.group(1).strip()[0] in "+−-" or m.group(1).strip() == "n/a", (url, m[0])
-        for m in re.finditer(r'<td class="([^"]*)" data-label="[^"]*">(0[.,]0)<', html):
-            zeros += 1
-            assert not {"up", "down"} & set(m.group(1).split()), (url, m[0])
-    assert seen + zeros
+        kinds, n = _up_down_and_zeros(url, page_site.html[url])
+        zeros += n
+    assert zeros
+
+
+def test_a_nonzero_change_is_up_or_down_and_signed(client, monkeypatch):  # noqa: F811
+    # review 10, M1: the overview with the first-year headlines moved, so its changes print as
+    # nonzero: up on the English page, down on the German one (the fixture alone has only zeros)
+    import dataclasses
+
+    from velometer.report import data as report_data
+
+    real = report_data.ts.build_city
+    shift = {"by": 0.0}
+
+    def build_city(conn, city_id, kind, *a, **kw):
+        cs = real(conn, city_id, kind, *a, **kw)
+        if cs is None or kind != "lau":
+            return cs
+        i = next(i for i, p in enumerate(cs.points) if p.headline is not None)
+        points = list(cs.points)
+        points[i] = dataclasses.replace(points[i], headline=points[i].headline + shift["by"])
+        return dataclasses.replace(cs, points=points)
+
+    monkeypatch.setattr(report_data.ts, "build_city", build_city)
+    for url, by, want in (("/", -5.0, "up"), ("/de/", 5.0, "down")):
+        shift["by"] = by  # the first year lower: the change is up; higher: down
+        kinds, zeros = _up_down_and_zeros(url, client.get(url).text)
+        assert kinds and set(kinds) == {want}, (url, kinds)
+        assert zeros == 0, url
 
 
 def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noqa: F811
