@@ -109,6 +109,16 @@ def test_methodology_formatters_delegate_and_keep_their_output(lang):
         assert methodology._number(v, lang) == i18n.number_trimmed(v, lang)
 
 
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_key_defined_twice_is_a_problem_naming_it(tmp_path, lang):
+    """YAML keeps the last of two equal keys in silence, so an edit to the first copy would be
+    lost (M13 review): the catalogue refuses a duplicate key, in either language."""
+    once, twice = "a.b: x\nc.d: y\n", "a.b: x\nc.d: y\na.b: x\n"
+    _write(tmp_path, twice if lang == "en" else once, twice if lang == "de" else once)
+    problems = i18n.check_catalogues(tmp_path)
+    assert any(f"catalogue {lang}" in p and "a.b" in p and "twice" in p for p in problems), problems
+
+
 def test_german_required_only_for_the_shipped_tree(monkeypatch, tmp_path):
     monkeypatch.setattr(i18n, "GERMAN_CONTENT_REQUIRED", True)
     assert i18n.german_required(i18n.SHIPPED_CONTENT_DIR)

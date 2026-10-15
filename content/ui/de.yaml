@@ -752,7 +752,6 @@ js.cite.accessed_note: Abgerufen am {accessed}
 js.cite.snapshot: OSM-Stand {timestamp}
 js.cite.snapshot_one: OSM-Stand vom {day}
 js.cite.snapshot_range: OSM-Stände vom {first} bis {last}
-cite.snapshot_two: '{kind_a}-Lauf {run_a}, OSM-Stand {ts_a}, und {kind_b}-Lauf {run_b}, OSM-Stand {ts_b}'
 js.cite.classifier: Klassifikator {version}
 js.cite.run: Lauf {run}
 js.cite.commit: Commit {commit}

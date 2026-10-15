@@ -160,10 +160,26 @@ _PLURAL = {"one", "other"}
 _warned: set[tuple[str, str]] = set()
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """A SafeLoader that refuses a mapping key given twice: plain YAML keeps the last one in
+    silence, so an edit to the first copy of a UI string would be lost."""
+
+    def construct_mapping(self, node, deep=False):
+        seen: set = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in seen:
+                raise ValueError(
+                    f"key {key} is defined twice (line {key_node.start_mark.line + 1})"
+                )
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 @functools.lru_cache(maxsize=32)
 def _load(path: str, mtime_ns: int, size: int) -> dict[str, object]:
     del mtime_ns, size  # cache-key parts only: an edited file reads fresh
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    raw = yaml.load(Path(path).read_text(encoding="utf-8"), Loader=_UniqueKeyLoader) or {}
     if not isinstance(raw, dict):
         raise ValueError(f"{path}: the catalogue must be a flat mapping")
     return {str(k): v for k, v in raw.items()}

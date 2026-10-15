@@ -761,7 +761,6 @@ js.cite.accessed_note: Accessed {accessed}
 js.cite.snapshot: OSM snapshot {timestamp}
 js.cite.snapshot_one: OSM snapshot of {day}
 js.cite.snapshot_range: OSM snapshots of {first} to {last}
-cite.snapshot_two: '{kind_a} run {run_a}, OSM snapshot {ts_a}, and {kind_b} run {run_b}, OSM snapshot {ts_b}'
 js.cite.classifier: classifier {version}
 js.cite.run: run {run}
 js.cite.commit: commit {commit}
