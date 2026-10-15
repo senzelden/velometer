@@ -736,7 +736,9 @@ js.plan.per_year: '{unit} per year'
 js.plan.cumulative: cumulative
 js.plan.total: total
 js.plan.share_in: share in {unit}
-js.plan.line: 'line: mapped km since 1 Jan {year}'
+js.plan.mapped_axis: mapped km since 1 Jan {year}
+js.plan.mapped_chart_of: 'Chart: {label}, mapped km on the network since 1 Jan {year}'
+js.plan.mapped_chart: 'Chart: mapped km on the network since 1 Jan {year}'
 js.plan.chart_of: 'Chart: {label}, target and figures by year'
 js.plan.chart: Plan chart
 js.plan.completed: Completed projects

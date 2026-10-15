@@ -99,52 +99,18 @@ export function yDomain(values, count = 5, opts = {}) {
 }
 
 /**
- * The ticks of a domain thinned to at most count + 2: every k-th step from 0 both ways, with k
- * a divisor or a multiple of the steps above 0, so that 0 and the top (`hi`, where off-scale caps
- * sit) stay ticks and the spacing stays even. A domain with few enough ticks is returned as is.
+ * The mapped panel's y domain: nice ticks over [min(0, values), max(0, values)], so 0 is always a
+ * tick (the zero line) and a change far below 0 gets steps of the same size as one above, never a
+ * flood of small ones. All zero (or a single snapshot, the baseline): 0 to one step.
  */
-export function thinTicks(d, count = 5) {
-  if (d.ticks.length <= count + 2) return d;
-  const s = d.ticks[1] - d.ticks[0];
-  const m = Math.max(1, Math.round(d.hi / s)); // steps from 0 to the top
-  for (let k = 2; ; k++) {
-    if (m % k && k % m) continue;
-    const S = s * k;
-    const ticks = [];
-    for (let v = 0; v >= d.lo - 1e-9; v -= S) ticks.unshift(+v.toFixed(10));
-    for (let v = S; v < d.hi - 1e-9; v += S) ticks.push(+v.toFixed(10));
-    if (d.hi > 0) ticks.push(d.hi);
-    if (ticks.length <= count + 2) return { ...d, ticks };
-  }
-}
-
-/**
- * Two y domains (yDomain) with their 0 at the same height: the one whose 0 sits lower gets more
- * room below 0, its ticks thinned (thinTicks) to about `count`. A domain with no room above 0
- * first gets one step of it, so that 0 can lie inside both.
- */
-export function alignZero(a, b, count = 5) {
-  const up = (d) => {
-    if (d.hi > 0) return d;
-    const step = d.ticks.length > 1 ? d.ticks[1] - d.ticks[0] : 1;
-    return { lo: d.lo, hi: step, ticks: [...d.ticks.filter((v) => v <= 0), step] };
-  };
-  const at = (d) => -d.lo / (d.hi - d.lo); // 0's height above the bottom, as a share of the span
-  const lower = (d, f) => {
-    const lo = (-f * d.hi) / (1 - f);
-    const step = d.ticks[1] - d.ticks[0];
-    const ticks = [...d.ticks];
-    for (let v = ticks[0] - step; v >= lo - 1e-9; v -= step) ticks.unshift(+v.toFixed(10));
-    return thinTicks({ lo, hi: d.hi, ticks }, count);
-  };
-  const [p, q] = [up(a), up(b)];
-  const f = Math.max(at(p), at(q));
-  return [at(p) < f ? lower(p, f) : p, at(q) < f ? lower(q, f) : q];
+export function mappedDomain(values, count = 4) {
+  const ticks = niceTicks(Math.min(0, ...values), Math.max(0, ...values), count);
+  return { lo: ticks[0], hi: ticks.at(-1), ticks };
 }
 
 /**
  * Which target steps the y axis holds. A step above OFFSCALE_FACTOR x the largest figure
- * (reported, completed or mapped; the mapped line has its own axis but still counts here, so a
+ * (reported, completed or mapped; the mapped line has its own panel but still counts here, so a
  * target near the mapped change stays on the scale) is off scale: the axis is set by the figures
  * and the nearer steps, and the far ones are drawn as caps on the top edge. No figure above 0: all
  * on scale.
@@ -210,16 +176,17 @@ export function labelSpot(x, y, w, segments, [left, right, top, bottom]) {
 }
 
 /**
- * Draw `series` (planSeries) into `host`: one band per year (opts.years, else every year with a
- * value), target steps across each band, completed-project bars beside the reported markers and
- * the mapped line (positioned by snapshot date, its last point labelled with the date). The
- * mapped line is a change since a date, not km per year: it is read on its own labelled axis on
- * the right, its 0 on the per-year axis's 0 (alignZero).
- * opts: {label, years, unit, quantity, width, height}; quantity is the item's target_kind, and
- * the y label says it. The charted figures are per year: a cumulative or total target is not
- * drawn against them (a note under the chart says so; the table lists it), only on its own.
- * Off-scale targets (targetScale, then settleScale) are caps on the top edge, their values labelled. Margins
- * follow the labels: every text lies inside the svg. No values: a note instead of an svg.
+ * Draw `series` (planSeries) into `host` as two panels on one x scale (one band per year:
+ * opts.years, else every year with a value). The first, per year: target steps across each band,
+ * completed-project bars beside the reported markers. The second, below it: the mapped line, a
+ * change since a date, not km per year, on its own labelled axis with a zero line (positioned by
+ * snapshot date, its last point labelled with the date). No mapped series: no second panel.
+ * opts: {label, years, unit, quantity, width, height, mappedHeight}; quantity is the item's
+ * target_kind, and the y label says it. The charted figures are per year: a cumulative or total
+ * target is not drawn against them (a note under the chart says so; the table lists it), only on
+ * its own. Off-scale targets (targetScale, then settleScale) are caps on the top edge, their values
+ * labelled. Margins follow the labels: every text lies inside its svg. No values: a note instead
+ * of an svg.
  */
 export function renderPlanChart(host, series, opts = {}) {
   const unit = opts.unit ?? "km";
@@ -248,148 +215,144 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const W = Math.max(280, opts.width ?? host.clientWidth ?? 0);
   const H = opts.height ?? 240;
+  const H2 = opts.mappedHeight ?? 150;
   const count = W < 480 ? 4 : 5;
-  const settled = settleScale(scaled, figures, count);
-  const { steps, offScale } = settled;
-  let dom = settled.dom;
-  // the mapped line's own axis (right), its 0 level with the per-year 0
-  let dom2 = null;
-  if (mapped.length) {
-    const own = yDomain(mapped.map((p) => p.value), count, { headroom: offScale.length > 0 });
-    [dom, dom2] = figures.length || steps.length ? alignZero(dom, own, count) : [own, own];
-  }
-  const ticks = dom.ticks;
-  const ticks2 = dom2?.ticks ?? [];
-  // each side: the widest tick label and its 6 px gap, 4 px to spare; no right axis: the last
-  // band's edge
+  const { steps, offScale, dom } = settleScale(scaled, figures, count);
+  // the per-year panel holds targets and figures; only a mapped line: no per-year panel
+  const top = steps.length || offScale.length || figures.length;
+  const dom2 = mapped.length ? mappedDomain(mapped.map((p) => p.value), count - 1) : null;
+  // one x scale for both panels: the left margin fits the wider axis's tick labels (and its 6 px
+  // gap, 4 px to spare); the right margin is the last band's edge
   const widest = (ts) => Math.ceil(Math.max(...ts.map((tick) => textWidth(tickLabel(tick))))) + 10;
-  const ml = widest(ticks);
-  const mr = dom2 ? widest(ticks2) : 10;
-  const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : measureText(quantity, unit);
-  const line = mapped.length ? t("js.plan.line", { year: series.mappedFrom }) : null;
-  // the left label from the left axis, the line's label ending over the right axis; one row if
-  // both fit side by side, else two
-  const oneRow = !line || textWidth(axis) + 12 + textWidth(line) <= W - ml - Math.round(mr / 2);
-  const rows = oneRow ? 1 : 2;
-  // the y labels' rows, then a row for the off-scale caps' values, then the plot
-  const mt = 14 + (rows - 1) * LINE + (offScale.length ? LINE : 0);
+  const ml = Math.max(top ? widest(dom.ticks) : 0, dom2 ? widest(dom2.ticks) : 0);
+  const mr = 10;
   const mb = 26;
-  const y = scaleLinear([dom.lo, dom.hi], [H - mb, mt]);
-  const y2 = dom2 ? scaleLinear([dom2.lo, dom2.hi], [H - mb, mt]) : y;
   const band = (W - ml - mr) / years.length;
   const x0 = (yr) => ml + years.indexOf(yr) * band;
   const mid = (yr) => x0(yr) + band / 2;
   const barW = Math.max(3, Math.min(14, band / 6));
 
-  const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", class: "plan-svg" });
-  const label = opts.label ? t("js.plan.chart_of", { label: opts.label }) : t("js.plan.chart");
-  svg.setAttribute("aria-label", label);
-  svg.appendChild(el("title", {}, label));
-  for (const tick of ticks) {
-    svg.appendChild(el("line", { class: tick === 0 ? "gridl zero" : "gridl", x1: ml, x2: W - mr, y1: y(tick), y2: y(tick) }));
-    svg.appendChild(el("text", { class: "axis-t", x: ml - 6, y: y(tick) + 3.5, "text-anchor": "end" }, tickLabel(tick)));
-  }
-  const every = band < 34 ? 2 : 1;
-  years.forEach((yr, i) => {
-    if ((years.length - 1 - i) % every) return;
-    svg.appendChild(el("text", { class: "axis-t", x: mid(yr), y: H - mb + 16, "text-anchor": "middle" }, String(yr)));
-  });
-  for (const tick of ticks2) {
-    svg.appendChild(el("text", { class: "axis-t axis-r", x: W - mr + 6, y: y2(tick) + 3.5, "text-anchor": "start" }, tickLabel(tick)));
-  }
-  // the line's label ends half the right margin inside the svg edge, over its tick labels
-  svg.appendChild(el("text", { class: "ylab", x: ml, y: 10 }, axis));
-  if (line) svg.appendChild(el("text", { class: "ylab", x: W - Math.round(mr / 2), y: 10 + (rows - 1) * LINE, "text-anchor": "end" }, line));
+  /** A panel: an svg (role img, named), its gridlines, tick labels, year labels and y label. */
+  const panel = (height, mt, d, ylab, name) => {
+    const svg = el("svg", { width: W, height, viewBox: `0 0 ${W} ${height}`, role: "img", class: "plan-svg" });
+    svg.setAttribute("aria-label", name);
+    svg.appendChild(el("title", {}, name));
+    const y = scaleLinear([d.lo, d.hi], [height - mb, mt]);
+    for (const tick of d.ticks) {
+      svg.appendChild(el("line", { class: tick === 0 ? "gridl zero" : "gridl", x1: ml, x2: W - mr, y1: y(tick), y2: y(tick) }));
+      svg.appendChild(el("text", { class: "axis-t", x: ml - 6, y: y(tick) + 3.5, "text-anchor": "end" }, tickLabel(tick)));
+    }
+    const every = band < 34 ? 2 : 1;
+    years.forEach((yr, i) => {
+      if ((years.length - 1 - i) % every) return;
+      svg.appendChild(el("text", { class: "axis-t", x: mid(yr), y: height - mb + 16, "text-anchor": "middle" }, String(yr)));
+    });
+    svg.appendChild(el("text", { class: "ylab", x: ml, y: 10 }, ylab));
+    return { svg, y };
+  };
 
-  const bars = (points, cls, dx, what) => {
-    const g = el("g", { class: cls });
-    for (const p of points.filter(inRange)) {
-      const top = y(Math.max(0, p.value));
-      const h = Math.abs(y(p.value) - y(0));
-      const text = `${what}, ${p.year}: ${formatValue(p.value)} ${unit}`;
-      g.appendChild(titled(el("rect", { class: "bar", x: mid(p.year) + dx - barW / 2, y: top, width: barW, height: Math.max(1, h) }), text));
+  const out = [];
+  if (top) {
+    const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : measureText(quantity, unit);
+    // the y label's row, then a row for the off-scale caps' values, then the plot
+    const mt = 14 + (offScale.length ? LINE : 0);
+    const name = opts.label ? t("js.plan.chart_of", { label: opts.label }) : t("js.plan.chart");
+    const { svg, y } = panel(H, mt, dom, axis, name);
+    out.push(svg);
+
+    const bars = (points, cls, dx, what) => {
+      const g = el("g", { class: cls });
+      for (const p of points.filter(inRange)) {
+        const top = y(Math.max(0, p.value));
+        const h = Math.abs(y(p.value) - y(0));
+        const text = `${what}, ${p.year}: ${formatValue(p.value)} ${unit}`;
+        g.appendChild(titled(el("rect", { class: "bar", x: mid(p.year) + dx - barW / 2, y: top, width: barW, height: Math.max(1, h) }), text));
+      }
+      svg.appendChild(g);
+    };
+    bars(series.projects, "projects", -barW * 1.6, t("js.plan.completed"));
+
+    if (steps.length) {
+      const g = el("g", { class: "target" });
+      let d = "";
+      for (const p of steps) {
+        const yy = y(p.value).toFixed(1);
+        d += `M${(x0(p.year) + 2).toFixed(1)},${yy}H${(x0(p.year) + band - 2).toFixed(1)}`;
+      }
+      const list = steps.map((p) => `${p.year} ${formatValue(p.value)} ${unit}`).join(", ");
+      g.appendChild(titled(el("path", { class: "target-step", d }), t("js.plan.target", { steps: list })));
+      svg.appendChild(g);
+    }
+    if (offScale.length) {
+      // off the scale: a cap on the top edge of the band, the value above it (every target is
+      // also in the table under the chart). A value wider than its band: the compact form; still
+      // wider, every other cap is labelled (counted from the last), as the year labels thin out
+      const g = el("g", { class: "target offscale" });
+      const compact = (p) => `↑${formatValue(p.value)}`;
+      const thin = offScale.some((p) => textWidth(compact(p)) > band - 2);
+      offScale.forEach((p, i) => {
+        const d = `M${(x0(p.year) + 2).toFixed(1)},${mt}H${(x0(p.year) + band - 2).toFixed(1)}`;
+        const text = t("js.plan.target_cap", { year: p.year, value: formatValue(p.value), unit });
+        g.appendChild(titled(el("path", { class: "target-cap", d }), text));
+        const next = offScale[i + 1];
+        if (thin && (offScale.length - 1 - i) % 2 && next?.year === p.year + 1) return;
+        const wide = `↑ ${formatValue(p.value)}`;
+        const value = textWidth(wide) <= band ? wide : compact(p);
+        g.appendChild(el("text", { class: "target-cap-label", x: mid(p.year), y: mt - 3, "text-anchor": "middle" }, value));
+      });
+      svg.appendChild(g);
+    }
+
+    const g = el("g", { class: "reported" });
+    const offsets = {};
+    for (const p of series.reported.filter(inRange)) {
+      // documents agreeing on a value would hide one another: spread them a little
+      const key = `${p.year}`;
+      const k = (offsets[key] = (offsets[key] ?? -1) + 1);
+      const cx = mid(p.year) + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 3;
+      const cls = ["rep", p.current ? "rep-current" : "rep-revision", p.suspect ? "rep-suspect" : null]
+        .filter(Boolean)
+        .join(" ");
+      const which = p.current ? t("js.plan.current") : t("js.plan.revision");
+      const suspect = p.suspect ? `, ${p.note ? t("js.plan.suspect_note", { note: p.note }) : t("js.plan.suspect")}` : "";
+      const text = `${t("js.plan.reported", { year: p.year, value: formatValue(p.value), unit, doc: p.doc })} ${which}${suspect}`;
+      g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text, p.suspect && !!p.note && p.noteFallback));
     }
     svg.appendChild(g);
-  };
-  bars(series.projects, "projects", -barW * 1.6, t("js.plan.completed"));
-  // the date label keeps off the target steps and the caps on the top edge
-  const segments = [
-    ...steps.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: y(p.value) })),
-    ...offScale.map((p) => ({ x1: x0(p.year) + 2, x2: x0(p.year) + band - 2, y: mt })),
-  ];
+  }
 
-  if (mapped.length) {
+  if (dom2) {
+    const year = series.mappedFrom;
+    const mt = 14;
+    const name = opts.label
+      ? t("js.plan.mapped_chart_of", { label: opts.label, year })
+      : t("js.plan.mapped_chart", { year });
+    const { svg, y } = panel(H2, mt, dom2, t("js.plan.mapped_axis", { year }), name);
     // a snapshot sits at its date: 1 January of Y on the left edge of Y's band
     const xAt = (p) => x0(p.year) + (p.at - p.year) * band;
     const g = el("g", { class: "mapped" });
-    const d = mapped.map((p, i) => `${i ? "L" : "M"}${xAt(p).toFixed(1)},${y2(p.value).toFixed(1)}`).join("");
+    const d = mapped.map((p, i) => `${i ? "L" : "M"}${xAt(p).toFixed(1)},${y(p.value).toFixed(1)}`).join("");
     g.appendChild(el("path", { class: "mapped-line", d }));
     for (const p of mapped) {
       const sign = p.value > 0 ? "+" : "";
-      const text = t("js.plan.mapped_point", { date: p.date, value: `${sign}${formatValue(p.value)}`, year: series.mappedFrom });
-      g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y2(p.value), r: 3 }), text));
+      const text = t("js.plan.mapped_point", { date: p.date, value: `${sign}${formatValue(p.value)}`, year });
+      g.appendChild(titled(el("circle", { class: "mapped-pt", cx: xAt(p), cy: y(p.value), r: 3 }), text));
     }
     const last = mapped.at(-1);
-    const spot = labelSpot(xAt(last), y2(last.value), textWidth(last.date), segments, [ml, W - mr, mt, H - mb]);
+    const spot = labelSpot(xAt(last), y(last.value), textWidth(last.date), [], [ml, W - mr, mt, H2 - mb]);
     g.appendChild(el("text", { class: "mapped-label", ...spot }, last.date));
     svg.appendChild(g);
+    out.push(svg);
   }
 
-  if (steps.length) {
-    const g = el("g", { class: "target" });
-    let d = "";
-    for (const p of steps) {
-      const yy = y(p.value).toFixed(1);
-      d += `M${(x0(p.year) + 2).toFixed(1)},${yy}H${(x0(p.year) + band - 2).toFixed(1)}`;
-    }
-    const list = steps.map((p) => `${p.year} ${formatValue(p.value)} ${unit}`).join(", ");
-    g.appendChild(titled(el("path", { class: "target-step", d }), t("js.plan.target", { steps: list })));
-    svg.appendChild(g);
-  }
-  if (offScale.length) {
-    // off the scale: a cap on the top edge of the band, the value above it (every target is
-    // also in the table under the chart). A value wider than its band: the compact form; still
-    // wider, every other cap is labelled (counted from the last), as the year labels thin out
-    const g = el("g", { class: "target offscale" });
-    const compact = (p) => `↑${formatValue(p.value)}`;
-    const thin = offScale.some((p) => textWidth(compact(p)) > band - 2);
-    offScale.forEach((p, i) => {
-      const d = `M${(x0(p.year) + 2).toFixed(1)},${mt}H${(x0(p.year) + band - 2).toFixed(1)}`;
-      const text = t("js.plan.target_cap", { year: p.year, value: formatValue(p.value), unit });
-      g.appendChild(titled(el("path", { class: "target-cap", d }), text));
-      const next = offScale[i + 1];
-      if (thin && (offScale.length - 1 - i) % 2 && next?.year === p.year + 1) return;
-      const wide = `↑ ${formatValue(p.value)}`;
-      const value = textWidth(wide) <= band ? wide : compact(p);
-      g.appendChild(el("text", { class: "target-cap-label", x: mid(p.year), y: mt - 3, "text-anchor": "middle" }, value));
-    });
-    svg.appendChild(g);
-  }
-
-  const g = el("g", { class: "reported" });
-  const offsets = {};
-  for (const p of series.reported.filter(inRange)) {
-    // documents agreeing on a value would hide one another: spread them a little
-    const key = `${p.year}`;
-    const k = (offsets[key] = (offsets[key] ?? -1) + 1);
-    const cx = mid(p.year) + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 3;
-    const cls = ["rep", p.current ? "rep-current" : "rep-revision", p.suspect ? "rep-suspect" : null]
-      .filter(Boolean)
-      .join(" ");
-    const which = p.current ? t("js.plan.current") : t("js.plan.revision");
-    const suspect = p.suspect ? `, ${p.note ? t("js.plan.suspect_note", { note: p.note }) : t("js.plan.suspect")}` : "";
-    const text = `${t("js.plan.reported", { year: p.year, value: formatValue(p.value), unit, doc: p.doc })} ${which}${suspect}`;
-    g.appendChild(titled(el("circle", { class: cls, cx, cy: y(p.value), r: p.suspect ? 5.5 : 4.5 }), text, p.suspect && !!p.note && p.noteFallback));
-  }
-  svg.appendChild(g);
   if (drawTarget || !series.target.some(inRange)) {
-    host.replaceChildren(svg);
+    host.replaceChildren(...out);
     return;
   }
   const note = document.createElement("p");
   note.className = "meta plan-chart-note";
   note.textContent = t("js.plan.not_drawn", { measure: measureText(quantity, unit) });
-  host.replaceChildren(svg, note);
+  host.replaceChildren(...out, note);
 }
 
 function boot() {
