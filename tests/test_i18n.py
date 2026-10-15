@@ -173,3 +173,10 @@ def test_a_signed_value_that_rounds_to_zero_has_no_sign():
         assert i18n.signed(0.004, lang, 2) == zero + "0"
     assert i18n.signed(0.05, "en") == "+0.1" and i18n.signed(-0.05, "de") == "−0,1"
     assert i18n.signed(0.006, "de", 2) == "+0,01"
+
+
+def test_a_change_that_prints_as_zero_is_neither_up_nor_down():
+    # the up/down classes follow the printed sign (test_a11y: every up/down value has a sign)
+    assert [i18n.tone(v) for v in (None, 0, 0.04, -0.04, 0.05, -0.05, 3)] == [
+        None, None, None, None, "up", "down", "up",
+    ]  # fmt: skip

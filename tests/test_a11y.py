@@ -933,13 +933,18 @@ def test_flagged_rows_carry_the_flag_mark_not_only_the_colour(all_page_urls, pag
 
 
 def test_every_up_and_down_value_carries_a_sign(all_page_urls, page_site):  # noqa: F811
-    seen = 0
+    # and a change that prints as zero (M12-3: no sign) is neither up nor down; the fixture's
+    # changes all print as zero, so the zero side is what it shows
+    seen = zeros = 0
     for url in all_page_urls:
         html = page_site.html[url]
         for m in re.finditer(r'class="[^"]*\b(?:up|down)\b[^"]*"[^>]*>\s*([^<\s][^<]*)<', html):
             seen += 1
             assert m.group(1).strip()[0] in "+−-" or m.group(1).strip() == "n/a", (url, m[0])
-    assert seen
+        for m in re.finditer(r'<td class="([^"]*)" data-label="[^"]*">(0[.,]0)<', html):
+            zeros += 1
+            assert not {"up", "down"} & set(m.group(1).split()), (url, m[0])
+    assert seen + zeros
 
 
 def test_a_flagged_year_in_the_overview_chart_table_has_the_mark(client):  # noqa: F811

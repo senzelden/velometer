@@ -43,7 +43,7 @@
   {% else %}
   <td class="num first-col" data-label="{{ t('table.first_year') }}">{{ s.first | num }}{% if s.first_label %} <span class="sub">{{ s.first_label }}</span>{% endif %}</td>
   <td class="num" data-label="{{ t('table.current') }}"><b>{{ s.now | num }}</b> <span class="sub">{{ s.now_label }}</span></td>
-  <td class="num{% if s.change is not none %} {{ 'down' if s.change < 0 else 'up' }}{% endif %}" data-label="{{ t('table.change') }}">{{ s.change | signed }}</td>
+  <td class="num{% if s.change | tone %} {{ s.change | tone }}{% endif %}" data-label="{{ t('table.change') }}">{{ s.change | signed }}</td>
   {% endif %}
 </tr>
 {% endfor %}

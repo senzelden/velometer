@@ -436,6 +436,7 @@ def create_app(
         env.filters["cite_json"] = cite_model.json_fields
         env.filters["num"] = lambda v, spec=",.1f": _num(v, spec, lang)
         env.filters["signed"] = lambda v, decimals=1: i18n.signed(v, lang, decimals)
+        env.filters["tone"] = i18n.tone
         env.filters["pct"] = lambda v, decimals=1, signed=False: i18n.percent(
             v, lang, decimals, signed
         )
@@ -1317,7 +1318,7 @@ def create_app(
             {"label": i18n.t(lang, "city.keynum.since",
                              when=summary["first_label"] or i18n.t(lang, "city.keynum.first_year")),
              "value": na if change is None else i18n.signed(change, lang).replace("-", i18n.MINUS),
-             "tone": None if change is None else ("up" if change >= 0 else "down"),
+             "tone": i18n.tone(change),
              "sub": na if summary["first"] is None
              else i18n.t(lang, "city.keynum.from", value=_num(summary["first"], lang=lang))},
             {"label": i18n.t(lang, "city.keynum.ab_km"),

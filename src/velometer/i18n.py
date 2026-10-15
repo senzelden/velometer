@@ -308,6 +308,15 @@ def signed(v: float | int | None, lang: str, decimals: int = 1) -> str:
     return _localise(f"{v:+.{decimals}f}", lang)
 
 
+def tone(v: float | int | None, decimals: int = 1) -> str | None:
+    """ "up" or "down" for a change as `signed` prints it, None for none or one that prints as
+    zero (no sign, so neither up nor down)."""
+    if v is None:
+        return None
+    text = signed(v, "en", decimals)
+    return "up" if text.startswith("+") else "down" if text.startswith("-") else None
+
+
 # `percent` has a `signed` flag that shadows the function inside it; this alias reaches it.
 _signed = signed
 
