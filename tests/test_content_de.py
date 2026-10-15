@@ -1,6 +1,7 @@
 import subprocess
 
 import pytest
+import yaml
 
 from tests.content_util import build_tree, fake_translate
 from velometer.content import check as ck
@@ -414,3 +415,75 @@ def test_the_counter_page_index_rule_runs_on_the_german_text(m8):
         p.startswith("[de] de/counters.yaml: index rule stated as literal text: ")
         for p in german()[0]
     )
+
+
+# --- M12-5: the German index-rule statements, confirmed on the German corpus and on the
+# German twins of the English seeded cases (test_content_m8.py) ---
+
+RULE_VALUES = {90.0: "counter.min_valid", 3.0: "counter.min_sites"} | {
+    2019.0: "counter.base_year.berlin",
+    2020.0: "counter.base_year.madrid",
+}
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Drei Städte veröffentlichen stündliche Zählwerte.",
+        "2020 war das Corona-Jahr.",
+        "Die Zählwerte fielen 2020 und stiegen gegenüber 2019.",
+        "Das Netz wuchs um 90 km; 3 Portale wurden geprüft.",
+        "Neun der Zählstellen liegen in drei Bezirken.",
+        "2019 öffnete die Stadt ihr Portal (Madrid: 2020).",
+    ],
+)
+def test_a_german_rule_value_outside_a_threshold_statement_is_no_literal_rule(sentence):
+    assert ck.literal_counter_rules(sentence, RULE_VALUES, [], ck.RULES["de"]) == []
+
+
+@pytest.mark.parametrize(
+    ("sentence", "found"),
+    [
+        ("Ein Schritt braucht 3 Zählstellen.", "3 (counter.min_sites)"),
+        ("Ein Jahr mit weniger als drei solchen Zählstellen hat keinen Wert.",
+         "drei (counter.min_sites)"),
+        ("Weniger als drei Zählstellen ergeben keinen Wert.", "drei (counter.min_sites)"),
+        ("Zählstellen, die an 90 % der Tage vollständig sind, zählen.",
+         "90 % (counter.min_valid)"),
+        ("Zählstellen, die an 90 Prozent ihrer Tage vollständig sind, zählen.",
+         "90 (counter.min_valid)"),
+        ("Zählstellen, die an neun von zehn Tagen vollständig sind, zählen.",
+         "neun von zehn (counter.min_valid)"),
+        ("Der Index setzt 2019 = 100.", "2019 (counter.base_year.berlin)"),
+        ("Sein Basisjahr ist 2020.", "2020 (counter.base_year.madrid)"),
+        ("Verkettet ab 2019 (Madrid: 2020).", "2020 (counter.base_year.madrid)"),
+    ],
+)  # fmt: skip
+def test_a_german_rule_value_in_a_threshold_statement_is_a_literal_rule(sentence, found):
+    assert found in ck.literal_counter_rules(sentence, RULE_VALUES, [], ck.RULES["de"])
+
+
+def test_the_shipped_german_counter_page_states_the_rule_through_its_facts():
+    """No false positive on the German corpus, and every rule the page states is caught once its
+    fact is taken away (the twin of the English shipped-page test)."""
+    from pathlib import Path
+
+    from velometer.content.loader import load_document
+
+    root = Path(__file__).parents[1]
+    rules, error = ck.counter_rule_values(root / "config")
+    assert error is None
+    en = load_document(root / "content" / "counters.yaml")
+    de = yaml.safe_load((root / "content" / "de" / "counters.yaml").read_text(encoding="utf-8"))
+    prose = [p["text"] for s in de["sections"] for p in s.get("paragraphs") or [] if p]
+    assert len(prose) > 3, "the German counters page has prose"
+    found = [x for p in prose for x in ck.literal_counter_rules(p, rules, en.facts, ck.RULES["de"])]
+    assert found == []
+    others = [f for f in en.facts if not ck._is_rule_fact(f.expr)]
+    declared = {f.expr.strip() for f in en.facts if ck._is_rule_fact(f.expr)}
+    caught = {
+        x.rsplit(" (", 1)[1].rstrip(")")
+        for p in prose
+        for x in ck.literal_counter_rules(p, rules, others, ck.RULES["de"])
+    }
+    assert declared and caught == declared
