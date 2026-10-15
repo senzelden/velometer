@@ -1,8 +1,11 @@
 """M13 Task 2: counter index v2 (pooled mean per complete day), stored beside v1 by method."""
 
 import sqlite3
+import subprocess
+import sys
 from contextlib import closing
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -119,11 +122,12 @@ def _seed_both(db_path, city="berlin"):
 def test_readers_never_see_a_v1_only_year(setup):  # noqa: F811
     db_path = setup[0]
     _seed_both(db_path)
-    data = ReportData(sqlite3.connect(db_path), setup[1])
-    rows = data.counter_index("berlin")
-    assert rows and {r.method for r in rows} == {INDEX_METHOD}
-    assert V1_ONLY not in {r.year for r in rows}
-    assert V1_ONLY in {r.year for r in data.counter_index("berlin", "v1")}
+    with closing(sqlite3.connect(db_path)) as conn:
+        data = ReportData(conn, setup[1])
+        rows = data.counter_index("berlin")
+        assert rows and {r.method for r in rows} == {INDEX_METHOD}
+        assert V1_ONLY not in {r.year for r in rows}
+        assert V1_ONLY in {r.year for r in data.counter_index("berlin", "v1")}
     with _client(_app(setup)) as c:
         points = c.get("/data/series.json").json()["counters"]["cities"]["berlin"]["points"]
         assert V1_ONLY not in {p["year"] for p in points}
@@ -149,6 +153,13 @@ def test_a_fact_of_a_v1_only_year_is_a_missing_year_not_two_series(fixture_db, t
 # --- counters --check --------------------------------------------------------------------------
 
 
+@pytest.fixture
+def check_conn(tmp_path):
+    """A fresh counters database, closed after the test."""
+    with closing(_check_db(tmp_path)) as conn:
+        yield conn
+
+
 def _rows(method, base_value=100.0):
     return [
         CounterIndexYear("berlin", 2019, base_value, 5, 2019, "counts", method),
@@ -156,34 +167,48 @@ def _rows(method, base_value=100.0):
     ]
 
 
-def test_check_passes_v1_and_v2_rows(tmp_path):
-    conn = _check_db(tmp_path)
+def test_check_passes_v1_and_v2_rows(check_conn):
+    conn = check_conn
     replace_counter_sites(conn, "berlin", [_check_site("berlin", "a")])
     replace_counter_index(conn, "berlin", _rows("v1"))
     replace_counter_index(conn, "berlin", _rows("v2"))
     assert check_counters(conn, _cfg("berlin")) == []
 
 
-def test_check_flags_a_city_with_v1_rows_and_no_v2_rows(tmp_path):
-    conn = _check_db(tmp_path)
+def test_check_flags_a_city_with_v1_rows_and_no_v2_rows(check_conn):
+    conn = check_conn
     replace_counter_sites(conn, "berlin", [_check_site("berlin", "a")])
     replace_counter_index(conn, "berlin", _rows("v1"))
     problems = check_counters(conn, _cfg("berlin"))
     assert "berlin: v1 index rows but no v2 rows" in problems
 
 
-def test_check_flags_a_v2_base_year_that_is_not_100(tmp_path):
-    conn = _check_db(tmp_path)
+def test_check_flags_a_v2_base_year_that_is_not_100(check_conn):
+    conn = check_conn
     replace_counter_sites(conn, "berlin", [_check_site("berlin", "a")])
     replace_counter_index(conn, "berlin", _rows("v1"))
     replace_counter_index(conn, "berlin", _rows("v2", base_value=99.0))
     assert check_counters(conn, _cfg("berlin")) == ["berlin: index base year 2019 is 99.0, not 100"]
 
 
-def test_check_ignores_v1_rows_for_the_index_checks(tmp_path):
+def test_check_ignores_v1_rows_for_the_index_checks(check_conn):
     # a v1 base year off 100 is not the headline; the checks read INDEX_METHOD rows
-    conn = _check_db(tmp_path)
+    conn = check_conn
     replace_counter_sites(conn, "berlin", [_check_site("berlin", "a")])
     replace_counter_index(conn, "berlin", _rows("v1", base_value=99.0))
     replace_counter_index(conn, "berlin", _rows("v2"))
     assert check_counters(conn, _cfg("berlin")) == []
+
+
+def test_this_file_closes_every_connection_it_opens():
+    """M13-T2b: a reader opened without closing it raised a ResourceWarning ("unclosed
+    database") when it was collected; run the rest of this file and listen for it."""
+    me = "tests/test_counter_index_v2.py"
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", me, "-q", "-p", "no:cacheprovider",
+         "-W", "always::ResourceWarning",
+         "--deselect", f"{me}::test_this_file_closes_every_connection_it_opens"],
+        capture_output=True, text=True, check=False, cwd=Path(__file__).resolve().parents[1],
+    )  # fmt: skip
+    assert r.returncode == 0, r.stdout[-2000:]
+    assert "unclosed database" not in r.stdout + r.stderr
