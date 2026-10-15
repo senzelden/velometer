@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { fileName, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
+import { fileName, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -294,4 +294,58 @@ test("tableCsv in German: formula-shaped header and cells are quoted off, conver
   assert.equal(lines[5], "-1639.8,1.5"); // a signed German number converts; nothing left to run
   assert.equal(lines[6], "'=1+1,'-x");
   useLang("en");
+});
+
+// ---- the plan and Counts keys in the image (M13 Task 13a: M11-8, user review) ----
+
+// the computed style of a key mark (`<span class="key key-...">`) as app.css draws it, dark theme;
+// with border-box sizing a line mark's computed height is its border's (the render check found
+// the lines drawn as swatches when the rule read height 0)
+const MARK = {
+  target: { borderTopStyle: "dashed", borderBottomStyle: "none", borderTopColor: "rgb(163, 161, 154)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "2px" },
+  current: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(94, 152, 237)", borderRadius: "50%", backgroundColor: "rgba(0, 0, 0, 0)", height: "12px" },
+  revision: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(94, 152, 237)", borderRadius: "50%", backgroundColor: "rgb(236, 235, 230)", height: "12px" },
+  projects: { borderTopStyle: "solid", borderBottomStyle: "solid", borderTopColor: "rgb(163, 161, 154)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "12px" },
+  mapped: { borderTopStyle: "solid", borderBottomStyle: "none", borderTopColor: "rgb(94, 152, 237)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "3px" },
+};
+
+test("glyphOf: a key mark's computed style says its glyph: line, dashed line, dot, ring or swatch", () => {
+  assert.deepEqual(glyphOf(MARK.target), { shape: "dash", colour: "rgb(163, 161, 154)" });
+  assert.deepEqual(glyphOf(MARK.mapped), { shape: "line", colour: "rgb(94, 152, 237)" });
+  assert.deepEqual(glyphOf(MARK.current), { shape: "dot", colour: "rgb(94, 152, 237)" });
+  assert.deepEqual(glyphOf(MARK.revision), { shape: "ring", colour: "rgb(94, 152, 237)", fill: "rgb(236, 235, 230)" });
+  assert.deepEqual(glyphOf(MARK.projects), { shape: "swatch", colour: "rgb(163, 161, 154)" });
+  // a mark coloured by its ground (no border) is a swatch of that ground
+  assert.deepEqual(glyphOf({ borderTopStyle: "none", borderTopColor: "rgb(0, 0, 0)", borderRadius: "0px", backgroundColor: "rgb(1, 2, 3)", height: "12px" }),
+    { shape: "swatch", colour: "rgb(1, 2, 3)" });
+});
+
+test("selfContained: line, dashed, dot and ring key glyphs are drawn as such, in light colours", () => {
+  const key = Object.entries(MARK).map(([k, st]) => ({ ...glyphOf(st), text: `key ${k}` }));
+  const out = selfContained(chart(), darkStyle, lightOf({ ...TOKENS, "--surface": ["#ffffff", "#ecebe6"] }), { ...META, key });
+  const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+  for (const k of Object.keys(MARK)) assert.ok(g.includes(`key ${k}`), k);
+  assert.match(g, /<line[^>]*stroke="#6b6a66"[^>]*stroke-dasharray="[^"]+"/, "the target's dashed line");
+  assert.match(g, /<line(?![^>]*dasharray)[^>]*stroke="#2a78d6"/, "the mapped line, solid");
+  assert.match(g, /<circle[^>]*fill="#2a78d6"(?![^>]*stroke=)/, "the current figure's dot");
+  assert.match(g, /<circle[^>]*fill="#ffffff"[^>]*stroke="#2a78d6"/, "the revision's ring, on the light ground");
+  assert.match(g, /<rect[^>]*fill="#6b6a66"/, "the projects' swatch");
+  assert.doesNotMatch(g, /rgb\(|NaN/);
+});
+
+test("selfContained: a key label wider than the image wraps inside the image", () => {
+  const text = "mapped on the network, mapped km since 1 Jan 2022 (ours; a line, one point per OpenStreetMap snapshot, the last at the current snapshot)";
+  for (const w of [400, 300]) {
+    const svg = node("svg", { viewBox: `0 0 ${w} 200` }, []);
+    const out = selfContained(svg, darkStyle, null, { ...META, key: [{ shape: "line", colour: "rgb(1, 2, 3)", text }] });
+    const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+    const lines = [...g.matchAll(/<text x="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => [Number(m[1]), m[2]]);
+    assert.ok(lines.length >= 2, `${w}: wrapped`);
+    assert.equal(lines.map((l) => l[1]).join(" "), text.replace(/&/g, "&amp;"));
+    for (const [x, s] of lines) assert.ok(x + s.length * 6.6 <= w, `${w}: "${s}" ends at ${x + s.length * 6.6}`);
+    // the source line stays below the wrapped key
+    const ys = [...g.matchAll(/<text x="[\d.]+" y="([\d.]+)"/g)].map((m) => Number(m[1]));
+    const src = Number(out.match(/<g id="velometer-meta"><text x="8" y="([\d.]+)"/)[1]);
+    assert.ok(Math.max(...ys) + 8 <= src, `key ends at ${Math.max(...ys)}, source at ${src}`);
+  }
 });

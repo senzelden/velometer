@@ -652,3 +652,17 @@ def test_the_counts_tab_states_the_index_rule_from_its_constants(setup, monkeypa
     assert "links to a neighbouring one with 7 sites complete on at least 80% of days." in text
     assert "fewer than 7 sites complete on at least 80% of days in both years of a link" in text
     assert "nine days in ten" not in text and "three sites" not in text
+
+
+def test_the_counts_chart_names_the_key_its_download_carries(setup):  # noqa: F811
+    # M13 Task 13a (M11-8, user review): a downloaded Counts chart carries its key. download-ui
+    # reads the list the chart names in data-download-key
+    _seed(setup[0], index={2024: 100.0, 2025: 120.0}, base=2024)
+    with _client(_app(setup)) as c:
+        html = c.get("/city/berlin/counts").text
+    chart = re.search(r'<div class="chart" data-chart="city-counts"[^>]*>', html).group(0)
+    key_id = re.search(r'data-download-key="([^"]+)"', chart).group(1)
+    start = html.index(f'id="{key_id}"')
+    assert html[html.rfind("<", 0, start) : start].startswith('<ul class="meta chart-key"')
+    items = re.findall(r'<li><span class="key key-[\w-]+"></span>', _chart_key(html))
+    assert len(items) == 2

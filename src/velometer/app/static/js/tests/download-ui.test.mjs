@@ -300,3 +300,31 @@ test("keyOf reads the .legend .chip key chart.js draws: colour, text and measure
     globalThis.getComputedStyle = before;
   }
 });
+
+test("keyOf reads the key list a chart names (data-download-key): the plan and Counts keys", () => {
+  // M13 Task 13a (M11-8, user review): the plan page's key and a Counts tab's key are lists beside
+  // the chart; the chart names its list, and each entry's mark gives its glyph
+  const mark = (style) => ({ style });
+  const li = (style, text) => ({ textContent: `  ${text}\n `, querySelector: (sel) => (sel === ".key" ? mark(style) : null) });
+  const dashed = { borderTopStyle: "dashed", borderTopColor: "rgb(9, 9, 9)", borderRadius: "0px", backgroundColor: "rgba(0, 0, 0, 0)", height: "0px" };
+  const ring = { borderTopStyle: "solid", borderTopColor: "rgb(1, 2, 3)", borderRadius: "50%", backgroundColor: "rgb(255, 255, 255)", height: "12px" };
+  const list = { querySelectorAll: (sel) => (sel === "li" ? [li(dashed, "target per year"), li(ring, "reported,   revision")] : []) };
+  const page = { ...measuringDoc((s) => s.length * 6), getElementById: (id) => (id === "plan-key" ? list : null) };
+  const container = {
+    querySelectorAll: () => [],
+    getAttribute: (k) => (k === "data-download-key" ? "plan-key" : null),
+  };
+  const before = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = (m) => m.style;
+  try {
+    assert.deepEqual(keyOf(container, page), [
+      { shape: "dash", colour: "rgb(9, 9, 9)", text: "target per year", width: 90 },
+      { shape: "ring", colour: "rgb(1, 2, 3)", fill: "rgb(255, 255, 255)", text: "reported, revision", width: 108 },
+    ]);
+    // a chart that names no key, or a key not on the page: no entries
+    assert.deepEqual(keyOf({ ...container, getAttribute: () => null }, page), []);
+    assert.deepEqual(keyOf({ ...container, getAttribute: () => "gone" }, page), []);
+  } finally {
+    globalThis.getComputedStyle = before;
+  }
+});

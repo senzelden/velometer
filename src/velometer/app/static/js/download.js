@@ -142,42 +142,95 @@ const TOP = 30;
 const BOTTOM = 44;
 
 const KEY_ROW = 18;
+const KEY_LINE = 14; // a wrapped key label's next line
 const CHAR = 6.6; // an estimate of the width of a character at 11px, where none was measured
 
-/** The key chips ({colour, text, width?}) in rows that fit the width, each chip with its x. A
- * chip's `width` is its label measured in the page (getComputedTextLength); without one the
- * label's width is estimated from its length. */
+/**
+ * A key entry's glyph, from the computed style (camelCase, as getComputedStyle gives it) of its
+ * mark in the page's key (`<span class="key ...">`, drawn by app.css): a round mark is a dot, or a
+ * ring when it has a ground of its own; a mark drawn by its top border alone is a line, dashed when
+ * that border is;
+ * any other is a swatch. The colour is the border's, or the ground's where the mark has no border.
+ */
+export function glyphOf(st) {
+  const solid = (c) => {
+    const v = colour(c, null);
+    return v && v.value !== "none" ? c : null;
+  };
+  const border = st.borderTopStyle && st.borderTopStyle !== "none" ? solid(st.borderTopColor) : null;
+  const ground = solid(st.backgroundColor);
+  if (String(st.borderRadius ?? "").startsWith("50%") && border) {
+    return ground ? { shape: "ring", colour: border, fill: ground } : { shape: "dot", colour: border };
+  }
+  // a line is a top border alone (with border-box sizing its computed height is the border's)
+  const topOnly = st.borderBottomStyle ? st.borderBottomStyle === "none" : parseFloat(st.height) === 0;
+  if (topOnly && border) return { shape: st.borderTopStyle === "dashed" ? "dash" : "line", colour: border };
+  return { shape: "swatch", colour: border ?? ground ?? "" };
+}
+
+/** A label's lines, each at most `room` px wide (by `perChar` px a character), broken at spaces;
+ * a single word wider than that stays whole. */
+function wrap(text, perChar, room) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && next.length * perChar > room) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** The key chips ({shape?, colour, fill?, text, width?}) in rows that fit the width, each chip with
+ * its x and its label's lines. A chip's `width` is its label measured in the page
+ * (getComputedTextLength); without one the label's width is estimated from its length. A label
+ * wider than the image wraps onto lines of its own; a row is as tall as its tallest chip. */
 function layoutKey(chips, width) {
   const rows = [];
   let row = [];
   let x = 8;
+  const room = Math.max(40, width - 8 - 14 - 8);
   for (const c of chips) {
-    const label = Number.isFinite(c.width) && c.width > 0 ? c.width : c.text.length * CHAR;
+    const measured = Number.isFinite(c.width) && c.width > 0 ? c.width : c.text.length * CHAR;
+    const lines = measured <= room ? [c.text] : wrap(c.text, measured / Math.max(1, c.text.length), room);
+    const label = lines.length > 1 ? room : measured;
     const need = 14 + label + 14;
     if (row.length && x + need > width) {
       rows.push(row);
       row = [];
       x = 8;
     }
-    row.push({ ...c, x });
+    row.push({ ...c, x, lines });
     x += need;
   }
   if (row.length) rows.push(row);
-  return rows;
+  return rows.map((r) => ({ chips: r, h: KEY_ROW + (Math.max(...r.map((c) => c.lines.length)) - 1) * KEY_LINE }));
 }
 
-/** A swatch and a label per chip: the key of a chart whose key is HTML beside the SVG. */
+/** A glyph per chip (swatch, line, dashed line, dot or ring, as the page's key draws it) and its
+ * label: the key of a chart whose key is HTML beside the SVG. */
 function keySvg(rows, top, toLight, ink, txt) {
   if (!rows.length) return [];
   const out = ['<g id="velometer-key">'];
-  rows.forEach((row, i) => {
-    const y = top + 6 + i * KEY_ROW;
-    for (const c of row) {
-      const col = colour(c.colour, toLight);
-      out.push(`<rect${attrs([["x", c.x], ["y", y], ["width", 10], ["height", 10], ["fill", col?.value ?? "none"]])}/>`); // fmt: skip
-      out.push(txt(c.x + 14, y + 9, "11px", "400", ink, c.text));
+  let y = top + 6;
+  for (const row of rows) {
+    for (const c of row.chips) {
+      const col = colour(c.colour, toLight)?.value ?? "none";
+      const [cx, cy] = [c.x + 5, y + 5];
+      const glyph = {
+        line: () => `<line${attrs([["x1", c.x - 1], ["y1", cy], ["x2", c.x + 11], ["y2", cy], ["stroke", col], ["stroke-width", 3]])}/>`, // fmt: skip
+        dash: () => `<line${attrs([["x1", c.x - 1], ["y1", cy], ["x2", c.x + 11], ["y2", cy], ["stroke", col], ["stroke-width", 2], ["stroke-dasharray", "4 2"]])}/>`, // fmt: skip
+        dot: () => `<circle${attrs([["cx", cx], ["cy", cy], ["r", 5], ["fill", col]])}/>`,
+        ring: () => `<circle${attrs([["cx", cx], ["cy", cy], ["r", 4], ["fill", colour(c.fill, toLight)?.value ?? "none"], ["stroke", col], ["stroke-width", 2]])}/>`, // fmt: skip
+      }[c.shape];
+      out.push(glyph ? glyph() : `<rect${attrs([["x", c.x], ["y", y], ["width", 10], ["height", 10], ["fill", col]])}/>`); // fmt: skip
+      c.lines.forEach((line, i) => out.push(txt(c.x + 14, y + 9 + i * KEY_LINE, "11px", "400", ink, line)));
     }
-  });
+    y += row.h;
+  }
   out.push("</g>");
   return out;
 }
@@ -193,7 +246,7 @@ export function selfContained(svg, styleOf, toLight, meta) {
   const { w, h } = sizeOf(svg);
   const { ground, ink, muted } = { ...FALLBACK, ...Object.fromEntries(Object.entries(meta).filter(([k, v]) => k in FALLBACK && v)) };
   const keyRows = layoutKey(meta.key ?? [], w);
-  const keyH = keyRows.length * KEY_ROW + (keyRows.length ? 6 : 0);
+  const keyH = keyRows.reduce((sum, r) => sum + r.h, 0) + (keyRows.length ? 6 : 0);
   const height = h + TOP + keyH + BOTTOM;
   const inner = [];
   for (const k of Array.from(svg.children ?? [])) walk(k, styleOf, toLight, inner);

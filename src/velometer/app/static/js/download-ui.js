@@ -2,7 +2,7 @@
 // CSV buttons. The file is built from the chart on the page at the moment of the click, in the
 // light theme whatever the page shows. The cities-page sparklines have no table and get none.
 import { base } from "./base.js";
-import { fileName, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
+import { fileName, glyphOf, lightOf, pngBlob, PLAIN_PROPS, selfContained, sizeOf, tableCsv } from "./download.js";
 import { locale } from "./fmt.js";
 import { announce } from "./live.js";
 import { t } from "./strings.js";
@@ -59,16 +59,25 @@ export function labelWidth(text, doc = document) {
   }
 }
 
-/** The key chips of a chart whose key is an HTML legend inside its container: colour (computed),
- * text and the text's measured width. One form is read, the one chart.js draws (renderTiers):
- * `.legend` with a `.chip` per entry, its colour on the chip's `<i>`. A key outside the
- * container (the Counts and plan pages' lists beside their charts) is not in the image. */
+/** The key chips of a chart whose key is HTML: colour (computed), text and the text's measured
+ * width. Two forms are read. A `.legend` inside the container with a `.chip` per entry, its
+ * colour on the chip's `<i>` (chart.js renderTiers draws it). And a list beside the chart that the
+ * container names by id in `data-download-key` (the plan page's key, a Counts tab's key): an `li`
+ * per entry, its mark the `.key` in it, whose computed style gives the glyph (glyphOf). */
 export function keyOf(container, doc = document) {
-  return [...container.querySelectorAll(".legend .chip")].map((chip) => {
+  const tiers = [...container.querySelectorAll(".legend .chip")].map((chip) => {
     const sw = chip.querySelector("i");
     const text = chip.textContent.trim();
     return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text, width: labelWidth(text, doc) };
   });
+  const id = container.getAttribute?.("data-download-key");
+  const list = id ? doc.getElementById?.(id) : null;
+  const beside = [...(list?.querySelectorAll("li") ?? [])].map((li) => {
+    const mark = li.querySelector(".key");
+    const text = li.textContent.replace(/\s+/g, " ").trim();
+    return { ...(mark ? glyphOf(getComputedStyle(mark)) : { shape: "swatch", colour: "" }), text, width: labelWidth(text, doc) };
+  });
+  return [...tiers, ...beside];
 }
 
 /** The `.cite-data` of the chart's own Cite: the first that follows the chart's data table (the

@@ -27,7 +27,7 @@
 </div>{% endif %}
 {% if error %}<p class="note">{{ t('page.plans.error') }}</p>{% endif %}
 {% if plan %}
-<div class="plan-key" aria-label="{{ t('page.plan.key') }}">
+<div class="plan-key" id="plan-key" aria-label="{{ t('page.plan.key') }}">
 <ul class="meta key-list"><li><span class="key key-target"></span> {{ t('page.plan.key_target') }}</li><li><span class="key key-cap"></span> {{ t('page.plan.key_cap') }}</li><li><span class="key key-current"></span> {{ t('page.plan.key_current') }}</li><li><span class="key key-revision"></span> {{ t('page.plan.key_revision') }}</li><li><span class="key key-suspect"></span> {{ t('page.plan.key_suspect') }}</li><li><span class="key key-projects"></span> {{ t('page.plan.key_projects') }}</li><li><span class="key key-mapped"></span> {{ t('page.plan.key_mapped', year=base_year) }}</li></ul>
 <p class="meta">{{ t('page.plan.three', reported=series_link("reported", t('page.plan.reported')), completed=series_link("completed", t('page.plan.completed')), mapped=series_link("mapped", t('page.plan.mapped'))) }}</p>
 </div>
@@ -39,7 +39,7 @@
 <section class="plan-item" id="item-{{ i.item.id }}">
 <h2>{{ i.item.label }}</h2>
 <p class="meta">{{ t('page.plan.target', target=i.target) }}</p>
-{% if i.yearly %}<div class="chart plan-chart" data-plan-item="{{ i.item.id }}" role="group" aria-label="{{ t('page.plan.chart', item=i.item.label) }}" aria-describedby="plan-years-{{ i.item.id }}"></div>
+{% if i.yearly %}<div class="chart plan-chart" data-plan-item="{{ i.item.id }}" data-download-key="plan-key" role="group" aria-label="{{ t('page.plan.chart', item=i.item.label) }}" aria-describedby="plan-years-{{ i.item.id }}"></div>
 {% else %}<p class="note">{{ t('page.plan.no_yearly') }}</p>{% endif %}
 {% if i.network %}
 <p class="meta series-note">{{ t('page.plan.projects_note') }}{% if projects_org.href %}{{ t('page.plan.projects_fed', href=u(projects_org.href), name=projects_org.name) }}{% endif %}{{ t('page.plan.projects_note_end') }}

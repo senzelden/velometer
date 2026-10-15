@@ -983,3 +983,17 @@ def test_two_osm_wildcards_outside_backticks_are_text_not_an_italic():
 def test_nothing_but_a_language_marked_quote_reaches_the_page_as_markup(text):
     out = _para(text)
     assert "<" not in re.sub(r"</?p>", "", out), out  # every tag was escaped to text
+
+
+def test_every_plan_chart_names_the_key_its_download_carries(client):
+    # M13 Task 13a (M11-8, user review): a downloaded plan chart carries the page's key. download-ui
+    # reads the list the chart names in data-download-key, an `li` with a `.key` mark per entry
+    html = client.get("/plans/berlin").text
+    charts = re.findall(r'<div class="chart plan-chart"[^>]*>', html)
+    assert charts, "the page draws plan charts"
+    for c in charts:
+        m = re.search(r'data-download-key="([^"]+)"', c)
+        assert m, c
+        start = html.index(f'id="{m.group(1)}"')
+        key = html[start : html.index("</ul>", start)]
+        assert len(re.findall(r'<li><span class="key key-[\w-]+"></span>', key)) >= 5, key
