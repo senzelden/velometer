@@ -615,3 +615,70 @@ def test_cli_online_prints_a_skipped_pdf_and_passes(content, fixture_db, monkeyp
     assert res.exit_code == 0, res.output
     assert "sources/src: excerpt e1 skipped: no PDF reader" in res.stderr
     assert res.stdout.strip() == "ok"
+
+
+# --- review 13b: PDF read failures, inline tags, PDF spacing ------------------------------
+
+
+def _with_text(text: str):
+    doc = copy.deepcopy(SOURCES)
+    doc["sources"][0]["excerpts"][0]["text"] = text
+    return load_sources_from(doc)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        __import__("subprocess").TimeoutExpired(["pdftotext"], 60),
+        __import__("subprocess").CalledProcessError(1, ["pdftotext"]),
+    ],
+)
+def test_a_pdf_pdftotext_cannot_read_is_its_own_problem(monkeypatch, error):
+    import velometer.content.check as ck
+
+    seen: list[dict] = []
+
+    def run(*args, **kw):
+        seen.append(kw)
+        raise error
+
+    monkeypatch.setattr(ck.shutil, "which", lambda name: "/usr/bin/pdftotext")
+    monkeypatch.setattr(ck.subprocess, "run", run)
+    problems, notes = check_online(load_sources_from(SOURCES), fetch=lambda u: PDF.read_bytes())
+    assert notes == [] and len(problems) == 1
+    assert problems[0].startswith("sources/src: cannot read PDF https://example.org/radverkehr:")
+    assert "cannot fetch" not in problems[0]
+    assert seen and seen[0]["timeout"] == ck.PDF_TIMEOUT == 60  # poppler never hangs the check
+
+
+@pytest.mark.parametrize(
+    ("excerpt", "page"),
+    [
+        ("au 1er janvier 2025", "<p>au 1<sup>er</sup> janvier 2025</p>"),  # Paris l'essentiel
+        (
+            "Das Netz ist 78,2 km lang.",
+            '<p>Das <a href="/n">Netz</a> ist 78,2 km <em>lang</em>.</p>',
+        ),
+        ("Das Netz ist 78,2 km lang.", '<p>Das Netz ist 78,<span class="x">2</span> km lang.</p>'),
+        ("Das Netz ist 78,2 km lang.", "<p>Das Netz</p><p>ist 78,2 km lang.</p>"),  # block: a space
+    ],
+)
+def test_an_inline_tag_leaves_no_space_and_a_block_tag_does(excerpt, page):
+    assert check_online(_with_text(excerpt), fetch=lambda u: page) == ([], [])
+
+
+def test_html_is_not_compared_without_spaces():
+    # "21 47 km" is not "2 147 km": without spaces both read "2147km", so the whitespace-free
+    # form is for PDF text only, never for HTML
+    page = "<table><tr><td>Netz 2</td><td>147 km</td></tr></table>"
+    out, _ = check_online(_with_text("Netz 21 47 km"), fetch=lambda u: page)
+    assert out == ["sources/src: excerpt not found online: e1"]
+
+
+@needs_pdftotext
+def test_a_pdf_that_lost_its_inter_word_spaces_still_holds_the_excerpt():
+    no_spaces = Path(__file__).parent / "fixtures/content_online/no-spaces.pdf"
+    assert check_online(load_sources_from(SOURCES), fetch=lambda u: no_spaces.read_bytes()) == (
+        [],
+        [],
+    )

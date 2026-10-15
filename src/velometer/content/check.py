@@ -1146,6 +1146,14 @@ RETRY_TIMEOUT = 90.0
 UNREACHABLE = "unreachable (network problem)"
 NO_PDF_READER = "skipped: no PDF reader"
 _SKIPPED = object()  # a page check_online cannot read (a PDF without pdftotext)
+PDF_TIMEOUT = 60  # seconds for one pdftotext run: a malformed PDF never hangs the check
+# inline elements: a tag of one sits inside a word or before its punctuation ("1<sup>er</sup>",
+# "<em>lang</em>."), so it is dropped; any other tag (a block, a cell) still separates words
+_INLINE = re.compile(
+    r"</?(?:a|abbr|b|bdi|bdo|cite|code|data|dfn|em|font|i|kbd|mark|q|s|samp|small|span|strong"
+    r"|sub|sup|time|u|var|wbr)\b[^>]*>",
+    re.I,
+)
 
 
 class Unreachable(Exception):
@@ -1155,6 +1163,10 @@ class Unreachable(Exception):
 
 class NoPdfReader(Exception):
     """A PDF source, and no `pdftotext` to read it."""
+
+
+class PdfUnreadable(Exception):
+    """`pdftotext` failed on a PDF or took longer than PDF_TIMEOUT."""
 
 
 def _is_pdf(body: bytes) -> bool:
@@ -1192,46 +1204,78 @@ def _pdf_text(body: bytes) -> str:
     exe = shutil.which("pdftotext")
     if exe is None:
         raise NoPdfReader
-    texts = [
-        subprocess.run(
-            [exe, "-q", *o, "-", "-"], input=body, capture_output=True, check=True
-        ).stdout.decode("utf-8", errors="replace")
-        for o in PDF_ORDERS
-    ]
+    try:
+        texts = [
+            subprocess.run(
+                [exe, "-q", *o, "-", "-"],
+                input=body,
+                capture_output=True,
+                check=True,
+                timeout=PDF_TIMEOUT,
+            ).stdout.decode("utf-8", errors="replace")
+            for o in PDF_ORDERS
+        ]
+    except subprocess.TimeoutExpired as e:
+        raise PdfUnreadable(f"pdftotext took more than {PDF_TIMEOUT} s") from e
+    except subprocess.CalledProcessError as e:
+        raise PdfUnreadable(f"pdftotext exit {e.returncode}") from e
     return _ORDER_BREAK.join(texts)
 
 
-def _page_text(body: str | bytes) -> str:
-    """A fetched page as the whitespace-normalised text an excerpt is looked for in: a PDF's
-    text as pdftotext reads it (plain text: a `<` in it is not markup), else the HTML without
-    its tags and entities."""
+class _Page:
+    """A fetched page's text, and how an excerpt is looked for in it."""
+
+    def __init__(self, text: str, pdf: bool):
+        self.pdf = pdf
+        # PDF text is compared without any whitespace: pdftotext drops the spaces of justified
+        # text ("voiesréservées"). HTML keeps its spaces: "21 47 km" must not match "2 147 km".
+        self.text = _no_space(text) if pdf else text
+
+    def holds(self, excerpt: str) -> bool:
+        ex = _squash(excerpt)
+        return (_no_space(ex) if self.pdf else ex) in self.text
+
+
+def _no_space(text: str) -> str:
+    return "".join(text.split())
+
+
+def _page_text(body: str | bytes) -> _Page:
+    """A fetched page as the text an excerpt is looked for in: a PDF's text as pdftotext reads
+    it (plain text: a `<` in it is not markup), else the HTML without its tags and entities."""
     if isinstance(body, bytes) and _is_pdf(body):
-        return " ".join(_pdf_text(body).split())
+        return _Page(" ".join(_pdf_text(body).split()), pdf=True)
     text = body if isinstance(body, str) else body.decode("utf-8", errors="replace")
-    return _squash(text)
+    return _Page(_squash(text), pdf=False)
 
 
 def _squash(text: str) -> str:
-    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", text)).split())
+    """Text without tags and entities, whitespace-normalised: an inline element's tag is dropped,
+    any other tag is a space."""
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", _INLINE.sub("", text))).split())
 
 
 def check_online(
     sources: dict[str, Source], fetch: Callable[[str], str | bytes] = _http_get
 ) -> tuple[list[str], list[str]]:
     """(problems, notes): fetch each source URL once and report excerpts whose text is not on
-    the page (whitespace-normalised). A PDF is read as text by `pdftotext`; without it each of
-    its excerpts is a note ("skipped: no PDF reader"), not a problem. A host that does not
+    the page (HTML: tags dropped, whitespace-normalised; PDF: compared without whitespace). A PDF
+    is read as text by `pdftotext`; without it each of its excerpts is a note ("skipped: no PDF
+    reader"), not a problem, and a PDF it fails on is "cannot read PDF". A host that does not
     answer is "unreachable", apart from a page that does not hold the excerpt. Never archives
     anything."""
     problems: list[str] = []
     notes: list[str] = []
-    pages: dict[str, str | object | None] = {}  # url -> text, _SKIPPED or None
+    pages: dict[str, _Page | object | None] = {}  # url -> page, _SKIPPED or None
     for s in sources.values():
         if s.url not in pages:
             try:
                 pages[s.url] = _page_text(fetch(s.url))
             except NoPdfReader:
                 pages[s.url] = _SKIPPED
+            except PdfUnreadable as e:
+                pages[s.url] = None
+                problems.append(f"sources/{s.id}: cannot read PDF {s.url}: {e}")
             except Unreachable as e:
                 pages[s.url] = None
                 problems.append(f"sources/{s.id}: {UNREACHABLE} {s.url}: {e}")
@@ -1244,7 +1288,7 @@ def check_online(
         for e in s.excerpts:
             if page is _SKIPPED:
                 notes.append(f"sources/{s.id}: excerpt {e.id} {NO_PDF_READER}")
-            elif _squash(e.text) not in page:
+            elif not page.holds(e.text):
                 problems.append(f"sources/{s.id}: excerpt not found online: {e.id}")
     return problems, notes
 
