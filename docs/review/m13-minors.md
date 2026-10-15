@@ -123,8 +123,8 @@ These came up in the areas this task touched. They are not fixed here.
 
 | id | item | ruling | owner |
 |---|---|---|---|
-| M13-T1a | The rolling-export test passes under both in-service rules (day and hour) | fix candidate | controller (Task 1 follow-up) |
-| M13-T1b | The outage test has no red-proof | fix candidate | controller (Task 1 follow-up) |
+| M13-T1a | The rolling-export test passes under both in-service rules (day and hour) | fixed: new test `test_paris_rolling_export_counter_starting_mid_day_keeps_the_first_local_day` (a counter first reported at 14:00 local on the export's first day); red under the day rule, green under the hour rule | final fix round (`af16650`) |
+| M13-T1b | The outage test has no red-proof | fixed: red-proofed by weakening the rule to `reporting >= 1`; `test_an_hour_missing_inside_the_span_is_still_an_outage` fails (`assert not True`), as do the in-service-span and fold tests; no code change needed | final fix round (`af16650`, test only) |
 | M13-T2a | `_signed_pct` prints −0.0 % | fixed in Task 10, see the M13 carry-overs section | Task 10 (`e7dc007`) |
 | M13-T2b | Unclosed sqlite connection in `tests/test_counter_index_v2.py` (~1702) | fixed in Task 10, see the M13 carry-overs section | Task 10 (`900b980`) |
 
