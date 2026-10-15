@@ -530,6 +530,15 @@ def test_a_pdf_excerpt_is_found_in_the_content_stream_order_too():
     assert check_online(src, fetch=lambda u: stream_order.read_bytes()) == ([], [])
 
 
+@needs_pdftotext
+def test_a_pdf_text_is_not_read_as_markup():
+    # "< 5 km" and "> 1 km" are text in a PDF: stripping them as a tag swallowed the sentence
+    # between them (the Berlin Radverkehrsplan lost two excerpts that way)
+    angles = Path(__file__).parent / "fixtures/content_online/angle-brackets.pdf"
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: angles.read_bytes()) == ([], [])
+
+
 def test_a_pdf_without_a_reader_is_skipped_not_failed(monkeypatch):
     import velometer.content.check as ck
 

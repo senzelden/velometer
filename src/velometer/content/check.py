@@ -1202,9 +1202,13 @@ def _pdf_text(body: bytes) -> str:
 
 
 def _page_text(body: str | bytes) -> str:
-    if isinstance(body, str):
-        return body
-    return _pdf_text(body) if _is_pdf(body) else body.decode("utf-8", errors="replace")
+    """A fetched page as the whitespace-normalised text an excerpt is looked for in: a PDF's
+    text as pdftotext reads it (plain text: a `<` in it is not markup), else the HTML without
+    its tags and entities."""
+    if isinstance(body, bytes) and _is_pdf(body):
+        return " ".join(_pdf_text(body).split())
+    text = body if isinstance(body, str) else body.decode("utf-8", errors="replace")
+    return _squash(text)
 
 
 def _squash(text: str) -> str:
@@ -1225,7 +1229,7 @@ def check_online(
     for s in sources.values():
         if s.url not in pages:
             try:
-                pages[s.url] = _squash(_page_text(fetch(s.url)))
+                pages[s.url] = _page_text(fetch(s.url))
             except NoPdfReader:
                 pages[s.url] = _SKIPPED
             except Unreachable as e:
