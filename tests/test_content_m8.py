@@ -199,6 +199,9 @@ def test_causal_wording_in_a_profile(m8):
         "cykelsti</i>",  # a close without an open
         '<span lang="da">cykelsti</span>',  # no mark at all
         '<q lang="da">a <i lang="da">b</q></i>',  # crossed
+        # review 10, M2: a block quotation is a whole paragraph, so not one inside a sentence
+        '<blockquote lang="de">Zitat</blockquote> more',
+        '<q lang="de">a <q lang="de">b</q> c</q>',  # a mark inside the same mark
     ],
 )
 def test_a_malformed_mark_in_prose_is_a_problem(m8, mark):
@@ -222,6 +225,12 @@ def test_the_marks_the_renderer_reads_pass(m8):
     )
     assert malformed_marks(ok) == []
     assert malformed_marks('<blockquote lang="de">Zitat</blockquote>') == []
+    # a whole-paragraph block quotation, around spaces and with an original term inside it
+    assert (
+        malformed_marks(' <blockquote lang="de">Ein <i lang="de">Radweg</i></blockquote>\n') == []
+    )
+    two = '<blockquote lang="de">a</blockquote> <blockquote lang="de">b</blockquote>'
+    assert malformed_marks(two)  # two block quotations make no whole paragraph
     _edit(_senmvku(m8), lambda d: d["sections"][1]["paragraphs"].__setitem__(0, ok))
     assert _problems(m8) == []
 

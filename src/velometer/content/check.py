@@ -165,16 +165,32 @@ _MARK_CLOSE = re.compile(r"</(q|i|blockquote)>")
 _CODE_SPAN = re.compile(r"`[^`\n]+`")
 
 
+_BLOCKQUOTE_WHOLE = re.compile(
+    rf'<blockquote lang="(?:{LANG_TAG.pattern})">(.*)</blockquote>', re.DOTALL
+)
+
+
 def malformed_marks(text: str) -> list[str]:
-    """Every tag of `text` (outside code spans) that is no well-formed, properly nested mark:
-    another tag or form, a close without its open, an open left unclosed."""
+    """Every tag of the paragraph `text` (outside code spans) that is no well-formed, properly
+    nested mark: another tag or form, a close without its open, an open left unclosed, a mark
+    opened inside the same mark (the renderer pairs the first open with the first close), and
+    a block quotation that is not the whole paragraph (review 10, M2)."""
     out: list[str] = []
     stack: list[tuple[str, str]] = []  # (tag name, open tag)
-    for m in _ANY_TAG.finditer(_CODE_SPAN.sub(" ", text)):
+    # a paragraph that is wholly one block quotation is read as its inside; any other
+    # `blockquote` tag is malformed
+    whole = _BLOCKQUOTE_WHOLE.fullmatch(_CODE_SPAN.sub(" ", text).strip())
+    body = whole.group(1) if whole else _CODE_SPAN.sub(" ", text)
+    for m in _ANY_TAG.finditer(body):
         tag = m.group(0)
-        if opened := _MARK_OPEN.fullmatch(tag):
-            stack.append((opened.group(1), tag))
-        elif (closed := _MARK_CLOSE.fullmatch(tag)) and stack and stack[-1][0] == closed.group(1):
+        opened = _MARK_OPEN.fullmatch(tag)
+        closed = _MARK_CLOSE.fullmatch(tag)
+        name = (opened or closed).group(1) if (opened or closed) else None
+        if name == "blockquote" or (opened and any(n == name for n, _t in stack)):
+            out.append(tag)
+        elif opened:
+            stack.append((name, tag))
+        elif closed and stack and stack[-1][0] == name:
             stack.pop()
         else:
             out.append(tag)
