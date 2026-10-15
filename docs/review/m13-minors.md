@@ -13,18 +13,21 @@ Tasks 9 and 10 add the M9, M11, M10 and M12 sections.
 
 ### How the M8-N numbers map
 
-`docs/superpowers/rulings-m8.md`, section "Follow-ups", read top to bottom. Each bullet that still
-holds an open, unmarked part gets the next number. Bullets whose parts are all marked "closed
-`sha`" get no number. These are Colours, DB helpers (Task 1), Berlin WFS fetch, Attribution and
-error notes (M3, M4), and Code structure (M8, M9). Under "Opened by the final review", I2 is closed
-(`10f9865`) and gets no number either. The numbers:
+`docs/superpowers/rulings-m8.md`, section "Follow-ups", read top to bottom. Each open, unmarked
+part of a bullet gets the next number, so a bullet can give more than one: the Counters bullet
+gives 3 (Paris in-service) and 4 (the km-only branch). Exception: each bullet under "Opened by the
+follow-up pass" gets one number, split into a, b, … in the table below. Bullets whose parts are
+all marked "closed `sha`" get no number. These are Colours, Compare (`f0684ed`), DB helpers
+(Task 1), Berlin WFS fetch, Attribution and error notes (M3, M4), and Code structure (M8, M9).
+Under "Opened by the final review", I2 is closed (`10f9865`) and gets no number either. The
+numbers:
 
 | N | Bullet in rulings-m8 Follow-ups |
 |---|---|
 | 1 | Overlay method (v3 bends, v4 turning networks) |
 | 2 | Plan chart: cumulative mapped line on the per-year axis |
-| 3 | Counters: Paris in-service day-granular, rolling UTC export |
-| 4 | Counters: the km-only Counts chart branch unreachable |
+| 3 | Counters (first open part): Paris in-service day-granular, rolling UTC export |
+| 4 | Counters (second open part): the km-only Counts chart branch unreachable |
 | 5 | Content checks (Task 2): unexplained `test_overlay_facts` failure |
 | 6 | Content: no test that Copenhagen 37 and Strasbourg 52 are suspect |
 | 7 | Counter index (M1, M2): a mean-per-day link (index v2) |
@@ -104,14 +107,14 @@ gives them one row per item (14a, 14b, …).
 | M8-20d | Threshold phrasings the check misses: "2019 (= 100)", "relative to 2019", "90% coverage" | fix ("2019 (= 100)") / keep (the other two) | "2019 (= 100)" is now read as a base year (en "(= 100)", de as well). "Relative to 2019" and "90% coverage" also describe comparisons and network coverage, so matching them would flag correct prose. The check stays a literal-statement heuristic. | `0063cde` |
 | M8-20e | `_seed_report` depends on the fixture flagging at least one gap | close | It asserts that dependency itself (`assert marker and gaps, first`), so it fails loudly, not silently | n/a |
 | M8-20f | Source and data-ref substitutions run inside code spans | fix | `[@id]` / `[#id]` inside backticks stay text | `c17a68a` |
-| M8-20g | "counts" as a verb triggers the causal check | keep | A false positive only makes the check stricter. Telling the verb from the noun needs part-of-speech tagging. | n/a |
+| M8-20g | "counts" as a verb triggers the causal check | keep | This can reject correct prose. Kept on cost: the author rewords the sentence (for example "tallies", "records"), while telling the verb from the noun needs part-of-speech tagging. No shipped prose trips it today. | n/a |
 | M8-20h | `archive_url` error says "source url" | fix | The error names the field: "source archive_url must be …" | `6bf1a1b` |
 | M8-21 | `EM_MARK` pairs two OSM wildcards outside backticks | fix | A star after "=" neither opens nor closes an italic. A renderer test covers it, and the `<i lang>` term mark still renders. | `2909e74` |
 | M8-22 | Spec §5.4 "the index base year equals 100" | fix | M8 spec §5.4 now states the `MIN_SITES` condition (doc-only) | `0a9ecd0` |
 | M8-23 | `_optional_rows` trusts its caller's table name | fix | A ValueError when `table` is not a word of the SQL | `0838310` |
 | M8-24 | `plan-chart.js` "%, share" axis text | fix | `js.plan.share_in` gives "share in %" / "Anteil in %". The not-drawn note uses the same measure text. | `e12b115` |
 | M8-25 | `RULES` typed by hand for the shipped-page test | fix | The test uses `counter_rule_values(config)` and compares declared rule facts with those found. Red: with `MIN_SITES` = 4 the old test passed and the new one fails. | `e6953cf` |
-| M8-26 | Counters fetch: HTML answer gives "Expecting value" without the file | fix | Oslo `_graphql` raises `CounterFormatError(url, "answer is not JSON (<content type>) …")` | `a372e6a` |
+| M8-26 | Counters fetch: HTML answer gives "Expecting value" without the file | fix | Oslo `_graphql` raises `CounterFormatError(url, "answer is not JSON (<content type>) …")`. The error names the URL it came from, which is the source for a network fetch: Oslo is the only adapter that parses JSON at fetch time, and the file-based adapters name the file. | `a372e6a` |
 
 ### Logged here, owned elsewhere
 
