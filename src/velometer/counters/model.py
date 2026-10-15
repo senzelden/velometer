@@ -16,6 +16,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from velometer.config import ConfigError, require_de
+from velometer.content.models import name_lang
 from velometer.i18n import Lang
 
 COUNTERS_FILE = "counters.yaml"
@@ -115,6 +116,9 @@ class CounterEntry(_Strict):
     # the German attribution, only where `source` holds our English words beside the name
     # (Oslo's "(state counters)"); a publisher's own name is not translated (M12)
     source_de: str | None = None
+    # the language of `source` (BCP 47) where it is the body's own name (an original-language
+    # form in brackets beside it shares it), written as its `lang` (M12-1); not used for source_de
+    source_lang: str | None = None
     licence: str
     licence_url: str
     page: str  # the dataset's portal page
@@ -153,6 +157,15 @@ class CounterEntry(_Strict):
 
     def source_in(self, lang: Lang) -> str:
         return (self.source_de or self.source) if lang == "de" else self.source
+
+    def source_lang_in(self, lang: Lang) -> str | None:
+        """The `lang` of what `source_in(lang)` shows: none for our German `source_de`."""
+        return None if lang == "de" and self.source_de else self.source_lang
+
+    @field_validator("source_lang")
+    @classmethod
+    def _source_lang(cls, v: str | None) -> str | None:
+        return name_lang(v, "source_lang")
 
 
 class NoCounterData(_Strict):

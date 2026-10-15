@@ -96,7 +96,11 @@ def target_text(item: PlanItem, lang: Lang = "en") -> str:
 
 def _publisher(name: str, orgs: dict[str, Organisation]) -> dict:
     org = orgs.get(name)
-    return {"name": org.name if org else name, "href": f"/organisations#{name}" if org else None}
+    return {
+        "name": org.name if org else name,
+        "href": f"/organisations#{name}" if org else None,
+        "lang": org.lang if org else None,
+    }
 
 
 def note_in(note: str | None, lang: Lang, notes_de: dict[str, str] | None) -> tuple[str, bool]:

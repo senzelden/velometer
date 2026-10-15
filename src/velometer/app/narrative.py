@@ -72,6 +72,12 @@ def fb(text: object) -> Markup:
     return Markup(FALLBACK_ATTRS) if english else Markup("")
 
 
+def lang_attr(code: str | None) -> Markup:
+    """` lang="<code>"` for a name in its own language (M12-1: an organisation, a counter
+    publisher, a plan title), else nothing: the page's language applies."""
+    return Markup(' lang="{}"').format(code) if code and LANG_TAG.fullmatch(code) else Markup("")
+
+
 def fb_text(text: object, english: bool | None = None) -> object:
     """`text` as it shows inside other text: in a `lang="en" data-fallback` span when it is an
     English fallback (`english`, or a `Fallback` string), else unchanged."""

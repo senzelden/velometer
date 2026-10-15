@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import pytest
+from markupsafe import escape
 
 from tests.test_a11y import all_page_urls  # noqa: F401
 from tests.test_app import CONTENT, _client, client, setup  # noqa: F401
@@ -262,7 +263,7 @@ def test_content_phrases_split_at_an_original_term_as_at_a_quotation():
     # on the page: a phrase holding it could never be found, so it never caught a leak
     text = (
         'Our Copenhagen figure, 401 km of <i lang="da">cykelsti</i> in 2025, comes from the '
-        "city's own mobility report of the year, as we read it. Then <i\n lang=\"nb\">"
+        'city\'s own mobility report of the year, as we read it. Then <i\n lang="nb">'
         "kommunale veger</i> follow."
     )
     parts = i18n._sentences(text, 3)
@@ -271,3 +272,55 @@ def test_content_phrases_split_at_an_original_term_as_at_a_quotation():
         "in 2025, comes from the city's own mobility report of the year, as we read it.",
     ]
     assert not [p for p in i18n.content_phrases(CONTENT) if "<" in p]
+
+
+# --- M12-1: names in their own language carry it, so the sniff needs no list for them ---
+
+
+def test_names_with_a_language_are_written_in_it_on_german_pages(client):  # noqa: F811
+    from velometer.content.loader import load_organisations
+    from velometer.plans.models import load_plans
+
+    orgs = load_organisations(CONTENT / "organisations", errors={})
+    assert orgs and all(o.lang for o in orgs.values())  # every shipped profile names its language
+    html = client.get("/de/organisations").text
+    for o in orgs.values():
+        assert f'<h2 lang="{o.lang}">{escape(o.name)}</h2>' in html, o.id
+    plans, _rows = load_plans(CONFIG / "plans")
+    oslo = next(p for p in plans if p.id == "oslo_sykkelveinettet_2018")
+    assert oslo.title_lang == "nb" and oslo.localised("de").title_lang == "nb"
+    vienna = next(p for p in plans if p.title_de)  # our German title is not the document's
+    assert vienna.localised("de").title_lang is None
+    plans_html = client.get("/de/plans").text
+    shown = [p.localised("de") for p in plans if str(escape(p.localised("de").title)) in plans_html]
+    assert any(p.title_lang for p in shown)
+    for p in shown:
+        title = re.escape(str(escape(p.title)))
+        assert re.search(rf'(?:lang="{p.title_lang}")?>{title}<', plans_html), p.id
+        if p.title_lang:
+            assert re.search(rf'lang="{p.title_lang}">{title}<', plans_html), p.id
+    for name in ("Københavns Kommune (City of Copenhagen)", "Plan for sykkelveinettet i Oslo"):
+        assert name not in i18n.PROPER_NAMES
+        assert english_words(f"<p>{name}</p>")  # untagged, the sniff would see its English
+        assert english_words(f'<p lang="da">{name}</p>') == []
+
+
+def test_a_counter_publisher_is_written_in_its_language_unless_ours_is_shown():
+    from velometer.app.counts import counters_config
+
+    cfg, error = counters_config(CONFIG)
+    assert error is None
+    by_city = {e.city: e for e in cfg.cities}
+    assert by_city["berlin"].source_lang_in("de") == "de"
+    assert by_city["helsinki"].source_lang_in("en") == "en"
+    oslo = by_city["oslo"]  # "Statens vegvesen (state counters)": our words beside the name
+    assert oslo.source_lang is None and oslo.source_lang_in("de") is None
+
+
+@pytest.mark.parametrize("bad", ["d a", "DE", "deutsch-", ""])
+def test_a_name_language_must_be_a_language_tag(bad):
+    from velometer.content.models import name_lang
+
+    with pytest.raises(ValueError, match="BCP 47"):
+        name_lang(bad, "lang")
+    assert name_lang(None, "lang") is None and name_lang("pt-BR", "lang") == "pt-BR"

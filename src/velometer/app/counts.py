@@ -228,6 +228,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
         else None,
         "entry": entry,
         "source": source,
+        "source_lang": entry.source_lang_in(lang) if entry is not None else None,
         "licence": licence,
         "retrieved": None if retrieved is None else retrieved[:10],
         "covid_year": COVID_YEAR,

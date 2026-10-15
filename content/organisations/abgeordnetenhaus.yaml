@@ -1,5 +1,6 @@
 id: abgeordnetenhaus
 name: Abgeordnetenhaus Berlin
+lang: de
 kind: parliament
 url: https://www.parlament-berlin.de/
 sections:

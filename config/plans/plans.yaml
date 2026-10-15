@@ -7,6 +7,7 @@
 - id: berlin_rvp_2021
   city: berlin
   title: Radverkehrsplan des Landes Berlin (Verordnung vom 16. November 2021, Vorlage zur Kenntnisnahme vo19-013)
+  title_lang: de
   adopted: 2021-11-16
   url: https://www.parlament-berlin.de/ados/19/IIIPlen/vorgang/verordnungen/vo19-013.pdf
   status: current
@@ -69,6 +70,7 @@
 - id: paris_plan_velo_2021
   city: paris
   title: Plan Vélo 2021-2026
+  title_lang: fr
   adopted: null
   url: https://opendata.paris.fr/explore/dataset/plan-velo-2026/
   status: current
@@ -143,6 +145,7 @@
 - id: amsterdam_meerjarenplan_fiets_2017
   city: amsterdam
   title: Meerjarenplan Fiets 2017-2022
+  title_lang: nl
   adopted: null
   url: https://bikecity.amsterdam.nl/wp-content/uploads/2023/11/Meerjarenplan_Fiets_2017-2022.pdf
   status: expired
@@ -166,6 +169,7 @@
 - id: utrecht_mobiliteitsplan_2040
   city: utrecht
   title: Mobiliteitsplan 2040
+  title_lang: nl
   adopted: null
   url: https://utrecht.bestuurlijkeinformatie.nl/Document/View/1042744c-3d66-4915-846f-a513f41b36f1
   status: current
@@ -187,6 +191,7 @@
 - id: madrid_pdmc_2008
   city: madrid
   title: Plan Director de Movilidad Ciclista (2008)
+  title_lang: es
   adopted: null
   url: https://www.madrid.es/portales/munimadrid/es/Inicio/Vivienda-urbanismo-y-obras/Publicaciones/Plan-Director-de-Movilidad-Ciclista-2008-/?vgnextfmt=default&vgnextoid=09bccea83e67a110VgnVCM2000000c205a0aRCRD&vgnextchannel=cf6031d3b28fe410VgnVCM1000000b205a0aRCRD
   status: expired
@@ -209,6 +214,7 @@
 - id: barcelona_pmu_2024
   city: barcelona
   title: Pla de Mobilitat Urbana 2024
+  title_lang: ca
   adopted: 2022-12-23
   url: https://ajuntament.barcelona.cat/premsa/2022/12/23/aprovacio-definitiva-del-pla-de-mobilitat-urbana-2024/
   status: expired
@@ -234,6 +240,7 @@
 - id: stockholm_cykelplan_2022
   city: stockholm
   title: Cykelstaden – Cykelplan för Stockholms stad
+  title_lang: sv
   adopted: 2022-05-30
   url: https://meetingspublic.stockholm.se/welcome-sv/namnder-styrelser/kommunfullmaktige/mote-2022-05-30/agenda/bilaga-2-cykelstaden-cykelplan-for-stockholmpdf?downloadMode=open
   status: current
@@ -259,6 +266,7 @@
 - id: oslo_sykkelveinettet_2018
   city: oslo
   title: Plan for sykkelveinettet i Oslo
+  title_lang: nb
   adopted: null
   url: https://www.oslo.kommune.no/slik-bygger-vi-oslo/plan-for-sykkelveinettet/
   status: expired
@@ -289,6 +297,7 @@
 - id: helsinki_pyoraliikenne_2020
   city: helsinki
   title: Pyöräliikenteen kehittämisohjelma 2020–2025
+  title_lang: fi
   adopted: null
   url: https://www.hel.fi/static/liitteet/kaupunkiymparisto/julkaisut/julkaisut/julkaisu-31-20.pdf
   status: expired
@@ -345,6 +354,7 @@
 - id: strasbourg_plan_velo_2021
   city: strasbourg
   title: Plan vélo de l'Eurométropole 2021-2026
+  title_lang: fr
   adopted: null
   url: https://www.strasbourg.eu/-/plan-velo-eurometropole-102024
   status: current
@@ -371,6 +381,7 @@
 - id: bordeaux_plan_velo_2021
   city: bordeaux
   title: 3ème Plan vélo métropolitain 2021-2026
+  title_lang: fr
   adopted: 2021-11-25
   url: https://www.bordeaux-metropole.fr/sites/MET-BXMETRO-DRUPAL/files/2023-08/Plan_velo2021.pdf
   status: current
@@ -402,6 +413,7 @@
 - id: wroclaw_plan_rowerowy_2030
   city: wroclaw
   title: Wrocławski Plan Działań Rowerowych do 2030 roku
+  title_lang: pl
   adopted: null
   url: https://www.wroclaw.pl/komunikacja/wroclawski-plan-dzialan-rowerowych-do-2030
   status: current
@@ -423,6 +435,7 @@
 - id: warsaw_program_tras_2020
   city: warsaw
   title: Program rozwoju tras rowerowych Warszawy do 2020 roku
+  title_lang: pl
   adopted: null
   url: https://zdm.waw.pl/aktualnosci/jaka-ma-byc-rowerowa-warszawa-2030/
   status: expired
@@ -444,6 +457,7 @@
 - id: krakow_polityka_transportowa_2016
   city: krakow
   title: Polityka transportowa dla miasta Krakowa na lata 2016–2025 (uchwała Nr XLVII/848/16)
+  title_lang: pl
   adopted: 2016-06-08
   url: https://www.bip.krakow.pl/?sub_dok_id=19585
   status: expired
@@ -464,6 +478,7 @@
 - id: budapest_kfht
   city: budapest
   title: Kerékpárforgalmi főhálózati terv (KFHT)
+  title_lang: hu
   adopted: null
   url: https://bkk.hu/rolunk/strategiank/kerekparforgalmi-fohalozati-terv/
   status: current
@@ -492,6 +507,7 @@
 - id: prague_koncepce_2010
   city: prague
   title: Koncepce rozvoje cyklistické dopravy na území hl. m. Prahy (2010)
+  title_lang: cs
   adopted: null
   url: https://iprpraha.cz/assets/files/files/506ba6ec042dbcfbd30a0ebf0f4dbf87.pdf
   status: current
@@ -514,6 +530,7 @@
 - id: bratislava_zasady_2014
   city: bratislava
   title: Zásady rozvoja cyklistickej a pešej dopravy (uznesenie č. 1743/2014)
+  title_lang: sk
   adopted: null
   url: https://zastupitelstvo.bratislava.sk/data/att/37247.pdf
   status: current
@@ -535,6 +552,7 @@
 - id: ljubljana_cps_2025
   city: ljubljana
   title: Celostna prometna strategija Mestne občine Ljubljana 2025–2032
+  title_lang: sl
   adopted: 2025-10-20
   url: https://www.ljubljana.si/sl/ljubljana/mobilna/celostna-prometna-strategija
   status: current

@@ -12,6 +12,7 @@ cities:
   - city: berlin
     adapter: berlin
     source: Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin
+    source_lang: de
     licence: dl-de-zero-2.0
     licence_url: https://www.govdata.de/dl-de/zero-2-0
     page: https://www.berlin.de/sen/uvk/mobilitaet-und-verkehr/verkehrsplanung/radverkehr/weitere-radinfrastruktur/zaehlstellen-und-fahrradbarometer/
@@ -32,6 +33,7 @@ cities:
   - city: paris
     adapter: paris
     source: Ville de Paris, Direction de la Voirie et des Déplacements
+    source_lang: fr
     licence: ODbL
     licence_url: http://opendatacommons.org/licenses/odbl/
     page: https://opendata.paris.fr/explore/dataset/comptage-velo-historique-donnees-compteurs/
@@ -53,6 +55,7 @@ cities:
   - city: vienna
     adapter: vienna
     source: Stadt Wien
+    source_lang: de
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/deed.de
     page: https://www.data.gv.at/katalog/datasets/2e9f926c-f688-4889-856d-5e6935440c28
@@ -66,6 +69,7 @@ cities:
   - city: helsinki
     adapter: helsinki
     source: City of Helsinki, Urban Environment Division (Helsingin kaupunkiympäristön toimiala)
+    source_lang: en
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/
     page: https://hri.fi/data/en_GB/dataset/helsingin-pyorailijamaarat
@@ -95,6 +99,7 @@ cities:
   - city: madrid
     adapter: madrid
     source: Ayuntamiento de Madrid
+    source_lang: es
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/legalcode.es
     page: https://datos.madrid.es/dataset/300321-0-aforos-peatones-bicicletas
@@ -131,6 +136,7 @@ cities:
   - city: barcelona
     adapter: barcelona
     source: Ajuntament de Barcelona
+    source_lang: ca
     licence: CC BY 4.0
     licence_url: https://creativecommons.org/licenses/by/4.0/
     page: https://opendata-ajuntament.barcelona.cat/data/en/dataset/aforaments-detall

@@ -23,6 +23,13 @@ MAX_EXCERPT_WORDS = 60
 LANG_TAG = re.compile(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
 
 
+def name_lang(v: str | None, field: str) -> str | None:
+    """A name's `lang` field: None, or a BCP 47 language tag (ValueError otherwise)."""
+    if v is not None and not LANG_TAG.fullmatch(v):
+        raise ValueError(f"{field} must be a BCP 47 language tag such as 'de', not {v!r}")
+    return v
+
+
 class ContentError(Exception):
     """A content file is missing or invalid; the message names the file."""
 
@@ -201,6 +208,9 @@ class Organisation(_Strict):
 
     id: str
     name: str
+    # the language of `name` (BCP 47), written as the name's `lang` on every page (M12-1): a
+    # body's own name is not translated, so a German page must not claim it is German
+    lang: str | None = None
     kind: Literal["official", "ngo", "index", "research", "parliament", "agency"]
     url: str
     sections: list[OrgSection]
@@ -214,6 +224,11 @@ class Organisation(_Strict):
     def _external(cls, v: str) -> str:
         _external_url(v, "organisation url")
         return v
+
+    @field_validator("lang")
+    @classmethod
+    def _lang(cls, v: str | None) -> str | None:
+        return name_lang(v, "lang")
 
     @property
     def prose(self) -> list[str]:

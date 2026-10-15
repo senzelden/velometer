@@ -475,14 +475,16 @@ ENGLISH_WORDS = frozenset({
 # official English) name, a publication or plan title in its language, an English term of art
 # German uses. Names are not translated (OrganisationTr; the local-name rule), so the sniff
 # passes over them; every one must be in the shipped config, content or German methodology.
+# An organisation, counter publisher or plan title with a `lang` field is written in its own
+# language (`lang` attribute), which the sniff skips (M12-1); the names left here are shown
+# somewhere without one: in prose, in a source's excerpt, in the methodology tables, or in text
+# the browser builds (the Compare counters note).
 PROPER_NAMES = (
     "City of Helsinki, Urban Environment Division",
     "Confederation of the European Bicycle Industry",
     "INSEE populations de référence 2023, population municipale",
     "IT University of Copenhagen",
-    "Københavns Kommune (City of Copenhagen)",
     "Networks, Data and Society",
-    "Plan for sykkelveinettet i Oslo",
     "Points of Interest",
     "Streets for Kids, Cities for All",
     "Sykkelstrategi for Oslo",
