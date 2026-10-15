@@ -289,6 +289,24 @@ def test_a_figure_is_flagged_suspect_exactly_when_its_row_says_so(
     assert ("a forecast, not a count" in item) is suspect
 
 
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_suspect_figure_says_so_in_words_not_only_by_its_style(
+    setup,  # noqa: F811
+    plans_data,
+    lang,
+):
+    # M10-7: the mark beside a suspect figure is its text alternative to the row's styling: the
+    # word in the page's language, read inside the row
+    from velometer import i18n
+
+    _add_rows(setup[1], {**PARIS_ROW, "suspect": "true"})
+    with _client(_app(setup, plans_data)) as c:
+        sec = _section(c.get("/plans" if lang == "en" else "/de/plans").text, "paris")
+    item = next(li for li in re.findall(r"<li\b.*?</li>", sec, re.S) if "<b>99 km</b>" in li)
+    word = str(escape(i18n.t(lang, "page.plans.suspect")))
+    assert word.strip() and f'<span class="suspect-mark">{word}</span>' in item
+
+
 # ---------- the Berlin plan page ----------
 
 
