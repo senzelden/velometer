@@ -67,6 +67,18 @@ def test_the_compare_table_stays_a_table_at_640(probe):
     assert got["wide"] <= 0, got
 
 
+def test_the_figures_tables_are_tables_from_701_px(probe):
+    # the edge: the 700 px rule ends at 700, one pixel wider is a table again
+    got = probe(FIGURES, 701, "table.figures td")
+    assert got["cell"] == ["table-cell"], got
+
+
+def test_the_compare_table_stacks_on_a_phone(probe):
+    got = probe(COMPARE, 390, ".compare-table td")
+    assert got["compare"] == ["block"], got
+    assert got["wide"] <= 0, got
+
+
 def test_the_figures_cards_hide_the_header_row_visually_and_align_ours_right(probe):
     # twin of test_the_stack_pattern_is_one_phone_rule_set / ..._align_ours_with_theirs_and_gap
     got = probe(FIGURES, 640, "table.figures td")
