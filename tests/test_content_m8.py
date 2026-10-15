@@ -738,6 +738,20 @@ def test_a_rule_value_in_a_threshold_statement_is_a_literal_rule(sentence, found
     assert found in literal_counter_rules(sentence, RULES, [])
 
 
+@pytest.mark.parametrize(
+    ("lang", "sentence"),
+    [("en", "The index sets 2019 (= 100) for most cities."),
+     ("de", "Der Index setzt 2019 (= 100) für die meisten Städte.")],
+)  # fmt: skip
+def test_a_base_year_with_a_bracketed_equals_100_is_a_literal_rule(lang, sentence):
+    # M8-20: "2019 (= 100)" slipped past the "2019 = 100" pattern
+    from velometer.content.check import RULES as FAMILIES
+    from velometer.content.check import literal_counter_rules
+
+    found = literal_counter_rules(sentence, RULES, [], FAMILIES[lang])
+    assert "2019 (counter.base_year.berlin)" in found
+
+
 def test_the_shipped_counter_page_states_the_rule_through_its_facts():
     # the follow-up Task 3 wording ("90% of days", "chained from 2019 (Madrid: 2020)", "fewer
     # than 3 such sites") passes because the rule facts print those numbers, and only then.

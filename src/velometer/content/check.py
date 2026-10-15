@@ -104,10 +104,11 @@ _SITES_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,2}?(?:sites?|counters?)\b", re
 # A share of days: a percentage followed within three words by "days" ("90% of days").
 _PER_CENT = re.compile(r"\s*(?:%|per\s?cent\b)", re.IGNORECASE)
 _DAYS_AFTER = re.compile(r"\s+(?:[A-Za-z]+\s+){0,3}?days?\b", re.IGNORECASE)
-# A base year: "2019 = 100", "2019 is the base (year)", "base year (is) 2019", "chained from
-# 2019", "indexed/rebased to 2019", and a year in the parenthesis after one ("(Madrid: 2020)").
+# A base year: "2019 = 100" or "2019 (= 100)", "2019 is the base (year)", "base year (is) 2019",
+# "chained from 2019", "indexed/rebased to 2019", and a year in the parenthesis after one
+# ("(Madrid: 2020)").
 _BASE_AFTER = re.compile(
-    r"\s*=\s*100\b|\s+(?:is\s+|as\s+)?(?:the\s+)?(?:index\s+)?base\b", re.IGNORECASE
+    r"\s*\(?\s*=\s*100\b|\s+(?:is\s+|as\s+)?(?:the\s+)?(?:index\s+)?base\b", re.IGNORECASE
 )
 _BASE_BEFORE = re.compile(
     r"(?:\bbase\s+year(?:\s+(?:is|of))?|\bchained\s+from|\b(?:indexed|rebased)\s+to)\s*:?\s*"
@@ -284,7 +285,8 @@ RULES: dict[i18n.Lang, RuleFamily] = {
         per_cent=re.compile(r"\s*(?:%|Prozent\b)", _I),
         days_after=re.compile(rf"\s+(?:{_LETTERS}\s+){{0,3}}?Tag(?:e|en)?\b", _I),
         base_after=re.compile(
-            r"\s*=\s*100\b|\s+(?:ist\s+|als\s+)?(?:das\s+)?(?:Index-?\s*)?Basis(?:jahr)?\b", _I
+            r"\s*\(?\s*=\s*100\b|\s+(?:ist\s+|als\s+)?(?:das\s+)?(?:Index-?\s*)?Basis(?:jahr)?\b",
+            _I,
         ),
         base_before=re.compile(
             r"(?:\bBasisjahr(?:\s+(?:ist|von))?|\bverkettet\s+ab|"
