@@ -515,7 +515,7 @@ def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup
         replace_external_figures(w, "official", [fig])
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
     assert '<div data-dimension="length"><dt>How length is measured</dt>' in table
     assert "route length (Streckenlänge)" in table
     row = next(r for r in table.split("<tr>") if "vorrangnetz_target_km" in r)
@@ -537,7 +537,7 @@ def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # n
         replace_external_figures(w, "official", [a, b])
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
     rows = [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
     assert len(rows) == 2
     assert {("2025-01-01" in r, "2024-12-31" in r) for r in rows} == {(True, False), (False, True)}
@@ -738,7 +738,7 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
         replace_external_figures(w, "official", rows)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
     cells = [
         re.sub(r"<(?:dl|div|dt|dd)\b.*", "", r.split("</td>")[0], flags=re.S)
         for r in table.split("<tr>")
@@ -1240,7 +1240,7 @@ def _diffs_rows(db_path, cfg, maps, docs, figures) -> list[str]:
         replace_external_figures(w, "official", figures)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
     return [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
 
 

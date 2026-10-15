@@ -173,7 +173,7 @@ def test_a_profile_names_the_figures_it_stands_behind(client):
 
 def test_figures_rows_link_to_the_organisation_anchor(client):
     html = client.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack">') : html.index("</table>")]
+    table = html[html.index('<table class="diffs stack figures">') : html.index("</table>")]
     assert 'href="/organisations#clean_cities"' in table
     assert 'href="/organisations#ecf"' in table
 

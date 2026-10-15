@@ -504,7 +504,7 @@ def test_the_markdown_change_table_stacks_with_labels(subarea_setup):  # noqa: F
 
 def _phone_rules():
     css = _css_outside_tokens(_stylesheet())
-    blocks = re.findall(r"@media \(max-width: 600px\) \{(.*?)\n\}", css, re.S)
+    blocks = re.findall(r"@media \(max-width: (?:600|700)px\) \{(.*?)\n\}", css, re.S)
     return [r for b in blocks for r in _css_rules(b)]
 
 

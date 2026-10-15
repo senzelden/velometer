@@ -16,7 +16,7 @@
 <p class="note">{{ t('page.figures.none', city=city.name) }}</p>
 {% else %}
 <div class="scroll">
-<table class="diffs stack">
+<table class="diffs stack figures">
 <thead><tr><th>{{ t('table.source') }}</th><th>{{ t('table.figure') }}</th><th class="num">{{ t('table.theirs') }}</th><th>{{ t('table.ours') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.differs') }}</th></tr></thead>
 <tbody>
 {% for r in differences %}
@@ -57,7 +57,7 @@
 <p class="note">{{ t('page.figures.none', city=city.name) }}</p>
 {% else %}
 <div class="scroll">
-<table class="stack">
+<table class="stack figures">
 <thead><tr><th>{{ t('table.comparison') }}</th><th class="num">{{ t('table.ours') }}</th><th class="num">{{ t('table.theirs') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.flagged_col') }}</th><th>{{ t('table.source_date') }}</th></tr></thead>
 <tbody>
 {% for g in reconcile.gaps %}
@@ -83,7 +83,7 @@
 {% else %}
 <p class="meta">{{ t('page.figures.official_meta') }}</p>
 <div class="scroll">
-<table class="stack">
+<table class="stack figures">
 <thead><tr><th>{{ t('table.source') }}</th><th>{{ t('page.compare.metric') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.unit') }}</th><th>{{ t('table.scope') }}</th><th>{{ t('table.length_basis') }}</th><th>{{ t('table.date') }}</th><th>{{ t('table.source_link') }}</th></tr></thead>
 <tbody>
 {% for f in reported %}

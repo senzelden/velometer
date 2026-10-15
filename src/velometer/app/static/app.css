@@ -655,6 +655,33 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
    table.stack: below 600 px each body row is a card and every cell prints its column's name
    (data-label, written by the template or by table.js) above or beside its value. The header
    row stays for screen readers, visually hidden. Prose tables never get the class. */
+/* The Figures tables are wide (six columns, long names): they stack from 700 px, which a 1280 px
+   window at 200 % zoom (640 px) needs. The same card rules as below, scoped to .figures. */
+@media (max-width: 700px) {
+  table.stack.figures, table.stack.figures tbody, table.stack.figures tr, table.stack.figures td, table.stack.figures th[scope="row"] { display: block; }
+  table.stack.figures thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.stack.figures thead tr, table.stack.figures thead th { display: block; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; }
+  table.stack.figures tr { border: 1px solid var(--grid-2); border-radius: 6px; padding: 0.35rem 0.75rem; margin: 0 0 0.6rem; background: var(--surface); }
+  table.stack.figures td, table.stack.figures td:nth-child(n), table.stack.figures th[scope="row"] { border: 0; padding: 0.2rem 0; white-space: normal; min-width: 0; width: auto; overflow-wrap: anywhere; }
+  table.stack.figures td::before { content: attr(data-label); display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  table.stack.figures td.num { text-align: right; white-space: normal; }
+  table.stack.figures td.num::before { float: left; margin-right: 0.75rem; text-align: left; }
+  table.stack.figures td.date { white-space: normal; }
+  table.stack.figures th[scope="row"] { font-weight: 600; color: var(--ink); padding-bottom: 0.3rem; }
+  table.stack.figures th[scope="row"]::before, table.stack.figures td[colspan]::before { display: none; }
+  table.stack.figures td.bar-col { display: none; }
+  table.stack.figures td:empty:not(.bar-col)::after { content: "–" / "no value"; }
+  table.stack.figures tr.flagged { box-shadow: inset 3px 0 0 var(--flag); }
+  table.stack.figures tr.flagged td:first-child { box-shadow: none; }
+  table.stack.figures tr.note-row { margin-top: -0.6rem; border-top: 0; border-radius: 0 0 6px 6px; }
+  table.stack.figures tr:has(+ tr.note-row) { border-bottom: 0; border-radius: 6px 6px 0 0; margin-bottom: 0; }
+  table.stack.figures tr.note-row td { padding-top: 0; }
+  table.stack.figures td *, table.stack.figures th[scope="row"] * { overflow-wrap: anywhere; }
+  table.stack.figures td code { white-space: normal; }
+  /* "Ours" (value and what it counts) lines up with "Theirs" and "Gap" */
+  table.diffs td:nth-child(4) { text-align: right; }
+  table.diffs td:nth-child(4)::before { float: left; margin-right: 0.75rem; text-align: left; }
+}
 @media (max-width: 600px) {
   table.stack, .stack tbody, table.stack tr, table.stack td, table.stack th[scope="row"] { display: block; }
   table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -665,9 +692,6 @@ ul.chart-key, ul.key-list { list-style: none; padding: 0; display: flex; flex-wr
   table.stack td.num { text-align: right; white-space: normal; }
   table.stack td.num::before { float: left; margin-right: 0.75rem; text-align: left; }
   table.stack td.date { white-space: normal; }
-  /* Figures: "Ours" (value and what it counts) lines up with "Theirs" and "Gap" */
-  table.diffs td:nth-child(4) { text-align: right; }
-  table.diffs td:nth-child(4)::before { float: left; margin-right: 0.75rem; text-align: left; }
   table.stack th[scope="row"] { font-weight: 600; color: var(--ink); padding-bottom: 0.3rem; }
   table.stack th[scope="row"]::before, table.stack td[colspan]::before { display: none; }
   table.stack td.bar-col { display: none; }
