@@ -510,3 +510,32 @@ test("renderPlanChart: a share target's axis and note name the share in its unit
   const note = drawn.children.find((c) => c.tag === "p").textContent;
   assert.ok(note.includes("(share in %)") && !note.includes("%, share"), note);
 });
+
+test("renderPlanChart: a far negative mapped change does not flood the per-year axis with ticks", () => {
+  // review I1: lowering the per-year domain to keep the zeros level added every step down to the
+  // new bottom (21 labels for a 14 km figure beside a mapped 0 -> -40, 26 for a 0 km figure)
+  const overlay = [{ date: "2022-01-01", ab_km: 100 }, { date: "2023-01-01", ab_km: 60 }];
+  const cases = [
+    [{ 2022: 40 }, [row(2022, 14, "a", true)]],
+    [{}, [row(2022, 0, "a", true)]],
+    [{ 2022: 40, 2023: 60 }, [row(2022, 14, "a", true), row(2023, 3, "b", true)]],
+  ];
+  for (const width of [640, 358]) {
+    const count = width < 480 ? 4 : 5;
+    for (const [targets, reports] of cases) {
+      const el = new Node("div");
+      const s = planSeries(targets, reports, overlay, [], { mappedFrom: 2022 });
+      renderPlanChart(el, s, { years: [2022, 2023, 2024], unit: "km", width });
+      for (const anchor of ["end", "start"]) {
+        const ticks = tickTexts(el, anchor);
+        assert.ok(ticks.length <= 2 * count, `${width}px, ${anchor}: ${ticks.map((n) => n.textContent)}`);
+        assert.ok(ticks.some((n) => n.textContent === "0"), "0 stays a tick");
+        const ys = ticks.map(tickY).sort((a, b) => a - b);
+        ys.slice(1).forEach((yy, i) => assert.ok(yy - ys[i] >= 12, `labels ${yy - ys[i]} px apart`));
+      }
+      const zeroL = tickTexts(el, "end").find((n) => n.textContent === "0");
+      const zeroR = tickTexts(el, "start").find((n) => n.textContent === "0");
+      assert.ok(Math.abs(tickY(zeroL) - tickY(zeroR)) < 0.01, "the zeros stay level");
+    }
+  }
+});

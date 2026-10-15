@@ -99,11 +99,31 @@ export function yDomain(values, count = 5, opts = {}) {
 }
 
 /**
- * Two y domains (yDomain) with their 0 at the same height: the one whose 0 sits lower gets more
- * room below 0 (and the ticks of its step that fit there). A domain with no room above 0 first
- * gets one step of it, so that 0 can lie inside both.
+ * The ticks of a domain thinned to at most count + 2: every k-th step from 0 both ways, with k
+ * a divisor or a multiple of the steps above 0, so that 0 and the top (`hi`, where off-scale caps
+ * sit) stay ticks and the spacing stays even. A domain with few enough ticks is returned as is.
  */
-export function alignZero(a, b) {
+export function thinTicks(d, count = 5) {
+  if (d.ticks.length <= count + 2) return d;
+  const s = d.ticks[1] - d.ticks[0];
+  const m = Math.max(1, Math.round(d.hi / s)); // steps from 0 to the top
+  for (let k = 2; ; k++) {
+    if (m % k && k % m) continue;
+    const S = s * k;
+    const ticks = [];
+    for (let v = 0; v >= d.lo - 1e-9; v -= S) ticks.unshift(+v.toFixed(10));
+    for (let v = S; v < d.hi - 1e-9; v += S) ticks.push(+v.toFixed(10));
+    if (d.hi > 0) ticks.push(d.hi);
+    if (ticks.length <= count + 2) return { ...d, ticks };
+  }
+}
+
+/**
+ * Two y domains (yDomain) with their 0 at the same height: the one whose 0 sits lower gets more
+ * room below 0, its ticks thinned (thinTicks) to about `count`. A domain with no room above 0
+ * first gets one step of it, so that 0 can lie inside both.
+ */
+export function alignZero(a, b, count = 5) {
   const up = (d) => {
     if (d.hi > 0) return d;
     const step = d.ticks.length > 1 ? d.ticks[1] - d.ticks[0] : 1;
@@ -115,7 +135,7 @@ export function alignZero(a, b) {
     const step = d.ticks[1] - d.ticks[0];
     const ticks = [...d.ticks];
     for (let v = ticks[0] - step; v >= lo - 1e-9; v -= step) ticks.unshift(+v.toFixed(10));
-    return { lo, hi: d.hi, ticks };
+    return thinTicks({ lo, hi: d.hi, ticks }, count);
   };
   const [p, q] = [up(a), up(b)];
   const f = Math.max(at(p), at(q));
@@ -236,7 +256,7 @@ export function renderPlanChart(host, series, opts = {}) {
   let dom2 = null;
   if (mapped.length) {
     const own = yDomain(mapped.map((p) => p.value), count, { headroom: offScale.length > 0 });
-    [dom, dom2] = figures.length || steps.length ? alignZero(dom, own) : [own, own];
+    [dom, dom2] = figures.length || steps.length ? alignZero(dom, own, count) : [own, own];
   }
   const ticks = dom.ticks;
   const ticks2 = dom2?.ticks ?? [];
