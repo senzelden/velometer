@@ -109,11 +109,11 @@ export function mappedDomain(values, count = 4) {
 }
 
 /**
- * Which target steps the y axis holds. A step above OFFSCALE_FACTOR x the largest figure
- * (reported, completed or mapped; the mapped line has its own panel but still counts here, so a
- * target near the mapped change stays on the scale) is off scale: the axis is set by the figures
- * and the nearer steps, and the far ones are drawn as caps on the top edge. No figure above 0: all
- * on scale.
+ * Which target steps the y axis holds. Targets up to OFFSCALE_FACTOR (3) x the largest plotted
+ * figure, including the mapped change, stay on scale; a step above that is off scale and drawn as
+ * a cap on the top edge, and the axis is set by the figures and the nearer steps. The mapped
+ * change is drawn in its own panel but still counts here: kept so Vorrangnetz's 60/100 km targets
+ * do not become caps. No figure above 0: all on scale.
  */
 export function targetScale(steps, figures) {
   const top = Math.max(0, ...figures);
