@@ -23,7 +23,7 @@ test("cite: the shared cases give the same text, BibTeX and CSL-JSON", () => {
   assert.deepEqual([...new Set(CASES.map((c) => c.lang))].sort(), ["de", "en"]);
   for (const c of CASES) {
     useLang(c.lang); // a page has the strings of its own language
-    assert.equal(citeText(c.fields, c.accessed, c.url, c.lang), c.text, c.name);
+    assert.equal(citeText(c.fields, c.accessed, c.url), c.text, c.name);
     assert.equal(citeBibtex(c.fields, c.accessed, c.url, c.lang), c.bibtex, c.name);
     assert.deepEqual(citeCsl(c.fields, c.accessed, c.url, c.lang), c.csl, c.name);
     assert.equal(cslJson(citeCsl(c.fields, c.accessed, c.url, c.lang)), c.csl_text, c.name);
@@ -84,4 +84,9 @@ test("multiFields agrees with the shared cases (tests/cite_cases.json, multi)", 
     assert.deepEqual(multiFields(c.runs, c.ids, c.title, c.path, c.commit), c.expected, c.name);
   }
   useLang("en");
+});
+
+test("citeText takes no language: its text is the page's strings (M12-4)", () => {
+  const params = citeText.toString().match(/^function citeText\(([^)]*)\)/)[1];
+  assert.deepEqual(params.split(",").map((p) => p.split("=")[0].trim()), ["f", "accessed", "url"]);
 });
