@@ -900,6 +900,13 @@ def test_content_may_mark_an_original_term_with_its_language():
     assert quote == '<blockquote lang="fr"><p>Les <i lang="fr">voies vertes</i>.</p></blockquote>'
 
 
+def test_citation_markers_inside_a_code_span_are_text():
+    # M8-20: `[@id]` and `[#id]` in backticks were still replaced (by "source missing" marks)
+    html = _para("write `[@a-source]` or `[#a-ref]` to cite")
+    assert "<code>[@a-source]</code>" in html and "<code>[#a-ref]</code>" in html
+    assert "<sup" not in html
+
+
 def test_two_osm_wildcards_outside_backticks_are_text_not_an_italic():
     # M8-21: `cycleway:left=*, cycleway:right=*` without backticks paired its two stars into
     # <em>, cycleway:right=</em>; a star after "=" is a tag value, never an emphasis mark

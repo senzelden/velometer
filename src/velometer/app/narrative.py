@@ -189,13 +189,18 @@ class _Numbering:
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
         body = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', body)  # the only markup content may write
         body = TERM_MARK.sub(r'<i lang="\1">\2</i>', body)
-        # code spans first and kept whole: `*` inside one is text, and no *...* spans across one
+
+        # code spans first and kept whole: `*` inside one is text, and no *...* spans across one;
+        # nor is a citation marker inside one replaced
+        def prose(part: str) -> str:
+            return REF_MARK.sub(ref, SOURCE_MARK.sub(source, EM_MARK.sub(r"<em>\1</em>", part)))
+
         parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
-        body = "".join(
-            f"<code>{part}</code>" if i % 2 else EM_MARK.sub(r"<em>\1</em>", part)
-            for i, part in enumerate(parts)
+        return Markup(
+            "".join(
+                f"<code>{part}</code>" if i % 2 else prose(part) for i, part in enumerate(parts)
+            )
         )
-        return Markup(REF_MARK.sub(ref, SOURCE_MARK.sub(source, body)))
 
 
 _TRIM = " (,;:–—-"
