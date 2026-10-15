@@ -8,6 +8,7 @@ series" and "the headline" are defined here once, by reusing `timeseries.build_c
 import copy
 import csv
 import functools
+import re
 import sqlite3
 from datetime import date
 from pathlib import Path
@@ -661,7 +662,10 @@ class ReportData:
 
     def _optional_rows(self, table: str, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
         """`sql`'s rows, or [] when `table` is not in the schema (a v8 database); any error of
-        the query itself is raised."""
+        the query itself is raised. `sql` must read `table` (named as a word in it): a ValueError
+        otherwise, as a mismatch would answer [] for a table the query does not read."""
+        if not re.search(rf"\b{re.escape(table)}\b", sql):
+            raise ValueError(f"_optional_rows: the SQL does not read {table!r}: {sql}")
         present = self.conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
         ).fetchone()

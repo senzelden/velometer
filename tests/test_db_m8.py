@@ -242,6 +242,17 @@ def test_optional_rows_tells_a_missing_table_by_the_schema_not_the_message(fixtu
         data._optional_rows("counter_sites", "SELECT * FROM counter_sites JOIN gone")
 
 
+@pytest.mark.parametrize("table", ["plan_overlay", "no_such_table_here"])
+def test_optional_rows_refuses_sql_that_does_not_read_its_table(fixture_db, table):
+    # M8-23: a mismatch returned [] for a missing `table` while the SQL read another one (and,
+    # for a present one, ran a query the caller did not mean); the SQL must name the table
+    data = fixture_db[3]
+    with pytest.raises(ValueError, match=f"{table}.*SELECT \\* FROM counter_sites"):
+        data._optional_rows(table, "SELECT * FROM counter_sites")
+    with pytest.raises(ValueError):
+        data._optional_rows("counter", "SELECT * FROM counter_sites")  # a word, not a prefix
+
+
 def _data(conn, cfg):
     return ReportData(conn, cfg)
 
