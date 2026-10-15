@@ -850,3 +850,19 @@ sources:
         gloss_en: "Kraków plans 9.1 km of new routes."
         gloss_de: "Krakau plant 9,1 km neue Routen."
         locator: "section 10 km lub niewiele mniej. Oto plany Łodzi, Gdańska, Krakowa i Katowic"
+
+  # ------------------------------------------------------------ poland (GUS)
+  - id: gus-pojecie-gmina
+    publisher: Główny Urząd Statystyczny (GUS)
+    title: "Pojęcia stosowane w statystyce publicznej: Gmina"
+    title_de: "Pojęcia stosowane w statystyce publicznej (Begriffe der amtlichen Statistik): Gmina"
+    url: https://stat.gov.pl/metainformacje/slownik-pojec/pojecia-stosowane-w-statystyce-publicznej/813,pojecie.html
+    accessed: 2026-10-15
+    language: pl
+    kind: official
+    excerpts:
+      - id: definition
+        text: "Gmina Nazwa angielska: Gmina Definicja: Podstawowa jednostka najniższego szczebla zasadniczego trójstopniowego podziału terytorialnego państwa."
+        gloss_en: "Gmina. English name: Gmina. Definition: the basic unit at the lowest level of the country's main three-tier territorial division."
+        gloss_de: "Gmina. Englische Bezeichnung: Gmina. Definition: die Grundeinheit der untersten Stufe der dreistufigen Gebietsgliederung des Staates (Gemeinde)."
+        locator: "glossary entry Gmina, fields Nazwa angielska and Definicja"

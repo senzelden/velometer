@@ -282,6 +282,43 @@ sources:
     gloss_en: Ambition lowered last January to 200 km. Then recently to 180 km.
     gloss_de: "Im vergangenen Januar wurde das Ziel auf 200 km gesenkt. Dann zuletzt auf 180 km."
     locator: section 'Près de 100 km réalisés à la mi-mai'
+- id: insee-collectivites-statut-particulier
+  publisher: Institut national de la statistique et des études économiques (Insee)
+  title: Collectivités territoriales à statut particulier
+  url: https://www.insee.fr/fr/information/7929497
+  accessed: '2026-10-15'
+  language: fr
+  kind: official
+  excerpts:
+  - id: metropole-de-lyon
+    text: Pour les collectivités territoriales à statut particulier, une numérotation spécifique a
+      été introduite. La Ville de Paris (75C) Le Département-Région de Mayotte (976R) La Métropole
+      de Lyon (69M)
+    gloss_en: 'For local authorities with special status (collectivités territoriales à statut particulier),
+      a specific numbering has been introduced: the City of Paris (75C), the Département-Région of
+      Mayotte (976R), the Métropole de Lyon (Lyon Metropolis, 69M).'
+    gloss_de: "Für Gebietskörperschaften mit Sonderstatus (collectivités territoriales à statut particulier) wurde eine eigene Nummerierung eingeführt: die Stadt Paris (75C), das Département-Région Mayotte (976R), die Métropole de Lyon (Metropole Lyon, 69M)."
+    locator: section on the coding of collectivités, list of collectivités territoriales à statut particulier
+- id: insee-departement
+  publisher: Institut national de la statistique et des études économiques (Insee)
+  title: 'Département : définition'
+  title_de: 'Département: Definition'
+  url: https://www.insee.fr/fr/metadonnees/definition/c1762
+  accessed: '2026-10-15'
+  language: fr
+  kind: official
+  excerpts:
+  - id: definition
+    text: Création de la Révolution (loi du 22 décembre 1789), le département est une circonscription
+      administrative de l’État. Le Préfet représente les différentes administrations de l’État au
+      niveau territorial. C’est aussi, par la loi du 10 août 1871, une collectivité locale autonome
+      avec un organe délibérant et un exécutif élus.
+    gloss_en: Created by the Revolution (law of 22 December 1789), the département is an administrative
+      district of the State. The Prefect represents the various State administrations at territorial
+      level. Since the law of 10 August 1871 it is also an autonomous local authority with an elected
+      deliberative body and executive.
+    gloss_de: "Als Schöpfung der Revolution (Gesetz vom 22. Dezember 1789) ist das Département ein Verwaltungsbezirk des Staates. Der Präfekt vertritt die verschiedenen staatlichen Verwaltungen auf territorialer Ebene. Seit dem Gesetz vom 10. August 1871 ist es zudem eine autonome Gebietskörperschaft mit einem gewählten beschließenden Organ und einer gewählten Exekutive."
+    locator: Définition, first paragraph
 - id: strasbourg-premiere-agglomeration
   publisher: Ville et Eurométropole de Strasbourg
   title: Première agglomération cyclable de France
@@ -417,6 +454,21 @@ sources:
       across the Eurométropole's 33 municipalities.
     gloss_de: "Er wird den 750 Kilometern bereits bestehender Radwege in allen 33 Gemeinden der Eurométropole rund hundert Kilometer hinzufügen."
     locator: article body, paragraph 2
+- id: strasbourg-ville-eurometropole
+  publisher: Ville et Eurométropole de Strasbourg
+  title: Ville & Eurométropole
+  url: https://www.strasbourg.eu/ville-eurometropole
+  accessed: '2026-10-15'
+  language: fr
+  kind: official
+  excerpts:
+  - id: two-institutions
+    text: La Ville et l'Eurométropole de Strasbourg sont deux institutions distinctes. Elles ont la
+      particularité d'avoir à leur service une seule administration et un siège commun.
+    gloss_en: The City (Ville) and the Eurométropole de Strasbourg (the metropolitan authority) are two
+      separate institutions. They share a single administration and a common headquarters.
+    gloss_de: "Die Stadt (Ville) und die Eurométropole de Strasbourg (der Metropolverband) sind zwei getrennte Institutionen. Sie haben die Besonderheit, eine einzige Verwaltung und einen gemeinsamen Sitz zu teilen."
+    locator: intro text of the section Ville & Eurométropole
 - id: bordeaux-plan-velo-2021-2026
   publisher: Bordeaux Métropole
   title: 3ème Plan vélo métropolitain 2021-2026
@@ -520,6 +572,21 @@ sources:
     gloss_en: Bordeaux has 378 km of cycle facilities; the métropole has more than 1,000.
     gloss_de: "Bordeaux verfügt über 378 km Radverkehrsanlagen, die Métropole über mehr als 1.000."
     locator: section 'Pistes cyclables et réseau express (ReVE)'
+- id: bordeaux-metropole-que-fait
+  publisher: Bordeaux Métropole
+  title: Que fait Bordeaux Métropole ?
+  url: https://www.bordeaux-metropole.fr/metropole/linstitution-territoire/que-fait-bordeaux-metropole
+  accessed: '2026-10-15'
+  language: fr
+  kind: official
+  excerpts:
+  - id: epci-28-communes
+    text: Bordeaux Métropole est un Établissement Public de Coopération Intercommunale ( EPCI ). Au
+      service des 28 communes qui la composent
+    gloss_en: Bordeaux Métropole is a public body for inter-municipal cooperation (Établissement Public
+      de Coopération Intercommunale, EPCI), serving the 28 municipalities (communes) that make it up.
+    gloss_de: "Bordeaux Métropole ist ein öffentlicher Zweckverband für interkommunale Zusammenarbeit (Établissement Public de Coopération Intercommunale, EPCI), im Dienst der 28 Gemeinden (communes), aus denen er besteht."
+    locator: intro text below the heading Institution (the page renders EPCI as an abbreviation, hence the spaces)
 - id: madrid-opendata-infraestructura-ciclista
   publisher: Ayuntamiento de Madrid, Portal de datos abiertos
   title: Bici. Infraestructura ciclista, dataset description
@@ -650,6 +717,23 @@ sources:
       vehicles.
     gloss_de: "Ciclocarriles sind gemischte Fahrstreifen für Autos und Fahrräder mit einer Höchstgeschwindigkeit von 30 Kilometern pro Stunde. Das Modell ist in europäischen Städten mit ausgeprägterer Radkultur sehr selten, weil es Kraftfahrzeugen mehr Raum gibt."
     locator: article body
+- id: boe-estatuto-autonomia-madrid
+  publisher: Agencia Estatal Boletín Oficial del Estado (BOE)
+  title: Ley Orgánica 3/1983, de 25 de febrero, de Estatuto de Autonomía de la Comunidad de Madrid (consolidated
+    text)
+  title_de: "Ley Orgánica 3/1983, de 25 de febrero, de Estatuto de Autonomía de la Comunidad de Madrid (konsolidierte Fassung)"
+  url: https://www.boe.es/buscar/act.php?id=BOE-A-1983-6317
+  accessed: '2026-10-15'
+  language: es
+  kind: official
+  excerpts:
+  - id: territory
+    text: Artículo 2. El territorio de la Comunidad de Madrid es el comprendido dentro de los límites de
+      la provincia de Madrid.
+    gloss_en: Article 2. The territory of the Comunidad de Madrid (the autonomous region of Madrid) is
+      that within the boundaries of the provincia de Madrid (province of Madrid).
+    gloss_de: "Artikel 2. Das Gebiet der Comunidad de Madrid (Autonome Gemeinschaft Madrid) ist das innerhalb der Grenzen der provincia de Madrid (Provinz Madrid)."
+    locator: Artículo 2 (wording in force since 8 July 1998)
 - id: barcelona-premsa-42km-2025
   publisher: Ajuntament de Barcelona, Servei de Premsa
   title: Barcelona intervé en més de 42 km de carrils bici per incrementar la connectivitat entre els
@@ -750,3 +834,20 @@ sources:
       the current term.
     gloss_de: "Mit diesen geplanten Maßnahmen wird die Stadt am Ende der laufenden Amtszeit 270 Kilometer Radwege erreichen."
     locator: article lead
+- id: diba-institucio
+  publisher: Diputació de Barcelona
+  title: Diputació de Barcelona, la Institució
+  title_de: "Diputació de Barcelona, die Institution (la Institució)"
+  url: https://www.diba.cat/en/web/ladiputacio/institucio
+  accessed: '2026-10-15'
+  language: ca
+  kind: official
+  excerpts:
+  - id: provincia-311
+    text: 'La Diputació de Barcelona és una institució de govern local que impulsa el progrés i el benestar
+      dels ciutadans del seu àmbit territorial: la província de Barcelona, 311 municipis en xarxa'
+    gloss_en: 'The Diputació de Barcelona is a local-government institution that promotes the progress and
+      well-being of the citizens of its territory: the província de Barcelona (province of Barcelona),
+      311 networked municipalities.'
+    gloss_de: "Die Diputació de Barcelona ist eine Institution der Kommunalverwaltung, die Fortschritt und Wohlergehen der Bürgerinnen und Bürger ihres Gebiets fördert: der província de Barcelona (Provinz Barcelona), 311 vernetzte Gemeinden."
+    locator: section Institució, first paragraph

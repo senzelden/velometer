@@ -160,6 +160,39 @@ sources:
         gloss_en: "We are raising our ambitions with the goal that by 2040 at the latest every fourth trip in Stockholm is made by bicycle."
         gloss_de: "Wir erhöhen unsere Ambitionen mit dem Ziel, dass spätestens im Jahr 2040 jeder vierte Weg in Stockholm mit dem Fahrrad zurückgelegt wird."
         locator: "p. 2, Mina synpunkter (föredragande borgarrådet)"
+  - id: scb-lan-och-kommuner
+    publisher: Statistiska centralbyrån (SCB)
+    title: Län och kommuner (regionala indelningar)
+    title_de: "Län och kommuner (regionale Gliederungen)"
+    url: https://www.scb.se/hitta-statistik/regional-statistik-och-kartor/regionala-indelningar/lan-och-kommuner/
+    accessed: 2026-10-15
+    language: sv
+    kind: official
+    excerpts:
+      - id: 21-lan
+        text: "Här redovisas koder, namn och indelningsändringar för län och kommuner. SCB ansvarar för att förteckna regionala indelningar och ange koder för dessa. Sverige har idag 21 län och 290 kommuner."
+        gloss_en: "Codes, names and changes of division for counties (län) and municipalities (kommuner) are reported here. SCB is responsible for listing the regional divisions and assigning their codes. Sweden today has 21 counties (län) and 290 municipalities."
+        gloss_de: "Hier werden Codes, Namen und Gebietsänderungen der Län (Verwaltungsbezirke) und Kommunen veröffentlicht. SCB ist dafür zuständig, die regionalen Gliederungen zu verzeichnen und ihnen Codes zuzuweisen. Schweden hat heute 21 Län und 290 Kommunen."
+        locator: "intro text below the heading Län och kommuner"
+  - id: lansstyrelsen-stockholm-om-lanet
+    publisher: Länsstyrelsen Stockholm
+    title: Om länet
+    title_de: "Om länet (Über das Län)"
+    url: https://www.lansstyrelsen.se/stockholm/om-oss/om-lanet.html
+    accessed: 2026-10-15
+    language: sv
+    kind: official
+    excerpts:
+      - id: 26-kommuner
+        text: "Stockholms län har 26 kommuner"
+        gloss_en: "Stockholms län (Stockholm County) has 26 municipalities."
+        gloss_de: "Stockholms län (Verwaltungsbezirk Stockholm) umfasst 26 Kommunen."
+        locator: "main text, line above the county map link (länskarta och länkar till kommunernas webbplatser)"
+      - id: largest-lan
+        text: "Sett till befolkningsmängd är vi landets största län. I dagsläget bor drygt två miljoner människor, en femtedel av Sveriges befolkning, i länets 26 kommuner."
+        gloss_en: "By population we are the country's largest county (län). Just over two million people, a fifth of Sweden's population, currently live in the county's 26 municipalities."
+        gloss_de: "Nach der Einwohnerzahl sind wir das größte Län (Verwaltungsbezirk) des Landes. Derzeit leben gut zwei Millionen Menschen, ein Fünftel der Bevölkerung Schwedens, in den 26 Kommunen des Läns."
+        locator: "main text, first section"
 
   # ---------------------------------------------------------------------- oslo
   - id: oslo-sykkelkart
@@ -423,6 +456,25 @@ sources:
         gloss_en: "The multi-year plans for road safety (2016) and cycling (2017), which are now expiring, played an important role in this."
         gloss_de: "Die jetzt auslaufenden Mehrjahrespläne für Verkehrssicherheit (2016) und Radverkehr (2017) haben dabei eine wichtige Rolle gespielt."
         locator: "p. 3, section 1.1"
+  - id: cbs-regionale-economie-2018-begrippen
+    publisher: Centraal Bureau voor de Statistiek (CBS)
+    title: "De regionale economie 2018: Begrippenlijst"
+    title_de: "De regionale economie 2018: Begriffsverzeichnis (Begrippenlijst)"
+    url: https://longreads.cbs.nl/regionale-economie-2018/begrippenlijst/
+    accessed: 2026-10-15
+    language: nl
+    kind: official
+    excerpts:
+      - id: corop-level
+        text: "De COROP-indeling is een regionaal niveau tussen gemeenten en provincies in."
+        gloss_en: "The COROP division is a regional level between municipalities (gemeenten) and provinces (provincies)."
+        gloss_de: "Die COROP-Gliederung ist eine regionale Ebene zwischen Gemeinden (gemeenten) und Provinzen (provincies)."
+        locator: "entry COROP-gebied"
+      - id: groot-amsterdam
+        text: "In deze publicatie zijn de grote steden gedefinieerd als kerngemeente plus omliggend gebied. Amsterdam betreft COROP-gebied Groot-Amsterdam"
+        gloss_en: "In this publication the large cities are defined as the core municipality plus the surrounding area. Amsterdam means the COROP region (COROP-gebied) Groot-Amsterdam."
+        gloss_de: "In dieser Veröffentlichung sind die großen Städte als Kerngemeinde plus Umland definiert. Amsterdam steht für die COROP-Region (COROP-gebied) Groot-Amsterdam."
+        locator: "entry Grote steden (G4)"
 
   # ------------------------------------------------------------------- utrecht
   - id: utrecht-actieplan-fietst-2015
