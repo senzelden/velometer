@@ -518,7 +518,7 @@ def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup
     table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
     assert '<div data-dimension="length"><dt>How length is measured</dt>' in table
     assert "route length (Streckenlänge)" in table
-    row = next(r for r in table.split("<tr>") if "vorrangnetz_target_km" in r)
+    row = next(r for r in table.split("<tr>") if "priority cycle network" in r)
     assert "reference date 2025-01-01" in row and 'href="https://example.invalid/fixture"' in row
     assert "Ours:" not in _text(table)  # the old "Ours: ..." preset label prefix is gone
 
@@ -538,7 +538,7 @@ def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # n
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
-    rows = [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
+    rows = [r for r in table.split("<tr>") if "newly created cycle infrastructure" in r]
     assert len(rows) == 2
     assert {("2025-01-01" in r, "2024-12-31" in r) for r in rows} == {(True, False), (False, True)}
     assert any("https://example.org/other" in r for r in rows)
@@ -742,7 +742,7 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
     cells = [
         re.sub(r"<(?:dl|div|dt|dd)\b.*", "", r.split("</td>")[0], flags=re.S)
         for r in table.split("<tr>")
-        if "new_cycle_infra_km" in r
+        if "newly created cycle infrastructure" in r
     ]
     texts = [_text(c) for c in cells]
     assert len(texts) == 2 and texts[0] != texts[1]
@@ -1244,7 +1244,7 @@ def _diffs_rows(db_path, cfg, maps, docs, figures) -> list[str]:
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
     table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
-    return [r for r in table.split("<tr>") if "new_cycle_infra_km" in r]
+    return [r for r in table.split("<tr>") if "newly created cycle infrastructure" in r]
 
 
 def test_figures_rows_show_the_metric_label_not_its_id(setup):  # noqa: F811
@@ -1253,7 +1253,9 @@ def test_figures_rows_show_the_metric_label_not_its_id(setup):  # noqa: F811
     rows = _diffs_rows(*setup, [_figure("berlin", "official", "new_cycle_infra_km", 21.2)])
     cell = re.search(r'<td data-label="Figure"([^>]*)>(.*?)</td>', rows[0], re.S)
     assert _text(cell.group(2)).strip() == "newly created cycle infrastructure"
-    assert 'title="new_cycle_infra_km"' in cell.group(1)  # the id stays reachable on hover
+    # not as a title either: a title is the cell's accessible description, and Orca read the id
+    # out on every row (M13 screen-reader pass)
+    assert "new_cycle_infra_km" not in cell.group(0)
 
 
 def test_figures_rows_say_when_a_source_states_no_reference_date(setup):  # noqa: F811

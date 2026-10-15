@@ -1116,6 +1116,9 @@ def test_an_empty_card_cell_keeps_its_label_and_says_there_is_no_value():
 
 # ---------- M13 screen-reader pass (Orca, docs/review/m13-screen-reader.md) ----------
 
+# a raw id as a reader never sees it written: lower-case words joined by underscores
+RAW_ID = re.compile(r"[a-z0-9]+(?:_[a-z0-9]+)+")
+
 
 def test_every_page_is_one_banner_and_a_panel_adds_none(all_page_urls, page_site):  # noqa: F811
     # Orca said "banner" when Tab entered the open city panel: compare puts the fragment in a
@@ -1127,3 +1130,12 @@ def test_every_page_is_one_banner_and_a_panel_adds_none(all_page_urls, page_site
         assert len(re.findall(r"<header\b", page_site.html[url])) == 1, url
     for url in panels:
         assert not re.search(r"<header\b", page_site.html[url]), url
+
+
+def test_no_title_attribute_carries_a_raw_id(all_page_urls, page_site):  # noqa: F811
+    # a title is the element's accessible description: Orca read the Figures metric cells as
+    # "... road network. protected_share_pct", an internal id a sighted reader never sees
+    assert all_page_urls
+    for url in all_page_urls:
+        for title in re.findall(r'\btitle="([^"]*)"', page_site.html[url]):
+            assert not RAW_ID.fullmatch(title.strip()), (url, title)
