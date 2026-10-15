@@ -20,6 +20,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
 )
 from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
 from velometer.app.main import create_app
+from velometer.app.narrative import bracketed
 from velometer.content.loader import load_organisations
 from velometer.db import OverlayRow, replace_plan_overlay
 from velometer.plans.models import load_plans
@@ -142,7 +143,8 @@ def test_every_profile_renders_with_its_anchor_text_and_quotes(client):
     assert ORGS  # the shipped profiles
     for org in ORGS.values():
         sec = " ".join(_section(html, org.id).split())
-        assert str(escape(org.name)) in sec, org.id
+        # a bracket in another language than the name's sits in its own lang (review 10, I1)
+        assert str(bracketed(org.name, org.bracket_lang)) in sec, org.id
         for s in org.sections:
             assert str(escape(s.heading)) in sec, (org.id, s.heading)
             for p in s.paragraphs:
