@@ -382,6 +382,24 @@ def test_counters_fetch_hands_the_data_dir_to_the_adapter(tmp_path, monkeypatch)
     assert seen == {"out_dir": data / "counters" / "oslo", "data_dir": data}
 
 
+def test_counters_fetch_names_the_url_when_the_portal_answers_html(tmp_path, monkeypatch):
+    # M8-19, M8-26: an HTML page where JSON was expected was "error: oslo: Expecting value";
+    # the adapter raises a CounterFormatError naming the URL, and the CLI exits 1 with it
+    import httpx
+
+    def post(url, **kw):
+        req = httpx.Request("POST", url)
+        return httpx.Response(200, text="<!doctype html><p>maintenance</p>", request=req)
+
+    monkeypatch.setattr(oslo.httpx, "post", post)
+    res = CliRunner().invoke(app, ["counters", "fetch", "oslo", "--data", str(tmp_path)])
+    assert res.exit_code == 1, res.output
+    assert "error: oslo: https://trafikkdata-api.atlas.vegvesen.no/" in res.output
+    assert "not JSON" in res.output
+    with pytest.raises(CounterFormatError, match="not JSON"):
+        oslo._graphql("https://example.org/", "query { x }", {})
+
+
 def test_oslo_fetch_without_a_data_dir_is_refused():
     with pytest.raises(ValueError, match="data directory"):
         oslo.fetch(CONFIG.entry("oslo"), Path("x"), post=lambda *a: pytest.fail("posted"))
