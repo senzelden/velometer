@@ -975,3 +975,16 @@ def test_methodology_states_the_v2_rule_and_drops_the_known_property_paragraph(f
     assert "summed counts" not in en.split("## Counter index")[1].split("Method change")[0]
     assert "A known property of this rule" not in en
     assert "Eine bekannte Eigenschaft dieser Regel" not in de
+
+
+def test_the_mapped_baseline_is_the_plans_first_target_year_as_the_prose_says():
+    # M8-16: the methodology (and content/plans/berlin.yaml) call MAPPED_BASELINE "the plan's
+    # first target year" in hand-written words beside the generated date; the claim must hold
+    from velometer.plans.berlin import CITY
+    from velometer.plans.models import MAPPED_BASELINE, load_plans
+
+    plans, _ = load_plans(Path(__file__).parents[1] / "config" / "plans")
+    (plan,) = [p for p in plans if p.city == CITY and p.status == "current"]
+    first = min(int(y) for i in plan.items for y in i.targets)
+    assert (MAPPED_BASELINE.month, MAPPED_BASELINE.day) == (1, 1)
+    assert MAPPED_BASELINE.year == first
