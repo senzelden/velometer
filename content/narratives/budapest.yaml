@@ -29,9 +29,10 @@ sections:
         [#recon]. Clean Cities' 212 km sits near our 231 km; its 4% is rounded to a whole percent
         from its own km [#recon-cc]. BikeNetKit counts 588 km, more than twice our 260 km of tiers
         A, B and E, because it includes living streets, which no tier here counts [#recon-bnk]. City
-        figures count other things, such as a city-managed inventory or a planned main network
-        [@budapest-bkk-kfht-helyzetertekeles-2022]. A 2024 press analysis called km a poor indicator
-        and set an OpenStreetMap-based count against the statistics office's figure
+        figures count other things, such as an inventory of <i lang="hu">fővárosi kezelésű</i>
+        (city-managed) track and lane sections or a planned <i lang="hu">főhálózat</i> (main
+        network) [@budapest-bkk-kfht-helyzetertekeles-2022]. A 2024 press analysis called km a poor
+        indicator and set an OpenStreetMap-based count against the statistics office's figure
         [@budapest-telex-g7-2024].
 quotes:
   - {excerpt: budapest-telex-g7-2024/km-poor-indicator, after: 3}

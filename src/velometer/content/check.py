@@ -147,10 +147,10 @@ _ORDINAL_WORDS_DE = sorted(
 _ORDINAL_DE = re.compile(
     r"\b\d{1,2}\.[   ]?(?:" + "|".join(map(re.escape, _ORDINAL_WORDS_DE)) + r")(?!\w)"
 )
-# a quotation in another language than German: kept byte for byte from the English (parity),
-# so it is checked there, not as German text
+# a quotation or an original term (`<i lang>`) in another language than German: kept byte for
+# byte from the English (parity), so it is checked there, not as German text
 _FOREIGN_QUOTE = re.compile(
-    r"""<(q|blockquote)\b[^>]*\blang\s*=\s*["'](?!de["'-])[^"']*["'][^>]*>.*?</\1>""",
+    r"""<(q|blockquote|i)\b[^>]*\blang\s*=\s*["'](?!de["'-])[^"']*["'][^>]*>.*?</\1>""",
     re.S | re.IGNORECASE,
 )
 
@@ -578,7 +578,8 @@ def _narrative_prose(n: Narrative) -> list[str]:
 
 def _check_lang_attributes(content_dir: Path, german: bool = False) -> list[str]:
     """A problem per `lang="…"` in a content file whose value is not a BCP 47 language tag: the
-    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`). The English
+    renderer writes it into the page for a quote (`<q lang>`, `<blockquote lang>`) or an original
+    term (`<i lang>`). The English
     files, or with `german` the translation files (those in a `de/` directory)."""
     problems = []
     for path in sorted(content_dir.rglob("*.yaml")):
@@ -770,7 +771,10 @@ def check_translation(
                 f" German {sorted(de_markers.elements())})"
             )
         if Counter(_foreign_quotes(en_text)) != Counter(_foreign_quotes(de.text)):
-            problem(f" {path}: quotations differ from English (quotes are never translated)")
+            problem(
+                f" {path}: quotations or original terms differ from English"
+                " (neither is ever translated)"
+            )
         not_stated = ".dimensions." in path and " ".join(en_text.split()) == NOT_STATED
         if not_stated and " ".join(de.text.split()) != NOT_STATED_DE:
             problem(f" {path}: {NOT_STATED!r} is {NOT_STATED_DE!r} in German")

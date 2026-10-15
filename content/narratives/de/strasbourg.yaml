@@ -42,14 +42,16 @@ sections:
   paragraphs:
   - text: >-
       Die amtliche Netzzahl [@strasbourg-a-velo] ist mehr als doppelt so hoch wie
-      unser A+B. Die Seite sagt nicht, ob sie die Gemeinde oder die ganze Eurométropole
-      abdeckt, welche Anlagen sie zählt, wie die Länge gemessen wird oder zu welchem
-      Datum. Die offenen Daten der Stadt sind auf ihrem eigenen Straßenachsennetz
-      im nationalen BNAC-Schema gezeichnet [@strasbourg-opendata-bnac], nicht aus
-      OSM übernommen; sie sind also ein von unserem unabhängiges Maß. Strasbourg ist
-      nicht in der Rangliste von Clean Cities. QECIO berichtet für das Département
-      Bas-Rhin, weshalb seine Hauptstraßen-km um −95,3 % von unseren abweichen; auf
-      dieser Fläche gemessen stimmen die Hauptstraßen überein [#rc-strasbourg-qecio_main_km].
-    src: 91d2c1994238
+      unser A+B. Die Seite sagt nicht, ob sie die Gemeinde oder die ganze <i lang="fr">Eurométropole
+      de Strasbourg</i> (Metropolverband) [@strasbourg-ville-eurometropole] abdeckt,
+      welche Anlagen sie zählt, wie die Länge gemessen wird oder zu welchem Datum.
+      Die offenen Daten der Stadt sind auf ihrem eigenen Straßenachsennetz im nationalen
+      BNAC-Schema gezeichnet [@strasbourg-opendata-bnac], nicht aus OSM übernommen;
+      sie sind also ein von unserem unabhängiges Maß. Strasbourg ist nicht in der
+      Rangliste von Clean Cities. QECIO berichtet für das <i lang="fr">département</i>
+      (Verwaltungsbezirk) Bas-Rhin [@insee-departement], weshalb seine Hauptstraßen-km
+      um −95,3 % von unseren abweichen; auf dieser Fläche gemessen stimmen die Hauptstraßen
+      überein [#rc-strasbourg-qecio_main_km].
+    src: dc61279e6bce
 literals:
 - 100 km

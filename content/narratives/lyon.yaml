@@ -31,10 +31,12 @@ sections:
         [@cc2025-report]. Our 17.7% counts each side of a road. On the centreline basis the gap
         shrinks to +7.6%, and against Clean Cities' own road network it matches their figure
         [#rc-lyon-cc_ratio]. Both refer to the commune; their data were collected by early 2025,
-        ours come from the October 2026 map. The Métropole's own total covers the whole Métropole
-        and adds contraflow streets, greenways and paved shoulders [@lyon-plan-velo-2024], so it
-        differs in area and scope. QECIO reports the Rhône département; measured on that area, the
-        main roads agree [#rc-lyon-qecio_main_km].
+        ours come from the October 2026 map. The total of the <i lang="fr">Métropole de Lyon</i>
+        (Lyon Metropolis) covers its whole area and adds <i lang="fr">double sens cyclable</i>
+        (contraflow cycling), <i lang="fr">voie verte</i> (greenway) and <i lang="fr">accotement
+        revêtu</i> (paved shoulder) [@lyon-plan-velo-2024], so it differs in area and scope. QECIO
+        reports the Rhône <i lang="fr">département</i> (administrative district)
+        [@insee-departement]; measured on that area, the main roads agree [#rc-lyon-qecio_main_km].
 quotes:
   - excerpt: lyon-lavilleavelo-bilan-vl/delivered
     after: 1

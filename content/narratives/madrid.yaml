@@ -29,12 +29,13 @@ sections:
       - >-
         The city's network figure, as the press reported it from the city's mobility department
         [@madrid-ultimahora-1167km], is more than three times our A+B. The official release behind
-        it was not found, so the figure is secondary. It includes ciclocarriles, lanes shared with
-        motor traffic [@madrid-opendata-infraestructura-ciclista]; our tiers leave such shared lanes
-        out. Clean Cities' 8% protected sits close to our 7.7%, both against the whole road network
-        of the municipio; their data were collected by early 2025 [@cc2025-report]. BikeNetKit's
-        network is longer than ours (−26.3%) because it includes living streets
-        [#rc-madrid-bnk_network_km]. QECIO reports the whole Comunidad de Madrid
+        it was not found, so the figure is secondary. It includes <i lang="es">ciclocarriles</i>
+        (lanes shared with motor traffic) [@madrid-opendata-infraestructura-ciclista]; our tiers
+        leave such shared lanes out. Clean Cities' 8% protected sits close to our 7.7%, both against
+        the whole road network of the municipio; their data were collected by early 2025
+        [@cc2025-report]. BikeNetKit's network is longer than ours (−26.3%) because it includes
+        living streets [#rc-madrid-bnk_network_km]. QECIO reports the whole <i lang="es">Comunidad
+        de Madrid</i> (autonomous region of Madrid) [@boe-estatuto-autonomia-madrid]
         [#rc-madrid-qecio_main_km].
 quotes:
   - excerpt: madrid-ultimahora-1167km/network-1167

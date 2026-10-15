@@ -27,12 +27,13 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The city counts 401 km of cykelsti for 2025 [@copenhagen-mobilitetsredegorelse-2026] and
-        Clean Cities 397 km of protected infrastructure [@cc2025-report]; our A+B is 582 km. Scope:
-        a cykelsti is a kerbed track, painted lanes are a separate row, and our A+B also holds
-        shared paths. The city's design guidance advises against painted lanes in new schemes
-        [@copenhagen-cykelfokus-2024]. Length: Copenhagen's tracks are mostly one-way pairs, one per
-        road side; on the centreline ours is 359 km (−9% against Clean Cities)
+        The city counts 401 km of <i lang="da">cykelsti</i> (kerbed cycle track) for 2025
+        [@copenhagen-mobilitetsredegorelse-2026] and Clean Cities 397 km of protected infrastructure
+        [@cc2025-report]; our A+B is 582 km. Scope: a <i lang="da">cykelsti</i> is a kerbed track,
+        <i lang="da">cykelbaner</i> (painted cycle lanes) are a separate row, and our A+B also holds
+        shared paths. The city's design guidance advises against <i lang="da">cykelbaner</i> in new
+        schemes [@copenhagen-cykelfokus-2024]. Length: Copenhagen's tracks are mostly one-way pairs,
+        one per road side; on the centreline ours is 359 km (−9% against Clean Cities)
         [#recon-copenhagen-cc-km]. Kind and date: theirs are existing km counted for 2025, ours
         mapped km in October 2026. Area: both are the municipality. Method: the city's own count
         against OpenStreetMap; whether Clean Cities used the city's figure is not stated.

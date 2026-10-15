@@ -34,7 +34,7 @@ sections:
     src: d55acf04cca1
 - heading:
     text: Die 12 Bezirke
-    src: 69045acadeda
+    src: 7b0b36d4817d
   paragraphs:
   - text: >-
       Die 12 Bezirke unterscheiden sich deutlich [#bezirke]. Neukölln ist am dichtesten
@@ -54,14 +54,14 @@ sections:
       [@berlin-tagesspiegel-dpa-2025-12]; die 9,8 km betreffen allein das Vorrangnetz
       [@berlin-drs-19-25987], für das der Fortschrittsbericht selbst eine kleinere
       Zahl nennt.
-    src: d2410052bf7b
+    src: 0b69dd81c395
   - text: >-
       Wir zählen alle kartierte Infrastruktur je Straßenseite, gleich wann Kartierende
       sie erfassen. Von 2023 bis Oktober 2026 wurden 442 km Wegseiten neu kartiert
       und 656 km neu gezeichnet, und A+B stieg netto um 35,6 km [#change]. Die Bestandsaufnahme
       des Vorrangnetzes im Bericht nutzte ebenfalls OpenStreetMap, aber nur innerhalb
       dieses Netzes. Keine der beiden Reihen bestätigt oder widerlegt die andere.
-    src: 406958f81788
+    src: 5af182c680e7
 literals:
 - 100 km
 - 12 Bezirke

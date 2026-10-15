@@ -390,11 +390,11 @@ page.figures.ours_tiers: our tiers {tiers} km
 preset.fallback_label: '{preset}, our OSM data'
 figure.scope.whole_network: whole network
 figure.scope.incl_traffic_calmed_restricted_access: incl traffic calmed restricted access
-figure.scope.vorrangnetz: vorrangnetz
-figure.scope.cykelsti: cykelsti
-figure.scope.hauptradverkehrsnetz: hauptradverkehrsnetz
+figure.scope.vorrangnetz: Vorrangnetz (priority network)
+figure.scope.cykelsti: cykelsti (kerbed cycle track)
+figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz (main cycle network)
 figure.basis.unknown: unknown
-figure.basis.streckenlaenge: streckenlaenge
+figure.basis.streckenlaenge: Streckenlänge (route length)
 figure.note.qecio_halves: QECIO halves unidirectional infrastructure
 figure.note.nuts3_not_city: NUTS3 unit is not the city
 figure.note.file_md5: file md5 {md5}

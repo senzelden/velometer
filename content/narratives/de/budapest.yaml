@@ -45,11 +45,13 @@ sections:
       eigenen km auf ganze Prozent gerundet [#recon-cc]. BikeNetKit zählt 588 km,
       mehr als das Doppelte unserer 260 km der Stufen A, B und E, weil es verkehrsberuhigte
       Bereiche einschließt, die hier keine Stufe zählt [#recon-bnk]. Die Zahlen der
-      Stadt erfassen anderes, etwa einen von der Stadt verwalteten Bestand oder ein
-      geplantes Hauptnetz [@budapest-bkk-kfht-helyzetertekeles-2022]. Eine Presseanalyse
-      von 2024 nannte km einen schlechten Indikator und stellte eine auf OpenStreetMap
-      beruhende Zählung der Zahl des Statistikamts gegenüber [@budapest-telex-g7-2024].
-    src: 57162c6b1ca3
+      Stadt erfassen anderes, etwa einen Bestand an <i lang="hu">fővárosi kezelésű</i>
+      (von der Stadt verwalteten) Radweg- und Radfahrstreifenabschnitten oder ein
+      geplantes <i lang="hu">főhálózat</i> (Hauptnetz) [@budapest-bkk-kfht-helyzetertekeles-2022].
+      Eine Presseanalyse von 2024 nannte km einen schlechten Indikator und stellte
+      eine auf OpenStreetMap beruhende Zählung der Zahl des Statistikamts gegenüber
+      [@budapest-telex-g7-2024].
+    src: 69ecb4afc52d
 literals:
 - 100 km
 - 21 Städte

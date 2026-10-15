@@ -37,14 +37,17 @@ CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/ch
 EM_MARK = re.compile(r"(?<![\w*])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>])\*(?![\w*])")
 
 
-# the one markup content may write: a quotation in another language, `<q lang="de">…</q>` inside
-# a paragraph or a paragraph that is wholly `<blockquote lang="de">…</blockquote>`. Matched on the
-# escaped text, the language only ever a plain tag (LANG_TAG), nothing else is let through
+# the only markup content may write: a quotation in another language, `<q lang="de">…</q>` inside
+# a paragraph or a paragraph that is wholly `<blockquote lang="de">…</blockquote>`, and an
+# original term (an official category in its own language, M13), `<i lang="da">cykelsti</i>`,
+# italic. Matched on the escaped text, the language only ever a plain tag (LANG_TAG), nothing
+# else is let through
 def _open(tag: str) -> str:
     return f"&lt;{tag} lang=&#34;({LANG_TAG.pattern})&#34;&gt;"
 
 
 QUOTE_MARK = re.compile(_open("q") + r"(.*?)&lt;/q&gt;", re.DOTALL)
+TERM_MARK = re.compile(_open("i") + r"(.*?)&lt;/i&gt;", re.DOTALL)
 BLOCKQUOTE_MARK = re.compile(
     _open("blockquote") + r"((?:(?!&lt;/?blockquote).)*?)&lt;/blockquote&gt;", re.DOTALL
 )
@@ -183,6 +186,7 @@ class _Numbering:
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
         body = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', body)  # the only markup content may write
+        body = TERM_MARK.sub(r'<i lang="\1">\2</i>', body)
         # code spans first and kept whole: `*` inside one is text, and no *...* spans across one
         parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
         body = "".join(

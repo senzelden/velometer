@@ -38,16 +38,20 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die eigene Zahl der Ville de Bordeaux schließt Busspuren ein [@bordeaux-ville-circuler-a-velo]
-      und sagt nicht, wie die Länge gemessen wird oder ob eine Straße mit Anlagen
-      auf beiden Seiten doppelt zählt. Die Zahlen der Métropole umfassen alle ihre
-      Gemeinden und schließen verkehrsberuhigte Straßen und Fußgängerzonen ein [@bordeaux-plan-velo-2021-2026],
+      Die eigene Zahl der Ville de Bordeaux schließt <i lang="fr">couloirs bus</i>
+      (Busspuren) ein [@bordeaux-ville-circuler-a-velo] und sagt nicht, wie die Länge
+      gemessen wird oder ob eine Straße mit Anlagen auf beiden Seiten doppelt zählt.
+      Die Zahlen von <i lang="fr">Bordeaux Métropole</i> (interkommunaler Zweckverband)
+      [@bordeaux-metropole-que-fait] umfassen alle seine Gemeinden und schließen <i
+      lang="fr">voies de circulation apaisée</i> (verkehrsberuhigte Straßen) und <i
+      lang="fr">voies piétonnes</i> (Fußgängerstraßen) ein [@bordeaux-plan-velo-2021-2026],
       die keine unserer Stufen zählt; der regionale Rechnungshof beschreibt dieselbe
       Reihe als Summe aller Typen [@bordeaux-crc-plan-velo-2025]. Bordeaux ist nicht
-      in der Rangliste von Clean Cities. QECIO berichtet für das Département Gironde,
-      daher seine Abweichung von −97,6 % bei den Hauptstraßen; auf dieser Fläche stimmen
-      die Hauptstraßen überein, und die Gemeinde hat mehr markierte Radfahrstreifen
-      und weniger separate Radwege als der Rest der Gironde [#rc-bordeaux-qecio_main_km].
-    src: aebe2b5de6de
+      in der Rangliste von Clean Cities. QECIO berichtet für das <i lang="fr">département</i>
+      (Verwaltungsbezirk) Gironde [@insee-departement], daher seine Abweichung von
+      −97,6 % bei den Hauptstraßen; auf dieser Fläche stimmen die Hauptstraßen überein,
+      und die Gemeinde hat mehr markierte Radfahrstreifen und weniger separate Radwege
+      als der Rest der Gironde [#rc-bordeaux-qecio_main_km].
+    src: 6407f9a01cbc
 literals:
 - 100 km

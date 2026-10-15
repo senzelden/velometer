@@ -31,8 +31,8 @@ sections:
         network is 3,423 km against its 4,093 km, and the two gaps compound [#recon]. The length
         basis is not the cause, and the date gap does not explain the km: we already had more at the
         start of 2025. We found no published city total for cycling facilities; the city's route
-        system counts routes, which need not be signed or carry any facility
-        [@prague-ipr-system-cyklotras-2021].
+        system counts <i lang="cs">trasy</i> (routes), which need not be signed or carry any
+        facility [@prague-ipr-system-cyklotras-2021].
 quotes:
   - {excerpt: cc2025-annexes/included, after: 3}
   - {excerpt: prague-ipr-system-cyklotras-2021/routes-not-facilities, after: 3}

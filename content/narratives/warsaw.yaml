@@ -18,21 +18,23 @@ sections:
         2024, and motorways are not in the denominator [#shift_2025]. Most of that step is a
         shorter yardstick, not more mapped cycle km.
       - >-
-        The functional urban area grew much faster, from 833 to 2,033 mapped km. Its flagged
-        jumps of 2019 to 2021 were ordinary mapping activity spread over the suburban gminas,
-        with no campaign or import, partly ways retagged from construction to cycleway, which
-        dates the mapping rather than the path [#ts_fua_2019].
+        The functional urban area grew much faster, from 833 to 2,033 mapped km. Its flagged jumps
+        of 2019 to 2021 were ordinary mapping activity spread over the suburban
+        <i lang="pl">gmina</i> (municipality) areas [@gus-pojecie-gmina], with no campaign or
+        import, partly ways retagged from construction to cycleway, which dates the mapping rather
+        than the path [#ts_fua_2019].
   - heading: Why the figures differ
     role: figures
     paragraphs:
       - >-
-        The road authority ZDM counts a network that includes cycle lanes and contraflow lanes,
-        which we keep in tier D outside the headline [@warsaw-zdm-sezon-2018], and its yearly
-        summaries report km added in the year, a different kind of km from ours. Clean Cities 2025
-        counts protected infrastructure [@cc2025-annexes]; our per-side A+B is 20.9% above its 631
-        km. Every OSM count near its date is higher, which suggests it leaves out shared foot and
-        cycle paths, though that is an inference [#rec_cc_km]. Its road network of 4,300 km is wider
-        than our 3,386 km, so its ratio is 15% against our 22.5%.
+        The road authority ZDM counts a network that includes km of <i lang="pl">pasów i
+        kontrapasów</i> (cycle lanes and contraflow lanes), which we keep in tier D outside the
+        headline [@warsaw-zdm-sezon-2018], and its yearly summaries report km added in the year, a
+        different kind of km from ours. Clean Cities 2025 counts protected infrastructure
+        [@cc2025-annexes]; our per-side A+B is 20.9% above its 631 km. Every OSM count near its date
+        is higher, which suggests it leaves out shared foot and cycle paths, though that is an
+        inference [#rec_cc_km]. Its road network of 4,300 km is wider than our 3,386 km, so its
+        ratio is 15% against our 22.5%.
 quotes:
   - excerpt: warsaw-zdm-sezon-2018/composition-544km
     after: 3

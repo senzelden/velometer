@@ -47,11 +47,13 @@ sections:
       und gegenüber dem eigenen Straßennetz von Clean Cities trifft unser Wert ihre
       Zahl [#rc-lyon-cc_ratio]. Beide beziehen sich auf die Gemeinde; ihre Daten wurden
       bis Anfang 2025 erhoben, unsere stammen von der Karte vom Oktober 2026. Die
-      eigene Summe der Métropole umfasst die ganze Métropole und nimmt Straßen mit
-      Radverkehr gegen die Einbahnrichtung, Voies vertes und befestigte Seitenstreifen
-      hinzu [@lyon-plan-velo-2024]; sie weicht also in Fläche und Umfang ab. QECIO
-      berichtet für das Département Rhône; auf dieser Fläche gemessen stimmen die
-      Hauptstraßen überein [#rc-lyon-qecio_main_km].
-    src: a0ef4783ed95
+      Summe der <i lang="fr">Métropole de Lyon</i> (Metropole Lyon) umfasst deren
+      ganzes Gebiet und nimmt <i lang="fr">double sens cyclable</i> (Radverkehr gegen
+      die Einbahnrichtung), <i lang="fr">voie verte</i> (Grüner Weg) und <i lang="fr">accotement
+      revêtu</i> (befestigter Seitenstreifen) hinzu [@lyon-plan-velo-2024]; sie weicht
+      also in Fläche und Umfang ab. QECIO berichtet für das <i lang="fr">département</i>
+      (Verwaltungsbezirk) Rhône [@insee-departement]; auf dieser Fläche gemessen stimmen
+      die Hauptstraßen überein [#rc-lyon-qecio_main_km].
+    src: 8386ade09404
 literals:
 - 100 km

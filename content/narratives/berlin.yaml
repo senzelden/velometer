@@ -19,7 +19,7 @@ sections:
         absent in 2018, now come to 29 km [#ts-lau]. The functional urban area fell with the same
         campaign, which reached into Brandenburg, from 71.5 in 2021 to 64.7 in 2022, and is at
         64.5 now [#ts-fua] [#expl-fua-2022].
-  - heading: The 12 Bezirke
+  - heading: The 12 Bezirke (districts)
     paragraphs:
       - >-
         The 12 Bezirke diverge [#bezirke]. Neukölln maps densest (164.3), Pankow thinnest (62.8).
@@ -32,13 +32,14 @@ sections:
         The Senate's figures answer a different question [@berlin-fortschrittsbericht-2025]. Its
         21.2 km for 2025 are km of route that projects completed or improved, taken from a project
         database at year end. The 20.5 km was a preliminary figure the administration called
-        possibly incomplete [@berlin-tagesspiegel-dpa-2025-12]; the 9.8 km covers the Vorrangnetz
-        alone [@berlin-drs-19-25987], for which the progress report itself gives a smaller figure.
+        possibly incomplete [@berlin-tagesspiegel-dpa-2025-12]; the 9.8 km covers the
+        <i lang="de">Vorrangnetz</i> (priority network) alone [@berlin-drs-19-25987], for which the
+        progress report itself gives a smaller figure.
       - >-
         We count all mapped infrastructure per road side, whenever mappers record it. From 2023 to
-        October 2026, 442 km of way-sides were newly mapped and 656 km redrawn, and A+B rose by
-        35.6 km net [#change]. The report's Vorrangnetz inventory used OpenStreetMap too, but only
-        within that network. Neither set confirms or refutes the other.
+        October 2026, 442 km of way-sides were newly mapped and 656 km redrawn, and A+B rose by 35.6
+        km net [#change]. The report's <i lang="de">Vorrangnetz</i> inventory used OpenStreetMap
+        too, but only within that network. Neither set confirms or refutes the other.
 quotes:
   - {excerpt: berlin-fortschrittsbericht-2025/total-2025, after: 3}
   - {excerpt: berlin-fortschrittsbericht-2025/data-basis, after: 3}

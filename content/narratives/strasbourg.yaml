@@ -28,14 +28,15 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The official network figure [@strasbourg-a-velo] is more than twice our A+B. The page
-        does not say whether it covers the commune or the whole Eurométropole, which facilities
-        it counts, how length is measured or at what date. The city's open data are drawn on its
-        own road centreline network in the national BNAC schema [@strasbourg-opendata-bnac], not
-        taken from OSM, so they are a measure independent of ours. Strasbourg is not in the Clean
-        Cities ranking. QECIO reports the Bas-Rhin département, which is why its main-road km sit
-        −95.3% away from ours; measured on that area, the main roads agree
-        [#rc-strasbourg-qecio_main_km].
+        The official network figure [@strasbourg-a-velo] is more than twice our A+B. The page does
+        not say whether it covers the commune or the whole <i lang="fr">Eurométropole de
+        Strasbourg</i> (metropolitan authority) [@strasbourg-ville-eurometropole], which facilities
+        it counts, how length is measured or at what date. The city's open data are drawn on its own
+        road centreline network in the national BNAC schema [@strasbourg-opendata-bnac], not taken
+        from OSM, so they are a measure independent of ours. Strasbourg is not in the Clean Cities
+        ranking. QECIO reports the Bas-Rhin <i lang="fr">département</i> (administrative district)
+        [@insee-departement], which is why its main-road km sit −95.3% away from ours; measured on
+        that area, the main roads agree [#rc-strasbourg-qecio_main_km].
 quotes:
   - excerpt: strasbourg-a-velo/network-600
     after: 3

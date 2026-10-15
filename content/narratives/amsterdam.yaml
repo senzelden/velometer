@@ -28,12 +28,14 @@ sections:
       - >-
         Clean Cities counts 919 km of protected infrastructure [@cc2025-report]; our A+B is 862 km
         per side (−6%). We found no published city total, but the city's own definition of a
-        fietspad, quoted below, matches that scope [@amsterdam-maps-fietsnetten]. The gap is in the
-        road network: Clean Cities divides by 2,700 km, we by 2,041 km (−24%), so its ratio is 34%
-        against our 42.2% [#recon-amsterdam-cc-ratio]. Which roads its network includes, and whether
-        the city or OpenStreetMap supplied the data, is not stated. Their data date from early 2025,
-        ours from October 2026. QECIO reports Groot-Amsterdam, a region larger than the city
-        [#recon-amsterdam-qecio-main].
+        <i lang="nl">fietspad</i> (cycle path), quoted below, matches that scope
+        [@amsterdam-maps-fietsnetten]. The gap is in the road network: Clean Cities divides by 2,700
+        km, we by 2,041 km (−24%), so its ratio is 34% against our 42.2%
+        [#recon-amsterdam-cc-ratio]. Which roads its network includes, and whether the city or
+        OpenStreetMap supplied the data, is not stated. Their data date from early 2025, ours from
+        October 2026. QECIO reports the <i lang="nl">COROP-gebied</i> (COROP region, between
+        municipality and province) Groot-Amsterdam [@cbs-regionale-economie-2018-begrippen], larger
+        than the city [#recon-amsterdam-qecio-main].
 quotes:
   - {excerpt: amsterdam-maps-fietsnetten/fietspad-definition, after: 3}
   - {excerpt: cc2025-annexes/road-network-area, after: 3}

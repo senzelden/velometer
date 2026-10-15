@@ -748,7 +748,10 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
     assert len(texts) == 2 and texts[0] != texts[1]
     assert "nordkurier.de" in texts[0] and "scope: whole network" in texts[0]
     assert "Senate" in texts[0] and "final" not in texts[0]  # the first clause only
-    assert "parlament-berlin.de" in texts[1] and "scope: vorrangnetz" in texts[1]
+    from velometer import i18n
+
+    scope = i18n.t("en", "figure.scope.vorrangnetz")  # the glossed label (M13 original terms)
+    assert "parlament-berlin.de" in texts[1] and f"scope: {scope}" in texts[1]
     assert "Official / press figures" in texts[0] and "official" not in texts[0].replace(
         "Official", ""
     )

@@ -41,16 +41,18 @@ sections:
   paragraphs:
   - text: >-
       Eine aktuelle amtliche Gesamtzahl für die Stadt wurde nicht gefunden. Ein Artikel
-      eines Geschichtsvereins nennt ältere Zahlen, die Radwege und markierte Radfahrstreifen
-      getrennt führen, unten zitiert [@utrecht-oud-utrecht-fietsstad]; das entspricht
-      ungefähr unseren Stufen A und B gegenüber Stufe D, doch die Zahlen stammen von
-      2012 und die Quelle ist eine Sekundärquelle. Die Stadt streut im Winter ein
-      Netz von Hauptradwegen [@utrecht-actieplan-fietst-2015], ein Umfang für den
-      Unterhalt, keine Gesamtzahl. Fläche: QECIO berichtet für die ganze Provinz,
-      mit 2.324 km Hauptstraßen gegenüber unseren 423 km für die Stadt [#recon-utrecht-qecio-main],
-      und ist daher kein Maßstab. BikeNetKit, ebenfalls aus OpenStreetMap, zählt 420
-      km gegenüber unseren 387 km der Stufen A, B und E (−8 %) [@bikenetkit-zenodo];
-      welche Grenze es verwendet, gibt die Quelle nicht an.
-    src: 1c3b4c5a94d7
+      eines Geschichtsvereins nennt ältere Zahlen, die <i lang="nl">fietspad</i> (Radweg)
+      und <i lang="nl">fietsstrook</i> (Radfahrstreifen) getrennt führen, unten zitiert
+      [@utrecht-oud-utrecht-fietsstad]; das entspricht ungefähr unseren Stufen A und
+      B gegenüber Stufe D, doch die Zahlen stammen von 2012 und die Quelle ist eine
+      Sekundärquelle. Die Stadt streut im Winter ihre <i lang="nl">hoofdfietspaden</i>
+      (Hauptradwege) [@utrecht-actieplan-fietst-2015], ein Umfang für den Unterhalt,
+      keine Gesamtzahl. Fläche: QECIO berichtet für die ganze <i lang="nl">provincie</i>
+      (Provinz) Utrecht [@utrecht-rtv-fietsersbond-2025], mit 2.324 km Hauptstraßen
+      gegenüber unseren 423 km für die Stadt [#recon-utrecht-qecio-main], und ist
+      daher kein Maßstab. BikeNetKit, ebenfalls aus OpenStreetMap, zählt 420 km gegenüber
+      unseren 387 km der Stufen A, B und E (−8 %) [@bikenetkit-zenodo]; welche Grenze
+      es verwendet, gibt die Quelle nicht an.
+    src: 5eafcf3c219c
 literals:
 - 100 km

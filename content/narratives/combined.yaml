@@ -68,7 +68,7 @@ sections:
         tertiary roads lifted the main roads from 467 to 484 km, and the headline fell from
         274.4 to 264.7 with A+B flat [#shift-helsinki-2025]. Both describe the road map, not
         cycling infrastructure.
-  - heading: Inside one city, Berlin's 12 Bezirke
+  - heading: Inside one city, Berlin's 12 Bezirke (districts)
     step: bezirke
     paragraphs:
       - >-
@@ -94,13 +94,13 @@ sections:
         basis, 913.5 km, not our 1,550.7 km per side [#recon-berlin-cc-km]; Ljubljana's 251 km
         sits by our per-side 245 km [#recon-ljubljana-cc-ratio].
       - >-
-        Date: their data date from early 2025, ours from October 2026.
-        Area: QECIO reports NUTS3 regions from data of January 2024 [@qecio-metadata]. Where the
-        region is the city the main roads agree closely: 2,153 against 2,150 km for Berlin
-        [#recon-berlin]; elsewhere it covers a county, as Stockholm's 4,946 km
-        of main roads against our 667 km show [#recon-stockholm-qecio-main]. Method: Clean
-        Cities took most figures from the cities themselves [@cc2025-report], and its 822 km for
-        Paris exceeds everything we map there across all tiers [#recon-paris-cc-km].
+        Date: their data date from early 2025, ours from October 2026. Area: QECIO reports NUTS3
+        regions from data of January 2024 [@qecio-metadata]. Where the region is the city the main
+        roads agree closely: 2,153 against 2,150 km for Berlin [#recon-berlin]; elsewhere it covers
+        a <i lang="sv">län</i> (county) [@scb-lan-och-kommuner], as Stockholm's 4,946 km of main
+        roads against our 667 km show [#recon-stockholm-qecio-main]. Method: Clean Cities took most
+        figures from the cities themselves [@cc2025-report], and its 822 km for Paris exceeds
+        everything we map there across all tiers [#recon-paris-cc-km].
 quotes:
   - {excerpt: cc2025-report/shared-paths, after: 1}
   - {excerpt: qecio-methodology/disclaimer, after: 2}

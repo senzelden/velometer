@@ -40,8 +40,9 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Die eigenen Summen der Stadt verwenden eine weite Definition, die auch Gehwege
-      mit erlaubtem Radverkehr und Radfahren gegen die Einbahnrichtung in verkehrsberuhigten
+      Die eigenen Summen der Stadt verwenden eine weite Definition, die auch <i lang="pl">chodniki
+      z dopuszczonym ruchem rowerowym</i> (Gehwege mit erlaubtem Radverkehr) und <i
+      lang="pl">kontraruch rowerowy</i> (Radfahren gegen die Einbahnrichtung) in verkehrsberuhigten
       Straßen zählt, beides außerhalb unseres A+B [@krakow-250km-2022], und sie nennen
       weder Längenbasis noch Zählmethode. Clean Cities 2025 zählt geschützte Infrastruktur
       [@cc2025-annexes]: Seine 229 km liegen unter jeder OSM-Zählung nahe seinem Datum,
@@ -49,6 +50,6 @@ sections:
       Grund sein, dass Geh- und Radwege ausgelassen werden, doch das ist eine Schlussfolgerung
       [#rec_cc_km]. Sein Straßennetz von 2.128 km ist weiter gefasst als unsere 1.718
       km, daher beträgt sein Verhältnis 11 % gegenüber unseren 17,2 %.
-    src: f28416373942
+    src: 5645af2ca82e
 literals:
 - 100 km

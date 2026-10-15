@@ -150,7 +150,9 @@ def test_german_figures_tab_shows_the_german_config_text(setup):  # noqa: F811
         assert f.note in en
     assert i18n.t("de", "figure.scope.vorrangnetz") in de
     assert i18n.t("de", "figure.basis.streckenlaenge") in de
-    assert "vorrangnetz" in en and "streckenlaenge" in en
+    # both editions show the glossed label (M13: the original term, then its translation)
+    assert i18n.t("en", "figure.scope.vorrangnetz") in en
+    assert i18n.t("en", "figure.basis.streckenlaenge") in en
     leaks = [en_ for _w, en_, de_ in reader_prose(Path("config"))
              if len(en_.split()) >= 4 and en_ != de_ and en_ in de]  # fmt: skip
     assert leaks == []

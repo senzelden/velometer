@@ -376,12 +376,12 @@ sources:
       - id: lanes
         text: "Cyklopruhy vyhrazené / ochranné 74,2 km / 80,1 km"
         gloss_en: "Cycle lanes, reserved / advisory (protective): 74.2 km / 80.1 km."
-        gloss_de: "Radfahrstreifen / Schutzstreifen: 74,2 km / 80,1 km."
+        gloss_de: "Radfahrstreifen / Angebotsstreifen: 74,2 km / 80,1 km."
         locator: "p. 28, table 'Základní údaje o cyklistické infrastruktuře v Praze' (label and value cells)"
       - id: new-2024-lanes
         text: "Cyklopruhy (V14 / V14–ochranný) 0 km / 6,6 km"
         gloss_en: "Cycle lanes (V14 reserved / V14 advisory) built in 2024: 0 km / 6.6 km."
-        gloss_de: "Radfahrstreifen (V14 / V14-Schutzstreifen): 0 km / 6,6 km."
+        gloss_de: "Radfahrstreifen (V14 / V14-Angebotsstreifen): 0 km / 6,6 km."
         locator: "p. 28, table 'Nové prvky cyklistické infrastruktury realizované v roce 2024' (row)"
       - id: new-2024-contraflow
         text: "Cykloobousměrky 16,4 km"
@@ -426,7 +426,7 @@ sources:
       - id: lanes-2025
         text: "Vyhrazených cyklopruhů byl vyznačen 1,1 kilometr, ochranných 6,5 kilometrů."
         gloss_en: "1.1 km of reserved cycle lanes and 6.5 km of advisory (protective) lanes were marked."
-        gloss_de: "Markiert wurden 1,1 Kilometer Radfahrstreifen und 6,5 Kilometer Schutzstreifen."
+        gloss_de: "Markiert wurden 1,1 Kilometer Radfahrstreifen und 6,5 Kilometer Angebotsstreifen."
         locator: "article body, paragraph on cycle lanes"
       - id: own-monitoring
         text: "Data prezentovaná v tomto přehledovém článku vycházejí z našeho redakčního monitoringu nové infrastruktury. Je možné, že skutečné počty se mohou mírně lišit."
@@ -453,7 +453,7 @@ sources:
       - id: breakdown-total
         text: "Z vyše štrnástich kilometrov, o ktoré sa sieť rozšírila, je 6,9 kilometra samostatných cyklistických komunikácií, 2,2 kilometra ochranných pruhov, 3,6 kilometra spoločného chodníka pre chodcov a cyklistov a 1,5 kilometra bicyklovej cesty. Cyklistická infraštruktúra v meste celkovo meria viac než 205 kilometrov."
         gloss_en: "Of the more than fourteen kilometres by which the network grew, 6.9 km are separate cycle tracks, 2.2 km advisory lanes, 3.6 km shared footpaths for pedestrians and cyclists and 1.5 km bicycle road. Cycling infrastructure in the city measures more than 205 km in total."
-        gloss_de: "Von den mehr als vierzehn Kilometern, um die das Netz wuchs, sind 6,9 Kilometer eigenständige Radwege, 2,2 Kilometer Schutzstreifen, 3,6 Kilometer gemeinsame Geh- und Radwege und 1,5 Kilometer Fahrradstraße. Die Radinfrastruktur der Stadt misst insgesamt mehr als 205 Kilometer."
+        gloss_de: "Von den mehr als vierzehn Kilometern, um die das Netz wuchs, sind 6,9 Kilometer eigenständige Radwege, 2,2 Kilometer Angebotsstreifen, 3,6 Kilometer gemeinsame Geh- und Radwege und 1,5 Kilometer Fahrradstraße. Die Radinfrastruktur der Stadt misst insgesamt mehr als 205 Kilometer."
         locator: "article body, second paragraph"
       - id: connected-network
         text: "Týmto prvkom vznikla ucelená sieť s minimálnou dĺžkou deväťdesiat kilometrov."

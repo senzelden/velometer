@@ -124,10 +124,11 @@ def test_nav_links_plans_and_organisations_and_marks_the_current_one(client):
 
 
 def _plain(paragraph: str) -> str:
-    """The start of a paragraph as the page shows it: escaped, `code` marked, up to its first
-    citation marker."""
+    """The start of a paragraph as the page shows it: escaped, `code` and original terms
+    (`<i lang>`) marked, up to its first citation marker."""
     text = " ".join(paragraph.split()).split(" [", 1)[0].split("[", 1)[0]
-    return re.sub(r"`([^`]+)`", r"<code>\1</code>", str(escape(text)))
+    html = re.sub(r"`([^`]+)`", r"<code>\1</code>", str(escape(text)))
+    return re.sub(r"&lt;i lang=&#34;([\w-]+)&#34;&gt;(.*?)&lt;/i&gt;", r'<i lang="\1">\2</i>', html)
 
 
 def test_the_german_document_title_renders_in_italics_with_its_translation(client):
@@ -834,9 +835,26 @@ def test_content_may_mark_an_inline_quote_with_its_language():
     )
 
 
+def test_content_may_mark_an_original_term_with_its_language():
+    """An official category in its own language (M13 original-terms rule): `<i lang="da">…</i>`,
+    italic and in that language, inside the paragraph's own text."""
+    assert _para('the <i lang="da">cykelsti</i> (kerbed track) and *a title*') == (
+        '<p>the <i lang="da">cykelsti</i> (kerbed track) and <em>a title</em></p>'
+    )
+    assert _para('<i lang="nb">gang- og sykkelveier</i>, <i lang="sv">län</i>') == (
+        '<p><i lang="nb">gang- og sykkelveier</i>, <i lang="sv">län</i></p>'
+    )
+    quote = _para('<blockquote lang="fr">Les <i lang="fr">voies vertes</i>.</blockquote>')
+    assert quote == '<blockquote lang="fr"><p>Les <i lang="fr">voies vertes</i>.</p></blockquote>'
+
+
 @pytest.mark.parametrize(
     "text",
     [
+        '<i lang="da" class="x">a</i>',  # an original term: no other attribute either
+        "<i>a</i>",  # an italic needs a language: plain emphasis is `*…*`
+        '<i lang="d a">a</i>',
+        '<i lang="da">unclosed',
         '<q lang="de" onclick="x()">a</q>',  # no other attribute
         '<q lang="de&quot; onclick=&quot;x">a</q>',  # the value is a language tag, nothing else
         '<q lang="d e">a</q>',

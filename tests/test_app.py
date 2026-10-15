@@ -1380,7 +1380,8 @@ def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
     assert 'href=""' not in section
     assert section.count("no source URL recorded") == 1
     text = _text(section)
-    assert "17.3" in text and "20.5" in text and "vorrangnetz" in text and "unknown" in text
+    assert "17.3" in text and "20.5" in text and "Vorrangnetz (priority network)" in text
+    assert "unknown" in text
     assert "clean_cities_2025" not in section and "qecio" not in section
     assert "no official or reported figures for Paris" in _text(other)
 

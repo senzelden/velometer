@@ -11,7 +11,7 @@ sections:
       und den Bezirken [@infravelo-organisation]. Sie vollzieht das Mobilitätsgesetz,
       verkündet am 5. Juli 2018 [@berlin-mobg-page], und finanziert und steuert die
       landeseigene Radverkehrsgesellschaft infraVelo [@infravelo-faq].
-    src: e87c144db01b
+    src: 1d0db6318a35
 - heading:
     text: Wie sie messen
     src: 961f30415384
@@ -29,18 +29,18 @@ sections:
       text: >-
         Streckenlänge seit dem Bericht 2022: Eine Straße mit Anlagen auf beiden Seiten
         zählt als eine Länge; frühere Berichte zählten jede Richtung [@berlin-radfortschrittsbericht-page]
-      src: 7b791fb8ab03
+      src: 5d77165502d3
     date:
       text: Stichtag 31. Dezember des Berichtsjahres [@berlin-fortschrittsbericht-2025]
       src: 190c4e68ace0
     area:
-      text: Land Berlin [@berlin-fortschrittsbericht-2025]
-      src: 13f6a99c9cff
+      text: Land Berlin [@berlin-fortschrittsbericht-2025] [@infravelo-faq]
+      src: 3828699be36f
     method:
       text: >-
         hauptsächlich die von infraVelo geführte und von den Bezirken aktualisierte
         Projektdatenbank [@berlin-fortschrittsbericht-2025] [@infravelo-faq]
-      src: 52fcef4f18d4
+      src: 64e9004ce118
   paragraphs:
   - text: >-
       Unsere Berliner Zeilen `official` stammen von der SenMVKU: aus ihrem jährlichen
@@ -71,7 +71,7 @@ sections:
       auch nur einen Autoparkplatz kosten würden [@berlin-tagesspiegel-radwegestopp-2023].
       Im Dezember 2025 nannte sie für das Jahr 20,5 km, weniger als ihr eigenes Ziel
       [@berlin-tagesspiegel-dpa-2025-12].
-    src: f2d62ae37a83
+    src: 879247f774a0
 literals:
 - 27 Millionen Euro
 - 82,4 Millionen

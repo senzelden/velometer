@@ -134,6 +134,20 @@ def test_parity_of_foreign_quotations_is_enforced(tree):
     assert any(p.startswith("[de] ") and "quotations" in p for p in tree.check()[0])
 
 
+def test_parity_of_original_terms_is_enforced(tree):
+    """An original term in another language is kept byte for byte, like a quotation: the German
+    edition shows the same `<i lang="da">cykelsti</i>`, only its bracketed translation differs."""
+    tree.edit("sections.0.paragraphs.0", lambda s: s + ' <i lang="da">cykelsti</i> (x)')
+    fake_translate(tree.en, tree.de)
+    assert tree.check()[0] == []
+    tree.edit(
+        "sections.0.paragraphs.0",
+        lambda s: s.replace('lang="da">cykelsti', 'lang="da">Radweg'),
+        german=True,
+    )
+    assert any(p.startswith("[de] ") and "original terms" in p for p in tree.check()[0])
+
+
 def test_section_and_paragraph_counts_must_match(tree):
     tree.edit("sections.1.paragraphs", lambda ps: ps + ["Übersetzt: extra"], german=True)
     assert any("paragraph count" in p for p in tree.check()[0])

@@ -487,7 +487,7 @@ tier.A: A baulich getrennter Radweg
 tier.B: B Geh- und Radweg
 tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
-tier.E: E Fahrradstraße / Busspur
+tier.E: E Fahrradstraße o. Ä. / Busspur
 map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
 map.footer: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle
@@ -639,7 +639,7 @@ js.tier.A: A baulich getrennter Radweg
 js.tier.B: B Geh- und Radweg
 js.tier.C: C geschützter Radfahrstreifen
 js.tier.D: D markierter Radfahrstreifen
-js.tier.E: E Fahrradstraße / Busspur
+js.tier.E: E Fahrradstraße o. Ä. / Busspur
 js.chart.no_values: Keine Werte für diese Auswahl.
 js.chart.no_data: Keine Daten
 js.chart.line: Liniendiagramm

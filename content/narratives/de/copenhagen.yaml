@@ -42,19 +42,20 @@ sections:
     src: 8cc8463f82aa
   paragraphs:
   - text: >-
-      Für 2025 zählt die Stadt 401 km cykelsti [@copenhagen-mobilitetsredegorelse-2026]
-      und Clean Cities 397 km geschützter Infrastruktur [@cc2025-report]; unser A+B-Wert
-      liegt bei 582 km. Umfang: Ein cykelsti ist ein Radweg mit Bordstein, markierte
-      Radfahrstreifen stehen in einer eigenen Zeile, und unser A+B enthält auch Geh-
-      und Radwege. Die Gestaltungsleitlinien der Stadt raten bei neuen Vorhaben von
-      markierten Radfahrstreifen ab [@copenhagen-cykelfokus-2024]. Länge: Kopenhagens
+      Für 2025 zählt die Stadt 401 km <i lang="da">cykelsti</i> (Hochbordradwege)
+      [@copenhagen-mobilitetsredegorelse-2026] und Clean Cities 397 km geschützter
+      Infrastruktur [@cc2025-report]; unser A+B-Wert liegt bei 582 km. Umfang: Ein
+      <i lang="da">cykelsti</i> ist ein Radweg mit Bordstein, <i lang="da">cykelbaner</i>
+      (markierte Radfahrstreifen) stehen in einer eigenen Zeile, und unser A+B enthält
+      auch Geh- und Radwege. Die Gestaltungsleitlinien der Stadt raten bei neuen Vorhaben
+      von <i lang="da">cykelbaner</i> ab [@copenhagen-cykelfokus-2024]. Länge: Kopenhagens
       Radwege sind meist Paare von Einrichtungsradwegen, einer je Straßenseite; entlang
       der Straßenachse liegt unser Wert bei 359 km (−9 % gegenüber Clean Cities) [#recon-copenhagen-cc-km].
       Art und Datum: Die Zahlen der Stadt und von Clean Cities sind bestehende km,
       für 2025 gezählt, unsere sind kartierte km im Oktober 2026. Fläche: Beide beziehen
       sich auf die Gemeinde. Methode: die eigene Zählung der Stadt gegenüber OpenStreetMap;
       ob Clean Cities die Zahl der Stadt übernommen hat, ist nicht angegeben.
-    src: a7d97cbf3b17
+    src: b8e252634cfd
 literals:
 - 100 km
 - '21'

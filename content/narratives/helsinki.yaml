@@ -31,14 +31,15 @@ sections:
     role: figures
     paragraphs:
       - >-
-        Clean Cities counts 783 km of protected infrastructure for Helsinki [@cc2025-report];
-        our A+B is 1,279 km per side (+63%). Length is not the cause: most of the city's paths
-        are two-way [@helsinki-priorisointiohjelma-2021], so the centreline barely changes ours.
-        Scope is: their figure lies between our tier A and A+B, so it counts fewer shared paths,
-        though which ones is not stated [#recon-helsinki-cc-km]. The city's own figure for
-        separate cycleways, quoted below, is close to our A+B; its date and method are not
-        stated. QECIO reports the Helsinki-Uusimaa region, not the city. Baana figures count
-        completed high-quality routes, a kind of km we do not measure.
+        Clean Cities counts 783 km of protected infrastructure for Helsinki [@cc2025-report]; our
+        A+B is 1,279 km per side (+63%). Length is not the cause: most of the city's paths are
+        two-way [@helsinki-priorisointiohjelma-2021], so the centreline barely changes ours. Scope
+        is: their figure lies between our tier A and A+B, so it counts fewer shared paths, though
+        which ones is not stated [#recon-helsinki-cc-km]. The city's own figure for
+        <i lang="fi">erillisiä pyöräväyliä</i> (separate cycleways), quoted below, is close to our
+        A+B; its date and method are not stated. QECIO reports the Helsinki-Uusimaa region, not the
+        city. The <i lang="fi">baana</i> (high-quality cycle route) figures count completed routes,
+        a kind of km we do not measure [@helsinki-pyorailykatsaus-2021].
 quotes:
   - {excerpt: helsinki-priorisointiohjelma-2021/network-1200, after: 4}
   - {excerpt: helsinki-yle-2026/baana-33, after: 4}

@@ -10,11 +10,11 @@ sections:
     paragraphs:
       - >-
         A permanent counter records each bicycle that crosses its counting line, quoted below
-        [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's
-        sites are the state's counters, on the statlige og fylkeskommunale vegnett (state and
-        county road network) and a few kommunale veger (municipal roads)
-        [@vegvesen-trafikkdata]. Barcelona's files give one average value per gauge, month and
-        type of day [@barcelona-aforaments-detall], indexed as a separate series.
+        [@berlin-zaehlstellen]. It says nothing about trips elsewhere or who rides. Oslo's sites are
+        the state's counters, on the <i lang="nb">statlige og fylkeskommunale vegnett</i> (state and
+        county road network) and a few <i lang="nb">kommunale veger</i> (municipal roads)
+        [@vegvesen-trafikkdata]. Barcelona's files give one average value per gauge, month and type
+        of day [@barcelona-aforaments-detall], indexed as a separate series.
   - dimension: selection
     heading: Where counters stand
     paragraphs:

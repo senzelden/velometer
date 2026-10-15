@@ -16,22 +16,23 @@ sections:
         mapper drew much of the pedestrian network, footways rather than cycleways
         [#ts_lau_2018]. Because 2018 is the first point, no change in km is attributed to it.
       - >-
-        The functional urban area grew faster, from 332 to 701 mapped km. Its flagged steps of
-        2020, 2022 and 2023 were mapping activity in the suburban gminas, partly ways retagged
-        from construction to cycleway. Such a retag dates the mapping, not the path on the
-        ground [#ts_fua_2023].
+        The functional urban area grew faster, from 332 to 701 mapped km. Its flagged steps of 2020,
+        2022 and 2023 were mapping activity in the suburban <i lang="pl">gmina</i> (municipality)
+        areas [@gus-pojecie-gmina], partly ways retagged from construction to cycleway. Such a retag
+        dates the mapping, not the path on the ground [#ts_fua_2023].
   - heading: Why the figures differ
     role: figures
     paragraphs:
       - >-
-        The city hall's figures count wider networks than ours: its "cyclist-friendly routes"
-        include contraflow lanes and traffic-calmed zones, which our headline does not count
-        [@wroclaw-wroclife-nik-2023], and its other totals give no definition or length basis. Clean
-        Cities 2025 counts protected infrastructure, shared foot and cycle paths included
-        [@cc2025-annexes]. Our per-side A+B of 399 km is 12.3% above its 355 km, and 6.8% above on
-        the centreline basis, with a year and a half between the two dates [#rec_cc_ratio]. The
-        ratio differs more: its road network of 1,769 km is wider than our 1,340 km
-        [#rec_cc_network], so its 20% stands against our 29.8%.
+        The city hall's figures count wider networks than ours: its <i lang="pl">trasy „przyjazne
+        rowerzystom”</i> ("cyclist-friendly" routes) include <i lang="pl">kontrapasy</i> (contraflow
+        lanes) and <i lang="pl">strefy uspokojonego ruchu</i> (traffic-calmed zones), which our
+        headline does not count [@wroclaw-wroclife-nik-2023], and its other totals give no
+        definition or length basis. Clean Cities 2025 counts protected infrastructure, shared foot
+        and cycle paths included [@cc2025-annexes]. Our per-side A+B of 399 km is 12.3% above its
+        355 km, and 6.8% above on the centreline basis, with a year and a half between the two dates
+        [#rec_cc_ratio]. The ratio differs more: its road network of 1,769 km is wider than our
+        1,340 km [#rec_cc_network], so its 20% stands against our 29.8%.
 quotes:
   - excerpt: wroclaw-wroclife-nik-2023/friendly-routes
     after: 3

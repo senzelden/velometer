@@ -22,7 +22,7 @@ sections:
       text: >-
         Radverkehrsprojekte aller Anlagentypen im Hauptradverkehrsnetz, deren Umsetzung
         im Jahr begann [@vienna-radwegeausbau-bilanz-2025]
-      src: 434a019503ac
+      src: 8e1b3adbfa26
     kind:
       text: >-
         begonnene Projekte, nicht die abgeschlossenen [@vienna-radwegeausbau-bilanz-2025]
@@ -37,7 +37,7 @@ sections:
       src: d33063da7ded
     area:
       text: Stadt Wien, Hauptradverkehrsnetz [@vienna-radwegeausbau-bilanz-2025]
-      src: fde5da0edf00
+      src: 28274922d547
     method:
       text: >-
         eigene Zählung der Agentur über die Projekte der Stadt [@vienna-radwegeausbau-bilanz-2025]
@@ -50,7 +50,7 @@ sections:
       bestehender Wege bleibt außen vor [@vienna-radwegeausbau-bilanz-2025]. Die Netzstatistik
       der Stadt ist eine eigene Reihe, die seit 2018 Anlagen auf beiden Seiten einer
       Straße erfasst [@vienna-radverkehrsnetz-fakten].
-    src: 017ed95dcd17
+    src: a616366bda1d
 - heading:
     text: Politische Rolle
     src: 38a02bd1c37e

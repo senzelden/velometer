@@ -42,15 +42,17 @@ sections:
   paragraphs:
   - text: >-
       Ljubljanas eigene Zahl nennt weder Längenbasis noch Zähldatum: Die Website der
-      Stadt zählt Radfahrstreifen auf Gehwegen und Fahrbahnen zusammen mit baulich
-      getrennten Radwegen und Geh- und Radwegen [@ljubljana-mol-hoja-in-kolesarjenje],
-      während unsere Hauptkennzahl Radfahrstreifen auslässt. Clean Cities 2025 zählt
-      nur geschützte Infrastruktur [@cc2025-annexes]. Seine 251 km liegen nahe an
-      unserem A+B-Wert je Seite von 245 km (−2,4 %), allerdings sagt der Bericht nicht,
-      ob die Stadt die Zahl geliefert hat. Sein Straßennetz von 1.649 km ist weiter
-      gefasst als unsere 1.172 km, daher beträgt sein Verhältnis 15 % gegenüber unseren
-      20,9 % [#rec_cc_ratio]. QECIO zählt die ganze NUTS3-Region um die Stadt, nicht
-      die Gemeinde [#rec_qecio_main].
-    src: 4279a8621149
+      Stadt zählt Flächen in Form von <i lang="sl">kolesarskih pasov na pločniku ali
+      vozišču, ločenih kolesarskih stez ter skupnih poti za pešce in kolesarje</i>
+      (Radfahrstreifen auf Gehweg oder Fahrbahn, getrennte Radwege sowie gemeinsame
+      Wege für Fußgänger und Radfahrer) [@ljubljana-mol-hoja-in-kolesarjenje], während
+      unsere Hauptkennzahl Radfahrstreifen auslässt. Clean Cities 2025 zählt nur geschützte
+      Infrastruktur [@cc2025-annexes]. Seine 251 km liegen nahe an unserem A+B-Wert
+      je Seite von 245 km (−2,4 %), allerdings sagt der Bericht nicht, ob die Stadt
+      die Zahl geliefert hat. Sein Straßennetz von 1.649 km ist weiter gefasst als
+      unsere 1.172 km, daher beträgt sein Verhältnis 15 % gegenüber unseren 20,9 %
+      [#rec_cc_ratio]. QECIO zählt die ganze NUTS3-Region um die Stadt, nicht die
+      Gemeinde [#rec_qecio_main].
+    src: b346c76dc274
 literals:
 - 100 km

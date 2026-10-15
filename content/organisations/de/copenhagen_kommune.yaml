@@ -18,12 +18,14 @@ sections:
   dimensions:
     scope:
       text: >-
-        Radwege (cykelstier), durch Bordsteine von Fahrbahn und Gehweg getrennt; Radfahrstreifen
-        stehen in einer eigenen Zeile [@copenhagen-cykelfokus-2024] [@copenhagen-mobilitetsredegorelse-2026]
-      src: 152104ce3298
+        <i lang="da">cykelstier</i> (Hochbordradwege), durch Bordsteine von Fahrbahn
+        und Gehweg getrennt; <i lang="da">cykelbaner</i> (Radfahrstreifen) stehen
+        in einer eigenen Zeile [@copenhagen-cykelfokus-2024] [@copenhagen-mobilitetsredegorelse-2026]
+      src: 12eb6ced42b5
     kind:
-      text: bestehender Radweg im Jahr 2025 [@copenhagen-mobilitetsredegorelse-2026]
-      src: 6ebf91a68d15
+      text: >-
+        bestehender <i lang="da">cykelsti</i> im Jahr 2025 [@copenhagen-mobilitetsredegorelse-2026]
+      src: 524384544c5a
     length:
       text: von der Quelle nicht angegeben
       src: 6369b53f77a8
@@ -38,14 +40,14 @@ sections:
       src: 27b70064b6ea
   paragraphs:
   - text: >-
-      Unsere Zahl für Kopenhagen, 401 km Radweg im Jahr 2025, stammt aus der Mobilitetsredegørelse
-      2026 [@copenhagen-mobilitetsredegorelse-2026]. Früher berichtete die Stadt alle
-      zwei Jahre in einer Fahrradbilanz (Cykelregnskab) über den Radverkehr; seit
-      2021 ersetzt sie der Mobilitätsbericht [@copenhagen-verdens-bedste-cykelby].
-      In den Gestaltungsleitlinien der Stadt hat ein cykelsti Bordsteine zur Fahrbahn
-      und zum Gehweg, während markierte Radfahrstreifen eine eigene Kategorie sind,
-      die neue Vorhaben vermeiden sollen [@copenhagen-cykelfokus-2024].
-    src: 362d4682c122
+      Unsere Zahl für Kopenhagen, 401 km <i lang="da">cykelsti</i> im Jahr 2025, stammt
+      aus der Mobilitetsredegørelse 2026 [@copenhagen-mobilitetsredegorelse-2026].
+      Früher berichtete die Stadt alle zwei Jahre in einer Fahrradbilanz (Cykelregnskab)
+      über den Radverkehr; seit 2021 ersetzt sie der Mobilitätsbericht [@copenhagen-verdens-bedste-cykelby].
+      In den Gestaltungsleitlinien der Stadt hat ein <i lang="da">cykelsti</i> Bordsteine
+      zur Fahrbahn und zum Gehweg, während <i lang="da">cykelbaner</i> eine eigene
+      Kategorie sind, die neue Vorhaben vermeiden sollen [@copenhagen-cykelfokus-2024].
+    src: bf0650bcab0f
 - heading:
     text: Politische Rolle
     src: 38a02bd1c37e

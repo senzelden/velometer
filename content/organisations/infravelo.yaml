@@ -7,19 +7,21 @@ sections:
     paragraphs:
       - >-
         GB infraVelo GmbH was founded in mid-2017 on behalf of the Senate transport department
-        [@infravelo-ueber-uns]. It is a wholly owned subsidiary of the state-owned Grün Berlin
-        GmbH [@infravelo-ueber-uns] and is funded by allocations from Berlin's public budget
-        [@infravelo-faq]. It does not initiate projects: SenMVKU assigns and prioritises them,
-        and infraVelo manages their planning and construction as the client
-        [@infravelo-faq]. The districts and SenMVKU also run cycling projects themselves
+        [@infravelo-ueber-uns]. It is a wholly owned subsidiary of the state-owned Grün Berlin GmbH
+        [@infravelo-ueber-uns] and is funded by allocations from Berlin's public budget
+        [@infravelo-faq]. It does not initiate projects: SenMVKU assigns and prioritises them, and
+        infraVelo manages their planning and construction as the client [@infravelo-faq]. The
+        <i lang="de">Bezirke</i> (districts) and SenMVKU also run cycling projects themselves
         [@infravelo-faq].
   - heading: How they measure
     dimensions:
-      scope: cycling measures of all Berlin districts, recorded as projects [@infravelo-faq]
+      scope: >-
+        cycling measures of all Berlin <i lang="de">Bezirke</i> (districts), recorded as projects
+        [@infravelo-faq]
       kind: projects, monitored above all for scheduling and finances [@infravelo-faq]
       length: not stated by the source
       date: updated quarterly by the districts [@infravelo-faq]
-      area: Land Berlin [@infravelo-faq]
+      area: <i lang="de">Land Berlin</i> (state of Berlin) [@infravelo-faq]
       method: >-
         a cloud project database developed by infraVelo and kept up by district project leads
         [@infravelo-faq]
@@ -36,9 +38,10 @@ sections:
     paragraphs:
       - >-
         The direction and priorities of infraVelo's projects lie with SenMVKU
-        [@infravelo-organisation]; in our reading it has no political mandate of its own. It chairs three to four steering
-        rounds a year with each district and SenMVKU [@infravelo-faq] and shows the database on
-        a public project map [@infravelo-faq].
+        [@infravelo-organisation]; in our reading it has no political mandate of its own. It chairs
+        three to four steering rounds a year with each of the <i lang="de">Bezirke</i> (districts)
+        and SenMVKU [@infravelo-faq] and shows the database on a public project map
+        [@infravelo-faq].
       - >-
         In our reading, because the report to the Hauptausschuss rests on its database
         [@berlin-fortschrittsbericht-2025] [@berlin-dpa-fortschrittsbericht-hauptausschuss], the

@@ -12,7 +12,7 @@ sections:
       an: Die SenMVKU weist sie zu und priorisiert sie, und infraVelo steuert als
       Bauherrin ihre Planung und ihren Bau [@infravelo-faq]. Auch die Bezirke und
       die SenMVKU führen selbst Radverkehrsprojekte durch [@infravelo-faq].
-    src: 1576620de02d
+    src: f72eee8fc8b7
 - heading:
     text: Wie sie messen
     src: 961f30415384
@@ -20,7 +20,7 @@ sections:
     scope:
       text: >-
         Radverkehrsmaßnahmen aller Berliner Bezirke, als Projekte erfasst [@infravelo-faq]
-      src: 870374399b9c
+      src: 2b84b412dcd4
     kind:
       text: Projekte, vor allem nach Terminen und Finanzen überwacht [@infravelo-faq]
       src: 53fb07d1767b
@@ -32,7 +32,7 @@ sections:
       src: 416dfaec37fa
     area:
       text: Land Berlin [@infravelo-faq]
-      src: a2602256d4c2
+      src: 50cead5704e6
     method:
       text: >-
         eine von infraVelo entwickelte Cloud-Projektdatenbank, die von den Projektleitungen
@@ -61,7 +61,7 @@ sections:
       Mandat. infraVelo leitet drei bis vier Lenkungsrunden im Jahr mit jedem Bezirk
       und der SenMVKU [@infravelo-faq] und zeigt die Datenbank auf einer öffentlichen
       Projektkarte [@infravelo-faq].
-    src: ffc720d0a113
+    src: 085046cd5e9d
   - text: >-
       Weil der Bericht an den Hauptausschuss auf seiner Datenbank beruht [@berlin-fortschrittsbericht-2025]
       [@berlin-dpa-fortschrittsbericht-hauptausschuss], gehört nach unserer Lesart

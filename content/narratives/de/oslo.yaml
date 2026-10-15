@@ -19,18 +19,18 @@ sections:
       Hauptstraßen) von 53,1 auf 70,8 [#ts-oslo]. Der einzige markierte Schritt ist
       der Punkt 2021, als A+B von 264 auf 298 km ging. Das meiste davon ist eine Umtaggung:
       Im Laufe des Jahres 2020 wurden bestehende Gehwege als gemeinsame Geh- und Radwege
-      neu getaggt, so wie in Norwegen der übliche gang- og sykkelvei kartiert wird,
-      und neu gezeichnete Wege machten den Rest aus [#ts-oslo-2021]. Neu getaggte
-      Wege sind keine neue Infrastruktur.
-    src: 61f6f3d856b4
+      neu getaggt, so wie in Norwegen der übliche <i lang="nb">gang- og sykkelvei</i>
+      (Geh- und Radweg) kartiert wird [@oslo-sykkelkart], und neu gezeichnete Wege
+      machten den Rest aus [#ts-oslo-2021]. Neu getaggte Wege sind keine neue Infrastruktur.
+    src: 4717ada18223
   - text: >-
       Geh- und Radwege (Stufe B) überwiegen durchgehend, 222 → 282 km, gegenüber 38
       → 60 km baulich getrennter Radwege (Stufe A). Markierte Radfahrstreifen (Stufe
       D) stiegen von 111 auf 161 km, größtenteils am Punkt 2023 (128 → 160 km). Eine
-      von der Stadt beauftragte Evaluation beschreibt das Netz als überwiegend markierte
-      Radfahrstreifen [@oslo-ey-evaluering-2024]; in den kartierten Daten sind Geh-
-      und Radwege die größte Gruppe.
-    src: cf91a66a6802
+      von der Stadt beauftragte Evaluation beschreibt das Netz als überwiegend <i
+      lang="nb">markerte sykkelfelt</i> (markierte Radfahrstreifen) [@oslo-ey-evaluering-2024];
+      in den kartierten Daten sind Geh- und Radwege die größte Gruppe.
+    src: 0b8412814d52
   - text: >-
       Der funktionale Stadtraum (FUA) wuchs stärker, A+B 1.546 → 2.071 km, mit einem
       eigenen markierten Schritt im Jahr 2021: in den umliegenden Gemeinden neu gezeichnete
@@ -46,12 +46,14 @@ sections:
       Clean Cities zählt für Oslo 307 km geschützter Infrastruktur [@cc2025-report];
       unser A+B-Wert liegt bei 341 km je Seite, 11 % darüber [#recon-oslo-cc-ratio].
       Seine Daten stammen von Anfang 2025, unsere vom Oktober 2026, und ob die Stadt
-      oder OpenStreetMap sie geliefert hat, ist nicht angegeben. Die eigene Netzzahl
-      der Stadt, unten zitiert, schließt Geh- und Radwege, markierte Radfahrstreifen
-      und Radwege ein [@oslo-sykkelkart], ihr Umfang entspricht also unseren Stufen
-      A, B und D. Längenbasis und Methode gibt die Quelle nicht an. Die QECIO-Region
-      ist hier die Stadt selbst, und ihre Summe von 413 km Radinfrastruktur stimmt
-      mit unseren 414 km überein, gezählt nach ihrer Regel der halben Länge [#recon-oslo-qecio-tracks].
-    src: c7cdd94bb4ba
+      oder OpenStreetMap sie geliefert hat, ist nicht angegeben. Die eigene Zahl der
+      Stadt für ihr <i lang="nb">sykkelveinett</i> (Radverkehrsnetz), unten zitiert,
+      schließt <i lang="nb">gang- og sykkelveier, sykkelfelt og sykkelveier</i> (Geh-
+      und Radwege, Radfahrstreifen und Radwege) ein [@oslo-sykkelkart], ihr Umfang
+      entspricht also unseren Stufen A, B und D. Längenbasis und Methode gibt die
+      Quelle nicht an. Die QECIO-Region ist hier die Stadt selbst, und ihre Summe
+      von 413 km Radinfrastruktur stimmt mit unseren 414 km überein, gezählt nach
+      ihrer Regel der halben Länge [#recon-oslo-qecio-tracks].
+    src: c720a3c5e248
 literals:
 - 100 km

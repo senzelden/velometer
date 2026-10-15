@@ -28,8 +28,11 @@ sections:
     role: figures
     paragraphs:
       - >-
-        The city's yearly cycle-route length counts much more than our A+B: lanes, bus lanes open to
-        bikes, pedestrian streets and contraflow cycling as well as tracks
+        The city's yearly cycle-route length counts much more than our A+B: besides
+        <i lang="fr">piste</i> (track) also <i lang="fr">voie verte</i> (greenway),
+        <i lang="fr">bande</i> (painted lane), <i lang="fr">couloir bus ouverts aux vélos</i> (bus
+        lanes open to bikes), <i lang="fr">voies piétonnes ouvertes aux vélos</i> (pedestrian
+        streets open to bikes) and <i lang="fr">doubles sens cyclable</i> (contraflow cycling)
         [@paris-opendata-lineaire-km]. It is dated to the start of each year; we read the October
         2026 map. It is also not independent of ours: the city extracts it from OSM, the map we
         read, so it cannot confirm or refute our km. Clean Cities' 822 km of protected

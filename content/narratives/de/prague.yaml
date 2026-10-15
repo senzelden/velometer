@@ -44,9 +44,9 @@ sections:
       seinen 4.093 km; beide Abweichungen verstärken sich [#recon]. An der Längenbasis
       liegt es nicht, und der Zeitabstand erklärt die km nicht: Wir hatten schon Anfang
       2025 mehr. Eine veröffentlichte Gesamtzahl der Stadt für Radverkehrsanlagen
-      haben wir nicht gefunden; das Routensystem der Stadt zählt Routen, die weder
-      beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
-    src: 526c4d699a94
+      haben wir nicht gefunden; das Routensystem der Stadt zählt <i lang="cs">trasy</i>
+      (Routen), die weder beschildert sein noch irgendeine Anlage haben müssen [@prague-ipr-system-cyklotras-2021].
+    src: 31b46a320c86
 literals:
 - 100 km
 - 21 Städte
