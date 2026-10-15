@@ -52,9 +52,8 @@ def test_build_map_writes_png_and_run_marker(placed, tmp_path):
     out = maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
     assert out == maps_dir / "berlin_lau.png"
     assert out.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
-    assert (maps_dir / "berlin_lau.run").read_text().strip() == str(
-        data.current("berlin", "lau").run_id
-    )
+    run_id = data.current("berlin", "lau").run_id
+    assert (maps_dir / "berlin_lau.run").read_text() == f"{run_id} {maps.palette_hash()}\n"
 
 
 @needs_osmium
@@ -73,14 +72,13 @@ def test_build_map_rebuilds_when_run_changes(placed, tmp_path):
     conn, data, data_dir, maps_dir = placed
     _place_snapshot(conn, data, data_dir, tmp_path)
     maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
-    (maps_dir / "berlin_lau.run").write_text("0")  # an older run's marker
+    (maps_dir / "berlin_lau.run").write_text(f"0 {maps.palette_hash()}\n")  # an older run's
     png = maps_dir / "berlin_lau.png"
     png.write_bytes(b"stale")
     maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
     assert png.read_bytes()[:4] == b"\x89PNG"
-    assert (maps_dir / "berlin_lau.run").read_text().strip() == str(
-        data.current("berlin", "lau").run_id
-    )
+    run_id = data.current("berlin", "lau").run_id
+    assert (maps_dir / "berlin_lau.run").read_text() == f"{run_id} {maps.palette_hash()}\n"
 
 
 def test_build_map_returns_none_without_snapshot(placed):
@@ -262,6 +260,40 @@ def test_german_map_is_its_own_file_and_leaves_the_english_alone(placed, tmp_pat
     assert {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in (en, geojson)} == before
     assert maps.up_to_date(maps_dir, "berlin", "lau", run_id, "de")
     assert maps.up_to_date(maps_dir, "berlin", "lau", run_id, "en")
+
+
+def test_palette_hash_is_short_hex_and_follows_every_map_palette(monkeypatch):
+    from velometer.report import change, charts
+
+    h = maps.palette_hash()
+    assert len(h) == 12 and int(h, 16) >= 0 and maps.palette_hash() == h
+    for patch in (
+        lambda: monkeypatch.setattr(charts, "TIER_COLOURS", [*charts.TIER_COLOURS[:4], "#000000"]),
+        lambda: monkeypatch.setattr(charts, "OUTLINE", "#000000"),
+        lambda: monkeypatch.setitem(change.CATEGORY_COLOURS, "lost", "#000000"),
+    ):
+        patch()
+        assert maps.palette_hash() != h
+        monkeypatch.undo()
+        assert maps.palette_hash() == h
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_palette_change_makes_a_map_stale(tmp_path, monkeypatch, lang):
+    from velometer.report import charts
+
+    # Review Focus 5: a marker naming the current run but the old palette is out of date
+    png, marker = maps._files(tmp_path, "berlin", "lau", lang)
+    for f in (png, tmp_path / "berlin_lau.geojson"):
+        f.write_bytes(b"x")
+    marker.write_text(maps.marker_text(7))
+    assert maps.up_to_date(tmp_path, "berlin", "lau", 7, lang)
+    assert not maps.up_to_date(tmp_path, "berlin", "lau", 8, lang)  # a new run
+    monkeypatch.setattr(charts, "TIER_COLOURS", list(reversed(charts.TIER_COLOURS)))
+    assert not maps.up_to_date(tmp_path, "berlin", "lau", 7, lang)  # a new palette
+    marker.write_text("7\n")  # an M12 marker: the run id alone
+    monkeypatch.undo()
+    assert not maps.up_to_date(tmp_path, "berlin", "lau", 7, lang)
 
 
 def test_german_map_writes_only_its_png_and_marker(placed, monkeypatch):

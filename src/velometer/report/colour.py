@@ -14,8 +14,6 @@ _MACHADO = {
 
 def _linear(hexcolour: str) -> tuple[float, float, float]:
     h = hexcolour.lstrip("#")
-    if len(h) == 3:
-        h = "".join(c * 2 for c in h)
     srgb = [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
     return tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb)
 
@@ -40,12 +38,19 @@ def contrast(a: str, b: str) -> float:
     return (la + 0.05) / (lb + 0.05)
 
 
-def lab(hexcolour: str) -> tuple[float, float, float]:
+# linear sRGB -> XYZ (IEC 61966-2-1, four digits); the D65 white is the image of sRGB white under
+# this same matrix, so white lands on L* 100, a* = b* = 0 exactly
+_XYZ = ((0.4124, 0.3576, 0.1805), (0.2126, 0.7152, 0.0722), (0.0193, 0.1192, 0.9505))
+_WHITE = tuple(sum(row) for row in _XYZ)
+
+Lab = tuple[float, float, float]
+
+
+def lab(hexcolour: str) -> Lab:
     """CIELAB (D65) of an sRGB colour."""
-    r, g, b = _linear(hexcolour)
-    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
-    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+    rgb = _linear(hexcolour)
+    x, y, z = (sum(m * c for m, c in zip(row, rgb, strict=True)) / w
+               for row, w in zip(_XYZ, _WHITE, strict=True))  # fmt: skip
 
     def f(t: float) -> float:
         return t ** (1 / 3) if t > 216 / 24389 else (24389 / 27 * t + 16) / 116
@@ -53,7 +58,7 @@ def lab(hexcolour: str) -> tuple[float, float, float]:
     return 116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
 
 
-def ciede2000(lab1, lab2) -> float:
+def ciede2000(lab1: Lab, lab2: Lab) -> float:
     """CIEDE2000 colour difference (kL = kC = kH = 1)."""
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2

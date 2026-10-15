@@ -10,14 +10,16 @@ same classification pass:
   as `pipeline.measure` does) and a subset of the way's OSM tags. The boundary rides along as a
   `boundary` member and the run as a `properties` member of the FeatureCollection.
 
-A `.run` marker next to them holds the run id they were made from, so an unchanged run is not
-redrawn; a missing PNG or GeoJSON is.
+A `.run` marker next to them holds the run id they were made from and a hash of the map palettes
+(`palette_hash`), so an unchanged run in unchanged colours is not redrawn; a missing PNG or
+GeoJSON, a new run or a palette change is.
 
 The German edition (M12) has its own image, `<city>_<kind>.de.png` with its own `.de.run`
 marker: the same drawing with the German title, legend and footer. Writing it never touches the
 English PNG, the GeoJSON or their marker.
 """
 
+import hashlib
 import json
 import os
 from collections.abc import Mapping
@@ -44,7 +46,8 @@ from velometer.pipeline.geometry import Projector, length_km  # noqa: E402
 from velometer.pipeline.measure import clipped_length_km  # noqa: E402
 from velometer.pipeline.read import read_ways  # noqa: E402
 from velometer.pipeline.types import Classified  # noqa: E402
-from velometer.report.charts import INK_2, OUTLINE, TIER_COLOURS  # noqa: E402
+from velometer.report import charts  # noqa: E402
+from velometer.report.charts import INK_2  # noqa: E402
 from velometer.report.data import ReportData  # noqa: E402
 from velometer.sources.boundaries import load_boundary_polygon  # noqa: E402
 
@@ -238,17 +241,17 @@ def _draw(sides, outline, title: str, footer: str, out: Path, labels: Mapping[st
         for poly in getattr(outline, "geoms", [outline]):
             # interior rings too: an enclave (Frederiksberg in København) is not city area
             for ring in (poly.exterior, *poly.interiors):
-                ax.plot(*ring.xy, color=OUTLINE, linewidth=0.8, zorder=1)
+                ax.plot(*ring.xy, color=charts.OUTLINE, linewidth=0.8, zorder=1)
     for i, tier in enumerate(TIERS):  # A drawn last: on top where sides overlap
         for geom in sides.get(tier, []):
             for line in getattr(geom, "geoms", [geom]):  # a clipped way may be several parts
-                ax.plot(*line.xy, color=TIER_COLOURS[i], linewidth=1.1, zorder=10 - i,
+                ax.plot(*line.xy, color=charts.TIER_COLOURS[i], linewidth=1.1, zorder=10 - i,
                         solid_capstyle="round")  # fmt: skip
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_title(title, loc="left", fontsize=14)
     handles = [
-        Line2D([], [], color=TIER_COLOURS[i], linewidth=2.5, label=labels[tier])
+        Line2D([], [], color=charts.TIER_COLOURS[i], linewidth=2.5, label=labels[tier])
         for i, tier in enumerate(TIERS)
     ]
     legend = ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.0, 1.0),
@@ -272,16 +275,31 @@ def _files(maps_dir: Path, city_id: str, kind: str, lang: Lang) -> tuple[Path, P
     return stem.with_name(f"{stem.name}.png"), stem.with_name(f"{stem.name}.run")
 
 
+def palette_hash() -> str:
+    """12 hex digits of the sha256 over the map palettes: the tier colours, the change-map
+    colours (in category order) and the boundary outline. A palette change changes it."""
+    from velometer.report.change import CATEGORY_COLOURS  # change imports this module
+
+    changes = (f"{k}={v}" for k, v in CATEGORY_COLOURS.items())
+    parts = [*charts.TIER_COLOURS, *changes, charts.OUTLINE]
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
+
+
+def marker_text(run_id: int) -> str:
+    """The `.run` marker's content: the run id and the palette hash."""
+    return f"{run_id} {palette_hash()}\n"
+
+
 def up_to_date(maps_dir: Path, city_id: str, kind: str, run_id: int, lang: Lang = "en") -> bool:
-    """True when the language's PNG and its marker naming `run_id` exist, and for English the
-    GeoJSON too."""
+    """True when the language's PNG and its marker exist, and for English the GeoJSON too, and
+    the marker names `run_id` and today's palette hash."""
     png, marker = _files(maps_dir, city_id, kind, lang)
     geojson = Path(maps_dir) / f"{city_id}_{kind}.geojson"
     return (
         png.is_file()
         and (lang != "en" or geojson.is_file())
         and marker.is_file()
-        and marker.read_text().strip() == str(run_id)
+        and marker.read_text() == marker_text(run_id)
     )
 
 
@@ -300,7 +318,7 @@ def build_map(
     <city>_<kind>.de.png and its .de.run marker (`lang="de"`); None without a run or snapshot.
     Returns the PNG's path.
 
-    Existing files whose marker holds the current run id are left alone.
+    Existing files whose marker holds the current run id and palette hash are left alone.
     """
     point = data.current(city_id, kind)
     if point is None:
@@ -341,5 +359,5 @@ def build_map(
         }
         text = json.dumps(collection, ensure_ascii=False, separators=(",", ":"))
         write_atomic(maps_dir / f"{city_id}_{kind}.geojson", text.encode("utf-8"))
-    marker.write_text(f"{point.run_id}\n")
+    marker.write_text(marker_text(point.run_id))
     return png

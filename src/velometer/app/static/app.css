@@ -30,31 +30,31 @@
   --shadow: rgb(0 0 0 / 0.12);
   /* the light palettes equal velometer.report: charts.SERIES_COLOURS, charts.TIER_COLOURS,
      charts.OUTLINE and change.CATEGORY_COLOURS (the single-source test, tests/test_a11y.py) */
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
+  --series-1: #7095bf;
+  --series-2: #835010;
   --series-3: #35a186;
   --series-4: #bf8500;
-  --series-5: #d96d98;
-  --series-6: #8753cd;
-  --series-7: #52514e;
-  --series-8: #008300;
+  --series-5: #3e1a51;
+  --series-6: #6e3ec7;
+  --series-7: #352c20;
+  --series-8: #1c6b64;
   --tier-a: #2a78d6;
   --tier-b: #9f3d0c;
   --tier-c: #22a397;
   --tier-d: #c68501;
   --tier-e: #8d415b;
   --outline: #93928d;
-  --change-gained: #1baf7a;
-  --change-lost: #eb6834;
-  --change-retiered: #eda100;
+  --change-gained: #349a82;
+  --change-lost: #9a2d0a;
+  --change-retiered: #b5811c;
   --change-redrawn: #2a78d6;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 /* dark, from the OS: every colour token above, redefined. The tier, series and change values are
-   the light hues re-chosen by the same rules on the dark grounds (>= 3:1; tiers >= CIEDE2000 20
-   pairwise and 25 adjacent in normal, deuteranopic and protanopic vision; series and change
-   colours >= 20 pairwise). The PNG figures stay light on --plate */
+   re-chosen by the light rules on the dark grounds (>= 3:1; >= CIEDE2000 20 pairwise in normal,
+   deuteranopic and protanopic vision; tiers also 25 adjacent, change gained/lost 25), series and
+   change colours by tools/pick_palette.py. The PNG figures stay light on --plate */
 @media (prefers-color-scheme: dark) {
   :root {
     --ink: #ecebe6;
@@ -81,22 +81,22 @@
     --focus: #5d9ce8;
     --plate: #f4f3ef;
     --shadow: rgb(0 0 0 / 0.5);
-    --series-1: #5e98ed;
-    --series-2: #e77648;
-    --series-3: #49a294;
-    --series-4: #c1902d;
-    --series-5: #d97b99;
-    --series-6: #b07fea;
-    --series-7: #979693;
-    --series-8: #5dad42;
+    --series-1: #86b0ed;
+    --series-2: #a05e3b;
+    --series-3: #bcecea;
+    --series-4: #db9a0d;
+    --series-5: #886677;
+    --series-6: #805cd2;
+    --series-7: #aaa091;
+    --series-8: #b4feb2;
     --tier-a: #5c91e7;
     --tier-b: #ac5831;
     --tier-c: #68c4bd;
     --tier-d: #e2a440;
     --tier-e: #985d74;
     --outline: #77766f;
-    --change-gained: #58c394;
-    --change-lost: #e77648;
+    --change-gained: #3fc7a8;
+    --change-lost: #cb5f31;
     --change-retiered: #ffb948;
     --change-redrawn: #6895e8;
   }

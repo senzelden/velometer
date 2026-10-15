@@ -3,7 +3,7 @@ import itertools
 import pytest
 
 from velometer.report import change, charts
-from velometer.report.colour import ciede2000, contrast, delta, simulate
+from velometer.report.colour import ciede2000, contrast, delta, lab, simulate
 
 LIGHT_BACKGROUNDS = ["#ffffff", "#fcfcfa"]  # --surface, --paper (light); Task 3 checks the tokens
 
@@ -43,21 +43,32 @@ def test_the_tier_palette_follows_the_rule():
             assert delta(a, b, vision) >= 25, (a, b, vision)
 
 
-def test_the_series_palette_follows_the_rule():
+@pytest.mark.parametrize("vision", ["normal", "deuteranopia", "protanopia"])
+def test_the_series_palette_follows_the_rule(vision):
     series = charts.SERIES_COLOURS
     assert len(series) == 8
     for c, bg in itertools.product(series, LIGHT_BACKGROUNDS):
         assert contrast(c, bg) >= 3.0, (c, bg)
     for a, b in itertools.combinations(series, 2):
-        assert delta(a, b) >= 20, (a, b)
+        assert delta(a, b, vision) >= 20, (a, b, vision)
 
 
-def test_change_map_colours_do_not_follow_the_tier_palette():
-    # spec decision 3: fixed at their M9 values, so the change PNGs need no re-render
-    assert change.CATEGORY_COLOURS == {
-        "gained": "#1baf7a",
-        "lost": "#eb6834",
-        "retiered": "#eda100",
-        "redrawn": "#2a78d6",
-    }
-    assert "TIER_COLOURS" not in change.__dict__
+def test_the_altair_charts_use_all_eight_series_colours():
+    assert charts.CITY_COLOURS == charts.SERIES_COLOURS and len(charts.CITY_COLOURS) == 8
+
+
+@pytest.mark.parametrize("vision", ["normal", "deuteranopia", "protanopia"])
+def test_the_change_map_colours_follow_the_rule(vision):
+    # the series rule, plus the pair a reader most needs to tell apart: gained versus lost
+    colours = change.CATEGORY_COLOURS
+    assert list(colours) == ["gained", "lost", "retiered", "redrawn"]
+    for c, bg in itertools.product(colours.values(), LIGHT_BACKGROUNDS):
+        assert contrast(c, bg) >= 3.0, (c, bg)
+    for a, b in itertools.combinations(colours.values(), 2):
+        assert delta(a, b, vision) >= 20, (a, b, vision)
+    assert delta(colours["gained"], colours["lost"], vision) >= 25, vision
+    assert "TIER_COLOURS" not in change.__dict__  # not the tier palette
+
+
+def test_lab_puts_white_at_the_white_point():
+    assert lab("#ffffff") == pytest.approx((100.0, 0.0, 0.0), abs=1e-6)

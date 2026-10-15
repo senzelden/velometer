@@ -137,12 +137,9 @@ def test_the_panel_grounds_are_the_known_ones():
 
 def _graphics() -> set[str]:
     # gridlines, dividers and halos are decoration (WCAG 1.4.11 exempts them)
-    # the change colours are exempt in light: they are fixed at their M9 values (decision 3) and
-    # the key swatch beside each carries its text label; in dark they are held to 3:1 by
-    # test_the_dark_change_colours_stand_apart_and_out
     return (
-        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2", *CHANGES}
-        | set(SERIES) | set(TIERS)
+        _used(NONTEXT_PROPS) - {"--shadow", "--halo", "--grid", "--grid-2"}
+        | set(SERIES) | set(TIERS) | set(CHANGES)
         | {"--outline", "--focus", "--accent", "--flag", "--mapped", "--completed",
            "--control-border", "--marker-fill"}
     )  # fmt: skip
@@ -213,20 +210,24 @@ def test_the_dark_tier_palette_follows_the_rule():
             assert delta(a, b, vision) >= 25, (a, b, vision)
 
 
-def test_the_dark_series_palette_follows_the_rule():
+@pytest.mark.parametrize("vision", VISIONS)
+def test_the_dark_series_palette_follows_the_rule(vision):
+    # the light rule (tests/test_colour.py) on the dark tokens; 3:1 is the graphics test above
     t = _css_tokens(_stylesheet(), "dark")
     for a, b in itertools.combinations([t[x] for x in SERIES], 2):
-        assert delta(a, b) >= 20, (a, b)
+        assert delta(a, b, vision) >= 20, (a, b, vision)
 
 
-def test_the_dark_change_colours_stand_apart_and_out():
-    # the light change colours are fixed at their M9 values (decision 3); the dark ones are
-    # free, so they follow the series rule: 3:1 on the dark grounds, pairwise >= Delta E 20
+@pytest.mark.parametrize("vision", VISIONS)
+def test_the_dark_change_colours_stand_apart_and_out(vision):
+    # the light rule (tests/test_colour.py) on the dark grounds: 3:1, pairwise >= Delta E 20 and
+    # gained/lost >= 25, in each vision
     t = _css_tokens(_stylesheet(), "dark")
     for c, bg in itertools.product(CHANGES, ("--paper", "--surface")):
         assert contrast(t[c], t[bg]) >= 3.0, (c, bg)
     for a, b in itertools.combinations(CHANGES, 2):
-        assert delta(t[a], t[b]) >= 20, (a, b)
+        assert delta(t[a], t[b], vision) >= 20, (a, b, vision)
+    assert delta(t["--change-gained"], t["--change-lost"], vision) >= 25, vision
 
 
 def test_every_colour_token_has_a_dark_value():

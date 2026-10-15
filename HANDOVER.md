@@ -181,10 +181,10 @@ German PNG (`<city>_<kind>.de.png`, German legend and footer). All of them live 
 `data/maps/`, so **a fresh checkout runs `velometer report maps` before `app export`** (it only
 reads the database and writes under `data/`); without it the export has no tier-map PNGs.
 
-After a palette change (`charts.TIER_COLOURS`), re-run `velometer report maps`; the change maps
-keep fixed colours. A tier map is skipped while its `.run` marker names the current run, and a
-palette change does not touch the run, so delete `data/maps/*_{lau,fua}.run` first (the PNGs and
-GeoJSON stay; the database is opened read-only).
+After a palette change (`charts.TIER_COLOURS`, `charts.OUTLINE` or `change.CATEGORY_COLOURS`),
+re-run `velometer report maps`: a tier map is skipped only while its `.run` marker names the current
+run and the current palette hash (`maps.palette_hash`), so a palette change redraws every map. The
+change maps are redrawn with `velometer report change`.
 
 ### Serving the static edition
 
@@ -262,8 +262,6 @@ tags), no overflow (a box that scrolls, clips or is spilled out of, other than a
 map and ellipsised text), no console message, no CSP violation, no host other than `127.0.0.1` and
 `tile.openstreetmap.org`, and no error; `--keyboard` adds its own steps, each of which must pass.
 Run it before reporting UI work done. axe-core is vendored and never shipped (`tools/axe/`).
-`velometer report maps` skips a map whose `.run` marker names the current run, and the marker
-ignores palette changes: after a palette change delete `data/maps/*.run` first (see above).
 
 Runs must be resumable and idempotent: skip a (city, date, boundary, classifier_version) tuple that already has a completed `Run`.
 
@@ -327,13 +325,13 @@ conformance, not a certification.
 - Prose tables (methodology, explainer) scroll sideways inside a named, focusable region. At 200%
   zoom on a 1280 px screen (640 CSS px) and under WCAG 1.4.12 text spacing the Figures tables also
   scroll inside their region, because stacking starts at 600 px; nothing is lost or clipped.
-- The series palette (8 city colours) is held only to normal-vision colour difference (CIEDE2000
-  at least 20); only the tier palette is checked under simulated colour blindness, and tiers B and
-  E are only 20.5 apart under deuteranopia. Charts also label series directly and have tables.
+- The tier, series (8 city colours) and change-map palettes are checked under simulated
+  deuteranopia and protanopia as well as normal vision (CIEDE2000 at least 20 pairwise, M13), but
+  the floor is narrow: tiers B and E are 20.5 apart under deuteranopia, and eight series colours
+  pass only with some very dark ones (picked by `tools/pick_palette.py`). Charts also label series
+  directly and have tables.
 - If a colour token is missing, the JS falls back to a neutral grey and logs one console error
   (spec §5 said "the light value"; ruling in rulings-m10). The render pass fails on that error.
-- `velometer report maps` skips a map when its `.run` marker names the current run; the marker
-  ignores palette changes, so re-rendering after one needs the markers deleted (§8).
 - Not covered: screen-reader testing with real assistive technology, and a German interface (M12).
 
 ### Reader features (M11)

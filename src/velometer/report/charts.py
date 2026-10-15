@@ -32,12 +32,14 @@ TIER_LABEL = {
     "E": "E cycle street / bus lane",
 }
 OUTLINE = "#93928d"  # the tier maps' boundary outline (PNG and interactive), >= 3:1 on light
-# Series colours, light theme: each >= 3:1 on the light backgrounds, every pair >= CIEDE2000 20
-# in normal vision (tests/test_colour.py).
+# Series colours, light theme, chosen by rule (M13, tools/pick_palette.py; tested in
+# tests/test_colour.py): each >= 3:1 on the light backgrounds, every pair >= CIEDE2000 20 in
+# normal vision and simulated deuteranopia and protanopia, nearest the M12 colours. Eight pass
+# only with some very dark ones (5 and 7).
 SERIES_COLOURS = [
-    "#2a78d6", "#eb6834", "#35a186", "#bf8500", "#d96d98", "#8753cd", "#52514e", "#008300",
+    "#7095bf", "#835010", "#35a186", "#bf8500", "#3e1a51", "#6e3ec7", "#352c20", "#1c6b64",
 ]  # fmt: skip
-CITY_COLOURS = SERIES_COLOURS[:7]  # the Altair report charts
+CITY_COLOURS = SERIES_COLOURS  # the Altair report charts: all eight
 GREY = "#c9c8c3"  # the context ("other") cities
 PICK_COLOUR = "#7a5bd1"  # a context city picked in the headline chart's select
 HIGHLIGHT, COMPARISON, OTHER = "highlight", "comparison", "other"

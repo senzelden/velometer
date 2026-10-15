@@ -65,12 +65,14 @@ GEOMETRY_MIN_KM = 0.001  # a same-tier side whose length changed by more than 1 
 SPLIT_SLACK_SHARE = 0.2
 SPLIT_SLACK_KM = 0.015
 TOP_N = 20
-# four map colours (geometry changes are listed, not drawn), fixed at their M9 values and
-# independent of the tier palette (M10 decision 3), so the change maps need no re-render
+# four map colours (geometry changes are listed, not drawn), independent of the tier palette
+# (M10 decision 3). Chosen by rule (M13, tools/pick_palette.py; tested in tests/test_colour.py):
+# each >= 3:1 on the light grounds, every pair >= CIEDE2000 20 and gained/lost >= 25, in normal
+# vision and simulated deuteranopia and protanopia; hue families green, red, amber, blue
 CATEGORY_COLOURS = {
-    "gained": "#1baf7a",
-    "lost": "#eb6834",
-    "retiered": "#eda100",
+    "gained": "#349a82",
+    "lost": "#9a2d0a",
+    "retiered": "#b5811c",
     "redrawn": "#2a78d6",
 }
 BEZIRK_OUTLINE = "#d6d5d0"  # light grey
