@@ -654,13 +654,18 @@ def test_duplicate_ids_within_one_page_are_refused(tmp_path):
     assert not (tmp_path / "retrieved.json").exists()
 
 
-def test_a_feature_without_the_sort_property_is_refused_naming_it(tmp_path):
+@pytest.mark.parametrize("null", [False, True], ids=["missing", "json-null"])
+def test_a_feature_without_the_sort_property_is_refused_naming_it(tmp_path, null):
+    # M8-19: a JSON null was reported as a missing property; the message covers both
     def fake(url, params):
         doc = _fc([0, 1])
-        del doc["features"][1]["properties"]["gisid"]
+        if null:
+            doc["features"][1]["properties"]["gisid"] = None
+        else:
+            del doc["features"][1]["properties"]["gisid"]
         return json.dumps(doc).encode()
 
-    with pytest.raises(ValueError, match="no 'gisid' property") as e:
+    with pytest.raises(ValueError, match="no value for its 'gisid' property") as e:
         berlin.fetch_layers(_one_layer_cfg(), tmp_path, fetch=fake)
     assert "repeated" not in str(e.value)
 

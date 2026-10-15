@@ -82,9 +82,9 @@ def _http_get(url: str, params: dict[str, str]) -> bytes:
 
 def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
     """All features of one layer, one FeatureCollection; ValueError if the server's
-    `numberMatched` disagrees with the features received, a feature lacks the `sort_by`
-    property, an id appears twice (within a page or across pages), or the layer has not ended
-    after `MAX_PAGES` pages."""
+    `numberMatched` disagrees with the features received, a feature has no value for the
+    `sort_by` property (missing or null), an id appears twice (within a page or across pages),
+    or the layer has not ended after `MAX_PAGES` pages."""
     features: list = []
     seen: set = set()
     matched = None
@@ -111,8 +111,9 @@ def _fetch_layer(layer: WfsLayer, cfg: PlanSourcesConfig, fetch: Fetch) -> dict:
             props = f.get("properties") or {}
             if props.get(layer.sort_by) is None:
                 raise ValueError(
-                    f"{layer.url}: a feature at startIndex {len(features)} has no "
-                    f"{layer.sort_by!r} property (the layer's sort_by, which must be unique)"
+                    f"{layer.url}: a feature at startIndex {len(features)} has no value for "
+                    f"its {layer.sort_by!r} property (missing or null; the layer's sort_by, "
+                    "which must be unique)"
                 )
             ids.append(props[layer.sort_by])
         if len(set(ids)) < len(ids):
