@@ -107,6 +107,13 @@ test("Compare's counter tooltip names the city's base year = 100 and, on its poi
   assert.equal(counterTip(mad, "mad", 100, "2020"), "Madrid · 2020: index 100 (2020 = 100; 2020 is the COVID year)");
 });
 
+test("Compare's counter tooltip names no base year a city does not have", () => {
+  // review M3: a city without base_year printed "(undefined = 100)"
+  const bare = { ...D, counters: { ...D.counters, cities: { ber: { ...D.counters.cities.ber, base_year: null } } } };
+  assert.equal(counterTip(bare, "ber", 114.6, "2020"), "Berlin · 2020: index 114.6 (2020 is the COVID year)");
+  assert.equal(counterTip(bare, "ber", 90, "2017"), "Berlin · 2017: index 90");
+});
+
 test("a city listed without open counter data gets its config note with the portals checked", () => {
   const note = "no open counter data found (portals checked: data.kk.dk)";
   const m = counterLines({ ...D, counters: { ...D.counters, none: { cph: note } } }, ["cph"]);

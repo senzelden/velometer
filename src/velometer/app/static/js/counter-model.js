@@ -35,9 +35,13 @@ export const counterTitle = (label) => `${label} · ${t("js.counts.title")}`;
  */
 export function counterTip(D, id, value, label) {
   const covid = D.counters?.covid_year;
-  const base = `${D.counters?.cities?.[id]?.base_year} = 100`;
-  const year = covid != null && String(covid) === String(label) ? `; ${t("js.counts.covid_is", { year: covid })}` : "";
-  return `${D.cities[id].name} · ${label}: ${t("js.chart.index_value", { value: formatValue(value) })} (${base}${year})`;
+  const baseYear = D.counters?.cities?.[id]?.base_year;
+  const parts = [
+    baseYear != null ? `${baseYear} = 100` : null,
+    covid != null && String(covid) === String(label) ? t("js.counts.covid_is", { year: covid }) : null,
+  ].filter(Boolean);
+  const note = parts.length ? ` (${parts.join("; ")})` : "";
+  return `${D.cities[id].name} · ${label}: ${t("js.chart.index_value", { value: formatValue(value) })}${note}`;
 }
 
 /**
