@@ -15,7 +15,6 @@ the stored index keeps them (user ruling, Task 8).
 """
 
 import logging
-from datetime import date
 from pathlib import Path
 
 from velometer import timeseries as ts
@@ -26,11 +25,11 @@ from velometer.counters.model import (
     COUNTERS_FILE,
     COVID_YEAR,
     DEFAULT_BASE_YEAR,
-    MIN_LINE_YEARS,
     CounterEntry,
     CountersConfig,
     DayCount,
     data_gaps,
+    has_line,
     load_counters_config,
 )
 from velometer.i18n import Lang, month_year, t
@@ -80,10 +79,6 @@ def _round(v: float | None) -> float | None:
     return None if v is None else round(v, 3)
 
 
-def has_line(points: list[dict]) -> bool:
-    return sum(p["idx"] is not None for p in points) >= MIN_LINE_YEARS
-
-
 def no_data_notes(cfg: CountersConfig | None, lang: Lang = "en") -> dict[str, str]:
     """city -> the note of a city listed under `none:` in config/counters.yaml (spec §5.1): "no
     open counter data found", the portals checked and the config's note."""
@@ -129,7 +124,7 @@ def counter_payload(data: ReportData) -> dict:
         cities[city_id] = {
             "series": rows[0].series,
             "base_year": rows[0].base_year,
-            "line": has_line(points),
+            "line": has_line(p["idx"] for p in points),
             "points": points,
             "source": source,
             "licence": licence,
@@ -181,13 +176,6 @@ def step_down_note(
     }
 
 
-def _days(data: ReportData, city_id: str) -> list[DayCount]:
-    return [
-        DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
-        for d in data.counter_days(city_id)
-    ]
-
-
 def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, km_points) -> dict:
     """The Counts tab: index rows (counter index, qualifying sites, km index per year), notes,
     sites (a map config for those with coordinates), attribution."""
@@ -195,7 +183,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     series = rows[0].series if rows else "counts"
     base = rows[0].base_year if rows else (entry.base_year if entry else DEFAULT_BASE_YEAR)
     points = [{"year": r.year, "idx": r.index, "sites": r.sites} for r in rows]
-    line = has_line(points)
+    line = has_line(p["idx"] for p in points)
     km = km_index(km_points, base)
     valued = {r.year for r in rows if r.index is not None} | set(km)
     # every year from the first to the last with a value: a year between them without one is
@@ -213,7 +201,7 @@ def counts_context(data: ReportData, city_id: str, entry: CounterEntry | None, k
     ]
     # the daily rows are read only for a note that needs them (a no-line gap, a step-down)
     wanted = series == "counts" and (not line or (entry is not None and entry.step_downs))
-    days = _days(data, city_id) if wanted else []
+    days = data.counter_day_counts(city_id) if wanted else []
     stored = {r.year: r.index for r in rows}
     sites = data.counter_sites(city_id)
     mapped = [s for s in sites if s.lat is not None and s.lon is not None]

@@ -22,6 +22,14 @@ COUNTERS_FILE = "counters.yaml"
 DEFAULT_BASE_YEAR = 2019  # the index base year (= 100) unless an entry names another (§2.13)
 COVID_YEAR = 2020  # marked on every counter chart (spec decision 12)
 MIN_LINE_YEARS = 2  # years with a value an index needs to be drawn as a line (user ruling, Task 8)
+
+
+def has_line(values) -> bool:
+    """Whether an index with these yearly values (None: no value) is drawn as a line: at least
+    `MIN_LINE_YEARS` years with a value. The Counts tab, Compare and the methodology."""
+    return sum(v is not None for v in values) >= MIN_LINE_YEARS
+
+
 GAP_DAYS = 31  # a run of days without any count longer than this is a gap in the data
 # the counter index rule readers show (M13 spec §4.2): v2 pools counts per complete day; the
 # stored v1 rows (M8-M12: summed counts) feed only the methodology's v1->v2 table

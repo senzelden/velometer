@@ -388,3 +388,15 @@ def test_the_plan_page_methodology_and_facts_share_one_latest_overlay_rule():
     version, latest = facts.latest_overlay(rows)
     assert version == "overlay_v10" and [r.overlay_version for r in latest] == ["overlay_v10"]
     assert facts.latest_overlay([]) == (None, [])
+
+
+def test_the_counts_tab_and_the_methodology_share_the_line_rule_and_the_day_reading():
+    # M8-16: the methodology re-implemented `has_line` and `_days` of app/counts.py and asked
+    # for gaps under another condition (the configured grain, not the stored series)
+    from velometer.app import counts
+    from velometer.counters import model
+    from velometer.report import methodology
+
+    assert counts.has_line is model.has_line and methodology.has_line is model.has_line
+    assert model.has_line([None, 100.0, 104.0]) and not model.has_line([None, 100.0, None])
+    assert not hasattr(counts, "_days")  # ReportData.counter_day_counts for both

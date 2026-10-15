@@ -35,10 +35,9 @@ from velometer.counters.model import (
     COUNTERS_FILE,
     COVID_YEAR,
     DEFAULT_BASE_YEAR,
-    MIN_LINE_YEARS,
     CounterEntry,
-    DayCount,
     data_gaps,
+    has_line,
     load_counters_config,
 )
 from velometer.db import fetch_boundary, fetch_run
@@ -333,15 +332,12 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
     series = MONTHLY_SERIES if c.grain == "monthly" else SERIES
     rows = data.counter_index(c.city)
     years = [r.year for r in rows if r.index is not None]
-    line = len(years) >= MIN_LINE_YEARS
+    line = has_line(r.index for r in rows)
     firsts = [s.first_day for s in data.counter_sites(c.city) if s.first_day]
     gaps: list[tuple[str, str]] = []
-    if rows and not line and series == SERIES:
-        days = [
-            DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
-            for d in data.counter_days(c.city)
-        ]
-        gaps = [(a[:7], b[:7]) for a, b in data_gaps(days)]
+    # as the Counts tab: gaps of daily counts (the stored series), of a city without a line
+    if rows and not line and rows[0].series == SERIES:
+        gaps = [(a[:7], b[:7]) for a, b in data_gaps(data.counter_day_counts(c.city))]
     return CounterCityFact(
         id=c.city,
         name=name,

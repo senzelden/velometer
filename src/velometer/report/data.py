@@ -30,7 +30,7 @@ from velometer.config import (
     load_report,
     remainder_label,
 )
-from velometer.counters.model import INDEX_METHOD
+from velometer.counters.model import INDEX_METHOD, DayCount
 from velometer.db import (
     SCHEMA_VERSION,
     CounterDay,
@@ -713,6 +713,13 @@ class ReportData:
             (city_id,),
         )
         return [CounterDay(r[0], r[1], r[2], r[3], bool(r[4])) for r in rows]
+
+    def counter_day_counts(self, city_id: str) -> list[DayCount]:
+        """`counter_days` as the counters package reads days (data gaps, step-downs)."""
+        return [
+            DayCount(d.site_id, date.fromisoformat(d.day), d.count, d.complete)
+            for d in self.counter_days(city_id)
+        ]
 
     def counter_cities(self) -> list[str]:
         rows = self._optional_rows(
