@@ -8,7 +8,7 @@ import csv
 import html
 import re
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -690,7 +690,7 @@ def _check(
         for org in orgs.values():
             problems += _check_organisation(org, sources, data, docs_dir, config_dir)
         problems += _check_coverage(config_dir, set(orgs) | set(org_errors), plans, rows)
-        problems += _check_source_rows(config_dir, orgs)
+        problems += _check_source_rows(config_dir, orgs, said=problems)
     return problems
 
 
@@ -1009,18 +1009,23 @@ NOT_STATED = "not stated by the source"
 NOT_STATED_DE = "von der Quelle nicht angegeben"
 
 
-def _check_source_rows(config_dir: Path, orgs: dict[str, Organisation]) -> list[str]:
+def _check_source_rows(
+    config_dir: Path, orgs: dict[str, Organisation], said: Collection[str] = ()
+) -> list[str]:
     """Every quoted figure source has its /sources row (M11 spec decision 1): the organisation
     behind each mapping entry whose (city, source) figures.csv or reconcile.yaml quotes has a
     "How they measure" section with all six dimensions, each cited or "not stated by the
     source". A missing profile is `_check_coverage`'s problem. A file the check needs that
     cannot be read is said in one line naming it, so the rows are never passed unchecked in
-    silence (the same file usually fails `_check_coverage` too)."""
+    silence; unless that cause is already among the problems `said` (the coverage check
+    reads figures.csv and reconcile.yaml too), since a broken file is one problem."""
     try:
         mapping = load_organisation_map(Path(config_dir) / "organisations.yaml")
         pairs = _figure_pairs(config_dir)
         reconciled = set(_reconcile_sources(config_dir))
     except ContentError as e:
+        if str(e) in said:
+            return []
         return [f"organisations: the 'How they measure' rows were not checked: {e}"]
     try:
         dims = _read_dimensions(config_dir)

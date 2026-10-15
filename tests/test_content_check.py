@@ -479,9 +479,25 @@ def test_an_unquoted_mapping_entry_is_not_checked(shipped):
     ],
 )
 def test_a_file_the_source_rows_need_unreadable_is_said_not_skipped(shipped, rel, text, says):
-    """The "How they measure" check cannot run without its inputs: it says so and why, instead
-    of passing in silence (M13 M11-7)."""
+    """The "How they measure" check cannot run without its inputs: the check fails naming the
+    file, never passes in silence (M13 M11-7); and a cause another check already said is not
+    said twice (a broken file is one problem, test_content_m8)."""
+    from velometer.content.check import check_content_offline
+
     content_dir, config_dir, _ = shipped
     (config_dir / rel).write_text(text, encoding="utf-8")
+    problems = check_content_offline(content_dir, config_dir)
+    assert any(says in p for p in problems), problems
+    not_checked = "organisations: the 'How they measure' rows were not checked: "
+    for p in problems:
+        if p.startswith(not_checked):
+            assert says in p and p.removeprefix(not_checked) not in problems, problems
+
+
+def test_the_source_rows_say_a_cause_no_other_check_said(shipped):
+    """differences.yaml is read by the explainer and the profiles under their own words, so the
+    rows' own line is the one that says the rows went unchecked."""
+    content_dir, config_dir, _ = shipped
+    (config_dir / "differences.yaml").write_text("dimensions: [unclosed\n", encoding="utf-8")
     problems = _source_row_problems(content_dir, config_dir)
-    assert any("not checked" in p and says in p for p in problems), problems
+    assert any("not checked" in p and "differences.yaml" in p for p in problems), problems
