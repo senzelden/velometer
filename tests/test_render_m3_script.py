@@ -1,18 +1,13 @@
-import importlib.util
-from pathlib import Path
-
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from tests.helpers import load_script
 from velometer import cli  # noqa: E402
 from velometer import timeseries as T  # noqa: E402
 
-_PATH = Path(__file__).resolve().parent.parent / "scripts" / "render_m3_timeseries.py"
-_spec = importlib.util.spec_from_file_location("render_m3_timeseries", _PATH)
-render = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(render)
+render = load_script("scripts/render_m3_timeseries.py")
 
 YEARS = range(2018, 2027)
 

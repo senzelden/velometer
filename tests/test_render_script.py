@@ -1,15 +1,10 @@
-import importlib.util
-from pathlib import Path
-
 import pytest
 
+from tests.helpers import load_script
 from velometer.config import default_config_dir, load_classifier, load_presets
 from velometer.models import Boundary, Metric
 
-_PATH = Path(__file__).resolve().parent.parent / "scripts" / "render_m2_results.py"
-_spec = importlib.util.spec_from_file_location("render_m2_results", _PATH)
-render = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(render)
+render = load_script("scripts/render_m2_results.py")
 
 
 def _boundary(sha: str = "b" * 64) -> Boundary:

@@ -1,15 +1,11 @@
 """The class decision of scripts/overlay_false_positives.py (the M8 overlay log's classes)."""
 
-import importlib.util
-from pathlib import Path
-
 import pytest
 from shapely import LineString
 
-_PATH = Path(__file__).resolve().parent.parent / "scripts" / "overlay_false_positives.py"
-_spec = importlib.util.spec_from_file_location("overlay_false_positives", _PATH)
-fp = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(fp)
+from tests.helpers import load_script
+
+fp = load_script("scripts/overlay_false_positives.py")
 
 
 @pytest.mark.parametrize(

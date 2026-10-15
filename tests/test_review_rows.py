@@ -1,7 +1,6 @@
 """tools/review_rows.py (M12 Task 9): the rows of the German review page, on the synthetic content
 tree with fake translations, a tmp catalogue and a tmp explanations pair."""
 
-import importlib.util
 import json
 import shutil
 from pathlib import Path
@@ -10,14 +9,12 @@ import pytest
 import yaml
 
 from tests.content_util import build_tree, fake_translate
+from tests.helpers import load_script
 from velometer.config import reader_prose
 from velometer.content import translate as tr
 from velometer.timeseries import explanation, explanation_hash, stamp_explanations
 
-TOOL = Path(__file__).resolve().parents[1] / "tools" / "review_rows.py"
-_spec = importlib.util.spec_from_file_location("review_rows", TOOL)
-review_rows = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(review_rows)
+review_rows = load_script("tools/review_rows.py")
 
 GLOSSED = {
     "sources": [

@@ -1,6 +1,5 @@
 import contextlib
 import hashlib
-import importlib.util
 import io
 import json
 import shutil
@@ -10,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers import load_script
 from tests.test_app_base import rich  # noqa: F401  (`rich` is a fixture)
 from tests.test_export import _export
 from velometer.app import export
@@ -22,10 +22,7 @@ needs_chrome = pytest.mark.skipif(not HAS_CHROME, reason="needs Chrome")
 
 @pytest.fixture(scope="module")
 def rp():
-    spec = importlib.util.spec_from_file_location("render_pass", ROOT / "tools" / "render_pass.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    return load_script("tools/render_pass.py")
 
 
 def test_axe_is_pinned_and_unchanged():
@@ -561,3 +558,24 @@ def test_the_permalink_step_needs_every_boundary_the_page_maps(rp):
     (msg,) = rp.boundary_errors(["lau"], ["lau", "fua"])  # a dropped FUA option
     assert "fua" in msg
     assert rp.boundary_errors(["lau", "fua"], ["lau"]) != []
+
+
+# --- M10-7: one loader for repository scripts (tests/helpers.py) -----------------------------
+
+
+LOADER = "spec_from_" + "file_location("  # split, so this file does not match itself
+
+
+def test_scripts_load_through_the_one_helper():
+    from tests.helpers import load_script
+
+    tool = load_script("tools/pick_palette.py")
+    assert tool.__name__ == "pick_palette" and tool.__file__ == str(ROOT / "tools/pick_palette.py")
+    with pytest.raises(FileNotFoundError):
+        load_script("tools/no_such_tool.py")
+    copies = [
+        p.name
+        for p in (ROOT / "tests").glob("*.py")
+        if p.name != "helpers.py" and LOADER in p.read_text(encoding="utf-8")
+    ]
+    assert copies == []
