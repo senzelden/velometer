@@ -103,7 +103,9 @@ export function renderLines(el, model, opts = {}) {
     hi = ticks.at(-1);
   }
 
-  const labelled = compact ? [] : narrow && live.length > 8 ? coloured : live;
+  // end labels: every line, or with more than 8 the focus (coloured) series only, at any width;
+  // the grey context lines stay unlabelled (their names are in the tooltip and the table)
+  const labelled = compact ? [] : live.length > 8 ? coloured : live;
   const longest = Math.max(0, ...labelled.map((s) => s.name.length));
   const axisTexts = labels.map((l) =>
     compact && /\d{4}$/.test(l) && l.length > 4 ? l.replace(/ \d{2}(\d{2})$/, " $1") : l,

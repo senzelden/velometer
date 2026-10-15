@@ -117,6 +117,21 @@ test("renderLines uses a series' short name when the full end label would be cut
   assert.ok(wide.children[0].find("text").some((t) => t.textContent === "City proper (LAU)"));
 });
 
+test("more than 8 series: only the focus series get end labels, at any width; 8 or fewer: all", () => {
+  const focus = [mk("a", "Focus A", [1, 2, 3], "#111"), mk("b", "Focus B", [3, 2, 1], "#222")];
+  const grey = Array.from({ length: 8 }, (_, i) => mk(`g${i}`, `Context ${i}`, [i, i, i]));
+  const ends = (series, width) => {
+    const el = new Node("div");
+    renderLines(el, { labels, series }, { height: 300, width });
+    return el.children[0].find("text").filter((t) => t.attrs.class === "el").map((t) => t.textContent).sort();
+  };
+  for (const width of [400, 900, 1400]) {
+    assert.deepEqual(ends([...focus, ...grey], width), ["Focus A", "Focus B"], `width ${width}`);
+  }
+  const few = [...focus, ...grey.slice(0, 6)];
+  assert.equal(ends(few, 900).length, 8, "8 series: every line is labelled");
+});
+
 /** Every attribute value and text of a stub tree. */
 const strings = (n, out = []) => {
   out.push(...Object.values(n.attrs ?? {}), n._text ?? "");
