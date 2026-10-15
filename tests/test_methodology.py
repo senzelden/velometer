@@ -1014,6 +1014,7 @@ def test_the_counter_day_is_called_complete_in_every_reader_visible_text(facts):
         *(root / "src/velometer/report/templates").glob("methodology.*.j2"),
         *(root / "content").rglob("*.yaml"),
         *(root / "src/velometer/app/static/js").glob("*.js"),
+        *(root / "src/velometer/app/templates").rglob("*.html"),
     ]:
         texts[str(path.relative_to(root))] = path.read_text(encoding="utf-8")
     hits = {k: _OTHER_DAY_TERM.findall(v) for k, v in texts.items() if _OTHER_DAY_TERM.search(v)}
