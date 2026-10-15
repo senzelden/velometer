@@ -466,12 +466,19 @@ def test_pages_load_our_chart_modules(client):
             assert spec.startswith("./") and (js.parent / spec).is_file(), (js.name, spec)
 
 
-HEX_COLOUR = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+# a hex colour has 3, 4, 6 or 8 digits and stands alone (no `&#` entity, no word after it)
+HEX_COLOUR = re.compile(r"(?<![\w&#])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])")
 JS_COLOUR = re.compile(rf"{HEX_COLOUR.pattern}|(?<![\w-])(?:rgba?|hsla?)\(", re.I)
+# the string a selector call opens just before a match: "#add" there is an id, not a colour
+SELECTOR_ARG = re.compile(r"(?:querySelector(?:All)?|closest|matches)\(\s*[\"'`][^\"'`]*$")
 
 
 def _js_colour_literals(text: str) -> list[str]:
-    return JS_COLOUR.findall(text)
+    return [
+        m.group(0)
+        for m in JS_COLOUR.finditer(text)
+        if not SELECTOR_ARG.search(text[max(0, m.start() - 200) : m.start()])
+    ]
 
 
 def test_no_js_file_holds_a_colour_literal():
@@ -494,6 +501,15 @@ def test_the_js_literal_rule_sees_each_kind():
         assert _js_colour_literals(f"const c = {lit};"), lit
     for ok in ['"#tiermap-config"', "`#${t}`", '"transparent"', '"currentColor"', "#hash"]:
         assert not _js_colour_literals(f"const c = {ok};"), ok
+
+
+def test_the_js_literal_rule_passes_over_an_id_that_spells_a_colour():
+    # M10-7: "#add" is a valid hex colour and a valid id; as a selector it is the id
+    for sel in ['document.querySelector("#add")', "el.closest('#bad .x')", "d.matches(`#fab`)"]:
+        assert not _js_colour_literals(sel), sel
+    assert _js_colour_literals('el.style.fill = "#add";') == ["#add"]
+    assert _js_colour_literals('const c = "#aabbcc80";') == ["#aabbcc80"]
+    assert not _js_colour_literals('const c = "#abcde";')  # five digits are no colour
 
 
 # the ODbL attribution (a licence requirement) and the mapped-km line, in each language
