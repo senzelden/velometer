@@ -14,7 +14,7 @@ where a short UI form is used beside the methodology's longer one are listed und
 | B shared foot/cycle path | B Geh- und Radweg | long form: "Geh- und Radweg (gemeinsam oder getrennt)" |
 | C protected lane | C geschützter Radfahrstreifen | long form: "Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr" |
 | D painted lane | D markierter Radfahrstreifen | long form adds "einschließlich Schutzstreifen" |
-| E cycle street / bus lane | E Fahrradstraße / Busspur | long form: "Fahrradstraße sowie für den Radverkehr freigegebene Busspuren" |
+| E cycle street / bus lane | E Fahrradstraße o. Ä. / Busspur | long form: "Fahrradstraßen und vergleichbare Straßen sowie für den Radverkehr freigegebene Busspuren"; in prose "Fahrradstraßen o. Ä. (Stufe E)": tier E is wider than the StVO Fahrradstraße (M13 Task 7) |
 | mapped km | kartierte km, kartierte Kilometer | ADR 0006; never "gebaute" |
 | not built km | keine gebauten km | only in the fixed formula "kartierte km, nicht gebaute km" |
 | headline | Hauptkennzahl | the A+B per 100 km figure |
@@ -54,7 +54,7 @@ where a short UI form is used beside the methodology's longer one are listed und
 | bicycle account (Copenhagen) | Fahrradbilanz (Cykelregnskab) | the local name in brackets at first mention |
 | cycling referendum campaign (Berlin) | Volksentscheid Fahrrad | the campaign's own name; not "Radentscheid" |
 | country-specific official category (road class, network class) | the source's original term first, the translation in parentheses | both editions (user ruling, M12 Task 12; replaces the Task 10 row "county road (fylkesvei) → regionale Straße"). Example, Oslo's counters: "statlige og fylkeskommunale vegnett (staatliches und regionales Straßennetz)", English "(state and county road network)"; "kommunale veger (Gemeindestraßen)" |
-| county (Sweden: län) | Verwaltungsbezirk | "Stockholms län, ein Verwaltungsbezirk"; never "Provinz" (M12 Task 12) |
+| county (Sweden: län) | Verwaltungsbezirk | "*Stockholms län* (Verwaltungsbezirk Stockholm)", "ein *län* (Verwaltungsbezirk)", the term as `<i lang="sv">…</i>`; never "Provinz" (M12 Task 12, M13 Task 7) |
 | advisory lane (a foreign category) | Angebotsstreifen | not "Schutzstreifen", the German StVO term (M12 Task 12) |
 | secondary network (Berlin, Mobilitätsgesetz) | Nebennetz | the act's word; "Ergänzungsnetz" is the plan's network class, not shown to be the same (M12 Task 12) |
 | **Sources and actions** | | |

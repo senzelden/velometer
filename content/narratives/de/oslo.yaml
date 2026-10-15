@@ -20,9 +20,9 @@ sections:
       der Punkt 2021, als A+B von 264 auf 298 km ging. Das meiste davon ist eine Umtaggung:
       Im Laufe des Jahres 2020 wurden bestehende Gehwege als gemeinsame Geh- und Radwege
       neu getaggt, so wie in Norwegen der übliche <i lang="nb">gang- og sykkelvei</i>
-      (Geh- und Radweg) kartiert wird [@oslo-sykkelkart], und neu gezeichnete Wege
+      (Geh- und Radweg) [@oslo-sykkelkart] kartiert wird, und neu gezeichnete Wege
       machten den Rest aus [#ts-oslo-2021]. Neu getaggte Wege sind keine neue Infrastruktur.
-    src: 4717ada18223
+    src: 062c7c2bca9b
   - text: >-
       Geh- und Radwege (Stufe B) überwiegen durchgehend, 222 → 282 km, gegenüber 38
       → 60 km baulich getrennter Radwege (Stufe A). Markierte Radfahrstreifen (Stufe

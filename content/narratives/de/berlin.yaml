@@ -26,9 +26,9 @@ sections:
     src: 373a67bd43df
   - text: >-
       Auch außerhalb von A+B kam auf der Karte etwas hinzu. Markierte Radfahrstreifen
-      (Stufe D) stiegen von 403 auf 461 km, Fahrradstraßen und Busspuren (E) von 53
-      auf 117 km, und Radfahrstreifen, die mit baulicher Trennung kartiert sind (C),
-      2018 noch nicht vorhanden, kommen heute auf 29 km [#ts-lau]. Der funktionale
+      (Stufe D) stiegen von 403 auf 461 km, Fahrradstraßen o. Ä. und Busspuren (E)
+      von 53 auf 117 km, und Radfahrstreifen, die mit baulicher Trennung kartiert
+      sind (C), 2018 noch nicht vorhanden, kommen heute auf 29 km [#ts-lau]. Der funktionale
       Stadtraum fiel mit derselben Kampagne, die bis nach Brandenburg reichte, von
       71,5 im Jahr 2021 auf 64,7 im Jahr 2022 und liegt heute bei 64,5 [#ts-fua] [#expl-fua-2022].
     src: d55acf04cca1
@@ -51,10 +51,10 @@ sections:
       Seine 21,2 km für 2025 sind km Strecke, die Projekte fertiggestellt oder verbessert
       haben, entnommen einer Projektdatenbank zum Jahresende. Die 20,5 km waren eine
       vorläufige Zahl, die die Verwaltung als möglicherweise unvollständig bezeichnete
-      [@berlin-tagesspiegel-dpa-2025-12]; die 9,8 km betreffen allein das Vorrangnetz
+      [@berlin-tagesspiegel-dpa-2025-12]; die 9,8 km betreffen allein das Radvorrangnetz
       [@berlin-drs-19-25987], für das der Fortschrittsbericht selbst eine kleinere
       Zahl nennt.
-    src: 0b69dd81c395
+    src: 3a340ac54640
   - text: >-
       Wir zählen alle kartierte Infrastruktur je Straßenseite, gleich wann Kartierende
       sie erfassen. Von 2023 bis Oktober 2026 wurden 442 km Wegseiten neu kartiert

@@ -11,9 +11,9 @@ sections:
         headline (mapped A+B km per 100 km of main roads) from 53.1 to 70.8 [#ts-oslo]. The one
         flagged step is the 2021 point, when A+B went from 264 to 298 km. Most of it is tag drift:
         during 2020 existing footways were retagged as combined foot and cycle paths, the way
-        Norway's standard <i lang="nb">gang- og sykkelvei</i> (shared walking and cycling path) is
-        mapped [@oslo-sykkelkart], and newly drawn ways added the rest [#ts-oslo-2021]. Retagging is
-        not new infrastructure.
+        Norway's standard <i lang="nb">gang- og sykkelvei</i> (shared walking and cycling path)
+        [@oslo-sykkelkart] is mapped, and newly drawn ways added the rest [#ts-oslo-2021]. Retagging
+        is not new infrastructure.
       - >-
         Shared paths (tier B) dominate throughout, 222 → 282 km, against 38 → 60 km of separated
         tracks (tier A). Painted lanes (tier D) rose from 111 to 161 km, most of it at the 2023

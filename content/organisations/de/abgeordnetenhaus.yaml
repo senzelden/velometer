@@ -17,9 +17,9 @@ sections:
   dimensions:
     scope:
       text: >-
-        was eine Anfrage erfragt; für das Vorrangnetz die je Jahr und Bezirk umgesetzten
+        was eine Anfrage erfragt; für das Radvorrangnetz die je Jahr und Bezirk umgesetzten
         km [@berlin-drs-19-25987] [@infravelo-faq]
-      src: 9d34821c58f1
+      src: fe291672eea8
     kind:
       text: so, wie der Senat antwortet [@agh-parlamentarische-anfragen]
       src: f8816a10ee16
@@ -45,9 +45,9 @@ sections:
       Mit einer Schriftlichen Anfrage kann jedes Mitglied Auskunft verlangen; der
       Senat antwortet schriftlich, in der Regel innerhalb von drei Wochen [@agh-parlamentarische-anfragen],
       und jede Antwort bleibt in der Parlamentsdokumentation PARDOK abrufbar [@agh-parlamentarische-anfragen].
-      Die Drucksache 19/25987 vom Mai 2026 ist die Quelle unserer Zeilen zum Vorrangnetz
+      Die Drucksache 19/25987 vom Mai 2026 ist die Quelle unserer Zeilen zum Radvorrangnetz
       [@berlin-drs-19-25987].
-    src: e58e1b1f4f9c
+    src: 399e5e03dd8d
   - text: >-
       Der jährliche Fortschrittsbericht erreicht das Parlament als Bericht der Senatsverkehrsverwaltung
       an den Hauptausschuss [@berlin-dpa-fortschrittsbericht-hauptausschuss].
@@ -59,19 +59,19 @@ sections:
   - text: >-
       Das Abgeordnetenhaus beschloss das Mobilitätsgesetz am 28. Juni 2018, nach der
       Kampagne des Volksentscheids Fahrrad [@changing-cities-volksentscheid] [@berlin-mobg-page].
-      Im Juli 2026 änderte es das Gesetz: Das Vorrangnetz behält seine Frist 2030,
+      Im Juli 2026 änderte es das Gesetz: Das Radvorrangnetz behält seine Frist 2030,
       die Frist für das Nebennetz wird auf 2035 verschoben, und an Hauptverkehrsstraßen
-      (Hauptstraßen im Berliner Straßennetz, nicht unsere Hauptstraßen [#main-roads])
+      (Berliner Straßen der Stufen I–III, nicht unsere Hauptstraßen [#main-roads])
       [@berlin-radverkehrsplan-2021] darf eine Radverkehrsanlage entfallen, wo es
       in der Nähe eine qualifizierte Alternative auf Nebenstraßen gibt [@berlin-mobg-amendment-2026].
-    src: b7ea8ae4126f
+    src: d7eecce68af6
   - text: >-
       Es kontrolliert den Senat durch Anfragen und Berichtsaufträge [@agh-arbeitsweise];
       die Drucksache 19/25987, *Acht Jahre Mobilitätsgesetz – Zwischen Anspruch und
-      Wirklichkeit im Radverkehr*, fragte, wie viel des Vorrangnetzes besteht [@berlin-drs-19-25987].
+      Wirklichkeit im Radverkehr*, fragte, wie viel des Radvorrangnetzes besteht [@berlin-drs-19-25987].
       Nach unserer Lesart sind Schriftliche Anfragen der Ort, an dem die Zahlen des
       Senats an ein Dokument und ein Datum gebunden werden; deshalb zitieren wir sie
       Dokument für Dokument.
-    src: f102e9fff5d6
+    src: f364de295f33
 literals:
 - Drucksache 19/25987

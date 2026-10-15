@@ -22,18 +22,17 @@ sections:
   - text: >-
       Innerhalb von A+B verschob sich die Aufteilung. Baulich getrennte Radwege (Stufe
       A) gingen von 336 auf 317 km, Geh- und Radwege (Stufe B) von 5,0 auf 43,6 km.
-      Fahrradstraßen (Stufe E) stiegen von 10 auf 27 km, und markierte Radfahrstreifen
+      Fahrradstraßen o. Ä. (Stufe E) stiegen von 10 auf 27 km, und markierte Radfahrstreifen
       (Stufe D) bewegten sich von 51 auf 48 km [#ts-utrecht].
     src: d63e1b7cfe85
   - text: >-
-      Kein Jahr der städtischen Reihe ist markiert, und die Verschiebung von A nach
-      B in der Stadt selbst wurde nicht Weg für Weg nachverfolgt. Der funktionale
-      Stadtraum (FUA), in dem A+B von 1.216 auf 1.269 km stieg, zeigt, wie solche
-      Verschiebungen entstehen: Im Laufe des Jahres 2019 stellten Kartierende Fahrradstraßen
-      von einem nicht standardmäßigen Tag auf `cyclestreet=yes` um, was km in die
-      Stufe E verschob, außerhalb der Hauptkennzahl, und Radwege, die `foot=yes` erhielten,
-      wechselten von A nach B [#ts-utrecht-fua-2020]. Neu getaggte Wege dieser Art
-      sind keine neue Infrastruktur.
+      Kein Jahr der städtischen Reihe ist markiert, und die Verschiebung von A nach B in der Stadt
+      selbst wurde nicht Weg für Weg nachverfolgt. Der funktionale Stadtraum (FUA), in dem A+B von
+      1.216 auf 1.269 km stieg, zeigt, wie solche Verschiebungen entstehen: Im Laufe des Jahres 2019
+      stellten Kartierende Fahrradstraßen o. Ä. von einem nicht standardmäßigen Tag auf
+      `cyclestreet=yes` um, was km in die Stufe E verschob, außerhalb der Hauptkennzahl, und
+      Radwege, die `foot=yes` erhielten, wechselten von A nach B [#ts-utrecht-fua-2020]. Neu
+      getaggte Wege dieser Art sind keine neue Infrastruktur.
     src: b0874b1c0c30
 - heading:
     text: Warum die Zahlen abweichen

@@ -43,8 +43,8 @@ sections:
         Our km are mapped km: what is in OpenStreetMap at the snapshot date, whenever mappers
         recorded it. Official series often count another kind of km. Berlin's Senate reports 21.2 km
         of route that projects completed or improved in 2025, from a project database at year end
-        [@berlin-fortschrittsbericht-2025]. Its <i lang="de">Vorrangnetz</i> (priority network) is a
-        planned network of about 870 km, of which 78.2 km had been implemented by May 2026
+        [@berlin-fortschrittsbericht-2025]. Its <i lang="de">Radvorrangnetz</i> (priority network)
+        is a planned network of about 870 km, of which 78.2 km had been implemented by May 2026
         [@berlin-drs-19-25987]. Vienna's 20.4 km for 2025 counts projects started that year, not
         finished ones, quoted below [@vienna-radwegeausbau-bilanz-2025].
       - >-

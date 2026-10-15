@@ -16,35 +16,35 @@ sections:
     src: 34540bb7b089
   paragraphs:
   - text: >-
-      Die gemeldeten km sind die des Senats. Der jährliche Fortschrittsbericht geht
-      als Bericht (rote Nummer) an den Hauptausschuss; Schriftliche Anfragen werden
-      als Drucksachen beantwortet. Beide stützen sich auf eine von infraVelo geführte
-      Projektdatenbank [@berlin-fortschrittsbericht-2025] und zählen die Streckenlänge
-      [@berlin-radfortschrittsbericht-page] einmal je Straßenabschnitt; eine Straße
-      mit Anlagen auf beiden Seiten zählt also einmal. Der Bericht über 2021 halbierte
-      Radverkehrsanlagen an Hauptverkehrsstraßen noch, um auf diese Basis zu kommen,
-      unten zitiert [@berlin-fortschrittsbericht-2021].
-    src: a143c5033740
+      Die gemeldeten km sind die des Senats. Der jährliche Fortschrittsbericht geht als Bericht
+      (rote Nummer) an den Hauptausschuss; Schriftliche Anfragen werden als Drucksachen beantwortet.
+      Beide stützen sich auf eine von infraVelo geführte Projektdatenbank
+      [@berlin-fortschrittsbericht-2025] und zählen die Streckenlänge
+      [@berlin-radfortschrittsbericht-page] einmal je Straßenabschnitt; eine Straße mit Anlagen auf
+      beiden Seiten zählt also einmal. Der Bericht über 2021 halbierte Radverkehrsanlagen an
+      Hauptverkehrsstraßen (Berliner Straßenklassen, nicht unsere Hauptstraßen) noch, um auf diese
+      Basis zu kommen, unten zitiert [@berlin-fortschrittsbericht-2021].
+    src: 5a83a1949e2a
   - text: >-
       Dokumente korrigieren einander, und jede gedruckte Zahl wird aufbewahrt. Für
-      2025 meldet die neueste Antwort 8,6 km im Vorrangnetz, wie der Bericht über
+      2025 meldet die neueste Antwort 8,6 km im Radvorrangnetz, wie der Bericht über
       2025, während eine Antwort vom Mai 2026 für dasselbe Jahr 9,8 km angab [@berlin-drs-19-27049]
       [@berlin-drs-19-25987]. Für das Ergänzungsnetz im Jahr 2023 nennt die neueste
       Antwort 55,1 km, was weder ihre eigene Spaltensumme noch die 5,1 km der früheren
       Antwort stützen. Die Zahl bleibt wie gedruckt, mit einem Hinweis, und ist als
       zweifelhaft markiert; als aktuell wird daher die frühere Zahl gezeigt [@berlin-drs-19-27049].
-    src: 4276b26bc6de
+    src: 5b7b554e2b9f
 - heading:
     text: Fertiggestellte Projekte
     src: 0cbaeb18ca0d
   paragraphs:
   - text: >-
-      Die fertiggestellten Projekte stammen aus dem Datensatz der Radverkehrsmaßnahmen
-      im Berliner Geoportal, einer Sicht auf Planung und Umsetzung von Radverkehrsinfrastruktur,
-      die aus derselben infraVelo-Datenbank gespeist wird, unten zitiert [@berlin-gdi-radverkehrsmassnahmen].
-      Unsere Zählung nimmt die als abgeschlossen markierten Projekte, nach dem Jahr,
-      in dem ihre Bauarbeiten endeten. Es ist eine eigene Reihe; sie und die gemeldeten
-      km müssen also nicht übereinstimmen.
+      Die fertiggestellten Projekte stammen aus dem Datensatz der Radverkehrsmaßnahmen im Berliner
+      Geoportal, einer Sicht auf Planung und Umsetzung von Radverkehrsinfrastruktur, die aus
+      derselben infraVelo-Datenbank gespeist wird, unten zitiert
+      [@berlin-gdi-radverkehrsmassnahmen]. Unsere Zählung nimmt die als abgeschlossen markierten
+      Projekte, nach dem Jahr, in dem ihre Bauarbeiten endeten. Es ist eine eigene Reihe; sie und
+      die gemeldeten km müssen also nicht übereinstimmen.
     src: bb0d2d18c953
 - heading:
     text: Im Netz kartiert

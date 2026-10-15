@@ -15,9 +15,8 @@ sections:
   - heading: How they measure
     dimensions:
       scope: >-
-        km of Berlin's cycle network newly created in the year, against the monitor's own target for
-        the <i lang="de">Berliner Radnetz</i> (Berlin cycle network)
-        [@berlin-changing-cities-monitor]
+        km of the <i lang="de">Berliner Radnetz</i> (Berlin cycle network) newly created in the
+        year, against the monitor's own target for it [@berlin-changing-cities-monitor]
       kind: newly created in the year [@berlin-changing-cities-monitor]
       length: not stated by the source
       date: reference date 31 December 2025 [@berlin-changing-cities-monitor]

@@ -19,8 +19,8 @@ sections:
     scope:
       text: >-
         km des Berliner Radnetzes, die im Jahr neu geschaffen wurden, gemessen am
-        eigenen Ziel des Monitors für das Berliner Radnetz [@berlin-changing-cities-monitor]
-      src: d51f72571190
+        eigenen Ziel des Monitors für dieses Netz [@berlin-changing-cities-monitor]
+      src: fcb3ab5ce6b2
     kind:
       text: im Jahr neu geschaffen [@berlin-changing-cities-monitor]
       src: 0e98188c429f
