@@ -767,8 +767,8 @@ def _rgb(hexcolour: str) -> tuple[float, float, float]:
     return tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb)
 
 
-def _lch_hue(hexcolour: str) -> float:
-    """The CIELAB hue angle (D65) of an sRGB colour, in degrees."""
+def _lch(hexcolour: str) -> tuple[float, float]:
+    """The CIELAB chroma and hue angle (D65, degrees) of an sRGB colour."""
     import math
 
     r, g, b = _rgb(hexcolour)
@@ -780,7 +780,7 @@ def _lch_hue(hexcolour: str) -> float:
         return t ** (1 / 3) if t > 216 / 24389 else (24389 / 27 * t + 16) / 116
 
     a_, b_ = 500 * (f(x) - f(y)), 200 * (f(y) - f(z))
-    return math.degrees(math.atan2(b_, a_)) % 360
+    return math.hypot(a_, b_), math.degrees(math.atan2(b_, a_)) % 360
 
 
 # Hue distance between the mapped line and the plan chart's other colours. The M8 amber was
@@ -788,6 +788,9 @@ def _lch_hue(hexcolour: str) -> float:
 # degrees, a sixth of the circle, puts two colours in different hue families (orange, magenta,
 # blue, green), whatever their lightness
 MIN_HUE_DEGREES = 60
+# below this CIELAB chroma a colour reads as grey and its hue angle is noise (M8-18): the mapped
+# colour must stay above it for the hue test to mean anything
+MIN_CHROMA = 20
 
 
 @pytest.mark.parametrize("theme", ["light", "dark"])
@@ -806,9 +809,13 @@ def test_the_mapped_colour_is_apart_from_the_other_plan_chart_colours(theme):
         for t in re.findall(r"var\((--[\w-]+)\)", v)
     } - {"--ink", "--ink-2", "--grid", "--grid-2", "--halo"}
     assert {"--mapped", "--series-1", "--flag", "--completed"} <= drawn
-    mapped = _lch_hue(tokens["--mapped"])
+    chroma, mapped = _lch(tokens["--mapped"])
+    assert chroma >= MIN_CHROMA, ("--mapped", round(chroma))
     for other in sorted(drawn - {"--mapped"}):
-        d = abs(mapped - _lch_hue(tokens[other])) % 360
+        c, hue = _lch(tokens[other])
+        if c < MIN_CHROMA:
+            continue  # a grey: no hue family to be confused with
+        d = abs(mapped - hue) % 360
         assert min(d, 360 - d) >= MIN_HUE_DEGREES, (other, round(min(d, 360 - d)))
 
 
@@ -840,7 +847,8 @@ def test_the_plan_key_explains_the_capped_marker(client):
     cap = [i for i in items if 'class="key key-cap"' in i]
     assert len(cap) == 1
     text = _text(cap[0])
-    assert "↑" in text and "above the chart's scale" in text and "table" in text
+    assert "↑" in text and "above the chart's scale" in text
+    assert re.search(r"\bthe table under the chart\b", text), text  # M8-18: a word, not "notable"
 
 
 # --- quote language (M10 spec decision 6, Language) ---
