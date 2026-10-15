@@ -787,6 +787,18 @@ def test_read_only_commands_on_a_v9_db_with_counter_index_rows_point_to_migrate(
         assert {m for (m,) in c.execute("SELECT method FROM counter_index")} == {"v1"}
 
 
+def test_migrate_from_v9_hints_that_counters_load_writes_the_v2_rows(tmp_path):
+    from tests.test_db_m8 import v9_db
+
+    db = tmp_path / "v9.sqlite"
+    v9_db(db).close()
+    out = CliRunner().invoke(app, ["migrate", "--db", str(db)])
+    assert out.exit_code == 0, out.output
+    assert "velometer counters load" in out.output
+    again = CliRunner().invoke(app, ["migrate", "--db", str(db)])  # already v10: no hint
+    assert again.exit_code == 0 and "counters load" not in again.output
+
+
 def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
     from tests.test_db import _make_v5_db_with_activity
 

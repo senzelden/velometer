@@ -139,12 +139,18 @@ def migrate(
         typer.echo("error: --activity-sha must be 64 lowercase hex characters", err=True)
         raise typer.Exit(2)
     with open_db(db) as conn:
+        before = conn.execute("PRAGMA user_version").fetchone()[0]
         try:
             create_schema(conn, activity_sha256_for_v5=activity_sha)
         except SchemaError as e:
             typer.echo(f"database error: {e}", err=True)
             raise typer.Exit(1) from e
+        tagged = before < 10 and conn.execute("SELECT 1 FROM counter_index LIMIT 1").fetchone()
     typer.echo(f"{db}: schema v{SCHEMA_VERSION}")
+    if tagged:
+        typer.echo(
+            "counter_index rows are tagged v1; run `velometer counters load` to write the v2 rows"
+        )
 
 
 @app.command()

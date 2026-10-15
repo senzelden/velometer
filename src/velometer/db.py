@@ -1184,6 +1184,17 @@ def replace_counter_index(
     rows: list[CounterIndexYear],
     method: str | None = None,
 ) -> None:
+    """`replace_counter_index_nocommit` in its own transaction."""
+    with conn:
+        replace_counter_index_nocommit(conn, city_id, rows, method)
+
+
+def replace_counter_index_nocommit(
+    conn: sqlite3.Connection,
+    city_id: str,
+    rows: list[CounterIndexYear],
+    method: str | None = None,
+) -> None:
     """Replace the city's index rows of one method (`method`, or the one every row has) with
     `rows`; the city's rows of the other method and other cities' rows stay. ValueError, and
     nothing written, on rows of two methods, a row of another method than `method`, or no rows
@@ -1196,12 +1207,11 @@ def replace_counter_index(
             else "counter_index: no rows and no method to replace"
         )
     (scope,) = methods
-    with conn:
-        conn.execute("DELETE FROM counter_index WHERE city_id=? AND method=?", (city_id, scope))
-        conn.executemany(
-            "INSERT INTO counter_index VALUES (?,?,?,?,?,?,?)",
-            (
-                (r.city_id, r.year, r.index, r.sites, r.base_year, r.series, r.method)
-                for r in _same_city("counter_index", city_id, rows)
-            ),
-        )
+    conn.execute("DELETE FROM counter_index WHERE city_id=? AND method=?", (city_id, scope))
+    conn.executemany(
+        "INSERT INTO counter_index VALUES (?,?,?,?,?,?,?)",
+        (
+            (r.city_id, r.year, r.index, r.sites, r.base_year, r.series, r.method)
+            for r in _same_city("counter_index", city_id, rows)
+        ),
+    )

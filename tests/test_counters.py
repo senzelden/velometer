@@ -491,6 +491,29 @@ def test_paris_rolling_export_drops_no_site_hour_for_a_counter_not_yet_started()
     assert days["100003096", date(2025, 10, 25)].complete
 
 
+def test_paris_rolling_export_counter_starting_mid_day_keeps_the_first_local_day(tmp_path):
+    """The rolling export's first UTC hours, converted to local time, follow the hour rule: a
+    counter first reported at 14:00 local is not in service before it, so the day stays complete
+    (the day rule would call the hours 0-13 an outage)."""
+    entry = _entry("paris", "paris", "Europe/Paris")
+    src = (FIX / "paris" / "rolling.csv").read_text(encoding="utf-8-sig").splitlines()
+    ids = {"a": "100003096-353242251", "b": "100003096-999999999"}
+
+    def row(counter, utc):
+        return f"{ids[counter]};x;100003096;97 avenue Denfert Rochereau;1.0;{utc};48.83504, 2.33314"
+
+    # local 2025-10-25 is UTC+2: local 00:00 is 2025-10-24T22:00Z, local 14:00 is 12:00Z
+    a = [row("a", f"2025-10-24T{h}:00:00+00:00") for h in (22, 23)]
+    a += [row("a", f"2025-10-25T{h:02d}:00:00+00:00") for h in range(22)]
+    b = [row("b", f"2025-10-25T{h:02d}:00:00+00:00") for h in range(12, 22)]
+    f = tmp_path / "rolling.csv"
+    f.write_text("\n".join([src[0], *a, *b]) + "\n", encoding="utf-8")
+    _, hours = paris.parse([f], entry)
+    days = _by_key(to_days(hours, entry.timezone))
+    assert days["100003096", date(2025, 10, 25)].complete
+    assert days["100003096", date(2025, 10, 25)].count == 24 + 10
+
+
 def _vienna_entry():
     return _entry("vienna", "vienna", "Europe/Vienna", "daily", exclude_columns=["Opernring"])
 
@@ -670,6 +693,34 @@ def test_a_failed_replace_keeps_the_previous_daily_rows(tmp_path, monkeypatch):
     monkeypatch.setattr(counters, "zero_days_invalid", lambda days: real(days) + [bad])
     assert CliRunner().invoke(app, args).exit_code != 0
     assert _dump(db) == rows
+
+
+def test_an_interrupt_between_the_two_methods_keeps_the_previous_rows_of_both(
+    tmp_path, monkeypatch
+):
+    import velometer.db as db_module
+    from velometer.counters import _store_index
+
+    conn = _check_db(tmp_path)
+    entry = _entry("berlin", "berlin", "Europe/Berlin")
+    _store_index(conn, entry, {"v1": [(2019, 100.0, 4)], "v2": [(2019, 100.0, 4)]}, "counts")
+    before = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+    real = db_module.replace_counter_index_nocommit
+    calls = []
+
+    def fail_on_the_second(*a, **kw):
+        if calls:
+            raise KeyboardInterrupt
+        calls.append(1)
+        return real(*a, **kw)
+
+    monkeypatch.setattr(db_module, "replace_counter_index_nocommit", fail_on_the_second)
+    new = {"v1": [(2019, 100.0, 5)], "v2": [(2019, 100.0, 5)]}
+    with pytest.raises(KeyboardInterrupt):
+        _store_index(conn, entry, new, "counts")
+    assert calls  # the first method was written before the interrupt
+    after = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+    assert after == before
 
 
 def test_counters_check_flags_a_city_with_no_index_year(tmp_path):

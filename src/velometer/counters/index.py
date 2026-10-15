@@ -4,7 +4,8 @@ Each year-on-year link uses only the sites with at least `min_valid` complete da
 year's 365 or 366 calendar days) in both years. The v2 link ratio (`chain_index`, from M13) is
 the pooled mean per complete day: those sites' counts summed over their complete days, divided
 by the number of those complete days, in the later year over the same in the earlier one. A
-difference in coverage between the two years therefore no longer moves the ratio. v1 (M8-M12,
+difference in coverage between the two years still moves the ratio, but only through the weight a
+site's days carry in the pooled mean (a site with more complete days weighs more). v1 (M8-M12,
 `chain_index_v1`) was the ratio of the summed counts alone. Links are chained from `base_year`
 = 100.0, forwards and backwards. A link with fewer than `min_sites` sites breaks the chain: that
 year and every year beyond it (further from the base) have no value; the chain is never

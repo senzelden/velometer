@@ -164,15 +164,16 @@ def _store_sites(conn, entry, sites: list[Site], span, retrieved_at: str) -> Non
 
 def _store_index(conn, entry, index_by_method: dict[str, list], series: str) -> None:
     """Replace the city's index rows of each method in `index_by_method` (method -> chain)."""
-    from velometer.db import CounterIndexYear, replace_counter_index
+    from velometer.db import CounterIndexYear, replace_counter_index_nocommit
 
-    for method, index in index_by_method.items():
-        replace_counter_index(
-            conn,
-            entry.city,
-            [
-                CounterIndexYear(entry.city, y, v, n, entry.base_year, series, method)
-                for y, v, n in index
-            ],
-            method=method,
-        )
+    with conn:  # one transaction: an interrupt leaves the old rows of every method
+        for method, index in index_by_method.items():
+            replace_counter_index_nocommit(
+                conn,
+                entry.city,
+                [
+                    CounterIndexYear(entry.city, y, v, n, entry.base_year, series, method)
+                    for y, v, n in index
+                ],
+                method=method,
+            )
