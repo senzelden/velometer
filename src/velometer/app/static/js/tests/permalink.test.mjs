@@ -118,3 +118,19 @@ test("readerMoves: a resize's moveend and the app's own fit are not the reader's
   assert.equal(moves.moveend(false), false, "the moveend a resize sends");
   assert.equal(moves.moveend(false), true, "the reader's next move counts again");
 });
+
+test("stepMemory: the step in view writes #step-<id>, once; the first step of a bare page writes nothing", async () => {
+  const { stepMemory } = await import("../permalink.js");
+  const ids = ["intro", "jumps", "a b"];
+  const bare = stepMemory(ids, "");
+  assert.equal(bare.next("intro"), null, "the top of a page that came without a step");
+  assert.equal(bare.next("jumps"), "#step-jumps");
+  assert.equal(bare.next("jumps"), null, "already written");
+  assert.equal(bare.next("intro"), "#step-intro", "back to the first step once another was written");
+  assert.equal(bare.next("a b"), "#step-a%20b");
+  const linked = stepMemory(ids, "#step-jumps");
+  assert.equal(linked.next("jumps"), null, "the permalink's own step is written already");
+  assert.equal(linked.next("intro"), "#step-intro");
+  const stale = stepMemory(ids, "#step-gone");
+  assert.equal(stale.next("intro"), null, "an unknown step is no step");
+});

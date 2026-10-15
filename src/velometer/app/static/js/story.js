@@ -7,7 +7,7 @@ import { renderLines, renderSmallMultiples } from "./chart.js";
 import { formatValue } from "./chart-core.js";
 import { buildModel, slotPlan } from "./compare-model.js";
 import { describe } from "./describe.js";
-import { stepFromHash } from "./permalink.js";
+import { stepFromHash, stepMemory } from "./permalink.js";
 import { displayLabels, failed, labelsOf, loadSeries, mount, pointsOn } from "./data.js";
 import { t } from "./strings.js";
 
@@ -122,14 +122,14 @@ for (const d of document.querySelectorAll("details.step-values")) d.open = false
 
 const sections = [...document.querySelectorAll("section[data-step]")];
 const ids = sections.map((s) => s.dataset.step);
-// permalink: the step in view is the address's #step-<id> (replaceState: Back is not flooded). The
-// first step at the top of a page that came without a step hash writes nothing.
-let written = stepFromHash(location.hash, ids);
+// permalink: the step in view is the address's #step-<id> (replaceState: Back is not flooded);
+// which steps write is permalink.js stepMemory
+const memory = stepMemory(ids, location.hash);
 const remember = (step) => {
-  if (step === written || (step === ids[0] && written === null)) return;
-  written = step;
+  const hash = memory.next(step);
+  if (hash === null) return;
   try {
-    history.replaceState(history.state, "", `${location.pathname}${location.search}#step-${encodeURIComponent(step)}`);
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${hash}`);
   } catch {
     // a frame that refuses history changes: the page works without the permalink
   }

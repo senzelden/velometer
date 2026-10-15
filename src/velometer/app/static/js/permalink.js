@@ -72,6 +72,21 @@ export function stepFromHash(hash, steps) {
   }
 }
 
+/** The Stories permalink: which step in view is written to the address. `next(step)` is the
+ * hash to write (`#step-<id>`), or null when there is nothing to write: the step written last
+ * (or the one the address came with), or the first step while the page came without a step and
+ * none has been written (its top is the page itself). */
+export function stepMemory(steps, hash) {
+  let written = stepFromHash(hash, steps);
+  return {
+    next(step) {
+      if (step === written || (step === steps[0] && written === null)) return null;
+      written = step;
+      return `#step-${encodeURIComponent(step)}`;
+    },
+  };
+}
+
 /** `search` with `key` set to `value` (or removed for null); the other pairs stay as written. */
 export function setParam(search, key, value) {
   const parts = String(search).replace(/^\?/, "").split("&").filter(Boolean);
