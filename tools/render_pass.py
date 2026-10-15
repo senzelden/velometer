@@ -1414,11 +1414,20 @@ def _search(devtools, origin, base, theme, width, st: Steps) -> None:
     _search_again(devtools, origin, base, theme, width, st, state, label, cities)
 
 
+# the search's "No match" status (M13): its text, role, place and whether it is drawn
+NO_MATCH_JS = """(() => { const p = document.querySelector('.search .search-status');
+  return {status: p ? p.textContent : null, role: p && p.getAttribute('role'),
+          in_list: !!(p && p.closest('[role=listbox]')),
+          shown: !!(p && p.getClientRects().length)}; })()"""
+NO_MATCH_SHOWN = "!!document.querySelector('.search .search-status')?.textContent"
+
+
 def _search_again(
     devtools, origin, base, theme, width, st: Steps, state: str, label: str, cities: list
 ) -> None:
-    """Two fresh loads: the second city + Down + Enter lands on it; "zzz" offers the one
-    "No match" option and axe finds nothing with that list open."""
+    """Two fresh loads: the second city + Down + Enter lands on it; "zzz" says "No match" in
+    the status under the box, outside the listbox, the list closed and empty, and axe finds
+    nothing then."""
 
     def to_box(t, errs, what: str) -> bool:
         if not st.check(f"{label}: {what} loads", "; ".join(errs) or None):
@@ -1455,13 +1464,14 @@ def _search_again(
         if not to_box(t, errs, "no-match page"):
             return
         t.call("Input.insertText", text="zzz")
-        t.wait_js(options, 5)
-        s = t.js(state)
-        st.check(f"{label}: zzz offers the No match option",
-                 None if s["n"] == 1 and s["first"] == "No match" and s["expanded"] == "true"
-                 else f"{s}")  # fmt: skip
+        t.wait_js(NO_MATCH_SHOWN, 5)
+        s = t.js(state) | t.js(NO_MATCH_JS)
+        ok = s["n"] == 0 and s["expanded"] == "false" and s["status"] == "No match"
+        ok = ok and s["role"] == "status" and not s["in_list"] and s["shown"]
+        st.check(f"{label}: zzz says No match in the status, outside the closed list",
+                 None if ok else f"{s}")  # fmt: skip
         bad = [v["id"] for v in audit(t)]
-        st.check(f"{label}: axe finds nothing with the list open", ", ".join(bad) or None)
+        st.check(f"{label}: axe finds nothing with No match shown", ", ".join(bad) or None)
     finally:
         t.close()
 

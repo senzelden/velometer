@@ -8,6 +8,7 @@ from pathlib import Path
 
 from velometer.app.names import country_name
 from velometer.content.loader import load_narratives, load_organisations
+from velometer.content.models import Narrative, Organisation
 from velometer.i18n import Lang, t
 from velometer.report.data import ReportData
 
@@ -63,12 +64,13 @@ def search_index(
     for iso2, name in sorted(countries.items(), key=lambda kv: kv[1]):
         out.append(_entry(name, "country", f"/cities#{iso2.lower()}", iso2))
     errors: dict[str, str] = {}
+    orgs: dict[str, Organisation] = {}
+    narratives: dict[str, Narrative] = {}
     try:
         orgs = load_organisations(Path(content_dir) / "organisations", errors=errors)
         narratives = load_narratives(Path(content_dir) / "narratives", errors=errors)
     except OSError as e:  # pragma: no cover - the loaders record per-file errors
         log.error("search index: content could not be read: %s", e)
-        orgs, narratives = {}, {}
     for name, why in sorted(errors.items()):  # the pages show a note; the index says it here
         log.warning("search index: left out content %s: %s", name, why)
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):

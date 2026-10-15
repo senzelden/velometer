@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import "./strings-fixture.mjs";
 import { fold, rank, move, keyAction } from "../search.js";
 import { repoFile } from "./repo.mjs";
 
@@ -114,11 +115,13 @@ function fakePage() {
   const focusable = (n) => Object.assign(n, { focus() { if (!this.hidden) doc.activeElement = this; } });
   const input = focusable(fakeNode("input"));
   const list = fakeNode("ul", { hidden: true });
-  const box = fakeNode("div", { hidden: true, kids: [input, list] });
-  box.querySelector = (s) => (s === "input" ? input : list);
+  const status = fakeNode("p");
+  const box = fakeNode("div", { hidden: true, kids: [input, list, status] });
+  box.querySelector = (s) =>
+    s === "input" ? input : s === "[role=listbox]" ? list : s === ".search-status" ? status : null;
   const fallback = focusable(fakeNode("a"));
   doc.querySelector = (s) => (s === ".search" ? box : s === ".search-fallback" ? fallback : null);
-  return { doc, box, input, list, fallback };
+  return { doc, box, input, list, status, fallback };
 }
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
@@ -215,4 +218,70 @@ test("every name form of every city, plain, upper case and without diacritics, r
       }
     }
   }
+});
+
+// ---- M13 (M11-6): No match is a status outside the listbox; the keys, dispatched ----
+
+/** A mounted search over `index`, the index loaded, `query` typed. */
+async function typed(t, index, query) {
+  const { mount } = await import("../search.js");
+  t.mock.method(globalThis, "fetch", async () => ({ ok: true, json: async () => index }));
+  const page = fakePage();
+  mount(page.doc);
+  page.input.fire("focus");
+  await settle();
+  await settle();
+  page.input.value = query;
+  page.input.fire("input");
+  return page;
+}
+const key = (input, k) => {
+  let prevented = false;
+  input.fire("keydown", { key: k, preventDefault() { prevented = true; } });
+  return prevented;
+};
+const INDEX = [
+  { label: "Berlin (Germany)", kind: "city", url: "/city/berlin", terms: ["Berlin"] },
+  { label: "Bern (Switzerland)", kind: "city", url: "/city/bern", terms: ["Bern"] },
+];
+
+test("no match: the status says so outside the listbox, the list stays closed and empty", async (t) => {
+  const { input, list, status } = await typed(t, INDEX, "zzz");
+  assert.equal(status.textContent, "No match");
+  assert.deepEqual(list.children, [], "a listbox holds options only");
+  assert.equal(list.hidden, true);
+  assert.equal(input.getAttribute("aria-expanded"), "false");
+  assert.equal(key(input, "ArrowDown"), false, "Down does nothing");
+  assert.equal(input.getAttribute("aria-activedescendant"), null);
+  input.value = "ber";
+  input.fire("input");
+  assert.equal(status.textContent, "", "a match clears it");
+  assert.equal(list.children.length, 2);
+});
+
+test("keys: Down and Up move the active option, wrapping; Enter goes to it; Escape closes, then clears", async (t) => {
+  const { input, list } = await typed(t, INDEX, "ber");
+  assert.equal(list.hidden, false);
+  assert.equal(input.getAttribute("aria-expanded"), "true");
+  assert.equal(key(input, "ArrowDown"), true);
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-0");
+  key(input, "ArrowDown");
+  key(input, "ArrowDown");
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-0", "wraps");
+  key(input, "ArrowUp");
+  assert.equal(input.getAttribute("aria-activedescendant"), "site-search-opt-1");
+  assert.deepEqual(list.children.map((li) => li.getAttribute("aria-selected")), ["false", "true"]);
+  const before = globalThis.location;
+  globalThis.location = { href: "" };
+  try {
+    assert.equal(key(input, "Enter"), true);
+    assert.equal(globalThis.location.href, "/city/bern");
+  } finally {
+    globalThis.location = before;
+  }
+  key(input, "Escape");
+  assert.equal(list.hidden, true);
+  assert.equal(input.value, "ber", "the first Escape closes the list");
+  key(input, "Escape");
+  assert.equal(input.value, "", "the second clears the box");
 });

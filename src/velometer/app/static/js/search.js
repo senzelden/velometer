@@ -67,6 +67,8 @@ export function mount(doc) {
   const box = doc.querySelector(".search");
   const input = box?.querySelector("input");
   const list = box?.querySelector("[role=listbox]");
+  // "No match" is said here, outside the listbox (a listbox owns only options)
+  const status = box?.querySelector(".search-status");
   const fallback = doc.querySelector(".search-fallback");
   if (!box || !input || !list) return;
   box.hidden = false;
@@ -124,6 +126,7 @@ export function mount(doc) {
     if (!input.value.trim()) {
       shown = [];
       list.replaceChildren();
+      if (status) status.textContent = "";
       return close();
     }
     if (!index) return;
@@ -145,17 +148,15 @@ export function mount(doc) {
       list.append(li);
     });
     if (!shown.length) {
-      const li = doc.createElement("li");
-      li.className = "none";
-      li.setAttribute("role", "option"); // a listbox owns only options
-      li.setAttribute("aria-disabled", "true");
-      li.textContent = t("js.search.no_match");
-      list.append(li);
+      // the status (role=status) says it, and a screen reader hears it from there
+      if (status) status.textContent = t("js.search.no_match");
+      return close();
     }
+    if (status) status.textContent = "";
     list.hidden = false;
     input.setAttribute("aria-expanded", "true");
     setActive(-1);
-    announce(shown.length ? t("js.search.results", { count: shown.length }) : t("js.search.no_match"));
+    announce(t("js.search.results", { count: shown.length }));
   }
 
   const go = (entry) => {

@@ -868,6 +868,10 @@ def test_nav_search_is_a_hidden_combobox_with_a_working_fallback_link(client):  
     assert 'role="combobox"' in html and 'aria-expanded="false"' in html
     assert 'aria-controls="site-search-list"' in html and 'role="listbox"' in html
     assert re.search(r'<label for="site-search" class="visually-hidden">', html)
+    # "No match" is a status outside the listbox (M13 M11-6): the list holds options only
+    listbox = re.search(r'<ul id="site-search-list" role="listbox"[^>]*></ul>', html)
+    assert listbox, "the listbox is empty in the page; search.js fills it with options"
+    assert re.search(r'<p class="search-status" role="status"></p>', html)
 
 
 def test_search_js_follows_the_rules():
