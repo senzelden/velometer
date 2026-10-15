@@ -907,6 +907,30 @@ def test_citation_markers_inside_a_code_span_are_text():
     assert "<sup" not in html
 
 
+def _well_nested(html: str) -> bool:
+    stack = []
+    for close, tag in re.findall(r"<(/?)([a-z]+)\b[^>]*>", html):
+        if not close:
+            stack.append(tag)
+        elif not stack or stack.pop() != tag:
+            return False
+    return not stack
+
+
+def test_a_code_span_and_a_quotation_never_misnest():
+    # M10-7: the quotation mark was read before the code spans, so a code span holding a
+    # quotation's end gave <q …><code>…</q></code>
+    html = _para('<q lang="de">a `b</q>` c')
+    assert _well_nested(html) and "<code>b&lt;/q&gt;</code>" in html, html
+    html = _para('`<i lang="da">x` y</i>')
+    assert _well_nested(html) and '<code>&lt;i lang=&#34;da&#34;&gt;x</code>' in html, html
+    # a code span inside a quotation or a term is still one
+    assert _para('<q lang="de">nimm `highway=*` hier</q>') == (
+        '<p><q lang="de">nimm <code>highway=*</code> hier</q></p>'
+    )
+    assert _para('<i lang="nb">`a`</i>') == '<p><i lang="nb"><code>a</code></i></p>'
+
+
 def test_two_osm_wildcards_outside_backticks_are_text_not_an_italic():
     # M8-21: `cycleway:left=*, cycleway:right=*` without backticks paired its two stars into
     # <em>, cycleway:right=</em>; a star after "=" is a tag value, never an emphasis mark

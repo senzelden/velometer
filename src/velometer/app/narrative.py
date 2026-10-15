@@ -33,6 +33,7 @@ from velometer.i18n import Lang, t
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
 CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
+CODE_SLOT = re.compile(r"\0(\d+)\0")  # a code span held aside while the other marks are read
 # *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text,
 # and a star after "=" (a tag's wildcard value) neither opens nor closes one, so two wildcards in a
 # paragraph (`left=*, right=*`) are never paired
@@ -187,18 +188,25 @@ class _Numbering:
             return f'<sup class="dref"><a href="#{self.prefix}ref-{n}">d{n}</a></sup>'
 
         body = str(escape(text))  # escaped first: the markers' characters are not escaped
-        body = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', body)  # the only markup content may write
-        body = TERM_MARK.sub(r'<i lang="\1">\2</i>', body)
 
         # code spans first and kept whole: `*` inside one is text, and no *...* spans across one;
-        # nor is a citation marker inside one replaced
+        # nor is a citation marker inside one replaced, nor a quotation or term mark read from
+        # it. Each is held as a NUL-numbered slot (escaped text has no NUL) while the quotation
+        # and term marks are read, so a mark holds whole code spans or none (M10-7)
+        parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
+        codes = parts[1::2]
+        held = "".join(p if i % 2 == 0 else f"\0{i // 2}\0" for i, p in enumerate(parts))
+        held = QUOTE_MARK.sub(r'<q lang="\1">\2</q>', held)  # the only markup content may write
+        held = TERM_MARK.sub(r'<i lang="\1">\2</i>', held)
+
         def prose(part: str) -> str:
             return REF_MARK.sub(ref, SOURCE_MARK.sub(source, EM_MARK.sub(r"<em>\1</em>", part)))
 
-        parts = CODE_MARK.split(body)  # text, code, text, code, ..., text
+        pieces = CODE_SLOT.split(held)  # text, slot, text, slot, ..., text
         return Markup(
             "".join(
-                f"<code>{part}</code>" if i % 2 else prose(part) for i, part in enumerate(parts)
+                f"<code>{codes[int(piece)]}</code>" if i % 2 else prose(piece)
+                for i, piece in enumerate(pieces)
             )
         )
 
