@@ -111,6 +111,9 @@ cities:
     timezone: Europe/Madrid
     grain: hourly
     base_year: 2020  # data start in September 2019 (spec §2.13)
+    # the methodology's clause after the gaps (the portal: interruption, detectors replaced)
+    note: while the detectors were changed
+    note_de: während die Detektoren getauscht wurden
   - city: oslo
     adapter: oslo
     source: Statens vegvesen (state counters)

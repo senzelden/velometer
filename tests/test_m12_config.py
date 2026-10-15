@@ -69,6 +69,25 @@ def test_figure_notes_de_refuses_a_note_without_german(tmp_path):
         figure_notes_de(tmp_path)
 
 
+def test_a_counter_city_note_needs_its_german_clause():
+    # M8-8: the Madrid gap clause is reader prose in both editions
+    from pydantic import ValidationError
+
+    from velometer.counters.model import CounterEntry
+
+    entry = {
+        "city": "x", "adapter": "x", "source": "S", "licence": "L", "licence_url": "u",
+        "page": "p", "urls": ["u"], "timezone": "Europe/Madrid", "grain": "hourly",
+        "note": "while the detectors were changed",
+    }  # fmt: skip
+    with pytest.raises(ValidationError, match="note_de is required beside note"):
+        CounterEntry(**entry)
+    assert CounterEntry(**entry, note_de="während").note_de == "während"
+    assert any(
+        w == "counters.yaml cities.madrid.note" for w, _en, _de in reader_prose(Path("config"))
+    )
+
+
 def test_german_config_prose_has_no_english_sentences():
     # the sniff's scope is config-derived text only: the _de values themselves
     bad = []

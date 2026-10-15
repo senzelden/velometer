@@ -137,6 +137,8 @@ class CounterCityFact(_Frozen):
     index_years: list[int] = []  # stored years with an index value
     line: bool = True  # whether the index is drawn as a line (`MIN_LINE_YEARS` valued years)
     gaps: list[tuple[str, str]] = []  # (YYYY-MM, YYYY-MM) runs without counts, of a no-line city
+    note: str | None = None  # config/counters.yaml: the clause after the gaps (M8-8)
+    note_de: str | None = None
     step_downs: list[StepDownFact] = []  # config/counters.yaml: our reading of the daily data
 
 
@@ -355,6 +357,8 @@ def _counter_city(data: ReportData, c: CounterEntry, name: str) -> CounterCityFa
         index_years=years,
         line=line,
         gaps=gaps,
+        note=c.note,
+        note_de=c.note_de,
         step_downs=[StepDownFact(site=s.site, since=s.since) for s in c.step_downs],
     )
 

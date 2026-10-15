@@ -234,7 +234,7 @@ Per city:
 {% set ns.parts = ns.parts + ["the data start in " ~ (c.data_from | month) ~ ", so its base year is " ~ c.base_year] %}
 {% endif %}
 {% if c.gaps %}
-{% set ns.parts = ns.parts + ["the files hold no counts " ~ (c.gaps | gaps) ~ (", while the detectors were changed" if c.id == "madrid" else "")] %}
+{% set ns.parts = ns.parts + ["the files hold no counts " ~ (c.gaps | gaps) ~ ((", " ~ c.note) if c.note else "")] %}
 {% endif %}
 {% if c.index_years %}
 {% set ns.parts = ns.parts + ["only " ~ (c.index_years | map("string") | list | and_list) ~ (" has" if c.index_years | length == 1 else " have") ~ " an index value, so no index line is drawn"] %}

@@ -123,6 +123,16 @@ class CounterEntry(_Strict):
     # are dropped, with their counts (Oslo: state counters, county-wide query)
     boundary: Literal["lau"] | None = None
     step_downs: list[StepDown] = []
+    # a clause the methodology adds after the gaps of a city drawn without an index line, in
+    # the portal's words as we read them (Madrid: "while the detectors were changed"); the German
+    # clause is required beside it (M12)
+    note: str | None = None
+    note_de: str | None = None
+
+    @model_validator(mode="after")
+    def _german_note(self) -> "CounterEntry":
+        require_de(self, f"city {self.city!r}", "note")
+        return self
 
     @field_validator("timezone")
     @classmethod

@@ -234,7 +234,7 @@ Je Stadt:
 {% set ns.parts = ns.parts + ["Die Daten beginnen im " ~ (c.data_from | month) ~ ", das Basisjahr ist daher " ~ c.base_year] %}
 {% endif %}
 {% if c.gaps %}
-{% set ns.parts = ns.parts + ["Die Dateien enthalten " ~ (c.gaps | gaps) ~ (", während die Detektoren getauscht wurden," if c.id == "madrid" else "") ~ " keine Zählwerte"] %}
+{% set ns.parts = ns.parts + ["Die Dateien enthalten " ~ (c.gaps | gaps) ~ ((", " ~ c.note_de ~ ",") if c.note_de else "") ~ " keine Zählwerte"] %}
 {% endif %}
 {% if c.index_years %}
 {% set ns.parts = ns.parts + ["Nur " ~ (c.index_years | map("string") | list | and_list) ~ (" hat" if c.index_years | length == 1 else " haben") ~ " einen Indexwert, daher wird keine Indexlinie gezeichnet"] %}

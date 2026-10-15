@@ -859,9 +859,9 @@ NO_LINE = {
 }
 
 
-def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture_db, tmp_path):
-    """The Madrid bullet is generated: the first month, the gaps and the years with a value come
-    from the stored counter tables, the base year from config/counters.yaml."""
+def _store_berlin_without_a_line(db_path) -> None:
+    """Berlin as Madrid is stored: data from September 2019, no counts from July 2021 to August
+    2022, an index value for 2020 only."""
     from datetime import date, timedelta
 
     from velometer.db import (
@@ -872,9 +872,6 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
         replace_counter_index,
         replace_counter_sites,
     )
-
-    db_path, cfg_dir, _conn, data = fixture_db
-    write(tmp_path, methodology_facts(data))
 
     def span(a: date, b: date) -> list[CounterDay]:
         n = (b - a).days + 1
@@ -890,10 +887,44 @@ def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture
         replace_counter_sites(c, "berlin", [site])
         replace_counter_daily(c, "berlin", days)
         replace_counter_index(c, "berlin", index)
+
+
+def test_a_city_without_an_index_line_gets_a_bullet_from_its_stored_data(fixture_db, tmp_path):
+    """The Madrid bullet is generated: the first month, the gaps and the years with a value come
+    from the stored counter tables, the base year from config/counters.yaml."""
+    db_path, cfg_dir, _conn, data = fixture_db
+    write(tmp_path, methodology_facts(data))
+    _store_berlin_without_a_line(db_path)
     _edit_counters(cfg_dir, "berlin", base_year=2020)
     facts = methodology_facts(data)
     for lang in LANGS:
         assert NO_LINE[lang] in render(facts, lang)
+    assert check(tmp_path, facts)
+
+
+GAP_NOTE = {
+    "en": "The files hold no counts from July 2021 to August 2022, while the portal was moved. ",
+    "de": "Die Dateien enthalten von Juli 2021 bis August 2022, während das Portal umzog, keine "
+    "Zählwerte. ",
+}
+
+
+def test_the_gap_clause_of_a_city_without_a_line_comes_from_its_counters_yaml_note(
+    fixture_db, tmp_path
+):
+    """M8-8: the clause after a no-line city's gaps (Madrid: "while the detectors were changed")
+    is its counters.yaml `note`, not template text keyed on the city: a changed note makes the
+    committed methodology stale, so `content --check` sees it."""
+    db_path, cfg_dir, _conn, data = fixture_db
+    _store_berlin_without_a_line(db_path)
+    _edit_counters(cfg_dir, "berlin", base_year=2020)
+    write(tmp_path, methodology_facts(data))
+    _edit_counters(
+        cfg_dir, "berlin", note="while the portal was moved", note_de="während das Portal umzog"
+    )
+    facts = methodology_facts(data)
+    for lang in LANGS:
+        assert GAP_NOTE[lang] in render(facts, lang)
     assert check(tmp_path, facts)
 
 
