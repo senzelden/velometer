@@ -312,7 +312,11 @@ def sub_data(tmp_path):
 
 def test_subareas_rows_of_the_current_run(sub_data):
     rows = sub_data.subareas("berlin")
-    assert [r.name for r in rows] == ["East", "West", "Outside the 2 Bezirke (districts), at the LAU edge"]
+    assert [r.name for r in rows] == [
+        "East",
+        "West",
+        "Outside the 2 Bezirke (districts), at the LAU edge",
+    ]
     assert [r.remainder for r in rows] == [False, False, True]  # the remainder last, set apart
     assert rows[2].subarea_id == "remainder" and rows[2].tier_km["A"] == 0.5
     west = rows[1]
