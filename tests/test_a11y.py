@@ -642,6 +642,13 @@ def test_skip_link_is_hidden_until_focused_and_visually_hidden_exists():
     assert any(s == [".visually-hidden"] or ".visually-hidden" in s for s, _ in rules)
 
 
+def test_the_two_hiding_classes_are_one_rule():
+    # M10-9: `.sr-only` and `.visually-hidden` hide the same way, from one rule with both
+    hiding = [(s, d) for s, d in _rules() if {".sr-only", ".visually-hidden"} & set(s)]
+    assert [sorted(s) for s, _ in hiding] == [[".sr-only", ".visually-hidden"]]
+    assert hiding[0][1]["clip"] == "rect(0 0 0 0)" and hiding[0][1]["position"] == "absolute"
+
+
 class _Scrolls(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -728,6 +735,32 @@ def test_a_table_inside_a_wrapper_gets_no_tab_stop_of_its_own():
     assert inside.count('tabindex="0"') == 1
     nested = name_scroll_regions('<div class="scroll"><div>x</div><table></table></div>')
     assert nested.count('tabindex="0"') == 1  # a nested div does not end the wrapper early
+
+
+def test_a_single_quoted_wrapper_is_a_wrapper_and_a_nested_one_is_no_stop():
+    # M10-7: the class may be single-quoted; a scroller inside a scroller is one tab stop
+    out = name_scroll_regions("<h2>H</h2><div class='wide scroll'><table></table></div>")
+    assert out.count('tabindex="0"') == 1 and 'role="region"' in out.split("<table")[0]
+    nested = name_scroll_regions(
+        '<h2>H</h2><div class="scroll"><section class="scroll"><p>x</p></section></div>'
+        '<div class="scroll"><p>y</p></div>'
+    )
+    assert nested.count('tabindex="0"') == 2  # the outer one and the later sibling
+    assert "<section class=\"scroll\">" in nested
+
+
+def test_tags_inside_scripts_and_comments_are_not_counted():
+    # M10-9: a tag in a script string or a comment neither opens nor closes a wrapper
+    page = (
+        '<h2>H</h2><div class="scroll"><script>const s = "</div><table>";</script>'
+        "<!-- <div> --><p>x</p></div><table><caption>Out</caption></table>"
+        '<!-- <div class="scroll"></div> --><script>x = \'<div class="scroll">\';</script>'
+    )
+    out = name_scroll_regions(page)
+    assert out.count('tabindex="0"') == 2  # the wrapper and the table after it
+    assert '<!-- <div class="scroll"></div> -->' in out
+    assert "x = '<div class=\"scroll\">';" in out and '"</div><table>"' in out
+    assert re.search(r'<table tabindex="0" aria-label="Out">', out)
 
 
 class _Groups(HTMLParser):
