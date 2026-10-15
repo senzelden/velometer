@@ -163,9 +163,14 @@ use today may get worse: compare, tables, CSV and methodology.
 
 ## 5. Error handling
 
-- If a token is missing when JS reads it, the JS throws a named error in development tests.
-  In the page it falls back to the light value and logs once to the console. The render pass
-  treats any console message as a failure, so a missing token cannot ship.
+- If a token is missing when JS reads it, the JS paints a neutral grey (`MISSING`, `#808080`,
+  in `theme.js`) and logs one `console.error` naming the token. The render pass treats any
+  console message as a failure, so a missing token cannot ship; the node tests fail on the
+  error too ("no chart drew from the missing-token fallback"), and a Python test checks that
+  every token the JS names is defined in both themes.
+  *Amended 2026-10-15 (M13, M10-5):* this line first said the JS throws a named error in tests
+  and falls back to "the light value". The M10 pre-flight ruling chose the grey instead, since a
+  light-value fallback would copy every token into the JS, against decision 2's single source.
 - If the live region is missing, `announce` is a no-op (pages without dynamic content).
 
 ## 6. Testing
