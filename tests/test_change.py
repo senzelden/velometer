@@ -426,7 +426,7 @@ def test_the_bezirk_table_ends_with_the_remainder_outside_every_subarea():
     md = ch.render_markdown(got, "berlin", RUN_FROM, RUN_TO, {"west": "Westend", "east": "Ostend"})
     table = ch.bezirk_table(md).splitlines()
     assert [ln.split("|")[1].strip() for ln in table[2:]] == [
-        "Ostend", "Westend", "Outside the 2 Bezirke (LAU edge)", "**berlin**"
+        "Ostend", "Westend", "Outside the 2 Bezirke (districts), at the LAU edge", "**berlin**"
     ]  # fmt: skip
     assert f"{rest:.3f}" in table[-2]
 

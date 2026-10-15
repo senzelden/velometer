@@ -1127,8 +1127,8 @@ def test_results_subareas_ends_with_the_remainder_after_a_separator(tmp_path):
     rest = lines[next(i for i, ln in enumerate(lines) if ln.startswith("subarea")) + 1 :]
     assert [ln.split()[0] for ln in rest[:2]] == ["East", "Ölberg"]
     assert set(rest[2]) == {"-"}  # the separator line
-    assert rest[3].startswith("Outside the 2 Bezirke (LAU edge)")
-    assert rest[3].split("(LAU edge)")[1].split()[0] == "5.0"  # 0.5 / 10 main_excl_motorway
+    assert rest[3].startswith("Outside the 2 Bezirke (districts), at the LAU edge")
+    assert rest[3].split("at the LAU edge")[1].split()[0] == "5.0"  # 0.5 / 10 main_excl_motorway
     assert rest[4].startswith("per 100k")
 
 

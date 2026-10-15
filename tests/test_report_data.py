@@ -312,7 +312,7 @@ def sub_data(tmp_path):
 
 def test_subareas_rows_of_the_current_run(sub_data):
     rows = sub_data.subareas("berlin")
-    assert [r.name for r in rows] == ["East", "West", "Outside the 2 Bezirke (LAU edge)"]
+    assert [r.name for r in rows] == ["East", "West", "Outside the 2 Bezirke (districts), at the LAU edge"]
     assert [r.remainder for r in rows] == [False, False, True]  # the remainder last, set apart
     assert rows[2].subarea_id == "remainder" and rows[2].tier_km["A"] == 0.5
     west = rows[1]
@@ -358,6 +358,6 @@ def test_subarea_series_and_csv_rows(sub_data):
         ids = [r["subarea_id"] for r in rows if r["run_id"] == run_id]
         assert ids[-2:] == ["remainder"] * 2 and "remainder" not in ids[:-2]
     assert {r["name"] for r in rows if r["subarea_id"] == "remainder"} == {
-        "Outside the 2 Bezirke (LAU edge)"
+        "Outside the 2 Bezirke (districts), at the LAU edge"
     }
     assert sub_data.subarea_csv_rows("paris") == []
