@@ -398,6 +398,7 @@ page.city.headline_chart: Hauptkennzahl im Zeitverlauf, {city}
 page.story.table: 'Tabelle: Hauptkennzahl je Stand'
 table.kind_headline: "Haupt­kennzahl {kind}"
 cite.title.city_headline: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU)'
+cite.title.city_headline_both: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Kernstadt (LAU) und Funktionaler Stadtraum (FUA)'
 note.no_run_history: kein Lauf (Verlauf)
 page.story.over_time: Zeitverlauf, mit markierten Jahren
 page.story.read_on: Weiterlesen
@@ -623,6 +624,7 @@ cite.accessed: '{url} (abgerufen am {accessed}).'
 cite.snapshot: OSM-Stand {timestamp}
 cite.snapshot_one: OSM-Stand vom {day}
 cite.snapshot_range: OSM-Stände vom {first} bis {last}
+cite.snapshot_two: '{kind_a}-Lauf {run_a}, OSM-Stand {ts_a}, und {kind_b}-Lauf {run_b}, OSM-Stand {ts_b}'
 cite.classifier: Klassifikator {version}
 cite.run: Lauf {run}
 cite.commit: Commit {commit}
@@ -750,6 +752,7 @@ js.cite.accessed_note: Abgerufen am {accessed}
 js.cite.snapshot: OSM-Stand {timestamp}
 js.cite.snapshot_one: OSM-Stand vom {day}
 js.cite.snapshot_range: OSM-Stände vom {first} bis {last}
+cite.snapshot_two: '{kind_a}-Lauf {run_a}, OSM-Stand {ts_a}, und {kind_b}-Lauf {run_b}, OSM-Stand {ts_b}'
 js.cite.classifier: Klassifikator {version}
 js.cite.run: Lauf {run}
 js.cite.commit: Commit {commit}

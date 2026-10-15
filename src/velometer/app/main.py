@@ -527,10 +527,19 @@ def create_app(
 
         shared: dict = {}  # a page's figures share one run: built once, the title varies
 
-        def make(title, city=None, cities=None, kind="lau", path=None):
+        def make(title, city=None, cities=None, kind="lau", path=None, both=None):
+            """`both`: the title of a city figure drawn from its LAU and FUA runs; with both
+            runs present it cites both under that title, else the `kind` run under `title`."""
             if rows is None:
                 return None
             key = (city, kind, None if cities is None else tuple(cities))
+            if both is not None and city is not None:
+                if ("both", city) not in shared:
+                    shared[("both", city)] = cite_model.fields_for_city_runs(
+                        rows, city, "", where, lang=lang
+                    )
+                if shared[("both", city)] is not None:
+                    key, title = ("both", city), both
             if key not in shared:
                 if city is not None:
                     shared[key] = cite_model.fields_for_city(rows, city, "", where, kind, lang)

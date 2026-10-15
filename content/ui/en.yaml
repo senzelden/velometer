@@ -407,6 +407,7 @@ page.city.headline_chart: Headline over time, {city}
 page.story.table: 'Table: headline per snapshot'
 table.kind_headline: '{kind} headline'
 cite.title.city_headline: '{city}: headline over time, {unit}, city proper (LAU)'
+cite.title.city_headline_both: '{city}: headline over time, {unit}, city proper (LAU) and metro area (FUA)'
 note.no_run_history: no run (history)
 page.story.over_time: Over time, with flagged years
 page.story.read_on: Read on
@@ -632,6 +633,7 @@ cite.accessed: '{url} (accessed {accessed}).'
 cite.snapshot: OSM snapshot {timestamp}
 cite.snapshot_one: OSM snapshot of {day}
 cite.snapshot_range: OSM snapshots of {first} to {last}
+cite.snapshot_two: '{kind_a} run {run_a}, OSM snapshot {ts_a}, and {kind_b} run {run_b}, OSM snapshot {ts_b}'
 cite.classifier: classifier {version}
 cite.run: run {run}
 cite.commit: commit {commit}
@@ -759,6 +761,7 @@ js.cite.accessed_note: Accessed {accessed}
 js.cite.snapshot: OSM snapshot {timestamp}
 js.cite.snapshot_one: OSM snapshot of {day}
 js.cite.snapshot_range: OSM snapshots of {first} to {last}
+cite.snapshot_two: '{kind_a} run {run_a}, OSM snapshot {ts_a}, and {kind_b} run {run_b}, OSM snapshot {ts_b}'
 js.cite.classifier: classifier {version}
 js.cite.run: run {run}
 js.cite.commit: commit {commit}

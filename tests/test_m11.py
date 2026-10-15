@@ -3,6 +3,8 @@ import io
 import json
 import re
 
+import pytest
+
 from tests.test_app import client, client_21, setup, setup_21  # noqa: F401  (fixtures)
 from tests.test_app_base import rich  # noqa: F401  (fixture)
 
@@ -581,6 +583,63 @@ def test_the_keynums_cite_is_titled_for_the_run_it_cites(client):  # noqa: F811
     assert "LAU" in title and "FUA" not in title
 
 
+def _current_run(client, city, kind):  # noqa: F811
+    lines = [x for x in client.get(f"/data/{city}.csv").text.splitlines() if not x.startswith("#")]
+    rows = [r for r in csv.DictReader(lines) if r["boundary_kind"] == kind]
+    current = [r for r in rows if r["label"] == "current"] or rows
+    return current[-1]
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+@pytest.mark.parametrize("tab", ["/time", ""])
+def test_a_two_line_headline_chart_cites_both_runs(client, lang, tab):  # noqa: F811
+    """The headline chart draws LAU and FUA: its Cite names both boundaries and both runs, each
+    with its OSM snapshot (M13 M11-3)."""
+    from velometer import i18n
+
+    pre = "/de" if lang == "de" else ""
+    html = client.get(f"{pre}/city/berlin{tab}").text
+    chart = html.index('data-chart="city-headline"')
+    (blob,) = CITE_DATA.findall(html[chart:])[:1]
+    f = json.loads(blob)
+    lau, fua = _current_run(client, "berlin", "lau"), _current_run(client, "berlin", "fua")
+    assert lau["run_id"] != fua["run_id"]
+    both = i18n.t(lang, "cite.title.city_headline_both", city="Berlin", unit="{unit}")
+    assert f["title"].startswith(both.split("{unit}")[0]), f["title"]
+    assert f["title"].endswith(both.split("{unit}")[1]), f["title"]
+    assert "LAU" in f["title"] and "FUA" in f["title"]
+    assert f["run_id"] is None and f["osm_timestamp"] is None
+    for row in (lau, fua):
+        assert (
+            f"{row['run_id']}, " in f["snapshot_note"]
+            and row["osm_timestamp"] in f["snapshot_note"]
+        )
+    assert f["snapshot_note"].index(lau["run_id"]) < f["snapshot_note"].index(fua["run_id"])
+    text = html[chart:].split('<p class="cite-text">', 1)[1].split("</p>", 1)[0]
+    assert f["snapshot_note"] in text
+
+
+def test_a_headline_cite_without_a_fua_run_cites_the_lau_run(client, monkeypatch):  # noqa: F811
+    """One run, one boundary: a city without a FUA run keeps the LAU title and run."""
+    from velometer.app import cite as cite_model
+
+    real = cite_model.RunRows.of
+
+    def lau_only(data):
+        rows = real(data)
+        rows._rows = {
+            c: [r for r in rs if r["boundary_kind"] == "lau"] for c, rs in rows._rows.items()
+        }
+        return rows
+
+    monkeypatch.setattr(cite_model.RunRows, "of", staticmethod(lau_only))
+    html = client.get("/city/berlin/time").text
+    (blob,) = CITE_DATA.findall(html[html.index('data-chart="city-headline"') :])[:1]
+    f = json.loads(blob)
+    assert "LAU" in f["title"] and "FUA" not in f["title"]
+    assert f["run_id"] == _current_run(client, "berlin", "lau")["run_id"]
+
+
 def test_cite_pre_blocks_are_not_scroll_regions():
     js = (STATIC_JS / "cite-ui.js").read_text(encoding="utf-8")
     assert "scroll" not in js
@@ -591,7 +650,9 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
     page_site,
 ):
     # a citation is built from one run (LAU unless it says FUA): its title may name that
-    # boundary only. A title naming both, or FUA with the LAU run, cites a run it does not name.
+    # boundary only. A title naming FUA with the LAU run cites a run it does not name. A title
+    # naming both (the two-line headline chart, M13) cites both runs: no single run id, and its
+    # snapshot note names the city's LAU and FUA runs.
     data = page_site.data  # the run ids of the app that rendered the pages
     runs = {
         (c.id, k): next(
@@ -603,20 +664,28 @@ def test_a_cite_names_only_the_boundary_whose_run_it_cites(
         for k in ("lau", "fua")
         if any(r["boundary_kind"] == k and r["label"] == "current" for r in data.csv_rows(c.id))
     }
-    seen_fua = 0
+    seen_fua = seen_both = 0
     for url in all_page_urls:
         for blob in CITE_DATA.findall(page_site.html[url]):
             f = json.loads(blob)
             title = f["title"]
             names_lau, names_fua = "LAU" in title, bool(re.search(r"\bFUA\b", title))
-            assert not (names_lau and names_fua), (url, title)
+            if names_lau and names_fua:
+                seen_both += 1
+                assert f["run_id"] is None, (url, title)
+                note = f["snapshot_note"] or ""
+                cited = {(c, k) for (c, k), rid in runs.items() if re.search(rf"\b{rid}, ", note)}
+                cities = {c for c, _k in cited}
+                assert len(cities) == 1, (url, title, note)
+                assert cited == {(c, k) for c in cities for k in ("lau", "fua")}, (url, note)
+                continue
             if names_fua and f["run_id"] is not None:
                 seen_fua += 1
                 city = next(c for (c, k), rid in runs.items() if k == "fua" and rid == f["run_id"])
                 assert f["run_id"] == runs[(city, "fua")] and f["run_id"] != runs.get(
                     (city, "lau")
                 ), (url, title)
-    assert seen_fua
+    assert seen_fua and seen_both
 
 
 def test_theme_tokens_cover_both_themes_and_dark_maps_unambiguously(client):  # noqa: F811

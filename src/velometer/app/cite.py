@@ -120,6 +120,38 @@ def fields_for_city(
     )
 
 
+def fields_for_city_runs(
+    data,
+    city_id: str,
+    title: str,
+    path: str,
+    kinds: tuple[str, str] = ("lau", "fua"),
+    lang: Lang = "en",
+) -> CiteFields | None:
+    """The citation fields of a figure drawn from two runs of one city (the headline chart's LAU
+    and FUA lines): the snapshot note names each boundary's run and OSM snapshot, in `kinds`
+    order; there is no single run id or timestamp. None unless the city has a run of both."""
+    rows = [_current_row_of_kind(data, city_id, k) for k in kinds]
+    if any(r is None for r in rows):
+        return None
+    (a, row_a), (b, row_b) = zip(kinds, rows, strict=True)
+    note = t(lang, "cite.snapshot_two", kind_a=a.upper(), run_a=row_a["run_id"],
+             ts_a=row_a["osm_timestamp"], kind_b=b.upper(), run_b=row_b["run_id"],
+             ts_b=row_b["osm_timestamp"])  # fmt: skip
+    return CiteFields(
+        title=title,
+        path=path,
+        osm_timestamp=None,
+        snapshot_note=note,
+        classifier="/".join(
+            sorted({r["classifier_version"] for r in (row_a, row_b)}, key=_natural)
+        ),
+        run_id=None,
+        commit=_commit(),
+        attribution=t(lang, "cite.attribution"),
+    )
+
+
 def fields_for_cities(
     data, city_ids: list[str], title: str, path: str, kind: str = "lau", lang: Lang = "en"
 ) -> CiteFields | None:
