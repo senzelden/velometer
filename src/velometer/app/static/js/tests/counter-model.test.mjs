@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import "./strings-fixture.mjs";
 import { DEFAULTS } from "../state.js";
 import { buildModel } from "../compare-model.js";
-import { counterLines, countsChart } from "../counter-model.js";
+import { readFileSync } from "node:fs";
+import { counterLines, counterTip, countsChart } from "../counter-model.js";
 
 // the English texts (js.counts.*) an English page shows
 const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
@@ -98,6 +99,14 @@ test("Counts tab: no index line (Madrid), no chart: the tab shows a note instead
   assert.equal(countsChart(D, "cph"), null);
 });
 
+test("Compare's counter tooltip names the city's base year = 100 and, on its point, the COVID year", () => {
+  // M8-14: the unit's "2019 = 100; 2020 is the COVID year", per point and per city
+  assert.equal(counterTip(D, "ber", 114.6, "2020"), "Berlin · 2020: index 114.6 (2019 = 100; 2020 is the COVID year)");
+  assert.equal(counterTip(D, "ber", 90, "2017"), "Berlin · 2017: index 90 (2019 = 100)");
+  const mad = { ...D, counters: { ...D.counters, cities: { mad: { ...D.counters.cities.mad, line: true } } } };
+  assert.equal(counterTip(mad, "mad", 100, "2020"), "Madrid · 2020: index 100 (2020 = 100; 2020 is the COVID year)");
+});
+
 test("a city listed without open counter data gets its config note with the portals checked", () => {
   const note = "no open counter data found (portals checked: data.kk.dk)";
   const m = counterLines({ ...D, counters: { ...D.counters, none: { cph: note } } }, ["cph"]);
@@ -115,7 +124,6 @@ test("Counts tab end labels: each series has a short name that fits the narrow c
 });
 
 // ---- the cases table shared with the Python suite (tests/test_app_m8_counts.py) ----
-import { readFileSync } from "node:fs";
 
 const shared = JSON.parse(
   readFileSync(new URL("../../../../../../tests/counter_cases.json", import.meta.url), "utf8"),

@@ -4,6 +4,7 @@
 // A city listed under `none:` in config/counters.yaml gets its note from `counters.none`.
 // app/compare.py: counter_lines computes the Compare table the same way for the no-JS page.
 
+import { formatValue } from "./chart-core.js";
 import { t } from "./strings.js";
 
 export const COUNTER_METRIC = "counter_index";
@@ -26,6 +27,18 @@ export function covidMarks(D, labels) {
 
 /** The counter metric's chart and table title (the index is the same for both boundaries). */
 export const counterTitle = (label) => `${label} · ${t("js.counts.title")}`;
+
+/**
+ * Compare's tooltip on one counter index point: the value, the city's base year = 100 and, on
+ * the COVID year's point, that it is the COVID year ("Berlin · 2020: index 114.6 (2019 = 100;
+ * 2020 is the COVID year)"): the unit line's facts, for the city under the pointer.
+ */
+export function counterTip(D, id, value, label) {
+  const covid = D.counters?.covid_year;
+  const base = `${D.counters?.cities?.[id]?.base_year} = 100`;
+  const year = covid != null && String(covid) === String(label) ? `; ${t("js.counts.covid_is", { year: covid })}` : "";
+  return `${D.cities[id].name} · ${label}: ${t("js.chart.index_value", { value: formatValue(value) })} (${base}${year})`;
+}
 
 /**
  * The counter index unit for `ids`, naming the base year (= 100) of the cities drawn as a line:

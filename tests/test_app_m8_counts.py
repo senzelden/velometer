@@ -402,10 +402,40 @@ def test_compare_footnote_is_metric_aware(client):
     counter = _foot(client.get("/compare?c=berlin&m=counter_index").text)
     assert "flagged year" not in counter and "Headline:" not in counter
     assert counter == compare.COUNTER_FOOT
-    assert "base year = 100" in counter and "recorded at counter sites" in counter
+    assert "base year = 100" in counter
     for m in ("headline", "ab_km"):
         foot = _foot(client.get(f"/compare?c=berlin&m={m}").text)
         assert "flagged year" in foot and "Headline:" in foot, m
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_the_counter_compare_view_says_counters_are_context_once(client, lang):
+    # M8-14: the subtitle states it; the footnote does not repeat it
+    from velometer.i18n import t
+
+    lead = t(lang, "counts.context").split(":")[0]  # "Counters are context"
+    prefix = "/de" if lang == "de" else ""
+    html = client.get(f"{prefix}/compare?c=berlin&m=counter_index").text
+    assert _text(html).count(lead) == 1, lead
+    assert lead not in t(lang, "counts.foot") and lead not in t(lang, "js.counts.foot")
+
+
+def test_counter_unit_and_lines_skip_a_city_without_line_as_the_js_does():
+    # M8-14: compare.py read cities[i]["line"]; counter-model.js reads `?.line` and skips it
+    payload = {
+        "cities": {"x": {"name": "X"}, "y": {"name": "Y"}},
+        "counters": {
+            "covid_year": 2020,
+            "cities": {
+                "x": {"base_year": 2019, "series": "counts", "points": []},
+                "y": {"base_year": 2019, "series": "counts", "line": True,
+                      "points": [{"year": 2019, "idx": 100.0}, {"year": 2020, "idx": 90.0}]},
+            },
+        },
+    }  # fmt: skip
+    labels, values, _notes = compare.counter_lines(payload, ["x", "y"])
+    assert labels == ["2019", "2020"] and values["x"] == [None, None]
+    assert "2019 = 100" in compare.counter_unit(payload, ["x", "y"])
 
 
 def test_compare_counter_unit_names_the_base_year_of_each_drawn_city(setup):  # noqa: F811

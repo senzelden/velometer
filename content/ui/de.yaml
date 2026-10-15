@@ -518,7 +518,7 @@ counts.no_line: keine Linie des Zählstellenindex (ein Indexwert für nur ein Ja
 counts.config_error: 'Zählstellenkonfiguration nicht lesbar (config/counters.yaml; siehe Serverprotokoll): Städte ohne offene Zähldaten werden nicht als solche genannt'
 counts.title: Zählstellen
 counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
-counts.foot: "Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab."
+counts.foot: "Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Ränge in der Ansicht Rang hängen von den gewählten Städten ab."
 counts.not_recorded: nicht erfasst
 counts.source_not_recorded: Quelle nicht erfasst
 counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswerte), nicht der Zählwerte
@@ -670,7 +670,7 @@ js.counts.avg_daily: Index der durchschnittlichen täglichen Stärke (Monatswert
 js.counts.covid_year: Corona-Jahr
 js.counts.title: Zählstellen
 js.counts.context: 'Zählstellen sind Kontext: Sie erfassen die Fahrräder an ihrem Standort, nicht die anderswo in der Stadt.'
-js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Zählstellen sind Kontext: an Zählstellen erfasste Zählwerte, nicht der Radverkehr der ganzen Stadt. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
+js.counts.foot: 'Zählstellenindex: Basisjahr jeder Stadt = 100, nie neu basiert. Ränge in der Ansicht Rang hängen von den gewählten Städten ab.'
 js.counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchschnittlichen täglichen Stärke)
 js.counts.any_base: Basisjahr jeder Stadt = 100
 js.counts.base_for: '{year} = 100 für {cities}'

@@ -527,7 +527,7 @@ counts.no_line: no counter index line (an index value for one year only; see its
 counts.config_error: 'counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such'
 counts.title: counter sites
 counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
-counts.foot: "Counter index: each city's base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected."
+counts.foot: "Counter index: each city's base year = 100, never rebased. Ranks in the Rank view depend on the cities selected."
 counts.not_recorded: not recorded
 counts.source_not_recorded: source not recorded
 counts.avg_daily: index of average daily intensity (monthly values), not of counts
@@ -679,7 +679,7 @@ js.counts.avg_daily: index of average daily intensity (monthly values), not of c
 js.counts.covid_year: COVID year
 js.counts.title: counter sites
 js.counts.context: 'Counters are context: they record the bicycles passing the sites where they stand, not those elsewhere in the city.'
-js.counts.foot: 'Counter index: each city''s base year = 100, never rebased. Counters are context: counts recorded at counter sites, not cycling in the whole city. Ranks in the Rank view depend on the cities selected.'
+js.counts.foot: 'Counter index: each city''s base year = 100, never rebased. Ranks in the Rank view depend on the cities selected.'
 js.counts.of: index of counts recorded at counter sites (or of their average daily intensity)
 js.counts.any_base: each city's base year = 100
 js.counts.base_for: '{year} = 100 for {cities}'

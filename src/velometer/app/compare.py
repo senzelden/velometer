@@ -206,7 +206,7 @@ def counter_lines(
         "counters", {}
     ).get("none", {})
     names = payload["cities"]
-    drawn = {i: counters[i] for i in ids if i in counters and counters[i]["line"]}
+    drawn = {i: counters[i] for i in ids if counters.get(i, {}).get("line")}
     years = [p["year"] for c in drawn.values() for p in c["points"] if p["idx"] is not None]
     labels = [str(y) for y in range(min(years), max(years) + 1)] if years else []
     values: dict = {}
@@ -216,7 +216,7 @@ def counter_lines(
         c = counters.get(i)
         if c is None:
             notes.append(f"{names[i]['name']}: {none.get(i, t(lang, 'counts.no_counters'))}")
-        elif not c["line"]:
+        elif not c.get("line"):
             notes.append(f"{names[i]['name']}: {t(lang, 'counts.no_line')}")
         elif c["series"] == "avg_daily_intensity":
             notes.append(f"{names[i]['name']}: {t(lang, 'counts.avg_daily')}")
@@ -258,7 +258,7 @@ def counter_unit(payload: dict, ids: Sequence[str], lang: Lang = "en") -> str:
     cities = counters.get("cities", {})
     by_base: dict[int, list[str]] = {}
     for i in ids:
-        if i in cities and cities[i]["line"]:
+        if cities.get(i, {}).get("line"):
             by_base.setdefault(cities[i]["base_year"], []).append(payload["cities"][i]["name"])
     base = t(lang, "counts.any_base")  # no city drawn: no year to name
     if by_base:
