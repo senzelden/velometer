@@ -941,7 +941,7 @@ def test_a_code_span_and_a_quotation_never_misnest():
     html = _para('<q lang="de">a `b</q>` c')
     assert _well_nested(html) and "<code>b&lt;/q&gt;</code>" in html, html
     html = _para('`<i lang="da">x` y</i>')
-    assert _well_nested(html) and '<code>&lt;i lang=&#34;da&#34;&gt;x</code>' in html, html
+    assert _well_nested(html) and "<code>&lt;i lang=&#34;da&#34;&gt;x</code>" in html, html
     # a code span inside a quotation or a term is still one
     assert _para('<q lang="de">nimm `highway=*` hier</q>') == (
         '<p><q lang="de">nimm <code>highway=*</code> hier</q></p>'
