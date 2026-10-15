@@ -1,13 +1,13 @@
 {% from "_cite.html" import cite %}
 {% from "city/_tier_table.html" import tier_series_table %}
 <div class="panel-frag" lang="{{ lang }}">
-<header class="panel-head">
+<div class="panel-head">
 <div>
 <h2>{{ city.name }}</h2>
 <p class="meta">{{ country }}{% if residents %} · {{ t('page.city.residents', n=residents | num(",d")) }}{% endif %}</p>
 </div>
 <a class="panel-full" href="{{ u('/city/' ~ city.id) }}">{{ t('page.panel.full') }} →</a>
-</header>
+</div>
 <div class="keynums" role="list" aria-label="{{ t('page.index.keys') }}">
 {% for k in keynums %}<div class="kn" role="listitem"><span class="kn-label">{{ k.label }}</span><span class="kn-val{% if k.tone %} {{ k.tone }}{% endif %}">{{ k.value }}</span><span class="kn-sub">{{ k.sub }}</span></div>
 {% endfor %}</div>

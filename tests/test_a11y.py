@@ -1112,3 +1112,18 @@ def test_an_empty_card_cell_keeps_its_label_and_says_there_is_no_value():
     marked = {k: v for s, d in rules if any("td:empty" in x and "::after" in x for x in s)
               for k, v in d.items()}  # fmt: skip
     assert "no value" in marked.get("content", "")  # a visible dash with a spoken alternative
+
+
+# ---------- M13 screen-reader pass (Orca, docs/review/m13-screen-reader.md) ----------
+
+
+def test_every_page_is_one_banner_and_a_panel_adds_none(all_page_urls, page_site):  # noqa: F811
+    # Orca said "banner" when Tab entered the open city panel: compare puts the fragment in a
+    # role=dialog, where a <header> is not scoped by sectioning content and maps to a second
+    # banner landmark
+    pages, panels = _split_fragments(all_page_urls)
+    assert pages and panels
+    for url in pages:
+        assert len(re.findall(r"<header\b", page_site.html[url])) == 1, url
+    for url in panels:
+        assert not re.search(r"<header\b", page_site.html[url]), url
