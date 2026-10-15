@@ -4,6 +4,7 @@ guarded `--clean`."""
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -457,6 +458,102 @@ def test_a_dangerous_out_is_refused(rich, tmp_path, monkeypatch, which, clean): 
     assert calls == []  # refused before the database is opened
     if before is not None:
         assert _snapshot(out) == before
+
+
+# --- the swap's rollback (M13: M9-12, M9-13, M9-14) ---
+
+
+def _swap(tmp_path: Path) -> tuple[Path, Path]:
+    """A previous export in `dist` and a complete new site beside it, for `_install`."""
+    out = tmp_path / "dist"
+    out.mkdir()
+    (out / "build.json").write_text(json.dumps(dict.fromkeys(BUILD_KEYS, "old")))
+    (out / "old.html").write_text("old page")
+    site = tmp_path / "site-new"
+    site.mkdir()
+    for name in ("a.html", "b.html", "build.json"):
+        (site / name).write_text(f"new {name}")
+    return out, site
+
+
+def _set_aside(tmp_path: Path) -> list[Path]:
+    return [p for p in _staging(tmp_path) if "-old-" in p.name]
+
+
+def _failing_moves(monkeypatch, fail):
+    """os.rename and os.replace (whichever the swap uses) that call `fail(src, dst)` first; it
+    raises to simulate a failure at that move."""
+    real_rename, real_replace = os.rename, os.replace
+
+    def rename(src, dst, *a, **k):
+        fail(Path(src), Path(dst))
+        return real_rename(src, dst, *a, **k)
+
+    def replace(src, dst, *a, **k):
+        fail(Path(src), Path(dst))
+        return real_replace(src, dst, *a, **k)
+
+    monkeypatch.setattr(os, "rename", rename)
+    monkeypatch.setattr(os, "replace", replace)
+
+
+def test_a_ctrl_c_mid_swap_puts_the_previous_export_back(tmp_path, monkeypatch):
+    """A KeyboardInterrupt between two moves into `out` restores `out` and the new site, removes
+    the set-aside directory, and is raised again (M9-12)."""
+    out, site = _swap(tmp_path)
+    before_out, before_site = _snapshot(out), _snapshot(site)
+    moved_in = []
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            moved_in.append(src.name)
+            if len(moved_in) == 2:
+                raise KeyboardInterrupt
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(KeyboardInterrupt):
+        export._install(site, out, clean=True)
+    assert _snapshot(out) == before_out
+    assert _snapshot(site) == before_site
+    assert _set_aside(tmp_path) == []
+
+
+def test_a_failed_rollback_names_the_set_aside_directory(tmp_path, monkeypatch):
+    """When putting the previous export back fails too, the error names the directory that
+    holds it, and that directory is kept (M9-13)."""
+    out, site = _swap(tmp_path)
+    before_out = _snapshot(out)
+
+    def fail(src, dst):
+        if src.parent == site and dst.parent == out:
+            raise OSError(28, "No space left on device")
+        if "-old-" in src.parent.name and dst.parent == out:
+            raise OSError(5, "Input/output error")
+
+    _failing_moves(monkeypatch, fail)
+    with pytest.raises(export.ExportError) as caught:
+        export._install(site, out, clean=True)
+    [aside] = _set_aside(tmp_path)
+    assert str(aside) in str(caught.value)
+    assert _snapshot(aside) == before_out  # the previous export, whole, where the message says
+
+
+def test_a_failed_set_aside_leaves_no_new_out(tmp_path, monkeypatch):
+    """`out` did not exist and the set-aside directory cannot be made: `out` is not left behind
+    empty (M9-14)."""
+    out = tmp_path / "dist"
+    site = tmp_path / "site-new"
+    site.mkdir()
+    (site / "index.html").write_text("new")
+
+    def no_room(*a, **k):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(export.tempfile, "mkdtemp", no_room)
+    with pytest.raises(OSError):
+        export._install(site, out, clean=False)
+    assert not out.exists()
+    assert (site / "index.html").read_text() == "new"
 
 
 def test_clean_rechecks_the_guard_before_deleting(rich, tmp_path, monkeypatch):  # noqa: F811

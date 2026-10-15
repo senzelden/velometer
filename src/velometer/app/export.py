@@ -468,31 +468,56 @@ def scan_references(out: Path, base: str) -> list[Unresolved]:
 def _install(site: Path, out: Path, clean: bool) -> None:
     """The complete `site` in place of `out`'s contents. The guard is checked again first (`out`
     may have changed during the render); `out`'s old entries are set aside in a sibling
-    directory and deleted only once the new ones are in, else they are put back."""
+    directory and deleted only once the new ones are in. Anything that stops the swap, an
+    interrupt (Ctrl-C) included, puts them back and is raised again; when putting them back
+    fails too, the ExportError names the directory that still holds them."""
     _check_out(out, clean)
     created = not out.exists()
-    out.mkdir(exist_ok=True)
-    old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
+    old: Path | None = None
     moved_out: list[str] = []
     moved_in: list[str] = []
     try:
+        out.mkdir(exist_ok=True)
+        old = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-old-", dir=out.parent))
         for entry in list(out.iterdir()):
             entry.rename(old / entry.name)
             moved_out.append(entry.name)
         for entry in list(site.iterdir()):
             entry.rename(out / entry.name)
             moved_in.append(entry.name)
-    except OSError:
-        for name in moved_in:
-            (out / name).rename(site / name)
-        for name in moved_out:
-            (old / name).rename(out / name)
-        old.rmdir()
-        if created:
-            out.rmdir()
+    except BaseException as failure:
+        _roll_back(site, out, old, moved_in, moved_out, created, failure)
         raise
     shutil.rmtree(old)
     site.rmdir()
+
+
+def _roll_back(
+    site: Path,
+    out: Path,
+    old: Path | None,
+    moved_in: list[str],
+    moved_out: list[str],
+    created: bool,
+    failure: BaseException,
+) -> None:
+    """Undo a partial swap: the new entries back into `site`, the old ones back into `out`, the
+    set-aside directory and a newly made `out` removed. ExportError naming the set-aside
+    directory when that fails (the previous export is still in it)."""
+    try:
+        for name in reversed(moved_in):
+            (out / name).rename(site / name)
+        if old is not None:
+            for name in reversed(moved_out):
+                (old / name).rename(out / name)
+            old.rmdir()
+        if created and out.exists():
+            out.rmdir()
+    except OSError as e:
+        where = "" if old is None else f"; the previous export's entries are in {old}"
+        raise ExportError(
+            f"export to {out} failed ({failure!r}) and putting {out} back failed too ({e}){where}"
+        ) from failure
 
 
 def run_export(
