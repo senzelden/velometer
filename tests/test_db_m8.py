@@ -370,3 +370,21 @@ def test_replace_counter_index_with_no_rows_clears_the_named_method(conn):
     assert [r[0] for r in conn.execute("SELECT method FROM counter_index")] == ["v1"]
     with pytest.raises(ValueError, match="method"):
         replace_counter_index(conn, "berlin", [])  # no rows and no method: no scope to clear
+
+
+def test_the_plan_page_methodology_and_facts_share_one_latest_overlay_rule():
+    # M8-16: the latest-version rule was written out three times; one function, so the plan
+    # page, the methodology and the facts cannot disagree on the version
+    from velometer.app import plans_pages
+    from velometer.content import facts
+    from velometer.report import methodology
+
+    assert plans_pages.latest_overlay is facts.latest_overlay
+    assert methodology.latest_overlay is facts.latest_overlay
+    rows = [
+        OverlayRow(1, "berlin", "v", "A", 1.0, 2.0, v, "2026-01-01")
+        for v in ("overlay_v2", "overlay_v10", "overlay_v9")
+    ]
+    version, latest = facts.latest_overlay(rows)
+    assert version == "overlay_v10" and [r.overlay_version for r in latest] == ["overlay_v10"]
+    assert facts.latest_overlay([]) == (None, [])

@@ -36,6 +36,7 @@ from pathlib import Path
 from velometer.config import ConfigError
 from velometer.counters import index as counter_index
 from velometer.counters.model import INDEX_METHOD
+from velometer.db import OverlayRow
 from velometer.plans.models import (
     PLANS_FILE,
     REPORTS_FILE,
@@ -319,13 +320,21 @@ def version_key(version: str) -> tuple:
     return tuple(int(p) if p.isdigit() else p for p in re.split(r"(\d+)", version))
 
 
+def latest_overlay(rows: list[OverlayRow]) -> tuple[str | None, list[OverlayRow]]:
+    """The latest overlay version (numeric order, `overlay_v10` after `overlay_v2`) and its rows;
+    the one rule of the plan page, the methodology and the facts."""
+    if not rows:
+        return None, []
+    version = max((r.overlay_version for r in rows), key=version_key)
+    return version, [r for r in rows if r.overlay_version == version]
+
+
 def _overlay_at(expr: str, data: ReportData, city: str, cls: str, day: str) -> list:
     """The overlay rows (one per tier) of one class at the run snapshotted on `day`."""
     rows = data.plan_overlay(city)
     if not rows:
         raise _err(expr, f"no plan overlay for city {city!r}")
-    version = max((r.overlay_version for r in rows), key=version_key)
-    rows = [r for r in rows if r.overlay_version == version]
+    _, rows = latest_overlay(rows)
     classes = sorted({r.network_class for r in rows})
     rows = [r for r in rows if r.network_class == cls]
     if not rows:

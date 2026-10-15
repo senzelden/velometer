@@ -14,11 +14,11 @@ from datetime import date
 from pathlib import Path
 
 from velometer.app.narrative import safe_url
-from velometer.content.facts import version_key
+from velometer.content.facts import latest_overlay
 from velometer.content.models import Organisation
 from velometer.db import OverlayRow
 from velometer.i18n import Lang, number_trimmed, t
-from velometer.plans.berlin import NETWORK_LAYER
+from velometer.plans.berlin import CITY, NETWORK_LAYER
 from velometer.plans.models import (
     MAPPED_BASELINE,
     Plan,
@@ -27,7 +27,7 @@ from velometer.plans.models import (
     current_and_revisions,
 )
 
-DETAIL_CITY = "berlin"  # the one city with a plan page of its own (spec §4.4)
+DETAIL_CITY = CITY  # the one city with a plan page of its own (spec §4.4), the overlay's
 MEASURES_LAYER = "radverkehrsmassnahmen"  # the layer the completed projects are read from
 MEASURES_FILE = Path("berlin") / f"{MEASURES_LAYER}.geojson"
 MEASURES_RETRIEVED = Path("berlin") / "retrieved.json"
@@ -274,14 +274,6 @@ def _projects_of(item_id: str, metres: dict[str, dict[int, float]] | None) -> li
         {"year": y, "km": round(sum(metres.get(c, {}).get(y, 0.0) for c in classes) / 1000, 2)}
         for y in years
     ]
-
-
-def latest_overlay(rows: list[OverlayRow]) -> tuple[str | None, list[OverlayRow]]:
-    """The latest overlay version (numeric order, `overlay_v10` after `overlay_v2`) and its rows."""
-    if not rows:
-        return None, []
-    version = max((r.overlay_version for r in rows), key=version_key)
-    return version, [r for r in rows if r.overlay_version == version]
 
 
 def run_dates(conn: sqlite3.Connection, run_ids: set[int]) -> dict[int, str]:

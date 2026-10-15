@@ -28,7 +28,7 @@ from velometer.config import (
     load_limitations,
     load_trust,
 )
-from velometer.content.facts import version_key
+from velometer.content.facts import latest_overlay
 from velometer.counters import MONTHLY_SERIES, SERIES
 from velometer.counters import index as counter_index
 from velometer.counters.model import (
@@ -44,6 +44,7 @@ from velometer.counters.model import (
 from velometer.db import fetch_boundary, fetch_run
 from velometer.i18n import LANGS, Lang
 from velometer.models import City
+from velometer.plans.berlin import CITY as OVERLAY_CITY
 from velometer.plans.models import MAPPED_BASELINE
 from velometer.plans.overlay import load_overlay_config
 from velometer.report.data import KINDS, ReportData
@@ -308,16 +309,12 @@ def _country_facts(config_dir: Path) -> list[CountryFact]:
     return out
 
 
-OVERLAY_CITY = "berlin"  # the one city with a plan network overlay (spec §4.3)
-
-
 def _overlay_facts(data: ReportData) -> OverlayFacts | None:
     """The latest overlay version stored for Berlin (numeric order, as the plan page picks it)
     with the parameters of its config file; None when no overlay is stored."""
-    rows = data.plan_overlay(OVERLAY_CITY)
-    if not rows:
+    version, _ = latest_overlay(data.plan_overlay(OVERLAY_CITY))
+    if version is None:
         return None
-    version = max((r.overlay_version for r in rows), key=version_key)
     cfg = load_overlay_config(data.config_dir / "plans", version)
     return OverlayFacts(
         version=cfg.version,

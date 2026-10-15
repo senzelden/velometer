@@ -22,6 +22,7 @@ from velometer.sources.download import user_agent
 
 TIMEOUT_S = 120.0
 MAX_PAGES = 1000  # Berlin's largest layer is 3 pages; a server that pages forever is refused
+CITY = "berlin"  # the one city with a plan network overlay (spec §4.3) and a plan page (§4.4)
 NETWORK_LAYER = "radverkehrsnetz"  # the layer `plans overlay` matches sides against
 
 Fetch = Callable[[str, dict[str, str]], bytes]
