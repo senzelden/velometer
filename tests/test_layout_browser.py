@@ -33,14 +33,14 @@ def probe(rp, rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     _export(rich, out, BASE)
 
-    def run(path, width, ready):
+    def run(path, width, ready, js=PROBE):
         with rp.serve(out, BASE) as origin, rp.chrome(rp.CHROME) as devtools:
             t = rp.open_tab(devtools, width, "light")
             try:
                 errors = rp.navigate(t, origin + BASE + path)
                 assert not errors, errors
                 assert t.wait_js(f"document.querySelector('{ready}') !== null", 15), ready
-                return t.js(PROBE)
+                return t.js(js)
             finally:
                 t.close()
 
@@ -73,3 +73,21 @@ def test_the_figures_cards_hide_the_header_row_visually_and_align_ours_right(pro
     assert got["head"][0] == "absolute", got
     assert got["head"][1] != "none", got  # visually hidden, still there for screen readers
     assert got["ours"] == "right", got
+
+
+# the chart's Download control sits right after its container, so `[hidden] + .download` hides it
+# with the chart (M13 M11-2): Compare's table view hides the chart
+DOWNLOAD = """(() => {
+  const chart = document.querySelector('[data-compare-chart]');
+  const next = chart && chart.nextElementSibling;
+  return {hidden: chart && chart.hidden, next: next && next.className,
+          shown: next && getComputedStyle(next).display};
+})()"""
+
+
+@pytest.mark.parametrize(("view", "hidden"), [("table", True), ("lines", False)])
+def test_a_hidden_chart_hides_its_download_control(probe, view, hidden):
+    got = probe(f"{COMPARE}?view={view}", 1280, "[data-compare-chart] + .download", DOWNLOAD)
+    assert got["next"] == "download", got
+    assert got["hidden"] is hidden, got
+    assert (got["shown"] == "none") is hidden, got
