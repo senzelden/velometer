@@ -451,6 +451,9 @@ table.sources tr.group th { padding-top: 1rem; color: var(--ink); font-size: 1re
 :lang(de) table.sources { font-size: 0.8rem; }
 :lang(de) table.sources th, :lang(de) table.sources td { hyphens: auto; padding-left: 0.3rem; padding-right: 0.3rem; }
 :lang(de) table.sources td { min-width: 4.5rem; }
+/* an original term (M13) is one such word in an English cell too: it hyphenates by its own lang
+   where the browser can, and breaks anywhere where it cannot */
+table.sources i[lang] { hyphens: auto; overflow-wrap: anywhere; }
 dl.drivers { margin: 0; font-size: 0.88rem; }
 dl.drivers div { margin-bottom: 0.35rem; }
 dl.drivers dt { font-weight: 600; }

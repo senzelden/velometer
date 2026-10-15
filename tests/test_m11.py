@@ -992,3 +992,16 @@ def test_every_exported_search_url_resolves_to_an_exported_page_and_anchor(rich,
             anchors += 1
             assert anchor in _ids(page.read_text(encoding="utf-8")), e["url"]
     assert anchors
+
+
+def test_original_terms_in_the_sources_table_may_break():
+    """An original term (`<i lang>`) is one unbroken word in an English cell, where no German
+    hyphenation rule reaches it: "Hauptradverkehrsnetz" alone set the table to 1169 px against
+    the 1120 px column at 1280 (M13 render pass). It hyphenates where the browser has the
+    language's dictionary and may break anywhere where it has none (headless Chrome)."""
+    from tests.test_app import _css_rules
+
+    rules = _css_rules((STATIC / "app.css").read_text())
+    decl = {k: v for sels, d in rules if "table.sources i[lang]" in sels for k, v in d.items()}
+    assert decl.get("hyphens") == "auto"
+    assert decl.get("overflow-wrap") == "anywhere"
