@@ -32,11 +32,42 @@ function styleOf(el) {
   return Object.fromEntries(STYLE_PROPS.map((p) => [p, cs.getPropertyValue(p)]));
 }
 
-/** The key chips of a chart whose key is an HTML `.legend` beside its SVG: colour (computed) and text. */
-function keyOf(container) {
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** A key label's width in px as the downloaded image sets it (11px system-ui), measured by the
+ * browser (getComputedTextLength) in a hidden SVG; null where that is not available, and the
+ * image then estimates it. */
+export function labelWidth(text, doc = document) {
+  try {
+    const svg = doc.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("aria-hidden", "true");
+    Object.assign(svg.style, { position: "absolute", visibility: "hidden", width: "0", height: "0" });
+    const el = doc.createElementNS(SVG_NS, "text");
+    el.setAttribute("font-size", "11px");
+    el.setAttribute("font-family", "system-ui, sans-serif");
+    el.textContent = text;
+    svg.append(el);
+    doc.body.append(svg);
+    try {
+      const w = typeof el.getComputedTextLength === "function" ? el.getComputedTextLength() : NaN;
+      return Number.isFinite(w) && w > 0 ? w : null;
+    } finally {
+      svg.remove();
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** The key chips of a chart whose key is an HTML legend inside its container: colour (computed),
+ * text and the text's measured width. One form is read, the one chart.js draws (renderTiers):
+ * `.legend` with a `.chip` per entry, its colour on the chip's `<i>`. A key outside the
+ * container (the Counts and plan pages' lists beside their charts) is not in the image. */
+export function keyOf(container, doc = document) {
   return [...container.querySelectorAll(".legend .chip")].map((chip) => {
     const sw = chip.querySelector("i");
-    return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text: chip.textContent.trim() };
+    const text = chip.textContent.trim();
+    return { colour: sw ? getComputedStyle(sw).backgroundColor : "", text, width: labelWidth(text, doc) };
   });
 }
 

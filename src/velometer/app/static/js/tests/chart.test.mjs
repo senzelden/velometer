@@ -180,6 +180,13 @@ test("renderTiers keys every tier by name beside its colour, in the order they s
   assert.ok(legend, "a visible key under the chart");
   const text = (n) => (n._text ?? "") + (n.children ?? []).map(text).join("");
   assert.deepEqual(legend.children.map(text), Object.values(names).reverse());
+  // the one HTML key form a download reads (download-ui.js keyOf): `.legend` > `.chip` > `<i>`
+  assert.equal(legend.className, "legend");
+  for (const chip of legend.children) {
+    assert.equal(chip.className, "chip");
+    assert.equal(chip.children[0].tag, "i");
+    assert.match(chip.children[0].style.background, /^#/);
+  }
 });
 
 test("a series without a colour is drawn in its slot's token, a tier in its tier's token", () => {

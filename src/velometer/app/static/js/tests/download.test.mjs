@@ -187,6 +187,15 @@ test("selfContained: a long key wraps to a second row", () => {
   assert.ok(ys.size >= 2);
 });
 
+test("selfContained: the key wraps by each chip's measured width when the page gave one", () => {
+  const rows = (key) =>
+    new Set([...selfContained(chart(), darkStyle, null, { ...META, key }).matchAll(/<rect x="[\d.]+" y="([\d.]+)" width="10"/g)].map((m) => m[1])).size;
+  const long = "x".repeat(40); // estimated at 6.6 px a character: two of these do not fit in 400 px
+  assert.equal(rows([{ colour: "red", text: long }, { colour: "red", text: long }]), 2, "estimated");
+  assert.equal(rows([{ colour: "red", text: long, width: 60 }, { colour: "red", text: long, width: 60 }]), 1, "measured narrow");
+  assert.equal(rows([{ colour: "red", text: "A", width: 300 }, { colour: "red", text: "B", width: 300 }]), 2, "measured wide");
+});
+
 test("safeCell: formula starters get a quote, a plain number does not", () => {
   for (const bad of ["=1+1", "+cmd", "@SUM(A1)", "\tx", "\rx", "-cmd|' /C calc'!A0", "-1+1", "--x", "--", "- "])
     assert.equal(safeCell(bad), `'${bad}`, bad);

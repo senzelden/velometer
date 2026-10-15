@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { SELECTOR, control, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
+import { SELECTOR, control, keyOf, labelWidth, nameOf, scan, tableFor, titleOf, upgrade } from "../download-ui.js";
 import { localised } from "../data.js";
 import { buildModel } from "../compare-model.js";
 import { t } from "../strings.js";
@@ -256,4 +256,47 @@ test("a German chart title names the city as the localised series does (Krakau)"
   assert.ok(titleOf(container, { title }).includes("Krakau"));
   assert.ok(!titleOf(container, { title }).includes("Kraków"));
   useLang("en");
+});
+
+// ---- the key in the image (M13: M11-4, M11-8) ----
+
+/** A page that measures text as `measure` says (undefined: no getComputedTextLength). */
+function measuringDoc(measure) {
+  const appended = [];
+  const el = (tag) => ({
+    tag, style: {}, children: [], attrs: {}, textContent: "",
+    setAttribute(k, v) { this.attrs[k] = v; },
+    append(...n) { this.children.push(...n); },
+    remove() { appended.splice(appended.indexOf(this), 1); },
+    ...(tag === "text" && measure ? { getComputedTextLength() { return measure(this.textContent); } } : {}),
+  });
+  return { appended, createElementNS: (_ns, tag) => el(tag), body: { append: (n) => appended.push(n) } };
+}
+
+test("labelWidth: the browser's measure of the label at the image's font, else null", () => {
+  const doc = measuringDoc((s) => s.length * 5);
+  assert.equal(labelWidth("abcd", doc), 20);
+  assert.deepEqual(doc.appended, [], "the measuring SVG is removed again");
+  assert.equal(labelWidth("abcd", measuringDoc(undefined)), null, "no getComputedTextLength");
+  assert.equal(labelWidth("abcd", measuringDoc(() => 0)), null, "nothing laid out");
+  assert.equal(labelWidth("abcd", {}), null, "no DOM at all");
+});
+
+test("keyOf reads the .legend .chip key chart.js draws: colour, text and measured width", () => {
+  const chip = (colour, text) => ({
+    textContent: ` ${text} `,
+    querySelector: (sel) => (sel === "i" ? { colour } : null),
+  });
+  const chips = [chip("rgb(1, 2, 3)", "A separated track"), chip("rgb(4, 5, 6)", "B shared path")];
+  const container = { querySelectorAll: (sel) => (sel === ".legend .chip" ? chips : []) };
+  const before = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = (i) => ({ backgroundColor: i.colour });
+  try {
+    assert.deepEqual(keyOf(container, measuringDoc((s) => s.length * 6)), [
+      { colour: "rgb(1, 2, 3)", text: "A separated track", width: 102 },
+      { colour: "rgb(4, 5, 6)", text: "B shared path", width: 78 },
+    ]);
+  } finally {
+    globalThis.getComputedStyle = before;
+  }
 });

@@ -142,15 +142,18 @@ const TOP = 30;
 const BOTTOM = 44;
 
 const KEY_ROW = 18;
-const CHAR = 6.6; // an estimate of the width of a character at 11px, to wrap the key
+const CHAR = 6.6; // an estimate of the width of a character at 11px, where none was measured
 
-/** The key chips ({colour, text}) in rows that fit the width, each chip with its x. */
+/** The key chips ({colour, text, width?}) in rows that fit the width, each chip with its x. A
+ * chip's `width` is its label measured in the page (getComputedTextLength); without one the
+ * label's width is estimated from its length. */
 function layoutKey(chips, width) {
   const rows = [];
   let row = [];
   let x = 8;
   for (const c of chips) {
-    const need = 14 + c.text.length * CHAR + 14;
+    const label = Number.isFinite(c.width) && c.width > 0 ? c.width : c.text.length * CHAR;
+    const need = 14 + label + 14;
     if (row.length && x + need > width) {
       rows.push(row);
       row = [];
