@@ -14,9 +14,13 @@ const NS = "http://www.w3.org/2000/svg";
 export const OFFSCALE_FACTOR = 3;
 // target kinds whose steps are km per year, the quantity of every charted figure
 const PER_YEAR = new Set(["km_per_year", "none"]);
-/** A target kind's word on the y label ("cumulative"); a kind without one is named by its id. */
-const quantityText = (q) =>
-  ({ km_cumulative: () => t("js.plan.cumulative"), km_total: () => t("js.plan.total"), share: () => t("js.plan.share") })[q]?.() ?? q;
+/** A target kind with its unit, for the y label and the note ("km, cumulative", "share in %"); a
+ * kind without a word is named by its id. */
+const measureText = (q, unit) => {
+  if (q === "share") return t("js.plan.share_in", { unit });
+  const word = { km_cumulative: () => t("js.plan.cumulative"), km_total: () => t("js.plan.total") }[q]?.() ?? q;
+  return `${unit}, ${word}`;
+};
 const LINE = 12; // one line of axis text, px
 
 /**
@@ -241,7 +245,7 @@ export function renderPlanChart(host, series, opts = {}) {
   const widest = (ts) => Math.ceil(Math.max(...ts.map((tick) => textWidth(tickLabel(tick))))) + 10;
   const ml = widest(ticks);
   const mr = dom2 ? widest(ticks2) : 10;
-  const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : `${unit}, ${quantityText(quantity)}`;
+  const axis = perYear || !drawTarget ? t("js.plan.per_year", { unit }) : measureText(quantity, unit);
   const line = mapped.length ? t("js.plan.line", { year: series.mappedFrom }) : null;
   // the left label from the left axis, the line's label ending over the right axis; one row if
   // both fit side by side, else two
@@ -355,7 +359,7 @@ export function renderPlanChart(host, series, opts = {}) {
   }
   const note = document.createElement("p");
   note.className = "meta plan-chart-note";
-  note.textContent = t("js.plan.not_drawn", { unit, quantity: quantityText(quantity) });
+  note.textContent = t("js.plan.not_drawn", { measure: measureText(quantity, unit) });
   host.replaceChildren(svg, note);
 }
 

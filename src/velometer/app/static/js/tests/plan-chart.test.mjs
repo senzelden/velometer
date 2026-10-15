@@ -464,3 +464,14 @@ test("renderPlanChart: the two axes share their zero line", () => {
   const svg = svgOf(el);
   assert.ok(Number(low.attrs.cy) <= Number(svg.attrs.height) - 26, "and inside the plot");
 });
+
+test("renderPlanChart: a share target's axis and note name the share in its unit, never \"%, share\"", () => {
+  // M8-24: the unit-then-quantity pattern reads "%, share" for a share target
+  const alone = new Node("div");
+  renderPlanChart(alone, planSeries({ 2025: 20, 2030: 30 }, [], [], []), { years: [2025, 2030], unit: "%", quantity: "share" });
+  assert.equal(ylabText(alone), "share in %");
+  const drawn = new Node("div");
+  renderPlanChart(drawn, planSeries({ 2030: 30 }, [row(2024, 12, "a", true)], [], []), { years: [2024, 2030], unit: "%", quantity: "share" });
+  const note = drawn.children.find((c) => c.tag === "p").textContent;
+  assert.ok(note.includes("(share in %)") && !note.includes("%, share"), note);
+});

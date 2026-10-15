@@ -724,7 +724,7 @@ js.plan.no_figures: Für diesen Punkt gibt es keine Zahlen für ein Diagramm; di
 js.plan.per_year: '{unit} je Jahr'
 js.plan.cumulative: kumuliert
 js.plan.total: gesamt
-js.plan.share: Anteil
+js.plan.share_in: Anteil in {unit}
 js.plan.line: 'Linie: kartierte km seit 1. Jan. {year}'
 js.plan.chart_of: 'Diagramm: {label}, Ziel und Zahlen nach Jahr'
 js.plan.chart: Plandiagramm
@@ -737,7 +737,7 @@ js.plan.current: (aktuell)
 js.plan.revision: (Revision)
 js.plan.suspect: zweifelhaft
 js.plan.suspect_note: 'zweifelhaft: {note}'
-js.plan.not_drawn: 'Das Ziel ({unit}, {quantity}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
+js.plan.not_drawn: 'Das Ziel ({measure}) ist nicht eingezeichnet: Die Zahlen im Diagramm gelten je Jahr. Die Tabelle nennt es.'
 js.search.no_match: Kein Treffer
 js.search.results:
   one: '{count} Treffer'

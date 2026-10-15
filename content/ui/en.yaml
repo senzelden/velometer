@@ -733,7 +733,7 @@ js.plan.no_figures: No figures to chart for this item; the tables list what is r
 js.plan.per_year: '{unit} per year'
 js.plan.cumulative: cumulative
 js.plan.total: total
-js.plan.share: share
+js.plan.share_in: share in {unit}
 js.plan.line: 'line: mapped km since 1 Jan {year}'
 js.plan.chart_of: 'Chart: {label}, target and figures by year'
 js.plan.chart: Plan chart
@@ -746,7 +746,7 @@ js.plan.current: (current)
 js.plan.revision: (revision)
 js.plan.suspect: suspect
 js.plan.suspect_note: 'suspect: {note}'
-js.plan.not_drawn: 'The target ({unit}, {quantity}) is not drawn: the figures in the chart are per year. The table lists it.'
+js.plan.not_drawn: 'The target ({measure}) is not drawn: the figures in the chart are per year. The table lists it.'
 js.search.no_match: No match
 js.search.results:
   one: '{count} result'
