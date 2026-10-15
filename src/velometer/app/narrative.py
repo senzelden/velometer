@@ -33,8 +33,10 @@ from velometer.i18n import Lang, t
 SOURCE_MARK = re.compile(r"\[@([A-Za-z0-9._-]+)\]")
 REF_MARK = re.compile(r"\[#([A-Za-z0-9._-]+)\]")
 CODE_MARK = re.compile(r"`([^`\n]+)`")  # an OSM tag in backticks, as content/check reads it
-# *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text
-EM_MARK = re.compile(r"(?<![\w*])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>])\*(?![\w*])")
+# *a title* in italics, as markdown writes it; a lone `*` (an OSM wildcard, `highway=*`) is text,
+# and a star after "=" (a tag's wildcard value) neither opens nor closes one, so two wildcards in a
+# paragraph (`left=*, right=*`) are never paired
+EM_MARK = re.compile(r"(?<![\w*=])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>=])\*(?![\w*])")
 
 
 # the only markup content may write: a quotation in another language, `<q lang="de">…</q>` inside

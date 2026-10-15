@@ -866,6 +866,18 @@ def test_content_may_mark_an_original_term_with_its_language():
     assert quote == '<blockquote lang="fr"><p>Les <i lang="fr">voies vertes</i>.</p></blockquote>'
 
 
+def test_two_osm_wildcards_outside_backticks_are_text_not_an_italic():
+    # M8-21: `cycleway:left=*, cycleway:right=*` without backticks paired its two stars into
+    # <em>, cycleway:right=</em>; a star after "=" is a tag value, never an emphasis mark
+    assert _para("cycleway:left=*, cycleway:right=* or *a title*") == (
+        "<p>cycleway:left=*, cycleway:right=* or <em>a title</em></p>"
+    )
+    assert _para("*a=* b*") == "<p>*a=* b*</p>"  # a closing star after "=" is text too
+    assert _para('<i lang="de">Radweg</i>=* and *x*') == (
+        '<p><i lang="de">Radweg</i>=* and <em>x</em></p>'
+    )
+
+
 @pytest.mark.parametrize(
     "text",
     [
