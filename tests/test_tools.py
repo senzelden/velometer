@@ -5,6 +5,7 @@ import json
 import shutil
 import socket
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -617,3 +618,59 @@ def test_pick_palette_reproduces_the_committed_palette(name):
     tool = load_script("tools/pick_palette.py")
     colours, short, *_ = tool.search(name, tries=6000)
     assert short == 0 and colours == _committed_palettes()[name]
+
+
+# ---------- orca_pass (M13 Task 11) ----------
+
+
+@pytest.fixture(scope="module")
+def op():
+    return load_script("tools/orca_pass.py")
+
+
+def test_the_orca_pass_environment_cannot_reach_the_desktop_or_the_speakers(
+    op, tmp_path, monkeypatch
+):
+    # the pass runs inside dbus-run-session next to a live desktop: nothing of the session's
+    # display, bus, a11y bus or audio may leak into the private one
+    for k, v in {"DISPLAY": ":0", "WAYLAND_DISPLAY": "wayland-0", "XAUTHORITY": "/x",
+                 "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1/bus",
+                 "AT_SPI_BUS_ADDRESS": "unix:path=/a", "PULSE_SERVER": "unix:/p",
+                 "SPEECHD_ADDRESS": "unix_socket:/s"}.items():  # fmt: skip
+        monkeypatch.setenv(k, v)
+    env = op.isolated_env(tmp_path)
+    for k in ("DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS", "AT_SPI_BUS_ADDRESS",
+              "SPEECHD_ADDRESS"):  # fmt: skip
+        assert k not in env, k
+    assert not Path(env["WAYLAND_DISPLAY"]).exists()  # a socket name that leads nowhere
+    assert Path(env["WAYLAND_DISPLAY"]).is_relative_to(tmp_path)
+    for k in ("HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_RUNTIME_DIR"):
+        assert Path(env[k]).is_relative_to(tmp_path), k
+    assert env["GSETTINGS_BACKEND"] == "memory"  # Orca's settings never reach the user's dconf
+    assert "nonexistent" in env["PULSE_SERVER"] and "nonexistent" in env["PIPEWIRE_REMOTE"]
+    stub = Path(env["ORCA_PASS_STUB"])
+    blocked = subprocess.run(
+        [sys.executable, "-c", "import speechd"],
+        cwd=tmp_path, env={"PYTHONPATH": str(stub)}, capture_output=True, text=True,
+    )  # fmt: skip
+    assert blocked.returncode and "blocked" in blocked.stderr  # no speech-dispatcher, no audio
+
+
+def test_the_orca_pass_reads_what_orca_said_and_in_which_language(op, tmp_path):
+    log = tmp_path / "orca-debug.log"
+    log.write_text(
+        "10:00:00.1 - SPEECH GENERATOR: something else\n"
+        "10:00:00.2 - SPEECH OUTPUT: 'cykelsti' {'established': False, 'family': {'name': '',"
+        " 'gender': None, 'lang': 'da', 'dialect': '', 'variant': None}}\n"
+        "10:00:00.3 - SPEECH OUTPUT: 'link.' {'established': False}\n"
+        "10:00:00.4 - SPEECH OUTPUT: 'Seite' {'family': {'lang': 'de'}} [say all]\n"
+        "10:00:00.5 - FOCUS MANAGER: Locus of focus is [link: 'Story' (0x1)] \n"
+    )
+    orca = op.Orca.__new__(op.Orca)
+    orca.log = log
+    assert orca.said(0) == [
+        {"text": "cykelsti", "lang": "da", "sayall": False},
+        {"text": "link.", "lang": "", "sayall": False},
+        {"text": "Seite", "lang": "de", "sayall": True},
+    ]
+    assert orca.locus(0) == "link: 'Story' (0x1)"

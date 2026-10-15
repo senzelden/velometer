@@ -93,6 +93,37 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
 The tool contacts `tile.openstreetmap.org` because the maps do. The browser cache is kept
 between visits, so each tile is fetched only once per run.
 
+## orca_pass.py
+
+Runs the real Orca screen reader (`/usr/bin/orca`, 50.x) over the exported static edition (M13
+spec §4.7) and logs what it says, without touching the desktop it runs next to. Everything runs
+inside `dbus-run-session`, so Orca, Chrome and their AT-SPI bus are private to the run:
+
+- no display: `DISPLAY` is unset and `WAYLAND_DISPLAY` names a socket that does not exist;
+  Chrome runs headless (`--ozone-platform=headless --headless=new --app=URL`) with
+  `--force-renderer-accessibility` and still registers with the private AT-SPI bus;
+- no audio: a stub blocks Orca's `speechd` import and Orca gets a speech server that only writes;
+  each utterance lands in Orca's debug log as `SPEECH OUTPUT: '<text>' <voice>`, the voice
+  carrying the language Orca switched to (`lang`);
+- Orca's settings stay out of the user's: `HOME`, `XDG_*` point into `--out`, and
+  `GSETTINGS_BACKEND=memory`.
+
+Keys reach the page as real key events through CDP `Input.dispatchKeyEvent` (Tab, Shift+Tab,
+Enter, Escape, arrows, typed letters). Orca's own browse-mode keys (H, T, table navigation, say
+all) are sent as the same commands over Orca's D-Bus remote control, because without a display no
+key reaches Orca. Each page loads in a fresh Chrome (navigating one tab left Orca on the previous
+page's objects).
+
+```bash
+uv run velometer app export --out "$SCRATCH/site" --base /velometer/ --clean
+uv run --group dev python tools/orca_pass.py --site "$SCRATCH/site" --base /velometer/ \
+    --out "$SCRATCH/orca" [--editions en,de] [--steps home,compare-table,...]
+```
+
+`--out` gets `transcript.md` (per step: the keys, the DOM focus, Orca's locus, what Orca said and
+in which language), `steps.json` and Orca's raw `orca-debug.log`. The review log of M13 is
+`docs/review/m13-screen-reader.md`.
+
 ## axe/
 
 axe-core is pinned in `axe/VERSION` (version, sha256 of `axe.min.js`, date vendored) and
