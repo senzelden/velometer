@@ -111,12 +111,28 @@ test("currentAddress: origin + base + path without base + query + hash", () => {
 test("readerMoves: a resize's moveend and the app's own fit are not the reader's; the next move is", async () => {
   const { readerMoves } = await import("../permalink.js");
   const moves = readerMoves();
-  assert.equal(moves.moveend(true), false, "the app fitting the map");
-  assert.equal(moves.moveend(false), true, "a drag or zoom");
-  moves.resize(); // Leaflet's invalidateSize: moveend follows (200 ms later on a window resize)
-  moves.resize();
-  assert.equal(moves.moveend(false), false, "the moveend a resize sends");
-  assert.equal(moves.moveend(false), true, "the reader's next move counts again");
+  const here = [52.52, 13.4, 12];
+  assert.equal(moves.moveend(true, here), false, "the app fitting the map");
+  assert.equal(moves.moveend(false, here), true, "a drag or zoom");
+  moves.resize(here); // Leaflet's invalidateSize keeps the view: moveend follows (200 ms later)
+  moves.resize(here);
+  assert.equal(moves.moveend(false, here), false, "the moveend a resize sends");
+  assert.equal(moves.moveend(false, [52.5, 13.3, 12]), true, "the reader's next move counts again");
+});
+
+test("readerMoves: a pan within the resize's debounce is the reader's, not taken for the resize's", async () => {
+  const { readerMoves } = await import("../permalink.js");
+  const moves = readerMoves();
+  const left = [52.52, 13.4, 12];
+  moves.resize(left);
+  assert.equal(moves.moveend(false, [52.52, 13.35, 12]), true, "panned before the resize's moveend");
+  assert.equal(moves.moveend(false, [52.52, 13.35, 12]), true, "the resize's late moveend: the reader's view, written again");
+  moves.resize(left);
+  assert.equal(moves.moveend(false, [52.52, 13.4, 13]), true, "zoomed within the debounce");
+  moves.resize(left);
+  assert.equal(moves.moveend(false, [52.520001, 13.400001, 12]), false, "the same view as written (5 decimals)");
+  moves.resize(left);
+  assert.equal(moves.moveend(true, [1, 1, 5]), false, "the app's own fit stays the app's");
 });
 
 test("stepMemory: the step in view writes #step-<id>, once; the first step of a bare page writes nothing", async () => {

@@ -214,11 +214,15 @@ import { leafletPrefix, t } from "./js/strings.js";
     });
   });
   var moves = readerMoves();
-  map.on("resize", moves.resize);
-  map.on("moveend", function () {
-    if (!moves.moveend(fitting)) return;
+  function viewNow() {
     var c = map.getCenter();
-    view = [c.lat, c.lng, map.getZoom()];
+    return [c.lat, c.lng, map.getZoom()];
+  }
+  map.on("resize", function () { moves.resize(viewNow()); });
+  map.on("moveend", function () {
+    var now = viewNow();
+    if (!moves.moveend(fitting, now)) return;
+    view = now;
     sync();
   });
   paintKey(tierColours());
