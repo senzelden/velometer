@@ -126,3 +126,118 @@ These came up in the areas this task touched. They are not fixed here.
 | M13-T1b | The outage test has no red-proof | fix candidate | controller (Task 1 follow-up) |
 | M13-T2a | `_signed_pct` prints −0.0 % | fix candidate | Task 10 |
 | M13-T2b | Unclosed sqlite connection in `tests/test_counter_index_v2.py` (~1702) | fix candidate | Task 10 |
+
+## M9
+
+### How the M9-N numbers map
+
+`docs/superpowers/rulings-m9.md`, section "Follow-ups", read top to bottom. Each bullet under
+"Deferred review minors, by task" (T1 to T4, the "(noted)" one included) gets the next number,
+1 to 18. Under "Hosting and later work", the size bullet is the publishing question (HANDOVER §12
+Q4), not a minor. The live-vs-main identity bullet is marked "done, clean". Of the render-pass
+observations, the 390 px tables and the dark theme and accessibility check name M10 as their
+owner. None of these gets a number. The one left, the Compare address keeping its slash after the
+directory redirect, gets 19. The numbers:
+
+| N | Bullet in rulings-m9 Follow-ups |
+|---|---|
+| 1 | T1: `urls._is_external` takes letters-only schemes (`web+foo:` raises) |
+| 2 | T1: the `unit` filter's lambda parameter `u` shadows `u()` |
+| 3 | T2: the literal-route rule misses a bare `"/"` and more; add a comment |
+| 4 | T2: `base.test.mjs` finds `url_cases.json` by six `../` |
+| 5 | T2: a `base.test.mjs` assertion (around line 87) does not match its test name |
+| 6 | T2: `base()` queries the DOM on every `url()` call |
+| 7 | T3: `plans_data_dir` has no CLI option |
+| 8 | T3: the test map regex copies the implementation's (M-5) |
+| 9 | T3: the test follows redirects and the code does not (M-6) |
+| 10 | T3: every page is rendered twice (M-8) |
+| 11 | T3: the `validate_base` regex's `$` accepts a trailing newline |
+| 12 | T3: rollback catches `OSError` only (Ctrl-C mid-swap) |
+| 13 | T3: a failed rollback leaves the old export in a directory no message names |
+| 14 | T3: `out.mkdir` runs before the `try` |
+| 15 | T4: the Leaflet guard ignores `L.geoJSON`'s default marker for Point features |
+| 16 | T4: the JS scan skips lines starting with `*` as comments |
+| 17 | T4: an `export.py` docstring line is about 140 characters |
+| 18 | T4 (noted): the JS scan checks only literal `url()` paths |
+| 19 | Render pass: Compare shows `/velometer/compare/?…` until the first change |
+
+This matches every item the Task 9 brief names, 1 to 19. No number was ambiguous.
+
+### Items
+
+| id | item | ruling | reason | commit |
+|---|---|---|---|---|
+| M9-1 | `_is_external` takes letters-only schemes | fix | Python `u()` and JS `url()` both treat any RFC 3986 scheme (`[A-Za-z][A-Za-z0-9+.-]*:`) as external. The shared `url_cases.json` gains `web+foo:bar` and `a1.b-c+d:x` as untouched, and `1a:b` and `+x:y` as refused. | `61dab4e` |
+| M9-2 | Lambda parameter `u` shadows `u()` | fix | Renamed to `unit` (no behaviour, so no red test) | `1919ac5` |
+| M9-3 | Literal-route rule misses a bare `"/"` | fix | A comment says what the rule covers and what it does not. A second rule fails a bare root literal (`"/"`, `"/?…"`, `"/#…"`) outside `url()` and string-method separators (`.join("/")`, …), read with `js-literals.mjs`, so comments do not count. Red: a planted `"/"` in `nav.js`. | `6b22f99` |
+| M9-4 | `base.test.mjs` finds `url_cases.json` by six `../` | fix | `tests/repo.mjs` walks up from `import.meta.url` to `pyproject.toml`. All six node tests that read `tests/*.json` use it now, with a test that it finds the root from a deep path and throws without one. | `6b22f99` |
+| M9-5 | An assertion does not match its test name | fix | The "this file sits in `js/tests`" assertion is its own test, named for what it checks. It also checks the exact path, not just a `js` prefix. | `6b22f99` |
+| M9-6 | `base()` queries the DOM on every `url()` | fix | One read per document (a `WeakMap`), with `_resetBase()` for tests. Red: without the cache the test counts two queries. | `6b22f99` |
+| M9-7 | No `--plans-data-dir` option | fix | `app export` and `serve` take `--plans-data-dir`, default `data/plans`. `serve` passed nothing before, so the app used its own default. | `173896c` |
+| M9-8 | Test map regex copies the implementation's | close | Already fixed in M9's fix round: the test's `/maps/[^"'\s)<>]+` is independent of `_map_refs` | `b0ba484` |
+| M9-9 | Test follows redirects, the code does not | fix | The rest of the export tests now ask with `follow_redirects=False`. Red: the live-app equality test asked `/de`, was redirected to `/de/`, and passed. It now asks each page by the URL the export rendered. | `4046b32` |
+| M9-10 | Every page rendered twice | fix | A contained change: `export_urls` hands its responses to `_write_site`, which renders only what it lacks. Red: a request-counting middleware saw 31 URLs asked twice. | `1cc3293` |
+| M9-11 | `validate_base` `$` accepts a trailing newline | fix | `fullmatch`; `/a\n` and `/a\n/b` are refused | `e14129e` |
+| M9-12 | Ctrl-C mid-swap leaves `out` half-swapped | fix | The swap rolls back on any `BaseException` and raises it again. The test interrupts the second move-in with a monkeypatched `os.rename`/`os.replace`. | `a3abb1e` |
+| M9-13 | A failed rollback names no directory | fix | `ExportError` names the set-aside directory, and that directory keeps the previous export. The test fails the move-in and the move-back. | `a3abb1e` |
+| M9-14 | `out.mkdir` before the `try` | fix | `mkdir` and the set-aside `mkdtemp` are inside the `try`. A new `out` is removed when the set-aside cannot be made (test: `mkdtemp` raises). | `a3abb1e` |
+| M9-15 | Leaflet guard ignores `L.geoJSON`'s default marker | fix | The guard fails on any `L.geoJSON(…)` call without `pointToLayer`. The three calls (tier map boundary and tiers, change map) now draw a Point as a canvas circle. Red: the guard failed on all three. | `3ce08a4` |
+| M9-16 | JS scan skips any line starting with `*` | close | Fixed in M9 (`9c50b1c`): `JS_COMMENTS` strips `//` lines and `/* … */` blocks only, and the fail-closed plants include a `*fetch(…)` continuation line | `9c50b1c` |
+| M9-17 | `export.py` docstring line of 140 characters | close | Wrapped in M9 (`9c50b1c`). No docstring line in `export.py` is over 100 characters now. | `9c50b1c` |
+| M9-18 | JS scan checks only literal `url()` paths | fix (documented) | The scan cannot know which ids a run-time URL will use. `_js_refs` now says so, and names what covers those URLs: `export_urls` writes every city page and panel, which `test_export_urls_are_what_the_app_serves` asserts per city. | `1f4a13f` |
+| M9-19 | Compare keeps `/compare/?…` until the first change | close | Cosmetic and recorded: both addresses open the same state, and the first change rewrites it | n/a |
+
+## M11
+
+### How the M11-N numbers map
+
+`docs/superpowers/rulings-m11.md`, section "Follow-ups", read top to bottom. Each bullet under
+"Parked minors, from the ledger" gets the next number, 1 to 7. Bullets with several parts are split
+into a, b, … below. "Fixed in final wave" and "M10 follow-ups this milestone resolved" are marked
+done, so they get no number. "M10 follow-ups left open" belong to the M10 section (Task 10). Under
+"New in M11 and open", the German interface bullet was delivered by M12 and gets no number. The
+other four get 8 to 11. The numbers:
+
+| N | Bullet in rulings-m11 Follow-ups |
+|---|---|
+| 1 | End labels for line charts with more than 8 series |
+| 2 | The `[hidden] + .download` adjacency rule |
+| 3 | Two-line headline charts cite only the LAU run |
+| 4 | `-1e-5` / `-.5` over-neutralised in CSVs (a); the key wrap width is estimated (b) |
+| 5 | The story `remember` decision could move to `permalink.js` |
+| 6 | Search: "No match" is an `li` in the listbox (a); key dispatch untested (b); stale `orgs` pyright hint (c) |
+| 7 | Sources: silent on `ContentError` (a); synthetic fixture owners (b); quoted entries only (c); loose series-id check (d) |
+| 8 | HTML legends other than the tier key are not in downloads |
+| 9 | Search does not cover narrative text or quotes |
+| 10 | The render pass's permalink step does not require two boundaries |
+| 11 | A reader pan within the 200 ms resize debounce is not written to `at=` |
+
+This matches every item the Task 9 brief names, 1 to 11. No number was ambiguous.
+
+### Items
+
+| id | item | ruling | reason | commit |
+|---|---|---|---|---|
+| M11-1 | End labels for more than 8 series | fix | With more than 8 lines only the focus (coloured) series are labelled, at every width. The grey context lines stay unlabelled, and their names are in the tooltip and the table. Before, a wide chart labelled every line. Red: the node test failed at 900 px. | `e04ae5e` |
+| M11-2 | `[hidden] + .download` rule untested | fix | A Chrome test (`test_layout_browser.py`): on Compare's table view the hidden chart's next sibling is its Download control, and it computes to `display: none`. On the lines view it shows. Red: without the CSS rule, `block`. | `1faee4b` |
+| M11-3 | Two-line headline charts cite only the LAU run | fix | The time and story tabs' headline Cite names both boundaries ("city proper (LAU) and metro area (FUA)"). Its snapshot note names each run and its OSM snapshot (`cite.snapshot_two`, en and de), with no single run id. A city without a FUA run keeps the LAU title and run. The existing rule test now accepts a both-boundary title only when it cites both runs of one city. | `7ccb6bc` |
+| M11-4a | `-1e-5` / `-.5` over-neutralised in CSVs | keep | Safe: the cell gets a leading `'` and is read as text. It can never run as a formula. The pattern stays the same in `safeCell` and `safe_cell`. Telling exponent and bare-decimal numbers from formula starters would widen a security rule for two number forms the tables never print. | n/a |
+| M11-4b | Key wrap width estimated | fix | The download measures each key label with `getComputedTextLength` (11px, in a hidden SVG) and wraps by that width. It falls back to the estimate where the browser cannot measure. Red: two 40-character labels measured at 60 px still wrapped. | `9a8aa07` |
+| M11-5 | Story `remember` decision in `story.js` | fix | `permalink.js` `stepMemory(steps, hash)`, node-tested. `story.js` only writes the hash it returns. | `cc15046` |
+| M11-6a | "No match" is an `li` inside the listbox | fix | A `<p class="search-status" role="status">` under the box, outside the listbox, says it. The list stays closed and empty. The render pass's keyboard step checks it in Chrome. | `8bb0e53` |
+| M11-6b | Key dispatch untested outside `--keyboard` | fix | Node tests drive the keydown handler: Down/Up wrap, Enter goes, the first Escape closes, the second clears. With no match, Down does nothing. Red: without ArrowUp handling the test fails. | `8bb0e53` |
+| M11-6c | Stale `orgs` pyright hint in `search.py` | fix | `orgs` and `narratives` are typed empty defaults before the `try`, not reassigned untyped in the `except`. pyright 1.1.411 reports nothing. | `8bb0e53` |
+| M11-7a | Sources check silent on `ContentError` | fix | When a file it needs cannot be read, the "How they measure" check says it was not checked and names the file and error, in the check's problem list. The English check has no notes channel, and the same file usually fails `_check_coverage` too. | `05966e7` |
+| M11-7b | Fixture owners are synthetic | keep | The fixtures test the rule. The shipped content is checked by `test_shipped_figure_sources_have_complete_cited_dimensions`. | n/a |
+| M11-7c | The content check covers quoted entries only | keep | By design: only a quoted source has a Sources row (`test_an_unquoted_mapping_entry_is_not_checked`) | n/a |
+| M11-7d | Series-id check is loose | fix | It reads the exact keys the scripts use: `series.presets` ids and each point's `headline` / `ecf_qecio` / `clean_cities`. Red: a renamed point key passed the old string search. | `05966e7` |
+| M11-8 | HTML legends other than the tier key not in downloads | fix (documented) | One form is read, `.legend .chip` inside the container, the one `chart.js` draws. `keyOf` says so, a node test pins `renderTiers`' form, and another pins `keyOf`'s reading of it. The Counts and plan keys sit beside their charts, outside the container, and are not in the image (open idea below). | `9a8aa07` |
+| M11-9 | Search over narrative text and quotes | keep | Brief ruling: a new feature that would change search scope and index size. Recorded as an open idea. | n/a |
+| M11-10 | Permalink step does not require two boundaries | fix | The step reads the boundaries the tier page lists with a map (its file list, independent of the radios). The map must offer exactly those. Where the page has LAU and FUA, the step restores FUA, the non-default one. | `7d2e5ed` |
+| M11-11 | A pan within the resize debounce is lost | fix | `readerMoves` records the view a resize leaves. The next `moveend` is the resize's only when it shows that same view (as `at=` writes it), so a pan or zoom inside the 200 ms is written at once. Node test. | `28aaa59` |
+
+### Open ideas (not built)
+
+- Search over narrative text and quotes (M11-9).
+- The Counts and plan keys in a downloaded image (M11-8). They are HTML lists beside the chart,
+  and their glyphs are lines, rings and dots, not the tier key's swatches.
