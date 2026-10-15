@@ -5,6 +5,7 @@ import { DEFAULTS } from "../state.js";
 import { buildModel } from "../compare-model.js";
 import { readFileSync } from "node:fs";
 import { counterLines, counterTip, countsChart } from "../counter-model.js";
+import { repoFile } from "./repo.mjs";
 
 // the English texts (js.counts.*) an English page shows
 const AVG_DAILY = "index of average daily intensity (monthly values), not of counts";
@@ -133,7 +134,7 @@ test("Counts tab end labels: each series has a short name that fits the narrow c
 // ---- the cases table shared with the Python suite (tests/test_app_m8_counts.py) ----
 
 const shared = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/counter_cases.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/counter_cases.json"), "utf8"),
 );
 
 for (const c of shared.cases) {

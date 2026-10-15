@@ -3,10 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { useLang } from "./strings-fixture.mjs";
 import { absoluteUrl, citeBibtex, citeCsl, citeText, cslJson, multiFields } from "../cite.js";
+import { repoFile } from "./repo.mjs";
 
 // shared with tests/test_m11.py, so the Python and JS formatting rules agree
 const SHARED = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/cite_cases.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/cite_cases.json"), "utf8"),
 );
 const CASES = SHARED.cases;
 

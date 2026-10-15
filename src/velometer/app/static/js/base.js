@@ -31,10 +31,22 @@ export function lang(doc = globalThis.document) {
   return String(doc?.documentElement?.lang ?? "").toLowerCase().startsWith("de") ? "de" : "en";
 }
 
+// the base of each document, read once: the meta tag never changes after the page is served
+let seen = new WeakMap();
+
 /** The page's base path, normalised; `/` when there is no document or no meta tag. */
 export function base(doc = globalThis.document) {
-  const content = doc?.querySelector('meta[name="velometer-base"]')?.getAttribute("content");
-  return normalise(content ?? "/");
+  if (!doc) return "/";
+  if (!seen.has(doc)) {
+    const content = doc.querySelector?.('meta[name="velometer-base"]')?.getAttribute("content");
+    seen.set(doc, normalise(content ?? "/"));
+  }
+  return seen.get(doc);
+}
+
+/** Tests only: forget every document's base. */
+export function _resetBase() {
+  seen = new WeakMap();
 }
 
 /**

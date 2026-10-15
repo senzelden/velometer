@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fold, rank, move, keyAction } from "../search.js";
+import { repoFile } from "./repo.mjs";
 
 const e = (label, kind, terms = [label]) => ({ label, kind, url: "/x", terms });
 const idx = [
@@ -184,7 +185,7 @@ test("an option shows the entry's kind label (the German index's), else its kind
 
 
 const CITY_NAMES = JSON.parse(
-  readFileSync(new URL("../../../../../../tests/city_names.json", import.meta.url), "utf8"),
+  readFileSync(repoFile("tests/city_names.json"), "utf8"),
 );
 // the letters a reader without them types instead, written out here (not fold's mapping)
 const BY_HAND = { ó: "o", ø: "o", ł: "l", ß: "ss", ä: "a", ö: "o", ü: "u", é: "e", á: "a", ř: "r" };
