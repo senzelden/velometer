@@ -212,7 +212,9 @@ def _madrid_year(path: Path, year: int, sites: int) -> Path:
     return path
 
 
-@pytest.mark.parametrize(("year", "changes"), [(2020, {"29/03", "25/10"}), (2021, {"28/03", "31/10"})])
+@pytest.mark.parametrize(
+    ("year", "changes"), [(2020, {"29/03", "25/10"}), (2021, {"28/03", "31/10"})]
+)
 def test_the_synthetic_madrid_year_leaves_out_that_years_clock_changes(tmp_path, year, changes):
     # M8-20: the left-out days come from the zone's rules, not 2020's dates typed in
     path = _madrid_year(tmp_path / f"{year}.csv", year, 1)
