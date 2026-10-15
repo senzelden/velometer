@@ -255,3 +255,19 @@ def test_tab_names_in_the_german_methodology_are_the_german_tab_labels():
     assert quoted  # the page names tabs, so the rule has something to read
     labels = {v for k, v in i18n.catalogue("de").items() if k.startswith("city.tab.")}
     assert [q for q in quoted if q not in labels] == []
+
+
+def test_content_phrases_split_at_an_original_term_as_at_a_quotation():
+    # M13: an original term (`<i lang="da">…</i>`, Task 7) is no English, and its markup is not
+    # on the page: a phrase holding it could never be found, so it never caught a leak
+    text = (
+        'Our Copenhagen figure, 401 km of <i lang="da">cykelsti</i> in 2025, comes from the '
+        "city's own mobility report of the year, as we read it. Then <i\n lang=\"nb\">"
+        "kommunale veger</i> follow."
+    )
+    parts = i18n._sentences(text, 3)
+    assert parts == [
+        "Our Copenhagen figure, 401 km of",
+        "in 2025, comes from the city's own mobility report of the year, as we read it.",
+    ]
+    assert not [p for p in i18n.content_phrases(CONTENT) if "<" in p]

@@ -531,16 +531,17 @@ def leak_phrases(min_words: int = 4) -> list[str]:
     return sorted(out)
 
 
-# a quotation in another language, a citation or data marker, a code span: none of it is
-# English running text, and each splits the text around it
-_NOT_PROSE = re.compile(r"<(q|blockquote)\b[^>]*>.*?</\1>|\[[@#][^\]]*\]|`[^`]*`", re.DOTALL)
+# a quotation in another language, an original term (`<i lang="da">…</i>`, M13), a citation or
+# data marker, a code span: none of it is English running text, and each splits the text around
+# it (a tag may break across lines)
+_NOT_PROSE = re.compile(r"<(q|blockquote|i)\b[^>]*>.*?</\1>|\[[@#][^\]]*\]|`[^`]*`", re.DOTALL)
 _SENTENCE_END = re.compile(r"(?<=[.!?:;])\s+")
 
 
 def _sentences(text: str, min_words: int) -> list[str]:
     out = []
     for part in _NOT_PROSE.split(text):
-        if part is None or part in ("q", "blockquote"):
+        if part is None or part in ("q", "blockquote", "i"):
             continue
         for sentence in _SENTENCE_END.split(part.replace("*", "")):
             sentence = _squash(sentence).strip(" ,;:—–-")
