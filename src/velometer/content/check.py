@@ -1180,13 +1180,25 @@ def _http_get(url: str) -> str | bytes:
     return resp.content if pdf or _is_pdf(resp.content) else resp.text
 
 
+PDF_ORDERS = ([], ["-raw"])  # pdftotext's reading order, then the content-stream order
+_ORDER_BREAK = " \u241e "  # between the two readings: no excerpt spans it
+
+
 def _pdf_text(body: bytes) -> str:
-    """The text of PDF `body`, read by the `pdftotext` CLI (poppler); NoPdfReader without it."""
+    """The text of PDF `body`, read by the `pdftotext` CLI (poppler) twice: in reading order and
+    in content-stream order (`-raw`), joined, so an excerpt is found in either. A header, a page
+    number or a table cell drawn out of reading order splits a sentence or a row in one of them.
+    NoPdfReader without pdftotext."""
     exe = shutil.which("pdftotext")
     if exe is None:
         raise NoPdfReader
-    done = subprocess.run([exe, "-q", "-", "-"], input=body, capture_output=True, check=True)
-    return done.stdout.decode("utf-8", errors="replace")
+    texts = [
+        subprocess.run(
+            [exe, "-q", *o, "-", "-"], input=body, capture_output=True, check=True
+        ).stdout.decode("utf-8", errors="replace")
+        for o in PDF_ORDERS
+    ]
+    return _ORDER_BREAK.join(texts)
 
 
 def _page_text(body: str | bytes) -> str:

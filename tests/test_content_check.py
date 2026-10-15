@@ -521,6 +521,15 @@ def test_check_online_reads_the_text_of_a_pdf_source():
     assert problems == ["sources/src: excerpt not found online: e1"]
 
 
+@needs_pdftotext
+def test_a_pdf_excerpt_is_found_in_the_content_stream_order_too():
+    # a header or a table cell drawn out of reading order splits the excerpt in pdftotext's
+    # reading order; its raw (content-stream) order keeps it whole, as the source printed it
+    stream_order = Path(__file__).parent / "fixtures/content_online/stream-order.pdf"
+    src = load_sources_from(SOURCES)
+    assert check_online(src, fetch=lambda u: stream_order.read_bytes()) == ([], [])
+
+
 def test_a_pdf_without_a_reader_is_skipped_not_failed(monkeypatch):
     import velometer.content.check as ck
 
