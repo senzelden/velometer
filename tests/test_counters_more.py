@@ -10,6 +10,7 @@ import shutil
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import openpyxl
 import pytest
@@ -190,20 +191,35 @@ def _setup(tmp_path, city: str, files: list[Path], boundary: Path | None = None)
 
 def _madrid_year(path: Path, year: int, sites: int) -> Path:
     """A synthetic Madrid file in the 2019-2021 schema: `sites` counters, every whole hour of
-    `year` with 1 bicycle, the two clock-change days left out (no counter needs them: 364 of 366
-    days is above MIN_VALID)."""
+    `year` with 1 bicycle, the year's two clock-change days left out (no counter needs them: 364
+    of 366 days is above MIN_VALID)."""
     header = (FIX / "madrid" / "2020.csv").read_bytes().decode("utf-8-sig").splitlines()[0]
     tail = "2;Arganzuela;Calle Toledo ;133;28005;Sentido Sur ;40,40547173;-3,711960704"
     lines = [header]
+    zone = ZoneInfo(CONFIG.entry("madrid").timezone)
+
+    def offset(d: date):
+        return datetime(d.year, d.month, d.day, tzinfo=zone).utcoffset()
+
     day = date(year, 1, 1)
     while day.year == year:
-        if (day.month, day.day) not in ((3, 29), (10, 25)):  # 2020's clock changes
+        if offset(day) == offset(date.fromordinal(day.toordinal() + 1)):  # no clock change
             for h in range(24):
                 stamp = f"{day:%d/%m/%Y} {h}:00;{h}:00"
                 lines += [f"{stamp};PERM_BICI{n:02d}_PM01;1;{tail}" for n in range(sites)]
         day = date.fromordinal(day.toordinal() + 1)
     path.write_bytes(("\ufeff" + "\r\n".join(lines) + "\r\n").encode("utf-8"))
     return path
+
+
+@pytest.mark.parametrize(("year", "changes"), [(2020, {"29/03", "25/10"}), (2021, {"28/03", "31/10"})])
+def test_the_synthetic_madrid_year_leaves_out_that_years_clock_changes(tmp_path, year, changes):
+    # M8-20: the left-out days come from the zone's rules, not 2020's dates typed in
+    path = _madrid_year(tmp_path / f"{year}.csv", year, 1)
+    seen = {line[:5] for line in path.read_text(encoding="utf-8-sig").splitlines()[1:]}
+    start, end = date(year, 1, 1), date(year + 1, 1, 1)
+    every = {f"{date.fromordinal(d):%d/%m}" for d in range(start.toordinal(), end.toordinal())}
+    assert every - seen == changes
 
 
 def test_madrid_index_base_year_2020_is_100(tmp_path):

@@ -740,19 +740,25 @@ def test_a_rule_value_in_a_threshold_statement_is_a_literal_rule(sentence, found
 
 def test_the_shipped_counter_page_states_the_rule_through_its_facts():
     # the follow-up Task 3 wording ("90% of days", "chained from 2019 (Madrid: 2020)", "fewer
-    # than 3 such sites") passes because the rule facts print those numbers, and only then
-    from velometer.content.check import _is_rule_fact, literal_counter_rules
+    # than 3 such sites") passes because the rule facts print those numbers, and only then.
+    # M8-25: the rule values are config's and the constants' (counter_rule_values), not typed here
+    from velometer.content.check import _is_rule_fact, counter_rule_values, literal_counter_rules
 
-    doc = load_document(Path(__file__).parents[1] / "content" / "counters.yaml")
+    root = Path(__file__).parents[1]
+    rules, error = counter_rule_values(root / "config")
+    assert error is None
+    doc = load_document(root / "content" / "counters.yaml")
     prose = [p for s in doc.sections for p in s.paragraphs]
-    assert [x for p in prose for x in literal_counter_rules(p, RULES, doc.facts)] == []
+    assert [x for p in prose for x in literal_counter_rules(p, rules, doc.facts)] == []
+    # without its rule facts, every rule value the page prints is a literal of its rule
+    declared = {f.expr.strip() for f in doc.facts if _is_rule_fact(f.expr)}
     others = [f for f in doc.facts if not _is_rule_fact(f.expr)]
-    assert sorted(x for p in prose for x in literal_counter_rules(p, RULES, others)) == [
-        "2019 (counter.base_year.berlin)",
-        "2020 (counter.base_year.madrid)",
-        "3 (counter.min_sites)",
-        "90% (counter.min_valid)",
-    ]
+    found = {
+        x.rsplit(" (", 1)[1].rstrip(")")
+        for p in prose
+        for x in literal_counter_rules(p, rules, others)
+    }
+    assert declared and found == declared
 
 
 def test_the_online_check_fetches_with_the_shared_user_agent(agent_server):
