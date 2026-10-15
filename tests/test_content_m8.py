@@ -91,6 +91,21 @@ def test_an_internal_profile_url_is_refused(m8):
     assert "organisation url must be" in problem and "source url" not in problem, problem
 
 
+def test_an_internal_archive_url_is_named_as_the_archive_url():
+    # M8-20: the archive_url error said "source url"
+    from pydantic import ValidationError
+
+    from velometer.content.models import Source
+
+    base = {"id": "s", "publisher": "P", "title": "T", "url": "https://example.org/",
+            "accessed": "2026-01-01", "language": "en", "kind": "press"}  # fmt: skip
+    with pytest.raises(ValidationError, match="source archive_url must be an external") as e:
+        Source(**base, archive_url="http://127.0.0.1/x")
+    assert "source url must" not in str(e.value)
+    with pytest.raises(ValidationError, match="source url must be an external"):
+        Source(**(base | {"url": "http://localhost/"}))
+
+
 # --- profile document rules ----------------------------------------------------------------
 
 

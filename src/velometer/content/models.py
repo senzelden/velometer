@@ -6,7 +6,14 @@ from datetime import date
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 STORY_STEPS = ("all", "leaders", "tail", "growth", "jumps", "bezirke")
 INTERNAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "::1"}
@@ -70,8 +77,8 @@ class Source(_Strict):
 
     @field_validator("url", "archive_url")
     @classmethod
-    def _external(cls, v: str | None) -> str | None:
-        return _external_url(v)
+    def _external(cls, v: str | None, info: ValidationInfo) -> str | None:
+        return _external_url(v, f"source {info.field_name}")
 
     @field_validator("publisher_de", "title_de")
     @classmethod
