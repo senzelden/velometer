@@ -230,7 +230,9 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
 
 
 def test_a_non_200_fails_the_export_naming_url_and_status(rich, tmp_path, monkeypatch):  # noqa: F811
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/city/nowhere"])
+    monkeypatch.setattr(
+        export, "export_urls", lambda data, app, rendered=None: ["/", "/city/nowhere"]
+    )
     out = tmp_path / "dist"
     with pytest.raises(export.ExportError, match=r"/city/nowhere.*404"):
         _export(rich, out)
@@ -356,7 +358,9 @@ def test_a_failed_export_leaves_out_dot_as_it_was(rich, tmp_path, monkeypatch): 
     monkeypatch.chdir(site)
     _export(rich, Path("."))
     before = _snapshot(site)
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/city/nowhere"])
+    monkeypatch.setattr(
+        export, "export_urls", lambda data, app, rendered=None: ["/", "/city/nowhere"]
+    )
     with pytest.raises(export.ExportError, match="/city/nowhere"):
         _export(rich, Path("."), clean=True)
     assert _snapshot(site) == before
@@ -378,6 +382,29 @@ def test_a_symlinked_out_is_refused(rich, tmp_path):  # noqa: F811
         _export(rich, dangling)
 
 
+def test_the_export_renders_each_url_once(rich, tmp_path, monkeypatch):  # noqa: F811
+    """A page found while listing the URLs is written from that response, not rendered again
+    (M9-10)."""
+    asked: dict[str, int] = {}
+    real = export.create_app
+
+    def counting(*args, **kw):
+        app = real(*args, **kw)
+
+        @app.middleware("http")
+        async def count(request, call_next):
+            asked[request.url.path] = asked.get(request.url.path, 0) + 1
+            return await call_next(request)
+
+        return app
+
+    monkeypatch.setattr(export, "create_app", counting)
+    out = tmp_path / "dist"
+    _export(rich, out, BASE)
+    assert len(asked) > 50
+    assert {url: n for url, n in asked.items() if n != 1} == {}
+
+
 def test_a_route_exception_names_its_url(rich, tmp_path, monkeypatch):  # noqa: F811
     real = export.create_app
 
@@ -391,7 +418,7 @@ def test_a_route_exception_names_its_url(rich, tmp_path, monkeypatch):  # noqa: 
         return app
 
     monkeypatch.setattr(export, "create_app", with_boom)
-    monkeypatch.setattr(export, "export_urls", lambda data, app: ["/", "/boom"])
+    monkeypatch.setattr(export, "export_urls", lambda data, app, rendered=None: ["/", "/boom"])
     out = tmp_path / "dist"
     with pytest.raises(export.ExportError, match="/boom: HTTP 500"):
         _export(rich, out)

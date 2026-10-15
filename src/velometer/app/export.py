@@ -206,12 +206,14 @@ def _map_refs(html: str, base: str) -> set[str]:
     return {"/" + m.removeprefix(base) for m in re.findall(pattern, html)}
 
 
-def export_urls(data: ReportData, app: FastAPI) -> list[str]:
+def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) -> list[str]:
     """Every URL the static edition has (decision 4): the fixed pages; per trusted city its page,
     each tab and plan page and CSV the app serves for it (a 404 is a page the city does not
     have, left out), its panel; every map an exported page references (a German page with
     maps is read too: it links the German tier map images). A per-city URL answered
-    with anything but 200 or 404 is kept, so the export fails on it by name."""
+    with anything but 200 or 404 is kept, so the export fails on it by name. Each response
+    of a URL kept goes into `rendered` (URL -> response) when given, so `_write_site` need not
+    render it again."""
     base = app.state.base_path
     probed = []
     for city in data.cities():
@@ -226,6 +228,8 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
             r = client.get(url, follow_redirects=False)
             if r.status_code == 404 and url not in PAGES:
                 continue
+            if rendered is not None:
+                rendered[url] = r
             if url not in PAGES:
                 found.append(url)
             if r.headers.get("content-type", "").startswith("text/html") and url not in LEGACY_DE:
@@ -233,7 +237,11 @@ def export_urls(data: ReportData, app: FastAPI) -> list[str]:
             if r.status_code == 200 and r.headers["content-type"].startswith("text/html"):
                 refs = _map_refs(r.text, base)
                 if refs:  # its German twin links its own image (`<city>_<kind>.de.png`)
-                    refs |= _map_refs(client.get(with_lang(url, "de")).text, base)
+                    twin = with_lang(url, "de")
+                    german = client.get(twin, follow_redirects=False)
+                    if rendered is not None:
+                        rendered[twin] = german
+                    refs |= _map_refs(german.text, base)
                 maps |= refs
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
@@ -291,12 +299,18 @@ def _ignore_tests(static: Path):
     return ignore
 
 
-def _write_site(site: Path, app: FastAPI, urls: list[str], build: dict) -> None:
-    """Every URL's response to its file, `static/`, `404.html` and `build.json` into `site`."""
+def _write_site(
+    site: Path, app: FastAPI, urls: list[str], build: dict, rendered: dict | None = None
+) -> None:
+    """Every URL's response to its file, `static/`, `404.html` and `build.json` into `site`; a
+    URL's response is taken from `rendered` when `export_urls` already had it."""
     written: dict[PurePosixPath, str] = {}
+    rendered = {} if rendered is None else rendered
     with TestClient(app, base_url=BASE_URL, raise_server_exceptions=False) as client:
         for url in urls:
-            r = client.get(url, follow_redirects=False)
+            r = rendered.pop(url, None)
+            if r is None:
+                r = client.get(url, follow_redirects=False)
             if r.status_code != 200:
                 raise ExportError(f"{url}: HTTP {r.status_code}")
             rel = url_to_path(url, r.headers["content-type"])
@@ -567,13 +581,14 @@ def _run_export(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base, static_edition={"commit": build["commit"]},
         )  # fmt: skip
-        urls = export_urls(data, app)
+        rendered: dict = {}  # each page is rendered once: listing it and writing it
+        urls = export_urls(data, app, rendered)
     finally:
         conn.close()
     out.parent.mkdir(parents=True, exist_ok=True)
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
-        _write_site(site, app, urls, build)
+        _write_site(site, app, urls, build, rendered)
         unresolved = scan_references(site, build["base"])
         if unresolved:
             lines = "\n".join(f"  {x.file}: {x.ref}" for x in unresolved)
