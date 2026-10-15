@@ -234,7 +234,8 @@ base year. Stored per city and year with the number of qualifying sites.
 ### 5.4 `velometer counters --check`
 
 Every configured city has sites and at least one index year; no site appears under two cities;
-daily counts are non-negative; the index base year equals 100.
+daily counts are non-negative; the index base year equals 100 when at least `MIN_SITES`
+sites qualify in it, and has no value when fewer do (§2.13; amended in M13, M8-22).
 
 ### 5.5 Pages and wording
 
