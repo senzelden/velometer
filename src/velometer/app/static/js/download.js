@@ -171,14 +171,15 @@ export function glyphOf(st) {
   return { shape: "swatch", colour: border ?? ground ?? "" };
 }
 
-/** A label's lines, each at most `room` px wide (by `perChar` px a character), broken at spaces;
- * a single word wider than that stays whole. */
-function wrap(text, perChar, room) {
+/** A label's lines, each at most `room` px wide by `measure(line)` (a string's width in px), broken
+ * at spaces: a word joins the line only if the longer line still measures within the room. A single
+ * word wider than the room stays whole on its own line. */
+export function wrap(text, measure, room) {
   const lines = [];
   let line = "";
   for (const word of text.split(/\s+/).filter(Boolean)) {
     const next = line ? `${line} ${word}` : word;
-    if (line && next.length * perChar > room) {
+    if (line && measure(next) > room) {
       lines.push(line);
       line = word;
     } else line = next;
@@ -187,25 +188,36 @@ function wrap(text, perChar, room) {
   return lines;
 }
 
-/** `text` in lines at most `room` px wide: by `measured` (its width in the page), else by `perChar`
- * px a character. */
-function fit(text, measured, perChar, room) {
-  const width = Number.isFinite(measured) && measured > 0 ? measured : text.length * perChar;
-  return width <= room ? [text] : wrap(text, width / Math.max(1, text.length), room);
+/** `text` in lines at most `room` px wide by `measure`. */
+export function fit(text, measure, room) {
+  return measure(text) <= room ? [text] : wrap(text, measure, room);
+}
+
+/** A width measure for text at one size and weight: the page's (`meta.measure`) where it gives a
+ * number, else `perChar` px a character. */
+function measureOf(meta, size, weight, perChar) {
+  return (s) => {
+    const w = typeof meta.measure === "function" ? meta.measure(s, size, weight) : null;
+    return Number.isFinite(w) && w > 0 ? w : s.length * perChar;
+  };
 }
 
 /** The key chips ({shape?, colour, fill?, text, width?}) in rows that fit the width, each chip with
  * its x and its label's lines. A chip's `width` is its label measured in the page
  * (getComputedTextLength); without one the label's width is estimated from its length. A label
- * wider than the image wraps onto lines of its own; a row is as tall as its tallest chip. */
-function layoutKey(chips, width) {
+ * wider than the image wraps onto lines of its own, each line by `measure(line)` (the key font's
+ * measure; without one, the chip's own average character width); a row is as tall as its tallest
+ * chip. */
+function layoutKey(chips, width, measure) {
   const rows = [];
   let row = [];
   let x = 8;
   const room = Math.max(40, width - 8 - 14 - 8);
   for (const c of chips) {
     const measured = Number.isFinite(c.width) && c.width > 0 ? c.width : c.text.length * CHAR;
-    const lines = measured <= room ? [c.text] : wrap(c.text, measured / Math.max(1, c.text.length), room);
+    const per = measured / Math.max(1, c.text.length);
+    const lineWidth = measure ?? ((s) => s.length * per);
+    const lines = measured <= room ? [c.text] : wrap(c.text, lineWidth, room);
     const label = lines.length > 1 ? room : measured;
     const need = 14 + label + 14;
     if (row.length && x + need > width) {
@@ -258,14 +270,15 @@ function keySvg(rows, top, toLight, ink, txt) {
 export function selfContained(svg, styleOf, toLight, meta) {
   const { w, h } = sizeOf(svg);
   const { ground, ink, muted } = { ...FALLBACK, ...Object.fromEntries(Object.entries(meta).filter(([k, v]) => k in FALLBACK && v)) };
-  const measure = (text, size, weight) => (typeof meta.measure === "function" ? meta.measure(text, size, weight) : null);
+  const titleWidth = measureOf(meta, "15px", "600", TITLE_CHAR);
+  const noteWidth = measureOf(meta, "11px", "400", CHAR);
   const room = Math.max(40, w - 16);
   const title = String(meta.title ?? "");
-  const titleLines = fit(title, measure(title, "15px", "600"), TITLE_CHAR, room);
+  const titleLines = fit(title, titleWidth, room);
   const notes = [String(meta.source ?? ""), `${meta.attribution ?? t("js.download.attribution")} · ${t("js.download.note")}`];
-  const metaLines = notes.flatMap((line) => fit(line, measure(line, "11px", "400"), CHAR, room));
+  const metaLines = notes.flatMap((line) => fit(line, noteWidth, room));
   const top = TOP + (titleLines.length - 1) * TITLE_LINE;
-  const keyRows = layoutKey(meta.key ?? [], w);
+  const keyRows = layoutKey(meta.key ?? [], w, typeof meta.measure === "function" ? noteWidth : null);
   const keyH = keyRows.reduce((sum, r) => sum + r.h, 0) + (keyRows.length ? 6 : 0);
   const height = h + top + keyH + BOTTOM + (metaLines.length - 2) * META_LINE;
   const inner = [];

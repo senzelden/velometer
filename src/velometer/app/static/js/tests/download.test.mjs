@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { fileName, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
+import { fileName, fit, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv, wrap } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -403,4 +403,49 @@ test("selfContained: a short title and meta lines keep the one-line layout", () 
   const out = selfContained(node("svg", { viewBox: "0 0 800 200" }, []), darkStyle, null, META);
   assert.match(out, /<g transform="translate\(0,30\)">/);
   assert.equal(textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]).length, 2);
+});
+
+// M14 Task 7: a title wraps by the measured width of each candidate line
+const glyph = (ch) => ("WÄ".includes(ch) ? 14 : ch === "i" ? 4 : 8);
+const stub = (s) => [...s].reduce((n, ch) => n + glyph(ch), 0);
+const WIDE = "WWWW ÄÖÜ WWW iii WWWW ÄÄ iiii WWWW WWW";
+
+test("wrap: no line of several words is wider than the room by the measure", () => {
+  const room = 120;
+  const lines = wrap(WIDE, stub, room);
+  assert.ok(lines.length >= 2);
+  assert.equal(lines.join(" "), WIDE);
+  for (const l of lines.filter((l) => l.includes(" "))) assert.ok(stub(l) <= room, `"${l}" is ${stub(l)} px`);
+});
+
+test("wrap: one word wider than the room stays whole on its own line", () => {
+  const lines = wrap("ab WWWWWWWWWWWWWWWW cd", stub, 100);
+  assert.deepEqual(lines, ["ab", "WWWWWWWWWWWWWWWW", "cd"]);
+  assert.ok(stub(lines[1]) > 100);
+});
+
+test("fit: a text that fits is one line; one that does not wraps by the measure", () => {
+  assert.deepEqual(fit("iii iii", stub, 200), ["iii iii"]);
+  assert.ok(fit(WIDE, stub, 120).length >= 2);
+});
+
+test("selfContained: without a measure a plain ASCII title wraps as it did before M14", () => {
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  const title = "Cycling infrastructure growth across the whole region compared with last year";
+  const out = selfContained(svg, darkStyle, null, { ...META, title });
+  // recorded from the pre-change code (average 15 * 0.62 px a character)
+  assert.deepEqual(textsOf(out.split("<g transform=")[0]).map((l) => l.text), [
+    "Cycling infrastructure growth",
+    "across the whole region",
+    "compared with last year",
+  ]);
+});
+
+test("selfContained: title lines are wrapped by the measure the page gave", () => {
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  const measure = (text) => stub(text) * 15 / 8;
+  const out = selfContained(svg, darkStyle, null, { ...META, title: WIDE, measure });
+  const lines = textsOf(out.split("<g transform=")[0]).map((l) => l.text);
+  assert.ok(lines.length >= 2);
+  for (const l of lines.filter((l) => l.includes(" "))) assert.ok(measure(l) <= 300 - 16, `"${l}"`);
 });
