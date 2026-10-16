@@ -9,7 +9,7 @@
 <div class="chart" data-chart="city-headline" data-city="{{ city.id }}" aria-describedby="yearly-caption" role="group" aria-label="{{ t('page.city.headline_chart', city=city.name) }}"></div>
 <div class="scroll">
 <table class="yearly stack">
-<caption id="yearly-caption" class="sr-only">{{ t('page.time.caption', city=city.name) }}</caption>
+<caption id="yearly-caption" class="sr-only">{{ t('page.time.caption', city=city_name(city)) }}</caption>
 <thead><tr><th>{{ t('table.snapshot') }}</th>{% for k in kinds %}<th class="num">{{ t('table.kind_headline', kind=k.kind | upper) }}</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}

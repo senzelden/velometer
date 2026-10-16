@@ -76,6 +76,7 @@ cities:
   - id: berlin
     name: Berlin
     country_iso2: DE
+    lang: de
     epsg: 25833
     geofabrik_region: europe/germany/berlin
     osm_relation_id: 62422
@@ -103,6 +104,7 @@ cities:
   - id: paris
     name: Paris
     country_iso2: FR
+    lang: fr
     epsg: 25831
     geofabrik_region: europe/france/ile-de-france
     osm_relation_id: 71525
@@ -117,6 +119,7 @@ cities:
     name_de: Wien  # German exonym (M12): the German edition's name
     aliases: ["Vienna"]  # common English name; display data only
     country_iso2: AT
+    lang: de
     epsg: 25833
     geofabrik_region: europe/austria
     osm_relation_id: 109166
@@ -130,6 +133,7 @@ cities:
     name_de: Kopenhagen  # German exonym (M12): the German edition's name
     aliases: ["Copenhagen"]  # common English name; display data only
     country_iso2: DK
+    lang: da
     epsg: 25832
     epsg_exception: "Danish national standard ETRS89 / UTM 32N; centroid 12.57E is 0.57 deg into zone 33, scale error about 0.06 %"
     geofabrik_region: europe/denmark
@@ -144,6 +148,7 @@ cities:
   - id: wroclaw
     name: Wrocław
     country_iso2: PL
+    lang: pl
     epsg: 25833
     geofabrik_region: europe/poland/dolnoslaskie
     osm_relation_id: 451516
@@ -156,6 +161,7 @@ cities:
   - id: amsterdam
     name: Amsterdam
     country_iso2: NL
+    lang: nl
     epsg: 25831
     geofabrik_region: europe/netherlands/noord-holland
     osm_relation_id: 47811
@@ -169,6 +175,7 @@ cities:
   - id: utrecht
     name: Utrecht
     country_iso2: NL
+    lang: nl
     epsg: 25831
     geofabrik_region: europe/netherlands/utrecht
     osm_relation_id: 419203
@@ -182,6 +189,7 @@ cities:
   - id: madrid
     name: Madrid
     country_iso2: ES
+    lang: es
     epsg: 25830
     geofabrik_region: europe/spain/madrid
     osm_relation_id: 5326784
@@ -200,6 +208,7 @@ cities:
   - id: barcelona
     name: Barcelona
     country_iso2: ES
+    lang: ca  # Catalan: the city's own language beside Spanish
     epsg: 25831
     geofabrik_region: europe/spain/cataluna
     osm_relation_id: 347950
@@ -218,6 +227,7 @@ cities:
   - id: stockholm
     name: Stockholm
     country_iso2: SE
+    lang: sv
     epsg: 25833
     geofabrik_region: europe/sweden
     osm_relation_id: 398021
@@ -231,6 +241,7 @@ cities:
   - id: oslo
     name: Oslo
     country_iso2: "NO"
+    lang: nb  # Bokmål
     epsg: 25832
     geofabrik_region: europe/norway/ostlandet
     osm_relation_id: 2775550
@@ -246,6 +257,7 @@ cities:
   - id: helsinki
     name: Helsinki
     country_iso2: FI
+    lang: fi
     epsg: 25835
     geofabrik_region: europe/finland
     osm_relation_id: 34914
@@ -263,6 +275,7 @@ cities:
   - id: lyon
     name: Lyon
     country_iso2: FR
+    lang: fr
     epsg: 25831
     geofabrik_region: europe/france/rhone-alpes
     osm_relation_id: 120965
@@ -281,6 +294,7 @@ cities:
   - id: strasbourg
     name: Strasbourg
     country_iso2: FR
+    lang: fr
     epsg: 25832
     geofabrik_region: europe/france/alsace
     osm_relation_id: 71033
@@ -299,6 +313,7 @@ cities:
   - id: bordeaux
     name: Bordeaux
     country_iso2: FR
+    lang: fr
     epsg: 25830
     geofabrik_region: europe/france/aquitaine
     osm_relation_id: 105270
@@ -319,6 +334,7 @@ cities:
     name_de: Warschau  # German exonym (M12): the German edition's name
     aliases: ["Warsaw"]  # common English name; display data only
     country_iso2: PL
+    lang: pl
     epsg: 25834
     geofabrik_region: europe/poland/mazowieckie
     osm_relation_id: 336075
@@ -332,6 +348,7 @@ cities:
     name_de: Krakau  # German exonym (M12): the German edition's name
     aliases: ["Cracow"]  # common English name; display data only
     country_iso2: PL
+    lang: pl
     epsg: 25834
     geofabrik_region: europe/poland/malopolskie
     osm_relation_id: 449696
@@ -343,6 +360,7 @@ cities:
   - id: budapest
     name: Budapest
     country_iso2: HU
+    lang: hu
     epsg: 25834
     geofabrik_region: europe/hungary
     osm_relation_id: 1244004
@@ -356,6 +374,7 @@ cities:
     name_de: Prag  # German exonym (M12): the German edition's name
     aliases: ["Prague"]  # common English name; display data only
     country_iso2: CZ
+    lang: cs
     epsg: 25833
     geofabrik_region: europe/czech-republic/stredocesky
     osm_relation_id: 435514
@@ -367,6 +386,7 @@ cities:
   - id: ljubljana
     name: Ljubljana
     country_iso2: SI
+    lang: sl
     epsg: 25833
     geofabrik_region: europe/slovenia
     osm_relation_id: 1675898
@@ -380,6 +400,7 @@ cities:
   - id: bratislava
     name: Bratislava
     country_iso2: SK
+    lang: sk
     epsg: 25833
     geofabrik_region: europe/slovakia
     osm_relation_id: 1702499

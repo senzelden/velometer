@@ -1,7 +1,7 @@
 {% from "_cite.html" import cite %}
 <div class="city-head">
 <div>
-<h1>{{ city.name }}</h1>
+<h1>{{ city_name(city) }}</h1>
 <p class="meta">{{ country }}{% if residents %} · {{ t('page.city.residents', n=residents | num(",d")) }}{% endif %} · <a href="{{ data_u('/data/' ~ city.id ~ '.csv') }}">CSV</a>{% if bezirke %} · <a href="{{ data_u('/data/' ~ city.id ~ '_subareas.csv') }}">{{ t('page.city.bezirke_csv') }}</a>{% endif %}{% if plan_href %} · <a href="{{ u(plan_href) }}">{{ t('page.city.plan') }}</a>{% endif %}</p>
 </div>
 <form class="compare-form" action="{{ u('/compare') }}" method="get">
@@ -10,7 +10,7 @@
 <div class="compare-row">
 <select id="compare-with" name="c" multiple size="8">
 {% for g in compare_groups %}<optgroup label="{{ g.country }}">
-{% for o in g.cities %}<option value="{{ o.id }}">{{ o.name }}</option>
+{% for o in g.cities %}<option value="{{ o.id }}"{{ city_lang_attr(o) }}>{{ o.name }}</option>
 {% endfor %}</optgroup>
 {% endfor %}</select>
 <button type="submit">{{ t('nav.compare') }}</button>

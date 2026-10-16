@@ -3,7 +3,7 @@
 <div class="panel-frag" lang="{{ lang }}">
 <div class="panel-head">
 <div>
-<h2>{{ city.name }}</h2>
+<h2>{{ city_name(city) }}</h2>
 <p class="meta">{{ country }}{% if residents %} · {{ t('page.city.residents', n=residents | num(",d")) }}{% endif %}</p>
 </div>
 <a class="panel-full" href="{{ u('/city/' ~ city.id) }}">{{ t('page.panel.full') }} →</a>

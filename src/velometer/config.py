@@ -18,6 +18,7 @@ from pydantic import (
     model_validator,
 )
 
+from velometer.content.models import name_lang
 from velometer.i18n import Lang, t
 from velometer.pipeline.geometry import require_projected
 from velometer.pipeline.match import validate_expr
@@ -126,6 +127,9 @@ class CityConfig(_Strict):
     name_de: str | None = None
     # Other names the search matches (the common English one): display data, not classifier input
     aliases: list[str] = []
+    # the language the city's own `name` is in (BCP 47: "da" for København): the `lang` of the
+    # name where an English page shows it and it differs from the English form (aliases[0])
+    lang: str
     country_iso2: str = Field(pattern=r"^[A-Z]{2}$")
     epsg: int
     geofabrik_region: str
@@ -166,6 +170,17 @@ class CityConfig(_Strict):
         if any(not a.strip() for a in v):
             raise ValueError("aliases: a blank alias")
         return v
+
+    @field_validator("lang")
+    @classmethod
+    def _lang_tag(cls, v: str) -> str:
+        return name_lang(v, "lang") or v
+
+    @property
+    def english_name(self) -> str:
+        """The name an English page would use if it did not show the city's own: the first alias
+        (Copenhagen), else `name`."""
+        return self.aliases[0] if self.aliases else self.name
 
     @field_validator("name_de")
     @classmethod

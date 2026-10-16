@@ -16,6 +16,7 @@ around an inline value.
 import re
 from dataclasses import dataclass, field
 from functools import partial
+from types import SimpleNamespace
 
 from markupsafe import Markup, escape
 
@@ -81,6 +82,39 @@ def lang_attr(code: str | None) -> Markup:
     """` lang="<code>"` for a name in its own language (M12-1: an organisation, a counter
     publisher, a plan title), else nothing: the page's language applies."""
     return Markup(' lang="{}"').format(code) if code and LANG_TAG.fullmatch(code) else Markup("")
+
+
+def _own_lang(city: object, lang: str) -> str | None:
+    """The language of the city's own name where `lang`'s page shows it in a form that differs
+    from the English one (København, not Copenhagen), else None. A German page shows the German
+    form, which needs no mark (M14)."""
+    own = getattr(city, "lang", None)
+    english = getattr(city, "english_name", None)
+    if lang != "en" or not own or not english or getattr(city, "name", "") == english:
+        return None
+    return own
+
+
+def city_name(city: object, lang: str = "en") -> Markup:
+    """A city's name as a page shows it, the city's own one (København) in a `<span lang>` of
+    its language on an English page where it differs from the English form (Copenhagen)."""
+    own = _own_lang(city, lang)
+    name = getattr(city, "name", "")
+    return Markup('<span lang="{}">{}</span>').format(own, name) if own else escape(name)
+
+
+def city_row_name(configs: dict, city_id: str, name: str, lang: str = "en") -> Markup:
+    """`city_name` for a table row, which holds a city's id and name: marked only where `name` is
+    the config's own name for that city (a row named otherwise is shown as it is)."""
+    cfg = configs.get(city_id)
+    shown = cfg if cfg is not None and cfg.name == name else None
+    return city_name(shown if shown is not None else SimpleNamespace(name=name), lang)
+
+
+def city_lang_attr(city: object, lang: str = "en") -> Markup:
+    """` lang="<code>"` for an element that holds nothing but the city's name (an `<option>`),
+    where `city_name` would wrap it."""
+    return lang_attr(_own_lang(city, lang))
 
 
 def bracketed(name: str, code: str | None) -> Markup:

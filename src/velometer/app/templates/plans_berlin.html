@@ -17,7 +17,7 @@
 {% set why_roles = doc.sections | map(attribute="role") | list if doc else [] %}
 <h1>{{ t('page.plan.h1', title=(doc.title | lower if lang == 'en' else fb_text(doc.title)) if doc else t('page.plan.h1_default')) }}</h1>
 {% if plan %}
-<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ bracketed(publisher.name, publisher.bracket_lang) }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
+<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ bracketed(plan.title, plan.title_bracket_lang) }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ bracketed(plan.title, plan.title_bracket_lang) }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ bracketed(publisher.name, publisher.bracket_lang) }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
 {% endif %}
 {% if content_error %}<p class="note">{{ t('note.registry_error') }}</p>{% endif -%}
 {% if text_error %}<p class="note">{{ t('page.plan.text_error') }}</p>{% endif %}

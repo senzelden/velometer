@@ -17,7 +17,7 @@
     <p class="quick" aria-label="{{ t('page.compare.quick') }}">{% for q in quick %}<a class="chip-link" data-quick="{{ q.key }}" href="{{ u(href(c=q.ids)) }}">{{ q.label }}</a>{% endfor %}</p>
     <div class="country-grid">
     {% for g in groups %}<div class="country" role="group" aria-labelledby="cmp-grp-{{ loop.index }}"><p class="grp-name" id="cmp-grp-{{ loop.index }}">{{ g.country }}</p>
-      {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ c.name }}</label>
+      {% for c in g.cities %}<label><input type="checkbox" name="c" value="{{ c.id }}"{% if c.id in state.c %} checked{% endif %}> {{ city_name(c) }}</label>
       {% endfor %}</div>
     {% endfor %}</div>
   </fieldset>
@@ -62,7 +62,7 @@
 <caption id="compare-caption" class="sr-only">{{ t('page.compare.caption', metric=metrics[state.m].label) }}</caption>
 <thead><tr><th scope="col">{{ t('table.city') }}</th>{% for col in table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for row in table.rows %}<tr><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ row.name }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ table.columns[loop.index0].text }}">{{ v | num }}{% if table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}</td>{% endfor %}</tr>
+{% for row in table.rows %}<tr><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ city_row_name(row.id, row.name) }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ table.columns[loop.index0].text }}">{{ v | num }}{% if table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}</td>{% endfor %}</tr>
 {% endfor %}</tbody>
 </table>
 </div>

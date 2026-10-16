@@ -46,6 +46,9 @@ from velometer.app.names import country_name
 from velometer.app.narrative import (
     Fallback,
     bracketed,
+    city_lang_attr,
+    city_name,
+    city_row_name,
     data_ref_label,
     fb,
     fb_text,
@@ -61,7 +64,7 @@ from velometer.app.search import search_index
 from velometer.app.series import series_payload
 from velometer.app.sources import GROUPS, group_name, overview_column, source_anchor, source_rows
 from velometer.app.tokens import theme_tokens
-from velometer.config import ConfigError, PresetRanking, load_differences, load_site
+from velometer.config import ConfigError, PresetRanking, load_cities, load_differences, load_site
 from velometer.content.loader import (
     load_document,
     load_narratives,
@@ -453,6 +456,9 @@ def create_app(
     data_u = urls.make_data_u(app.state.base_path)
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
     app.state.site = load_site(config_dir)
+    # a table row carries a city's id and name, not the city: the config says which language the
+    # name is in (M14)
+    city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
     commit = static_edition["commit"] if static_edition else short_commit(git_commit())
 
     def _templates(lang: Lang) -> Jinja2Templates:
@@ -481,6 +487,10 @@ def create_app(
         env.globals["lang_attr"] = lang_attr
         # its bracketed form in another language, in its own `lang` (review 10, I1)
         env.globals["bracketed"] = bracketed
+        # a city's name; the city's own one in its `lang` where English shows it (M14)
+        env.globals["city_name"] = partial(city_name, lang=lang)
+        env.globals["city_lang_attr"] = partial(city_lang_attr, lang=lang)
+        env.globals["city_row_name"] = partial(city_row_name, city_configs, lang=lang)
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
         # a source's publisher or title: on a German page its German sibling, original in `lang`

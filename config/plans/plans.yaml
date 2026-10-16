@@ -95,6 +95,8 @@
 - id: vienna_radwegoffensive
   city: vienna
   title: Radwegoffensive (yearly construction programme for the Hauptradverkehrsnetz)
+  title_lang: de
+  title_bracket_lang: en
   title_de: Radwegoffensive (jährliches Ausbauprogramm für das Hauptradverkehrsnetz)
   adopted: null
   url: https://mobilitaetsagentur.at/radfahren/radverkehrsplanung
@@ -325,6 +327,8 @@
 - id: lyon_plan_velo_2024
   city: lyon
   title: Plan vélo 2024-2030 de la Métropole de Lyon (incl. Voies Lyonnaises)
+  title_lang: fr
+  title_bracket_lang: en
   adopted: null
   url: https://avelo.grandlyon.com/fileadmin/user_upload/pdf/GL_PlanVelo_FR_aout2024_BAT03.pdf
   status: current

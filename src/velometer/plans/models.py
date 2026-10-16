@@ -14,7 +14,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator, model_validator
 
 from velometer.config import ConfigError, require_de
-from velometer.content.models import name_lang
+from velometer.content.models import bracket_lang, name_lang
 from velometer.i18n import Lang
 
 PLANS_FILE = "plans.yaml"
@@ -55,6 +55,9 @@ class Plan(_Strict):
     # the language of `title` (BCP 47) where it is wholly the document's own title, written as its
     # `lang` (M12-1); not set where the title holds our words, and not used for `title_de`
     title_lang: str | None = None
+    # the language of the bracketed form ending `title` where it is not `title_lang` (Vienna's and
+    # Lyon's English glosses beside the German and French titles); not used for `title_de`
+    title_bracket_lang: str | None = None
     adopted: date | None
     url: str
     status: Literal["current", "expired", "replaced"]
@@ -72,6 +75,11 @@ class Plan(_Strict):
     @classmethod
     def _title_lang(cls, v: str | None) -> str | None:
         return name_lang(v, "title_lang")
+
+    @model_validator(mode="after")
+    def _title_bracket_lang(self) -> "Plan":
+        bracket_lang(self.title_bracket_lang, self.title, "title_bracket_lang")
+        return self
 
     @model_validator(mode="after")
     def _unique_items(self) -> "Plan":
@@ -93,6 +101,7 @@ class Plan(_Strict):
             update={
                 "title": self.title_de or self.title,
                 "title_lang": None if self.title_de else self.title_lang,
+                "title_bracket_lang": None if self.title_de else self.title_bracket_lang,
                 "successor": self.successor_de or self.successor,
                 "publisher": self.publisher_de or self.publisher,
                 "note": self.note_de or self.note,

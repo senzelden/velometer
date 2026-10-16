@@ -13,7 +13,7 @@
 {% if differences is none %}
 <p class="note">{{ t('page.figures.config_error') }}</p>
 {% elif not differences %}
-<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.none', city=city_name(city)) }}</p>
 {% else %}
 <div class="scroll">
 <table class="diffs stack figures">
@@ -54,7 +54,7 @@
 {% if reconcile is none %}
 <p class="note">{{ t('page.figures.no_run') }}</p>
 {% elif not reconcile.gaps %}
-<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.none', city=city_name(city)) }}</p>
 {% else %}
 <div class="scroll">
 <table class="stack figures">
@@ -79,7 +79,7 @@
 <section>
 <h2>{{ t('page.figures.official') }}</h2>
 {% if not reported %}
-<p class="note">{{ t('page.figures.no_official', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.no_official', city=city_name(city)) }}</p>
 {% else %}
 <p class="meta">{{ t('page.figures.official_meta') }}</p>
 <div class="scroll">
