@@ -5,6 +5,7 @@ apart from the two meta tags; every page carries the CSP and base meta tags."""
 import json
 import re
 from html.parser import HTMLParser
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
@@ -91,8 +92,14 @@ def _external(url: str) -> bool:
 
 @pytest.fixture
 def rich(tmp_path):
-    """The report fixture with every page part present: berlin's Bezirke and change map, its
-    tier maps, counter data and the plan page's data."""
+    """The report fixture with every page part present (`build_rich`)."""
+    return build_rich(tmp_path)
+
+
+def build_rich(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
+    """(db, config, maps, docs, plans data) of the report fixture with every page part present:
+    berlin's Bezirke and change map, its tier maps, counter data and the plan page's data. A
+    plain function, so a module-scoped fixture can build it too."""
     from tests.report_fixture import build_report_fixture_subareas
 
     db_path, cfg = build_report_fixture_subareas(tmp_path)

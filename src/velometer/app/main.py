@@ -504,6 +504,10 @@ def create_app(
         env.globals["fb_text"] = fb_text
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
+        # the Datalab's name in the footer, in a `<span lang>` where site.yaml gives its language
+        env.globals["datalab_name"] = lambda d: (
+            Markup("<span{}>{}</span>").format(lang_attr(d.lang), d.name) if d.lang else d.name
+        )
         # its bracketed form in another language, in its own `lang` (review 10, I1)
         env.globals["bracketed"] = bracketed
         # a city's name; the city's own one in its `lang` where English shows it (M14)

@@ -914,6 +914,12 @@ HttpsUrl = Annotated[str, AfterValidator(_https_url)]
 class Datalab(_Strict):
     name: str = Field(min_length=1)
     url: HttpsUrl
+    lang: str | None = None  # the name's language where it is not the page's ("de", M14)
+
+    @field_validator("lang")
+    @classmethod
+    def _lang_tag(cls, v: str | None) -> str | None:
+        return name_lang(v, "datalab.lang")
 
 
 class SiteConfig(_Strict):
@@ -926,7 +932,8 @@ class SiteConfig(_Strict):
     @field_validator("datalab", mode="before")
     @classmethod
     def _unset_datalab(cls, v: Any) -> Any:
-        """`name: null` and `url: null` together are an unset Datalab, not a half-set one."""
+        """`name: null` and `url: null` (and `lang: null`) together are an unset Datalab, not a
+        half-set one."""
         if isinstance(v, dict) and v and all(x is None for x in v.values()):
             return None
         return v
@@ -951,6 +958,15 @@ class SiteConfig(_Strict):
         if self.privacy_url is None:
             out.append("privacy_url")
         return out
+
+    def public_values(self) -> dict[str, str | None]:
+        """The four values a public export needs, as `build.json` records them (M14)."""
+        return {
+            "datalab_name": self.datalab.name if self.datalab else None,
+            "datalab_url": self.datalab.url if self.datalab else None,
+            "impressum_url": self.impressum_url,
+            "privacy_url": self.privacy_url,
+        }
 
 
 def load_site(config_dir: Path) -> SiteConfig:

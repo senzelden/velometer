@@ -7,9 +7,10 @@ import re
 import zlib
 from pathlib import Path
 
+from markupsafe import escape
+
 from velometer.app import export
 from velometer.app.urls import normalise_base
-from velometer.config import ConfigError, load_site
 
 _META_CSP = re.compile(r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"')
 
@@ -82,9 +83,43 @@ def _gz_problems(out: Path) -> list[str]:
     return problems
 
 
-def deploy_problems(out: Path, base: str | None, config_dir: Path) -> list[str]:
+SITE_VALUES = ("datalab_name", "datalab_url", "impressum_url", "privacy_url")
+FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url")
+
+
+def _public_problems(out: Path, build: dict) -> list[str]:
+    """A public export's footer, judged from the export itself: build.json records the four
+    site values, and every page with the site's footer (the home page always) names the
+    Datalab and links it, its Impressum and its privacy page."""
+    site = build.get("site")
+    site = site if isinstance(site, dict) else {}
+    missing = [k for k in SITE_VALUES if not isinstance(site.get(k), str) or not site[k]]
+    if missing:
+        return [f"public export, but {export.BUILD_FILE} records no: " + ", ".join(missing)]
+    links = [f'href="{escape(site[k])}"' for k in FOOTER_LINKS]
+    name = str(escape(site["datalab_name"]))
+    bare = []
+    for page in sorted(out.rglob("*.html")):
+        text = page.read_text(encoding="utf-8")
+        rel = page.relative_to(out).as_posix()
+        if "<footer>" not in text and rel != "index.html":
+            continue  # a fragment (a city's /panel), not a page with the site's footer
+        footer = text.rpartition("<footer>")[2]
+        if name not in footer or not all(link in footer for link in links):
+            bare.append(rel)
+    if bare:
+        shown = ", ".join(bare[:5]) + (f" and {len(bare) - 5} more" if len(bare) > 5 else "")
+        return [
+            f"public export, but {len(bare)} page(s) lack the Datalab, Impressum or privacy "
+            f"link of {export.BUILD_FILE} in the footer: {shown}"
+        ]
+    return []
+
+
+def deploy_problems(out: Path, base: str | None, public: bool = False) -> list[str]:
     """What stops `out` from being uploaded as it is; an empty list means ready. `base` defaults
-    to the one in build.json."""
+    to the one in build.json. A public export is checked against its own build.json and footers,
+    not today's site.yaml; `public` also refuses an export that is not public."""
     out = Path(out)
     if not out.is_dir():
         return [f"{out} is not a directory"]
@@ -109,12 +144,9 @@ def deploy_problems(out: Path, base: str | None, config_dir: Path) -> list[str]:
         f"unresolved reference in {u.file}: {u.ref}" for u in export.scan_references(out, use)
     ]
     if build and build.get("public") is True:
-        try:
-            missing = load_site(config_dir).missing()
-        except ConfigError as e:
-            missing = [str(e)]
-        if missing:
-            problems.append("public export, but site.yaml has no: " + ", ".join(missing))
+        problems += _public_problems(out, build)
+    elif build and public:
+        problems.append("not a public export (exported without --public): no Impressum")
     return problems
 
 

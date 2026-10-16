@@ -257,10 +257,14 @@ def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) ->
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
-def build_stamp(data: ReportData, base: str, public: bool = False) -> dict:
+def build_stamp(
+    data: ReportData, base: str, public: bool = False, site: dict | None = None
+) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
-    exported runs (the rows of /data/all.csv), the base path and the build time (UTC)."""
+    exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
+    export also records `site`, the four values its footer links (`SiteConfig.public_values`),
+    which `deploy-check` checks the pages against."""
     raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
     versions: set[str] = set()
@@ -275,6 +279,7 @@ def build_stamp(data: ReportData, base: str, public: bool = False) -> dict:
         "osm_timestamps": {city: sorted(ts) for city, ts in stamps.items()},
         "base": base,
         "public": public,
+        **({"site": site} if public and site is not None else {}),
         "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
@@ -630,6 +635,7 @@ def _run_export(
     public: bool = False,
 ) -> ExportResult:
     validate_base(base)
+    site_values = None
     if public:
         try:
             site_cfg = load_site(config_dir)
@@ -639,6 +645,7 @@ def _run_export(
             raise ExportError(
                 "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
             )
+        site_values = site_cfg.public_values()
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
     _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
@@ -649,7 +656,7 @@ def _run_export(
         raise ExportError(str(e)) from e
     try:
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base), public)
+        build = build_stamp(data, normalise_base(base), public, site_values)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base, static_edition={"commit": build["commit"]},

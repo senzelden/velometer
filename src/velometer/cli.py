@@ -2119,14 +2119,17 @@ def app_deploy_check(
     base: str = typer.Option(
         None, "--base", help="Path the site is served under (default: the one in build.json)."
     ),
-    config_dir: Path = CONFIG_EXPORT_OPT,
+    public: bool = typer.Option(
+        False, "--public", help="Fail unless the export is public (made with `export --public`)."
+    ),
 ) -> None:
-    """The deploy dry run: verify a finished export and upload nothing (exit 1 lists problems)."""
+    """The deploy dry run: verify a finished export and upload nothing (exit 1 lists problems).
+    A public export is checked against its own build.json and footers."""
     import json
 
     from velometer.app.deploy_check import deploy_problems, site_stats
 
-    problems = deploy_problems(site, base, config_dir)
+    problems = deploy_problems(site, base, public)
     if problems:
         for p in problems:
             typer.echo(f"problem: {p}")

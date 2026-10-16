@@ -100,6 +100,22 @@ def test_footer_with_complete_settings(inputs):
     assert 'lang="de"' not in footers["de"]
 
 
+def test_the_datalab_name_carries_its_language_when_site_yaml_gives_one(inputs):
+    # final review M8: "Zählwerk Berlin Datalab" is a German name; "Part of" stays English
+    doc = {**COMPLETE, "datalab": {**COMPLETE["datalab"], "lang": "de"}}
+    name = COMPLETE["datalab"]["name"]
+    footers = _footers(inputs, doc)
+    assert f'Part of <span lang="de">{name}</span></a>' in footers["en"]
+    assert f'Teil von <span lang="de">{name}</span></a>' in footers["de"]
+    # without a language the name is plain text in the page's language
+    assert f"Part of {name}</a>" in _footers(inputs, COMPLETE)["en"]
+
+
+def test_a_datalab_language_must_be_a_language_tag(tmp_path):
+    with pytest.raises(ConfigError, match="datalab.lang"):
+        _load(tmp_path, {**COMPLETE, "datalab": {**COMPLETE["datalab"], "lang": "German"}})
+
+
 def test_footer_without_settings_has_no_datalab_line(inputs):
     for lang, f in _footers(inputs, None).items():
         # the line's own words, from the catalogue (the name filled in with a marker)

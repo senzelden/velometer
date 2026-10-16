@@ -9,7 +9,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from tests.test_app_base import rich  # noqa: F401  (`rich._get_wrapped_function`)
+from tests.test_app_base import build_rich
 from tests.test_export import _content, _files
 from velometer.app import deploy_check, export
 from velometer.cli import app
@@ -25,7 +25,7 @@ COMPLETE = {
 def good(tmp_path_factory):
     """One public export with a complete site.yaml, made once: (export dir, config dir)."""
     tmp = tmp_path_factory.mktemp("m14-deploy-check")
-    r = rich._get_wrapped_function()(tmp)
+    r = build_rich(tmp)
     db_path, cfg, maps, docs, plans = r
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
     out = tmp / "good"
@@ -49,39 +49,39 @@ def _big_gz(out: Path) -> Path:
 
 def test_good_export_is_ready(site):
     out, cfg = site
-    assert deploy_check.deploy_problems(out, None, cfg) == []
-    assert deploy_check.deploy_problems(out, "/", cfg) == []
+    assert deploy_check.deploy_problems(out, None) == []
+    assert deploy_check.deploy_problems(out, "/") == []
 
 
 def test_missing_build_json(site):
     out, cfg = site
     (out / "build.json").unlink()
-    assert any("build.json" in p for p in deploy_check.deploy_problems(out, "/", cfg))
+    assert any("build.json" in p for p in deploy_check.deploy_problems(out, "/"))
 
 
 def test_base_differs_from_build_json(site):
     out, cfg = site
-    problems = deploy_check.deploy_problems(out, "/velometer/", cfg)
+    problems = deploy_check.deploy_problems(out, "/velometer/")
     assert any("build.json" in p and "base" in p for p in problems)
 
 
 def test_missing_404(site):
     out, cfg = site
     (out / "404.html").unlink()
-    assert any("404.html" in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any("404.html" in p for p in deploy_check.deploy_problems(out, None))
 
 
 def test_missing_headers(site):
     out, cfg = site
     (out / "_headers").unlink()
-    assert any("_headers" in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any("_headers" in p for p in deploy_check.deploy_problems(out, None))
 
 
 def test_headers_csp_differs_from_the_meta_csp(site):
     out, cfg = site
     text = (out / "_headers").read_text()
     (out / "_headers").write_text(text.replace("frame-ancestors 'none'", "frame-ancestors *"))
-    problems = deploy_check.deploy_problems(out, None, cfg)
+    problems = deploy_check.deploy_problems(out, None)
     assert any("_headers" in p and "Content-Security-Policy" in p for p in problems)
 
 
@@ -89,14 +89,14 @@ def test_headers_csp_missing_frame_ancestors(site):
     out, cfg = site
     text = (out / "_headers").read_text()
     (out / "_headers").write_text(text.replace("; frame-ancestors 'none'", ""))
-    assert any("_headers" in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any("_headers" in p for p in deploy_check.deploy_problems(out, None))
 
 
 def test_missing_gz_for_an_eligible_file(site):
     out, cfg = site
     gz = _big_gz(out)
     gz.unlink()
-    problems = deploy_check.deploy_problems(out, None, cfg)
+    problems = deploy_check.deploy_problems(out, None)
     assert any(gz.name in p and "missing" in p for p in problems)
 
 
@@ -105,7 +105,7 @@ def test_gz_that_no_longer_matches_its_file(site):
     gz = _big_gz(out)
     origin = gz.with_name(gz.name.removesuffix(".gz"))
     origin.write_bytes(origin.read_bytes() + b"\n<!-- edited by hand -->\n")
-    problems = deploy_check.deploy_problems(out, None, cfg)
+    problems = deploy_check.deploy_problems(out, None)
     assert any(origin.name in p and "differs" in p for p in problems)
 
 
@@ -113,22 +113,22 @@ def test_gz_that_is_not_gzip(site):
     out, cfg = site
     gz = _big_gz(out)
     gz.write_bytes(b"not gzip")
-    assert any(gz.name in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any(gz.name in p for p in deploy_check.deploy_problems(out, None))
 
 
 def test_stray_gz_without_its_file(site):
     out, cfg = site
     (out / "gone.json.gz").write_bytes(gzip.compress(b"{}"))
-    problems = deploy_check.deploy_problems(out, None, cfg)
+    problems = deploy_check.deploy_problems(out, None)
     assert any("gone.json.gz" in p and "stray" in p for p in problems)
 
 
 def test_file_of_the_host_limit(site):
     out, cfg = site
     (out / "huge.bin").write_bytes(b"\0" * export.MAX_FILE_BYTES)
-    assert any("huge.bin" in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any("huge.bin" in p for p in deploy_check.deploy_problems(out, None))
     (out / "huge.bin").write_bytes(b"\0" * (export.MAX_FILE_BYTES - 1))
-    assert deploy_check.deploy_problems(out, None, cfg) == []
+    assert deploy_check.deploy_problems(out, None) == []
 
 
 def test_unresolved_reference(site):
@@ -136,36 +136,67 @@ def test_unresolved_reference(site):
     css = sorted((out / "static").rglob("*.css"))
     assert css
     css[0].unlink()
-    assert any("unresolved" in p for p in deploy_check.deploy_problems(out, None, cfg))
+    assert any("unresolved" in p for p in deploy_check.deploy_problems(out, None))
 
 
-def test_public_export_with_incomplete_site_settings(site, tmp_path):
+def test_the_public_values_are_in_build_json(site):
     out, _cfg = site
-    assert json.loads((out / "build.json").read_text())["public"] is True
-    empty = tmp_path / "empty-config"
-    empty.mkdir()
-    problems = deploy_check.deploy_problems(out, None, empty)
-    assert any("site.yaml" in p and "datalab.name" in p for p in problems)
+    build = json.loads((out / "build.json").read_text())
+    assert build["public"] is True
+    assert build["site"] == {
+        "datalab_name": COMPLETE["datalab"]["name"],
+        "datalab_url": COMPLETE["datalab"]["url"],
+        "impressum_url": COMPLETE["impressum_url"],
+        "privacy_url": COMPLETE["privacy_url"],
+    }
 
 
-def test_non_public_export_needs_no_site_settings(site, tmp_path):
+def test_a_public_export_is_judged_by_itself_not_todays_site_yaml(site):
+    # final review M5: the export was made from a config that is not the repo's (empty) one
+    out, _cfg = site
+    assert deploy_check.deploy_problems(out, None) == []
+    assert deploy_check.deploy_problems(out, None, public=True) == []
+
+
+def test_a_public_export_without_its_site_values(site):
+    out, _cfg = site
+    build = json.loads((out / "build.json").read_text())
+    del build["site"]["impressum_url"]
+    (out / "build.json").write_text(json.dumps(build))
+    problems = deploy_check.deploy_problems(out, None)
+    assert any("build.json" in p and "impressum_url" in p for p in problems), problems
+
+
+def test_a_public_export_whose_page_lost_its_footer_link(site):
+    out, _cfg = site
+    page = out / "cities" / "index.html"
+    html = page.read_text(encoding="utf-8")
+    page.write_text(html.replace(COMPLETE["impressum_url"], "https://elsewhere.example/"))
+    gz = page.with_name(page.name + ".gz")  # kept matching: only the footer is at fault
+    gz.write_bytes(gzip.compress(page.read_bytes(), mtime=0))
+    problems = deploy_check.deploy_problems(out, None)
+    assert any("cities/index.html" in p and "footer" in p for p in problems), problems
+
+
+def test_non_public_export_needs_no_site_settings_but_fails_with_public(site):
     out, _cfg = site
     meta = json.loads((out / "build.json").read_text())
     meta["public"] = False
+    del meta["site"]
     (out / "build.json").write_text(json.dumps(meta))
-    empty = tmp_path / "empty-config"
-    empty.mkdir()
-    assert deploy_check.deploy_problems(out, None, empty) == []
+    assert deploy_check.deploy_problems(out, None) == []
+    problems = deploy_check.deploy_problems(out, None, public=True)
+    assert any("not a public export" in p for p in problems), problems
 
 
 def test_cli_ok_and_broken(site):
     out, cfg = site
     runner = CliRunner()
-    ok = runner.invoke(app, ["app", "deploy-check", str(out), "--config", str(cfg)])
+    ok = runner.invoke(app, ["app", "deploy-check", str(out), "--public"])
     assert ok.exit_code == 0, ok.output
     assert ok.output.startswith("deploy-check ok: ")
     assert "base /, public True" in ok.output
     (out / "404.html").unlink()
-    bad = runner.invoke(app, ["app", "deploy-check", str(out), "--config", str(cfg)])
+    bad = runner.invoke(app, ["app", "deploy-check", str(out), "--public"])
     assert bad.exit_code == 1
     assert "404.html" in bad.output

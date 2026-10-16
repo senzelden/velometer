@@ -8,14 +8,18 @@ Nothing here has been run. M14 makes the export ready for a static host and chec
 
 ```
 uv run velometer app export --out <dir> --base / --clean --public
-uv run velometer app deploy-check <dir>
+uv run velometer app deploy-check <dir> --public
 ```
 
-`--public` refuses to run unless `config/site.yaml` names the Datalab, its Impressum and its
-privacy page. `deploy-check` uploads nothing. It checks `build.json` and its base, `404.html`, the
-`_headers` file against the pages' meta policy, a `.gz` that matches each text file of 1 KiB or
-more, that no file is 25 MiB or more, that every reference resolves, and, for a public export, the
-site settings. It exits 1 and lists the problems otherwise. Run it again after any hand edit.
+`export --public` refuses to run unless `config/site.yaml` names the Datalab, its Impressum and
+its privacy page, and records those four values in `build.json`. `deploy-check` uploads nothing.
+It checks `build.json` and its base, `404.html`, the `_headers` file against the pages' meta
+policy, a `.gz` that matches each text file of 1 KiB or more, that no file is 25 MiB or more, that
+every reference resolves, and, for a public export, that every page's footer links the Datalab,
+Impressum and privacy page that `build.json` records. It judges the export, not today's
+`config/site.yaml`. `deploy-check --public` also fails on an export made without `--public`, which
+would go live without an Impressum. It exits 1 and lists the problems otherwise. Run it again
+after any hand edit.
 
 ## 1. Cloudflare Pages
 
@@ -31,8 +35,12 @@ site settings. It exits 1 and lists the problems otherwise. Run it again after a
    `frame-ancestors 'none'`, which only works as a header), `X-Content-Type-Options`,
    `Referrer-Policy` and `Cache-Control`. It compresses responses itself and ignores the `.gz`
    files, which count as files.
-3. DNS: at the current DNS provider add a CNAME `velometer` pointing to `velometer.pages.dev`,
-   and add `velometer.<domain>` as a custom domain in the Pages project.
+3. Custom domain, in this order (a CNAME to Pages for a domain the project does not know yet
+   answers with an error):
+   1. add `velometer.<domain>` as a custom domain in the Pages project;
+   2. then, at the current DNS provider, add a CNAME `velometer` pointing to
+      `<project>.pages.dev`, the project's host name as wrangler prints it after the first
+      deploy (it carries a suffix when `velometer` is taken).
 4. Limits, from Cloudflare's Pages limits page
    (https://developers.cloudflare.com/pages/platform/limits/, read 2026-10-16): 25 MiB per file;
    20,000 files per site on the Free plan. Check both against the current page before a deploy:
@@ -49,16 +57,7 @@ Not run in M14. The Caddyfile below is an example and has not been tested on a s
 3. `/etc/caddy/Caddyfile`:
 
    ```
-   velometer.<domain> {
-       root * /srv/velometer
-       encode gzip
-       file_server {
-           precompressed gzip
-       }
-       handle_errors {
-           rewrite * /404.html
-           file_server
-       }
+   (security_headers) {
        header {
            Content-Security-Policy "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
            X-Content-Type-Options nosniff
@@ -66,11 +65,27 @@ Not run in M14. The Caddyfile below is an example and has not been tested on a s
            Cache-Control "public, max-age=3600"
        }
    }
+
+   velometer.<domain> {
+       root * /srv/velometer
+       encode gzip
+       import security_headers
+       file_server {
+           precompressed gzip
+       }
+       handle_errors {
+           import security_headers
+           rewrite * /404.html
+           file_server
+       }
+   }
    ```
 
-   The `header` lines must equal the `_headers` file in the export (`deploy-check` checks the
-   file, not the Caddyfile): compare them after a policy change. `precompressed gzip` serves the
-   export's `.gz` siblings. This block is for `--base /`.
+   The `header` lines must equal the `_headers` file in the export; `deploy-check` checks that
+   file, not the Caddyfile, and a test (`tests/test_m14_deploy_doc.py`) holds these lines to the
+   same policy. The snippet is imported in `handle_errors` too, so the 404 page carries the
+   headers whether or not Caddy keeps the site route's headers on an error response.
+   `precompressed gzip` serves the export's `.gz` siblings. This block is for `--base /`.
 4. Upload. Dry run first, then without `--dry-run`:
 
    ```
