@@ -8,12 +8,12 @@
 {%- if v.row.suspect and v.row.note %}<br><span class="meta suspect-note"{{ fb(v.note_fallback) }}>{{ v.note }}</span>{% endif %}</li>
 {%- endmacro %}
 {% block content %}
-<h1>{{ t('page.plans.title') }}</h1>
+<h1 id="plans-h">{{ t('page.plans.title') }}</h1>
 <p class="dek">{{ t('page.plans.dek') }}</p>
 <p class="meta">{{ t('page.plans.meta', berlin=u('/plans/berlin')) }}</p>
 {% if error %}<p class="note">{{ t('page.plans.error') }}</p>{% endif %}
 <div class="scroll">
-<table class="plans stack">
+<table class="plans stack" aria-labelledby="plans-h">
 <thead><tr><th>{{ t('table.city') }}</th><th>{{ t('table.plan') }}</th><th>{{ t('table.status') }}</th><th>{{ t('table.target') }}</th><th>{{ t('table.latest_reported') }}</th></tr></thead>
 <tbody>
 {% for c in table %}

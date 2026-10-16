@@ -21,7 +21,7 @@
 </div>
 <p class="meta">{{ t('page.index.ranking_meta', unit=headline_unit) }}</p>
 <div class="scroll">
-<table class="ranking stack">
+<table class="ranking stack" aria-labelledby="ranking-h">
 <thead><tr>
   <th class="num">#</th><th>{{ t('table.city') }}</th><th class="bar-col"><span class="sr-only">{{ t('table.first_to_current') }}</span></th>
   <th class="num first-col">{{ t('table.first_year') }}</th><th class="num">{{ t('table.current') }}</th><th class="num">{{ t('table.change') }}</th>
@@ -58,7 +58,7 @@
 <div class="chart" data-chart="overview-lines" aria-describedby="overview-sum" role="group" aria-label="{{ t('page.index.time_chart') }}"></div>
 <details class="table-details"><summary id="overview-sum">{{ t('page.index.time_table') }}</summary>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="overview-sum">
 <thead><tr><th scope="col">{{ t('table.city') }}</th>{% for col in chart_table.columns %}<th scope="col" class="num">{{ col.text }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in chart_table.rows %}<tr><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ row.id) }}">{{ city_row_name(row.id, row.name) }}</a></th>{% for v in row["values"] %}<td class="num" data-label="{{ chart_table.columns[loop.index0].text }}">{{ v | num }}{% if chart_table.columns[loop.index0].label in row.flagged %} <span class="flagmark" title="{{ t('table.flagged_year') }}">⚑</span><span class="sr-only"> {{ t('table.flagged') }}</span>{% endif %}</td>{% endfor %}</tr>
@@ -88,7 +88,7 @@
 <h2 id="keys-h">{{ t('page.index.keys') }}</h2>
 <p class="lede">{{ t('page.index.keys_lede', unit=headline_unit, methodology=u('/methodology')) }}</p>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="keys-h">
 <thead><tr>
   <th>{{ t('table.city') }}</th>
   {% for p in preset_label %}<th class="num" id="{{ preset_column[p] }}" title="{{ preset_unit[p] }}"><a href="{{ u('/sources') }}#{{ preset_anchor[p] }}">{{ preset_label[p] }}</a></th>{% endfor %}
@@ -122,7 +122,7 @@
 {% if rankings %}
 <p class="meta">{{ t('page.index.ranks_meta') }}</p>
 <div class="scroll">
-<table class="ranks stack">
+<table class="ranks stack" aria-labelledby="ranks-h">
 <thead><tr><th>{{ t('table.city') }}</th>{% for sid, col in rankings.columns.items() %}<th class="num"><a href="{{ u('/sources') }}#{{ rankings.anchors[sid] }}">{{ col }}</a></th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in rankings.rows %}

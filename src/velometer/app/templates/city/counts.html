@@ -42,9 +42,9 @@
 {% else %}
 <p class="meta">{{ t('page.counts.no_coords') }}</p>
 {% endif %}
-<details class="table-details"{% if not c.site_map %} open{% endif %}><summary>{{ t('page.counts.n_sites', count=c.sites | length) }}</summary>
+<details class="table-details"{% if not c.site_map %} open{% endif %}><summary id="counter-sites-sum">{{ t('page.counts.n_sites', count=c.sites | length) }}</summary>
 <div class="scroll">
-<table class="counter-sites stack">
+<table class="counter-sites stack" aria-labelledby="counter-sites-sum">
 <thead><tr><th scope="col">{{ t('table.site') }}</th><th scope="col">{{ t('table.first_day') }}</th><th scope="col">{{ t('table.last_day') }}</th></tr></thead>
 <tbody>
 {% for s in c.sites %}<tr><td data-label="{{ t('table.site') }}">{{ s.name }}</td><td class="date" data-label="{{ t('table.first_day') }}">{{ s.first_day or t('fmt.na') }}</td><td class="date" data-label="{{ t('table.last_day') }}">{{ s.last_day or t('fmt.na') }}</td></tr>

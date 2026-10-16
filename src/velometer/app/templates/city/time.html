@@ -53,14 +53,14 @@
 </section>
 
 <section>
-<h2>{{ t('page.time.presets') }}</h2>
+<h2 id="presets-h">{{ t('page.time.presets') }}</h2>
 <div class="pair">
 {% for k in kinds %}
 <div>
-<h3>{{ k.kind | upper }}</h3>
+<h3 id="presets-{{ k.kind }}">{{ k.kind | upper }}</h3>
 {% if k.point %}
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="presets-h presets-{{ k.kind }}">
 <thead><tr><th>{{ t('table.preset') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.measure') }}</th><th class="num">{{ t('table.per_100k') }}{% if k.point.population_year %} {{ t('table.population_year', year=k.point.population_year) }}{% endif %}</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}

@@ -18,9 +18,9 @@
 {{ tier_series_table(k, tiers, "panel-tiers-sum-" ~ k.kind) }}
 {{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=k.kind | upper), city=city.id, kind=k.kind)) }}
 {% endfor %}
-<h3>{{ t('page.panel.tiers_now') }}</h3>
+<h3 id="panel-tiers-now-h">{{ t('page.panel.tiers_now') }}</h3>
 <div class="scroll">
-<table class="panel-tiers stack">
+<table class="panel-tiers stack" aria-labelledby="panel-tiers-now-h">
 <thead><tr><th>{{ t('table.boundary') }}</th>{% for tier in tiers %}<th class="num">{{ tier }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for k in kinds %}<tr><td data-label="{{ t('table.boundary') }}">{{ k.kind | upper }}</td>

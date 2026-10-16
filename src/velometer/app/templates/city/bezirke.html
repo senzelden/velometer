@@ -4,10 +4,10 @@
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
-<h2>{{ t('city.tab.bezirke') }}</h2>
+<h2 id="bezirke-h">{{ t('city.tab.bezirke') }}</h2>
 <p class="meta">{{ t('page.bezirke.meta', unit=headline_unit) }}</p>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="bezirke-h">
 <thead><tr>
   <th>{{ t('table.bezirk') }}</th><th class="num" title="{{ headline_unit }}">{{ t('table.headline_per_100') }}</th><th class="num">{{ t('table.a_share') }}</th>
   {% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}
@@ -32,7 +32,7 @@
 <div class="chart" data-chart="bezirke" data-city="{{ city.id }}" aria-describedby="bezirke-series-sum" role="group" aria-label="{{ t('page.bezirke.chart', city=city.name) }}"></div>
 <details class="table-details"><summary id="bezirke-series-sum">{{ t('page.bezirke.table') }}</summary>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="bezirke-series-sum">
 <thead><tr><th>{{ t('table.bezirk') }}</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for r in bezirke.series.rows %}

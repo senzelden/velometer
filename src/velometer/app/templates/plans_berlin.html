@@ -98,9 +98,9 @@
 <details class="table-details plan-series">
 <summary>{{ t('page.plan.every_figure', n=i.figures) }}</summary>
 {% for s in i.series %}
-<h3>{{ s.text | capitalize }}</h3>
+<h3 id="plan-series-{{ i.item.id }}-{{ loop.index }}">{{ s.text | capitalize }}</h3>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="plan-series-{{ i.item.id }}-{{ loop.index }}">
 <thead><tr><th class="num">{{ t('table.year') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.status') }}</th><th>{{ t('table.document') }}</th></tr></thead>
 <tbody>
 {% for year, views in s.years %}{% for v in views %}
@@ -132,10 +132,10 @@
 
 {% if plan %}
 <section id="documents">
-<h2>{{ t('page.plan.documents') }}</h2>
+<h2 id="documents-h">{{ t('page.plan.documents') }}</h2>
 <p class="meta">{{ t('page.plan.documents_meta') }}</p>
 <div class="scroll">
-<table class="plan-docs stack">
+<table class="plan-docs stack" aria-labelledby="documents-h">
 <thead><tr><th>{{ t('table.type') }}</th><th>{{ t('table.number') }}</th><th>{{ t('table.date') }}</th><th>{{ t('table.publisher') }}</th><th>{{ t('table.reports_on') }}</th><th class="num">{{ t('table.figures') }}</th></tr></thead>
 <tbody>
 {% for d in documents %}

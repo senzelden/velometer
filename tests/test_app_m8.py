@@ -176,7 +176,7 @@ def test_a_profile_names_the_figures_it_stands_behind(client):
 
 def test_figures_rows_link_to_the_organisation_anchor(client):
     html = client.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack figures">') : html.index("</table>")]
+    table = html[html.index('<table class="diffs stack figures"') : html.index("</table>")]
     assert 'href="/organisations#clean_cities"' in table
     assert 'href="/organisations#ecf"' in table
 
@@ -524,7 +524,7 @@ def test_plan_tables_fit_a_phone_width(client):
     # Task 11 render check: at 390 px the plan tables were cut at the right. At phone width
     # the headers wrap, long cell text breaks, and the documents table is a stack with labels
     html = client.get("/plans/berlin").text
-    docs = html[html.index('<table class="plan-docs stack">') :].split("</table>")[0]
+    docs = html[html.index('<table class="plan-docs stack"') :].split("</table>")[0]
     body = docs.split("<tbody>")[1]
     cells = re.findall(r"<td\b[^>]*>", body)
     assert cells and all("data-label=" in c for c in cells)

@@ -10,7 +10,7 @@
 <summary id="step-values-{{ step }}">{{ t('page.stories.values') }}</summary>
 {% for n in tbl.notes %}<p class="note">{{ n }}</p>
 {% endfor %}
-<div class="scroll"><table class="step-table stack">
+<div class="scroll"><table class="step-table stack" aria-labelledby="step-values-{{ step }}">
 <thead><tr><th scope="col">{{ tbl.row_head }}</th>{% for h in tbl.head %}<th scope="col"{% if tbl.rows[0].cells[loop.index0] is not string %} class="num"{% endif %}>{{ h }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for r in tbl.rows %}<tr><th scope="row" data-label="{{ tbl.row_head }}">{% if tbl.linked %}<a href="{{ u('/city/' ~ r.id) }}">{{ city_row_name(r.id, r.name) }}</a>{% else %}{{ city_row_name(r.id, r.name) }}{% endif %}</th>{% for c in r.cells %}{% if c is string %}<td data-label="{{ tbl.head[loop.index0] }}">{{ c }}</td>{% else %}<td class="num" data-label="{{ tbl.head[loop.index0] }}">{{ c | num }}</td>{% endif %}{% endfor %}</tr>

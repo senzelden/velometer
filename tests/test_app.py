@@ -1173,8 +1173,8 @@ def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM, **kw) -> None
 
 def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    assert '<h2><i lang="de">Bezirke</i></h2>' in html
-    bezirke = html.split('<h2><i lang="de">Bezirke</i></h2>')[1].split("<h2>")[0]
+    assert '<i lang="de">Bezirke</i></h2>' in html
+    bezirke = html.split('<i lang="de">Bezirke</i></h2>')[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
     assert "4.0" in bezirke  # West's headline, 4 %
     assert '<div class="chart" data-chart="bezirke" data-city="berlin"' in bezirke
@@ -1185,7 +1185,7 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    bezirke = html.split('<h2><i lang="de">Bezirke</i></h2>')[1].split("<h3>")[0]
+    bezirke = html.split('<i lang="de">Bezirke</i></h2>')[1].split("<h3>")[0]
     body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
     rows = body.split("<tr")[1:]
     assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]
@@ -1387,7 +1387,7 @@ def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
         other = c.get("/city/paris/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert (
         section.count("<td>new_cycle_infra_km") == 0
         and section.count("<code>new_cycle_infra_km</code>") == 2
@@ -1415,7 +1415,7 @@ def test_non_http_source_url_is_never_a_link(setup):
     _add_reported(db_path, source_url="javascript:alert(1)")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="javascript:' not in html and "javascript:" not in section
     assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
 
@@ -1425,7 +1425,7 @@ def test_an_upper_case_http_scheme_is_a_link(setup):
     _add_reported(db_path, source_url="HTTPS://example.org/report")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="HTTPS://example.org/report"' in section
 
 
@@ -1435,7 +1435,7 @@ def test_reported_figure_note_gets_its_own_full_width_row(setup):
     _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = nolabels(c.get("/city/berlin/figures").text)
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]
     assert "Drucksache" not in link_cell
     assert '<td colspan="8" class="meta">primary: Drucksache 19/25987' in section

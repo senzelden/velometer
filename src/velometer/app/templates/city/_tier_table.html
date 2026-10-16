@@ -3,7 +3,7 @@
 {% macro tier_series_table(k, tiers, sum_id) %}
 <details class="table-details"><summary id="{{ sum_id }}">{{ t('page.city.tier_table', kind=k.kind | upper) }}</summary>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="{{ sum_id }}">
 <thead><tr><th>{{ t('table.snapshot') }}</th>{% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for p in k.series.points %}
