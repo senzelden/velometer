@@ -1126,13 +1126,16 @@ def test_maps_of_an_untrusted_city_are_404(report_db_with_trust, tmp_path):
 CHANGE_STEM = "berlin_change_2023-01-01_current"  # the shipped report.yaml change_window
 
 
-def _change_markdown(run_to: int = 2, west: str = "West") -> str:
+def _change_markdown(run_to: int = 2, west: str = "West", remainder: bool = False) -> str:
+    from velometer.config import REMAINDER_ID
     from velometer.report import change as ch
 
     rows = [
         ch.ChangeRow("gained", None, 7, "right", None, "A", 1.25, {"west": 1.25}),
         ch.ChangeRow("lost", 8, None, "left", "B", None, 0.5, {"east": 0.5}),
     ]
+    if remainder:  # a way-side outside both Bezirke: the table's remainder row
+        rows.append(ch.ChangeRow("gained", None, 9, "left", None, "A", 0.25, {REMAINDER_ID: 0.25}))
     result = ch.ChangeResult(rows, {"A": 1.0}, {"A": 2.0})
     run = {"id": 1, "osm_timestamp": "2023-01-01T00:00:00Z", "classifier_version": "v4",
            "boundary_sha256": "b" * 64}  # fmt: skip
@@ -1224,7 +1227,7 @@ def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea
         assert "No change map generated yet" not in html
         assert f"/maps/{CHANGE_STEM}.geojson" in html
         assert "/static/changemap.js" in html and "/static/vendor/leaflet.js" in html
-        table = html.split("<h3>Mapped change")[1].split("</table>")[0]
+        table = html.split('<h3 id="bezirke-change-h">Mapped change')[1].split("</table>")[0]
         assert "<td>West</td>" in table and "<td>East</td>" in table and "1.250" in table
         assert "MARKER-BEYOND-THE-TABLE" not in html  # only the generated table, not the page
         assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 200
@@ -1235,7 +1238,9 @@ def test_change_section_names_its_runs_and_is_not_stale_on_the_latest_run(subare
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split(
+            '<h3 id="bezirke-change-h">Mapped change'
+        )[1]
     assert f"Run 1 → run {latest}" in section
     assert "older than" not in section and "Regenerate it" not in section
 
@@ -1245,7 +1250,9 @@ def test_change_section_says_when_the_change_map_is_older_than_the_figures(subar
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest - 1)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split(
+            '<h3 id="bezirke-change-h">Mapped change'
+        )[1]
     assert f"Run 1 → run {latest - 1}" in section
     assert f"ends at run {latest - 1}, not at the run {latest} of the figures above" in section
     assert "<code>velometer report change --city berlin</code>" in section
@@ -1261,7 +1268,9 @@ def test_change_table_never_passes_raw_html(subarea_setup):
     md.write_text(md.read_text().replace("| East |", "| <i>East</i> |"))
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = (
-            c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1].split("</table>")[0]
+            c.get("/city/berlin/bezirke")
+            .text.split('<h3 id="bezirke-change-h">Mapped change')[1]
+            .split("</table>")[0]
         )
     assert "<b>" not in section and "<i>" not in section
     assert "&lt;b&gt;West&lt;/b&gt;" in section and "&lt;i&gt;East&lt;/i&gt;" in section

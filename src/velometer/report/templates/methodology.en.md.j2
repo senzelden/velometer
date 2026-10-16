@@ -91,7 +91,7 @@ The table lists, per city and boundary, the OSM timestamps of the runs this repo
 |---|---|---|---|---|---|
 {% for c in f.cities %}
 {% for k in c.kinds %}
-| {{ c.name }} | `{{ k.kind }}` | {{ k.current_osm_timestamp or "no current run" }} | {% if k.history_set %}`{{ k.history_set[:12] }}`{% else %}none{% endif %} | {{ k.history_osm_timestamps | join(", ") if k.history_osm_timestamps else "no history runs" }} | {% if k.population_value %}{{ k.population_value | num }} ({{ k.population_year }}){% else %}none, no per-100k figure{% endif %} |
+| {{ c.name | city }} | `{{ k.kind }}` | {{ k.current_osm_timestamp or "no current run" }} | {% if k.history_set %}`{{ k.history_set[:12] }}`{% else %}none{% endif %} | {{ k.history_osm_timestamps | join(", ") if k.history_osm_timestamps else "no history runs" }} | {% if k.population_value %}{{ k.population_value | num }} ({{ k.population_year }}){% else %}none, no per-100k figure{% endif %} |
 {% endfor %}
 {% endfor %}
 <!-- /generated:cities -->
@@ -102,7 +102,7 @@ The trust gate (see below) compares the area of the GISCO LAU polygon with that 
 | City | Admin boundary (LAU) | Population source |
 |---|---|---|
 {% for c in f.cities %}
-| {{ c.name }} | {{ c.boundary_source or "not recorded" }} | {{ c.population_source or "none" }} |
+| {{ c.name | city }} | {{ c.boundary_source or "not recorded" }} | {{ c.population_source or "none" }} |
 {% endfor %}
 <!-- /generated:sources -->
 
@@ -196,7 +196,7 @@ Counter data are context, not an outcome. They record the bicycles passing the s
 | City | Publisher | Licence | Base year (= 100) | Series |
 |---|---|---|---|---|
 {% for c in f.counters.cities %}
-| {{ c.name }} | {{ c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "average daily intensity" if c.series == "avg_daily_intensity" else "counts" }} |
+| {{ c.name | city }} | {{ c.source }} | {{ c.licence }} | {{ c.base_year }} | {{ "average daily intensity" if c.series == "avg_daily_intensity" else "counts" }} |
 {% endfor %}
 
 For the other {{ f.counters.n_no_data | num }} cities no open counter data were found; their Figures tab names the portals checked.
@@ -211,7 +211,7 @@ Method change (M13): up to M12 the link was the ratio of the qualifying sites' c
 | City | Link | v1 | v2 | Change |
 |---|---|---|---|---|
 {% for r in f.counters.method_changes %}
-| {{ r.city }} | {{ r.years[0] }}–{{ r.years[1] }} | {{ ((r.v1 - 1) * 100) | signed_pct }} | {{ ((r.v2 - 1) * 100) | signed_pct }} | {{ r.change_pct | signed_pct }} |
+| {{ r.city | city }} | {{ r.years[0] }}–{{ r.years[1] }} | {{ ((r.v1 - 1) * 100) | signed_pct }} | {{ ((r.v2 - 1) * 100) | signed_pct }} | {{ r.change_pct | signed_pct }} |
 {% endfor %}
 {% else %}
 No link moved by {{ f.counters.method_change_pct | num }} % or more.
@@ -241,7 +241,7 @@ Per city:
 {% else %}
 {% set ns.parts = ns.parts + ["no year has an index value, so no index line is drawn"] %}
 {% endif %}
-- {{ c.name }}: {% for p in ns.parts %}{{ p if loop.first else p[:1] | upper ~ p[1:] }}.{{ " " if not loop.last }}{% endfor %}
+- {{ c.name | city }}: {% for p in ns.parts %}{{ p if loop.first else p[:1] | upper ~ p[1:] }}.{{ " " if not loop.last }}{% endfor %}
 
 {% endfor %}
 {% if "barcelona" in counter_ids %}
@@ -249,7 +249,7 @@ Per city:
 {% endif %}
 {% for c in f.counters.cities if c.step_downs %}
 {% set n = c.step_downs | length %}
-- {{ c.name }}: the index keeps every qualifying site. The counts of {{ n | sites }} step down while {{ "it keeps" if n == 1 else "they keep" }} counting ({% for s in c.step_downs %}{{ s.site }} from {{ s.since | month }}{{ ", " if not loop.last }}{% endfor %}). The Counts tab gives, as our reading of the daily data, the index without {{ "it from that year" if n == 1 else "them from those years" }} on [user decision on counters of 2026-10-07, `docs/superpowers/rulings-m8.md`].
+- {{ c.name | city }}: the index keeps every qualifying site. The counts of {{ n | sites }} step down while {{ "it keeps" if n == 1 else "they keep" }} counting ({% for s in c.step_downs %}{{ s.site }} from {{ s.since | month }}{{ ", " if not loop.last }}{% endfor %}). The Counts tab gives, as our reading of the daily data, the index without {{ "it from that year" if n == 1 else "them from those years" }} on [user decision on counters of 2026-10-07, `docs/superpowers/rulings-m8.md`].
 {% endfor %}
 
 ## Provenance
@@ -259,9 +259,9 @@ Every number traces to a run. A run records the git commit, the classifier versi
 ## Known limitations
 
 <!-- generated:limitations -->
-{% set nuts3_not_city = f.cities | selectattr("nuts3_is_city", "sameas", false) | map(attribute="name") | list %}
+{% set nuts3_not_city = f.cities | selectattr("nuts3_is_city", "sameas", false) | map(attribute="name") | map("city") | list %}
 {% set overrides = [] %}
-{% for c in f.cities if c.population_override %}{% set _ = overrides.append(c.name ~ " (" ~ c.population_override ~ ")") %}{% endfor %}
+{% for c in f.cities if c.population_override %}{% set _ = overrides.append((c.name | city) ~ " (" ~ c.population_override ~ ")") %}{% endfor %}
 {% for lim in f.limitations %}
 - {{ lim.en }}{% if lim.id == "qecio_nuts3_not_city" and nuts3_not_city %} This applies to {{ nuts3_not_city | and_list }}.{% endif %}{% if lim.id == "population_national_statistics" and overrides %} This applies to {{ overrides | and_list }}.{% endif %}
 

@@ -22,6 +22,7 @@ from html import unescape
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlparse
+from xml.etree import ElementTree
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -72,7 +73,7 @@ from velometer.content.loader import (
     load_organisations,
     load_sources,
 )
-from velometer.content.models import ContentError, Explainer
+from velometer.content.models import LANG_TAG, ContentError, Explainer
 from velometer.content.translate import walk
 from velometer.db import SchemaError, subarea_names
 from velometer.i18n import LANGS, Lang
@@ -241,13 +242,29 @@ class _DropComments(markdown.preprocessors.Preprocessor):
         return HTML_COMMENT.sub("", "\n".join(lines)).split("\n")
 
 
+# the one raw markup markdown may hold (M14): a name or term in its own language,
+# `<span lang="da">København</span>` (a city's name, the methodology) or `<i lang="de">Bezirke</i>`
+# (an original term, the Bezirk change table): plain text inside, the language a plain tag
+LANG_MARK = rf'<(span|i) lang="({LANG_TAG.pattern})">([^<>]+)</\1>'
+
+
+class _LangMark(markdown.inlinepatterns.InlineProcessor):
+    def handleMatch(self, m, data):
+        el = ElementTree.Element(m.group(1))
+        el.set("lang", m.group(2))
+        el.text = unescape(m.group(3))  # serialised escaped once
+        return el, m.start(0), m.end(0)
+
+
 class _EscapeHtml(markdown.Extension):
-    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted.
-    HTML comments (the `<!-- generated:... -->` markers of docs/methodology*.md) are dropped."""
+    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted,
+    except a language mark (`LANG_MARK`). HTML comments (the `<!-- generated:... -->` markers of
+    docs/methodology*.md) are dropped."""
 
     def extendMarkdown(self, md):
         md.preprocessors.deregister("html_block")
         md.inlinePatterns.deregister("html")
+        md.inlinePatterns.register(_LangMark(LANG_MARK, md), "lang_mark", 90)
         md.preprocessors.register(_DropComments(md), "drop_comments", 30)
 
 
@@ -312,9 +329,10 @@ def _md(text: str, ids: list[str] | None = None) -> Markup:
     )
 
 
-def _stack_table(html: Markup) -> Markup:
+def _stack_table(html: Markup, labelledby: str | None = None) -> Markup:
     """A rendered markdown table made a stacking table: class `stack`, and `data-label` on each
-    body cell, equal to its column's header text (the same rule the templates follow)."""
+    body cell, equal to its column's header text (the same rule the templates follow).
+    `labelledby`: the id of the heading that names the table (`aria-labelledby`, M14 §4.3)."""
     text = str(html)
     thead = re.search(r"<thead>.*?</thead>", text, re.S)
     heads = [
@@ -332,7 +350,8 @@ def _stack_table(html: Markup) -> Markup:
 
     head, sep, body = text.partition("</thead>")
     body = re.sub(r"<tr>.*?</tr>", row, body, flags=re.S)
-    return Markup((head + sep + body).replace("<table>", '<table class="stack">', 1))
+    named = f' aria-labelledby="{escape(labelledby)}"' if labelledby else ""
+    return Markup((head + sep + body).replace("<table>", f'<table class="stack"{named}>', 1))
 
 
 def _host(url: str) -> str:
@@ -1563,6 +1582,7 @@ def create_app(
         table = None if text is None else change_report.bezirk_table(text, data.lang)
         if table is not None:  # never raw HTML from the page into the `md` filter
             table = table.replace("<", "&lt;").replace(">", "&gt;")
+            table = change_report.mark_remainder(table, data.lang)  # the one mark let through
         runs = None if text is None else change_report.change_runs(text)
         has_map = (maps_dir / f"{stem}.geojson").is_file()
         latest = data.selector.latest(data.conn, city_id, "lau")

@@ -46,7 +46,7 @@
 {% else %}
 <p class="note">{{ t('page.bezirke.no_history') }}</p>
 {% endif %}
-<h3>{{ t('page.bezirke.change', window=bezirke.window) }}</h3>
+<h3 id="bezirke-change-h">{{ t('page.bezirke.change', window=bezirke.window) }}</h3>
 {% if bezirke.change_runs %}
 <p class="meta">{{ t('page.bezirke.runs', run_from=bezirke.change_runs[0], run_to=bezirke.change_runs[1]) }}</p>
 {% endif %}
@@ -64,7 +64,7 @@
 <script type="module" src="{{ data_u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
-<div class="scroll">{{ bezirke.change_table | md | stack_table }}</div>
+<div class="scroll">{{ bezirke.change_table | md | stack_table('bezirke-change-h') }}</div>
 <p class="meta">{{ t('page.bezirke.table_note', geometry=t('change.category.geometry')) }}</p>
 {% endif %}
 {% if not bezirke.change_map and not bezirke.change_table %}

@@ -10,7 +10,9 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from tests.report_fixture import build_report_fixture
+from tests.report_fixture import CLASSIFIER, PARIS, build_report_fixture
+from tests.test_run_history import _current_deps
+from velometer import run as R
 from velometer.app import export
 from velometer.config import ConfigError, default_config_dir, load_cities
 from velometer.content.models import LANG_TAG, name_lang
@@ -74,9 +76,12 @@ class _Occurrences(HTMLParser):
 @pytest.fixture(scope="module")
 def copenhagen_site(tmp_path_factory):
     """The report fixture whose second city is Copenhagen as config/cities.yaml has it (name,
-    German name, aliases, language): a city whose name differs from its English form."""
+    German name, aliases, language): a city whose name differs from its English form. The city
+    has an organisation's figures (Sources, Organisations) and the docs hold the methodology
+    rendered from the fixture, so every page that shows a city's name shows this one."""
     from tests.test_app import CONTENT, _client, app_inputs
     from velometer.app.main import create_app
+    from velometer.report import methodology
 
     real = next(c for c in load_cities(CONFIG / "cities.yaml") if c.id == "copenhagen")
     tmp = tmp_path_factory.mktemp("m14_lang")
@@ -86,11 +91,18 @@ def copenhagen_site(tmp_path_factory):
     paris.update(name=real.name, name_de=real.name_de, aliases=real.aliases, lang=real.lang)
     (cfg / "cities.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
     with open_db(db_path) as conn:
+        # a current run, so the city's Figures tab quotes its sources (the Sources city links)
+        R.run_city(conn, PARIS, data_dir=tmp, config_dir=cfg, classifier=CLASSIFIER,
+                   deps=_current_deps(tmp))  # fmt: skip
         conn.execute("UPDATE cities SET name = ? WHERE id = 'paris'", (real.name,))
         conn.commit()
+    orgs = cfg / "organisations.yaml"
+    mapped = "- {city: paris, source: official, organisation: copenhagen_kommune}\n"
+    orgs.write_text(orgs.read_text(encoding="utf-8") + mapped, encoding="utf-8")
     inputs = app_inputs(db_path, cfg, tmp)
     conn = open_readonly(db_path)
     data = ReportData(conn, cfg)
+    methodology.write(inputs[3], methodology.methodology_facts(data))
     with _client(create_app(*inputs, content_dir=CONTENT)) as c:
         html = {}
         for url in export.export_urls(data, c.app):
@@ -105,8 +117,12 @@ def test_a_city_name_differing_from_its_english_form_carries_its_language(copenh
     real, html = copenhagen_site
     english = real.aliases[0] if real.aliases else real.name
     assert real.name != english  # the fixture covers a name that differs
-    pages = {u: h for u, h in html.items() if not u.startswith("/de")}
+    # the English pages, by their own `lang` (`/methodology/de` is German at an English path)
+    pages = {u: h for u, h in html.items() if '<html lang="en"' in h}
     assert any(real.name in h for h in pages.values())
+    for url in ("/sources", "/organisations", "/methodology"):  # each shows the name
+        assert real.name in pages[url], url
+    assert '/city/paris/figures">' in pages["/sources"]  # a Sources city link
     wrong = {}
     for url, page in pages.items():
         p = _Occurrences(real.name)
@@ -153,3 +169,20 @@ def test_a_title_bracket_language_needs_a_bracket():
                 status="current", publisher="P", items=[])  # fmt: skip
     with pytest.raises(ValidationError, match="title_bracket_lang"):
         Plan(**base, title_bracket_lang="en")
+
+
+def test_markdown_lets_through_a_language_mark_and_nothing_else():
+    from velometer.app.main import _md
+
+    assert str(_md('<span lang="da">København</span> og <i lang="de">Bezirke</i>')) == (
+        '<p><span lang="da">København</span> og <i lang="de">Bezirke</i></p>'
+    )
+    for raw in (
+        "<span>x</span>",
+        '<span lang="da" onclick="y">x</span>',
+        '<b lang="da">x</b>',
+        '<span lang="da"><b>x</b></span>',
+        '<span lang="d a">x</span>',
+    ):
+        html = str(_md(raw))
+        assert "<span" not in html and "<b" not in html and "<i" not in html, html

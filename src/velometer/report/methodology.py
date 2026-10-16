@@ -180,6 +180,9 @@ class MethodologyFacts(_Frozen):
     overlay: OverlayFacts | None  # None: no overlay stored
     mapped_baseline: date  # "mapped on the network" counts from this day (spec §4.4)
     counters: CounterFacts
+    # a city's own name -> its language, for each city whose name differs from its English form
+    # (København): the English methodology shows it in a `<span lang>` (M14, spec §4.3)
+    city_langs: dict[str, str] = {}
 
 
 # The rules table is diffed against the previous version from v4 on, the rewrite that renamed
@@ -461,6 +464,11 @@ def methodology_facts(data: ReportData) -> MethodologyFacts:
         overlay=_overlay_facts(data),
         mapped_baseline=MAPPED_BASELINE,
         counters=_counter_facts(data, {c.id: c.name for c in data.cities()}),
+        city_langs={
+            cfg.name: cfg.lang
+            for c in data.cities()
+            if (cfg := configured.get(c.id)) is not None and cfg.name != cfg.english_name
+        },
     )
 
 
@@ -527,7 +535,14 @@ def _signed_pct(v: float, lang: Lang) -> str:
     return f"{text}{i18n.NNBSP if lang == 'de' else ' '}%"
 
 
-def _environment(lang: Lang) -> Environment:
+def _city(name: str, langs: dict[str, str], lang: Lang) -> str:
+    """A city's name as the methodology shows it: on the English page, a name that differs from
+    its English form in a `<span lang>` of its language, as the app's `city_name` does."""
+    own = langs.get(name) if lang == "en" else None
+    return f'<span lang="{own}">{name}</span>' if own else name
+
+
+def _environment(lang: Lang, city_langs: dict[str, str] | None = None) -> Environment:
     env = Environment(
         loader=PackageLoader("velometer.report", "templates"),
         undefined=StrictUndefined,
@@ -547,13 +562,14 @@ def _environment(lang: Lang) -> Environment:
     env.filters["gaps"] = lambda v: _gaps(v, lang)
     env.filters["sites"] = lambda v: _sites(v, lang)
     env.filters["provenance"] = lambda v: _provenance(v, lang)
+    env.filters["city"] = lambda v: _city(v, city_langs or {}, lang)
     env.globals["tab"] = lambda key: i18n.t(lang, f"city.tab.{key}")  # the site's tab label
     return env
 
 
 def render(facts: MethodologyFacts, lang: Lang) -> str:
     """The methodology in one language, from its template and the facts."""
-    template = _environment(lang).get_template(f"methodology.{lang}.md.j2")
+    template = _environment(lang, facts.city_langs).get_template(f"methodology.{lang}.md.j2")
     return template.render(f=facts, files=FILES)
 
 

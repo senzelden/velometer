@@ -495,8 +495,9 @@ def test_the_markdown_change_table_stacks_with_labels(subarea_setup):  # noqa: F
     _write_change(maps, docs, run_to=_latest_lau_run(db_path, cfg))
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/bezirke").text
-    section = html.split("<h3>Mapped change")[1]
-    assert '<table class="stack">' in section and 'class="prose"' not in section
+    section = html.split('<h3 id="bezirke-change-h">Mapped change')[1]
+    assert '<table class="stack" aria-labelledby="bezirke-change-h">' in section
+    assert 'class="prose"' not in section
     assert "data-label=" in section.split("<tbody>")[1]
     n, bad = _stack_violations(html)
     assert n >= 3 and not bad
