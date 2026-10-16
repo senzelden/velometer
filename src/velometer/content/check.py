@@ -50,7 +50,7 @@ from velometer.content.models import (
     Quote,
     Source,
 )
-from velometer.content.ocr import OcrResult, empty_pages, ocr_pages
+from velometer.content.ocr import MAX_OCR_PAGES, OcrResult, empty_pages, ocr_pages
 from velometer.content.translate import DE as DE_DIR
 from velometer.content.translate import (
     English,
@@ -1241,13 +1241,24 @@ def _no_space(text: str) -> str:
     return "".join(text.split())
 
 
+@dataclass
+class _OcrBudget:
+    """The pages a `check_online` run may still send to OCR: MAX_OCR_PAGES over the whole run,
+    not per PDF (spec §4.5)."""
+
+    left: int = MAX_OCR_PAGES
+
+
 def _page_text(
-    body: str | bytes, ocr: Callable[[bytes, list[int]], OcrResult] | None = None, notes=None
+    body: str | bytes,
+    ocr: Callable[[bytes, list[int], int], OcrResult] | None = None,
+    notes=None,
+    budget: _OcrBudget | None = None,
 ) -> _Page:
     """A fetched page as the text an excerpt is looked for in: a PDF's text as pdftotext reads
     it (plain text: a `<` in it is not markup), else the HTML without its tags and entities.
-    The pages of a PDF with no text layer are OCRed by `ocr(pdf, pages)`; its notes go to
-    `notes`."""
+    The pages of a PDF with no text layer are OCRed by `ocr(pdf, pages, limit)`, `limit` what
+    is left of `budget`; its notes go to `notes`."""
     if isinstance(body, bytes) and _is_pdf(body):
         text = " ".join(_pdf_text(body).split())
         own_notes: list[str] = []
@@ -1255,7 +1266,9 @@ def _page_text(
         if notes is not None:
             notes.extend(n for n in own_notes if n not in notes)
         if empty:
-            got = ocr(body, empty)
+            budget = budget if budget is not None else _OcrBudget()
+            got = ocr(body, empty, budget.left)
+            budget.left -= got.sent
             if notes is not None:
                 notes.extend(n for n in got.notes if n not in notes)
             text += "".join(f" {_ORDER_BREAK} {t}" for t in got.texts.values())
@@ -1273,7 +1286,7 @@ def _squash(text: str) -> str:
 def check_online(
     sources: dict[str, Source],
     fetch: Callable[[str], str | bytes] = _http_get,
-    ocr: Callable[[bytes, list[int]], OcrResult] | None = ocr_pages,
+    ocr: Callable[[bytes, list[int], int], OcrResult] | None = ocr_pages,
 ) -> tuple[list[str], list[str]]:
     """(problems, notes): fetch each source URL once and report excerpts whose text is not on
     the page (HTML: tags dropped, whitespace-normalised; PDF: compared without whitespace). A PDF
@@ -1281,15 +1294,17 @@ def check_online(
     reader"), not a problem, and a PDF it fails on is "cannot read PDF". A host that does not
     answer is "unreachable", apart from a page that does not hold the excerpt. Never archives
     anything. A PDF page without a text layer is OCRed by `ocr` (Mistral OCR; None turns it
-    off); the OCR notes are returned once, apart from the per-excerpt ones."""
+    off), at most MAX_OCR_PAGES sent over the whole run; the OCR notes are returned once, apart
+    from the per-excerpt ones."""
     problems: list[str] = []
     notes: list[str] = []
     ocr_notes: list[str] = []
+    budget = _OcrBudget()
     pages: dict[str, _Page | object | None] = {}  # url -> page, _SKIPPED or None
     for s in sources.values():
         if s.url not in pages:
             try:
-                pages[s.url] = _page_text(fetch(s.url), ocr, ocr_notes)
+                pages[s.url] = _page_text(fetch(s.url), ocr, ocr_notes, budget)
             except NoPdfReader:
                 pages[s.url] = _SKIPPED
             except PdfUnreadable as e:

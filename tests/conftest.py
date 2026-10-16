@@ -31,10 +31,16 @@ def pytest_collection_modifyitems(items):
             item.add_marker(pytest.mark.timeout(0))
 
 
+def pytest_configure(config):
+    """A suite run inside direnv has a real MISTRAL_API_KEY; no test may reach the billed API
+    through it. Dropped before collection, so no module, session or module fixture sees it
+    either; tests that need a key pass one explicitly."""
+    os.environ.pop("MISTRAL_API_KEY", None)
+
+
 @pytest.fixture(autouse=True)
 def _no_mistral_key(monkeypatch):
-    """A suite run inside direnv has a real MISTRAL_API_KEY; no test may reach the billed API
-    through it. Tests that need a key pass one explicitly."""
+    """The same for each test, after anything that set the key again."""
     monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
 
 

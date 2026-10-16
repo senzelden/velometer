@@ -38,8 +38,7 @@ import httpx
 OCR_MODEL = "mistral-ocr-latest"
 OCR_URL = "https://api.mistral.ai/v1/ocr"
 MAX_OCR_PAGES = 20
-CACHE_DIR = Path("data/cache/ocr")
-SCRATCH_DIR = Path("data/scratch-m14")  # git-ignored; /tmp may be full
+CACHE_DIR = Path("data/cache/ocr")  # also holds the scratch directory of a cut (git-ignored)
 POPPLER_TIMEOUT = 60
 REQUEST_TIMEOUT = 60.0
 PDFINFO_NOTE = "OCR skipped: pdfinfo unavailable or could not count the PDF's pages"
@@ -53,7 +52,8 @@ NO_KEY_NOTE = (
 class OcrResult:
     texts: dict[int, str] = field(default_factory=dict)  # 1-based original page -> text
     notes: list[str] = field(default_factory=list)
-    skipped: list[int] = field(default_factory=list)  # pages over MAX_OCR_PAGES
+    skipped: list[int] = field(default_factory=list)  # pages over the run's limit
+    sent: int = 0  # pages sent to the API (cached pages are not): the run's limit counts these
 
 
 def _poppler(name: str, *args: str, input: bytes | None = None) -> bytes | None:
@@ -76,17 +76,20 @@ def page_count(pdf: bytes) -> int:
 
 
 def empty_pages(pdf: bytes, notes: list[str] | None = None) -> list[int]:
-    """The 1-based pages of `pdf` for which `pdftotext` yields nothing but whitespace. When
-    `pdfinfo` cannot count the pages and a key is set (so OCR would apply), `notes` gets a note."""
-    empty = []
+    """The 1-based pages of `pdf` for which `pdftotext` yields nothing but whitespace: one
+    `pdftotext` run over the whole PDF, its output split at the form feed that ends each page.
+    When `pdfinfo` cannot count the pages and a key is set (so OCR would apply), `notes` gets a
+    note."""
     count = page_count(pdf)
-    if count == 0 and notes is not None and os.environ.get("MISTRAL_API_KEY"):
-        notes.append(PDFINFO_NOTE)
-    for n in range(1, count + 1):
-        out = _poppler("pdftotext", "-q", "-f", str(n), "-l", str(n), "-", "-", input=pdf)
-        if out is not None and not out.strip():
-            empty.append(n)
-    return empty
+    if count == 0:
+        if notes is not None and os.environ.get("MISTRAL_API_KEY"):
+            notes.append(PDFINFO_NOTE)
+        return []
+    out = _poppler("pdftotext", "-q", "-", "-", input=pdf)
+    if out is None:
+        return []
+    texts = out.split(b"\f")
+    return [n for n in range(1, count + 1) if n <= len(texts) and not texts[n - 1].strip()]
 
 
 def _cut_pages(pdf: bytes, selected: list[int], work: Path) -> bytes | None:
@@ -147,7 +150,7 @@ def _post(client: httpx.Client, payload: dict, key: str) -> httpx.Response | str
         except httpx.TimeoutException:
             last = f"OCR failed: request timed out after {REQUEST_TIMEOUT:.0f} s"
             continue
-        except httpx.TransportError as e:
+        except httpx.HTTPError as e:  # any other failure of the request: its type only
             return f"OCR failed: {type(e).__name__}"
         if resp.status_code >= 500:
             last = resp
@@ -159,14 +162,16 @@ def _post(client: httpx.Client, payload: dict, key: str) -> httpx.Response | str
 def ocr_pages(
     pdf: bytes,
     pages: list[int],
+    limit: int = MAX_OCR_PAGES,
     *,
     client: httpx.Client | None = None,
     cache_dir: Path = CACHE_DIR,
     key: str | None = None,
 ) -> OcrResult:
     """OCR the 1-based `pages` of `pdf` (those without a text layer). Cached pages cost nothing;
-    at most MAX_OCR_PAGES others are sent in one request, the rest are `skipped`. Without a key
-    or on an API error `texts` lacks the pages and `notes` says why; this never raises."""
+    at most `limit` others are sent in one request (`check_online` passes what is left of the
+    run's MAX_OCR_PAGES), the rest are `skipped`. Without a key or on an API error `texts` lacks
+    the pages and `notes` says why; this never raises."""
     result = OcrResult()
     sha = hashlib.sha256(pdf).hexdigest()
     todo = []
@@ -182,16 +187,19 @@ def ocr_pages(
     if not key:
         result.notes.append(NO_KEY_NOTE)
         return result
-    if len(todo) > MAX_OCR_PAGES:
-        result.skipped = todo[MAX_OCR_PAGES:]
-        todo = todo[:MAX_OCR_PAGES]
+    limit = max(limit, 0)
+    if len(todo) > limit:
+        result.skipped = todo[limit:]
+        todo = todo[:limit]
         result.notes.append(
             f"OCR: {len(result.skipped)} pages skipped (at most {MAX_OCR_PAGES} per run): "
             + ", ".join(map(str, result.skipped))
         )
+    if not todo:
+        return result
     try:
-        SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=SCRATCH_DIR) as tmp:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=cache_dir, prefix=".cut-") as tmp:
             cut = _cut_pages(pdf, todo, Path(tmp))
     except OSError as e:
         result.notes.append(f"OCR failed: {type(e).__name__} cutting the scanned pages out")
@@ -206,6 +214,7 @@ def ocr_pages(
             "document_url": "data:application/pdf;base64," + base64.b64encode(cut).decode("ascii"),
         },
     }
+    result.sent = len(todo)  # billed or not, these count against the run's limit
     own = client is None
     http = client or httpx.Client()
     try:

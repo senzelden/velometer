@@ -111,8 +111,8 @@ def test_check_online_finds_an_excerpt_only_the_ocr_text_holds(tmp_path):
     doc["sources"][0]["excerpts"][0]["text"] = "Das Radnetz misst 5 km"
     sources = load_sources_from(doc)
     with api.client() as c:
-        ocr_call = lambda pdf, pages: ocr.ocr_pages(  # noqa: E731
-            pdf, pages, client=c, cache_dir=tmp_path, key=KEY
+        ocr_call = lambda pdf, pages, limit: ocr.ocr_pages(  # noqa: E731
+            pdf, pages, limit, client=c, cache_dir=tmp_path, key=KEY
         )
         problems, notes = check_online(sources, fetch=lambda u: SCANNED.read_bytes(), ocr=ocr_call)
     assert (problems, notes) == ([], [])
@@ -125,8 +125,8 @@ def test_check_online_finds_an_excerpt_only_the_ocr_text_holds(tmp_path):
 def test_a_text_only_pdf_never_reaches_the_api(api, tmp_path):
     assert ocr.empty_pages(TEXT_PDF.read_bytes()) == []
     with api.client() as c:
-        ocr_call = lambda pdf, pages: ocr.ocr_pages(  # noqa: E731
-            pdf, pages, client=c, cache_dir=tmp_path, key=KEY
+        ocr_call = lambda pdf, pages, limit: ocr.ocr_pages(  # noqa: E731
+            pdf, pages, limit, client=c, cache_dir=tmp_path, key=KEY
         )
         assert check_online(
             load_sources_from(SOURCES), fetch=lambda u: TEXT_PDF.read_bytes(), ocr=ocr_call
@@ -244,11 +244,20 @@ def test_the_ocr_text_of_each_sent_page_goes_to_its_own_page_number(tmp_path):
     assert result.texts == {3: "text 0", 5: "text 1"}
 
 
-def test_the_suite_has_no_mistral_key():
+@pytest.fixture(scope="session")
+def _key_at_session_setup():
+    """Whether a session fixture, set up before any test's own fixtures, sees the key."""
+    import os
+
+    return "MISTRAL_API_KEY" in os.environ
+
+
+def test_the_suite_has_no_mistral_key(_key_at_session_setup):
     """Run by the guard below with a key in the process environment."""
     import os
 
     assert "MISTRAL_API_KEY" not in os.environ
+    assert not _key_at_session_setup
 
 
 def test_a_key_in_the_environment_never_reaches_a_test():
@@ -296,11 +305,10 @@ def test_a_cache_write_leaves_no_partial_file_and_an_oserror_is_a_note(api, tmp_
     assert list(tmp_path.iterdir()) == []  # no half-written file left behind
 
 
-def test_an_unwritable_scratch_dir_is_a_note_not_an_exception(api, tmp_path, monkeypatch):
+def test_an_unwritable_scratch_dir_is_a_note_not_an_exception(api, tmp_path):
     blocker = tmp_path / "file"
     blocker.write_text("x")
-    monkeypatch.setattr(ocr, "SCRATCH_DIR", blocker / "sub")
-    result = _ocr(api, tmp=tmp_path / "cache")
+    result = _ocr(api, tmp=blocker / "sub")  # the cut's scratch directory is in the cache
     assert api.requests == [] and result.texts == {}
     assert len(result.notes) == 1 and "OCR failed" in result.notes[0]
 
@@ -324,3 +332,79 @@ def test_a_missing_pdfinfo_is_a_note_when_ocr_would_apply(monkeypatch):
     ocr.empty_pages(pdf, notes)
     assert notes == [ocr.PDFINFO_NOTE]
     assert KEY not in notes[0]
+
+
+def test_the_cap_is_for_the_whole_run_not_each_pdf(tmp_path, monkeypatch):
+    # final review M1: two PDFs of 15 scanned pages each send 20 pages in all, not 30
+    from velometer.content import check
+
+    sent: list[list[int]] = []
+
+    def cut(pdf, selected, work):
+        sent.append(list(selected))
+        return b"%PDF-1.4 stand-in"
+
+    def handler(request):
+        pages = [{"index": i, "markdown": f"t{i}"} for i in range(len(sent[-1]))]
+        return httpx.Response(200, json={"model": "m", "pages": pages})
+
+    monkeypatch.setattr(ocr, "_cut_pages", cut)
+    monkeypatch.setattr(check, "empty_pages", lambda pdf, notes=None: list(range(1, 16)))
+    doc = copy.deepcopy(SOURCES)
+    second = copy.deepcopy(doc["sources"][0])
+    second.update(id="src2", url="https://example.org/other")
+    doc["sources"].append(second)
+    bodies = {s["url"]: SCANNED.read_bytes() + s["id"].encode() for s in doc["sources"]}
+    api = Api(handler)
+    with api.client() as c:
+        ocr_call = lambda pdf, pages, limit: ocr.ocr_pages(  # noqa: E731
+            pdf, pages, limit, client=c, cache_dir=tmp_path, key=KEY
+        )
+        _problems, notes = check_online(load_sources_from(doc), fetch=bodies.get, ocr=ocr_call)
+    assert sum(map(len, sent)) == ocr.MAX_OCR_PAGES == 20
+    assert sent == [list(range(1, 16)), list(range(1, 6))]
+    assert any("10 pages skipped" in n for n in notes), notes
+
+
+def test_a_run_with_no_pages_left_sends_nothing(api, tmp_path):
+    result = _ocr(api, tmp=tmp_path, limit=0)
+    assert api.requests == [] and result.texts == {} and result.sent == 0
+    assert result.skipped == [3] and any("skipped" in n for n in result.notes)
+
+
+def test_the_cut_works_in_the_cache_dir_not_a_milestone_scratch_dir(api, tmp_path, monkeypatch):
+    # final review M2: no scratch path of this machine in shipped code
+    seen: list[Path] = []
+    real = ocr._cut_pages
+
+    def cut(pdf, selected, work):
+        seen.append(work)
+        return real(pdf, selected, work)
+
+    monkeypatch.setattr(ocr, "_cut_pages", cut)
+    _ocr(api, tmp=tmp_path)
+    assert seen and seen[0].parent == tmp_path
+    assert "scratch-m" not in Path(ocr.__file__).read_text(encoding="utf-8")
+
+
+def test_any_http_error_is_a_note_with_its_type_only(tmp_path):
+    # final review M3: an httpx error that is not a transport error is a note, never raised
+    def handler(request):
+        raise httpx.DecodingError(f"bad body for {KEY}")
+
+    result = _ocr(Api(handler), tmp=tmp_path)
+    assert result.notes == ["OCR failed: DecodingError"] and result.texts == {}
+
+
+def test_the_empty_pages_take_one_pdftotext_run(monkeypatch):
+    # final review M4: one pdftotext over the PDF, not one per page; the page numbers stay
+    calls: list[str] = []
+    real = ocr._poppler
+
+    def counted(name, *args, **kw):
+        calls.append(name)
+        return real(name, *args, **kw)
+
+    monkeypatch.setattr(ocr, "_poppler", counted)
+    assert ocr.empty_pages(SCANNED.read_bytes()) == [3]
+    assert calls.count("pdftotext") == 1
