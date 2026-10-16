@@ -453,11 +453,16 @@ Not inputs to the pipeline; load relevant ones as `ExternalFigure` rows with con
 
 ## 12. Open questions for Dennis (ask, don't guess)
 
-1. Repo name and whether it lives in the personal web monorepo or standalone.
-2. Confirm the Berlin golden-way expected tiers (M1).
-3. Headline excludes motorways from the denominator — confirm.
-4. Publish the app publicly from M4, or keep private until the first article?
-5. Geofabrik internal access: Dennis needs to provide OSM OAuth credentials via the existing secrets setup; Claude Code must not hard-code or log them.
+Status after M14. Still open:
+
+1. Repo name and whether it lives in the personal web monorepo or standalone. The package and project are named `velometer` (`pyproject.toml:2`) and the repo is a standalone checkout with no git remote (`docs/superpowers/specs/2026-10-16-velometer-m14-design.md:60`), but no ADR or ruling records a decision on the final repo name or on monorepo versus standalone.
+
+Answered:
+
+- Q2, Berlin golden-way tiers: confirmed. All 48 ways in `tests/fixtures/berlin_golden.yaml` carry `confirmed: true` (commit `c9eaa94`, "Berlin golden set signed off"); six samples were re-signed on classifier v4 (commit `5f8e30f`).
+- Q3, motorways out of the headline denominator: confirmed. ADR 0003 (accepted) sets the headline to tier A+B per 100 km of main roads excluding motorways (`docs/adr/0003-headline-metric-main-road-denominator.md:15`, reason at line 29).
+- Q4, public from M4 or private until the first article: not deployed in M14. It goes public at a later deploy step, on a subdomain of Zählwerk Berlin Datalab (M14 spec §2, `docs/superpowers/specs/2026-10-16-velometer-m14-design.md:32-33`).
+- Q5, Geofabrik credentials: done in M3. They live in `pass` as `velometer/osm-username` and `velometer/osm-password`, wired by direnv to `VELOMETER_OSM_USER` and `VELOMETER_OSM_PASSWORD` (`.envrc.example:2-3`, M3 spec `docs/superpowers/specs/2026-10-01-velometer-m3-design.md:37-38`, commit `6512bbd`). No value is stored in a file.
 
 ---
 
