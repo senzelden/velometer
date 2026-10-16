@@ -33,6 +33,11 @@ reader-visible changes are:
   That answers HANDOVER §12 Q4 for now: not public until a later deploy step.
 - **Follow-ups in scope:** the accessibility pass, the small fixes, and OCR for the scanned PDF
   pages.
+- **OCR engine:** the Mistral OCR API. It gives the best quality on scanned German pages and
+  needs neither an install nor `sudo`. The cost is negligible: 7 pages, cached after the first run.
+  The other options were rejected:
+  - Docling: several GB of PyTorch for 7 pages;
+  - tesseract: needs a system install and is weaker on poor scans.
 - **Out:** the Straßburg exonym and full-text search (§6).
 
 ## 3. Facts this design rests on (survey of 2026-10-16)
@@ -67,8 +72,11 @@ reader-visible changes are:
     through `LOCPATH` without root.
 - **OCR:** the 7 excerpts that need OCR are on scanned pages of Berlin's Fortschrittsbericht, in
   German.
-  - `pdftoppm` is installed, but `tesseract` is not.
-  - `content --check --online` reads PDFs with `pdftotext` (M13-l).
+  - `content --check --online` reads PDFs with `pdftotext` (M13-l); `pdfinfo` and `pdfseparate`
+    from the same poppler tools are installed.
+  - `httpx` is already a dependency.
+  - Secrets are wired through a tracked `.envrc.example` with `use_pass` lines (the Geofabrik login,
+    M3). The real `.envrc` is git-ignored.
 - **Downloaded titles:** chart downloads wrap titles by average glyph width
   (`static/js/download.js`, `wrap(text, perChar, room)`). A line of wide glyphs can overrun by a
   few px (rulings-m13, Follow-ups).
@@ -217,39 +225,61 @@ reader-visible changes are:
   - Q4 records the M14 decision, and Q5 records the Geofabrik credentials set up in M3.
   Answered questions move to a short "Answered" list, so §12 lists only what is open.
 
-### 4.5 OCR for scanned PDF pages
+### 4.5 OCR for scanned PDF pages (Mistral OCR)
 
 - **When it applies:** in `content --check --online`, when `pdftotext` yields no text for a PDF
-  page (empty after whitespace is stripped), that page is OCRed:
-  - `pdftoppm -r 300 -f N -l N -png`, then `tesseract <png> - -l <lang>`;
-  - each tool runs with the existing 60 s timeout;
-  - `<lang>` maps the source's language to tesseract's code (`de`→`deu`, `fr`→`fra`, `en`→`eng`,
-    and so on), defaulting to `eng`.
-- **Matching:** OCR text is compared the way M13-l compares `pdftotext -raw` text (all whitespace
-  removed). In addition, a line-end hyphen followed by a newline is joined first.
-- **Not installed:** when `tesseract` or the language data is missing, the check prints one note,
-  `OCR not available: install tesseract-ocr tesseract-ocr-deu`, and treats those pages as before.
-  It never fails because OCR is missing.
-- **No new Python dependency:** tesseract is a system program, called through `subprocess`.
-- **User step:** installing it (`sudo apt install tesseract-ocr tesseract-ocr-deu`) is the
-  user's. M14 asks for it once, at the start of the OCR task.
-- **Tests:**
-  - with a fake `tesseract` and `pdftoppm` on `PATH` (scripts that print known text), assert that
-    an image-only page is OCRed and its excerpt found;
-  - assert the "OCR not available" note when they are missing;
-  - one `@pytest.mark.slow` test runs the real tools on a generated one-page image PDF, skipped
-    when they are absent.
-- **Acceptance:** `content --check --online` is re-run. The expected result is about 7 missed
-  excerpts instead of 14. Whatever the run gives is recorded.
+  page (empty after whitespace is stripped), that page is OCRed. Pages with a text layer never go
+  to the API.
+- **The call:**
+  - `POST https://api.mistral.ai/v1/ocr` with `model: mistral-ocr-latest`;
+  - the document is sent as a base64 `data:application/pdf` URL of only the scanned pages, cut out
+    with `pdfseparate` and joined back with `pdfunite` (poppler), so only those pages are billed;
+  - the response's per-page `markdown` is the OCR text;
+  - `httpx` is used, with the check's existing 60 s timeout and one retry on a timeout or 5xx;
+  - the request and response shapes are checked against Mistral's current API documentation when
+    the task is implemented, not taken from this spec.
+- **Matching:** the OCR text is reduced to plain text: Markdown marks (`#`, `*`, `_`, `|`, table
+  rules) and image references are dropped. It is then compared the way M13-l compares
+  `pdftotext -raw` text (all whitespace removed), after joining a line-end hyphen that a newline
+  follows.
+- **Cache:** the OCR text is stored per source document and page under the git-ignored
+  `data/cache/ocr/`, keyed by the PDF's SHA-256 and the page number, together with the model name
+  the response reports.
+  - A later run reads the cache and does not call the API.
+  - A changed PDF has a new hash and is OCRed again.
+- **Key:** `MISTRAL_API_KEY`, through direnv and `pass`.
+  - `.envrc.example` gets `use_pass MISTRAL_API_KEY velometer/mistral-api-key`.
+  - The user runs `pass insert velometer/mistral-api-key` and adds the line to their `.envrc`.
+  - No key value is written into any file, log or report.
+  - The key is never printed. An error from the API is reported with its status and message only.
+- **No key:** the check prints one note, `OCR not available: set MISTRAL_API_KEY (pass insert
+  velometer/mistral-api-key)`, and treats those pages as before. It never fails because OCR is
+  unavailable. With a key but an API error, the note names the status, and the pages count as
+  unread, as today.
+- **Cost guard:** a run OCRs at most 20 pages; the rest are reported as skipped. That is far above
+  the 7 needed, and keeps a source with a large scanned PDF from running up a bill.
+- **Tests never call the API:**
+  - an `httpx` mock transport returns a recorded-shape response, and the tests assert that only
+    the empty pages are sent and that the excerpt is found;
+  - a cache hit makes no request;
+  - a missing key gives the note;
+  - an API error is reported without the key;
+  - the 20-page cap holds.
+  No slow test calls the real API.
+- **The one real call** is the acceptance run of `content --check --online` (§8), on the 7 pages.
+  The user chose Mistral OCR knowing it is a paid API (2026-10-16).
+- **Acceptance:** the expected result is about 7 missed excerpts instead of 14. Whatever the run
+  gives is recorded.
 
 ## 5. User review stop
 
 None for prose: M14 adds no narrative text. The two new footer strings and the hidden link texts
 are UI strings, reviewed in the final whole-branch review.
 
-The user is asked once for:
-- the `tesseract` install (§4.5);
-- `sudo locale-gen`, only if `localedef` fails (§4.3).
+The user is asked:
+- once, for the Mistral key, at the start of the OCR task: `pass insert
+  velometer/mistral-api-key`, plus the `use_pass` line in `.envrc` (§4.5);
+- for `sudo locale-gen`, only if `localedef` fails (§4.3).
 
 ## 6. Out of scope
 
@@ -287,8 +317,8 @@ The user is asked once for:
   - pass the full render pass (`--pages all`, both themes, 1280/390/320, both editions) and
     `--pages types --interact --keyboard --flip`, exit 0;
   - pass `velometer app deploy-check`, exit 0.
-- `content --check --online` is run, with tesseract if the user installed it, and the remaining
-  misses are recorded.
+- `content --check --online` is run with the Mistral key (the one real API call, 7 pages), and the
+  remaining misses are recorded.
 - `docs/review/m14-screen-reader.md` records the German-locale Orca run.
 - Screenshots were checked in both themes, at 1280 and 390, in both editions:
   - the footer with the Datalab line;
