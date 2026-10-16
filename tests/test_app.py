@@ -1173,8 +1173,8 @@ def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM, **kw) -> None
 
 def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    assert "<h2>Bezirke</h2>" in html
-    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
+    assert '<h2><i lang="de">Bezirke</i></h2>' in html
+    bezirke = html.split('<h2><i lang="de">Bezirke</i></h2>')[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
     assert "4.0" in bezirke  # West's headline, 4 %
     assert '<div class="chart" data-chart="bezirke" data-city="berlin"' in bezirke
@@ -1185,7 +1185,7 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h3>")[0]
+    bezirke = html.split('<h2><i lang="de">Bezirke</i></h2>')[1].split("<h3>")[0]
     body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
     rows = body.split("<tr")[1:]
     assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]

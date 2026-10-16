@@ -222,8 +222,18 @@ def _template(lang: str, key: str, vars: dict) -> str:
     return value
 
 
+def plain(text: str) -> str:
+    """`text` without its original-term marks, the term kept: `<i lang="da">cykelsti</i> (x)` ->
+    `cykelsti (x)`. For every place that takes text, not markup (M14)."""
+    from velometer.app.narrative import TERM_MARK_RAW  # narrative imports this module
+
+    return TERM_MARK_RAW.sub(lambda m: m.group(2), text)
+
+
 def t(lang: str, key: str, /, **vars) -> str:
-    return _template(lang, key, vars).format(**vars)
+    """The plain text of a UI string: an original-term mark is dropped, its term kept (the
+    values are not touched). Pages that want the mark use `t_markup`."""
+    return plain(_template(lang, key, vars)).format(**vars)
 
 
 def t_markup(lang: str, key: str, /, **vars) -> Markup:
@@ -240,11 +250,18 @@ def js_strings(lang: str) -> dict:
         merged.update({k: v for k, v in catalogue(lang).items() if k.startswith("js.")})
     for prefix, names in zip(JS_INJECTED, (MONTHS_SHORT[lang], MONTHS[lang]), strict=True):
         merged.update({f"{prefix}{m}": name for m, name in enumerate(names, 1)})
-    return merged
+    return {k: plain(v) if isinstance(v, str) else v for k, v in merged.items()}
 
 
 def _placeholders(form: object) -> set[str]:
     return {name for _, name, _, _ in string.Formatter().parse(str(form)) if name is not None}
+
+
+def _marks(form: str) -> list[str]:
+    from velometer.content.check import malformed_marks  # check imports this module
+
+    # the catalogue also holds <b>, <code>, <a>: only the <i> mark is this check's business
+    return [tag for tag in malformed_marks(form) if re.match(r"</?i[\s>]", tag)]
 
 
 def check_catalogues(directory: Path | None = None) -> list[str]:
@@ -260,6 +277,9 @@ def check_catalogues(directory: Path | None = None) -> list[str]:
         for key, value in cat.items():
             if not KEY_RE.match(key):
                 problems.append(f"[{lang}] malformed key: {key}")
+            for form in value.values() if isinstance(value, dict) else [value]:
+                if isinstance(form, str):
+                    problems += [f"[{lang}] {key}: malformed mark {tag}" for tag in _marks(form)]
             if isinstance(value, dict) and set(value) != _PLURAL:
                 problems.append(f"[{lang}] {key}: a plural needs exactly one and other")
             elif not isinstance(value, (str, dict)):

@@ -163,7 +163,7 @@ def test_german_figures_tab_shows_the_german_config_text(setup):  # noqa: F811
     assert rows, "the fixture needs berlin's reported figures"
     with app_for(setup) as c:
         de = i18n.visible_text(c.get("/de/city/berlin/figures").text)
-        en = html.unescape(c.get("/city/berlin/figures").text)
+        en = i18n.plain(html.unescape(c.get("/city/berlin/figures").text))
     for f in rows:
         assert notes[f.note] in de and f.note not in de
         assert f.note in en

@@ -95,9 +95,7 @@ def test_footer_with_complete_settings(inputs):
         assert re.search(rf'<a href="{re.escape(url)}">[^<]*{name}[^<]*</a>', f)
         assert f'<a href="{COMPLETE["impressum_url"]}">' in f
         assert re.search(rf'<a href="{re.escape(COMPLETE["privacy_url"])}">{privacy}</a>', f)
-    assert re.search(
-        r'<a href="[^"]*impressum">\s*<span lang="de">Impressum</span></a>', footers["en"]
-    )
+    assert re.search(r'<a href="[^"]*impressum">\s*<i lang="de">Impressum</i></a>', footers["en"])
     assert "Teil von" in footers["de"] and "Part of" in footers["en"]
     assert 'lang="de"' not in footers["de"]
 

@@ -385,7 +385,7 @@ preset.fallback_label: '{preset}, unsere OSM-Daten'
 figure.scope.whole_network: gesamtes Netz
 figure.scope.incl_traffic_calmed_restricted_access: einschließlich verkehrsberuhigter Straßen mit beschränkter Kfz-Zufahrt
 figure.scope.vorrangnetz: Vorrangnetz
-figure.scope.cykelsti: Cykelsti (Radweg)
+figure.scope.cykelsti: '<i lang="da">Cykelsti</i> (Radweg)'
 figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz
 figure.basis.unknown: unbekannt
 figure.basis.streckenlaenge: Streckenlänge

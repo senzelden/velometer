@@ -46,12 +46,16 @@ EM_MARK = re.compile(r"(?<![\w*=])\*(?=[^\s*<>])([^*\n<>]*?[^\s*<>=])\*(?![\w*])
 # original term (an official category in its own language, M13), `<i lang="da">cykelsti</i>`,
 # italic. Matched on the escaped text, the language only ever a plain tag (LANG_TAG), nothing
 # else is let through
-def _open(tag: str) -> str:
-    return f"&lt;{tag} lang=&#34;({LANG_TAG.pattern})&#34;&gt;"
+def _open(tag: str, escaped: bool = True) -> str:
+    if escaped:
+        return f"&lt;{tag} lang=&#34;({LANG_TAG.pattern})&#34;&gt;"
+    return f'<{tag} lang="({LANG_TAG.pattern})">'
 
 
 QUOTE_MARK = re.compile(_open("q") + r"(.*?)&lt;/q&gt;", re.DOTALL)
 TERM_MARK = re.compile(_open("i") + r"(.*?)&lt;/i&gt;", re.DOTALL)
+# the same mark as a UI string writes it, raw trusted markup (`i18n.plain`, `i18n.check_catalogues`)
+TERM_MARK_RAW = re.compile(_open("i", escaped=False) + r"(.*?)</i>", re.DOTALL)
 BLOCKQUOTE_MARK = re.compile(
     _open("blockquote") + r"((?:(?!&lt;/?blockquote).)*?)&lt;/blockquote&gt;", re.DOTALL
 )
