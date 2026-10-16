@@ -449,3 +449,30 @@ test("selfContained: title lines are wrapped by the measure the page gave", () =
   assert.ok(lines.length >= 2);
   for (const l of lines.filter((l) => l.includes(" "))) assert.ok(measure(l) <= 300 - 16, `"${l}"`);
 });
+
+// M14 Task 7: a key label wraps by the page's measure of the key font, not the chip's average
+test("selfContained: a long key label wraps by the width the page measured for the key font", () => {
+  const text = Array.from({ length: 24 }, (_, i) => `w${i}xx`).join(" ");
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  // the chip was measured wide (the page's own label), so it wraps; the page's 11px measure is
+  // narrower than the chip's average character, so lines hold more words by it
+  const chip = { shape: "line", colour: "rgb(1, 2, 3)", text, width: text.length * 9 };
+  const keyLines = (measure) => {
+    const out = selfContained(svg, darkStyle, null, { ...META, key: [chip], measure });
+    const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+    return [...g.matchAll(/<text x="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => [Number(m[1]), m[2]]);
+  };
+  const sizes = [];
+  const measure = (s, size) => {
+    sizes.push(size);
+    return s.length * 5;
+  };
+  const byPage = keyLines(measure);
+  const byChip = keyLines(undefined);
+  assert.ok(byPage.length >= 2, "wrapped");
+  assert.equal(byPage.map((l) => l[1]).join(" "), text);
+  assert.ok(sizes.includes("11px"), "the key is measured in the key font");
+  for (const [x, s] of byPage) assert.ok(x + measure(s, "11px") <= 300, `"${s}" ends at ${x + s.length * 5}`);
+  // a line can hold more than the chip's average would allow: the page's measure decided
+  assert.ok(byPage.length < byChip.length, `${byPage.length} lines by the page, ${byChip.length} by the chip`);
+});

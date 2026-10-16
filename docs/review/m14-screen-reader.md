@@ -58,8 +58,9 @@ Orca's own role words were English in both runs. In `run-de` and `run-de-en` the
 utterances containing them are the same: "heading" 81 / 81, "link" 530 / 530, "button" 43 / 43,
 "landmark" 21 / 21, "navigation" 15 / 15, "list with" 21 / 21, "table" 32 / 30, "rows" 34 / 33,
 "columns" 7 / 6. No German role word ("Überschrift", "Schaltfläche", "Liste mit") was spoken in
-either (the "Tabelle" and "Zeile" hits are page text, 2 each in both). The German locale changed the
-voice of the labels but not Orca's role vocabulary. Why was not investigated.
+either (the "Tabelle" and "Zeile" hits are page text: "Tabelle" 2 and "Zeile" 5 in both runs). The
+German locale changed the voice of the labels but not Orca's role vocabulary. Why was not
+investigated.
 
 Debug-log "Reported locale" lines, by the locale AT-SPI gave Orca:
 
