@@ -10,6 +10,7 @@ import yaml
 from tests.test_app import CONTENT, _client, app_inputs
 from tests.test_app_base import rich  # noqa: F401  (a fixture)
 from tests.test_export import _content
+from velometer import i18n
 from velometer.app import export
 from velometer.app.main import create_app
 from velometer.config import ConfigError, SiteConfig, default_config_dir, load_site
@@ -48,10 +49,16 @@ def test_complete(tmp_path):
 @pytest.mark.parametrize(
     ("doc", "field"),
     [
-        ({"datalab": {"name": "X"}}, "url"),
-        ({"datalab": {"url": "https://a.example/"}}, "name"),
-        ({"impressum_url": "https://a.example/i"}, "privacy_url"),
-        ({"privacy_url": "https://a.example/p"}, "impressum_url"),
+        ({"datalab": {"name": "X"}}, "datalab.url"),
+        ({"datalab": {"url": "https://a.example/"}}, "datalab.name"),
+        (
+            {"impressum_url": "https://a.example/i"},
+            "impressum_url and privacy_url must be set together",
+        ),
+        (
+            {"privacy_url": "https://a.example/p"},
+            "impressum_url and privacy_url must be set together",
+        ),
         ({**COMPLETE, "impressum_url": "http://a.example/i"}, "http://a.example/i"),
         ({"datalab": {"name": "X", "url": "https://"}}, "https://"),
         ({"datalab": None, "colour": "red"}, "colour"),
@@ -96,9 +103,14 @@ def test_footer_with_complete_settings(inputs):
 
 
 def test_footer_without_settings_has_no_datalab_line(inputs):
-    for f in _footers(inputs, None).values():
-        assert "Impressum" not in f and "datalab" not in f.lower()
-        assert f.count("<p>") == 3 or f.count("<p>") == 2  # attribution, run (+ static edition)
+    for lang, f in _footers(inputs, None).items():
+        # the line's own words, from the catalogue (the name filled in with a marker)
+        prefix = i18n.t(lang, "site.footer.datalab", name="\x00").split("\x00")[0]
+        assert prefix.strip()
+        assert prefix not in f
+        assert "Impressum" not in f
+        # attribution and run lines only: the fixture has no static edition
+        assert f.count("<p>") == 2
 
 
 def test_footer_datalab_line_comes_first(inputs):
