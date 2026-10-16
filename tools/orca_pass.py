@@ -186,12 +186,24 @@ LOCUS_RE = re.compile(r"FOCUS MANAGER: Locus of focus is \[(.*?)\] ")
 # --- outer: the isolated environment -------------------------------------------------------
 
 
+def check_locale(locale: str | None, locpath: Path | None) -> None:
+    """glibc falls back to the C locale without a word; refuse a locale that is not there."""
+    if locpath and not locale:
+        raise ValueError("--locpath needs --locale")
+    if locale and locpath:
+        if not locpath.is_dir():
+            raise ValueError(f"--locpath {locpath} is not a directory")
+        if not (locpath / locale).is_dir():
+            raise ValueError(f"locale {locale} is not in {locpath} (build it with localedef)")
+
+
 def isolated_env(
     scratch: Path, locale: str | None = None, locpath: Path | None = None
 ) -> dict[str, str]:
     """The environment for the private session: own dirs, no display, no audio server.
 
     `locale` (e.g. de_DE.UTF-8) becomes LANG and LC_ALL and `locpath` LOCPATH."""
+    check_locale(locale, locpath)
     dirs = {k: scratch / k for k in ("home", "config", "data", "cache", "run", "tmp", "stub")}
     for d in dirs.values():
         d.mkdir(parents=True, exist_ok=True)
@@ -249,6 +261,11 @@ def main(argv: list[str] | None = None) -> int:
         if not shutil.which(tool):
             print(f"orca pass: {tool} is not installed", file=sys.stderr)
             return 2
+    try:
+        check_locale(a.locale, a.locpath)
+    except ValueError as e:
+        print(f"orca pass: {e}", file=sys.stderr)
+        return 2
     a.out.mkdir(parents=True, exist_ok=True)
     env = isolated_env(a.out / "env", a.locale, a.locpath)
     cmd = ["dbus-run-session", "--", sys.executable, str(Path(__file__).resolve()), "--inner"]
