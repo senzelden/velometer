@@ -2113,6 +2113,33 @@ def app_export(
     )
 
 
+@web_app.command("deploy-check")
+def app_deploy_check(
+    site: Path = typer.Argument(..., help="A finished export directory."),  # noqa: B008
+    base: str = typer.Option(
+        None, "--base", help="Path the site is served under (default: the one in build.json)."
+    ),
+    config_dir: Path = CONFIG_EXPORT_OPT,
+) -> None:
+    """The deploy dry run: verify a finished export and upload nothing (exit 1 lists problems)."""
+    import json
+
+    from velometer.app.deploy_check import deploy_problems, site_stats
+
+    problems = deploy_problems(site, base, config_dir)
+    if problems:
+        for p in problems:
+            typer.echo(f"problem: {p}")
+        typer.echo(f"deploy-check: {len(problems)} problem(s)", err=True)
+        raise typer.Exit(1)
+    build = json.loads((site / "build.json").read_text(encoding="utf-8"))
+    files, size = site_stats(site)
+    typer.echo(
+        f"deploy-check ok: {files} files, {size / 1e6:.1f} MB, base {build['base']}, "
+        f"public {build.get('public', False)}"
+    )
+
+
 @content_app.callback(invoke_without_command=True)
 def content(
     ctx: typer.Context,
