@@ -27,7 +27,13 @@ After each action the pass waits until Orca's debug log stops growing and keeps 
 that slice.
 
     uv run --group dev python tools/orca_pass.py --site DIR --base /velometer/ --out DIR \
-        [--editions en,de] [--steps name,...] [--chrome PATH]
+        [--editions en,de] [--steps name,...] [--chrome PATH] [--locale de_DE.UTF-8 --locpath DIR]
+
+`--locale` gives the whole private session (Orca, Chrome, the AT-SPI clients) that process locale:
+`LANG` and `LC_ALL` are set to it, `LOCPATH` to `--locpath` (a directory made without root by
+`localedef -i de_DE -f UTF-8 DIR/de_DE.UTF-8`), and Chrome gets `--lang=<language part>`. Without
+it the run inherits the caller's locale (M13: `en_US.UTF-8`). Every other isolation property
+stays as above.
 
 `--out` gets `transcript.md` (per step: the keys, what Orca said and in which language) and
 `steps.json`, plus Orca's raw `orca-debug.log`. Every process the pass starts (server, Orca,
@@ -180,8 +186,12 @@ LOCUS_RE = re.compile(r"FOCUS MANAGER: Locus of focus is \[(.*?)\] ")
 # --- outer: the isolated environment -------------------------------------------------------
 
 
-def isolated_env(scratch: Path) -> dict[str, str]:
-    """The environment for the private session: own dirs, no display, no audio server."""
+def isolated_env(
+    scratch: Path, locale: str | None = None, locpath: Path | None = None
+) -> dict[str, str]:
+    """The environment for the private session: own dirs, no display, no audio server.
+
+    `locale` (e.g. de_DE.UTF-8) becomes LANG and LC_ALL and `locpath` LOCPATH."""
     dirs = {k: scratch / k for k in ("home", "config", "data", "cache", "run", "tmp", "stub")}
     for d in dirs.values():
         d.mkdir(parents=True, exist_ok=True)
@@ -206,6 +216,11 @@ def isolated_env(scratch: Path) -> dict[str, str]:
         "ORCA_PASS_STUB": str(dirs["stub"]),
         "ORCA_PASS_KEYMARK": str(dirs["run"] / "last-key"),
     }
+    if locale:
+        env |= {"LANG": locale, "LC_ALL": locale}
+        env.pop("LANGUAGE", None)  # would override LANG for message catalogues
+        if locpath:
+            env["LOCPATH"] = str(locpath.resolve())
     return env
 
 
@@ -224,6 +239,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--editions", default="en,de")
     ap.add_argument("--steps", default="all")
     ap.add_argument("--chrome", default=os.environ.get("VELOMETER_CHROME", rp.CHROME))
+    ap.add_argument("--locale", help="process locale for the session, e.g. de_DE.UTF-8")
+    ap.add_argument("--locpath", type=Path, help="LOCPATH: where a locale made by localedef lives")
     ap.add_argument("--inner", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     if a.inner:
@@ -233,10 +250,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"orca pass: {tool} is not installed", file=sys.stderr)
             return 2
     a.out.mkdir(parents=True, exist_ok=True)
-    env = isolated_env(a.out / "env")
+    env = isolated_env(a.out / "env", a.locale, a.locpath)
     cmd = ["dbus-run-session", "--", sys.executable, str(Path(__file__).resolve()), "--inner"]
     cmd += ["--site", str(a.site.resolve()), "--base", a.base, "--out", str(a.out.resolve())]
     cmd += ["--editions", a.editions, "--steps", a.steps, "--chrome", a.chrome]
+    if a.locale:
+        cmd += ["--locale", a.locale]
     with open(a.out / "bus.log", "w") as bus_log:
         return subprocess.call(cmd, env=env, stderr=bus_log)
 
@@ -322,7 +341,10 @@ class Orca:
         rp.stop(self.proc)
 
 
-def start_chrome(binary: str, out: Path, url: str = "about:blank") -> tuple[subprocess.Popen, str]:
+def start_chrome(
+    binary: str, out: Path, url: str = "about:blank", locale: str | None = None
+) -> tuple[subprocess.Popen, str]:
+    lang = [f"--lang={re.split(r'[_.@-]', locale)[0]}"] if locale else []
     port = rp.free_port()
     profile = out / "chrome-profile"
     (profile / "Default").mkdir(parents=True, exist_ok=True)
@@ -336,7 +358,7 @@ def start_chrome(binary: str, out: Path, url: str = "about:blank") -> tuple[subp
          "--no-first-run", "--no-default-browser-check", "--disable-extensions",
          "--disable-background-networking", "--disable-sync", "--disable-component-update",
          "--password-store=basic", "--mute-audio", "--disable-features=Translate,TranslateUI",
-         f"--app={url}"],
+         *lang, f"--app={url}"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )  # fmt: skip
     devtools = f"http://127.0.0.1:{port}"
@@ -368,7 +390,10 @@ DOM_JS = r"""(() => {
 
 
 class Driver:
-    def __init__(self, chrome: str, out: Path, orca: Orca, origin: str, base: str):
+    def __init__(
+        self, chrome: str, out: Path, orca: Orca, origin: str, base: str, locale: str | None = None
+    ):
+        self.locale = locale
         self.chrome, self.out, self.orca, self.origin, self.base = chrome, out, orca, origin, base
         self.proc: subprocess.Popen | None = None
         self.t: rp.Tab | None = None
@@ -412,7 +437,7 @@ class Driver:
         def do():
             self.close()
             url = self.origin + self.base + path
-            self.proc, devtools = start_chrome(self.chrome, self.out, url)
+            self.proc, devtools = start_chrome(self.chrome, self.out, url, self.locale)
             self.t = page_tab(devtools)
             if not self.t.wait_js("document.readyState === 'complete'", rp.LOAD_TIMEOUT):
                 raise RuntimeError(f"{url} did not finish loading")
@@ -613,7 +638,7 @@ def inner(a) -> int:
     with rp.serve(a.site, a.base) as origin:
         try:
             orca = Orca(out)
-            d = Driver(a.chrome, out, orca, origin, a.base)
+            d = Driver(a.chrome, out, orca, origin, a.base, a.locale)
             for ed in a.editions.split(","):
                 steps_for(d, "de/" if ed == "de" else "", ed, only)
                 (out / "steps.json").write_text(json.dumps(d.steps, indent=1, ensure_ascii=False))
