@@ -9,6 +9,7 @@ import json
 import shutil
 import sqlite3
 import zipfile
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -701,26 +702,26 @@ def test_an_interrupt_between_the_two_methods_keeps_the_previous_rows_of_both(
     import velometer.db as db_module
     from velometer.counters import _store_index
 
-    conn = _check_db(tmp_path)
-    entry = _entry("berlin", "berlin", "Europe/Berlin")
-    _store_index(conn, entry, {"v1": [(2019, 100.0, 4)], "v2": [(2019, 100.0, 4)]}, "counts")
-    before = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
-    real = db_module.replace_counter_index_nocommit
-    calls = []
+    with _check_db(tmp_path) as conn:
+        entry = _entry("berlin", "berlin", "Europe/Berlin")
+        _store_index(conn, entry, {"v1": [(2019, 100.0, 4)], "v2": [(2019, 100.0, 4)]}, "counts")
+        before = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+        real = db_module.replace_counter_index_nocommit
+        calls = []
 
-    def fail_on_the_second(*a, **kw):
-        if calls:
-            raise KeyboardInterrupt
-        calls.append(1)
-        return real(*a, **kw)
+        def fail_on_the_second(*a, **kw):
+            if calls:
+                raise KeyboardInterrupt
+            calls.append(1)
+            return real(*a, **kw)
 
-    monkeypatch.setattr(db_module, "replace_counter_index_nocommit", fail_on_the_second)
-    new = {"v1": [(2019, 100.0, 5)], "v2": [(2019, 100.0, 5)]}
-    with pytest.raises(KeyboardInterrupt):
-        _store_index(conn, entry, new, "counts")
-    assert calls  # the first method was written before the interrupt
-    after = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
-    assert after == before
+        monkeypatch.setattr(db_module, "replace_counter_index_nocommit", fail_on_the_second)
+        new = {"v1": [(2019, 100.0, 5)], "v2": [(2019, 100.0, 5)]}
+        with pytest.raises(KeyboardInterrupt):
+            _store_index(conn, entry, new, "counts")
+        assert calls  # the first method was written before the interrupt
+        after = conn.execute("SELECT * FROM counter_index ORDER BY method, year").fetchall()
+        assert after == before
 
 
 def test_counters_check_flags_a_city_with_no_index_year(tmp_path):
@@ -733,10 +734,14 @@ def test_counters_check_flags_a_city_with_no_index_year(tmp_path):
     assert "berlin: no index year" in res.output
 
 
+@contextmanager
 def _check_db(tmp_path):
     conn = sqlite3.connect(tmp_path / "c.sqlite")
-    create_schema(conn)
-    return conn
+    try:
+        create_schema(conn)
+        yield conn
+    finally:
+        conn.close()
 
 
 def _site(city, site_id, lat=52.5, lon=13.4):
@@ -749,54 +754,56 @@ def _cfg(*cities):
 
 
 def test_check_passes_a_complete_city(tmp_path):
-    conn = _check_db(tmp_path)
-    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
-    replace_counter_index(
-        conn,
-        "berlin",
-        [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
-        ],
-    )
-    assert check_counters(conn, _cfg("berlin")) == []
+    with _check_db(tmp_path) as conn:
+        replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+        replace_counter_index(
+            conn,
+            "berlin",
+            [
+                CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+                CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
+            ],
+        )
+        assert check_counters(conn, _cfg("berlin")) == []
 
 
 def test_check_flags_missing_sites_base_not_100_and_a_site_under_two_cities(tmp_path):
-    conn = _check_db(tmp_path)
-    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
-    replace_counter_sites(conn, "paris", [_site("paris", "a", 48.8, 2.3)])
-    replace_counter_index(
-        conn,
-        "berlin",
-        [
-            CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts", "v2"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
-        ],
-    )
-    problems = check_counters(conn, _cfg("berlin", "paris", "vienna"))
-    text = "\n".join(problems)
-    assert "berlin: index base year 2019 is 99.0, not 100" in text
-    assert "vienna: no counter sites" in text
-    assert "paris: no index year" in text
-    assert "site 'a' under more than one city: berlin, paris" in text
+    with _check_db(tmp_path) as conn:
+        replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+        replace_counter_sites(conn, "paris", [_site("paris", "a", 48.8, 2.3)])
+        replace_counter_index(
+            conn,
+            "berlin",
+            [
+                CounterIndexYear("berlin", 2019, 99.0, 5, 2019, "counts", "v2"),
+                CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
+            ],
+        )
+        problems = check_counters(conn, _cfg("berlin", "paris", "vienna"))
+        text = "\n".join(problems)
+        assert "berlin: index base year 2019 is 99.0, not 100" in text
+        assert "vienna: no counter sites" in text
+        assert "paris: no index year" in text
+        assert "site 'a' under more than one city: berlin, paris" in text
 
 
 def test_check_flags_a_step_down_site_absent_from_the_data(tmp_path):
-    conn = _check_db(tmp_path)
-    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
-    replace_counter_index(
-        conn,
-        "berlin",
-        [
-            CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
-            CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
-        ],
-    )
-    entry = {**BERLIN_ENTRY, "step_downs": [{"site": "a", "since": "2020-04"},
-                                            {"site": "renamed", "since": "2020-05"}]}  # fmt: skip
-    cfg = CountersConfig.model_validate({"cities": [entry], "none": []})
-    assert check_counters(conn, cfg) == ["berlin: step_downs site 'renamed' is not a stored site"]
+    with _check_db(tmp_path) as conn:
+        replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+        replace_counter_index(
+            conn,
+            "berlin",
+            [
+                CounterIndexYear("berlin", 2019, 100.0, 5, 2019, "counts", "v2"),
+                CounterIndexYear("berlin", 2020, 110.0, 4, 2019, "counts", "v2"),
+            ],
+        )
+        steps = [{"site": "a", "since": "2020-04"}, {"site": "renamed", "since": "2020-05"}]
+        entry = {**BERLIN_ENTRY, "step_downs": steps}
+        cfg = CountersConfig.model_validate({"cities": [entry], "none": []})
+        assert check_counters(conn, cfg) == [
+            "berlin: step_downs site 'renamed' is not a stored site"
+        ]
 
 
 # --- the base year needs MIN_SITES qualifying sites (spec §2.13; follow-up Task 3) -----------
@@ -825,33 +832,33 @@ def test_a_monthly_base_year_with_fewer_than_min_sites_gauges_has_no_value():
 
 
 def test_check_accepts_no_value_on_a_base_year_with_too_few_sites(tmp_path):
-    conn = _check_db(tmp_path)
-    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
-    few = MIN_SITES - 1
-    replace_counter_index(
-        conn,
-        "berlin",
-        [
-            CounterIndexYear("berlin", 2019, None, few, 2019, "counts", "v2"),
-            CounterIndexYear("berlin", 2020, None, few, 2019, "counts", "v2"),
-        ],
-    )
-    assert check_counters(conn, _cfg("berlin")) == ["berlin: no index year"]
+    with _check_db(tmp_path) as conn:
+        replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+        few = MIN_SITES - 1
+        replace_counter_index(
+            conn,
+            "berlin",
+            [
+                CounterIndexYear("berlin", 2019, None, few, 2019, "counts", "v2"),
+                CounterIndexYear("berlin", 2020, None, few, 2019, "counts", "v2"),
+            ],
+        )
+        assert check_counters(conn, _cfg("berlin")) == ["berlin: no index year"]
 
 
 def test_check_flags_a_value_on_a_base_year_with_too_few_sites(tmp_path):
-    conn = _check_db(tmp_path)
-    replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
-    few = MIN_SITES - 1
-    replace_counter_index(
-        conn,
-        "berlin",
-        [
-            CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts", "v2"),
-            CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts", "v2"),
-        ],
-    )
-    assert check_counters(conn, _cfg("berlin")) == [
-        f"berlin: index base year 2019 has {few} qualifying sites (fewer than {MIN_SITES}) "
-        "but the value 100.0"
-    ]
+    with _check_db(tmp_path) as conn:
+        replace_counter_sites(conn, "berlin", [_site("berlin", "a")])
+        few = MIN_SITES - 1
+        replace_counter_index(
+            conn,
+            "berlin",
+            [
+                CounterIndexYear("berlin", 2019, 100.0, few, 2019, "counts", "v2"),
+                CounterIndexYear("berlin", 2020, 110.0, MIN_SITES, 2019, "counts", "v2"),
+            ],
+        )
+        assert check_counters(conn, _cfg("berlin")) == [
+            f"berlin: index base year 2019 has {few} qualifying sites (fewer than {MIN_SITES}) "
+            "but the value 100.0"
+        ]

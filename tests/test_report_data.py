@@ -9,6 +9,7 @@ from tests.report_fixture import (
     _figure,
     external_figures,
 )
+from tests.sqlite_util import committing
 from velometer.cli import report_selector
 from velometer.config import ConfigError
 from velometer.db import (
@@ -171,7 +172,7 @@ def test_open_readonly_refuses_another_schema_version(tmp_path, version):
 
 def _fail_history(db_path, city_id, kind):
     """Mark every history run of city/kind failed in the (writable) fixture file."""
-    with sqlite3.connect(db_path) as c:
+    with committing(db_path) as c:
         n = c.execute(
             "UPDATE runs SET status='failed' WHERE city_id=? AND boundary_kind=? "
             "AND source='history'",

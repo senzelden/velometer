@@ -5,9 +5,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from tests.sqlite_util import committing
 from velometer.cli import app
 from velometer.config import default_config_dir, load_cities
-from velometer.db import SCHEMA_VERSION, connect, fetch_cities
+from velometer.db import SCHEMA_VERSION, connect, fetch_cities, open_db
 
 
 def test_init_creates_db_with_cities_and_is_idempotent(tmp_path):
@@ -17,7 +18,8 @@ def test_init_creates_db_with_cities_and_is_idempotent(tmp_path):
         result = runner.invoke(app, ["init", "--db", str(db)])
         assert result.exit_code == 0, result.output
     n = len(load_cities(default_config_dir() / "cities.yaml"))
-    assert len(fetch_cities(connect(db))) == n
+    with open_db(db) as conn:
+        assert len(fetch_cities(conn)) == n
     assert f"{n} cities" in result.output
 
 
@@ -160,7 +162,8 @@ def test_boundaries_fetch_all_skips_missing_code_and_stores_rest(tmp_path, monke
     assert out.exit_code == 0, out.output
     assert "berlin fua skipped" in out.output
     assert "berlin lau area_km2=" in out.output and "berlin osm_admin area_km2=" in out.output
-    kinds = {r[0] for r in sqlite3.connect(db).execute("SELECT kind FROM boundaries")}
+    with open_db(db) as conn:
+        kinds = {r[0] for r in conn.execute("SELECT kind FROM boundaries")}
     assert kinds == {"lau", "osm_admin"}
 
 
@@ -329,7 +332,7 @@ def _external(conn, source, metric, value, scope="whole_network"):
 
 def _required_rows_matching_ours(db: Path) -> int:
     """Insert Berlin's required external rows at our own values (no flagged gap); return run id."""
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         (rid,) = conn.execute("SELECT MAX(id) FROM runs WHERE status='done'").fetchone()
         one = lambda sql: conn.execute(sql, (rid,)).fetchone()[0]  # noqa: E731
         cc = one("SELECT value FROM metrics WHERE run_id=? AND preset='clean_cities_2025'")
@@ -351,7 +354,7 @@ def _required_rows_matching_ours(db: Path) -> int:
 def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatch):
     runner, db = _berlin_run(tmp_path, monkeypatch)
     rid = _required_rows_matching_ours(db)
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         _external(conn, "clean_cities_2025", "network_km", 1e9)
         conn.commit()
     report = tmp_path / "r.md"
@@ -380,7 +383,7 @@ def test_reconcile_check_exits_1_until_the_gap_is_explained(tmp_path, monkeypatc
 def test_reconcile_check_fails_when_a_required_comparison_has_no_figure(tmp_path, monkeypatch):
     runner, db = _berlin_run(tmp_path, monkeypatch)
     rid = _required_rows_matching_ours(db)
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         conn.execute("DELETE FROM external_figures WHERE source='bikenetkit_v1'")
         conn.commit()
     report = tmp_path / "r.md"
@@ -450,7 +453,7 @@ def test_reconcile_missing_markers_or_report_exit_1_without_traceback(tmp_path, 
 
 def test_commands_on_a_newer_schema_exit_1_without_traceback(tmp_path):
     db = tmp_path / "v.sqlite"
-    with sqlite3.connect(db) as c:
+    with committing(db) as c:
         c.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
     report = tmp_path / "r.md"
     report.write_text("<!-- reconcile:begin -->\n<!-- reconcile:end -->\n")
@@ -538,7 +541,7 @@ def test_results_prints_the_selected_basis_and_the_other_one(tmp_path, monkeypat
         return row.split()[header.split().index("clean_cities")]
 
     assert cc_column(per_side.output) != cc_column(weighted.output)
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         rows = dict(
             conn.execute(
                 "SELECT length_basis, value FROM metrics WHERE preset='clean_cities_2025'"
@@ -571,7 +574,7 @@ def _cc_km_gap_line(output: str, key: str) -> str:
 
 def test_reconcile_switches_the_flagged_basis_and_always_shows_the_other(tmp_path, monkeypatch):
     runner, db = _berlin_run(tmp_path, monkeypatch)
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         (per_side,) = conn.execute(
             "SELECT numerator_km FROM metrics WHERE preset='clean_cities_2025' "
             "AND length_basis='per_side'"
@@ -783,7 +786,7 @@ def test_read_only_commands_on_a_v9_db_with_counter_index_rows_point_to_migrate(
     assert db.read_bytes() == before  # never migrated by a read-only command
     out = CliRunner().invoke(app, ["migrate", "--db", str(db)])
     assert out.exit_code == 0, out.output
-    with sqlite3.connect(db) as c:
+    with committing(db) as c:
         assert {m for (m,) in c.execute("SELECT method FROM counter_index")} == {"v1"}
 
 
@@ -806,7 +809,7 @@ def test_migrate_gives_a_v5_db_the_activity_sha(tmp_path):
     _make_v5_db_with_activity(db, rows=2)
     out = CliRunner().invoke(app, ["migrate", "--activity-sha", "e" * 64, "--db", str(db)])
     assert out.exit_code == 0, out.output
-    with sqlite3.connect(db) as c:
+    with committing(db) as c:
         assert c.execute("SELECT DISTINCT activity_sha256 FROM activity").fetchall() == [
             ("e" * 64,)
         ]
@@ -857,7 +860,7 @@ def _report_cfg(tmp_path, classifier):
 
 
 def _run_versions(db):
-    with connect(db) as conn:
+    with committing(db, connect) as conn:
         return {r[0] for r in conn.execute("SELECT classifier_version FROM runs")}
 
 
@@ -1058,11 +1061,10 @@ def test_boundaries_fetch_subareas_stores_rows_and_prints_checks(tmp_path, monke
     assert "berlin west West relation=9001 area_km2=50.0" in out.output
     assert "berlin east East relation=9002 area_km2=50.0" in out.output
     assert "union_diff_pct=0.00 symdiff_pct=0.00 overlap_pct=0.000" in out.output
-    rows = (
-        sqlite3.connect(db)
-        .execute("SELECT subarea_id, relation_id, source FROM subareas ORDER BY subarea_id")
-        .fetchall()
-    )
+    with open_db(db) as conn:
+        rows = conn.execute(
+            "SELECT subarea_id, relation_id, source FROM subareas ORDER BY subarea_id"
+        ).fetchall()
     assert rows == [("east", 9002, "OSM relation 9002"), ("west", 9001, "OSM relation 9001")]
 
 
@@ -1070,7 +1072,8 @@ def test_boundaries_fetch_subareas_that_leave_a_gap_exit_1_and_store_nothing(tmp
     out, db = _subarea_run(tmp_path, monkeypatch, east_right=9_800.0)
     assert out.exit_code == 1
     assert "union area differs from the LAU by 2.0 %" in out.output
-    assert sqlite3.connect(db).execute("SELECT count(*) FROM subareas").fetchone() == (0,)
+    with open_db(db) as conn:
+        assert conn.execute("SELECT count(*) FROM subareas").fetchone() == (0,)
 
 
 def test_boundaries_fetch_subareas_of_a_city_without_them_exits_1(tmp_path, monkeypatch):
@@ -1091,7 +1094,7 @@ def test_boundaries_fetch_subareas_of_a_city_without_them_exits_1(tmp_path, monk
 
 
 def _berlin_run_ids(db, kind="lau"):
-    with sqlite3.connect(db) as conn:
+    with committing(db) as conn:
         return [
             r[0]
             for r in conn.execute(

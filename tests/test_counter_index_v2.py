@@ -156,7 +156,7 @@ def test_a_fact_of_a_v1_only_year_is_a_missing_year_not_two_series(fixture_db, t
 @pytest.fixture
 def check_conn(tmp_path):
     """A fresh counters database, closed after the test."""
-    with closing(_check_db(tmp_path)) as conn:
+    with _check_db(tmp_path) as conn:
         yield conn
 
 

@@ -10,6 +10,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from tests.sqlite_util import committing
 from velometer.cli import app
 from velometer.content.check import (
     causal_counter_wording,
@@ -568,7 +569,7 @@ def test_plan_fact_needs_the_config_dir(fixture_db, tmp_path):
 
 
 def _berlin_lau_runs(db_path: Path, kind: str = "lau") -> list[tuple[int, str]]:
-    with sqlite3.connect(db_path) as c:
+    with committing(db_path) as c:
         rows = c.execute(
             "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind=? "
             "ORDER BY osm_timestamp",

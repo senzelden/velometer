@@ -7,7 +7,6 @@ import json
 import os
 import re
 import shutil
-import sqlite3
 import threading
 import time
 from collections import Counter
@@ -19,6 +18,7 @@ from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
 from tests.report_fixture import CLASSIFIER
+from tests.sqlite_util import committing
 from velometer import i18n
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
@@ -747,7 +747,7 @@ def test_db_on_another_schema_version_is_503(setup, tmp_path):
     db_path, cfg, maps, docs = setup
     old = tmp_path / "v5.sqlite"
     shutil.copy(db_path, old)
-    with sqlite3.connect(old) as c:
+    with committing(old) as c:
         c.execute("PRAGMA user_version = 5")
     with _client(create_app(old, cfg, maps, docs, content_dir=CONTENT)) as c:
         for path in ["/", "/city/berlin", "/data/all.csv"]:
@@ -778,7 +778,7 @@ def test_index_flagged_years_count_lau_only(client, monkeypatch):
 def test_city_with_current_run_but_no_history(setup):
     """Review Focus 2, reverse case: berlin/fua keeps its current run, its history fails."""
     db_path, cfg, maps, docs = setup
-    with sqlite3.connect(db_path) as c:
+    with committing(db_path) as c:
         c.execute(
             "UPDATE runs SET status='failed' WHERE city_id='berlin' AND boundary_kind='fua' "
             "AND source='history'"
