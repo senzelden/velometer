@@ -242,3 +242,85 @@ def test_the_ocr_text_of_each_sent_page_goes_to_its_own_page_number(tmp_path):
     api = Api(handler)
     result = _ocr(api, pdf=SCANNED.read_bytes(), pages=[3, 5], tmp=tmp_path)
     assert result.texts == {3: "text 0", 5: "text 1"}
+
+
+def test_the_suite_has_no_mistral_key():
+    """Run by the guard below with a key in the process environment."""
+    import os
+
+    assert "MISTRAL_API_KEY" not in os.environ
+
+
+def test_a_key_in_the_environment_never_reaches_a_test():
+    """Guard: pytest run inside direnv has a real MISTRAL_API_KEY. tests/conftest.py must drop it
+    for every test, or check_online's default OCR would make a billed call."""
+    import os
+    import sys
+
+    env = {**os.environ, "MISTRAL_API_KEY": "dummy-not-real"}
+    out = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--no-header",
+         f"{__file__}::test_the_suite_has_no_mistral_key"],
+        env=env, capture_output=True, text=True, cwd=HERE.parent,
+    )  # fmt: skip
+    assert out.returncode == 0, out.stdout[-800:]
+
+
+def test_check_online_without_a_key_sends_nothing_by_default(monkeypatch):
+    reached: list[httpx.Request] = []
+
+    def boom(request):
+        reached.append(request)
+        raise AssertionError("a live OCR request left the test")
+
+    real = httpx.Client
+    monkeypatch.setattr(
+        ocr.httpx, "Client", lambda *a, **k: real(transport=httpx.MockTransport(boom))
+    )
+    doc = copy.deepcopy(SOURCES)
+    doc["sources"][0]["excerpts"][0]["text"] = "nothing on any page"
+    problems, notes = check_online(load_sources_from(doc), fetch=lambda u: SCANNED.read_bytes())
+    assert reached == []
+    assert notes == [NO_KEY_NOTE]
+    assert problems == ["sources/src: excerpt not found online: e1"]
+
+
+def test_a_cache_write_leaves_no_partial_file_and_an_oserror_is_a_note(api, tmp_path, monkeypatch):
+    def broken_replace(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(ocr.os, "replace", broken_replace)
+    result = _ocr(api, tmp=tmp_path)
+    assert result.texts[3]  # the text is still returned
+    assert len(result.notes) == 1 and "cache" in result.notes[0]
+    assert list(tmp_path.iterdir()) == []  # no half-written file left behind
+
+
+def test_an_unwritable_scratch_dir_is_a_note_not_an_exception(api, tmp_path, monkeypatch):
+    blocker = tmp_path / "file"
+    blocker.write_text("x")
+    monkeypatch.setattr(ocr, "SCRATCH_DIR", blocker / "sub")
+    result = _ocr(api, tmp=tmp_path / "cache")
+    assert api.requests == [] and result.texts == {}
+    assert len(result.notes) == 1 and "OCR failed" in result.notes[0]
+
+
+def test_a_short_answer_is_not_cached(tmp_path):
+    api = Api(
+        lambda r: httpx.Response(200, json={"model": "m", "pages": [{"index": 0, "markdown": "a"}]})
+    )
+    result = _ocr(api, pages=[3, 5], tmp=tmp_path)
+    assert any("1 pages answered for 2 sent" in n for n in result.notes)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_missing_pdfinfo_is_a_note_when_ocr_would_apply(monkeypatch):
+    monkeypatch.setattr(ocr.shutil, "which", lambda name: None if name == "pdfinfo" else "/x")
+    pdf = SCANNED.read_bytes()
+    notes: list[str] = []
+    ocr.empty_pages(pdf, notes)
+    assert notes == []  # no key: OCR would not apply, so no note on every PDF
+    monkeypatch.setenv("MISTRAL_API_KEY", KEY)
+    ocr.empty_pages(pdf, notes)
+    assert notes == [ocr.PDFINFO_NOTE]
+    assert KEY not in notes[0]

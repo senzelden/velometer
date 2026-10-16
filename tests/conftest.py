@@ -32,6 +32,13 @@ def pytest_collection_modifyitems(items):
 
 
 @pytest.fixture(autouse=True)
+def _no_mistral_key(monkeypatch):
+    """A suite run inside direnv has a real MISTRAL_API_KEY; no test may reach the billed API
+    through it. Tests that need a key pass one explicitly."""
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def _collect_after_each_test():
     """An unclosed connection, file or client warns (a ResourceWarning, an error under
     `filterwarnings`) only when it is garbage-collected, so a plain run reports a leak at the end

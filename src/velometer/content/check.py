@@ -1250,7 +1250,10 @@ def _page_text(
     `notes`."""
     if isinstance(body, bytes) and _is_pdf(body):
         text = " ".join(_pdf_text(body).split())
-        empty = empty_pages(body) if ocr is not None else []
+        own_notes: list[str] = []
+        empty = empty_pages(body, own_notes) if ocr is not None else []
+        if notes is not None:
+            notes.extend(n for n in own_notes if n not in notes)
         if empty:
             got = ocr(body, empty)
             if notes is not None:

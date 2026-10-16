@@ -42,6 +42,7 @@ CACHE_DIR = Path("data/cache/ocr")
 SCRATCH_DIR = Path("data/scratch-m14")  # git-ignored; /tmp may be full
 POPPLER_TIMEOUT = 60
 REQUEST_TIMEOUT = 60.0
+PDFINFO_NOTE = "OCR skipped: pdfinfo unavailable or could not count the PDF's pages"
 NO_KEY_NOTE = (
     "OCR not available: set MISTRAL_API_KEY (use_pass_optional MISTRAL_API_KEY api/mistral in "
     ".envrc)"
@@ -74,10 +75,14 @@ def page_count(pdf: bytes) -> int:
     return int(m.group(1)) if m else 0
 
 
-def empty_pages(pdf: bytes) -> list[int]:
-    """The 1-based pages of `pdf` for which `pdftotext` yields nothing but whitespace."""
+def empty_pages(pdf: bytes, notes: list[str] | None = None) -> list[int]:
+    """The 1-based pages of `pdf` for which `pdftotext` yields nothing but whitespace. When
+    `pdfinfo` cannot count the pages and a key is set (so OCR would apply), `notes` gets a note."""
     empty = []
-    for n in range(1, page_count(pdf) + 1):
+    count = page_count(pdf)
+    if count == 0 and notes is not None and os.environ.get("MISTRAL_API_KEY"):
+        notes.append(PDFINFO_NOTE)
+    for n in range(1, count + 1):
         out = _poppler("pdftotext", "-q", "-f", str(n), "-l", str(n), "-", "-", input=pdf)
         if out is not None and not out.strip():
             empty.append(n)
@@ -184,9 +189,13 @@ def ocr_pages(
             f"OCR: {len(result.skipped)} pages skipped (at most {MAX_OCR_PAGES} per run): "
             + ", ".join(map(str, result.skipped))
         )
-    SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=SCRATCH_DIR) as tmp:
-        cut = _cut_pages(pdf, todo, Path(tmp))
+    try:
+        SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=SCRATCH_DIR) as tmp:
+            cut = _cut_pages(pdf, todo, Path(tmp))
+    except OSError as e:
+        result.notes.append(f"OCR failed: {type(e).__name__} cutting the scanned pages out")
+        return result
     if cut is None:
         result.notes.append("OCR failed: poppler could not cut the scanned pages out")
         return result
@@ -220,11 +229,26 @@ def ocr_pages(
         result.notes.append("OCR failed: unexpected response shape")
         return result
     if len(texts) != len(todo):
+        # an answer for fewer pages than were sent cannot be trusted to line up: use what came,
+        # cache none of it
         result.notes.append(f"OCR: {len(texts)} pages answered for {len(todo)} sent")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    for n, text in zip(todo, texts, strict=False):
-        result.texts[n] = text
-        _cache_file(cache_dir, sha, n).write_text(
-            json.dumps({"model": model, "text": text}, ensure_ascii=False), encoding="utf-8"
-        )
+        result.texts.update(zip(todo, texts, strict=False))
+        return result
+    result.texts.update(zip(todo, texts, strict=True))
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        for n, text in zip(todo, texts, strict=True):
+            _write_cache(_cache_file(cache_dir, sha, n), model, text)
+    except OSError as e:
+        result.notes.append(f"OCR: could not write the cache: {type(e).__name__}")
     return result
+
+
+def _write_cache(f: Path, model: str, text: str) -> None:
+    """Write the cache file whole or not at all: a temp file in the same directory, then rename."""
+    tmp = f.with_name(f"{f.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps({"model": model, "text": text}, ensure_ascii=False), "utf-8")
+        os.replace(tmp, f)
+    finally:
+        tmp.unlink(missing_ok=True)
