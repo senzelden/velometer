@@ -247,13 +247,15 @@ reader-visible changes are:
   the response reports.
   - A later run reads the cache and does not call the API.
   - A changed PDF has a new hash and is OCRed again.
-- **Key:** `MISTRAL_API_KEY`, through direnv and `pass`.
-  - `.envrc.example` gets `use_pass MISTRAL_API_KEY velometer/mistral-api-key`.
-  - The user runs `pass insert velometer/mistral-api-key` and adds the line to their `.envrc`.
+- **Key:** `MISTRAL_API_KEY`, through direnv and `pass`. It reuses the user's existing general
+  entry `api/mistral`, the one `denckring-bench` already reads.
+  - `.envrc.example` gets `use_pass_optional MISTRAL_API_KEY api/mistral`. The global direnv helper
+    makes a missing entry a warning, which fits an optional key.
+  - The user adds the same line to their git-ignored `.envrc`; no new `pass` entry is needed.
   - No key value is written into any file, log or report.
   - The key is never printed. An error from the API is reported with its status and message only.
-- **No key:** the check prints one note, `OCR not available: set MISTRAL_API_KEY (pass insert
-  velometer/mistral-api-key)`, and treats those pages as before. It never fails because OCR is
+- **No key:** the check prints one note, `OCR not available: set MISTRAL_API_KEY
+  (use_pass_optional MISTRAL_API_KEY api/mistral in .envrc)`, and treats those pages as before. It never fails because OCR is
   unavailable. With a key but an API error, the note names the status, and the pages count as
   unread, as today.
 - **Cost guard:** a run OCRs at most 20 pages; the rest are reported as skipped. That is far above
@@ -277,8 +279,8 @@ None for prose: M14 adds no narrative text. The two new footer strings and the h
 are UI strings, reviewed in the final whole-branch review.
 
 The user is asked:
-- once, for the Mistral key, at the start of the OCR task: `pass insert
-  velometer/mistral-api-key`, plus the `use_pass` line in `.envrc` (§4.5);
+- once, at the start of the OCR task, to add `use_pass_optional MISTRAL_API_KEY api/mistral` to
+  their `.envrc` and run `direnv allow` (§4.5);
 - for `sudo locale-gen`, only if `localedef` fails (§4.3).
 
 ## 6. Out of scope
