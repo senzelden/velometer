@@ -2079,6 +2079,12 @@ def app_export(
     clean: bool = typer.Option(
         False, "--clean", help="Replace a previous export in --out (one with its build.json)."
     ),
+    public: bool = typer.Option(
+        False,
+        "--public",
+        help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
+        "pages (a public export).",
+    ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
@@ -2095,7 +2101,7 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
         )
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)

@@ -37,6 +37,7 @@ from velometer.app.urls import (
     normalise_base,
     with_lang,
 )
+from velometer.config import ConfigError, load_site
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
@@ -247,7 +248,7 @@ def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) ->
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
-def build_stamp(data: ReportData, base: str) -> dict:
+def build_stamp(data: ReportData, base: str, public: bool = False) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
     exported runs (the rows of /data/all.csv), the base path and the build time (UTC)."""
@@ -264,6 +265,7 @@ def build_stamp(data: ReportData, base: str) -> dict:
         "classifier_versions": sorted(versions),
         "osm_timestamps": {city: sorted(ts) for city, ts in stamps.items()},
         "base": base,
+        "public": public,
         "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
@@ -558,11 +560,12 @@ def run_export(
     content_dir: Path,
     plans_data_dir: Path,
     clean: bool,
+    public: bool = False,
 ) -> ExportResult:
     """Write the static edition of the app built with `base` to `out` (module docstring)."""
     try:
         return _run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
         )
     except OSError as e:
         raise ExportError(f"export to {out} failed: {e}") from e
@@ -578,8 +581,18 @@ def _run_export(
     content_dir: Path,
     plans_data_dir: Path,
     clean: bool,
+    public: bool = False,
 ) -> ExportResult:
     validate_base(base)
+    if public:
+        try:
+            site = load_site(config_dir)
+        except ConfigError as e:
+            raise ExportError(str(e)) from e
+        if not site.complete:
+            raise ExportError(
+                "--public needs config/site.yaml to set: " + ", ".join(site.missing())
+            )
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
     _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
@@ -590,7 +603,7 @@ def _run_export(
         raise ExportError(str(e)) from e
     try:
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base))
+        build = build_stamp(data, normalise_base(base), public)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base, static_edition={"commit": build["commit"]},

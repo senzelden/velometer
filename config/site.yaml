@@ -1,0 +1,7 @@
+# Site settings (M14). Every value may be null; a public export (`app export --public`)
+# needs all four. URLs must be https.
+datalab:
+  name: null        # e.g. "Zählwerk Berlin Datalab"
+  url: null         # https URL of the Datalab
+impressum_url: null # https URL (the Datalab's Impressum)
+privacy_url: null   # https URL (the Datalab's Datenschutzerklärung)

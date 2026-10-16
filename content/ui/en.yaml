@@ -16,6 +16,9 @@ site.footer.methodology: Methodology
 site.footer.csv_all: CSV (all cities)
 site.footer.run: 'Classifier {classifier} · config <code>{config}</code>'
 site.footer.static_edition: Static edition · build {commit}
+site.footer.datalab: Part of {name}
+site.footer.impressum: '<span lang="de">Impressum</span>'
+site.footer.privacy: Privacy
 page.404.title: Page not found
 page.404.home: Overview
 page.404.text: 'There is no page at this address. <a href="{home}">Go to the overview</a>.'

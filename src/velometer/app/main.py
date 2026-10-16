@@ -61,7 +61,7 @@ from velometer.app.search import search_index
 from velometer.app.series import series_payload
 from velometer.app.sources import GROUPS, group_name, overview_column, source_anchor, source_rows
 from velometer.app.tokens import theme_tokens
-from velometer.config import ConfigError, PresetRanking, load_differences
+from velometer.config import ConfigError, PresetRanking, load_differences, load_site
 from velometer.content.loader import (
     load_document,
     load_narratives,
@@ -452,6 +452,7 @@ def create_app(
     }
     data_u = urls.make_data_u(app.state.base_path)
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
+    app.state.site = load_site(config_dir)
     commit = static_edition["commit"] if static_edition else short_commit(git_commit())
 
     def _templates(lang: Lang) -> Jinja2Templates:
@@ -468,6 +469,7 @@ def create_app(
         # inside a double-quoted attribute the policy's single quotes need no escaping
         env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
         env.globals["static_edition"] = static_edition
+        env.globals["site"] = app.state.site
         env.globals["cite_text"] = partial(cite_model.cite_text, lang=lang)
         # the `#ui-strings` block static/js/strings.js reads: the `js.*` strings and month names
         env.globals["js_strings"] = i18n.js_strings
