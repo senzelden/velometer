@@ -1036,16 +1036,21 @@ def create_app(
             cited_sources = [] if nar is None else sorted(nar.sources.items())
             cited_refs = [] if nar is None else sorted(nar.refs.items())
         lang = request.state.lang
-        label = i18n.t(lang, f"city.tab.{tab}")
+        label = i18n.t(lang, f"city.tab.{tab}")  # plain: the <title>
+        label_html = i18n.t_markup(lang, f"city.tab.{tab}")  # the crumb and the tab links: marks
         tabs = [
-            {"key": k, "label": i18n.t(lang, f"city.tab.{k}"), "href": f"/city/{city_id}{suffix}"}
+            {
+                "key": k,
+                "label_html": i18n.t_markup(lang, f"city.tab.{k}"),
+                "href": f"/city/{city_id}{suffix}",
+            }
             for k, suffix in TABS
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
-            tabs=tabs, nar=nar, content_error=note, cited_sources=cited_sources,
-            cited_refs=cited_refs,
+            tabs=tabs, tab_label_html=label_html, nar=nar, content_error=note,
+            cited_sources=cited_sources, cited_refs=cited_refs,
         )  # fmt: skip
 
     async def compare(request: Request, data: Data):
@@ -1553,6 +1558,13 @@ def create_app(
         latest = data.selector.latest(data.conn, city_id, "lau")
         return {
             "rows": rows,
+            # the remainder row's name as HTML text, the original term marked (the plain label
+            # is for the CSV and the change report)
+            "remainder_html": i18n.t_markup(
+                lang,
+                "subarea.remainder",
+                n=len(data.city_fields()[city_id]["subareas"]["relations"]),
+            ),
             "series": bezirk_series(data, city_id),
             "window": i18n.t(
                 lang,

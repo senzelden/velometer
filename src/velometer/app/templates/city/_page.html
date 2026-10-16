@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · {{ city.name }}{% if tab != "story" %} · {{ tab_label }}{% endif %}{% endblock %}
-{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/cities') }}">{{ t('nav.cities') }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/cities#' ~ (city.country_iso2 | lower)) }}">{{ country }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/city/' ~ city.id) }}">{{ city.name }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ tab_label }}</span></nav>{% endblock %}
+{% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/cities') }}">{{ t('nav.cities') }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/cities#' ~ (city.country_iso2 | lower)) }}">{{ country }}</a><span class="sep" aria-hidden="true">›</span><a href="{{ u('/city/' ~ city.id) }}">{{ city.name }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ tab_label_html }}</span></nav>{% endblock %}
 {% block content %}
 {% include "city/_header.html" %}
 {% block tab %}{% endblock %}

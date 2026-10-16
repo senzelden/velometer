@@ -491,7 +491,9 @@ def test_tab_routes_and_the_current_tab_mark(subarea_client):  # noqa: F811 - th
         r = subarea_client.get(f"/city/berlin{tab}")
         assert r.status_code == 200, tab
         tabs = re.search(r'<nav class="tabs".*?</nav>', r.text, re.S).group(0)
-        assert re.findall(r'<a [^>]*aria-current="page"[^>]*>(.*?)</a>', tabs) == [label]
+        assert re.findall(r'<a [^>]*aria-current="page"[^>]*>(.*?)</a>', tabs) == [
+            label.replace("Bezirke", '<i lang="de">Bezirke</i>')
+        ]
         assert len(re.findall(r"<li><a ", tabs)) == 5
     assert subarea_client.get("/city/berlin/nope").status_code == 404
     assert subarea_client.get("/city/paris/bezirke").status_code == 404

@@ -15,7 +15,7 @@
 <tbody>
 {% for r in bezirke.rows %}
 <tr{% if r.remainder %} class="remainder"{% endif %}>
-  <td data-label="{{ t('table.bezirk') }}">{{ r.name }}</td>
+  <td data-label="{{ t('table.bezirk') }}">{% if r.remainder %}{{ bezirke.remainder_html }}{% else %}{{ r.name }}{% endif %}</td>
   <td class="num" data-label="{{ t('table.headline_per_100') }}">{{ r.headline | num }}</td>
   <td class="num" data-label="{{ t('table.a_share') }}">{% if r.a_share_of_ab is none %}{{ t('fmt.na') }}{% else %}{{ t('unit.pct_spaced', value=r.a_share_of_ab | num) }}{% endif %}</td>
   {% for tier in tiers %}<td class="num" data-label="{{ tier }} km">{{ r.tier_km[tier] | num }}</td>{% endfor %}

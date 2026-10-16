@@ -22,5 +22,5 @@
 {% endfor %}</div>
 {{ cite(cite_for(t('cite.title.keynums', city=city.name), city=city.id)) }}
 <nav class="tabs" aria-label="{{ t('page.city.sections') }}"><ul>
-{% for tb in tabs %}<li><a href="{{ u(tb.href) }}"{% if tb.key == tab %} aria-current="page"{% endif %}>{{ tb.label }}</a></li>
+{% for tb in tabs %}<li><a href="{{ u(tb.href) }}"{% if tb.key == tab %} aria-current="page"{% endif %}>{{ tb.label_html }}</a></li>
 {% endfor %}</ul></nav>

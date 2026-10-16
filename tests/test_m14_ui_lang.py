@@ -12,7 +12,11 @@ import pytest
 import yaml
 from markupsafe import Markup, escape
 
-from tests.test_app import setup  # noqa: F401 - the imported fixture
+from tests.test_app import (  # noqa: F401 - the imported fixtures
+    setup,
+    subarea_client,
+    subarea_setup,
+)
 from velometer import i18n
 from velometer.app.cite import cite_text
 from velometer.app.narrative import TERM_MARK_RAW
@@ -241,3 +245,17 @@ def test_marked_ui_strings_are_plain_in_csv_labels_and_citations(cat, monkeypatc
     f = CiteFields("T", "/p", "2026-10-03T00:00:00Z", None, "v1", "r1", "abc1234")
     text = cite_text(f, accessed="2026-10-16", url="https://x.example/p")
     assert "cykelsti: https://x.example/p" in text and "<i" not in text
+
+
+def test_bezirke_nav_and_remainder_marked_title_and_csv_plain(subarea_client):  # noqa: F811
+    """Where the term is HTML text (tab link, crumb, the remainder `<td>`) it is marked; the
+    <title> and the CSV are plain."""
+    html = subarea_client.get("/city/berlin/bezirke").text
+    mark = '<i lang="de">Bezirke</i>'
+    assert re.search(rf'<nav class="tabs".*?<a href="[^"]*bezirke"[^>]*>{mark}</a>', html, re.S)
+    assert f'<span aria-current="page">{mark}</span>' in html
+    assert re.search(r"<title>[^<]*Bezirke[^<]*</title>", html)
+    remainder = re.search(r'<tr class="remainder">\s*<td[^>]*>(.*?)</td>', html, re.S).group(1)
+    assert remainder == f"Outside the 2 {mark} (districts), at the LAU edge"
+    csv = subarea_client.get("/data/berlin_subareas.csv").text
+    assert "<i" not in csv and "Outside the 2 Bezirke (districts), at the LAU edge" in csv

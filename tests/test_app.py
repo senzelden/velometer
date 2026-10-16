@@ -1190,7 +1190,7 @@ def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
     rows = body.split("<tr")[1:]
     assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]
     assert len(rows) == 3 and 'class="remainder"' in rows[2]
-    assert "<td>Outside the 2 Bezirke (districts), at the LAU edge</td>" in rows[2]
+    assert '<td>Outside the 2 <i lang="de">Bezirke</i> (districts), at the LAU edge</td>' in rows[2]
     assert 'class="remainder"' not in "".join(rows[:2])
     note = bezirke.split("</table>")[1]
     assert (
