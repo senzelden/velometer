@@ -144,3 +144,33 @@ def test_the_bezirke_change_table_is_named_and_marks_its_remainder(subarea_setup
             for i in r.walk())
         for r in rows
     ), [r.text() for r in rows]  # fmt: skip
+
+
+def _unnamed_links(root):
+    """The `href`s of links with no text and no `aria-label` (axe link-name)."""
+    return [
+        n.attrs.get("href")
+        for n in root.walk()
+        if n.tag == "a" and "href" in n.attrs and not n.text().strip()
+        and not (n.attrs.get("aria-label") or "").strip()
+    ]  # fmt: skip
+
+
+def test_every_link_has_a_name(page_site):
+    # M14 Task 12: the plans table's city links rendered empty (city_name on a dict row)
+    assert "/plans" in page_site.html and "/de/plans" in page_site.html
+    bad = {u: found for u, h in page_site.html.items() if (found := _unnamed_links(parse(h)))}
+    assert not bad, bad
+
+
+def test_the_link_checker_flags_an_empty_link():
+    assert _unnamed_links(parse('<p><a href="/x"></a><a href="/y">y</a></p>')) == ["/x"]
+
+
+def test_city_name_refuses_a_row_dict():
+    import pytest
+
+    from velometer.app.narrative import city_name
+
+    with pytest.raises(TypeError, match="city_row_name"):
+        city_name({"id": "berlin", "name": "Berlin"})

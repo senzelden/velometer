@@ -14,6 +14,7 @@ around an inline value.
 """
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import partial
 from types import SimpleNamespace
@@ -97,7 +98,10 @@ def _own_lang(city: object, lang: str) -> str | None:
 
 def city_name(city: object, lang: str = "en") -> Markup:
     """A city's name as a page shows it, the city's own one (København) in a `<span lang>` of
-    its language on an English page where it differs from the English form (Copenhagen)."""
+    its language on an English page where it differs from the English form (Copenhagen). A row
+    dict (id, name) goes through `city_row_name`: read here by attribute it would show nothing."""
+    if isinstance(city, Mapping):
+        raise TypeError("city_name takes a city config, not a row dict; use city_row_name")
     own = _own_lang(city, lang)
     name = getattr(city, "name", "")
     return Markup('<span lang="{}">{}</span>').format(own, name) if own else escape(name)
