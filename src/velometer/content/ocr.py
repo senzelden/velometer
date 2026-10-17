@@ -37,7 +37,7 @@ import httpx
 
 OCR_MODEL = "mistral-ocr-latest"
 OCR_URL = "https://api.mistral.ai/v1/ocr"
-MAX_OCR_PAGES = 20
+MAX_OCR_PAGES = 100  # raised from 20 after the first live run (2026-10-17)
 CACHE_DIR = Path("data/cache/ocr")  # also holds the scratch directory of a cut (git-ignored)
 POPPLER_TIMEOUT = 60
 REQUEST_TIMEOUT = 60.0

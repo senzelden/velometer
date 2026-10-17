@@ -99,7 +99,8 @@ Before the spec (2026-10-16):
 - OCR text is mapped to pages by position in the response, because the docs contradict each other
   on page indexing.
 - The cap is 20 pages actually sent per run, across all PDFs (final review M1). Cached pages do not
-  count.
+  count. Raised to 100 on 2026-10-17 at the user's choice, after the live run spent 20 on the
+  first PDF and left 52 empty pages in 7 PDFs: one run now reaches all 72.
 - `MISTRAL_API_KEY` is removed at `pytest_configure` and again by an autouse fixture, so no test or
   fixture of any scope can make a billed call. A subprocess guard test proves it.
 - A short answer (fewer pages than sent) is not cached. The temporary cut PDFs live in a `.cut-*`

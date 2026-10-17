@@ -227,10 +227,11 @@ def test_over_the_cap_the_rest_is_skipped_with_a_note(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ocr, "_cut_pages", cut)
     api = Api(handler)
-    result = _ocr(api, pages=range(1, 26), tmp=tmp_path)
-    assert sent == [list(range(1, 21))] and len(api.requests) == 1
-    assert result.skipped == [21, 22, 23, 24, 25]
-    assert sorted(result.texts) == list(range(1, 21))
+    cap = ocr.MAX_OCR_PAGES
+    result = _ocr(api, pages=range(1, cap + 6), tmp=tmp_path)
+    assert sent == [list(range(1, cap + 1))] and len(api.requests) == 1
+    assert result.skipped == list(range(cap + 1, cap + 6))
+    assert sorted(result.texts) == list(range(1, cap + 1))
     assert any("5 pages" in n and "skipped" in n for n in result.notes)
 
 
@@ -335,8 +336,11 @@ def test_a_missing_pdfinfo_is_a_note_when_ocr_would_apply(monkeypatch):
 
 
 def test_the_cap_is_for_the_whole_run_not_each_pdf(tmp_path, monkeypatch):
-    # final review M1: two PDFs of 15 scanned pages each send 20 pages in all, not 30
+    # final review M1: two PDFs of 3/4 of the cap each send the cap in all, not 1.5 times it
     from velometer.content import check
+
+    cap = ocr.MAX_OCR_PAGES
+    each = cap * 3 // 4
 
     sent: list[list[int]] = []
 
@@ -349,7 +353,7 @@ def test_the_cap_is_for_the_whole_run_not_each_pdf(tmp_path, monkeypatch):
         return httpx.Response(200, json={"model": "m", "pages": pages})
 
     monkeypatch.setattr(ocr, "_cut_pages", cut)
-    monkeypatch.setattr(check, "empty_pages", lambda pdf, notes=None: list(range(1, 16)))
+    monkeypatch.setattr(check, "empty_pages", lambda pdf, notes=None: list(range(1, each + 1)))
     doc = copy.deepcopy(SOURCES)
     second = copy.deepcopy(doc["sources"][0])
     second.update(id="src2", url="https://example.org/other")
@@ -361,9 +365,14 @@ def test_the_cap_is_for_the_whole_run_not_each_pdf(tmp_path, monkeypatch):
             pdf, pages, limit, client=c, cache_dir=tmp_path, key=KEY
         )
         _problems, notes = check_online(load_sources_from(doc), fetch=bodies.get, ocr=ocr_call)
-    assert sum(map(len, sent)) == ocr.MAX_OCR_PAGES == 20
-    assert sent == [list(range(1, 16)), list(range(1, 6))]
-    assert any("10 pages skipped" in n for n in notes), notes
+    assert sum(map(len, sent)) == cap
+    assert sent == [list(range(1, each + 1)), list(range(1, cap - each + 1))]
+    assert any(f"{2 * each - cap} pages skipped" in n for n in notes), notes
+
+
+def test_the_cap_covers_every_scanned_page_of_the_sources():
+    # 2026-10-17: the sources' scanned PDFs have 72 empty pages; one run reaches them all
+    assert ocr.MAX_OCR_PAGES == 100
 
 
 def test_a_run_with_no_pages_left_sends_nothing(api, tmp_path):
