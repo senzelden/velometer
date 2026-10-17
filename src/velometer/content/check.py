@@ -1194,6 +1194,7 @@ def _http_get(url: str) -> str | bytes:
 
 
 PDF_ORDERS = ([], ["-raw"])  # pdftotext's reading order, then the content-stream order
+_PDF_GLYPHS = re.compile("[\u00ad\u2022\u2023\u25aa\u25cf\u25e6\u2043]")  # soft hyphen, bullets
 _ORDER_BREAK = " \u241e "  # between the two readings: no excerpt spans it
 
 
@@ -1230,7 +1231,8 @@ class _Page:
         self.pdf = pdf
         # PDF text is compared without any whitespace: pdftotext drops the spaces of justified
         # text ("voiesréservées"). HTML keeps its spaces: "21 47 km" must not match "2 147 km".
-        self.text = _no_space(text) if pdf else text
+        # A PDF's list bullets and soft hyphens are not in the sentence an excerpt quotes.
+        self.text = _no_space(_PDF_GLYPHS.sub("", text)) if pdf else text
 
     def holds(self, excerpt: str) -> bool:
         ex = _squash(excerpt)

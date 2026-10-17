@@ -417,3 +417,11 @@ def test_the_empty_pages_take_one_pdftotext_run(monkeypatch):
     monkeypatch.setattr(ocr, "_poppler", counted)
     assert ocr.empty_pages(SCANNED.read_bytes()) == [3]
     assert calls.count("pdftotext") == 1
+
+
+def test_a_page_whose_text_has_no_letter_or_digit_counts_as_empty(monkeypatch):
+    # 2026-10-17: the Fortschrittsbericht 2025 draws its prose as images over a text layer of
+    # bullet glyphs only ("• •"); such a page is OCRed. A page number alone is text, not empty.
+    out = {"pdfinfo": b"Pages: 5\n", "pdftotext": "Text\f• •\f–\f12\f \n\f".encode()}
+    monkeypatch.setattr(ocr, "_poppler", lambda name, *a, **kw: out[name])
+    assert ocr.empty_pages(b"%PDF-") == [2, 3, 5]

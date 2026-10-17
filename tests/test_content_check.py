@@ -682,3 +682,14 @@ def test_a_pdf_that_lost_its_inter_word_spaces_still_holds_the_excerpt():
         [],
         [],
     )
+
+
+def test_a_pdf_bullet_or_soft_hyphen_does_not_hide_an_excerpt():
+    # 2026-10-17: Bordeaux's list items start with "•", Amsterdam's "fiets­routes" breaks
+    # at a soft hyphen; neither is in the quoted sentence
+    from velometer.content.check import _Page
+
+    page = _Page("voies de circulation apaisée • 167 km ▪ de fiets­routes op", pdf=True)
+    assert page.holds("voies de circulation apaisée 167 km de fietsroutes op")
+    # an HTML page keeps its text as it is
+    assert not _Page("apaisée • 167 km", pdf=False).holds("apaisée 167 km")

@@ -101,6 +101,16 @@ Before the spec (2026-10-16):
 - The cap is 20 pages actually sent per run, across all PDFs (final review M1). Cached pages do not
   count. Raised to 100 on 2026-10-17 at the user's choice, after the live run spent 20 on the
   first PDF and left 52 empty pages in 7 PDFs: one run now reaches all 72.
+- After the second live run (2026-10-17, 10 misses), two rules changed:
+  - A page counts as empty when its text layer holds no letter or digit, not only when it holds
+    nothing: nine pages of the Fortschrittsbericht 2025 carry only bullet glyphs over prose drawn
+    as images.
+  - PDF text is compared without list bullets and soft hyphens (Bordeaux `network-2021`).
+- The six other misses are kept as reported misses, not rewritten: Prague `signed-routes`,
+  `protected-routes`, `lanes` and Lyon `breakdown-2023` (table and chart cells), Amsterdam
+  `width-target` (footnote marker) and the EU act's `lau` (the page break of pp. 5-6). Their
+  locators already record the transcription choice, so the online check cannot find them
+  literally.
 - `MISTRAL_API_KEY` is removed at `pytest_configure` and again by an autouse fixture, so no test or
   fixture of any scope can make a billed call. A subprocess guard test proves it.
 - A short answer (fewer pages than sent) is not cached. The temporary cut PDFs live in a `.cut-*`
