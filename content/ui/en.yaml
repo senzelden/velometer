@@ -16,6 +16,9 @@ site.footer.methodology: Methodology
 site.footer.csv_all: CSV (all cities)
 site.footer.run: 'Classifier {classifier} · config <code>{config}</code>'
 site.footer.static_edition: Static edition · build {commit}
+site.footer.datalab: Part of {name}
+site.footer.impressum: '<i lang="de">Impressum</i>'
+site.footer.privacy: Privacy
 page.404.title: Page not found
 page.404.home: Overview
 page.404.text: 'There is no page at this address. <a href="{home}">Go to the overview</a>.'
@@ -266,7 +269,7 @@ page.plan.record_error: 'data source record unreadable (<code>retrieved.json</co
 
 # --- city
 page.city.residents: '{n} residents (city proper)'
-page.city.bezirke_csv: Bezirke CSV
+page.city.bezirke_csv: '<i lang="de">Bezirke</i> CSV'
 page.city.plan: Cycling plan
 page.city.compare_with: Compare this city with…
 cite.title.keynums: '{city}: key numbers, city proper (LAU)'
@@ -390,11 +393,11 @@ page.figures.ours_tiers: our tiers {tiers} km
 preset.fallback_label: '{preset}, our OSM data'
 figure.scope.whole_network: whole network
 figure.scope.incl_traffic_calmed_restricted_access: incl traffic calmed restricted access
-figure.scope.vorrangnetz: Vorrangnetz (priority network)
-figure.scope.cykelsti: cykelsti (kerbed cycle track)
-figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz (main cycle network)
+figure.scope.vorrangnetz: '<i lang="de">Vorrangnetz</i> (priority network)'
+figure.scope.cykelsti: '<i lang="da">cykelsti</i> (kerbed cycle track)'
+figure.scope.hauptradverkehrsnetz: '<i lang="de">Hauptradverkehrsnetz</i> (main cycle network)'
 figure.basis.unknown: unknown
-figure.basis.streckenlaenge: Streckenlänge (route length)
+figure.basis.streckenlaenge: '<i lang="de">Streckenlänge</i> (route length)'
 figure.note.qecio_halves: QECIO halves unidirectional infrastructure
 figure.note.nuts3_not_city: NUTS3 unit is not the city
 figure.note.file_md5: file md5 {md5}
@@ -492,7 +495,7 @@ road_class.main_excl_motorway: main roads (excl. motorways)
 road_class.main_incl_motorway: main roads (incl. motorways)
 road_class.main_incl_motorway_raw: main roads (incl. motorways, per carriageway)
 road_class.all_public: all public roads
-subarea.remainder: Outside the {n} Bezirke (districts), at the LAU edge
+subarea.remainder: 'Outside the {n} <i lang="de">Bezirke</i> (districts), at the LAU edge'
 tier.A: A separated track
 tier.B: B shared foot/cycle path
 tier.C: C protected lane
@@ -600,7 +603,7 @@ city.tab.time: Over time
 city.tab.tiers: Tiers
 city.tab.figures: Figures
 city.tab.counts: Counts
-city.tab.bezirke: Bezirke
+city.tab.bezirke: '<i lang="de">Bezirke</i>'
 change.category.gained: gained
 change.category.lost: lost
 change.category.retiered: retiered

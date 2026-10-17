@@ -237,14 +237,14 @@ def test_a_missing_chrome_is_a_clear_error(rp, tmp_path, monkeypatch, capsys):
 
 
 def test_stop_kills_a_child_that_ignores_terminate(rp):
-    proc = subprocess.Popen(
+    with subprocess.Popen(
         ["python3", "-c", "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN);"
          " print('ready', flush=True); time.sleep(60)"],
         stdout=subprocess.PIPE,
-    )  # fmt: skip
-    assert proc.stdout.readline().strip() == b"ready"
-    rp.stop(proc, timeout=0.5)
-    assert proc.returncode is not None and proc.returncode < 0
+    ) as proc:  # fmt: skip
+        assert proc.stdout.readline().strip() == b"ready"
+        rp.stop(proc, timeout=0.5)
+        assert proc.returncode is not None and proc.returncode < 0
 
 
 def test_open_tab_closes_the_tab_when_setup_fails(rp, monkeypatch):

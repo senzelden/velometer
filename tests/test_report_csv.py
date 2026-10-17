@@ -1,7 +1,6 @@
 import csv
 import io
 import shutil
-import sqlite3
 
 import pytest
 from typer.testing import CliRunner
@@ -10,6 +9,7 @@ from tests.report_fixture import (
     CLASSIFIER,
     SPIKE_YEAR,
 )
+from tests.sqlite_util import committing
 from velometer.cli import app
 from velometer.db import fetch_run_results
 from velometer.pipeline.measure import select_metric
@@ -139,7 +139,7 @@ def test_report_commands_exit_1_on_an_unmigrated_db(fixture_db, tmp_path, comman
     db_path, cfg, _, _ = fixture_db
     old = tmp_path / "v5.sqlite"
     shutil.copy(db_path, old)
-    with sqlite3.connect(old) as c:
+    with committing(old) as c:
         c.execute("PRAGMA user_version = 5")
     res = CliRunner().invoke(app, _report_args(command, old, cfg, tmp_path))
     assert res.exit_code == 1, res.output

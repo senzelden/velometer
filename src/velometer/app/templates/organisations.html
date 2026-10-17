@@ -15,8 +15,8 @@
 <p class="kicker">{{ p.kind }}</p>
 <h2{{ lang_attr(p.org.lang) }}>{{ bracketed(p.org.name, p.org.bracket_lang) }}</h2>
 <p class="meta">{% if p.org.url | http_url %}<a href="{{ p.org.url | http_url }}" rel="noopener noreferrer">{{ p.org.url | host }}</a>{% endif %}
-{%- if p.figures %} · {{ t('page.organisations.figures') }} {% for city, source in p.figures %}{{ source }} ({{ city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
-{%- if p.plans %} · {{ t('page.organisations.plans') }} {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ l.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
+{%- if p.figures %} · {{ t('page.organisations.figures') }} {% for city, source, cid in p.figures %}{{ source }} ({{ city_row_name(cid, city) if cid else city }}){% if not loop.last %}; {% endif %}{% endfor %}{% endif %}
+{%- if p.plans %} · {{ t('page.organisations.plans') }} {% for l in p.plans %}<a href="{{ u(l.href) }}">{{ city_row_name(l.city, l.name) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
 <div class="narrative">
 {% for s in p.doc.sections %}
 <h3{{ fb(s.heading) }}>{{ s.heading }}</h3>

@@ -36,10 +36,11 @@ def organisations_context(
     for org in sorted(orgs.values(), key=lambda o: o.name.lower()):
         doc = render_organisation(org, sources, lang, (fallback or {}).get(org.id, frozenset()))
         cited_sources, cited_refs = doc.cited(doc.sections)
-        figures = sorted(
+        figures = sorted(  # (city's name, source's name, city id or None for every city)
             (
                 t(lang, "org.all_cities") if m.city == "*" else city_names.get(m.city, m.city),
                 source_names.get(m.source, m.source),
+                None if m.city == "*" else m.city,
             )
             for m in mapping
             if m.organisation == org.id
@@ -53,6 +54,7 @@ def organisations_context(
         plan_links = [
             {
                 "name": city_names.get(c, c),
+                "city": c,
                 "href": f"/plans/{c}" if c == DETAIL_CITY else f"/plans#{c}",
             }
             for c in sorted(plan_cities)

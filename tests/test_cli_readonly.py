@@ -3,7 +3,6 @@
 clear exit 1, never a new or migrated file."""
 
 import hashlib
-import sqlite3
 from pathlib import Path
 
 import pytest
@@ -11,6 +10,7 @@ import yaml
 from typer.testing import CliRunner
 
 from tests.report_fixture import build_report_fixture_subareas
+from tests.sqlite_util import committing
 from velometer import reconcile as rc
 from velometer import timeseries as ts
 from velometer.cli import app
@@ -86,7 +86,7 @@ def test_a_missing_db_is_an_error_and_not_created(tmp_path, args):
 @pytest.mark.parametrize("args", [["results"], ["reconcile"], ["timeseries"], ["counters"]])
 def test_an_older_schema_is_an_error_and_not_migrated(tmp_path, args):
     db = tmp_path / "old.sqlite"
-    with sqlite3.connect(db) as c:
+    with committing(db) as c:
         c.execute(f"PRAGMA user_version = {SCHEMA_VERSION - 1}")
     before = _md5(db)
     argv = [*args, "--check"] if args == ["counters"] else args

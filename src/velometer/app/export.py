@@ -10,8 +10,12 @@ moved into place only when complete, so a failed export leaves `out` as it was. 
 `out` (`/`, $HOME, a repo root, a directory holding an input, a symlink) and a base that is not
 a plain path are refused before anything happens. The database is opened read-only, as the app
 opens it.
+
+M14: `write_gz` adds a `.gz` sibling to each large text file, `_headers` carries the security and
+cache headers, and a file of 25 MiB or more (the Cloudflare Pages limit) fails the export.
 """
 
+import gzip
 import json
 import os
 import posixpath
@@ -28,7 +32,7 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
-from velometer.app.main import HERE, TABS, create_app
+from velometer.app.main import CSP, HERE, TABS, create_app, csp_meta
 from velometer.app.urls import (
     DATA_ROOTS,
     LEGACY_DE,
@@ -37,6 +41,7 @@ from velometer.app.urls import (
     normalise_base,
     with_lang,
 )
+from velometer.config import ConfigError, load_site
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
@@ -86,7 +91,12 @@ LINK_TAGS = frozenset({"a", "area"})
 # its value looks like one (URL_SHAPED)
 URL_ATTRS = frozenset({"href", "src", "action", "data", "poster", "formaction", "cite"})
 JSON_SCRIPT_TYPES = frozenset({"application/json", "application/ld+json"})
-SCANNED_SUFFIXES = (".html", ".css", ".js")
+SCANNED_SUFFIXES = (".html", ".css", ".js")  # so `.gz` copies and `_headers` are never scanned
+# M14: the compressed siblings, the host headers file and the per-file size limit
+GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg")
+GZ_MIN_BYTES = 1024
+MAX_FILE_BYTES = 26_214_400  # 25 MiB: Cloudflare Pages refuses a file of this size or more
+HEADERS_FILE = "_headers"
 # The images the vendored leaflet.css names that static/vendor/VERSIONS records as not vendored:
 # the maps use neither the layers control nor the default marker icon (a test keeps that true).
 UNVENDORED = frozenset(
@@ -247,10 +257,14 @@ def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) ->
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
-def build_stamp(data: ReportData, base: str) -> dict:
+def build_stamp(
+    data: ReportData, base: str, public: bool = False, site: dict | None = None
+) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
-    exported runs (the rows of /data/all.csv), the base path and the build time (UTC)."""
+    exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
+    export also records `site`, the four values its footer links (`SiteConfig.public_values`),
+    which `deploy-check` checks the pages against."""
     raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
     versions: set[str] = set()
@@ -264,6 +278,8 @@ def build_stamp(data: ReportData, base: str) -> dict:
         "classifier_versions": sorted(versions),
         "osm_timestamps": {city: sorted(ts) for city, ts in stamps.items()},
         "base": base,
+        "public": public,
+        **({"site": site} if public and site is not None else {}),
         "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
@@ -328,6 +344,43 @@ def _write_site(
     static = HERE / "static"
     shutil.copytree(static, site / "static", ignore=_ignore_tests(static))
     (site / BUILD_FILE).write_text(json.dumps(build, indent=2, sort_keys=True) + "\n")
+
+
+def write_gz(site: Path) -> int:
+    """A `<name>.gz` beside every file of a `GZ_TYPES` suffix and `GZ_MIN_BYTES` or more, byte
+    for byte reproducible (mtime 0, no stored file name). Returns the number written."""
+    count = 0
+    for path in sorted(p for p in site.rglob("*") if p.is_file()):
+        if path.suffix not in GZ_TYPES or path.stat().st_size < GZ_MIN_BYTES:
+            continue
+        with (
+            path.with_name(path.name + ".gz").open("wb") as raw,
+            gzip.GzipFile(filename="", mode="wb", compresslevel=9, fileobj=raw, mtime=0) as z,
+        ):
+            z.write(path.read_bytes())
+        count += 1
+    return count
+
+
+def headers_text(base: str, csp: str) -> str:
+    """The `_headers` file (Cloudflare Pages / Netlify format) for a site served under `base`:
+    `csp` is the pages' meta policy, to which the header adds `frame-ancestors 'none'`."""
+    return (
+        f"{base}*\n"
+        f"  Content-Security-Policy: {csp}; frame-ancestors 'none'\n"
+        "  X-Content-Type-Options: nosniff\n"
+        "  Referrer-Policy: strict-origin-when-cross-origin\n"
+        "  Cache-Control: public, max-age=3600\n"
+    )
+
+
+def oversized(site: Path, limit: int = MAX_FILE_BYTES) -> list[str]:
+    """The files (relative paths, sorted) of `limit` bytes or more."""
+    return sorted(
+        p.relative_to(site).as_posix()
+        for p in site.rglob("*")
+        if p.is_file() and p.stat().st_size >= limit
+    )
 
 
 class _HtmlRefs(HTMLParser):
@@ -558,11 +611,12 @@ def run_export(
     content_dir: Path,
     plans_data_dir: Path,
     clean: bool,
+    public: bool = False,
 ) -> ExportResult:
     """Write the static edition of the app built with `base` to `out` (module docstring)."""
     try:
         return _run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
         )
     except OSError as e:
         raise ExportError(f"export to {out} failed: {e}") from e
@@ -578,8 +632,20 @@ def _run_export(
     content_dir: Path,
     plans_data_dir: Path,
     clean: bool,
+    public: bool = False,
 ) -> ExportResult:
     validate_base(base)
+    site_values = None
+    if public:
+        try:
+            site_cfg = load_site(config_dir)
+        except ConfigError as e:
+            raise ExportError(str(e)) from e
+        if not site_cfg.complete:
+            raise ExportError(
+                "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
+            )
+        site_values = site_cfg.public_values()
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
     _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
@@ -590,7 +656,7 @@ def _run_export(
         raise ExportError(str(e)) from e
     try:
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base))
+        build = build_stamp(data, normalise_base(base), public, site_values)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base, static_edition={"commit": build["commit"]},
@@ -603,6 +669,14 @@ def _run_export(
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
         _write_site(site, app, urls, build, rendered)
+        (site / HEADERS_FILE).write_text(headers_text(build["base"], csp_meta(CSP)))
+        write_gz(site)
+        big = oversized(site, MAX_FILE_BYTES)
+        if big:
+            lines = "\n".join(f"  {name}" for name in big)
+            raise ExportError(
+                f"{len(big)} file(s) of {MAX_FILE_BYTES} bytes or more (the host's limit):\n{lines}"
+            )
         unresolved = scan_references(site, build["base"])
         if unresolved:
             lines = "\n".join(f"  {x.file}: {x.ref}" for x in unresolved)

@@ -844,8 +844,8 @@ def test_a_blank_alias_is_refused():
 
     with pytest.raises(ValidationError):
         CityConfig(
-            id="x", name="X", aliases=[" "], country_iso2="DE", epsg=25832, geofabrik_region="r",
-            osm_relation_id=1,
+            id="x", name="X", aliases=[" "], country_iso2="DE", lang="de", epsg=25832,
+            geofabrik_region="r", osm_relation_id=1,
         )  # fmt: skip
 
 

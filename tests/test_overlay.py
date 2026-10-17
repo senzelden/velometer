@@ -11,6 +11,7 @@ import pytest
 from shapely import LineString, box
 from typer.testing import CliRunner
 
+from tests.sqlite_util import committing
 from velometer.cli import app
 from velometer.config import ConfigError, default_config_dir
 from velometer.plans import berlin, overlay
@@ -361,7 +362,7 @@ def test_overlay_facts_read_the_latest_overlay_version(fixture_db, tmp_path):
     from velometer.db import OverlayRow, replace_plan_overlay
 
     db_path, _cfg, _conn, data = fixture_db
-    with sqlite3.connect(db_path) as c:
+    with committing(db_path) as c:
         run_id, ts = c.execute(
             "SELECT id, osm_timestamp FROM runs WHERE city_id='berlin' AND boundary_kind='lau' "
             "ORDER BY osm_timestamp LIMIT 1"

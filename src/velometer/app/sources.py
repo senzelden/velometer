@@ -60,6 +60,7 @@ class SourceRow:
     cities: list[tuple[str, str]]  # (city id, city name) whose Figures tab quotes it
     recomputed_anchor: str | None  # the overview key-numbers column id, else None
     city_name: str | None = None  # the city of a city source (its sort key)
+    city_id: str | None = None  # that city's id (its name's `lang`, M14)
     organisation_lang: str | None = None  # the language of organisation_name (M12-1)
     organisation_bracket_lang: str | None = None  # of its bracketed form, where not that one
     recomputed_label: str | None = None  # that overview column's own header label
@@ -177,6 +178,7 @@ def source_rows(
                     overview_column(preset_of[m.source]) if m.source in preset_of else None
                 ),
                 city_name=None if m.city == "*" else names.get(m.city, m.city),
+                city_id=None if m.city == "*" else m.city,
                 recomputed_label=labels.get(preset_of.get(m.source)),
                 english_cells=english_cells,
             )

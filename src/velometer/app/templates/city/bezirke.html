@@ -4,10 +4,10 @@
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <section>
-<h2>{{ t('city.tab.bezirke') }}</h2>
+<h2 id="bezirke-h">{{ t('city.tab.bezirke') }}</h2>
 <p class="meta">{{ t('page.bezirke.meta', unit=headline_unit) }}</p>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="bezirke-h">
 <thead><tr>
   <th>{{ t('table.bezirk') }}</th><th class="num" title="{{ headline_unit }}">{{ t('table.headline_per_100') }}</th><th class="num">{{ t('table.a_share') }}</th>
   {% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}
@@ -15,7 +15,7 @@
 <tbody>
 {% for r in bezirke.rows %}
 <tr{% if r.remainder %} class="remainder"{% endif %}>
-  <td data-label="{{ t('table.bezirk') }}">{{ r.name }}</td>
+  <td data-label="{{ t('table.bezirk') }}">{% if r.remainder %}{{ bezirke.remainder_html }}{% else %}{{ r.name }}{% endif %}</td>
   <td class="num" data-label="{{ t('table.headline_per_100') }}">{{ r.headline | num }}</td>
   <td class="num" data-label="{{ t('table.a_share') }}">{% if r.a_share_of_ab is none %}{{ t('fmt.na') }}{% else %}{{ t('unit.pct_spaced', value=r.a_share_of_ab | num) }}{% endif %}</td>
   {% for tier in tiers %}<td class="num" data-label="{{ tier }} km">{{ r.tier_km[tier] | num }}</td>{% endfor %}
@@ -32,7 +32,7 @@
 <div class="chart" data-chart="bezirke" data-city="{{ city.id }}" aria-describedby="bezirke-series-sum" role="group" aria-label="{{ t('page.bezirke.chart', city=city.name) }}"></div>
 <details class="table-details"><summary id="bezirke-series-sum">{{ t('page.bezirke.table') }}</summary>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="bezirke-series-sum">
 <thead><tr><th>{{ t('table.bezirk') }}</th>{% for l in bezirke.series.labels %}<th class="num">{{ l.text }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for r in bezirke.series.rows %}
@@ -46,7 +46,7 @@
 {% else %}
 <p class="note">{{ t('page.bezirke.no_history') }}</p>
 {% endif %}
-<h3>{{ t('page.bezirke.change', window=bezirke.window) }}</h3>
+<h3 id="bezirke-change-h">{{ t('page.bezirke.change', window=bezirke.window) }}</h3>
 {% if bezirke.change_runs %}
 <p class="meta">{{ t('page.bezirke.runs', run_from=bezirke.change_runs[0], run_to=bezirke.change_runs[1]) }}</p>
 {% endif %}
@@ -64,7 +64,7 @@
 <script type="module" src="{{ data_u('/static/changemap.js') }}"></script>
 {% endif %}
 {% if bezirke.change_table %}
-<div class="scroll">{{ bezirke.change_table | md | stack_table }}</div>
+<div class="scroll">{{ bezirke.change_table | md | stack_table('bezirke-change-h') }}</div>
 <p class="meta">{{ t('page.bezirke.table_note', geometry=t('change.category.geometry')) }}</p>
 {% endif %}
 {% if not bezirke.change_map and not bezirke.change_table %}

@@ -22,6 +22,7 @@ from html import unescape
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlparse
+from xml.etree import ElementTree
 
 import markdown
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -46,6 +47,9 @@ from velometer.app.names import country_name
 from velometer.app.narrative import (
     Fallback,
     bracketed,
+    city_lang_attr,
+    city_name,
+    city_row_name,
     data_ref_label,
     fb,
     fb_text,
@@ -61,7 +65,7 @@ from velometer.app.search import search_index
 from velometer.app.series import series_payload
 from velometer.app.sources import GROUPS, group_name, overview_column, source_anchor, source_rows
 from velometer.app.tokens import theme_tokens
-from velometer.config import ConfigError, PresetRanking, load_differences
+from velometer.config import ConfigError, PresetRanking, load_cities, load_differences, load_site
 from velometer.content.loader import (
     load_document,
     load_narratives,
@@ -69,7 +73,7 @@ from velometer.content.loader import (
     load_organisations,
     load_sources,
 )
-from velometer.content.models import ContentError, Explainer
+from velometer.content.models import LANG_TAG, ContentError, Explainer
 from velometer.content.translate import walk
 from velometer.db import SchemaError, subarea_names
 from velometer.i18n import LANGS, Lang
@@ -238,13 +242,29 @@ class _DropComments(markdown.preprocessors.Preprocessor):
         return HTML_COMMENT.sub("", "\n".join(lines)).split("\n")
 
 
+# the one raw markup markdown may hold (M14): a name or term in its own language,
+# `<span lang="da">København</span>` (a city's name, the methodology) or `<i lang="de">Bezirke</i>`
+# (an original term, the Bezirk change table): plain text inside, the language a plain tag
+LANG_MARK = rf'<(span|i) lang="({LANG_TAG.pattern})">([^<>]+)</\1>'
+
+
+class _LangMark(markdown.inlinepatterns.InlineProcessor):
+    def handleMatch(self, m, data):
+        el = ElementTree.Element(m.group(1))
+        el.set("lang", m.group(2))
+        el.text = unescape(m.group(3))  # serialised escaped once
+        return el, m.start(0), m.end(0)
+
+
 class _EscapeHtml(markdown.Extension):
-    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted.
-    HTML comments (the `<!-- generated:... -->` markers of docs/methodology*.md) are dropped."""
+    """Markdown with raw HTML turned off: `<b>` in the source is shown as text, never emitted,
+    except a language mark (`LANG_MARK`). HTML comments (the `<!-- generated:... -->` markers of
+    docs/methodology*.md) are dropped."""
 
     def extendMarkdown(self, md):
         md.preprocessors.deregister("html_block")
         md.inlinePatterns.deregister("html")
+        md.inlinePatterns.register(_LangMark(LANG_MARK, md), "lang_mark", 90)
         md.preprocessors.register(_DropComments(md), "drop_comments", 30)
 
 
@@ -309,9 +329,10 @@ def _md(text: str, ids: list[str] | None = None) -> Markup:
     )
 
 
-def _stack_table(html: Markup) -> Markup:
+def _stack_table(html: Markup, labelledby: str | None = None) -> Markup:
     """A rendered markdown table made a stacking table: class `stack`, and `data-label` on each
-    body cell, equal to its column's header text (the same rule the templates follow)."""
+    body cell, equal to its column's header text (the same rule the templates follow).
+    `labelledby`: the id of the heading that names the table (`aria-labelledby`, M14 §4.3)."""
     text = str(html)
     thead = re.search(r"<thead>.*?</thead>", text, re.S)
     heads = [
@@ -329,7 +350,8 @@ def _stack_table(html: Markup) -> Markup:
 
     head, sep, body = text.partition("</thead>")
     body = re.sub(r"<tr>.*?</tr>", row, body, flags=re.S)
-    return Markup((head + sep + body).replace("<table>", '<table class="stack">', 1))
+    named = f' aria-labelledby="{escape(labelledby)}"' if labelledby else ""
+    return Markup((head + sep + body).replace("<table>", f'<table class="stack"{named}>', 1))
 
 
 def _host(url: str) -> str:
@@ -452,6 +474,10 @@ def create_app(
     }
     data_u = urls.make_data_u(app.state.base_path)
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
+    app.state.site = load_site(config_dir)
+    # a table row carries a city's id and name, not the city: the config says which language the
+    # name is in (M14)
+    city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
     commit = static_edition["commit"] if static_edition else short_commit(git_commit())
 
     def _templates(lang: Lang) -> Jinja2Templates:
@@ -468,6 +494,7 @@ def create_app(
         # inside a double-quoted attribute the policy's single quotes need no escaping
         env.globals["csp_meta"] = Markup(str(escape(csp_meta(CSP))).replace("&#39;", "'"))
         env.globals["static_edition"] = static_edition
+        env.globals["site"] = app.state.site
         env.globals["cite_text"] = partial(cite_model.cite_text, lang=lang)
         # the `#ui-strings` block static/js/strings.js reads: the `js.*` strings and month names
         env.globals["js_strings"] = i18n.js_strings
@@ -477,8 +504,16 @@ def create_app(
         env.globals["fb_text"] = fb_text
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
+        # the Datalab's name in the footer, in a `<span lang>` where site.yaml gives its language
+        env.globals["datalab_name"] = lambda d: (
+            Markup("<span{}>{}</span>").format(lang_attr(d.lang), d.name) if d.lang else d.name
+        )
         # its bracketed form in another language, in its own `lang` (review 10, I1)
         env.globals["bracketed"] = bracketed
+        # a city's name; the city's own one in its `lang` where English shows it (M14)
+        env.globals["city_name"] = partial(city_name, lang=lang)
+        env.globals["city_lang_attr"] = partial(city_lang_attr, lang=lang)
+        env.globals["city_row_name"] = partial(city_row_name, city_configs, lang=lang)
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
         # a source's publisher or title: on a German page its German sibling, original in `lang`
@@ -1034,16 +1069,21 @@ def create_app(
             cited_sources = [] if nar is None else sorted(nar.sources.items())
             cited_refs = [] if nar is None else sorted(nar.refs.items())
         lang = request.state.lang
-        label = i18n.t(lang, f"city.tab.{tab}")
+        label = i18n.t(lang, f"city.tab.{tab}")  # plain: the <title>
+        label_html = i18n.t_markup(lang, f"city.tab.{tab}")  # the crumb and the tab links: marks
         tabs = [
-            {"key": k, "label": i18n.t(lang, f"city.tab.{k}"), "href": f"/city/{city_id}{suffix}"}
+            {
+                "key": k,
+                "label_html": i18n.t_markup(lang, f"city.tab.{k}"),
+                "href": f"/city/{city_id}{suffix}",
+            }
             for k, suffix in TABS
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
-            tabs=tabs, nar=nar, content_error=note, cited_sources=cited_sources,
-            cited_refs=cited_refs,
+            tabs=tabs, tab_label_html=label_html, nar=nar, content_error=note,
+            cited_sources=cited_sources, cited_refs=cited_refs,
         )  # fmt: skip
 
     async def compare(request: Request, data: Data):
@@ -1546,11 +1586,19 @@ def create_app(
         table = None if text is None else change_report.bezirk_table(text, data.lang)
         if table is not None:  # never raw HTML from the page into the `md` filter
             table = table.replace("<", "&lt;").replace(">", "&gt;")
+            table = change_report.mark_remainder(table, data.lang)  # the one mark let through
         runs = None if text is None else change_report.change_runs(text)
         has_map = (maps_dir / f"{stem}.geojson").is_file()
         latest = data.selector.latest(data.conn, city_id, "lau")
         return {
             "rows": rows,
+            # the remainder row's name as HTML text, the original term marked (the plain label
+            # is for the CSV and the change report)
+            "remainder_html": i18n.t_markup(
+                lang,
+                "subarea.remainder",
+                n=len(data.city_fields()[city_id]["subareas"]["relations"]),
+            ),
             "series": bezirk_series(data, city_id),
             "window": i18n.t(
                 lang,

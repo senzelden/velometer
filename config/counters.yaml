@@ -123,6 +123,8 @@ cities:
   - city: oslo
     adapter: oslo
     source: Statens vegvesen (state counters)
+    source_lang: nb
+    source_bracket_lang: en
     source_de: Statens vegvesen (staatliche Zählstellen)
     licence: NLOD
     licence_url: https://data.norge.no/nlod/no

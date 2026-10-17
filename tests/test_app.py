@@ -7,7 +7,6 @@ import json
 import os
 import re
 import shutil
-import sqlite3
 import threading
 import time
 from collections import Counter
@@ -19,6 +18,7 @@ from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
 from tests.report_fixture import CLASSIFIER
+from tests.sqlite_util import committing
 from velometer import i18n
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
@@ -747,7 +747,7 @@ def test_db_on_another_schema_version_is_503(setup, tmp_path):
     db_path, cfg, maps, docs = setup
     old = tmp_path / "v5.sqlite"
     shutil.copy(db_path, old)
-    with sqlite3.connect(old) as c:
+    with committing(old) as c:
         c.execute("PRAGMA user_version = 5")
     with _client(create_app(old, cfg, maps, docs, content_dir=CONTENT)) as c:
         for path in ["/", "/city/berlin", "/data/all.csv"]:
@@ -778,7 +778,7 @@ def test_index_flagged_years_count_lau_only(client, monkeypatch):
 def test_city_with_current_run_but_no_history(setup):
     """Review Focus 2, reverse case: berlin/fua keeps its current run, its history fails."""
     db_path, cfg, maps, docs = setup
-    with sqlite3.connect(db_path) as c:
+    with committing(db_path) as c:
         c.execute(
             "UPDATE runs SET status='failed' WHERE city_id='berlin' AND boundary_kind='fua' "
             "AND source='history'"
@@ -1126,13 +1126,16 @@ def test_maps_of_an_untrusted_city_are_404(report_db_with_trust, tmp_path):
 CHANGE_STEM = "berlin_change_2023-01-01_current"  # the shipped report.yaml change_window
 
 
-def _change_markdown(run_to: int = 2, west: str = "West") -> str:
+def _change_markdown(run_to: int = 2, west: str = "West", remainder: bool = False) -> str:
+    from velometer.config import REMAINDER_ID
     from velometer.report import change as ch
 
     rows = [
         ch.ChangeRow("gained", None, 7, "right", None, "A", 1.25, {"west": 1.25}),
         ch.ChangeRow("lost", 8, None, "left", "B", None, 0.5, {"east": 0.5}),
     ]
+    if remainder:  # a way-side outside both Bezirke: the table's remainder row
+        rows.append(ch.ChangeRow("gained", None, 9, "left", None, "A", 0.25, {REMAINDER_ID: 0.25}))
     result = ch.ChangeResult(rows, {"A": 1.0}, {"A": 2.0})
     run = {"id": 1, "osm_timestamp": "2023-01-01T00:00:00Z", "classifier_version": "v4",
            "boundary_sha256": "b" * 64}  # fmt: skip
@@ -1173,8 +1176,8 @@ def _write_change(maps: Path, docs: Path, stem: str = CHANGE_STEM, **kw) -> None
 
 def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    assert "<h2>Bezirke</h2>" in html
-    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h2>")[0]
+    assert '<i lang="de">Bezirke</i></h2>' in html
+    bezirke = html.split('<i lang="de">Bezirke</i></h2>')[1].split("<h2>")[0]
     assert "<td>West</td>" in bezirke and "<td>East</td>" in bezirke
     assert "4.0" in bezirke  # West's headline, 4 %
     assert '<div class="chart" data-chart="bezirke" data-city="berlin"' in bezirke
@@ -1185,12 +1188,12 @@ def test_city_page_has_the_bezirke_table_and_small_multiples(subarea_client):
 
 def test_bezirke_table_ends_with_the_remainder_row_and_its_note(subarea_client):
     html = nolabels(subarea_client.get("/city/berlin/bezirke").text)
-    bezirke = html.split("<h2>Bezirke</h2>")[1].split("<h3>")[0]
+    bezirke = html.split('<i lang="de">Bezirke</i></h2>')[1].split("<h3>")[0]
     body = bezirke.split("<tbody>")[1].split("</tbody>")[0]
     rows = body.split("<tr")[1:]
     assert ["<td>East</td>" in rows[0], "<td>West</td>" in rows[1]] == [True, True]
     assert len(rows) == 3 and 'class="remainder"' in rows[2]
-    assert "<td>Outside the 2 Bezirke (districts), at the LAU edge</td>" in rows[2]
+    assert '<td>Outside the 2 <i lang="de">Bezirke</i> (districts), at the LAU edge</td>' in rows[2]
     assert 'class="remainder"' not in "".join(rows[:2])
     note = bezirke.split("</table>")[1]
     assert (
@@ -1224,7 +1227,7 @@ def test_bezirke_with_change_files_show_the_map_and_the_per_bezirk_table(subarea
         assert "No change map generated yet" not in html
         assert f"/maps/{CHANGE_STEM}.geojson" in html
         assert "/static/changemap.js" in html and "/static/vendor/leaflet.js" in html
-        table = html.split("<h3>Mapped change")[1].split("</table>")[0]
+        table = html.split('<h3 id="bezirke-change-h">Mapped change')[1].split("</table>")[0]
         assert "<td>West</td>" in table and "<td>East</td>" in table and "1.250" in table
         assert "MARKER-BEYOND-THE-TABLE" not in html  # only the generated table, not the page
         assert c.get(f"/maps/{CHANGE_STEM}.geojson").status_code == 200
@@ -1235,7 +1238,9 @@ def test_change_section_names_its_runs_and_is_not_stale_on_the_latest_run(subare
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split(
+            '<h3 id="bezirke-change-h">Mapped change'
+        )[1]
     assert f"Run 1 → run {latest}" in section
     assert "older than" not in section and "Regenerate it" not in section
 
@@ -1245,7 +1250,9 @@ def test_change_section_says_when_the_change_map_is_older_than_the_figures(subar
     latest = _latest_lau_run(db_path, cfg)
     _write_change(maps, docs, run_to=latest - 1)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
-        section = c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1]
+        section = c.get("/city/berlin/bezirke").text.split(
+            '<h3 id="bezirke-change-h">Mapped change'
+        )[1]
     assert f"Run 1 → run {latest - 1}" in section
     assert f"ends at run {latest - 1}, not at the run {latest} of the figures above" in section
     assert "<code>velometer report change --city berlin</code>" in section
@@ -1261,7 +1268,9 @@ def test_change_table_never_passes_raw_html(subarea_setup):
     md.write_text(md.read_text().replace("| East |", "| <i>East</i> |"))
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         section = (
-            c.get("/city/berlin/bezirke").text.split("<h3>Mapped change")[1].split("</table>")[0]
+            c.get("/city/berlin/bezirke")
+            .text.split('<h3 id="bezirke-change-h">Mapped change')[1]
+            .split("</table>")[0]
         )
     assert "<b>" not in section and "<i>" not in section
     assert "&lt;b&gt;West&lt;/b&gt;" in section and "&lt;i&gt;East&lt;/i&gt;" in section
@@ -1387,7 +1396,7 @@ def test_city_page_lists_reported_figures_with_link_or_no_url_note(setup):
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
         other = c.get("/city/paris/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert (
         section.count("<td>new_cycle_infra_km") == 0
         and section.count("<code>new_cycle_infra_km</code>") == 2
@@ -1415,7 +1424,7 @@ def test_non_http_source_url_is_never_a_link(setup):
     _add_reported(db_path, source_url="javascript:alert(1)")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="javascript:' not in html and "javascript:" not in section
     assert section.count("no source URL recorded") == 2  # the bad scheme and the blank one
 
@@ -1425,7 +1434,7 @@ def test_an_upper_case_http_scheme_is_a_link(setup):
     _add_reported(db_path, source_url="HTTPS://example.org/report")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     assert 'href="HTTPS://example.org/report"' in section
 
 
@@ -1435,7 +1444,7 @@ def test_reported_figure_note_gets_its_own_full_width_row(setup):
     _add_reported(db_path, note="primary: Drucksache 19/25987, table Vorrangnetz")
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = nolabels(c.get("/city/berlin/figures").text)
-    section = html.split("<h2>Official and reported figures</h2>")[1].split("</section>")[0]
+    section = html.split(">Official and reported figures</h2>")[1].split("</section>")[0]
     link_cell = section.split('rel="noopener noreferrer">source</a>')[1].split("</td>")[0]
     assert "Drucksache" not in link_cell
     assert '<td colspan="8" class="meta">primary: Drucksache 19/25987' in section

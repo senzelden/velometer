@@ -491,7 +491,9 @@ def test_tab_routes_and_the_current_tab_mark(subarea_client):  # noqa: F811 - th
         r = subarea_client.get(f"/city/berlin{tab}")
         assert r.status_code == 200, tab
         tabs = re.search(r'<nav class="tabs".*?</nav>', r.text, re.S).group(0)
-        assert re.findall(r'<a [^>]*aria-current="page"[^>]*>(.*?)</a>', tabs) == [label]
+        assert re.findall(r'<a [^>]*aria-current="page"[^>]*>(.*?)</a>', tabs) == [
+            label.replace("Bezirke", '<i lang="de">Bezirke</i>')
+        ]
         assert len(re.findall(r"<li><a ", tabs)) == 5
     assert subarea_client.get("/city/berlin/nope").status_code == 404
     assert subarea_client.get("/city/paris/bezirke").status_code == 404
@@ -515,7 +517,7 @@ def test_figures_tab_lists_a_length_driver_row_for_a_streckenlaenge_figure(setup
         replace_external_figures(w, "official", [fig])
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures"') :].split("</table>")[0]
     assert '<div data-dimension="length"><dt>How length is measured</dt>' in table
     assert "route length (Streckenlänge)" in table
     row = next(r for r in table.split("<tr>") if "priority cycle network" in r)
@@ -537,7 +539,7 @@ def test_figures_rows_of_one_source_are_told_apart_by_date_and_link(setup):  # n
         replace_external_figures(w, "official", [a, b])
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures"') :].split("</table>")[0]
     rows = [r for r in table.split("<tr>") if "newly created cycle infrastructure" in r]
     assert len(rows) == 2
     assert {("2025-01-01" in r, "2024-12-31" in r) for r in rows} == {(True, False), (False, True)}
@@ -738,7 +740,7 @@ def test_figures_rows_with_one_source_metric_and_date_differ_in_visible_text(set
         replace_external_figures(w, "official", rows)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures"') :].split("</table>")[0]
     cells = [
         re.sub(r"<(?:dl|div|dt|dd)\b.*", "", r.split("</td>")[0], flags=re.S)
         for r in table.split("<tr>")
@@ -1097,7 +1099,7 @@ def test_stories_works_without_javascript(story_client):
     secs = _sections(html)
     for step in ("all", "leaders", "tail", "growth"):  # jumps: no km_jump in the fixture
         assert '<details class="step-values" open>' in secs[step], step
-        assert '<table class="step-table stack">' in secs[step], step
+        assert '<table class="step-table stack"' in secs[step], step
     assert "Text of leaders" in secs["leaders"]
     assert '<sup><a href="#src-1">1</a></sup>' in html and '<sup class="dref">' in html
     assert 'id="src-1"' in html and 'id="ref-1"' in html  # the lists the numbers point at
@@ -1112,9 +1114,9 @@ def test_stories_escapes_the_narrative(story_client):
 
 def test_the_story_table_has_a_row_per_city_with_first_and_current_values(story_client):
     html = nolabels(story_client.get("/stories").text)
-    table = re.search(r'<table class="step-table stack">.*?</table>', _sections(html)["all"], re.S)[
-        0
-    ]
+    table = re.search(
+        r'<table class="step-table stack"[^>]*>.*?</table>', _sections(html)["all"], re.S
+    )[0]
     assert len(re.findall(r"<tr>", table)) == 21 + 1  # and the header row
     assert "Jan 2024" in table and re.search(r">[A-Z][a-z]{2} 2026<", table)  # the snapshot month
     assert 'href="/city/berlin"' in table
@@ -1217,7 +1219,7 @@ def test_the_jumps_table_lists_only_km_jump_city_years_with_before_and_after(sto
 def test_the_growth_table_shows_km_and_the_change_beside_the_index(story_client):
     html = nolabels(story_client.get("/stories").text)
     table = re.search(
-        r'<table class="step-table stack">.*?</table>', _sections(html)["growth"], re.S
+        r'<table class="step-table stack"[^>]*>.*?</table>', _sections(html)["growth"], re.S
     )[0]
     assert (
         "A+B km Jan 2024" in table and "Change, km" in table and "Index, first year = 100" in table
@@ -1243,7 +1245,7 @@ def _diffs_rows(db_path, cfg, maps, docs, figures) -> list[str]:
         replace_external_figures(w, "official", figures)
     with _client(create_app(db_path, cfg, maps, docs, content_dir=CONTENT)) as c:
         html = c.get("/city/berlin/figures").text
-    table = html[html.index('<table class="diffs stack figures">') :].split("</table>")[0]
+    table = html[html.index('<table class="diffs stack figures"') :].split("</table>")[0]
     return [r for r in table.split("<tr>") if "newly created cycle infrastructure" in r]
 
 

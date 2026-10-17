@@ -125,6 +125,11 @@ class _Times:
 
 def _parse_member(label, stream, times, sites, hours) -> None:
     header_line, f = _open_text(stream)
+    with f:  # the text wrapper owns the stream's handle: closed here, never left to the GC
+        _parse_text(label, header_line, f, times, sites, hours)
+
+
+def _parse_text(label, header_line, f, times, sites, hours) -> None:
     delim = ";" if header_line.count(";") >= header_line.count(",") else ","
     header = [h.strip() for h in next(csv.reader([header_line], delimiter=delim))]
     idx = {}

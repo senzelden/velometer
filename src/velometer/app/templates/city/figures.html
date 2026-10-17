@@ -8,15 +8,15 @@
 {%- endmacro %}
 {% block tab %}
 <section>
-<h2>{{ t('page.differences.title') }}</h2>
+<h2 id="fig-diffs-h">{{ t('page.differences.title') }}</h2>
 <p class="meta">{{ t('page.figures.dimensions') }} {% for d in dimensions %}{{ d.label[:1] | lower }}{{ d.label[1:] }}{% if not loop.last %}, {% endif %}{% endfor %}. <a href="{{ u('/differences') }}">{{ t('page.figures.explained') }} →</a></p>
 {% if differences is none %}
 <p class="note">{{ t('page.figures.config_error') }}</p>
 {% elif not differences %}
-<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.none', city=city_name(city)) }}</p>
 {% else %}
 <div class="scroll">
-<table class="diffs stack figures">
+<table class="diffs stack figures" aria-labelledby="fig-diffs-h">
 <thead><tr><th>{{ t('table.source') }}</th><th>{{ t('table.figure') }}</th><th class="num">{{ t('table.theirs') }}</th><th>{{ t('table.ours') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.differs') }}</th></tr></thead>
 <tbody>
 {% for r in differences %}
@@ -50,14 +50,14 @@
 </section>{% endif %}{% endif %}
 
 <section>
-<h2>{{ t('page.figures.comparison') }}</h2>
+<h2 id="fig-compare-h">{{ t('page.figures.comparison') }}</h2>
 {% if reconcile is none %}
 <p class="note">{{ t('page.figures.no_run') }}</p>
 {% elif not reconcile.gaps %}
-<p class="note">{{ t('page.figures.none', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.none', city=city_name(city)) }}</p>
 {% else %}
 <div class="scroll">
-<table class="stack figures">
+<table class="stack figures" aria-labelledby="fig-compare-h">
 <thead><tr><th>{{ t('table.comparison') }}</th><th class="num">{{ t('table.ours') }}</th><th class="num">{{ t('table.theirs') }}</th><th class="num">{{ t('table.gap') }}</th><th>{{ t('table.flagged_col') }}</th><th>{{ t('table.source_date') }}</th></tr></thead>
 <tbody>
 {% for g in reconcile.gaps %}
@@ -77,13 +77,13 @@
 </section>
 
 <section>
-<h2>{{ t('page.figures.official') }}</h2>
+<h2 id="fig-official-h">{{ t('page.figures.official') }}</h2>
 {% if not reported %}
-<p class="note">{{ t('page.figures.no_official', city=city.name) }}</p>
+<p class="note">{{ t('page.figures.no_official', city=city_name(city)) }}</p>
 {% else %}
 <p class="meta">{{ t('page.figures.official_meta') }}</p>
 <div class="scroll">
-<table class="stack figures">
+<table class="stack figures" aria-labelledby="fig-official-h">
 <thead><tr><th>{{ t('table.source') }}</th><th>{{ t('page.compare.metric') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.unit') }}</th><th>{{ t('table.scope') }}</th><th>{{ t('table.length_basis') }}</th><th>{{ t('table.date') }}</th><th>{{ t('table.source_link') }}</th></tr></thead>
 <tbody>
 {% for f in reported %}

@@ -58,3 +58,9 @@ markers = ["slow: needs network or large data; deselected by default"]
 # a runaway test fails instead of filling RAM (the slowest fast test takes about 3 s); slow tests
 # are exempt in tests/conftest.py
 timeout = 60
+# an unclosed connection, file or client fails the test that leaked it; CPython reports them at
+# garbage collection, so the unraisable form is an error too
+filterwarnings = [
+  "error::ResourceWarning",
+  "error::pytest.PytestUnraisableExceptionWarning",
+]

@@ -8,22 +8,22 @@
 {%- if v.row.suspect and v.row.note %}<br><span class="meta suspect-note"{{ fb(v.note_fallback) }}>{{ v.note }}</span>{% endif %}</li>
 {%- endmacro %}
 {% block content %}
-<h1>{{ t('page.plans.title') }}</h1>
+<h1 id="plans-h">{{ t('page.plans.title') }}</h1>
 <p class="dek">{{ t('page.plans.dek') }}</p>
 <p class="meta">{{ t('page.plans.meta', berlin=u('/plans/berlin')) }}</p>
 {% if error %}<p class="note">{{ t('page.plans.error') }}</p>{% endif %}
 <div class="scroll">
-<table class="plans stack">
+<table class="plans stack" aria-labelledby="plans-h">
 <thead><tr><th>{{ t('table.city') }}</th><th>{{ t('table.plan') }}</th><th>{{ t('table.status') }}</th><th>{{ t('table.target') }}</th><th>{{ t('table.latest_reported') }}</th></tr></thead>
 <tbody>
 {% for c in table %}
 {% if not c.plans %}
-<tr id="{{ c.id }}"><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></th><td colspan="4" class="note" data-label="{{ t('table.plan') }}">{{ t('page.plans.no_plan') }}</td></tr>
+<tr id="{{ c.id }}"><th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ c.id) }}">{{ city_row_name(c.id, c.name) }}</a></th><td colspan="4" class="note" data-label="{{ t('table.plan') }}">{{ t('page.plans.no_plan') }}</td></tr>
 {% endif %}
 {% for p in c.plans %}
 <tr{% if loop.first %} id="{{ c.id }}"{% endif %}>
-  <th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ c.id) }}">{{ c.name }}</a></th>
-  <td data-label="{{ t('table.plan') }}">{% if p.url %}<a href="{{ p.url }}" rel="noopener noreferrer"{{ lang_attr(p.plan.title_lang) }}>{{ p.plan.title }}</a>{% else %}<span{{ lang_attr(p.plan.title_lang) }}>{{ p.plan.title }}</span>{% endif %}
+  <th scope="row" data-label="{{ t('table.city') }}"><a href="{{ u('/city/' ~ c.id) }}">{{ city_row_name(c.id, c.name) }}</a></th>
+  <td data-label="{{ t('table.plan') }}">{% if p.url %}<a href="{{ p.url }}" rel="noopener noreferrer"{{ lang_attr(p.plan.title_lang) }}>{{ bracketed(p.plan.title, p.plan.title_bracket_lang) }}</a>{% else %}<span{{ lang_attr(p.plan.title_lang) }}>{{ bracketed(p.plan.title, p.plan.title_bracket_lang) }}</span>{% endif %}
     <br><span class="meta">{% if p.plan.adopted %}{{ t('page.plans.adopted', date=p.plan.adopted | day) }}{% else %}{{ t('page.plans.adoption_unknown') }}{% endif %} · {% if p.publisher.href %}<a href="{{ u(p.publisher.href) }}"{{ lang_attr(p.publisher.lang) }}>{{ bracketed(p.publisher.name, p.publisher.bracket_lang) }}</a>{% else %}{{ p.publisher.name }}{% endif %}</span>
     {% if p.detail_href %}<br><a href="{{ u(p.detail_href) }}">{{ t('page.plans.every_item') }} →</a>{% endif %}
     {% if p.plan.note %}<details class="plan-note"><summary>{{ t('page.plans.notes') }}</summary><p class="meta">{{ p.plan.note }}</p></details>{% endif %}</td>

@@ -41,7 +41,7 @@ from shapely.prepared import prep  # noqa: E402
 
 from velometer.config import REMAINDER_ID, ClassifierConfig, remainder_label  # noqa: E402
 from velometer.db import fetch_run  # noqa: E402
-from velometer.i18n import Lang, fmt, t  # noqa: E402
+from velometer.i18n import Lang, fmt, t, t_markup  # noqa: E402
 from velometer.pipeline.classify import classify_ways  # noqa: E402
 from velometer.pipeline.dedupe import share_within  # noqa: E402
 from velometer.pipeline.geometry import Projector  # noqa: E402
@@ -594,6 +594,26 @@ _REMAINDER = re.compile(
     re.escape(t("en", "subarea.remainder", n=0)).replace("0", r"(\d+)", 1) + "$"
 )
 _NUMBER_CELL = re.compile(r"^-?\d+(\.\d+)?$")
+
+
+def _remainder_pattern(lang: Lang) -> re.Pattern:
+    """The remainder's plain label in `lang`, its count a group."""
+    return re.compile(re.escape(t(lang, "subarea.remainder", n=0)).replace("0", r"(\d+)", 1) + "$")
+
+
+def mark_remainder(table: str, lang: Lang = "en") -> str:
+    """`bezirk_table`'s table with the remainder's label as a page shows it, its original term
+    marked (`<i lang="de">Bezirke</i>`, M14): for the app's markdown filter, which lets that
+    mark through, after the table's own text is escaped."""
+    pattern = _remainder_pattern(lang)
+    out = []
+    for line in table.splitlines():
+        cells = line.strip().strip("|").split("|")
+        if line.startswith("|") and (m := pattern.match(cells[0].strip())):
+            cells[0] = f" {t_markup(lang, 'subarea.remainder', n=int(m.group(1)))} "
+            line = "|" + "|".join(cells) + "|"
+        out.append(line)
+    return "\n".join(out)
 
 
 def _localise_row(line: str, index: int, lang: Lang) -> str:

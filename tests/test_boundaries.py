@@ -14,6 +14,7 @@ CITY = CityConfig(
     id="berlin",
     name="Berlin",
     country_iso2="DE",
+    lang="de",
     epsg=25833,
     geofabrik_region="europe/germany/berlin",
     osm_relation_id=62422,

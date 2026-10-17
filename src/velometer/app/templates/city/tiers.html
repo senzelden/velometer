@@ -18,10 +18,10 @@
 </section>
 
 <section>
-<h2>{{ t('page.tiers.lau_fua') }}</h2>
+<h2 id="lau-fua-h">{{ t('page.tiers.lau_fua') }}</h2>
 <p class="meta">{{ t('page.tiers.headline', unit=headline_unit) }}</p>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="lau-fua-h">
 <thead><tr>
   <th>{{ t('table.boundary') }}</th><th class="num" title="{{ headline_unit }}">{{ t('table.headline_per_100') }}</th><th class="num">A+B km</th>
   {% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}

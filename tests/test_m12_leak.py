@@ -317,7 +317,9 @@ def test_a_counter_publisher_is_written_in_its_language_unless_ours_is_shown():
     assert by_city["berlin"].source_lang_in("de") == "de"
     assert by_city["helsinki"].source_lang_in("en") == "en"
     oslo = by_city["oslo"]  # "Statens vegvesen (state counters)": our words beside the name
-    assert oslo.source_lang is None and oslo.source_lang_in("de") is None
+    assert oslo.source_lang_in("en") == "nb" and oslo.source_bracket_lang_in("en") == "en"
+    assert oslo.source_lang_in("de") is None  # our German attribution is in the page's language
+    assert oslo.source_bracket_lang_in("de") is None
 
 
 @pytest.mark.parametrize("bad", ["d a", "DE", "deutsch-", ""])

@@ -1,3 +1,5 @@
 # velometer: OSM account for Geofabrik's internal server (M3). Values live in pass, never here.
 use_pass VELOMETER_OSM_USER velometer/osm-username
 use_pass VELOMETER_OSM_PASSWORD velometer/osm-password
+# velometer: Mistral OCR for `content --check --online` (M14); optional, a missing entry only warns.
+use_pass_optional MISTRAL_API_KEY api/mistral

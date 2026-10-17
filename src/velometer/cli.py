@@ -2079,6 +2079,12 @@ def app_export(
     clean: bool = typer.Option(
         False, "--clean", help="Replace a previous export in --out (one with its build.json)."
     ),
+    public: bool = typer.Option(
+        False,
+        "--public",
+        help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
+        "pages (a public export).",
+    ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,
     maps: Path = typer.Option(Path("data/maps"), "--maps", help="Tier map PNGs directory."),  # noqa: B008
@@ -2095,7 +2101,7 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
         )
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)
@@ -2104,6 +2110,36 @@ def app_export(
         f"exported {result.files} files ({result.bytes / 1e6:.1f} MB) to {out} in "
         f"{time.monotonic() - start:.1f} s, build {result.build['commit']}, "
         f"base {result.build['base']}"
+    )
+
+
+@web_app.command("deploy-check")
+def app_deploy_check(
+    site: Path = typer.Argument(..., help="A finished export directory."),  # noqa: B008
+    base: str = typer.Option(
+        None, "--base", help="Path the site is served under (default: the one in build.json)."
+    ),
+    public: bool = typer.Option(
+        False, "--public", help="Fail unless the export is public (made with `export --public`)."
+    ),
+) -> None:
+    """The deploy dry run: verify a finished export and upload nothing (exit 1 lists problems).
+    A public export is checked against its own build.json and footers."""
+    import json
+
+    from velometer.app.deploy_check import deploy_problems, site_stats
+
+    problems = deploy_problems(site, base, public)
+    if problems:
+        for p in problems:
+            typer.echo(f"problem: {p}")
+        typer.echo(f"deploy-check: {len(problems)} problem(s)", err=True)
+        raise typer.Exit(1)
+    build = json.loads((site / "build.json").read_text(encoding="utf-8"))
+    files, size = site_stats(site)
+    typer.echo(
+        f"deploy-check ok: {files} files, {size / 1e6:.1f} MB, base {build['base']}, "
+        f"public {build.get('public', False)}"
     )
 
 

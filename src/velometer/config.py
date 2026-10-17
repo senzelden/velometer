@@ -5,10 +5,20 @@ import re
 from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Literal
+from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
+from velometer.content.models import name_lang
 from velometer.i18n import Lang, t
 from velometer.pipeline.geometry import require_projected
 from velometer.pipeline.match import validate_expr
@@ -117,6 +127,9 @@ class CityConfig(_Strict):
     name_de: str | None = None
     # Other names the search matches (the common English one): display data, not classifier input
     aliases: list[str] = []
+    # the language the city's own `name` is in (BCP 47: "da" for København): the `lang` of the
+    # name where an English page shows it and it differs from the English form (aliases[0])
+    lang: str
     country_iso2: str = Field(pattern=r"^[A-Z]{2}$")
     epsg: int
     geofabrik_region: str
@@ -157,6 +170,17 @@ class CityConfig(_Strict):
         if any(not a.strip() for a in v):
             raise ValueError("aliases: a blank alias")
         return v
+
+    @field_validator("lang")
+    @classmethod
+    def _lang_tag(cls, v: str) -> str:
+        return name_lang(v, "lang") or v
+
+    @property
+    def english_name(self) -> str:
+        """The name an English page would use if it did not show the city's own: the first alias
+        (Copenhagen), else `name`."""
+        return self.aliases[0] if self.aliases else self.name
 
     @field_validator("name_de")
     @classmethod
@@ -875,3 +899,79 @@ def reader_prose(config_dir: Path) -> list[tuple[str, str, str]]:
         if c.nuts3_note and c.nuts3_note_de
     ]
     return out
+
+
+def _https_url(value: str) -> str:
+    parsed = urlsplit(value)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError(f"{value!r} must be an https:// URL with a host")
+    return value
+
+
+HttpsUrl = Annotated[str, AfterValidator(_https_url)]
+
+
+class Datalab(_Strict):
+    name: str = Field(min_length=1)
+    url: HttpsUrl
+    lang: str | None = None  # the name's language where it is not the page's ("de", M14)
+
+    @field_validator("lang")
+    @classmethod
+    def _lang_tag(cls, v: str | None) -> str | None:
+        return name_lang(v, "datalab.lang")
+
+
+class SiteConfig(_Strict):
+    """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14)."""
+
+    datalab: Datalab | None = None
+    impressum_url: HttpsUrl | None = None
+    privacy_url: HttpsUrl | None = None
+
+    @field_validator("datalab", mode="before")
+    @classmethod
+    def _unset_datalab(cls, v: Any) -> Any:
+        """`name: null` and `url: null` (and `lang: null`) together are an unset Datalab, not a
+        half-set one."""
+        if isinstance(v, dict) and v and all(x is None for x in v.values()):
+            return None
+        return v
+
+    @model_validator(mode="after")
+    def _legal_pair(self) -> "SiteConfig":
+        if (self.impressum_url is None) != (self.privacy_url is None):
+            raise ValueError("impressum_url and privacy_url must be set together")
+        return self
+
+    @property
+    def complete(self) -> bool:
+        return self.datalab is not None and self.impressum_url is not None
+
+    def missing(self) -> list[str]:
+        """The dotted names of the unset values."""
+        out = []
+        if self.datalab is None:
+            out += ["datalab.name", "datalab.url"]
+        if self.impressum_url is None:
+            out.append("impressum_url")
+        if self.privacy_url is None:
+            out.append("privacy_url")
+        return out
+
+    def public_values(self) -> dict[str, str | None]:
+        """The four values a public export needs, as `build.json` records them (M14)."""
+        return {
+            "datalab_name": self.datalab.name if self.datalab else None,
+            "datalab_url": self.datalab.url if self.datalab else None,
+            "impressum_url": self.impressum_url,
+            "privacy_url": self.privacy_url,
+        }
+
+
+def load_site(config_dir: Path) -> SiteConfig:
+    """The site settings; a missing `site.yaml` is an empty SiteConfig."""
+    path = Path(config_dir) / "site.yaml"
+    if not path.is_file():
+        return SiteConfig()
+    return _parse(path, lambda doc: SiteConfig.model_validate(doc or {}))

@@ -32,6 +32,10 @@ class City(_Model):
     # every form of the name a reader may search for (config: name, name_de, aliases); display
     # data set by ReportData, never stored
     names: tuple[str, ...] = ()
+    # the language of the city's own name and the name an English page would use without it
+    # (config: lang, aliases[0] else name); display data set by ReportData, never stored
+    lang: str | None = None
+    english_name: str | None = None
 
 
 class Boundary(_Model):

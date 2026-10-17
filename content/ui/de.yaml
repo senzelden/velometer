@@ -7,6 +7,9 @@ site.footer.methodology: Methodik
 site.footer.csv_all: CSV (alle Städte)
 site.footer.run: 'Klassifikator {classifier} · Konfiguration <code>{config}</code>'
 site.footer.static_edition: Statische Ausgabe · Build {commit}
+site.footer.datalab: Teil von {name}
+site.footer.impressum: Impressum
+site.footer.privacy: Datenschutz
 page.404.title: Seite nicht gefunden
 page.404.home: Übersicht
 page.404.text: 'Unter dieser Adresse gibt es keine Seite. <a href="{home}">Zur Übersicht</a>.'
@@ -382,7 +385,7 @@ preset.fallback_label: '{preset}, unsere OSM-Daten'
 figure.scope.whole_network: gesamtes Netz
 figure.scope.incl_traffic_calmed_restricted_access: einschließlich verkehrsberuhigter Straßen mit beschränkter Kfz-Zufahrt
 figure.scope.vorrangnetz: Vorrangnetz
-figure.scope.cykelsti: Cykelsti (Radweg)
+figure.scope.cykelsti: '<i lang="da">Cykelsti</i> (Radweg)'
 figure.scope.hauptradverkehrsnetz: Hauptradverkehrsnetz
 figure.basis.unknown: unbekannt
 figure.basis.streckenlaenge: Streckenlänge

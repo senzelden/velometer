@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FIXTURE, useLang } from "./strings-fixture.mjs";
-import { fileName, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv } from "../download.js";
+import { fileName, fit, glyphOf, hex, lightOf, pngBlob, safeCell, selfContained, slug, tableCsv, wrap } from "../download.js";
 
 // A minimal fake DOM: tagName, attributes ([{name, value}]), children, textContent.
 const node = (tagName, attrs = {}, children = [], textContent = "") => ({
@@ -403,4 +403,76 @@ test("selfContained: a short title and meta lines keep the one-line layout", () 
   const out = selfContained(node("svg", { viewBox: "0 0 800 200" }, []), darkStyle, null, META);
   assert.match(out, /<g transform="translate\(0,30\)">/);
   assert.equal(textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]).length, 2);
+});
+
+// M14 Task 7: a title wraps by the measured width of each candidate line
+const glyph = (ch) => ("WÄ".includes(ch) ? 14 : ch === "i" ? 4 : 8);
+const stub = (s) => [...s].reduce((n, ch) => n + glyph(ch), 0);
+const WIDE = "WWWW ÄÖÜ WWW iii WWWW ÄÄ iiii WWWW WWW";
+
+test("wrap: no line of several words is wider than the room by the measure", () => {
+  const room = 120;
+  const lines = wrap(WIDE, stub, room);
+  assert.ok(lines.length >= 2);
+  assert.equal(lines.join(" "), WIDE);
+  for (const l of lines.filter((l) => l.includes(" "))) assert.ok(stub(l) <= room, `"${l}" is ${stub(l)} px`);
+});
+
+test("wrap: one word wider than the room stays whole on its own line", () => {
+  const lines = wrap("ab WWWWWWWWWWWWWWWW cd", stub, 100);
+  assert.deepEqual(lines, ["ab", "WWWWWWWWWWWWWWWW", "cd"]);
+  assert.ok(stub(lines[1]) > 100);
+});
+
+test("fit: a text that fits is one line; one that does not wraps by the measure", () => {
+  assert.deepEqual(fit("iii iii", stub, 200), ["iii iii"]);
+  assert.ok(fit(WIDE, stub, 120).length >= 2);
+});
+
+test("selfContained: without a measure a plain ASCII title wraps as it did before M14", () => {
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  const title = "Cycling infrastructure growth across the whole region compared with last year";
+  const out = selfContained(svg, darkStyle, null, { ...META, title });
+  // recorded from the pre-change code (average 15 * 0.62 px a character)
+  assert.deepEqual(textsOf(out.split("<g transform=")[0]).map((l) => l.text), [
+    "Cycling infrastructure growth",
+    "across the whole region",
+    "compared with last year",
+  ]);
+});
+
+test("selfContained: title lines are wrapped by the measure the page gave", () => {
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  const measure = (text) => stub(text) * 15 / 8;
+  const out = selfContained(svg, darkStyle, null, { ...META, title: WIDE, measure });
+  const lines = textsOf(out.split("<g transform=")[0]).map((l) => l.text);
+  assert.ok(lines.length >= 2);
+  for (const l of lines.filter((l) => l.includes(" "))) assert.ok(measure(l) <= 300 - 16, `"${l}"`);
+});
+
+// M14 Task 7: a key label wraps by the page's measure of the key font, not the chip's average
+test("selfContained: a long key label wraps by the width the page measured for the key font", () => {
+  const text = Array.from({ length: 24 }, (_, i) => `w${i}xx`).join(" ");
+  const svg = node("svg", { viewBox: "0 0 300 200" }, []);
+  // the chip was measured wide (the page's own label), so it wraps; the page's 11px measure is
+  // narrower than the chip's average character, so lines hold more words by it
+  const chip = { shape: "line", colour: "rgb(1, 2, 3)", text, width: text.length * 9 };
+  const keyLines = (measure) => {
+    const out = selfContained(svg, darkStyle, null, { ...META, key: [chip], measure });
+    const g = out.match(/<g id="velometer-key">(.*?)<\/g>/)[1];
+    return [...g.matchAll(/<text x="([\d.]+)"[^>]*>([^<]*)<\/text>/g)].map((m) => [Number(m[1]), m[2]]);
+  };
+  const sizes = [];
+  const measure = (s, size) => {
+    sizes.push(size);
+    return s.length * 5;
+  };
+  const byPage = keyLines(measure);
+  const byChip = keyLines(undefined);
+  assert.ok(byPage.length >= 2, "wrapped");
+  assert.equal(byPage.map((l) => l[1]).join(" "), text);
+  assert.ok(sizes.includes("11px"), "the key is measured in the key font");
+  for (const [x, s] of byPage) assert.ok(x + measure(s, "11px") <= 300, `"${s}" ends at ${x + s.length * 5}`);
+  // a line can hold more than the chip's average would allow: the page's measure decided
+  assert.ok(byPage.length < byChip.length, `${byPage.length} lines by the page, ${byChip.length} by the chip`);
 });

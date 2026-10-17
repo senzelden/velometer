@@ -29,7 +29,7 @@
 <section>
 <h2>{{ t('page.differences.cities') }}</h2>
 <ul class="city-links">
-{% for c in cities %}<li><a href="{{ u('/city/' ~ c.id ~ '/figures') }}">{{ c.name }}</a></li>
+{% for c in cities %}<li><a href="{{ u('/city/' ~ c.id ~ '/figures') }}">{{ city_name(c) }}</a></li>
 {% endfor %}</ul>
 </section>
 {% endblock %}

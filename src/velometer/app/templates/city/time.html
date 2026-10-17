@@ -9,7 +9,7 @@
 <div class="chart" data-chart="city-headline" data-city="{{ city.id }}" aria-describedby="yearly-caption" role="group" aria-label="{{ t('page.city.headline_chart', city=city.name) }}"></div>
 <div class="scroll">
 <table class="yearly stack">
-<caption id="yearly-caption" class="sr-only">{{ t('page.time.caption', city=city.name) }}</caption>
+<caption id="yearly-caption" class="sr-only">{{ t('page.time.caption', city=city_name(city)) }}</caption>
 <thead><tr><th>{{ t('table.snapshot') }}</th>{% for k in kinds %}<th class="num">{{ t('table.kind_headline', kind=k.kind | upper) }}</th><th class="num">{{ k.kind | upper }} A+B km</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}
@@ -53,14 +53,14 @@
 </section>
 
 <section>
-<h2>{{ t('page.time.presets') }}</h2>
+<h2 id="presets-h">{{ t('page.time.presets') }}</h2>
 <div class="pair">
 {% for k in kinds %}
 <div>
-<h3>{{ k.kind | upper }}</h3>
+<h3 id="presets-{{ k.kind }}">{{ k.kind | upper }}</h3>
 {% if k.point %}
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="presets-h presets-{{ k.kind }}">
 <thead><tr><th>{{ t('table.preset') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.measure') }}</th><th class="num">{{ t('table.per_100k') }}{% if k.point.population_year %} {{ t('table.population_year', year=k.point.population_year) }}{% endif %}</th></tr></thead>
 <tbody>
 {% for p in k.point.presets %}

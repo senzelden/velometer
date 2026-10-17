@@ -1,3 +1,5 @@
+import gc
+import os
 import threading
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -27,6 +29,31 @@ def pytest_collection_modifyitems(items):
     for item in items:
         if item.get_closest_marker("slow") and not item.get_closest_marker("timeout"):
             item.add_marker(pytest.mark.timeout(0))
+
+
+def pytest_configure(config):
+    """A suite run inside direnv has a real MISTRAL_API_KEY; no test may reach the billed API
+    through it. Dropped before collection, so no module, session or module fixture sees it
+    either; tests that need a key pass one explicitly."""
+    os.environ.pop("MISTRAL_API_KEY", None)
+
+
+@pytest.fixture(autouse=True)
+def _no_mistral_key(monkeypatch):
+    """The same for each test, after anything that set the key again."""
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _collect_after_each_test():
+    """An unclosed connection, file or client warns (a ResourceWarning, an error under
+    `filterwarnings`) only when it is garbage-collected, so a plain run reports a leak at the end
+    of the session, not at the test that caused it. `VELOMETER_GC_EACH_TEST=1 uv run pytest`
+    collects after every test and so fails the leaking one (it makes the suite about 2.5 times
+    slower, which is why it is not the default)."""
+    yield
+    if os.environ.get("VELOMETER_GC_EACH_TEST"):
+        gc.collect()
 
 
 @pytest.fixture

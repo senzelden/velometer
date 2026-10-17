@@ -17,7 +17,7 @@
 {% set why_roles = doc.sections | map(attribute="role") | list if doc else [] %}
 <h1>{{ t('page.plan.h1', title=(doc.title | lower if lang == 'en' else fb_text(doc.title)) if doc else t('page.plan.h1_default')) }}</h1>
 {% if plan %}
-<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ plan.title }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ bracketed(publisher.name, publisher.bracket_lang) }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
+<p class="meta">{% if url %}<a href="{{ url }}" rel="noopener noreferrer"{{ lang_attr(plan.title_lang) }}>{{ bracketed(plan.title, plan.title_bracket_lang) }}</a>{% else %}<span{{ lang_attr(plan.title_lang) }}>{{ bracketed(plan.title, plan.title_bracket_lang) }}</span>{% endif %}{% if plan.adopted %}, {{ t('page.plans.adopted', date=plan.adopted | day) }}{% endif %} · {% if publisher.href %}<a href="{{ u(publisher.href) }}"{{ lang_attr(publisher.lang) }}>{{ bracketed(publisher.name, publisher.bracket_lang) }}</a>{% else %}{{ publisher.name }}{% endif %} · <a href="{{ u('/plans') }}">{{ t('page.plan.all_plans') }}</a></p>
 {% endif %}
 {% if content_error %}<p class="note">{{ t('note.registry_error') }}</p>{% endif -%}
 {% if text_error %}<p class="note">{{ t('page.plan.text_error') }}</p>{% endif %}
@@ -98,9 +98,9 @@
 <details class="table-details plan-series">
 <summary>{{ t('page.plan.every_figure', n=i.figures) }}</summary>
 {% for s in i.series %}
-<h3>{{ s.text | capitalize }}</h3>
+<h3 id="plan-series-{{ i.item.id }}-{{ loop.index }}">{{ s.text | capitalize }}</h3>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="plan-series-{{ i.item.id }}-{{ loop.index }}">
 <thead><tr><th class="num">{{ t('table.year') }}</th><th class="num">{{ t('table.value') }}</th><th>{{ t('table.status') }}</th><th>{{ t('table.document') }}</th></tr></thead>
 <tbody>
 {% for year, views in s.years %}{% for v in views %}
@@ -132,10 +132,10 @@
 
 {% if plan %}
 <section id="documents">
-<h2>{{ t('page.plan.documents') }}</h2>
+<h2 id="documents-h">{{ t('page.plan.documents') }}</h2>
 <p class="meta">{{ t('page.plan.documents_meta') }}</p>
 <div class="scroll">
-<table class="plan-docs stack">
+<table class="plan-docs stack" aria-labelledby="documents-h">
 <thead><tr><th>{{ t('table.type') }}</th><th>{{ t('table.number') }}</th><th>{{ t('table.date') }}</th><th>{{ t('table.publisher') }}</th><th>{{ t('table.reports_on') }}</th><th class="num">{{ t('table.figures') }}</th></tr></thead>
 <tbody>
 {% for d in documents %}

@@ -8,6 +8,7 @@ Day totals below were summed by hand from the fixture rows (docs/review/m8-count
 import json
 import shutil
 import sqlite3
+from contextlib import closing, contextmanager
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -164,6 +165,7 @@ def test_madrid_duplicate_listing_with_other_counts_raises(tmp_path):
 # --- load via the CLI -----------------------------------------------------------------------
 
 
+@contextmanager
 def _setup(tmp_path, city: str, files: list[Path], boundary: Path | None = None):
     cfg_dir = tmp_path / "config"
     cfg_dir.mkdir()
@@ -186,7 +188,11 @@ def _setup(tmp_path, city: str, files: list[Path], boundary: Path | None = None)
     db = tmp_path / "v.sqlite"
     args = ["--db", str(db), "--config-dir", str(cfg_dir)]
     res = CliRunner().invoke(app, ["counters", "load", city, "--data", str(data), *args])
-    return res, sqlite3.connect(db)
+    conn = sqlite3.connect(db)
+    try:
+        yield res, conn
+    finally:
+        conn.close()
 
 
 def _madrid_year(path: Path, year: int, sites: int) -> Path:
@@ -231,21 +237,21 @@ def test_madrid_index_base_year_2020_is_100(tmp_path):
     assert CONFIG.entry("madrid").base_year == 2020
     (tmp_path / "src").mkdir()
     synthetic = _madrid_year(tmp_path / "src" / "2020.csv", 2020, MIN_SITES)
-    res, conn = _setup(tmp_path, "madrid", [synthetic])
-    assert res.exit_code == 0, res.output
-    rows = conn.execute(
-        "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id='madrid'"
-    )
-    assert {y: (idx, n, base) for y, idx, n, base in rows} == {2020: (100.0, MIN_SITES, 2020)}
+    with _setup(tmp_path, "madrid", [synthetic]) as (res, conn):
+        assert res.exit_code == 0, res.output
+        rows = conn.execute(
+            "SELECT year, idx, sites, base_year FROM counter_index WHERE city_id='madrid'"
+        )
+        assert {y: (idx, n, base) for y, idx, n, base in rows} == {2020: (100.0, MIN_SITES, 2020)}
 
 
 def test_madrid_fixture_years_have_no_index_value(tmp_path):
     # the real fixture cut: four months of 2019 and a few days of the other years qualify nowhere
-    res, conn = _setup(tmp_path, "madrid", MAD_FILES)
-    assert res.exit_code == 0, res.output
-    rows = conn.execute("SELECT year, idx, base_year FROM counter_index WHERE city_id='madrid'")
-    by_year = {y: (idx, base) for y, idx, base in rows}
-    assert by_year and all(v == (None, 2020) for v in by_year.values()), by_year
+    with _setup(tmp_path, "madrid", MAD_FILES) as (res, conn):
+        assert res.exit_code == 0, res.output
+        rows = conn.execute("SELECT year, idx, base_year FROM counter_index WHERE city_id='madrid'")
+        by_year = {y: (idx, base) for y, idx, base in rows}
+        assert by_year and all(v == (None, 2020) for v in by_year.values()), by_year
 
 
 @pytest.mark.parametrize(
@@ -306,22 +312,22 @@ def test_oslo_day_under_full_coverage_is_incomplete_without_every_hour(tmp_path)
 
 def test_oslo_load_drops_a_point_outside_the_boundary(tmp_path):
     assert CONFIG.entry("oslo").boundary == "lau"
-    res, conn = _setup(tmp_path, "oslo", OSLO_FILES, OSLO / "oslo_lau.geojson")
-    assert res.exit_code == 0, res.output
-    sites = {r[0] for r in conn.execute("SELECT site_id FROM counter_sites")}
-    assert sites == {"70429B619257", "12703B2460285"}
-    (outside,) = conn.execute(
-        "SELECT COUNT(*) FROM counter_daily WHERE site_id='88224B442844'"
-    ).fetchone()
-    assert outside == 0
-    (source,) = conn.execute("SELECT DISTINCT source FROM counter_sites").fetchone()
-    assert "state counters" in source
+    with _setup(tmp_path, "oslo", OSLO_FILES, OSLO / "oslo_lau.geojson") as (res, conn):
+        assert res.exit_code == 0, res.output
+        sites = {r[0] for r in conn.execute("SELECT site_id FROM counter_sites")}
+        assert sites == {"70429B619257", "12703B2460285"}
+        (outside,) = conn.execute(
+            "SELECT COUNT(*) FROM counter_daily WHERE site_id='88224B442844'"
+        ).fetchone()
+        assert outside == 0
+        (source,) = conn.execute("SELECT DISTINCT source FROM counter_sites").fetchone()
+        assert "state counters" in source
 
 
 def test_oslo_load_without_the_stored_boundary_fails(tmp_path):
-    res, _ = _setup(tmp_path, "oslo", OSLO_FILES)
-    assert res.exit_code == 1
-    assert "lau boundary not readable" in res.output
+    with _setup(tmp_path, "oslo", OSLO_FILES) as (res, _):
+        assert res.exit_code == 1
+        assert "lau boundary not readable" in res.output
 
 
 def test_oslo_fetch_keeps_points_inside_pages_days_and_records_queries(tmp_path):
@@ -467,29 +473,31 @@ def test_barcelona_index_needs_twelve_months_in_both_years():
 
 
 def test_barcelona_load_stores_monthly_values_and_their_series(tmp_path):
-    res, conn = _setup(tmp_path, "barcelona", BCN_FILES)
-    assert res.exit_code == 0, res.output
-    assert "monthly values" in res.output
-    (n,) = conn.execute("SELECT COUNT(*) FROM counter_monthly WHERE city_id='barcelona'").fetchone()
-    assert n > 0
-    assert conn.execute("SELECT COUNT(*) FROM counter_daily").fetchone() == (0,)
-    series = {r[0] for r in conn.execute("SELECT series FROM counter_index")}
-    assert series == {"avg_daily_intensity"}
-    # the monthly links are unchanged by pooling (each site has twelve values in both years of
-    # a link): one chain_index_monthly result, stored for both methods
-    by_method = {
-        m: conn.execute(
-            "SELECT year, idx, sites, base_year, series FROM counter_index "
-            "WHERE city_id='barcelona' AND method=? ORDER BY year",
-            (m,),
-        ).fetchall()
-        for m in INDEX_METHODS
-    }
-    assert by_method["v1"] and by_method["v1"] == by_method["v2"]
-    span = conn.execute(
-        "SELECT first_day, last_day FROM counter_sites WHERE site_id='20012'"
-    ).fetchone()
-    assert span == ("2019-01-01", "2024-12-31")
+    with _setup(tmp_path, "barcelona", BCN_FILES) as (res, conn):
+        assert res.exit_code == 0, res.output
+        assert "monthly values" in res.output
+        (n,) = conn.execute(
+            "SELECT COUNT(*) FROM counter_monthly WHERE city_id='barcelona'"
+        ).fetchone()
+        assert n > 0
+        assert conn.execute("SELECT COUNT(*) FROM counter_daily").fetchone() == (0,)
+        series = {r[0] for r in conn.execute("SELECT series FROM counter_index")}
+        assert series == {"avg_daily_intensity"}
+        # the monthly links are unchanged by pooling (each site has twelve values in both years of
+        # a link): one chain_index_monthly result, stored for both methods
+        by_method = {
+            m: conn.execute(
+                "SELECT year, idx, sites, base_year, series FROM counter_index "
+                "WHERE city_id='barcelona' AND method=? ORDER BY year",
+                (m,),
+            ).fetchall()
+            for m in INDEX_METHODS
+        }
+        assert by_method["v1"] and by_method["v1"] == by_method["v2"]
+        span = conn.execute(
+            "SELECT first_day, last_day FROM counter_sites WHERE site_id='20012'"
+        ).fetchone()
+        assert span == ("2019-01-01", "2024-12-31")
 
 
 def test_monthly_index_with_a_gap_in_the_base_year():
@@ -521,12 +529,12 @@ def test_seven_cities_configured_with_their_adapters():
 
 
 def test_check_flags_a_negative_monthly_value(tmp_path):
-    conn = sqlite3.connect(tmp_path / "c.sqlite")
-    create_schema(conn)
-    replace_counter_monthly(
-        conn, "barcelona", [CounterMonth("barcelona", "20012", "2019-01", "working_day", -1.0)]
-    )
-    problems = check_counters(conn, CONFIG)
+    with closing(sqlite3.connect(tmp_path / "c.sqlite")) as conn:
+        create_schema(conn)
+        replace_counter_monthly(
+            conn, "barcelona", [CounterMonth("barcelona", "20012", "2019-01", "working_day", -1.0)]
+        )
+        problems = check_counters(conn, CONFIG)
     assert "barcelona: 1 negative monthly values" in problems
 
 

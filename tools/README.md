@@ -121,8 +121,21 @@ uv run --group dev python tools/orca_pass.py --site "$SCRATCH/site" --base /velo
 ```
 
 `--out` gets `transcript.md` (per step: the keys, the DOM focus, Orca's locus, what Orca said and
-in which language), `steps.json` and Orca's raw `orca-debug.log`. The review log of M13 is
-`docs/review/m13-screen-reader.md`.
+in which language), `steps.json` and Orca's raw `orca-debug.log`. The review logs are
+`docs/review/m13-screen-reader.md` and `docs/review/m14-screen-reader.md`.
+
+`--locale LOCALE --locpath DIR` (M14) runs the whole private session in a process locale. `LANG` and
+`LC_ALL` are set to the locale, `LOCPATH` to the directory, and Chrome gets `--lang=<language>`
+(`de` for `de_DE.UTF-8`). Without them the run inherits the caller's locale. The locale needs no
+root; build it once with `localedef`, which writes a directory:
+
+```bash
+localedef -i de_DE -f UTF-8 "$SCRATCH/locale/de_DE.UTF-8"
+uv run --group dev python tools/orca_pass.py --site "$SCRATCH/site" --base /velometer/ \
+    --editions de --locale de_DE.UTF-8 --locpath "$SCRATCH/locale" --out "$SCRATCH/orca-de"
+```
+
+All isolation properties above hold unchanged with a locale.
 
 ## axe/
 

@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
@@ -28,7 +29,8 @@ BASE_URL = "http://127.0.0.1:8000"
 # the stamp in each page language (M12): a German page says it in German
 FOOTERS = {lang: i18n.t(lang, "site.footer.static_edition", commit="") for lang in i18n.LANGS}
 BUILD_KEYS = {
-    "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "built_at"
+    "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "public",
+    "built_at"
 }  # fmt: skip
 
 MAIN_OPEN = '<main id="main" tabindex="-1">'
@@ -45,7 +47,8 @@ def _content(rich) -> Path:  # noqa: F811
     db_path, cfg, *_ = rich
     content = db_path.parent / "content-for-fixture"
     if not content.exists():
-        cities = {c.id for c in _data(rich).cities()}
+        with _data(rich) as data:
+            cities = {c.id for c in data.cities()}
         assert "berlin" in cities
         city_link = re.compile(r"/city/([a-z_-]+)")
 
@@ -67,9 +70,15 @@ def _app(rich, base="/"):  # noqa: F811
     )
 
 
+@contextmanager
 def _data(rich):  # noqa: F811
+    """The fixture DB's ReportData, its read-only connection closed on exit."""
     db_path, cfg, *_ = rich
-    return ReportData(open_readonly(db_path), cfg)
+    conn = open_readonly(db_path)
+    try:
+        yield ReportData(conn, cfg)
+    finally:
+        conn.close()
 
 
 def _export(rich, out: Path, base="/", clean=False):  # noqa: F811
@@ -122,43 +131,45 @@ def test_url_to_path_refuses_what_has_no_file(url):
 
 
 def test_export_urls_are_what_the_app_serves(rich):  # noqa: F811
-    app, data = _app(rich), _data(rich)
-    found = export.export_urls(data, app)
-    assert len(found) == len(set(found))
-    with TestClient(app, base_url=BASE_URL) as c:
-        responses = {url: c.get(url, follow_redirects=False) for url in found}
-        for url, r in responses.items():
-            assert r.status_code == 200, url
-        cities = [city.id for city in data.cities()]
-        assert cities
-        for city in cities:
-            assert f"/city/{city}" in found
-            assert f"/city/{city}/panel" in found
-            for _k, suffix in TABS:
-                url = f"/city/{city}{suffix}"
-                # a tab is exported exactly when the app serves it for that city
-                assert (url in found) == (c.get(url, follow_redirects=False).status_code == 200), (
-                    url
-                )
-            for url in (f"/plans/{city}", f"/data/{city}.csv", f"/data/{city}_subareas.csv"):
-                assert (url in found) == (c.get(url, follow_redirects=False).status_code == 200), (
-                    url
-                )
-    # the fixture has a city without a tab (paris: no Bezirke), so absence is exercised
-    assert any(f"/city/{c}/bezirke" not in found for c in cities)
-    for url in ["/", "/compare", "/methodology/de", "/data/series.json", "/data/all.csv"]:
-        assert url in found
-    # every map an exported page references is exported
-    maps = set()
-    for r in responses.values():
-        if r.headers["content-type"].startswith("text/html"):
-            maps |= set(re.findall(r"/maps/[^\"'\s)<>]+", r.text))
-    assert maps, "the fixture's pages reference maps"
-    assert maps <= set(found)
+    app = _app(rich)
+    with _data(rich) as data:
+        found = export.export_urls(data, app)
+        assert len(found) == len(set(found))
+        with TestClient(app, base_url=BASE_URL) as c:
+            responses = {url: c.get(url, follow_redirects=False) for url in found}
+            for url, r in responses.items():
+                assert r.status_code == 200, url
+            cities = [city.id for city in data.cities()]
+            assert cities
+            for city in cities:
+                assert f"/city/{city}" in found
+                assert f"/city/{city}/panel" in found
+                for _k, suffix in TABS:
+                    url = f"/city/{city}{suffix}"
+                    # a tab is exported exactly when the app serves it for that city
+                    assert (url in found) == (
+                        c.get(url, follow_redirects=False).status_code == 200
+                    ), url
+                for url in (f"/plans/{city}", f"/data/{city}.csv", f"/data/{city}_subareas.csv"):
+                    assert (url in found) == (
+                        c.get(url, follow_redirects=False).status_code == 200
+                    ), url
+        # the fixture has a city without a tab (paris: no Bezirke), so absence is exercised
+        assert any(f"/city/{c}/bezirke" not in found for c in cities)
+        for url in ["/", "/compare", "/methodology/de", "/data/series.json", "/data/all.csv"]:
+            assert url in found
+        # every map an exported page references is exported
+        maps = set()
+        for r in responses.values():
+            if r.headers["content-type"].startswith("text/html"):
+                maps |= set(re.findall(r"/maps/[^\"'\s)<>]+", r.text))
+        assert maps, "the fixture's pages reference maps"
+        assert maps <= set(found)
 
 
 def test_export_urls_find_maps_under_a_base(rich):  # noqa: F811
-    found = export.export_urls(_data(rich), _app(rich, BASE))
+    with _data(rich) as data:
+        found = export.export_urls(data, _app(rich, BASE))
     assert "/maps/berlin_lau.geojson" in found  # referenced as /velometer/maps/…, kept as /maps/…
 
 
@@ -166,7 +177,8 @@ def test_export_urls_find_the_german_tier_map_image(rich):  # noqa: F811
     """A German page links `<city>_<kind>.de.png`: the export holds it."""
     _db, _cfg, maps, _docs, _plans = rich
     (maps / "berlin_lau.de.png").write_bytes((maps / "berlin_lau.png").read_bytes())
-    found = export.export_urls(_data(rich), _app(rich, BASE))
+    with _data(rich) as data:
+        found = export.export_urls(data, _app(rich, BASE))
     assert "/maps/berlin_lau.de.png" in found and "/maps/berlin_lau.png" in found
 
 
@@ -181,53 +193,53 @@ def test_run_export_writes_the_static_edition(rich, tmp_path):  # noqa: F811
     assert _md5(db_path) == before  # read-only
 
     app = _app(rich, BASE)
-    data = _data(rich)
-    found = export.export_urls(data, app)
-    with TestClient(app, base_url=BASE_URL) as c:
-        for url in found:
-            r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
-            assert r.status_code == 200, url
-            path = out / export.url_to_path(url, r.headers["content-type"])
-            assert path.is_file(), url
-            if not r.headers["content-type"].startswith(("text/html", "text/csv")):
-                assert path.read_bytes() == r.content, url  # a CSV's preamble has a timestamp
-        missing = c.get("/no-such-page")
-        assert missing.status_code == 404
-        assert _without_footer((out / "404.html").read_text()) == missing.text
+    with _data(rich) as data:
+        found = export.export_urls(data, app)
+        with TestClient(app, base_url=BASE_URL) as c:
+            for url in found:
+                r = c.get(url, follow_redirects=False)  # as the export asks: a redirect is no page
+                assert r.status_code == 200, url
+                path = out / export.url_to_path(url, r.headers["content-type"])
+                assert path.is_file(), url
+                if not r.headers["content-type"].startswith(("text/html", "text/csv")):
+                    assert path.read_bytes() == r.content, url  # a CSV's preamble has a timestamp
+            missing = c.get("/no-such-page")
+            assert missing.status_code == 404
+            assert _without_footer((out / "404.html").read_text()) == missing.text
 
-    static = HERE / "static"
-    for src in _files(static):
-        rel = src.relative_to(static)
-        if rel.parts[:2] == ("js", "tests"):
-            assert not (out / "static" / rel).exists(), rel
-        else:
-            assert (out / "static" / rel).read_bytes() == src.read_bytes(), rel
-    assert not (out / "static" / "js" / "tests").exists()
+        static = HERE / "static"
+        for src in _files(static):
+            rel = src.relative_to(static)
+            if rel.parts[:2] == ("js", "tests"):
+                assert not (out / "static" / rel).exists(), rel
+            else:
+                assert (out / "static" / rel).read_bytes() == src.read_bytes(), rel
+        assert not (out / "static" / "js" / "tests").exists()
 
-    build = json.loads((out / "build.json").read_text())
-    assert set(build) == BUILD_KEYS
-    assert build["base"] == BASE
-    assert isinstance(build["dirty"], bool)
-    assert build["commit_full"].startswith(build["commit"].removesuffix("-dirty"))
-    built = datetime.fromisoformat(build["built_at"])
-    assert built.utcoffset().total_seconds() == 0
-    assert abs((datetime.now(UTC) - built).total_seconds()) < 600
-    rows = data.csv_rows()
-    assert build["classifier_versions"] == sorted({r["classifier_version"] for r in rows})
-    stamps: dict[str, set] = {}
-    for r in rows:
-        stamps.setdefault(r["city_id"], set()).add(r["osm_timestamp"])
-    assert build["osm_timestamps"] == {k: sorted(v) for k, v in stamps.items()}
-    assert result.build == build
+        build = json.loads((out / "build.json").read_text())
+        assert set(build) == BUILD_KEYS
+        assert build["base"] == BASE
+        assert isinstance(build["dirty"], bool)
+        assert build["commit_full"].startswith(build["commit"].removesuffix("-dirty"))
+        built = datetime.fromisoformat(build["built_at"])
+        assert built.utcoffset().total_seconds() == 0
+        assert abs((datetime.now(UTC) - built).total_seconds()) < 600
+        rows = data.csv_rows()
+        assert build["classifier_versions"] == sorted({r["classifier_version"] for r in rows})
+        stamps: dict[str, set] = {}
+        for r in rows:
+            stamps.setdefault(r["city_id"], set()).add(r["osm_timestamp"])
+        assert build["osm_timestamps"] == {k: sorted(v) for k, v in stamps.items()}
+        assert result.build == build
 
-    pages = [p for p in out.rglob("index.html") if p.parent.name != "panel"]
-    assert len(pages) > 10
-    for page in pages:
-        lang = urls.lang_of("/" + page.relative_to(out).parent.as_posix())
-        assert page.read_text().count(FOOTERS[lang] + build["commit"]) == 1, page
-    files = _files(out)
-    assert result.files == len(files)
-    assert result.bytes == sum(p.stat().st_size for p in files)
+        pages = [p for p in out.rglob("index.html") if p.parent.name != "panel"]
+        assert len(pages) > 10
+        for page in pages:
+            lang = urls.lang_of("/" + page.relative_to(out).parent.as_posix())
+            assert page.read_text().count(FOOTERS[lang] + build["commit"]) == 1, page
+        files = _files(out)
+        assert result.files == len(files)
+        assert result.bytes == sum(p.stat().st_size for p in files)
 
 
 def test_a_non_200_fails_the_export_naming_url_and_status(rich, tmp_path, monkeypatch):  # noqa: F811
@@ -316,7 +328,9 @@ def test_export_and_serve_take_the_plans_data_dir(tmp_path, monkeypatch, given):
     db.write_bytes(b"")
     seen = {}
 
-    def fake_export(out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean):
+    def fake_export(
+        out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
+    ):
         seen["export"] = plans_data_dir
         return export.ExportResult(0, 0, {"commit": "x", "base": "/"})
 
@@ -1097,7 +1111,9 @@ def test_exported_pages_are_the_live_apps_pages(rich, tmp_path):  # noqa: F811
     assert len(pages) > 10
     # each page file's URL, as the export rendered it (`/de/` keeps its slash: `/de` redirects)
     url_of = {"404.html": "/404"}
-    for url in export.export_urls(_data(rich), _app(rich)):
+    with _data(rich) as data:
+        urls_ = export.export_urls(data, _app(rich))
+    for url in urls_:
         url_of.setdefault(str(export.url_to_path(url, "text/html")), url)
     with TestClient(_app(rich), base_url=BASE_URL) as c:
         for page in pages:

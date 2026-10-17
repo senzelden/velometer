@@ -43,6 +43,7 @@ def _row(**run_kw) -> dict:
         id="berlin",
         name="Berlin",
         country_iso2="DE",
+        lang="de",
         osm_relation_id=62422,
         epsg=25833,
         geofabrik_region="r",

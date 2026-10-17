@@ -23,7 +23,7 @@
 <div class="chart" data-chart="city-headline" data-height="170" data-city="{{ city.id }}" aria-describedby="story-headline-sum" role="group" aria-label="{{ t('page.city.headline_chart', city=city.name) }}"></div>
 <details class="table-details"><summary id="story-headline-sum">{{ t('page.story.table') }}</summary>
 <div class="scroll">
-<table class="stack">
+<table class="stack" aria-labelledby="story-headline-sum">
 <thead><tr><th>{{ t('table.snapshot') }}</th>{% for k in kinds %}<th class="num">{{ t('table.kind_headline', kind=k.kind | upper) }}</th>{% endfor %}</tr></thead>
 <tbody>
 {% for row in yearly %}

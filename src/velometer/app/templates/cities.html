@@ -10,7 +10,7 @@
 <div class="cards">
 {% for s in g.cities %}
   <a class="card city-card" href="{{ u('/city/' ~ s.city.id) }}">
-    <span class="card-title">{{ s.city.name }}</span>
+    <span class="card-title">{{ city_name(s.city) }}</span>
     {% if s.now is not none %}
     <span class="bignum">{{ s.now | num }}</span> <span class="sub">{{ t('page.cities.per_main_roads', when=s.now_label) }}</span>
     <span class="spark-mount" data-chart="sparkline" data-city="{{ s.city.id }}"></span>
@@ -18,7 +18,7 @@
     {% else %}
     <span class="note">{{ t('note.no_run_lau_current') }}</span>
     {% endif %}
-    <span class="more">{{ t('page.cities.open', city=s.city.name) }} →</span>
+    <span class="more">{{ t('page.cities.open', city=city_name(s.city)) }} →</span>
   </a>
 {% endfor %}
 </div>

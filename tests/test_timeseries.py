@@ -1,6 +1,5 @@
 import re
 import shutil
-import sqlite3
 from pathlib import Path
 
 import pytest
@@ -8,6 +7,7 @@ import yaml
 from typer.testing import CliRunner
 
 from tests.fake_subareas import strip_subareas, without_subareas
+from tests.sqlite_util import committing
 from tests.test_run_history import CFG_DIR, Fakes, _current_deps
 from tests.test_run_history import CITY as _SHIPPED_BERLIN
 from velometer import run as R
@@ -756,7 +756,7 @@ def test_explanation_reads_utf8_under_a_non_utf8_locale(tmp_path):
 def test_check_fails_for_a_subarea_city_run_without_rows_then_passes(db, tmp_path):
     from tests.report_fixture import add_subareas
 
-    with sqlite3.connect(db[0]) as conn:
+    with committing(db[0]) as conn:
         runs = [r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'")]
     report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
     assert _ts(db, report, "--check").exit_code == 0
@@ -776,7 +776,7 @@ def test_check_without_subareas_in_config_never_reports_missing_rows(db, tmp_pat
 def test_subareas_flag_prints_the_yearly_series_per_subarea(db, tmp_path):
     from tests.report_fixture import add_subareas
 
-    with sqlite3.connect(db[0]) as conn:
+    with committing(db[0]) as conn:
         runs = [r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'")]
     add_subareas(db[0], db[2], runs)
     res = _ts(db, _report(tmp_path), "--subareas")
@@ -800,7 +800,7 @@ def test_subarea_series_skips_runs_without_rows(db, tmp_path):
     from tests.report_fixture import add_subareas
     from velometer.selection import run_selector
 
-    with sqlite3.connect(db[0]) as conn:
+    with committing(db[0]) as conn:
         runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
     add_subareas(db[0], db[2], runs[1:])
     sel = run_selector(db[2], "v1")
@@ -813,7 +813,7 @@ def test_subarea_series_and_flag_leave_out_the_remainder(db, tmp_path):
     from tests.report_fixture import add_remainder, add_subareas
     from velometer.selection import run_selector
 
-    with sqlite3.connect(db[0]) as conn:
+    with committing(db[0]) as conn:
         runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
     add_subareas(db[0], db[2], runs)
     add_remainder(db[0], runs)
@@ -830,7 +830,7 @@ def test_subarea_series_and_flag_leave_out_the_remainder(db, tmp_path):
 def test_check_needs_subarea_rows_but_not_remainder_rows(db, tmp_path):
     from tests.report_fixture import add_remainder, add_subareas
 
-    with sqlite3.connect(db[0]) as conn:
+    with committing(db[0]) as conn:
         runs = sorted(r[0] for r in conn.execute("SELECT id FROM runs WHERE status='done'"))
     report = _report(tmp_path, marker=f"berlin/lau={db[1][:8]}")
     add_subareas(db[0], db[2], runs[1:])  # no remainder rows on these: an empty remainder
