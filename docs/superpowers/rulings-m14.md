@@ -111,6 +111,12 @@ Before the spec (2026-10-16):
   `width-target` (footnote marker) and the EU act's `lau` (the page break of pp. 5-6). Their
   locators already record the transcription choice, so the online check cannot find them
   literally.
+- After the third live run (2026-10-17): the Fortschrittsbericht 2025's three misses sit on PDF
+  pp. 9-11, which carry a table's text layer over prose drawn as an image. With the user's
+  approval, a PDF that still misses an excerpt after the empty pages are read also has its thin
+  pages OCRed, once: pages with a letter or digit but under 500 non-space characters
+  (`THIN_PAGE_CHARS`). This extends spec §4.5, which OCRed only pages with no text layer.
+  Thin pages across all PDFs would be 311; a cache-only dry run sends 53, within the cap.
 - `MISTRAL_API_KEY` is removed at `pytest_configure` and again by an autouse fixture, so no test or
   fixture of any scope can make a billed call. A subprocess guard test proves it.
 - A short answer (fewer pages than sent) is not cached. The temporary cut PDFs live in a `.cut-*`

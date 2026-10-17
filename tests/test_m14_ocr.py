@@ -425,3 +425,39 @@ def test_a_page_whose_text_has_no_letter_or_digit_counts_as_empty(monkeypatch):
     out = {"pdfinfo": b"Pages: 5\n", "pdftotext": "Text\f• •\f–\f12\f \n\f".encode()}
     monkeypatch.setattr(ocr, "_poppler", lambda name, *a, **kw: out[name])
     assert ocr.empty_pages(b"%PDF-") == [2, 3, 5]
+
+
+def _fake_ocr(calls, texts):
+    """An `ocr` callable that records the pages it is asked for and answers from `texts`."""
+
+    def call(pdf, pages, limit):
+        calls.append(list(pages))
+        sent = pages[:limit]
+        return ocr.OcrResult(texts={n: texts.get(n, "") for n in sent}, sent=len(sent))
+
+    return call
+
+
+def test_a_pdf_missing_an_excerpt_has_its_thin_pages_ocred_once():
+    # 2026-10-17: the Fortschrittsbericht 2025 has a table's text layer over prose drawn as an
+    # image (PDF pp. 9-11); its excerpts are found once those pages are OCRed
+    doc = copy.deepcopy(SOURCES)
+    doc["sources"][0]["excerpts"][0]["text"] = "Das Radnetz misst 5 km"
+    second = copy.deepcopy(doc["sources"][0]["excerpts"][0])
+    second.update(id="e2", text="Nirgends im Bericht")
+    doc["sources"][0]["excerpts"].append(second)
+    calls: list[list[int]] = []
+    fake = _fake_ocr(calls, {4: "Das Radnetz misst 5 km"})
+    problems, _ = check_online(
+        load_sources_from(doc), fetch=lambda u: SCANNED.read_bytes(), ocr=fake
+    )
+    assert calls == [[3], [1, 2, 4, 5]]  # the empty page, then the thin ones, once
+    assert problems == ["sources/src: excerpt not found online: e2"]
+
+
+def test_a_pdf_holding_its_excerpts_has_no_thin_page_ocred():
+    calls: list[list[int]] = []
+    fake = _fake_ocr(calls, {})
+    assert ocr.thin_pages(TEXT_PDF.read_bytes())  # it has a thin page to send
+    out = check_online(load_sources_from(SOURCES), fetch=lambda u: TEXT_PDF.read_bytes(), ocr=fake)
+    assert out == ([], []) and calls == []

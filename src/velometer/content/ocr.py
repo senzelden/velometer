@@ -40,6 +40,7 @@ OCR_URL = "https://api.mistral.ai/v1/ocr"
 MAX_OCR_PAGES = 100  # raised from 20 after the first live run (2026-10-17)
 CACHE_DIR = Path("data/cache/ocr")  # also holds the scratch directory of a cut (git-ignored)
 POPPLER_TIMEOUT = 60
+THIN_PAGE_CHARS = 500
 _WORDY = re.compile(r"[^\W_]")  # a letter or a digit, in any script
 REQUEST_TIMEOUT = 60.0
 PDFINFO_NOTE = "OCR skipped: pdfinfo unavailable or could not count the PDF's pages"
@@ -76,12 +77,10 @@ def page_count(pdf: bytes) -> int:
     return int(m.group(1)) if m else 0
 
 
-def empty_pages(pdf: bytes, notes: list[str] | None = None) -> list[int]:
-    """The 1-based pages of `pdf` whose `pdftotext` text holds no letter or digit (nothing, or
-    only bullets and dashes over prose drawn as images): one `pdftotext` run over the whole PDF,
-    its output split at the form feed that ends each page.
-    When `pdfinfo` cannot count the pages and a key is set (so OCR would apply), `notes` gets a
-    note."""
+def _page_texts(pdf: bytes, notes: list[str] | None = None) -> list[str]:
+    """The `pdftotext` text of each page of `pdf`, from one run over the whole PDF split at the
+    form feed that ends each page. When `pdfinfo` cannot count the pages and a key is set (so
+    OCR would apply), `notes` gets a note and the list is empty."""
     count = page_count(pdf)
     if count == 0:
         if notes is not None and os.environ.get("MISTRAL_API_KEY"):
@@ -90,8 +89,24 @@ def empty_pages(pdf: bytes, notes: list[str] | None = None) -> list[int]:
     out = _poppler("pdftotext", "-q", "-", "-", input=pdf)
     if out is None:
         return []
-    texts = out.decode("utf-8", errors="replace").split("\f")
-    return [n for n in range(1, count + 1) if n <= len(texts) and not _WORDY.search(texts[n - 1])]
+    return out.decode("utf-8", errors="replace").split("\f")[:count]
+
+
+def empty_pages(pdf: bytes, notes: list[str] | None = None) -> list[int]:
+    """The 1-based pages of `pdf` whose `pdftotext` text holds no letter or digit (nothing, or
+    only bullets and dashes over prose drawn as images)."""
+    return [n for n, t in enumerate(_page_texts(pdf, notes), 1) if not _WORDY.search(t)]
+
+
+def thin_pages(pdf: bytes) -> list[int]:
+    """The 1-based pages of `pdf` with some text but under THIN_PAGE_CHARS non-space characters
+    of it: a table's text layer over prose drawn as an image (Fortschrittsbericht 2025, PDF
+    pp. 9-11). OCRed only for a PDF that misses an excerpt; most such pages need no OCR."""
+    return [
+        n
+        for n, t in enumerate(_page_texts(pdf), 1)
+        if _WORDY.search(t) and len("".join(t.split())) < THIN_PAGE_CHARS
+    ]
 
 
 def _cut_pages(pdf: bytes, selected: list[int], work: Path) -> bytes | None:

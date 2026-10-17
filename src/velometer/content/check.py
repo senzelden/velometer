@@ -50,7 +50,7 @@ from velometer.content.models import (
     Quote,
     Source,
 )
-from velometer.content.ocr import MAX_OCR_PAGES, OcrResult, empty_pages, ocr_pages
+from velometer.content.ocr import MAX_OCR_PAGES, OcrResult, empty_pages, ocr_pages, thin_pages
 from velometer.content.translate import DE as DE_DIR
 from velometer.content.translate import (
     English,
@@ -1234,6 +1234,10 @@ class _Page:
         # A PDF's list bullets and soft hyphens are not in the sentence an excerpt quotes.
         self.text = _no_space(_PDF_GLYPHS.sub("", text)) if pdf else text
 
+    def add_ocr(self, texts) -> None:
+        """Append OCR texts of a PDF's pages, each after an order break."""
+        self.text += _no_space(_PDF_GLYPHS.sub("", "".join(f"{_ORDER_BREAK}{t}" for t in texts)))
+
     def holds(self, excerpt: str) -> bool:
         ex = _squash(excerpt)
         return (_no_space(ex) if self.pdf else ex) in self.text
@@ -1267,16 +1271,23 @@ def _page_text(
         empty = empty_pages(body, own_notes) if ocr is not None else []
         if notes is not None:
             notes.extend(n for n in own_notes if n not in notes)
+        page = _Page(text, pdf=True)
         if empty:
-            budget = budget if budget is not None else _OcrBudget()
-            got = ocr(body, empty, budget.left)
-            budget.left -= got.sent
-            if notes is not None:
-                notes.extend(n for n in got.notes if n not in notes)
-            text += "".join(f" {_ORDER_BREAK} {t}" for t in got.texts.values())
-        return _Page(text, pdf=True)
+            page.add_ocr(_ocr_texts(body, empty, ocr, notes, budget))
+        return page
     text = body if isinstance(body, str) else body.decode("utf-8", errors="replace")
     return _Page(_squash(text), pdf=False)
+
+
+def _ocr_texts(body, pages, ocr, notes, budget) -> list[str]:
+    """The OCR texts of `pages` of PDF `body`, sent within what is left of `budget`; the
+    notes go to `notes`."""
+    budget = budget if budget is not None else _OcrBudget()
+    got = ocr(body, pages, budget.left)
+    budget.left -= got.sent
+    if notes is not None:
+        notes.extend(n for n in got.notes if n not in notes)
+    return list(got.texts.values())
 
 
 def _squash(text: str) -> str:
@@ -1296,17 +1307,22 @@ def check_online(
     reader"), not a problem, and a PDF it fails on is "cannot read PDF". A host that does not
     answer is "unreachable", apart from a page that does not hold the excerpt. Never archives
     anything. A PDF page without a text layer is OCRed by `ocr` (Mistral OCR; None turns it
-    off), at most MAX_OCR_PAGES sent over the whole run; the OCR notes are returned once, apart
-    from the per-excerpt ones."""
+    off), at most MAX_OCR_PAGES sent over the whole run; a PDF that still misses an excerpt also
+    has its thin pages OCRed (a table's text over prose drawn as an image), once. The OCR notes
+    are returned once, apart from the per-excerpt ones."""
     problems: list[str] = []
     notes: list[str] = []
     ocr_notes: list[str] = []
     budget = _OcrBudget()
     pages: dict[str, _Page | object | None] = {}  # url -> page, _SKIPPED or None
+    bodies: dict[str, bytes] = {}  # url -> a PDF whose thin pages are not OCRed yet
     for s in sources.values():
         if s.url not in pages:
             try:
-                pages[s.url] = _page_text(fetch(s.url), ocr, ocr_notes, budget)
+                body = fetch(s.url)
+                pages[s.url] = _page_text(body, ocr, ocr_notes, budget)
+                if ocr is not None and pages[s.url].pdf:
+                    bodies[s.url] = body
             except NoPdfReader:
                 pages[s.url] = _SKIPPED
             except PdfUnreadable as e:
@@ -1325,7 +1341,11 @@ def check_online(
             if page is _SKIPPED:
                 notes.append(f"sources/{s.id}: excerpt {e.id} {NO_PDF_READER}")
             elif not page.holds(e.text):
-                problems.append(f"sources/{s.id}: excerpt not found online: {e.id}")
+                body = bodies.pop(s.url, None)
+                if body is not None and (thin := thin_pages(body)):
+                    page.add_ocr(_ocr_texts(body, thin, ocr, ocr_notes, budget))
+                if not page.holds(e.text):
+                    problems.append(f"sources/{s.id}: excerpt not found online: {e.id}")
     return problems, notes + ocr_notes
 
 
