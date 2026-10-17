@@ -149,7 +149,7 @@ velometer external load path/to/figures.csv
 velometer reconcile --city X                # ours vs QECIO / BikeNetKit / Clean Cities / official; writes gap table
 velometer report tables|charts
 velometer serve                             # FastAPI read-only app
-velometer app export --out DIR [--base /velometer/] [--clean]   # static edition of the reader app (M9)
+velometer app export --out DIR [--base /velometer/] [--clean] [--public] [--config DIR]   # static edition (M9); --public needs the site.yaml values (M14)
 velometer app deploy-check DIR [--base /] [--public]       # dry run on a finished export, uploads nothing (M14)
 velometer content --check                   # both editions; German problems are marked [de] (M12)
 velometer content stamp FILE                # stamp a German translation file after translating (M12)
