@@ -1,7 +1,7 @@
 # velometer
 
 Read `HANDOVER.md` (project brief) and `docs/adr/` (locked decisions) before changing behaviour.
-Latest delivered: M13, open follow-ups batch (`docs/superpowers/specs/2026-10-14-velometer-m13-design.md`, rulings in `docs/superpowers/rulings-m13.md`).
+Latest delivered: M14, ready to host plus follow-ups (`docs/superpowers/specs/2026-10-16-velometer-m14-design.md`, rulings in `docs/superpowers/rulings-m14.md`, deploy guide `docs/deploy.md`).
 Next: not yet decided.
 
 - Gate: `uv run ruff format --check . && uv run ruff check . && uv run pytest && node --test "src/velometer/app/static/js/tests/*.test.mjs"`
