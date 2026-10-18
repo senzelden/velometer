@@ -12,10 +12,21 @@ they need and collects their problems. The exit status is 1 when any probe fails
     uv run python tools/deploy_dryrun.py --site DIR --server caddy|wrangler [--keep-running]
 """
 
+import argparse
+import contextlib
 import gzip as gzip_
+import json
+import os
 import re
 import secrets
+import shutil
+import signal
+import socket
+import subprocess
+import sys
+import tempfile
 import textwrap
+import time
 import urllib.error
 import urllib.request
 import zlib
@@ -288,3 +299,155 @@ def run_probes(
         if not 200 <= r.status < 300:
             problems.append(f"{link}: linked from {base}, status {r.status}")
     return n, problems
+
+
+def free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def wait_http(url: str, timeout: float) -> None:
+    """Return once anything answers at `url` (any HTTP status); DryRunError after `timeout`."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=2):
+                return
+        except urllib.error.HTTPError as e:
+            e.close()
+            return
+        except (urllib.error.URLError, OSError):
+            time.sleep(0.5)
+    raise DryRunError(f"no answer from {url} within {timeout:g} s")
+
+
+def caddy_command(site: Path, caddyfile: Path, name: str, image: str = CADDY_IMAGE) -> list[str]:
+    # host networking: the site address 127.0.0.1:<port> is the host's loopback
+    return [
+        "docker", "run", "--rm", "--name", name, "--network", "host",
+        "-v", f"{site.resolve()}:/srv/velometer:ro",
+        "-v", f"{caddyfile}:/etc/caddy/Caddyfile:ro",
+        image,
+    ]  # fmt: skip
+
+
+def wrangler_command(site: Path, port: int, inspector_port: int) -> list[str]:
+    return [
+        "npx", "--yes", WRANGLER, "pages", "dev", str(site.resolve()),
+        "--ip", "127.0.0.1", "--port", str(port), "--inspector-port", str(inspector_port),
+    ]  # fmt: skip
+
+
+def _log_tail(log: Path, lines: int = 30) -> str:
+    try:
+        return "\n".join(log.read_text(errors="replace").splitlines()[-lines:])
+    except OSError:
+        return "(no server log)"
+
+
+@contextlib.contextmanager
+def caddy_server(site: Path):
+    """Caddy in Docker with the documented Caddyfile; yields the origin, removes the container."""
+    port = free_port()
+    origin = f"http://127.0.0.1:{port}"
+    work = Path(tempfile.mkdtemp(prefix="deploy-dryrun-caddy-"))
+    caddyfile = work / "Caddyfile"
+    caddyfile.write_text(caddyfile_from_doc(DOC.read_text(encoding="utf-8"), origin))
+    name = f"velometer-dryrun-{port}"
+    log = work / "server.log"
+    with log.open("wb") as out:
+        proc = subprocess.Popen(
+            caddy_command(site, caddyfile, name), stdout=out, stderr=subprocess.STDOUT
+        )
+    try:
+        try:
+            wait_http(origin + "/", 120)
+        except DryRunError as e:
+            raise DryRunError(f"caddy: {e}\n{_log_tail(log)}") from None
+        yield origin
+    finally:
+        subprocess.run(["docker", "stop", "-t", "5", name], capture_output=True)
+        try:
+            proc.wait(timeout=20)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        shutil.rmtree(work, ignore_errors=True)
+
+
+@contextlib.contextmanager
+def wrangler_server(site: Path):
+    """`wrangler pages dev` in its own process group; yields the origin, stops the group."""
+    port = free_port()
+    origin = f"http://127.0.0.1:{port}"
+    work = Path(tempfile.mkdtemp(prefix="deploy-dryrun-wrangler-"))  # wrangler's .wrangler/
+    env = {**os.environ, "WRANGLER_SEND_METRICS": "false", "CI": "1"}
+    log = work / "server.log"
+    with log.open("wb") as out:
+        proc = subprocess.Popen(
+            wrangler_command(site, port, free_port()),
+            cwd=work,
+            env=env,
+            stdout=out,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    try:
+        try:
+            wait_http(origin + "/", 300)
+        except DryRunError as e:
+            raise DryRunError(f"wrangler: {e}\n{_log_tail(log)}") from None
+        yield origin
+    finally:
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGTERM)
+        try:
+            proc.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait()
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
+    ap.add_argument("--site", type=Path, required=True, help="a finished export (--base /)")
+    ap.add_argument("--server", choices=("caddy", "wrangler"), required=True)
+    ap.add_argument(
+        "--keep-running",
+        action="store_true",
+        help="after the probes, keep serving until Ctrl-C (for render_pass.py --url)",
+    )
+    a = ap.parse_args(argv)
+    site = a.site.resolve()
+    try:
+        base = json.loads((site / "build.json").read_text(encoding="utf-8"))["base"]
+    except (OSError, ValueError, KeyError):
+        ap.error(f"{site} has no readable build.json; export the static edition first")
+    if base != "/":
+        ap.error(f"both routes serve an export made with --base /; this one has base {base}")
+    if not (site / "_headers").is_file():
+        ap.error(f"{site} has no _headers file")
+    server = caddy_server(site) if a.server == "caddy" else wrangler_server(site)
+    try:
+        with server as origin:
+            print(f"{a.server} serving {site} at {origin}{base}", flush=True)
+            n, problems = run_probes(origin, site, base, require_gzip=a.server == "caddy")
+            for p in problems:
+                print(f"  problem: {p}")
+            print(f"{n} checks, {len(problems)} problems", flush=True)
+            if a.keep_running:
+                print(f"serving {origin}{base} until Ctrl-C", flush=True)
+                with contextlib.suppress(KeyboardInterrupt):
+                    while True:
+                        time.sleep(3600)
+    except DryRunError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

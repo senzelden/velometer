@@ -305,3 +305,87 @@ def test_repeated_headers_are_joined_so_a_doubled_header_is_seen():
         srv.server_close()
     assert r.header("cache-control") == "public, max-age=3600, no-store"
     assert dr.check_headers("/", r, {"cache-control": "public, max-age=3600"})
+
+
+# --- servers and CLI (no Docker, no npx) --------------------------------------------------
+
+
+def test_the_caddy_command_pins_the_image_and_mounts_read_only_on_the_host_network(tmp_path):
+    cmd = dr.caddy_command(tmp_path / "site", tmp_path / "Caddyfile", "velometer-dryrun-1")
+    assert cmd[:3] == ["docker", "run", "--rm"]
+    assert "--network" in cmd and cmd[cmd.index("--network") + 1] == "host"
+    assert f"{(tmp_path / 'site').resolve()}:/srv/velometer:ro" in cmd
+    assert f"{tmp_path / 'Caddyfile'}:/etc/caddy/Caddyfile:ro" in cmd
+    import re
+
+    assert re.fullmatch(r"caddy:\d+\.\d+\.\d+-alpine", cmd[-1])
+
+
+def test_the_wrangler_command_pins_its_version_and_binds_loopback(tmp_path):
+    import re
+
+    cmd = dr.wrangler_command(tmp_path, 8788, 9230)
+    assert cmd[:2] == ["npx", "--yes"] and re.fullmatch(r"wrangler@\d+\.\d+\.\d+", cmd[2])
+    assert cmd[3:5] == ["pages", "dev"]
+    assert cmd[cmd.index("--ip") + 1] == "127.0.0.1"
+    assert cmd[cmd.index("--port") + 1] == "8788"
+
+
+def test_wait_http_gives_up_with_an_error_naming_the_url():
+    import socket
+
+    with socket.socket() as s:  # a port nobody listens on
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    with pytest.raises(dr.DryRunError, match=str(port)):
+        dr.wait_http(f"http://127.0.0.1:{port}/", timeout=1)
+
+
+def test_an_export_without_build_json_is_refused(tmp_path, capsys):
+    with pytest.raises(SystemExit) as e:
+        dr.main(["--site", str(tmp_path), "--server", "caddy"])
+    assert e.value.code == 2 and "build.json" in capsys.readouterr().err
+
+
+def test_an_export_for_another_base_is_refused_before_any_server_starts(tiny, monkeypatch, capsys):
+    (tiny / "build.json").write_text(json.dumps({"base": "/velometer/"}), encoding="utf-8")
+    monkeypatch.setattr(dr, "caddy_server", lambda site: pytest.fail("no server may start"))
+    with pytest.raises(SystemExit) as e:
+        dr.main(["--site", str(tiny), "--server", "caddy"])
+    assert e.value.code == 2 and "--base /" in capsys.readouterr().err
+
+
+def test_a_server_is_stopped_when_a_probe_crashes(tiny, monkeypatch):
+    import contextlib
+
+    stopped = []
+
+    @contextlib.contextmanager
+    def server(site):
+        try:
+            yield "http://127.0.0.1:9"
+        finally:
+            stopped.append(site)
+
+    def boom(*a, **k):
+        raise RuntimeError("probe crashed")
+
+    monkeypatch.setattr(dr, "caddy_server", server)
+    monkeypatch.setattr(dr, "run_probes", boom)
+    with pytest.raises(RuntimeError):
+        dr.main(["--site", str(tiny), "--server", "caddy"])
+    assert stopped == [tiny.resolve()]
+
+
+def test_main_reports_problems_with_exit_1_and_none_with_exit_0(tiny, monkeypatch, capsys):
+    import contextlib
+
+    monkeypatch.setattr(
+        dr, "caddy_server", lambda site: contextlib.nullcontext("http://127.0.0.1:9")
+    )
+    monkeypatch.setattr(dr, "run_probes", lambda *a, **k: (12, []))
+    assert dr.main(["--site", str(tiny), "--server", "caddy"]) == 0
+    assert "12 checks, 0 problems" in capsys.readouterr().out
+    monkeypatch.setattr(dr, "run_probes", lambda *a, **k: (12, ["/de: missing header x"]))
+    assert dr.main(["--site", str(tiny), "--server", "caddy"]) == 1
+    assert "/de: missing header x" in capsys.readouterr().out
