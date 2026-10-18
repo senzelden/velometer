@@ -2,8 +2,8 @@
 
 M14 made the export ready for a static host; M15 served it locally with both routes' server
 software (Caddy 2.11.4 in Docker and `wrangler pages dev` 4.147.0, 2026-10-18;
-`docs/review/m15-dryrun.md`). Nothing has been deployed to a real host. Every command below is for you to run. Replace
-`<dir>`, `<domain>` and `<host>` with your own values.
+`docs/review/m15-dryrun.md`). Nothing has been deployed to a real host. Every command below is
+for you to run. Replace `<dir>`, `<domain>` and `<host>` with your own values.
 
 ## 0. Make and check the export
 
@@ -33,7 +33,10 @@ uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
 ```
 
 `--server caddy` runs Caddy 2.11.4 in Docker with the Caddyfile from §2; it uses Docker host
-networking and so runs on Linux only. `--server wrangler` runs `npx wrangler pages dev`. Both bind
+networking and so runs on Linux only. With `--network host`, the Caddy container also binds Caddy's
+admin endpoint on 127.0.0.1:2019, so a Caddy already running on the host (or a second dry run left
+up with `--keep-running`) makes the run fail after its 120 s wait; stop the other one first.
+`--server wrangler` runs `npx wrangler pages dev`. Both bind
 127.0.0.1, without TLS. The tool ends with `N checks, M problems` and exits 1 on any problem. With
 `--keep-running` it leaves the server up and prints its origin, so that
 `tools/render_pass.py --url <origin>` can audit the pages through it.
