@@ -117,6 +117,12 @@ Before the spec (2026-10-16):
   pages OCRed, once: pages with a letter or digit but under 500 non-space characters
   (`THIN_PAGE_CHARS`). This extends spec §4.5, which OCRed only pages with no text layer.
   Thin pages across all PDFs would be 311; a cache-only dry run sends 53, within the cap.
+- Fourth live run (2026-10-18): 7 misses, from 14 before OCR. `total-2025` and `osm-survey` are
+  found. `network-share` is in the OCR text but runs over the break of PDF pp. 10-11: the page
+  number "8" and the next page's running header sit inside the sentence, as with the EU act's
+  `lau`, so it joins the kept misses. OCR of Prague's table pages did not bring label and value
+  together. Page 122 of `berlin-radverkehrsplan-vo19-013` (a 19866x14043 px map) is refused by
+  the API on every run; none of that source's excerpts needs it.
 - `MISTRAL_API_KEY` is removed at `pytest_configure` and again by an autouse fixture, so no test or
   fixture of any scope can make a billed call. A subprocess guard test proves it.
 - A short answer (fewer pages than sent) is not cached. The temporary cut PDFs live in a `.cut-*`
