@@ -2,7 +2,9 @@
 probe what a browser gets (M15 spec, docs/superpowers/specs/2026-10-18-velometer-m15-design.md).
 
 - `caddy`: the official Docker image (`CADDY_IMAGE`) with the Caddyfile from docs/deploy.md,
-  its site address replaced by `http://127.0.0.1:<port>`;
+  its site address replaced by `http://127.0.0.1:<port>`; with `--network host` it also binds
+  Caddy's admin endpoint on 127.0.0.1:2019, so stop any other Caddy (or a `--keep-running` dry run)
+  first;
 - `wrangler`: `wrangler pages dev` (`WRANGLER`, fetched by npx at run time), Cloudflare Pages'
   local emulation.
 
@@ -39,8 +41,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 SITE_ADDRESS = "velometer.<domain>"  # the Caddyfile's site address in docs/deploy.md
 CADDY_IMAGE = "caddy:2.11.4-alpine"
-# wrangler pages dev sends Cache-Control: no-store on a 404, and Cloudflare's _headers rules cover
-# static assets only; an uncached not-found answer is harmless, so a 404 may carry any value.
+# Cloudflare's _headers docs cover static asset responses and are silent on 404s; wrangler pages
+# dev sends no-store on its 404. An uncached not-found answer is harmless (rulings-m15).
 NOT_FOUND_EXEMPT = ("cache-control",)
 WRANGLER = "wrangler@4.147.0"
 # accepted media types per suffix (parameters such as charset are ignored)

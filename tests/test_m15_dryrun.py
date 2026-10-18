@@ -498,6 +498,14 @@ def test_the_doc_names_the_caddy_version_the_tool_pins_and_warns_about_2_10_2():
     assert "2.10.2" in doc
 
 
+def test_the_doc_names_the_wrangler_version_the_tool_pins():
+    import re
+
+    version = re.fullmatch(r"wrangler@(\d+\.\d+\.\d+)", dr.WRANGLER)
+    assert version, dr.WRANGLER
+    assert version.group(1) in dr.DOC.read_text(encoding="utf-8")
+
+
 # --- the 404 page's Cache-Control (wrangler sends no-store on a 404) -----------------------
 
 
