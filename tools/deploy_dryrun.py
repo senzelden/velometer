@@ -38,7 +38,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 SITE_ADDRESS = "velometer.<domain>"  # the Caddyfile's site address in docs/deploy.md
-CADDY_IMAGE = "caddy:2.10.2-alpine"
+CADDY_IMAGE = "caddy:2.11.4-alpine"
 WRANGLER = "wrangler@4.147.0"
 # accepted media types per suffix (parameters such as charset are ignored)
 TYPES = {

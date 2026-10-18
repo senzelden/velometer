@@ -52,6 +52,9 @@ after any hand edit.
 Not run in M14. The Caddyfile below is an example and has not been tested on a server.
 
 1. Create the smallest server type in a German location, with Caddy installed.
+   Use Caddy 2.11.4 or later: Caddy 2.10.2 answers a precompressed (`.gz`) file with
+   `206 Partial Content` even when the browser asked for no range (found by the M15 dry run,
+   `docs/review/m15-dryrun.md`).
 2. DNS: an A record (and AAAA, if the server has IPv6) for `velometer.<domain>` pointing to the
    server.
 3. `/etc/caddy/Caddyfile`:

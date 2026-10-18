@@ -486,3 +486,13 @@ def test_wrangler_cleanup_kills_the_whole_group_after_terminating_it(tiny, monke
     with dr.wrangler_server(tiny):
         pass
     assert calls == [(4242, signal.SIGTERM), (4242, signal.SIGKILL)]
+
+
+def test_the_doc_names_the_caddy_version_the_tool_pins_and_warns_about_2_10_2():
+    import re
+
+    version = re.fullmatch(r"caddy:(\d+\.\d+\.\d+)-alpine", dr.CADDY_IMAGE)
+    assert version, dr.CADDY_IMAGE
+    doc = dr.DOC.read_text(encoding="utf-8")
+    assert f"Caddy {version.group(1)} or later" in doc
+    assert "2.10.2" in doc
