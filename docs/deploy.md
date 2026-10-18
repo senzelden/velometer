@@ -1,7 +1,8 @@
 # Deploying the static edition
 
-Nothing here has been run. M14 makes the export ready for a static host and checks it with
-`velometer app deploy-check`; it deploys nothing. Every command below is for you to run. Replace
+M14 made the export ready for a static host; M15 served it locally with both routes' server
+software (Caddy 2.11.4 in Docker and `wrangler pages dev` 4.147.0, 2026-10-18;
+`docs/review/m15-dryrun.md`). Nothing has been deployed to a real host. Every command below is for you to run. Replace
 `<dir>`, `<domain>` and `<host>` with your own values.
 
 ## 0. Make and check the export
@@ -20,6 +21,22 @@ Impressum and privacy page that `build.json` records. It judges the export, not 
 `config/site.yaml`. `deploy-check --public` also fails on an export made without `--public`, which
 would go live without an Impressum. It exits 1 and lists the problems otherwise. Run it again
 after any hand edit.
+
+## 0a. Local dry run
+
+Before you upload, serve the export with the same server software the host runs and probe it over
+HTTP (status, compression, security headers, 404 page):
+
+```
+uv run python tools/deploy_dryrun.py --site <dir> --server caddy
+uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
+```
+
+`--server caddy` runs Caddy 2.11.4 in Docker with the Caddyfile from §2; it uses Docker host
+networking and so runs on Linux only. `--server wrangler` runs `npx wrangler pages dev`. Both bind
+127.0.0.1, without TLS. The tool ends with `N checks, M problems` and exits 1 on any problem. With
+`--keep-running` it leaves the server up and prints its origin, so that
+`tools/render_pass.py --url <origin>` can audit the pages through it.
 
 ## 1. Cloudflare Pages
 
@@ -49,7 +66,7 @@ after any hand edit.
 
 ## 2. Hetzner Cloud with Caddy
 
-Not run in M14. The Caddyfile below is an example and has not been tested on a server.
+Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet on a server with TLS.
 
 1. Create the smallest server type in a German location, with Caddy installed.
    Use Caddy 2.11.4 or later: Caddy 2.10.2 answers a precompressed (`.gz`) file with
