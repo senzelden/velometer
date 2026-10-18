@@ -351,28 +351,33 @@ def caddy_server(site: Path):
     """Caddy in Docker with the documented Caddyfile; yields the origin, removes the container."""
     port = free_port()
     origin = f"http://127.0.0.1:{port}"
-    work = Path(tempfile.mkdtemp(prefix="deploy-dryrun-caddy-"))
-    caddyfile = work / "Caddyfile"
-    caddyfile.write_text(caddyfile_from_doc(DOC.read_text(encoding="utf-8"), origin))
     name = f"velometer-dryrun-{port}"
+    work = Path(tempfile.mkdtemp(prefix="deploy-dryrun-caddy-"))
     log = work / "server.log"
-    with log.open("wb") as out:
-        proc = subprocess.Popen(
-            caddy_command(site, caddyfile, name), stdout=out, stderr=subprocess.STDOUT
-        )
+    proc = None
     try:
+        caddyfile = work / "Caddyfile"
+        caddyfile.write_text(caddyfile_from_doc(DOC.read_text(encoding="utf-8"), origin))
+        try:
+            with log.open("wb") as out:
+                proc = subprocess.Popen(
+                    caddy_command(site, caddyfile, name), stdout=out, stderr=subprocess.STDOUT
+                )
+        except OSError as e:
+            raise DryRunError(f"caddy: docker not found or not runnable ({e})") from None
         try:
             wait_http(origin + "/", 120)
         except DryRunError as e:
             raise DryRunError(f"caddy: {e}\n{_log_tail(log)}") from None
         yield origin
     finally:
-        subprocess.run(["docker", "stop", "-t", "5", name], capture_output=True)
-        try:
-            proc.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
+        if proc is not None:
+            subprocess.run(["docker", "stop", "-t", "5", name], capture_output=True)
+            try:
+                proc.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
         shutil.rmtree(work, ignore_errors=True)
 
 
@@ -384,27 +389,32 @@ def wrangler_server(site: Path):
     work = Path(tempfile.mkdtemp(prefix="deploy-dryrun-wrangler-"))  # wrangler's .wrangler/
     env = {**os.environ, "WRANGLER_SEND_METRICS": "false", "CI": "1"}
     log = work / "server.log"
-    with log.open("wb") as out:
-        proc = subprocess.Popen(
-            wrangler_command(site, port, free_port()),
-            cwd=work,
-            env=env,
-            stdout=out,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
+    proc = None
     try:
+        try:
+            with log.open("wb") as out:
+                proc = subprocess.Popen(
+                    wrangler_command(site, port, free_port()),
+                    cwd=work,
+                    env=env,
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+        except OSError as e:
+            raise DryRunError(f"wrangler: npx not found or not runnable ({e})") from None
         try:
             wait_http(origin + "/", 300)
         except DryRunError as e:
             raise DryRunError(f"wrangler: {e}\n{_log_tail(log)}") from None
         yield origin
     finally:
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(proc.pid, signal.SIGTERM)
-        try:
-            proc.wait(timeout=15)
-        except subprocess.TimeoutExpired:
+        if proc is not None:
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGTERM)
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                proc.wait(timeout=15)
+            # npx may exit while workerd, its child, ignores SIGTERM: end the whole group
             with contextlib.suppress(ProcessLookupError):
                 os.killpg(proc.pid, signal.SIGKILL)
             proc.wait()

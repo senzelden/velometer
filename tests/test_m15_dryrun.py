@@ -389,3 +389,100 @@ def test_main_reports_problems_with_exit_1_and_none_with_exit_0(tiny, monkeypatc
     monkeypatch.setattr(dr, "run_probes", lambda *a, **k: (12, ["/de: missing header x"]))
     assert dr.main(["--site", str(tiny), "--server", "caddy"]) == 1
     assert "/de: missing header x" in capsys.readouterr().out
+
+
+# --- a server that never comes up; missing binaries; process-group cleanup -----------------
+
+
+class _Proc:
+    """A stand-in for subprocess.Popen: writes one line to the log it is given, never serves."""
+
+    pid = 4242
+
+    def __init__(self, cmd, stdout=None, **kw):
+        self.cmd = cmd
+        stdout.write(b"boom: the server log line\n")
+
+    def wait(self, timeout=None):
+        return 0
+
+    def kill(self):
+        pass
+
+
+def _no_answer(url, timeout):
+    raise dr.DryRunError(f"no answer from {url} within {timeout:g} s")
+
+
+@pytest.mark.parametrize("server", ["caddy", "wrangler"])
+def test_a_server_that_never_answers_exits_1_naming_it_with_its_log_tail(
+    tiny, monkeypatch, capsys, server
+):
+    monkeypatch.setattr(dr.subprocess, "Popen", _Proc)
+    monkeypatch.setattr(dr.subprocess, "run", lambda *a, **k: None)
+    monkeypatch.setattr(dr.os, "killpg", lambda *a: None)
+    monkeypatch.setattr(dr, "wait_http", _no_answer)
+    assert dr.main(["--site", str(tiny), "--server", server]) == 1
+    err = capsys.readouterr().err
+    assert f"error: {server}: no answer" in err and "boom: the server log line" in err
+
+
+def test_an_export_without_a_headers_file_is_refused(tiny, capsys):
+    (tiny / "_headers").unlink()
+    with pytest.raises(SystemExit) as e:
+        dr.main(["--site", str(tiny), "--server", "caddy"])
+    assert e.value.code == 2 and "_headers" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("server", "program"), [("caddy", "docker"), ("wrangler", "npx")])
+def test_a_missing_program_is_a_clean_error_and_leaves_no_temp_dir(
+    tiny, tmp_path, monkeypatch, capsys, server, program
+):
+    made = []
+
+    def mkdtemp(prefix=""):
+        d = tmp_path / f"{prefix}x"
+        d.mkdir()
+        made.append(d)
+        return str(d)
+
+    def popen(*a, **k):
+        raise FileNotFoundError(program)
+
+    monkeypatch.setattr(dr.tempfile, "mkdtemp", mkdtemp)
+    monkeypatch.setattr(dr.subprocess, "Popen", popen)
+    monkeypatch.setattr(dr.subprocess, "run", lambda *a, **k: None)
+    assert dr.main(["--site", str(tiny), "--server", server]) == 1
+    err = capsys.readouterr().err
+    assert f"{server}: {program} not found" in err
+    assert made and not any(d.exists() for d in made)
+
+
+def test_a_failing_caddyfile_extraction_leaves_no_temp_dir(tiny, tmp_path, monkeypatch):
+    made = []
+
+    def mkdtemp(prefix=""):
+        d = tmp_path / f"{prefix}y"
+        d.mkdir()
+        made.append(d)
+        return str(d)
+
+    def broken(*a, **k):
+        raise dr.DryRunError("no Caddyfile in the doc")
+
+    monkeypatch.setattr(dr.tempfile, "mkdtemp", mkdtemp)
+    monkeypatch.setattr(dr, "caddyfile_from_doc", broken)
+    assert dr.main(["--site", str(tiny), "--server", "caddy"]) == 1
+    assert made and not any(d.exists() for d in made)
+
+
+def test_wrangler_cleanup_kills_the_whole_group_after_terminating_it(tiny, monkeypatch):
+    import signal
+
+    calls = []
+    monkeypatch.setattr(dr.subprocess, "Popen", _Proc)
+    monkeypatch.setattr(dr, "wait_http", lambda url, timeout: None)
+    monkeypatch.setattr(dr.os, "killpg", lambda pid, sig: calls.append((pid, sig)))
+    with dr.wrangler_server(tiny):
+        pass
+    assert calls == [(4242, signal.SIGTERM), (4242, signal.SIGKILL)]
