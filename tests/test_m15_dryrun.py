@@ -496,3 +496,22 @@ def test_the_doc_names_the_caddy_version_the_tool_pins_and_warns_about_2_10_2():
     doc = dr.DOC.read_text(encoding="utf-8")
     assert f"Caddy {version.group(1)} or later" in doc
     assert "2.10.2" in doc
+
+
+# --- the 404 page's Cache-Control (wrangler sends no-store on a 404) -----------------------
+
+
+def test_a_404_with_no_store_cache_control_passes_the_other_headers():
+    sent = {**WANT, "cache-control": "no-store"}
+    assert dr.check_404("/nope", resp(404, sent, b"<p>404</p>"), b"<p>404</p>", WANT) == []
+
+
+def test_a_404_without_cache_control_passes_the_other_headers():
+    sent = {k: v for k, v in WANT.items() if k != "cache-control"}
+    assert dr.check_404("/nope", resp(404, sent, b"<p>404</p>"), b"<p>404</p>", WANT) == []
+
+
+def test_a_404_without_csp_is_still_a_problem_when_its_cache_control_is_exempt():
+    sent = {k: v for k, v in WANT.items() if k != "content-security-policy"}
+    (p,) = dr.check_404("/nope", resp(404, sent, b"<p>404</p>"), b"<p>404</p>", WANT)
+    assert "content-security-policy" in p

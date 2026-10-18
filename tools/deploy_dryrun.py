@@ -39,6 +39,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 SITE_ADDRESS = "velometer.<domain>"  # the Caddyfile's site address in docs/deploy.md
 CADDY_IMAGE = "caddy:2.11.4-alpine"
+# wrangler pages dev sends Cache-Control: no-store on a 404, and Cloudflare's _headers rules cover
+# static assets only; an uncached not-found answer is harmless, so a 404 may carry any value.
+NOT_FOUND_EXEMPT = ("cache-control",)
 WRANGLER = "wrangler@4.147.0"
 # accepted media types per suffix (parameters such as charset are ignored)
 TYPES = {
@@ -160,7 +163,8 @@ def check_404(path: str, r: Resp, page: bytes, expected: dict[str, str]) -> list
     problems = check_status(path, r, 404)
     if r.decoded() != page:
         problems.append(f"{path}: the body is not 404.html")
-    return problems + check_headers(path, r, expected)
+    kept = {name: v for name, v in expected.items() if name not in NOT_FOUND_EXEMPT}
+    return problems + check_headers(path, r, kept)
 
 
 def check_page(path: str, r: Resp, page: bytes, origin: str) -> list[str]:
