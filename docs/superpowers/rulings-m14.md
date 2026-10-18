@@ -123,6 +123,12 @@ Before the spec (2026-10-16):
   `lau`, so it joins the kept misses. OCR of Prague's table pages did not bring label and value
   together. Page 122 of `berlin-radverkehrsplan-vo19-013` (a 19866x14043 px map) is refused by
   the API on every run; none of that source's excerpts needs it.
+- Instead of splitting the two page-break excerpts (offered to the user, who said continue), the
+  matcher allows one page break inside a PDF excerpt: up to 200 characters between the halves
+  (`_BREAK_GAP`, a page number and a running header), exactly one page break among them and no
+  order break. Splitting would have shown readers half-sentences ("…of the" / "identified
+  LAU…"). Text inserted anywhere else still misses. A cache-only dry run: 5 misses, the kept
+  layout cases (Prague ×3, Lyon `breakdown-2023`, Amsterdam `width-target`).
 - `MISTRAL_API_KEY` is removed at `pytest_configure` and again by an autouse fixture, so no test or
   fixture of any scope can make a billed call. A subprocess guard test proves it.
 - A short answer (fewer pages than sent) is not cached. The temporary cut PDFs live in a `.cut-*`

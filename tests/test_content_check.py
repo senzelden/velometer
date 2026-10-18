@@ -693,3 +693,45 @@ def test_a_pdf_bullet_or_soft_hyphen_does_not_hide_an_excerpt():
     assert page.holds("voies de circulation apaisée 167 km de fietsroutes op")
     # an HTML page keeps its text as it is
     assert not _Page("apaisée • 167 km", pdf=False).holds("apaisée 167 km")
+
+
+def test_an_excerpt_may_run_over_one_page_break_with_its_page_number_and_header():
+    # 2026-10-18: the EU act's Article 6(1) breaks at "of the | identified LAU" with the page
+    # number and "EN" between; the Fortschrittsbericht 2025 at "Im | aktuellen" with "8" and the
+    # running header between
+    from velometer.content.check import _PAGE_BREAK, _Page
+
+    eu = _Page(f"boundaries of the 4 EN {_PAGE_BREAK} identified LAU. The", pdf=True)
+    assert eu.holds("boundaries of the identified LAU. The")
+    fb = _Page(f"knapp 9%. Im 8 {_PAGE_BREAK} Fahrrad Berlin BERLIN aktuellen Netz", pdf=True)
+    assert fb.holds("knapp 9%. Im aktuellen Netz")
+
+
+def test_text_inserted_anywhere_but_at_a_page_break_still_misses():
+    from velometer.content.check import _ORDER_BREAK, _PAGE_BREAK, _Page
+
+    assert not _Page("Das Netz ist nicht 5 km lang", pdf=True).holds("Das Netz ist 5 km lang")
+    # not across the break between the two readings of a PDF, nor over more than a header
+    assert not _Page(f"Das Netz ist {_ORDER_BREAK} 5 km lang", pdf=True).holds(
+        "Das Netz ist 5 km lang"
+    )
+    far = "x" * 300
+    assert not _Page(f"Das Netz ist {far}{_PAGE_BREAK} 5 km lang", pdf=True).holds(
+        "Das Netz ist 5 km lang"
+    )
+    # nor two page breaks
+    two = _Page(f"Das Netz {_PAGE_BREAK} 3 {_PAGE_BREAK} ist 5 km lang", pdf=True)
+    assert not two.holds("Das Netz ist 5 km lang") and two.holds("Das Netz")
+
+
+@needs_pdftotext
+def test_a_sentence_over_a_pdf_page_break_is_still_found():
+    # the five-page fixture repeats one sentence per page: the end of page 1 and the start of
+    # page 2 meet at a page break
+    pdf = Path(__file__).parent / "fixtures/ocr/five-pages-p3-scanned.pdf"
+    doc = copy.deepcopy(SOURCES)
+    doc["sources"][0]["excerpts"][0]["text"] = "km lang. Das Netz ist"
+    assert check_online(load_sources_from(doc), fetch=lambda u: pdf.read_bytes(), ocr=None) == (
+        [],
+        [],
+    )

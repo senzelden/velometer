@@ -1196,6 +1196,8 @@ def _http_get(url: str) -> str | bytes:
 PDF_ORDERS = ([], ["-raw"])  # pdftotext's reading order, then the content-stream order
 _PDF_GLYPHS = re.compile("[\u00ad\u2022\u2023\u25aa\u25cf\u25e6\u2043]")  # soft hyphen, bullets
 _ORDER_BREAK = " \u241e "  # between the two readings: no excerpt spans it
+_PAGE_BREAK = "\u240c"  # between two pages: an excerpt may span one, with a header in it
+_BREAK_GAP = 200  # the most text a page break may hold inside an excerpt (number, header)
 
 
 def _pdf_text(body: bytes) -> str:
@@ -1214,7 +1216,9 @@ def _pdf_text(body: bytes) -> str:
                 capture_output=True,
                 check=True,
                 timeout=PDF_TIMEOUT,
-            ).stdout.decode("utf-8", errors="replace")
+            )
+            .stdout.decode("utf-8", errors="replace")
+            .replace("\f", _PAGE_BREAK)
             for o in PDF_ORDERS
         ]
     except subprocess.TimeoutExpired as e:
@@ -1234,13 +1238,46 @@ class _Page:
         # A PDF's list bullets and soft hyphens are not in the sentence an excerpt quotes.
         self.text = _no_space(_PDF_GLYPHS.sub("", text)) if pdf else text
 
-    def add_ocr(self, texts) -> None:
-        """Append OCR texts of a PDF's pages, each after an order break."""
-        self.text += _no_space(_PDF_GLYPHS.sub("", "".join(f"{_ORDER_BREAK}{t}" for t in texts)))
+    def add_ocr(self, texts: dict[int, str]) -> None:
+        """Append the OCR texts of a PDF's pages after an order break, a page after the one
+        before it after a page break."""
+        out, last = [], None
+        for n, t in sorted(texts.items()):
+            out.append(f"{_PAGE_BREAK if last == n - 1 else _ORDER_BREAK}{t}")
+            last = n
+        self.text += _no_space(_PDF_GLYPHS.sub("", "".join(out)))
 
     def holds(self, excerpt: str) -> bool:
         ex = _squash(excerpt)
-        return (_no_space(ex) if self.pdf else ex) in self.text
+        if not self.pdf:
+            return ex in self.text
+        needle = _no_space(ex)
+        return needle in self.text or _over_a_page_break(self.text, needle)
+
+
+def _over_a_page_break(text: str, needle: str) -> bool:
+    """Whether `needle` is in `text` with one page break inside it, the break holding at most
+    _BREAK_GAP characters (a page number, a running header) and no order break. The needle is
+    cut where its longest prefix in `text` ends."""
+    lo, hi = 0, len(needle)
+    while lo < hi:  # a prefix that is in the text has all its own prefixes in it
+        mid = (lo + hi + 1) // 2
+        lo, hi = (mid, hi) if needle[:mid] in text else (lo, mid - 1)
+    head, rest = needle[:lo], needle[lo:]
+    if not head or not rest:
+        return False
+    i = text.find(head)
+    while i >= 0:
+        end = i + len(head)
+        j = text.find(rest, end, end + _BREAK_GAP + len(rest))
+        if (
+            j >= 0
+            and text.count(_PAGE_BREAK, end, j) == 1
+            and _ORDER_BREAK.strip() not in text[end:j]
+        ):
+            return True
+        i = text.find(head, i + 1)
+    return False
 
 
 def _no_space(text: str) -> str:
@@ -1279,7 +1316,7 @@ def _page_text(
     return _Page(_squash(text), pdf=False)
 
 
-def _ocr_texts(body, pages, ocr, notes, budget) -> list[str]:
+def _ocr_texts(body, pages, ocr, notes, budget) -> dict[int, str]:
     """The OCR texts of `pages` of PDF `body`, sent within what is left of `budget`; the
     notes go to `notes`."""
     budget = budget if budget is not None else _OcrBudget()
@@ -1287,7 +1324,7 @@ def _ocr_texts(body, pages, ocr, notes, budget) -> list[str]:
     budget.left -= got.sent
     if notes is not None:
         notes.extend(n for n in got.notes if n not in notes)
-    return list(got.texts.values())
+    return dict(got.texts)
 
 
 def _squash(text: str) -> str:
