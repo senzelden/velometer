@@ -14,7 +14,8 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
 
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
-        [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH]
+        [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH] \
+        [--url ORIGIN]
 
 `--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
 run as usual): each page loads in light, the emulated scheme switches to dark mid-page, and after
@@ -31,7 +32,9 @@ keyboard pass driven by real key events (`Input.dispatchKeyEvent`): skip link, p
 menu, city tabs, compare (tick, metric, view, sort, panel, Escape), the nav search and the tier
 and counter maps (+ and -); each step is a line in the entry's `steps`, a failed one is an error.
 Chrome is `--chrome`, else
-`$VELOMETER_CHROME`, else `/usr/bin/google-chrome`.
+`$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
+(e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
+page list still comes from `--site`.
 """
 
 from __future__ import annotations
@@ -1637,6 +1640,13 @@ def stop(proc: subprocess.Popen, timeout: float = 10) -> None:
 
 
 @contextlib.contextmanager
+def running(origin: str, base: str):
+    """A server someone else started (`--url`): wait until it answers under `base`."""
+    wait_http(origin + base)
+    yield origin
+
+
+@contextlib.contextmanager
 def serve(site: Path, base: str):
     """`python -m http.server` on 127.0.0.1 with the site reachable under `base`."""
     root = Path(tempfile.mkdtemp(prefix="render-pass-root-"))
@@ -1729,7 +1739,14 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("VELOMETER_CHROME") or CHROME,
         help=f"Chrome binary (default: $VELOMETER_CHROME, else {CHROME})",
     )
+    ap.add_argument(
+        "--url",
+        help="audit a server already running at this origin (e.g. http://127.0.0.1:8080) "
+        "instead of serving --site with http.server; --site still lists the pages",
+    )
     a = ap.parse_args(argv)
+    if a.url is not None and not re.fullmatch(r"https?://[^/]+/?", a.url):
+        ap.error(f"--url takes an origin such as http://127.0.0.1:8080, not {a.url!r}")
 
     base = _norm_base(a.base)
     site = a.site.resolve()
@@ -1778,7 +1795,8 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     try:
-        with serve(site, base) as origin, chrome(binary) as devtools:
+        server = running(a.url.rstrip("/"), base) if a.url else serve(site, base)
+        with server as origin, chrome(binary) as devtools:
             for n, (kind, url, theme, width) in enumerate(plan, 1):
                 if kind == "de":
                     rs = _de_interactions(devtools, origin, base, theme, width, shots)
