@@ -76,6 +76,11 @@ class DatalabError(Exception):
     """A build that cannot complete; the message names what and why."""
 
 
+def _blank_is_none(value: str | None) -> str | None:
+    """A value of only whitespace is not given: it stays a placeholder (or is left out)."""
+    return None if value is None or not value.strip() else value
+
+
 class DatalabConfig(BaseModel):
     """`sites/datalab/site.yaml`."""
 
@@ -99,7 +104,12 @@ class DatalabConfig(BaseModel):
         unknown = sorted(set(v) - set(OPERATOR_KEYS))
         if unknown:
             raise ValueError(f"unknown operator keys {unknown}; known: {list(OPERATOR_KEYS)}")
-        return {k: v.get(k) for k in OPERATOR_KEYS}
+        return {k: _blank_is_none(v.get(k)) for k in OPERATOR_KEYS}
+
+    @field_validator("contact_email")
+    @classmethod
+    def _contact(cls, v: str | None) -> str | None:
+        return _blank_is_none(v)
 
 
 def load_config(path: Path = DEFAULT_CONFIG) -> DatalabConfig:

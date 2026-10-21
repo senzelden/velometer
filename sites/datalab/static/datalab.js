@@ -1,7 +1,8 @@
 // The Zählwerk counter: the page already shows the last reading (each drum strip's `dN` class);
 // this script reveals the play button and, on a click, steps through the years the page lists
 // in `data-series` ("2018:1640 2019:1612 …", read from velometer's all.csv when the site was
-// built). It stores nothing and loads nothing.
+// built). Screen readers hear only the reading the drums stop at, not every year on the way
+// (the live region is busy while they turn). It stores nothing and loads nothing.
 (function () {
   "use strict";
   var counter = document.getElementById("counter");
@@ -28,18 +29,27 @@
   function show(i) {
     setKm(series[i][1]);
     setYear(series[i][0]);
+  }
+
+  function announce(i) {
     live.textContent = "Berlin " + series[i][0] + ": " + number.format(series[i][1]) + " km";
+    live.removeAttribute("aria-busy");
   }
 
   var timer = null;
   play.hidden = false;
   play.addEventListener("click", function () {
     clearTimeout(timer);
+    live.setAttribute("aria-busy", "true");
     var i = 0;
     (function step() {
       show(i);
+      if (i === series.length - 1) {
+        announce(i);
+        return;
+      }
       i += 1;
-      if (i < series.length) timer = setTimeout(step, 750);
+      timer = setTimeout(step, 750);
     })();
   });
 })();

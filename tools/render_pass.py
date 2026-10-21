@@ -15,8 +15,11 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
         [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH] \
-        [--url ORIGIN]
+        [--url ORIGIN] [--lang en|de]
 
+`--lang de` audits a one-language German site (the Datalab: `--base /`): every page must have
+`<html lang="de">` and gets the English-leak check, instead of velometer's rule (de under
+`<base>de`, en elsewhere).
 `--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
 run as usual): each page loads in light, the emulated scheme switches to dark mid-page, and after
 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
@@ -192,9 +195,17 @@ def type_urls(urls: list[str], base: str) -> list[str]:
     return sorted(keep)
 
 
+# `--lang`: the one language of a site that is not velometer's two-language tree (the German
+# Datalab site); None keeps velometer's rule.
+SITE_LANG: str | None = None
+
+
 def lang_of(url: str, base: str) -> str:
     """The language of a page URL, by the app's rule (`urls.lang_of`): `de` under `<base>de`
-    and for the legacy `<base>methodology/de`, else `en`."""
+    and for the legacy `<base>methodology/de`, else `en`; with `--lang`, that language for
+    every page."""
+    if SITE_LANG is not None:
+        return SITE_LANG
     rest = url[len(_norm_base(base)) :] if url.startswith(_norm_base(base)) else url.lstrip("/")
     return app_urls.lang_of("/" + rest)
 
@@ -1752,7 +1763,15 @@ def main(argv: list[str] | None = None) -> int:
         help="audit a server already running at this origin (e.g. http://127.0.0.1:8080) "
         "instead of serving --site with http.server; --site still lists the pages",
     )
+    ap.add_argument(
+        "--lang",
+        choices=("en", "de"),
+        help="every page is in this language (a one-language site such as the Datalab); "
+        "default: velometer's rule, de under <base>de, else en",
+    )
     a = ap.parse_args(argv)
+    global SITE_LANG
+    SITE_LANG = a.lang
     if a.url is not None and not re.fullmatch(r"https?://[^/]+/?", a.url):
         ap.error(f"--url takes an origin such as http://127.0.0.1:8080, not {a.url!r}")
 

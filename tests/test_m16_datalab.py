@@ -6,6 +6,7 @@ variant per operator form until the form is chosen (legal review 4.1-4.5, 5.1-5.
 F10, F14).
 """
 
+import contextlib
 import re
 import shutil
 from html.parser import HTMLParser
@@ -15,6 +16,7 @@ import pytest
 from pydantic import ValidationError
 from typer.testing import CliRunner
 
+from tests.helpers import load_script
 from velometer import datalab
 from velometer.app.export import scan_references
 from velometer.cli import app
@@ -230,6 +232,12 @@ def test_versions_pins_every_font_file():
         assert f"{digest}  {f.name}" in versions, f.name
 
 
+def test_no_site_file_is_executable():
+    site = ROOT / "sites" / "datalab"
+    executable = [p.name for p in site.rglob("*") if p.is_file() and p.stat().st_mode & 0o111]
+    assert executable == []
+
+
 def test_headers_carry_a_strict_policy(undecided):
     headers = (undecided / "_headers").read_text(encoding="utf-8")
     csp = re.search(r"Content-Security-Policy: (.*)", headers).group(1)
@@ -350,6 +358,22 @@ def test_a_missing_required_value_stays_a_placeholder(tmp_path):
     assert found and all(f.startswith("impressum/index.html:") for f in found)
 
 
+def test_blank_values_count_as_not_given(tmp_path):
+    values = {**FULL_PERSON, "name": "\n", "mail_host": " ", "phone": "  ", "vat": "\t"}
+    cfg = _cfg(operator_form="person", operator=values, contact_email=" ")
+    assert cfg.operator["name"] is None and cfg.contact_email is None
+    out = tmp_path / "out"
+    build(cfg, _export(tmp_path), out)
+    found = placeholders(out)
+    assert {f.split(":")[0] for f in found} == set(PAGES)  # the contact on every page
+    impressum = (out / "impressum" / "index.html").read_text(encoding="utf-8")
+    assert "[[Vor- und Nachname]]" in impressum  # a blank required value: a placeholder
+    assert "Telefon" not in impressum and "Umsatzsteuer" not in impressum  # blank optional: out
+    datenschutz = (out / "datenschutz" / "index.html").read_text(encoding="utf-8")
+    assert "[[Anbieter des Postfachs" in datenschutz
+    assert "mailto:" not in (out / "index.html").read_text(encoding="utf-8")
+
+
 def test_values_are_escaped(tmp_path):
     values = {**FULL_PERSON, "name": "<script>x</script>"}
     out = tmp_path / "out"
@@ -453,3 +477,33 @@ def test_cli_builds(tmp_path):
     )  # fmt: skip
     assert bad.exit_code == 1
     assert "all.csv" in bad.output
+
+
+# --- the render pass audits the Datalab as a German site ---------------------------------------
+
+
+def test_render_pass_lang_option_sets_every_page_language(tmp_path, monkeypatch):
+    rp = load_script("tools/render_pass.py")
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "index.html").write_text("<html></html>", encoding="utf-8")
+    seen = []
+    monkeypatch.setattr(rp, "find_chrome", lambda path: "chrome")
+    monkeypatch.setattr(rp, "chrome", lambda binary: contextlib.nullcontext("devtools"))
+    monkeypatch.setattr(rp, "wait_http", lambda url, *a, **k: None)
+    monkeypatch.setattr(rp, "failures", lambda r: [])
+    monkeypatch.setattr(rp, "serve", lambda site, base: contextlib.nullcontext("http://own:1"))
+
+    def visit(devtools, origin, url, theme, width, shots, base, flip=False):
+        seen.append(rp.lang_of(url, base))
+        return {"url": url, "theme": theme, "width": width, "axe": [], "errors": []}
+
+    monkeypatch.setattr(rp, "visit", visit)
+    args = ["--site", str(site), "--base", "/", "--out", str(tmp_path / "out"),
+            "--pages", "/,/impressum", "--themes", "light", "--widths", "1280"]  # fmt: skip
+    assert rp.main([*args, "--lang", "de"]) == 0
+    assert seen == ["de", "de"]
+    seen.clear()
+    assert rp.main(args) == 0  # without it, velometer's rule: en outside /de
+    assert seen == ["en", "en"]
+    assert rp.lang_of("/de/cities", "/") == "de"
