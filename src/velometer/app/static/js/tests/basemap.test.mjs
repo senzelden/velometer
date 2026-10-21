@@ -97,7 +97,7 @@ function silence(t) {
 
 test("a missing tile file: no layer, nothing logged, the OSM credit stays", async (t) => {
   const said = silence(t);
-  for (const status of [404, 403, 500, 200 - 100]) {
+  for (const status of [404, 403, 500, 204]) {
     const map = fakeMap();
     const pm = fakePm();
     const layer = await addBasemap(map, CFG, fakeMedia(false), { fetch: fetchAnswering(status), pm, read: fakeMedia(false).read });
@@ -124,6 +124,26 @@ test("a header that cannot be read (no byte ranges): no layer, nothing logged", 
   const map = fakeMap();
   assert.equal(await addBasemap(map, CFG, fakeMedia(false), { fetch: fetchAnswering(200), pm }), null);
   assert.equal(pm.made.length, 0);
+  assert.deepEqual(said, []);
+});
+
+test("a vendored library that throws: no layer, no rejection, nothing logged", async (t) => {
+  const said = silence(t);
+  for (const where of ["leafletLayer", "paintRules", "labelRules", "addTo"]) {
+    const map = fakeMap();
+    const pm = fakePm();
+    if (where === "addTo") {
+      const make = pm.leafletLayer;
+      pm.leafletLayer = (o) => ({ ...make(o), addTo() { throw new Error("addTo"); } });
+    } else {
+      pm[where] = () => { throw new TypeError(where); };
+    }
+    const layer = await addBasemap(map, CFG, fakeMedia(false), {
+      fetch: fetchAnswering(200), pm, read: fakeMedia(false).read,
+    });
+    assert.equal(layer, null, where);
+    assert.deepEqual(map.credits, [credits(CFG).data], where);
+  }
   assert.deepEqual(said, []);
 });
 
@@ -166,6 +186,8 @@ test("the file answers: one HEAD, then the vector layer over the extract's zoom 
 });
 
 test("the dark theme draws the dark flavour and a theme change swaps it in place", async () => {
+  // `mm.read` stands in for the stylesheet: in the page the CSS media query picks the token block
+  // (light or dark); addBasemap only reads the tokens again on a change, it never picks a theme
   const mm = fakeMedia(true);
   const map = fakeMap();
   const pm = fakePm();

@@ -7,7 +7,7 @@
 import { onThemeChange, token } from "./js/theme.js";
 import { number } from "./js/fmt.js";
 import { leafletPrefix, t } from "./js/strings.js";
-import { addBasemap } from "./js/basemap.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -17,7 +17,7 @@ import { addBasemap } from "./js/basemap.js";
   var cfg = JSON.parse(configEl.textContent);
   var status = document.getElementById("changemap-status");
 
-  var map = L.map(mapEl, { preferCanvas: true, maxZoom: 19 });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 });
   // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image

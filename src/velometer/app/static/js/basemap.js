@@ -11,7 +11,8 @@
 import { onThemeChange, token } from "./theme.js";
 import { t } from "./strings.js";
 
-const MAX_ZOOM = 19; // the maps' own limit; past the extract's maxzoom the layer overzooms
+// the maps' own limit (their L.map maxZoom); past the extract's maxzoom the layer overzooms
+export const MAX_ZOOM = 19;
 // the colour roles, each the token --map-<role>
 export const ROLES = [
   "earth", "water", "green", "area", "hard", "building", "road", "rail", "boundary", "label",
@@ -77,7 +78,8 @@ export function credits(cfg) {
 
 /**
  * Put the basemap under `map`'s lines: a HEAD request for `cfg.tiles` first; anything but 200/206,
- * a failed request or an unreadable PMTiles header resolves `null` (no layer, nothing logged).
+ * a failed request, an unreadable PMTiles header or a library call that throws resolves `null`
+ * (no layer, nothing logged); it never rejects, so the maps call it without awaiting it.
  * `theme` is the matchMedia whose colour-scheme changes repaint it; `deps` replace the page's
  * globals in tests (`read`: the token reader).
  */
@@ -88,33 +90,35 @@ export async function addBasemap(map, cfg, theme = globalThis.matchMedia, deps =
   const credit = credits(cfg);
   map.attributionControl.addAttribution(credit.data);
   if (!cfg.tiles || !pm || !fetchFn) return null;
-  let source, header;
   try {
     const r = await fetchFn(cfg.tiles, { method: "HEAD" });
     if (r.status !== 200 && r.status !== 206) return null;
-    source = new pm.PmtilesSource(cfg.tiles, true).p;
-    header = await source.getHeader();
+    const source = new pm.PmtilesSource(cfg.tiles, true).p;
+    const header = await source.getHeader();
+    const f = flavour(deps.read);
+    const layer = pm.leafletLayer({
+      url: source,
+      paintRules: pm.paintRules(f),
+      labelRules: pm.labelRules(f, lang),
+      backgroundColor: f.background,
+      maxDataZoom: header.maxZoom,
+      maxZoom: MAX_ZOOM,
+      lang: lang,
+      attribution: credit.basemap,
+    });
+    layer.addTo(map);
+    onThemeChange(function () {
+      const next = flavour(deps.read);
+      layer.paintRules = pm.paintRules(next);
+      layer.labelRules = pm.labelRules(next, lang);
+      layer.backgroundColor = next.background;
+      layer.clearLayout();
+      layer.rerenderTiles();
+    }, theme);
+    return layer;
   } catch (e) {
-    return null; // unreachable, or a server without byte ranges: the map goes without a background
+    // unreachable, a server without byte ranges, or a vendored library that no longer fits these
+    // calls (the render pass's map steps catch that one: no tile is drawn): no background
+    return null;
   }
-  const f = flavour(deps.read);
-  const layer = pm.leafletLayer({
-    url: source,
-    paintRules: pm.paintRules(f),
-    labelRules: pm.labelRules(f, lang),
-    backgroundColor: f.background,
-    maxDataZoom: header.maxZoom,
-    maxZoom: MAX_ZOOM,
-    lang: lang,
-    attribution: credit.basemap,
-  });
-  onThemeChange(function () {
-    const next = flavour(deps.read);
-    layer.paintRules = pm.paintRules(next);
-    layer.labelRules = pm.labelRules(next, lang);
-    layer.backgroundColor = next.background;
-    layer.clearLayout();
-    layer.rerenderTiles();
-  }, theme);
-  return layer.addTo(map);
 }

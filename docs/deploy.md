@@ -119,6 +119,14 @@ Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet o
    (Caddy's file server answers `Range`; `encode` leaves its binary type alone). Without it the
    maps draw without a background. `handle_errors` sets its own `root`: an error under `/tiles/`
    would otherwise look for the 404 page in `/srv/tiles/` and send an empty body.
+   Replace the tile file atomically: copy the new one to a temporary name in the same directory,
+   then rename it into place, so a reader's open map never fetches a half-written file
+   (protomaps-leaflet logs every failed tile to the console):
+
+   ```sh
+   scp velometer.pmtiles server:/srv/tiles/velometer.pmtiles.new
+   ssh server mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
+   ```
 4. Upload. Dry run first, then without `--dry-run`:
 
    ```

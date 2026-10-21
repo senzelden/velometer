@@ -9,7 +9,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
 import { mapStatus } from "./js/data.js";
 import { leafletPrefix, t } from "./js/strings.js";
 import { tierPopup } from "./js/tier-popup.js";
-import { addBasemap } from "./js/basemap.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -27,7 +27,7 @@ import { addBasemap } from "./js/basemap.js";
   var view = want.at; // the reader's own pan/zoom, or null while the app's fit is showing
   var fitting = false; // true while the app moves the map itself: that is not the reader's view
 
-  var map = L.map(mapEl, { preferCanvas: true, maxZoom: 19 });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
   // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image

@@ -5,7 +5,7 @@
 // Site names are portal data: tooltips are built with textContent.
 import { onThemeChange, token } from "./js/theme.js";
 import { leafletPrefix } from "./js/strings.js";
-import { addBasemap } from "./js/basemap.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -14,7 +14,7 @@ import { addBasemap } from "./js/basemap.js";
   if (!configEl || !mapEl || typeof L === "undefined") return;
   var cfg = JSON.parse(configEl.textContent);
 
-  var map = L.map(mapEl, { preferCanvas: true, maxZoom: 19 });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 4 });
   addBasemap(map, cfg);
