@@ -1094,10 +1094,10 @@ one inline SVG of our own, and no photo. Its numbers come from velometer's expor
 |---|---|---|---|
 | F1 | 1.1b | One OSM notice with both URIs (openstreetmap.org/copyright, opendatacommons.org/licenses/odbl/1-0/) in CSV preamble, tier-map and change-map GeoJSON (`attribution` member), `series.json`, tier-map and chart PNG footers | Task 2 |
 | F2 | 1.2a | EuroGeographics notice, exact text: EN `© EuroGeographics for the administrative boundaries`, DE `© EuroGeographics bezüglich der Verwaltungsgrenzen` (replaces the plan's "für die"), in the tier-map attribution (P1), site footer, tier-map PNG, tier-map GeoJSON (plus "the `boundary` member is GISCO data under GISCO terms, not ODbL"), CSV preamble, methodology/sources block; ADR 0008 adds GISCO with its non-commercial condition | Task 2 (kept by Task 5) |
-| F3 | 1.3 | Population credits per source: Eurostat; "Source : Insee" (FR); "Elaboración propia con datos extraídos del sitio web del INE: www.ine.es" (ES); in the CSV preamble per city and the methodology block, plus the non-responsibility line for derived per-capita figures | Task 2 |
+| F3 | 1.3 | Population credits per source: Eurostat; "Source : Insee" (FR); "Elaboración propia con datos extraídos del sitio web del INE: www.ine.es" (ES); in the CSV preamble per city and the methodology block, plus the non-responsibility line for derived per-capita figures; ADR 0008 entry (Eurostat, INSEE, INE) | Task 2, Task 2 (ADR) |
 | F4 | 1.4c | Counter credit adds "; index and totals computed by velometer" / "; Index und Summen von velometer berechnet" (user sees the wording) | Task 2 |
 | F5 | 1.6 | ADR 0008: BikeNetKit "states no licence; OSM extracts, so ODbL by share-alike" | Task 2 |
-| F6 | 1.7 | Map credit: © OpenStreetMap contributors (linked) + Protomaps; no `landcover` layer (or ESA WorldCover CC BY 4.0 credit); extract not offered as a tile service | Task 5 |
+| F6 | 1.7 | Map credit: © OpenStreetMap contributors (linked) + Protomaps; no `landcover` layer (or ESA WorldCover CC BY 4.0 credit); extract not offered as a tile service; ADR 0008 entry (Protomaps basemap: ODbL produced work; ESA WorldCover if landcover is drawn) | Task 5, Task 2 (ADR) |
 | F7 | 1.8 | Vendor and export `protomaps-leaflet.LICENSE`, `VERSIONS` entry; ADR 0008 names Leaflet (BSD-2) and protomaps-leaflet (BSD-3) | Task 5, Task 2 (ADR) |
 | F8 | 1.9 | Self-hosted woff2 with each family's `OFL.txt` published beside them; ADR 0008 names the fonts | Task 6, Task 2 (ADR) |
 | F9 | 4.5 | `/impressum`, `/datenschutz` on the apex, linked in every footer; one Impressum naming both hostnames | Task 6 |
@@ -1108,7 +1108,7 @@ one inline SVG of our own, and no photo. Its numbers come from velometer's expor
 | F14 | 5.9 | CSP without `tile.openstreetmap.org`; fonts self-hosted; render-pass audit 0 foreign hosts | Task 5, Task 6 |
 | F15 | 1.10 | DB-IP credit line in the GoAccess report; ADR 0008 entry | Task 8, Task 2 (ADR) |
 
-F13 and F15 fall to Task 8, which owns `goaccess.conf`.
+F13 and F15 fall to Task 8, which owns `goaccess.conf`. Each implementing task owns a test that fails without its fix.
 
 ## Decisions for the user (block go-live until decided)
 
