@@ -87,27 +87,39 @@ def _download(url: str) -> bytes:
         return response.read()
 
 
+def _binary_from(data: bytes) -> bytes:
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+        return tar.extractfile(tar.getmember("pmtiles")).read()
+
+
 def ensure_pmtiles(
     bin_dir: Path = BIN_DIR,
     fetch: Callable[[str], bytes] = _download,
     sha256: str = PMTILES_SHA256,
 ) -> Path:
-    """The pinned `pmtiles` binary in `bin_dir`; downloaded and checksum-verified when absent."""
-    binary = Path(bin_dir) / f"pmtiles-{PMTILES_VERSION}"
-    if binary.exists():
-        return binary
-    data = fetch(PMTILES_URL)
-    got = hashlib.sha256(data).hexdigest()
-    if got != sha256:
-        raise ValueError(f"pmtiles download sha256 {got} does not match the pinned {sha256}")
-    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
-        member = tar.getmember("pmtiles")
-        payload = tar.extractfile(member).read()
-    binary.parent.mkdir(parents=True, exist_ok=True)
-    partial = binary.with_name(binary.name + ".part")
-    partial.write_bytes(payload)
-    partial.chmod(0o755)
-    partial.replace(binary)
+    """The pinned `pmtiles` binary in `bin_dir`.
+
+    The verified tarball is cached beside the binary. Every call re-hashes the cached tarball
+    against the pin (a mismatch is downloaded again and verified) and restores the binary from it
+    when the binary is missing or differs, so a tampered cache is never run.
+    """
+    bin_dir = Path(bin_dir)
+    binary = bin_dir / f"pmtiles-{PMTILES_VERSION}"
+    tarball = bin_dir / f"pmtiles-{PMTILES_VERSION}.tar.gz"
+    data = tarball.read_bytes() if tarball.exists() else b""
+    if hashlib.sha256(data).hexdigest() != sha256:
+        data = fetch(PMTILES_URL)
+        got = hashlib.sha256(data).hexdigest()
+        if got != sha256:
+            raise ValueError(f"pmtiles download sha256 {got} does not match the pinned {sha256}")
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        tarball.write_bytes(data)
+    payload = _binary_from(data)
+    if not binary.exists() or binary.read_bytes() != payload:
+        partial = binary.with_name(binary.name + ".part")
+        partial.write_bytes(payload)
+        partial.chmod(0o755)
+        partial.replace(binary)
     return binary
 
 

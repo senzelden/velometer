@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import math
+import struct
 import tarfile
 from pathlib import Path
 
@@ -88,6 +89,33 @@ def test_the_pinned_binary_is_checked_against_its_sha256(tmp_path):
     assert binary.stat().st_mode & 0o111
 
 
+def test_a_tampered_cached_binary_is_restored_and_never_trusted(tmp_path):
+    data = _tarball(b"#!/bin/sh\necho real\n")
+    good = hashlib.sha256(data).hexdigest()
+    calls = []
+
+    def fetch(url):
+        calls.append(url)
+        return data
+
+    binary = tiles.ensure_pmtiles(tmp_path, fetch=fetch, sha256=good)
+    binary.write_bytes(b"#!/bin/sh\necho evil\n")
+    assert tiles.ensure_pmtiles(tmp_path, fetch=fetch, sha256=good) == binary
+    assert b"real" in binary.read_bytes()
+    assert len(calls) == 1  # restored from the verified cached tarball
+
+
+def test_a_tampered_cached_tarball_is_downloaded_again_or_refused(tmp_path):
+    data = _tarball(b"real")
+    good = hashlib.sha256(data).hexdigest()
+    tiles.ensure_pmtiles(tmp_path, fetch=lambda url: data, sha256=good)
+    (tmp_path / f"pmtiles-{tiles.PMTILES_VERSION}.tar.gz").write_bytes(b"junk")
+    tiles.ensure_pmtiles(tmp_path, fetch=lambda url: data, sha256=good)
+    (tmp_path / f"pmtiles-{tiles.PMTILES_VERSION}.tar.gz").write_bytes(b"junk")
+    with pytest.raises(ValueError, match="sha256"):
+        tiles.ensure_pmtiles(tmp_path, fetch=lambda url: b"also junk", sha256=good)
+
+
 def test_a_checksum_mismatch_refuses_and_leaves_no_binary(tmp_path):
     data = _tarball(b"tampered")
     with pytest.raises(ValueError, match="sha256"):
@@ -168,12 +196,18 @@ def test_the_tile_directory_is_git_ignored():
     assert r.returncode == 0
 
 
-FIXTURE = ROOT / "tests" / "fixtures" / "tiles" / "berlin-z0-10.pmtiles"
+FIXTURE = ROOT / "tests" / "fixtures" / "tiles" / "berlin-z0-8.pmtiles"
 
 
-def test_the_fixture_is_a_small_pmtiles_archive_with_its_attribution():
-    head = FIXTURE.read_bytes()[:8]
+def test_the_fixture_is_a_small_berlin_archive_for_zoom_0_to_8_with_its_attribution():
+    head = FIXTURE.read_bytes()[:127]
     assert head[:7] == b"PMTiles" and head[7] == 3
+    assert (head[100], head[101]) == (0, 8)  # min and max zoom
+    west, south, east, north = (
+        struct.unpack_from("<i", head, off)[0] / 1e7 for off in (102, 106, 110, 114)
+    )
+    assert 13.0 <= west < east <= 13.9 and 52.3 <= south < north <= 52.7
     assert FIXTURE.stat().st_size < 2_000_000
     text = (FIXTURE.parent / "ATTRIBUTION.txt").read_text()
     assert "OpenStreetMap contributors" in text and "ODbL" in text and "Protomaps" in text
+    assert FIXTURE.name in text
