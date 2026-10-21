@@ -139,3 +139,14 @@ def test_a_coalition_by_colour_and_an_office_holder():
         "Die rot-grüne Stadtregierung gründete sie; der Radverkehrsbeauftragte leitete sie."
     )
     assert {"names-party", "names-person"} <= set(got)
+
+
+def test_cli_never_overwrites_an_existing_file_without_force(tmp_path, capsys):
+    out = tmp_path / "m16-press.md"
+    out.write_bytes(b"# reviewed table\n| 1 | ... | reviewed |\n")
+    before = out.read_bytes()
+    assert pr.main(["--out", str(out), str(FIXTURE)]) == 2
+    assert out.read_bytes() == before
+    assert "--force" in capsys.readouterr().err
+    assert pr.main(["--out", str(out), "--force", str(FIXTURE)]) == 0
+    assert "Clean Cities is not reproducible." in out.read_text(encoding="utf-8")

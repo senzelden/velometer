@@ -159,8 +159,9 @@ the content files (not the quotations in `content/sources/`), the UI catalogues,
 explanations, `config/limitations.yaml` and the config prose of `velometer.config.reader_prose`.
 Organisation names come from `config/organisations.yaml` and the source publishers; offices,
 parties and the reviewed `PERSONS` are lists in the tool. The output is a raw list to read; the
-reviewed table is `docs/review/m16-press.md`.
+reviewed table is `docs/review/m16-press.md`; an existing `--out` file is never overwritten
+without `--force`, so the CLI cannot replace the reviewed table by accident.
 
 ```bash
-uv run python tools/press_review.py --out "$SCRATCH/press.md" [PATH ...]
+uv run python tools/press_review.py --out "$SCRATCH/press.md" [--force] [PATH ...]
 ```

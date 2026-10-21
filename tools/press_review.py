@@ -2,7 +2,9 @@
 that names a person, party, administration or organisation, or states a cause or a judgement
 about one (spec §4.1 item 3, §4.9 item 8).
 
-    uv run python tools/press_review.py --out FILE [PATH ...]
+    uv run python tools/press_review.py --out FILE [--force] [PATH ...]
+
+An existing FILE is never overwritten without `--force`.
 
 Without PATHs it reads `default_paths()`: the English and German content files (not
 `content/sources/`, whose excerpts are verbatim, attributed quotations), the UI catalogues, the
@@ -417,8 +419,13 @@ def table(cands: list[Candidate]) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--force", action="store_true", help="overwrite an existing --out file")
     ap.add_argument("paths", nargs="*", type=Path)
     a = ap.parse_args(argv)
+    if a.out.exists() and not a.force:
+        # the reviewed table (docs/review/m16-press.md) must not be replaced by a raw list
+        print(f"{a.out} exists; pass --force to overwrite it", file=sys.stderr)
+        return 2
     cands = candidates(a.paths or default_paths())
     by_reason = {r: sum(r in c.reasons for c in cands) for r in REASONS}
     head = (
