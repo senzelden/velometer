@@ -149,3 +149,18 @@ To upgrade it, take the newest 4.x release on `registry.npmjs.org/axe-core` that
 14 days old. Download `axe.min.js` and `LICENSE` from
 `cdn.jsdelivr.net/npm/axe-core@<version>/`, check them against the npm tarball, and rewrite
 `VERSION`.
+
+## press_review.py
+
+Lists the press-law candidate sentences (M16 spec §4.1 item 3, §4.9 item 8): every reader-facing
+sentence of both editions that names a person, party, administration or organisation, uses an
+actor-implying verb, or states a cause or judgement in a paragraph that names an actor. It reads
+the content files (not the quotations in `content/sources/`), the UI catalogues, the flagged-year
+explanations, `config/limitations.yaml` and the config prose of `velometer.config.reader_prose`.
+Organisation names come from `config/organisations.yaml` and the source publishers; offices,
+parties and the reviewed `PERSONS` are lists in the tool. The output is a raw list to read; the
+reviewed table is `docs/review/m16-press.md`.
+
+```bash
+uv run python tools/press_review.py --out "$SCRATCH/press.md" [PATH ...]
+```
