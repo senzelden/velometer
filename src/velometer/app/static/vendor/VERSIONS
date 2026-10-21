@@ -6,3 +6,13 @@
 # The vega, vega-lite and vega-embed bundles left the app in M7 (charts are static/js/chart.js);
 # altair still renders the PNG charts in docs/review on the Python side.
 leaflet 1.9 1.9.4
+# protomaps-leaflet: the exact release 5.1.0 (published to npm 2025-06-18), BSD-3-Clause. The
+# browser bundle was fetched once on 2026-10-21 from
+# https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js
+# (sha256 26af014f7b1af308ec120b791cff76657bb9c3383633b52033e6edf9e5e4cdb5) and is kept byte for
+# byte (it has no header comment). protomaps-leaflet.LICENSE is the package's LICENSE
+# (https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/LICENSE) followed by the licences of the
+# packages the bundle contains (pmtiles, @protomaps/basemaps, @mapbox/vector-tile,
+# @mapbox/point-geometry, pbf, rbush, quickselect, potpack, color2k). It needs no worker, blob:
+# URL, glyph, sprite or font host: labels are drawn with the browser's sans-serif.
+protomaps-leaflet 5.1.0 5.1.0

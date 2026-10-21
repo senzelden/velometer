@@ -2050,6 +2050,12 @@ def serve(
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
     plans_data_dir: Path = PLANS_DATA_OPT,
+    tiles: Path | None = typer.Option(  # noqa: B008
+        None,
+        "--tiles",
+        help="A PMTiles extract (tools/tiles.py) served as the maps' background; without it the "
+        "maps have none.",
+    ),
 ) -> None:
     """The private, read-only web app on a loopback address (never exposed to the network)."""
     if host not in LOOPBACK_HOSTS:
@@ -2062,12 +2068,21 @@ def serve(
     if not db.is_file():
         typer.echo(f"error: database not found: {db}", err=True)
         raise typer.Exit(1)
+    if tiles is not None and not tiles.is_file():
+        typer.echo(f"error: tile file not found: {tiles}", err=True)
+        raise typer.Exit(1)
     import uvicorn
 
     from velometer.app.main import create_app
 
     app_ = create_app(
-        db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir
+        db,
+        config_dir,
+        maps,
+        docs,
+        content_dir=content_dir,
+        plans_data_dir=plans_data_dir,
+        tiles_file=tiles,
     )
     uvicorn.run(app_, host=host, port=port)
 

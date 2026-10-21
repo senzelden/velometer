@@ -7,8 +7,9 @@ Missing data is a note on the page ("no run ...", "map not generated ..."), neve
 unknown city is a 404. Every page is server-rendered and readable without JavaScript (tables);
 charts are drawn by our own ES modules under /static/js from `/data/series.json`. The city page's
 tier map is the vendored Leaflet over the run's GeoJSON (`velometer report maps`); its background
-tiles come from the public OSM tile server, the one external host a page loads from (the user's
-decision, 2026-10-02). Every response carries a Content-Security-Policy that allows exactly that.
+is a Protomaps vector extract served beside the site (TILES_PATH, M16), drawn by the vendored
+protomaps-leaflet. No page loads anything from another host, and every response carries a
+Content-Security-Policy that allows exactly that.
 """
 
 import logging
@@ -109,11 +110,13 @@ GENERATED_NOTE = re.compile(r"\A(?:>[^\n]*\n)+\s*")
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
 GZIP_MIN_BYTES = 1024  # below this a gzip frame saves too little to be worth it
 GZIP_LEVEL = 5  # ~3x less CPU than 9 on the 15-20 MB FUA GeoJSON, ~5 % more bytes
-# The tile layer's class (app.css mutes it: OSM's orange/red roads clash with tiers B and D)
-TILE_CLASS = "tiermap-tiles"
-LINE_WEIGHT = 3  # px: tier lines stay readable over the tiles at zoom 16
-# The tier map's background and the links its attribution and popups point at.
-OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+LINE_WEIGHT = 3  # px: tier lines stay readable over the basemap at zoom 16
+# The maps' background: one PMTiles extract (tools/tiles.py), served beside the site at this path
+# under the base, never part of the export (export.SERVED_BESIDE); static/js/basemap.js draws it
+# and leaves the map without a background when it is missing. `velometer serve --tiles FILE`
+# serves it for the live app.
+TILES_PATH = "tiles/velometer.pmtiles"
+# The links the maps' attribution and popups point at.
 OSM_LINKS = {
     "copyright": "https://www.openstreetmap.org/copyright",
     "way": "https://www.openstreetmap.org/way/",
@@ -130,9 +133,10 @@ STEP_COMPARE = {
     "jumps": {"c": "flagged", "m": "ab_km", "view": "small", "table": "jumps", "ring": "km_jump"},
     "bezirke": {"href": f"/city/{STORY_CITY}/bezirke"},
 }
-# No inline script or style, no third-party host except the OSM tiles (images), no framing.
+# No inline script or style, no host but the page's own (the basemap's byte ranges are
+# connect-src 'self'), no framing.
 CSP = (
-    "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
+    "default-src 'self'; img-src 'self' data:; "
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
@@ -453,10 +457,13 @@ def create_app(
     plans_data_dir: Path = Path("data") / "plans",
     base_path: str = "/",
     static_edition: dict | None = None,
+    tiles_file: Path | None = None,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
-    for the static export (a footer line), None for the live app."""
+    for the static export (a footer line), None for the live app. `tiles_file`, when given, is
+    served at TILES_PATH with byte ranges (`velometer serve --tiles`); without it the maps go
+    without a background."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -473,6 +480,16 @@ def create_app(
         lang: urls.make_u(app.state.base_path, lang) for lang in LANGS
     }
     data_u = urls.make_data_u(app.state.base_path)
+    tiles_url = app.state.base_path + TILES_PATH  # the maps' configs carry it as it is
+    if tiles_file is not None:
+        tiles = Path(tiles_file)
+
+        # FileResponse answers Range with 206, which GZipMiddleware leaves as it is (a compressed
+        # body would not hold the bytes at the offsets asked for)
+        async def tiles_route() -> FileResponse:
+            return FileResponse(tiles, media_type="application/vnd.pmtiles")
+
+        app.add_api_route("/" + TILES_PATH, tiles_route, methods=["GET", "HEAD"])
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
     app.state.site = load_site(config_dir)
     # a table row carries a city's id and name, not the city: the config says which language the
@@ -1037,8 +1054,7 @@ def create_app(
             ctx["site_map"] = (
                 None
                 if ctx["site_map"] is None
-                else ctx["site_map"]
-                | {"tiles": OSM_TILES, "tile_class": TILE_CLASS, "links": OSM_LINKS}
+                else ctx["site_map"] | {"tiles": tiles_url, "links": OSM_LINKS}
             )
             return ctx | {"doc": doc, "text_error": text_error, "config_error": cfg_error}
 
@@ -1467,8 +1483,7 @@ def create_app(
         yearly = years + ([by_label[ts.CURRENT]] if ts.CURRENT in by_label else [])
         # no colours: the tier and outline colours are stylesheet tokens map.js reads (both themes)
         tiermap = {
-            "tiles": OSM_TILES,
-            "tile_class": TILE_CLASS,
+            "tiles": tiles_url,
             "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
             "labels": {tier: i18n.t(lang, f"tier.{tier}") for tier in charts.TIER_LABEL},
@@ -1616,8 +1631,7 @@ def create_app(
             "change_table": table,
             "change_map": {
                 "url": data_u(f"/maps/{stem}.geojson"),
-                "tiles": OSM_TILES,
-                "tile_class": TILE_CLASS,
+                "tiles": tiles_url,
                 "weight": LINE_WEIGHT,
                 "links": OSM_LINKS,
                 # the drawn categories, in key order; their colours are the --change-<category>

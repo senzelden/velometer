@@ -82,7 +82,7 @@ Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet o
    ```
    (security_headers) {
        header {
-           Content-Security-Policy "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+           Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
            X-Content-Type-Options nosniff
            Referrer-Policy strict-origin-when-cross-origin
            Cache-Control "public, max-age=3600"
@@ -96,8 +96,13 @@ Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet o
        file_server {
            precompressed gzip
        }
+       handle_path /tiles/* {
+           root * /srv/tiles
+           file_server
+       }
        handle_errors {
            import security_headers
+           root * /srv/velometer
            rewrite * /404.html
            file_server
        }
@@ -109,6 +114,11 @@ Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet o
    same policy. The snippet is imported in `handle_errors` too, so the 404 page carries the
    headers whether or not Caddy keeps the site route's headers on an error response.
    `precompressed gzip` serves the export's `.gz` siblings. This block is for `--base /`.
+   The maps' basemap (`tiles/velometer.pmtiles`, cut by `tools/tiles.py`, about 900 MB) is not
+   part of the export: it lives in `/srv/tiles/` and `handle_path` serves it with byte ranges
+   (Caddy's file server answers `Range`; `encode` leaves its binary type alone). Without it the
+   maps draw without a background. `handle_errors` sets its own `root`: an error under `/tiles/`
+   would otherwise look for the 404 page in `/srv/tiles/` and send an empty body.
 4. Upload. Dry run first, then without `--dry-run`:
 
    ```
@@ -121,9 +131,7 @@ Tested locally in M15 (Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet o
 The Datenschutzerklärung (the Datalab's, linked from the footer) must name:
 
 - the host and its server logs (Cloudflare or Hetzner, including the IP addresses they log);
-- `tile.openstreetmap.org`: when a tier map loads, the browser asks the OpenStreetMap Foundation's
-  tile server, which receives the visitor's IP address;
 - Cloudflare as a US processor, if the Cloudflare Pages route is taken.
 
-The OSM tile usage policy forbids heavy use of `tile.openstreetmap.org`. A site with real traffic
-needs its own tiles or a commercial provider; that is a recorded follow-up, not built in M14.
+Since M16 no page loads anything from another host: the map background is the self-hosted
+Protomaps extract, so the OSM tile usage policy no longer applies.

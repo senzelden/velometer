@@ -4,14 +4,16 @@ probe what a browser gets (M15 spec, docs/superpowers/specs/2026-10-18-velometer
 - `caddy`: the official Docker image (`CADDY_IMAGE`) with the Caddyfile from docs/deploy.md,
   its site address replaced by `http://127.0.0.1:<port>`; with `--network host` it also binds
   Caddy's admin endpoint on 127.0.0.1:2019, so stop any other Caddy (or a `--keep-running` dry run)
-  first;
+  first. `--tiles FILE` mounts a PMTiles extract where the server keeps it (`TILES_MOUNT`), and a
+  probe asks it for a byte range;
 - `wrangler`: `wrangler pages dev` (`WRANGLER`, fetched by npx at run time), Cloudflare Pages'
   local emulation.
 
 Nothing is uploaded. The probes are pure functions of a response; `run_probes` fetches the paths
 they need and collects their problems. The exit status is 1 when any probe fails.
 
-    uv run python tools/deploy_dryrun.py --site DIR --server caddy|wrangler [--keep-running]
+    uv run python tools/deploy_dryrun.py --site DIR --server caddy|wrangler [--tiles FILE]
+        [--keep-running]
 """
 
 import argparse
@@ -41,6 +43,11 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 SITE_ADDRESS = "velometer.<domain>"  # the Caddyfile's site address in docs/deploy.md
 CADDY_IMAGE = "caddy:2.11.4-alpine"
+# where the server keeps the maps' basemap (docs/deploy.md: `handle_path /tiles/*`), outside the
+# site's directory, and the path a page asks for it at (main.TILES_PATH under base /)
+TILES_MOUNT = "/srv/tiles/velometer.pmtiles"
+TILES_URL = "/tiles/velometer.pmtiles"
+PMTILES_MAGIC = b"PMTiles"
 # Cloudflare's _headers docs cover static asset responses and are silent on 404s; wrangler pages
 # dev sends no-store on its 404. An uncached not-found answer is harmless (rulings-m15).
 NOT_FOUND_EXEMPT = ("cache-control",)
@@ -169,6 +176,20 @@ def check_404(path: str, r: Resp, page: bytes, expected: dict[str, str]) -> list
     return problems + check_headers(path, r, kept)
 
 
+def check_tiles(path: str, r: Resp) -> list[str]:
+    """`Range: bytes=0-15` on the tile file: 206 with exactly those 16 bytes, unencoded (the
+    reader asks for byte offsets of the file as stored)."""
+    problems = []
+    if r.status != 206:
+        problems.append(f"{path}: a byte range answered {r.status}, not 206 (no Range support?)")
+    enc = (r.header("content-encoding") or "identity").strip().lower()
+    if enc != "identity":
+        problems.append(f"{path}: a byte range sent with Content-Encoding {enc}")
+    if len(r.body) != 16 or not r.body.startswith(PMTILES_MAGIC):
+        problems.append(f"{path}: the first 16 bytes are not a PMTiles header ({r.body[:16]!r})")
+    return problems
+
+
 def check_page(path: str, r: Resp, page: bytes, origin: str) -> list[str]:
     """`path` ends, after any redirects, on this site with `page` as its body."""
     problems = check_status(path, r)
@@ -232,15 +253,12 @@ def _file(site: Path, base: str, path: str) -> Path:
     return f / "index.html" if f.is_dir() else f
 
 
-def fetch_url(url: str, gzip: bool = False) -> Resp:
+def fetch_url(url: str, gzip: bool = False, byte_range: str | None = None) -> Resp:
     """GET `url` (following redirects); repeated response headers are joined with ", "."""
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Accept-Encoding": "gzip" if gzip else "identity",
-            "User-Agent": "velometer-dryrun",
-        },
-    )
+    headers = {"Accept-Encoding": "gzip" if gzip else "identity", "User-Agent": "velometer-dryrun"}
+    if byte_range:
+        headers["Range"] = f"bytes={byte_range}"
+    req = urllib.request.Request(url, headers=headers)
 
     def merged(msg) -> dict[str, str]:
         out: dict[str, str] = {}
@@ -263,8 +281,10 @@ def run_probes(
     base: str,
     require_gzip: bool,
     fetch: Callable[..., Resp] = fetch_url,
+    tiles: bool = False,
 ) -> tuple[int, list[str]]:
-    """Probe the server at `origin` serving `site` under `base`: (checks run, problems)."""
+    """Probe the server at `origin` serving `site` under `base`: (checks run, problems); with
+    `tiles`, also a byte range of the basemap file served beside the site."""
     rules = headers_rules((site / "_headers").read_text(encoding="utf-8"))
     paths = pick_paths(site, base)
     problems: list[str] = []
@@ -288,15 +308,19 @@ def run_probes(
     problems += check_page(
         other, fetch(origin + other), _file(site, base, city).read_bytes(), origin
     )
-    # an unknown path
-    nope = f"{base}nope-{secrets.token_hex(4)}"
-    n += 1
-    problems += check_404(
-        nope,
-        fetch(origin + nope),
-        (site / "404.html").read_bytes(),
-        expected_headers(rules, nope),
-    )
+    # an unknown path, at the top and under the tiles route (served from another root)
+    for nope in (f"{base}nope-{secrets.token_hex(4)}", f"{base}tiles/nope-{secrets.token_hex(4)}"):
+        n += 1
+        problems += check_404(
+            nope,
+            fetch(origin + nope),
+            (site / "404.html").read_bytes(),
+            expected_headers(rules, nope),
+        )
+    if tiles:
+        n += 1
+        # gzip offered: a byte range must still come back as stored
+        problems += check_tiles(TILES_URL, fetch(origin + TILES_URL, gzip=True, byte_range="0-15"))
     # every path the home page links or loads
     home = fetch(origin + base).decoded() or b""
     for link in site_links(home.decode("utf-8", "replace"), base):
@@ -328,11 +352,15 @@ def wait_http(url: str, timeout: float) -> None:
     raise DryRunError(f"no answer from {url} within {timeout:g} s")
 
 
-def caddy_command(site: Path, caddyfile: Path, name: str, image: str = CADDY_IMAGE) -> list[str]:
+def caddy_command(
+    site: Path, caddyfile: Path, name: str, image: str = CADDY_IMAGE, tiles: Path | None = None
+) -> list[str]:
     # host networking: the site address 127.0.0.1:<port> is the host's loopback
+    mount_tiles = ["-v", f"{tiles.resolve()}:{TILES_MOUNT}:ro"] if tiles else []
     return [
         "docker", "run", "--rm", "--name", name, "--network", "host",
         "-v", f"{site.resolve()}:/srv/velometer:ro",
+        *mount_tiles,
         "-v", f"{caddyfile}:/etc/caddy/Caddyfile:ro",
         image,
     ]  # fmt: skip
@@ -353,8 +381,9 @@ def _log_tail(log: Path, lines: int = 30) -> str:
 
 
 @contextlib.contextmanager
-def caddy_server(site: Path):
-    """Caddy in Docker with the documented Caddyfile; yields the origin, removes the container."""
+def caddy_server(site: Path, tiles: Path | None = None):
+    """Caddy in Docker with the documented Caddyfile (and the tile file mounted, if given);
+    yields the origin, removes the container."""
     port = free_port()
     origin = f"http://127.0.0.1:{port}"
     name = f"velometer-dryrun-{port}"
@@ -367,7 +396,9 @@ def caddy_server(site: Path):
         try:
             with log.open("wb") as out:
                 proc = subprocess.Popen(
-                    caddy_command(site, caddyfile, name), stdout=out, stderr=subprocess.STDOUT
+                    caddy_command(site, caddyfile, name, tiles=tiles),
+                    stdout=out,
+                    stderr=subprocess.STDOUT,
                 )
         except OSError as e:
             raise DryRunError(f"caddy: docker not found or not runnable ({e})") from None
@@ -432,6 +463,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--site", type=Path, required=True, help="a finished export (--base /)")
     ap.add_argument("--server", choices=("caddy", "wrangler"), required=True)
     ap.add_argument(
+        "--tiles",
+        type=Path,
+        help="a PMTiles extract to serve beside the site at /tiles/velometer.pmtiles (caddy only)",
+    )
+    ap.add_argument(
         "--keep-running",
         action="store_true",
         help="after the probes, keep serving until Ctrl-C (for render_pass.py --url)",
@@ -446,11 +482,15 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(f"both routes serve an export made with --base /; this one has base {base}")
     if not (site / "_headers").is_file():
         ap.error(f"{site} has no _headers file")
-    server = caddy_server(site) if a.server == "caddy" else wrangler_server(site)
+    if a.tiles is not None and (a.server != "caddy" or not a.tiles.is_file()):
+        ap.error(f"--tiles needs --server caddy and an existing file, not {a.tiles}")
+    server = caddy_server(site, a.tiles) if a.server == "caddy" else wrangler_server(site)
     try:
         with server as origin:
             print(f"{a.server} serving {site} at {origin}{base}", flush=True)
-            n, problems = run_probes(origin, site, base, require_gzip=a.server == "caddy")
+            n, problems = run_probes(
+                origin, site, base, require_gzip=a.server == "caddy", tiles=a.tiles is not None
+            )
             for p in problems:
                 print(f"  problem: {p}")
             print(f"{n} checks, {len(problems)} problems", flush=True)

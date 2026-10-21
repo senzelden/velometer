@@ -71,7 +71,8 @@ def test_german_pages_never_link_to_english_twins(all_page_urls, page_site):  # 
     bad = []
     for de in (u for u in all_page_urls if urls.lang_of(u) == "de"):
         for href, exempt in _page_links(page_site.html[de]):
-            if exempt or href.startswith(("/data/", "/maps/", "/static/", "/de/data/")):
+            # data, maps, static files and the basemap file (M16) are the same in every language
+            if exempt or href.startswith(("/data/", "/maps/", "/static/", "/de/data/", "/tiles/")):
                 continue
             if not (href == "/de" or href.startswith(("/de/", "/de?", "/de#"))):
                 bad.append(f"{de}: {href}")

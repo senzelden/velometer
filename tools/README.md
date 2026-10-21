@@ -83,15 +83,19 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
 - `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else
   `/usr/bin/google-chrome`. A missing binary is a usage error.
 - The exit status is 1 if any visit has an error, an axe violation, overflow, a console message,
-  a CSP violation or a host other than `127.0.0.1` and `tile.openstreetmap.org`. It is also 1
+  a CSP violation or a host other than `127.0.0.1`. It is also 1
   when nothing was visited. Otherwise it is 0.
 - `<out>/results.json` lists one entry per visit and is rewritten after every visit:
   `{url, theme, width, kind: page|flip|interact, axe: [{id, impact, nodes}], overflow, console,
   csp, hosts, errors, screenshot}`.
 - `tools/out/` is git-ignored.
 
-The tool contacts `tile.openstreetmap.org` because the maps do. The browser cache is kept
-between visits, so each tile is fetched only once per run.
+The tool contacts no other host: since M16 the maps' basemap is a PMTiles file served by the
+site itself. `http.server` serves no byte ranges and the export does not hold the file, so with
+`--site` alone the maps draw without a background; the permalink and keyboard map steps read the
+map's view from the basemap's tiles and need it. Serve the export with
+`tools/deploy_dryrun.py --site DIR --server caddy --tiles data/tiles/velometer.pmtiles
+--keep-running` and pass its origin as `--url`.
 
 ## orca_pass.py
 

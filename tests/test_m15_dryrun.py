@@ -349,7 +349,9 @@ def test_an_export_without_build_json_is_refused(tmp_path, capsys):
 
 def test_an_export_for_another_base_is_refused_before_any_server_starts(tiny, monkeypatch, capsys):
     (tiny / "build.json").write_text(json.dumps({"base": "/velometer/"}), encoding="utf-8")
-    monkeypatch.setattr(dr, "caddy_server", lambda site: pytest.fail("no server may start"))
+    monkeypatch.setattr(
+        dr, "caddy_server", lambda site, tiles=None: pytest.fail("no server may start")
+    )
     with pytest.raises(SystemExit) as e:
         dr.main(["--site", str(tiny), "--server", "caddy"])
     assert e.value.code == 2 and "--base /" in capsys.readouterr().err
@@ -361,7 +363,7 @@ def test_a_server_is_stopped_when_a_probe_crashes(tiny, monkeypatch):
     stopped = []
 
     @contextlib.contextmanager
-    def server(site):
+    def server(site, tiles=None):
         try:
             yield "http://127.0.0.1:9"
         finally:
@@ -381,7 +383,7 @@ def test_main_reports_problems_with_exit_1_and_none_with_exit_0(tiny, monkeypatc
     import contextlib
 
     monkeypatch.setattr(
-        dr, "caddy_server", lambda site: contextlib.nullcontext("http://127.0.0.1:9")
+        dr, "caddy_server", lambda site, tiles=None: contextlib.nullcontext("http://127.0.0.1:9")
     )
     monkeypatch.setattr(dr, "run_probes", lambda *a, **k: (12, []))
     assert dr.main(["--site", str(tiny), "--server", "caddy"]) == 0

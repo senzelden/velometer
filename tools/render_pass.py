@@ -26,12 +26,13 @@ it and focus must return to the link; a city's Time tab with its first Cite open
 the address, the Copy button's live region); `city/berlin/tiers` with the Download control open,
 saving SVG, PNG and CSV (the SVG has no `var(` and names OpenStreetMap contributors); and
 `permalinks`, where the tier map, a story `#step-` and a compare `panel=` URL each open the state
-they name (the map view is read back from the tile under the map's centre, `MAP_VIEW_JS`) and a
-hostile query opens the defaults with a quiet console. `--keyboard` adds, per theme, a scripted
-keyboard pass driven by real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities
-menu, city tabs, compare (tick, metric, view, sort, panel, Escape), the nav search and the tier
-and counter maps (+ and -); each step is a line in the entry's `steps`, a failed one is an error.
-Chrome is `--chrome`, else
+they name (the map view is read back from the basemap tile under the map's centre,
+`MAP_VIEW_JS`, so this step and the keyboard pass's map steps need the tile file served: `--url`
+with the dry run's `--tiles`) and a hostile query opens the defaults with a quiet console.
+`--keyboard` adds, per theme, a scripted keyboard pass driven by real key events
+(`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare (tick, metric,
+view, sort, panel, Escape), the nav search and the tier and counter maps (+ and -); each step is a
+line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
 `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
 (e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
 page list still comes from `--site`.
@@ -69,7 +70,7 @@ CHROME = "/usr/bin/google-chrome"  # default; --chrome or $VELOMETER_CHROME over
 LOAD_TIMEOUT = 30.0  # seconds for a page's load event; a load that never fires is a finding
 OK_STATUS = {200, 304}  # 304: the browser cache revalidated a 200
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
-ALLOWED_HOSTS = {"127.0.0.1", "tile.openstreetmap.org"}
+ALLOWED_HOSTS = {"127.0.0.1"}  # M16: the basemap is served by the site itself
 # pages in a city are /city/<slug>/<tab>; --pages types keeps Berlin plus the first city (by
 # slug) whose tab list differs from Berlin's
 TYPES_CITY = "berlin"
@@ -800,22 +801,29 @@ TIER_PAGE = "city/berlin/tiers"
 # data; a site with a LAU map only has nothing else), read from the page, not assumed
 PERMALINK_TIERS = TIER_PAGE + "?kind={kind}&tiers=AB&at=52.52,13.40,12"
 TIER_KINDS_JS = "[...document.querySelectorAll('input[name=kind]')].map(e => e.value)"
+# A basemap tile's coordinates: protomaps-leaflet's canvas tiles carry Leaflet's key "x:y:z" as
+# their `key` property; [z, x, y] or null
+TILE_ZXY_JS = (
+    "((el) => { const m = /^(-?\\d+):(-?\\d+):(\\d+)$/.exec(String(el.key));"
+    " return m ? [+m[3], +m[1], +m[2]] : null; })"
+)
 # the map's centre and zoom, read back from the tile under the container's centre (the map object
 # is private to map.js); {z, lat, lon} or null while no tile has been placed
 MAP_VIEW_JS = r"""(() => {
+  const zxy = TILE_ZXY;
   const box = document.querySelector('#tiermap').getBoundingClientRect();
   const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
-  for (const i of document.querySelectorAll('img.leaflet-tile')) {
-    const m = i.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+  for (const i of document.querySelectorAll('.leaflet-tile')) {
+    const m = zxy(i);
     const r = i.getBoundingClientRect();
     if (!m || cx < r.left || cx >= r.right || cy < r.top || cy >= r.bottom) continue;
-    const z = +m[1], n = 2 ** z;
-    const x = +m[2] + (cx - r.left) / r.width, y = +m[3] + (cy - r.top) / r.height;
+    const z = m[0], n = 2 ** z;
+    const x = m[1] + (cx - r.left) / r.width, y = m[2] + (cy - r.top) / r.height;
     const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
     return {z, lat, lon: x / n * 360 - 180};
   }
   return null;
-})()"""
+})()""".replace("TILE_ZXY", TILE_ZXY_JS)
 TIER_STATE_JS = """(() => ({
   kind: (document.querySelector('input[name=kind]:checked') || {}).value,
   tiers: [...document.querySelectorAll('input[name=tier]:checked')].map(e => e.value).join(''),
@@ -921,7 +929,7 @@ def _wait_map(t: Tab, why: str, lang: str = "en") -> list[str]:
         f"((s) => s.startsWith({json.dumps(start)}) && s.endsWith({json.dumps(end)}))"
         "(document.querySelector('#tiermap-status').textContent.trim())"
     )
-    ok = t.wait_js(f"!!document.querySelector('img.leaflet-tile') && !{loading}", 15)
+    ok = t.wait_js(f"!!document.querySelector('.leaflet-tile') && !{loading}", 15)
     t.pump(0.5)
     return [] if ok else [why]
 
@@ -1138,10 +1146,10 @@ def _page(devtools, origin, base, theme, width, path) -> tuple[Tab, list[str]]:
 
 
 def _zoom(t: Tab) -> int:
-    """The highest tile zoom level in the DOM (a tile's URL is .../{z}/{x}/{y}.png)."""
+    """The highest basemap tile zoom level in the DOM (TILE_ZXY_JS)."""
     return t.js(
-        "Math.max(0, ...[...document.querySelectorAll('img.leaflet-tile')]"
-        ".map(i => +((i.src.match(/\\/(\\d+)\\/\\d+\\/\\d+\\.png/) || [])[1] || 0)))"
+        f"Math.max(0, ...[...document.querySelectorAll('.leaflet-tile')]"
+        f".map(i => ({TILE_ZXY_JS})(i)?.[0] ?? 0))"
     )
 
 

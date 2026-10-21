@@ -28,7 +28,7 @@ from velometer.app.main import create_app
 from velometer.content.models import STORY_STEPS
 
 CSP = (
-    "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
+    "default-src 'self'; img-src 'self' data:; "
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
@@ -201,7 +201,7 @@ def test_no_response_references_vega(client):
     assert not list((STATIC / "vendor").glob("vega*"))
     versions = (STATIC / "vendor" / "VERSIONS").read_text().splitlines()
     packages = [line.split()[0] for line in versions if line.strip() and not line.startswith("#")]
-    assert packages == ["leaflet"]
+    assert packages == ["leaflet", "protomaps-leaflet"]
 
 
 def test_breadcrumbs_lead_back_to_the_overview(client):

@@ -46,7 +46,6 @@ GEOJSON = json.dumps(
 ).encode()  # fmt: skip
 ROUTES = ["/", "/city/berlin", "/city/paris", "/methodology", "/methodology/de"]
 ROUTES += ["/data/all.csv", "/data/berlin.csv", "/maps/berlin_lau.png", "/maps/berlin_lau.geojson"]
-OSM_TILES = "tile.openstreetmap.org"
 # absolute (http/https) or protocol-relative (`//host`, after a quote, `(`, `=` or space) URLs
 URL = re.compile(r"""(?:https?:|(?<=["'(=\s]))//[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+[^\s"'<>\\)]*""")
 STATIC = VENDOR.parent
@@ -285,7 +284,11 @@ def test_city_page_interactive_map_with_png_link_and_hint(client):
     section = _map_section(html)
     assert '<div id="tiermap"' in section
     scripts = re.findall(r'<script[^>]+src="([^"]+)"', section)
-    assert scripts == ["/static/vendor/leaflet.js", "/static/map.js"]
+    assert scripts == [
+        "/static/vendor/leaflet.js",
+        "/static/vendor/protomaps-leaflet.js",
+        "/static/map.js",
+    ]
     assert '<link rel="stylesheet" href="/static/vendor/leaflet.css">' in html.split("</head>")[0]
     for s in scripts + ["/static/vendor/leaflet.css"]:
         assert client.get(s).status_code == 200
@@ -354,11 +357,11 @@ def test_pages_load_only_static_assets_and_osm_tiles(client):
         assert css and all(c.startswith("/static/") for c in css), path
         assert all(i.startswith("/") and not i.startswith("//")
                    for i in re.findall(r'<img[^>]+src="([^"]+)"', html)), path  # fmt: skip
-        assert _loaded_hosts(html) <= {OSM_TILES}, path
+        assert _loaded_hosts(html) == set(), path
     city = client.get("/city/berlin/tiers").text
-    assert _loaded_hosts(city) == {OSM_TILES}
+    assert _loaded_hosts(city) == set()
     cfg = _map_config(city)
-    assert urlparse(cfg["tiles"]).hostname == OSM_TILES
+    assert cfg["tiles"] == "/tiles/velometer.pmtiles"  # served beside the site (M16)
     assert {urlparse(u).hostname for u in cfg["links"].values()} == {"www.openstreetmap.org"}
     # map.js takes every URL from that config: it names no host of its own
     assert not URL.findall(client.get("/static/map.js").text)
@@ -388,23 +391,17 @@ def test_protocol_relative_urls_count_as_loads():
     assert _loaded_hosts('<a href="//www.openstreetmap.org/copyright">x</a>') == set()
 
 
-def test_osm_tiles_are_muted_and_tier_lines_readable(client):
-    """Standard OSM draws main roads orange/red, clashing with tiers B and D: the tile layer
-    (only it, not the vector canvas) is greyed and faded; the tier lines stay ~3 px."""
+def test_no_map_layer_is_filtered_and_tier_lines_stay_readable(client):
+    """M16: the basemap is drawn in muted flavours of its own (js/basemap.js, its node test
+    checks them): no stylesheet rule filters a map layer; the tier lines stay ~3 px."""
     cfg = _map_config(client.get("/city/berlin/tiers").text)
-    cls = cfg["tile_class"]
-    assert cls and cls != "leaflet-tile-pane"
+    assert "tile_class" not in cfg
     rules = _css_rules((STATIC / "app.css").read_text())
-    decls = [d for sels, d in rules if f".{cls}" in sels]
-    assert decls, cls
-    rule = decls[0]  # the light rule; the dark-theme filter is checked in test_a11y
-    assert "grayscale(1)" in rule["filter"]
-    assert float(rule.get("opacity", "1")) <= 0.8 or "contrast(" in rule["filter"]
-    assert not any(".leaflet-overlay-pane" in s or "canvas" in s for sels, d in rules
+    assert not any("leaflet" in s or "tiermap" in s or "canvas" in s for sels, d in rules
                    if "filter" in d for s in sels)  # fmt: skip
     assert 2.5 <= cfg["weight"] <= 4
     js = (STATIC / "map.js").read_text()
-    assert "className: cfg.tile_class" in js and "weight: cfg.weight" in js
+    assert "addBasemap(map, cfg)" in js and "weight: cfg.weight" in js
 
 
 def test_geojson_route_serves_geo_json(client):
@@ -450,7 +447,7 @@ def test_pages_load_our_chart_modules(client):
         "/city/berlin": [*base, "/static/js/city.js"],
         "/city/berlin/time": [*base, "/static/js/city.js"],
         "/city/berlin/tiers": [*base, "/static/js/city.js", "/static/vendor/leaflet.js",
-                               "/static/map.js"],
+                               "/static/vendor/protomaps-leaflet.js", "/static/map.js"],
         "/city/berlin/figures": base,
         "/differences": base,
         "/methodology": base,

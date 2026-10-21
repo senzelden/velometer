@@ -32,7 +32,7 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
-from velometer.app.main import CSP, HERE, TABS, create_app, csp_meta
+from velometer.app.main import CSP, HERE, TABS, TILES_PATH, create_app, csp_meta
 from velometer.app.urls import (
     DATA_ROOTS,
     LEGACY_DE,
@@ -79,12 +79,16 @@ STAGING_PREFIX = ".velometer-staging-"
 # object data, poster, any other attribute holding a URL, CSS url() / @import in a file, a <style>
 # or a style attribute, a script's import / url("…") / fetch("…") / new URL("…") and any other
 # URL-shaped string literal, a JSON config string) must resolve to a file in the export, or be
-# `data:`, or be `https:` on the one external host below (as the CSP allows). A *link* (<a>/<area>
+# `data:`, or name the one file served beside the export (SERVED_BESIDE); no external host is
+# loaded (LOADED_HOSTS is empty since M16, as the CSP allows none). A *link* (<a>/<area>
 # href, a string under a JSON config's "links" key, which scripts put in an <a>) is followed by
 # the reader, not loaded by the page: it may also point at any http(s) or mailto address (the
 # attribution and source links). The scan fails closed: an inline <script> (the CSP runs none,
 # and its code is not parsed) is reported as it is.
-LOADED_HOSTS = frozenset({"tile.openstreetmap.org"})
+LOADED_HOSTS: frozenset[str] = frozenset()
+# Paths under the base that pages load but the export never holds: the basemap extract (900 MB,
+# uploaded apart from the releases). Pages work without it (their maps have no background).
+SERVED_BESIDE = frozenset({TILES_PATH})
 LINK_SCHEMES = frozenset({"http", "https", "mailto"})
 LINK_TAGS = frozenset({"a", "area"})
 # attributes whose value is a URL whatever it looks like; any other attribute is a reference when
@@ -105,6 +109,9 @@ UNVENDORED = frozenset(
 )
 # XML namespace names in scripts (document.createElementNS): identifiers, never fetched
 NAMESPACES = frozenset({"http://www.w3.org/2000/svg", "http://www.w3.org/1999/xhtml"})
+# protomaps-leaflet parses its `url` option with `new URL(url, "http://example.com")` to read the
+# path's suffix: a base for parsing, never fetched
+NOT_FETCHED = frozenset({("static/vendor/protomaps-leaflet.js", "http://example.com")})
 URL_SHAPED = re.compile(r"^\s*(/|[A-Za-z][A-Za-z0-9+.-]*://|javascript:|data:)", re.I)
 CSS_URL = re.compile(r"""url\(\s*(["']?)([^"')]*?)\1\s*\)""", re.I)
 CSS_IMPORT = re.compile(r"""@import\s+(["'])([^"']*)\1""", re.I)
@@ -132,7 +139,7 @@ class ExportError(Exception):
 @dataclass(frozen=True, order=True)
 class Unresolved:
     """A reference in an exported file (relative path) that resolves to no exported file, or a
-    loaded resource on a host other than the tile server."""
+    loaded resource on another host."""
 
     file: str
     ref: str
@@ -504,7 +511,10 @@ def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
         return name == "https" and urlsplit(ref).hostname in LOADED_HOSTS
     path = unquote(urlsplit(ref).path)
     if path.startswith("/"):
-        return path.startswith(base) and _resolves(out, path.removeprefix(base))
+        if not path.startswith(base):
+            return False
+        rel = path.removeprefix(base)
+        return rel in SERVED_BESIDE or _resolves(out, rel)
     if file.endswith(".html") or not path:
         return False  # relative in a page: it depends on the URL the page is served at
     return _resolves(out, posixpath.join(posixpath.dirname(file), path))
@@ -513,8 +523,9 @@ def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
 def scan_references(out: Path, base: str) -> list[Unresolved]:
     """Every reference of every exported HTML, CSS and JS file under `out` that does not resolve
     (the rule at LOADED_HOSTS): an internal one must carry `base` and name an exported file or
-    page directory (a relative one in CSS/JS resolves against its file); a loaded external one
-    must be on the tile server; a link may also leave the site. Sorted, without duplicates."""
+    page directory (a relative one in CSS/JS resolves against its file) or a path served beside
+    the export; nothing external may be loaded; a link may also leave the site. Sorted, without
+    duplicates."""
     base = normalise_base(base)
     found: set[Unresolved] = set()
     for path in sorted(p for p in out.rglob("*") if p.is_file()):
@@ -533,7 +544,9 @@ def scan_references(out: Path, base: str) -> list[Unresolved]:
         else:
             refs = _js_refs(text, base)
         for ref, loaded in refs:
-            if (file, ref) not in UNVENDORED and not _ok(ref.strip(), loaded, file, out, base):
+            if (file, ref) in UNVENDORED or (file, ref) in NOT_FETCHED:
+                continue
+            if not _ok(ref.strip(), loaded, file, out, base):
                 found.add(Unresolved(file, ref))
     return sorted(found)
 
