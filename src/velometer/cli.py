@@ -62,6 +62,8 @@ web_app = typer.Typer(no_args_is_help=True, help="The reader app's static editio
 app.add_typer(web_app, name="app")
 content_app = typer.Typer(invoke_without_command=True)
 app.add_typer(content_app, name="content")
+datalab_app = typer.Typer(no_args_is_help=True, help="The Zählwerk Berlin Datalab site.")
+app.add_typer(datalab_app, name="datalab")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -2157,6 +2159,37 @@ def app_deploy_check(
     typer.echo(
         f"deploy-check ok: {files} files, {size / 1e6:.1f} MB, base {build['base']}, "
         f"public {build.get('public', False)}"
+    )
+
+
+@datalab_app.command("build")
+def datalab_build(
+    velometer_export: Path = typer.Option(  # noqa: B008
+        ..., "--velometer-export", help="A finished velometer export (its data/all.csv is read)."
+    ),
+    out: Path = typer.Option(..., "--out", help="New or empty directory for the site."),  # noqa: B008
+    config: Path = typer.Option(  # noqa: B008
+        None, "--config", help="Site settings (default: sites/datalab/site.yaml)."
+    ),
+) -> None:
+    """The Datalab site (apex page, Impressum, Datenschutz) as static files; the Berlin counter
+    reads the velometer export. Reports the [[…]] placeholders still left."""
+    from pydantic import ValidationError
+
+    from velometer.datalab import DEFAULT_CONFIG, DatalabError, build, load_config, placeholders
+
+    try:
+        cfg = load_config(config or DEFAULT_CONFIG)
+        written = build(cfg, velometer_export, out)
+    except (DatalabError, ValidationError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    left = placeholders(out)
+    for where in left:
+        typer.echo(f"placeholder: {where}")
+    typer.echo(
+        f"built {len(written)} files to {out} for {cfg.domain}, operator form "
+        f"{cfg.operator_form or 'undecided'}, {len(left)} placeholder(s) left"
     )
 
 

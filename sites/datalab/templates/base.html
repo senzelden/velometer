@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="{{ csp }}">
+<meta name="color-scheme" content="light dark">
+<title>{% block title %}Zählwerk Berlin Datalab{% endblock %}</title>
+<link rel="preload" href="/static/fonts/MartianMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/datalab.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="mark" href="/">Zählwerk <span>Berlin Datalab</span></a>
+{% block eyebrow %}{% endblock %}
+  </header>
+  <main id="inhalt">
+{% block main %}{% endblock %}
+  </main>
+  <footer>
+    <span>Zählwerk Berlin Datalab</span>
+    <a href="/impressum/">Impressum</a>
+    <a href="/datenschutz/">Datenschutz</a>
+    <span>Kontakt: {{ contact }}</span>
+  </footer>
+</div>
+</body>
+</html>

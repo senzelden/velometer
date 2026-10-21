@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% macro drums(id, digits, small=false) %}
+<div class="drums{{ ' small' if small }}" id="{{ id }}" aria-hidden="true">
+{% for d in digits %}
+  <div class="drum{{ ' last' if loop.last }}"><div class="strip d{{ d }}">{% for k in range(10) %}<span>{{ k }}</span>{% endfor %}</div></div>
+{% endfor %}
+</div>
+{% endmacro %}
+{% block head %}
+<script src="/static/datalab.js" defer></script>
+{% endblock %}
+{% block eyebrow %}
+    <p class="eyebrow">Im Aufbau</p>
+{% endblock %}
+{% block main %}
+    <section class="hero" aria-labelledby="hero-h">
+      <h1 class="eyebrow" id="hero-h">Berlin · geschützte Radwege, kartiert</h1>
+      <div class="counter" id="counter" data-series="{{ series }}">
+        <div class="reading">
+          {{ drums("km-drums", km_digits) }}
+          <div class="cap">km, Stufe A+B, OpenStreetMap</div>
+        </div>
+        <div class="reading">
+          {{ drums("yr-drums", year_digits, small=true) }}
+          <div class="cap">Jahr</div>
+        </div>
+      </div>
+      <p class="sr" id="reading" aria-live="polite">{{ reading }}</p>
+      <p class="lede">Wir zählen nach, was andere schätzen. Offen, mit dem Code, der jede Zahl erzeugt.</p>
+      <div class="row">
+        <button class="btn" id="play" type="button" hidden>{{ first_year }} bis {{ last_year }} abspielen</button>
+        <p class="fine">Kartierte Kilometer in OpenStreetMap, nicht gebaute. Berlin in seiner Gemeindegrenze, ein Stand der OSM-Daten je Jahr, zuletzt vom {{ as_of }}. Zahlen aus velometer. {{ osm_credit }}. {{ boundary_credit }}.</p>
+      </div>
+    </section>
+
+    <section class="next" aria-label="Was kommt">
+      <div>
+        <h2><a href="{{ velometer_url }}">velometer</a></h2>
+        <p>Radinfrastruktur in {{ cities }} europäischen Städten, Jahr für Jahr.</p>
+      </div>
+    </section>
+{% endblock %}
