@@ -19,7 +19,7 @@ from typer.testing import CliRunner
 
 from tests.report_fixture import CLASSIFIER
 from tests.sqlite_util import committing
-from velometer import i18n
+from velometer import credits, i18n
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.main import create_app
 from velometer.cli import app as cli_app
@@ -580,6 +580,14 @@ def test_app_never_writes_the_db(client, fixture_db_path):
     assert set(fixture_db_path.parent.iterdir()) == siblings  # no -wal / -journal files
 
 
+def _provenance_index(lines: list[str]) -> int:
+    """The index of the CSV's last comment line, `# velometer <commit> generated <time>`; the
+    credits come before it."""
+    n = max(i for i, line in enumerate(lines) if line.startswith("#"))
+    assert lines[n].startswith("# velometer ") and n == sum(ln.startswith("#") for ln in lines) - 1
+    return n
+
+
 def test_csv_route_is_attachment_with_attribution(client, fixture_db):
     _db, _cfg, _conn, data = fixture_db
     r = client.get("/data/berlin.csv")
@@ -587,12 +595,12 @@ def test_csv_route_is_attachment_with_attribution(client, fixture_db):
     assert r.headers["content-disposition"].startswith("attachment")
     assert "berlin" in r.headers["content-disposition"]
     lines = r.text.splitlines()
-    assert lines[0].startswith("# Map data © OpenStreetMap contributors, ODbL 1.0")
-    assert lines[1].startswith("# velometer ")
-    body = lines[3:]
+    assert lines[0].startswith(f"# {credits.OSM_NOTICE}")
+    n = _provenance_index(lines)
+    body = lines[n + 2 :]  # the provenance line, the header, the rows
     assert len(body) == len(data.csv_rows("berlin")) and all(b.startswith("berlin,") for b in body)
-    every = client.get("/data/all.csv").text.splitlines()[3:]
-    assert len(every) == len(data.csv_rows())
+    every = client.get("/data/all.csv").text.splitlines()
+    assert len(every[_provenance_index(every) + 2 :]) == len(data.csv_rows())
 
 
 def test_templates_and_static_ship_in_the_package():
@@ -1036,10 +1044,11 @@ def test_csv_commit_and_generated_line_are_of_the_request_not_the_cache(client, 
     first = client.get("/data/berlin.csv").text.splitlines()
     monkeypatch.setattr(main, "git_commit", lambda: "bbbbbbbb" * 5)
     second = client.get("/data/berlin.csv").text.splitlines()
-    assert first[0] == second[0] and first[0].startswith("# Map data ©")
-    assert first[1] != second[1]  # the provenance line follows git_commit()
-    assert "aaaaaaa" in first[1] and "bbbbbbb" in second[1]
-    assert first[2:] == second[2:]  # the table is the cached part
+    n = _provenance_index(first)
+    assert first[:n] == second[:n] and first[0].startswith("# Map data ©")  # the credits
+    assert first[n] != second[n]  # the provenance line follows git_commit()
+    assert "aaaaaaa" in first[n] and "bbbbbbb" in second[n]
+    assert first[n + 1 :] == second[n + 1 :]  # the table is the cached part
 
 
 def test_lazy_data_forwards_only_public_report_data_attributes(fixture_db):
@@ -1292,9 +1301,8 @@ def test_subarea_csv_has_provenance_columns_the_odbl_line_and_a_row_per_tier(sub
 
     text = subarea_client.get("/data/berlin_subareas.csv").text
     lines = text.splitlines()
-    assert lines[0].startswith("# Map data © OpenStreetMap contributors, ODbL 1.0")
-    assert lines[1].startswith("# velometer ")
-    rows = list(csv.DictReader(io.StringIO("\n".join(lines[2:]))))
+    assert lines[0].startswith(f"# {credits.OSM_NOTICE}")
+    rows = list(csv.DictReader(io.StringIO("\n".join(lines[_provenance_index(lines) + 1 :]))))
     assert list(rows[0]) == [
         "city_id", "subarea_id", "name", "run_id", "osm_timestamp", "classifier_version",
         "git_commit", "config_sha256", "boundary_sha256", "subarea_sha", "tier", "length_basis",
@@ -1326,8 +1334,9 @@ def test_subarea_csv_commit_and_generated_line_are_of_the_request(subarea_client
     first = subarea_client.get("/data/berlin_subareas.csv").text.splitlines()
     monkeypatch.setattr(main, "git_commit", lambda: "bbbbbbbb" * 5)
     second = subarea_client.get("/data/berlin_subareas.csv").text.splitlines()
-    assert "aaaaaaa" in first[1] and "bbbbbbb" in second[1]
-    assert first[2:] == second[2:]
+    n = _provenance_index(first)
+    assert "aaaaaaa" in first[n] and "bbbbbbb" in second[n]
+    assert first[n + 1 :] == second[n + 1 :]
 
 
 def test_subarea_csv_of_a_city_without_subareas_is_404(subarea_client):

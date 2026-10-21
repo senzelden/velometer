@@ -2,7 +2,8 @@
 
 One payload for the whole app (21 cities x 2 boundaries x 10 labels is small): the cities, each
 city's yearly series per boundary, the subarea (Bezirk) series, the preset labels and the
-explanations of flagged years. Values are the CSV export's (mapped km, ADR 0006).
+explanations of flagged years, under the OSM notice (`attribution`, ODbL §4.2 b). Values are the
+CSV export's (mapped km, ADR 0006).
 
 The file is shared by both editions (M12): the display text is English, and each text a German
 page shows differently has an additive `<key>_de` sibling, which static/js/data.js `localised`
@@ -11,6 +12,7 @@ swaps in on a German page.
 
 from pathlib import Path
 
+from velometer import credits
 from velometer import timeseries as ts
 from velometer.app.counts import counter_payload, counters_config, no_data_notes
 from velometer.app.names import country_name
@@ -93,6 +95,7 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
     counters = counter_payload(data)
     counters["none_de"] = no_data_notes(counters_config(data.config_dir)[0], "de")
     return {
+        "attribution": credits.OSM_NOTICE,
         "cities": cities,
         "series": series,
         "bezirke": bezirke,

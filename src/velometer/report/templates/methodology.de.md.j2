@@ -269,4 +269,11 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 
 ## Lizenzen
 
-Kartendaten © OpenStreetMap-Mitwirkende. Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der Open Database License (ODbL) 1.0. Der Code steht unter der MIT-Lizenz. Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
+Kartendaten © [OpenStreetMap-Mitwirkende]({{ osm_copyright }}). Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der [Open Database License (ODbL) 1.0]({{ odbl_url }}). Der Code steht unter der MIT-Lizenz. Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
+
+Die LAU- und FUA-Grenzen sind Daten von Eurostat GISCO: {{ boundary_credit }}. Sie werden nach den [Bedingungen von GISCO]({{ gisco_terms }}) genutzt, die keine kommerzielle Nutzung erlauben, und stehen nicht unter der ODbL.
+{% set pops = population_credits(f.cities) %}
+{% if pops %}
+
+Einwohnerzahlen: {% for c, names in pops %}{{ c | credit }} {% if c.body == "Eurostat" %}{{ "für alle Städte" if pops | length == 1 else "für alle übrigen Städte" }}{% else %}für {{ names | and_list }}{% endif %}{{ "; " if not loop.last }}{% endfor %}. {{ disclaimer(pops) or "" }}
+{% endif %}

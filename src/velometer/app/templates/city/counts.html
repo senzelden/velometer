@@ -52,7 +52,7 @@
 </table>
 </div>
 </details>
-<p class="meta counts-attribution">{{ t('counts.data') }}: {% if c.entry %}<a href="{{ c.entry.page | http_url }}" rel="noopener noreferrer"{{ lang_attr(c.source_lang) }}>{{ bracketed(c.source, c.source_bracket_lang) }}</a>, {{ t('page.counts.licence') }} <a href="{{ c.entry.licence_url | http_url }}" rel="noopener noreferrer">{{ c.licence }}</a>{% else %}{{ c.source }}, {{ t('page.counts.licence') }} {{ c.licence }}{% endif %}{% if c.retrieved %}, {{ t('page.counts.retrieved', date=c.retrieved) }}{% endif %}.{% if c.site_map %} {{ t('page.counts.map_credit', href=c.site_map.links.copyright) }}{% endif %}</p>
+<p class="meta counts-attribution">{{ t('counts.data') }}: {% if c.entry %}<a href="{{ c.entry.page | http_url }}" rel="noopener noreferrer"{{ lang_attr(c.source_lang) }}>{{ bracketed(c.source, c.source_bracket_lang) }}</a>, {{ t('page.counts.licence') }} <a href="{{ c.entry.licence_url | http_url }}" rel="noopener noreferrer">{{ c.licence }}</a>{% else %}{{ c.source }}, {{ t('page.counts.licence') }} {{ c.licence }}{% endif %}{% if c.retrieved %}, {{ t('page.counts.retrieved', date=c.retrieved) }}{% endif %}{{ t('page.counts.computed') }}.{% if c.site_map %} {{ t('page.counts.map_credit', href=c.site_map.links.copyright) }}{% endif %}</p>
 </section>
 
 {% if c.text_error %}<p class="note">{{ t('page.counts.text_error') }}</p>{% endif %}

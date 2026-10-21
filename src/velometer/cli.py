@@ -1299,7 +1299,7 @@ def report_csv(
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
 ) -> None:
-    """One CSV row per city, boundary kind and year or `current`, with ODbL attribution."""
+    """One CSV row per city, boundary kind and year or `current`, with the data credits."""
     from datetime import UTC, datetime
 
     from velometer.reconcile import short_commit
@@ -1315,10 +1315,12 @@ def report_csv(
     try:
         data = ReportData(conn, config_dir)
         _check_report_city(data, city)
+        rows = data.csv_rows(city)
         text = to_csv(
-            data.csv_rows(city),
+            rows,
             short_commit(git_commit()),
             datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            data.population_sources(rows),
         )
     except ConfigError as e:
         raise _config_error(e) from e

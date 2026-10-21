@@ -11,12 +11,11 @@ from pathlib import Path
 import altair as alt
 import vl_convert as vlc
 
+from velometer import credits
 from velometer import timeseries as ts
 from velometer.report.data import HEADLINE_UNIT, ReportData
 
-ATTRIBUTION = (
-    "Map data © OpenStreetMap contributors, ODbL 1.0 · OSM mapped km, not built km (ADR 0006)"
-)
+ATTRIBUTION = f"{credits.OSM_PRINTED} · OSM mapped km, not built km (ADR 0006)"
 # Tier colours A-E, light theme; the light CSS tier tokens equal these. Chosen by rule (M10
 # decision 3, tested in tests/test_colour.py): each >= 3:1 on the light backgrounds, every pair
 # >= CIEDE2000 20 and adjacent tiers >= 25, in normal vision and simulated deuteranopia and

@@ -346,4 +346,8 @@ Every number traces to a run. A run records the git commit, the classifier versi
 
 ## Licences
 
-Map data © OpenStreetMap contributors. The derived data (tier lengths, metrics and exports) is licensed under the Open Database License (ODbL) 1.0. The code is MIT-licensed. External comparison figures are cited with their source and are not redistributed beyond what citation allows [ADR 0008].
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). The derived data (tier lengths, metrics and exports) is licensed under the [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The code is MIT-licensed. External comparison figures are cited with their source and are not redistributed beyond what citation allows [ADR 0008].
+
+The LAU and FUA boundaries are Eurostat GISCO data: © EuroGeographics for the administrative boundaries. They are used under [GISCO's terms](https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units), which do not allow commercial use, and are not under the ODbL.
+
+Population: <span lang="fr">Source : Insee</span> for Bordeaux, Lyon and Strasbourg; <span lang="es">Elaboración propia con datos extraídos del sitio web del INE: www.ine.es</span> for Barcelona and Madrid; Eurostat for every other city. Per-capita figures are computed by velometer; Eurostat, INSEE and INE bear no responsibility for them.

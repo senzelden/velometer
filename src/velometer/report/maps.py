@@ -8,11 +8,13 @@ same classification pass:
 - `<city>_<kind>.geojson`: the same sides in WGS84 for the app's interactive map, each with its
   way id, side, tier, subtype, rule id, km (measured in the city EPSG and clipped to the boundary,
   as `pipeline.measure` does) and a subset of the way's OSM tags. The boundary rides along as a
-  `boundary` member and the run as a `properties` member of the FeatureCollection.
+  `boundary` member and the run as a `properties` member of the FeatureCollection; its
+  `attribution` is the OSM notice, plus the EuroGeographics notice and a `boundary_note` (the
+  boundary is GISCO data under GISCO's terms, not ODbL) when the boundary is from GISCO.
 
 A `.run` marker next to them holds the run id they were made from and a hash of the map palettes
-(`palette_hash`), so an unchanged run in unchanged colours is not redrawn; a missing PNG or
-GeoJSON, a new run or a palette change is.
+and credits (`palette_hash`), so an unchanged run in unchanged colours and credits is not
+redrawn; a missing PNG or GeoJSON, a new run, a palette or a credit change is.
 
 The German edition (M12) has its own image, `<city>_<kind>.de.png` with its own `.de.run`
 marker: the same drawing with the German title, legend and footer. Writing it never touches the
@@ -37,6 +39,7 @@ from shapely import LineString, MultiLineString  # noqa: E402
 from shapely.geometry.base import BaseGeometry  # noqa: E402
 from shapely.prepared import prep  # noqa: E402
 
+from velometer import credits, i18n  # noqa: E402
 from velometer.config import ConfigError, load_cities, load_classifier  # noqa: E402
 from velometer.db import fetch_boundary, fetch_run  # noqa: E402
 from velometer.i18n import Lang, t  # noqa: E402
@@ -60,9 +63,11 @@ TAG_PREFIXES = ("cycleway", "oneway")
 DPI = 150
 LEGEND_RIGHT = 0.74  # the axes' right edge (figure fraction); the legend sits right of it
 LEGEND_PAD = 0.01  # the margin kept between the legend and the figure's right edge
-# ODBL, MAPPED_KM: kept as the English-footer guard test_maps reads; equal to the English catalogue
+# ODBL: the short OSM credit of the change review's markdown and image (report/change.py)
 ODBL = "Map data © OpenStreetMap contributors, ODbL 1.0"
+# credits.OSM_PRINTED, MAPPED_KM: the English footer's first two lines (test_maps checks them)
 MAPPED_KM = "OSM mapped km, not built km"  # ADR 0006
+FOOTER_KEYS = ("map.footer", "credit.boundaries")  # the catalogue texts of the PNG footer
 
 
 def snapshot_path(run_row: dict, data_dir: Path) -> Path:
@@ -277,11 +282,14 @@ def _files(maps_dir: Path, city_id: str, kind: str, lang: Lang) -> tuple[Path, P
 
 def palette_hash() -> str:
     """12 hex digits of the sha256 over the map palettes: the tier colours, the change-map
-    colours (in category order) and the boundary outline. A palette change changes it."""
+    colours (in category order) and the boundary outline, and the credits the PNG footers and
+    the GeoJSON carry. A palette or a credit change changes it."""
     from velometer.report.change import CATEGORY_COLOURS  # change imports this module
 
     changes = (f"{k}={v}" for k, v in CATEGORY_COLOURS.items())
-    parts = [*charts.TIER_COLOURS, *changes, charts.OUTLINE]
+    footers = (i18n.catalogue(lang)[k] for lang in i18n.LANGS for k in FOOTER_KEYS)
+    notices = (credits.OSM_NOTICE, credits.BOUNDARY_CREDIT, credits.BOUNDARY_NOTE)
+    parts = [*charts.TIER_COLOURS, *changes, charts.OUTLINE, *footers, *notices]
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
 
 
@@ -305,9 +313,16 @@ def up_to_date(maps_dir: Path, city_id: str, kind: str, run_id: int, lang: Lang 
 
 def map_texts(point, name: str, kind: str, lang: Lang) -> tuple[str, str, dict[str, str]]:
     """(title, footer, tier labels) of a tier map image of the city `name` in `lang`; the footer
-    carries the ODbL attribution and "mapped km, not built km" (ADR 0006)."""
+    carries the OSM notice with the printed copyright and licence addresses, the
+    EuroGeographics notice and "mapped km, not built km" (ADR 0006)."""
     title = t(lang, "map.title", name=name, kind=kind.upper())
-    footer = t(lang, "map.footer", ts=point.osm_timestamp, classifier=point.classifier_version)
+    footer = t(
+        lang,
+        "map.footer",
+        ts=point.osm_timestamp,
+        classifier=point.classifier_version,
+        boundaries=t(lang, "credit.boundaries"),
+    )
     return title, footer, {tier: t(lang, f"tier.{tier}") for tier in TIERS}
 
 
@@ -336,6 +351,7 @@ def build_map(
     classified, way_tags = tiered(snap, data.config_dir, point.classifier_version)
     boundary = fetch_boundary(data.conn, city_id, kind)
     outline, outline_4326, boundary_member = None, None, None
+    gisco = boundary is not None and credits.is_gisco(boundary.source)
     if boundary is not None and Path(boundary.path).is_file():
         outline = load_boundary_polygon(Path(boundary.path), epsg)
         outline_4326 = boundary_geometry(Path(boundary.path))
@@ -349,6 +365,10 @@ def build_map(
     if lang == "en":
         collection = {
             "type": "FeatureCollection",
+            "attribution": (
+                f"{credits.OSM_NOTICE} · {credits.BOUNDARY_CREDIT}" if gisco else credits.OSM_NOTICE
+            ),
+            **({"boundary_note": credits.BOUNDARY_NOTE} if gisco else {}),
             "properties": {
                 "run_id": point.run_id,
                 "osm_timestamp": point.osm_timestamp,

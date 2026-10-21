@@ -9,7 +9,8 @@ import { t } from "./strings.js";
 
 const NS = "http://www.w3.org/2000/svg";
 // the CSV preamble, English in both editions
-export const ATTRIBUTION = "Map data © OpenStreetMap contributors, ODbL 1.0";
+export const ATTRIBUTION =
+  "Map data © OpenStreetMap contributors (https://www.openstreetmap.org/copyright), ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)";
 const CSV_NOTE = "OSM mapped km, not built km";
 // the added text and ground use the light tokens the caller passes in `meta` (no colour literal in a script)
 const FALLBACK = { ground: "white", ink: "black", muted: "gray" };

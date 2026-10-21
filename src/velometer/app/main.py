@@ -1681,19 +1681,23 @@ def create_app(
         return FileResponse(map_file(data, name, "geojson"), media_type="application/geo+json")
 
     def csv_response(request: Request, data: ReportData, city_id: str | None) -> Response:
-        def build() -> str:
+        def build() -> tuple[str, list[str]]:
             if city_id is not None:
                 known(data, city_id)
             try:
-                return csv_table(data.csv_rows(city_id))
+                rows = data.csv_rows(city_id)
+                return csv_table(rows), data.population_sources(rows)
             except sqlite3.Error as e:
                 raise HTTPException(503, f"database error: {e}") from e
 
-        # the table is cached; the commit and the generated time are of this request
-        table = cache.get(f"csv:{city_id or 'all'}", fp(request), build)
+        # the table and its population sources are cached; the commit and the generated time
+        # are of this request
+        table, sources = cache.get(f"csv:{city_id or 'all'}", fp(request), build)
         text = (
             csv_preamble(
-                short_commit(git_commit()), datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+                short_commit(git_commit()),
+                datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                sources,
             )
             + table
         )

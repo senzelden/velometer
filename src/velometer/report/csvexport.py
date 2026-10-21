@@ -1,8 +1,11 @@
-"""CSV text of the report rows: ODbL attribution and provenance comments, then the table."""
+"""CSV text of the report rows: the data credits and provenance comments, then the table."""
 
 import csv
 import io
 import re
+from collections.abc import Iterable
+
+from velometer import credits
 
 CSV_COLUMNS = [
     "city_id",
@@ -40,7 +43,8 @@ SUBAREA_CSV_COLUMNS = [
     "length_basis",
     "length_km",
 ]
-ATTRIBUTION = "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km"
+ATTRIBUTION = f"# {credits.OSM_NOTICE} — OSM mapped km, not built km"
+BOUNDARIES = f"# Boundaries: Eurostat GISCO, {credits.BOUNDARY_CREDIT}"
 
 
 _NUMBER = re.compile(r"-\d[\d,]*(\.\d+)?")
@@ -60,9 +64,16 @@ def safe_cell(value: str) -> str:
     return value
 
 
-def csv_preamble(commit: str, generated_at: str) -> str:
-    """The two comment lines: attribution, then the commit and time of this export."""
-    return f"{ATTRIBUTION}\n# velometer {commit} generated {generated_at}\n"
+def csv_preamble(
+    commit: str, generated_at: str, population_sources: Iterable[str | None] = ()
+) -> str:
+    """The comment lines: the OSM notice, the boundary notice, the population credit of the
+    sources the rows used (`runs.population_source`) with the per-capita disclaimer (none when
+    no row has a population), then the commit and time of this export."""
+    lines = [ATTRIBUTION, BOUNDARIES]
+    lines += [f"# {line}" for line in credits.population_lines(population_sources)]
+    lines.append(f"# velometer {commit} generated {generated_at}")
+    return "\n".join(lines) + "\n"
 
 
 def csv_table(rows: list[dict[str, str]], columns: list[str] = CSV_COLUMNS) -> str:
@@ -76,5 +87,10 @@ def csv_table(rows: list[dict[str, str]], columns: list[str] = CSV_COLUMNS) -> s
     return out.getvalue()
 
 
-def to_csv(rows: list[dict[str, str]], commit: str, generated_at: str) -> str:
-    return csv_preamble(commit, generated_at) + csv_table(rows)
+def to_csv(
+    rows: list[dict[str, str]],
+    commit: str,
+    generated_at: str,
+    population_sources: Iterable[str | None] = (),
+) -> str:
+    return csv_preamble(commit, generated_at, population_sources) + csv_table(rows)

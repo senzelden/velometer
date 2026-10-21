@@ -40,6 +40,9 @@ import { tierPopup } from "./js/tier-popup.js";
     attribution:
       '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
   }).addTo(map);
+  // GISCO's boundary notice (docs/review/m16-legal.md 1.2a): the map's own credit, not the tile
+  // layer's, so it stays whatever the background is (ruling P1)
+  map.attributionControl.addAttribution(t("js.map.boundaries"));
 
   function say(text) {
     if (status) status.textContent = text;

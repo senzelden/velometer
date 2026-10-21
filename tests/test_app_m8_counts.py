@@ -270,7 +270,8 @@ def test_counter_lines_gap_is_none_and_cities_without_data_are_notes():
     assert notes == [
         f"M: {compare.NO_COUNTER_LINE}",
         f"N: {compare.NO_COUNTERS}",
-        "Counter data, A: source not recorded, licence not recorded",
+        "Counter data, A: source not recorded, licence not recorded"
+        "; index and totals computed by velometer",
     ]
 
 
@@ -334,7 +335,10 @@ def test_counter_lines_attribution_falls_back_to_unrecorded():
                                                  {"year": 2020, "idx": 99.0}]}}},
     }  # fmt: skip
     _, _, notes = compare.counter_lines(payload, ["a"])
-    assert notes == ["Counter data, A: source not recorded, licence not recorded"]
+    assert notes == [
+        "Counter data, A: source not recorded, licence not recorded"
+        "; index and totals computed by velometer"
+    ]
 
 
 COUNTER_CASES = json.loads((ROOT / "tests" / "counter_cases.json").read_text(encoding="utf-8"))

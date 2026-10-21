@@ -346,4 +346,8 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 
 ## Lizenzen
 
-Kartendaten © OpenStreetMap-Mitwirkende. Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der Open Database License (ODbL) 1.0. Der Code steht unter der MIT-Lizenz. Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
+Kartendaten © [OpenStreetMap-Mitwirkende](https://www.openstreetmap.org/copyright). Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Der Code steht unter der MIT-Lizenz. Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
+
+Die LAU- und FUA-Grenzen sind Daten von Eurostat GISCO: © EuroGeographics bezüglich der Verwaltungsgrenzen. Sie werden nach den [Bedingungen von GISCO](https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units) genutzt, die keine kommerzielle Nutzung erlauben, und stehen nicht unter der ODbL.
+
+Einwohnerzahlen: <span lang="fr">Source : Insee</span> für Bordeaux, Lyon und Strasbourg; <span lang="es">Elaboración propia con datos extraídos del sitio web del INE: www.ine.es</span> für Barcelona und Madrid; Eurostat für alle übrigen Städte. Die Pro-Kopf-Werte berechnet velometer; Eurostat, INSEE und INE tragen dafür keine Verantwortung.

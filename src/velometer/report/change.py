@@ -39,6 +39,7 @@ from shapely import STRtree, unary_union  # noqa: E402
 from shapely.geometry.base import BaseGeometry  # noqa: E402
 from shapely.prepared import prep  # noqa: E402
 
+from velometer import credits  # noqa: E402
 from velometer.config import REMAINDER_ID, ClassifierConfig, remainder_label  # noqa: E402
 from velometer.db import fetch_run  # noqa: E402
 from velometer.i18n import Lang, fmt, t, t_markup  # noqa: E402
@@ -675,8 +676,8 @@ def write_geojson(
         feats.append({"type": "Feature", "geometry": geom, "properties": props})
     doc = {
         "type": "FeatureCollection",
+        "attribution": credits.OSM_NOTICE,
         "properties": {
-            "attribution": ODBL,
             "unit": "mapped km (ADR 0006)",
             "run_from": run_from,
             "run_to": run_to,
