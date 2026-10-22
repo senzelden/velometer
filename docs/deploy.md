@@ -182,18 +182,24 @@ TLS.
    user before it replaces the live one), `/etc/caddy/caddy.env` and the GoAccess configuration,
    and turns the lock the server came up with into the password lock: the password goes on stdin
    to `caddy hash-password` on the server, never on a command line. Run again, it changes
-   nothing, and it leaves an unlocked server unlocked.
+   nothing, and it leaves an unlocked server unlocked. It also compares what Caddy runs with the
+   files on disk: the JSON config Caddy's admin API reports (`localhost:2019/config/`) against
+   `caddy adapt` of the Caddyfile on disk, which includes the lock file. When Caddy is stopped,
+   or a reload failed and Caddy still serves the previous lock, the two differ and `setup`
+   reloads or starts Caddy, even when no file changed. A failed reload says what the running
+   Caddy still serves.
 
    `deploy velometer|datalab` runs `deploy-check --public` on a velometer export first, then
    uploads the build with rsync into a new directory `/srv/<site>/releases/<build>/` (`<build>`
    is the export's commit and the UTC upload time, e.g. `1234abc-20261022T093005`), with
    `--link-dest` to the live release so that only changed files travel. Only after rsync exits 0
-   does it write the marker `.complete` into the release, and only with the marker present does it
-   switch the site: `ln -sfn releases/<build> current.new` and `mv -T current.new current`, an
+   does it write the marker `releases/<build>.complete` beside the release (outside the served
+   tree, so no reader can fetch it), and only with the marker present does it switch the site: `ln -sfn releases/<build> current.new` and `mv -T current.new current`, an
    atomic rename. An upload that fails or is cut off leaves `current` on the previous complete
    release, so a reader never sees half a site. The three newest complete releases are kept;
-   older ones are removed one at a time, each path first checked to be a release directory under
-   `/srv/<site>/releases/`. `deploy tiles` is no release: it uploads the file to
+   older ones are removed one at a time, marker first, each path first checked to be a release
+   directory or its marker under `/srv/<site>/releases/`. `deploy` stops when `current` points to
+   anything but a release. `deploy tiles` is no release: it uploads the file to
    `/srv/tiles/velometer.pmtiles.new` and renames it into place, as above.
 
    `verify` probes the live server: port 80 answers every host with a 308 to `https://`, and

@@ -89,9 +89,12 @@ SITE_ROOT = "/srv"
 SITES = ("velometer", "datalab")
 USER = "deploy"
 KEEP = 3
-# The only paths a cleanup may remove (ASCII digits only).
+# The only paths a cleanup may remove (ASCII digits only): a release directory, and the marker
+# beside it (`<release>.complete`, outside the served tree, ruling R33), written only after the
+# upload is complete; the switch to a release requires it.
 RELEASE = re.compile(r"^/srv/[a-z]+/releases/[0-9a-f]{7,40}-\d{8}T\d{6}$", re.ASCII)
 MARKER = ".complete"
+MARKER_PATH = re.compile(r"^/srv/[a-z]+/releases/[0-9a-f]{7,40}-\d{8}T\d{6}\.complete$", re.ASCII)
 TILES_DIR = f"{SITE_ROOT}/tiles"
 TILES_FILE = "velometer.pmtiles"  # the name the maps fetch (/tiles/velometer.pmtiles)
 RSYNC_CHMOD = "--chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r"
@@ -102,6 +105,7 @@ RSYNC_SITE = ["-rlpD", "--checksum", RSYNC_CHMOD]
 SSH_OPTS = ["-o", "BatchMode=yes"]
 
 LOCK = "/etc/caddy/lock.caddy"
+ADMIN_CONFIG = "http://localhost:2019/config/"  # Caddy's admin API, on the server only
 REMOTE_CADDYFILE = "/etc/caddy/Caddyfile"
 REMOTE_ENV = "/etc/caddy/caddy.env"
 REMOTE_GOACCESS = "/etc/goaccess/velometer.conf"
@@ -235,8 +239,8 @@ class Target:
         """Write `text` (sent on stdin) to `path` as root, atomically (temp file, then rename)."""
         q = shlex.quote(path)
         script = (
-            f't=$(mktemp {q}.XXXXXX) && cat >"$t" && chmod {mode} "$t" && '
-            f'chown root:{group} "$t" && mv -f "$t" {q}'
+            f't=$(mktemp {q}.XXXXXX) && trap \'rm -f "$t"\' EXIT && cat >"$t" && '
+            f'chmod {mode} "$t" && chown root:{group} "$t" && mv -f "$t" {q}'
         )
         self.ssh(f"sudo sh -c {shlex.quote(script)}", input=text)
 
@@ -327,6 +331,11 @@ def create(
             if len(types["server_types"]) != 1:
                 raise ServerError(f"no server type {server_type!r}")
             stype = types["server_types"][0]
+            if stype.get("architecture") != "x86":
+                raise ServerError(
+                    f"server type {server_type!r} is {stype.get('architecture')!r}, not x86: "
+                    "cloud-init installs the linux_amd64 Caddy"
+                )
             if stype.get("deprecation") or stype.get("deprecated"):
                 raise ServerError(f"server type {server_type!r} is deprecated; choose another")
             prices = [p for p in stype.get("prices", []) if p.get("location") == location]
@@ -412,6 +421,73 @@ def lock_state(text: str) -> str:
     return "unknown"
 
 
+def served_lock(config: dict) -> str:
+    """What the running Caddy's lock does, read from its loaded JSON config: `default` (the
+    401 `respond`), `password <hash>` (one basic_auth hash), `open` (neither), or `mixed`."""
+    hashes, default = set(), 0
+
+    def walk(node):
+        nonlocal default
+        if isinstance(node, dict):
+            if node.get("handler") == "authentication":
+                for acc in node.get("providers", {}).get("http_basic", {}).get("accounts", []):
+                    hashes.add(acc.get("password", ""))
+            if node.get("handler") == "static_response" and node.get("body") == "locked":
+                default += 1
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(config)
+    if hashes and not default and len(hashes) == 1:
+        return "password " + next(iter(hashes))
+    if default and not hashes:
+        return "default"
+    if not hashes and not default:
+        return "open"
+    return "mixed"
+
+
+def _describe(served: str) -> str:
+    return {
+        "default": "the default lock (401 everywhere)",
+        "open": "no lock (the sites are public)",
+        "mixed": "a mixture of lock forms",
+        "not running": "nothing (Caddy is not running)",
+        "unknown": "an unknown configuration (the admin API did not answer)",
+    }.get(served, "the password lock")
+
+
+def running_state(t: Target) -> tuple[bool, str]:
+    """(in_sync, served): whether Caddy is active and runs exactly what the files on disk give,
+    and which lock it serves. Robust check: Caddy's admin API returns the JSON config it loaded;
+    `caddy adapt` of /etc/caddy/Caddyfile with the env file gives the JSON the files on disk would
+    load (the imported lock file included). Equal JSON means nothing waits for a reload; a failed
+    reload, a stopped Caddy or a hand edit makes them differ."""
+    active = t.ssh("systemctl is-active caddy", check=False).stdout.strip() == "active"
+    if not active:
+        return False, "not running"
+    running = t.ssh(f"curl -fsS {ADMIN_CONFIG}", check=False)
+    try:
+        loaded = json.loads(running.stdout) if running.returncode == 0 else None
+    except ValueError:
+        loaded = None
+    if not isinstance(loaded, dict):
+        return False, "unknown"
+    adapted = t.ssh(
+        f"sudo -u caddy /usr/bin/caddy adapt --config {REMOTE_CADDYFILE} --adapter caddyfile "
+        f"--envfile {REMOTE_ENV}",
+        check=False,
+    )
+    try:
+        on_disk = json.loads(adapted.stdout) if adapted.returncode == 0 else None
+    except ValueError:
+        on_disk = None
+    return loaded == on_disk, served_lock(loaded)
+
+
 @app.command()
 def setup(
     host: str = _host_option(),
@@ -420,7 +496,8 @@ def setup(
     relock: bool = typer.Option(False, "--relock", help="Lock an unlocked server again."),
     user: str = typer.Option(USER, "--user"),
 ) -> None:
-    """Bring the server's Caddy and GoAccess files up to date (idempotent; asks for yes)."""
+    """Bring the server's Caddy and GoAccess files up to date, and the running Caddy up to the
+    files (idempotent; asks for yes)."""
     t = Target(host, user)
     try:
         wanted = {
@@ -443,6 +520,8 @@ def setup(
             if len(parts) == 2:
                 have[parts[1]] = parts[0]
         changed = [p for p, text in wanted.items() if have.get(p) != sha256(text)]
+        in_sync, served = running_state(t)
+        typer.echo(f"running Caddy serves {_describe(served)}")
         plan = [f"upload {p}" for p in changed]
         if write_lock:
             plan.append(
@@ -450,11 +529,17 @@ def setup(
             )
         elif state == "open":
             typer.echo(f"{LOCK} is empty: the sites are live; setup leaves them so (--relock)")
-        if not plan:
+        if not plan and in_sync:
             typer.echo("nothing to change")
             return
         password = secret("VELOMETER_PREVIEW_PASSWORD") if write_lock else None
-        plan.append("reload Caddy")
+        if plan:
+            plan.append("reload Caddy")
+        else:
+            plan.append(
+                "reload or start Caddy: it does not run what the files on disk give "
+                "(a failed reload, a stop or a hand edit)"
+            )
         confirm(plan)
         for p in (REMOTE_ENV, REMOTE_GOACCESS):
             if p in changed:
@@ -471,18 +556,31 @@ def setup(
                 f"--envfile {REMOTE_ENV}"
             )
             t.ssh(f"sudo mv -f {new} {REMOTE_CADDYFILE}")
-        t.ssh("sudo systemctl enable caddy && sudo systemctl reload-or-restart caddy")
+        reload_caddy(t, served)
     except (ServerError, dr.DryRunError) as e:
         _fail(e)
     typer.echo("setup done")
+
+
+def reload_caddy(t: Target, served_before: str) -> None:
+    """Reload (or start) Caddy; on failure say what the running Caddy still serves."""
+    r = t.ssh("sudo systemctl enable caddy && sudo systemctl reload-or-restart caddy", check=False)
+    if r.returncode != 0:
+        _, served = running_state(t)
+        raise ServerError(
+            f"reloading Caddy failed (exit {r.returncode}): the running Caddy still serves the "
+            f"previous lock, {_describe(served if served != 'unknown' else served_before)}; "
+            "the files on disk are new. Fix the cause (journalctl -u caddy) and run setup again: "
+            "it will reload."
+        )
 
 
 # --- deploy ---------------------------------------------------------------------------------
 
 
 def guard_release(path: str) -> str:
-    """`path` if it is a release directory; anything else stops the cleanup."""
-    if not RELEASE.fullmatch(path):
+    """`path` if it is a release directory or its marker; anything else stops the cleanup."""
+    if not (RELEASE.fullmatch(path) or MARKER_PATH.fullmatch(path)):
         raise ServerError(f"refusing to remove {path!r}: not a release path")
     return path
 
@@ -491,34 +589,55 @@ def _stamp(name: str) -> str:
     return name.rsplit("-", 1)[1]
 
 
-def plan_cleanup(site: str, listing: list[tuple[str, bool]], current: str | None) -> list[str]:
-    """The release paths to remove: all but the `KEEP` newest complete ones (by deploy time)
-    and `current`. Names the guard does not admit are never touched."""
+def plan_cleanup(site: str, names: list[str], current: str | None) -> list[str]:
+    """The paths to remove, from the names in `/srv/<site>/releases/`: every release but the
+    `KEEP` newest complete ones (by deploy time) and `current`, each with its marker (the marker
+    first, so a half-removed release is never complete), and markers whose release is gone.
+    Names the guard does not admit are never touched."""
     base = f"{SITE_ROOT}/{site}/releases"
-    ok = [(n, c) for n, c in listing if RELEASE.fullmatch(f"{base}/{n}")]
-    complete = sorted((n for n, c in ok if c), key=_stamp, reverse=True)
+    present = set(names)
+    releases = [n for n in present if RELEASE.fullmatch(f"{base}/{n}")]
+    markers = {n for n in present if MARKER_PATH.fullmatch(f"{base}/{n}")}
+    complete = sorted((n for n in releases if n + MARKER in markers), key=_stamp, reverse=True)
     keep = set(complete[:KEEP]) | {current}
-    return sorted(guard_release(f"{base}/{n}") for n, _ in ok if n not in keep)
+    gone = []
+    for n in sorted(releases, key=_stamp):
+        if n not in keep:
+            if n + MARKER in markers:
+                gone.append(f"{base}/{n}{MARKER}")
+            gone.append(f"{base}/{n}")
+    gone += [f"{base}/{m}" for m in sorted(markers) if m.removesuffix(MARKER) not in releases]
+    return [guard_release(p) for p in gone]
 
 
 def build_name(site: str, src: Path, now: datetime) -> str:
-    commit = ""
-    build = src / "build.json"
     if site == "velometer":
-        commit = json.loads(build.read_text(encoding="utf-8")).get("commit", "")
+        try:
+            commit = json.loads((src / "build.json").read_text(encoding="utf-8")).get("commit")
+        except (OSError, ValueError, AttributeError) as e:
+            raise ServerError(
+                f"{src}/build.json: not readable ({e}); export the site again"
+            ) from None
     else:
         commit = DEPS.git_commit()
-    if not re.fullmatch(r"[0-9a-f]{7,40}", commit or ""):
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{7,40}", commit):
         raise ServerError(f"no commit to name the release after (got {commit!r})")
     return f"{commit}-{now.strftime('%Y%m%dT%H%M%S')}"
 
 
 def _current(t: Target, site: str) -> str | None:
+    """The release `current` points to; None when there is no `current` yet. A link to anything
+    but a release stops the deploy."""
     r = t.ssh(f"readlink {SITE_ROOT}/{site}/current", check=False)
-    link = r.stdout.strip()
-    if r.returncode != 0 or not link.startswith("releases/"):
+    if r.returncode != 0:
         return None
-    return link.removeprefix("releases/")
+    link = r.stdout.rstrip("\n")
+    name = link.removeprefix("releases/")
+    if not link.startswith("releases/") or not RELEASE.fullmatch(
+        f"{SITE_ROOT}/{site}/releases/{name}"
+    ):
+        raise ServerError(f"{SITE_ROOT}/{site}/current points to {link!r}, not a release")
+    return name
 
 
 def _rsync_failed(rc: int) -> str:
@@ -535,12 +654,13 @@ def deploy_site(t: Target, site: str, src: Path) -> None:
     build = build_name(site, src, DEPS.now())
     root = f"{SITE_ROOT}/{site}"
     release = guard_release(f"{root}/releases/{build}")
+    marker = guard_release(release + MARKER)
     prev = _current(t, site)
     confirm(
         [
             f"upload {src}/ to {t.login}:{release}/"
             + (f" (unchanged files hard-linked from {prev})" if prev else ""),
-            f"write {MARKER} last, then switch {root}/current to releases/{build}",
+            f"write {marker} last, then switch {root}/current to releases/{build}",
             f"keep the {KEEP} newest complete releases, remove older ones",
         ]
     )
@@ -554,26 +674,21 @@ def deploy_site(t: Target, site: str, src: Path) -> None:
     if r.returncode != 0:
         raise ServerError(f"rsync {_rsync_failed(r.returncode)}; {still}")
     try:
-        t.ssh(f"touch {release}/{MARKER}")
+        t.ssh(f"touch {marker}")
     except ServerError as e:
         raise ServerError(f"{e}; {still}") from None
     t.ssh(
-        f"test -f {release}/{MARKER} && ln -sfn releases/{build} {root}/current.new && "
+        f"test -f {marker} && ln -sfn releases/{build} {root}/current.new && "
         f"mv -T {root}/current.new {root}/current"
     )
     typer.echo(f"{site}: current -> releases/{build}")
-    listing = t.ssh(
-        f'cd {root}/releases && for d in *; do if [ -f "$d/{MARKER}" ]; then '
-        'echo "complete $d"; else echo "partial $d"; fi; done',
-        check=False,
-    ).stdout
-    entries = []
-    for line in listing.splitlines():
-        kind, _, name = line.partition(" ")
-        entries.append((name, kind == "complete"))
-    for path in plan_cleanup(site, entries, current=build):
-        t.ssh(f"rm -r --one-file-system -- {guard_release(path)}")
-        typer.echo(f"removed {path}")
+    names = t.ssh(f"ls -1A {root}/releases", check=False).stdout.splitlines()
+    for path in plan_cleanup(site, names, current=build):
+        if MARKER_PATH.fullmatch(path):
+            t.ssh(f"rm -- {guard_release(path)}")
+        else:
+            t.ssh(f"rm -r --one-file-system -- {guard_release(path)}")
+            typer.echo(f"removed {path}")
 
 
 def deploy_tiles(t: Target, src: Path) -> None:
@@ -664,53 +779,143 @@ def stats(host: str = _host_option(), user: str = typer.Option(USER, "--user")) 
 # --- go-live --------------------------------------------------------------------------------
 
 
+# Ruling P3: the four verdicts; a decided user decision carries its date and the decision.
+VERDICTS = ("ok", "fix in M16", "decision for the user", "question for a lawyer")
+VERDICT_LINE = re.compile(r"\*\*Verdict:\*\* (.*)")
+VERDICT_VALUE = re.compile(
+    "(" + "|".join(map(re.escape, VERDICTS)) + r")( \(decided \d{4}-\d{2}-\d{2}: [^)]+\))?",
+    re.ASCII,
+)
+# A line that labels a verdict in any spelling ("Verdict:", "**Verdict**:", "- **Verdict:**",
+# "VERDICT -"): it must be the exact P3 form, or it counts as open. Prose that merely mentions
+# verdicts ("Verdicts (ruling P3)", "one verdict each", a table header) is no label.
+VERDICT_LABEL = re.compile(r"(?i)\bverdict\b(?!s)[\s*_]*[:\-\u2013\u2014=]")
+CONTENTS_HEADER = re.compile(r"(?i)^\|?\s*§\s*\|.*\|\s*verdict\s*\|?\s*$")
+PRESS_STATUSES = ("open", "reviewed")
+
+
 def _legal_open(text: str) -> list[str]:
-    items, heading = [], "(no section)"
-    for line in text.splitlines():
+    """Open items in m16-legal.md, failing closed: every verdict label must be the exact P3
+    form with a known value; a user decision is closed only by `(decided YYYY-MM-DD: …)`; there
+    must be at least one verdict, a contents table, and as many verdicts as it has topics."""
+    items, heading, verdicts = [], "(no section)", 0
+    lines = text.splitlines()
+    for n, line in enumerate(lines, 1):
         if line.startswith("#"):
             heading = line.lstrip("#").strip()
-        elif (
-            line.startswith("**Verdict:**")
-            and "decision for the user" in line
-            and "(decided " not in line
-        ):
-            items.append(f"m16-legal.md §{heading}: decision for the user is open")
+            continue
+        m = VERDICT_LINE.fullmatch(line.rstrip())
+        if m:
+            verdicts += 1
+            v = VERDICT_VALUE.fullmatch(m.group(1))
+            if not v:
+                items.append(f"m16-legal.md:{n} §{heading}: unknown verdict {m.group(1)!r}")
+            elif v.group(2) and v.group(1) != "decision for the user":
+                items.append(f"m16-legal.md:{n} §{heading}: only a user decision is decided")
+            elif v.group(1) == "decision for the user" and not v.group(2):
+                items.append(f"m16-legal.md §{heading}: decision for the user is open")
+        elif VERDICT_LABEL.search(line) and not line.lstrip().startswith("|"):
+            items.append(f"m16-legal.md:{n} §{heading}: verdict line not in the P3 form")
+    if verdicts == 0:
+        items.append("m16-legal.md: no verdict line found (`**Verdict:** …`)")
+    topics = _contents_rows(lines)
+    if topics is None:
+        items.append("m16-legal.md: no contents table (`| § | Topic | Verdict |`) to count against")
+    elif topics != verdicts:
+        items.append(f"m16-legal.md: {topics} topics in the contents but {verdicts} verdict lines")
     return items
+
+
+def _contents_rows(lines: list[str]) -> int | None:
+    for i, line in enumerate(lines):
+        if CONTENTS_HEADER.match(line.strip()):
+            rows = 0
+            for row in lines[i + 2 :]:
+                if not row.strip():
+                    break
+                rows += 1
+            return rows
+    return None
+
+
+def _cells(line: str) -> list[str]:
+    body = line.strip()
+    body = body[1:] if body.startswith("|") else body
+    body = body[:-1] if body.endswith("|") else body
+    return [c.strip() for c in body.split("|")]
 
 
 def _press_open(text: str) -> list[str]:
-    items, header = [], None
-    for line in text.splitlines():
-        if not line.startswith("|"):
-            header = None
+    """Open items in m16-press.md, failing closed: exactly one table with a Status column; each
+    of its rows (until the first blank line) has the header's cell count and a status of `open`
+    or `reviewed`; anything else counts as open."""
+    lines = text.splitlines()
+    headers = [
+        i for i, line in enumerate(lines)
+        if "|" in line and any(c.lower() == "status" for c in _cells(line))
+    ]  # fmt: skip
+    if len(headers) != 1:
+        return [f"m16-press.md: {len(headers)} tables with a Status column, expected one"]
+    h = headers[0]
+    header = _cells(lines[h])
+    col = [c.lower() for c in header].index("status")
+    sep = lines[h + 1] if h + 1 < len(lines) else ""
+    if not re.fullmatch(r"\|?(\s*:?-+:?\s*\|)*\s*:?-+:?\s*\|?", sep.strip()):
+        return ["m16-press.md: the Status table has no separator line under its header"]
+    items, rows = [], 0
+    for n, line in enumerate(lines[h + 2 :], h + 3):
+        if not line.strip():
+            break
+        rows += 1
+        cells = _cells(line)
+        if len(cells) != len(header):
+            items.append(f"m16-press.md:{n}: {len(cells)} cells, the header has {len(header)}")
             continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if header is None:
-            header = cells
+        status = cells[col]
+        if status == "reviewed":
             continue
-        if set("".join(cells)) <= set("-: ") or header[-1] != "Status" or header[0] != "#":
-            continue
-        if cells[-1] != "reviewed":
-            items.append(f"press row {cells[0]} ({cells[1]}, {cells[2]}): status {cells[-1]}")
+        what = cells[0] if cells else "?"
+        detail = f"({cells[1]}, {cells[2]})" if len(cells) > 2 else ""
+        state = status if status in PRESS_STATUSES else f"{status!r} (not open or reviewed)"
+        items.append(f"press row {what} {detail}: status {state}")
+    if rows == 0:
+        items.append("m16-press.md: the Status table has no rows")
     return items
 
 
+def _read(path: Path, items: list[str]) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        items.append(f"{path.name}: not readable ({e.__class__.__name__})")
+        return None
+
+
 def golive_items(root: Path, datalab: Path) -> list[str]:
-    """Every automatable reason not to go live (spec §4.7, ruling R31); [] when none is open."""
-    from velometer.datalab import load_config, placeholders
+    """Every automatable reason not to go live (spec §4.7, ruling R31); [] when none is open.
+    A file that is missing or cannot be read is an open item itself."""
+    from velometer.datalab import DatalabError, load_config, placeholders
 
     items = []
-    cfg = load_config(root / "sites" / "datalab" / "site.yaml")
-    if cfg.operator_form is None:
+    try:
+        cfg = load_config(root / "sites" / "datalab" / "site.yaml")
+    except (DatalabError, ValueError) as e:
+        items.append(f"sites/datalab/site.yaml: not readable or invalid ({e})")
+        cfg = None
+    if cfg is not None and cfg.operator_form is None:
         items.append("sites/datalab/site.yaml: operator_form is null (operator undecided)")
-    if not cfg.contact_email:
+    if cfg is not None and not cfg.contact_email:
         items.append("sites/datalab/site.yaml: contact_email is null (no contact mailbox)")
     if not (datalab / "index.html").is_file():
         items.append(f"{datalab}: no built Datalab site (velometer datalab build)")
     items += [f"placeholder left in the Datalab build: {p}" for p in placeholders(datalab)]
     review = root / "docs" / "review"
-    items += _legal_open((review / "m16-legal.md").read_text(encoding="utf-8"))
-    items += _press_open((review / "m16-press.md").read_text(encoding="utf-8"))
+    legal = _read(review / "m16-legal.md", items)
+    if legal is not None:
+        items += _legal_open(legal)
+    press = _read(review / "m16-press.md", items)
+    if press is not None:
+        items += _press_open(press)
     return items
 
 
@@ -810,8 +1015,9 @@ def unlock(
         if _golive(root, datalab):
             raise ServerError("golive-check has open items; the sites stay locked")
         confirm([f"empty {LOCK} on {host}: both sites go public", "reload Caddy", "probe them"])
+        _, served = running_state(t)
         t.put(LOCK, "", mode="0640", group="caddy")
-        t.ssh("sudo systemctl reload-or-restart caddy")
+        reload_caddy(t, served)
     except ServerError as e:
         _fail(e)
     problems = verify_live(domain, DEPS.transport)

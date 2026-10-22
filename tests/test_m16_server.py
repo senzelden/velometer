@@ -59,6 +59,10 @@ class FakeRunner:
         return hits[0]
 
 
+def _no_network(request: httpx.Request) -> httpx.Response:
+    raise AssertionError(f"unexpected HTTP request in a test: {request.method} {request.url}")
+
+
 @pytest.fixture
 def deps(monkeypatch, tmp_path):
     runner = FakeRunner()
@@ -66,6 +70,7 @@ def deps(monkeypatch, tmp_path):
     monkeypatch.setattr(srv.DEPS, "now", lambda: NOW)
     monkeypatch.setattr(srv.DEPS, "check_site", lambda path: [])
     monkeypatch.setattr(srv.DEPS, "git_commit", lambda: "abcdef1")
+    monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(_no_network))
     monkeypatch.setattr(srv, "STATS_DIR", tmp_path / "data" / "stats")
     monkeypatch.setenv("HCLOUD_TOKEN", "test-token")
     monkeypatch.setenv("VELOMETER_PREVIEW_PASSWORD", PASSWORD)
@@ -138,7 +143,9 @@ def test_gitignore_keeps_stats_and_tiles_out_of_git():
 # --- create ---------------------------------------------------------------------------------
 
 
-def hetzner(requests: list[httpx.Request], *, server_exists=False, type_deprecated=False):
+def hetzner(
+    requests: list[httpx.Request], *, server_exists=False, type_deprecated=False, arch="x86"
+):
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
         assert request.headers["authorization"] == "Bearer test-token"
@@ -150,7 +157,7 @@ def hetzner(requests: list[httpx.Request], *, server_exists=False, type_deprecat
             t = {
                 "id": 1,
                 "name": q.get("name"),
-                "architecture": "x86",
+                "architecture": arch,
                 "deprecation": {"announced": "2026-01-01"} if type_deprecated else None,
                 "prices": [
                     {"location": "nbg1", "price_monthly": {"gross": "4.5100"}},
@@ -238,7 +245,12 @@ def test_create_refuses_a_location_outside_germany(deps, monkeypatch):
 
 
 def test_create_refuses_an_unknown_key_an_existing_server_and_a_deprecated_type(deps, monkeypatch):
-    cases = [({}, "nope"), ({"server_exists": True}, "k"), ({"type_deprecated": True}, "k")]
+    cases = [
+        ({}, "nope"),
+        ({"server_exists": True}, "k"),
+        ({"type_deprecated": True}, "k"),
+        ({"arch": "arm"}, "k"),  # cloud-init installs the linux_amd64 Caddy
+    ]
     for kwargs, key in cases:
         requests: list[httpx.Request] = []
         monkeypatch.setattr(srv.DEPS, "transport", hetzner(requests, **kwargs))
@@ -383,17 +395,20 @@ REL = f"/srv/velometer/releases/{BUILD}"
 PREV = "fedcba9-20261020T120000"
 
 
+MARK = f"{REL}.complete"
+
+
 def deploy_rules(rsync_rc=0, current=PREV, listing=None):
-    listing = listing if listing is not None else f"complete {PREV}\n"
+    listing = listing if listing is not None else f"{PREV}\n{PREV}.complete\n"
     return [
         ("readlink /srv/velometer/current", (0, f"releases/{current}\n") if current else (1, "")),
-        ("cd /srv/velometer/releases", listing),
+        ("ls -1A /srv/velometer/releases", listing),
         ("rsync", (rsync_rc, "")),
     ]
 
 
 def test_deploy_uploads_into_a_new_release_marks_it_and_switches_atomically(deps, tmp_path):
-    deps.rules = deploy_rules(listing=f"complete {PREV}\ncomplete {BUILD}\n")
+    deps.rules = deploy_rules(listing=f"{PREV}\n{PREV}.complete\n{BUILD}\n{BUILD}.complete\n")
     r = invoke("deploy", "velometer", str(site_dir(tmp_path)), *HOST, input="yes\n")
     assert r.exit_code == 0, r.output
     (rsync,) = [a for a, _ in deps.calls if a[0] == "rsync"]
@@ -402,11 +417,11 @@ def test_deploy_uploads_into_a_new_release_marks_it_and_switches_atomically(deps
     assert "--delete" not in rsync
     # unchanged files are linked although an export rewrites them all: checksum, no times
     assert "--checksum" in rsync and "-a" not in rsync and "-t" not in rsync
-    i_rsync, i_mark = deps.index("rsync"), deps.index(f"touch {REL}/.complete")
+    i_rsync, i_mark = deps.index("rsync"), deps.index(f"touch {MARK}")
     i_switch = deps.index("mv -T")
     assert i_rsync < i_mark < i_switch
     switch = deps.joined()[i_switch]
-    assert f"test -f {REL}/.complete" in switch
+    assert f"test -f {MARK} && ln" in switch
     assert f"ln -sfn releases/{BUILD} /srv/velometer/current.new" in switch
     assert "mv -T /srv/velometer/current.new /srv/velometer/current" in switch
 
@@ -421,7 +436,7 @@ def test_the_build_name_is_the_exports_commit_and_the_deploy_time(deps, tmp_path
 def test_the_datalab_build_is_named_after_the_local_commit(deps, tmp_path):
     d = site_dir(tmp_path)
     (d / "build.json").unlink()
-    deps.rules = [("readlink", (1, "")), ("cd /srv/datalab/releases", "")]
+    deps.rules = [("readlink", (1, "")), ("ls -1A /srv/datalab/releases", "")]
     r = invoke("deploy", "datalab", str(d), *HOST, input="yes\n")
     assert r.exit_code == 0, r.output
     assert any("mkdir -p /srv/datalab/releases/abcdef1-20261022T093005" in j for j in deps.joined())
@@ -448,6 +463,50 @@ def test_a_failed_marker_never_switches_current(deps, tmp_path):
     r = invoke("deploy", "velometer", str(site_dir(tmp_path)), *HOST, input="yes\n")
     assert r.exit_code != 0
     assert not any("mv -T" in j for j in deps.joined())
+
+
+def test_the_marker_lies_beside_the_release_never_inside_it(deps, tmp_path):
+    """Ruling R33: the served tree (the release) holds no `.complete`; the marker is the
+    release's sibling `<release>.complete`, and the switch requires it."""
+    deps.rules = deploy_rules()
+    r = invoke("deploy", "velometer", str(site_dir(tmp_path)), *HOST, input="yes\n")
+    assert r.exit_code == 0, r.output
+    joined = deps.joined()
+    assert not any(f"{REL}/.complete" in j or "/.complete" in j for j in joined)
+    assert srv.MARKER_PATH.fullmatch(MARK) and not MARK.startswith(REL + "/")
+    assert any(j.endswith(f"touch {MARK}") for j in joined)
+
+
+@pytest.mark.parametrize(
+    "link",
+    [
+        "../../etc",
+        "releases/../../etc",
+        "/etc",
+        "releases/x",
+        "releases/",
+        "other/1234abc-20261020T120000",
+    ],  # noqa: E501
+)
+def test_deploy_stops_when_current_points_to_no_release(deps, tmp_path, link):
+    deps.rules = [("readlink /srv/velometer/current", (0, link + "\n"))]
+    r = invoke("deploy", "velometer", str(site_dir(tmp_path)), *HOST, input="yes\n")
+    assert r.exit_code != 0
+    assert "not a release" in r.output
+    assert not any("mkdir" in j or j.startswith("rsync") for j in deps.joined())
+
+
+@pytest.mark.parametrize("content", [None, "{not json", "[1, 2]", '{"commit": null}'])
+def test_deploy_stops_cleanly_without_a_usable_build_json(deps, tmp_path, content):
+    d = site_dir(tmp_path)
+    if content is None:
+        (d / "build.json").unlink()
+    else:
+        (d / "build.json").write_text(content, encoding="utf-8")
+    r = invoke("deploy", "velometer", str(d), *HOST, input="yes\n")
+    assert r.exit_code == 1
+    assert "error:" in r.output and "Traceback" not in r.output
+    assert deps.calls == []
 
 
 def test_deploy_does_nothing_without_a_typed_yes(deps, tmp_path):
@@ -516,6 +575,29 @@ BAD = [
 
 def test_the_guard_is_the_briefs_regex():
     assert srv.RELEASE.pattern == r"^/srv/[a-z]+/releases/[0-9a-f]{7,40}-\d{8}T\d{6}$"
+    assert srv.MARKER_PATH.pattern == (
+        r"^/srv/[a-z]+/releases/[0-9a-f]{7,40}-\d{8}T\d{6}\.complete$"
+    )
+
+
+@pytest.mark.parametrize("path", [p + ".complete" for p in GOOD])
+def test_the_guard_admits_markers(path):
+    assert srv.guard_release(path) == path
+
+
+@pytest.mark.parametrize(
+    "path",
+    [p + ".complete" for p in BAD if not p.endswith("\n")]
+    + [
+        GOOD[0] + "/.complete",
+        GOOD[0] + ".completed",
+        GOOD[0] + "xcomplete",
+        GOOD[0] + ".complete\n",
+    ],
+)
+def test_the_guard_refuses_marker_lookalikes(path):
+    with pytest.raises(srv.ServerError):
+        srv.guard_release(path)
 
 
 @pytest.mark.parametrize("path", GOOD)
@@ -533,31 +615,49 @@ def rel(n: int, sha="1234abc") -> str:
     return f"{sha}-2026102{n}T000000"
 
 
+def complete(*names: str) -> list[str]:
+    return [x for n in names for x in (n, n + ".complete")]
+
+
+B = "/srv/velometer/releases/"
+
+
 def test_cleanup_keeps_the_three_newest_complete_releases_and_current():
-    listing = [(rel(n), True) for n in range(1, 7)] + [(rel(0, "fff0000"), False)]
-    gone = srv.plan_cleanup("velometer", listing, current=rel(2))
-    assert gone == sorted(
-        f"/srv/velometer/releases/{n}" for n in (rel(1), rel(3), rel(0, "fff0000"))
-    )
+    names = complete(*(rel(n) for n in range(1, 7))) + [rel(0, "fff0000")]
+    gone = srv.plan_cleanup("velometer", names, current=rel(2))
+    assert gone == [
+        B + rel(0, "fff0000"),  # partial: no marker
+        B + rel(1) + ".complete",
+        B + rel(1),
+        B + rel(3) + ".complete",
+        B + rel(3),
+    ]
+
+
+def test_cleanup_removes_a_marker_before_its_release_and_orphaned_markers():
+    names = complete(*(rel(n) for n in range(1, 5))) + [rel(9, "abc1234") + ".complete"]
+    gone = srv.plan_cleanup("velometer", names, current=rel(4))
+    assert gone == [B + rel(1) + ".complete", B + rel(1), B + rel(9, "abc1234") + ".complete"]
 
 
 def test_cleanup_orders_by_deploy_time_not_by_name():
-    listing = [("fff0000-20261021T000000", True), ("0000aaa-20261024T000000", True),
-               ("aaa1111-20261023T000000", True), ("bbb2222-20261022T000000", True)]  # fmt: skip
-    gone = srv.plan_cleanup("velometer", listing, current="0000aaa-20261024T000000")
-    assert gone == ["/srv/velometer/releases/fff0000-20261021T000000"]
+    names = complete("fff0000-20261021T000000", "0000aaa-20261024T000000",
+                     "aaa1111-20261023T000000", "bbb2222-20261022T000000")  # fmt: skip
+    gone = srv.plan_cleanup("velometer", names, current="0000aaa-20261024T000000")
+    assert gone == [B + "fff0000-20261021T000000.complete", B + "fff0000-20261021T000000"]
 
 
 def test_cleanup_ignores_every_name_the_guard_does_not_admit():
     odd = ["..", ".", "current", "x", "1234abc-20261022T093005.old", "-rf", "*", "a b",
-           "1234abc-20261022T093005\nx", "../../etc"]  # fmt: skip
-    listing = [(n, False) for n in odd] + [(rel(n), True) for n in range(1, 4)]
-    assert srv.plan_cleanup("velometer", listing, current=rel(3)) == []
+           "1234abc-20261022T093005\nx", "../../etc", ".complete", "x.complete",
+           "1234abc-20261022T093005.complete.old", "1234abc-20261022T093005/.complete"]  # fmt: skip
+    names = odd + complete(*(rel(n) for n in range(1, 4)))
+    assert srv.plan_cleanup("velometer", names, current=rel(3)) == []
 
 
 def test_cleanup_removes_only_guarded_paths_without_force(deps, tmp_path):
     old = [rel(n) for n in range(1, 5)]
-    listing = "".join(f"complete {n}\n" for n in old) + "partial ../../etc\ncomplete current\n"
+    listing = "\n".join(complete(*old) + ["../../etc", "current", "x.complete"]) + "\n"
     deps.rules = deploy_rules(current=rel(4), listing=listing)
     r = invoke("deploy", "velometer", str(site_dir(tmp_path)), *HOST, input="yes\n")
     assert r.exit_code == 0, r.output
@@ -566,9 +666,12 @@ def test_cleanup_removes_only_guarded_paths_without_force(deps, tmp_path):
     for j in rms:
         assert "-f" not in j.split() and "-rf" not in j and "-fr" not in j
         (path,) = re.findall(r"/srv/\S+", j)
-        assert srv.RELEASE.fullmatch(path), j
-    removed = {re.findall(r"/srv/\S+", j)[0].rsplit("/", 1)[1] for j in rms}
-    assert removed == {rel(1)}  # 2, 3, 4 are kept; the new BUILD is not listed in this fake
+        assert srv.RELEASE.fullmatch(path) or srv.MARKER_PATH.fullmatch(path), j
+        if srv.MARKER_PATH.fullmatch(path):
+            assert "-r" not in j.split()  # a marker is a file
+    removed = [re.findall(r"/srv/\S+", j)[0].rsplit("/", 1)[1] for j in rms]
+    # 2, 3, 4 are kept; the new BUILD is not listed in this fake; the marker goes first
+    assert removed == [rel(1) + ".complete", rel(1)]
 
 
 # --- setup (idempotent; the password only on stdin) -----------------------------------------
@@ -580,7 +683,24 @@ def sha(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def server_state(lock: str, *, synced=False, domain="example.org"):
+def caddy_json(lock: str) -> str:
+    """A loaded Caddy config as the admin API returns it, three sites importing `lock`."""
+    state = srv.lock_state(lock)
+    if state == "password":
+        handler = {"handler": "authentication", "providers": {"http_basic": {
+            "accounts": [{"password": lock.split()[-2], "username": "preview"}],
+            "hash": {"algorithm": "bcrypt"}}}}  # fmt: skip
+    elif state == "default":
+        handler = {"body": "locked", "handler": "static_response", "status_code": 401}
+    else:
+        handler = {"handler": "vars"}
+    route = {"handle": [{"handler": "subroute", "routes": [{"handle": [handler]}]}]}
+    return json.dumps({"apps": {"http": {"servers": {"srv0": {"routes": [route] * 3}}}}})
+
+
+def server_state(
+    lock: str, *, synced=False, domain="example.org", active=True, running=None, on_disk=None
+):
     sums = ""
     if synced:
         sums = "".join(
@@ -591,10 +711,15 @@ def server_state(lock: str, *, synced=False, domain="example.org"):
                 ("/etc/goaccess/velometer.conf", GOACCESS.read_text("utf-8")),
             )
         )
+    running = lock if running is None else running
+    on_disk = lock if on_disk is None else on_disk
     return [
         ("cat /etc/caddy/lock.caddy", lock),
         ("sha256sum", sums),
         ("hash-password", HASH + "\n"),
+        ("systemctl is-active caddy", "active\n" if active else (3, "inactive\n")),
+        ("curl -fsS http://localhost:2019/config/", caddy_json(running) if active else (7, "")),
+        ("caddy adapt --config /etc/caddy/Caddyfile", caddy_json(on_disk)),
     ]
 
 
@@ -652,6 +777,82 @@ def test_setup_run_twice_changes_nothing_and_asks_nothing(deps):
     assert not any("hash-password" in j or "reload" in j for j in deps.joined())
 
 
+HASH2 = "$2a$14$" + "b" * 53
+
+
+def test_a_failed_reload_says_what_still_runs_and_the_next_setup_reloads(deps):
+    deps.rules = [("reload-or-restart", (1, ""))] + server_state(dr.LOCK_DEFAULT)
+    r = invoke("setup", *HOST, "--domain", "example.org", input="yes\n")
+    assert r.exit_code == 1
+    assert "still serves the previous lock" in r.output
+    assert "default lock" in r.output
+    # on disk now: the password lock and the files; running: still the default lock
+    second = FakeRunner(server_state(dr.lock_text(HASH), synced=True, running=dr.LOCK_DEFAULT))
+    srv.DEPS.runner = second
+    r2 = invoke("setup", *HOST, "--domain", "example.org", input="yes\n")
+    assert r2.exit_code == 0, r2.output
+    assert "nothing to change" not in r2.output
+    assert "reload or start Caddy" in r2.output
+    assert any("reload-or-restart caddy" in j for j in second.joined())
+    assert all(i is None for _, i in second.calls)  # nothing uploaded, nothing hashed
+
+
+def test_setup_starts_a_stopped_caddy_even_when_the_files_are_current(deps):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True, active=False)
+    r = invoke("setup", *HOST, "--domain", "example.org", input="yes\n")
+    assert r.exit_code == 0, r.output
+    assert "not running" in r.output
+    assert any("reload-or-restart caddy" in j for j in deps.joined())
+
+
+def test_setup_reloads_when_the_running_config_differs_from_disk(deps):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True, running=dr.lock_text(HASH2))
+    r = invoke("setup", *HOST, "--domain", "example.org", input="no\n")
+    assert r.exit_code != 0  # it asked: a reload is planned
+    assert "reload or start Caddy" in r.output
+
+
+def test_served_lock_reads_the_three_forms():
+    assert srv.served_lock(json.loads(caddy_json(dr.LOCK_DEFAULT))) == "default"
+    assert srv.served_lock(json.loads(caddy_json(""))) == "open"
+    assert srv.served_lock(json.loads(caddy_json(dr.lock_text(HASH)))) == "password " + HASH
+
+
+def test_setup_relock_locks_an_unlocked_server_again(deps):
+    deps.rules = server_state("", synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--relock", input="yes\n")
+    assert r.exit_code == 0, r.output
+    (_, stdin) = deps.calls[deps.index("hash-password")]
+    assert stdin == PASSWORD + "\n"
+    writes = [i for a, i in deps.calls if "/etc/caddy/lock.caddy" in " ".join(a) and i]
+    assert writes == [dr.lock_text(HASH)]
+    assert deps.index("lock.caddy.XXXXXX") < deps.index("reload-or-restart caddy")
+
+
+def test_setup_new_password_rehashes_a_locked_server(deps):
+    deps.rules = server_state(dr.lock_text(HASH2), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--new-password", input="yes\n")
+    assert r.exit_code == 0, r.output
+    writes = [i for a, i in deps.calls if "/etc/caddy/lock.caddy" in " ".join(a) and i]
+    assert writes == [dr.lock_text(HASH)]
+    assert any("reload-or-restart caddy" in j for j in deps.joined())
+
+
+def test_setup_without_flags_keeps_a_locked_servers_hash(deps):
+    deps.rules = server_state(dr.lock_text(HASH2), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", input="")
+    assert r.exit_code == 0, r.output
+    assert "nothing to change" in r.output
+    assert not any("hash-password" in j for j in deps.joined())
+
+
+def test_put_removes_its_temp_file_on_every_exit(deps):
+    srv.Target("h").put("/etc/x", "text")
+    ((argv, stdin),) = deps.calls
+    assert "trap 'rm -f \"$t\"' EXIT" in argv[-1].replace("'\"'\"'", "'")
+    assert stdin == "text"
+
+
 def test_setup_keeps_an_unlocked_server_unlocked(deps):
     deps.rules = server_state("", synced=False)
     r = invoke("setup", *HOST, "--domain", "example.org", input="yes\n")
@@ -701,8 +902,9 @@ def golive_fixture(tmp_path: Path, *, open_items: bool) -> tuple[Path, Path]:
     (root / "sites" / "datalab" / "site.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     verdict = "decision for the user" + ("" if open_items else " (decided 2026-10-22: A)")
     (root / "docs" / "review" / "m16-legal.md").write_text(
-        "# Review\n\n| § | Topic | Verdict |\n|---|---|---|\n"
-        "| 1.1 | X | decision for the user |\n\n"
+        "# Review\n\n- Verdicts (ruling P3): `ok` / `decision for the user`.\n\n"
+        "## Contents (2 topics, one verdict each)\n\n| § | Topic | Verdict |\n|---|---|---|\n"
+        "| 4.6 | Source code | decision for the user |\n| 4.7 | Other | ok |\n\n"
         f"### 4.6 Source code\n\nText.\n\n**Verdict:** {verdict}\n\n"
         "### 4.7 Other\n\n**Verdict:** ok\n",
         encoding="utf-8",
@@ -768,6 +970,141 @@ def test_golive_items_reads_each_rule_separately(tmp_path):
     assert "contact_email" in item
 
 
+def _edit(path: Path, old: str, new: str) -> None:
+    text = path.read_text("utf-8")
+    assert old in text, old
+    path.write_text(text.replace(old, new), "utf-8")
+
+
+DECIDED = "**Verdict:** decision for the user (decided 2026-10-22: A)"
+LEGAL_DRIFT = {
+    "list item": (DECIDED, "- " + DECIDED),
+    "bold colon outside": (DECIDED, DECIDED.replace("**Verdict:**", "**Verdict**:")),
+    "capitalised value": (DECIDED, "**Verdict:** Decision for the user (decided 2026-10-22: A)"),
+    "decided without a date": (DECIDED, "**Verdict:** decision for the user (decided later)"),
+    "decided without the decision": (
+        DECIDED,
+        "**Verdict:** decision for the user (decided 2026-10-22)",
+    ),  # noqa: E501
+    "unknown verdict": ("**Verdict:** ok", "**Verdict:** fine"),
+    "trailing words": ("**Verdict:** ok", "**Verdict:** ok, mostly"),
+    "decided on another verdict": ("**Verdict:** ok", "**Verdict:** ok (decided 2026-10-22: x)"),
+    "upper-case label": ("**Verdict:** ok", "VERDICT: ok"),
+    "a verdict line lost": ("\n\n**Verdict:** ok\n", "\n\nok\n"),
+    "every verdict line lost": ("**Verdict:**", "**Ruling:**"),
+    # the count still matches: only the label check sees these
+    "an extra drifted label": ("Text.\n", "Text.\n\n- **Verdict:** see 4.7\n"),
+    "an extra lower-case label": ("Text.\n", "Text.\n\nverdict: decision for the user\n"),
+    "no contents table": ("| § | Topic | Verdict |", "| § | Topic | Result |"),
+}
+
+
+def test_golive_legal_without_any_verdict_is_open(tmp_path):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    (root / "docs" / "review" / "m16-legal.md").write_text(
+        "# Review\n\n| § | Topic | Verdict |\n|---|---|---|\n\nNothing reviewed yet.\n", "utf-8"
+    )
+    items = srv.golive_items(root, datalab)
+    assert any("no verdict line" in i for i in items), items
+
+
+@pytest.mark.parametrize("case", sorted(LEGAL_DRIFT))
+def test_golive_legal_parser_fails_closed_on_format_drift(tmp_path, case):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    path = root / "docs" / "review" / "m16-legal.md"
+    assert srv.golive_items(root, datalab) == []
+    old, new = LEGAL_DRIFT[case]
+    text = path.read_text("utf-8")
+    assert old in text
+    path.write_text(text.replace(old, new), "utf-8")
+    items = srv.golive_items(root, datalab)
+    assert items and all("m16-legal.md" in i for i in items), items
+
+
+HEADER = "| # | File | Key | Lang | Sentence | Source | Fact or opinion | Risk | Proposed rewording | Status |"  # noqa: E501
+ROW2 = "| 2 (1) | a.yaml | `k` | de | A sagte. | s | fact | low | keep | open |"
+PRESS_FORMAT_DRIFT = {
+    "No. for #": [("| # |", "| No. |")],
+    "status in lower case": [("| Status |", "| status |")],
+    "STATUS in capitals": [("| Status |", "| STATUS |")],
+    "a column after Status": [
+        ("| Status |", "| Status | Note |"),
+        (
+            "|---|---|---|---|---|---|---|---|---|---|",
+            "|---|---|---|---|---|---|---|---|---|---|---|",
+        ),  # noqa: E501
+        ("| reviewed |", "| reviewed | x |"),
+        ("| open |", "| open | x |"),
+    ],
+    "rows without a leading pipe": [("\n| 1 (1)", "\n1 (1)"), ("\n| 2 (1)", "\n2 (1)")],
+}
+
+
+@pytest.mark.parametrize("case", sorted(PRESS_FORMAT_DRIFT))
+def test_golive_press_parser_still_finds_the_open_row_after_format_drift(tmp_path, case):
+    root, datalab = golive_fixture(tmp_path, open_items=True)
+    path = root / "docs" / "review" / "m16-press.md"
+    for old, new in PRESS_FORMAT_DRIFT[case]:
+        _edit(path, old, new)
+    items = srv.golive_items(root, datalab)
+    press = [i for i in items if i.startswith(("press row", "m16-press.md"))]
+    assert press == [press[0]] and press[0].startswith("press row 2 (1)"), press
+    assert press[0].endswith("status open")
+
+
+PRESS_BROKEN = {
+    "status not open or reviewed": [("keep | reviewed |", "keep | done |")],
+    "Reviewed with a capital": [("keep | reviewed |", "keep | Reviewed |")],
+    "empty status": [("keep | reviewed |", "keep |  |")],
+    "a cell missing": [("| low | keep | reviewed |", "| low | reviewed |")],
+    "an extra cell": [("| keep | reviewed |", "| keep | x | reviewed |")],
+    "no Status column": [("| Status |", "| State |")],
+    "two Status tables": [("| Risk | Claims | Rows |", "| Risk | Claims | Status |")],
+    "no rows": [
+        (ROW2.replace("open", "reviewed") + "\n", ""),
+        ("| 1 (1) | a.yaml | `k` | en | A said. | s | fact | low | keep | reviewed |\n", ""),
+    ],  # noqa: E501
+}
+
+
+@pytest.mark.parametrize("case", sorted(PRESS_BROKEN))
+def test_golive_press_parser_fails_closed(tmp_path, case):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    assert srv.golive_items(root, datalab) == []
+    path = root / "docs" / "review" / "m16-press.md"
+    for old, new in PRESS_BROKEN[case]:
+        _edit(path, old, new)
+    items = srv.golive_items(root, datalab)
+    assert items and all(i.startswith(("press row", "m16-press.md")) for i in items), items
+
+
+@pytest.mark.parametrize("name", ["m16-legal.md", "m16-press.md"])
+def test_golive_a_missing_or_unreadable_review_file_is_open(tmp_path, name):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    path = root / "docs" / "review" / name
+    path.unlink()
+    (item,) = srv.golive_items(root, datalab)
+    assert item.startswith(f"{name}: not readable")
+    path.write_bytes(b"\xff\xfe not utf-8 \x80")
+    (item,) = srv.golive_items(root, datalab)
+    assert item.startswith(f"{name}: not readable")
+
+
+def test_golive_a_missing_datalab_config_is_open(tmp_path):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    (root / "sites" / "datalab" / "site.yaml").unlink()
+    (item,) = srv.golive_items(root, datalab)
+    assert "site.yaml" in item
+
+
+def test_golive_the_real_review_files_parse(tmp_path):
+    """The repo's own files are in the form the parsers read: every row and verdict is seen."""
+    legal = (ROOT / "docs" / "review" / "m16-legal.md").read_text("utf-8")
+    assert not [i for i in srv._legal_open(legal) if "decision for the user is open" not in i]
+    press = (ROOT / "docs" / "review" / "m16-press.md").read_text("utf-8")
+    assert all(i.startswith("press row ") for i in srv._press_open(press))
+
+
 def live_transport(seen: list[httpx.Request], *, port80=308, apex=200):
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(request)
@@ -809,6 +1146,7 @@ def test_unlock_needs_a_passing_golive_check(deps, tmp_path):
 def test_unlock_empties_the_lock_after_a_typed_yes_and_verifies(deps, tmp_path, monkeypatch):
     root, datalab = golive_fixture(tmp_path, open_items=False)
     monkeypatch.setattr(srv.DEPS, "transport", live_transport([]))
+    deps.rules = server_state(dr.lock_text(HASH))
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--root", str(root), input="yes\n")  # fmt: skip
     assert r.exit_code == 0, r.output
