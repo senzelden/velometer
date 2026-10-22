@@ -313,8 +313,8 @@ def check_redirect(label: str, r: Resp, location: str) -> list[str]:
 def check_logs(logs: dict[str, str], secrets: dict[str, str], masked_in: list[str]) -> list[str]:
     """No log (`name: text`) holds the probes' address, the forged X-Forwarded-For or a secret
     (`what: value`), and no JSON entry keeps a `DROPPED` request header (Caddy itself only
-    redacts the credentials' values); each log in `masked_in` shows the probes' address masked
-    to /24, so it did log the probes."""
+    redacts the credentials' values) or the client port; each log in `masked_in` shows the
+    probes' address masked to /24, so it did log the probes."""
     problems = []
     forbidden = {"the client address": CLIENT_ADDR, "the forged X-Forwarded-For": FORGED_XFF}
     for name, text in logs.items():
@@ -322,11 +322,15 @@ def check_logs(logs: dict[str, str], secrets: dict[str, str], masked_in: list[st
             if value and value in text:
                 problems.append(f"log {name}: holds {what} unmasked")
     for name, text in logs.items():
-        kept = set()
+        kept, port = set(), False
         for line in text.splitlines():
             with contextlib.suppress(ValueError, AttributeError):
-                kept |= set(json.loads(line).get("request", {}).get("headers", {})) & DROPPED
+                request = json.loads(line).get("request", {})
+                kept |= set(request.get("headers", {})) & DROPPED
+                port = port or "remote_port" in request
         problems += [f"log {name}: keeps the {h} header" for h in sorted(kept)]
+        if port:
+            problems.append(f"log {name}: keeps the client port (request>remote_port)")
     for name in masked_in:
         text = logs.get(name, "")
         missing = [m for m in MASKED if m not in text]
@@ -582,12 +586,14 @@ def run_datalab_probes(
 
 
 def lock_paths() -> list[str]:
-    """What the lock probes ask every host for: pages, files, the tile file, the 404 page, an
-    unknown path at the top and under the tiles route, robots.txt."""
+    """What the lock probes ask every host for: pages, files and their `.gz` siblings (which
+    `precompressed` serves), the tile file, the 404 page, an unknown path at the top and under
+    the tiles route, robots.txt."""
     nope = secrets.token_hex(4)
     return [
         "/", "/de", "/city/berlin/", "/impressum/", "/data/series.json", "/static/app.css",
-        "/404.html", f"/nope-{nope}", TILES_URL, f"/tiles/nope-{nope}", "/robots.txt",
+        "/static/app.css.gz", "/data/series.json.gz", "/404.html", f"/nope-{nope}", TILES_URL,
+        f"/tiles/nope-{nope}", "/robots.txt",
     ]  # fmt: skip
 
 
@@ -604,7 +610,8 @@ def run_lock_probes(
     origin: str, fetch: Callable[..., Resp] = fetch_url, auth: tuple[str, str] | None = None
 ) -> tuple[int, list[str]]:
     """Every path of every host answers 401 with nothing of the site, without credentials (and,
-    with `auth`, also with those: the lock that no password opens)."""
+    with `auth`, also with those: the lock that no password opens). Each asks with gzip offered,
+    and the tile file is asked once more for a byte range."""
     port = int(origin.rsplit(":", 1)[1])
     problems: list[str] = []
     n = 0
@@ -613,8 +620,11 @@ def run_lock_probes(
             for creds in (None, auth) if auth else (None,):
                 n += 1
                 label = f"{name} {path}" + (" (with a password)" if creds else "")
-                r = fetch(origin + path, host=host, auth=creds, follow=False)
+                r = fetch(origin + path, gzip=True, host=host, auth=creds, follow=False)
                 problems += check_locked(label, r)
+        n += 1
+        r = fetch(origin + TILES_URL, byte_range="0-15", host=host, auth=None, follow=False)
+        problems += check_locked(f"{name} {TILES_URL} (Range bytes=0-15)", r)
     return n, problems
 
 

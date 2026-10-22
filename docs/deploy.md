@@ -148,21 +148,27 @@ TLS.
    page alike (ruling R26): it runs before the site's own headers, which set Cache-Control only
    where it is not set yet (`?Cache-Control`). A plain `header` in the lock file loses to the
    site's later one, and a deferred one misses the 401 and the 404 page (both seen with Caddy
-   2.11.4). The dry run checks both texts on every host.
+   2.11.4). The dry run checks both texts on every host. Port 80 answers every request with
+   Caddy's automatic 308 to `https://` before any site route, so before the lock too; that
+   redirect names only the address that was asked for and reveals nothing of the sites.
 
    **Logs.** Each site writes a JSON access log, `/var/log/caddy/datalab.log` and
    `velometer.log`, with the client address masked to IPv4 /24 and IPv6 /48 before it reaches the
    disk (`remote_ip`, `client_ip`). The client port, `Cookie` and `Authorization` are dropped, and
    so are `X-Forwarded-For`, `Forwarded` and `X-Real-Ip`: no proxy stands in front of Caddy, so
    they carry only what a client chose to write (ruling R25). Retention is by time (ruling R27):
-   the logs roll at 00:00 UTC (`roll_at 00:00`) and each rolled file is deleted once 14 days old
-   (`roll_keep_for 336h`). Size and count must not prune first, and Caddy has no unlimited
-   setting (`roll_keep 0`, or none, keeps 10 files; seen with Caddy 2.11.4), so `roll_size 1GiB`
-   and `roll_keep 1000` sit far above a day's log. A rolled file is gzipped, named like
-   `velometer-2026-10-21T00-00-00.000-time.log.gz`. Caddy's own log (stderr, so journald) masks the same fields, writes no
-   access lines, and drops the `http.stdlib` logger, whose messages name the client in their text
-   (`TLS handshake error from <ip>:<port>`, at DEBUG) where no field filter reaches.
-4. Upload. Dry run first, then without `--dry-run`:
+   the logs roll at 00:00 server time (`roll_at 00:00`; the server runs on UTC) and each rolled
+   file is deleted once 14 days old (`roll_keep_for 336h`). Size and count must not prune first,
+   and Caddy has no unlimited setting (`roll_keep 0`, or none, keeps 10 files; seen with Caddy
+   2.11.4), so `roll_size 1GiB` and `roll_keep 1000` sit far above a day's log. A rolled file is
+   gzipped, named like `velometer-2026-10-21T00-00-00.000-time.log.gz`. Caddy's own log (stderr,
+   so journald) masks the same fields, writes no access lines, and drops the `http.stdlib`
+   logger, whose messages name the client in their text (`TLS handshake error from
+   <ip>:<port>`, at DEBUG) where no field filter reaches.
+4. Upload. *Superseded in M16:* the deploy tool (Task 8) uploads each build to
+   `releases/<build>/` and switches the `current` symlink once the upload is complete, so a
+   reader never sees half a site; use it instead of the hand copy below, which writes into the
+   live directory. The hand copy, dry run first, then without `--dry-run`:
 
    ```
    rsync -a --delete --dry-run <dir>/ <host>:/srv/velometer/current/

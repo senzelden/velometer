@@ -26,10 +26,10 @@ LOCK = "import /etc/caddy/lock.caddy"
 APEX, VELOMETER, WWW = "{$DOMAIN}", "velometer.{$DOMAIN}", "www.{$DOMAIN}"
 # every field of a log entry that carries the client's address, and the headers it must not keep:
 # credentials, and what a client writes as it likes with no proxy to vouch for it (ruling R25)
-MASKED = ("request>remote_ip", "request>client_ip")
+MASKED = ("remote_ip", "client_ip", "request>remote_ip", "request>client_ip")
 DELETED = (
     "request>headers>Cookie", "request>headers>Authorization", "request>headers>X-Forwarded-For",
-    "request>headers>Forwarded", "request>headers>X-Real-Ip",
+    "request>headers>Forwarded", "request>headers>X-Real-Ip", "request>remote_port",
 )  # fmt: skip
 # set by the site only where the lock file has not set it (ruling R26)
 CONDITIONAL = "Cache-Control"

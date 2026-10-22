@@ -155,6 +155,23 @@ def test_the_probes_see_a_locked_response_a_cache_may_keep(
     assert "problem: /: header cache-control is 'public, max-age=3600', expected 'no-store'" in out
 
 
+def test_the_log_check_sees_an_unmasked_default_logger(caddy_args, tmp_path, monkeypatch, capsys):
+    """Caddy's own log (stderr, journald) carries error entries at DEBUG: without its own
+    remote_ip mask they name the client."""
+    text = dr.CADDYFILE.read_text(encoding="utf-8")
+    default = text[: text.index("(access_log) {")]
+    _broken(
+        tmp_path,
+        monkeypatch,
+        default,
+        default.replace("\t\t\t\trequest>remote_ip ip_mask 24 48\n", "", 1),
+    )
+    assert dr.main([*caddy_args, "--lock", "pw", "--debug-log"]) == 1
+    out = capsys.readouterr().out
+    assert "problem: log caddy output: holds the client address unmasked" in out
+    assert "problem: log velometer.log" not in out  # the access logs keep their own mask
+
+
 def test_wrangler_pages_dev_serves_the_export(public_site):
     if not shutil.which("npx"):
         pytest.skip("npx is not available")

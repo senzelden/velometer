@@ -757,6 +757,11 @@ def test_the_log_check_finds_each_unmasked_address_and_secret():
     assert p == "log a.log: keeps the Cookie header"
     line = '{"request":{"headers":{"Authorization":["REDACTED"],"User-Agent":["x"]}}}'
     assert dr.check_logs({"b.log": line}, {}, []) == ["log b.log: keeps the Authorization header"]
+    # the client port is dropped (fix round 1)
+    line = '{"request":{"remote_ip":"127.0.0.0","remote_port":"51234"}}'
+    assert dr.check_logs({"d.log": line}, {}, []) == [
+        "log d.log: keeps the client port (request>remote_port)"
+    ]
     # X-Forwarded-For is dropped, even masked (ruling R25)
     line = '{"request":{"headers":{"X-Forwarded-For":["203.0.113.0"]}}}'
     assert dr.check_logs({"c.log": line}, {}, []) == ["log c.log: keeps the X-Forwarded-For header"]
@@ -811,7 +816,7 @@ def _host_fetch(by_host):
 
     def fetch(url, gzip=False, byte_range=None, *, host=None, auth=None, follow=True, **kw):
         path = url.removeprefix(ORIGIN)
-        calls.append((host, path, auth, kw))
+        calls.append((host, path, auth, {"gzip": gzip, "byte_range": byte_range, **kw}))
         status, body = by_host[host.split(":")[0]](path, auth)
         return dr.Resp(status, {"cache-control": "no-store"}, body, url)
 
@@ -825,20 +830,26 @@ def test_the_lock_probes_ask_every_host_for_every_path_and_report_a_leak():
     fetch, calls = _host_fetch({"localhost": locked, "velometer.localhost": leaky,
                                 "www.localhost": locked})  # fmt: skip
     n, problems = dr.run_lock_probes(ORIGIN, fetch)
-    assert n == 3 * len(dr.lock_paths()) == len(calls)
+    assert n == 3 * (len(dr.lock_paths()) + 1) == len(calls)  # each host: every path, a range
     assert {h for h, *_ in calls} == {"localhost:9", "velometer.localhost:9", "www.localhost:9"}
     assert all(auth is None for _, _, auth, _ in calls)
     assert problems and all(p.startswith("velometer /tiles/") for p in problems)
+    assert "velometer /tiles/velometer.pmtiles (Range bytes=0-15): status 200, expected 401" in (
+        problems
+    )
+    ranges = [(h, p) for h, p, _, kw in calls if kw.get("byte_range") == "0-15"]
+    assert sorted(ranges) == sorted((h, dr.TILES_URL) for h in {h for h, *_ in calls})
+    assert all(kw["gzip"] for _, _, _, kw in calls if not kw.get("byte_range"))
     # the lock no password opens: each path is asked again with one
     fetch, calls = _host_fetch(dict.fromkeys(("localhost", "velometer.localhost",
                                               "www.localhost"), locked))  # fmt: skip
     n, problems = dr.run_lock_probes(ORIGIN, fetch, auth=("preview", "guess"))
-    assert problems == [] and n == 2 * 3 * len(dr.lock_paths())
+    assert problems == [] and n == 3 * (2 * len(dr.lock_paths()) + 1)
 
 
 def test_the_lock_paths_cover_pages_tiles_the_404_page_and_robots():
     paths = dr.lock_paths()
-    for want in ("/", dr.TILES_URL, "/404.html", "/robots.txt"):
+    for want in ("/", dr.TILES_URL, "/404.html", "/robots.txt", "/static/app.css.gz"):
         assert want in paths
     assert any(p.startswith("/tiles/nope-") for p in paths)
     assert any(p.startswith("/nope-") for p in paths)
