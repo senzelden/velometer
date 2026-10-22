@@ -1,4 +1,7 @@
 data/
+# named on their own as well (M16): visitor reports and the tile extract never enter git
+data/stats/
+data/tiles/
 velometer.sqlite
 .venv/
 __pycache__/

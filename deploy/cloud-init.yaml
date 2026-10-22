@@ -1,0 +1,175 @@
+#cloud-config
+# The server as it comes up (M16 spec §4.2, §4.4, §4.6), for Debian 13 at Hetzner Cloud.
+#
+# `tools/server.py create` sends this file as the user data, with one change: it adds the chosen
+# SSH public key (read from the Hetzner API, never stored here) to the `deploy` user. It holds no
+# secret. The server comes up locked (/etc/caddy/lock.caddy answers 401, ruling P4) and Caddy does
+# not start until `tools/server.py setup` has written /etc/caddy/Caddyfile.
+#
+# tests/test_m16_server.py holds the rules; validate with
+#   docker run --rm -v $PWD/deploy:/d debian:13 sh -c "apt-get update -qq && \
+#     apt-get install -y -qq cloud-init >/dev/null && cloud-init schema --config-file /d/cloud-init.yaml"
+
+# Logs roll at 00:00 server time; the server runs on UTC (ruling R30).
+timezone: Etc/UTC
+
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - goaccess
+  - rsync
+  - unattended-upgrades
+
+# SSH by key only; root does not log in (the deploy user has sudo).
+ssh_pwauth: false
+disable_root: true
+users:
+  - name: deploy
+    gecos: velometer deploy
+    shell: /bin/bash
+    lock_passwd: true
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+
+write_files:
+  # Sorted before 50-cloud-init.conf: sshd keeps the first value it reads.
+  - path: /etc/ssh/sshd_config.d/10-velometer.conf
+    permissions: "0644"
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+
+  # Security updates from Debian, unattended.
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+  # The lock as the server comes up (ruling P4): every request answers 401, nothing is cached
+  # (ruling R26). `setup` replaces it with the basic_auth block, `unlock` empties it. Exactly
+  # tools/deploy_dryrun.py's LOCK_DEFAULT.
+  - path: /etc/caddy/lock.caddy
+    permissions: "0640"
+    content: |
+      header Cache-Control "no-store"
+      respond "locked" 401
+
+  # Caddy 2.11.4, the release binary (installed by runcmd below), as the `caddy` user. It does
+  # not start before `setup` writes the Caddyfile. EnvironmentFile carries DOMAIN and SITE_ROOT
+  # (deploy/caddy.env.example).
+  - path: /etc/systemd/system/caddy.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Caddy
+      Documentation=https://caddyserver.com/docs/
+      After=network.target network-online.target
+      Requires=network-online.target
+      ConditionPathExists=/etc/caddy/Caddyfile
+
+      [Service]
+      Type=notify
+      User=caddy
+      Group=caddy
+      EnvironmentFile=/etc/caddy/caddy.env
+      ExecStart=/usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+      ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile --force
+      TimeoutStopSec=5s
+      LimitNOFILE=1048576
+      PrivateTmp=true
+      ProtectSystem=full
+      AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # DB-IP Lite Country for GoAccess's country panel (legal review 1.10, CC BY 4.0): this month's
+  # file, or last month's while this month's is not out yet; replaced atomically.
+  - path: /usr/local/sbin/velometer-dbip
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      dir=/var/lib/goaccess
+      mkdir -p "$dir"
+      this=$(date -u +%Y-%m)
+      last=$(date -u -d "$(date -u +%Y-%m-01) -1 month" +%Y-%m)
+      for month in "$this" "$last"; do
+        tmp=$(mktemp "$dir/.dbip.XXXXXX")
+        if curl -fsSL --proto '=https' \
+            "https://download.db-ip.com/free/dbip-country-lite-$month.mmdb.gz" \
+            | gunzip >"$tmp" && [ -s "$tmp" ]; then
+          chmod 0644 "$tmp"
+          mv -f "$tmp" "$dir/dbip-country-lite.mmdb"
+          exit 0
+        fi
+        rm -f "$tmp"
+      done
+      echo "velometer-dbip: no DB-IP Lite Country file for $this or $last" >&2
+      exit 1
+
+  - path: /etc/systemd/system/velometer-dbip.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Download DB-IP Lite Country for GoAccess
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/velometer-dbip
+
+  - path: /etc/systemd/system/velometer-dbip.timer
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Monthly DB-IP Lite Country download
+
+      [Timer]
+      OnCalendar=*-*-03 04:00:00
+      RandomizedDelaySec=1h
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+runcmd:
+  # Caddy 2.11.4 (released 2026-06-03): the official release binary, checked against the SHA-512
+  # in caddy_2.11.4_checksums.txt of the GitHub release (its SHA-256, as the release API reports
+  # it, is 527fbf917c39189a1e3b31d34fa955601680b2d5c8055d2a87b8b9588dec7bb9). Caddy 2.10.2 answers
+  # a .gz sibling with 206 and must not be used.
+  - - bash
+    - -euo
+    - pipefail
+    - -c
+    - |
+      v=2.11.4
+      sha512=8220d1f013b6f27510247b2360c9e0ca9f018feebd82515f07635318b34ff9777ccc8fd0b6e6f2486ce3a33fe389fbb7db12d05baa474f4587509fb4f5ebf1c9
+      tgz=/root/caddy_${v}_linux_amd64.tar.gz
+      curl -fsSL --proto '=https' -o "$tgz" \
+        "https://github.com/caddyserver/caddy/releases/download/v${v}/caddy_${v}_linux_amd64.tar.gz"
+      echo "$sha512  $tgz" | sha512sum -c -
+      tar -xzf "$tgz" -C /usr/local/src caddy
+      install -m 0755 /usr/local/src/caddy /usr/bin/caddy
+      rm -f "$tgz" /usr/local/src/caddy
+      /usr/bin/caddy version | grep -q "^v${v} "
+  - getent group caddy >/dev/null || groupadd --system caddy
+  - >-
+    getent passwd caddy >/dev/null || useradd --system --gid caddy --create-home
+    --home-dir /var/lib/caddy --shell /usr/sbin/nologin caddy
+  - chown root:caddy /etc/caddy/lock.caddy
+  - install -d -m 0750 -o caddy -g caddy /var/log/caddy
+  - install -d -m 0755 -o deploy -g deploy /srv/velometer /srv/velometer/releases
+  - install -d -m 0755 -o deploy -g deploy /srv/datalab /srv/datalab/releases
+  - install -d -m 0755 -o deploy -g deploy /srv/tiles
+  - install -d -m 0755 /etc/goaccess /var/lib/goaccess
+  - systemctl daemon-reload
+  - systemctl enable caddy.service
+  - systemctl enable --now unattended-upgrades.service
+  - systemctl enable --now velometer-dbip.timer
+  - systemctl start velometer-dbip.service || true
+  - systemctl restart ssh

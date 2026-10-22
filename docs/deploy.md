@@ -165,17 +165,44 @@ TLS.
    so journald) masks the same fields, writes no access lines, and drops the `http.stdlib`
    logger, whose messages name the client in their text (`TLS handshake error from
    <ip>:<port>`, at DEBUG) where no field filter reaches.
-4. Upload. *Superseded in M16:* the deploy tool (Task 8) uploads each build to
-   `releases/<build>/` and switches the `current` symlink once the upload is complete, so a
-   reader never sees half a site; use it instead of the hand copy below, which writes into the
-   live directory. The hand copy, dry run first, then without `--dry-run`:
+4. Upload, with `tools/server.py` (M16; it reads `HCLOUD_TOKEN` and `VELOMETER_PREVIEW_PASSWORD`
+   from the environment, wired by direnv + pass as in `.envrc.example`; `preflight` names the
+   `pass insert` command for a missing one). Every step that changes the server prints its plan
+   and goes ahead only after you type `yes`.
 
    ```
-   rsync -a --delete --dry-run <dir>/ <host>:/srv/velometer/current/
-   rsync -a --delete <dir>/ <host>:/srv/velometer/current/
+   uv run python tools/server.py setup --host <host> --domain <domain>
+   uv run python tools/server.py deploy velometer <dir> --host <host>
+   uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
+   uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host <host>
+   uv run python tools/server.py verify --domain <domain> --locked
    ```
 
-   The Datalab build goes to `/srv/datalab/current/` the same way.
+   `setup` writes `/etc/caddy/Caddyfile` (this file, checked by `caddy validate` as the `caddy`
+   user before it replaces the live one), `/etc/caddy/caddy.env` and the GoAccess configuration,
+   and turns the lock the server came up with into the password lock: the password goes on stdin
+   to `caddy hash-password` on the server, never on a command line. Run again, it changes
+   nothing, and it leaves an unlocked server unlocked.
+
+   `deploy velometer|datalab` runs `deploy-check --public` on a velometer export first, then
+   uploads the build with rsync into a new directory `/srv/<site>/releases/<build>/` (`<build>`
+   is the export's commit and the UTC upload time, e.g. `1234abc-20261022T093005`), with
+   `--link-dest` to the live release so that only changed files travel. Only after rsync exits 0
+   does it write the marker `.complete` into the release, and only with the marker present does it
+   switch the site: `ln -sfn releases/<build> current.new` and `mv -T current.new current`, an
+   atomic rename. An upload that fails or is cut off leaves `current` on the previous complete
+   release, so a reader never sees half a site. The three newest complete releases are kept;
+   older ones are removed one at a time, each path first checked to be a release directory under
+   `/srv/<site>/releases/`. `deploy tiles` is no release: it uploads the file to
+   `/srv/tiles/velometer.pmtiles.new` and renames it into place, as above.
+
+   `verify` probes the live server: port 80 answers every host with a 308 to `https://`, and
+   with `--locked` both sites answer 401 with `Cache-Control: no-store`; without it they answer
+   200, `www` 308 to the apex and the tile file 206 to a byte range.
+
+   Statistics (`stats --host <host>`) and the go-live (`golive-check --datalab <datalab-dir>`,
+   then `unlock`) are in the tool's help. `unlock` runs the go-live check first, empties the lock
+   file and runs `verify`.
 
 ## 3. Datenschutz and Impressum
 
