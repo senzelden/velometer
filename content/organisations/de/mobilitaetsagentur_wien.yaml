@@ -8,12 +8,12 @@ sections:
       Die Mobilitätsagentur Wien ist ein Unternehmen der Stadt Wien, das sich für
       bessere Bedingungen für den Rad- und Fußverkehr einsetzt und nach eigener Aussage
       an die Ziele der Stadt gebunden ist [@mobilitaetsagentur-ueber-uns]. Die rot-grüne
-      Stadtregierung gründete sie bald nach ihrem Amtsantritt, und der seit Herbst
-      2011 amtierende Radverkehrsbeauftragte der Stadt leitete sie [@drahtesel-mobilitaetsagentur-2016].
+      Stadtregierung gründete sie bald nach ihrem Amtsantritt, und der Radverkehrsbeauftragte
+      der Stadt, der das Amt im Herbst 2011 antrat, leitete sie [@drahtesel-mobilitaetsagentur-2016].
       Ein Porträt von 2016 in der Radzeitschrift Drahtesel bezifferte ihr jährliches
       Budget auf rund zwei Millionen und nannte sie eine Art Kommunikationsabteilung
       der Stadt, die selbst keine Infrastruktur durchsetzen könne [@drahtesel-mobilitaetsagentur-2016].
-    src: 5ee700f8c64b
+    src: 6d16fa78ca98
 - heading:
     text: Wie sie messen
     src: 961f30415384

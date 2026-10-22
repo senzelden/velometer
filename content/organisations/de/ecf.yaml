@@ -5,12 +5,13 @@ sections:
     src: e74d1fb7aefb
   paragraphs:
   - text: >-
-      Die European Cyclists' Federation ist ein unabhängiger gemeinnütziger Verband
-      mit Sitz in Brüssel, gegründet 1983 [@ecf-about]. Sie bezeichnet sich als den
-      einzigen europäischen Dachverband für den Radverkehr, mit mehr als 70 Mitgliedsorganisationen
-      in über 40 Ländern [@ecf-about]. Die Website der ECF nennt finanzielle Unterstützung
-      durch das LIFE-Programm der EU und die europäische Fahrradindustrie [@ecf-about].
-    src: 5469e90782c7
+      Die European Cyclists' Federation ist ein gemeinnütziger Verband mit Sitz in
+      Brüssel, gegründet 1983 [@ecf-about], der sich als unabhängig bezeichnet. Sie
+      bezeichnet sich als den einzigen europäischen Dachverband für den Radverkehr,
+      mit mehr als 70 Mitgliedsorganisationen in über 40 Ländern [@ecf-about]. Die
+      Website der ECF nennt finanzielle Unterstützung durch das LIFE-Programm der
+      EU und die europäische Fahrradindustrie [@ecf-about].
+    src: 1bc1c019190f
 - heading:
     text: Wie sie messen
     src: 961f30415384

@@ -7,11 +7,11 @@ sections:
   - heading: Who they are
     paragraphs:
       - >-
-        The European Cyclists' Federation is a Brussels-based independent non-profit
-        association, founded in 1983 [@ecf-about]. It calls itself the single European umbrella
-        organisation for cycling, with more than 70 member organisations in over 40 countries
-        [@ecf-about]. Its website acknowledges financial support from the EU's LIFE Programme
-        and from the European cycling industries [@ecf-about].
+        The European Cyclists' Federation is a Brussels-based non-profit association, founded in
+        1983 [@ecf-about], that describes itself as independent. It calls itself the single European
+        umbrella organisation for cycling, with more than 70 member organisations in over 40
+        countries [@ecf-about]. Its website acknowledges financial support from the EU's LIFE
+        Programme and from the European cycling industries [@ecf-about].
   - heading: How they measure
     dimensions:
       scope: >-

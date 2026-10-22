@@ -48,14 +48,14 @@ sections:
       - >-
         The progress report goes to the Abgeordnetenhaus's main committee, the Hauptausschuss
         [@berlin-dpa-fortschrittsbericht-hauptausschuss]. For 2025, dpa read from it that just under
-        27 million euros went into cycling, of about 82.4 million available
+        27 million euros, federal funds included, went into cycling, of about 82.4 million available
         [@berlin-dpa-fortschrittsbericht-hauptausschuss].
       - >-
-        In our reading, the same department sets the pace and reports on it. In June 2023 it asked
-        the <i lang="de">Bezirke</i> (districts) to stop cycle path projects for the time being if
-        they would cost even one car parking space [@berlin-tagesspiegel-radwegestopp-2023]. In
-        December 2025 it gave 20.5 km for the year, below its own target
-        [@berlin-tagesspiegel-dpa-2025-12].
+        In our reading, the same department sets the pace and reports on it. In June 2023, the
+        Tagesspiegel reported, it asked the <i lang="de">Bezirke</i> (districts) to stop cycle path
+        projects for the time being if they would cost even one car parking space
+        [@berlin-tagesspiegel-radwegestopp-2023]. In December 2025 it gave dpa 20.5 km for the year,
+        a figure dpa reported as below the Senate's own target [@berlin-tagesspiegel-dpa-2025-12].
 quotes:
   - {excerpt: berlin-tagesspiegel-radwegestopp-2023/stop, after: 4}
 literals:
