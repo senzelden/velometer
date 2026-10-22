@@ -25,7 +25,7 @@
 				request>remote_ip ip_mask 24 48
 				request>client_ip ip_mask 24 48
 				request>remote_port delete
-				request>headers>X-Forwarded-For ip_mask 24 48
+				request>headers>X-Forwarded-For delete
 				request>headers>Forwarded delete
 				request>headers>X-Real-Ip delete
 				request>headers>Cookie delete
@@ -37,13 +37,17 @@
 }
 
 # A site's access log: JSON with the client address masked (IPv4 /24, IPv6 /48) before it reaches
-# the disk, Cookie and Authorization dropped (legal review 5.3); rolled at midnight, 14 files and
-# 14 days kept (5.4).
+# the disk (legal review 5.3). Headers a client writes as it likes and no proxy vouches for
+# (X-Forwarded-For, Forwarded, X-Real-Ip) are dropped, and so are Cookie and Authorization
+# (ruling R25). Retention is by time (5.4, ruling R27): rolled at midnight UTC, each rolled file
+# deleted once 14 days old. roll_size and roll_keep are set so high that neither prunes first
+# (Caddy has no "unlimited": roll_keep 0 or none means 10 files).
 (access_log) {
 	log {
 		output file /var/log/caddy/{args[0]}.log {
 			roll_at 00:00
-			roll_keep 14
+			roll_size 1GiB
+			roll_keep 1000
 			roll_keep_for 336h
 		}
 		format filter {
@@ -54,7 +58,7 @@
 				request>remote_ip ip_mask 24 48
 				request>client_ip ip_mask 24 48
 				request>remote_port delete
-				request>headers>X-Forwarded-For ip_mask 24 48
+				request>headers>X-Forwarded-For delete
 				request>headers>Forwarded delete
 				request>headers>X-Real-Ip delete
 				request>headers>Cookie delete
@@ -64,13 +68,15 @@
 	}
 }
 
-# Each site's headers equal its export's `_headers` file, plus HSTS for one year.
+# Each site's headers equal its export's `_headers` file, plus HSTS for one year. Cache-Control
+# is set only where the lock file has not set it (`?`): while locked, its `no-store` holds on
+# every response, the 401 and the 404 page included (ruling R26).
 (velometer_headers) {
 	header {
 		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		Cache-Control "public, max-age=3600"
+		?Cache-Control "public, max-age=3600"
 		Strict-Transport-Security "max-age=31536000"
 	}
 }
@@ -80,7 +86,7 @@
 		Content-Security-Policy "default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
-		Cache-Control "public, max-age=3600"
+		?Cache-Control "public, max-age=3600"
 		Strict-Transport-Security "max-age=31536000"
 	}
 }

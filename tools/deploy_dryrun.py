@@ -12,14 +12,16 @@ M16 spec §4.2, §4.4, §4.6).
   extract where the server keeps it (`TILES_MOUNT`); probes ask it for a byte range and for a
   malformed one. `--lock PASSWORD` locks both sites the way the server is locked until go-live
   (a `basic_auth` block in /etc/caddy/lock.caddy, its bcrypt hash made by `caddy hash-password`
-  in the container at run time, never stored): every path of every host must answer 401 without
-  the password, and the content probes send it. `--lock-default` serves the lock the server comes
-  up with (`respond "locked" 401`, ruling P4), which no password opens. Without either, the lock
-  file is empty, as after go-live. The probes connect from `CLIENT_ADDR` with a forged
-  X-Forwarded-For and a cookie; afterwards the access logs and Caddy's own output must hold
-  neither address unmasked, nor the cookie, the password or its Authorization value (legal review
-  5.3). `--debug-log` raises Caddy's own log to DEBUG, so that the 404 and 401 error entries are
-  written there too and checked.
+  in the container at run time, never stored; `--lock` alone reads the password from
+  $VELOMETER_PREVIEW_PASSWORD, ruling R28): every path of every host must answer 401 without
+  the password, and the content probes send it. `--lock-default` serves the lock the server
+  comes up with (`respond "locked" 401`, ruling P4), which no password opens. Either lock also
+  sets `Cache-Control: no-store`, which every locked response must carry (ruling R26). Without
+  either, the lock file is empty, as after go-live. The probes connect from `CLIENT_ADDR` with a
+  forged X-Forwarded-For and a cookie; afterwards the access logs and Caddy's own output must
+  hold neither address unmasked, nor the cookie, the password or its Authorization value, nor
+  keep any of those headers (legal review 5.3, ruling R25). `--debug-log` raises Caddy's own
+  log to DEBUG, so that the 404 and 401 error entries are written there too and checked.
 - `wrangler`: `wrangler pages dev` (`WRANGLER`, fetched by npx at run time), Cloudflare Pages'
   local emulation, for `--site` only.
 
@@ -27,7 +29,7 @@ Nothing is uploaded. The probes are pure functions of a response; `run_probes` a
 fetch the paths they need and collect their problems. The exit status is 1 when any probe fails.
 
     uv run python tools/deploy_dryrun.py --site DIR --server caddy --datalab DIR [--tiles FILE]
-        [--lock PASSWORD | --lock-default] [--debug-log] [--keep-running]
+        [--lock [PASSWORD] | --lock-default] [--debug-log] [--keep-running]
     uv run python tools/deploy_dryrun.py --site DIR --server wrangler [--keep-running]
 """
 
@@ -74,18 +76,23 @@ PMTILES_MAGIC = b"PMTiles"
 DOMAIN = "localhost"
 HSTS = "max-age=31536000"
 # the lock (spec §4.6): the user of the basic_auth block, and the file's form until setup writes
-# that block (ruling P4)
+# that block (ruling P4). Both forms forbid caching (ruling R26): the header runs before the
+# site's own headers, which set Cache-Control only where it is not set yet. docs/deploy.md
+# records both texts for the server setup.
 LOCK_USER = "preview"
-LOCK_DEFAULT = 'respond "locked" 401\n'
+NO_STORE = 'header Cache-Control "no-store"\n'
+LOCK_DEFAULT = NO_STORE + 'respond "locked" 401\n'
+PASSWORD_ENV = "VELOMETER_PREVIEW_PASSWORD"  # `--lock` with no value reads it (ruling R28)
 BCRYPT = re.compile(r"\$2[aby]?\$\d\d\$[./A-Za-z0-9]{53}")
 # The probes connect from this loopback address (not 127.0.0.1, which Caddy's own start-up lines
 # name as an admin origin), with a forged X-Forwarded-For and a cookie: none may reach a log.
 CLIENT_ADDR = "127.0.0.77"
 FORGED_XFF = "203.0.113.7"
-MASKED = ("127.0.0.0", "203.0.113.0")  # the same two at /24
+MASKED = ("127.0.0.0",)  # CLIENT_ADDR at /24
 COOKIE = "velometer-dryrun=c00kie-marker-5e1f"
 PROBE_HEADERS = {"X-Forwarded-For": FORGED_XFF, "Cookie": COOKIE}
-DROPPED = frozenset({"Cookie", "Authorization"})  # request headers no log entry may keep
+# request headers no log entry may keep (credentials; what the client writes as it likes, R25)
+DROPPED = frozenset({"Cookie", "Authorization", "X-Forwarded-For", "Forwarded", "X-Real-Ip"})
 # a site address line of deploy/Caddyfile: the apex, velometer and www, all from {$DOMAIN}
 SITE_LINE = re.compile(r"^((?:[a-z]+\.)?\{\$DOMAIN\}) \{$", re.M)
 SITE_COUNT = 3
@@ -153,10 +160,10 @@ def dryrun_caddyfile(text: str, port: int, debug: bool = False) -> str:
 
 
 def lock_text(bcrypt_hash: str) -> str:
-    """/etc/caddy/lock.caddy while the sites are locked: one user, `LOCK_USER`."""
+    """/etc/caddy/lock.caddy while the sites are locked: one user, `LOCK_USER`; nothing cached."""
     if not BCRYPT.fullmatch(bcrypt_hash):
         raise DryRunError("caddy hash-password gave no bcrypt hash")
-    return f"basic_auth {{\n\t{LOCK_USER} {bcrypt_hash}\n}}\n"
+    return NO_STORE + f"basic_auth {{\n\t{LOCK_USER} {bcrypt_hash}\n}}\n"
 
 
 def hash_password(password: str, image: str = CADDY_IMAGE) -> str:
@@ -280,9 +287,16 @@ def check_bad_range(path: str, r: Resp) -> list[str]:
     return problems
 
 
+def check_no_store(label: str, r: Resp) -> list[str]:
+    """While locked, no response may be stored by any cache (ruling R26)."""
+    got = r.header("cache-control")
+    return [] if got == "no-store" else [f"{label}: Cache-Control {got!r} while locked"]
+
+
 def check_locked(label: str, r: Resp) -> list[str]:
-    """A request without the password: 401 and nothing of the site (no page, no file)."""
-    problems = check_status(label, r, 401)
+    """A request without the password: 401, nothing of the site (no page, no file), and
+    nothing a cache may keep."""
+    problems = check_status(label, r, 401) + check_no_store(label, r)
     if b"<" in r.body or PMTILES_MAGIC in r.body or len(r.body) > 64:
         problems.append(f"{label}: the 401 carries a body of {len(r.body)} bytes ({r.body[:40]!r})")
     return problems
@@ -299,8 +313,8 @@ def check_redirect(label: str, r: Resp, location: str) -> list[str]:
 def check_logs(logs: dict[str, str], secrets: dict[str, str], masked_in: list[str]) -> list[str]:
     """No log (`name: text`) holds the probes' address, the forged X-Forwarded-For or a secret
     (`what: value`), and no JSON entry keeps a `DROPPED` request header (Caddy itself only
-    redacts their values); each log in `masked_in` shows both addresses masked to /24, so it did
-    log the probes."""
+    redacts the credentials' values); each log in `masked_in` shows the probes' address masked
+    to /24, so it did log the probes."""
     problems = []
     forbidden = {"the client address": CLIENT_ADDR, "the forged X-Forwarded-For": FORGED_XFF}
     for name, text in logs.items():
@@ -623,6 +637,8 @@ def run_caddy_probes(
         return run_lock_probes(origin, base, auth=(LOCK_USER, "a-guess"))
     auth = (LOCK_USER, password) if password else None
     hsts = {"strict-transport-security": HSTS}
+    if password:  # the password opens the sites, not the caches (ruling R26)
+        hsts["cache-control"] = "no-store"
     n, problems = run_probes(
         origin, site, "/", True, functools.partial(base, host=host["velometer"], auth=auth),
         tiles=tiles, extra=hsts,
@@ -631,10 +647,18 @@ def run_caddy_probes(
         origin, datalab, True, functools.partial(base, host=host["datalab"], auth=auth), hsts
     )
     n, problems = n + k, problems + found
+    if password:  # check_404 leaves Cache-Control out (rulings-m15); the lock does not
+        for name in ("velometer", "datalab"):
+            n += 1
+            nope = f"/nope-{secrets.token_hex(4)}"
+            r = base(origin + nope, host=host[name], auth=auth)
+            problems += check_status(f"{name} {nope}", r, 404) + check_no_store(f"{name} {nope}", r)
     for path in ("/", "/impressum/", "/city/berlin?x=1"):
         n += 1
         r = base(origin + path, host=host["www"], auth=auth, follow=False)
         problems += check_redirect(f"www {path}", r, f"https://{DOMAIN}{path}")
+        if password:
+            problems += check_no_store(f"www {path}", r)
     if password:
         k, found = run_lock_probes(origin, base)
         n, problems = n + k, problems + found
@@ -841,7 +865,10 @@ def main(argv: list[str] | None = None) -> int:
     lock.add_argument(
         "--lock",
         metavar="PASSWORD",
-        help=f"lock both sites with basic auth, user {LOCK_USER} (caddy only)",
+        nargs="?",
+        const="",
+        help=f"lock both sites with basic auth, user {LOCK_USER} (caddy only); with no value, "
+        f"the password is read from ${PASSWORD_ENV} and stays off the command line",
     )
     lock.add_argument(
         "--lock-default",
@@ -875,7 +902,9 @@ def main(argv: list[str] | None = None) -> int:
         if not (datalab / "_headers").is_file() or not (datalab / "404.html").is_file():
             ap.error(f"{datalab} is no Datalab build (no _headers or 404.html)")
     if a.lock == "":
-        ap.error("--lock needs a password")
+        a.lock = os.environ.get(PASSWORD_ENV, "")
+        if not a.lock:
+            ap.error(f"--lock with no value reads ${PASSWORD_ENV}, which is not set")
     try:
         if caddy:
             lock = LOCK_DEFAULT if a.lock_default else ""

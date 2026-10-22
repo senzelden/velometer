@@ -84,9 +84,10 @@ def test_caddy_serves_both_sites_unlocked_as_after_go_live(caddy_args, capsys):
 
 
 def test_caddy_locked_with_a_password_answers_401_everywhere_without_it(caddy_args, capsys):
-    """Every path of both sites and www: 401 without the password, the content with it; a byte
-    range 206, a malformed one 416; Caddy's error entries (DEBUG) and the access logs mask the
-    client and the forged X-Forwarded-For, and hold neither cookie, password nor its header."""
+    """Every path of both sites and www: 401 without the password, the content with it, each
+    with Cache-Control: no-store (R26); a byte range 206, a malformed one 416; Caddy's error
+    entries (DEBUG) and the access logs mask the client, keep no X-Forwarded-For (R25), and hold
+    neither cookie, password nor its header."""
     password = secrets.token_urlsafe(16)  # made here, never stored
     assert dr.main([*caddy_args, "--lock", password, "--debug-log"]) == 0
     out = capsys.readouterr().out
@@ -125,15 +126,33 @@ def test_the_log_check_sees_an_unmasked_access_log(caddy_args, tmp_path, monkeyp
         monkeypatch,
         snippet,
         snippet.replace("\t\t\t\trequest>remote_ip ip_mask 24 48\n", "", 1)
-        .replace("\t\t\t\trequest>headers>X-Forwarded-For ip_mask 24 48\n", "", 1)
+        .replace("\t\t\t\trequest>headers>X-Forwarded-For delete\n", "", 1)
         .replace("\t\t\t\trequest>headers>Cookie delete\n", "", 1),
     )
     assert dr.main(caddy_args) == 1
     out = capsys.readouterr().out
     for what in ("the client address", "the forged X-Forwarded-For"):
         assert f"problem: log velometer.log: holds {what} unmasked" in out
-    # Caddy redacts the cookie's value itself; the rule is that the header is gone
+    # Caddy redacts the cookie's value itself; the rule is that the header is gone (and R25:
+    # X-Forwarded-For too)
     assert "problem: log velometer.log: keeps the Cookie header" in out
+    assert "problem: log velometer.log: keeps the X-Forwarded-For header" in out
+
+
+def test_the_probes_see_a_locked_response_a_cache_may_keep(
+    caddy_args, tmp_path, monkeypatch, capsys
+):
+    """Ruling R26: with the site's Cache-Control set unconditionally, it overrides the lock's
+    no-store on the 401 and on the pages behind the password."""
+    text = dr.CADDYFILE.read_text(encoding="utf-8")
+    assert text.count('\t\t?Cache-Control "public, max-age=3600"\n') == 2
+    copy = tmp_path / "Caddyfile"
+    copy.write_text(text.replace("\t\t?Cache-Control", "\t\tCache-Control"), encoding="utf-8")
+    monkeypatch.setattr(dr, "CADDYFILE", copy)
+    assert dr.main([*caddy_args, "--lock", secrets.token_urlsafe(16)]) == 1
+    out = capsys.readouterr().out
+    assert "problem: velometer /: Cache-Control 'public, max-age=3600' while locked" in out
+    assert "problem: /: header cache-control is 'public, max-age=3600', expected 'no-store'" in out
 
 
 def test_wrangler_pages_dev_serves_the_export(public_site):

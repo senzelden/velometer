@@ -41,11 +41,13 @@ resolves `*.localhost` to loopback). It also asks the tile file for a byte range
 malformed one (416), checks HSTS and the `www` redirect, and afterwards reads the access logs and
 Caddy's own output: neither may hold the probes' address (`127.0.0.77`), a forged
 `X-Forwarded-For` (`203.0.113.7`), a cookie, the password or its Authorization header, and each
-access log must show both addresses masked to /24. `--lock <password>` locks both sites as the
-server is locked until go-live (the bcrypt hash is made by `caddy hash-password` in the container
-at run time and kept in a temporary file); every path of every host must then answer 401 without
-the password. `--lock-default` serves the lock the server comes up with (`respond "locked" 401`),
-which no password opens. `--debug-log` raises Caddy's own log to DEBUG so that its error entries
+access log must show the probes' address masked to /24 and keep none of those headers.
+`--lock <password>` (or `--lock` alone, reading `$VELOMETER_PREVIEW_PASSWORD`) locks both sites
+as the server is locked until go-live (the bcrypt hash is made by `caddy hash-password` in the
+container at run time and kept in a temporary file); every path of every host must then answer
+401 without the password, and every locked response must carry `Cache-Control: no-store`.
+`--lock-default` serves the lock the server comes up with (`respond "locked" 401`), which no
+password opens. `--debug-log` raises Caddy's own log to DEBUG so that its error entries
 (404, 401) are written and checked too.
 
 `--server caddy` uses Docker host networking and so runs on Linux only. With `--network host`, the
@@ -122,20 +124,42 @@ TLS.
    ssh server mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
    ```
 
-   **Lock.** Every site block imports `/etc/caddy/lock.caddy` first. Until go-live it holds either
-   `respond "locked" 401` (as the server comes up) or a `basic_auth` block with the preview
-   password's bcrypt hash; after go-live it is empty. The hash is made on the server with
-   `caddy hash-password` and never enters the repository. The Caddyfile's global `order` lines run
-   the lock before `redir` and the tiles route, which by Caddy's default order would come first and
-   answer without the password; the dry run checks both forms on every host.
+   **Lock.** Every site block imports `/etc/caddy/lock.caddy` first. Until go-live it holds one
+   of two texts, exactly as below; after go-live it is empty. As the server comes up (ruling P4):
+
+   ```
+   header Cache-Control "no-store"
+   respond "locked" 401
+   ```
+
+   Once setup has the preview password (`<bcrypt hash>` from `caddy hash-password` on the
+   server; it never enters the repository):
+
+   ```
+   header Cache-Control "no-store"
+   basic_auth {
+   	preview <bcrypt hash>
+   }
+   ```
+
+   The Caddyfile's global `order` lines run the lock before `redir` and the tiles route, which by
+   Caddy's default order would come first and answer without the password. The `header` line
+   keeps every locked response out of caches, the 401, the pages behind the password and the 404
+   page alike (ruling R26): it runs before the site's own headers, which set Cache-Control only
+   where it is not set yet (`?Cache-Control`). A plain `header` in the lock file loses to the
+   site's later one, and a deferred one misses the 401 and the 404 page (both seen with Caddy
+   2.11.4). The dry run checks both texts on every host.
 
    **Logs.** Each site writes a JSON access log, `/var/log/caddy/datalab.log` and
    `velometer.log`, with the client address masked to IPv4 /24 and IPv6 /48 before it reaches the
-   disk (`remote_ip`, `client_ip`, `X-Forwarded-For`), the client port, `Cookie`,
-   `Authorization`, `Forwarded` and `X-Real-Ip` dropped. The logs roll at 00:00 UTC, and 14
-   rolled files, at most 14 days old, are kept (`roll_at 00:00`, `roll_keep 14`,
-   `roll_keep_for 336h`); a rolled file is gzipped, named like
-   `velometer-2026-10-21T00-00-00.000-time.log.gz` (seen with Caddy 2.11.4). Caddy's own log (stderr, so journald) masks the same fields, writes no
+   disk (`remote_ip`, `client_ip`). The client port, `Cookie` and `Authorization` are dropped, and
+   so are `X-Forwarded-For`, `Forwarded` and `X-Real-Ip`: no proxy stands in front of Caddy, so
+   they carry only what a client chose to write (ruling R25). Retention is by time (ruling R27):
+   the logs roll at 00:00 UTC (`roll_at 00:00`) and each rolled file is deleted once 14 days old
+   (`roll_keep_for 336h`). Size and count must not prune first, and Caddy has no unlimited
+   setting (`roll_keep 0`, or none, keeps 10 files; seen with Caddy 2.11.4), so `roll_size 1GiB`
+   and `roll_keep 1000` sit far above a day's log. A rolled file is gzipped, named like
+   `velometer-2026-10-21T00-00-00.000-time.log.gz`. Caddy's own log (stderr, so journald) masks the same fields, writes no
    access lines, and drops the `http.stdlib` logger, whose messages name the client in their text
    (`TLS handshake error from <ip>:<port>`, at DEBUG) where no field filter reaches.
 4. Upload. Dry run first, then without `--dry-run`:

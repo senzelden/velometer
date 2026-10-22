@@ -24,9 +24,15 @@ DOC = ROOT / "docs" / "deploy.md"
 HSTS = "max-age=31536000"
 LOCK = "import /etc/caddy/lock.caddy"
 APEX, VELOMETER, WWW = "{$DOMAIN}", "velometer.{$DOMAIN}", "www.{$DOMAIN}"
-# every field of a log entry that can carry a client address, and the headers it must not keep
-MASKED = ("request>remote_ip", "request>client_ip", "request>headers>X-Forwarded-For")
-DELETED = ("request>headers>Cookie", "request>headers>Authorization")
+# every field of a log entry that carries the client's address, and the headers it must not keep:
+# credentials, and what a client writes as it likes with no proxy to vouch for it (ruling R25)
+MASKED = ("request>remote_ip", "request>client_ip")
+DELETED = (
+    "request>headers>Cookie", "request>headers>Authorization", "request>headers>X-Forwarded-For",
+    "request>headers>Forwarded", "request>headers>X-Real-Ip",
+)  # fmt: skip
+# set by the site only where the lock file has not set it (ruling R26)
+CONDITIONAL = "Cache-Control"
 
 
 def _text() -> str:
@@ -90,12 +96,22 @@ def _top_level(body: str) -> list[str]:
 
 
 def _header_lines(snippet: str) -> dict[str, str]:
+    """The snippet's headers by name; a `?Name` line (set only if not set yet) counts as `Name`."""
     (inner,) = _inner(snippet, "header")
     out = {}
     for line in inner.splitlines():
         name, value = line.split(" ", 1)
-        out[name] = value.strip().removeprefix('"').removesuffix('"')
+        out[name.removeprefix("?")] = value.strip().removeprefix('"').removesuffix('"')
     return out
+
+
+@pytest.mark.parametrize("snippet", ["(velometer_headers)", "(datalab_headers)"])
+def test_only_cache_control_yields_to_the_lock(blocks, snippet):
+    """While locked, the lock file's `no-store` (its header runs first) must survive the site's
+    headers on every response, the 401 and the 404 page included (ruling R26)."""
+    (inner,) = _inner(blocks[snippet], "header")
+    conditional = [line.split()[0] for line in inner.splitlines() if line.startswith("?")]
+    assert conditional == [f"?{CONDITIONAL}"]
 
 
 def _headers_file(text: str) -> dict[str, str]:
@@ -274,10 +290,22 @@ def test_each_file_serving_site_writes_its_own_access_log(blocks):
     assert "output file /var/log/caddy/{args[0]}.log {" in log.splitlines()
 
 
-def test_access_logs_roll_at_midnight_and_keep_14_days(blocks):
+def test_access_logs_roll_at_midnight_and_keep_14_days_by_time(blocks):
+    """Retention is time-based (ruling R27): rolled files go once 14 days old. Size and count
+    must not prune first: Caddy 2.11.4 rolls at 100 MiB by default and keeps 10 files by default,
+    also for `roll_keep 0` (seen live), so both are set far above a day's log."""
     (log,) = _inner(blocks["(access_log)"], "log")
     (out,) = _inner(log, "output file /var/log/caddy/{args[0]}.log")
-    assert sorted(out.splitlines()) == ["roll_at 00:00", "roll_keep 14", "roll_keep_for 336h"]
+    opts = dict(line.split(" ", 1) for line in out.splitlines())
+    assert opts == {
+        "roll_at": "00:00", "roll_size": "1GiB", "roll_keep": "1000", "roll_keep_for": "336h",
+    }  # fmt: skip
+    # 14 daily rolls plus a size roll for every GiB: 1000 files outlast 14 days of any day here
+    assert int(opts["roll_keep"]) >= 14 * 2
+
+
+def test_no_log_masks_x_forwarded_for_instead_of_dropping_it():
+    assert "X-Forwarded-For ip_mask" not in _text()
 
 
 # --- the env example and the guide -------------------------------------------------------------

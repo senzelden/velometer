@@ -189,10 +189,26 @@ def test_the_debug_variant_needs_the_default_logger():
 # --- the lock file --------------------------------------------------------------------------
 
 
-def test_the_lock_file_text_is_a_basic_auth_block_for_the_preview_user():
+def test_the_lock_file_text_is_a_basic_auth_block_for_the_preview_user_with_no_store():
     h = "$2a$14$" + "x" * 53
-    assert dr.lock_text(h) == f"basic_auth {{\n\tpreview {h}\n}}\n"
-    assert dr.LOCK_DEFAULT == 'respond "locked" 401\n'
+    assert dr.lock_text(h) == f'header Cache-Control "no-store"\nbasic_auth {{\n\tpreview {h}\n}}\n'
+    assert dr.LOCK_DEFAULT == 'header Cache-Control "no-store"\nrespond "locked" 401\n'
+
+
+def test_the_guide_records_both_lock_file_texts_for_the_server_setup():
+    doc = dr.DOC.read_text(encoding="utf-8")
+    assert dr.LOCK_DEFAULT in _dedented_blocks(doc)
+    assert dr.lock_text("$2a$14$" + "x" * 53).replace("$2a$14$" + "x" * 53, "<bcrypt hash>") in (
+        _dedented_blocks(doc)
+    )
+
+
+def _dedented_blocks(doc):
+    import re
+    import textwrap
+
+    fence = r"^[ \t]*```[a-z]*\n(.*?)^[ \t]*```[ \t]*$"
+    return [textwrap.dedent(b) for b in re.findall(fence, doc, re.S | re.M)]
 
 
 def test_a_hash_that_is_not_bcrypt_is_refused():
@@ -506,9 +522,26 @@ def test_the_lock_options_reach_the_server_as_lock_file_text(tiny, tiny_datalab,
     assert dr.main(_caddy_args(tiny, tiny_datalab, "--lock", "pw")) == 0
     assert seen == [
         ("", False),
-        ('respond "locked" 401\n', True),
-        ("basic_auth {\n\tpreview $2a$14$" + "z" * 53 + "\n}\n", False),
-    ]
+        ('header Cache-Control "no-store"\nrespond "locked" 401\n', True),
+        ('header Cache-Control "no-store"\nbasic_auth {\n\tpreview $2a$14$' + "z" * 53 + "\n}\n",
+         False),
+    ]  # fmt: skip
+
+
+def test_lock_without_a_value_reads_the_password_from_the_environment(
+    tiny, tiny_datalab, monkeypatch, capsys
+):
+    hashed = []
+    monkeypatch.setattr(dr, "caddy_server", _served_with_logs(CLEAN_LOGS))
+    monkeypatch.setattr(dr, "run_caddy_probes", lambda *a, **k: (1, []))
+    monkeypatch.setattr(dr, "hash_password", lambda pw: hashed.append(pw) or "$2a$14$" + "z" * 53)
+    monkeypatch.setenv("VELOMETER_PREVIEW_PASSWORD", "from-the-env")
+    assert dr.main(_caddy_args(tiny, tiny_datalab, "--lock")) == 0
+    assert hashed == ["from-the-env"]
+    monkeypatch.delenv("VELOMETER_PREVIEW_PASSWORD")
+    with pytest.raises(SystemExit) as e:
+        dr.main(_caddy_args(tiny, tiny_datalab, "--lock"))
+    assert e.value.code == 2 and "VELOMETER_PREVIEW_PASSWORD" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(
@@ -673,14 +706,21 @@ def test_a_404_without_csp_is_still_a_problem_when_its_cache_control_is_exempt()
 # --- M16: the lock, www, Range and the logs (deploy/Caddyfile; legal review 5.3) ----------------
 
 
-def test_a_locked_answer_is_401_with_nothing_of_the_site():
-    assert dr.check_locked("velometer /", resp(401, body=b"")) == []
-    assert dr.check_locked("velometer /", resp(401, body=b"locked")) == []
-    assert dr.check_locked("velometer /", resp(200, body=b"<!doctype html>"))
+NS = {"Cache-Control": "no-store"}
+
+
+def test_a_locked_answer_is_401_with_nothing_of_the_site_and_nothing_to_cache():
+    assert dr.check_locked("velometer /", resp(401, NS, b"")) == []
+    assert dr.check_locked("velometer /", resp(401, NS, b"locked")) == []
+    assert dr.check_locked("velometer /", resp(200, NS, b"<!doctype html>"))
     # a 401 that carries the 404 page (a bare handle_errors) or the tile file leaks
-    (p,) = dr.check_locked("velometer /x", resp(401, body=b"<p>404</p>"))
+    (p,) = dr.check_locked("velometer /x", resp(401, NS, b"<p>404</p>"))
     assert "body" in p
-    assert dr.check_locked("velometer /t", resp(401, body=b"PMTiles\x03"))
+    assert dr.check_locked("velometer /t", resp(401, NS, b"PMTiles\x03"))
+    # a 401 a shared cache may keep (ruling R26)
+    (p,) = dr.check_locked("datalab /", resp(401, {"Cache-Control": "public, max-age=3600"}, b""))
+    assert p == "datalab /: Cache-Control 'public, max-age=3600' while locked"
+    assert dr.check_locked("datalab /", resp(401, {}, b""))
 
 
 def test_www_must_redirect_permanently_to_the_apex():
@@ -702,7 +742,7 @@ def test_a_malformed_range_must_be_refused_without_the_file():
 
 
 def test_the_log_check_finds_each_unmasked_address_and_secret():
-    clean = "127.0.0.0 203.0.113.0"
+    clean = "127.0.0.0"
     assert dr.check_logs({"a.log": clean}, {"the cookie": "c00k"}, ["a.log"]) == []
     for leak, what in (
         ("127.0.0.77", "the client address"),
@@ -717,6 +757,9 @@ def test_the_log_check_finds_each_unmasked_address_and_secret():
     assert p == "log a.log: keeps the Cookie header"
     line = '{"request":{"headers":{"Authorization":["REDACTED"],"User-Agent":["x"]}}}'
     assert dr.check_logs({"b.log": line}, {}, []) == ["log b.log: keeps the Authorization header"]
+    # X-Forwarded-For is dropped, even masked (ruling R25)
+    line = '{"request":{"headers":{"X-Forwarded-For":["203.0.113.0"]}}}'
+    assert dr.check_logs({"c.log": line}, {}, []) == ["log c.log: keeps the X-Forwarded-For header"]
     # a log that should show the probes but holds no masked address logged nothing
     (p,) = dr.check_logs({"a.log": ""}, {}, ["a.log"])
     assert "nothing logged" in p
@@ -770,13 +813,14 @@ def _host_fetch(by_host):
         path = url.removeprefix(ORIGIN)
         calls.append((host, path, auth, kw))
         status, body = by_host[host.split(":")[0]](path, auth)
-        return dr.Resp(status, {}, body, url)
+        return dr.Resp(status, {"cache-control": "no-store"}, body, url)
 
     return fetch, calls
 
 
 def test_the_lock_probes_ask_every_host_for_every_path_and_report_a_leak():
     locked = lambda path, auth: (401, b"")  # noqa: E731
+    # (the fake sends Cache-Control: no-store on every answer)
     leaky = lambda path, auth: (200, b"PMTiles") if path.startswith("/tiles/") else (401, b"")  # noqa: E731
     fetch, calls = _host_fetch({"localhost": locked, "velometer.localhost": leaky,
                                 "www.localhost": locked})  # fmt: skip
