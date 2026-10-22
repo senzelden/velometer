@@ -1,12 +1,13 @@
 """The Zählwerk Berlin Datalab site: the apex page, Impressum and Datenschutz (M16 spec §4.5).
 
-`build` renders `sites/datalab/` into a small static site. The Berlin counter on the main page is
-read from a finished velometer export's `data/all.csv` (spec §4.9 item 7), so it cannot drift
-from velometer: Berlin's LAU tier A+B mapped km (`ab_km`) of each year snapshot, rounded to whole
-km. Impressum and Datenschutz hold one variant per operator form (legal review 4.1, 5.1); with
-`operator_form` null all three are rendered, each under its own heading, and every value not
-given is a visible `[[…]]` placeholder (`placeholders` lists those left; the go-live check
-refuses while there is one). Nothing is invented: a null stays a placeholder.
+`build` renders `sites/datalab/` into a small static site, with a 404 page for the server (ruling
+R21). The Berlin counter on the main page is read from a finished velometer export's
+`data/all.csv` (spec §4.9 item 7), so it cannot drift from velometer: Berlin's LAU tier A+B
+mapped km (`ab_km`) of each year snapshot, rounded to whole km. Impressum and Datenschutz hold
+one variant per operator form (legal review 4.1, 5.1); with `operator_form` null all three are
+rendered, each under its own heading, and every value not given is a visible `[[…]]`
+placeholder (`placeholders` lists those left; the go-live check refuses while there is one).
+Nothing is invented: a null stays a placeholder.
 
 The site loads nothing from another host (fonts self-hosted, legal review 5.9) and has no inline
 script or style; its own CSP says so. The output gets `.gz` siblings and a `_headers` file the
@@ -68,8 +69,9 @@ BLNBDI = (
 CSP = "default-src 'self'; base-uri 'none'; form-action 'none'"
 PLACEHOLDER = re.compile(r"\[\[[^\]\n]*\]\]")
 HOSTNAME = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
+# 404.html is the page the server sends for any address the site does not have (ruling R21)
 PAGES = {"index.html": "index.html", "impressum.html": "impressum/index.html",
-         "datenschutz.html": "datenschutz/index.html"}  # fmt: skip
+         "datenschutz.html": "datenschutz/index.html", "404.html": "404.html"}  # fmt: skip
 
 
 class DatalabError(Exception):

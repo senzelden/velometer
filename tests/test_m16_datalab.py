@@ -25,7 +25,7 @@ from velometer.datalab import DatalabConfig, DatalabError, build, load_config, p
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "datalab" / "all.csv"
 SITE_YAML = ROOT / "sites" / "datalab" / "site.yaml"
-PAGES = ("index.html", "impressum/index.html", "datenschutz/index.html")
+PAGES = ("index.html", "impressum/index.html", "datenschutz/index.html", "404.html")
 # the Berlin LAU tier A+B mapped km of the fixture, 2018-2026, rounded half up
 BERLIN = {
     2018: 1640, 2019: 1612, 2020: 1634, 2021: 1677, 2022: 1494,
@@ -304,6 +304,37 @@ def test_domain_is_a_parameter(undecided):
             assert "zaehlwerk-datalab" not in path.read_text(encoding="utf-8", errors="replace")
 
 
+# --- the 404 page and the favicon (rulings R21, R23) ------------------------------------------
+
+
+def test_the_404_page_is_german_in_the_base_layout_with_a_link_home(undecided):
+    html = (undecided / "404.html").read_text(encoding="utf-8")
+    assert re.search(r"<title>Seite nicht gefunden · Zählwerk Berlin Datalab</title>", html)
+    assert re.search(r"<h1>Seite nicht gefunden</h1>", html)
+    assert '<a href="/">Zur Startseite</a>' in html
+    assert 'href="/static/datalab.css"' in html  # base.html
+    # served at whatever path was not found: every reference is absolute
+    refs = [a.get("href") or a.get("src") for t, a in _tags(undecided / "404.html").tags]
+    assert all(r.startswith(("/", "https://", "mailto:")) for r in refs if r)
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_every_page_names_the_svg_favicon(undecided, page):
+    icons = [a for t, a in _tags(undecided / page).tags if t == "link" and a.get("rel") == "icon"]
+    assert icons == [{"rel": "icon", "href": "/static/favicon.svg", "type": "image/svg+xml"}]
+
+
+def test_the_favicon_is_a_small_self_contained_svg(undecided):
+    svg = (ROOT / "sites" / "datalab" / "static" / "favicon.svg").read_bytes()
+    assert (undecided / "static" / "favicon.svg").read_bytes() == svg
+    text = svg.decode("utf-8")
+    assert text.startswith("<svg ") and 'xmlns="http://www.w3.org/2000/svg"' in text
+    assert len(svg) < 2048
+    # loads and runs nothing: no script, no link, no reference but the SVG namespace
+    assert "<script" not in text and "href" not in text
+    assert re.findall(r"https?://[^\s\"']+", text) == ["http://www.w3.org/2000/svg"]
+
+
 # --- operator variants -------------------------------------------------------------------------
 
 VARIANT_MARKS = {
@@ -321,7 +352,7 @@ def test_undecided_operator_renders_all_variants_with_placeholders(undecided):
             assert mark in html
     found = placeholders(undecided)
     assert found
-    assert all(re.fullmatch(r"[a-z/]+index\.html:\d+|index\.html:\d+", f) for f in found)
+    assert all(re.fullmatch(r"[a-z0-9/]+\.html:\d+", f) for f in found)
     files = {f.split(":")[0] for f in found}
     assert files == set(PAGES)  # the footer contact is a placeholder everywhere
 

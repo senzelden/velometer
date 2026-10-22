@@ -1,0 +1,135 @@
+# The production Caddyfile (M16 spec §4.2, §4.4, §4.6), for Caddy 2.11.4 or later.
+#
+# Environment (deploy/caddy.env.example): DOMAIN, the apex host name; SITE_ROOT, default /srv.
+# /etc/caddy/lock.caddy holds the lock until go-live: `respond "locked" 401` as the server comes
+# up, then a `basic_auth` block with the preview password's hash; empty after go-live. No hash
+# and no password is ever in this repository.
+#
+# tests/test_m16_caddyfile.py holds the rules; tools/deploy_dryrun.py runs this file in Docker.
+{
+	# The lock runs first in every site, whichever form the lock file holds: by Caddy's default
+	# order `redir` (www) runs before basic_auth, and `handle_path` (the tiles) before respond.
+	# Nothing else in this file uses respond.
+	order basic_auth before redir
+	order respond after basic_auth
+
+	# Caddy's own log (stderr, so journald): no access lines, no stdlib lines (their message text
+	# names the client, which no field filter reaches), and every address field masked.
+	log default {
+		output stderr
+		format filter {
+			wrap json
+			fields {
+				remote_ip ip_mask 24 48
+				client_ip ip_mask 24 48
+				request>remote_ip ip_mask 24 48
+				request>client_ip ip_mask 24 48
+				request>remote_port delete
+				request>headers>X-Forwarded-For ip_mask 24 48
+				request>headers>Forwarded delete
+				request>headers>X-Real-Ip delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+			}
+		}
+		exclude http.log.access http.stdlib
+	}
+}
+
+# A site's access log: JSON with the client address masked (IPv4 /24, IPv6 /48) before it reaches
+# the disk, Cookie and Authorization dropped (legal review 5.3); rolled at midnight, 14 files and
+# 14 days kept (5.4).
+(access_log) {
+	log {
+		output file /var/log/caddy/{args[0]}.log {
+			roll_at 00:00
+			roll_keep 14
+			roll_keep_for 336h
+		}
+		format filter {
+			wrap json
+			fields {
+				remote_ip ip_mask 24 48
+				client_ip ip_mask 24 48
+				request>remote_ip ip_mask 24 48
+				request>client_ip ip_mask 24 48
+				request>remote_port delete
+				request>headers>X-Forwarded-For ip_mask 24 48
+				request>headers>Forwarded delete
+				request>headers>X-Real-Ip delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+			}
+		}
+	}
+}
+
+# Each site's headers equal its export's `_headers` file, plus HSTS for one year.
+(velometer_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Cache-Control "public, max-age=3600"
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+(datalab_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Cache-Control "public, max-age=3600"
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+# The Zählwerk Berlin Datalab.
+{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import access_log datalab
+	import datalab_headers
+	root * {$SITE_ROOT:/srv}/datalab/current
+	encode gzip
+	file_server {
+		precompressed gzip
+	}
+	# 404 only: any other error (the lock's 401) keeps its empty body
+	handle_errors 404 {
+		import datalab_headers
+		root * {$SITE_ROOT:/srv}/datalab/current
+		rewrite * /404.html
+		file_server
+	}
+}
+
+# velometer, with the maps' basemap beside it.
+velometer.{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import access_log velometer
+	import velometer_headers
+	root * {$SITE_ROOT:/srv}/velometer/current
+	encode gzip
+	file_server {
+		precompressed gzip
+	}
+	# byte ranges for protomaps-leaflet; never precompressed (a .gz would break the offsets)
+	handle_path /tiles/* {
+		root * {$SITE_ROOT:/srv}/tiles
+		file_server
+	}
+	# the error handler sets its own root: under /tiles/ it would look for 404.html in the tiles
+	handle_errors 404 {
+		import velometer_headers
+		root * {$SITE_ROOT:/srv}/velometer/current
+		rewrite * /404.html
+		file_server
+	}
+}
+
+www.{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import datalab_headers
+	redir https://{$DOMAIN}{uri} 308
+}

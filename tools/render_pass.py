@@ -15,7 +15,7 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
         [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH] \
-        [--url ORIGIN] [--lang en|de]
+        [--url ORIGIN [--auth USER:PASS]] [--lang en|de]
 
 `--lang de` audits a one-language German site (the Datalab: `--base /`): every page must have
 `<html lang="de">` and gets the English-leak check, instead of velometer's rule (de under
@@ -38,7 +38,10 @@ view, sort, panel, Escape), the nav search and the tier and counter maps (+ and 
 line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
 `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
 (e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
-page list still comes from `--site`.
+page list still comes from `--site`; the origin's host counts as the pages' own host (the dry
+run's `velometer.localhost`). `--auth USER:PASS` sends basic auth through a locked server (the
+dry run's `--lock`): every tab adds the Authorization header to all its requests
+(`Network.setExtraHTTPHeaders`).
 """
 
 from __future__ import annotations
@@ -74,6 +77,8 @@ LOAD_TIMEOUT = 30.0  # seconds for a page's load event; a load that never fires 
 OK_STATUS = {200, 304}  # 304: the browser cache revalidated a 200
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
 ALLOWED_HOSTS = {"127.0.0.1"}  # M16: the basemap is served by the site itself
+SITE_HOST: str | None = None  # --url's host: the pages' own host too
+AUTH: str | None = None  # --auth as an Authorization header value
 # pages in a city are /city/<slug>/<tab>; --pages types keeps Berlin plus the first city (by
 # slug) whose tab list differs from Berlin's
 TYPES_CITY = "berlin"
@@ -226,11 +231,12 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
-def wait_http(url: str, seconds: float = 15) -> None:
+def wait_http(url: str, seconds: float = 15, headers: dict[str, str] | None = None) -> None:
     end = time.time() + seconds
     while True:
         try:
-            urllib.request.urlopen(url, timeout=2).close()
+            urllib.request.urlopen(urllib.request.Request(url, headers=headers or {}),
+                                   timeout=2).close()  # fmt: skip
             return
         except OSError:
             if time.time() > end:
@@ -313,6 +319,8 @@ def open_tab(devtools: str, width: int, theme: str) -> Tab:
     try:
         for domain in ("Page", "Network", "Runtime", "Log", "Audits"):
             t.call(f"{domain}.enable")
+        if AUTH:
+            t.call("Network.setExtraHTTPHeaders", headers={"Authorization": AUTH})
         phone = width < 600
         t.call(
             "Emulation.setDeviceMetricsOverride",
@@ -1642,7 +1650,8 @@ def failures(r: dict) -> list[str]:
         out.append(f"console {len(r['console'])}")
     if r["csp"]:
         out.append(f"csp {len(r['csp'])}")
-    foreign = [h for h in r["hosts"] if h not in ALLOWED_HOSTS]
+    own = ALLOWED_HOSTS | ({SITE_HOST} if SITE_HOST else set())
+    foreign = [h for h in r["hosts"] if h not in own]
     if foreign:
         out.append(f"hosts {','.join(foreign)}")
     return out
@@ -1661,7 +1670,7 @@ def stop(proc: subprocess.Popen, timeout: float = 10) -> None:
 @contextlib.contextmanager
 def running(origin: str, base: str):
     """A server someone else started (`--url`): wait until it answers under `base`."""
-    wait_http(origin + base)
+    wait_http(origin + base, headers={"Authorization": AUTH} if AUTH else None)
     yield origin
 
 
@@ -1764,16 +1773,25 @@ def main(argv: list[str] | None = None) -> int:
         "instead of serving --site with http.server; --site still lists the pages",
     )
     ap.add_argument(
+        "--auth",
+        metavar="USER:PASS",
+        help="basic auth for a locked server (with --url): sent with every request",
+    )
+    ap.add_argument(
         "--lang",
         choices=("en", "de"),
         help="every page is in this language (a one-language site such as the Datalab); "
         "default: velometer's rule, de under <base>de, else en",
     )
     a = ap.parse_args(argv)
-    global SITE_LANG
+    global SITE_LANG, SITE_HOST, AUTH
     SITE_LANG = a.lang
     if a.url is not None and not re.fullmatch(r"https?://[^/]+/?", a.url):
         ap.error(f"--url takes an origin such as http://127.0.0.1:8080, not {a.url!r}")
+    if a.auth is not None and (a.url is None or ":" not in a.auth):
+        ap.error("--auth takes USER:PASS and needs --url (a server that asks for it)")
+    SITE_HOST = urlsplit(a.url).hostname if a.url else None
+    AUTH = "Basic " + base64.b64encode(a.auth.encode()).decode() if a.auth else None
 
     base = _norm_base(a.base)
     site = a.site.resolve()

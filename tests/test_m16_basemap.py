@@ -280,11 +280,12 @@ def test_the_render_pass_allows_only_the_loopback_host():
 def test_the_dry_run_mounts_the_tiles_beside_the_site(tmp_path):
     dr = load_script("tools/deploy_dryrun.py")
     tiles = tmp_path / "t.pmtiles"
-    cmd = dr.caddy_command(tmp_path / "site", tmp_path / "Caddyfile", "n", tiles=tiles)
+    paths = (tmp_path / "site", tmp_path / "datalab", tmp_path / "Caddyfile", tmp_path / "lock")
+    cmd = dr.caddy_command(*paths, "n", tiles=tiles)
     assert f"{tiles.resolve()}:/srv/tiles/velometer.pmtiles:ro" in cmd
-    assert not any("/srv/tiles" in x for x in dr.caddy_command(tmp_path, tmp_path / "C", "n"))
-    caddyfile = dr.caddyfile_from_doc(dr.DOC.read_text(encoding="utf-8"), "http://127.0.0.1:1")
-    assert "/tiles/*" in caddyfile and "/srv/tiles" in caddyfile
+    assert not any("/srv/tiles" in x for x in dr.caddy_command(*paths, "n"))
+    caddyfile = dr.dryrun_caddyfile(dr.CADDYFILE.read_text(encoding="utf-8"), 1)
+    assert "/tiles/*" in caddyfile and "{$SITE_ROOT:/srv}/tiles" in caddyfile
 
 
 def test_the_dry_run_probes_a_byte_range_on_the_tiles():
