@@ -480,3 +480,24 @@ test("selfContained: a long key label wraps by the width the page measured for t
   // a line can hold more than the chip's average would allow: the page's measure decided
   assert.ok(byPage.length < byChip.length, `${byPage.length} lines by the page, ${byChip.length} by the chip`);
 });
+
+const out_meta = (out) => textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]);
+// M16 R24: the ADR 0006 note ("mapped km, not built km") is never broken across two lines
+for (const lang of ["de", "en"]) {
+  test(`selfContained: the ${lang} mapped-km note stays on one line at 390 px`, () => {
+    useLang(lang);
+    const note = FIXTURE[lang]["js.download.note"];
+    const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+    const meta = out_meta(selfContained(svg, darkStyle, null, { ...LONG, attribution: "Kartendaten © OSM-Mitwirkende" }));
+    assert.ok(meta.some((l) => l.text.includes(note)), `${lang}: "${note}" is whole on one <text>`);
+    assert.ok(meta.length >= 3, "the meta text still wraps around it");
+    useLang("en");
+  });
+}
+
+test("wrap: a protected phrase is one unbreakable unit, wider than the room it overflows", () => {
+  const stub = (s) => s.length * 10;
+  const lines = wrap("aa bb cc dd ee ff", stub, 60, ["cc dd ee"]);
+  assert.deepEqual(lines, ["aa bb", "cc dd ee", "ff"]);
+  assert.ok(lines.every((l, i) => i === 1 || stub(l) <= 60));
+});
