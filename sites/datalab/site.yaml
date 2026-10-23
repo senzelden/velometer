@@ -3,7 +3,7 @@
 # visible [[…]] placeholder, and the go-live check refuses while one is left.
 domain: zaehlwerk-datalab.de  # the apex; velometer is served at velometer.<domain>
 # person | verein | company; null renders all three variants (legal review 4.1)
-operator_form: null
+operator_form: person
 operator:
   name: null            # person: full name; verein: name incl. "e.V."; company: Firma incl. Rechtsform
   address: null         # where the operator is established; a c/o address only after a lawyer's yes (Q6)

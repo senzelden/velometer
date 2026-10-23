@@ -210,7 +210,7 @@ nothing) and the site links to no source code. The yearly classified snapshots a
 Whether the printed rules plus the GeoJSON already make "the method of making the alterations" is
 arguable. Publishing the repository settles §4.6(b) without argument.
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-23: publish the repository, MIT code and classifier rules, on a public remote and link it from the methodology page; the lede stays)
 
 *Fix.* The user chooses one of: (A) publish the repository (MIT code, `config/classifier/*.yaml`)
 and link it from the methodology page (recommended); (B) offer the classified way data per snapshot
@@ -272,7 +272,7 @@ EuroGeographics for information about their licence agreements."
 *Our state.* velometer is free, has no ads and sells nothing. The operator form is open. A company
 operator, or any later paid offer, could count as commercial use. The term is not defined on the page.
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-23: velometer and the Datalab stay non-commercial: no ads, no paid service, no sale of data)
 
 *Fix.* The user confirms that velometer and the Datalab stay non-commercial (no ads, no paid
 service, no sale of data). If a company operates the site, or anything commercial is planned, ask
@@ -609,7 +609,7 @@ Informationen enthalten sind … Nachrichten sind vom Anbieter vor ihrer Verbrei
 Umständen gebotenen Sorgfalt auf Inhalt, Herkunft und Wahrheit zu prüfen." No reworded sentence ships
 without the user's review (spec §4.1 item 3, ADR 0006 for "mapped km").
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-23: the user reviewed all 96 rows of m16-press.md; every proposed rewording accepted, every keep kept)
 
 *Fix.* Tasks 3 and 10.
 
@@ -661,7 +661,7 @@ three forms here.
 *Our state.* `config/site.yaml` has `impressum_url: null` and `privacy_url: null`. There is no
 Impressum page yet (Task 6 builds one variant block per form).
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-23: operator is a private person)
 
 *Fix.* The user picks the operator form (`sites/datalab/site.yaml` `operator_form`, spec §4.9 item 3).
 Task 6 writes the three variant blocks from the table above.
@@ -716,7 +716,7 @@ Post".
 *Our state.* No mailbox on the domain yet (spec §5: the user sets it up; go-live needs it). The
 Datalab draft has the contact in the footer.
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-23: e-mail on the domain only; whether that alone suffices stays Q7)
 
 *Fix.* The user provides the contact address (`contact_email`). Q7 asks whether e-mail alone meets
 "unmittelbare Kommunikation" or a second channel (phone number or a promptly answered form) is

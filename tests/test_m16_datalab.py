@@ -462,13 +462,12 @@ def test_impressum_states_the_media_law_lines(undecided):
 # --- configuration -----------------------------------------------------------------------------
 
 
-def test_site_yaml_is_undecided_with_the_default_domain():
+def test_site_yaml_has_the_default_domain_and_every_operator_key():
+    # The user decided the form (legal review 4.1, 2026-10-23); the values come in as they decide.
     cfg = load_config(SITE_YAML)
     assert cfg.domain == "zaehlwerk-datalab.de"
-    assert cfg.operator_form is None
-    assert cfg.contact_email is None
+    assert cfg.operator_form == "person"
     assert set(cfg.operator) == set(datalab.OPERATOR_KEYS)
-    assert all(v is None for v in cfg.operator.values())
 
 
 @pytest.mark.parametrize(
