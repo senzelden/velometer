@@ -53,6 +53,9 @@ REQUIRED = {
     ),
 }  # fmt: skip
 OPTIONAL = ("phone", "vat")
+# Required by law but rendered nowhere, not even as a placeholder, until set (the user's call,
+# 2026-10-24: the address waits until the last moment); the go-live check refuses while one is null.
+DEFERRED = ("address",)
 FORMS = (
     ("person", "Privatperson"),
     ("verein", "Eingetragener Verein (e.V.)"),
@@ -177,8 +180,8 @@ def placeholder(label: str) -> Markup:
 
 class _Fields:
     """The operator's values as the templates use them: `v(key, label)` is the escaped value
-    (line breaks kept) or a placeholder; `shown(key)` is False only for an optional value left
-    out of a chosen form."""
+    (line breaks kept) or a placeholder; `shown(key)` is False for an optional value left
+    out of a chosen form and for an unset deferred one."""
 
     def __init__(self, cfg: DatalabConfig):
         self.cfg = cfg
@@ -192,7 +195,14 @@ class _Fields:
     def shown(self, key: str) -> bool:
         if self.cfg.operator.get(key):
             return True
+        if key in DEFERRED:
+            return False
         return self.cfg.operator_form is None or key not in OPTIONAL
+
+
+def deferred_missing(cfg: DatalabConfig) -> list[str]:
+    """The deferred values (DEFERRED) still unset; the pages leave them out without a trace."""
+    return [k for k in DEFERRED if not cfg.operator.get(k)]
 
 
 def _env() -> Environment:

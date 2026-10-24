@@ -970,6 +970,17 @@ def test_golive_items_reads_each_rule_separately(tmp_path):
     assert "contact_email" in item
 
 
+def test_golive_a_chosen_form_without_an_address_is_open(tmp_path):
+    # the pages leave the address out without a trace, so only this check still sees it
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    cfg = root / "sites" / "datalab" / "site.yaml"
+    data = yaml.safe_load(cfg.read_text("utf-8"))
+    data["operator"]["address"] = None
+    cfg.write_text(yaml.safe_dump(data), "utf-8")
+    (item,) = srv.golive_items(root, datalab)
+    assert "operator.address is null" in item
+
+
 def _edit(path: Path, old: str, new: str) -> None:
     text = path.read_text("utf-8")
     assert old in text, old

@@ -19,13 +19,19 @@
 {% endif %}
 {% if form == "person" %}
         <p>{{ f.v("name", "Vor- und Nachname") }}<br>
+{% if f.shown("address") %}
         {{ f.v("address", "Anschrift") }}<br>
+{% endif %}
 {% elif form == "verein" %}
         <p>{{ f.v("name", "Name des Vereins mit „e. V.“") }}, vertreten durch den Vorstand {{ f.v("representative", "Namen des Vorstands (Vereinsregister)") }}<br>
+{% if f.shown("address") %}
         {{ f.v("address", "Anschrift des Vereinssitzes") }}<br>
+{% endif %}
 {% else %}
         <p>{{ f.v("name", "Firma mit Rechtsform") }}, vertreten durch die Geschäftsführung {{ f.v("representative", "Namen der Geschäftsführer (Handelsregister)") }}<br>
+{% if f.shown("address") %}
         {{ f.v("address", "Anschrift des Sitzes") }}<br>
+{% endif %}
 {% endif %}
         E-Mail: {{ f.v("email", "E-Mail-Adresse") }}</p>
       </section>

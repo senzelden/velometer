@@ -20,19 +20,19 @@
         <{{ h }}>Anbieter</{{ h }}>
 {% if form == "person" %}
         {# a c/o or Impressum-service address only after a lawyer's yes (legal review 4.3, Q6) #}
-        <p>{{ f.v("name", "Vor- und Nachname") }}<br>
-        {{ f.v("address", "Anschrift; eine c/o-Anschrift nur nach anwaltlicher Freigabe (Q6)") }}</p>
+        <p>{{ f.v("name", "Vor- und Nachname") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift; eine c/o-Anschrift nur nach anwaltlicher Freigabe (Q6)") }}{% endif %}</p>
 {% elif form == "verein" %}
-        <p>{{ f.v("name", "Name des Vereins mit „e. V.“") }}<br>
-        {{ f.v("address", "Anschrift des Vereinssitzes") }}</p>
+        <p>{{ f.v("name", "Name des Vereins mit „e. V.“") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift des Vereinssitzes") }}{% endif %}</p>
         <dl>
           <dt>Rechtsform</dt><dd>eingetragener Verein</dd>
           <dt>Vertretungsberechtigt</dt><dd>Vorstand nach § 26 BGB: {{ f.v("representative", "Namen des Vorstands, wie eingetragen") }}</dd>
           <dt>Registereintrag</dt><dd>{{ f.v("register", "Vereinsregister, Amtsgericht, VR-Nummer") }}</dd>
         </dl>
 {% else %}
-        <p>{{ f.v("name", "Firma mit Rechtsform") }}<br>
-        {{ f.v("address", "Anschrift des Sitzes") }}</p>
+        <p>{{ f.v("name", "Firma mit Rechtsform") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift des Sitzes") }}{% endif %}</p>
         <dl>
           <dt>Vertretungsberechtigt</dt><dd>Geschäftsführung: {{ f.v("representative", "Namen der Geschäftsführer") }}</dd>
           <dt>Registereintrag</dt><dd>{{ f.v("register", "Handelsregister, Amtsgericht, HRB-Nummer") }}</dd>
@@ -49,7 +49,7 @@
         <p>Umsatzsteuer-Identifikationsnummer nach § 27a UStG oder Wirtschafts-Identifikationsnummer: {{ f.v("vat", "USt-IdNr. oder W-IdNr., nur falls vorhanden") }}</p>
 {% endif %}
         <{{ h }}>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</{{ h }}>
-        <p>{{ f.v("responsible", "Name und Anschrift der verantwortlichen Person, ständiger Aufenthalt in Deutschland") }}</p>
+        <p>{{ f.v("responsible", "Name der verantwortlichen Person, ständiger Aufenthalt in Deutschland") }}</p>
       </section>
 {% endfor %}
       <section class="shared">

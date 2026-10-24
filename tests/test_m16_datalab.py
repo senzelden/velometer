@@ -359,7 +359,7 @@ def test_undecided_operator_renders_all_variants_with_placeholders(undecided):
 
 def test_placeholders_are_visible(undecided):
     html = (undecided / "impressum" / "index.html").read_text(encoding="utf-8")
-    assert re.search(r'<span class="ph">\[\[Anschrift[^\]]*\]\]</span>', html)
+    assert re.search(r'<span class="ph">\[\[E-Mail-Adresse\]\]</span>', html)
     css = (undecided / "static" / "datalab.css").read_text(encoding="utf-8")
     assert re.search(r"\.ph\s*\{[^}]*outline", css)
 
@@ -537,3 +537,18 @@ def test_render_pass_lang_option_sets_every_page_language(tmp_path, monkeypatch)
     assert rp.main(args) == 0  # without it, velometer's rule: en outside /de
     assert seen == ["en", "en"]
     assert rp.lang_of("/de/cities", "/") == "de"
+
+
+@pytest.mark.parametrize("form", [None, "person", "verein", "company"])
+def test_an_unset_address_is_left_out_without_a_trace(tmp_path, form):
+    # the user's call (2026-10-24): no address, no placeholder, no mention until it is set
+    op = {**FULL_PERSON, "address": None, "responsible": "Erika Mustermann"}
+    out = tmp_path / "out"
+    build(_cfg(operator_form=form, operator=op), _export(tmp_path), out)
+    for page in ("impressum/index.html", "datenschutz/index.html"):
+        assert "Anschrift" not in (out / page).read_text("utf-8"), page
+
+
+def test_a_set_address_is_shown_on_both_pages(person):
+    for page in ("impressum/index.html", "datenschutz/index.html"):
+        assert "Musterstraße 1" in (person / page).read_text("utf-8"), page

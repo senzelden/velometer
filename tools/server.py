@@ -894,7 +894,7 @@ def _read(path: Path, items: list[str]) -> str | None:
 def golive_items(root: Path, datalab: Path) -> list[str]:
     """Every automatable reason not to go live (spec §4.7, ruling R31); [] when none is open.
     A file that is missing or cannot be read is an open item itself."""
-    from velometer.datalab import DatalabError, load_config, placeholders
+    from velometer.datalab import DatalabError, deferred_missing, load_config, placeholders
 
     items = []
     try:
@@ -904,6 +904,11 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
         cfg = None
     if cfg is not None and cfg.operator_form is None:
         items.append("sites/datalab/site.yaml: operator_form is null (operator undecided)")
+    if cfg is not None and cfg.operator_form is not None:
+        items += [
+            f"sites/datalab/site.yaml: operator.{k} is null (required; the pages leave it out)"
+            for k in deferred_missing(cfg)
+        ]
     if cfg is not None and not cfg.contact_email:
         items.append("sites/datalab/site.yaml: contact_email is null (no contact mailbox)")
     if not (datalab / "index.html").is_file():
