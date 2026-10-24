@@ -13,6 +13,6 @@ operator:
   vat: null             # USt-IdNr. or W-IdNr., only if one exists; left out when null and a form is chosen
   representative: null  # verein: Vorstand (§ 26 BGB); company: Geschäftsführung
   responsible: null     # Verantwortlicher nach § 18 Abs. 2 MStV: name and address (legal review 4.2)
-  authority: null       # "blnbdi" (operator in Berlin) or the full text of the Land's authority (5.8)
+  authority: blnbdi     # "blnbdi" (operator in Berlin) or the full text of the Land's authority (5.8)
   mail_host: null       # who hosts the contact mailbox: name and address (a recipient of e-mails)
 contact_email: null     # the contact in every page's footer
