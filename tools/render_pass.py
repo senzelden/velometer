@@ -15,7 +15,7 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
         [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH] \
-        [--url ORIGIN [--auth USER:PASS]] [--lang en|de]
+        [--url ORIGIN] [--lang en|de]
 
 `--lang de` audits a one-language German site (the Datalab: `--base /`): every page must have
 `<html lang="de">` and gets the English-leak check, instead of velometer's rule (de under
@@ -39,9 +39,12 @@ line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, els
 `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
 (e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
 page list still comes from `--site`; the origin's host counts as the pages' own host (the dry
-run's `velometer.localhost`). `--auth USER:PASS` sends basic auth through a locked server (the
-dry run's `--lock`): every tab adds the Authorization header to all its requests
-(`Network.setExtraHTTPHeaders`).
+run's `velometer.localhost`). Through a locked server (the dry run's `--lock`, the server before
+go-live) it sends basic auth as the user `preview` with the password from
+`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass), so the password never stands on a command line;
+`--auth USER:PASS` still overrides it. The Authorization header goes only to the `--url` origin:
+each tab intercepts that origin's requests (`Fetch.enable` with one URL pattern) and adds the
+header to them, and the wait for the server never forwards it on a redirect.
 """
 
 from __future__ import annotations
@@ -78,7 +81,10 @@ OK_STATUS = {200, 304}  # 304: the browser cache revalidated a 200
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
 ALLOWED_HOSTS = {"127.0.0.1"}  # M16: the basemap is served by the site itself
 SITE_HOST: str | None = None  # --url's host: the pages' own host too
-AUTH: str | None = None  # --auth as an Authorization header value
+AUTH: str | None = None  # the Authorization header value for the --url origin
+AUTH_ORIGIN: str | None = None  # the only origin AUTH is sent to
+PASSWORD_ENV = "VELOMETER_PREVIEW_PASSWORD"
+PREVIEW_USER = "preview"
 # pages in a city are /city/<slug>/<tab>; --pages types keeps Berlin plus the first city (by
 # slug) whose tab list differs from Berlin's
 TYPES_CITY = "berlin"
@@ -231,12 +237,46 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
+def resolve_auth(spec: str | None, url: str | None, env=None) -> str | None:
+    """The Authorization header value: `--auth USER:PASS` if given, else, for a `--url`, the
+    user `preview` with `$VELOMETER_PREVIEW_PASSWORD` when that is set; else None."""
+    env = os.environ if env is None else env
+    if spec is not None:
+        user, pw = spec.split(":", 1)
+    elif url is not None and env.get(PASSWORD_ENV, "").strip():
+        user, pw = PREVIEW_USER, env[PASSWORD_ENV]
+    else:
+        return None
+    return "Basic " + base64.b64encode(f"{user}:{pw}".encode()).decode()
+
+
+def origin_of(url: str) -> str:
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}".lower()
+
+
+def fetch_reply(params: dict, auth: tuple[str, str] | None) -> dict:
+    """The `Fetch.continueRequest` parameters for a paused request: the Authorization header is
+    added only when the request goes to the auth origin; any other request goes on untouched."""
+    reply = {"requestId": params["requestId"]}
+    request = params.get("request", {})
+    if auth and origin_of(request.get("url", "")) == auth[0]:
+        headers = {k: v for k, v in request.get("headers", {}).items()
+                   if k.lower() != "authorization"}  # fmt: skip
+        headers["Authorization"] = auth[1]
+        reply["headers"] = [{"name": k, "value": v} for k, v in headers.items()]
+    return reply
+
+
 def wait_http(url: str, seconds: float = 15, headers: dict[str, str] | None = None) -> None:
+    """Wait until `url` answers; `headers` are never forwarded on a redirect."""
     end = time.time() + seconds
     while True:
         try:
-            urllib.request.urlopen(urllib.request.Request(url, headers=headers or {}),
-                                   timeout=2).close()  # fmt: skip
+            req = urllib.request.Request(url)
+            for k, v in (headers or {}).items():
+                req.add_unredirected_header(k, v)
+            urllib.request.urlopen(req, timeout=2).close()
             return
         except OSError:
             if time.time() > end:
@@ -256,6 +296,21 @@ class Tab:
         self.ws = websocket.create_connection(ws_url, timeout=120, suppress_origin=True)
         self.n = 0
         self.events: list[dict] = []
+        self.auth: tuple[str, str] | None = None  # (origin, Authorization value)
+        self._sent: set[int] = set()  # ids of replies nobody waits for
+
+    def _take(self, m: dict) -> None:
+        """Keep an event; answer a paused request (`fetch_reply`) at once."""
+        if m.get("method") == "Fetch.requestPaused":
+            self.n += 1
+            self._sent.add(self.n)
+            reply = fetch_reply(m["params"], self.auth)
+            self.ws.send(json.dumps({"id": self.n, "method": "Fetch.continueRequest",
+                                     "params": reply}))  # fmt: skip
+        elif m.get("id") in self._sent:
+            self._sent.discard(m["id"])
+        else:
+            self.events.append(m)
 
     def call(self, method: str, **params):
         self.n += 1
@@ -267,14 +322,14 @@ class Tab:
                 if "error" in m:
                     raise RuntimeError(f"{method}: {m['error']}")
                 return m.get("result", {})
-            self.events.append(m)
+            self._take(m)
 
     def pump(self, seconds: float) -> None:
         end = time.time() + seconds
         self.ws.settimeout(0.1)
         while time.time() < end:
             with contextlib.suppress(self._wsmod.WebSocketTimeoutException):
-                self.events.append(json.loads(self.ws.recv()))
+                self._take(json.loads(self.ws.recv()))
         self.ws.settimeout(120)
 
     def wait_event(self, method: str, since: int, cap: float) -> bool:
@@ -319,8 +374,11 @@ def open_tab(devtools: str, width: int, theme: str) -> Tab:
     try:
         for domain in ("Page", "Network", "Runtime", "Log", "Audits"):
             t.call(f"{domain}.enable")
-        if AUTH:
-            t.call("Network.setExtraHTTPHeaders", headers={"Authorization": AUTH})
+        if AUTH and AUTH_ORIGIN:
+            # only the origin under test is paused, and only it gets the header (fetch_reply)
+            t.auth = (AUTH_ORIGIN, AUTH)
+            t.call("Fetch.enable", patterns=[
+                {"urlPattern": AUTH_ORIGIN + "/*", "requestStage": "Request"}])  # fmt: skip
         phone = width < 600
         t.call(
             "Emulation.setDeviceMetricsOverride",
@@ -1775,7 +1833,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--auth",
         metavar="USER:PASS",
-        help="basic auth for a locked server (with --url): sent with every request",
+        help="basic auth for a locked server (with --url), sent to that origin only; without "
+        "it, user preview with $VELOMETER_PREVIEW_PASSWORD when set",
     )
     ap.add_argument(
         "--lang",
@@ -1784,14 +1843,15 @@ def main(argv: list[str] | None = None) -> int:
         "default: velometer's rule, de under <base>de, else en",
     )
     a = ap.parse_args(argv)
-    global SITE_LANG, SITE_HOST, AUTH
+    global SITE_LANG, SITE_HOST, AUTH, AUTH_ORIGIN
     SITE_LANG = a.lang
     if a.url is not None and not re.fullmatch(r"https?://[^/]+/?", a.url):
         ap.error(f"--url takes an origin such as http://127.0.0.1:8080, not {a.url!r}")
     if a.auth is not None and (a.url is None or ":" not in a.auth):
         ap.error("--auth takes USER:PASS and needs --url (a server that asks for it)")
     SITE_HOST = urlsplit(a.url).hostname if a.url else None
-    AUTH = "Basic " + base64.b64encode(a.auth.encode()).decode() if a.auth else None
+    AUTH = resolve_auth(a.auth, a.url)
+    AUTH_ORIGIN = origin_of(a.url) if a.url and AUTH else None
 
     base = _norm_base(a.base)
     site = a.site.resolve()

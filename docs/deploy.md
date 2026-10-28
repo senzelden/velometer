@@ -69,7 +69,7 @@ HTTP (status, compression, security headers, 404 page):
 
 ```
 uv run python tools/deploy_dryrun.py --site <dir> --server caddy --datalab <datalab-dir> \
-    --tiles <file.pmtiles> [--lock <password> | --lock-default] [--debug-log]
+    --tiles <file.pmtiles> [--lock | --lock-default] [--debug-log]
 uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
 ```
 
@@ -82,7 +82,8 @@ malformed one (416), checks HSTS and the `www` redirect, and afterwards reads th
 Caddy's own output: neither may hold the probes' address (`127.0.0.77`), a forged
 `X-Forwarded-For` (`203.0.113.7`), a cookie, the password or its Authorization header, and each
 access log must show the probes' address masked to /24 and keep none of those headers.
-`--lock <password>` (or `--lock` alone, reading `$VELOMETER_PREVIEW_PASSWORD`) locks both sites
+`--lock` (the password read from `$VELOMETER_PREVIEW_PASSWORD`, never typed on the command line)
+locks both sites
 as the server is locked until go-live (the bcrypt hash is made by `caddy hash-password` in the
 container at run time and kept in a temporary file); every path of every host must then answer
 401 without the password, and every locked response must carry `Cache-Control: no-store`.
@@ -96,8 +97,9 @@ the host (or a second dry run left up with `--keep-running`) makes the run fail 
 wait; stop the other one first. `--server wrangler` runs `npx wrangler pages dev` for the velometer
 export alone. The tool ends with `N checks, M problems` and exits 1 on any problem. With
 `--keep-running` it leaves the server up and prints its origins, so that `tools/render_pass.py
---url <origin>` can audit the pages through it (add `--auth preview:<password>` when locked, and
-`--lang de` for the Datalab).
+--url <origin>` can audit the pages through it (when locked it logs in as `preview` with
+`$VELOMETER_PREVIEW_PASSWORD`, sending the header to that origin only; add `--lang de` for the
+Datalab).
 
 ## 1. Hetzner Cloud with Caddy
 
@@ -117,7 +119,7 @@ uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
 uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
 uv run python tools/server.py verify --domain <domain> --locked
 uv run python tools/render_pass.py --site <dir> --base / --url https://velometer.<domain> \
-    --auth preview:<password> --pages types --interact --flip
+    --pages types --interact --flip
 uv run python tools/server.py stats --host <host>
 uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
 uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
@@ -136,6 +138,9 @@ uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <
   registrar's parking records and wildcard. Let's Encrypt issues the certificates on the first
   request after `setup`.
 - `render_pass.py` needs `--base /` against the live site: its default `/velometer/` 404s.
+  Behind the lock it logs in as `preview` with `$VELOMETER_PREVIEW_PASSWORD` from the
+  environment, so the password stands in no command line, process list or shell history, and
+  it sends the Authorization header to the `--url` origin only.
 - `golive-check` and `unlock` are the go-live (step 4 below); nothing before them opens the sites.
 
 The steps in detail:

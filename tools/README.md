@@ -98,11 +98,13 @@ map's view from the basemap's tiles and need it. Serve the export with
 --keep-running` and pass its origin as `--url`.
 
 Against the live site (M16), give `--base /`, the base the export was made with: the default
-`/velometer/` 404s there. Behind the lock add `--auth preview:<password>`:
+`/velometer/` 404s there. Behind the lock it logs in as `preview` with the password from
+`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass; never on the command line) and sends the header to
+the `--url` origin only:
 
 ```bash
 uv run --group dev python tools/render_pass.py --site "$SCRATCH/velometer" --base / \
-    --url https://velometer.<domain> --auth preview:<password> --pages types --interact --flip
+    --url https://velometer.<domain> --pages types --interact --flip
 ```
 
 ## orca_pass.py
@@ -186,8 +188,8 @@ reduced to 256 colours. It uses `render_pass.py`'s Chrome and server helpers. Th
 the basemap tiles, which an export does not contain, so the usual source is the deployed site:
 
 ```bash
-uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de \
-    --auth preview:"$VELOMETER_PREVIEW_PASSWORD"   # while the site is locked
+uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de
+# while the site is locked: logs in as preview with $VELOMETER_PREVIEW_PASSWORD
 ```
 
 Re-run it when the pages change, and update the README's alt texts and caption to what the new

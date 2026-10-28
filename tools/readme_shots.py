@@ -3,11 +3,11 @@
 Drives headless Chrome over a served static edition with the render pass's helpers and writes
 `docs/img/readme/{tiermap-berlin,compare-headline}-{light,dark}.png`, each clipped to its page
 element. The tier map needs the basemap tiles, which an export does not contain, so the usual
-source is the deployed site (behind the preview lock, `--auth`); `--site` serves a local export
-instead (the map then draws without its basemap).
+source is the deployed site: behind the preview lock, the user `preview` with the password from
+`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass), sent to that origin only, never on a command line;
+`--site` serves a local export instead (the map then draws without its basemap).
 
-    uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de \
-        --auth preview:"$VELOMETER_PREVIEW_PASSWORD"
+    uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de
     uv run --group dev python tools/readme_shots.py --site DIR [--base /]
 """
 
@@ -89,12 +89,16 @@ def main(argv: list[str] | None = None) -> int:
     src.add_argument("--url", help="origin of a deployed site, e.g. https://velometer.example")
     src.add_argument("--site", type=Path, help="exported static edition, served locally")
     ap.add_argument("--base", default="/", help="base path the site was exported for")
-    ap.add_argument("--auth", help="USER:PASS for a locked site (with --url)")
+    ap.add_argument(
+        "--auth",
+        help="USER:PASS for a locked site (with --url; default: $VELOMETER_PREVIEW_PASSWORD)",
+    )
     ap.add_argument("--chrome", default=rp.CHROME)
     a = ap.parse_args(argv)
-    if a.auth and not a.url:
-        ap.error("--auth needs --url")
-    rp.AUTH = "Basic " + base64.b64encode(a.auth.encode()).decode() if a.auth else None
+    if a.auth is not None and (not a.url or ":" not in a.auth):
+        ap.error("--auth takes USER:PASS and needs --url")
+    rp.AUTH = rp.resolve_auth(a.auth, a.url)
+    rp.AUTH_ORIGIN = rp.origin_of(a.url) if a.url and rp.AUTH else None
     base = rp._norm_base(a.base)
     with contextlib.ExitStack() as stack:
         if a.url:

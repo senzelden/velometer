@@ -10,11 +10,11 @@ M16 spec §4.2, §4.4, §4.6).
   With `--network host` the container also binds Caddy's admin endpoint on 127.0.0.1:2019, so
   stop any other Caddy (or a `--keep-running` dry run) first. `--tiles FILE` mounts a PMTiles
   extract where the server keeps it (`TILES_MOUNT`); probes ask it for a byte range and for a
-  malformed one. `--lock PASSWORD` locks both sites the way the server is locked until go-live
-  (a `basic_auth` block in /etc/caddy/lock.caddy, its bcrypt hash made by `caddy hash-password`
-  in the container at run time, never stored; `--lock` alone reads the password from
-  $VELOMETER_PREVIEW_PASSWORD, ruling R28): every path of every host must answer 401 without
-  the password, and the content probes send it. `--lock-default` serves the lock the server
+  malformed one. `--lock` locks both sites the way the server is locked until go-live (a
+  `basic_auth` block in /etc/caddy/lock.caddy, its bcrypt hash made by `caddy hash-password` in
+  the container at run time, never stored), with the password from $VELOMETER_PREVIEW_PASSWORD
+  (ruling R28), which keeps it off the command line: every path of every host must answer 401
+  without the password, and the content probes send it. `--lock-default` serves the lock the server
   comes up with (`respond "locked" 401`, ruling P4), which no password opens. Either lock also
   sets `Cache-Control: no-store`, which every locked response must carry (ruling R26). Without
   either, the lock file is empty, as after go-live. The probes connect from `CLIENT_ADDR` with a
@@ -29,7 +29,7 @@ Nothing is uploaded. The probes are pure functions of a response; `run_probes` a
 fetch the paths they need and collect their problems. The exit status is 1 when any probe fails.
 
     uv run python tools/deploy_dryrun.py --site DIR --server caddy --datalab DIR [--tiles FILE]
-        [--lock [PASSWORD] | --lock-default] [--debug-log] [--keep-running]
+        [--lock | --lock-default] [--debug-log] [--keep-running]
     uv run python tools/deploy_dryrun.py --site DIR --server wrangler [--keep-running]
 """
 
