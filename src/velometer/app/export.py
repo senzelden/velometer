@@ -270,8 +270,8 @@ def build_stamp(
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
     exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
-    export also records `site`, the four values its footer links (`SiteConfig.public_values`),
-    which `deploy-check` checks the pages against."""
+    export also records `site`, the values its footer and repo links use
+    (`SiteConfig.public_values`), which `deploy-check` checks the pages against."""
     raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
     versions: set[str] = set()
@@ -659,6 +659,14 @@ def _run_export(
                 "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
             )
         site_values = site_cfg.public_values()
+        # the pages link repo files at the export's commit (M16, R42): a commit that lacks the
+        # tree's changes, or no commit at all, would link the wrong text
+        raw = git_commit()
+        if raw == "unknown" or raw.endswith("-dirty"):
+            raise ExportError(
+                "--public needs a clean git checkout (the pages link the repository at the "
+                f"export's commit); git says {raw!r}: commit or stash the changes first"
+            )
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
     _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
@@ -672,7 +680,8 @@ def _run_export(
         build = build_stamp(data, normalise_base(base), public, site_values)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
-            base_path=base, static_edition={"commit": build["commit"]},
+            base_path=base,
+            static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
         )  # fmt: skip
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)

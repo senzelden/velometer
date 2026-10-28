@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -12,13 +13,20 @@ from typer.testing import CliRunner
 from tests.test_app_base import build_rich
 from tests.test_export import _content, _files
 from velometer.app import deploy_check, export
+from velometer.app.repo_links import bare_repo_paths
 from velometer.cli import app
 
 COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "repo": {
+        "url": "https://forge.example.org/owner/velometer",
+        "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
+    },
 }
+# a public export needs a clean checkout (M16); the tests' tree may be mid-edit
+CLEAN_COMMIT = "0123456789abcdef0123456789abcdef01234567"
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +37,11 @@ def good(tmp_path_factory):
     db_path, cfg, maps, docs, plans = r
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
     out = tmp / "good"
-    export.run_export(out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(export, "git_commit", lambda: CLEAN_COMMIT)
+        export.run_export(
+            out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
+        )
     return out, cfg
 
 
@@ -148,7 +160,36 @@ def test_the_public_values_are_in_build_json(site):
         "datalab_url": COMPLETE["datalab"]["url"],
         "impressum_url": COMPLETE["impressum_url"],
         "privacy_url": COMPLETE["privacy_url"],
+        "repo_url": COMPLETE["repo"]["url"],
+        "repo_file_url": COMPLETE["repo"]["file_url"],
     }
+
+
+def test_a_public_export_links_its_repo_paths_at_its_commit(site):
+    # M16 (R42): no page prints a repo path a reader cannot open; links pin the export's commit
+    out, _cfg = site
+    assert json.loads((out / "build.json").read_text())["commit_full"] == CLEAN_COMMIT
+    pages = {p: p.read_text(encoding="utf-8") for p in sorted(out.rglob("*.html"))}
+    assert all(bare_repo_paths(html) == [] for html in pages.values())
+    blob = f"https://forge.example.org/owner/velometer/blob/{CLEAN_COMMIT}/"
+    bezirke = pages[out / "city" / "berlin" / "bezirke" / "index.html"]
+    assert f'<a href="{blob}docs/review"><code>docs/review</code></a>' in bezirke
+    assert sum(html.count(blob) for html in pages.values()) > 0
+
+
+def test_deploy_check_fails_a_public_export_with_a_bare_repo_path(site):
+    # red-proof of the guard: the same export with the repo links taken out again
+    out, _cfg = site
+    link = re.compile(r'<a href="https://forge\.example\.org/[^"]*">(<code>[^<]*</code>)</a>')
+    page = out / "city" / "berlin" / "bezirke" / "index.html"
+    page.write_text(link.sub(r"\1", page.read_text(encoding="utf-8")), encoding="utf-8")
+    problems = deploy_check.deploy_problems(out, None)
+    assert any(
+        "city/berlin/bezirke/index.html" in p
+        and "not linked to the repo" in p
+        and "docs/review" in p
+        for p in problems
+    ), problems
 
 
 def test_a_public_export_is_judged_by_itself_not_todays_site_yaml(site):

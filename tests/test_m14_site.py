@@ -19,6 +19,10 @@ COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "repo": {
+        "url": "https://forge.example.org/owner/velometer",
+        "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
+    },
 }
 
 
@@ -143,13 +147,35 @@ def test_public_export_refuses_empty_settings(rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     with pytest.raises(export.ExportError) as e:
         _export(rich, out, True)
-    for name in ("datalab.name", "datalab.url", "impressum_url", "privacy_url"):
+    names = ("datalab.name", "datalab.url", "impressum_url", "privacy_url", "repo.url")
+    for name in names + ("repo.file_url",):
         assert name in str(e.value)
     assert not out.exists()
 
 
-def test_public_export_stamps_true(rich, tmp_path):  # noqa: F811
+def test_public_export_refuses_without_the_repo(rich, tmp_path):  # noqa: F811
+    _write_site(rich[1], {k: v for k, v in COMPLETE.items() if k != "repo"})
+    with pytest.raises(export.ExportError, match=r"repo\.url, repo\.file_url"):
+        _export(rich, tmp_path / "site", True)
+
+
+CLEAN = "0123456789abcdef0123456789abcdef01234567"
+
+
+@pytest.mark.parametrize("commit", [CLEAN + "-dirty", "unknown"])
+def test_public_export_refuses_a_dirty_or_unknown_checkout(rich, tmp_path, monkeypatch, commit):  # noqa: F811
+    # M16 (R42): the pages link repo files at the export's commit, which must hold the tree
     _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "git_commit", lambda: commit)
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match="clean git checkout"):
+        _export(rich, out, True)
+    assert not out.exists()
+
+
+def test_public_export_stamps_true(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "git_commit", lambda: CLEAN)
     out = tmp_path / "site"
     _export(rich, out, True)
     assert json.loads((out / "build.json").read_text())["public"] is True

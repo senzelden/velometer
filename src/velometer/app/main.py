@@ -41,7 +41,7 @@ from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import plans_pages, urls
+from velometer.app import plans_pages, repo_links, urls
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
@@ -322,6 +322,19 @@ def methodology_html(text: str, english: str) -> Markup:
     return _md(text, ids=[slug for _, slug in en] if same else [])
 
 
+# the methodology's sentence that links the repository (M16, legal review 1.1c), written as a
+# comment so a page without `repo` drops it: `<!-- repo: ... [...]({repo_url}) ... -->`
+REPO_MARK = re.compile(r"<!-- repo: (.+?) -->")
+
+
+def repo_sentence(text: str, repo) -> str:
+    """`text` with its repo sentence shown, linking `repo.url`; unchanged without `repo` (the
+    markdown then drops the comment)."""
+    if repo is None:
+        return text
+    return REPO_MARK.sub(lambda m: " " + m.group(1).replace("{repo_url}", repo.url), text)
+
+
 def _md(text: str, ids: list[str] | None = None) -> Markup:
     extensions = ["tables", "fenced_code", _EscapeHtml()] + ([_Ids(ids)] if ids else [])
     html = markdown.markdown(text, extensions=extensions)
@@ -496,6 +509,12 @@ def create_app(
     # name is in (M14)
     city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
     commit = static_edition["commit"] if static_edition else short_commit(git_commit())
+    # repo paths link the public repository at the commit the pages are built from (M16, R42):
+    # the export's commit, else the checkout's HEAD; None (plain `<code>`) with `repo` unset
+    links = repo_links.make_links(
+        app.state.site,
+        static_edition.get("commit_full") if static_edition else git_commit(),
+    )
 
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""
@@ -533,6 +552,8 @@ def create_app(
         env.globals["city_row_name"] = partial(city_row_name, city_configs, lang=lang)
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
+        # its file line, a link to the repo at its heading when site.yaml names the repo (M16)
+        env.globals["data_ref_file"] = partial(repo_links.data_ref_file, links)
         # a source's publisher or title: on a German page its German sibling, original in `lang`
         env.globals["source_field"] = partial(source_field, lang=lang)
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
@@ -563,9 +584,11 @@ def create_app(
         _respond = templates.TemplateResponse
 
         def respond(*args, **kwargs):
-            """Every rendered page, with its sideways-scrolling regions keyboard-reachable."""
+            """Every rendered page, with its sideways-scrolling regions keyboard-reachable and
+            its repo paths linked (M16)."""
             resp = _respond(*args, **kwargs)
-            resp.body = name_scroll_regions(resp.body.decode(), lang).encode()
+            body = name_scroll_regions(resp.body.decode(), lang)
+            resp.body = (links.link_code(body) if links else body).encode()
             resp.headers["content-length"] = str(len(resp.body))
             return resp
 
@@ -1648,7 +1671,9 @@ def create_app(
     def methodology_page(request: Request, data: ReportData, **ctx) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[request.state.lang]
         try:
-            text = GENERATED_NOTE.sub("", path.read_text(encoding="utf-8"))
+            text = repo_sentence(
+                GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")), app.state.site.repo
+            )
             english = docs_dir / METHODOLOGY["en"]
             body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:

@@ -2102,7 +2102,7 @@ def app_export(
         False,
         "--public",
         help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
-        "pages (a public export).",
+        "pages and the repository, and the git checkout is clean (a public export).",
     ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,

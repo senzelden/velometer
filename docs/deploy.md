@@ -13,11 +13,19 @@ uv run velometer app deploy-check <dir> --public
 ```
 
 `export --public` refuses to run unless `config/site.yaml` names the Datalab, its Impressum and
-its privacy page, and records those four values in `build.json`. `deploy-check` uploads nothing.
+its privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a
+file's address with `{commit}` and `{path}`; examples for GitHub and Codeberg are in the file), and
+records those values in `build.json`. It also refuses a git checkout with uncommitted changes:
+every repo path on the pages (a data reference's file, `docs/...` in the prose) links
+`repo.file_url` at the export's commit (`build.json` `commit_full`), so that commit must hold what
+the pages were built from, and it must be pushed to the repository before the site goes live. The
+methodology links `repo.url` (legal review 1.1c). `deploy-check` uploads nothing.
 It checks `build.json` and its base, `404.html`, the `_headers` file against the pages' meta
 policy, a `.gz` that matches each text file of 1 KiB or more, that no file is 25 MiB or more, that
 every reference resolves, and, for a public export, that every page's footer links the Datalab,
-Impressum and privacy page that `build.json` records. It judges the export, not today's
+Impressum and privacy page that `build.json` records and that no page prints a repo path
+(`<code>docs/...</code>`, `config/`, `src/`, `tools/`, `content/`, `sites/`, `deploy/`) outside a
+link. It judges the export, not today's
 `config/site.yaml`. `deploy-check --public` also fails on an export made without `--public`, which
 would go live without an Impressum. It exits 1 and lists the problems otherwise. Run it again
 after any hand edit.

@@ -346,7 +346,7 @@ Every number traces to a run. A run records the git commit, the classifier versi
 
 ## Licences
 
-Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). The derived data (tier lengths, metrics and exports) is licensed under the [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The code is MIT-licensed. External comparison figures are cited with their source and are not redistributed beyond what citation allows [ADR 0008].
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). The derived data (tier lengths, metrics and exports) is licensed under the [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The code is MIT-licensed.<!-- repo: It is published with the classifier rules and this documentation in the [velometer repository]({repo_url}). --> External comparison figures are cited with their source and are not redistributed beyond what citation allows [ADR 0008].
 
 The LAU and FUA boundaries are Eurostat GISCO data: © EuroGeographics for the administrative boundaries. They are used under [GISCO's terms](https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units), which do not allow commercial use, and are not under the ODbL.
 

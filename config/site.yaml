@@ -1,5 +1,5 @@
 # Site settings (M14). Every value may be null; a public export (`app export --public`)
-# needs all four. URLs must be https.
+# needs all of them. URLs must be https.
 datalab:
   name: null        # e.g. "Zählwerk Berlin Datalab"
   url: null         # https URL of the Datalab
@@ -9,3 +9,13 @@ datalab:
 # domain being the one in sites/datalab/site.yaml.
 impressum_url: null # https URL (the Datalab's Impressum)
 privacy_url: null   # https URL (the Datalab's Datenschutzerklärung)
+# M16 (legal review 1.1c): the public repository. Pages link repo paths (data references,
+# `docs/...` in prose) to `file_url` at the export's commit, and the methodology links `url`.
+# Set both or neither; `file_url` must contain {commit} and {path}. Examples:
+#   GitHub:   url: https://github.com/OWNER/velometer
+#             file_url: https://github.com/OWNER/velometer/blob/{commit}/{path}
+#   Codeberg: url: https://codeberg.org/OWNER/velometer
+#             file_url: https://codeberg.org/OWNER/velometer/src/commit/{commit}/{path}
+repo:
+  url: null         # https URL of the repository's home page
+  file_url: null    # https URL of a file at a commit, with {commit} and {path}

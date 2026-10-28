@@ -35,6 +35,10 @@ SITE_VALUES = {
     },
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "repo": {
+        "url": "https://forge.example.org/owner/velometer",
+        "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
+    },
 }
 
 
@@ -47,7 +51,11 @@ def public_site(tmp_path_factory):
         yaml.safe_dump(SITE_VALUES, allow_unicode=True), encoding="utf-8"
     )
     out = tmp / "site"
-    export.run_export(out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True)
+    with pytest.MonkeyPatch.context() as mp:  # a public export needs a clean checkout (M16)
+        mp.setattr(export, "git_commit", lambda: "0123456789abcdef0123456789abcdef01234567")
+        export.run_export(
+            out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
+        )
     return out
 
 
