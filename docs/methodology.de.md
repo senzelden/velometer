@@ -346,7 +346,7 @@ Jede Zahl lässt sich auf einen Lauf zurückführen. Ein Lauf speichert den Git-
 
 ## Lizenzen
 
-Kartendaten © [OpenStreetMap-Mitwirkende](https://www.openstreetmap.org/copyright). Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Der Code steht unter der MIT-Lizenz.<!-- repo: Er ist mit den Klassifikatorregeln und dieser Dokumentation im [velometer-Repository]({repo_url}) veröffentlicht. --> Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
+Kartendaten © [OpenStreetMap-Mitwirkende](https://www.openstreetmap.org/copyright). Die abgeleiteten Daten (Stufenlängen, Kennzahlen und Exporte) stehen unter der [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Der Code steht unter der MIT-Lizenz.<!-- repo: Der Code ist mit den Klassifikationsregeln und dieser Dokumentation im [velometer-Repository]({repo_url}) veröffentlicht. --> Externe Vergleichszahlen werden mit Quelle zitiert und nicht über das Zitatrecht hinaus weitergegeben [ADR 0008].
 
 Die LAU- und FUA-Grenzen sind Daten von Eurostat GISCO: © EuroGeographics bezüglich der Verwaltungsgrenzen. Sie werden nach den [Bedingungen von GISCO](https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units) genutzt, die keine kommerzielle Nutzung erlauben, und stehen nicht unter der ODbL.
 
