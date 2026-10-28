@@ -953,7 +953,7 @@ is transferred to the USA, provided you have chosen this product location." The 
 
 *Our state.* No server, no DPA. The planned location is `nbg1` or `fsn1` (spec §4.2).
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-28: the user concluded the DPA in the Hetzner account; data type log data, persons affected website visitors; server at fsn1)
 
 *Fix.* The user concludes the DPA in the Hetzner account before go-live, choosing the data
 categories (web server logs with masked IP addresses) and data subjects (website visitors), and
