@@ -132,7 +132,8 @@ Network tests are marked `slow` and deselected by default. Deployment of the sta
 ## Citation
 
 Use GitHub's "Cite this repository" button ([`CITATION.cff`](CITATION.cff)), and name the
-classifier version and OSM snapshot of the figures you cite; both are printed under every chart.
+classifier version and OSM snapshot of the figures you cite: the Cite block under each chart on
+the site gives both, ready to copy.
 
 ## Licences and attribution
 
