@@ -16,8 +16,15 @@ cp -r config <scratch>/config        # then set the values in <scratch>/config/s
 git status --untracked-files=no      # must print no changes: commit first
 uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
 uv run velometer app deploy-check <dir> --public
+c=$(jq -r .commit_full <dir>/build.json)
 git push <public remote> HEAD        # the commit the pages link must be in the public repo
+git tag export-${c:0:7} $c && git push <public remote> export-${c:0:7}
 ```
+
+The tag keeps the pinned commit reachable on the forge after the branch is merged (squashed or
+rebased) or deleted; without it the links may lose their commit and every citation rots.
+`golive-check --site <dir>` lists a commit that no tag at `repo.url` points at as open (it asks
+`git ls-remote --tags repo.url`, anonymously).
 
 `export --public` refuses to run unless the site settings name the Datalab, its Impressum and its
 privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
@@ -26,18 +33,26 @@ examples), and records those values in `build.json`. It also refuses a checkout 
 have uncommitted changes (untracked files do not count): every repo path on the pages (a data
 reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
 `repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a
-committed tree, and that commit must be pushed to the public repository before the site goes
-live, or every repo link 404s (`golive-check --site <dir>` fetches one, §2 step 4). The
-methodology links `repo.url` (legal review 1.1c).
+committed tree, and that commit must be pushed to the public repository, and the repository
+publicly readable, before the site goes live, or every repo link 404s (`golive-check --site <dir>`
+fetches one anonymously, §2 step 4). The methodology links `repo.url` (legal review 1.1c).
+Untracked files do render: an untracked new narrative or doc shows on the pages but is not in
+`commit_full`, so those pages cannot be rebuilt from the commit (its repo paths stay unlinked,
+and the guard below flags any it cites). Commit what the pages show before a public export.
 
 `deploy-check` uploads nothing. It checks `build.json` and its base, `404.html`, the `_headers`
 file against the pages' meta policy, a `.gz` that matches each text file of 1 KiB or more, that
 no file is 25 MiB or more, that every reference resolves, and, for a public export, that every
 page's footer links the Datalab, Impressum and privacy page that `build.json` records, that no page
 prints a repo path in `<code>` outside a link (under `docs/`, `config/`, `src/`, `tools/`,
-`content/`, `sites/`, `deploy/`, `tests/`, a root file such as `HANDOVER.md`, or any path-like
-`.py`, `.yaml`, `.md`, `.js`, `.json` or `.toml` name), and that every repo link carries the
-export's `commit_full`. It judges the export, not today's `config/site.yaml`.
+`content/`, `sites/`, `deploy/`, `tests/`, `scripts/`, a root file such as `HANDOVER.md`,
+`LICENSE`, `CITATION.cff` or `uv.lock`, or any path-like `.py`, `.yaml`, `.md`, `.js`, `.json`,
+`.toml`, `.csv`, `.sh`, `.html`, `.css`, `.geojson`, `.txt`, `.ipynb` or `.cff` name), that every
+repo link carries the export's `commit_full`, and that the methodology page, English and German,
+links `repo.url`. It judges the export, not today's `config/site.yaml`. A bare file name with no
+directory (`retrieved.json`) is reported apart from an unlinked repo path: it is usually an error
+message on a page that failed to build (the plans page when its record is unreadable), so fix the
+cause and export again.
 `deploy-check --public` also fails on an export made without `--public`, which would go live
 without an Impressum. It exits 1 and lists the problems otherwise. Run it again after any hand
 edit.
@@ -227,10 +242,12 @@ TLS.
    200, `www` 308 to the apex and the tile file 206 to a byte range.
 
    Statistics (`stats --host <host>`) and the go-live (`golive-check --datalab <datalab-dir>
-   --site <dir>`, then `unlock`) are in the tool's help. With `--site`, `golive-check` also
-   fetches one file of the repository at the export's `commit_full` (`pyproject.toml`, by
-   `repo.file_url`) and lists anything but 200 as open: the commit is not pushed yet (§0).
-   `unlock` runs the go-live check first, empties the lock file and runs `verify`.
+   --site <dir>`, then `unlock --site <dir>`) are in the tool's help. With `--site`, `golive-check`
+   also fetches one file of the repository at the export's `commit_full` (`pyproject.toml`, by
+   `repo.file_url`, anonymously) and lists anything but 200 as open: the commit is not pushed, or
+   the repository is not publicly readable (a private repository answers 404). It also lists a
+   commit that no pushed tag points at (§0). `unlock` needs `--site` too and runs the same check
+   first, then empties the lock file and runs `verify`.
 
 ## 3. Datenschutz and Impressum
 

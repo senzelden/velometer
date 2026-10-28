@@ -60,7 +60,8 @@ uv run python tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datal
 
 The velometer export was made at `d04de95` with the Datalab values in a scratch copy of `config/`
 (name "Zählwerk Berlin Datalab", `lang: de`, `https://zaehlwerk-datalab.de/`, its `/impressum/` and
-`/datenschutz/`); the repo's `config/site.yaml` stays null until Task 12. Run in the Bash sandbox,
+`/datenschutz/`); the repo's `config/site.yaml` stays null (also at go-live: the real values
+live only in the scratch copy, `docs/deploy.md` §0). Run in the Bash sandbox,
 the export was stamped `d04de95-dirty` (the sandbox shows stub files in the working tree); run
 outside it, `d04de95`.
 

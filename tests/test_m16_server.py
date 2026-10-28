@@ -1204,32 +1204,71 @@ def test_live_verification_finds_a_site_still_locked():
     assert any("401" in p for p in problems)
 
 
+def ssh_calls(runner: FakeRunner) -> list[str]:
+    return [j for j in runner.joined() if j.startswith("ssh ")]
+
+
 def test_unlock_needs_a_passing_golive_check(deps, tmp_path):
     root, datalab = golive_fixture(tmp_path, open_items=True)
+    site = _export_with_repo(tmp_path)
+    r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
+               "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
+    assert r.exit_code == 1
+    assert ssh_calls(deps) == []
+
+
+def test_unlock_needs_the_velometer_export(deps, tmp_path):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--root", str(root), input="yes\n")  # fmt: skip
-    assert r.exit_code == 1
+    assert r.exit_code != 0
+    assert "--site" in r.output
     assert deps.calls == []
+
+
+@pytest.mark.parametrize("broken", ["private", "untagged"])
+def test_unlock_stays_locked_when_the_exports_repo_links_do_not_resolve(
+    deps, tmp_path, monkeypatch, broken
+):
+    """The repo probe runs on unlock: a 404 (private repo) or a commit without a pushed tag
+    keeps the lock (M16, R45 I1/I2)."""
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    site = _export_with_repo(tmp_path)
+    forge_status = 404 if broken == "private" else 200
+    monkeypatch.setattr(
+        srv.DEPS, "transport", httpx.MockTransport(lambda q: httpx.Response(forge_status))
+    )
+    deps.rules = [("ls-remote", "" if broken == "untagged" else TAGS)]
+    r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
+               "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
+    assert r.exit_code == 1, r.output
+    assert ssh_calls(deps) == []
 
 
 def test_unlock_empties_the_lock_after_a_typed_yes_and_verifies(deps, tmp_path, monkeypatch):
     root, datalab = golive_fixture(tmp_path, open_items=False)
-    monkeypatch.setattr(srv.DEPS, "transport", live_transport([]))
-    deps.rules = server_state(dr.lock_text(HASH))
+    site = _export_with_repo(tmp_path)
+    seen: list[httpx.Request] = []
+    monkeypatch.setattr(srv.DEPS, "transport", live_transport(seen))
+    deps.rules = [("ls-remote", TAGS), *server_state(dr.lock_text(HASH))]
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
-               "--root", str(root), input="yes\n")  # fmt: skip
+               "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
     assert r.exit_code == 0, r.output
+    assert any(q.url.host == "forge.example.org" for q in seen)  # the repo probe ran
     writes = [(a, i) for a, i in deps.calls if "lock.caddy" in " ".join(a) and i is not None]
     assert [i for _, i in writes] == [""]
     assert deps.index("lock.caddy") < deps.index("reload-or-restart caddy")
 
 
-def test_unlock_does_nothing_without_a_typed_yes(deps, tmp_path):
+def test_unlock_does_nothing_without_a_typed_yes(deps, tmp_path, monkeypatch):
     root, datalab = golive_fixture(tmp_path, open_items=False)
+    site = _export_with_repo(tmp_path)
+    monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(lambda q: httpx.Response(200)))
+    deps.rules = [("ls-remote", TAGS)]
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
-               "--root", str(root), input="\n")  # fmt: skip
+               "--site", str(site), "--root", str(root), input="\n")  # fmt: skip
     assert r.exit_code != 0
-    assert deps.calls == []
+    assert ssh_calls(deps) == []
 
 
 # --- stats (spec §4.4, ruling R3) -----------------------------------------------------------
@@ -1299,25 +1338,33 @@ def test_deploy_doc_step_4_describes_the_tool_not_the_hand_copy():
 
 REPO_SHA = "0123456789abcdef0123456789abcdef01234567"
 FILE_URL = "https://forge.example.org/owner/velometer/blob/{commit}/{path}"
+REPO_URL = "https://forge.example.org/owner/velometer"
+TAGS = f"1111111111111111111111111111111111111111\trefs/tags/export-0123456\n{REPO_SHA}\trefs/tags/export-0123456^{{}}\n"  # noqa: E501
 
 
 def _export_with_repo(tmp_path: Path, build: dict | None = None) -> Path:
     site = tmp_path / "velometer-export"
     site.mkdir(parents=True)
-    build = build or {"commit_full": REPO_SHA, "site": {"repo_file_url": FILE_URL}}
+    build = build or {
+        "commit_full": REPO_SHA,
+        "site": {"repo_url": REPO_URL, "repo_file_url": FILE_URL},
+    }
     (site / "build.json").write_text(json.dumps(build), encoding="utf-8")
     return site
 
 
 def test_golive_manual_items_name_the_pushed_commit(tmp_path):
+    """The rule: a manual line asks that the export's commit be readable at the repo."""
     root, datalab = golive_fixture(tmp_path, open_items=False)
     r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root))
-    assert "commit_full is pushed to repo.url" in r.output
+    manual = r.output.split("Manual confirmations", 1)[1]
+    (line,) = [x for x in manual.splitlines() if "commit_full" in x]
+    assert "repo.url" in line and "public" in line
 
 
 @pytest.mark.parametrize(("status", "open_items"), [(200, 0), (404, 1)])
 def test_golive_site_fetches_one_repo_link_at_the_exports_commit(
-    tmp_path, monkeypatch, status, open_items
+    deps, tmp_path, monkeypatch, status, open_items
 ):
     asked = []
 
@@ -1326,6 +1373,7 @@ def test_golive_site_fetches_one_repo_link_at_the_exports_commit(
         return httpx.Response(status)
 
     monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(handler))
+    deps.rules = [("ls-remote", TAGS)]
     root, datalab = golive_fixture(tmp_path, open_items=False)
     site = _export_with_repo(tmp_path)
     r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root), "--site", str(site))
@@ -1333,7 +1381,8 @@ def test_golive_site_fetches_one_repo_link_at_the_exports_commit(
     assert r.exit_code == open_items, r.output
     assert f"golive-check: {open_items} open item(s)" in r.output
     if open_items:
-        assert "404, want 200" in r.output and "0123456 pushed?" in r.output
+        assert "404, want 200" in r.output
+        assert "0123456 pushed and publicly readable at repo.url" in r.output
 
 
 def test_golive_site_without_repo_values_or_a_reachable_forge_is_open(tmp_path, monkeypatch):
@@ -1342,7 +1391,26 @@ def test_golive_site_without_repo_values_or_a_reachable_forge_is_open(tmp_path, 
 
     monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(down))
     (item,) = srv.repo_link_items(_export_with_repo(tmp_path), srv.DEPS.transport)
-    assert "ConnectError" in item and "pushed?" in item
+    assert "ConnectError" in item and "publicly readable" in item
     bare = _export_with_repo(tmp_path / "b", {"commit_full": REPO_SHA, "site": {}})
     (item,) = srv.repo_link_items(bare, httpx.MockTransport(_no_network))
     assert "no repo_file_url" in item
+
+
+def test_golive_site_asks_the_remote_for_a_tag_on_the_exports_commit(deps, tmp_path):
+    """I2 (R45): the pinned commit must carry a pushed tag, asked anonymously at repo_url."""
+    site = _export_with_repo(tmp_path)
+    deps.rules = [("ls-remote", TAGS)]
+    assert srv.repo_tag_items(site) == []
+    (argv, _) = deps.calls[deps.index("ls-remote")]
+    assert argv[-1] == REPO_URL and "GIT_TERMINAL_PROMPT=0" in argv
+    other = "2222222222222222222222222222222222222222\trefs/tags/export-old\n"
+    deps.rules = [("ls-remote", other)]
+    (item,) = srv.repo_tag_items(site)
+    assert "no tag" in item and "0123456" in item and "deploy.md" in item
+    deps.rules = [("ls-remote", (128, ""))]
+    (item,) = srv.repo_tag_items(site)
+    assert "exited 128" in item
+    bare = _export_with_repo(tmp_path / "b", {"commit_full": REPO_SHA, "site": {}})
+    (item,) = srv.repo_tag_items(bare)
+    assert "no repo_url" in item

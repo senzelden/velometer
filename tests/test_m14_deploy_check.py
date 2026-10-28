@@ -25,6 +25,7 @@ COMPLETE = {
         "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
     },
 }
+REPO_SENTENCE = "\nThe code is MIT-licensed.<!-- repo: It is in the [repository]({repo_url}). -->\n"
 # a public export needs a clean checkout (M16); the tests' tree may be mid-edit
 CLEAN_COMMIT = "0123456789abcdef0123456789abcdef01234567"
 
@@ -36,6 +37,10 @@ def good(tmp_path_factory):
     r = build_rich(tmp)
     db_path, cfg, maps, docs, plans = r
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
+    for name in ("methodology.md", "methodology.de.md"):  # the repo sentence (1.1c, R45 M5)
+        page = docs / name
+        text = page.read_text(encoding="utf-8") if page.is_file() else "# Methodology\n"
+        page.write_text(text + REPO_SENTENCE, encoding="utf-8")
     out = tmp / "good"
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
@@ -57,6 +62,22 @@ def _big_gz(out: Path) -> Path:
     gzs = sorted(p for p in _files(out) if p.suffix == ".gz")
     assert gzs
     return gzs[0]
+
+
+@pytest.mark.parametrize("page", ["methodology/index.html", "de/methodology/index.html"])
+def test_a_public_export_whose_methodology_does_not_link_the_repo_is_refused(site, page):
+    """Legal review 1.1c (R45 M5): each edition's methodology page links repo.url."""
+    out, _ = site
+    path = out / page
+    repo = COMPLETE["repo"]["url"]
+    text = path.read_text(encoding="utf-8")
+    assert f'href="{repo}"' in text
+    path.write_text(text.replace(f'href="{repo}"', 'href="https://elsewhere.example/"'))
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if "does not link the repository" in p and page in p], problems
+    path.unlink()
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if f"{page} is missing" in p], problems
 
 
 def test_good_export_is_ready(site):

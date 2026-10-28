@@ -10,7 +10,7 @@ from pathlib import Path
 from markupsafe import escape
 
 from velometer.app import export
-from velometer.app.repo_links import bare_repo_paths
+from velometer.app.repo_links import bare_repo_paths, is_bare_name
 from velometer.app.urls import normalise_base
 
 _META_CSP = re.compile(r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"')
@@ -92,14 +92,47 @@ FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url")
 
 def _bare_code_problems(out: Path) -> list[str]:
     """Every page that prints a repo path (`<code>docs/…</code>`, …) outside a link: a reader
-    cannot open it (M16, R42; a public export links them to the repository)."""
+    cannot open it (M16, R42; a public export links them to the repository). A bare file name
+    (no directory, not a root file) is reported apart: it is usually UI text, such as an error
+    message of a page that failed to build, not a citation (R45, M4)."""
+
+    def shown(names: list[str]) -> str:
+        return ", ".join(names[:3]) + (f" and {len(names) - 3} more" if len(names) > 3 else "")
+
     problems = []
     for page in sorted(out.rglob("*.html")):
         bare = bare_repo_paths(page.read_text(encoding="utf-8"))
-        if bare:
-            shown = ", ".join(bare[:3]) + (f" and {len(bare) - 3} more" if len(bare) > 3 else "")
-            rel = page.relative_to(out).as_posix()
-            problems.append(f"{rel}: {len(bare)} repo path(s) not linked to the repo: {shown}")
+        names = [b for b in bare if is_bare_name(b)]
+        paths = [b for b in bare if not is_bare_name(b)]
+        rel = page.relative_to(out).as_posix()
+        if paths:
+            problems.append(
+                f"{rel}: {len(paths)} repo path(s) not linked to the repo: {shown(paths)} "
+                "(an untracked or misspelt path; or a path the page prints outside the linker)"
+            )
+        if names:
+            problems.append(
+                f"{rel}: {len(names)} file name(s) in <code> with no repo path: {shown(names)} "
+                "(an error message on the page? fix its cause; or cite the file by its repo path)"
+            )
+    return problems
+
+
+METHODOLOGY_PAGES = ("methodology/index.html", "de/methodology/index.html")
+
+
+def _methodology_problems(out: Path, repo_url: str) -> list[str]:
+    """The methodology page, in each edition, links the repository itself (legal review 1.1c:
+    the code behind every figure is published and linked; R45, M5)."""
+    want = f'href="{escape(repo_url)}"'
+    problems = []
+    for rel in METHODOLOGY_PAGES:
+        page = out / rel
+        text = page.read_text(encoding="utf-8") if page.is_file() else None
+        if text is None:
+            problems.append(f"public export, but {rel} is missing (it must link {repo_url})")
+        elif want not in text:
+            problems.append(f"public export, but {rel} does not link the repository {repo_url}")
     return problems
 
 
@@ -161,6 +194,7 @@ def _public_problems(out: Path, build: dict) -> list[str]:
             f"public export, but {n} page(s) lack the Datalab, Impressum or privacy "
             f"link of {export.BUILD_FILE} in the footer: {shown}"
         )
+    problems += _methodology_problems(out, site["repo_url"])
     return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 

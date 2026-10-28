@@ -22,9 +22,16 @@ ROOT = Path(__file__).resolve().parents[3]
 
 # what a public page must never print unlinked (the deploy-check guard): a path under one of
 # these directories, one of these root files, or any path-like name of a source or text file
-REPO_DIRS = ("docs", "config", "src", "tools", "content", "sites", "deploy", "tests")
-REPO_ROOT_FILES = re.compile(r"(HANDOVER\.md|pyproject\.toml|README(\.[\w.-]+)?|CLAUDE\.md)")
-FILE_LIKE = re.compile(r"[\w.-]+(/[\w.-]+)*\.(py|ya?ml|md|mjs|js|json|toml)")
+REPO_DIRS = (
+    "docs", "config", "src", "tools", "content", "sites", "deploy", "tests", "scripts",
+)  # fmt: skip
+REPO_ROOT_FILES = re.compile(
+    r"HANDOVER\.md|pyproject\.toml|README(\.[\w.-]+)?|CLAUDE\.md|LICENSE(\.[\w.-]+)?"
+    r"|CITATION\.cff|uv\.lock|\.python-version"
+)
+FILE_LIKE = re.compile(
+    r"[\w.-]+(/[\w.-]+)*\.(py|ya?ml|md|mjs|js|json|toml|csv|sh|html|css|geojson|txt|ipynb|cff)"
+)
 
 _TOKEN = re.compile(
     r"(?P<script><script\b.*?</script\s*>)|(?P<comment><!--.*?-->)|(?P<open><a\b[^>]*>)"
@@ -189,6 +196,12 @@ def looks_like_repo_path(text: str) -> bool:
         or REPO_ROOT_FILES.fullmatch(text) is not None
         or FILE_LIKE.fullmatch(text) is not None
     )
+
+
+def is_bare_name(text: str) -> bool:
+    """A flagged `<code>` text that is a file name with no directory and no repo root file
+    (`retrieved.json`): usually a name in UI text, such as an error message, not a citation."""
+    return "/" not in text and REPO_ROOT_FILES.fullmatch(text) is None
 
 
 def bare_repo_paths(page: str) -> list[str]:

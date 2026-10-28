@@ -207,6 +207,35 @@ def test_bare_repo_paths_finds_code_outside_links():
     ]  # fmt: skip
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "LICENSE", "CITATION.cff", "uv.lock", ".python-version", "scripts/x", "scripts/",
+        "data/cities.csv", "deploy/run.sh", "page/index.html", "static/site.css",
+        "maps/berlin.geojson", "notes/a.txt", "nb/a.ipynb", "x/y.cff",
+    ],
+)  # fmt: skip
+def test_the_guard_catches_root_files_scripts_and_every_text_extension(text):
+    """R45 M2: the files and extensions the repo holds that the first guard missed."""
+    assert bare_repo_paths(f"<p><code>{text}</code></p>") == [text]
+
+
+def test_deploy_check_tells_a_bare_file_name_from_an_unlinked_path(tmp_path):
+    """R45 M4: a name with no directory (an error message's `retrieved.json`) is reported
+    apart from a repo path left unlinked, and each says what to check."""
+    from velometer.app.deploy_check import _bare_code_problems
+
+    (tmp_path / "index.html").write_text(
+        "<p><code>retrieved.json</code> <code>docs/review/x.md</code> <code>LICENSE</code></p>"
+    )
+    problems = _bare_code_problems(tmp_path)
+    (paths,) = [p for p in problems if "repo path(s) not linked" in p]
+    (names,) = [p for p in problems if "file name(s)" in p]
+    assert "docs/review/x.md" in paths and "LICENSE" in paths and "retrieved.json" not in paths
+    assert "retrieved.json" in names and "error message" in names
+    assert "untracked" in paths
+
+
 # --- the pages ----------------------------------------------------------------------------------
 
 

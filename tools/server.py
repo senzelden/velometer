@@ -119,8 +119,8 @@ MANUAL = [
     "go live now",
     "15 days after the first log line on the server: check that roll_keep_for pruned every "
     "rolled log older than 14 days (ls -l /var/log/caddy)",
-    "the velometer export's build.json commit_full is pushed to repo.url (else every repo link "
-    "404s; golive-check --site DIR fetches one)",
+    "the velometer export's build.json commit_full is pushed and publicly readable at repo.url "
+    "(a private repo 404s every repo link; golive-check --site DIR fetches one anonymously)",
 ]
 # the tracked root file golive-check --site fetches at the export's commit (M16, R42)
 REPO_PROBE_FILE = "pyproject.toml"
@@ -964,10 +964,15 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
     return items
 
 
+_PUSHED = (
+    "is commit {} pushed and publicly readable at repo.url? a private repo is the likely cause"
+)
+
+
 def repo_link_items(site: Path, transport=None) -> list[str]:
     """The velometer export's repo links reach the repository: one file (REPO_PROBE_FILE) at
     the export's `commit_full`, by `build.json` `site.repo_file_url`, answers 200 (else the
-    commit is not pushed and every repo link 404s). [] when it does."""
+    commit is not pushed and publicly readable, and every repo link 404s). [] when it does."""
     try:
         build = json.loads((site / "build.json").read_text(encoding="utf-8"))
         pattern, commit = build["site"]["repo_file_url"], build["commit_full"]
@@ -980,9 +985,32 @@ def repo_link_items(site: Path, transport=None) -> list[str]:
         with httpx.Client(transport=transport, follow_redirects=True, timeout=20) as c:
             status = c.get(url).status_code
     except httpx.HTTPError as e:
-        return [f"repo link {url}: {e.__class__.__name__} (is commit {commit[:7]} pushed?)"]
+        return [f"repo link {url}: {e.__class__.__name__} ({_PUSHED.format(commit[:7])})"]
     if status != 200:
-        return [f"repo link {url}: {status}, want 200 (is commit {commit[:7]} pushed?)"]
+        return [f"repo link {url}: {status}, want 200 ({_PUSHED.format(commit[:7])})"]
+    return []
+
+
+def repo_tag_items(site: Path) -> list[str]:
+    """A tag at `build.json` `site.repo_url` points at the export's `commit_full` (deploy.md §0),
+    so the pinned commit stays reachable after a merge or a deleted branch. Asked anonymously
+    with `git ls-remote --tags` (never prompts). [] when one does."""
+    try:
+        build = json.loads((site / "build.json").read_text(encoding="utf-8"))
+        url, commit = build["site"]["repo_url"], build["commit_full"]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return [f"{site}/build.json: no repo_url and commit_full ({e.__class__.__name__})"]
+    if not isinstance(url, str) or not isinstance(commit, str):
+        return [f"{site}/build.json: no repo_url and commit_full"]
+    r = DEPS.runner(["env", "GIT_TERMINAL_PROMPT=0", "git", "ls-remote", "--tags", url])
+    if r.returncode != 0:
+        return [f"git ls-remote --tags {url}: exited {r.returncode} ({_PUSHED.format(commit[:7])})"]
+    tagged = {line.split("\t", 1)[0] for line in r.stdout.splitlines() if "\t" in line}
+    if commit not in tagged:
+        return [
+            f"no tag at {url} points at commit {commit[:7]}: tag the export's commit and push "
+            "the tag (docs/deploy.md §0)"
+        ]
     return []
 
 
@@ -990,6 +1018,7 @@ def _golive(root: Path, datalab: Path, site: Path | None = None) -> list[str]:
     items = golive_items(root, datalab)
     if site is not None:
         items += repo_link_items(site, DEPS.transport)
+        items += repo_tag_items(site)
     for item in items:
         typer.echo(f"open: {item}")
     for w in golive_waivers(root):
@@ -1005,7 +1034,7 @@ def _golive(root: Path, datalab: Path, site: Path | None = None) -> list[str]:
 def golive_check(
     datalab: Path = typer.Option(..., "--datalab", help="The Datalab build to go live."),  # noqa: B008
     site: Path | None = typer.Option(  # noqa: B008
-        None, "--site", help="The velometer export: check one repo link answers 200."
+        None, "--site", help="The velometer export: one repo link answers 200, a tag pins it."
     ),
     root: Path = typer.Option(ROOT, "--root", hidden=True),  # noqa: B008
 ) -> None:
@@ -1079,6 +1108,9 @@ def unlock(
     host: str = _host_option(),
     domain: str = typer.Option(..., "--domain"),
     datalab: Path = typer.Option(..., "--datalab", help="The Datalab build that is live."),  # noqa: B008
+    site: Path = typer.Option(  # noqa: B008
+        ..., "--site", help="The velometer export that is live: its repo links must resolve."
+    ),
     root: Path = typer.Option(ROOT, "--root", hidden=True),  # noqa: B008
     user: str = typer.Option(USER, "--user"),
 ) -> None:
@@ -1086,7 +1118,7 @@ def unlock(
     t = Target(host, user)
     try:
         check_domain(domain)
-        if _golive(root, datalab):
+        if _golive(root, datalab, site):
             raise ServerError("golive-check has open items; the sites stay locked")
         confirm([f"empty {LOCK} on {host}: both sites go public", "reload Caddy", "probe them"])
         _, served = running_state(t)
