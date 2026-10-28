@@ -169,3 +169,18 @@ without `--force`, so the CLI cannot replace the reviewed table by accident.
 ```bash
 uv run python tools/press_review.py --out "$SCRATCH/press.md" [--force] [PATH ...]
 ```
+
+## readme_shots.py
+
+Renders the README's images into `docs/img/readme/`: the Berlin tier map and the compare chart,
+each in the light and the dark theme, clipped to the page elements at twice the CSS resolution and
+reduced to 256 colours. It uses `render_pass.py`'s Chrome and server helpers. The tier map needs
+the basemap tiles, which an export does not contain, so the usual source is the deployed site:
+
+```bash
+uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de \
+    --auth preview:"$VELOMETER_PREVIEW_PASSWORD"   # while the site is locked
+```
+
+Re-run it when the pages change, and update the README's alt texts and caption to what the new
+images show.
