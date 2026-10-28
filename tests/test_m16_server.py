@@ -71,6 +71,7 @@ def deps(monkeypatch, tmp_path):
     monkeypatch.setattr(srv.DEPS, "now", lambda: NOW)
     monkeypatch.setattr(srv.DEPS, "check_site", lambda path: [])
     monkeypatch.setattr(srv.DEPS, "git_commit", lambda: "abcdef1")
+    monkeypatch.setattr(srv.DEPS, "git_dirty", lambda: False)
     monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(_no_network))
     monkeypatch.setattr(srv, "STATS_DIR", tmp_path / "data" / "stats")
     monkeypatch.setenv("HCLOUD_TOKEN", "test-token")
@@ -434,15 +435,43 @@ def test_the_build_name_is_the_exports_commit_and_the_deploy_time(deps, tmp_path
     assert srv.RELEASE.fullmatch(REL)
 
 
-def test_the_datalab_build_is_named_after_the_local_commit(deps, tmp_path):
-    d = site_dir(tmp_path)
+def datalab_dir(tmp_path: Path, stamp_value: str | None = "repo") -> Path:
+    """A Datalab build stamped from the repo's committed settings (or `stamp_value`)."""
+    from velometer import datalab as dl
+
+    d = site_dir(tmp_path, "datalab-build")
     (d / "build.json").unlink()
+    if stamp_value == "repo":
+        stamp_value = dl.inputs_stamp(dl.load_config(dl.DEFAULT_CONFIG))
+    if stamp_value is not None:
+        (d / "build.json").write_text(json.dumps({dl.STAMP_KEY: stamp_value}), encoding="utf-8")
+    return d
+
+
+def test_the_datalab_build_is_named_after_the_local_commit(deps, tmp_path):
+    d = datalab_dir(tmp_path)
     deps.rules = [("readlink", (1, "")), ("ls -1A /srv/datalab/releases", "")]
     r = invoke("deploy", "datalab", str(d), *HOST, input="yes\n")
     assert r.exit_code == 0, r.output
     assert any("mkdir -p /srv/datalab/releases/abcdef1-20261022T093005" in j for j in deps.joined())
     (rsync,) = [a for a, _ in deps.calls if a[0] == "rsync"]
     assert not any(a.startswith("--link-dest") for a in rsync)  # no previous release
+
+
+@pytest.mark.parametrize("case", ["dirty", "no stamp", "stale stamp"])
+def test_deploy_datalab_refuses_a_dirty_tree_or_a_build_not_from_head(deps, tmp_path, case):
+    """M7: the release is named after HEAD, so the tree is clean and the build carries the
+    stamp of the committed settings."""
+    stamp_value = {"dirty": "repo", "no stamp": None, "stale stamp": "0" * 64}[case]
+    d = datalab_dir(tmp_path, stamp_value)
+    if case == "dirty":
+        srv.DEPS.git_dirty = lambda: True
+    r = invoke("deploy", "datalab", str(d), *HOST, input="yes\n")
+    assert r.exit_code == 1
+    assert {"dirty": "uncommitted", "no stamp": "no build stamp", "stale stamp": "build it again"}[
+        case
+    ] in r.output
+    assert deps.calls == []
 
 
 @pytest.mark.parametrize("rc", [23, 255, -9, -15])
@@ -959,7 +988,17 @@ def golive_fixture(tmp_path: Path, *, open_items: bool) -> tuple[Path, Path]:
     body = "[[Name des Betreibers]]" if open_items else "Erika Mustermann"
     (datalab / "impressum" / "index.html").write_text(f"<p>{body}</p>\n", encoding="utf-8")
     (datalab / "index.html").write_text("<p>ok</p>\n", encoding="utf-8")
+    stamp(root, datalab)
     return root, datalab
+
+
+def stamp(root: Path, datalab: Path) -> None:
+    """The build stamp `velometer datalab build` writes, for the fixture's settings."""
+    from velometer import datalab as dl
+
+    site = root / "sites" / "datalab"
+    value = dl.inputs_stamp(dl.load_config(site / "site.yaml"), site)
+    (datalab / "build.json").write_text(json.dumps({dl.STAMP_KEY: value}), encoding="utf-8")
 
 
 def test_golive_check_lists_every_open_item_and_exits_1(tmp_path):
@@ -1002,6 +1041,7 @@ def test_golive_items_reads_each_rule_separately(tmp_path):
     data = yaml.safe_load(cfg.read_text("utf-8"))
     data["contact_email"] = "   "
     cfg.write_text(yaml.safe_dump(data), "utf-8")
+    stamp(root2, datalab2)
     (item,) = srv.golive_items(root2, datalab2)
     assert "contact_email" in item
 
@@ -1013,6 +1053,7 @@ def test_golive_a_chosen_form_without_an_address_is_open(tmp_path):
     data = yaml.safe_load(cfg.read_text("utf-8"))
     data["operator"]["address"] = None
     cfg.write_text(yaml.safe_dump(data), "utf-8")
+    stamp(root, datalab)  # built from these settings
     (item,) = srv.golive_items(root, datalab)
     assert "operator.address is null" in item
 
@@ -1029,6 +1070,7 @@ def _no_address(tmp_path: Path, legal_extra: str) -> tuple[Path, Path]:
     data = yaml.safe_load(cfg.read_text("utf-8"))
     data["operator"]["address"] = None
     cfg.write_text(yaml.safe_dump(data), "utf-8")
+    stamp(root, datalab)
     legal = root / "docs" / "review" / "m16-legal.md"
     legal.write_text(legal.read_text("utf-8") + legal_extra, "utf-8")
     return root, datalab
@@ -1244,13 +1286,39 @@ def ssh_calls(runner: FakeRunner) -> list[str]:
     return [j for j in runner.joined() if j.startswith("ssh ")]
 
 
+def writes(runner: FakeRunner) -> list[str]:
+    """ssh calls that are more than the go-live check's reads (readlink and the digest)."""
+    reads = ("readlink /srv/", "| LC_ALL=C sort -z | xargs -0 -r sha256sum")
+    return [j for j in ssh_calls(runner) if not any(r in j for r in reads)]
+
+
+LIVE = "1234abc-20261022T093005"
+
+
+def digest_text(path: Path) -> str:
+    return "".join(f"{h}  ./{p}\n" for p, h in srv.tree_digest(path).items())
+
+
+def live_rules(site: Path | None, datalab: Path, *, velometer_text=None, datalab_text=None):
+    """The server's answers: both `current` links and the digests of what they hold."""
+    rules = []
+    for name, path, text in (
+        ("velometer", site, velometer_text),
+        ("datalab", datalab, datalab_text),
+    ):
+        rules.append((f"readlink /srv/{name}/current", f"releases/{LIVE}\n"))
+        body = text if text is not None else (digest_text(path) if path else "")
+        rules.append((f"cd /srv/{name}/releases/{LIVE} && find", body))
+    return rules
+
+
 def test_unlock_needs_a_passing_golive_check(deps, tmp_path):
     root, datalab = golive_fixture(tmp_path, open_items=True)
     site = _export_with_repo(tmp_path)
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
     assert r.exit_code == 1
-    assert ssh_calls(deps) == []
+    assert writes(deps) == []
 
 
 def test_unlock_needs_the_velometer_export(deps, tmp_path):
@@ -1278,7 +1346,7 @@ def test_unlock_stays_locked_when_the_exports_repo_links_do_not_resolve(
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
     assert r.exit_code == 1, r.output
-    assert ssh_calls(deps) == []
+    assert writes(deps) == []
 
 
 def test_unlock_empties_the_lock_after_a_typed_yes_and_verifies(deps, tmp_path, monkeypatch):
@@ -1286,7 +1354,11 @@ def test_unlock_empties_the_lock_after_a_typed_yes_and_verifies(deps, tmp_path, 
     site = _export_with_repo(tmp_path)
     seen: list[httpx.Request] = []
     monkeypatch.setattr(srv.DEPS, "transport", live_transport(seen))
-    deps.rules = [("ls-remote", TAGS), *server_state(dr.lock_text(HASH))]
+    deps.rules = [
+        ("ls-remote", TAGS),
+        *live_rules(site, datalab),
+        *server_state(dr.lock_text(HASH)),
+    ]
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
     assert r.exit_code == 0, r.output
@@ -1300,11 +1372,11 @@ def test_unlock_does_nothing_without_a_typed_yes(deps, tmp_path, monkeypatch):
     root, datalab = golive_fixture(tmp_path, open_items=False)
     site = _export_with_repo(tmp_path)
     monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(lambda q: httpx.Response(200)))
-    deps.rules = [("ls-remote", TAGS)]
+    deps.rules = [("ls-remote", TAGS), *live_rules(site, datalab)]
     r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
                "--site", str(site), "--root", str(root), input="\n")  # fmt: skip
     assert r.exit_code != 0
-    assert ssh_calls(deps) == []
+    assert writes(deps) == []
 
 
 # --- stats (spec §4.4, ruling R3) -----------------------------------------------------------
@@ -1450,3 +1522,126 @@ def test_golive_site_asks_the_remote_for_a_tag_on_the_exports_commit(deps, tmp_p
     bare = _export_with_repo(tmp_path / "b", {"commit_full": REPO_SHA, "site": {}})
     (item,) = srv.repo_tag_items(bare)
     assert "no repo_url" in item
+
+
+# --- go-live judges what is live (final review I1, M2) ----------------------------------------
+
+
+def test_golive_a_build_without_a_stamp_or_with_a_stale_one_is_open(tmp_path):
+    """The rule: the Datalab build must have been made from the settings golive-check reads."""
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    assert srv.golive_items(root, datalab) == []
+    cfg = root / "sites" / "datalab" / "site.yaml"
+    data = yaml.safe_load(cfg.read_text("utf-8"))
+    data["operator"]["address"] = "Neue Straße 3\n10115 Berlin"  # set after the build
+    cfg.write_text(yaml.safe_dump(data), "utf-8")
+    (item,) = srv.golive_items(root, datalab)
+    assert "stale build" in item
+    (datalab / "build.json").unlink()
+    (item,) = srv.golive_items(root, datalab)
+    assert "no build stamp" in item
+
+
+def _golive_host(root, datalab, site):
+    return invoke("golive-check", "--datalab", str(datalab), "--site", str(site), "--root",
+                  str(root), *HOST)  # fmt: skip
+
+
+def _live_ok(deps, monkeypatch, tmp_path):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    site = _export_with_repo(tmp_path)
+    (site / "index.html").write_text("<p>v</p>\n", encoding="utf-8")
+    monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(lambda q: httpx.Response(200)))
+    return root, datalab, site
+
+
+def test_golive_host_passes_when_both_live_releases_are_the_checked_directories(
+    deps, tmp_path, monkeypatch
+):
+    root, datalab, site = _live_ok(deps, monkeypatch, tmp_path)
+    deps.rules = [("ls-remote", TAGS), *live_rules(site, datalab)]
+    r = _golive_host(root, datalab, site)
+    assert r.exit_code == 0, r.output
+    digests = [j for j in deps.joined() if "sha256sum" in j]
+    assert [d.split(" && ")[0].split()[-1] for d in digests] == [
+        f"/srv/datalab/releases/{LIVE}", f"/srv/velometer/releases/{LIVE}"
+    ]  # fmt: skip
+
+
+@pytest.mark.parametrize("change", ["changed", "missing", "extra", "stale stamp"])
+@pytest.mark.parametrize("which", ["velometer", "datalab"])
+def test_golive_host_refuses_a_live_release_that_differs(
+    deps, tmp_path, monkeypatch, change, which
+):
+    root, datalab, site = _live_ok(deps, monkeypatch, tmp_path)
+    local = site if which == "velometer" else datalab
+    text = digest_text(local)
+    if change == "changed":
+        text = text.replace(srv.tree_digest(local)["index.html"], "0" * 64)
+    elif change == "missing":
+        text = "".join(x for x in text.splitlines(True) if not x.endswith("./index.html\n"))
+    elif change == "extra":
+        text += f"{'1' * 64}  ./old/page.html\n"
+    else:  # the server holds the build from before a settings change: build.json differs
+        assert "build.json" in text
+        text = text.replace(srv.tree_digest(local)["build.json"], "2" * 64)
+    deps.rules = [("ls-remote", TAGS), *live_rules(site, datalab, **{f"{which}_text": text})]
+    r = _golive_host(root, datalab, site)
+    assert r.exit_code == 1, r.output
+    (line,) = [x for x in r.output.splitlines() if "the live release" in x]
+    assert line.startswith(f"open: {which}: the live release {LIVE} is not {local}")
+
+
+def test_golive_host_without_anything_deployed_or_without_site_is_open(deps, tmp_path, monkeypatch):
+    root, datalab, site = _live_ok(deps, monkeypatch, tmp_path)
+    deps.rules = [("ls-remote", TAGS), ("readlink", (1, ""))]
+    r = _golive_host(root, datalab, site)
+    assert r.exit_code == 1
+    assert "datalab: cannot compare" in r.output and "velometer: cannot compare" in r.output
+    deps.rules = live_rules(None, datalab)
+    r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root), *HOST)
+    assert r.exit_code == 1
+    assert "--host given without --site" in r.output
+
+
+def test_unlock_refuses_when_the_live_release_is_not_the_checked_export(
+    deps, tmp_path, monkeypatch
+):
+    """The review's scenario: a new export is checked, the old release is still live."""
+    root, datalab, site = _live_ok(deps, monkeypatch, tmp_path)
+    old = tmp_path / "old-export"
+    old.mkdir()
+    (old / "index.html").write_text("<p>old</p>\n", encoding="utf-8")
+    deps.rules = [
+        ("ls-remote", TAGS),
+        *live_rules(site, datalab, velometer_text=digest_text(old)),
+        *server_state(dr.lock_text(HASH)),
+    ]
+    r = invoke("unlock", *HOST, "--domain", "example.org", "--datalab", str(datalab),
+               "--site", str(site), "--root", str(root), input="yes\n")  # fmt: skip
+    assert r.exit_code == 1, r.output
+    assert "velometer: the live release" in r.output
+    assert writes(deps) == []
+
+
+def test_the_digest_command_holds_only_the_guarded_release_path(deps):
+    deps.rules = [("readlink /srv/velometer/current", "releases/$(reboot)\n")]
+    with pytest.raises(srv.ServerError, match="not a release"):
+        srv.live_digest(srv.Target("203.0.113.10"), "velometer")
+    assert not [j for j in deps.joined() if "sha256sum" in j]
+
+
+@pytest.mark.parametrize(
+    "host", ["-oProxyCommand=touch /tmp/x", "deploy@203.0.113.10", "a b", "", "203.0.113.10;id"]
+)
+def test_a_host_that_is_no_address_or_name_stops_every_command(deps, host):
+    for args in (("stats",), ("deploy", "tiles", "/nonexistent"), ("setup", "--domain", "e.org")):
+        r = invoke(*args, "--host", host)
+        assert r.exit_code == 1, (args, r.output)
+        assert "not an IP address or a host name" in r.output
+    assert deps.calls == []
+
+
+@pytest.mark.parametrize("host", ["203.0.113.10", "2001:db8::1", "velometer.example.org", "vm"])
+def test_addresses_and_host_names_are_hosts(host):
+    assert srv.check_host(host) == host

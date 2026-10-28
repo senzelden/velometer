@@ -14,8 +14,8 @@ names its `pass insert` command. The preview password only ever travels on stdin
     uv run python tools/server.py deploy velometer|datalab|tiles PATH --host IP
     uv run python tools/server.py verify --domain D [--locked]
     uv run python tools/server.py stats --host IP
-    uv run python tools/server.py golive-check --datalab DIR
-    uv run python tools/server.py unlock --host IP --domain D --datalab DIR
+    uv run python tools/server.py golive-check --datalab DIR [--site DIR] [--host IP]
+    uv run python tools/server.py unlock --host IP --domain D --datalab DIR --site DIR
 
 Releases: `deploy` uploads a site with rsync (`--link-dest` to the live release, so only changed
 files travel) into a fresh `/srv/<site>/releases/<commit>-<UTC time>/`, writes `.complete` into
@@ -24,6 +24,10 @@ it only after rsync exits 0, and then switches `/srv/<site>/current` with `ln -s
 complete releases are kept; older ones are removed one by one, each path checked against
 `RELEASE` first. The tile file is no release: it is uploaded to a temporary name in
 `/srv/tiles/` and renamed into place.
+
+Go-live judges what is live: `unlock` (and `golive-check --host`) compares a content digest of
+each site's live release (`/srv/<site>/current`, every file's path and sha256) with the local
+`--site` and `--datalab` it checked, and refuses on any difference.
 """
 
 import hashlib
@@ -148,6 +152,15 @@ def _git_commit() -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+def _git_dirty() -> bool:
+    """Whether a tracked file differs from HEAD (untracked files do not count, as in export)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=ROOT, capture_output=True, text=True,
+    )  # fmt: skip
+    return r.returncode != 0 or bool(r.stdout.strip())
+
+
 def _check_site(path: Path) -> list[str]:
     from velometer.app.deploy_check import deploy_problems
 
@@ -163,6 +176,7 @@ class Deps:
     now: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     check_site: Callable[[Path], list[str]] = _check_site
     git_commit: Callable[[], str] = _git_commit
+    git_dirty: Callable[[], bool] = _git_dirty
 
 
 DEPS = Deps()
@@ -228,10 +242,35 @@ def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def check_host(host: str) -> str:
+    """An IPv4 or IPv6 address or a hostname; anything else (a leading `-` that ssh or rsync would
+    read as an option, a `user@`, spaces) stops the step (final review M2)."""
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except ValueError:
+        pass
+    if not HOSTNAME.fullmatch(host):
+        raise ServerError(f"--host: not an IP address or a host name: {host!r}")
+    return host
+
+
+# a host name or an ssh alias: dot-separated labels of letters, digits and inner hyphens
+HOSTNAME = re.compile(
+    r"[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*"
+)
+USER_NAME = re.compile(r"[a-z_][a-z0-9_-]*", re.ASCII)
+
+
 @dataclass(frozen=True)
 class Target:
     host: str
     user: str = USER
+
+    def __post_init__(self):
+        check_host(self.host)
+        if not USER_NAME.fullmatch(self.user):
+            raise ServerError(f"--user: not a user name: {self.user!r}")
 
     @property
     def login(self) -> str:
@@ -260,6 +299,13 @@ def _host_option() -> str:
 def _fail(e: Exception) -> None:
     typer.echo(f"error: {e}", err=True)
     raise typer.Exit(1)
+
+
+def _target(host: str, user: str) -> Target:
+    try:
+        return Target(host, user)
+    except ServerError as e:
+        _fail(e)
 
 
 # --- Hetzner API ----------------------------------------------------------------------------
@@ -506,7 +552,7 @@ def setup(
 ) -> None:
     """Bring the server's Caddy and GoAccess files up to date, and the running Caddy up to the
     files (idempotent; asks for yes)."""
-    t = Target(host, user)
+    t = _target(host, user)
     try:
         wanted = {
             REMOTE_CADDYFILE: CADDYFILE.read_text(encoding="utf-8"),
@@ -633,6 +679,33 @@ def build_name(site: str, src: Path, now: datetime) -> str:
     return f"{commit}-{now.strftime('%Y%m%dT%H%M%S')}"
 
 
+def check_datalab_build(src: Path, root: Path = ROOT) -> None:
+    """A Datalab release is named after the local HEAD (ruling R37), so the tree must be clean
+    and the build must carry the stamp of the committed settings and templates (M7)."""
+    from velometer.datalab import DatalabError, inputs_stamp, load_config, read_stamp
+
+    if DEPS.git_dirty():
+        raise ServerError(
+            "the working tree has uncommitted changes to tracked files: the release would be "
+            "named after a commit it was not built from; commit first, then build and deploy"
+        )
+    stamp = read_stamp(src)
+    if stamp is None:
+        raise ServerError(
+            f"{src}: no build stamp (build.json); build it with velometer datalab build"
+        )
+    site_dir = root / "sites" / "datalab"
+    try:
+        want = inputs_stamp(load_config(site_dir / "site.yaml"), site_dir)
+    except (DatalabError, ValueError) as e:
+        raise ServerError(f"sites/datalab/site.yaml: not readable or invalid ({e})") from None
+    if stamp != want:
+        raise ServerError(
+            f"{src} was built from other settings or templates than sites/datalab/ at HEAD; "
+            "build it again"
+        )
+
+
 def _current(t: Target, site: str) -> str | None:
     """The release `current` points to; None when there is no `current` yet. A link to anything
     but a release stops the deploy."""
@@ -659,6 +732,8 @@ def deploy_site(t: Target, site: str, src: Path) -> None:
         problems = DEPS.check_site(src)
         if problems:
             raise ServerError("deploy-check: " + "; ".join(problems))
+    else:
+        check_datalab_build(src)
     build = build_name(site, src, DEPS.now())
     root = f"{SITE_ROOT}/{site}"
     release = guard_release(f"{root}/releases/{build}")
@@ -721,7 +796,7 @@ def deploy(
     user: str = typer.Option(USER, "--user"),
 ) -> None:
     """Upload a build as a new release and switch to it (asks for yes)."""
-    t = Target(host, user)
+    t = _target(host, user)
     try:
         if what in SITES:
             deploy_site(t, what, path)
@@ -771,7 +846,7 @@ def stats_path(now: datetime, base: Path | None = None) -> Path:
 def stats(host: str = _host_option(), user: str = typer.Option(USER, "--user")) -> None:
     """GoAccess over the last 14 days of both sites' logs, built on the server (as root: the logs
     are 0600) and saved to data/stats/<date>.html."""
-    t = Target(host, user)
+    t = _target(host, user)
     try:
         r = t.ssh("sudo bash -s", input=STATS_SCRIPT, check=False)
         if r.returncode != 0 or not re.match(r"\s*<!DOCTYPE html|\s*<html", r.stdout, re.I):
@@ -935,7 +1010,14 @@ def _read(path: Path, items: list[str]) -> str | None:
 def golive_items(root: Path, datalab: Path) -> list[str]:
     """Every automatable reason not to go live (spec §4.7, ruling R31); [] when none is open.
     A file that is missing or cannot be read is an open item itself."""
-    from velometer.datalab import DatalabError, deferred_missing, load_config, placeholders
+    from velometer.datalab import (
+        DatalabError,
+        deferred_missing,
+        inputs_stamp,
+        load_config,
+        placeholders,
+        read_stamp,
+    )
 
     items = []
     review = root / "docs" / "review"
@@ -960,6 +1042,15 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
     if not (datalab / "index.html").is_file():
         items.append(f"{datalab}: no built Datalab site (velometer datalab build)")
     items += [f"placeholder left in the Datalab build: {p}" for p in placeholders(datalab)]
+    if (datalab / "index.html").is_file():
+        stamp = read_stamp(datalab)
+        if stamp is None:
+            items.append(f"{datalab}: no build stamp (build.json); build it again")
+        elif cfg is not None and stamp != inputs_stamp(cfg, root / "sites" / "datalab"):
+            items.append(
+                f"{datalab}: built from other settings or templates than sites/datalab/ "
+                "(a stale build); build it again"
+            )
     if legal is not None:
         items += _legal_open(legal)
     press = _read(review / "m16-press.md", items)
@@ -1018,11 +1109,86 @@ def repo_tag_items(site: Path) -> list[str]:
     return []
 
 
-def _golive(root: Path, datalab: Path, site: Path | None = None) -> list[str]:
+DIGEST_LINE = re.compile(r"([0-9a-f]{64})  \./(.+)")
+
+
+def tree_digest(path: Path) -> dict[str, str]:
+    """Every regular file under `path` (symlinks aside, like `find -type f`): its relative path
+    and sha256."""
+    out = {}
+    for p in sorted(path.rglob("*")):
+        if p.is_file() and not p.is_symlink():
+            out[p.relative_to(path).as_posix()] = hashlib.sha256(p.read_bytes()).hexdigest()
+    return out
+
+
+def live_digest(t: Target, site: str) -> tuple[str, dict[str, str]]:
+    """The release `/srv/<site>/current` points to and its `tree_digest`, computed on the server
+    by a fixed command over the guarded release path."""
+    name = _current(t, site)
+    if name is None:
+        raise ServerError(f"{SITE_ROOT}/{site}/current does not exist: nothing is deployed")
+    release = guard_release(f"{SITE_ROOT}/{site}/releases/{name}")
+    r = t.ssh(
+        f"cd {release} && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum",
+        check=False,
+    )
+    if r.returncode != 0:
+        raise ServerError(f"digest of {release} exited {r.returncode}: {r.stderr.strip()}")
+    digest = {}
+    for line in r.stdout.splitlines():
+        m = DIGEST_LINE.fullmatch(line)
+        if not m:
+            raise ServerError(f"digest of {release}: unreadable line {line[:80]!r}")
+        digest[m.group(2)] = m.group(1)
+    return name, digest
+
+
+def _few(paths: list[str]) -> str:
+    return ", ".join(paths[:3]) + (", …" if len(paths) > 3 else "")
+
+
+def live_items(t: Target, local: dict[str, Path]) -> list[str]:
+    """Each site whose live release is not exactly the local directory checked for it (site name
+    -> directory); [] when every one matches file for file."""
+    items = []
+    for site, path in local.items():
+        try:
+            name, remote = live_digest(t, site)
+        except ServerError as e:
+            items.append(f"{site}: cannot compare the live release with {path}: {e}")
+            continue
+        want = tree_digest(path)
+        changed = sorted(p for p in want if p in remote and remote[p] != want[p])
+        missing = sorted(set(want) - set(remote))
+        extra = sorted(set(remote) - set(want))
+        if changed or missing or extra:
+            parts = [
+                f"{len(changed)} changed ({_few(changed)})" if changed else "",
+                f"{len(missing)} not on the server ({_few(missing)})" if missing else "",
+                f"{len(extra)} only on the server ({_few(extra)})" if extra else "",
+            ]
+            items.append(
+                f"{site}: the live release {name} is not {path}: "
+                + "; ".join(x for x in parts if x)
+                + f" (deploy {path} first)"
+            )
+    return items
+
+
+def _golive(
+    root: Path, datalab: Path, site: Path | None = None, target: Target | None = None
+) -> list[str]:
     items = golive_items(root, datalab)
     if site is not None:
         items += repo_link_items(site, DEPS.transport)
         items += repo_tag_items(site)
+    if target is not None:
+        if site is None:
+            items.append("velometer: --host given without --site: no export to compare it with")
+        local = {"velometer": site, "datalab": datalab} if site is not None else {}
+        local = {"datalab": datalab, **local}
+        items += live_items(target, local)
     for item in items:
         typer.echo(f"open: {item}")
     for w in golive_waivers(root):
@@ -1040,10 +1206,15 @@ def golive_check(
     site: Path | None = typer.Option(  # noqa: B008
         None, "--site", help="The velometer export: one repo link answers 200, a tag pins it."
     ),
+    host: str | None = typer.Option(
+        None, "--host", help="Also check that the live releases are exactly --site and --datalab."
+    ),
+    user: str = typer.Option(USER, "--user"),
     root: Path = typer.Option(ROOT, "--root", hidden=True),  # noqa: B008
 ) -> None:
     """Exit 1 listing every open go-live item; always print the manual confirmations."""
-    if _golive(root, datalab, site):
+    target = _target(host, user) if host else None
+    if _golive(root, datalab, site, target):
         raise typer.Exit(1)
 
 
@@ -1119,10 +1290,10 @@ def unlock(
     user: str = typer.Option(USER, "--user"),
 ) -> None:
     """Go live: empty the lock file (only when golive-check passes; asks for yes)."""
-    t = Target(host, user)
+    t = _target(host, user)
     try:
         check_domain(domain)
-        if _golive(root, datalab, site):
+        if _golive(root, datalab, site, t):
             raise ServerError("golive-check has open items; the sites stay locked")
         confirm([f"empty {LOCK} on {host}: both sites go public", "reload Caddy", "probe them"])
         _, served = running_state(t)

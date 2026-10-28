@@ -552,3 +552,33 @@ def test_an_unset_address_is_left_out_without_a_trace(tmp_path, form):
 def test_a_set_address_is_shown_on_both_pages(person):
     for page in ("impressum/index.html", "datenschutz/index.html"):
         assert "Musterstraße 1" in (person / page).read_text("utf-8"), page
+
+
+# --- build stamp (final review I1) -------------------------------------------------------------
+
+
+def test_build_records_the_stamp_of_what_it_was_built_from(tmp_path):
+    out = tmp_path / "out"
+    cfg = _person()
+    build(cfg, _export(tmp_path), out)
+    assert datalab.read_stamp(out) == datalab.inputs_stamp(cfg)
+
+
+def test_the_stamp_changes_with_any_setting_and_any_template(tmp_path):
+    """The rule: a build made before a change to its inputs no longer matches them."""
+    base = datalab.inputs_stamp(_person())
+    other = {**FULL_PERSON, "address": "Andere Straße 2\n10115 Berlin"}
+    changed = _cfg(operator_form="person", operator=other, contact_email="hallo@example.org")
+    assert datalab.inputs_stamp(changed) != base
+    site = tmp_path / "site"
+    shutil.copytree(datalab.SITE_DIR, site)
+    assert datalab.inputs_stamp(_person(), site) == base
+    tpl = site / "templates" / "impressum.html"
+    tpl.write_text(tpl.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    assert datalab.inputs_stamp(_person(), site) != base
+
+
+def test_a_build_without_a_stamp_reads_as_none(tmp_path):
+    assert datalab.read_stamp(tmp_path) is None
+    (tmp_path / "build.json").write_text("[1]", encoding="utf-8")
+    assert datalab.read_stamp(tmp_path) is None

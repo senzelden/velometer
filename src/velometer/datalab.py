@@ -11,11 +11,14 @@ Nothing is invented: a null stays a placeholder.
 
 The site loads nothing from another host (fonts self-hosted, legal review 5.9) and has no inline
 script or style; its own CSP says so. The output gets `.gz` siblings and a `_headers` file the
-way the velometer export does (`export.write_gz`, `export.headers_text`).
+way the velometer export does (`export.write_gz`, `export.headers_text`), and a `build.json` with
+`inputs_stamp`, the hash of what it was built from (the go-live check compares it).
 """
 
 import csv
+import hashlib
 import io
+import json
 import re
 import shutil
 from dataclasses import dataclass
@@ -205,6 +208,44 @@ def deferred_missing(cfg: DatalabConfig) -> list[str]:
     return [k for k in DEFERRED if not cfg.operator.get(k)]
 
 
+# The build's stamp (M16 final review I1): a hash of everything the pages are rendered from but the
+# counter, so golive-check can refuse a build made from other settings than the ones it checks.
+STAMP_FILE = "build.json"
+STAMP_KEY = "inputs_sha256"
+
+
+def _shared_strings() -> tuple[str, str]:
+    """The velometer strings the pages carry (credits), as rendered."""
+    osm = str(i18n.t_markup("de", "site.footer.attribution", osm=credits.OSM_COPYRIGHT_URL))
+    return osm, i18n.t("de", "credit.boundaries")
+
+
+def inputs_stamp(cfg: DatalabConfig, site_dir: Path = SITE_DIR) -> str:
+    """sha256 over what a build is made from, the counter aside: the validated settings, every
+    file under `site_dir`'s `templates/` and `static/` (path and content), and the shared
+    strings. A change to any of them makes an older build's stamp differ."""
+    h = hashlib.sha256()
+    h.update(json.dumps(cfg.model_dump(mode="json"), sort_keys=True).encode("utf-8"))
+    for sub in ("templates", "static"):
+        base = site_dir / sub
+        files = sorted(p for p in base.rglob("*") if p.is_file()) if base.is_dir() else []
+        for path in files:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            h.update(f"\n{path.relative_to(site_dir).as_posix()}\0{digest}".encode())
+    for text in _shared_strings():
+        h.update(b"\n" + text.encode("utf-8"))
+    return h.hexdigest()
+
+
+def read_stamp(out: Path) -> str | None:
+    """The stamp a build recorded in its `build.json`; None when there is none."""
+    try:
+        value = json.loads((out / STAMP_FILE).read_text(encoding="utf-8")).get(STAMP_KEY)
+    except (OSError, ValueError, AttributeError):
+        return None
+    return value if isinstance(value, str) else None
+
+
 def _env() -> Environment:
     return Environment(
         loader=FileSystemLoader(SITE_DIR / "templates"),
@@ -221,6 +262,7 @@ def render(cfg: DatalabConfig, counter: Counter) -> dict[str, str]:
     last_year, last_km = counter.series[-1]
     digits = len(str(max(km for _, km in counter.series)))
     forms = [f for f in FORMS if cfg.operator_form in (None, f[0])]
+    osm, boundary = _shared_strings()
     context = {
         "domain": cfg.domain,
         "velometer_url": f"https://velometer.{cfg.domain}/",
@@ -241,8 +283,8 @@ def render(cfg: DatalabConfig, counter: Counter) -> dict[str, str]:
         "reading": f"Berlin {last_year}: {i18n.number(last_km, 'de', 0)} km",
         "as_of": i18n.long_day(counter.as_of, "de"),
         "cities": counter.cities,
-        "osm_credit": i18n.t_markup("de", "site.footer.attribution", osm=credits.OSM_COPYRIGHT_URL),
-        "boundary_credit": i18n.t("de", "credit.boundaries"),
+        "osm_credit": Markup(osm),
+        "boundary_credit": boundary,
     }
     env = _env()
     return {out: env.get_template(name).render(**context) for name, out in PAGES.items()}
@@ -255,6 +297,7 @@ def build(cfg: DatalabConfig, velometer_export: Path, out: Path) -> list[str]:
     from velometer.app.export import headers_text, write_gz
 
     pages = render(cfg, read_counter(velometer_export))
+    stamp = json.dumps({STAMP_KEY: inputs_stamp(cfg)}, indent=2) + "\n"
     if out.is_symlink():
         raise DatalabError(f"refusing --out {out}: it is a symlink; name the directory itself")
     if out.exists() and (not out.is_dir() or any(out.iterdir())):
@@ -265,6 +308,7 @@ def build(cfg: DatalabConfig, velometer_export: Path, out: Path) -> list[str]:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(html, encoding="utf-8")
     shutil.copytree(SITE_DIR / "static", out / "static")
+    (out / STAMP_FILE).write_text(stamp, encoding="utf-8")
     write_gz(out)
     (out / "_headers").write_text(headers_text("/", meta_csp()), encoding="utf-8")
     return sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file())

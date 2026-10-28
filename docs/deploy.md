@@ -119,7 +119,7 @@ uv run python tools/server.py verify --domain <domain> --locked
 uv run python tools/render_pass.py --site <dir> --base / --url https://velometer.<domain> \
     --auth preview:<password> --pages types --interact --flip
 uv run python tools/server.py stats --host <host>
-uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir>
+uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
 uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
 ```
 
@@ -228,7 +228,10 @@ The steps in detail:
    reloads or starts Caddy, even when no file changed. A failed reload says what the running
    Caddy still serves.
 
-   `deploy velometer|datalab` runs `deploy-check --public` on a velometer export first, then
+   `deploy velometer|datalab` runs `deploy-check --public` on a velometer export first; a
+   Datalab build is named after the local commit, so `deploy datalab` refuses a tree with
+   uncommitted changes to tracked files and a build whose stamp is not that of the committed
+   `sites/datalab/` (build it again after committing). Then it
    uploads the build with rsync into a new directory `/srv/<site>/releases/<build>/` (`<build>`
    is the export's commit and the UTC upload time, e.g. `1234abc-20261022T093005`), with
    `--link-dest` to the live release so that only changed files travel. Only after rsync exits 0
@@ -250,8 +253,15 @@ The steps in detail:
    also fetches one file of the repository at the export's `commit_full` (`pyproject.toml`, by
    `repo.file_url`, anonymously) and lists anything but 200 as open: the commit is not pushed, or
    the repository is not publicly readable (a private repository answers 404). It also lists a
-   commit that no pushed tag points at (§0). `unlock` needs `--site` too and runs the same check
-   first, then empties the lock file and runs `verify`.
+   commit that no pushed tag points at (§0). The Datalab build must carry the stamp of the
+   settings and templates it is checked against (`build.json` `inputs_sha256`, written by
+   `velometer datalab build`): a build made before a change to `sites/datalab/site.yaml` (say,
+   the address added afterwards) is open; build it again. With `--host`, `golive-check` also
+   compares what is live with what it checked: a digest of every file (path and sha256) of the
+   release `/srv/velometer/current` and `/srv/datalab/current` point to, computed on the server,
+   against `--site` and `--datalab`; any changed, missing or extra file is open, naming the site
+   (deploy the checked directory first). `unlock` needs `--site` too and runs the same checks,
+   the live comparison included, then empties the lock file and runs `verify`.
 
 ## 2. Cloudflare Pages (not chosen, 2026-10-21)
 
