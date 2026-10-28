@@ -8,7 +8,7 @@ names its `pass insert` command. The preview password only ever travels on stdin
 `caddy hash-password` on the server; it is never on a command line, here or there.
 
     uv run python tools/server.py preflight
-    uv run python tools/server.py create --domain D --ssh-key NAME [--type cx22] [--location nbg1]
+    uv run python tools/server.py create --domain D --ssh-key NAME [--type cx23] [--location nbg1]
     uv run python tools/server.py dns --domain D
     uv run python tools/server.py setup --host IP --domain D [--new-password] [--relock]
     uv run python tools/server.py deploy velometer|datalab|tiles PATH --host IP
@@ -134,6 +134,10 @@ Runner = Callable[..., subprocess.CompletedProcess]
 
 
 def _run(argv: list[str], input: str | None = None) -> subprocess.CompletedProcess:
+    """Run `argv`; without `input` its stdin is /dev/null, never the tool's own: an inherited
+    stdin lets `ssh` swallow what a pipe meant for the typed `yes` (Task 9)."""
+    if input is None:
+        return subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True)
     return subprocess.run(argv, input=input, capture_output=True, text=True)
 
 
@@ -317,7 +321,7 @@ def preflight() -> None:
 def create(
     domain: str = typer.Option(..., "--domain", help="The apex the server will serve."),
     ssh_key: str = typer.Option(..., "--ssh-key", help="The SSH key's name at Hetzner."),
-    server_type: str = typer.Option("cx22", "--type", help="Hetzner server type."),
+    server_type: str = typer.Option("cx23", "--type", help="Hetzner server type."),
     location: str = typer.Option("nbg1", "--location", help="nbg1 or fsn1 (Germany)."),
     name: str = typer.Option(SERVER_NAME, "--name"),
 ) -> None:

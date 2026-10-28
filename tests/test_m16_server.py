@@ -5,6 +5,7 @@ rsync a fake runner that records every argv and stdin, and the typed `yes` is in
 """
 
 import json
+import os
 import re
 import subprocess
 from datetime import UTC, datetime
@@ -203,7 +204,7 @@ def test_create_sends_type_location_image_key_firewall_and_user_data(deps, monke
         assert rule["direction"] == "in"
         assert set(rule["source_ips"]) == {"0.0.0.0/0", "::/0"}
     (body,) = posts(requests, "/v1/servers")
-    assert body["server_type"] == "cx22"
+    assert body["server_type"] == "cx23"  # cx22 is no longer offered (R40)
     assert body["location"] == "nbg1"
     assert body["image"] == "debian-13"
     assert body["ssh_keys"] == [42]
@@ -844,6 +845,41 @@ def test_setup_without_flags_keeps_a_locked_servers_hash(deps):
     assert r.exit_code == 0, r.output
     assert "nothing to change" in r.output
     assert not any("hash-password" in j for j in deps.joined())
+
+
+def test_a_command_without_input_never_inherits_the_tools_stdin(monkeypatch):
+    """Task 9: `echo yes | server.py setup` lost its `yes` to ssh, which read the inherited
+    stdin. Without input, the runner gives the process /dev/null; with input, the input."""
+    seen: list[dict] = []
+
+    def fake_run(argv, **kw):
+        seen.append(kw)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(srv.subprocess, "run", fake_run)
+    monkeypatch.setattr(srv.DEPS, "runner", srv._run)
+    srv.Target("203.0.113.10").ssh("true")
+    srv.Target("203.0.113.10").put("/etc/x", "text")
+    no_input, with_input = seen
+    assert no_input.get("stdin") is subprocess.DEVNULL and no_input.get("input") is None
+    assert with_input.get("input") == "text" and "stdin" not in with_input
+
+
+def test_the_runner_really_closes_stdin(monkeypatch):
+    """The same rule on a real process: `cat` without input ends at once, reading nothing,
+    even when the tool's own stdin holds a waiting `yes`."""
+    r_fd, w_fd = os.pipe()
+    os.write(w_fd, b"yes\n")
+    os.close(w_fd)  # an inherited stdin would give cat the `yes`, then end-of-file
+    saved = os.dup(0)
+    try:
+        os.dup2(r_fd, 0)
+        r = srv._run(["cat"])
+    finally:
+        os.dup2(saved, 0)
+        for fd in (saved, r_fd):
+            os.close(fd)
+    assert r.returncode == 0 and r.stdout == ""
 
 
 def test_put_removes_its_temp_file_on_every_exit(deps):

@@ -21,7 +21,7 @@ is public. Go-live is Task 12.
 uv run python tools/server.py create --domain zaehlwerk-datalab.de --ssh-key dennis-ws --type cx23 --location fsn1
 ```
 
-- `cx22`, the tool's default, is no longer offered by Hetzner; `cx23` (2 shared x86 vCPU, 4 GB,
+- `cx22`, then the tool's default, is no longer offered by Hetzner; `cx23` (2 shared x86 vCPU, 4 GB,
   40 GB disk, EUR 6.53 a month gross plus the IPv4 address) is its successor at the same price
   (ruling R40).
 - The first attempt at `nbg1` failed with `412 error during placement` (no capacity). It had
