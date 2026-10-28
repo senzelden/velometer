@@ -733,6 +733,38 @@ def external_load(
         typer.echo(f"{source} {n} rows")
 
 
+@external_app.command("check")
+def external_check(
+    figures: Path | None = typer.Option(  # noqa: B008
+        None, "--figures", dir_okay=False, help="Curated CSV (default: config)."
+    ),
+    config_dir: Path = CONFIG_OPT,
+    db: Path = DB_OPT,
+) -> None:
+    """Exit 1 when the database's curated figures differ from figures.csv (reads only)."""
+    from velometer.sources import external
+
+    path = figures or config_dir / "external" / "figures.csv"
+    if not path.is_file():
+        typer.echo(f"error: {path} not found", err=True)
+        raise typer.Exit(1)
+    with _open_readonly(db) as conn:
+        try:
+            drift = external.curated_drift(conn, path)
+        except (ConfigError, ValueError, sqlite3.Error) as e:
+            typer.echo(f"external check failed: {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(1) from e
+    for d in drift:
+        typer.echo(d)
+    if drift:
+        typer.echo(
+            f"{len(drift)} row(s) differ from {path}; reload with `{external.LOAD_COMMAND}` "
+            "(writes the database)"
+        )
+        raise typer.Exit(1)
+    typer.echo(f"ok: the database's curated figures match {path}")
+
+
 @osm_app.command("fetch-history")
 def osm_fetch_history(
     region: str | None = typer.Option(

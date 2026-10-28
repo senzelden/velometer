@@ -653,6 +653,15 @@ def run_export(
         raise ExportError(f"export to {out} failed: {e}") from e
 
 
+def figures_drift(conn, config_dir: Path) -> list[str]:
+    """The curated external figures where the database differs from the config's
+    `external/figures.csv` (Task 9: a CSV edit without `external load` sent the German figures
+    page back to English)."""
+    from velometer.sources.external import curated_drift
+
+    return curated_drift(conn, config_dir / "external" / "figures.csv")
+
+
 def _run_export(
     out: Path,
     base: str,
@@ -694,6 +703,17 @@ def _run_export(
     except (FileNotFoundError, SchemaError) as e:
         raise ExportError(str(e)) from e
     try:
+        if public:
+            drift = figures_drift(conn, Path(config_dir))
+            if drift:
+                from velometer.sources.external import LOAD_COMMAND
+
+                lines = "\n".join(f"  {d}" for d in drift)
+                raise ExportError(
+                    f"--public: the database's external figures differ from "
+                    f"{Path(config_dir) / 'external' / 'figures.csv'} in {len(drift)} row(s):\n"
+                    f"{lines}\nreload them with `{LOAD_COMMAND}` (writes velometer.sqlite)"
+                )
         data = ReportData(conn, config_dir)
         build = build_stamp(data, normalise_base(base), public, site_values, raw)
         app = create_app(

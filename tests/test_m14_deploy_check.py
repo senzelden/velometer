@@ -44,6 +44,7 @@ def good(tmp_path_factory):
     out = tmp / "good"
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
+        mp.setattr(export, "figures_drift", lambda conn, config_dir: [])  # synthetic figures
         export.run_export(
             out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
         )

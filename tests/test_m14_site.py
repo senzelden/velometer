@@ -136,11 +136,31 @@ def test_footer_datalab_line_comes_first(inputs):
     assert f.index("Part of") < f.index("OpenStreetMap")
 
 
-def _export(rich, out: Path, public: bool):  # noqa: F811
+def _export(rich, out: Path, public: bool, figures_guard: bool = False):  # noqa: F811
+    """The fixture database holds synthetic external figures, never the config's figures.csv,
+    so the figures guard is off unless `figures_guard` (it has its own tests)."""
     db_path, cfg, maps, docs, plans = rich
-    return export.run_export(
-        out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, public=public
-    )
+    with pytest.MonkeyPatch.context() as mp:
+        if not figures_guard:
+            mp.setattr(export, "figures_drift", lambda conn, config_dir: [])
+        return export.run_export(
+            out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, public=public
+        )
+
+
+def test_public_export_refuses_figures_the_database_does_not_hold(rich, tmp_path, monkeypatch):  # noqa: F811
+    """Task 9: figures.csv changed, the database not reloaded; the public export refuses,
+    names the rows and the command that reloads them."""
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError) as e:
+        _export(rich, out, True, figures_guard=True)
+    message = str(e.value)
+    assert "external figures differ" in message
+    assert "figures.csv line 2, berlin clean_cities_2025" in message
+    assert "velometer external load --no-qecio --no-bikenetkit" in message
+    assert not out.exists()
 
 
 def test_public_export_refuses_empty_settings(rich, tmp_path):  # noqa: F811

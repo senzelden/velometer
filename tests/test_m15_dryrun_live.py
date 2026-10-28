@@ -53,6 +53,7 @@ def public_site(tmp_path_factory):
     out = tmp / "site"
     with pytest.MonkeyPatch.context() as mp:  # a public export needs a clean checkout (M16)
         mp.setattr(export, "public_commit", lambda: "0123456789abcdef0123456789abcdef01234567")
+        mp.setattr(export, "figures_drift", lambda conn, config_dir: [])  # synthetic figures
         export.run_export(
             out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
         )
