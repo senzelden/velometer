@@ -129,6 +129,11 @@ Network tests are marked `slow` and deselected by default. Deployment of the sta
 [`docs/deploy.md`](docs/deploy.md). The images in this README are rendered from the site by
 [`tools/readme_shots.py`](tools/readme_shots.py).
 
+## Citation
+
+Use GitHub's "Cite this repository" button ([`CITATION.cff`](CITATION.cff)), and name the
+classifier version and OSM snapshot of the figures you cite; both are printed under every chart.
+
 ## Licences and attribution
 
 | Part | Licence |
