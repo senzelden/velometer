@@ -28,11 +28,11 @@ limitations:
   - id: fua_no_per_100k
     en: >-
       FUA runs carry no population, so the FUA has no per-100k figure [M4 spec §4.4;
-      `city_boundary` in `sources/boundaries.py` returns a population only for the LAU]. The FUA
+      `city_boundary` in `src/velometer/sources/boundaries.py` returns a population only for the LAU]. The FUA
       serves as a robustness check [ADR 0004].
     de: >-
       FUA-Läufe führen keine Einwohnerzahl. Für die FUA gibt es daher keinen Wert je 100.000
-      Einwohner [M4-Spezifikation §4.4; `city_boundary` in `sources/boundaries.py` liefert eine
+      Einwohner [M4-Spezifikation §4.4; `city_boundary` in `src/velometer/sources/boundaries.py` liefert eine
       Einwohnerzahl nur für die LAU]. Die FUA dient als Robustheitsprüfung [ADR 0004].
   - id: no_width_surface
     en: >-

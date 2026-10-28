@@ -1293,3 +1293,56 @@ def test_deploy_doc_step_4_describes_the_tool_not_the_hand_copy():
     assert "releases/<build>/" in step4
     assert "mv -T" in step4
     assert "/srv/velometer/current/" not in step4  # no rsync into the live directory
+
+
+# --- the repo links reach the repository (M16, R42 fix round) --------------------------------
+
+REPO_SHA = "0123456789abcdef0123456789abcdef01234567"
+FILE_URL = "https://forge.example.org/owner/velometer/blob/{commit}/{path}"
+
+
+def _export_with_repo(tmp_path: Path, build: dict | None = None) -> Path:
+    site = tmp_path / "velometer-export"
+    site.mkdir(parents=True)
+    build = build or {"commit_full": REPO_SHA, "site": {"repo_file_url": FILE_URL}}
+    (site / "build.json").write_text(json.dumps(build), encoding="utf-8")
+    return site
+
+
+def test_golive_manual_items_name_the_pushed_commit(tmp_path):
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root))
+    assert "commit_full is pushed to repo.url" in r.output
+
+
+@pytest.mark.parametrize(("status", "open_items"), [(200, 0), (404, 1)])
+def test_golive_site_fetches_one_repo_link_at_the_exports_commit(
+    tmp_path, monkeypatch, status, open_items
+):
+    asked = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(str(request.url))
+        return httpx.Response(status)
+
+    monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(handler))
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    site = _export_with_repo(tmp_path)
+    r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root), "--site", str(site))
+    assert asked == [f"https://forge.example.org/owner/velometer/blob/{REPO_SHA}/pyproject.toml"]
+    assert r.exit_code == open_items, r.output
+    assert f"golive-check: {open_items} open item(s)" in r.output
+    if open_items:
+        assert "404, want 200" in r.output and "0123456 pushed?" in r.output
+
+
+def test_golive_site_without_repo_values_or_a_reachable_forge_is_open(tmp_path, monkeypatch):
+    def down(request):
+        raise httpx.ConnectError("no route", request=request)
+
+    monkeypatch.setattr(srv.DEPS, "transport", httpx.MockTransport(down))
+    (item,) = srv.repo_link_items(_export_with_repo(tmp_path), srv.DEPS.transport)
+    assert "ConnectError" in item and "pushed?" in item
+    bare = _export_with_repo(tmp_path / "b", {"commit_full": REPO_SHA, "site": {}})
+    (item,) = srv.repo_link_items(bare, httpx.MockTransport(_no_network))
+    assert "no repo_file_url" in item

@@ -1,4 +1,4 @@
-"""Links to the public repository (M16, legal review 1.1c, ruling R42).
+"""Links to the public repository (M16, legal review 1.1c, rulings R42 and R44).
 
 A page that names a repo file (a data reference's file, a code span holding a path) links it to
 `site.yaml` `repo.file_url` at the commit the page was built from, so a citation never rots. With
@@ -8,7 +8,10 @@ A page that names a repo file (a data reference's file, a code span holding a pa
 import html
 import re
 import subprocess
+import unicodedata
+from collections.abc import Iterator
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
@@ -17,44 +20,63 @@ from markupsafe import Markup, escape
 # the repository root: src/velometer/app/repo_links.py -> parents[3]
 ROOT = Path(__file__).resolve().parents[3]
 
-# the first directories of the repo paths a public page must never print unlinked (the guard)
-REPO_DIRS = ("docs", "config", "src", "tools", "content", "sites", "deploy")
+# what a public page must never print unlinked (the deploy-check guard): a path under one of
+# these directories, one of these root files, or any path-like name of a source or text file
+REPO_DIRS = ("docs", "config", "src", "tools", "content", "sites", "deploy", "tests")
+REPO_ROOT_FILES = re.compile(r"(HANDOVER\.md|pyproject\.toml|README(\.[\w.-]+)?|CLAUDE\.md)")
+FILE_LIKE = re.compile(r"[\w.-]+(/[\w.-]+)*\.(py|ya?ml|md|mjs|js|json|toml)")
 
 _TOKEN = re.compile(
-    r"<script\b.*?</script\s*>|<!--.*?-->|<a\b[^>]*>|</a\s*>|<code>([^<>]*)</code>",
+    r"(?P<script><script\b.*?</script\s*>)|(?P<comment><!--.*?-->)|(?P<open><a\b[^>]*>)"
+    r"|(?P<close></a\s*>)|<code>(?P<code>[^<>]*)</code>",
     re.S | re.I,
 )
 _HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$", re.M)
+_FENCE = re.compile(r"^(```|~~~).*?^\1", re.M | re.S)
 
 
 def heading_slug(text: str) -> str:
     """GitHub's and Forgejo's anchor for a heading: lowercase, every character that is not a
-    letter, digit, space, hyphen or underscore dropped, each space a hyphen."""
-    kept = "".join(c for c in text.lower() if c.isalnum() or c in " -_")
+    letter, number or mark (Unicode categories L, N, M), space, hyphen or underscore dropped,
+    each space a hyphen."""
+    kept = "".join(c for c in text.lower() if unicodedata.category(c)[0] in "LNM" or c in " -_")
     return kept.replace(" ", "-")
 
 
 def heading_anchor(locator: str | None, text: str | None = None) -> str | None:
     """The anchor of a heading locator (`### warsaw/lau/2025` -> `warsawlau2025`), None for a
     locator that is not a heading. With the file's `text`, a repeated heading gets the suffix
-    the forges give it (`-1`, `-2`, ...) and a heading the file lacks gets no anchor."""
+    the forges give it (`-1`, `-2`, ...) and a heading the file lacks (at that level) gets no
+    anchor. Headings in code fences do not count."""
     if not locator or not locator.lstrip().startswith("#"):
         return None
-    level = len(locator.strip()) - len(locator.strip().lstrip("#"))
-    wanted = locator.strip().lstrip("#").strip()
+    stripped = locator.strip()
+    level = len(stripped) - len(stripped.lstrip("#"))
+    wanted = stripped.lstrip("#").strip()
     slug = heading_slug(wanted)
     if not slug:
         return None
     if text is None:
         return slug
     seen: dict[str, int] = {}
-    for m in _HEADING.finditer(re.sub(r"^```.*?^```", "", text, flags=re.M | re.S)):
+    for m in _HEADING.finditer(_FENCE.sub("", text)):
         s = heading_slug(m.group(2))
         n = seen.get(s, 0)
         seen[s] = n + 1
         if len(m.group(1)) == level and m.group(2) == wanted:
             return s if n == 0 else f"{s}-{n}"
     return None
+
+
+@lru_cache(maxsize=4096)
+def file_anchor(path: Path, locator: str | None) -> str | None:
+    """`heading_anchor` of `locator` in the file at `path` (cached per file and locator: tests
+    that change a fixture file call `file_anchor.cache_clear()`)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        text = None
+    return heading_anchor(locator, text)
 
 
 def tracked_paths(root: Path = ROOT) -> frozenset[str] | None:
@@ -69,6 +91,18 @@ def tracked_paths(root: Path = ROOT) -> frozenset[str] | None:
     files = [f for f in out.split("\0") if f]
     dirs = {str(p) for f in files for p in PurePosixPath(f).parents if str(p) != "."}
     return frozenset(files) | frozenset(dirs)
+
+
+def _outside_links(page: str) -> Iterator[re.Match]:
+    """The `<code>` matches of `page` that are not inside an `<a>`, a script or a comment."""
+    depth = 0
+    for m in _TOKEN.finditer(page):
+        if m.group("open"):
+            depth += 1
+        elif m.group("close"):
+            depth = max(0, depth - 1)
+        elif m.group("code") is not None and depth == 0:
+            yield m
 
 
 @dataclass(frozen=True)
@@ -100,40 +134,41 @@ class RepoLinks:
         file is not in the repo."""
         if not self.exists(file):
             return None
-        try:
-            text = (self.root / file.strip()).read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
-            text = None
-        return self.url(file, heading_anchor(locator, text))
+        return self.url(file, file_anchor(self.root / file.strip(), locator))
 
     def link_code(self, page: str) -> str:
         """`page` with every `<code>` that holds nothing but a repo path, and is not already
         inside a link, made a link to that path (scripts and comments are left alone)."""
-        out, last, depth = [], 0, 0
-        for m in _TOKEN.finditer(page):
-            token = m.group(0)
-            low = token[:3].lower()
-            if low.startswith("<a ") or low == "<a>":
-                depth += 1
-            elif low == "</a":
-                depth = max(0, depth - 1)
-            elif m.group(1) is not None and depth == 0:
-                path = html.unescape(m.group(1))
-                if self.exists(path):
-                    out.append(page[last : m.start()])
-                    out.append(f'<a href="{escape(self.url(path))}">{token}</a>')
-                    last = m.end()
+        out, last = [], 0
+        for m in _outside_links(page):
+            path = html.unescape(m.group("code"))
+            if self.exists(path):
+                out.append(page[last : m.start()])
+                out.append(f'<a href="{escape(self.url(path))}">{m.group(0)}</a>')
+                last = m.end()
         out.append(page[last:])
         return "".join(out)
 
+    def code_links(self, md: str) -> dict[str, str]:
+        """`{path: url}` of the markdown code spans of `md` that hold a repo path (the client
+        renders those as links, R44)."""
+        spans = (s.strip() for s in re.findall(r"`([^`\n]+)`", md))
+        return {s: self.url(s) for s in spans if self.exists(s)}
 
-def make_links(site, commit: str | None, root: Path = ROOT) -> RepoLinks | None:
-    """The links of `site` (a SiteConfig) at `commit`, None when `repo` is unset or the commit
-    is unknown."""
+
+def make_links(
+    site, commit: str | None, root: Path = ROOT, paths: frozenset[str] | None = None
+) -> RepoLinks | None:
+    """The links of `site` (a SiteConfig) at `commit`, over the repo at `root` with its tracked
+    `paths` (default: `git ls-files` there); None when `repo` is unset or the commit unknown.
+    A dev server or non-public export links HEAD even when the tree is dirty (accepted, R42):
+    only `export --public` insists on a clean checkout."""
     repo = getattr(site, "repo", None)
     if repo is None or not commit or commit == "unknown":
         return None
-    return RepoLinks(repo.file_url, commit.removesuffix("-dirty"), root, tracked_paths(root))
+    if paths is None:
+        paths = tracked_paths(root)
+    return RepoLinks(repo.file_url, commit.removesuffix("-dirty"), root, paths)
 
 
 def data_ref_file(links: RepoLinks | None, file: str, locator: str | None) -> Markup:
@@ -146,19 +181,18 @@ def data_ref_file(links: RepoLinks | None, file: str, locator: str | None) -> Ma
     return Markup('<a href="{}">{}</a>').format(href, shown) if href else shown
 
 
+def looks_like_repo_path(text: str) -> bool:
+    """Whether a `<code>` text reads as a repo path: under a repo directory, a root file, or a
+    path-like name of a source or text file (`sources/boundaries.py`)."""
+    return (
+        text.startswith(tuple(f"{d}/" for d in REPO_DIRS))
+        or REPO_ROOT_FILES.fullmatch(text) is not None
+        or FILE_LIKE.fullmatch(text) is not None
+    )
+
+
 def bare_repo_paths(page: str) -> list[str]:
-    """The `<code>` texts of `page` that look like repo paths (`docs/…`, `config/…`, …) and are
-    not inside a link: what a public page must not print (the deploy-check guard)."""
-    found, depth = [], 0
-    for m in _TOKEN.finditer(page):
-        token = m.group(0)
-        low = token[:3].lower()
-        if low.startswith("<a ") or low == "<a>":
-            depth += 1
-        elif low == "</a":
-            depth = max(0, depth - 1)
-        elif m.group(1) is not None and depth == 0:
-            text = html.unescape(m.group(1)).strip()
-            if text.startswith(tuple(f"{d}/" for d in REPO_DIRS)):
-                found.append(text)
-    return found
+    """The `<code>` texts of `page` that look like repo paths and are not inside a link: what a
+    public page must not print (the deploy-check guard)."""
+    texts = (html.unescape(m.group("code")).strip() for m in _outside_links(page))
+    return [t for t in texts if looks_like_repo_path(t)]

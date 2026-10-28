@@ -45,7 +45,7 @@ from velometer.config import ConfigError, load_site
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
-from velometer.run import git_commit
+from velometer.run import _git, git_commit
 
 # Starlette's notice that its TestClient will move from httpx to httpx2 is for test suites; the
 # export is a command, and the line would only be noise on every run. `httpx2` is a dev
@@ -264,15 +264,33 @@ def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) ->
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
+def public_commit() -> str:
+    """The checkout's commit as `git_commit` gives it ("<sha>", "<sha>-dirty", "unknown"), but
+    dirty only for changes to tracked files: an untracked file is not in what the pages link
+    (M16, R42), and stub files a sandbox shows must not block a public export."""
+    try:
+        sha = _git("rev-parse", "HEAD").strip()
+        dirty = bool(_git("status", "--porcelain", "--untracked-files=no").strip())
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return f"{sha}-dirty" if dirty else sha
+
+
 def build_stamp(
-    data: ReportData, base: str, public: bool = False, site: dict | None = None
+    data: ReportData,
+    base: str,
+    public: bool = False,
+    site: dict | None = None,
+    raw: str | None = None,
 ) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
     exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
     export also records `site`, the values its footer and repo links use
-    (`SiteConfig.public_values`), which `deploy-check` checks the pages against."""
-    raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
+    (`SiteConfig.public_values`), which `deploy-check` checks the pages against. `raw` is the
+    commit a public export already checked (read once), else `git_commit()` is asked."""
+    if raw is None:
+        raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
     versions: set[str] = set()
     for row in data.csv_rows():
@@ -648,7 +666,7 @@ def _run_export(
     public: bool = False,
 ) -> ExportResult:
     validate_base(base)
-    site_values = None
+    site_values, raw = None, None
     if public:
         try:
             site_cfg = load_site(config_dir)
@@ -661,7 +679,7 @@ def _run_export(
         site_values = site_cfg.public_values()
         # the pages link repo files at the export's commit (M16, R42): a commit that lacks the
         # tree's changes, or no commit at all, would link the wrong text
-        raw = git_commit()
+        raw = public_commit()
         if raw == "unknown" or raw.endswith("-dirty"):
             raise ExportError(
                 "--public needs a clean git checkout (the pages link the repository at the "
@@ -677,7 +695,7 @@ def _run_export(
         raise ExportError(str(e)) from e
     try:
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base), public, site_values)
+        build = build_stamp(data, normalise_base(base), public, site_values, raw)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base,

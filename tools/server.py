@@ -119,7 +119,11 @@ MANUAL = [
     "go live now",
     "15 days after the first log line on the server: check that roll_keep_for pruned every "
     "rolled log older than 14 days (ls -l /var/log/caddy)",
+    "the velometer export's build.json commit_full is pushed to repo.url (else every repo link "
+    "404s; golive-check --site DIR fetches one)",
 ]
+# the tracked root file golive-check --site fetches at the export's commit (M16, R42)
+REPO_PROBE_FILE = "pyproject.toml"
 
 
 class ServerError(Exception):
@@ -960,8 +964,32 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
     return items
 
 
-def _golive(root: Path, datalab: Path) -> list[str]:
+def repo_link_items(site: Path, transport=None) -> list[str]:
+    """The velometer export's repo links reach the repository: one file (REPO_PROBE_FILE) at
+    the export's `commit_full`, by `build.json` `site.repo_file_url`, answers 200 (else the
+    commit is not pushed and every repo link 404s). [] when it does."""
+    try:
+        build = json.loads((site / "build.json").read_text(encoding="utf-8"))
+        pattern, commit = build["site"]["repo_file_url"], build["commit_full"]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return [f"{site}/build.json: no repo_file_url and commit_full ({e.__class__.__name__})"]
+    if not isinstance(pattern, str) or not isinstance(commit, str):
+        return [f"{site}/build.json: no repo_file_url and commit_full"]
+    url = pattern.replace("{commit}", commit).replace("{path}", REPO_PROBE_FILE)
+    try:
+        with httpx.Client(transport=transport, follow_redirects=True, timeout=20) as c:
+            status = c.get(url).status_code
+    except httpx.HTTPError as e:
+        return [f"repo link {url}: {e.__class__.__name__} (is commit {commit[:7]} pushed?)"]
+    if status != 200:
+        return [f"repo link {url}: {status}, want 200 (is commit {commit[:7]} pushed?)"]
+    return []
+
+
+def _golive(root: Path, datalab: Path, site: Path | None = None) -> list[str]:
     items = golive_items(root, datalab)
+    if site is not None:
+        items += repo_link_items(site, DEPS.transport)
     for item in items:
         typer.echo(f"open: {item}")
     for w in golive_waivers(root):
@@ -976,10 +1004,13 @@ def _golive(root: Path, datalab: Path) -> list[str]:
 @app.command("golive-check")
 def golive_check(
     datalab: Path = typer.Option(..., "--datalab", help="The Datalab build to go live."),  # noqa: B008
+    site: Path | None = typer.Option(  # noqa: B008
+        None, "--site", help="The velometer export: check one repo link answers 200."
+    ),
     root: Path = typer.Option(ROOT, "--root", hidden=True),  # noqa: B008
 ) -> None:
     """Exit 1 listing every open go-live item; always print the manual confirmations."""
-    if _golive(root, datalab):
+    if _golive(root, datalab, site):
         raise typer.Exit(1)
 
 

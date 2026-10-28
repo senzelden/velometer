@@ -7,28 +7,40 @@ for you to run. Replace `<dir>`, `<domain>` and `<host>` with your own values.
 
 ## 0. Make and check the export
 
+The public site values (the Datalab, its Impressum and privacy page, the public repository) stay
+null in the repo's `config/site.yaml`. Never fill them in there: copy the config to a scratch
+directory, set them in the copy, and export with `--config-dir`:
+
 ```
-uv run velometer app export --out <dir> --base / --clean --public
+cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml
+git status --untracked-files=no      # must print no changes: commit first
+uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
 uv run velometer app deploy-check <dir> --public
+git push <public remote> HEAD        # the commit the pages link must be in the public repo
 ```
 
-`export --public` refuses to run unless `config/site.yaml` names the Datalab, its Impressum and
-its privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a
-file's address with `{commit}` and `{path}`; examples for GitHub and Codeberg are in the file), and
-records those values in `build.json`. It also refuses a git checkout with uncommitted changes:
-every repo path on the pages (a data reference's file, `docs/...` in the prose) links
-`repo.file_url` at the export's commit (`build.json` `commit_full`), so that commit must hold what
-the pages were built from, and it must be pushed to the repository before the site goes live. The
-methodology links `repo.url` (legal review 1.1c). `deploy-check` uploads nothing.
-It checks `build.json` and its base, `404.html`, the `_headers` file against the pages' meta
-policy, a `.gz` that matches each text file of 1 KiB or more, that no file is 25 MiB or more, that
-every reference resolves, and, for a public export, that every page's footer links the Datalab,
-Impressum and privacy page that `build.json` records and that no page prints a repo path
-(`<code>docs/...</code>`, `config/`, `src/`, `tools/`, `content/`, `sites/`, `deploy/`) outside a
-link. It judges the export, not today's
-`config/site.yaml`. `deploy-check --public` also fails on an export made without `--public`, which
-would go live without an Impressum. It exits 1 and lists the problems otherwise. Run it again
-after any hand edit.
+`export --public` refuses to run unless the site settings name the Datalab, its Impressum and its
+privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
+address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub and Codeberg
+examples), and records those values in `build.json`. It also refuses a checkout whose tracked files
+have uncommitted changes (untracked files do not count): every repo path on the pages (a data
+reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
+`repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a
+committed tree, and that commit must be pushed to the public repository before the site goes
+live, or every repo link 404s (`golive-check --site <dir>` fetches one, §2 step 4). The
+methodology links `repo.url` (legal review 1.1c).
+
+`deploy-check` uploads nothing. It checks `build.json` and its base, `404.html`, the `_headers`
+file against the pages' meta policy, a `.gz` that matches each text file of 1 KiB or more, that
+no file is 25 MiB or more, that every reference resolves, and, for a public export, that every
+page's footer links the Datalab, Impressum and privacy page that `build.json` records, that no page
+prints a repo path in `<code>` outside a link (under `docs/`, `config/`, `src/`, `tools/`,
+`content/`, `sites/`, `deploy/`, `tests/`, a root file such as `HANDOVER.md`, or any path-like
+`.py`, `.yaml`, `.md`, `.js`, `.json` or `.toml` name), and that every repo link carries the
+export's `commit_full`. It judges the export, not today's `config/site.yaml`.
+`deploy-check --public` also fails on an export made without `--public`, which would go live
+without an Impressum. It exits 1 and lists the problems otherwise. Run it again after any hand
+edit.
 
 ## 0a. Local dry run
 
@@ -214,9 +226,11 @@ TLS.
    with `--locked` both sites answer 401 with `Cache-Control: no-store`; without it they answer
    200, `www` 308 to the apex and the tile file 206 to a byte range.
 
-   Statistics (`stats --host <host>`) and the go-live (`golive-check --datalab <datalab-dir>`,
-   then `unlock`) are in the tool's help. `unlock` runs the go-live check first, empties the lock
-   file and runs `verify`.
+   Statistics (`stats --host <host>`) and the go-live (`golive-check --datalab <datalab-dir>
+   --site <dir>`, then `unlock`) are in the tool's help. With `--site`, `golive-check` also
+   fetches one file of the repository at the export's `commit_full` (`pyproject.toml`, by
+   `repo.file_url`) and lists anything but 200 as open: the commit is not pushed yet (§0).
+   `unlock` runs the go-live check first, empties the lock file and runs `verify`.
 
 ## 3. Datenschutz and Impressum
 

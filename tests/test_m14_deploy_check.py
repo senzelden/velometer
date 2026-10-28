@@ -38,7 +38,7 @@ def good(tmp_path_factory):
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
     out = tmp / "good"
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(export, "git_commit", lambda: CLEAN_COMMIT)
+        mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
         export.run_export(
             out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
         )

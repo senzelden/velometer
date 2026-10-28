@@ -166,16 +166,40 @@ CLEAN = "0123456789abcdef0123456789abcdef01234567"
 def test_public_export_refuses_a_dirty_or_unknown_checkout(rich, tmp_path, monkeypatch, commit):  # noqa: F811
     # M16 (R42): the pages link repo files at the export's commit, which must hold the tree
     _write_site(rich[1], COMPLETE)
-    monkeypatch.setattr(export, "git_commit", lambda: commit)
+    monkeypatch.setattr(export, "public_commit", lambda: commit)
     out = tmp_path / "site"
     with pytest.raises(export.ExportError, match="clean git checkout"):
         _export(rich, out, True)
     assert not out.exists()
 
 
+def test_an_untracked_file_does_not_make_the_checkout_dirty(monkeypatch):
+    # M16 fix round: a sandbox shows stub files as untracked; they are not in what pages link
+    calls = []
+
+    def fake_git(*args):
+        calls.append(args)
+        return CLEAN + "\n" if args[0] == "rev-parse" else ""
+
+    monkeypatch.setattr(export, "_git", fake_git)
+    assert export.public_commit() == CLEAN
+    assert ("status", "--porcelain", "--untracked-files=no") in calls
+    monkeypatch.setattr(export, "_git", lambda *a: CLEAN if a[0] == "rev-parse" else " M x.py")
+    assert export.public_commit() == CLEAN + "-dirty"
+
+
+def test_public_export_reads_the_commit_once(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    monkeypatch.setattr(export, "git_commit", lambda: pytest.fail("git_commit asked again"))
+    out = tmp_path / "site"
+    _export(rich, out, True)
+    assert json.loads((out / "build.json").read_text())["commit_full"] == CLEAN
+
+
 def test_public_export_stamps_true(rich, tmp_path, monkeypatch):  # noqa: F811
     _write_site(rich[1], COMPLETE)
-    monkeypatch.setattr(export, "git_commit", lambda: CLEAN)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
     out = tmp_path / "site"
     _export(rich, out, True)
     assert json.loads((out / "build.json").read_text())["public"] is True

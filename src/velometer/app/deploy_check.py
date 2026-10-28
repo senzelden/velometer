@@ -103,6 +103,36 @@ def _bare_code_problems(out: Path) -> list[str]:
     return problems
 
 
+_HREF = re.compile(r'href="([^"]*)"')
+
+
+def _pinned_problems(out: Path, build: dict) -> list[str]:
+    """Every page (and data JSON, where Compare's flag notes get their links) whose repo file
+    link (an address starting as `repo_file_url` does before `{commit}`) does not carry
+    `build.json` `commit_full`: a link to another commit than the export's (M16, R42)."""
+    pattern, commit = build["site"]["repo_file_url"], build.get("commit_full")
+    prefix = pattern.split("{commit}", 1)[0]
+    if not isinstance(commit, str) or not commit or commit == "unknown":
+        return [f"public export, but {export.BUILD_FILE} records no commit_full for its repo links"]
+    in_json = re.compile('"(' + re.escape(prefix) + '[^"]*)"')
+    problems = []
+    pages = sorted([*out.rglob("*.html"), *(out / "data").rglob("*.json")])
+    for page in pages:
+        text = page.read_text(encoding="utf-8")
+        if page.suffix == ".json":
+            hrefs = in_json.findall(text)
+        else:
+            hrefs = [html.unescape(h) for h in _HREF.findall(text)]
+        wrong = [h for h in hrefs if h.startswith(prefix) and commit not in h]
+        if wrong:
+            rel = page.relative_to(out).as_posix()
+            problems.append(
+                f"{rel}: {len(wrong)} repo link(s) not at the export's commit {commit[:7]}: "
+                + wrong[0]
+            )
+    return problems
+
+
 def _public_problems(out: Path, build: dict) -> list[str]:
     """A public export's footer, judged from the export itself: build.json records the site
     values, and every page with the site's footer (the home page always) names the Datalab and
@@ -131,7 +161,7 @@ def _public_problems(out: Path, build: dict) -> list[str]:
             f"public export, but {n} page(s) lack the Datalab, Impressum or privacy "
             f"link of {export.BUILD_FILE} in the footer: {shown}"
         )
-    return problems + _bare_code_problems(out)
+    return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 
 def deploy_problems(out: Path, base: str | None, public: bool = False) -> list[str]:

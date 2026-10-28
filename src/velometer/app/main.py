@@ -471,12 +471,15 @@ def create_app(
     base_path: str = "/",
     static_edition: dict | None = None,
     tiles_file: Path | None = None,
+    repo_root: Path = repo_links.ROOT,
+    repo_paths: frozenset[str] | None = None,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
     for the static export (a footer line), None for the live app. `tiles_file`, when given, is
     served at TILES_PATH with byte ranges (`velometer serve --tiles`); without it the maps go
-    without a background."""
+    without a background. `repo_root` and `repo_paths` (its tracked files and directories, default
+    `git ls-files` there) are the repo the pages link when site.yaml names one (M16)."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -514,6 +517,8 @@ def create_app(
     links = repo_links.make_links(
         app.state.site,
         static_edition.get("commit_full") if static_edition else git_commit(),
+        repo_root,
+        repo_paths,
     )
 
     def _templates(lang: Lang) -> Jinja2Templates:
@@ -816,7 +821,7 @@ def create_app(
 
     async def index(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
 
         def build() -> dict:
@@ -884,7 +889,7 @@ def create_app(
     @app.get("/data/series.json")
     async def series_json(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         return JSONResponse(payload)
 
@@ -1127,7 +1132,7 @@ def create_app(
 
     async def compare(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         known_ids = list(payload["cities"])
         state = cmp.parse_compare(request.url.query, known_ids, cmp.METRICS)
@@ -1259,7 +1264,7 @@ def create_app(
 
     async def stories(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         narratives, sources, _, errors, fallback = content_of(request)
         error = content_error(errors, "combined")
