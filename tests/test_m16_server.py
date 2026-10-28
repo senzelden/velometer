@@ -1361,7 +1361,7 @@ def test_goaccess_conf_ignores_hosts_and_credits_dbip():
 
 def test_deploy_doc_step_4_describes_the_tool_not_the_hand_copy():
     text = (ROOT / "docs" / "deploy.md").read_text("utf-8")
-    hetzner = text.split("\n## 2. Hetzner", 1)[1].split("\n## 3.", 1)[0]
+    hetzner = text.split("\n## 1. Hetzner", 1)[1].split("\n## 2.", 1)[0]
     step4 = hetzner.split("\n4. ", 1)[1]
     assert "uperseded" not in step4
     assert "tools/server.py deploy" in step4

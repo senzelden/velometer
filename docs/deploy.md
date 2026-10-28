@@ -1,9 +1,11 @@
 # Deploying the static edition
 
-M14 made the export ready for a static host; M15 served it locally with both routes' server
-software (Caddy 2.11.4 in Docker and `wrangler pages dev` 4.147.0, 2026-10-18;
-`docs/review/m15-dryrun.md`). Nothing has been deployed to a real host. Every command below is
-for you to run. Replace `<dir>`, `<domain>` and `<host>` with your own values.
+The chosen route is a Hetzner Cloud server with Caddy (§1, ADR 0009). It was run on 2026-10-28:
+both sites are on the server behind a password (`docs/review/m16-deploy.md`); the go-live (the
+`unlock` at the end of §1) waits for the user's go. The Cloudflare Pages route (§2) was not
+chosen. M15 served the export locally with both routes' server software (Caddy 2.11.4 in Docker
+and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`). Every command below is for you to run. Replace `<dir>`,
+`<datalab-dir>`, `<domain>` and `<host>` with your own values.
 
 ## 0. Make and check the export
 
@@ -29,13 +31,16 @@ rebased) or deleted; without it the links may lose their commit and every citati
 `export --public` refuses to run unless the site settings name the Datalab, its Impressum and its
 privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
 address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub and Codeberg
-examples), and records those values in `build.json`. It also refuses a checkout whose tracked files
+examples), and records those values in `build.json`. It refuses when the database's curated
+external figures differ from `config/external/figures.csv` (`velometer external check` names the
+rows; `velometer external load --no-qecio --no-bikenetkit` reloads them and writes the database,
+so it needs the user's go). It also refuses a checkout whose tracked files
 have uncommitted changes (untracked files do not count): every repo path on the pages (a data
 reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
 `repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a
 committed tree, and that commit must be pushed to the public repository, and the repository
 publicly readable, before the site goes live, or every repo link 404s (`golive-check --site <dir>`
-fetches one anonymously, §2 step 4). The methodology links `repo.url` (legal review 1.1c).
+fetches one anonymously, §1 step 4). The methodology links `repo.url` (legal review 1.1c).
 Untracked files do render: an untracked new narrative or doc shows on the pages but is not in
 `commit_full`, so those pages cannot be rebuilt from the commit (its repo paths stay unlinked,
 and the guard below flags any it cites). Commit what the pages show before a public export.
@@ -68,7 +73,7 @@ uv run python tools/deploy_dryrun.py --site <dir> --server caddy --datalab <data
 uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
 ```
 
-`--server caddy` runs Caddy 2.11.4 in Docker with `deploy/Caddyfile`, the production file (§2),
+`--server caddy` runs Caddy 2.11.4 in Docker with `deploy/Caddyfile`, the production file (§1),
 serving both sites: the Datalab build (`velometer datalab build`) at `localhost`, velometer at
 `velometer.localhost`, the redirect at `www.localhost`, all on one port of 127.0.0.1, without TLS.
 The probes name the site in the Host header; a browser reaches the names directly (Chrome
@@ -94,43 +99,52 @@ export alone. The tool ends with `N checks, M problems` and exits 1 on any probl
 --url <origin>` can audit the pages through it (add `--auth preview:<password>` when locked, and
 `--lang de` for the Datalab).
 
-## 1. Cloudflare Pages
+## 1. Hetzner Cloud with Caddy
 
-1. Export with `--base /` (the site gets its own host name) and run `deploy-check`, as above.
-2. Upload, from a machine where you are logged in to Cloudflare (no npm dependency enters this
-   repository; `npx` fetches wrangler on the fly):
+The route as run on 2026-10-28 (`docs/review/m16-deploy.md`), in order. `tools/server.py` reads
+`HCLOUD_TOKEN` and `VELOMETER_PREVIEW_PASSWORD` from the environment, wired by direnv + pass as in
+`.envrc.example`. Every step that changes the server or costs money prints its plan and goes ahead
+only after you type `yes`; a piped `yes` reaches the prompt (ssh gets no stdin).
 
-   ```
-   npx wrangler pages deploy <dir> --project-name velometer
-   ```
+```
+uv run python tools/server.py preflight
+uv run python tools/server.py create --domain <domain> --ssh-key <key name> [--type cx23] [--location nbg1|fsn1]
+uv run python tools/server.py dns --domain <domain>         # enter the printed records at INWX
+uv run python tools/server.py setup --host <host> --domain <domain>
+uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host <host>
+uv run python tools/server.py deploy velometer <dir> --host <host>        # the export of §0
+uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
+uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
+uv run python tools/server.py verify --domain <domain> --locked
+uv run python tools/render_pass.py --site <dir> --base / --url https://velometer.<domain> \
+    --auth preview:<password> --pages types --interact --flip
+uv run python tools/server.py stats --host <host>
+uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir>
+uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
+```
 
-   Pages reads `_headers` from the site root: the Content-Security-Policy (with
-   `frame-ancestors 'none'`, which only works as a header), `X-Content-Type-Options`,
-   `Referrer-Policy` and `Cache-Control`. It compresses responses itself and ignores the `.gz`
-   files, which count as files.
-3. Custom domain, in this order (a CNAME to Pages for a domain the project does not know yet
-   answers with an error):
-   1. add `velometer.<domain>` as a custom domain in the Pages project;
-   2. then, at the current DNS provider, add a CNAME `velometer` pointing to
-      `<project>.pages.dev`, the project's host name as wrangler prints it after the first
-      deploy (it carries a suffix when `velometer` is taken).
-4. Limits, from Cloudflare's Pages limits page
-   (https://developers.cloudflare.com/pages/platform/limits/, read 2026-10-16): 25 MiB per file;
-   20,000 files per site on the Free plan. Check both against the current page before a deploy:
-   limits change. `deploy-check` prints the file count (the `.gz` files are included) and refuses
-   a file of 25 MiB or more.
+- `preflight` names the `pass insert` command for a missing secret and never prints a value.
+- `create` makes a Hetzner Cloud firewall (22, 80, 443, 443/udp in) and a Debian 13 server with
+  IPv4 and IPv6 from `deploy/cloud-init.yaml`: a deploy user with SSH by key only, unattended
+  upgrades, UTC, Caddy at the pinned version (checked by SHA-512) not yet started, GoAccess, the
+  release roots and the default lock. It refuses a location outside Germany, an unknown SSH key,
+  an existing server of the same name, a deprecated type and an ARM type. The default type is
+  `cx23` (Hetzner no longer offers `cx22`); the default location `nbg1` had no capacity on
+  2026-10-28, and `fsn1` worked. A failed create may leave the firewall behind; the retry reuses
+  it.
+- `dns` prints A and AAAA for `<domain>`, `www.<domain>` and `velometer.<domain>`. Delete the
+  registrar's parking records and wildcard. Let's Encrypt issues the certificates on the first
+  request after `setup`.
+- `render_pass.py` needs `--base /` against the live site: its default `/velometer/` 404s.
+- `golive-check` and `unlock` are the go-live (step 4 below); nothing before them opens the sites.
 
-## 2. Hetzner Cloud with Caddy
+The steps in detail:
 
-Tested locally (M15, M16: Caddy 2.11.4, Docker, plain HTTP on 127.0.0.1); not yet on a server with
-TLS.
-
-1. Create the smallest server type in a German location, with Caddy installed.
-   Use Caddy 2.11.4 or later: Caddy 2.10.2 answers a precompressed (`.gz`) file with
-   `206 Partial Content` even when the browser asked for no range (found by the M15 dry run,
-   `docs/review/m15-dryrun.md`).
+1. The server: the smallest shared x86 type in a German location. Use Caddy 2.11.4 or later:
+   Caddy 2.10.2 answers a precompressed (`.gz`) file with `206 Partial Content` even when the
+   browser asked for no range (found by the M15 dry run, `docs/review/m15-dryrun.md`).
 2. DNS: A and AAAA records for `<domain>`, `www.<domain>` and `velometer.<domain>` pointing to the
-   server.
+   server, entered by hand at INWX; the INWX credentials stay off this machine.
 3. `/etc/caddy/Caddyfile` is `deploy/Caddyfile`, unchanged. It reads two environment variables
    (`deploy/caddy.env.example`): `DOMAIN`, the apex, and `SITE_ROOT`, default `/srv`. It serves:
    - the Datalab at `<domain>` from `<SITE_ROOT>/datalab/current`;
@@ -200,18 +214,8 @@ TLS.
    so journald) masks the same fields, writes no access lines, and drops the `http.stdlib`
    logger, whose messages name the client in their text (`TLS handshake error from
    <ip>:<port>`, at DEBUG) where no field filter reaches.
-4. Upload, with `tools/server.py` (M16; it reads `HCLOUD_TOKEN` and `VELOMETER_PREVIEW_PASSWORD`
-   from the environment, wired by direnv + pass as in `.envrc.example`; `preflight` names the
-   `pass insert` command for a missing one). Every step that changes the server prints its plan
-   and goes ahead only after you type `yes`.
-
-   ```
-   uv run python tools/server.py setup --host <host> --domain <domain>
-   uv run python tools/server.py deploy velometer <dir> --host <host>
-   uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
-   uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host <host>
-   uv run python tools/server.py verify --domain <domain> --locked
-   ```
+4. Setup, upload, statistics and go-live, with `tools/server.py deploy` and the other commands
+   of the list above.
 
    `setup` writes `/etc/caddy/Caddyfile` (this file, checked by `caddy validate` as the `caddy`
    user before it replaces the live one), `/etc/caddy/caddy.env` and the GoAccess configuration,
@@ -249,12 +253,43 @@ TLS.
    commit that no pushed tag points at (§0). `unlock` needs `--site` too and runs the same check
    first, then empties the lock file and runs `verify`.
 
+## 2. Cloudflare Pages (not chosen, 2026-10-21)
+
+Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a US company
+(ADR 0009). Kept for reference; never deployed.
+
+1. Export with `--base /` (the site gets its own host name) and run `deploy-check`, as above.
+2. Upload, from a machine where you are logged in to Cloudflare (no npm dependency enters this
+   repository; `npx` fetches wrangler on the fly):
+
+   ```
+   npx wrangler pages deploy <dir> --project-name velometer
+   ```
+
+   Pages reads `_headers` from the site root: the Content-Security-Policy (with
+   `frame-ancestors 'none'`, which only works as a header), `X-Content-Type-Options`,
+   `Referrer-Policy` and `Cache-Control`. It compresses responses itself and ignores the `.gz`
+   files, which count as files.
+3. Custom domain, in this order (a CNAME to Pages for a domain the project does not know yet
+   answers with an error):
+   1. add `velometer.<domain>` as a custom domain in the Pages project;
+   2. then, at the current DNS provider, add a CNAME `velometer` pointing to
+      `<project>.pages.dev`, the project's host name as wrangler prints it after the first
+      deploy (it carries a suffix when `velometer` is taken).
+4. Limits, from Cloudflare's Pages limits page
+   (https://developers.cloudflare.com/pages/platform/limits/, read 2026-10-16): 25 MiB per file;
+   20,000 files per site on the Free plan. Check both against the current page before a deploy:
+   limits change. `deploy-check` prints the file count (the `.gz` files are included) and refuses
+   a file of 25 MiB or more.
+
 ## 3. Datenschutz and Impressum
 
-The Datenschutzerklärung (the Datalab's, linked from the footer) must name:
-
-- the host and its server logs (Cloudflare or Hetzner, including the IP addresses they log);
-- Cloudflare as a US processor, if the Cloudflare Pages route is taken.
+The Impressum and the Datenschutzerklärung are pages of the Datalab site (`sites/datalab/`,
+`/impressum/` and `/datenschutz/` on the apex), linked from both sites' footers. The
+Datenschutzerklärung names Hetzner as the host and processor (the DPA was concluded on
+2026-10-28), the masked access logs and their 14 days, the statistics, Let's Encrypt and the
+supervisory authority (BlnBDI). `golive-check` refuses while a placeholder or an open legal
+decision remains (`docs/review/m16-legal.md`).
 
 Since M16 no page loads anything from another host: the map background is the self-hosted
 Protomaps extract, so the OSM tile usage policy no longer applies.

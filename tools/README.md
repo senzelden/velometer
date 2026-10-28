@@ -97,6 +97,14 @@ map's view from the basemap's tiles and need it. Serve the export with
 `tools/deploy_dryrun.py --site DIR --server caddy --tiles data/tiles/velometer.pmtiles
 --keep-running` and pass its origin as `--url`.
 
+Against the live site (M16), give `--base /`, the base the export was made with: the default
+`/velometer/` 404s there. Behind the lock add `--auth preview:<password>`:
+
+```bash
+uv run --group dev python tools/render_pass.py --site "$SCRATCH/velometer" --base / \
+    --url https://velometer.<domain> --auth preview:<password> --pages types --interact --flip
+```
+
 ## orca_pass.py
 
 Runs the real Orca screen reader (`/usr/bin/orca`, 50.x) over the exported static edition (M13
@@ -184,3 +192,9 @@ uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwer
 
 Re-run it when the pages change, and update the README's alt texts and caption to what the new
 images show.
+
+## server.py, tiles.py, deploy_dryrun.py
+
+The Hetzner server tool, the basemap extract and the local dry run are described where they are
+used: `docs/deploy.md` §1 (`server.py`, with the route as run), §1 step 3 (`tiles.py`'s extract)
+and §0a (`deploy_dryrun.py`). `server.py create` defaults to `--type cx23`.
