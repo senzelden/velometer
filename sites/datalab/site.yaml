@@ -12,7 +12,7 @@ operator:
   register: null        # verein: Vereinsregister, Amtsgericht, VR-Nr.; company: Handelsregister, HRB-Nr.
   vat: null             # USt-IdNr. or W-IdNr., only if one exists; left out when null and a form is chosen
   representative: null  # verein: Vorstand (§ 26 BGB); company: Geschäftsführung
-  responsible: "Dennis Senzel, Anschrift wie oben"     # Verantwortlicher nach § 18 Abs. 2 MStV: name and address (legal review 4.2)
+  responsible: "Dennis Senzel"     # Verantwortlicher nach § 18 Abs. 2 MStV: name and address (legal review 4.2); add ", Anschrift wie oben" with operator.address
   authority: blnbdi     # "blnbdi" (operator in Berlin) or the full text of the Land's authority (5.8)
   mail_host: "Posteo e.K., Methfesselstr. 38, 10965 Berlin"       # who hosts the contact mailbox: name and address (a recipient of e-mails)
 contact_email: "zaehlwerk-datalab@posteo.com"     # the contact in every page's footer

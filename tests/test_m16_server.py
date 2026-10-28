@@ -981,6 +981,64 @@ def test_golive_a_chosen_form_without_an_address_is_open(tmp_path):
     assert "operator.address is null" in item
 
 
+WAIVER = (
+    "**Go-live without:** operator.address (decided 2026-10-28: the user goes live without it "
+    "and accepts the risk)"
+)
+
+
+def _no_address(tmp_path: Path, legal_extra: str) -> tuple[Path, Path]:
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    cfg = root / "sites" / "datalab" / "site.yaml"
+    data = yaml.safe_load(cfg.read_text("utf-8"))
+    data["operator"]["address"] = None
+    cfg.write_text(yaml.safe_dump(data), "utf-8")
+    legal = root / "docs" / "review" / "m16-legal.md"
+    legal.write_text(legal.read_text("utf-8") + legal_extra, "utf-8")
+    return root, datalab
+
+
+def test_golive_a_recorded_waiver_lets_the_missing_address_through_and_says_so(tmp_path):
+    # ruling R43: the user decided (2026-10-28) to go live without the address; the waiver is a
+    # dated line in m16-legal.md, and the check names it instead of dropping the address silently
+    root, datalab = _no_address(tmp_path, f"\n{WAIVER}\n")
+    assert srv.golive_items(root, datalab) == []
+    (w,) = srv.golive_waivers(root)
+    assert "operator.address" in w and "2026-10-28" in w
+    r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root))
+    assert r.exit_code == 0, r.output
+    assert "waived: operator.address" in r.output
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "",  # no waiver at all
+        "\n**Go-live without:** operator.address\n",  # undated: not a decision
+        "\n**Go-live without:** operator.address (decided soon: maybe)\n",
+        "\n**Go-live without:** operator.email (decided 2026-10-28: no)\n",  # another key
+        "\nWe could note **Go-live without:** operator.address (decided 2026-10-28: x) here.\n",
+    ],
+)
+def test_golive_without_an_exact_waiver_the_missing_address_stays_open(tmp_path, extra):
+    root, datalab = _no_address(tmp_path, extra)
+    items = srv.golive_items(root, datalab)
+    assert any("operator.address is null" in i for i in items), items
+
+
+def test_golive_only_deferred_keys_can_be_waived(tmp_path):
+    # a waiver line naming a key that is not deferred (email) waives nothing and is itself open
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    legal = root / "docs" / "review" / "m16-legal.md"
+    legal.write_text(
+        legal.read_text("utf-8")
+        + "\n**Go-live without:** operator.email (decided 2026-10-28: no)\n",
+        "utf-8",
+    )
+    items = srv.golive_items(root, datalab)
+    assert any("operator.email cannot be waived" in i for i in items), items
+
+
 def _edit(path: Path, old: str, new: str) -> None:
     text = path.read_text("utf-8")
     assert old in text, old

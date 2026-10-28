@@ -826,6 +826,39 @@ def _legal_open(text: str) -> list[str]:
     return items
 
 
+# Ruling R43: a deferred operator value (velometer.datalab.DEFERRED) may stay unset at go-live only
+# by a dated user decision on its own line in m16-legal.md; golive-check names every such waiver.
+WAIVER_LINE = re.compile(
+    r"\*\*Go-live without:\*\* operator\.(\w+) \(decided (\d{4}-\d{2}-\d{2}): ([^)]+)\)"
+)
+
+
+def _legal_waivers(text: str) -> tuple[dict[str, str], list[str]]:
+    """The waived deferred keys (key -> "decided DATE: why") and the waiver lines that waive
+    nothing (a key that is not deferred)."""
+    from velometer.datalab import DEFERRED
+
+    waived, bad = {}, []
+    for line in text.splitlines():
+        m = WAIVER_LINE.fullmatch(line.rstrip())
+        if not m:
+            continue
+        if m.group(1) in DEFERRED:
+            waived[m.group(1)] = f"decided {m.group(2)}: {m.group(3)}"
+        else:
+            bad.append(f"m16-legal.md: operator.{m.group(1)} cannot be waived (not deferred)")
+    return waived, bad
+
+
+def golive_waivers(root: Path) -> list[str]:
+    """The waivers golive-check honours, as printed (ruling R43)."""
+    try:
+        text = (root / "docs" / "review" / "m16-legal.md").read_text(encoding="utf-8")
+    except OSError:
+        return []
+    return [f"operator.{k} ({why}, m16-legal.md)" for k, why in _legal_waivers(text)[0].items()]
+
+
 def _contents_rows(lines: list[str]) -> int | None:
     for i, line in enumerate(lines):
         if CONTENTS_HEADER.match(line.strip()):
@@ -897,6 +930,10 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
     from velometer.datalab import DatalabError, deferred_missing, load_config, placeholders
 
     items = []
+    review = root / "docs" / "review"
+    legal = _read(review / "m16-legal.md", items)
+    waived, bad = _legal_waivers(legal) if legal is not None else ({}, [])
+    items += bad
     try:
         cfg = load_config(root / "sites" / "datalab" / "site.yaml")
     except (DatalabError, ValueError) as e:
@@ -908,14 +945,13 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
         items += [
             f"sites/datalab/site.yaml: operator.{k} is null (required; the pages leave it out)"
             for k in deferred_missing(cfg)
+            if k not in waived
         ]
     if cfg is not None and not cfg.contact_email:
         items.append("sites/datalab/site.yaml: contact_email is null (no contact mailbox)")
     if not (datalab / "index.html").is_file():
         items.append(f"{datalab}: no built Datalab site (velometer datalab build)")
     items += [f"placeholder left in the Datalab build: {p}" for p in placeholders(datalab)]
-    review = root / "docs" / "review"
-    legal = _read(review / "m16-legal.md", items)
     if legal is not None:
         items += _legal_open(legal)
     press = _read(review / "m16-press.md", items)
@@ -928,6 +964,8 @@ def _golive(root: Path, datalab: Path) -> list[str]:
     items = golive_items(root, datalab)
     for item in items:
         typer.echo(f"open: {item}")
+    for w in golive_waivers(root):
+        typer.echo(f"waived: {w}")
     typer.echo("Manual confirmations (not checked here):")
     for m in MANUAL:
         typer.echo(f"  - {m}")

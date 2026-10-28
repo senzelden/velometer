@@ -707,6 +707,8 @@ sind" is not answered by the text. Court decisions on this were not read for thi
 *Fix.* Q6. Until it is answered, the private-person variant carries the placeholder `[[Anschrift]]`
 with a comment that a c/o address needs the lawyer's yes.
 
+**Go-live without:** operator.address (decided 2026-10-28: the first go-live shows no postal address; the user knows § 18 Abs. 1 and 2 MStV and § 5 DDG ask for one and accepts the risk; the address follows later)
+
 ### 4.4 Electronic contact
 
 *Rule.* § 5 Abs. 1 Nr. 2 DDG: "Angaben, die eine schnelle elektronische Kontaktaufnahme und eine
