@@ -684,7 +684,7 @@ reproducing a periodical. Treat § 18 Abs. 2 as applying. Q5 asks a lawyer to co
 
 *Our state.* Nothing named yet.
 
-**Verdict:** decision for the user
+**Verdict:** decision for the user (decided 2026-10-28: Dennis Senzel, the operator, for both sites; Anschrift as the operator's, which the pages add with operator.address)
 
 *Fix.* The user names the Verantwortlicher (name and Anschrift; a person resident in Germany), one
 for both sites or one per site. Task 6 renders "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:
