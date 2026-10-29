@@ -143,6 +143,8 @@ repository values (the guard of R58 checked that):
   flip): 171 visits, 0 with findings. The tier map credit reads "Protomaps (Stand 2026-08-11),
   ESA WorldCover (CC BY 4.0)".
 - On the server: `/var/log/btmp` empty, no rsyslog or `auth.log` (R53).
+- Render pass against `https://zaehlwerk-datalab.de` (`--base / --lang de`, axe WCAG 2 A/AA and
+  2.1 A/AA, both themes): 18 visits, 0 with findings.
 
 ## Not claimed
 
