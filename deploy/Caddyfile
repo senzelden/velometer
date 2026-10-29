@@ -34,6 +34,11 @@
 				request>headers>X-Forwarded-For delete
 				request>headers>Forwarded delete
 				request>headers>X-Real-Ip delete
+				request>headers>Alt-Used delete
+				request>headers>Save-Data delete
+				request>headers>Via delete
+				request>headers>X-Forwarded-Host delete
+				request>headers>X-Forwarded-Proto delete
 				request>headers>Accept delete
 				request>headers>Accept-Encoding delete
 				request>headers>Accept-Language delete
@@ -100,6 +105,11 @@
 				request>headers>X-Forwarded-For delete
 				request>headers>Forwarded delete
 				request>headers>X-Real-Ip delete
+				request>headers>Alt-Used delete
+				request>headers>Save-Data delete
+				request>headers>Via delete
+				request>headers>X-Forwarded-Host delete
+				request>headers>X-Forwarded-Proto delete
 				request>headers>Accept delete
 				request>headers>Accept-Encoding delete
 				request>headers>Accept-Language delete

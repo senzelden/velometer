@@ -60,6 +60,16 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   - The German methodology's repository sentence reads "Der Code ist mit den Klassifikationsregeln
     und dieser Dokumentation im velometer-Repository veröffentlicht." (the user's word
     "Klassifikationsregeln", as in the document's heading).
+- 2026-10-29 (final review fix round):
+  - Map credit with the tile build date, as drafted: "Protomaps (build 2026-08-11), ESA WorldCover
+    (CC BY 4.0)" / "Protomaps (Stand 2026-08-11), ESA WorldCover (CC BY 4.0)".
+  - Datenschutzerklärung §3 gains two sentences, the user's wording: "Weitere technische Angaben aus
+    dem Kopf der Anfrage: Die üblichen (etwa bevorzugte Sprache oder Angaben zu Browser und Gerät)
+    löscht der Server vor dem Schreiben; nur selten gesendete können im Protokoll stehen." and
+    "Unabhängig von der Website protokolliert der Server Anmeldeversuche über den
+    Fernwartungszugang (SSH) mit der vollständigen IP-Adresse; diese Einträge löscht er nach 14
+    Tagen."
+  - Go to run `setup` during the redeploy (new log filter, journald limit), lock kept.
 
 ## Pre-flight rulings
 
@@ -211,6 +221,9 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   to 14 days, outside the masked web logs and the statistics; the Datenschutzerklärung's wording
   for it is the user's — personal data kept without a stated period otherwise — cost: older
   journal lines for debugging are gone after 14 days.
+  Checked on the server 2026-10-29: `/var/log/btmp` is empty (this Debian image's sshd writes
+  no failed logins there), there is no rsyslog and no `auth.log`; `wtmp` holds only the
+  operator's own logins. The journal is the only place SSH client addresses are kept.
 - **R54.** Go-live judges what is live: `unlock` and `golive-check --host` compare a digest of every
   file (path and sha256) of the release `current` points to, computed on the server over the
   guarded release path, with `--site` and `--datalab`; `--host` without `--site` is open. The
@@ -238,6 +251,11 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   `--user` is checked too — cost: none.
 - **R60.** `deploy datalab` wants the stamp of the committed `sites/datalab/`, not only a stamp, so
   the release named after HEAD is what HEAD builds — cost: a rebuild after every commit there.
+
+- **R61.** The log filters also delete Alt-Used, Save-Data, Via, X-Forwarded-Host and
+  X-Forwarded-Proto (final re-review N1) — headers Firefox over HTTP/3, data-saver modes and
+  proxies send — cost if wrong: a rarely sent header stays in the log, which the
+  Datenschutzerklärung now says.
 
 ## Known limits (recorded, not fixed)
 

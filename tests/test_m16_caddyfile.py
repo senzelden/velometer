@@ -42,7 +42,8 @@ BROWSER_HEADERS = {
     "If-None-Match", "If-Range", "Range", "Origin", "Pragma", "Priority", "Purpose",
     "Sec-Purpose", "Sec-Ch-Ua", "Sec-Ch-Ua-Mobile", "Sec-Ch-Ua-Platform", "Sec-Fetch-Dest",
     "Sec-Fetch-Mode", "Sec-Fetch-Site", "Sec-Fetch-User", "Te", "Upgrade-Insecure-Requests",
-    "X-Forwarded-For", "Forwarded", "X-Real-Ip",
+    "X-Forwarded-For", "Forwarded", "X-Real-Ip", "Alt-Used", "Save-Data", "Via",
+    "X-Forwarded-Host", "X-Forwarded-Proto",
 }  # fmt: skip
 # set by the site only where the lock file has not set it (ruling R26)
 CONDITIONAL = "Cache-Control"
