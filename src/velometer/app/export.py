@@ -284,6 +284,45 @@ def public_commit() -> str:
     return f"{sha}-dirty" if dirty else sha
 
 
+# The one config file a public export's scratch copy may change (deploy.md §0): the public site
+# values. Every other file must be the commit's, or the pages show numbers the linked commit does
+# not produce (final review M6).
+SCRATCH_ONLY = "site.yaml"
+
+
+def _blob_sha(data: bytes) -> str:
+    """git's object id of a file's content (`git hash-object`)."""
+    import hashlib
+
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()  # noqa: S324 (git's id)
+
+
+def config_drift(config_dir: Path) -> list[str]:
+    """The files under `config_dir` that differ from the commit's `config/` (HEAD), but
+    `site.yaml`: changed, missing, or not in the commit. [] when the copy matches."""
+    try:
+        listing = _git("ls-tree", "-r", "--full-tree", "HEAD", "--", "config")
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [f"git cannot list config/ at HEAD ({e.__class__.__name__})"]
+    committed = {}
+    for line in listing.splitlines():
+        meta, _, path = line.partition("\t")
+        committed[path.removeprefix("config/")] = meta.split()[2]
+    root = Path(config_dir)
+    local = {
+        p.relative_to(root).as_posix(): _blob_sha(p.read_bytes())
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts
+    }
+    committed.pop(SCRATCH_ONLY, None)
+    local.pop(SCRATCH_ONLY, None)
+    out = [f"{rel}: differs from the commit" for rel in sorted(local.keys() & committed.keys())
+           if local[rel] != committed[rel]]  # fmt: skip
+    out += [f"{rel}: missing (in the commit)" for rel in sorted(committed.keys() - local.keys())]
+    out += [f"{rel}: not in the commit" for rel in sorted(local.keys() - committed.keys())]
+    return out
+
+
 def build_stamp(
     data: ReportData,
     base: str,
@@ -724,6 +763,14 @@ def _run_export(
         raise ExportError(str(e)) from e
     try:
         if public:
+            changed = config_drift(Path(config_dir))
+            if changed:
+                lines = "\n".join(f"  {c}" for c in changed)
+                raise ExportError(
+                    f"--public: {config_dir} differs from the commit's config/ in more than "
+                    f"site.yaml ({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
+                    "copy config/ afresh and change only site.yaml (docs/deploy.md §0)"
+                )
             drift = figures_drift(conn, Path(config_dir))
             if drift:
                 from velometer.sources.external import LOAD_COMMAND

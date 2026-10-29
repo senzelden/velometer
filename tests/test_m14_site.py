@@ -2,6 +2,8 @@
 
 import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -138,9 +140,11 @@ def test_footer_datalab_line_comes_first(inputs):
 
 def _export(rich, out: Path, public: bool, figures_guard: bool = False):  # noqa: F811
     """The fixture database holds synthetic external figures, never the config's figures.csv,
-    so the figures guard is off unless `figures_guard` (it has its own tests)."""
+    so the figures guard is off unless `figures_guard` (it has its own tests); the fixture config
+    is no copy of the commit's, so the config guard is off too (its own tests below)."""
     db_path, cfg, maps, docs, plans = rich
     with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(export, "config_drift", lambda config_dir: [])
         if not figures_guard:
             mp.setattr(export, "figures_drift", lambda conn, config_dir: [])
         return export.run_export(
@@ -229,3 +233,43 @@ def test_plain_export_stamps_false(rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     _export(rich, out, False)
     assert json.loads((out / "build.json").read_text())["public"] is False
+
+
+# --- a public export's config is the commit's but for site.yaml (final review M6) -------------
+
+
+def test_public_export_refuses_a_config_copy_beyond_site_yaml(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    monkeypatch.setattr(export, "config_drift", lambda config_dir: ["presets.yaml: differs"])
+    db_path, cfg, maps, docs, plans = rich
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match=r"(?s)more than site.yaml.*presets.yaml"):
+        export.run_export(out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, True)
+    assert not out.exists()
+
+
+def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
+    """The rule, against the repo's own HEAD: only site.yaml may differ."""
+    root = Path(__file__).resolve().parents[1]
+    copy = tmp_path / "config"
+    shutil.copytree(root / "config", copy)
+    for p in copy.rglob("*"):  # the working tree may hold edits; the copy must be HEAD's
+        if p.is_file():
+            rel = p.relative_to(copy).as_posix()
+            blob = subprocess.run(["git", "-C", str(root), "show", f"HEAD:config/{rel}"],
+                                  capture_output=True)  # fmt: skip
+            if blob.returncode == 0:
+                p.write_bytes(blob.stdout)
+            else:
+                p.unlink()
+    (copy / "site.yaml").write_text("datalab: {name: X}\n", encoding="utf-8")
+    assert export.config_drift(copy) == []
+    (copy / "presets.yaml").write_text("changed: true\n", encoding="utf-8")
+    (copy / "trust.yaml").unlink()
+    (copy / "extra.yaml").write_text("x: 1\n", encoding="utf-8")
+    assert export.config_drift(copy) == [
+        "presets.yaml: differs from the commit",
+        "trust.yaml: missing (in the commit)",
+        "extra.yaml: not in the commit",
+    ]

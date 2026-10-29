@@ -35,7 +35,9 @@ address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub an
 examples), and records those values in `build.json`. It refuses when the database's curated
 external figures differ from `config/external/figures.csv` (`velometer external check` names the
 rows; `velometer external load --no-qecio --no-bikenetkit` reloads them and writes the database,
-so it needs the user's go). It also refuses a checkout whose tracked files
+so it needs the user's go). It refuses a config directory that differs from the commit's
+`config/` in anything but `site.yaml` (a file changed, missing or added: the pages would show
+numbers the linked commit does not produce; copy `config/` afresh). It also refuses a checkout whose tracked files
 have uncommitted changes (untracked files do not count): every repo path on the pages (a data
 reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
 `repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a

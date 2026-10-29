@@ -45,6 +45,7 @@ def good(tmp_path_factory):
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
         mp.setattr(export, "figures_drift", lambda conn, config_dir: [])  # synthetic figures
+        mp.setattr(export, "config_drift", lambda config_dir: [])  # not a copy of config/
         export.run_export(
             out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True,
             tiles_info=_sidecar(tmp),
