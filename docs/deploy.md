@@ -128,7 +128,8 @@ uv run python tools/server.py deploy velometer <dir> --host <host>        # the 
 uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
 uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
 uv run python tools/server.py verify --domain <domain> --locked
-uv run python tools/render_pass.py --site <dir> --base / --url https://velometer.<domain> \
+uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir> \
+    --url https://velometer.<domain> \
     --pages types --interact --flip
 uv run python tools/server.py stats --host <host>
 uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
