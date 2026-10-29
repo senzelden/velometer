@@ -119,6 +119,31 @@ figures differ from `figures.csv` follows in Task 11.
 scanners (`/.git`, `/api`, `robots.txt`), all answered 401. The one 404 URL, `/velometer/`, is the
 first render pass with the wrong base. The report names DB-IP (CC BY 4.0) as required.
 
+## Redeploy 2026-10-29 (after Task 11 and the final review)
+
+Still behind the lock. From commit `a6093ae` (pushed to the private `origin` with tag
+`export-a6093ae`), with a fresh copy of `config/` whose `site.yaml` alone carries the Datalab and
+repository values (the guard of R58 checked that):
+
+- `velometer app export --public`: 798 files, 303.6 MB; `deploy-check --public` ok;
+  `build.json` `tiles`: Protomaps build 2026-08-11, max zoom 13, sha256 `1bca035e…`, equal to
+  `sha256sum /srv/tiles/velometer.pmtiles` on the server (tile file not re-uploaded).
+- `velometer datalab build`: 21 files, 0 placeholders, with its inputs stamp.
+- `setup` (user's go): new Caddyfile (log filter keeps only User-Agent and Referer of the common
+  headers, R52, R61) and the journald drop-in (14 days, R53); journald restarted, Caddy reloaded,
+  password lock kept.
+- `deploy velometer` → `releases/a6093ae-20261029T081457`; `deploy datalab` →
+  `releases/a6093ae-20261029T081502`.
+- `verify --locked`: 0 problems.
+- `golive-check --site --datalab --host`: the live releases equal the local builds file by file
+  (I1); open only the repository checks (private repo: repo link 404, anonymous `ls-remote`
+  refused) and the address waiver. The first run passed the tag check: it was not anonymous on a
+  machine with VS Code's `GIT_ASKPASS` (fixed, R62).
+- Render pass against `https://velometer.zaehlwerk-datalab.de` (`--base /`, types, interact,
+  flip): 171 visits, 0 with findings. The tier map credit reads "Protomaps (Stand 2026-08-11),
+  ESA WorldCover (CC BY 4.0)".
+- On the server: `/var/log/btmp` empty, no rsyslog or `auth.log` (R53).
+
 ## Not claimed
 
 - That `roll_keep_for 336h` deletes rolled logs after 14 days: check on the server after
