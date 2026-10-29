@@ -790,6 +790,7 @@ js.download.image_failed: the chart image could not be loaded
 js.map.osm_contributors: OpenStreetMap contributors
 js.map.boundaries: © EuroGeographics for the administrative boundaries
 js.map.basemap_credit: Protomaps, ESA WorldCover (CC BY 4.0)
+js.map.basemap_credit_build: Protomaps (build {build}), ESA WorldCover (CC BY 4.0)
 js.map.leaflet_title: A JavaScript library for interactive maps
 js.map.way: way {id}
 js.map.side: side

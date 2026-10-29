@@ -30,7 +30,7 @@ BASE_URL = "http://127.0.0.1:8000"
 FOOTERS = {lang: i18n.t(lang, "site.footer.static_edition", commit="") for lang in i18n.LANGS}
 BUILD_KEYS = {
     "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "public",
-    "built_at"
+    "tiles", "built_at"
 }  # fmt: skip
 
 MAIN_OPEN = '<main id="main" tabindex="-1">'
@@ -329,8 +329,9 @@ def test_export_and_serve_take_the_plans_data_dir(tmp_path, monkeypatch, given):
     seen = {}
 
     def fake_export(
-        out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-    ):
+        out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+        tiles_info=None,
+    ):  # fmt: skip
         seen["export"] = plans_data_dir
         return export.ExportResult(0, 0, {"commit": "x", "base": "/"})
 

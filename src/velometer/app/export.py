@@ -32,7 +32,15 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
-from velometer.app.main import CSP, HERE, TABS, TILES_PATH, create_app, csp_meta
+from velometer.app.main import (
+    CSP,
+    HERE,
+    TABS,
+    TILES_PATH,
+    create_app,
+    csp_meta,
+    load_tiles_info,
+)
 from velometer.app.urls import (
     DATA_ROOTS,
     LEGACY_DE,
@@ -282,13 +290,16 @@ def build_stamp(
     public: bool = False,
     site: dict | None = None,
     raw: str | None = None,
+    tiles: dict | None = None,
 ) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
     exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
     export also records `site`, the values its footer and repo links use
     (`SiteConfig.public_values`), which `deploy-check` checks the pages against. `raw` is the
-    commit a public export already checked (read once), else `git_commit()` is asked."""
+    commit a public export already checked (read once), else `git_commit()` is asked. `tiles` is
+    the basemap's sidecar (`main.load_tiles_info`: Protomaps build, maxzoom, sha256), null when
+    the export had none (spec §4.3; a public deploy-check refuses that)."""
     if raw is None:
         raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
@@ -305,6 +316,7 @@ def build_stamp(
         "base": base,
         "public": public,
         **({"site": site} if public and site is not None else {}),
+        "tiles": tiles,
         "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
@@ -643,12 +655,15 @@ def run_export(
     plans_data_dir: Path,
     clean: bool,
     public: bool = False,
+    tiles_info: Path | None = None,
 ) -> ExportResult:
-    """Write the static edition of the app built with `base` to `out` (module docstring)."""
+    """Write the static edition of the app built with `base` to `out` (module docstring).
+    `tiles_info` is the basemap's sidecar file (tools/tiles.py); absent, `tiles` is null."""
     try:
         return _run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-        )
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+            tiles_info,
+        )  # fmt: skip
     except OSError as e:
         raise ExportError(f"export to {out} failed: {e}") from e
 
@@ -673,8 +688,13 @@ def _run_export(
     plans_data_dir: Path,
     clean: bool,
     public: bool = False,
+    tiles_info: Path | None = None,
 ) -> ExportResult:
     validate_base(base)
+    try:
+        tiles = load_tiles_info(tiles_info)
+    except ValueError as e:
+        raise ExportError(str(e)) from e
     site_values, raw = None, None
     if public:
         try:
@@ -715,11 +735,12 @@ def _run_export(
                     f"{lines}\nreload them with `{LOAD_COMMAND}` (writes velometer.sqlite)"
                 )
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base), public, site_values, raw)
+        build = build_stamp(data, normalise_base(base), public, site_values, raw, tiles)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base,
             static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
+            tiles_info=tiles,
         )  # fmt: skip
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)

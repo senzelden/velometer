@@ -6,6 +6,12 @@ once into the git-ignored `data/cache/bin/` and verified against `PMTILES_SHA256
 
     uv run python tools/tiles.py --site DIR --maxzoom 13 --out data/tiles/velometer.pmtiles
     uv run python tools/tiles.py --site DIR --measure
+    uv run python tools/tiles.py --stamp [--out data/tiles/velometer.pmtiles]
+
+Beside the extract it writes `<out>.json` (`velometer.pmtiles.json`): the Protomaps build it was
+cut from (`protomaps_build`, an ISO date), the `maxzoom` read from the file's own header, and its
+`sha256`. `velometer app export` records it in `build.json` `tiles`, and the map credit names the
+build date (spec §4.3, legal review 1.7). `--stamp` writes the sidecar for an extract cut before.
 
 The extract keeps every layer of the build, `landcover` included (the CLI cannot drop a layer).
 The style draws no landcover, and the extract is not offered as a tile service.
@@ -197,15 +203,61 @@ def measure(
     return match.group(1)
 
 
+def sidecar_path(out: Path) -> Path:
+    return Path(out).with_name(Path(out).name + ".json")
+
+
+def build_date(build_url: str) -> str:
+    """The ISO date of a dated Protomaps build URL (`.../20260811.pmtiles` -> `2026-08-11`)."""
+    m = re.search(r"/(\d{4})(\d{2})(\d{2})\.pmtiles$", build_url)
+    if not m:
+        raise ValueError(f"not a dated Protomaps build: {build_url}")
+    return "-".join(m.groups())
+
+
+def header_maxzoom(path: Path) -> int:
+    """The max zoom a PMTiles v3 archive's header records (byte 101 of its 127-byte header)."""
+    with Path(path).open("rb") as f:
+        head = f.read(127)
+    if len(head) < 127 or head[:7] != b"PMTiles" or head[7] != 3:
+        raise ValueError(f"{path} is no PMTiles v3 archive")
+    return head[101]
+
+
+def write_sidecar(out: Path, build_url: str) -> dict:
+    """Write `<out>.json` for the extract `out`, cut from `build_url`; returns what it wrote."""
+    h = hashlib.sha256()
+    with Path(out).open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    info = {
+        "file": Path(out).name,
+        "protomaps_build": build_date(build_url),
+        "maxzoom": header_maxzoom(out),
+        "sha256": h.hexdigest(),
+    }
+    sidecar_path(out).write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
+    return info
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--site", type=Path, required=True, help="export directory with maps/")
+    ap.add_argument("--site", type=Path, help="export directory with maps/")
     ap.add_argument("--maxzoom", type=int, default=MAXZOOM)
     ap.add_argument("--out", type=Path, default=ROOT / "data" / "tiles" / "velometer.pmtiles")
     ap.add_argument("--measure", action="store_true", help="print the size at z14 and z15")
     ap.add_argument("--build-url", default=BUILD_URL)
     ap.add_argument("--cities", type=Path, default=ROOT / "config" / "cities.yaml")
+    ap.add_argument(
+        "--stamp", action="store_true", help="only write the sidecar of an existing --out"
+    )
     args = ap.parse_args(argv)
+    if args.stamp:
+        info = write_sidecar(args.out, args.build_url)
+        print(f"{sidecar_path(args.out)}: build {info['protomaps_build']}, z{info['maxzoom']}")
+        return 0
+    if args.site is None:
+        ap.error("--site is required (except with --stamp)")
 
     boxes = city_bboxes(args.cities, args.site / "maps")
     if args.measure:
@@ -213,7 +265,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"z{zoom}: {measure(args.build_url, boxes, zoom)}", flush=True)
         return 0
     size = extract(args.build_url, boxes, args.maxzoom, args.out)
+    write_sidecar(args.out, args.build_url)
     print(f"{args.out}: {size} bytes, build {PROTOMAPS_BUILD}, maxzoom {args.maxzoom}")
+    print(f"{sidecar_path(args.out)}: written")
     return 0
 
 

@@ -46,9 +46,20 @@ def good(tmp_path_factory):
         mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
         mp.setattr(export, "figures_drift", lambda conn, config_dir: [])  # synthetic figures
         export.run_export(
-            out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True
-        )
+            out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True,
+            tiles_info=_sidecar(tmp),
+        )  # fmt: skip
     return out, cfg
+
+
+TILES_INFO = {"protomaps_build": "2026-08-11", "maxzoom": 13, "sha256": "ab" * 32}
+
+
+def _sidecar(tmp: Path) -> Path:
+    """The sidecar tools/tiles.py writes beside the extract."""
+    path = tmp / "velometer.pmtiles.json"
+    path.write_text(json.dumps({"file": "velometer.pmtiles", **TILES_INFO}), encoding="utf-8")
+    return path
 
 
 @pytest.fixture
@@ -85,6 +96,25 @@ def test_good_export_is_ready(site):
     out, cfg = site
     assert deploy_check.deploy_problems(out, None) == []
     assert deploy_check.deploy_problems(out, "/") == []
+
+
+def test_a_public_export_records_the_basemaps_build_and_its_maps_carry_the_date(site):
+    """Spec §4.3, legal review 1.7: build.json `tiles`, and the maps' credit date from it."""
+    out, _ = site
+    build = json.loads((out / "build.json").read_text(encoding="utf-8"))
+    assert build["tiles"] == TILES_INFO
+    page = (out / "city" / "berlin" / "tiers" / "index.html").read_text(encoding="utf-8")
+    assert '"tiles_build": "2026-08-11"' in page or '"tiles_build":"2026-08-11"' in page
+
+
+def test_a_public_export_without_the_basemaps_build_is_refused(site):
+    out, _ = site
+    path = out / "build.json"
+    build = json.loads(path.read_text(encoding="utf-8"))
+    build["tiles"] = None
+    path.write_text(json.dumps(build), encoding="utf-8")
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if "records no tiles" in p], problems
 
 
 def test_missing_build_json(site):

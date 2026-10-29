@@ -211,3 +211,51 @@ def test_the_fixture_is_a_small_berlin_archive_for_zoom_0_to_8_with_its_attribut
     text = (FIXTURE.parent / "ATTRIBUTION.txt").read_text()
     assert "OpenStreetMap contributors" in text and "ODbL" in text and "Protomaps" in text
     assert FIXTURE.name in text
+
+
+# --- the sidecar: the build the extract was cut from (final review I3) --------------------------
+
+FIXTURE = ROOT / "tests" / "fixtures" / "tiles" / "berlin-z0-8.pmtiles"
+
+
+def test_the_sidecar_records_build_maxzoom_and_checksum(tmp_path):
+    out = tmp_path / "velometer.pmtiles"
+    out.write_bytes(FIXTURE.read_bytes())
+    info = tiles.write_sidecar(out, "https://build.protomaps.com/20260811.pmtiles")
+    on_disk = json.loads((tmp_path / "velometer.pmtiles.json").read_text(encoding="utf-8"))
+    assert on_disk == info
+    assert info["protomaps_build"] == "2026-08-11"
+    assert info["maxzoom"] == 8  # read from the file, not from an argument
+    assert info["sha256"] == hashlib.sha256(FIXTURE.read_bytes()).hexdigest()
+
+
+def test_the_sidecar_refuses_an_undated_build_or_a_file_that_is_no_pmtiles(tmp_path):
+    out = tmp_path / "v.pmtiles"
+    out.write_bytes(FIXTURE.read_bytes())
+    with pytest.raises(ValueError, match="dated"):
+        tiles.write_sidecar(out, "https://build.protomaps.com/latest.pmtiles")
+    out.write_bytes(b"not a tile archive" * 10)
+    with pytest.raises(ValueError, match="PMTiles"):
+        tiles.write_sidecar(out, "https://build.protomaps.com/20260811.pmtiles")
+
+
+def test_every_cut_writes_its_sidecar(tmp_path, two_cities, monkeypatch):
+    cities, maps, _ = two_cities
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "maps").symlink_to(maps)
+    out = tmp_path / "o" / "velometer.pmtiles"
+
+    def fake_extract(build_url, boxes, maxzoom, out_path):
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_bytes(FIXTURE.read_bytes())
+        return out_path.stat().st_size
+
+    monkeypatch.setattr(tiles, "extract", fake_extract)
+    args = ["--site", str(site), "--cities", str(cities), "--out", str(out)]
+    assert tiles.main(args) == 0
+    info = json.loads(tiles.sidecar_path(out).read_text(encoding="utf-8"))
+    assert info["protomaps_build"] == tiles.build_date(tiles.BUILD_URL)
+    (tmp_path / "o" / "velometer.pmtiles.json").unlink()
+    assert tiles.main(["--stamp", "--out", str(out)]) == 0
+    assert json.loads(tiles.sidecar_path(out).read_text(encoding="utf-8")) == info

@@ -67,12 +67,20 @@ export function flavour(read) {
 
 /**
  * The map credits (docs/review/m16-legal.md 1.1a, 1.7): `data`, the OSM credit linked to the
- * copyright page, which every map shows (its lines are OSM data too); `basemap`, the layer's.
+ * copyright page, which every map shows (its lines are OSM data too); `basemap`, the layer's,
+ * with the Protomaps build date when the config has it (`tiles_build`, from the extract's
+ * sidecar via build.json; spec §4.3).
  */
 export function credits(cfg) {
+  const build = typeof cfg.tiles_build === "string" && /^\d{4}-\d{2}-\d{2}$/.test(cfg.tiles_build)
+    ? cfg.tiles_build
+    : null;
   return {
     data: '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
-    basemap: t("js.map.basemap_credit"), // landcover is credited although never drawn (R11)
+    // landcover is credited although never drawn (R11)
+    basemap: build
+      ? t("js.map.basemap_credit_build", { build })
+      : t("js.map.basemap_credit"),
   };
 }
 

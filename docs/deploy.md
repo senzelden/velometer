@@ -16,6 +16,7 @@ directory, set them in the copy, and export with `--config-dir`:
 ```
 cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml
 git status --untracked-files=no      # must print no changes: commit first
+uv run python tools/tiles.py --stamp     # once per extract: data/tiles/velometer.pmtiles.json
 uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
 uv run velometer app deploy-check <dir> --public
 c=$(jq -r .commit_full <dir>/build.json)
@@ -44,6 +45,13 @@ fetches one anonymously, §1 step 4). The methodology links `repo.url` (legal re
 Untracked files do render: an untracked new narrative or doc shows on the pages but is not in
 `commit_full`, so those pages cannot be rebuilt from the commit (its repo paths stay unlinked,
 and the guard below flags any it cites). Commit what the pages show before a public export.
+
+The export reads the basemap's sidecar, `data/tiles/velometer.pmtiles.json` (`--tiles-info`), which
+`tools/tiles.py` writes beside every extract it cuts (`--stamp` writes it for one cut before): the
+Protomaps build, the extract's max zoom and its sha256. It goes into `build.json` `tiles`, and
+the maps' credit names the build date ("Protomaps (build 2026-08-11), …"; spec §4.3, legal review
+1.7). Without the sidecar `tiles` is null, the credit has no date, and `deploy-check --public`
+refuses the export.
 
 `deploy-check` uploads nothing. It checks `build.json` and its base, `404.html`, the `_headers`
 file against the pages' meta policy, a `.gz` that matches each text file of 1 KiB or more, that

@@ -227,6 +227,12 @@ def deploy_problems(out: Path, base: str | None, public: bool = False) -> list[s
     ]
     if build and build.get("public") is True:
         problems += _public_problems(out, build)
+        if not build.get("tiles"):
+            problems.append(
+                f"public export, but {export.BUILD_FILE} records no tiles (the basemap's "
+                "Protomaps build, for the map credit): run tools/tiles.py --stamp, then export "
+                "with --tiles-info"
+            )
     elif build and public:
         problems.append("not a public export (exported without --public): no Impressum")
     return problems

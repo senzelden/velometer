@@ -2142,6 +2142,12 @@ def app_export(
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
     plans_data_dir: Path = PLANS_DATA_OPT,
+    tiles_info: Path = typer.Option(  # noqa: B008
+        Path("data/tiles/velometer.pmtiles.json"),
+        "--tiles-info",
+        help="The basemap's sidecar (tools/tiles.py): build.json `tiles` and the map credit's "
+        "build date; absent, `tiles` is null and a public deploy-check refuses.",
+    ),
 ) -> None:
     """The reader app's static edition: every page the data has, rendered by the app, as files
     (read-only on the database)."""
@@ -2152,8 +2158,9 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-        )
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+            tiles_info,
+        )  # fmt: skip
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e

@@ -12,6 +12,7 @@ protomaps-leaflet. No page loads anything from another host, and every response 
 Content-Security-Policy that allows exactly that.
 """
 
+import json
 import logging
 import re
 import sqlite3
@@ -116,6 +117,34 @@ LINE_WEIGHT = 3  # px: tier lines stay readable over the basemap at zoom 16
 # and leaves the map without a background when it is missing. `velometer serve --tiles FILE`
 # serves it for the live app.
 TILES_PATH = "tiles/velometer.pmtiles"
+# What tools/tiles.py records beside the extract (`<file>.json`): the Protomaps build it was cut
+# from, its max zoom and sha256. The export writes it into build.json `tiles`; the maps' credit
+# names the build date (spec §4.3, legal review 1.7).
+TILES_INFO_KEYS = ("protomaps_build", "maxzoom", "sha256")
+
+
+def load_tiles_info(path: Path | None) -> dict | None:
+    """The tile sidecar at `path` (`protomaps_build`, `maxzoom`, `sha256`); None when `path` is
+    None or no file is there. A file that is there but malformed raises ValueError."""
+    if path is None or not Path(path).is_file():
+        return None
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{path}: not readable as JSON ({e})") from e
+    ok = (
+        isinstance(raw, dict)
+        and isinstance(raw.get("protomaps_build"), str)
+        and re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw["protomaps_build"])
+        and isinstance(raw.get("maxzoom"), int)
+        and isinstance(raw.get("sha256"), str)
+        and re.fullmatch(r"[0-9a-f]{64}", raw["sha256"])
+    )
+    if not ok:
+        raise ValueError(f"{path}: not a tile sidecar ({', '.join(TILES_INFO_KEYS)})")
+    return {k: raw[k] for k in TILES_INFO_KEYS}
+
+
 # The links the maps' attribution and popups point at.
 OSM_LINKS = {
     "copyright": "https://www.openstreetmap.org/copyright",
@@ -473,13 +502,16 @@ def create_app(
     tiles_file: Path | None = None,
     repo_root: Path = repo_links.ROOT,
     repo_paths: frozenset[str] | None = None,
+    tiles_info: dict | None = None,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
     for the static export (a footer line), None for the live app. `tiles_file`, when given, is
     served at TILES_PATH with byte ranges (`velometer serve --tiles`); without it the maps go
     without a background. `repo_root` and `repo_paths` (its tracked files and directories, default
-    `git ls-files` there) are the repo the pages link when site.yaml names one (M16)."""
+    `git ls-files` there) are the repo the pages link when site.yaml names one (M16). `tiles_info`
+    (`load_tiles_info`) gives the maps' credit its Protomaps build date; with `tiles_file` and no
+    `tiles_info`, the sidecar beside the file is read."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -497,6 +529,9 @@ def create_app(
     }
     data_u = urls.make_data_u(app.state.base_path)
     tiles_url = app.state.base_path + TILES_PATH  # the maps' configs carry it as it is
+    if tiles_info is None and tiles_file is not None:
+        tiles_info = load_tiles_info(Path(tiles_file).with_name(Path(tiles_file).name + ".json"))
+    tiles_build = tiles_info["protomaps_build"] if tiles_info else None  # the credit's date
     if tiles_file is not None:
         tiles = Path(tiles_file)
 
@@ -1082,7 +1117,8 @@ def create_app(
             ctx["site_map"] = (
                 None
                 if ctx["site_map"] is None
-                else ctx["site_map"] | {"tiles": tiles_url, "links": OSM_LINKS}
+                else ctx["site_map"]
+                | {"tiles": tiles_url, "tiles_build": tiles_build, "links": OSM_LINKS}
             )
             return ctx | {"doc": doc, "text_error": text_error, "config_error": cfg_error}
 
@@ -1512,6 +1548,7 @@ def create_app(
         # no colours: the tier and outline colours are stylesheet tokens map.js reads (both themes)
         tiermap = {
             "tiles": tiles_url,
+            "tiles_build": tiles_build,
             "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
             "labels": {tier: i18n.t(lang, f"tier.{tier}") for tier in charts.TIER_LABEL},
@@ -1660,6 +1697,7 @@ def create_app(
             "change_map": {
                 "url": data_u(f"/maps/{stem}.geojson"),
                 "tiles": tiles_url,
+                "tiles_build": tiles_build,
                 "weight": LINE_WEIGHT,
                 "links": OSM_LINKS,
                 # the drawn categories, in key order; their colours are the --change-<category>

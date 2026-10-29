@@ -13,6 +13,7 @@ const CFG = {
 setStrings({
   "js.map.osm_contributors": "OpenStreetMap contributors",
   "js.map.basemap_credit": "Protomaps, ESA WorldCover (CC BY 4.0)",
+  "js.map.basemap_credit_build": "Protomaps (build {build}), ESA WorldCover (CC BY 4.0)",
 });
 
 // a Leaflet map as far as addBasemap touches it
@@ -224,6 +225,15 @@ test("the credit names OpenStreetMap contributors (linked), Protomaps and ESA Wo
   // the extract carries the landcover layer (R11): credited although it is never drawn
   assert.ok(c.basemap.includes("ESA WorldCover (CC BY 4.0)"));
   assert.match(`${c.data}, ${c.basemap}`, /OpenStreetMap.*Protomaps/);
+});
+
+test("the basemap credit names the Protomaps build the config carries (spec 4.3)", () => {
+  const dated = credits({ ...CFG, tiles_build: "2026-08-11" });
+  assert.equal(dated.basemap, "Protomaps (build 2026-08-11), ESA WorldCover (CC BY 4.0)");
+  // no date, or one that is not an ISO date, never prints a placeholder or junk
+  for (const tiles_build of [undefined, null, "", "11.08.2026", "<b>x</b>"]) {
+    assert.equal(credits({ ...CFG, tiles_build }).basemap, "Protomaps, ESA WorldCover (CC BY 4.0)");
+  }
 });
 
 // ---- the flavours ----

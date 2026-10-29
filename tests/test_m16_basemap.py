@@ -324,3 +324,35 @@ def test_the_dry_run_reports_an_empty_404_under_the_tiles_route(tiny):  # noqa: 
     assert dr15.run_probes(ORIGIN, tiny, "/", False, fetch=good)[1] == []
     _, problems = dr15.run_probes(ORIGIN, tiny, "/", False, fetch=empty_under_tiles)
     assert problems and all("/tiles/nope-" in p for p in problems)
+
+
+# --- the Protomaps build in the credit (final review I3) ----------------------------------------
+
+
+def test_the_dated_credit_strings_name_the_build(tmp_path):
+    """Reader-facing (R8): the exact strings, en and de, with the date filled from data."""
+    from velometer import i18n
+
+    assert i18n.t("en", "js.map.basemap_credit_build", build="2026-08-11") == (
+        "Protomaps (build 2026-08-11), ESA WorldCover (CC BY 4.0)"
+    )
+    assert i18n.t("de", "js.map.basemap_credit_build", build="2026-08-11") == (
+        "Protomaps (Stand 2026-08-11), ESA WorldCover (CC BY 4.0)"
+    )
+
+
+def test_the_tile_sidecar_loads_or_refuses(tmp_path):
+    import json
+
+    from velometer.app.main import load_tiles_info
+
+    path = tmp_path / "velometer.pmtiles.json"
+    assert load_tiles_info(None) is None and load_tiles_info(path) is None
+    good = {"file": "velometer.pmtiles", "protomaps_build": "2026-08-11", "maxzoom": 13,
+            "sha256": "0f" * 32}  # fmt: skip
+    path.write_text(json.dumps(good), encoding="utf-8")
+    assert load_tiles_info(path) == {k: good[k] for k in ("protomaps_build", "maxzoom", "sha256")}
+    for bad in ({**good, "protomaps_build": "20260811"}, {**good, "sha256": "x"}, [1], "{"):
+        path.write_text(bad if isinstance(bad, str) else json.dumps(bad), encoding="utf-8")
+        with pytest.raises(ValueError):
+            load_tiles_info(path)
