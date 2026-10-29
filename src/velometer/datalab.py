@@ -1,4 +1,5 @@
-"""The Zählwerk Berlin Datalab site: the apex page, Impressum and Datenschutz (M16 spec §4.5).
+"""The Zählwerk Berlin Datalab site: the apex page, Impressum, Datenschutz and the accessibility
+statement (M16 spec §4.5; the statement: user request 2026-10-29, ruling R63).
 
 `build` renders `sites/datalab/` into a small static site, with a 404 page for the server (ruling
 R21). The Berlin counter on the main page is read from a finished velometer export's
@@ -7,7 +8,8 @@ mapped km (`ab_km`) of each year snapshot, rounded to whole km. Impressum and Da
 one variant per operator form (legal review 4.1, 5.1); with `operator_form` null all three are
 rendered, each under its own heading, and every value not given is a visible `[[…]]`
 placeholder (`placeholders` lists those left; the go-live check refuses while there is one).
-Nothing is invented: a null stays a placeholder.
+Nothing is invented: a null stays a placeholder. The accessibility statement takes its e-mail from
+the Impressum's (`operator.email`) and its date from `accessibility.checked`, null until go-live.
 
 The site loads nothing from another host (fonts self-hosted, legal review 5.9) and has no inline
 script or style; its own CSP says so. The output gets `.gz` siblings and a `_headers` file the
@@ -77,7 +79,11 @@ PLACEHOLDER = re.compile(r"\[\[[^\]\n]*\]\]")
 HOSTNAME = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
 # 404.html is the page the server sends for any address the site does not have (ruling R21)
 PAGES = {"index.html": "index.html", "impressum.html": "impressum/index.html",
-         "datenschutz.html": "datenschutz/index.html", "404.html": "404.html"}  # fmt: skip
+         "datenschutz.html": "datenschutz/index.html",
+         "barrierefreiheit.html": "barrierefreiheit/index.html",
+         "404.html": "404.html"}  # fmt: skip
+# The accessibility statement's address in a build (golive-check asks for it, R63).
+STATEMENT_PAGE = PAGES["barrierefreiheit.html"]
 
 
 class DatalabError(Exception):
@@ -89,6 +95,25 @@ def _blank_is_none(value: str | None) -> str | None:
     return None if value is None or not value.strip() else value
 
 
+class Accessibility(BaseModel):
+    """`accessibility:` in site.yaml: the date the statement's checks were last done (R63)."""
+
+    model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
+
+    checked: date | None = None
+
+    @field_validator("checked", mode="before")
+    @classmethod
+    def _iso_day(cls, v: object) -> object:
+        """YAML reads `2026-11-02` as a date; a string must be the same ISO day."""
+        if isinstance(v, str):
+            try:
+                return date.fromisoformat(v)
+            except ValueError:
+                raise ValueError(f"not an ISO day (YYYY-MM-DD): {v!r}") from None
+        return v
+
+
 class DatalabConfig(BaseModel):
     """`sites/datalab/site.yaml`."""
 
@@ -98,6 +123,7 @@ class DatalabConfig(BaseModel):
     operator_form: Literal["person", "verein", "company"] | None = None
     operator: dict[str, str | None] = {}
     contact_email: str | None = None
+    accessibility: Accessibility = Accessibility()
 
     @field_validator("domain")
     @classmethod
@@ -195,6 +221,11 @@ class _Fields:
             value = BLNBDI
         return _lines(value) if value else placeholder(label)
 
+    def mail(self, key: str, label: str) -> Markup:
+        """The value as a mailto link, or a placeholder."""
+        value = self.cfg.operator.get(key)
+        return Markup('<a href="mailto:{0}">{0}</a>').format(value) if value else placeholder(label)
+
     def shown(self, key: str) -> bool:
         if self.cfg.operator.get(key):
             return True
@@ -285,6 +316,11 @@ def render(cfg: DatalabConfig, counter: Counter) -> dict[str, str]:
         "cities": counter.cities,
         "osm_credit": Markup(osm),
         "boundary_credit": boundary,
+        "checked": (
+            i18n.long_day(cfg.accessibility.checked, "de")
+            if cfg.accessibility.checked
+            else placeholder("Datum der Veröffentlichung")
+        ),
     }
     env = _env()
     return {out: env.get_template(name).render(**context) for name, out in PAGES.items()}
