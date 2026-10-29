@@ -218,7 +218,14 @@ The steps in detail:
    `velometer.log`, with the client address masked to IPv4 /24 and IPv6 /48 before it reaches the
    disk (`remote_ip`, `client_ip`). The client port, `Cookie` and `Authorization` are dropped, and
    so are `X-Forwarded-For`, `Forwarded` and `X-Real-Ip`: no proxy stands in front of Caddy, so
-   they carry only what a client chose to write (ruling R25). Retention is by time (ruling R27):
+   they carry only what a client chose to write (ruling R25). Of the request headers only
+   `User-Agent` and `Referer` stay, the two GoAccess reads: Caddy's log filter has no allow-list
+   or wildcard, so every other header a browser commonly sends is deleted by name, in Go's
+   canonical spelling (`Dnt`, `Sec-Gpc`, `Te`), and so are the TLS details (`request>tls`), the
+   basic-auth user (`user_id`), the duration and the response headers (ruling R52; checked with
+   Caddy 2.11.4, and GoAccess 1.9.3 still reads the lines). A header not on that list, rare from
+   a browser, is still written. The dry run fails on any kept header but those two.
+   Retention is by time (ruling R27):
    the logs roll at 00:00 server time (`roll_at 00:00`; the server runs on UTC) and each rolled
    file is deleted once 14 days old (`roll_keep_for 336h`). Size and count must not prune first,
    and Caddy has no unlimited setting (`roll_keep 0`, or none, keeps 10 files; seen with Caddy

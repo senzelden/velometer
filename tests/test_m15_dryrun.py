@@ -765,6 +765,19 @@ def test_the_log_check_finds_each_unmasked_address_and_secret():
     # X-Forwarded-For is dropped, even masked (ruling R25)
     line = '{"request":{"headers":{"X-Forwarded-For":["203.0.113.0"]}}}'
     assert dr.check_logs({"c.log": line}, {}, []) == ["log c.log: keeps the X-Forwarded-For header"]
+    # only User-Agent and Referer stay; every other header and field is the filter's to drop (I4)
+    line = (
+        '{"request":{"tls":{"cipher_suite":1},"headers":{"User-Agent":["x"],"Referer":["r"],'
+        '"Accept-Language":["de"],"Sec-Ch-Ua":["c"]}},"user_id":"preview","duration":0.1,'
+        '"resp_headers":{"Server":["Caddy"]}}'
+    )
+    assert dr.check_logs({"e.log": line}, {}, []) == [
+        "log e.log: keeps the Accept-Language header", "log e.log: keeps the Sec-Ch-Ua header",
+        "log e.log: keeps duration", "log e.log: keeps request>tls",
+        "log e.log: keeps resp_headers", "log e.log: keeps user_id",
+    ]  # fmt: skip
+    line = '{"request":{"headers":{"User-Agent":["x"],"Referer":["r"]}},"size":2,"status":200}'
+    assert dr.check_logs({"f.log": line}, {}, []) == []
     # a log that should show the probes but holds no masked address logged nothing
     (p,) = dr.check_logs({"a.log": ""}, {}, ["a.log"])
     assert "nothing logged" in p

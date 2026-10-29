@@ -91,8 +91,13 @@ FORGED_XFF = "203.0.113.7"
 MASKED = ("127.0.0.0",)  # CLIENT_ADDR at /24
 COOKIE = "velometer-dryrun=c00kie-marker-5e1f"
 PROBE_HEADERS = {"X-Forwarded-For": FORGED_XFF, "Cookie": COOKIE}
-# request headers no log entry may keep (credentials; what the client writes as it likes, R25)
-DROPPED = frozenset({"Cookie", "Authorization", "X-Forwarded-For", "Forwarded", "X-Real-Ip"})
+# the only request headers a log entry may keep: what GoAccess reads (final review I4, R52); the
+# credentials and what a client writes as it likes (R25) are among the rest
+KEPT_HEADERS = frozenset({"User-Agent", "Referer"})
+# entry fields no log may keep: the basic-auth user, the duration, the response headers, and
+# (under `request`, beside the client port) the TLS details
+DROPPED_FIELDS = ("user_id", "duration", "resp_headers")
+DROPPED_REQUEST_FIELDS = ("tls",)
 # a site address line of deploy/Caddyfile: the apex, velometer and www, all from {$DOMAIN}
 SITE_LINE = re.compile(r"^((?:[a-z]+\.)?\{\$DOMAIN\}) \{$", re.M)
 SITE_COUNT = 3
@@ -312,9 +317,9 @@ def check_redirect(label: str, r: Resp, location: str) -> list[str]:
 
 def check_logs(logs: dict[str, str], secrets: dict[str, str], masked_in: list[str]) -> list[str]:
     """No log (`name: text`) holds the probes' address, the forged X-Forwarded-For or a secret
-    (`what: value`), and no JSON entry keeps a `DROPPED` request header (Caddy itself only
-    redacts the credentials' values) or the client port; each log in `masked_in` shows the
-    probes' address masked to /24, so it did log the probes."""
+    (`what: value`), and no JSON entry keeps a request header outside `KEPT_HEADERS` (Caddy
+    itself only redacts the credentials' values), the client port or a `DROPPED_FIELDS` field;
+    each log in `masked_in` shows the probes' address masked to /24, so it did log the probes."""
     problems = []
     forbidden = {"the client address": CLIENT_ADDR, "the forged X-Forwarded-For": FORGED_XFF}
     for name, text in logs.items():
@@ -322,15 +327,19 @@ def check_logs(logs: dict[str, str], secrets: dict[str, str], masked_in: list[st
             if value and value in text:
                 problems.append(f"log {name}: holds {what} unmasked")
     for name, text in logs.items():
-        kept, port = set(), False
+        kept, port, fields = set(), False, set()
         for line in text.splitlines():
             with contextlib.suppress(ValueError, AttributeError):
-                request = json.loads(line).get("request", {})
-                kept |= set(request.get("headers", {})) & DROPPED
+                entry = json.loads(line)
+                request = entry.get("request", {})
+                kept |= set(request.get("headers", {})) - KEPT_HEADERS
                 port = port or "remote_port" in request
+                fields |= {f for f in DROPPED_FIELDS if f in entry}
+                fields |= {f"request>{f}" for f in DROPPED_REQUEST_FIELDS if f in request}
         problems += [f"log {name}: keeps the {h} header" for h in sorted(kept)]
         if port:
             problems.append(f"log {name}: keeps the client port (request>remote_port)")
+        problems += [f"log {name}: keeps {f}" for f in sorted(fields)]
     for name in masked_in:
         text = logs.get(name, "")
         missing = [m for m in MASKED if m not in text]

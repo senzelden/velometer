@@ -30,7 +30,20 @@ MASKED = ("remote_ip", "client_ip", "request>remote_ip", "request>client_ip")
 DELETED = (
     "request>headers>Cookie", "request>headers>Authorization", "request>headers>X-Forwarded-For",
     "request>headers>Forwarded", "request>headers>X-Real-Ip", "request>remote_port",
+    "request>tls", "user_id", "duration", "resp_headers",
 )  # fmt: skip
+# The request headers the logs keep: what GoAccess reads (final review I4, ruling R52).
+KEPT_HEADERS = {"User-Agent", "Referer"}
+# What a browser sends to a static site (Chrome, Firefox, Safari, a prefetch, a conditional or
+# ranged request, a proxy hop), in Go's canonical form, the keys of Caddy's header map.
+BROWSER_HEADERS = {
+    "User-Agent", "Referer", "Accept", "Accept-Encoding", "Accept-Language", "Cache-Control",
+    "Connection", "Cookie", "Authorization", "Dnt", "Sec-Gpc", "If-Modified-Since",
+    "If-None-Match", "If-Range", "Range", "Origin", "Pragma", "Priority", "Purpose",
+    "Sec-Purpose", "Sec-Ch-Ua", "Sec-Ch-Ua-Mobile", "Sec-Ch-Ua-Platform", "Sec-Fetch-Dest",
+    "Sec-Fetch-Mode", "Sec-Fetch-Site", "Sec-Fetch-User", "Te", "Upgrade-Insecure-Requests",
+    "X-Forwarded-For", "Forwarded", "X-Real-Ip",
+}  # fmt: skip
 # set by the site only where the lock file has not set it (ruling R26)
 CONDITIONAL = "Cache-Control"
 
@@ -265,6 +278,29 @@ def test_every_log_masks_client_addresses_and_drops_credentials():
             assert f"{field} ip_mask 24 48" in fields, field
         for field in DELETED:
             assert f"{field} delete" in fields, field
+
+
+def _deleted_headers(log: str) -> set[str]:
+    (fmt,) = _inner(log, "format filter")
+    return {m.group(1) for m in re.finditer(r"^request>headers>(\S+) delete$", fmt, re.M)}
+
+
+def test_every_log_keeps_only_user_agent_and_referer_of_a_browsers_headers():
+    """The rule (I4): of the headers a browser sends, a log keeps only what GoAccess reads.
+    Caddy's filter has no allow-list or wildcard (2.11.4), so each one is deleted by name; both
+    filters delete the same set. Checked live with Caddy 2.11.4 (final-fix-report)."""
+    logs = _log_blocks(_text())
+    sets = [_deleted_headers(log) for log in logs]
+    assert sets[0] == sets[1]
+    assert BROWSER_HEADERS - sets[0] == KEPT_HEADERS
+    assert not sets[0] & KEPT_HEADERS
+
+
+def test_header_names_are_in_gos_canonical_form():
+    """Caddy's header map keys are canonical (DNT -> Dnt): another spelling deletes nothing."""
+    for log in _log_blocks(_text()):
+        for name in _deleted_headers(log):
+            assert name == "-".join(p[:1].upper() + p[1:].lower() for p in name.split("-")), name
 
 
 def test_no_log_writes_without_the_filter():
