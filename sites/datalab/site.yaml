@@ -20,4 +20,4 @@ contact_email: "zaehlwerk-datalab@posteo.com"     # the contact in every page's 
 # render and keyboard passes before go-live (docs/deploy.md §1, R64), as YYYY-MM-DD; null renders
 # a placeholder and golive-check refuses. Its e-mail is operator.email.
 accessibility:
-  checked: null
+  checked: "2026-10-29"
