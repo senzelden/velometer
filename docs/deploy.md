@@ -9,12 +9,14 @@ and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`)
 
 ## 0. Make and check the export
 
-The public site values (the Datalab, its Impressum and privacy page, the public repository) stay
-null in the repo's `config/site.yaml`. Never fill them in there: copy the config to a scratch
+The public site values (the Datalab, its Impressum, privacy page and accessibility statement, the
+public repository) stay null in the repo's `config/site.yaml`. Never fill them in there: copy the config to a scratch
 directory, set them in the copy, and export with `--config-dir`:
 
 ```
-cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml
+cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml:
+                                     # datalab, impressum_url, privacy_url, accessibility_url
+                                     # (https://<domain>/barrierefreiheit/), repo
 git status --untracked-files=no      # must print no changes: commit first
 uv run python tools/tiles.py --stamp     # once per extract: data/tiles/velometer.pmtiles.json
 uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
@@ -29,8 +31,8 @@ rebased) or deleted; without it the links may lose their commit and every citati
 `golive-check --site <dir>` lists a commit that no tag at `repo.url` points at as open (it asks
 `git ls-remote --tags repo.url`, anonymously).
 
-`export --public` refuses to run unless the site settings name the Datalab, its Impressum and its
-privacy page, and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
+`export --public` refuses to run unless the site settings name the Datalab, its Impressum, its
+privacy page and its accessibility statement (`accessibility_url`, R63), and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
 address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub and Codeberg
 examples), and records those values in `build.json`. It refuses when the database's curated
 external figures differ from `config/external/figures.csv` (`velometer external check` names the
@@ -58,7 +60,8 @@ refuses the export.
 `deploy-check` uploads nothing. It checks `build.json` and its base, `404.html`, the `_headers`
 file against the pages' meta policy, a `.gz` that matches each text file of 1 KiB or more, that
 no file is 25 MiB or more, that every reference resolves, and, for a public export, that every
-page's footer links the Datalab, Impressum and privacy page that `build.json` records, that no page
+page's footer links the Datalab, Impressum, privacy page and accessibility statement that
+`build.json` records, that no page
 prints a repo path in `<code>` outside a link (under `docs/`, `config/`, `src/`, `tools/`,
 `content/`, `sites/`, `deploy/`, `tests/`, `scripts/`, a root file such as `HANDOVER.md`,
 `LICENSE`, `CITATION.cff` or `uv.lock`, or any path-like `.py`, `.yaml`, `.md`, `.js`, `.json`,
@@ -128,9 +131,12 @@ uv run python tools/server.py deploy velometer <dir> --host <host>        # the 
 uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
 uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
 uv run python tools/server.py verify --domain <domain> --locked
-uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir> \
-    --url https://velometer.<domain> \
-    --pages types --interact --flip
+uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/all \
+    --url https://velometer.<domain> --pages all --keyboard     # R64, before every publication
+uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/types \
+    --url https://velometer.<domain> --pages types --interact --flip
+uv run python tools/render_pass.py --site <datalab-dir> --base / --lang de \
+    --out <shots-dir>/datalab --url https://<domain>
 uv run python tools/server.py stats --host <host>
 uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
 uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
@@ -154,6 +160,17 @@ uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <
   environment, so the password stands in no command line, process list or shell history, and
   it sends the Authorization header to the `--url` origin only.
 - `golive-check` and `unlock` are the go-live (step 4 below); nothing before them opens the sites.
+- Before every publication (the go-live, and every deploy after it) the full render pass
+  (`--pages all`: every page of both editions, both themes, 1280/390/320) and the keyboard pass
+  (`--keyboard`) run on the export being published, with 0 findings (ruling R64): the
+  accessibility statement (`/barrierefreiheit/`) says so. Before the go-live run them against
+  the locked server as above; once the sites are open, run them before uploading, against the
+  local dry run of that export (§0a: `deploy_dryrun.py --server caddy --datalab <datalab-dir>
+  --tiles data/tiles/velometer.pmtiles --keep-running`, then `--url` its velometer origin; the
+  keyboard pass's map steps need the tiles). Set `accessibility.checked` in
+  `sites/datalab/site.yaml` to the day of these passes, commit, and build and deploy the Datalab
+  again (its stamp changes). `golive-check` lists the passes as a manual confirmation and
+  refuses while `accessibility.checked` is null or the Datalab build lacks the statement.
 
 The steps in detail:
 
@@ -318,10 +335,11 @@ Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a
    limits change. `deploy-check` prints the file count (the `.gz` files are included) and refuses
    a file of 25 MiB or more.
 
-## 3. Datenschutz and Impressum
+## 3. Datenschutz, Impressum and accessibility statement
 
-The Impressum and the Datenschutzerklärung are pages of the Datalab site (`sites/datalab/`,
-`/impressum/` and `/datenschutz/` on the apex), linked from both sites' footers. The
+The Impressum, the Datenschutzerklärung and the voluntary Erklärung zur Barrierefreiheit (R63)
+are pages of the Datalab site (`sites/datalab/`, `/impressum/`, `/datenschutz/` and
+`/barrierefreiheit/` on the apex), linked from both sites' footers. The
 Datenschutzerklärung names Hetzner as the host and processor (the DPA was concluded on
 2026-10-28), the masked access logs and their 14 days, the statistics, Let's Encrypt and the
 supervisory authority (BlnBDI). `golive-check` refuses while a placeholder or an open legal
