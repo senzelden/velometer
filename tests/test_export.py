@@ -30,7 +30,7 @@ BASE_URL = "http://127.0.0.1:8000"
 FOOTERS = {lang: i18n.t(lang, "site.footer.static_edition", commit="") for lang in i18n.LANGS}
 BUILD_KEYS = {
     "commit", "commit_full", "dirty", "classifier_versions", "osm_timestamps", "base", "public",
-    "built_at"
+    "tiles", "built_at"
 }  # fmt: skip
 
 MAIN_OPEN = '<main id="main" tabindex="-1">'
@@ -329,8 +329,9 @@ def test_export_and_serve_take_the_plans_data_dir(tmp_path, monkeypatch, given):
     seen = {}
 
     def fake_export(
-        out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-    ):
+        out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+        tiles_info=None,
+    ):  # fmt: skip
         seen["export"] = plans_data_dir
         return export.ExportResult(0, 0, {"commit": "x", "base": "/"})
 
@@ -746,7 +747,7 @@ SCAN_SITE = {
         '<div data-src="/velometer/data/d.json"></div>'
         '<script type="application/json" id="cfg">{"k": [{"url": "/velometer/maps/m.geojson"}],'
         ' "links": {"copyright": "https://www.openstreetmap.org/copyright"},'
-        ' "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"}</script>'
+        ' "tiles": "/velometer/tiles/velometer.pmtiles"}</script>'
         '<img src="data:image/png;base64,AAAA" alt="">'
         '<a href="https://www.openstreetmap.org/copyright">OSM</a> <a href="#x">here</a>'
         "</body></html>"
@@ -819,6 +820,11 @@ def test_the_scan_finds_each_reference_form(tmp_path, deleted):
         ('<link rel="stylesheet" href="https://cdn.example/x.css">', "https://cdn.example/x.css"),
         ('<form action="https://forms.example/x"></form>', "https://forms.example/x"),
         ('<a href="javascript:alert(1)">x</a>', "javascript:alert(1)"),
+        # M16: no external host is loaded, the former tile server included
+        (
+            '<img src="https://tile.openstreetmap.org/1/0/0.png" alt="">',
+            "https://tile.openstreetmap.org/1/0/0.png",
+        ),
         (
             '<script type="application/json">{"url": "https://cdn.example/t.json"}</script>',
             "https://cdn.example/t.json",
@@ -837,11 +843,12 @@ def test_the_scan_reports_dangling_and_foreign_references(tmp_path, planted, ref
     [
         '<a href="https://www.openstreetmap.org/copyright">OSM</a>',  # a link, not a load
         '<a href="mailto:x@example.org">mail</a>',
-        '<img src="https://tile.openstreetmap.org/1/0/0.png" alt="">',  # the one loaded host
         '<script type="application/json">{"links": {"w": "https://example.org/w/"}}</script>',
+        # the basemap file, served beside the export (SERVED_BESIDE)
+        '<script type="application/json">{"t": "/velometer/tiles/velometer.pmtiles"}</script>',
     ],
 )
-def test_the_scan_allows_links_and_the_tile_host(tmp_path, allowed):
+def test_the_scan_allows_links_and_the_file_served_beside(tmp_path, allowed):
     site = _scan_site(tmp_path)
     page = site / "page" / "index.html"
     page.write_text(page.read_text().replace("<body>", "<body>" + allowed))
@@ -934,7 +941,7 @@ PLANTS = [
         '<div data-src="/velometer/nowhere-d.json"></div>',
         "/velometer/nowhere-d.json",
     ),
-    # the CSP allows the tile server over https only
+    # the former tile server, over any scheme
     (
         "cities/index.html",
         '<img src="http://tile.openstreetmap.org/1/0/0.png" alt="">',

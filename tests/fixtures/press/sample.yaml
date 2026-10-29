@@ -1,0 +1,17 @@
+# Press-review fixture (M16 Task 3). Made-up sentences; the person is a placeholder name.
+sections:
+  - heading: Five sentences
+    paragraphs:
+      - Clean Cities is not reproducible.
+      - The tiers do not consider width or surface.
+      - Erika Mustermann (SPD) opened the lane because the census asked for it.
+      - Changing Cities e.V. counts km per street.
+    paragraphs_de:
+      - Die Senatsverwaltung hat Radwege zurückgebaut.
+  - heading: Context
+    paragraphs:
+      - The Senate counts route km. That figure is misleading.
+      - The fall came because mappers redrew ways.
+      - Fahrradstraßen o. Ä. kamen am 2. Oktober hinzu, sagt die Mobilitätsagentur Wien.
+facts:
+  - {id: x, expr: the Senate is wrong, printed: "1"}

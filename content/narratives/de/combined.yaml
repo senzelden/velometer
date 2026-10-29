@@ -124,11 +124,11 @@ sections:
       mit eingeschränkter Kfz-Zufahrt in verkehrsberuhigten Gebieten mitgezählt wurden
       [@cc2025-cycling-table]. Länge: Clean Cities definiert das Straßennetz, durch
       das es teilt, jede Straße einmal, gleich wie viele Fahrstreifen oder Richtungen
-      sie hat, und nennt keine Regel dafür, wie Rad-km gemessen werden. Berlins 925
-      km liegen bei unserer Basis entlang der Straßenachse, 913,5 km, nicht bei unseren
-      1.550,7 km je Seite [#recon-berlin-cc-km]; Ljubljanas 251 km liegen bei unseren
-      245 km je Seite [#recon-ljubljana-cc-ratio].
-    src: 2a3e2080fc65
+      sie hat; eine Regel dafür, wie seine Rad-km gemessen werden, haben wir nicht
+      gefunden. Berlins 925 km liegen bei unserer Basis entlang der Straßenachse,
+      913,5 km, nicht bei unseren 1.550,7 km je Seite [#recon-berlin-cc-km]; Ljubljanas
+      251 km liegen bei unseren 245 km je Seite [#recon-ljubljana-cc-ratio].
+    src: 099f494717fc
   - text: >-
       Datum: Die Daten von Clean Cities stammen von Anfang 2025, unsere vom Oktober
       2026. Fläche: QECIO berichtet für NUTS3-Regionen, mit Daten vom Januar 2024
@@ -139,7 +139,7 @@ sections:
       Methode: Clean Cities übernahm die meisten Zahlen von den Städten selbst [@cc2025-report],
       und seine 822 km für Paris übersteigen alles, was dort über alle Stufen hinweg
       kartiert ist [#recon-paris-cc-km].
-    src: 9263a63314a5
+    src: 0b7956af8d83
 literals:
 - 21 Städte
 - 21 Städten

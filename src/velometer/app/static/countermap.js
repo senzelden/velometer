@@ -1,10 +1,11 @@
 // velometer counter-site map (Counts tab): one marker per counter site with coordinates, over
-// OSM raster tiles. Every URL comes from the #countermap-config blob the server renders, so this
-// file names no host; the markers are drawn in the stylesheet's --marker-fill / --marker-stroke
-// tokens and restyled in place when the OS theme changes (zoom and position stay). Site names
-// are portal data: tooltips are built with textContent.
+// the vector basemap (js/basemap.js). Every URL comes from the #countermap-config blob the server
+// renders, so this file names no host; the markers are drawn in the stylesheet's --marker-fill /
+// --marker-stroke tokens and restyled in place when the OS theme changes (zoom and position stay).
+// Site names are portal data: tooltips are built with textContent.
 import { onThemeChange, token } from "./js/theme.js";
-import { leafletPrefix, t } from "./js/strings.js";
+import { leafletPrefix } from "./js/strings.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -13,14 +14,10 @@ import { leafletPrefix, t } from "./js/strings.js";
   if (!configEl || !mapEl || typeof L === "undefined") return;
   var cfg = JSON.parse(configEl.textContent);
 
-  var map = L.map(mapEl, { preferCanvas: true });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 4 });
-  L.tileLayer(cfg.tiles, {
-    maxZoom: 19,
-    className: cfg.tile_class,
-    attribution: '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
-  }).addTo(map);
+  addBasemap(map, cfg);
 
   function markerStyle() {
     return { color: token("--marker-stroke"), fillColor: token("--marker-fill") };

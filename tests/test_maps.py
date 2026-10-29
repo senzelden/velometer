@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from velometer import credits
 from velometer.db import fetch_run
 from velometer.pipeline.extract import snapshot_name
 from velometer.report import maps
@@ -217,15 +218,16 @@ def test_map_footer_carries_odbl_and_mapped_km(placed, monkeypatch):
     )
     maps.build_map(data, "berlin", "lau", data_dir, maps_dir)
     assert len(drawn) == 1
-    assert "© OpenStreetMap contributors, ODbL 1.0" in drawn[0]
+    assert credits.OSM_PRINTED in drawn[0]
     assert "OSM mapped km, not built km" in drawn[0]
 
 
 def test_map_footer_constants_equal_the_english_catalogue():
     from velometer import i18n
 
-    footer = i18n.catalogue("en")["map.footer"].split("\n")[0]
-    assert footer == f"{maps.ODBL} · {maps.MAPPED_KM}"
+    lines = i18n.catalogue("en")["map.footer"].split("\n")
+    assert lines[0] == credits.OSM_PRINTED
+    assert lines[1] == f"{maps.MAPPED_KM} · {{boundaries}}"
 
 
 def test_map_texts_english_are_the_constants_and_german_is_german(fixture_db):
@@ -235,12 +237,16 @@ def test_map_texts_english_are_the_constants_and_german_is_german(fixture_db):
     point = data.current("berlin", "lau")
     title, footer, labels = maps.map_texts(point, "Berlin", "lau", "en")
     assert title == "Berlin (LAU): protected cycling tiers" and labels == TIER_LABEL
-    assert footer == (f"{maps.ODBL} · {maps.MAPPED_KM}\nOSM {point.osm_timestamp}, "
-                      f"classifier {point.classifier_version}")  # fmt: skip
+    assert footer == (
+        f"{credits.OSM_PRINTED}\n{maps.MAPPED_KM} · {credits.BOUNDARY_CREDIT}\n"
+        f"OSM {point.osm_timestamp}, classifier {point.classifier_version}"
+    )
     title, footer, labels = maps.map_texts(point, "Krakau", "lau", "de")
     assert title.startswith("Krakau (LAU): ") and labels["A"] == "A baulich getrennter Radweg"
     assert footer == (
-        "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\n"
+        "Kartendaten © OpenStreetMap-Mitwirkende (openstreetmap.org/copyright), ODbL 1.0 "
+        "(opendatacommons.org/licenses/odbl/1-0/)\n"
+        "kartierte km, nicht gebaute km · © EuroGeographics bezüglich der Verwaltungsgrenzen\n"
         f"OSM-Stand {point.osm_timestamp}, Klassifikator {point.classifier_version}"
     )
 

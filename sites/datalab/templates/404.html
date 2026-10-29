@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{# Served by the server for any address the site does not have (ruling R21): every link is
+   absolute, since the page answers at whatever path was asked for. #}
+{% block title %}Seite nicht gefunden · Zählwerk Berlin Datalab{% endblock %}
+{% block main %}
+    <article class="legal">
+      <h1>Seite nicht gefunden</h1>
+      <p>Unter dieser Adresse gibt es hier keine Seite.</p>
+      <p><a href="/">Zur Startseite</a></p>
+    </article>
+{% endblock %}

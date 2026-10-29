@@ -48,6 +48,21 @@
   --change-lost: #9a2d0a;
   --change-retiered: #b5811c;
   --change-redrawn: #2a78d6;
+  /* the basemap (js/basemap.js): near-grey, white roads on a pale ground; the lines above keep
+     >= 2.5:1 on every fill and 3:1 on the roads (js/tests/basemap.test.mjs) */
+  --map-earth: #f0f0ed;
+  --map-water: #e5e8ea;
+  --map-green: #e8ebe5;
+  --map-area: #ebebe8;
+  --map-hard: #e6e6e3;
+  --map-building: #e8e7e3;
+  --map-road: #ffffff;
+  --map-rail: #d0cfca;
+  --map-boundary: #b9b8b2;
+  --map-label: #7d7c76;
+  --map-place: #5f5e59;
+  --map-faint: #a19f98;
+  --map-halo: #f0f0ed;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
@@ -99,6 +114,20 @@
     --change-lost: #cb5f31;
     --change-retiered: #ffb948;
     --change-redrawn: #6895e8;
+    /* dim roads on a near-black ground; the lines keep 3:1 on the ground */
+    --map-earth: #161615;
+    --map-water: #0e0f10;
+    --map-green: #181a17;
+    --map-area: #1a1a19;
+    --map-hard: #20201e;
+    --map-building: #222220;
+    --map-road: #292927;
+    --map-rail: #30302d;
+    --map-boundary: #4b4a45;
+    --map-label: #85837d;
+    --map-place: #a8a69e;
+    --map-faint: #6b6a65;
+    --map-halo: #161615;
   }
 }
 
@@ -327,8 +356,7 @@ svg.dim .s:not(.on) { opacity: 0.18; }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem 2rem; }
 figure { margin: 0; }
 img { max-width: 100%; height: auto; border: 1px solid var(--grid); }
-/* the global img border would frame every map tile: a 2px seam between tiles, light in the
-   light theme and, once filtered, lighter still in the dark one */
+/* the global img border would frame any image Leaflet places (a tile, an icon) */
 .leaflet-container img { border: 0; }
 
 .flag { border-left: 3px solid var(--flag); padding: 0.25rem 0 0.25rem 0.75rem; margin: 0 0 1rem; }
@@ -367,16 +395,10 @@ footer p { margin: 0.25rem 0; }
 .map-png { margin: 0.75rem 0; padding: 0.5rem; background: var(--plate); border: 1px solid var(--grid-2); }
 .map-png img { display: block; max-width: 100%; height: auto; border: 0; }
 .changemap-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.4rem 0 0; padding: 0; font-size: 0.9rem; color: var(--ink-2); }
-/* Standard OSM draws main roads orange/red, which reads as tiers B and D: grey the tiles out
-   and fade them. Only the tile layer's class: the tier lines (vector canvas) keep their colours. */
-.tiermap-tiles { filter: grayscale(1) contrast(0.8) brightness(1.08); opacity: 0.7; }
-/* the OSM tiles, darkened: invert + hue-rotate keeps the hues, brightness/contrast/grayscale
-   mute the standard style. Only the tile layer (a filter on its container, not on each tile
-   image, so no sub-pixel seams); the vector overlay keeps its full colours on top. Filter
-   functions only: a colour literal here would sit outside the token blocks. */
-@media (prefers-color-scheme: dark) {
-  .tiermap-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) grayscale(0.6); }
-}
+/* The basemap (js/basemap.js) is drawn in its own near-grey light and dark flavours: no filter.
+   Without its file the map shows its own ground (--panel) under the lines: this rule outranks
+   leaflet.css's light grey `.leaflet-container` background, in the dark theme too. */
+.tiermap.leaflet-container { background: var(--panel); }
 .tiermap { height: min(70vh, 40rem); width: 100%; border: 1px solid var(--grid); background: var(--panel); }
 .tiermap-note { margin: 0.25rem 0 0.5rem; }
 .tiermap-files { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; }

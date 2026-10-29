@@ -56,6 +56,6 @@ sections:
       übersteigen alles, was in Paris über alle Stufen hinweg kartiert ist [#rc-paris-cc_km];
       Clean Cities übernahm die Zahlen der meisten Städte von den Städten selbst [@cc2025-report].
       QECIO, das ebenfalls OSM misst, liegt innerhalb von +9,3 % unserer Radwege.
-    src: fac8b554c28f
+    src: 79dd4529d031
 literals:
 - 100 km

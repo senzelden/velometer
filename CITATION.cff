@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use velometer or its data, please cite it as below, with the classifier version and OSM snapshot of the figures you use."
+title: "velometer: protected cycling infrastructure in European cities from OpenStreetMap"
+type: software
+authors:
+  - given-names: Dennis
+    family-names: Senzel
+repository-code: "https://github.com/senzelden/velometer"
+url: "https://velometer.zaehlwerk-datalab.de/"
+license: MIT
+version: 0.1.0
+keywords:
+  - cycling infrastructure
+  - OpenStreetMap
+  - open data
+  - data journalism
+  - urban mobility

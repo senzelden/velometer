@@ -160,11 +160,69 @@ test("a flag explanation still in English on a German page is marked lang=en dat
   };
   const english = { lang: "en", "data-fallback": "" };
   assert.deepEqual(flagParagraphs(D, "b/lau/2022"), [
-    { attrs: english, text: "First cause." },
-    { attrs: english, text: "Second." },
+    { attrs: english, text: "First cause.", parts: [{ text: "First cause." }] },
+    { attrs: english, text: "Second.", parts: [{ text: "Second." }] },
   ]);
-  assert.deepEqual(flagParagraphs(D, "b/lau/2023"), [{ attrs: {}, text: "Ursache." }]);
+  assert.deepEqual(flagParagraphs(D, "b/lau/2023"), [{ attrs: {}, text: "Ursache.", parts: [{ text: "Ursache." }] }]);
   assert.deepEqual(flagParagraphs(D, "b/lau/2024"), []);
   // an English page has no fallback set: nothing is marked
   assert.deepEqual(flagParagraphs({ explanations: D.explanations }, "b/lau/2022")[0].attrs, {});
+});
+
+// ---- repo paths in a flag note (M16, R44) ----
+
+const SHA_URL = "https://forge.example/o/velometer/blob/abc/config/activity.yaml";
+const NOTE = "See `config/activity.yaml` and `highway=path`.";
+
+test("a flag note's code span is linked when the payload maps its repo path", async () => {
+  const { flagParagraphs } = await import("../compare-model.js");
+  const D = { explanations: { timeseries: { k: NOTE }, links: { k: { "config/activity.yaml": SHA_URL } } } };
+  const [p] = flagParagraphs(D, "k");
+  assert.equal(p.text, "See config/activity.yaml and highway=path.");
+  assert.deepEqual(p.parts, [
+    { text: "See " }, { code: "config/activity.yaml", href: SHA_URL }, { text: " and " },
+    { code: "highway=path" }, { text: "." },
+  ]);
+});
+
+test("a flag note without a links map, or with a non-https link, keeps plain code spans", async () => {
+  const { flagParagraphs } = await import("../compare-model.js");
+  const none = flagParagraphs({ explanations: { timeseries: { k: NOTE } } }, "k")[0];
+  assert.deepEqual(none.parts.filter((p) => p.code), [{ code: "config/activity.yaml" }, { code: "highway=path" }]);
+  const bad = { explanations: { timeseries: { k: NOTE }, links: { k: { "config/activity.yaml": "javascript:alert(1)" } } } };
+  assert.deepEqual(flagParagraphs(bad, "k")[0].parts[1], { code: "config/activity.yaml" });
+  const other = { explanations: { timeseries: { k: NOTE }, links: { j: { "config/activity.yaml": SHA_URL } } } };
+  assert.deepEqual(flagParagraphs(other, "k")[0].parts[1], { code: "config/activity.yaml" });
+});
+
+// a stub document: elements and text nodes, and innerHTML forbidden
+class StubNode {
+  constructor(tag, text) { Object.assign(this, { tag, attrs: {}, children: [], textContent: text ?? "" }); }
+  setAttribute(k, v) { this.attrs[k] = String(v); }
+  appendChild(c) { this.children.push(c); return c; }
+  set innerHTML(_) { throw new Error("innerHTML must not be used"); }
+}
+const stubDoc = { createElement: (tag) => new StubNode(tag), createTextNode: (t) => new StubNode("#text", t) };
+
+test("paragraphNode builds text, <code> and a linked <a><code> with DOM methods", async () => {
+  const { flagParagraphs, paragraphNode } = await import("../compare-model.js");
+  const D = {
+    explanations: { timeseries: { k: NOTE }, links: { k: { "config/activity.yaml": SHA_URL } } },
+    explanationFallback: new Set(["k"]),
+  };
+  const node = paragraphNode(flagParagraphs(D, "k")[0], stubDoc);
+  assert.equal(node.tag, "p");
+  assert.deepEqual(node.attrs, { lang: "en", "data-fallback": "" });
+  assert.deepEqual(node.children.map((c) => c.tag), ["#text", "a", "#text", "code", "#text"]);
+  const a = node.children[1];
+  assert.equal(a.attrs.href, SHA_URL);
+  assert.equal(a.children[0].tag, "code");
+  assert.equal(a.children[0].textContent, "config/activity.yaml");
+  assert.equal(node.children[3].textContent, "highway=path");
+  // unlinked: the code span stands alone
+  const plain = paragraphNode(flagParagraphs({ explanations: D.explanations.timeseries && { timeseries: { k: NOTE } } }, "k")[0], stubDoc);
+  assert.deepEqual(plain.children.map((c) => c.tag), ["#text", "code", "#text", "code", "#text"]);
+  // markup in the data stays text
+  const html = paragraphNode(flagParagraphs({ explanations: { timeseries: { k: "a `<b>x</b>` b" } } }, "k")[0], stubDoc);
+  assert.equal(html.children[1].textContent, "<b>x</b>");
 });

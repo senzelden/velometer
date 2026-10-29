@@ -1,0 +1,65 @@
+# The Datalab site's fonts (ADR 0008 "M16 fonts"; legal review 1.9, fix F8). Fetched 2026-10-22
+# from the projects' GitHub releases, each an exact tag published long before (> 2 weeks).
+#
+# Martian Mono v1.1.0 (release published 2025-02-10), SIL OFL 1.1, no Reserved Font Name:
+#   https://github.com/evilmartians/mono/releases/download/v1.1.0/martian-mono-1.1.0-variable.zip
+#   sha256 b87730975931dc2dbf0129ecf392ccaf8d29f46bc05e995703da4155db510867 (zip)
+#   sha256 60e0eee102be3f96b3c2c6431e6bb7101ff20735baee480e091af1765d7d49c7 (MartianMonoVF.ttf in it)
+#   The release ships no static 600 (SemiBold), so both weights are instances of the variable
+#   font at the Standard width (wdth 100: usWidthClass 5, advance 700, the width the approved
+#   spike was rendered at, `font-stretch: 100%`) and wght 400 / 600. The instancer's
+#   --update-name-table cannot be used (the font's STAT table has no wght 600 value: "Cannot find
+#   Axis Values {'wght': 600.0}"), so each instance is renamed by the script below before
+#   subsetting: name IDs 1/2/4/6 (and 16/17 for SemiBold) set to "Martian Mono" / "Regular" /
+#   "Martian Mono <style>" / "MartianMono-<style>", the variable font's STAT table dropped; the
+#   copyright (0) and licence (13, 14) records are kept.
+#   OFL-MartianMono.txt is the repository's OFL.txt at the same tag:
+#   https://raw.githubusercontent.com/evilmartians/mono/v1.1.0/OFL.txt
+#
+# Public Sans v2.001 (release published 2022-05-11), SIL OFL 1.1, no Reserved Font Name:
+#   https://github.com/uswds/public-sans/releases/download/v2.001/public-sans-v2.001.zip
+#   sha256 88cacdf7cd03b31af8f1f83e1f51e0eb5a6052565a6c014c90c385f1ff2d13a5 (zip)
+#   sha256 f3931c3c3ec5301043634ac8f39bcfa7b30d29181864f2fd0c3e6796feacc471 (fonts/webfonts/PublicSans-Regular.woff2)
+#   sha256 f99ffc265cc790e0f058a9f430a465c88996008327abb0f8561cb713add40d73 (fonts/webfonts/PublicSans-SemiBold.woff2)
+#   OFL-PublicSans.txt is OFL.txt from the same zip.
+#
+# Subsets (latin + latin-ext, the ranges Google Fonts uses for those two subsets), made with
+# fonttools 4.66.1 and brotli 1.2.0 through uvx (not a repo dependency):
+#   uvx --from fonttools==4.66.1 --with brotli==1.2.0 fonttools varLib.instancer \
+#       MartianMonoVF.ttf wght=<400|600> wdth=100 -o mm-<w>.ttf
+#   uvx --from fonttools==4.66.1 python -I names.py mm-<w>.ttf mm-<w>-named.ttf <Regular|SemiBold>
+#   uvx --from fonttools==4.66.1 --with brotli==1.2.0 pyftsubset <font> --unicodes=<RANGES> \
+#       --layout-features='*' --name-IDs='*' --flavor=woff2 --output-file=<name>.woff2
+#   RANGES: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,
+#   U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD,U+0100-02BA,U+02BD-02C5,
+#   U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,
+#   U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF
+#   Every name record (copyright, licence) is kept in the files.
+#
+#   names.py:
+#     import sys
+#     from fontTools.ttLib import TTFont
+#     src, dst, style = sys.argv[1:4]
+#     f = TTFont(src)
+#     name = f["name"]
+#     for nid in (1, 2, 3, 4, 6, 16, 17, 25):
+#         name.removeNames(nameID=nid)
+#     legacy_family = "Martian Mono" if style == "Regular" else f"Martian Mono {style}"
+#     values = {1: legacy_family, 2: "Regular", 3: f"Martian Mono {style} subset",
+#               4: f"Martian Mono {style}", 6: f"MartianMono-{style}"}
+#     if style != "Regular":
+#         values |= {16: "Martian Mono", 17: style}
+#     for nid, text in values.items():
+#         name.setName(text, nid, 3, 1, 0x409)
+#         name.setName(text, nid, 1, 0, 0)
+#     if "STAT" in f:
+#         del f["STAT"]
+#     f.save(dst)
+#
+# sha256  file (static/fonts/)
+0e00a7bdb2e9d9d50de11f21e361b5182fbf09a1b6b81b28f39741ceaead189d  MartianMono-Regular.woff2
+f43b7553b98f209b0ba66368e246a054b641bed13519daf403e064ec748aad4f  MartianMono-SemiBold.woff2
+ddafd2c3f37ef1d83ef284ca63e159befd3820850c5e9eded14ca52eee92c256  OFL-MartianMono.txt
+157a9e77f7580246e97c769490e2e977ae94399f9d30f4556015c41fe8c28bac  OFL-PublicSans.txt
+e703d1270caee0527a8511cf1eeacef2952430ab47702770c95bf2901333102a  PublicSans-Regular.woff2
+4f2bf86b8edc555fa80156d587083ae53b7bed9b62470c0804b6a7d4742ee878  PublicSans-SemiBold.woff2

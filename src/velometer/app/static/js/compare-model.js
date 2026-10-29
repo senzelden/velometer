@@ -158,25 +158,82 @@ export function orderCities(current, checked) {
 /**
  * A flagged year's explanation as plain paragraphs, each with the attributes of its element:
  * `lang="en" data-fallback` when the text is still English on a German page (as the server
- * marks it); [] when the year has no explanation.
+ * marks it); [] when the year has no explanation. `parts` are the paragraph's pieces: plain
+ * `{ text }`, or `{ code }` for a code span, with `href` when the payload links that repo path
+ * (`explanations.links`, M16 R44; only https addresses are taken).
  */
 export function flagParagraphs(D, key) {
   const raw = D.explanations?.timeseries?.[key];
   if (!raw) return [];
   const attrs = D.explanationFallback?.has(key) ? { lang: "en", "data-fallback": "" } : {};
-  return plainText(raw)
+  const links = D.explanations?.links?.[key] ?? {};
+  return markdownText(raw)
     .split(/\n{2,}/)
-    .map((para) => ({ attrs: { ...attrs }, text: para.trim() }));
+    .map((para) => {
+      const parts = codeParts(para.trim(), links);
+      return { attrs: { ...attrs }, text: parts.map((p) => p.text ?? p.code).join(""), parts };
+    });
+}
+
+/** `text` split at its code spans: `{ text }` and `{ code, href? }` pieces, empty text left out. */
+function codeParts(text, links) {
+  return text
+    .split(/`([^`]*)`/)
+    .map((piece, i) => {
+      if (i % 2 === 0) return { text: piece };
+      const href = Object.hasOwn(links, piece.trim()) ? links[piece.trim()] : null;
+      return isHttps(href) ? { code: piece, href } : { code: piece };
+    })
+    .filter((p) => p.code !== undefined || p.text);
+}
+
+function isHttps(href) {
+  if (typeof href !== "string") return false;
+  try {
+    return new URL(href).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A paragraph of `flagParagraphs` as a `<p>`: text nodes, `<code>` for code spans, inside an
+ * `<a>` when linked. DOM methods only: nothing from the data is parsed as HTML.
+ */
+export function paragraphNode(p, doc = globalThis.document) {
+  const node = doc.createElement("p");
+  for (const [k, v] of Object.entries(p.attrs ?? {})) node.setAttribute(k, v);
+  for (const part of p.parts ?? [{ text: p.text }]) {
+    if (part.code === undefined) {
+      node.appendChild(doc.createTextNode(part.text));
+      continue;
+    }
+    const code = doc.createElement("code");
+    code.textContent = part.code;
+    if (part.href) {
+      const a = doc.createElement("a");
+      a.setAttribute("href", part.href);
+      a.appendChild(code);
+      node.appendChild(a);
+    } else {
+      node.appendChild(code);
+    }
+  }
+  return node;
 }
 
 /** Explanation text without Markdown markers (the note shows plain text). */
 export function plainText(md) {
+  return markdownText(md).replace(/`([^`]*)`/g, "$1");
+}
+
+/** `plainText` that keeps the code spans' backticks (`flagParagraphs` makes them `<code>`). */
+function markdownText(md) {
   return String(md)
     .replace(/```[a-z]*\n?/g, "")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/(\*\*|__)(.+?)\1/g, "$2")
     .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
-    .replace(/`([^`]*)`/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/^\s*>\s?/gm, "")
     // a single newline is a soft wrap of the source: join it, keep paragraph and list breaks

@@ -62,6 +62,8 @@ web_app = typer.Typer(no_args_is_help=True, help="The reader app's static editio
 app.add_typer(web_app, name="app")
 content_app = typer.Typer(invoke_without_command=True)
 app.add_typer(content_app, name="content")
+datalab_app = typer.Typer(no_args_is_help=True, help="The Zählwerk Berlin Datalab site.")
+app.add_typer(datalab_app, name="datalab")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -731,6 +733,38 @@ def external_load(
         typer.echo(f"{source} {n} rows")
 
 
+@external_app.command("check")
+def external_check(
+    figures: Path | None = typer.Option(  # noqa: B008
+        None, "--figures", dir_okay=False, help="Curated CSV (default: config)."
+    ),
+    config_dir: Path = CONFIG_OPT,
+    db: Path = DB_OPT,
+) -> None:
+    """Exit 1 when the database's curated figures differ from figures.csv (reads only)."""
+    from velometer.sources import external
+
+    path = figures or config_dir / "external" / "figures.csv"
+    if not path.is_file():
+        typer.echo(f"error: {path} not found", err=True)
+        raise typer.Exit(1)
+    with _open_readonly(db) as conn:
+        try:
+            drift = external.curated_drift(conn, path)
+        except (ConfigError, ValueError, sqlite3.Error) as e:
+            typer.echo(f"external check failed: {type(e).__name__}: {e}", err=True)
+            raise typer.Exit(1) from e
+    for d in drift:
+        typer.echo(d)
+    if drift:
+        typer.echo(
+            f"{len(drift)} row(s) differ from {path}; reload with `{external.LOAD_COMMAND}` "
+            "(writes the database)"
+        )
+        raise typer.Exit(1)
+    typer.echo(f"ok: the database's curated figures match {path}")
+
+
 @osm_app.command("fetch-history")
 def osm_fetch_history(
     region: str | None = typer.Option(
@@ -1299,7 +1333,7 @@ def report_csv(
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_OPT,
 ) -> None:
-    """One CSV row per city, boundary kind and year or `current`, with ODbL attribution."""
+    """One CSV row per city, boundary kind and year or `current`, with the data credits."""
     from datetime import UTC, datetime
 
     from velometer.reconcile import short_commit
@@ -1315,10 +1349,12 @@ def report_csv(
     try:
         data = ReportData(conn, config_dir)
         _check_report_city(data, city)
+        rows = data.csv_rows(city)
         text = to_csv(
-            data.csv_rows(city),
+            rows,
             short_commit(git_commit()),
             datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            data.population_sources(rows),
         )
     except ConfigError as e:
         raise _config_error(e) from e
@@ -2048,6 +2084,12 @@ def serve(
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
     plans_data_dir: Path = PLANS_DATA_OPT,
+    tiles: Path | None = typer.Option(  # noqa: B008
+        None,
+        "--tiles",
+        help="A PMTiles extract (tools/tiles.py) served as the maps' background; without it the "
+        "maps have none.",
+    ),
 ) -> None:
     """The private, read-only web app on a loopback address (never exposed to the network)."""
     if host not in LOOPBACK_HOSTS:
@@ -2060,12 +2102,21 @@ def serve(
     if not db.is_file():
         typer.echo(f"error: database not found: {db}", err=True)
         raise typer.Exit(1)
+    if tiles is not None and not tiles.is_file():
+        typer.echo(f"error: tile file not found: {tiles}", err=True)
+        raise typer.Exit(1)
     import uvicorn
 
     from velometer.app.main import create_app
 
     app_ = create_app(
-        db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir
+        db,
+        config_dir,
+        maps,
+        docs,
+        content_dir=content_dir,
+        plans_data_dir=plans_data_dir,
+        tiles_file=tiles,
     )
     uvicorn.run(app_, host=host, port=port)
 
@@ -2083,7 +2134,7 @@ def app_export(
         False,
         "--public",
         help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
-        "pages (a public export).",
+        "pages and the repository, and the git checkout is clean (a public export).",
     ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,
@@ -2091,6 +2142,12 @@ def app_export(
     docs: Path = typer.Option(Path("docs"), "--docs", help="Methodology and review docs."),  # noqa: B008
     content_dir: Path = typer.Option(Path("content"), "--content", help="Narratives and sources."),  # noqa: B008
     plans_data_dir: Path = PLANS_DATA_OPT,
+    tiles_info: Path = typer.Option(  # noqa: B008
+        Path("data/tiles/velometer.pmtiles.json"),
+        "--tiles-info",
+        help="The basemap's sidecar (tools/tiles.py): build.json `tiles` and the map credit's "
+        "build date; absent, `tiles` is null and a public deploy-check refuses.",
+    ),
 ) -> None:
     """The reader app's static edition: every page the data has, rendered by the app, as files
     (read-only on the database)."""
@@ -2101,8 +2158,9 @@ def app_export(
     start = time.monotonic()
     try:
         result = run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-        )
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+            tiles_info,
+        )  # fmt: skip
     except ExportError as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
@@ -2140,6 +2198,37 @@ def app_deploy_check(
     typer.echo(
         f"deploy-check ok: {files} files, {size / 1e6:.1f} MB, base {build['base']}, "
         f"public {build.get('public', False)}"
+    )
+
+
+@datalab_app.command("build")
+def datalab_build(
+    velometer_export: Path = typer.Option(  # noqa: B008
+        ..., "--velometer-export", help="A finished velometer export (its data/all.csv is read)."
+    ),
+    out: Path = typer.Option(..., "--out", help="New or empty directory for the site."),  # noqa: B008
+    config: Path = typer.Option(  # noqa: B008
+        None, "--config", help="Site settings (default: sites/datalab/site.yaml)."
+    ),
+) -> None:
+    """The Datalab site (apex page, Impressum, Datenschutz) as static files; the Berlin counter
+    reads the velometer export. Reports the [[…]] placeholders still left."""
+    from pydantic import ValidationError
+
+    from velometer.datalab import DEFAULT_CONFIG, DatalabError, build, load_config, placeholders
+
+    try:
+        cfg = load_config(config or DEFAULT_CONFIG)
+        written = build(cfg, velometer_export, out)
+    except (DatalabError, ValidationError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    left = placeholders(out)
+    for where in left:
+        typer.echo(f"placeholder: {where}")
+    typer.echo(
+        f"built {len(written)} files to {out} for {cfg.domain}, operator form "
+        f"{cfg.operator_form or 'undecided'}, {len(left)} placeholder(s) left"
     )
 
 

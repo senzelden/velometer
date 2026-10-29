@@ -15,8 +15,11 @@ axe-core is vendored in `tools/axe/` (pinned in `tools/axe/VERSION`) and injecte
     uv run --group dev python tools/render_pass.py --site DIR --base /velometer/ \
         --out tools/out/NAME [--themes light,dark] [--widths 1280,390,320] \
         [--pages all|types|<url>,...] [--flip] [--interact] [--keyboard] [--chrome PATH] \
-        [--url ORIGIN]
+        [--url ORIGIN] [--lang en|de]
 
+`--lang de` audits a one-language German site (the Datalab: `--base /`): every page must have
+`<html lang="de">` and gets the English-leak check, instead of velometer's rule (de under
+`<base>de`, en elsewhere).
 `--flip` changes how the page visits run (it combines with `--interact` and `--keyboard`, which
 run as usual): each page loads in light, the emulated scheme switches to dark mid-page, and after
 500 ms the page is audited and shot as `<slug>-flipped-<width>.png`.
@@ -26,15 +29,22 @@ it and focus must return to the link; a city's Time tab with its first Cite open
 the address, the Copy button's live region); `city/berlin/tiers` with the Download control open,
 saving SVG, PNG and CSV (the SVG has no `var(` and names OpenStreetMap contributors); and
 `permalinks`, where the tier map, a story `#step-` and a compare `panel=` URL each open the state
-they name (the map view is read back from the tile under the map's centre, `MAP_VIEW_JS`) and a
-hostile query opens the defaults with a quiet console. `--keyboard` adds, per theme, a scripted
-keyboard pass driven by real key events (`Input.dispatchKeyEvent`): skip link, phone menu, Cities
-menu, city tabs, compare (tick, metric, view, sort, panel, Escape), the nav search and the tier
-and counter maps (+ and -); each step is a line in the entry's `steps`, a failed one is an error.
-Chrome is `--chrome`, else
+they name (the map view is read back from the basemap tile under the map's centre,
+`MAP_VIEW_JS`, so this step and the keyboard pass's map steps need the tile file served: `--url`
+with the dry run's `--tiles`) and a hostile query opens the defaults with a quiet console.
+`--keyboard` adds, per theme, a scripted keyboard pass driven by real key events
+(`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare (tick, metric,
+view, sort, panel, Escape), the nav search and the tier and counter maps (+ and -); each step is a
+line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
 `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
 (e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
-page list still comes from `--site`.
+page list still comes from `--site`; the origin's host counts as the pages' own host (the dry
+run's `velometer.localhost`). Through a locked server (the dry run's `--lock`, the server before
+go-live) it sends basic auth as the user `preview` with the password from
+`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass), so the password never stands on a command line;
+`--auth USER:PASS` still overrides it. The Authorization header goes only to the `--url` origin:
+each tab intercepts that origin's requests (`Fetch.enable` with one URL pattern) and adds the
+header to them, and the wait for the server never forwards it on a redirect.
 """
 
 from __future__ import annotations
@@ -69,7 +79,12 @@ CHROME = "/usr/bin/google-chrome"  # default; --chrome or $VELOMETER_CHROME over
 LOAD_TIMEOUT = 30.0  # seconds for a page's load event; a load that never fires is a finding
 OK_STATUS = {200, 304}  # 304: the browser cache revalidated a 200
 AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
-ALLOWED_HOSTS = {"127.0.0.1", "tile.openstreetmap.org"}
+ALLOWED_HOSTS = {"127.0.0.1"}  # M16: the basemap is served by the site itself
+SITE_HOST: str | None = None  # --url's host: the pages' own host too
+AUTH: str | None = None  # the Authorization header value for the --url origin
+AUTH_ORIGIN: str | None = None  # the only origin AUTH is sent to
+PASSWORD_ENV = "VELOMETER_PREVIEW_PASSWORD"
+PREVIEW_USER = "preview"
 # pages in a city are /city/<slug>/<tab>; --pages types keeps Berlin plus the first city (by
 # slug) whose tab list differs from Berlin's
 TYPES_CITY = "berlin"
@@ -191,9 +206,17 @@ def type_urls(urls: list[str], base: str) -> list[str]:
     return sorted(keep)
 
 
+# `--lang`: the one language of a site that is not velometer's two-language tree (the German
+# Datalab site); None keeps velometer's rule.
+SITE_LANG: str | None = None
+
+
 def lang_of(url: str, base: str) -> str:
     """The language of a page URL, by the app's rule (`urls.lang_of`): `de` under `<base>de`
-    and for the legacy `<base>methodology/de`, else `en`."""
+    and for the legacy `<base>methodology/de`, else `en`; with `--lang`, that language for
+    every page."""
+    if SITE_LANG is not None:
+        return SITE_LANG
     rest = url[len(_norm_base(base)) :] if url.startswith(_norm_base(base)) else url.lstrip("/")
     return app_urls.lang_of("/" + rest)
 
@@ -214,11 +237,46 @@ def free_port() -> int:
         return s.getsockname()[1]
 
 
-def wait_http(url: str, seconds: float = 15) -> None:
+def resolve_auth(spec: str | None, url: str | None, env=None) -> str | None:
+    """The Authorization header value: `--auth USER:PASS` if given, else, for a `--url`, the
+    user `preview` with `$VELOMETER_PREVIEW_PASSWORD` when that is set; else None."""
+    env = os.environ if env is None else env
+    if spec is not None:
+        user, pw = spec.split(":", 1)
+    elif url is not None and env.get(PASSWORD_ENV, "").strip():
+        user, pw = PREVIEW_USER, env[PASSWORD_ENV]
+    else:
+        return None
+    return "Basic " + base64.b64encode(f"{user}:{pw}".encode()).decode()
+
+
+def origin_of(url: str) -> str:
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}".lower()
+
+
+def fetch_reply(params: dict, auth: tuple[str, str] | None) -> dict:
+    """The `Fetch.continueRequest` parameters for a paused request: the Authorization header is
+    added only when the request goes to the auth origin; any other request goes on untouched."""
+    reply = {"requestId": params["requestId"]}
+    request = params.get("request", {})
+    if auth and origin_of(request.get("url", "")) == auth[0]:
+        headers = {k: v for k, v in request.get("headers", {}).items()
+                   if k.lower() != "authorization"}  # fmt: skip
+        headers["Authorization"] = auth[1]
+        reply["headers"] = [{"name": k, "value": v} for k, v in headers.items()]
+    return reply
+
+
+def wait_http(url: str, seconds: float = 15, headers: dict[str, str] | None = None) -> None:
+    """Wait until `url` answers; `headers` are never forwarded on a redirect."""
     end = time.time() + seconds
     while True:
         try:
-            urllib.request.urlopen(url, timeout=2).close()
+            req = urllib.request.Request(url)
+            for k, v in (headers or {}).items():
+                req.add_unredirected_header(k, v)
+            urllib.request.urlopen(req, timeout=2).close()
             return
         except OSError:
             if time.time() > end:
@@ -238,6 +296,21 @@ class Tab:
         self.ws = websocket.create_connection(ws_url, timeout=120, suppress_origin=True)
         self.n = 0
         self.events: list[dict] = []
+        self.auth: tuple[str, str] | None = None  # (origin, Authorization value)
+        self._sent: set[int] = set()  # ids of replies nobody waits for
+
+    def _take(self, m: dict) -> None:
+        """Keep an event; answer a paused request (`fetch_reply`) at once."""
+        if m.get("method") == "Fetch.requestPaused":
+            self.n += 1
+            self._sent.add(self.n)
+            reply = fetch_reply(m["params"], self.auth)
+            self.ws.send(json.dumps({"id": self.n, "method": "Fetch.continueRequest",
+                                     "params": reply}))  # fmt: skip
+        elif m.get("id") in self._sent:
+            self._sent.discard(m["id"])
+        else:
+            self.events.append(m)
 
     def call(self, method: str, **params):
         self.n += 1
@@ -249,14 +322,14 @@ class Tab:
                 if "error" in m:
                     raise RuntimeError(f"{method}: {m['error']}")
                 return m.get("result", {})
-            self.events.append(m)
+            self._take(m)
 
     def pump(self, seconds: float) -> None:
         end = time.time() + seconds
         self.ws.settimeout(0.1)
         while time.time() < end:
             with contextlib.suppress(self._wsmod.WebSocketTimeoutException):
-                self.events.append(json.loads(self.ws.recv()))
+                self._take(json.loads(self.ws.recv()))
         self.ws.settimeout(120)
 
     def wait_event(self, method: str, since: int, cap: float) -> bool:
@@ -301,6 +374,11 @@ def open_tab(devtools: str, width: int, theme: str) -> Tab:
     try:
         for domain in ("Page", "Network", "Runtime", "Log", "Audits"):
             t.call(f"{domain}.enable")
+        if AUTH and AUTH_ORIGIN:
+            # only the origin under test is paused, and only it gets the header (fetch_reply)
+            t.auth = (AUTH_ORIGIN, AUTH)
+            t.call("Fetch.enable", patterns=[
+                {"urlPattern": AUTH_ORIGIN + "/*", "requestStage": "Request"}])  # fmt: skip
         phone = width < 600
         t.call(
             "Emulation.setDeviceMetricsOverride",
@@ -800,22 +878,29 @@ TIER_PAGE = "city/berlin/tiers"
 # data; a site with a LAU map only has nothing else), read from the page, not assumed
 PERMALINK_TIERS = TIER_PAGE + "?kind={kind}&tiers=AB&at=52.52,13.40,12"
 TIER_KINDS_JS = "[...document.querySelectorAll('input[name=kind]')].map(e => e.value)"
+# A basemap tile's coordinates: protomaps-leaflet's canvas tiles carry Leaflet's key "x:y:z" as
+# their `key` property; [z, x, y] or null
+TILE_ZXY_JS = (
+    "((el) => { const m = /^(-?\\d+):(-?\\d+):(\\d+)$/.exec(String(el.key));"
+    " return m ? [+m[3], +m[1], +m[2]] : null; })"
+)
 # the map's centre and zoom, read back from the tile under the container's centre (the map object
 # is private to map.js); {z, lat, lon} or null while no tile has been placed
 MAP_VIEW_JS = r"""(() => {
+  const zxy = TILE_ZXY;
   const box = document.querySelector('#tiermap').getBoundingClientRect();
   const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
-  for (const i of document.querySelectorAll('img.leaflet-tile')) {
-    const m = i.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+  for (const i of document.querySelectorAll('.leaflet-tile')) {
+    const m = zxy(i);
     const r = i.getBoundingClientRect();
     if (!m || cx < r.left || cx >= r.right || cy < r.top || cy >= r.bottom) continue;
-    const z = +m[1], n = 2 ** z;
-    const x = +m[2] + (cx - r.left) / r.width, y = +m[3] + (cy - r.top) / r.height;
+    const z = m[0], n = 2 ** z;
+    const x = m[1] + (cx - r.left) / r.width, y = m[2] + (cy - r.top) / r.height;
     const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
     return {z, lat, lon: x / n * 360 - 180};
   }
   return null;
-})()"""
+})()""".replace("TILE_ZXY", TILE_ZXY_JS)
 TIER_STATE_JS = """(() => ({
   kind: (document.querySelector('input[name=kind]:checked') || {}).value,
   tiers: [...document.querySelectorAll('input[name=tier]:checked')].map(e => e.value).join(''),
@@ -921,7 +1006,7 @@ def _wait_map(t: Tab, why: str, lang: str = "en") -> list[str]:
         f"((s) => s.startsWith({json.dumps(start)}) && s.endsWith({json.dumps(end)}))"
         "(document.querySelector('#tiermap-status').textContent.trim())"
     )
-    ok = t.wait_js(f"!!document.querySelector('img.leaflet-tile') && !{loading}", 15)
+    ok = t.wait_js(f"!!document.querySelector('.leaflet-tile') && !{loading}", 15)
     t.pump(0.5)
     return [] if ok else [why]
 
@@ -1138,10 +1223,10 @@ def _page(devtools, origin, base, theme, width, path) -> tuple[Tab, list[str]]:
 
 
 def _zoom(t: Tab) -> int:
-    """The highest tile zoom level in the DOM (a tile's URL is .../{z}/{x}/{y}.png)."""
+    """The highest basemap tile zoom level in the DOM (TILE_ZXY_JS)."""
     return t.js(
-        "Math.max(0, ...[...document.querySelectorAll('img.leaflet-tile')]"
-        ".map(i => +((i.src.match(/\\/(\\d+)\\/\\d+\\/\\d+\\.png/) || [])[1] || 0)))"
+        f"Math.max(0, ...[...document.querySelectorAll('.leaflet-tile')]"
+        f".map(i => ({TILE_ZXY_JS})(i)?.[0] ?? 0))"
     )
 
 
@@ -1623,7 +1708,8 @@ def failures(r: dict) -> list[str]:
         out.append(f"console {len(r['console'])}")
     if r["csp"]:
         out.append(f"csp {len(r['csp'])}")
-    foreign = [h for h in r["hosts"] if h not in ALLOWED_HOSTS]
+    own = ALLOWED_HOSTS | ({SITE_HOST} if SITE_HOST else set())
+    foreign = [h for h in r["hosts"] if h not in own]
     if foreign:
         out.append(f"hosts {','.join(foreign)}")
     return out
@@ -1642,7 +1728,7 @@ def stop(proc: subprocess.Popen, timeout: float = 10) -> None:
 @contextlib.contextmanager
 def running(origin: str, base: str):
     """A server someone else started (`--url`): wait until it answers under `base`."""
-    wait_http(origin + base)
+    wait_http(origin + base, headers={"Authorization": AUTH} if AUTH else None)
     yield origin
 
 
@@ -1744,9 +1830,28 @@ def main(argv: list[str] | None = None) -> int:
         help="audit a server already running at this origin (e.g. http://127.0.0.1:8080) "
         "instead of serving --site with http.server; --site still lists the pages",
     )
+    ap.add_argument(
+        "--auth",
+        metavar="USER:PASS",
+        help="basic auth for a locked server (with --url), sent to that origin only; without "
+        "it, user preview with $VELOMETER_PREVIEW_PASSWORD when set",
+    )
+    ap.add_argument(
+        "--lang",
+        choices=("en", "de"),
+        help="every page is in this language (a one-language site such as the Datalab); "
+        "default: velometer's rule, de under <base>de, else en",
+    )
     a = ap.parse_args(argv)
+    global SITE_LANG, SITE_HOST, AUTH, AUTH_ORIGIN
+    SITE_LANG = a.lang
     if a.url is not None and not re.fullmatch(r"https?://[^/]+/?", a.url):
         ap.error(f"--url takes an origin such as http://127.0.0.1:8080, not {a.url!r}")
+    if a.auth is not None and (a.url is None or ":" not in a.auth):
+        ap.error("--auth takes USER:PASS and needs --url (a server that asks for it)")
+    SITE_HOST = urlsplit(a.url).hostname if a.url else None
+    AUTH = resolve_auth(a.auth, a.url)
+    AUTH_ORIGIN = origin_of(a.url) if a.url and AUTH else None
 
     base = _norm_base(a.base)
     site = a.site.resolve()

@@ -1,0 +1,212 @@
+/* Zählwerk Berlin Datalab: draft A ("Zählwerk") of the M16 spike, version 2. The palette follows
+   velometer's tokens, so the Datalab and its first project read as family. The theme follows the
+   system setting (prefers-color-scheme); nothing is stored. */
+
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/MartianMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/MartianMono-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Public Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/PublicSans-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Public Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/PublicSans-SemiBold.woff2") format("woff2");
+}
+
+:root {
+  --paper: #fcfcfa;
+  --surface: #ffffff;
+  --panel: #f4f3ef;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6b6a66;
+  --grid: #e4e3df;
+  --grid-2: #cfccc3;
+  --accent: #1a66c2;
+  --accent-bg: #e8f0fb;
+  --drum-bg: #1d1d1b;
+  --drum-fg: #fcfcfa;
+  --drum-edge: #3a3936;
+  --drum-last: #b8440f;
+  --drum-last-fg: #ffffff;
+  --ph-bg: #fff1c2;
+  --ph-fg: #5c3d00;
+  --ph-edge: #b8440f;
+
+  --f-mono: "Martian Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151514; --surface: #1d1d1b; --panel: #262623;
+    --ink: #ecebe6; --ink-2: #c2c0b8; --muted: #a3a19a;
+    --grid: #33322f; --grid-2: #4a4944;
+    --accent: #5d9ce8; --accent-bg: #1c2b3f;
+    --drum-bg: #0b0b0a; --drum-fg: #ecebe6; --drum-edge: #4a4944;
+    --drum-last: #b8440f; --drum-last-fg: #ffffff;
+    --ph-bg: #3d2f05; --ph-fg: #ffe08a; --ph-edge: #e3995a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+.wrap {
+  max-width: 64rem; margin: 0 auto; padding-bottom: 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* header */
+.top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-block: 28px; gap: 16px; flex-wrap: wrap;
+}
+.mark {
+  font-family: var(--f-mono); font-weight: 600; letter-spacing: -0.02em;
+  font-size: var(--step-1); color: var(--ink); text-decoration: none;
+}
+.mark span { color: var(--muted); font-weight: 400; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: var(--step--1); font-weight: 400;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+}
+
+/* the counter */
+.hero { display: grid; gap: 28px; padding-block: 40px 24px; }
+.counter { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px 32px; }
+.reading { display: grid; gap: 8px; justify-items: start; }
+.reading .cap { font-family: var(--f-mono); font-size: var(--step--1); color: var(--muted); letter-spacing: 0.04em; }
+.drums {
+  display: inline-flex; gap: 3px; padding: 6px; border-radius: 6px;
+  background: var(--drum-edge);
+  font-family: var(--f-mono); font-weight: 600; font-variant-numeric: tabular-nums;
+  font-size: clamp(2.6rem, 11vw, 6rem); line-height: 1;
+}
+.drums.small { font-size: clamp(1.4rem, 5vw, 2.4rem); }
+.drum {
+  width: 0.82em; height: 1.2em; overflow: hidden; position: relative;
+  background: var(--drum-bg); color: var(--drum-fg); border-radius: 3px;
+}
+.drum::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.55;
+  background: linear-gradient(var(--drum-bg), transparent 22%, transparent 78%, var(--drum-bg));
+}
+.drum.last { background: var(--drum-last); color: var(--drum-last-fg); }
+.drum.last::after { background: linear-gradient(var(--drum-last), transparent 22%, transparent 78%, var(--drum-last)); }
+.strip { display: flex; flex-direction: column; transition: transform 600ms cubic-bezier(.3, .7, .2, 1); }
+.strip span { height: 1.2em; display: grid; place-items: center; }
+/* the digit a strip shows: no inline style, so the server's reading needs no script */
+.strip.d0 { transform: translateY(0); }
+.strip.d1 { transform: translateY(-1.2em); }
+.strip.d2 { transform: translateY(-2.4em); }
+.strip.d3 { transform: translateY(-3.6em); }
+.strip.d4 { transform: translateY(-4.8em); }
+.strip.d5 { transform: translateY(-6em); }
+.strip.d6 { transform: translateY(-7.2em); }
+.strip.d7 { transform: translateY(-8.4em); }
+.strip.d8 { transform: translateY(-9.6em); }
+.strip.d9 { transform: translateY(-10.8em); }
+
+.lede { font-size: var(--step-1); max-width: 36ch; line-height: 1.4; }
+.row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+.btn {
+  font: inherit; font-family: var(--f-mono); font-size: var(--step--1);
+  padding: 8px 14px; border-radius: 4px; cursor: pointer;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--ink-2);
+}
+.btn:hover { background: var(--panel); }
+.btn[hidden] { display: none; }
+.fine { font-size: var(--step--1); color: var(--muted); max-width: 60ch; }
+.fine a { color: var(--muted); }
+.next {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 24px;
+  padding-top: 40px; border-top: 1px solid var(--grid); margin-top: 32px;
+}
+.next h2 { font-family: var(--f-mono); font-size: var(--step-0); font-weight: 600; margin-bottom: 6px; }
+.next p { color: var(--ink-2); max-width: 40ch; }
+
+/* Impressum and Datenschutz */
+.legal { max-width: 46rem; padding-block: 24px; }
+.legal h1 { font-family: var(--f-mono); font-weight: 600; font-size: var(--step-2); letter-spacing: -0.02em; margin-bottom: 20px; overflow-wrap: anywhere; }
+.legal h2 { font-size: var(--step-1); font-weight: 600; margin: 32px 0 8px; }
+.legal h3 { font-size: var(--step-0); font-weight: 600; margin: 20px 0 6px; }
+.legal p + p { margin-top: 10px; }
+.legal ul { margin: 8px 0; padding-left: 1.25rem; }
+.legal li + li { margin-top: 4px; }
+.legal dl { margin: 10px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; }
+.legal dt { color: var(--muted); }
+.legal dd { margin: 0; }
+@media (max-width: 600px) {
+  .legal dl { grid-template-columns: minmax(0, 1fr); }
+  .legal dd + dt { margin-top: 6px; }
+}
+.variant { margin-top: 20px; }
+.variant-h {
+  font-family: var(--f-mono); font-size: var(--step--1); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2);
+  border-top: 2px solid var(--ink); padding-top: 12px;
+}
+.legal .variant-h { margin-top: 36px; }
+.objection { margin-top: 32px; padding: 4px 20px 20px; border: 1px solid var(--grid-2); border-left: 4px solid var(--ink); background: var(--panel); }
+.objection h2 { margin-top: 16px; }
+.draft-note { padding: 12px 16px; border: 1px dashed var(--ph-edge); background: var(--ph-bg); color: var(--ph-fg); }
+.legal p, .legal li, .legal dd { overflow-wrap: anywhere; }
+
+/* a value that is still missing: visible on purpose until the go-live check passes */
+.ph {
+  background: var(--ph-bg); color: var(--ph-fg); font-family: var(--f-mono); font-size: 0.875em;
+  padding: 0 4px; border-radius: 3px; outline: 1px dashed var(--ph-edge); outline-offset: 0;
+}
+
+/* footer: Impressum, Datenschutz and the contact on every page */
+footer {
+  border-top: 1px solid var(--grid); margin-top: 64px; padding-top: 16px;
+  display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: var(--step--1); color: var(--muted);
+}
+footer a { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .strip { transition: none; }
+}

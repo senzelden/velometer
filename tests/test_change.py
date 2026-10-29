@@ -450,7 +450,7 @@ def test_geojson_has_one_feature_per_row_in_wgs84(result, tmp_path):
     assert lost["properties"]["way_id_from"] == W + 2
     lon, lat = lost["geometry"]["coordinates"][0]
     assert 13.3 < lon < 13.5 and 52.4 < lat < 52.6
-    assert "ODbL" in doc["properties"]["attribution"]
+    assert "ODbL" in doc["attribution"] and "attribution" not in doc["properties"]
 
 
 def test_png_has_four_categories_and_the_odbl_footer(result, tmp_path, monkeypatch):

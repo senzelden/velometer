@@ -83,15 +83,29 @@ uv run --group dev python tools/render_pass.py --site "$SCRATCH/site/velometer" 
 - `--chrome PATH` sets the Chrome binary. The default is `$VELOMETER_CHROME`, else
   `/usr/bin/google-chrome`. A missing binary is a usage error.
 - The exit status is 1 if any visit has an error, an axe violation, overflow, a console message,
-  a CSP violation or a host other than `127.0.0.1` and `tile.openstreetmap.org`. It is also 1
+  a CSP violation or a host other than `127.0.0.1`. It is also 1
   when nothing was visited. Otherwise it is 0.
 - `<out>/results.json` lists one entry per visit and is rewritten after every visit:
   `{url, theme, width, kind: page|flip|interact, axe: [{id, impact, nodes}], overflow, console,
   csp, hosts, errors, screenshot}`.
 - `tools/out/` is git-ignored.
 
-The tool contacts `tile.openstreetmap.org` because the maps do. The browser cache is kept
-between visits, so each tile is fetched only once per run.
+The tool contacts no other host: since M16 the maps' basemap is a PMTiles file served by the
+site itself. `http.server` serves no byte ranges and the export does not hold the file, so with
+`--site` alone the maps draw without a background; the permalink and keyboard map steps read the
+map's view from the basemap's tiles and need it. Serve the export with
+`tools/deploy_dryrun.py --site DIR --server caddy --tiles data/tiles/velometer.pmtiles
+--keep-running` and pass its origin as `--url`.
+
+Against the live site (M16), give `--base /`, the base the export was made with: the default
+`/velometer/` 404s there. Behind the lock it logs in as `preview` with the password from
+`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass; never on the command line) and sends the header to
+the `--url` origin only:
+
+```bash
+uv run --group dev python tools/render_pass.py --site "$SCRATCH/velometer" --base / \
+    --url https://velometer.<domain> --pages types --interact --flip
+```
 
 ## orca_pass.py
 
@@ -149,3 +163,40 @@ To upgrade it, take the newest 4.x release on `registry.npmjs.org/axe-core` that
 14 days old. Download `axe.min.js` and `LICENSE` from
 `cdn.jsdelivr.net/npm/axe-core@<version>/`, check them against the npm tarball, and rewrite
 `VERSION`.
+
+## press_review.py
+
+Lists the press-law candidate sentences (M16 spec §4.1 item 3, §4.9 item 8): every reader-facing
+sentence of both editions that names a person, party, administration or organisation, uses an
+actor-implying verb, or states a cause or judgement in a paragraph that names an actor. It reads
+the content files (not the quotations in `content/sources/`), the UI catalogues, the flagged-year
+explanations, `config/limitations.yaml` and the config prose of `velometer.config.reader_prose`.
+Organisation names come from `config/organisations.yaml` and the source publishers; offices,
+parties and the reviewed `PERSONS` are lists in the tool. The output is a raw list to read; the
+reviewed table is `docs/review/m16-press.md`; an existing `--out` file is never overwritten
+without `--force`, so the CLI cannot replace the reviewed table by accident.
+
+```bash
+uv run python tools/press_review.py --out "$SCRATCH/press.md" [--force] [PATH ...]
+```
+
+## readme_shots.py
+
+Renders the README's images into `docs/img/readme/`: the Berlin tier map and the compare chart,
+each in the light and the dark theme, clipped to the page elements at twice the CSS resolution and
+reduced to 256 colours. It uses `render_pass.py`'s Chrome and server helpers. The tier map needs
+the basemap tiles, which an export does not contain, so the usual source is the deployed site:
+
+```bash
+uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwerk-datalab.de
+# while the site is locked: logs in as preview with $VELOMETER_PREVIEW_PASSWORD
+```
+
+Re-run it when the pages change, and update the README's alt texts and caption to what the new
+images show.
+
+## server.py, tiles.py, deploy_dryrun.py
+
+The Hetzner server tool, the basemap extract and the local dry run are described where they are
+used: `docs/deploy.md` §1 (`server.py`, with the route as run), §1 step 3 (`tiles.py`'s extract)
+and §0a (`deploy_dryrun.py`). `server.py create` defaults to `--type cx23`.

@@ -18,7 +18,7 @@ import yaml
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from pydantic import BaseModel, ConfigDict
 
-from velometer import i18n
+from velometer import credits, i18n
 from velometer import timeseries as ts
 from velometer.config import (
     CityConfig,
@@ -40,6 +40,7 @@ from velometer.counters.model import (
     has_line,
     load_counters_config,
 )
+from velometer.credits import PopulationCredit
 from velometer.db import fetch_boundary, fetch_run
 from velometer.i18n import LANGS, Lang
 from velometer.models import City
@@ -542,6 +543,26 @@ def _city(name: str, langs: dict[str, str], lang: Lang) -> str:
     return f'<span lang="{own}">{name}</span>' if own else name
 
 
+def _population_credits(cities: list[CityFacts]) -> list[tuple[PopulationCredit, list[str]]]:
+    """Each population credit once with the names of the cities whose LAU population it gives:
+    the national offices first (`credits.BODIES` order), sources of no known body next, and
+    Eurostat last (the page says "every other city" for it)."""
+    found: dict[str, tuple[PopulationCredit, list[str]]] = {}
+    for c in cities:
+        credit = credits.population_credit(c.population_source)
+        if credit is not None:
+            found.setdefault(credit.body, (credit, []))[1].append(c.name)
+    known = [b for b in credits.BODIES if b in found and b != credits.EUROSTAT]
+    other = sorted(b for b in found if b not in credits.BODIES)
+    last = [credits.EUROSTAT] if credits.EUROSTAT in found else []
+    return [found[b] for b in known + other + last]
+
+
+def _credit(c: PopulationCredit, lang: Lang) -> str:
+    """A credit's text, in a `<span lang>` where its language is not the page's."""
+    return c.text if c.lang in (lang, "en") else f'<span lang="{c.lang}">{c.text}</span>'
+
+
 def _environment(lang: Lang, city_langs: dict[str, str] | None = None) -> Environment:
     env = Environment(
         loader=PackageLoader("velometer.report", "templates"),
@@ -564,6 +585,13 @@ def _environment(lang: Lang, city_langs: dict[str, str] | None = None) -> Enviro
     env.filters["provenance"] = lambda v: _provenance(v, lang)
     env.filters["city"] = lambda v: _city(v, city_langs or {}, lang)
     env.globals["tab"] = lambda key: i18n.t(lang, f"city.tab.{key}")  # the site's tab label
+    env.globals["population_credits"] = _population_credits
+    env.globals["disclaimer"] = lambda groups: credits.disclaimer([c.body for c, _ in groups], lang)
+    env.globals["gisco_terms"] = credits.GISCO_TERMS_URL
+    env.globals["osm_copyright"] = credits.OSM_COPYRIGHT_URL
+    env.globals["odbl_url"] = credits.ODBL_URL
+    env.filters["credit"] = lambda c: _credit(c, lang)
+    env.globals["boundary_credit"] = i18n.t(lang, "credit.boundaries")
     return env
 
 

@@ -133,7 +133,7 @@ def test_site_map_for_sites_with_coordinates_and_a_list_for_all(client):
     html = client.get("/city/berlin/counts").text
     cfg = json.loads(re.search(r'id="countermap-config">(.*?)</script>', html, re.S).group(1))
     assert [s["name"] for s in cfg["sites"]] == ["Site s1"]  # s2 has no coordinates
-    assert cfg["tiles"].startswith("https://tile.openstreetmap.org/")
+    assert cfg["tiles"] == "/tiles/velometer.pmtiles"
     assert '<script type="module" src="/static/countermap.js"></script>' in html
     assert "Site s2" in _text(html)  # in the site list
 
@@ -270,7 +270,8 @@ def test_counter_lines_gap_is_none_and_cities_without_data_are_notes():
     assert notes == [
         f"M: {compare.NO_COUNTER_LINE}",
         f"N: {compare.NO_COUNTERS}",
-        "Counter data, A: source not recorded, licence not recorded",
+        "Counter data, A: source not recorded, licence not recorded"
+        "; index and totals computed by velometer",
     ]
 
 
@@ -334,7 +335,10 @@ def test_counter_lines_attribution_falls_back_to_unrecorded():
                                                  {"year": 2020, "idx": 99.0}]}}},
     }  # fmt: skip
     _, _, notes = compare.counter_lines(payload, ["a"])
-    assert notes == ["Counter data, A: source not recorded, licence not recorded"]
+    assert notes == [
+        "Counter data, A: source not recorded, licence not recorded"
+        "; index and totals computed by velometer"
+    ]
 
 
 COUNTER_CASES = json.loads((ROOT / "tests" / "counter_cases.json").read_text(encoding="utf-8"))

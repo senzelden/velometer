@@ -1,0 +1,18 @@
+# The Zählwerk Berlin Datalab site (spec §4.5, §4.9 item 3): `velometer datalab build` reads it.
+# Every value but the domain stays null until the user decides; a null value is rendered as a
+# visible [[…]] placeholder, and the go-live check refuses while one is left.
+domain: zaehlwerk-datalab.de  # the apex; velometer is served at velometer.<domain>
+# person | verein | company; null renders all three variants (legal review 4.1)
+operator_form: person
+operator:
+  name: "Dennis Senzel"            # person: full name; verein: name incl. "e.V."; company: Firma incl. Rechtsform
+  address: null         # where the operator is established; a c/o address only after a lawyer's yes (Q6)
+  email: "zaehlwerk-datalab@posteo.com"           # the Impressum's e-mail address (legal review 4.4)
+  phone: null           # optional second channel (Q7); left out when null and a form is chosen
+  register: null        # verein: Vereinsregister, Amtsgericht, VR-Nr.; company: Handelsregister, HRB-Nr.
+  vat: null             # USt-IdNr. or W-IdNr., only if one exists; left out when null and a form is chosen
+  representative: null  # verein: Vorstand (§ 26 BGB); company: Geschäftsführung
+  responsible: "Dennis Senzel"     # Verantwortlicher nach § 18 Abs. 2 MStV: name and address (legal review 4.2); add ", Anschrift wie oben" with operator.address
+  authority: blnbdi     # "blnbdi" (operator in Berlin) or the full text of the Land's authority (5.8)
+  mail_host: "Posteo e.K., Methfesselstr. 38, 10965 Berlin"       # who hosts the contact mailbox: name and address (a recipient of e-mails)
+contact_email: "zaehlwerk-datalab@posteo.com"     # the contact in every page's footer

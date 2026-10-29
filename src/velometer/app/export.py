@@ -32,7 +32,15 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
-from velometer.app.main import CSP, HERE, TABS, create_app, csp_meta
+from velometer.app.main import (
+    CSP,
+    HERE,
+    TABS,
+    TILES_PATH,
+    create_app,
+    csp_meta,
+    load_tiles_info,
+)
 from velometer.app.urls import (
     DATA_ROOTS,
     LEGACY_DE,
@@ -45,7 +53,7 @@ from velometer.config import ConfigError, load_site
 from velometer.db import SchemaError
 from velometer.reconcile import short_commit
 from velometer.report.data import ReportData, open_readonly
-from velometer.run import git_commit
+from velometer.run import _git, git_commit
 
 # Starlette's notice that its TestClient will move from httpx to httpx2 is for test suites; the
 # export is a command, and the line would only be noise on every run. `httpx2` is a dev
@@ -79,12 +87,16 @@ STAGING_PREFIX = ".velometer-staging-"
 # object data, poster, any other attribute holding a URL, CSS url() / @import in a file, a <style>
 # or a style attribute, a script's import / url("…") / fetch("…") / new URL("…") and any other
 # URL-shaped string literal, a JSON config string) must resolve to a file in the export, or be
-# `data:`, or be `https:` on the one external host below (as the CSP allows). A *link* (<a>/<area>
+# `data:`, or name the one file served beside the export (SERVED_BESIDE); no external host is
+# loaded (LOADED_HOSTS is empty since M16, as the CSP allows none). A *link* (<a>/<area>
 # href, a string under a JSON config's "links" key, which scripts put in an <a>) is followed by
 # the reader, not loaded by the page: it may also point at any http(s) or mailto address (the
 # attribution and source links). The scan fails closed: an inline <script> (the CSP runs none,
 # and its code is not parsed) is reported as it is.
-LOADED_HOSTS = frozenset({"tile.openstreetmap.org"})
+LOADED_HOSTS: frozenset[str] = frozenset()
+# Paths under the base that pages load but the export never holds: the basemap extract (900 MB,
+# uploaded apart from the releases). Pages work without it (their maps have no background).
+SERVED_BESIDE = frozenset({TILES_PATH})
 LINK_SCHEMES = frozenset({"http", "https", "mailto"})
 LINK_TAGS = frozenset({"a", "area"})
 # attributes whose value is a URL whatever it looks like; any other attribute is a reference when
@@ -105,6 +117,9 @@ UNVENDORED = frozenset(
 )
 # XML namespace names in scripts (document.createElementNS): identifiers, never fetched
 NAMESPACES = frozenset({"http://www.w3.org/2000/svg", "http://www.w3.org/1999/xhtml"})
+# protomaps-leaflet parses its `url` option with `new URL(url, "http://example.com")` to read the
+# path's suffix: a base for parsing, never fetched
+NOT_FETCHED = frozenset({("static/vendor/protomaps-leaflet.js", "http://example.com")})
 URL_SHAPED = re.compile(r"^\s*(/|[A-Za-z][A-Za-z0-9+.-]*://|javascript:|data:)", re.I)
 CSS_URL = re.compile(r"""url\(\s*(["']?)([^"')]*?)\1\s*\)""", re.I)
 CSS_IMPORT = re.compile(r"""@import\s+(["'])([^"']*)\1""", re.I)
@@ -132,7 +147,7 @@ class ExportError(Exception):
 @dataclass(frozen=True, order=True)
 class Unresolved:
     """A reference in an exported file (relative path) that resolves to no exported file, or a
-    loaded resource on a host other than the tile server."""
+    loaded resource on another host."""
 
     file: str
     ref: str
@@ -257,15 +272,75 @@ def export_urls(data: ReportData, app: FastAPI, rendered: dict | None = None) ->
     return found + [with_lang(url, "de") for url in pages] + GERMAN_DATA + sorted(maps)
 
 
+def public_commit() -> str:
+    """The checkout's commit as `git_commit` gives it ("<sha>", "<sha>-dirty", "unknown"), but
+    dirty only for changes to tracked files: an untracked file is not in what the pages link
+    (M16, R42), and stub files a sandbox shows must not block a public export."""
+    try:
+        sha = _git("rev-parse", "HEAD").strip()
+        dirty = bool(_git("status", "--porcelain", "--untracked-files=no").strip())
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return f"{sha}-dirty" if dirty else sha
+
+
+# The one config file a public export's scratch copy may change (deploy.md §0): the public site
+# values. Every other file must be the commit's, or the pages show numbers the linked commit does
+# not produce (final review M6).
+SCRATCH_ONLY = "site.yaml"
+
+
+def _blob_sha(data: bytes) -> str:
+    """git's object id of a file's content (`git hash-object`)."""
+    import hashlib
+
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()  # noqa: S324 (git's id)
+
+
+def config_drift(config_dir: Path) -> list[str]:
+    """The files under `config_dir` that differ from the commit's `config/` (HEAD), but
+    `site.yaml`: changed, missing, or not in the commit. [] when the copy matches."""
+    try:
+        listing = _git("ls-tree", "-r", "--full-tree", "HEAD", "--", "config")
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [f"git cannot list config/ at HEAD ({e.__class__.__name__})"]
+    committed = {}
+    for line in listing.splitlines():
+        meta, _, path = line.partition("\t")
+        committed[path.removeprefix("config/")] = meta.split()[2]
+    root = Path(config_dir)
+    local = {
+        p.relative_to(root).as_posix(): _blob_sha(p.read_bytes())
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts
+    }
+    committed.pop(SCRATCH_ONLY, None)
+    local.pop(SCRATCH_ONLY, None)
+    out = [f"{rel}: differs from the commit" for rel in sorted(local.keys() & committed.keys())
+           if local[rel] != committed[rel]]  # fmt: skip
+    out += [f"{rel}: missing (in the commit)" for rel in sorted(committed.keys() - local.keys())]
+    out += [f"{rel}: not in the commit" for rel in sorted(local.keys() - committed.keys())]
+    return out
+
+
 def build_stamp(
-    data: ReportData, base: str, public: bool = False, site: dict | None = None
+    data: ReportData,
+    base: str,
+    public: bool = False,
+    site: dict | None = None,
+    raw: str | None = None,
+    tiles: dict | None = None,
 ) -> dict:
     """`build.json` (decision 8): the git commit (local `git rev-parse`, no network), whether the
     tree was dirty, the classifier versions and per city the OSM snapshot timestamps of the
     exported runs (the rows of /data/all.csv), the base path and the build time (UTC). A public
-    export also records `site`, the four values its footer links (`SiteConfig.public_values`),
-    which `deploy-check` checks the pages against."""
-    raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
+    export also records `site`, the values its footer and repo links use
+    (`SiteConfig.public_values`), which `deploy-check` checks the pages against. `raw` is the
+    commit a public export already checked (read once), else `git_commit()` is asked. `tiles` is
+    the basemap's sidecar (`main.load_tiles_info`: Protomaps build, maxzoom, sha256), null when
+    the export had none (spec §4.3; a public deploy-check refuses that)."""
+    if raw is None:
+        raw = git_commit()  # "<sha>", "<sha>-dirty" or "unknown"
     stamps: dict[str, set[str]] = {}
     versions: set[str] = set()
     for row in data.csv_rows():
@@ -280,6 +355,7 @@ def build_stamp(
         "base": base,
         "public": public,
         **({"site": site} if public and site is not None else {}),
+        "tiles": tiles,
         "built_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
@@ -504,7 +580,10 @@ def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
         return name == "https" and urlsplit(ref).hostname in LOADED_HOSTS
     path = unquote(urlsplit(ref).path)
     if path.startswith("/"):
-        return path.startswith(base) and _resolves(out, path.removeprefix(base))
+        if not path.startswith(base):
+            return False
+        rel = path.removeprefix(base)
+        return rel in SERVED_BESIDE or _resolves(out, rel)
     if file.endswith(".html") or not path:
         return False  # relative in a page: it depends on the URL the page is served at
     return _resolves(out, posixpath.join(posixpath.dirname(file), path))
@@ -513,8 +592,9 @@ def _ok(ref: str, loaded: bool, file: str, out: Path, base: str) -> bool:
 def scan_references(out: Path, base: str) -> list[Unresolved]:
     """Every reference of every exported HTML, CSS and JS file under `out` that does not resolve
     (the rule at LOADED_HOSTS): an internal one must carry `base` and name an exported file or
-    page directory (a relative one in CSS/JS resolves against its file); a loaded external one
-    must be on the tile server; a link may also leave the site. Sorted, without duplicates."""
+    page directory (a relative one in CSS/JS resolves against its file) or a path served beside
+    the export; nothing external may be loaded; a link may also leave the site. Sorted, without
+    duplicates."""
     base = normalise_base(base)
     found: set[Unresolved] = set()
     for path in sorted(p for p in out.rglob("*") if p.is_file()):
@@ -533,7 +613,9 @@ def scan_references(out: Path, base: str) -> list[Unresolved]:
         else:
             refs = _js_refs(text, base)
         for ref, loaded in refs:
-            if (file, ref) not in UNVENDORED and not _ok(ref.strip(), loaded, file, out, base):
+            if (file, ref) in UNVENDORED or (file, ref) in NOT_FETCHED:
+                continue
+            if not _ok(ref.strip(), loaded, file, out, base):
                 found.add(Unresolved(file, ref))
     return sorted(found)
 
@@ -612,14 +694,26 @@ def run_export(
     plans_data_dir: Path,
     clean: bool,
     public: bool = False,
+    tiles_info: Path | None = None,
 ) -> ExportResult:
-    """Write the static edition of the app built with `base` to `out` (module docstring)."""
+    """Write the static edition of the app built with `base` to `out` (module docstring).
+    `tiles_info` is the basemap's sidecar file (tools/tiles.py); absent, `tiles` is null."""
     try:
         return _run_export(
-            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public
-        )
+            out, base, db, config_dir, maps, docs, content_dir, plans_data_dir, clean, public,
+            tiles_info,
+        )  # fmt: skip
     except OSError as e:
         raise ExportError(f"export to {out} failed: {e}") from e
+
+
+def figures_drift(conn, config_dir: Path) -> list[str]:
+    """The curated external figures where the database differs from the config's
+    `external/figures.csv` (Task 9: a CSV edit without `external load` sent the German figures
+    page back to English)."""
+    from velometer.sources.external import curated_drift
+
+    return curated_drift(conn, config_dir / "external" / "figures.csv")
 
 
 def _run_export(
@@ -633,9 +727,14 @@ def _run_export(
     plans_data_dir: Path,
     clean: bool,
     public: bool = False,
+    tiles_info: Path | None = None,
 ) -> ExportResult:
     validate_base(base)
-    site_values = None
+    try:
+        tiles = load_tiles_info(tiles_info)
+    except ValueError as e:
+        raise ExportError(str(e)) from e
+    site_values, raw = None, None
     if public:
         try:
             site_cfg = load_site(config_dir)
@@ -646,6 +745,14 @@ def _run_export(
                 "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
             )
         site_values = site_cfg.public_values()
+        # the pages link repo files at the export's commit (M16, R42): a commit that lacks the
+        # tree's changes, or no commit at all, would link the wrong text
+        raw = public_commit()
+        if raw == "unknown" or raw.endswith("-dirty"):
+            raise ExportError(
+                "--public needs a clean git checkout (the pages link the repository at the "
+                f"export's commit); git says {raw!r}: commit or stash the changes first"
+            )
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
     _refuse_dangerous_out(out, [db, config_dir, maps, docs, content_dir, plans_data_dir])
@@ -655,11 +762,32 @@ def _run_export(
     except (FileNotFoundError, SchemaError) as e:
         raise ExportError(str(e)) from e
     try:
+        if public:
+            changed = config_drift(Path(config_dir))
+            if changed:
+                lines = "\n".join(f"  {c}" for c in changed)
+                raise ExportError(
+                    f"--public: {config_dir} differs from the commit's config/ in more than "
+                    f"site.yaml ({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
+                    "copy config/ afresh and change only site.yaml (docs/deploy.md §0)"
+                )
+            drift = figures_drift(conn, Path(config_dir))
+            if drift:
+                from velometer.sources.external import LOAD_COMMAND
+
+                lines = "\n".join(f"  {d}" for d in drift)
+                raise ExportError(
+                    f"--public: the database's external figures differ from "
+                    f"{Path(config_dir) / 'external' / 'figures.csv'} in {len(drift)} row(s):\n"
+                    f"{lines}\nreload them with `{LOAD_COMMAND}` (writes velometer.sqlite)"
+                )
         data = ReportData(conn, config_dir)
-        build = build_stamp(data, normalise_base(base), public, site_values)
+        build = build_stamp(data, normalise_base(base), public, site_values, raw, tiles)
         app = create_app(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
-            base_path=base, static_edition={"commit": build["commit"]},
+            base_path=base,
+            static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
+            tiles_info=tiles,
         )  # fmt: skip
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)

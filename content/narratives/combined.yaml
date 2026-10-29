@@ -84,23 +84,22 @@ sections:
     role: figures
     paragraphs:
       - >-
-        Published figures differ from ours along six dimensions, set out on the differences
-        page. Scope: Clean Cities 2025, which covers 17 cities here,
-        counts protected infrastructure only [@cc2025-annexes], and its Vienna figure rose from
-        384 to 625.1 km in July 2025, once roads with restricted motor access in traffic-calmed
-        areas were counted [@cc2025-cycling-table]. Length: Clean Cities defines
-        the road network it divides by, each road once whatever its lanes or directions, and
-        gives no rule for how cycling km are measured. Berlin's 925 km sits by our centreline
-        basis, 913.5 km, not our 1,550.7 km per side [#recon-berlin-cc-km]; Ljubljana's 251 km
-        sits by our per-side 245 km [#recon-ljubljana-cc-ratio].
+        Published figures differ from ours along six dimensions, set out on the differences page.
+        Scope: Clean Cities 2025, which covers 17 cities here, counts protected infrastructure only
+        [@cc2025-annexes], and its Vienna figure rose from 384 to 625.1 km in July 2025, once roads
+        with restricted motor access in traffic-calmed areas were counted [@cc2025-cycling-table].
+        Length: Clean Cities defines the road network it divides by, each road once whatever its
+        lanes or directions; we found no rule for how its cycling km are measured. Berlin's 925 km
+        sits by our centreline basis, 913.5 km, not our 1,550.7 km per side [#recon-berlin-cc-km];
+        Ljubljana's 251 km sits by our per-side 245 km [#recon-ljubljana-cc-ratio].
       - >-
         Date: their data date from early 2025, ours from October 2026. Area: QECIO reports NUTS3
         regions from data of January 2024 [@qecio-metadata]. Where the region is the city the main
         roads agree closely: 2,153 against 2,150 km for Berlin [#recon-berlin]; elsewhere it covers
         a <i lang="sv">län</i> (county) [@scb-lan-och-kommuner], as Stockholm's 4,946 km of main
         roads against our 667 km show [#recon-stockholm-qecio-main]. Method: Clean Cities took most
-        figures from the cities themselves [@cc2025-report], and its 822 km for Paris exceeds
-        everything we map there across all tiers [#recon-paris-cc-km].
+        figures from the cities themselves [@cc2025-report], and its 822 km for Paris exceed
+        everything mapped there across all tiers [#recon-paris-cc-km].
 quotes:
   - {excerpt: cc2025-report/shared-paths, after: 1}
   - {excerpt: qecio-methodology/disclaimer, after: 2}

@@ -630,6 +630,16 @@ class ReportData:
                 rows += self._kind_rows(c.id, kind)
         return rows
 
+    def population_sources(self, rows: list[dict[str, str]]) -> list[str]:
+        """The distinct population sources stored on the runs of CSV `rows` (their credit goes
+        into the CSV preamble), in row order; a run without one adds nothing."""
+        out: list[str] = []
+        for run_id in dict.fromkeys(r["run_id"] for r in rows):
+            source = fetch_run(self.conn, int(run_id))["population_source"]
+            if source and source not in out:
+                out.append(source)
+        return out
+
     def _kind_rows(self, city_id: str, kind: str) -> list[dict[str, str]]:
         cs = self.series(city_id, kind)
         points = [] if cs is None else cs.points

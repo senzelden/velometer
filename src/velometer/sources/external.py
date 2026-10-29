@@ -75,12 +75,28 @@ def retrieved_at(path: Path) -> date:
     return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).date()
 
 
+def row_lines(path: Path) -> list[int]:
+    """The line each data row of a CSV starts on (the header is line 1), in the order
+    `csv.DictReader` gives the rows: a quoted field may span lines, so a row's number is not its
+    index plus 2 (final review M10)."""
+    starts = []
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        next(reader, None)
+        end = reader.line_num
+        for row in reader:
+            if row:  # DictReader skips an empty line too
+                starts.append(end + 1)
+            end = reader.line_num
+    return starts
+
+
 def load_figures_csv(path: Path) -> list[ExternalFigure]:
     """The curated rows. Each must cite an http(s) source_url; `row <n>` in an error is the
-    row's line in the file (the header is line 1)."""
+    line the row starts on (the header is line 1)."""
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    for n, r in enumerate(rows, start=2):
+    for n, r in zip(row_lines(path), rows, strict=True):
         r.pop("note_de", None)  # the German note is display text (report.data.figure_notes_de)
         url = r["source_url"] = (r.get("source_url") or "").strip()  # stored as validated
         if not url:
@@ -208,3 +224,67 @@ def load_all(
         replace_external_figures(conn, "bikenetkit_v1", figs)
         counts["bikenetkit_v1"] = len(figs)
     return counts
+
+
+# the sources `load_all` fetches itself; every other source in external_figures is curated
+LOADER_SOURCES = ("qecio_v2_10", "bikenetkit_v1")
+_FIELDS = (
+    "city_id", "source", "metric_name", "value", "unit", "reference_date", "network_scope",
+    "length_basis", "source_url", "retrieved_at", "note",
+)  # fmt: skip
+LOAD_COMMAND = "velometer external load --no-qecio --no-bikenetkit"
+
+
+def _stored(f: ExternalFigure) -> tuple:
+    """A curated figure as `replace_external_figures` stores it (dates as ISO text)."""
+    return (
+        f.city_id, f.source, f.metric_name, float(f.value), f.unit,
+        f.reference_date.isoformat() if f.reference_date else None, f.network_scope,
+        f.length_basis, f.source_url, f.retrieved_at.isoformat(), f.note,
+    )  # fmt: skip
+
+
+def _named(row: tuple) -> str:
+    city, source, metric, _, _, ref = row[:6]
+    return f"{city} {source} {metric}" + (f" ({ref})" if ref else "")
+
+
+def _short(value) -> str:
+    text = repr(value)
+    return text if len(text) <= 70 else text[:67] + "...'"
+
+
+def curated_drift(conn: sqlite3.Connection, figures_csv: Path) -> list[str]:
+    """How the curated rows in the database differ from `figures_csv`, field by field, as
+    `velometer external load` would store them (QECIO and BikeNetKit rows are left out); [] when
+    they match. Reads only. A missing CSV has no curated rows to compare: []."""
+    if not figures_csv.is_file():
+        return []
+    curated = load_figures_csv(figures_csv)
+    want = Counter(_stored(f) for f in curated)
+    marks = ",".join("?" * len(LOADER_SOURCES))
+    rows = conn.execute(
+        f"SELECT {', '.join(_FIELDS)} FROM external_figures WHERE source NOT IN ({marks})",
+        LOADER_SOURCES,
+    ).fetchall()
+    have = Counter((*r[:3], float(r[3]), *r[4:]) for r in map(tuple, rows))
+    only_csv, only_db = list((want - have).elements()), list((have - want).elements())
+    pairs = zip(row_lines(figures_csv), map(_stored, curated), strict=True)
+    line = {row: n for n, row in reversed(list(pairs))}
+    problems = []
+    for row in only_csv:
+        key = row[:3] + row[5:7]  # city, source, metric, reference date, scope
+        twin = next((d for d in only_db if d[:3] + d[5:7] == key), None)
+        where = f"figures.csv line {line[row]}, {_named(row)}"
+        if twin is None:
+            problems.append(f"{where}: not in the database")
+            continue
+        only_db.remove(twin)
+        diffs = [
+            f"{name} database {_short(old)}, csv {_short(new)}"
+            for name, old, new in zip(_FIELDS, twin, row, strict=True)
+            if old != new
+        ]
+        problems.append(f"{where}: " + "; ".join(diffs))
+    problems += [f"database row {_named(row)}: not in figures.csv" for row in only_db]
+    return problems

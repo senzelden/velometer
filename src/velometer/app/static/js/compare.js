@@ -8,7 +8,7 @@ import { formatValue } from "./chart-core.js";
 import { displayLabels, failed, loadSeries } from "./data.js";
 import { onThemeChange, seriesColours, token } from "./theme.js";
 import {
-  buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, flagParagraphs, popPlan,
+  buildModel, compareSummary, slotPlan, colouredIds, compareUrl, footnote, nextSort, orderCities, flagParagraphs, paragraphNode, popPlan,
   queryOf, rankSeries, sortRows,
 } from "./compare-model.js";
 import { counterContext, counterTip, counterTitle } from "./counter-model.js";
@@ -187,7 +187,7 @@ function showFlag(id, label, rawLabel) {
   close.addEventListener("click", () => (box.hidden = true));
   box.append(close, head);
   if (paragraphs.length) {
-    for (const { attrs, text } of paragraphs) box.append(el("p", attrs, text));
+    for (const p of paragraphs) box.append(paragraphNode(p));
   } else {
     box.append(el("p", { class: "note" }, t("js.compare.no_explanation")));
   }

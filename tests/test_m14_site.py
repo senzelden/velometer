@@ -2,6 +2,8 @@
 
 import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,10 @@ COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "repo": {
+        "url": "https://forge.example.org/owner/velometer",
+        "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
+    },
 }
 
 
@@ -132,24 +138,92 @@ def test_footer_datalab_line_comes_first(inputs):
     assert f.index("Part of") < f.index("OpenStreetMap")
 
 
-def _export(rich, out: Path, public: bool):  # noqa: F811
+def _export(rich, out: Path, public: bool, figures_guard: bool = False):  # noqa: F811
+    """The fixture database holds synthetic external figures, never the config's figures.csv,
+    so the figures guard is off unless `figures_guard` (it has its own tests); the fixture config
+    is no copy of the commit's, so the config guard is off too (its own tests below)."""
     db_path, cfg, maps, docs, plans = rich
-    return export.run_export(
-        out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, public=public
-    )
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(export, "config_drift", lambda config_dir: [])
+        if not figures_guard:
+            mp.setattr(export, "figures_drift", lambda conn, config_dir: [])
+        return export.run_export(
+            out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, public=public
+        )
+
+
+def test_public_export_refuses_figures_the_database_does_not_hold(rich, tmp_path, monkeypatch):  # noqa: F811
+    """Task 9: figures.csv changed, the database not reloaded; the public export refuses,
+    names the rows and the command that reloads them."""
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError) as e:
+        _export(rich, out, True, figures_guard=True)
+    message = str(e.value)
+    assert "external figures differ" in message
+    assert "figures.csv line 2, berlin clean_cities_2025" in message
+    assert "velometer external load --no-qecio --no-bikenetkit" in message
+    assert not out.exists()
 
 
 def test_public_export_refuses_empty_settings(rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     with pytest.raises(export.ExportError) as e:
         _export(rich, out, True)
-    for name in ("datalab.name", "datalab.url", "impressum_url", "privacy_url"):
+    names = ("datalab.name", "datalab.url", "impressum_url", "privacy_url", "repo.url")
+    for name in names + ("repo.file_url",):
         assert name in str(e.value)
     assert not out.exists()
 
 
-def test_public_export_stamps_true(rich, tmp_path):  # noqa: F811
+def test_public_export_refuses_without_the_repo(rich, tmp_path):  # noqa: F811
+    _write_site(rich[1], {k: v for k, v in COMPLETE.items() if k != "repo"})
+    with pytest.raises(export.ExportError, match=r"repo\.url, repo\.file_url"):
+        _export(rich, tmp_path / "site", True)
+
+
+CLEAN = "0123456789abcdef0123456789abcdef01234567"
+
+
+@pytest.mark.parametrize("commit", [CLEAN + "-dirty", "unknown"])
+def test_public_export_refuses_a_dirty_or_unknown_checkout(rich, tmp_path, monkeypatch, commit):  # noqa: F811
+    # M16 (R42): the pages link repo files at the export's commit, which must hold the tree
     _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: commit)
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match="clean git checkout"):
+        _export(rich, out, True)
+    assert not out.exists()
+
+
+def test_an_untracked_file_does_not_make_the_checkout_dirty(monkeypatch):
+    # M16 fix round: a sandbox shows stub files as untracked; they are not in what pages link
+    calls = []
+
+    def fake_git(*args):
+        calls.append(args)
+        return CLEAN + "\n" if args[0] == "rev-parse" else ""
+
+    monkeypatch.setattr(export, "_git", fake_git)
+    assert export.public_commit() == CLEAN
+    assert ("status", "--porcelain", "--untracked-files=no") in calls
+    monkeypatch.setattr(export, "_git", lambda *a: CLEAN if a[0] == "rev-parse" else " M x.py")
+    assert export.public_commit() == CLEAN + "-dirty"
+
+
+def test_public_export_reads_the_commit_once(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    monkeypatch.setattr(export, "git_commit", lambda: pytest.fail("git_commit asked again"))
+    out = tmp_path / "site"
+    _export(rich, out, True)
+    assert json.loads((out / "build.json").read_text())["commit_full"] == CLEAN
+
+
+def test_public_export_stamps_true(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
     out = tmp_path / "site"
     _export(rich, out, True)
     assert json.loads((out / "build.json").read_text())["public"] is True
@@ -159,3 +233,43 @@ def test_plain_export_stamps_false(rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     _export(rich, out, False)
     assert json.loads((out / "build.json").read_text())["public"] is False
+
+
+# --- a public export's config is the commit's but for site.yaml (final review M6) -------------
+
+
+def test_public_export_refuses_a_config_copy_beyond_site_yaml(rich, tmp_path, monkeypatch):  # noqa: F811
+    _write_site(rich[1], COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    monkeypatch.setattr(export, "config_drift", lambda config_dir: ["presets.yaml: differs"])
+    db_path, cfg, maps, docs, plans = rich
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match=r"(?s)more than site.yaml.*presets.yaml"):
+        export.run_export(out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, True)
+    assert not out.exists()
+
+
+def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
+    """The rule, against the repo's own HEAD: only site.yaml may differ."""
+    root = Path(__file__).resolve().parents[1]
+    copy = tmp_path / "config"
+    shutil.copytree(root / "config", copy)
+    for p in copy.rglob("*"):  # the working tree may hold edits; the copy must be HEAD's
+        if p.is_file():
+            rel = p.relative_to(copy).as_posix()
+            blob = subprocess.run(["git", "-C", str(root), "show", f"HEAD:config/{rel}"],
+                                  capture_output=True)  # fmt: skip
+            if blob.returncode == 0:
+                p.write_bytes(blob.stdout)
+            else:
+                p.unlink()
+    (copy / "site.yaml").write_text("datalab: {name: X}\n", encoding="utf-8")
+    assert export.config_drift(copy) == []
+    (copy / "presets.yaml").write_text("changed: true\n", encoding="utf-8")
+    (copy / "trust.yaml").unlink()
+    (copy / "extra.yaml").write_text("x: 1\n", encoding="utf-8")
+    assert export.config_drift(copy) == [
+        "presets.yaml: differs from the commit",
+        "trust.yaml: missing (in the commit)",
+        "extra.yaml: not in the commit",
+    ]

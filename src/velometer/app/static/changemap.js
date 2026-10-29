@@ -1,5 +1,5 @@
 // velometer change map: the mapped gained / lost / retiered / redrawn way-sides between two runs
-// (GeoJSON from `velometer report change`) over OSM raster tiles. Every URL comes from the
+// (GeoJSON from `velometer report change`) over the vector basemap. Every URL comes from the
 // #changemap-config blob the server renders, so this file names no host; every colour is a
 // stylesheet token (--change-<category>) read when it draws, and the layer and its key are
 // restyled in place when the OS theme changes (zoom and position stay). Figures are mapped km
@@ -7,6 +7,7 @@
 import { onThemeChange, token } from "./js/theme.js";
 import { number } from "./js/fmt.js";
 import { leafletPrefix, t } from "./js/strings.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -16,7 +17,7 @@ import { leafletPrefix, t } from "./js/strings.js";
   var cfg = JSON.parse(configEl.textContent);
   var status = document.getElementById("changemap-status");
 
-  var map = L.map(mapEl, { preferCanvas: true });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 });
   // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image
@@ -24,11 +25,7 @@ import { leafletPrefix, t } from "./js/strings.js";
   function pointAsCircle(feature, latlng) {
     return L.circleMarker(latlng, { renderer: renderer, radius: 4 });
   }
-  L.tileLayer(cfg.tiles, {
-    maxZoom: 19,
-    className: cfg.tile_class,
-    attribution: '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
-  }).addTo(map);
+  addBasemap(map, cfg);
 
   function say(text) {
     if (status) status.textContent = text;

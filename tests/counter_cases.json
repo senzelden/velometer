@@ -45,8 +45,8 @@
     "notes": [
      "Bton: index of average daily intensity (monthly values), not of counts",
      "Nham: no open counter data",
-     "Counter data, Aville: Stadt A, licence CC BY 4.0",
-     "Counter data, Bton: Ajuntament B, licence CC BY 4.0"
+     "Counter data, Aville: Stadt A, licence CC BY 4.0; index and totals computed by velometer",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0; index and totals computed by velometer"
     ],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100; 2020 is the COVID year"
    }
@@ -63,9 +63,9 @@
     },
     "notes": [
      "Bton: index of average daily intensity (monthly values), not of counts",
-     "Counter data, Aville: Stadt A, licence CC BY 4.0",
-     "Counter data, Bton: Ajuntament B, licence CC BY 4.0",
-     "Counter data, Pville: source not recorded, licence not recorded"
+     "Counter data, Aville: Stadt A, licence CC BY 4.0; index and totals computed by velometer",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0; index and totals computed by velometer",
+     "Counter data, Pville: source not recorded, licence not recorded; index and totals computed by velometer"
     ],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100 (2020 = 100 for Pville); 2020 is the COVID year"
    }
@@ -76,7 +76,7 @@
    "expect": {
     "labels": ["2020", "2021"],
     "values": {"p": [100.0, 104.0]},
-    "notes": ["Counter data, Pville: source not recorded, licence not recorded"],
+    "notes": ["Counter data, Pville: source not recorded, licence not recorded; index and totals computed by velometer"],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2020 = 100; 2020 is the COVID year"
    }
   },
@@ -91,9 +91,9 @@
      "q": [null, null, 100.0, 98.5]
     },
     "notes": [
-     "Counter data, Aville: Stadt A, licence CC BY 4.0",
-     "Counter data, Pville: source not recorded, licence not recorded",
-     "Counter data, Qburg: Q, licence ODbL"
+     "Counter data, Aville: Stadt A, licence CC BY 4.0; index and totals computed by velometer",
+     "Counter data, Pville: source not recorded, licence not recorded; index and totals computed by velometer",
+     "Counter data, Qburg: Q, licence ODbL; index and totals computed by velometer"
     ],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2020 = 100 (2019 = 100 for Aville); 2020 is the COVID year"
    }
@@ -111,10 +111,10 @@
     },
     "notes": [
      "Bton: index of average daily intensity (monthly values), not of counts",
-     "Counter data, Pville: source not recorded, licence not recorded",
-     "Counter data, Qburg: Q, licence ODbL",
-     "Counter data, Bton: Ajuntament B, licence CC BY 4.0",
-     "Counter data, Aville: Stadt A, licence CC BY 4.0"
+     "Counter data, Pville: source not recorded, licence not recorded; index and totals computed by velometer",
+     "Counter data, Qburg: Q, licence ODbL; index and totals computed by velometer",
+     "Counter data, Bton: Ajuntament B, licence CC BY 4.0; index and totals computed by velometer",
+     "Counter data, Aville: Stadt A, licence CC BY 4.0; index and totals computed by velometer"
     ],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100 (2020 = 100 for Pville, Qburg); 2020 is the COVID year"
    }
@@ -146,7 +146,7 @@
     "notes": [
      "counter configuration unreadable (config/counters.yaml; see the server log): cities without open counter data are not named as such",
      "Zstad: no open counter data",
-     "Counter data, Aville: Stadt A, licence CC BY 4.0"
+     "Counter data, Aville: Stadt A, licence CC BY 4.0; index and totals computed by velometer"
     ],
     "unit": "index of counts recorded at counter sites (or of their average daily intensity), 2019 = 100; 2020 is the COVID year"
    }

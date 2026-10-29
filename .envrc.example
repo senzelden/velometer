@@ -3,3 +3,6 @@ use_pass VELOMETER_OSM_USER velometer/osm-username
 use_pass VELOMETER_OSM_PASSWORD velometer/osm-password
 # velometer: Mistral OCR for `content --check --online` (M14); optional, a missing entry only warns.
 use_pass_optional MISTRAL_API_KEY api/mistral
+# velometer: Hetzner Cloud API token and the preview password (M16, tools/server.py).
+use_pass HCLOUD_TOKEN velometer/hcloud-token
+use_pass VELOMETER_PREVIEW_PASSWORD velometer/preview-password

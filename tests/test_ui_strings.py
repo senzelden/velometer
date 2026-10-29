@@ -187,6 +187,8 @@ def test_german_values_differ_from_english_unless_the_same_word():
         "Pilot",
         "Berlin",
         "Drucksache",
+        "Protomaps",  # the basemap credit (M16)
+        "WorldCover",
     }
     bad = {k: ws for k, ws in words.items() if [w for w in ws if w not in names]}
     assert bad == {}

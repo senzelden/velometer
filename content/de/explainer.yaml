@@ -81,12 +81,13 @@ sections:
       Wir zählen jede Straßenseite: Eine Straße mit einem Einrichtungsradweg auf beiden
       Seiten geht mit der doppelten Länge ein. Clean Cities zählt im Straßennetz,
       durch das es teilt, jede Straße einmal, gleich wie viele Fahrstreifen oder Richtungen
-      sie hat, unten zitiert [@cc2025-annexes], nennt aber keine Regel für seine Rad-km.
-      QECIO zählt Anlagen für nur eine Fahrtrichtung mit halber Länge [@qecio-methodology].
-      Wiens eigene Netzsumme zählt Anlagen auf beiden Seiten einer Straße, wie wir
-      [@vienna-radverkehrsnetz-fakten]. Auf Straßen mit Anlagen auf beiden Seiten
-      halbiert die Messung entlang der Straßenachse unsere km ungefähr.
-    src: f7423560b3be
+      sie hat, unten zitiert [@cc2025-annexes]; eine Regel für seine Rad-km haben
+      wir in Bericht und Anhängen nicht gefunden. QECIO zählt Anlagen für nur eine
+      Fahrtrichtung mit halber Länge [@qecio-methodology]. Wiens eigene Netzsumme
+      zählt Anlagen auf beiden Seiten einer Straße, wie wir [@vienna-radverkehrsnetz-fakten].
+      Auf Straßen mit Anlagen auf beiden Seiten halbiert die Messung entlang der Straßenachse
+      unsere km ungefähr.
+    src: 1521219f6ff6
   - text: >-
       Die Zahlen von Clean Cities nutzen beide Basen: Berlins 925 km liegen bei unseren
       913,5 km entlang der Straßenachse, nicht bei unseren 1.550,7 km je Seite [#recon-berlin-cc-km],
@@ -127,8 +128,8 @@ sections:
       funktionalen Stadtraum. Clean Cities bezieht sich auf die Gemeinde [@cc2025-report].
       QECIO berichtet nach NUTS3-Regionen und schneidet jeden Weg an der Grenze der
       Region ab, unten zitiert [@qecio-methodology]. BikeNetKit schneidet mit einer
-      Datei der Stadtgrenze zu, deren Quelle es nicht nennt [@bikenetkit-export-notebook].
-    src: d359d8df0528
+      Datei der Stadtgrenze zu, deren Quelle wir nicht angegeben fanden [@bikenetkit-export-notebook].
+    src: db1db1ec5f1f
   - text: >-
       Wo die NUTS3-Region die Stadt ist, stimmen die Hauptstraßen eng überein: für
       Berlin 2.153 km bei uns gegenüber 2.150 km bei QECIO [#recon-berlin], und −0,6 %
@@ -154,10 +155,11 @@ sections:
       also aus der Karte, die wir lesen; eine Übereinstimmung zeigte nur zweimal dieselbe
       Quelle. Die offenen Daten von Strasbourg sind auf dem eigenen Straßenachsennetz
       der Stadt gezeichnet [@strasbourg-opendata-bnac], ein von unserem unabhängiges
-      Maß. Die 822 km von Clean Cities für Paris übersteigen alles, was dort über
-      alle Stufen hinweg kartiert ist, und lassen sich aus OpenStreetMap nicht nachbilden
-      [#recon-paris-cc-km].
-    src: 3ad92f7f9733
+      Maß. Die 822 km von Clean Cities für Paris übersteigen alles, was dort in OpenStreetMap
+      über alle Stufen hinweg kartiert ist; aus OpenStreetMap können wir die Zahl
+      daher nicht nachbilden [#recon-paris-cc-km]. Clean Cities übernahm die Zahlen
+      der meisten Städte von den Städten selbst.
+    src: f2990fb67680
 literals:
 - 21 Städten
 - 100 km

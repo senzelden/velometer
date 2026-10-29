@@ -922,18 +922,39 @@ class Datalab(_Strict):
         return name_lang(v, "datalab.lang")
 
 
+REPO_PLACEHOLDERS = ("{commit}", "{path}")
+
+
+class Repo(_Strict):
+    """The public repository (M16, legal review 1.1c): its home page, and the address of a file
+    or directory at a commit (`{commit}` and `{path}` filled in)."""
+
+    url: HttpsUrl
+    file_url: HttpsUrl
+
+    @field_validator("file_url")
+    @classmethod
+    def _placeholders(cls, v: str) -> str:
+        missing = [p for p in REPO_PLACEHOLDERS if p not in v]
+        if missing:
+            raise ValueError(f"repo.file_url {v!r} must contain {' and '.join(missing)}")
+        return v
+
+
 class SiteConfig(_Strict):
-    """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14)."""
+    """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14), and the
+    public repository the pages link (M16)."""
 
     datalab: Datalab | None = None
     impressum_url: HttpsUrl | None = None
     privacy_url: HttpsUrl | None = None
+    repo: Repo | None = None
 
-    @field_validator("datalab", mode="before")
+    @field_validator("datalab", "repo", mode="before")
     @classmethod
-    def _unset_datalab(cls, v: Any) -> Any:
-        """`name: null` and `url: null` (and `lang: null`) together are an unset Datalab, not a
-        half-set one."""
+    def _unset_block(cls, v: Any) -> Any:
+        """A block whose values are all null (`name: null`, `url: null`, ...) is unset, not
+        half-set."""
         if isinstance(v, dict) and v and all(x is None for x in v.values()):
             return None
         return v
@@ -946,7 +967,7 @@ class SiteConfig(_Strict):
 
     @property
     def complete(self) -> bool:
-        return self.datalab is not None and self.impressum_url is not None
+        return self.datalab is not None and self.impressum_url is not None and self.repo is not None
 
     def missing(self) -> list[str]:
         """The dotted names of the unset values."""
@@ -957,15 +978,19 @@ class SiteConfig(_Strict):
             out.append("impressum_url")
         if self.privacy_url is None:
             out.append("privacy_url")
+        if self.repo is None:
+            out += ["repo.url", "repo.file_url"]
         return out
 
     def public_values(self) -> dict[str, str | None]:
-        """The four values a public export needs, as `build.json` records them (M14)."""
+        """The values a public export needs, as `build.json` records them (M14, the repo M16)."""
         return {
             "datalab_name": self.datalab.name if self.datalab else None,
             "datalab_url": self.datalab.url if self.datalab else None,
             "impressum_url": self.impressum_url,
             "privacy_url": self.privacy_url,
+            "repo_url": self.repo.url if self.repo else None,
+            "repo_file_url": self.repo.file_url if self.repo else None,
         }
 
 

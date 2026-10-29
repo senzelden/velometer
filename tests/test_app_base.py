@@ -24,6 +24,7 @@ from tests.test_app_m8 import MEASURES, RETRIEVED
 from tests.test_app_m8_counts import _seed
 from velometer import i18n
 from velometer.app import urls
+from velometer.app.export import SERVED_BESIDE
 from velometer.app.main import CSP, TABS, create_app, csp_meta
 
 BASE = "/velometer/"
@@ -161,6 +162,8 @@ def test_every_internal_reference_carries_the_base_and_resolves(rich):
         # links to, so a city route is matched, not fetched.)
         for target in sorted(targets):
             path = "/" + urlsplit(target).path.removeprefix(BASE)
+            if path[1:] in SERVED_BESIDE:
+                continue  # the basemap file: served beside the site, not by the app (M16)
             scope = {"type": "http", "path": path, "method": "GET", "root_path": ""}
             assert any(r.matches(scope)[0] == Match.FULL for r in c.app.router.routes), target
             if path.startswith("/static/"):

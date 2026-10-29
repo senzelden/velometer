@@ -9,7 +9,8 @@ import { t } from "./strings.js";
 
 const NS = "http://www.w3.org/2000/svg";
 // the CSV preamble, English in both editions
-export const ATTRIBUTION = "Map data © OpenStreetMap contributors, ODbL 1.0";
+export const ATTRIBUTION =
+  "Map data © OpenStreetMap contributors (https://www.openstreetmap.org/copyright), ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)";
 const CSV_NOTE = "OSM mapped km, not built km";
 // the added text and ground use the light tokens the caller passes in `meta` (no colour literal in a script)
 const FALLBACK = { ground: "white", ink: "black", muted: "gray" };
@@ -173,11 +174,16 @@ export function glyphOf(st) {
 
 /** A label's lines, each at most `room` px wide by `measure(line)` (a string's width in px), broken
  * at spaces: a word joins the line only if the longer line still measures within the room. A single
- * word wider than the room stays whole on its own line. */
-export function wrap(text, measure, room) {
+ * word wider than the room stays whole on its own line. A protected phrase in `keep` (wording that
+ * must stay in one piece, such as the ADR 0006 "mapped km" note) is one such word: a line may end
+ * before it or begin after it, never break inside it, and if it alone is wider than the room it
+ * overflows on a line of its own. */
+export function wrap(text, measure, room, keep = []) {
   const lines = [];
   let line = "";
-  for (const word of text.split(/\s+/).filter(Boolean)) {
+  const phrases = keep.filter(Boolean).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const words = text.match(new RegExp([...phrases, "\\S+"].join("|"), "g")) ?? [];
+  for (const word of words) {
     const next = line ? `${line} ${word}` : word;
     if (line && measure(next) > room) {
       lines.push(line);
@@ -188,9 +194,9 @@ export function wrap(text, measure, room) {
   return lines;
 }
 
-/** `text` in lines at most `room` px wide by `measure`. */
-export function fit(text, measure, room) {
-  return measure(text) <= room ? [text] : wrap(text, measure, room);
+/** `text` in lines at most `room` px wide by `measure`, never breaking inside a `keep` phrase. */
+export function fit(text, measure, room, keep = []) {
+  return measure(text) <= room ? [text] : wrap(text, measure, room, keep);
 }
 
 /** A width measure for text at one size and weight: the page's (`meta.measure`) where it gives a
@@ -276,7 +282,8 @@ export function selfContained(svg, styleOf, toLight, meta) {
   const title = String(meta.title ?? "");
   const titleLines = fit(title, titleWidth, room);
   const notes = [String(meta.source ?? ""), `${meta.attribution ?? t("js.download.attribution")} · ${t("js.download.note")}`];
-  const metaLines = notes.flatMap((line) => fit(line, noteWidth, room));
+  const keep = [t("js.download.note")]; // ADR 0006 wording: one unit, in the page's language
+  const metaLines = notes.flatMap((line) => fit(line, noteWidth, room, keep));
   const top = TOP + (titleLines.length - 1) * TITLE_LINE;
   const keyRows = layoutKey(meta.key ?? [], w, typeof meta.measure === "function" ? noteWidth : null);
   const keyH = keyRows.reduce((sum, r) => sum + r.h, 0) + (keyRows.length ? 6 : 0);

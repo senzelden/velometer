@@ -99,7 +99,7 @@ test("tableCsv: two # lines, the header texts, the rows, RFC 4180 quoting", () =
           : [],
   };
   const lines = tableCsv(table, "abc1234", "2026-10-11T10:00:00Z").split("\r\n");
-  assert.match(lines[0], /^# Map data © OpenStreetMap contributors, ODbL 1\.0/);
+  assert.match(lines[0], /^# Map data © OpenStreetMap contributors \(https:\/\/www\.openstreetmap\.org\/copyright\), ODbL 1\.0 \(https:\/\/opendatacommons\.org\/licenses\/odbl\/1-0\/\)/);
   assert.equal(lines[1], "# velometer abc1234 generated 2026-10-11T10:00:00Z");
   assert.equal(lines[2], 'Year,"Headline, km"');
   assert.equal(lines[3], '2018,"a ""b"" c"');
@@ -243,7 +243,7 @@ test("tableCsv in German: the header as shown, number cells as machine numbers, 
   useLang("de");
   const table = tableOf(["Jahr", "A+B km"], [["2019", "1.639,8", "12,3 ⚑"], ["2020", "\u22123,2", "–"]]);
   const lines = tableCsv(table, "abc1234", "2026-10-12T10:00:00Z", "de-DE").split("\r\n");
-  assert.equal(lines[0], "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km");
+  assert.equal(lines[0], "# Map data © OpenStreetMap contributors (https://www.openstreetmap.org/copyright), ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/) — OSM mapped km, not built km");
   assert.equal(lines[1], "# velometer abc1234 generated 2026-10-12T10:00:00Z");
   assert.equal(lines[2], "Jahr,A+B km");
   assert.equal(lines[3], '2019,1639.8,"12,3 ⚑"');
@@ -269,10 +269,14 @@ test("tableCsv in English converts nothing: no locale is en-GB, and a grouped nu
 test("the SVG source line on a German page has the German note and attribution", () => {
   useLang("de");
   const out = selfContained(chart(), darkStyle, null, { ...META, attribution: FIXTURE.de["js.download.attribution"] });
-  assert.ok(out.includes(FIXTURE.de["js.download.note"]), out);
-  assert.ok(out.includes("OpenStreetMap-Mitwirkende"));
+  // the meta lines wrap at the image's width: read them as one text
+  const meta = [...out.slice(out.indexOf('id="velometer-meta"')).matchAll(/<text[^>]*>([^<]*)<\/text>/g)]
+    .map((m) => m[1]).join(" ");
+  assert.ok(meta.includes(FIXTURE.de["js.download.note"]), meta);
+  assert.ok(meta.includes(FIXTURE.de["js.download.attribution"]), meta);
+  assert.ok(meta.includes("openstreetmap.org/copyright") && meta.includes("opendatacommons.org/licenses/odbl/1-0/"));
   assert.notEqual(FIXTURE.de["js.download.note"], FIXTURE.en["js.download.note"]);
-  assert.ok(!out.includes(FIXTURE.en["js.download.note"]));
+  assert.ok(!meta.includes(FIXTURE.en["js.download.note"]));
   useLang("en");
 });
 
@@ -475,4 +479,25 @@ test("selfContained: a long key label wraps by the width the page measured for t
   for (const [x, s] of byPage) assert.ok(x + measure(s, "11px") <= 300, `"${s}" ends at ${x + s.length * 5}`);
   // a line can hold more than the chip's average would allow: the page's measure decided
   assert.ok(byPage.length < byChip.length, `${byPage.length} lines by the page, ${byChip.length} by the chip`);
+});
+
+const out_meta = (out) => textsOf(out.match(/<g id="velometer-meta">(.*?)<\/g>/)[1]);
+// M16 R24: the ADR 0006 note ("mapped km, not built km") is never broken across two lines
+for (const lang of ["de", "en"]) {
+  test(`selfContained: the ${lang} mapped-km note stays on one line at 390 px`, () => {
+    useLang(lang);
+    const note = FIXTURE[lang]["js.download.note"];
+    const svg = node("svg", { viewBox: "0 0 390 200" }, []);
+    const meta = out_meta(selfContained(svg, darkStyle, null, { ...LONG, attribution: "Kartendaten © OSM-Mitwirkende" }));
+    assert.ok(meta.some((l) => l.text.includes(note)), `${lang}: "${note}" is whole on one <text>`);
+    assert.ok(meta.length >= 3, "the meta text still wraps around it");
+    useLang("en");
+  });
+}
+
+test("wrap: a protected phrase is one unbreakable unit, wider than the room it overflows", () => {
+  const stub = (s) => s.length * 10;
+  const lines = wrap("aa bb cc dd ee ff", stub, 60, ["cc dd ee"]);
+  assert.deepEqual(lines, ["aa bb", "cc dd ee", "ff"]);
+  assert.ok(lines.every((l, i) => i === 1 || stub(l) <= 60));
 });

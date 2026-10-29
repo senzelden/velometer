@@ -10,6 +10,7 @@ from pathlib import Path
 from markupsafe import escape
 
 from velometer.app import export
+from velometer.app.repo_links import bare_repo_paths, is_bare_name
 from velometer.app.urls import normalise_base
 
 _META_CSP = re.compile(r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"')
@@ -83,14 +84,92 @@ def _gz_problems(out: Path) -> list[str]:
     return problems
 
 
-SITE_VALUES = ("datalab_name", "datalab_url", "impressum_url", "privacy_url")
+SITE_VALUES = (
+    "datalab_name", "datalab_url", "impressum_url", "privacy_url", "repo_url", "repo_file_url",
+)  # fmt: skip
 FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url")
 
 
+def _bare_code_problems(out: Path) -> list[str]:
+    """Every page that prints a repo path (`<code>docs/…</code>`, …) outside a link: a reader
+    cannot open it (M16, R42; a public export links them to the repository). A bare file name
+    (no directory, not a root file) is reported apart: it is usually UI text, such as an error
+    message of a page that failed to build, not a citation (R45, M4)."""
+
+    def shown(names: list[str]) -> str:
+        return ", ".join(names[:3]) + (f" and {len(names) - 3} more" if len(names) > 3 else "")
+
+    problems = []
+    for page in sorted(out.rglob("*.html")):
+        bare = bare_repo_paths(page.read_text(encoding="utf-8"))
+        names = [b for b in bare if is_bare_name(b)]
+        paths = [b for b in bare if not is_bare_name(b)]
+        rel = page.relative_to(out).as_posix()
+        if paths:
+            problems.append(
+                f"{rel}: {len(paths)} repo path(s) not linked to the repo: {shown(paths)} "
+                "(an untracked or misspelt path; or a path the page prints outside the linker)"
+            )
+        if names:
+            problems.append(
+                f"{rel}: {len(names)} file name(s) in <code> with no repo path: {shown(names)} "
+                "(an error message on the page? fix its cause; or cite the file by its repo path)"
+            )
+    return problems
+
+
+METHODOLOGY_PAGES = ("methodology/index.html", "de/methodology/index.html")
+
+
+def _methodology_problems(out: Path, repo_url: str) -> list[str]:
+    """The methodology page, in each edition, links the repository itself (legal review 1.1c:
+    the code behind every figure is published and linked; R45, M5)."""
+    want = f'href="{escape(repo_url)}"'
+    problems = []
+    for rel in METHODOLOGY_PAGES:
+        page = out / rel
+        text = page.read_text(encoding="utf-8") if page.is_file() else None
+        if text is None:
+            problems.append(f"public export, but {rel} is missing (it must link {repo_url})")
+        elif want not in text:
+            problems.append(f"public export, but {rel} does not link the repository {repo_url}")
+    return problems
+
+
+_HREF = re.compile(r'href="([^"]*)"')
+
+
+def _pinned_problems(out: Path, build: dict) -> list[str]:
+    """Every page (and data JSON, where Compare's flag notes get their links) whose repo file
+    link (an address starting as `repo_file_url` does before `{commit}`) does not carry
+    `build.json` `commit_full`: a link to another commit than the export's (M16, R42)."""
+    pattern, commit = build["site"]["repo_file_url"], build.get("commit_full")
+    prefix = pattern.split("{commit}", 1)[0]
+    if not isinstance(commit, str) or not commit or commit == "unknown":
+        return [f"public export, but {export.BUILD_FILE} records no commit_full for its repo links"]
+    in_json = re.compile('"(' + re.escape(prefix) + '[^"]*)"')
+    problems = []
+    pages = sorted([*out.rglob("*.html"), *(out / "data").rglob("*.json")])
+    for page in pages:
+        text = page.read_text(encoding="utf-8")
+        if page.suffix == ".json":
+            hrefs = in_json.findall(text)
+        else:
+            hrefs = [html.unescape(h) for h in _HREF.findall(text)]
+        wrong = [h for h in hrefs if h.startswith(prefix) and commit not in h]
+        if wrong:
+            rel = page.relative_to(out).as_posix()
+            problems.append(
+                f"{rel}: {len(wrong)} repo link(s) not at the export's commit {commit[:7]}: "
+                + wrong[0]
+            )
+    return problems
+
+
 def _public_problems(out: Path, build: dict) -> list[str]:
-    """A public export's footer, judged from the export itself: build.json records the four
-    site values, and every page with the site's footer (the home page always) names the
-    Datalab and links it, its Impressum and its privacy page."""
+    """A public export's footer, judged from the export itself: build.json records the site
+    values, and every page with the site's footer (the home page always) names the Datalab and
+    links it, its Impressum and its privacy page; no page prints a repo path unlinked."""
     site = build.get("site")
     site = site if isinstance(site, dict) else {}
     missing = [k for k in SITE_VALUES if not isinstance(site.get(k), str) or not site[k]]
@@ -98,7 +177,7 @@ def _public_problems(out: Path, build: dict) -> list[str]:
         return [f"public export, but {export.BUILD_FILE} records no: " + ", ".join(missing)]
     links = [f'href="{escape(site[k])}"' for k in FOOTER_LINKS]
     name = str(escape(site["datalab_name"]))
-    bare = []
+    footless = []
     for page in sorted(out.rglob("*.html")):
         text = page.read_text(encoding="utf-8")
         rel = page.relative_to(out).as_posix()
@@ -106,14 +185,17 @@ def _public_problems(out: Path, build: dict) -> list[str]:
             continue  # a fragment (a city's /panel), not a page with the site's footer
         footer = text.rpartition("<footer>")[2]
         if name not in footer or not all(link in footer for link in links):
-            bare.append(rel)
-    if bare:
-        shown = ", ".join(bare[:5]) + (f" and {len(bare) - 5} more" if len(bare) > 5 else "")
-        return [
-            f"public export, but {len(bare)} page(s) lack the Datalab, Impressum or privacy "
+            footless.append(rel)
+    problems = []
+    if footless:
+        n = len(footless)
+        shown = ", ".join(footless[:5]) + (f" and {n - 5} more" if n > 5 else "")
+        problems.append(
+            f"public export, but {n} page(s) lack the Datalab, Impressum or privacy "
             f"link of {export.BUILD_FILE} in the footer: {shown}"
-        ]
-    return []
+        )
+    problems += _methodology_problems(out, site["repo_url"])
+    return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 
 def deploy_problems(out: Path, base: str | None, public: bool = False) -> list[str]:
@@ -145,6 +227,12 @@ def deploy_problems(out: Path, base: str | None, public: bool = False) -> list[s
     ]
     if build and build.get("public") is True:
         problems += _public_problems(out, build)
+        if not build.get("tiles"):
+            problems.append(
+                f"public export, but {export.BUILD_FILE} records no tiles (the basemap's "
+                "Protomaps build, for the map credit): run tools/tiles.py --stamp, then export "
+                "with --tiles-info"
+            )
     elif build and public:
         problems.append("not a public export (exported without --public): no Impressum")
     return problems

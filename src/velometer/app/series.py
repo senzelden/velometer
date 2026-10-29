@@ -2,7 +2,8 @@
 
 One payload for the whole app (21 cities x 2 boundaries x 10 labels is small): the cities, each
 city's yearly series per boundary, the subarea (Bezirk) series, the preset labels and the
-explanations of flagged years. Values are the CSV export's (mapped km, ADR 0006).
+explanations of flagged years, under the OSM notice (`attribution`, ODbL §4.2 b). Values are the
+CSV export's (mapped km, ADR 0006).
 
 The file is shared by both editions (M12): the display text is English, and each text a German
 page shows differently has an additive `<key>_de` sibling, which static/js/data.js `localised`
@@ -11,9 +12,11 @@ swaps in on a German page.
 
 from pathlib import Path
 
+from velometer import credits
 from velometer import timeseries as ts
 from velometer.app.counts import counter_payload, counters_config, no_data_notes
 from velometer.app.names import country_name
+from velometer.app.repo_links import RepoLinks
 from velometer.db import subarea_names
 from velometer.report.data import HEADLINE_UNIT, KINDS, ReportData, headline_unit
 
@@ -56,14 +59,18 @@ def _bezirke(data: ReportData, city_id: str) -> dict:
     }
 
 
-def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
+def series_payload(
+    data: ReportData, explanations: Path | None = None, links: RepoLinks | None = None
+) -> dict:
     """The chart data: `cities`, `series` ("<id>/<kind>" -> points, years then `current`),
     `bezirke` (city id -> subarea id -> name and points; cities with subareas only), `presets`,
     `headline_unit`, `explanations.timeseries` (flag key -> text of `explanations`, the
     time-series review page, for every flag that has one) and `counters` (the counter index per
     counter city, `app/counts.counter_payload`). The German siblings: per city `name_de` and
     `country_name_de`, `headline_unit_de`, `presets_de`, `counters.none_de` and
-    `explanations_de` (`german_explanations`)."""
+    `explanations_de` (`german_explanations`). With repo `links` (M16, R44),
+    `explanations.links` maps a flag key to `{path: url}` of the repo paths its English or German
+    text holds in code spans, which Compare's flag note renders as links."""
     data = data.with_lang("en")  # one shared file in English (the pages localise it)
     names_de = {c.id: c.name for c in data.with_lang("de").cities()}
     cities = {
@@ -90,19 +97,28 @@ def series_payload(data: ReportData, explanations: Path | None = None) -> dict:
                     text = ts.explanation(explanations, flag.key)
                     if text:
                         notes[flag.key] = text
+    german = german_explanations(notes, explanations)
+    explained: dict = {"timeseries": notes}
+    if links is not None:
+        explained["links"] = {
+            key: found
+            for key, text in notes.items()
+            if (found := links.code_links(text + "\n" + german["timeseries"][key]))
+        }
     counters = counter_payload(data)
     counters["none_de"] = no_data_notes(counters_config(data.config_dir)[0], "de")
     return {
+        "attribution": credits.OSM_NOTICE,
         "cities": cities,
         "series": series,
         "bezirke": bezirke,
         "presets": data.preset_labels(),
         "headline_unit": HEADLINE_UNIT,
-        "explanations": {"timeseries": notes},
+        "explanations": explained,
         "counters": counters,
         "headline_unit_de": headline_unit("de"),
         "presets_de": data.with_lang("de").preset_labels(),
-        "explanations_de": german_explanations(notes, explanations),
+        "explanations_de": german,
     }
 
 

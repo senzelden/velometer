@@ -38,14 +38,14 @@ const D = {
   },
 };
 
-const ATT_BER = `${COUNTER_DATA}, Berlin: Senate, licence dl-de-zero-2.0`;
-const ATT_BCN = `${COUNTER_DATA}, Barcelona: Ajuntament, licence CC BY 4.0`;
+const ATT_BER = `${COUNTER_DATA}, Berlin: Senate, licence dl-de-zero-2.0; index and totals computed by velometer`;
+const ATT_BCN = `${COUNTER_DATA}, Barcelona: Ajuntament, licence CC BY 4.0; index and totals computed by velometer`;
 
 test("every drawn city carries its counter data attribution; an undrawn city none (ADR 0008)", () => {
   const notes = counterLines(D, ["ber", "bcn", "mad"]).notes;
   assert.deepEqual(notes.filter((n) => n.startsWith(COUNTER_DATA)), [ATT_BER, ATT_BCN]);
   const bare = { ...D, counters: { ...D.counters, cities: { ber: { ...D.counters.cities.ber, source: null, licence: undefined } } } };
-  assert.deepEqual(counterLines(bare, ["ber"]).notes, [`${COUNTER_DATA}, Berlin: source ${NOT_RECORDED}, licence ${NOT_RECORDED}`]);
+  assert.deepEqual(counterLines(bare, ["ber"]).notes, [`${COUNTER_DATA}, Berlin: source ${NOT_RECORDED}, licence ${NOT_RECORDED}; index and totals computed by velometer`]);
 });
 
 test("a year with idx = null is a gap (null), never 0; a stored 0 stays 0", () => {

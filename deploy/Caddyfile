@@ -1,0 +1,213 @@
+# The production Caddyfile (M16 spec §4.2, §4.4, §4.6), for Caddy 2.11.4 or later.
+#
+# Environment (deploy/caddy.env.example): DOMAIN, the apex host name; SITE_ROOT, default /srv.
+# /etc/caddy/lock.caddy holds the lock until go-live: `respond "locked" 401` as the server comes
+# up, then a `basic_auth` block with the preview password's hash; empty after go-live. No hash
+# and no password is ever in this repository.
+#
+# tests/test_m16_caddyfile.py holds the rules; tools/deploy_dryrun.py runs this file in Docker.
+{
+	# The lock runs first in every site, whichever form the lock file holds: by Caddy's default
+	# order `redir` (www) runs before basic_auth, and `handle_path` (the tiles) before respond.
+	# Nothing else in this file uses respond.
+	order basic_auth before redir
+	order respond after basic_auth
+
+	# Caddy's own log (stderr, so journald): no access lines, no stdlib lines (their message text
+	# names the client, which no field filter reaches), and every address field masked.
+	log default {
+		output stderr
+		format filter {
+			wrap json
+			fields {
+				remote_ip ip_mask 24 48
+				client_ip ip_mask 24 48
+				request>remote_ip ip_mask 24 48
+				request>client_ip ip_mask 24 48
+				request>remote_port delete
+				request>tls delete
+				user_id delete
+				duration delete
+				resp_headers delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>headers>X-Forwarded-For delete
+				request>headers>Forwarded delete
+				request>headers>X-Real-Ip delete
+				request>headers>Alt-Used delete
+				request>headers>Save-Data delete
+				request>headers>Via delete
+				request>headers>X-Forwarded-Host delete
+				request>headers>X-Forwarded-Proto delete
+				request>headers>Accept delete
+				request>headers>Accept-Encoding delete
+				request>headers>Accept-Language delete
+				request>headers>Cache-Control delete
+				request>headers>Connection delete
+				request>headers>Dnt delete
+				request>headers>If-Modified-Since delete
+				request>headers>If-None-Match delete
+				request>headers>If-Range delete
+				request>headers>Origin delete
+				request>headers>Pragma delete
+				request>headers>Priority delete
+				request>headers>Purpose delete
+				request>headers>Range delete
+				request>headers>Sec-Ch-Ua delete
+				request>headers>Sec-Ch-Ua-Mobile delete
+				request>headers>Sec-Ch-Ua-Platform delete
+				request>headers>Sec-Fetch-Dest delete
+				request>headers>Sec-Fetch-Mode delete
+				request>headers>Sec-Fetch-Site delete
+				request>headers>Sec-Fetch-User delete
+				request>headers>Sec-Gpc delete
+				request>headers>Sec-Purpose delete
+				request>headers>Te delete
+				request>headers>Upgrade-Insecure-Requests delete
+			}
+		}
+		exclude http.log.access http.stdlib
+	}
+}
+
+# A site's access log: JSON with the client address masked (IPv4 /24, IPv6 /48) before it reaches
+# the disk (legal review 5.3). Headers a client writes as it likes and no proxy vouches for
+# (X-Forwarded-For, Forwarded, X-Real-Ip) are dropped, and so are Cookie and Authorization
+# (ruling R25). Of the request headers only User-Agent and Referer are kept, the two GoAccess
+# reads: Caddy's filter cannot keep a list (no wildcard, no allow-list; Caddy 2.11.4), so every
+# other header a browser commonly sends is deleted by name (its canonical form: Dnt, Sec-Gpc, Te),
+# with the TLS details, the basic-auth user, the duration and the response headers (final review
+# I4, ruling R52). A header not on the list (rare, or sent by a script) is still written. Retention is by time (5.4, ruling R27): rolled at midnight UTC, each rolled file
+# deleted once 14 days old. roll_size and roll_keep are set so high that neither prunes first
+# (Caddy has no "unlimited": roll_keep 0 or none means 10 files).
+(access_log) {
+	log {
+		output file /var/log/caddy/{args[0]}.log {
+			roll_at 00:00
+			roll_size 1GiB
+			roll_keep 1000
+			roll_keep_for 336h
+		}
+		format filter {
+			wrap json
+			fields {
+				remote_ip ip_mask 24 48
+				client_ip ip_mask 24 48
+				request>remote_ip ip_mask 24 48
+				request>client_ip ip_mask 24 48
+				request>remote_port delete
+				request>tls delete
+				user_id delete
+				duration delete
+				resp_headers delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>headers>X-Forwarded-For delete
+				request>headers>Forwarded delete
+				request>headers>X-Real-Ip delete
+				request>headers>Alt-Used delete
+				request>headers>Save-Data delete
+				request>headers>Via delete
+				request>headers>X-Forwarded-Host delete
+				request>headers>X-Forwarded-Proto delete
+				request>headers>Accept delete
+				request>headers>Accept-Encoding delete
+				request>headers>Accept-Language delete
+				request>headers>Cache-Control delete
+				request>headers>Connection delete
+				request>headers>Dnt delete
+				request>headers>If-Modified-Since delete
+				request>headers>If-None-Match delete
+				request>headers>If-Range delete
+				request>headers>Origin delete
+				request>headers>Pragma delete
+				request>headers>Priority delete
+				request>headers>Purpose delete
+				request>headers>Range delete
+				request>headers>Sec-Ch-Ua delete
+				request>headers>Sec-Ch-Ua-Mobile delete
+				request>headers>Sec-Ch-Ua-Platform delete
+				request>headers>Sec-Fetch-Dest delete
+				request>headers>Sec-Fetch-Mode delete
+				request>headers>Sec-Fetch-Site delete
+				request>headers>Sec-Fetch-User delete
+				request>headers>Sec-Gpc delete
+				request>headers>Sec-Purpose delete
+				request>headers>Te delete
+				request>headers>Upgrade-Insecure-Requests delete
+			}
+		}
+	}
+}
+
+# Each site's headers equal its export's `_headers` file, plus HSTS for one year. Cache-Control
+# is set only where the lock file has not set it (`?`): while locked, its `no-store` holds on
+# every response, the 401 and the 404 page included (ruling R26).
+(velometer_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		?Cache-Control "public, max-age=3600"
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+(datalab_headers) {
+	header {
+		Content-Security-Policy "default-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		?Cache-Control "public, max-age=3600"
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
+
+# The Zählwerk Berlin Datalab.
+{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import access_log datalab
+	import datalab_headers
+	root * {$SITE_ROOT:/srv}/datalab/current
+	encode gzip
+	file_server {
+		precompressed gzip
+	}
+	# 404 only: any other error (the lock's 401) keeps its empty body
+	handle_errors 404 {
+		import datalab_headers
+		root * {$SITE_ROOT:/srv}/datalab/current
+		rewrite * /404.html
+		file_server
+	}
+}
+
+# velometer, with the maps' basemap beside it.
+velometer.{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import access_log velometer
+	import velometer_headers
+	root * {$SITE_ROOT:/srv}/velometer/current
+	encode gzip
+	file_server {
+		precompressed gzip
+	}
+	# byte ranges for protomaps-leaflet; never precompressed (a .gz would break the offsets)
+	handle_path /tiles/* {
+		root * {$SITE_ROOT:/srv}/tiles
+		file_server
+	}
+	# the error handler sets its own root: under /tiles/ it would look for 404.html in the tiles
+	handle_errors 404 {
+		import velometer_headers
+		root * {$SITE_ROOT:/srv}/velometer/current
+		rewrite * /404.html
+		file_server
+	}
+}
+
+www.{$DOMAIN} {
+	import /etc/caddy/lock.caddy
+	import datalab_headers
+	redir https://{$DOMAIN}{uri} 308
+}

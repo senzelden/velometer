@@ -1,5 +1,5 @@
-// velometer tier map: the run's tiered sides (GeoJSON from `velometer report maps`) over OSM
-// raster tiles, with a LAU/FUA switch and tier checkboxes. Every URL comes from the
+// velometer tier map: the run's tiered sides (GeoJSON from `velometer report maps`) over the
+// self-hosted vector basemap (js/basemap.js), with a LAU/FUA switch and tier checkboxes. Every URL comes from the
 // #tiermap-config blob the server renders, so this file names no host; every colour is a
 // stylesheet token (--tier-a … --tier-e, --outline) read when it draws, and the layers are
 // restyled in place when the OS theme changes (zoom and position stay). A side's popup is
@@ -9,6 +9,7 @@ import { onThemeChange, tierColours, token } from "./js/theme.js";
 import { mapStatus } from "./js/data.js";
 import { leafletPrefix, t } from "./js/strings.js";
 import { tierPopup } from "./js/tier-popup.js";
+import { MAX_ZOOM, addBasemap } from "./js/basemap.js";
 
 (function () {
   "use strict";
@@ -26,7 +27,7 @@ import { tierPopup } from "./js/tier-popup.js";
   var view = want.at; // the reader's own pan/zoom, or null while the app's fit is showing
   var fitting = false; // true while the app moves the map itself: that is not the reader's view
 
-  var map = L.map(mapEl, { preferCanvas: true });
+  var map = L.map(mapEl, { preferCanvas: true, maxZoom: MAX_ZOOM });
   map.attributionControl.setPrefix(leafletPrefix(map.attributionControl.options.prefix));
   var renderer = L.canvas({ tolerance: 6 }); // thin lines: a forgiving click target
   // a Point feature is a small circle on the canvas, never Leaflet's default marker (its image
@@ -34,12 +35,10 @@ import { tierPopup } from "./js/tier-popup.js";
   function pointAsCircle(feature, latlng) {
     return L.circleMarker(latlng, { renderer: renderer, radius: 4 });
   }
-  L.tileLayer(cfg.tiles, {
-    maxZoom: 19,
-    className: cfg.tile_class, // muted in app.css; the vector canvas is not
-    attribution:
-      '© <a href="' + cfg.links.copyright + '">' + t("js.map.osm_contributors") + "</a>",
-  }).addTo(map);
+  addBasemap(map, cfg); // the OSM credit now, the background once its file answers (or never)
+  // GISCO's boundary notice (docs/review/m16-legal.md 1.2a): the map's own credit, not the
+  // basemap's, so it stays whatever the background is (ruling P1)
+  map.attributionControl.addAttribution(t("js.map.boundaries"));
 
   function say(text) {
     if (status) status.textContent = text;

@@ -2,6 +2,7 @@
 fmt.na: k. A.
 nav.lang_switch: English
 site.footer.attribution: 'Kartendaten © <a href="{osm}">OpenStreetMap-Mitwirkende, ODbL 1.0</a>'
+credit.boundaries: © EuroGeographics bezüglich der Verwaltungsgrenzen
 site.footer.mapped_km: OSM-kartierte km, nicht gebaute km (ADR 0006)
 site.footer.methodology: Methodik
 site.footer.csv_all: CSV (alle Städte)
@@ -340,6 +341,7 @@ table.last_day: Letzter Tag
 counts.data: Zähldaten
 page.counts.licence: Lizenz
 page.counts.retrieved: abgerufen {date}
+page.counts.computed: '; Index und Summen von velometer berechnet'
 page.counts.map_credit: 'Karte: © <a href="{href}" rel="noopener noreferrer">OpenStreetMap-Mitwirkende</a>.'
 page.counts.text_error: Der Zählstellentext konnte nicht geladen werden (siehe Serverprotokoll)
 
@@ -493,7 +495,7 @@ tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
 tier.E: E Fahrradstraße o. Ä. / Busspur
 map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
-map.footer: "Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0 · kartierte km, nicht gebaute km\nOSM-Stand {ts}, Klassifikator {classifier}"
+map.footer: "Kartendaten © OpenStreetMap-Mitwirkende (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nkartierte km, nicht gebaute km · {boundaries}\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle
 compare.group.pilot5: Pilot 5
 compare.group.nordic: Nordeuropa
@@ -531,7 +533,7 @@ counts.any_base: Basisjahr jeder Stadt = 100
 counts.base_for: '{year} = 100 für {cities}'
 counts.covid_is: '{year} ist das Corona-Jahr'
 counts.covid_column: '{year} (Corona-Jahr)'
-counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}'
+counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}; Index und Summen von velometer berechnet'
 unit.per_100k: "Kartierte A+B-km je 100.000 Einwohner (Einwohnerzahl {span}jeder Stadt, für alle Jahre gleich)"
 unit.ab_km: Kartierte A+B-km, je Seite
 unit.tier_km: kartierte km der Stufe {tier}, je Seite
@@ -680,7 +682,7 @@ js.counts.of: Index der an Zählstellen erfassten Zählwerte (oder ihrer durchsc
 js.counts.any_base: Basisjahr jeder Stadt = 100
 js.counts.base_for: '{year} = 100 für {cities}'
 js.counts.covid_is: '{year} ist das Corona-Jahr'
-js.counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}'
+js.counts.attribution: 'Zähldaten, {city}: {source}, Lizenz {licence}; Index und Summen von velometer berechnet'
 js.counts.source_not_recorded: Quelle nicht erfasst
 js.counts.not_recorded: nicht erfasst
 js.counts.index: Zählstellenindex
@@ -763,7 +765,7 @@ js.cite.commit: Commit {commit}
 js.cite.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
 js.cite.copy: Kopieren
 js.cite.copy_label: '{format} kopieren, {title}'
-js.download.attribution: Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+js.download.attribution: Kartendaten © OpenStreetMap-Mitwirkende (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)
 js.download.note: OSM-kartierte km, nicht gebaute km
 js.download.snapshot: OSM-Stand {day}
 js.download.classifier: Klassifikator {version}
@@ -777,6 +779,9 @@ js.download.no_table: Zu diesem Diagramm gibt es keine Datentabelle zum Herunter
 js.download.no_png: die Zeichenfläche lieferte kein PNG
 js.download.image_failed: das Diagrammbild konnte nicht geladen werden
 js.map.osm_contributors: OpenStreetMap-Mitwirkende
+js.map.boundaries: © EuroGeographics bezüglich der Verwaltungsgrenzen
+js.map.basemap_credit: Protomaps, ESA WorldCover (CC BY 4.0)
+js.map.basemap_credit_build: Protomaps (Stand {build}), ESA WorldCover (CC BY 4.0)
 js.map.leaflet_title: Eine JavaScript-Bibliothek für interaktive Karten
 js.map.way: Weg {id}
 js.map.side: Seite

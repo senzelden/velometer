@@ -62,16 +62,16 @@ sections:
   paragraphs:
   - text: >-
       Der Fortschrittsbericht geht an den Hauptausschuss des Abgeordnetenhauses [@berlin-dpa-fortschrittsbericht-hauptausschuss].
-      Für 2025 entnahm die dpa ihm, dass knapp 27 Millionen Euro in den Radverkehr
-      flossen, von rund 82,4 Millionen verfügbaren [@berlin-dpa-fortschrittsbericht-hauptausschuss].
-    src: 9e13065cb025
+      Für 2025 entnahm die dpa ihm, dass einschließlich Bundesmitteln knapp 27 Millionen
+      Euro in den Radverkehr flossen, von rund 82,4 Millionen verfügbaren [@berlin-dpa-fortschrittsbericht-hauptausschuss].
+    src: 79e949c07bbb
   - text: >-
       Nach unserer Lesart gibt dieselbe Verwaltung das Tempo vor und berichtet darüber.
-      Im Juni 2023 bat sie die Bezirke, Radwegprojekte vorerst zu stoppen, wenn sie
-      auch nur einen Autoparkplatz kosten würden [@berlin-tagesspiegel-radwegestopp-2023].
-      Im Dezember 2025 nannte sie für das Jahr 20,5 km, weniger als ihr eigenes Ziel
-      [@berlin-tagesspiegel-dpa-2025-12].
-    src: 879247f774a0
+      Im Juni 2023 bat sie nach einem Bericht des Tagesspiegels die Bezirke, Radwegprojekte
+      vorerst zu stoppen, wenn sie auch nur einen Autoparkplatz kosten würden [@berlin-tagesspiegel-radwegestopp-2023].
+      Im Dezember 2025 nannte sie der dpa für das Jahr 20,5 km; die dpa berichtete,
+      das liege unter dem eigenen Ziel des Senats [@berlin-tagesspiegel-dpa-2025-12].
+    src: af114eadedc1
 literals:
 - 27 Millionen Euro
 - 82,4 Millionen

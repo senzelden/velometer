@@ -2,6 +2,7 @@
 
 import gzip
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -12,13 +13,21 @@ from typer.testing import CliRunner
 from tests.test_app_base import build_rich
 from tests.test_export import _content, _files
 from velometer.app import deploy_check, export
+from velometer.app.repo_links import bare_repo_paths
 from velometer.cli import app
 
 COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "repo": {
+        "url": "https://forge.example.org/owner/velometer",
+        "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
+    },
 }
+REPO_SENTENCE = "\nThe code is MIT-licensed.<!-- repo: It is in the [repository]({repo_url}). -->\n"
+# a public export needs a clean checkout (M16); the tests' tree may be mid-edit
+CLEAN_COMMIT = "0123456789abcdef0123456789abcdef01234567"
 
 
 @pytest.fixture(scope="module")
@@ -28,9 +37,30 @@ def good(tmp_path_factory):
     r = build_rich(tmp)
     db_path, cfg, maps, docs, plans = r
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
+    for name in ("methodology.md", "methodology.de.md"):  # the repo sentence (1.1c, R45 M5)
+        page = docs / name
+        text = page.read_text(encoding="utf-8") if page.is_file() else "# Methodology\n"
+        page.write_text(text + REPO_SENTENCE, encoding="utf-8")
     out = tmp / "good"
-    export.run_export(out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(export, "public_commit", lambda: CLEAN_COMMIT)
+        mp.setattr(export, "figures_drift", lambda conn, config_dir: [])  # synthetic figures
+        mp.setattr(export, "config_drift", lambda config_dir: [])  # not a copy of config/
+        export.run_export(
+            out, "/", db_path, cfg, maps, docs, _content(r), plans, False, public=True,
+            tiles_info=_sidecar(tmp),
+        )  # fmt: skip
     return out, cfg
+
+
+TILES_INFO = {"protomaps_build": "2026-08-11", "maxzoom": 13, "sha256": "ab" * 32}
+
+
+def _sidecar(tmp: Path) -> Path:
+    """The sidecar tools/tiles.py writes beside the extract."""
+    path = tmp / "velometer.pmtiles.json"
+    path.write_text(json.dumps({"file": "velometer.pmtiles", **TILES_INFO}), encoding="utf-8")
+    return path
 
 
 @pytest.fixture
@@ -47,10 +77,45 @@ def _big_gz(out: Path) -> Path:
     return gzs[0]
 
 
+@pytest.mark.parametrize("page", ["methodology/index.html", "de/methodology/index.html"])
+def test_a_public_export_whose_methodology_does_not_link_the_repo_is_refused(site, page):
+    """Legal review 1.1c (R45 M5): each edition's methodology page links repo.url."""
+    out, _ = site
+    path = out / page
+    repo = COMPLETE["repo"]["url"]
+    text = path.read_text(encoding="utf-8")
+    assert f'href="{repo}"' in text
+    path.write_text(text.replace(f'href="{repo}"', 'href="https://elsewhere.example/"'))
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if "does not link the repository" in p and page in p], problems
+    path.unlink()
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if f"{page} is missing" in p], problems
+
+
 def test_good_export_is_ready(site):
     out, cfg = site
     assert deploy_check.deploy_problems(out, None) == []
     assert deploy_check.deploy_problems(out, "/") == []
+
+
+def test_a_public_export_records_the_basemaps_build_and_its_maps_carry_the_date(site):
+    """Spec §4.3, legal review 1.7: build.json `tiles`, and the maps' credit date from it."""
+    out, _ = site
+    build = json.loads((out / "build.json").read_text(encoding="utf-8"))
+    assert build["tiles"] == TILES_INFO
+    page = (out / "city" / "berlin" / "tiers" / "index.html").read_text(encoding="utf-8")
+    assert '"tiles_build": "2026-08-11"' in page or '"tiles_build":"2026-08-11"' in page
+
+
+def test_a_public_export_without_the_basemaps_build_is_refused(site):
+    out, _ = site
+    path = out / "build.json"
+    build = json.loads(path.read_text(encoding="utf-8"))
+    build["tiles"] = None
+    path.write_text(json.dumps(build), encoding="utf-8")
+    problems = deploy_check.deploy_problems(out, None)
+    assert [p for p in problems if "records no tiles" in p], problems
 
 
 def test_missing_build_json(site):
@@ -148,7 +213,36 @@ def test_the_public_values_are_in_build_json(site):
         "datalab_url": COMPLETE["datalab"]["url"],
         "impressum_url": COMPLETE["impressum_url"],
         "privacy_url": COMPLETE["privacy_url"],
+        "repo_url": COMPLETE["repo"]["url"],
+        "repo_file_url": COMPLETE["repo"]["file_url"],
     }
+
+
+def test_a_public_export_links_its_repo_paths_at_its_commit(site):
+    # M16 (R42): no page prints a repo path a reader cannot open; links pin the export's commit
+    out, _cfg = site
+    assert json.loads((out / "build.json").read_text())["commit_full"] == CLEAN_COMMIT
+    pages = {p: p.read_text(encoding="utf-8") for p in sorted(out.rglob("*.html"))}
+    assert all(bare_repo_paths(html) == [] for html in pages.values())
+    blob = f"https://forge.example.org/owner/velometer/blob/{CLEAN_COMMIT}/"
+    bezirke = pages[out / "city" / "berlin" / "bezirke" / "index.html"]
+    assert f'<a href="{blob}docs/review"><code>docs/review</code></a>' in bezirke
+    assert sum(html.count(blob) for html in pages.values()) > 0
+
+
+def test_deploy_check_fails_a_public_export_with_a_bare_repo_path(site):
+    # red-proof of the guard: the same export with the repo links taken out again
+    out, _cfg = site
+    link = re.compile(r'<a href="https://forge\.example\.org/[^"]*">(<code>[^<]*</code>)</a>')
+    page = out / "city" / "berlin" / "bezirke" / "index.html"
+    page.write_text(link.sub(r"\1", page.read_text(encoding="utf-8")), encoding="utf-8")
+    problems = deploy_check.deploy_problems(out, None)
+    assert any(
+        "city/berlin/bezirke/index.html" in p
+        and "not linked to the repo" in p
+        and "docs/review" in p
+        for p in problems
+    ), problems
 
 
 def test_a_public_export_is_judged_by_itself_not_todays_site_yaml(site):

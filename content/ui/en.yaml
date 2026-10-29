@@ -11,6 +11,7 @@
 fmt.na: n/a
 nav.lang_switch: Deutsch
 site.footer.attribution: 'Map data © <a href="{osm}">OpenStreetMap contributors, ODbL 1.0</a>'
+credit.boundaries: © EuroGeographics for the administrative boundaries
 site.footer.mapped_km: OSM mapped km, not built km (ADR 0006)
 site.footer.methodology: Methodology
 site.footer.csv_all: CSV (all cities)
@@ -349,6 +350,7 @@ table.last_day: Last day
 counts.data: Counter data
 page.counts.licence: licence
 page.counts.retrieved: retrieved {date}
+page.counts.computed: '; index and totals computed by velometer'
 page.counts.map_credit: 'Map: © <a href="{href}" rel="noopener noreferrer">OpenStreetMap contributors</a>.'
 page.counts.text_error: the counters text could not be loaded (see the server log)
 
@@ -502,7 +504,7 @@ tier.C: C protected lane
 tier.D: D painted lane
 tier.E: E cycle street / bus lane
 map.title: '{name} ({kind}): protected cycling tiers'
-map.footer: "Map data © OpenStreetMap contributors, ODbL 1.0 · OSM mapped km, not built km\nOSM {ts}, classifier {classifier}"
+map.footer: "Map data © OpenStreetMap contributors (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nOSM mapped km, not built km · {boundaries}\nOSM {ts}, classifier {classifier}"
 compare.group.all: All
 compare.group.pilot5: Pilot 5
 compare.group.nordic: Nordic
@@ -540,7 +542,7 @@ counts.any_base: each city's base year = 100
 counts.base_for: '{year} = 100 for {cities}'
 counts.covid_is: '{year} is the COVID year'
 counts.covid_column: '{year} (COVID year)'
-counts.attribution: 'Counter data, {city}: {source}, licence {licence}'
+counts.attribution: 'Counter data, {city}: {source}, licence {licence}; index and totals computed by velometer'
 unit.per_100k: "A+B mapped km per 100,000 residents (each city's {span}population, held for every year)"
 unit.ab_km: A+B mapped km, per side
 unit.tier_km: mapped km of tier {tier}, per side
@@ -689,7 +691,7 @@ js.counts.of: index of counts recorded at counter sites (or of their average dai
 js.counts.any_base: each city's base year = 100
 js.counts.base_for: '{year} = 100 for {cities}'
 js.counts.covid_is: '{year} is the COVID year'
-js.counts.attribution: 'Counter data, {city}: {source}, licence {licence}'
+js.counts.attribution: 'Counter data, {city}: {source}, licence {licence}; index and totals computed by velometer'
 js.counts.source_not_recorded: source not recorded
 js.counts.not_recorded: not recorded
 js.counts.index: Counter index
@@ -772,7 +774,7 @@ js.cite.commit: commit {commit}
 js.cite.attribution: Map data © OpenStreetMap contributors, ODbL 1.0
 js.cite.copy: Copy
 js.cite.copy_label: Copy {format}, {title}
-js.download.attribution: Map data © OpenStreetMap contributors, ODbL 1.0
+js.download.attribution: Map data © OpenStreetMap contributors (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)
 js.download.note: OSM mapped km, not built km
 js.download.snapshot: OSM {day}
 js.download.classifier: classifier {version}
@@ -786,6 +788,9 @@ js.download.no_table: This chart has no data table to download
 js.download.no_png: the canvas gave no PNG
 js.download.image_failed: the chart image could not be loaded
 js.map.osm_contributors: OpenStreetMap contributors
+js.map.boundaries: © EuroGeographics for the administrative boundaries
+js.map.basemap_credit: Protomaps, ESA WorldCover (CC BY 4.0)
+js.map.basemap_credit_build: Protomaps (build {build}), ESA WorldCover (CC BY 4.0)
 js.map.leaflet_title: A JavaScript library for interactive maps
 js.map.way: way {id}
 js.map.side: side

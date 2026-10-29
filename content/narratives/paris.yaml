@@ -36,7 +36,7 @@ sections:
         [@paris-opendata-lineaire-km]. It is dated to the start of each year; we read the October
         2026 map. It is also not independent of ours: the city extracts it from OSM, the map we
         read, so it cannot confirm or refute our km. Clean Cities' 822 km of protected
-        infrastructure (48% of the road network) exceeds everything we map in Paris across all tiers
+        infrastructure (48% of the road network) exceed everything mapped in Paris across all tiers
         [#rc-paris-cc_km]; Clean Cities took most cities' figures from the cities themselves
         [@cc2025-report]. QECIO, also measuring OSM, lands within +9.3% of our tracks.
 quotes:

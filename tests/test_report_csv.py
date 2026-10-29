@@ -10,10 +10,11 @@ from tests.report_fixture import (
     SPIKE_YEAR,
 )
 from tests.sqlite_util import committing
+from velometer import credits
 from velometer.cli import app
 from velometer.db import fetch_run_results
 from velometer.pipeline.measure import select_metric
-from velometer.report.csvexport import CSV_COLUMNS, to_csv
+from velometer.report.csvexport import BOUNDARIES, CSV_COLUMNS, to_csv
 from velometer.timeseries import Flag
 
 STAMP = "2026-10-02T00:00:00Z"
@@ -28,12 +29,10 @@ def test_csv_header_comments_columns_and_no_user_columns(fixture_db):
     _, cfg, conn, data = fixture_db
     text = to_csv(data.csv_rows(), "abc123", STAMP)
     lines = text.splitlines()
-    assert (
-        lines[0]
-        == "# Map data © OpenStreetMap contributors, ODbL 1.0 — OSM mapped km, not built km"
-    )
-    assert lines[1] == "# velometer abc123 generated 2026-10-02T00:00:00Z"
-    header = lines[2].split(",")
+    assert lines[0] == f"# {credits.OSM_NOTICE} — OSM mapped km, not built km"
+    assert lines[1] == BOUNDARIES
+    assert lines[2] == "# velometer abc123 generated 2026-10-02T00:00:00Z"
+    header = lines[3].split(",")
     assert header == CSV_COLUMNS and not {"uid", "user", "username"} & set(header)
     assert header[:3] == ["city_id", "boundary_kind", "label"] and header[-1] == "flags"
 
@@ -89,9 +88,10 @@ def test_cli_report_csv_stdout_and_out_file(fixture_db, tmp_path):
     args = ["report", "csv", "--db", str(db_path), "--config-dir", str(cfg)]
     res = CliRunner().invoke(app, [*args, "--city", "paris"])
     assert res.exit_code == 0, res.output
-    lines = res.output.splitlines()
-    assert lines[0].startswith("# Map data © OpenStreetMap contributors")
-    assert lines[1].startswith("# velometer ") and lines[1].endswith("Z")
+    comments = [ln for ln in res.output.splitlines() if ln.startswith("#")]
+    assert comments[0].startswith("# Map data © OpenStreetMap contributors")
+    assert "# Population: t" in comments  # the fixture runs' stored population source
+    assert comments[-1].startswith("# velometer ") and comments[-1].endswith("Z")
     assert {r["city_id"] for r in _parse(res.output)} == {"paris"}
     out = tmp_path / "all.csv"
     res = CliRunner().invoke(app, [*args, "--out", str(out)])

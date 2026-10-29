@@ -7,10 +7,12 @@ Missing data is a note on the page ("no run ...", "map not generated ..."), neve
 unknown city is a 404. Every page is server-rendered and readable without JavaScript (tables);
 charts are drawn by our own ES modules under /static/js from `/data/series.json`. The city page's
 tier map is the vendored Leaflet over the run's GeoJSON (`velometer report maps`); its background
-tiles come from the public OSM tile server, the one external host a page loads from (the user's
-decision, 2026-10-02). Every response carries a Content-Security-Policy that allows exactly that.
+is a Protomaps vector extract served beside the site (TILES_PATH, M16), drawn by the vendored
+protomaps-leaflet. No page loads anything from another host, and every response carries a
+Content-Security-Policy that allows exactly that.
 """
 
+import json
 import logging
 import re
 import sqlite3
@@ -40,7 +42,7 @@ from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import plans_pages, urls
+from velometer.app import plans_pages, repo_links, urls
 from velometer.app import story as story_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
@@ -109,11 +111,41 @@ GENERATED_NOTE = re.compile(r"\A(?:>[^\n]*\n)+\s*")
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
 GZIP_MIN_BYTES = 1024  # below this a gzip frame saves too little to be worth it
 GZIP_LEVEL = 5  # ~3x less CPU than 9 on the 15-20 MB FUA GeoJSON, ~5 % more bytes
-# The tile layer's class (app.css mutes it: OSM's orange/red roads clash with tiers B and D)
-TILE_CLASS = "tiermap-tiles"
-LINE_WEIGHT = 3  # px: tier lines stay readable over the tiles at zoom 16
-# The tier map's background and the links its attribution and popups point at.
-OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+LINE_WEIGHT = 3  # px: tier lines stay readable over the basemap at zoom 16
+# The maps' background: one PMTiles extract (tools/tiles.py), served beside the site at this path
+# under the base, never part of the export (export.SERVED_BESIDE); static/js/basemap.js draws it
+# and leaves the map without a background when it is missing. `velometer serve --tiles FILE`
+# serves it for the live app.
+TILES_PATH = "tiles/velometer.pmtiles"
+# What tools/tiles.py records beside the extract (`<file>.json`): the Protomaps build it was cut
+# from, its max zoom and sha256. The export writes it into build.json `tiles`; the maps' credit
+# names the build date (spec §4.3, legal review 1.7).
+TILES_INFO_KEYS = ("protomaps_build", "maxzoom", "sha256")
+
+
+def load_tiles_info(path: Path | None) -> dict | None:
+    """The tile sidecar at `path` (`protomaps_build`, `maxzoom`, `sha256`); None when `path` is
+    None or no file is there. A file that is there but malformed raises ValueError."""
+    if path is None or not Path(path).is_file():
+        return None
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{path}: not readable as JSON ({e})") from e
+    ok = (
+        isinstance(raw, dict)
+        and isinstance(raw.get("protomaps_build"), str)
+        and re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw["protomaps_build"])
+        and isinstance(raw.get("maxzoom"), int)
+        and isinstance(raw.get("sha256"), str)
+        and re.fullmatch(r"[0-9a-f]{64}", raw["sha256"])
+    )
+    if not ok:
+        raise ValueError(f"{path}: not a tile sidecar ({', '.join(TILES_INFO_KEYS)})")
+    return {k: raw[k] for k in TILES_INFO_KEYS}
+
+
+# The links the maps' attribution and popups point at.
 OSM_LINKS = {
     "copyright": "https://www.openstreetmap.org/copyright",
     "way": "https://www.openstreetmap.org/way/",
@@ -130,9 +162,10 @@ STEP_COMPARE = {
     "jumps": {"c": "flagged", "m": "ab_km", "view": "small", "table": "jumps", "ring": "km_jump"},
     "bezirke": {"href": f"/city/{STORY_CITY}/bezirke"},
 }
-# No inline script or style, no third-party host except the OSM tiles (images), no framing.
+# No inline script or style, no host but the page's own (the basemap's byte ranges are
+# connect-src 'self'), no framing.
 CSP = (
-    "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
+    "default-src 'self'; img-src 'self' data:; "
     "style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
     "base-uri 'none'; form-action 'self'"
 )
@@ -318,6 +351,19 @@ def methodology_html(text: str, english: str) -> Markup:
     return _md(text, ids=[slug for _, slug in en] if same else [])
 
 
+# the methodology's sentence that links the repository (M16, legal review 1.1c), written as a
+# comment so a page without `repo` drops it: `<!-- repo: ... [...]({repo_url}) ... -->`
+REPO_MARK = re.compile(r"<!-- repo: (.+?) -->")
+
+
+def repo_sentence(text: str, repo) -> str:
+    """`text` with its repo sentence shown, linking `repo.url`; unchanged without `repo` (the
+    markdown then drops the comment)."""
+    if repo is None:
+        return text
+    return REPO_MARK.sub(lambda m: " " + m.group(1).replace("{repo_url}", repo.url), text)
+
+
 def _md(text: str, ids: list[str] | None = None) -> Markup:
     extensions = ["tables", "fenced_code", _EscapeHtml()] + ([_Ids(ids)] if ids else [])
     html = markdown.markdown(text, extensions=extensions)
@@ -453,10 +499,19 @@ def create_app(
     plans_data_dir: Path = Path("data") / "plans",
     base_path: str = "/",
     static_edition: dict | None = None,
+    tiles_file: Path | None = None,
+    repo_root: Path = repo_links.ROOT,
+    repo_paths: frozenset[str] | None = None,
+    tiles_info: dict | None = None,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
-    for the static export (a footer line), None for the live app."""
+    for the static export (a footer line), None for the live app. `tiles_file`, when given, is
+    served at TILES_PATH with byte ranges (`velometer serve --tiles`); without it the maps go
+    without a background. `repo_root` and `repo_paths` (its tracked files and directories, default
+    `git ls-files` there) are the repo the pages link when site.yaml names one (M16). `tiles_info`
+    (`load_tiles_info`) gives the maps' credit its Protomaps build date; with `tiles_file` and no
+    `tiles_info`, the sidecar beside the file is read."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -473,12 +528,33 @@ def create_app(
         lang: urls.make_u(app.state.base_path, lang) for lang in LANGS
     }
     data_u = urls.make_data_u(app.state.base_path)
+    tiles_url = app.state.base_path + TILES_PATH  # the maps' configs carry it as it is
+    if tiles_info is None and tiles_file is not None:
+        tiles_info = load_tiles_info(Path(tiles_file).with_name(Path(tiles_file).name + ".json"))
+    tiles_build = tiles_info["protomaps_build"] if tiles_info else None  # the credit's date
+    if tiles_file is not None:
+        tiles = Path(tiles_file)
+
+        # FileResponse answers Range with 206, which GZipMiddleware leaves as it is (a compressed
+        # body would not hold the bytes at the offsets asked for)
+        async def tiles_route() -> FileResponse:
+            return FileResponse(tiles, media_type="application/vnd.pmtiles")
+
+        app.add_api_route("/" + TILES_PATH, tiles_route, methods=["GET", "HEAD"])
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
     app.state.site = load_site(config_dir)
     # a table row carries a city's id and name, not the city: the config says which language the
     # name is in (M14)
     city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
     commit = static_edition["commit"] if static_edition else short_commit(git_commit())
+    # repo paths link the public repository at the commit the pages are built from (M16, R42):
+    # the export's commit, else the checkout's HEAD; None (plain `<code>`) with `repo` unset
+    links = repo_links.make_links(
+        app.state.site,
+        static_edition.get("commit_full") if static_edition else git_commit(),
+        repo_root,
+        repo_paths,
+    )
 
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""
@@ -516,6 +592,8 @@ def create_app(
         env.globals["city_row_name"] = partial(city_row_name, city_configs, lang=lang)
         # a data reference's label: always the English one, in `lang="en"` on a German page
         env.globals["data_ref_label"] = partial(data_ref_label, lang=lang)
+        # its file line, a link to the repo at its heading when site.yaml names the repo (M16)
+        env.globals["data_ref_file"] = partial(repo_links.data_ref_file, links)
         # a source's publisher or title: on a German page its German sibling, original in `lang`
         env.globals["source_field"] = partial(source_field, lang=lang)
         # chart downloads (M11): the light/dark colour tokens, so a dark page can be drawn light,
@@ -546,9 +624,11 @@ def create_app(
         _respond = templates.TemplateResponse
 
         def respond(*args, **kwargs):
-            """Every rendered page, with its sideways-scrolling regions keyboard-reachable."""
+            """Every rendered page, with its sideways-scrolling regions keyboard-reachable and
+            its repo paths linked (M16)."""
             resp = _respond(*args, **kwargs)
-            resp.body = name_scroll_regions(resp.body.decode(), lang).encode()
+            body = name_scroll_regions(resp.body.decode(), lang)
+            resp.body = (links.link_code(body) if links else body).encode()
             resp.headers["content-length"] = str(len(resp.body))
             return resp
 
@@ -776,7 +856,7 @@ def create_app(
 
     async def index(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
 
         def build() -> dict:
@@ -844,7 +924,7 @@ def create_app(
     @app.get("/data/series.json")
     async def series_json(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         return JSONResponse(payload)
 
@@ -1038,7 +1118,7 @@ def create_app(
                 None
                 if ctx["site_map"] is None
                 else ctx["site_map"]
-                | {"tiles": OSM_TILES, "tile_class": TILE_CLASS, "links": OSM_LINKS}
+                | {"tiles": tiles_url, "tiles_build": tiles_build, "links": OSM_LINKS}
             )
             return ctx | {"doc": doc, "text_error": text_error, "config_error": cfg_error}
 
@@ -1088,7 +1168,7 @@ def create_app(
 
     async def compare(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         known_ids = list(payload["cities"])
         state = cmp.parse_compare(request.url.query, known_ids, cmp.METRICS)
@@ -1220,7 +1300,7 @@ def create_app(
 
     async def stories(request: Request, data: Data):
         payload = cache.get(
-            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS)
+            "series", fp(request), lambda: series_payload(data, docs_dir / EXPLANATIONS, links)
         )
         narratives, sources, _, errors, fallback = content_of(request)
         error = content_error(errors, "combined")
@@ -1467,8 +1547,8 @@ def create_app(
         yearly = years + ([by_label[ts.CURRENT]] if ts.CURRENT in by_label else [])
         # no colours: the tier and outline colours are stylesheet tokens map.js reads (both themes)
         tiermap = {
-            "tiles": OSM_TILES,
-            "tile_class": TILE_CLASS,
+            "tiles": tiles_url,
+            "tiles_build": tiles_build,
             "weight": LINE_WEIGHT,
             "links": OSM_LINKS,
             "labels": {tier: i18n.t(lang, f"tier.{tier}") for tier in charts.TIER_LABEL},
@@ -1616,8 +1696,8 @@ def create_app(
             "change_table": table,
             "change_map": {
                 "url": data_u(f"/maps/{stem}.geojson"),
-                "tiles": OSM_TILES,
-                "tile_class": TILE_CLASS,
+                "tiles": tiles_url,
+                "tiles_build": tiles_build,
                 "weight": LINE_WEIGHT,
                 "links": OSM_LINKS,
                 # the drawn categories, in key order; their colours are the --change-<category>
@@ -1634,7 +1714,9 @@ def create_app(
     def methodology_page(request: Request, data: ReportData, **ctx) -> HTMLResponse:
         path = docs_dir / METHODOLOGY[request.state.lang]
         try:
-            text = GENERATED_NOTE.sub("", path.read_text(encoding="utf-8"))
+            text = repo_sentence(
+                GENERATED_NOTE.sub("", path.read_text(encoding="utf-8")), app.state.site.repo
+            )
             english = docs_dir / METHODOLOGY["en"]
             body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:
@@ -1681,19 +1763,23 @@ def create_app(
         return FileResponse(map_file(data, name, "geojson"), media_type="application/geo+json")
 
     def csv_response(request: Request, data: ReportData, city_id: str | None) -> Response:
-        def build() -> str:
+        def build() -> tuple[str, list[str]]:
             if city_id is not None:
                 known(data, city_id)
             try:
-                return csv_table(data.csv_rows(city_id))
+                rows = data.csv_rows(city_id)
+                return csv_table(rows), data.population_sources(rows)
             except sqlite3.Error as e:
                 raise HTTPException(503, f"database error: {e}") from e
 
-        # the table is cached; the commit and the generated time are of this request
-        table = cache.get(f"csv:{city_id or 'all'}", fp(request), build)
+        # the table and its population sources are cached; the commit and the generated time
+        # are of this request
+        table, sources = cache.get(f"csv:{city_id or 'all'}", fp(request), build)
         text = (
             csv_preamble(
-                short_commit(git_commit()), datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+                short_commit(git_commit()),
+                datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                sources,
             )
             + table
         )

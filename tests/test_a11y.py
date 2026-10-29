@@ -114,13 +114,14 @@ def test_text_exemptions_are_real_rules():
 
 
 # where --panel is a ground. A new panel ground must be added here, and NOT_ON_PANEL re-argued
-PANEL_GROUNDS = {"pre", ".tiermap", ".flag-item .rule", ".counts-table tr.covid th",
-                 ".counts-table tr.covid td"}  # fmt: skip
+PANEL_GROUNDS = {"pre", ".tiermap", ".tiermap.leaflet-container", ".flag-item .rule",
+                 ".counts-table tr.covid th", ".counts-table tr.covid td"}  # fmt: skip
 # graphics that never sit on --panel. Of the grounds above, pre, the flag rule chip and the COVID
-# rows hold text only; .tiermap is the Leaflet container, where tier lines, the boundary outline
-# and the counter markers are drawn over the OSM tile layer that covers it (the panel shows only
-# until the tiles load). Series and tier colours are drawn in chart cards (.panel, .sm-card,
-# .chart: --surface) and on maps, never on a --panel ground
+# rows hold text only; .tiermap is the Leaflet container (.tiermap.leaflet-container outranks
+# leaflet.css's own ground), where tier lines, the boundary outline and the counter markers are
+# drawn over the basemap that covers it (the panel shows until the basemap draws, or for good when
+# its file is missing: tests/test_m16_basemap.py). Series and tier colours are drawn in chart
+# cards (.panel, .sm-card, .chart: --surface) and on maps, never on a --panel ground
 NOT_ON_PANEL = set(SERIES) | set(TIERS) | {"--outline", "--marker-fill"}
 
 
@@ -342,22 +343,19 @@ def test_the_map_png_plate_is_a_light_ground_with_a_border():
         assert contrast(_css_tokens(_stylesheet(), theme)["--plate"], "#000000") > 12, theme
 
 
-def test_the_dark_theme_darkens_the_tiles_only():
+def test_the_dark_theme_filters_no_map_layer():
+    """M16 (review focus 5): the basemap has a dark flavour of its own (js/basemap.js), so no
+    dark rule inverts or filters any part of a map: no double inversion of the vector tiles."""
     rules = _dark_rules(_stylesheet())
-    tiles = [d for s, d in rules if any("tiermap-tiles" in x for x in s)]
-    assert tiles and "invert" in tiles[0].get("filter", "")
-    assert not any("leaflet-overlay-pane" in x or "canvas" in x for s, _ in rules for x in s)
-    # the counter markers (pane and icons) keep their own colours: no dark rule may touch them
-    assert not any(
-        "leaflet-marker-pane" in x or "leaflet-marker-icon" in x for s, _ in rules for x in s
-    )
-    assert not any("img" in x for s, _ in rules for x in s if "tiermap-tiles" in x)  # no seams
+    assert not any("filter" in d for _, d in rules)
+    assert not any("leaflet" in x or "tiermap" in x or "canvas" in x for s, _ in rules for x in s)
 
 
-def test_every_map_tile_layer_uses_the_dark_filtered_class():
+def test_every_map_draws_the_vector_basemap():
     static = STATIC
     for js in ("map.js", "changemap.js", "countermap.js"):
-        assert "className: cfg.tile_class" in (static / js).read_text(), js
+        text = (static / js).read_text()
+        assert "addBasemap(map, cfg)" in text and "L.tileLayer" not in text, js
 
 
 def test_key_swatches_have_a_css_fill_without_js():

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{# Legal review docs/review/m16-legal.md 4.1-4.5 (fix F9): one variant per operator form, the
+   table of 4.1. Not stated, because none applies: Aufsichtsbehörde and regulated professions
+   (§ 5 Abs. 1 Nr. 3, 5 DDG); a company's capital (only if stated anywhere, then with the
+   outstanding Einlagen) and a liquidation note (only if in Abwicklung). #}
+{% block title %}Impressum · Zählwerk Berlin Datalab{% endblock %}
+{% block main %}
+{% set h = "h3" if not decided else "h2" %}
+    <article class="legal">
+      <h1>Impressum</h1>
+{% if not decided %}
+      <p class="draft-note">Entwurf: Die Betreiberform ist noch nicht entschieden. Unten stehen alle drei Varianten; veröffentlicht wird nur eine. Werte in doppelten eckigen Klammern fehlen noch.</p>
+{% endif %}
+{% for form, label in forms %}
+      <section class="variant" data-form="{{ form }}"{% if not decided %} aria-labelledby="v-{{ form }}"{% endif %}>
+{% if not decided %}
+        <h2 class="variant-h" id="v-{{ form }}">Variante: {{ label }}</h2>
+{% endif %}
+        <p>Angaben nach § 5 DDG und § 18 Abs. 1 MStV</p>
+        <{{ h }}>Anbieter</{{ h }}>
+{% if form == "person" %}
+        {# a c/o or Impressum-service address only after a lawyer's yes (legal review 4.3, Q6) #}
+        <p>{{ f.v("name", "Vor- und Nachname") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift; eine c/o-Anschrift nur nach anwaltlicher Freigabe (Q6)") }}{% endif %}</p>
+{% elif form == "verein" %}
+        <p>{{ f.v("name", "Name des Vereins mit „e. V.“") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift des Vereinssitzes") }}{% endif %}</p>
+        <dl>
+          <dt>Rechtsform</dt><dd>eingetragener Verein</dd>
+          <dt>Vertretungsberechtigt</dt><dd>Vorstand nach § 26 BGB: {{ f.v("representative", "Namen des Vorstands, wie eingetragen") }}</dd>
+          <dt>Registereintrag</dt><dd>{{ f.v("register", "Vereinsregister, Amtsgericht, VR-Nummer") }}</dd>
+        </dl>
+{% else %}
+        <p>{{ f.v("name", "Firma mit Rechtsform") }}{% if f.shown("address") %}<br>
+        {{ f.v("address", "Anschrift des Sitzes") }}{% endif %}</p>
+        <dl>
+          <dt>Vertretungsberechtigt</dt><dd>Geschäftsführung: {{ f.v("representative", "Namen der Geschäftsführer") }}</dd>
+          <dt>Registereintrag</dt><dd>{{ f.v("register", "Handelsregister, Amtsgericht, HRB-Nummer") }}</dd>
+        </dl>
+{% endif %}
+        <{{ h }}>Kontakt</{{ h }}>
+        <p>E-Mail: {{ f.v("email", "E-Mail-Adresse") }}
+{% if f.shown("phone") %}
+        <br>Telefon: {{ f.v("phone", "Telefonnummer, optional (Q7)") }}
+{% endif %}
+        </p>
+{% if f.shown("vat") %}
+        <{{ h }}>Umsatzsteuer</{{ h }}>
+        <p>Umsatzsteuer-Identifikationsnummer nach § 27a UStG oder Wirtschafts-Identifikationsnummer: {{ f.v("vat", "USt-IdNr. oder W-IdNr., nur falls vorhanden") }}</p>
+{% endif %}
+        <{{ h }}>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</{{ h }}>
+        <p>{{ f.v("responsible", "Name der verantwortlichen Person, ständiger Aufenthalt in Deutschland") }}</p>
+      </section>
+{% endfor %}
+      <section class="shared">
+        <h2>Geltungsbereich</h2>
+        <p>Diese Angaben gelten für {{ domain }} und velometer.{{ domain }}.</p>
+        <h2>Schriften</h2>
+        <p>Die Schriften Martian Mono und Public Sans stehen unter der SIL Open Font License 1.1 und werden von diesem Server ausgeliefert. Lizenztexte: <a href="/static/fonts/OFL-MartianMono.txt">Martian Mono</a>, <a href="/static/fonts/OFL-PublicSans.txt">Public Sans</a>.</p>
+      </section>
+    </article>
+{% endblock %}

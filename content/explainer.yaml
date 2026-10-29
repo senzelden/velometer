@@ -56,10 +56,10 @@ sections:
     heading: How length is measured
     paragraphs:
       - >-
-        We count each side of a road: a street with a one-way track on both sides contributes
-        twice its length. Clean Cities counts each road once in the road network it divides by,
-        however many lanes or directions it has, quoted below [@cc2025-annexes], but gives no
-        rule for its cycling km. QECIO counts one-way infrastructure at half length
+        We count each side of a road: a street with a one-way track on both sides contributes twice
+        its length. Clean Cities counts each road once in the road network it divides by, however
+        many lanes or directions it has, quoted below [@cc2025-annexes]; for its cycling km we found
+        no rule in the report or its annexes. QECIO counts one-way infrastructure at half length
         [@qecio-methodology]. Vienna's own network total counts facilities on both sides of a
         street, as we do [@vienna-radverkehrsnetz-fakten]. On two-sided streets the centreline
         roughly halves our km.
@@ -89,11 +89,11 @@ sections:
     heading: Where
     paragraphs:
       - >-
-        We measure the city proper (LAU) and, where it tells a different story, the functional
-        urban area. Clean Cities refers to the municipality [@cc2025-report]. QECIO reports by
-        NUTS3 region and clips each way at the region's boundary, quoted below
-        [@qecio-methodology]. BikeNetKit cuts with a city boundary file whose source it does
-        not state [@bikenetkit-export-notebook].
+        We measure the city proper (LAU) and, where it tells a different story, the functional urban
+        area. Clean Cities refers to the municipality [@cc2025-report]. QECIO reports by NUTS3
+        region and clips each way at the region's boundary, quoted below [@qecio-methodology].
+        BikeNetKit cuts with a city boundary file whose source we did not find stated
+        [@bikenetkit-export-notebook].
       - >-
         Where the NUTS3 region is the city, the main roads agree closely: 2,153 km in ours against
         2,150 km in theirs for Berlin [#recon-berlin], and −0.6% for Warsaw [#recon-warsaw]. Where
@@ -110,13 +110,13 @@ sections:
         applied [@cc2025-annexes]. QECIO and BikeNetKit read OpenStreetMap with their own rules
         [@qecio-methodology] [@bikenetkit-zenodo].
       - >-
-        A figure derived from OpenStreetMap cannot confirm ours. Paris's official cycle-route
-        series is an extract of OpenStreetMap, quoted below [@paris-opendata-lineaire-km], the
-        map we read, so a match would only show the same source twice. Strasbourg's open data
-        are drawn on the city's own road centreline network [@strasbourg-opendata-bnac], a
-        measure independent of ours. Clean Cities' 822 km for Paris exceeds everything we map
-        there across all tiers and cannot be reproduced from OpenStreetMap
-        [#recon-paris-cc-km].
+        A figure derived from OpenStreetMap cannot confirm ours. Paris's official cycle-route series
+        is an extract of OpenStreetMap, quoted below [@paris-opendata-lineaire-km], the map we read,
+        so a match would only show the same source twice. Strasbourg's open data are drawn on the
+        city's own road centreline network [@strasbourg-opendata-bnac], a measure independent of
+        ours. Clean Cities' 822 km for Paris exceed everything mapped there in OpenStreetMap across
+        all tiers, so we cannot reproduce the figure from OpenStreetMap [#recon-paris-cc-km]; Clean
+        Cities took most cities' figures from the cities themselves.
 quotes:
   - {excerpt: cc2025-annexes/included, after: 0}
   - {excerpt: cc2025-cycling-table/vienna-why, after: 1}
