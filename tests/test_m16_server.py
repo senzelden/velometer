@@ -1247,7 +1247,10 @@ def test_golive_a_missing_datalab_config_is_open(tmp_path):
 def test_golive_the_real_review_files_parse(tmp_path):
     """The repo's own files are in the form the parsers read: every row and verdict is seen."""
     legal = (ROOT / "docs" / "review" / "m16-legal.md").read_text("utf-8")
-    assert not [i for i in srv._legal_open(legal) if "decision for the user is open" not in i]
+    exists = lambda sha: srv._commit_exists(ROOT, sha)  # noqa: E731
+    assert not [
+        i for i in srv._legal_open(legal, exists) if "decision for the user is open" not in i
+    ]
     press = (ROOT / "docs" / "review" / "m16-press.md").read_text("utf-8")
     assert all(i.startswith("press row ") for i in srv._press_open(press))
 
@@ -1645,3 +1648,63 @@ def test_a_host_that_is_no_address_or_name_stops_every_command(deps, host):
 @pytest.mark.parametrize("host", ["203.0.113.10", "2001:db8::1", "velometer.example.org", "vm"])
 def test_addresses_and_host_names_are_hosts(host):
     assert srv.check_host(host) == host
+
+
+# --- the legal review's fixes and contents (final review M3, M4) --------------------------------
+
+
+def _legal_with(tmp_path: Path, verdict: str, table: str | None = None) -> tuple[Path, Path]:
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    legal = root / "docs" / "review" / "m16-legal.md"
+    text = legal.read_text("utf-8").replace(
+        "### 4.7 Other\n\n**Verdict:** ok", f"### 4.7 Other\n\n**Verdict:** {verdict}"
+    )
+    if table is not None:
+        text = text.replace("| 4.7 | Other | ok |", f"| 4.7 | Other | {table} |")
+    legal.write_text(text, "utf-8")
+    return root, datalab
+
+
+def test_golive_a_fix_must_name_a_commit_that_exists(tmp_path, monkeypatch):
+    """Spec §4.1: each fix records its commit; a fix without one counted as closed (M3)."""
+    asked = []
+
+    def exists(root, sha):
+        asked.append(sha)
+        return sha == "abcdef1"
+
+    monkeypatch.setattr(srv.DEPS, "commit_exists", exists)
+    root, datalab = _legal_with(tmp_path, "fix in M16 (fixed abcdef1)", "fix in M16")
+    assert srv.golive_items(root, datalab) == []
+    assert asked == ["abcdef1"]
+    root, datalab = _legal_with(tmp_path / "b", "fix in M16", "fix in M16")
+    (item,) = srv.golive_items(root, datalab)
+    assert "names no fixing commit" in item
+    root, datalab = _legal_with(tmp_path / "c", "fix in M16 (fixed abcdef1, 1234567)", "fix in M16")
+    (item,) = srv.golive_items(root, datalab)
+    assert "fixing commit 1234567 is not in the repository" in item
+    root, datalab = _legal_with(tmp_path / "d", "ok (fixed abcdef1)")
+    (item,) = srv.golive_items(root, datalab)
+    assert "only a fix names fixing commits" in item
+
+
+def test_the_commit_check_asks_git(tmp_path):
+    head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True,
+                          text=True, check=True).stdout.strip()  # fmt: skip
+    assert srv._commit_exists(ROOT, head[:7])
+    assert not srv._commit_exists(ROOT, "0000000")
+    assert not srv._commit_exists(tmp_path, head[:7])  # not a repository
+
+
+def test_golive_the_contents_table_must_agree_with_each_section(tmp_path):
+    """M4: a section that says ok while the table says otherwise (or the reverse) is open."""
+    root, datalab = _legal_with(tmp_path, "ok", "decision for the user")
+    (item,) = srv.golive_items(root, datalab)
+    assert "contents row §4.7 says 'decision for the user', its section 'ok'" in item
+    root, datalab = golive_fixture(tmp_path / "b", open_items=False)
+    legal = root / "docs" / "review" / "m16-legal.md"
+    legal.write_text(
+        legal.read_text("utf-8").replace("| 4.7 | Other |", "| 4.8 | Other |"), "utf-8"
+    )
+    items = srv.golive_items(root, datalab)
+    assert any("§4.8 has no section" in i for i in items), items

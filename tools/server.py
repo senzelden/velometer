@@ -177,6 +177,9 @@ class Deps:
     check_site: Callable[[Path], list[str]] = _check_site
     git_commit: Callable[[], str] = _git_commit
     git_dirty: Callable[[], bool] = _git_dirty
+    commit_exists: Callable[[Path, str], bool] = field(
+        default=lambda root, sha: _commit_exists(root, sha)
+    )
 
 
 DEPS = Deps()
@@ -866,9 +869,12 @@ def stats(host: str = _host_option(), user: str = typer.Option(USER, "--user")) 
 VERDICTS = ("ok", "fix in M16", "decision for the user", "question for a lawyer")
 VERDICT_LINE = re.compile(r"\*\*Verdict:\*\* (.*)")
 VERDICT_VALUE = re.compile(
-    "(" + "|".join(map(re.escape, VERDICTS)) + r")( \(decided \d{4}-\d{2}-\d{2}: [^)]+\))?",
+    "(" + "|".join(map(re.escape, VERDICTS)) + r")( \(decided \d{4}-\d{2}-\d{2}: [^)]+\))?"
+    r"( \(fixed ([0-9a-f]{7,40}(?:, [0-9a-f]{7,40})*)\))?",
     re.ASCII,
 )
+# Spec §4.1: a `fix in M16` topic names the commit(s) that fixed it: ` (fixed <sha>[, <sha>…])`
+# (final review M3); golive-check asks git that each one exists.
 # A line that labels a verdict in any spelling ("Verdict:", "**Verdict**:", "- **Verdict:**",
 # "VERDICT -"): it must be the exact P3 form, or it counts as open. Prose that merely mentions
 # verdicts ("Verdicts (ruling P3)", "one verdict each", a table header) is no label.
@@ -877,11 +883,22 @@ CONTENTS_HEADER = re.compile(r"(?i)^\|?\s*§\s*\|.*\|\s*verdict\s*\|?\s*$")
 PRESS_STATUSES = ("open", "reviewed")
 
 
-def _legal_open(text: str) -> list[str]:
+def _commit_exists(root: Path, sha: str) -> bool:
+    r = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "-e", f"{sha}^{{commit}}"],
+        stdin=subprocess.DEVNULL, capture_output=True,
+    )  # fmt: skip
+    return r.returncode == 0
+
+
+def _legal_open(text: str, commit_exists: Callable[[str], bool] = lambda sha: False) -> list[str]:
     """Open items in m16-legal.md, failing closed: every verdict label must be the exact P3
-    form with a known value; a user decision is closed only by `(decided YYYY-MM-DD: …)`; there
-    must be at least one verdict, a contents table, and as many verdicts as it has topics."""
+    form with a known value; a user decision is closed only by `(decided YYYY-MM-DD: …)`; a fix
+    only by `(fixed <sha>, …)` naming commits that exist (`commit_exists`); there must be at least
+    one verdict, a contents table with as many topics as there are verdicts, and each topic's
+    verdict in the table must be its section's."""
     items, heading, verdicts = [], "(no section)", 0
+    by_section: dict[str, str] = {}
     lines = text.splitlines()
     for n, line in enumerate(lines, 1):
         if line.startswith("#"):
@@ -891,21 +908,47 @@ def _legal_open(text: str) -> list[str]:
         if m:
             verdicts += 1
             v = VERDICT_VALUE.fullmatch(m.group(1))
+            if v:
+                by_section[heading.split(" ", 1)[0].rstrip(".")] = v.group(1)
             if not v:
                 items.append(f"m16-legal.md:{n} §{heading}: unknown verdict {m.group(1)!r}")
             elif v.group(2) and v.group(1) != "decision for the user":
                 items.append(f"m16-legal.md:{n} §{heading}: only a user decision is decided")
+            elif v.group(3) and v.group(1) != "fix in M16":
+                items.append(f"m16-legal.md:{n} §{heading}: only a fix names fixing commits")
             elif v.group(1) == "decision for the user" and not v.group(2):
                 items.append(f"m16-legal.md §{heading}: decision for the user is open")
+            elif v.group(1) == "fix in M16" and not v.group(3):
+                items.append(
+                    f"m16-legal.md:{n} §{heading}: fix in M16 names no fixing commit "
+                    "(` (fixed <sha>)` on the verdict line)"
+                )
+            elif v.group(3):
+                items += [
+                    f"m16-legal.md:{n} §{heading}: fixing commit {sha} is not in the repository"
+                    for sha in v.group(4).split(", ")
+                    if not commit_exists(sha)
+                ]
         elif VERDICT_LABEL.search(line) and not line.lstrip().startswith("|"):
             items.append(f"m16-legal.md:{n} §{heading}: verdict line not in the P3 form")
     if verdicts == 0:
         items.append("m16-legal.md: no verdict line found (`**Verdict:** …`)")
-    topics = _contents_rows(lines)
-    if topics is None:
+    rows = _contents_rows(lines)
+    if rows is None:
         items.append("m16-legal.md: no contents table (`| § | Topic | Verdict |`) to count against")
-    elif topics != verdicts:
-        items.append(f"m16-legal.md: {topics} topics in the contents but {verdicts} verdict lines")
+        return items
+    if len(rows) != verdicts:
+        items.append(
+            f"m16-legal.md: {len(rows)} topics in the contents but {verdicts} verdict lines"
+        )
+    for section, verdict in rows:
+        found = by_section.get(section)
+        if found is None:
+            items.append(f"m16-legal.md: contents row §{section} has no section with a verdict")
+        elif found != verdict:
+            items.append(
+                f"m16-legal.md: contents row §{section} says {verdict!r}, its section {found!r}"
+            )
     return items
 
 
@@ -942,14 +985,17 @@ def golive_waivers(root: Path) -> list[str]:
     return [f"operator.{k} ({why}, m16-legal.md)" for k, why in _legal_waivers(text)[0].items()]
 
 
-def _contents_rows(lines: list[str]) -> int | None:
+def _contents_rows(lines: list[str]) -> list[tuple[str, str]] | None:
+    """The contents table's rows as (§, verdict), the verdict being its last cell; None when
+    there is no table."""
     for i, line in enumerate(lines):
         if CONTENTS_HEADER.match(line.strip()):
-            rows = 0
+            rows = []
             for row in lines[i + 2 :]:
                 if not row.strip():
                     break
-                rows += 1
+                cells = _cells(row)
+                rows.append((cells[0], cells[-1]))
             return rows
     return None
 
@@ -1052,7 +1098,7 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
                 "(a stale build); build it again"
             )
     if legal is not None:
-        items += _legal_open(legal)
+        items += _legal_open(legal, lambda sha: DEPS.commit_exists(root, sha))
     press = _read(review / "m16-press.md", items)
     if press is not None:
         items += _press_open(press)

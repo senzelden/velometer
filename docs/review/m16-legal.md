@@ -15,6 +15,8 @@ This review is not legal advice. It is a builder's reading of primary sources, w
   only documentation commits since that export, so it shows what the code produces today.
 - Verdicts (ruling P3): `ok` / `fix in M16` / `decision for the user` / `question for a lawyer`.
   A decided user decision gets ` (decided YYYY-MM-DD: …)` appended to its verdict line.
+  A fix gets ` (fixed <commit>[, <commit>…])`, naming the commits that fixed it (spec §4.1);
+  `golive-check` asks git that each exists (final review M3).
 
 ## How the sources were read
 
@@ -180,7 +182,7 @@ static media: "The URL to openstreetmap.org/copyright must be printed out."
   (`content/ui/en.yaml:505`, `de.yaml:496`), with no printed URL.
 - `data/series.json`: no notice.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed ba1a42a)
 
 *Fix (Task 2).* One notice text for every download, carrying both URIs. Suggested:
 `Map data © OpenStreetMap contributors (https://www.openstreetmap.org/copyright), ODbL 1.0
@@ -246,7 +248,7 @@ commercial use. The way out is ODbL §4.5 a: "You are not required to license Co
 under this License if You incorporate this Database or a Derivative Database in the collection". So
 the file must say that the `boundary` member is GISCO data under GISCO's terms and not under ODbL.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed ba1a42a, c134a39)
 
 *Fix (Task 2, kept by Task 5 per ruling P1).* Use the exact notice. EN: `© EuroGeographics for the
 administrative boundaries`; DE: `© EuroGeographics bezüglich der Verwaltungsgrenzen`. **The plan's
@@ -307,7 +309,7 @@ city's population source, with URL for INSEE and INE (3 pages per term). The CSV
 `population_value` and the derived km per 100,000 residents, but 0 of 23 CSVs name a population
 source. The site shows no Eurostat non-responsibility line, although we derive per-capita figures.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed ba1a42a)
 
 *Fix (Task 2).*
 - The CSV preamble names the population source of the rows it holds, not only "Eurostat". For
@@ -365,7 +367,7 @@ the publisher, links the dataset and the licence, and gives the retrieval date. 
 What is shown is an index and totals computed by velometer: modified material. The credit line does
 not say so, and only the surrounding prose ("sets an index of it") implies it.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed ba1a42a)
 
 *Fix (Task 2).* Append to the counter credit, in both catalogues (`content/ui/*.yaml`,
 `counts.attribution`, `js.counts.attribution`, and the template string used in `counts.html:55`):
@@ -411,7 +413,7 @@ code repository https://github.com/BikeNetKit/dataexport is AGPL-3.0 (GitHub lic
 the DOI link (51 pages), and the page footer carries the OSM credit. ADR 0008 says: "BikeNetKit
 (Zenodo 22271229) is also ODbL". The record does not state that.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed ba1a42a)
 
 *Fix (Task 2, ADR 0008).* Reword to: "BikeNetKit (Zenodo 22271229) states no licence; its files are
 OSM extracts and therefore under ODbL by share-alike. We use single figures from it, cited with the
@@ -437,7 +439,7 @@ DOI." No change on the site.
 *Our state.* Not built yet (Tasks 4 and 5). "Protomaps" appears in 0 exported files. The extract will
 be served at `/tiles/velometer.pmtiles` and is therefore downloadable.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed c134a39, 2e521d4)
 
 *Fix (Task 5).*
 - The map credit names "© OpenStreetMap contributors" (linked to openstreetmap.org/copyright) and
@@ -446,6 +448,11 @@ be served at `/tiles/velometer.pmtiles` and is therefore downloadable.
   Recommended: do not draw it. This must be checked in the flavour used, not assumed.
 - The extract is served only for our own maps and is not offered as a tile service under the
   Protomaps name. `build.json` records the build date.
+
+*Done.* c134a39: the credit, `landcover` never drawn and credited anyway (ruling R11), the extract
+served for our maps only. 2e521d4: `tools/tiles.py` writes the extract's sidecar (Protomaps build,
+maxzoom, sha256), the export records it in `build.json` `tiles`, the map credit names the build
+date, and a public deploy-check refuses an export without it (final review I3).
 
 ### 1.8 protomaps-leaflet and Leaflet (code)
 
@@ -459,7 +466,7 @@ distribution." Leaflet is BSD-2-Clause, the repo's own copy at
 *Our state.* Leaflet: `leaflet.js` keeps its `@preserve` header, and `leaflet.LICENSE` is exported at
 `static/vendor/leaflet.LICENSE`. protomaps-leaflet is not vendored yet.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed c134a39)
 
 *Fix (Task 5).* Vendor `protomaps-leaflet.LICENSE` beside the bundle, export it, keep any header
 comment in the minified file, and add the entry in `static/vendor/VERSIONS`. ADR 0008 (Task 2) names
@@ -486,7 +493,7 @@ unless explicit written permission is granted".
 (`…/scratchpad/datalab/datalab-entwuerfe.html`: `fonts.googleapis.com`, `fonts.gstatic.com`).
 Nothing is built yet (Task 6).
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed 274b121, edd94dd)
 
 *Fix (Task 6).* Self-host the woff2 files. Put each family's `OFL.txt`, with its copyright line,
 beside the fonts and publish it. Subsetting is a Modified Version, but with no Reserved Font Name
@@ -732,7 +739,7 @@ verfügbar".
 *Our state.* velometer's footer links `impressum_url` and `privacy_url` when set (`config/site.yaml`;
 a public export requires all four values, M14). The Datalab site does not exist yet.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed 274b121)
 
 *Fix (Task 6).* `/impressum` and `/datenschutz` on the apex. A footer link labelled "Impressum" and
 "Datenschutz" on every Datalab page. `config/site.yaml` points velometer's footer at them (values set
@@ -760,7 +767,7 @@ shall be presented clearly and separately from any other information."
 
 *Our state.* No Datenschutzerklärung exists. `privacy_url: null`.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed 274b121, 533da34)
 
 *Fix (Task 6).* `/datenschutz` in German, one controller block per operator form, then these items in
 this order:
@@ -876,7 +883,7 @@ side. If the field is an array of strings (e.g. HTTP headers), each value in the
 *Our state.* No Caddyfile yet. The plan's Task 7 interface already masks `request>remote_ip` and
 `request>client_ip` with `24 48` in each site log and in the default logger for `http.log.error`.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed 0d20bcf, f46ebf7)
 
 *Fix (Task 7).*
 - The same `ip_mask 24 48` filter on every field that can carry an address: `request>remote_ip`,
@@ -902,7 +909,7 @@ default of 10 would cut retention to 10 daily files. Plan Task 8 stores one GoAc
 `data/stats/` with no end date. GoAccess's hosts panel lists the (masked) addresses, so the reports
 would keep them indefinitely.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed f46ebf7, 13a1852)
 
 *Fix.*
 - Task 7: each site log gets `roll_at 00:00` (or `roll_interval 24h`), `roll_keep 14` and
@@ -995,7 +1002,7 @@ her identification." Berlin authority, https://www.datenschutz-berlin.de/impress
 
 *Our state.* No text yet.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed 274b121)
 
 *Fix (Task 6).* The rights block of 5.1 item 9, with Widerspruch under its own heading. A visitor may
 complain to any supervisory authority, in particular where they live or work (Art. 77). The
@@ -1015,7 +1022,7 @@ The Datalab draft loads `fonts.googleapis.com` and `fonts.gstatic.com`. Outbound
 (`rel="noopener noreferrer"`) are not loads. `Referrer-Policy: strict-origin-when-cross-origin`
 limits what a followed link discloses.
 
-**Verdict:** fix in M16
+**Verdict:** fix in M16 (fixed c134a39, 274b121)
 
 *Fix.* Task 5 removes the OSM tile host from the CSP, the maps and the render-pass allowance. Task 6
 self-hosts the fonts under the same CSP. The render-pass foreign-host audit (both editions, both
