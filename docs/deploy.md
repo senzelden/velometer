@@ -242,8 +242,8 @@ The steps in detail:
 
    `setup` writes `/etc/caddy/Caddyfile` (this file, checked by `caddy validate` as the `caddy`
    user before it replaces the live one), `/etc/caddy/caddy.env`, the GoAccess configuration and
-   the journald drop-in (`deploy/journald-velometer.conf`, then restarts journald),
-   and turns the lock the server came up with into the password lock: the password goes on stdin
+   the journald drop-in (`deploy/journald-velometer.conf`; journald is restarted when it
+   changes), and turns the lock the server came up with into the password lock: the password goes on stdin
    to `caddy hash-password` on the server, never on a command line. Run again, it changes
    nothing, and it leaves an unlocked server unlocked. It also compares what Caddy runs with the
    files on disk: the JSON config Caddy's admin API reports (`localhost:2019/config/`) against

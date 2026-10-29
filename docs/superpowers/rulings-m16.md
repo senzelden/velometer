@@ -195,6 +195,49 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   commit; the guard has its own tests — cost: none.
 - **R50.** Task 11 does not merge `m16` into `main` (the plan's Step 4): the brief says no merge;
   the merge waits for the final review and the user — cost: none.
+- **R51.** Final-review fix round: I1-I4, M1-M8 and M10 are fixed; M9 gets the 14-day journald
+  retention and is recorded (R53). Each `fix in M16` topic of the legal review names its commits
+  — the review found the gate blind to a missing fix — cost: one round.
+- **R52.** Caddy's log filter cannot keep a list of headers (2.11.4: no allow-list module, and
+  `request>headers>* delete` deletes nothing), so both log filters delete by name every header a
+  browser commonly sends but `User-Agent` and `Referer`, in Go's canonical spelling (`Dnt`,
+  `Sec-Gpc`, `Te`), plus `request>tls`, `user_id`, `duration` and `resp_headers`; GoAccess 1.9.3
+  reads the lines without them. A header not on the list is still written, so the
+  Datenschutzerklärung needs a sentence for "further technical headers", which goes to the user
+  (R8) — the alternative, `log_append` fields and a custom GoAccess format, changes the stats
+  pipeline — cost: the list must grow if browsers add headers; the dry run fails on any kept one.
+- **R53.** journald keeps 14 days (`MaxRetentionSec=14day`, by cloud-init and `setup`). sshd logs
+  the unmasked address of every SSH client (scanners on port 22 included) to the journal, for up
+  to 14 days, outside the masked web logs and the statistics; the Datenschutzerklärung's wording
+  for it is the user's — personal data kept without a stated period otherwise — cost: older
+  journal lines for debugging are gone after 14 days.
+- **R54.** Go-live judges what is live: `unlock` and `golive-check --host` compare a digest of every
+  file (path and sha256) of the release `current` points to, computed on the server over the
+  guarded release path, with `--site` and `--datalab`; `--host` without `--site` is open. The
+  Datalab build stamps `build.json` `inputs_sha256` over its settings, templates, static files and
+  the shared credit strings; a missing or stale stamp is open. `unlock` reads the server before it
+  refuses — cost: an ssh round trip per site on every unlock attempt.
+- **R55.** The Protomaps build date reaches the credit from data: `tools/tiles.py` writes
+  `velometer.pmtiles.json` (build, maxzoom read from the PMTiles header, sha256; `--stamp` for an
+  extract cut before), the export records it in `build.json` `tiles` and passes the date to the
+  maps' configs (`tiles_build`). Without a sidecar the credit stays undated and a public
+  deploy-check refuses the export. The sidecar of the existing extract was written locally
+  (`data/` is git-ignored) — cost: the deployed tile file's sha256 is not compared with
+  `build.json` (a manual check).
+- **R56.** `render_pass.py` and `readme_shots.py` log in as `preview` with
+  `$VELOMETER_PREVIEW_PASSWORD` whenever `--url` is given and the variable is set; `--auth` still
+  overrides. The header reaches only the `--url` origin (`Fetch.enable` with that origin's pattern;
+  checked in Chrome against a second origin) — cost: an audit of an open site sends a harmless
+  header to it.
+- **R57.** A legal fix is closed only by ` (fixed <sha>[, <sha>…])` on its verdict line, each
+  commit known to git (`git cat-file -e`); 5.1 names the log-field fix (533da34) beside the page
+  — cost: none.
+- **R58.** The config guard (M6) compares `--config-dir` with HEAD's `config/` by git blob id,
+  `site.yaml` aside; tests whose fixture config is no copy switch it off (as R49) — cost: none.
+- **R59.** `--host` takes an IP address or a host name, single labels included (an ssh alias);
+  `--user` is checked too — cost: none.
+- **R60.** `deploy datalab` wants the stamp of the committed `sites/datalab/`, not only a stamp, so
+  the release named after HEAD is what HEAD builds — cost: a rebuild after every commit there.
 
 ## Known limits (recorded, not fixed)
 
