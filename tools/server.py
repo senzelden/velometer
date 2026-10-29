@@ -127,6 +127,9 @@ MANUAL = [
     "rolled log older than 14 days (ls -l /var/log/caddy)",
     "the velometer export's build.json commit_full is pushed and publicly readable at repo.url "
     "(a private repo 404s every repo link; golive-check --site DIR fetches one anonymously)",
+    "the full render pass (render_pass.py --pages all, both themes, 1280/390/320) and the "
+    "keyboard pass (--keyboard) ran with 0 findings on the export being deployed (docs/deploy.md "
+    "§1; the accessibility statement's claim, R64), and accessibility.checked is their date",
 ]
 # the tracked root file golive-check --site fetches at the export's commit (M16, R42)
 REPO_PROBE_FILE = "pyproject.toml"
@@ -1066,6 +1069,7 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
     """Every automatable reason not to go live (spec §4.7, ruling R31); [] when none is open.
     A file that is missing or cannot be read is an open item itself."""
     from velometer.datalab import (
+        STATEMENT_PAGE,
         DatalabError,
         deferred_missing,
         inputs_stamp,
@@ -1094,8 +1098,15 @@ def golive_items(root: Path, datalab: Path) -> list[str]:
         ]
     if cfg is not None and not cfg.contact_email:
         items.append("sites/datalab/site.yaml: contact_email is null (no contact mailbox)")
+    if cfg is not None and cfg.accessibility.checked is None:
+        items.append(
+            "sites/datalab/site.yaml: accessibility.checked is null (the accessibility "
+            "statement's date; R63)"
+        )
     if not (datalab / "index.html").is_file():
         items.append(f"{datalab}: no built Datalab site (velometer datalab build)")
+    elif not (datalab / STATEMENT_PAGE).is_file():
+        items.append(f"{datalab}: no {STATEMENT_PAGE} (the accessibility statement; build again)")
     items += [f"placeholder left in the Datalab build: {p}" for p in placeholders(datalab)]
     if (datalab / "index.html").is_file():
         stamp = read_stamp(datalab)

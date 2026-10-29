@@ -965,6 +965,7 @@ def golive_fixture(tmp_path: Path, *, open_items: bool) -> tuple[Path, Path]:
         "operator_form": None if open_items else "person",
         "operator": op,
         "contact_email": None if open_items else "kontakt@example.org",
+        "accessibility": {"checked": None if open_items else "2026-11-02"},
     }
     (root / "sites" / "datalab" / "site.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
     verdict = "decision for the user" + ("" if open_items else " (decided 2026-10-22: A)")
@@ -990,6 +991,8 @@ def golive_fixture(tmp_path: Path, *, open_items: bool) -> tuple[Path, Path]:
     body = "[[Name des Betreibers]]" if open_items else "Erika Mustermann"
     (datalab / "impressum" / "index.html").write_text(f"<p>{body}</p>\n", encoding="utf-8")
     (datalab / "index.html").write_text("<p>ok</p>\n", encoding="utf-8")
+    (datalab / "barrierefreiheit").mkdir()
+    (datalab / "barrierefreiheit" / "index.html").write_text("<p>ok</p>\n", encoding="utf-8")
     stamp(root, datalab)
     return root, datalab
 
@@ -1536,6 +1539,36 @@ def test_golive_site_asks_the_remote_for_a_tag_on_the_exports_commit(deps, tmp_p
 
 
 # --- go-live judges what is live (final review I1, M2) ----------------------------------------
+
+
+def test_golive_an_undated_accessibility_statement_is_open(tmp_path):
+    """The rule (R63): the statement's "Stand:" date is set before go-live."""
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    cfg = root / "sites" / "datalab" / "site.yaml"
+    data = yaml.safe_load(cfg.read_text("utf-8"))
+    del data["accessibility"]
+    cfg.write_text(yaml.safe_dump(data), "utf-8")
+    stamp(root, datalab)  # built from these settings
+    (item,) = srv.golive_items(root, datalab)
+    assert "accessibility.checked is null" in item
+
+
+def test_golive_a_build_without_the_accessibility_statement_is_open(tmp_path):
+    """The rule (R63): the Datalab build carries the statement the footers link."""
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    (datalab / "barrierefreiheit" / "index.html").unlink()
+    (item,) = srv.golive_items(root, datalab)
+    assert "barrierefreiheit/index.html" in item
+
+
+def test_golive_manual_items_ask_for_the_full_render_and_keyboard_passes(tmp_path):
+    """The rule (R64): the statement's "every page ... keyboard" claim rests on the passes
+    deploy.md §1 runs before every deploy; golive-check asks for them."""
+    root, datalab = golive_fixture(tmp_path, open_items=False)
+    r = invoke("golive-check", "--datalab", str(datalab), "--root", str(root))
+    manual = r.output.split("Manual confirmations", 1)[1]
+    (line,) = [x for x in manual.splitlines() if "--pages all" in x]
+    assert "--keyboard" in line
 
 
 def test_golive_a_build_without_a_stamp_or_with_a_stale_one_is_open(tmp_path):
