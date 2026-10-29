@@ -1517,6 +1517,12 @@ def test_golive_site_asks_the_remote_for_a_tag_on_the_exports_commit(deps, tmp_p
     assert srv.repo_tag_items(site) == []
     (argv, _) = deps.calls[deps.index("ls-remote")]
     assert argv[-1] == REPO_URL and "GIT_TERMINAL_PROMPT=0" in argv
+    # anonymous: no askpass program (an editor's GIT_ASKPASS logs in silently), no credential
+    # helper from the user's, the system's or a repository's git config
+    for setting in ("GIT_ASKPASS=", "SSH_ASKPASS=", "GIT_CONFIG_GLOBAL=/dev/null",
+                    "GIT_CONFIG_NOSYSTEM=1"):  # fmt: skip
+        assert setting in argv[: argv.index("git")]
+    assert argv[argv.index("git") + 1 : argv.index("git") + 3] == ["-C", "/"]
     other = "2222222222222222222222222222222222222222\trefs/tags/export-old\n"
     deps.rules = [("ls-remote", other)]
     (item,) = srv.repo_tag_items(site)

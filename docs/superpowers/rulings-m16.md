@@ -257,6 +257,12 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   proxies send — cost if wrong: a rarely sent header stays in the log, which the
   Datenschutzerklärung now says.
 
+- **R62.** The tag check really is anonymous: `git ls-remote` runs with no askpass program
+  (`GIT_ASKPASS=`, `SSH_ASKPASS=`), no global or system git config and from `/`, so no credential
+  helper applies. Found on the redeploy of 2026-10-29: VS Code's `GIT_ASKPASS` and the per-host gh
+  helper logged in silently, and the check passed on the private repository — cost if wrong: the
+  tag check would pass before the repository is public (the repo-link probe still caught it).
+
 ## Known limits (recorded, not fixed)
 
 - **M3, slug divergences.** `heading_slug` differs from github-slugger for numbers of category No

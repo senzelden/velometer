@@ -1144,7 +1144,9 @@ def repo_link_items(site: Path, transport=None) -> list[str]:
 def repo_tag_items(site: Path) -> list[str]:
     """A tag at `build.json` `site.repo_url` points at the export's `commit_full` (deploy.md §0),
     so the pinned commit stays reachable after a merge or a deleted branch. Asked anonymously
-    with `git ls-remote --tags` (never prompts). [] when one does."""
+    with `git ls-remote --tags` (never prompts; no askpass program, such as an editor's
+    `GIT_ASKPASS`, and no credential helper from any git config, so a private repository is
+    refused even on a machine logged in to the forge). [] when one does."""
     try:
         build = json.loads((site / "build.json").read_text(encoding="utf-8"))
         url, commit = build["site"]["repo_url"], build["commit_full"]
@@ -1152,7 +1154,9 @@ def repo_tag_items(site: Path) -> list[str]:
         return [f"{site}/build.json: no repo_url and commit_full ({e.__class__.__name__})"]
     if not isinstance(url, str) or not isinstance(commit, str):
         return [f"{site}/build.json: no repo_url and commit_full"]
-    r = DEPS.runner(["env", "GIT_TERMINAL_PROMPT=0", "git", "ls-remote", "--tags", url])
+    anonymous = ["GIT_TERMINAL_PROMPT=0", "GIT_ASKPASS=", "SSH_ASKPASS=",
+                 "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_NOSYSTEM=1"]  # fmt: skip
+    r = DEPS.runner(["env", *anonymous, "git", "-C", "/", "ls-remote", "--tags", url])
     if r.returncode != 0:
         return [f"git ls-remote --tags {url}: exited {r.returncode} ({_PUSHED.format(commit[:7])})"]
     tagged = {line.split("\t", 1)[0] for line in r.stdout.splitlines() if "\t" in line}
