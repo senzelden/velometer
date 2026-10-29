@@ -20,6 +20,7 @@ site.footer.static_edition: Static edition · build {commit}
 site.footer.datalab: Part of {name}
 site.footer.impressum: '<i lang="de">Impressum</i>'
 site.footer.privacy: Privacy
+site.footer.accessibility: Accessibility
 page.404.title: Page not found
 page.404.home: Overview
 page.404.text: 'There is no page at this address. <a href="{home}">Go to the overview</a>.'

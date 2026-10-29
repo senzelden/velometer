@@ -20,6 +20,7 @@ COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "accessibility_url": "https://datalab.example.org/barrierefreiheit",
     "repo": {
         "url": "https://forge.example.org/owner/velometer",
         "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
@@ -213,6 +214,7 @@ def test_the_public_values_are_in_build_json(site):
         "datalab_url": COMPLETE["datalab"]["url"],
         "impressum_url": COMPLETE["impressum_url"],
         "privacy_url": COMPLETE["privacy_url"],
+        "accessibility_url": COMPLETE["accessibility_url"],
         "repo_url": COMPLETE["repo"]["url"],
         "repo_file_url": COMPLETE["repo"]["file_url"],
     }
@@ -270,6 +272,27 @@ def test_a_public_export_whose_page_lost_its_footer_link(site):
     gz.write_bytes(gzip.compress(page.read_bytes(), mtime=0))
     problems = deploy_check.deploy_problems(out, None)
     assert any("cities/index.html" in p and "footer" in p for p in problems), problems
+
+
+def test_a_public_export_without_its_accessibility_link(site):
+    # R63: the statement is linked like the Impressum; build.json records it, every footer has it
+    out, _cfg = site
+    key = "accessibility_url"
+    build_path = out / "build.json"
+    saved = build_path.read_text()
+    build = json.loads(saved)
+    del build["site"][key]
+    build_path.write_text(json.dumps(build))
+    problems = deploy_check.deploy_problems(out, None)
+    build_path.write_text(saved)
+    assert any("build.json" in p and key in p for p in problems), problems
+    page = out / "methodology" / "index.html"
+    html = page.read_text(encoding="utf-8")
+    page.write_text(html.replace(COMPLETE[key], "https://elsewhere.example/"), encoding="utf-8")
+    gz = page.with_name(page.name + ".gz")
+    gz.write_bytes(gzip.compress(page.read_bytes(), mtime=0))
+    problems = deploy_check.deploy_problems(out, None)
+    assert any("methodology/index.html" in p and "footer" in p for p in problems), problems
 
 
 def test_non_public_export_needs_no_site_settings_but_fails_with_public(site):

@@ -942,12 +942,13 @@ class Repo(_Strict):
 
 
 class SiteConfig(_Strict):
-    """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14), and the
-    public repository the pages link (M16)."""
+    """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14), the
+    public repository the pages link (M16) and the accessibility statement (M16, R63)."""
 
     datalab: Datalab | None = None
     impressum_url: HttpsUrl | None = None
     privacy_url: HttpsUrl | None = None
+    accessibility_url: HttpsUrl | None = None
     repo: Repo | None = None
 
     @field_validator("datalab", "repo", mode="before")
@@ -967,7 +968,7 @@ class SiteConfig(_Strict):
 
     @property
     def complete(self) -> bool:
-        return self.datalab is not None and self.impressum_url is not None and self.repo is not None
+        return not self.missing()
 
     def missing(self) -> list[str]:
         """The dotted names of the unset values."""
@@ -978,17 +979,21 @@ class SiteConfig(_Strict):
             out.append("impressum_url")
         if self.privacy_url is None:
             out.append("privacy_url")
+        if self.accessibility_url is None:
+            out.append("accessibility_url")
         if self.repo is None:
             out += ["repo.url", "repo.file_url"]
         return out
 
     def public_values(self) -> dict[str, str | None]:
-        """The values a public export needs, as `build.json` records them (M14, the repo M16)."""
+        """The values a public export needs, as `build.json` records them (M14; the repo and the
+        accessibility statement M16)."""
         return {
             "datalab_name": self.datalab.name if self.datalab else None,
             "datalab_url": self.datalab.url if self.datalab else None,
             "impressum_url": self.impressum_url,
             "privacy_url": self.privacy_url,
+            "accessibility_url": self.accessibility_url,
             "repo_url": self.repo.url if self.repo else None,
             "repo_file_url": self.repo.file_url if self.repo else None,
         }

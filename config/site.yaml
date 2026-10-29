@@ -4,11 +4,12 @@ datalab:
   name: null        # e.g. "Zählwerk Berlin Datalab"
   url: null         # https URL of the Datalab
   lang: null        # the name's language, e.g. "de": English pages mark it
-# M16: the Datalab site (`velometer datalab build`, sites/datalab/) holds both pages for both
-# sites; set at go-live to https://<domain>/impressum/ and https://<domain>/datenschutz/, the
-# domain being the one in sites/datalab/site.yaml.
+# M16: the Datalab site (`velometer datalab build`, sites/datalab/) holds the legal pages for
+# both sites; set at go-live to https://<domain>/impressum/, https://<domain>/datenschutz/ and
+# https://<domain>/barrierefreiheit/, the domain being the one in sites/datalab/site.yaml.
 impressum_url: null # https URL (the Datalab's Impressum)
 privacy_url: null   # https URL (the Datalab's Datenschutzerklärung)
+accessibility_url: null  # https URL (the Datalab's Erklärung zur Barrierefreiheit; R63)
 # M16 (legal review 1.1c): the public repository. Pages link repo paths (data references,
 # `docs/...` in prose) to `file_url` at the export's commit, and the methodology links `url`.
 # Set both or neither; `file_url` must contain {commit} and {path}. Examples:

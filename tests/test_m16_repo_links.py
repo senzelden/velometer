@@ -67,6 +67,7 @@ def test_a_public_export_needs_the_repo():
             "datalab": {"name": "D", "url": "https://d.example/"},
             "impressum_url": "https://d.example/i",
             "privacy_url": "https://d.example/p",
+            "accessibility_url": "https://d.example/b",
         }
     )
     assert not full.complete
