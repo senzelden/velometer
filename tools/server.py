@@ -1266,8 +1266,8 @@ def golive_check(
 
 def verify_live(domain: str, transport=None, locked: bool = False) -> list[str]:
     """Probe the live server: port 80 answers 308 to https on every host (ruling R30); over
-    https the sites answer 200 (or 401 with no-store while `locked`), www 308 to the apex, and
-    the tile file 206 to a byte range."""
+    https the sites answer 200, www 308 to the apex and the tile file 206 to a byte range; while
+    `locked`, all four answer 401 (the pages and www with no-store)."""
     problems = []
     hosts = [domain, f"www.{domain}", f"velometer.{domain}"]
     with httpx.Client(transport=transport, follow_redirects=False, timeout=20) as c:
@@ -1295,18 +1295,18 @@ def verify_live(domain: str, transport=None, locked: bool = False) -> list[str]:
             elif r.status_code != 200:
                 problems.append(f"https://{h}/: want 200, got {r.status_code}")
         r = get(f"https://www.{domain}/")
-        if (
-            r is not None
-            and not locked
-            and (r.status_code != 308 or r.headers.get("location") != f"https://{domain}/")
+        if r is not None and locked:
+            if r.status_code != 401 or r.headers.get("cache-control") != "no-store":
+                problems.append(f"https://www.{domain}/: want 401 no-store, got {r.status_code}")
+        elif r is not None and (
+            r.status_code != 308 or r.headers.get("location") != f"https://{domain}/"
         ):
             problems.append(f"https://www.{domain}/: want 308 to the apex, got {r.status_code}")
-        if not locked:
-            r = get(
-                f"https://velometer.{domain}/tiles/{TILES_FILE}", headers={"Range": "bytes=0-6"}
-            )
-            if r is not None and r.status_code != 206:
-                problems.append(f"tiles: want 206 to a byte range, got {r.status_code}")
+        r = get(f"https://velometer.{domain}/tiles/{TILES_FILE}", headers={"Range": "bytes=0-6"})
+        if r is not None and locked and r.status_code != 401:
+            problems.append(f"tiles: want 401 without the password, got {r.status_code}")
+        elif r is not None and not locked and r.status_code != 206:
+            problems.append(f"tiles: want 206 to a byte range, got {r.status_code}")
     return problems
 
 

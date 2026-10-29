@@ -1708,3 +1708,32 @@ def test_golive_the_contents_table_must_agree_with_each_section(tmp_path):
     )
     items = srv.golive_items(root, datalab)
     assert any("§4.8 has no section" in i for i in items), items
+
+
+def locked_transport(seen: list[httpx.Request], *, leak: str | None = None):
+    """The locked server: 401 no-store over https everywhere, except `leak` (a host or /tiles/)."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.scheme == "http":
+            loc = f"https://{request.url.host}{request.url.raw_path.decode()}"
+            return httpx.Response(308, headers={"location": loc})
+        if leak and (request.url.host == leak or request.url.path.startswith(leak)):
+            return httpx.Response(206 if leak == "/tiles/" else 308,
+                                  headers={"location": "https://example.org/"})  # fmt: skip
+        return httpx.Response(401, headers={"cache-control": "no-store"})
+
+    return httpx.MockTransport(handler)
+
+
+def test_verify_locked_probes_www_and_the_tiles_too():
+    """M8: the lock's claim covers every host and the tiles, not only the two home pages."""
+    seen: list[httpx.Request] = []
+    assert srv.verify_live("example.org", locked_transport(seen), locked=True) == []
+    https = {(q.url.host, q.url.path) for q in seen if q.url.scheme == "https"}
+    assert ("www.example.org", "/") in https
+    assert ("velometer.example.org", "/tiles/velometer.pmtiles") in https
+    (p,) = srv.verify_live("example.org", locked_transport([], leak="www.example.org"), locked=True)
+    assert "www.example.org" in p and "401" in p
+    (p,) = srv.verify_live("example.org", locked_transport([], leak="/tiles/"), locked=True)
+    assert p.startswith("tiles: want 401")

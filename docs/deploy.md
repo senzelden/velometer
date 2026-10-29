@@ -267,8 +267,9 @@ The steps in detail:
    `/srv/tiles/velometer.pmtiles.new` and renames it into place, as above.
 
    `verify` probes the live server: port 80 answers every host with a 308 to `https://`, and
-   with `--locked` both sites answer 401 with `Cache-Control: no-store`; without it they answer
-   200, `www` 308 to the apex and the tile file 206 to a byte range.
+   with `--locked` both sites and `www` answer 401 with `Cache-Control: no-store` and the tile
+   file 401; without it the sites answer 200, `www` 308 to the apex and the tile file 206 to a
+   byte range.
 
    Statistics (`stats --host <host>`) and the go-live (`golive-check --datalab <datalab-dir>
    --site <dir>`, then `unlock --site <dir>`) are in the tool's help. With `--site`, `golive-check`
