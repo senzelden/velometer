@@ -146,6 +146,21 @@ repository values (the guard of R58 checked that):
 - Render pass against `https://zaehlwerk-datalab.de` (`--base / --lang de`, axe WCAG 2 A/AA and
   2.1 A/AA, both themes): 18 visits, 0 with findings.
 
+## Go-live preparation 2026-10-29 (Task 12 steps 1-3)
+
+Still behind the lock. The accessibility statement dated 2026-10-29 (`fe90dd9`, pushed with tag
+`export-fe90dd9`); a fresh `config/` copy whose `site.yaml` alone carries the Datalab, legal,
+accessibility and repository values.
+
+- `export --public`: 798 files, 303.6 MB; `deploy-check --public` ok. `datalab build`: 23 files,
+  0 placeholders. No server config change since the last `setup` (`deploy/` unchanged).
+- `deploy velometer` and `deploy datalab` → `releases/fe90dd9-…`; `verify --locked`: 0 problems.
+- On the deployed export (R64): full render pass `--pages all --keyboard`: 1232 visits, 0 with
+  findings; `--pages types --interact --flip`: 171 visits, 0 with findings; Datalab `--lang de`:
+  24 visits, 0 with findings.
+- `golive-check --site --datalab --host`: live releases equal the builds; open only the two
+  repository checks (private repository) and the address waiver.
+
 ## Not claimed
 
 - That `roll_keep_for 336h` deletes rolled logs after 14 days: check on the server after
