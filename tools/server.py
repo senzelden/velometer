@@ -53,6 +53,7 @@ DEPLOY = ROOT / "deploy"
 CLOUD_INIT = DEPLOY / "cloud-init.yaml"
 CADDYFILE = DEPLOY / "Caddyfile"
 GOACCESS_CONF = DEPLOY / "goaccess.conf"
+JOURNALD_CONF = DEPLOY / "journald-velometer.conf"
 STATS_DIR = ROOT / "data" / "stats"
 
 
@@ -113,6 +114,7 @@ ADMIN_CONFIG = "http://localhost:2019/config/"  # Caddy's admin API, on the serv
 REMOTE_CADDYFILE = "/etc/caddy/Caddyfile"
 REMOTE_ENV = "/etc/caddy/caddy.env"
 REMOTE_GOACCESS = "/etc/goaccess/velometer.conf"
+REMOTE_JOURNALD = "/etc/systemd/journald.conf.d/velometer.conf"
 DOMAIN = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
 STATS_DAYS = 14
 
@@ -561,6 +563,7 @@ def setup(
             REMOTE_CADDYFILE: CADDYFILE.read_text(encoding="utf-8"),
             REMOTE_ENV: caddy_env(domain),
             REMOTE_GOACCESS: GOACCESS_CONF.read_text(encoding="utf-8"),
+            REMOTE_JOURNALD: JOURNALD_CONF.read_text(encoding="utf-8"),
         }
         state = lock_state(t.ssh(f"sudo cat {LOCK}").stdout)
         if state == "unknown":
@@ -580,6 +583,8 @@ def setup(
         in_sync, served = running_state(t)
         typer.echo(f"running Caddy serves {_describe(served)}")
         plan = [f"upload {p}" for p in changed]
+        if REMOTE_JOURNALD in changed:
+            plan.append("restart systemd-journald (14-day retention)")
         if write_lock:
             plan.append(
                 f"lock both sites: {LOCK} gets a basic_auth block (hash made on the server)"
@@ -601,6 +606,10 @@ def setup(
         for p in (REMOTE_ENV, REMOTE_GOACCESS):
             if p in changed:
                 t.put(p, wanted[p])
+        if REMOTE_JOURNALD in changed:  # a server made before M9 has no drop-in directory
+            t.ssh(f"sudo install -d -m 0755 {REMOTE_JOURNALD.rsplit('/', 1)[0]}")
+            t.put(REMOTE_JOURNALD, wanted[REMOTE_JOURNALD])
+            t.ssh("sudo systemctl restart systemd-journald")
         if write_lock:
             r = t.ssh("/usr/bin/caddy hash-password", input=password + "\n")
             lines = r.stdout.strip().splitlines()

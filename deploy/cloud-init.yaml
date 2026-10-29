@@ -41,6 +41,15 @@ write_files:
       KbdInteractiveAuthentication no
       PermitRootLogin no
 
+  # Exactly deploy/journald-velometer.conf, which `setup` keeps there too.
+  - path: /etc/systemd/journald.conf.d/velometer.conf
+    permissions: "0644"
+    content: |
+      # journald keeps nothing older than 14 days (final review M9, ruling R53): sshd writes the
+      # unmasked address of every SSH client, scanners included, to the journal.
+      [Journal]
+      MaxRetentionSec=14day
+
   # Security updates from Debian, unattended.
   - path: /etc/apt/apt.conf.d/20auto-upgrades
     permissions: "0644"
@@ -172,4 +181,5 @@ runcmd:
   - systemctl enable --now unattended-upgrades.service
   - systemctl enable --now velometer-dbip.timer
   - systemctl start velometer-dbip.service || true
+  - systemctl restart systemd-journald
   - systemctl restart ssh

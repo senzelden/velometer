@@ -23,6 +23,7 @@ dr = load_script("tools/deploy_dryrun.py")
 
 CLOUD_INIT = ROOT / "deploy" / "cloud-init.yaml"
 GOACCESS = ROOT / "deploy" / "goaccess.conf"
+JOURNALD = ROOT / "deploy" / "journald-velometer.conf"
 PASSWORD = "pw-" + "x7Qe9-not-a-real-one"
 PUBKEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeFakeFakeFakeFakeFakeFakeFakeFakeFake user@test"
 HASH = "$2a$14$" + "a" * 53
@@ -739,6 +740,7 @@ def server_state(
                 ("/etc/caddy/Caddyfile", (ROOT / "deploy" / "Caddyfile").read_text("utf-8")),
                 ("/etc/caddy/caddy.env", srv.caddy_env(domain)),
                 ("/etc/goaccess/velometer.conf", GOACCESS.read_text("utf-8")),
+                ("/etc/systemd/journald.conf.d/velometer.conf", JOURNALD.read_text("utf-8")),
             )
         )
     running = lock if running is None else running
@@ -1737,3 +1739,35 @@ def test_verify_locked_probes_www_and_the_tiles_too():
     assert "www.example.org" in p and "401" in p
     (p,) = srv.verify_live("example.org", locked_transport([], leak="/tiles/"), locked=True)
     assert p.startswith("tiles: want 401")
+
+
+# --- journald keeps 14 days (final review M9) ----------------------------------------------------
+
+
+def test_journald_keeps_at_most_14_days_on_a_new_server(ci):
+    """sshd logs unmasked SSH client addresses to the journal: nothing older than 14 days."""
+    drop_in = files(ci)["/etc/systemd/journald.conf.d/velometer.conf"]
+    assert drop_in["content"] == JOURNALD.read_text("utf-8")
+    lines = [x.strip() for x in JOURNALD.read_text("utf-8").splitlines() if not x.startswith("#")]
+    assert "[Journal]" in lines and "MaxRetentionSec=14day" in lines
+    assert "systemctl restart systemd-journald" in runcmd_text(ci)
+
+
+def test_setup_brings_the_journald_retention_to_an_older_server_once(deps):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    deps.rules[1] = ("sha256sum", "".join(
+        line + "\n" for line in deps.rules[1][1].splitlines() if "journald" not in line
+    ))  # fmt: skip
+    r = invoke("setup", *HOST, "--domain", "example.org", input="yes\n")
+    assert r.exit_code == 0, r.output
+    i_dir = deps.index("install -d -m 0755 /etc/systemd/journald.conf.d")
+    i_put = deps.index("/etc/systemd/journald.conf.d/velometer.conf.XXXXXX")
+    i_restart = deps.index("systemctl restart systemd-journald")
+    assert i_dir < i_put < i_restart
+    (stdin,) = [i for a, i in deps.calls if "journald.conf.d/velometer.conf.XXXXXX" in " ".join(a)]
+    assert stdin == JOURNALD.read_text("utf-8")
+    deps.calls.clear()
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org")
+    assert r.exit_code == 0 and "nothing to change" in r.output
+    assert not [j for j in deps.joined() if "journald" in j and "sha256sum" not in j]

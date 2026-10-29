@@ -139,7 +139,8 @@ uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <
 - `create` makes a Hetzner Cloud firewall (22, 80, 443, 443/udp in) and a Debian 13 server with
   IPv4 and IPv6 from `deploy/cloud-init.yaml`: a deploy user with SSH by key only, unattended
   upgrades, UTC, Caddy at the pinned version (checked by SHA-512) not yet started, GoAccess, the
-  release roots and the default lock. It refuses a location outside Germany, an unknown SSH key,
+  release roots, the default lock, and journald's 14-day retention (`MaxRetentionSec=14day`:
+  sshd logs the unmasked address of every SSH client to the journal; ruling R53). It refuses a location outside Germany, an unknown SSH key,
   an existing server of the same name, a deprecated type and an ARM type. The default type is
   `cx23` (Hetzner no longer offers `cx22`); the default location `nbg1` had no capacity on
   2026-10-28, and `fsn1` worked. A failed create may leave the firewall behind; the retry reuses
@@ -240,7 +241,8 @@ The steps in detail:
    of the list above.
 
    `setup` writes `/etc/caddy/Caddyfile` (this file, checked by `caddy validate` as the `caddy`
-   user before it replaces the live one), `/etc/caddy/caddy.env` and the GoAccess configuration,
+   user before it replaces the live one), `/etc/caddy/caddy.env`, the GoAccess configuration and
+   the journald drop-in (`deploy/journald-velometer.conf`, then restarts journald),
    and turns the lock the server came up with into the password lock: the password goes on stdin
    to `caddy hash-password` on the server, never on a command line. Run again, it changes
    nothing, and it leaves an unlocked server unlocked. It also compares what Caddy runs with the
