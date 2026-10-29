@@ -75,12 +75,28 @@ def retrieved_at(path: Path) -> date:
     return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC).date()
 
 
+def row_lines(path: Path) -> list[int]:
+    """The line each data row of a CSV starts on (the header is line 1), in the order
+    `csv.DictReader` gives the rows: a quoted field may span lines, so a row's number is not its
+    index plus 2 (final review M10)."""
+    starts = []
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        next(reader, None)
+        end = reader.line_num
+        for row in reader:
+            if row:  # DictReader skips an empty line too
+                starts.append(end + 1)
+            end = reader.line_num
+    return starts
+
+
 def load_figures_csv(path: Path) -> list[ExternalFigure]:
     """The curated rows. Each must cite an http(s) source_url; `row <n>` in an error is the
-    row's line in the file (the header is line 1)."""
+    line the row starts on (the header is line 1)."""
     with path.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    for n, r in enumerate(rows, start=2):
+    for n, r in zip(row_lines(path), rows, strict=True):
         r.pop("note_de", None)  # the German note is display text (report.data.figure_notes_de)
         url = r["source_url"] = (r.get("source_url") or "").strip()  # stored as validated
         if not url:
@@ -253,7 +269,8 @@ def curated_drift(conn: sqlite3.Connection, figures_csv: Path) -> list[str]:
     ).fetchall()
     have = Counter((*r[:3], float(r[3]), *r[4:]) for r in map(tuple, rows))
     only_csv, only_db = list((want - have).elements()), list((have - want).elements())
-    line = {row: n for n, row in reversed(list(enumerate(map(_stored, curated), start=2)))}
+    pairs = zip(row_lines(figures_csv), map(_stored, curated), strict=True)
+    line = {row: n for n, row in reversed(list(pairs))}
     problems = []
     for row in only_csv:
         key = row[:3] + row[5:7]  # city, source, metric, reference date, scope

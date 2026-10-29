@@ -128,3 +128,21 @@ def test_the_check_command_refuses_a_missing_csv(loaded, tmp_path):
         app, ["external", "check", "--db", str(db), "--figures", str(tmp_path / "none.csv")]
     )
     assert r.exit_code == 1
+
+
+def test_a_row_after_a_multi_line_note_is_named_by_its_own_line(loaded, tmp_path):
+    """M10: a quoted note spanning lines shifts every later row; the line is where it starts."""
+    db, _ = loaded
+    first = ROWS[0].replace("Senate report p. 3,", '"Senate report p. 3,\nsecond line\nthird",')
+    changed = _csv(tmp_path / "multi.csv", [first, ROWS[1].replace(",1700,", ",1701,")])
+    problems = _drift(db, changed)
+    assert any(p.startswith("figures.csv line 2, berlin") for p in problems), problems
+    assert any(p.startswith("figures.csv line 5, vienna") for p in problems), problems
+
+
+def test_row_lines_follow_the_csv_reader(tmp_path):
+    path = tmp_path / "f.csv"
+    path.write_text('a,b\n1,"x\ny"\n\n2,z\n3,"p\n\nq"\n4,w\n', encoding="utf-8")
+    assert X.row_lines(path) == [2, 5, 6, 9]
+    with path.open(newline="", encoding="utf-8") as f:
+        assert len(X.row_lines(path)) == len(list(csv.DictReader(f)))
