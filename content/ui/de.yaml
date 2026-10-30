@@ -11,6 +11,7 @@ site.footer.static_edition: Statische Ausgabe · Build {commit}
 site.footer.datalab: Teil von {name}
 site.footer.impressum: Impressum
 site.footer.privacy: Datenschutz
+site.footer.accessibility: Barrierefreiheit
 page.404.title: Seite nicht gefunden
 page.404.home: Übersicht
 page.404.text: 'Unter dieser Adresse gibt es keine Seite. <a href="{home}">Zur Übersicht</a>.'

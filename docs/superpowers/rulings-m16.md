@@ -70,6 +70,13 @@ Each execution ruling reads: Ruling — why — cost if wrong.
     Fernwartungszugang (SSH) mit der vollständigen IP-Adresse; diese Einträge löscht er nach 14
     Tagen."
   - Go to run `setup` during the redeploy (new log filter, journald limit), lock kept.
+- 2026-10-29 (accessibility statement):
+  - A voluntary Erklärung zur Barrierefreiheit on the Datalab (`/barrierefreiheit/`), linked from
+    both sites' footers, in the user's approved wording; after the claim check the user re-worded
+    the map and zoom bullets and chose to make "Vor jeder Veröffentlichung … jede Seite …
+    Tastaturtest" true through the deploy procedure (R64) rather than reword it.
+  - On English pages the three legal footer links (Impressum, Privacy, Accessibility) carry
+    `hreflang="de"`; the `<i lang="de">` mark on "Impressum" stays.
 
 ## Pre-flight rulings
 
@@ -262,6 +269,22 @@ Each execution ruling reads: Ruling — why — cost if wrong.
   helper applies. Found on the redeploy of 2026-10-29: VS Code's `GIT_ASKPASS` and the per-host gh
   helper logged in silently, and the check passed on the private repository — cost if wrong: the
   tag check would pass before the repository is public (the repo-link probe still caught it).
+
+- **R63.** The accessibility statement is a Datalab page like the legal pages: the hosts from
+  `domain`, the e-mail the Impressum's (`operator.email`, as a mailto link), the "Stand:" date
+  `accessibility.checked` (an ISO day, null until go-live, a visible placeholder meanwhile);
+  `golive-check` refuses while the date is null or the build lacks the page. velometer links it by
+  `accessibility_url`, independent of the Impressum pair, required by `export --public`, recorded
+  in `build.json` and checked by `deploy-check --public` like the other footer links. English
+  terms carry `lang="en"`: the guideline title as `<i lang="en">`, the names and the loanword
+  (WCAG, axe-core, Orca, Screenreader) as `<span lang="en">`, not italic — cost if wrong: a
+  styling difference only.
+- **R64.** The statement's "Vor jeder Veröffentlichung … jede Seite … Tastaturtest" is made true:
+  `docs/deploy.md` §1 runs `render_pass.py --pages all --keyboard` (and the Datalab pass) on the
+  export being published, before the go-live against the locked server and afterwards against
+  the local dry run before uploading; `golive-check` prints it as a manual confirmation, and
+  `accessibility.checked` is the day of those passes — cost: a full pass over every page
+  before every publication.
 
 ## Known limits (recorded, not fixed)
 

@@ -25,7 +25,10 @@ from velometer.datalab import DatalabConfig, DatalabError, build, load_config, p
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "datalab" / "all.csv"
 SITE_YAML = ROOT / "sites" / "datalab" / "site.yaml"
-PAGES = ("index.html", "impressum/index.html", "datenschutz/index.html", "404.html")
+PAGES = (
+    "index.html", "impressum/index.html", "datenschutz/index.html", "barrierefreiheit/index.html",
+    "404.html",
+)  # fmt: skip
 # the Berlin LAU tier A+B mapped km of the fixture, 2018-2026, rounded half up
 BERLIN = {
     2018: 1640, 2019: 1612, 2020: 1634, 2021: 1677, 2022: 1494,
@@ -62,7 +65,12 @@ def _cfg(**over) -> DatalabConfig:
 
 
 def _person() -> DatalabConfig:
-    return _cfg(operator_form="person", operator=FULL_PERSON, contact_email="hallo@example.org")
+    return _cfg(
+        operator_form="person",
+        operator=FULL_PERSON,
+        contact_email="hallo@example.org",
+        accessibility={"checked": "2026-11-02"},
+    )
 
 
 @pytest.fixture(scope="module")
@@ -273,6 +281,7 @@ def test_every_page_is_german_with_the_footer(undecided, person, page):
         footer = re.search(r"<footer.*?</footer>", html, re.S).group(0)
         assert 'href="/impressum/"' in footer and ">Impressum<" in footer
         assert 'href="/datenschutz/"' in footer and ">Datenschutz<" in footer
+        assert 'href="/barrierefreiheit/"' in footer and ">Barrierefreiheit<" in footer
         assert "Kontakt" in footer
     assert 'href="mailto:hallo@example.org"' in (person / page).read_text(encoding="utf-8")
     undecided_footer = re.search(
@@ -382,7 +391,12 @@ def test_chosen_person_with_full_values_has_no_placeholder(person):
 
 def test_a_missing_required_value_stays_a_placeholder(tmp_path):
     values = {**FULL_PERSON, "responsible": None}
-    cfg = _cfg(operator_form="person", operator=values, contact_email="hallo@example.org")
+    cfg = _cfg(
+        operator_form="person",
+        operator=values,
+        contact_email="hallo@example.org",
+        accessibility={"checked": "2026-11-02"},
+    )
     out = tmp_path / "out"
     build(cfg, _export(tmp_path), out)
     found = placeholders(out)
@@ -578,3 +592,135 @@ def test_a_build_without_a_stamp_reads_as_none(tmp_path):
     assert datalab.read_stamp(tmp_path) is None
     (tmp_path / "build.json").write_text("[1]", encoding="utf-8")
     assert datalab.read_stamp(tmp_path) is None
+
+
+# --- the accessibility statement (user request 2026-10-29, ruling R63) -------------------------
+
+# The user-approved text (brief of 2026-10-29), headings without their run-in full stop; the
+# hosts, the date and the e-mail are filled in by `_statement`.
+STATEMENT = (
+    ("p", "Diese Erklärung gilt für {host} und velometer.{host}."),
+    ("h2", "Unser Ziel"),
+    ("p", "Wir wollen, dass alle die Seiten nutzen können, auch mit Screenreader, nur mit der "
+          "Tastatur, mit starker Vergrößerung oder mit einer Farbsehschwäche. Dafür richten wir "
+          "uns nach den Web Content Accessibility Guidelines (WCAG) 2.1, Stufe AA."),
+    ("h2", "Wie wir prüfen"),
+    ("p", "Vor jeder Veröffentlichung prüft ein Programm (axe-core) jede Seite in hellem und "
+          "dunklem Farbschema und bei drei Bildschirmbreiten bis hinunter zu 320 Pixeln. Ein "
+          "Tastaturtest bedient Menüs, Reiter, Vergleich und Karten nur mit der Tastatur. "
+          "Automatische Tests prüfen den Kontrast aller Farbpaare und ob die Farben der Diagramme "
+          "auch bei Rot-Grün-Sehschwäche unterscheidbar sind. Mit dem Screenreader Orca haben wir "
+          "eine Auswahl von Seiten vorlesen lassen. Das ist eine eigene Prüfung, keine "
+          "Zertifizierung. Stand: {date}."),
+    ("h2", "Was noch nicht barrierefrei ist"),
+    ("li", "Die Karten selbst kann ein Screenreader nicht lesen. Die Zahlen der Stufenkarte stehen "
+           "auch in Tabellen und als CSV, zur Änderungskarte gibt es eine Tabelle auf der Seite, "
+           "zur Zählstellenkarte eine Liste der Zählstellen."),
+    ("li", "Die Karten als Bilddatei (PNG) gibt es nur hell, auch im dunklen Farbschema."),
+    ("li", "Bei starker Vergrößerung lassen sich breite Tabellen im Fließtext (etwa in der "
+           "Methodik) seitlich verschieben, statt umzubrechen. Es geht dabei nichts verloren."),
+    ("li", "Mit anderen Screenreadern als Orca haben wir nicht geprüft."),
+    ("h2", "Barriere melden"),
+    ("p", "Wenn Sie auf eine Barriere stoßen oder Inhalte in anderer Form brauchen, schreiben Sie "
+          "uns an {email}. Wir antworten so bald wie möglich."),
+)  # fmt: skip
+A11Y = "barrierefreiheit/index.html"
+
+
+class _Blocks(HTMLParser):
+    """The text of each h1/h2/p/li in <article>, tags stripped, whitespace collapsed."""
+
+    BLOCKS = ("h1", "h2", "p", "li")
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[tuple[str, str]] = []
+        self._in_article = False
+        self._open: str | None = None
+        self._text: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "article":
+            self._in_article = True
+        elif self._in_article and tag in self.BLOCKS:
+            self._open, self._text = tag, []
+
+    def handle_endtag(self, tag):
+        if tag == "article":
+            self._in_article = False
+        elif tag == self._open:
+            text = re.sub(r"\s+", " ", "".join(self._text)).strip().replace("\xad", "")
+            self.blocks.append((tag, text))
+            self._open = None
+
+    def handle_data(self, data):
+        if self._open:
+            self._text.append(data)
+
+
+def _blocks(path: Path) -> list[tuple[str, str]]:
+    p = _Blocks()
+    p.feed(path.read_text(encoding="utf-8"))
+    p.close()
+    return p.blocks
+
+
+def _statement(host: str, date: str, email: str) -> list[tuple[str, str]]:
+    return [(tag, text.format(host=host, date=date, email=email)) for tag, text in STATEMENT]
+
+
+def test_the_statement_carries_the_approved_text_with_the_settings_filled_in(person):
+    blocks = _blocks(person / A11Y)
+    assert blocks[0] == ("h1", "Erklärung zur Barrierefreiheit")
+    assert blocks[1:] == _statement("example.org", "2. November 2026", "kontakt@example.org")
+
+
+def test_the_statement_unsettled_shows_visible_placeholders(undecided):
+    blocks = _blocks(undecided / A11Y)
+    assert blocks[1:] == _statement(
+        "example.org", "[[Datum der Veröffentlichung]]", "[[E-Mail-Adresse]]"
+    )
+    html = (undecided / A11Y).read_text(encoding="utf-8")
+    assert '<span class="ph">[[Datum der Veröffentlichung]]</span>' in html
+    assert '<span class="ph">[[E-Mail-Adresse]]</span>' in html
+    assert any(f.startswith(A11Y + ":") for f in placeholders(undecided))
+
+
+def test_the_statement_takes_the_impressum_e_mail_as_a_link(tmp_path):
+    op = {**FULL_PERSON, "email": "barrieren@example.net"}
+    cfg = _cfg(operator_form="person", operator=op, contact_email="hallo@example.org")
+    out = tmp_path / "out"
+    build(cfg, _export(tmp_path), out)
+    html = (out / A11Y).read_text(encoding="utf-8")
+    assert '<a href="mailto:barrieren@example.net">barrieren@example.net</a>' in html
+    assert "barrieren@example.net" in (out / "impressum/index.html").read_text(encoding="utf-8")
+
+
+def test_the_statement_date_and_hosts_are_settings(tmp_path):
+    out = tmp_path / "out"
+    cfg = _cfg(domain="radwege.example", accessibility={"checked": "2027-01-15"})
+    build(cfg, _export(tmp_path), out)
+    text = re.sub(r"<[^>]+>", "", (out / A11Y).read_text("utf-8"))
+    assert "Stand: 15. Januar 2027." in text
+    assert "Diese Erklärung gilt für radwege.example und velometer.radwege.example." in text
+    with pytest.raises(ValidationError):
+        _cfg(accessibility={"checked": "15.01.2027"})
+    with pytest.raises(ValidationError):
+        _cfg(accessibility={"reviewed": "2027-01-15"})
+
+
+def test_the_statement_marks_its_english_terms(person):
+    html = (person / A11Y).read_text(encoding="utf-8")
+    for term in ("Web Content Accessibility Guidelines", "WCAG", "axe-core", "Orca"):
+        assert re.search(rf'<(i|span) lang="en">{term}</\1>', html), term
+    unmarked = re.sub(r'<(i|span) lang="en">[^<]*</\1>', "", html)
+    for term in ("Screenreader", "WCAG", "axe-core", "Orca", "Guidelines"):
+        assert term not in re.sub(r"<[^>]+>", " ", unmarked.split("<article", 1)[1]), term
+
+
+def test_the_statement_has_the_legal_pages_layout(person):
+    html = (person / A11Y).read_text(encoding="utf-8")
+    assert re.search(
+        r"<title>Erklärung zur Barrierefreiheit · Zählwerk Berlin Datalab</title>", html
+    )
+    assert '<article class="legal">' in html

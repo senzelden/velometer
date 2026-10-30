@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{# The accessibility statement (user request 2026-10-29, ruling R63): voluntary, the user's
+   approved text verbatim. The e-mail is the Impressum's (operator.email), the date
+   accessibility.checked; each a visible placeholder until set. #}
+{% block title %}Erklärung zur Barrierefreiheit · Zählwerk Berlin Datalab{% endblock %}
+{% block main %}
+    <article class="legal">
+      <h1>Erklärung zur Barriere&shy;freiheit</h1>
+      <p>Diese Erklärung gilt für {{ domain }} und velometer.{{ domain }}.</p>
+
+      <h2>Unser Ziel</h2>
+      <p>Wir wollen, dass alle die Seiten nutzen können, auch mit <span lang="en">Screenreader</span>, nur mit der Tastatur, mit starker Vergrößerung oder mit einer Farbsehschwäche. Dafür richten wir uns nach den <i lang="en">Web Content Accessibility Guidelines</i> (<span lang="en">WCAG</span>) 2.1, Stufe AA.</p>
+
+      <h2>Wie wir prüfen</h2>
+      <p>Vor jeder Veröffentlichung prüft ein Programm (<span lang="en">axe-core</span>) jede Seite in hellem und dunklem Farbschema und bei drei Bildschirmbreiten bis hinunter zu 320 Pixeln. Ein Tastaturtest bedient Menüs, Reiter, Vergleich und Karten nur mit der Tastatur. Automatische Tests prüfen den Kontrast aller Farbpaare und ob die Farben der Diagramme auch bei Rot-Grün-Sehschwäche unterscheidbar sind. Mit dem <span lang="en">Screenreader</span> <span lang="en">Orca</span> haben wir eine Auswahl von Seiten vorlesen lassen. Das ist eine eigene Prüfung, keine Zertifizierung. Stand: {{ checked }}.</p>
+
+      <h2>Was noch nicht barrierefrei ist</h2>
+      <ul>
+        <li>Die Karten selbst kann ein <span lang="en">Screenreader</span> nicht lesen. Die Zahlen der Stufenkarte stehen auch in Tabellen und als CSV, zur Änderungskarte gibt es eine Tabelle auf der Seite, zur Zählstellenkarte eine Liste der Zählstellen.</li>
+        <li>Die Karten als Bilddatei (PNG) gibt es nur hell, auch im dunklen Farbschema.</li>
+        <li>Bei starker Vergrößerung lassen sich breite Tabellen im Fließtext (etwa in der Methodik) seitlich verschieben, statt umzubrechen. Es geht dabei nichts verloren.</li>
+        <li>Mit anderen <span lang="en">Screenreadern</span> als <span lang="en">Orca</span> haben wir nicht geprüft.</li>
+      </ul>
+
+      <h2>Barriere melden</h2>
+      <p>Wenn Sie auf eine Barriere stoßen oder Inhalte in anderer Form brauchen, schreiben Sie uns an {{ f.mail("email", "E-Mail-Adresse") }}. Wir antworten so bald wie möglich.</p>
+    </article>
+{% endblock %}

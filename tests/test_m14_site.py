@@ -21,6 +21,7 @@ COMPLETE = {
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "accessibility_url": "https://datalab.example.org/barrierefreiheit",
     "repo": {
         "url": "https://forge.example.org/owner/velometer",
         "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
@@ -41,6 +42,7 @@ def test_shipped_site_yaml_is_empty():
     site = load_site(default_config_dir())
     assert site == SiteConfig()
     assert site.datalab is None and site.impressum_url is None and site.privacy_url is None
+    assert site.accessibility_url is None
     assert not site.complete
 
 
@@ -66,6 +68,7 @@ def test_complete(tmp_path):
             "impressum_url and privacy_url must be set together",
         ),
         ({**COMPLETE, "impressum_url": "http://a.example/i"}, "http://a.example/i"),
+        ({**COMPLETE, "accessibility_url": "http://a.example/b"}, "http://a.example/b"),
         ({"datalab": {"name": "X", "url": "https://"}}, "https://"),
         ({"datalab": None, "colour": "red"}, "colour"),
     ],
@@ -99,11 +102,34 @@ def test_footer_with_complete_settings(inputs):
     for lang, privacy in (("en", "Privacy"), ("de", "Datenschutz")):
         f = footers[lang]
         assert re.search(rf'<a href="{re.escape(url)}">[^<]*{name}[^<]*</a>', f)
-        assert f'<a href="{COMPLETE["impressum_url"]}">' in f
-        assert re.search(rf'<a href="{re.escape(COMPLETE["privacy_url"])}">{privacy}</a>', f)
-    assert re.search(r'<a href="[^"]*impressum">\s*<i lang="de">Impressum</i></a>', footers["en"])
+        assert f'<a href="{COMPLETE["impressum_url"]}"' in f
+        assert re.search(rf'<a href="{re.escape(COMPLETE["privacy_url"])}"[^>]*>{privacy}</a>', f)
+    assert re.search(
+        r'<a href="[^"]*impressum"[^>]*>\s*<i lang="de">Impressum</i></a>', footers["en"]
+    )
     assert "Teil von" in footers["de"] and "Part of" in footers["en"]
     assert 'lang="de"' not in footers["de"]
+
+
+def test_footer_links_the_accessibility_statement_and_marks_german_targets(inputs):
+    # R63: the statement beside Impressum and privacy; on English pages the three legal links
+    # lead to German pages and say so (hreflang, user ruling 2026-10-29)
+    footers = _footers(inputs, COMPLETE)
+    url = re.escape(COMPLETE["accessibility_url"])
+    assert re.search(rf'<a href="{url}"[^>]*>Accessibility</a>', footers["en"])
+    assert re.search(rf'<a href="{url}">Barrierefreiheit</a>', footers["de"])
+    for key in ("impressum_url", "privacy_url", "accessibility_url"):
+        link = re.escape(COMPLETE[key])
+        assert re.search(rf'<a href="{link}" hreflang="de">', footers["en"]), key
+        assert re.search(rf'<a href="{link}">', footers["de"]), key  # same language: no mark
+    assert "hreflang" not in footers["de"]
+
+
+def test_the_accessibility_link_is_left_out_while_unset(inputs):
+    doc = {k: v for k, v in COMPLETE.items() if k != "accessibility_url"}
+    footers = _footers(inputs, doc)
+    assert "Accessibility" not in footers["en"] and "Barrierefreiheit" not in footers["de"]
+    assert COMPLETE["impressum_url"] in footers["en"]
 
 
 def test_the_datalab_name_carries_its_language_when_site_yaml_gives_one(inputs):
@@ -171,7 +197,8 @@ def test_public_export_refuses_empty_settings(rich, tmp_path):  # noqa: F811
     out = tmp_path / "site"
     with pytest.raises(export.ExportError) as e:
         _export(rich, out, True)
-    names = ("datalab.name", "datalab.url", "impressum_url", "privacy_url", "repo.url")
+    names = ("datalab.name", "datalab.url", "impressum_url", "privacy_url", "accessibility_url",
+             "repo.url")  # fmt: skip
     for name in names + ("repo.file_url",):
         assert name in str(e.value)
     assert not out.exists()

@@ -16,3 +16,8 @@ operator:
   authority: blnbdi     # "blnbdi" (operator in Berlin) or the full text of the Land's authority (5.8)
   mail_host: "Posteo e.K., Methfesselstr. 38, 10965 Berlin"       # who hosts the contact mailbox: name and address (a recipient of e-mails)
 contact_email: "zaehlwerk-datalab@posteo.com"     # the contact in every page's footer
+# The accessibility statement (/barrierefreiheit/, ruling R63): its "Stand:" date, the day of the
+# render and keyboard passes before go-live (docs/deploy.md §1, R64), as YYYY-MM-DD; null renders
+# a placeholder and golive-check refuses. Its e-mail is operator.email.
+accessibility:
+  checked: "2026-10-29"

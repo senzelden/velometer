@@ -1048,6 +1048,10 @@ is good practice, not a legal duty here. BITV 2.0 binds public bodies only (not 
 
 *Fix.* None. If a paid offer or a donation-with-consideration flow is ever added, reopen.
 
+*Added (user decision 2026-10-29).* A voluntary Erklärung zur Barrierefreiheit, the user's wording,
+at `/barrierefreiheit/` on the Datalab, linked from both sites' footers (`0b2a17a`, `c2cd680`;
+rulings R63, R64). It is no legal duty here and does not change the verdict.
+
 ### 6.2 OSM tile usage policy
 
 *Rule.* https://operations.osmfoundation.org/policies/tiles/ (read 2026-10-21): "heavy or

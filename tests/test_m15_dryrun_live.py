@@ -35,6 +35,7 @@ SITE_VALUES = {
     },
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
+    "accessibility_url": "https://datalab.example.org/barrierefreiheit",
     "repo": {
         "url": "https://forge.example.org/owner/velometer",
         "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",

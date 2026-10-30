@@ -37,7 +37,7 @@
 {% block content %}{% endblock %}
 </main>
 <footer>
-{% if site.datalab or site.impressum_url %}  <p>{% if site.datalab %}<a href="{{ site.datalab.url }}">{{ t('site.footer.datalab', name=datalab_name(site.datalab)) }}</a>{% endif %}{% if site.impressum_url %}{% if site.datalab %} · {% endif %}<a href="{{ site.impressum_url }}">{{ t('site.footer.impressum') }}</a> · <a href="{{ site.privacy_url }}">{{ t('site.footer.privacy') }}</a>{% endif %}</p>
+{% if site.datalab or site.impressum_url or site.accessibility_url %}  <p>{% if site.datalab %}<a href="{{ site.datalab.url }}">{{ t('site.footer.datalab', name=datalab_name(site.datalab)) }}</a>{% endif %}{% set de_target = ' hreflang="de"' | safe if lang != 'de' else '' %}{% if site.impressum_url %}{% if site.datalab %} · {% endif %}<a href="{{ site.impressum_url }}"{{ de_target }}>{{ t('site.footer.impressum') }}</a> · <a href="{{ site.privacy_url }}"{{ de_target }}>{{ t('site.footer.privacy') }}</a>{% endif %}{% if site.accessibility_url %}{% if site.datalab or site.impressum_url %} · {% endif %}<a href="{{ site.accessibility_url }}"{{ de_target }}>{{ t('site.footer.accessibility') }}</a>{% endif %}</p>
 {% endif %}  <p>{{ t('site.footer.attribution', osm="https://www.openstreetmap.org/copyright") }}
   · {{ t('credit.boundaries') }} · {{ t('site.footer.mapped_km') }} · <a href="{{ u('/methodology') }}">{{ t('site.footer.methodology') }}</a> · <a href="{{ data_u('/data/all.csv') }}">{{ t('site.footer.csv_all') }}</a></p>
   <p>{{ t('site.footer.run', classifier=footer.classifier, config=footer.config) }}</p>{% if static_edition %}

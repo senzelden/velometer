@@ -85,9 +85,10 @@ def _gz_problems(out: Path) -> list[str]:
 
 
 SITE_VALUES = (
-    "datalab_name", "datalab_url", "impressum_url", "privacy_url", "repo_url", "repo_file_url",
+    "datalab_name", "datalab_url", "impressum_url", "privacy_url", "accessibility_url",
+    "repo_url", "repo_file_url",
 )  # fmt: skip
-FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url")
+FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url", "accessibility_url")
 
 
 def _bare_code_problems(out: Path) -> list[str]:
@@ -169,7 +170,8 @@ def _pinned_problems(out: Path, build: dict) -> list[str]:
 def _public_problems(out: Path, build: dict) -> list[str]:
     """A public export's footer, judged from the export itself: build.json records the site
     values, and every page with the site's footer (the home page always) names the Datalab and
-    links it, its Impressum and its privacy page; no page prints a repo path unlinked."""
+    links it, its Impressum, its privacy page and its accessibility statement (R63); no page
+    prints a repo path unlinked."""
     site = build.get("site")
     site = site if isinstance(site, dict) else {}
     missing = [k for k in SITE_VALUES if not isinstance(site.get(k), str) or not site[k]]
@@ -191,8 +193,8 @@ def _public_problems(out: Path, build: dict) -> list[str]:
         n = len(footless)
         shown = ", ".join(footless[:5]) + (f" and {n - 5} more" if n > 5 else "")
         problems.append(
-            f"public export, but {n} page(s) lack the Datalab, Impressum or privacy "
-            f"link of {export.BUILD_FILE} in the footer: {shown}"
+            f"public export, but {n} page(s) lack the Datalab, Impressum, privacy or "
+            f"accessibility link of {export.BUILD_FILE} in the footer: {shown}"
         )
     problems += _methodology_problems(out, site["repo_url"])
     return problems + _bare_code_problems(out) + _pinned_problems(out, build)
