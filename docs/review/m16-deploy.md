@@ -161,10 +161,23 @@ accessibility and repository values.
 - `golive-check --site --datalab --host`: live releases equal the builds; open only the two
   repository checks (private repository) and the address waiver.
 
+## Go-live 2026-10-30 (Task 12 steps 4-5)
+
+- History check before going public: no private e-mail address, token, password hash, key or
+  database file in any pushed commit; every commit authored as `DS <dennis.senzel@posteo.com>`.
+- `main` = `e06c38d` (merge of `m16`, tree equal to `7682df0`), gate green (3585 pytest, 330 node);
+  pushed. Repository made public by the user (`gh api -X PATCH … visibility=public`); the anonymous
+  `ls-remote --tags` lists `export-a6093ae` and `export-fe90dd9`.
+- `golive-check --site --datalab --host`: 0 open (address waived, R43).
+- `unlock` run by the user (typed `yes`).
+- Without a password: `verify` 0 problems; apex, velometer, `/de/`, `/impressum/`,
+  `/barrierefreiheit/` 200; `www` and port 80 308 to the apex; an unknown path 404 with
+  `cache-control: public, max-age=3600`; live `build.json` `commit_full` = `fe90dd9…`; the repo
+  link at that commit 200. Render pass `--pages types --interact --flip` on velometer: 171 visits,
+  0 with findings; Datalab `--lang de`: 24 visits, 0 with findings.
+
 ## Not claimed
 
 - That `roll_keep_for 336h` deletes rolled logs after 14 days: check on the server after
   2026-11-12.
-- Anything about the sites unlocked: `verify` without `--locked`, the go-live render pass and the
-  public 404 headers come with Task 12.
-- The Datalab pages' legal text with real operator values (placeholders until the user gives them).
+- A postal address in the Impressum (waived for the first go-live, R43; follows later).
