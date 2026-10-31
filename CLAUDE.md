@@ -2,7 +2,8 @@
 
 Read `HANDOVER.md` (project brief) and `docs/adr/` (locked decisions) before changing behaviour.
 Latest delivered: M16, Hetzner deployment behind the lock, own tiles, statistics, legal review (`docs/superpowers/specs/2026-10-21-velometer-m16-design.md`, rulings in `docs/superpowers/rulings-m16.md`, evidence `docs/review/m16-deploy.md` and `docs/review/m16-legal.md`; deploy guide `docs/deploy.md`).
-Live since 2026-10-30 (public repo, lock lifted). Next: check log pruning after 2026-11-12.
+Live since 2026-10-30 (public repo, lock lifted).
+Next: M17 on branch `m17`, findable, citable, published from GitHub (spec `docs/superpowers/specs/2026-10-31-velometer-m17-design.md`, plan `docs/superpowers/plans/2026-10-31-velometer-m17.md`, ledger `.superpowers/sdd/2026-10-31-velometer-m17/progress.md`). Also check log pruning on the server after 2026-11-12.
 
 - Gate: `uv run ruff format --check . && uv run ruff check . && uv run pytest && node --test "src/velometer/app/static/js/tests/*.test.mjs"`
 - Network tests are `@pytest.mark.slow` and deselected by default.
