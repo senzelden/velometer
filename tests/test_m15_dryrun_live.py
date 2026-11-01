@@ -28,6 +28,7 @@ ROOT = Path(__file__).parents[1]
 TILES = ROOT / "tests" / "fixtures" / "tiles" / "berlin-z0-8.pmtiles"
 COUNTER_CSV = ROOT / "tests" / "fixtures" / "datalab" / "all.csv"
 SITE_VALUES = {
+    "url": "https://velometer.example.org/",
     "datalab": {
         "name": "Zählwerk Berlin Datalab",
         "url": "https://datalab.example.org/",
@@ -51,6 +52,7 @@ def public_site(tmp_path_factory):
     (cfg / "site.yaml").write_text(
         yaml.safe_dump(SITE_VALUES, allow_unicode=True), encoding="utf-8"
     )
+    (cfg / "site.public.yaml").unlink(missing_ok=True)  # M17: the tests set their own values
     out = tmp / "site"
     with pytest.MonkeyPatch.context() as mp:  # a public export needs a clean checkout (M16)
         mp.setattr(export, "public_commit", lambda: "0123456789abcdef0123456789abcdef01234567")

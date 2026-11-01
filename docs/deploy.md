@@ -9,17 +9,16 @@ and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`)
 
 ## 0. Make and check the export
 
-The public site values (the Datalab, its Impressum, privacy page and accessibility statement, the
-public repository) stay null in the repo's `config/site.yaml`. Never fill them in there: copy the config to a scratch
-directory, set them in the copy, and export with `--config-dir`:
+The public site values (the site's own URL, the Datalab, its Impressum, privacy page and
+accessibility statement, the public repository) are committed in `config/site.public.yaml` (M17,
+R1). `export --public` merges that file over `config/site.yaml`, which stays null, so there is no
+scratch copy of `config/`: export from the repo's own `config/`. Only public values belong in the
+overlay (https URLs and the Datalab's name; no e-mail, no postal address).
 
 ```
-cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml:
-                                     # datalab, impressum_url, privacy_url, accessibility_url
-                                     # (https://<domain>/barrierefreiheit/), repo
 git status --untracked-files=no      # must print no changes: commit first
 uv run python tools/tiles.py --stamp     # once per extract: data/tiles/velometer.pmtiles.json
-uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
+uv run velometer app export --out <dir> --base / --clean --public
 uv run velometer app deploy-check <dir> --public
 c=$(jq -r .commit_full <dir>/build.json)
 git push <public remote> HEAD        # the commit the pages link must be in the public repo
@@ -31,15 +30,15 @@ rebased) or deleted; without it the links may lose their commit and every citati
 `golive-check --site <dir>` lists a commit that no tag at `repo.url` points at as open (it asks
 `git ls-remote --tags repo.url`, anonymously).
 
-`export --public` refuses to run unless the site settings name the Datalab, its Impressum, its
+`export --public` refuses to run unless the site settings name the site's own URL (`url`), the Datalab, its Impressum, its
 privacy page and its accessibility statement (`accessibility_url`, R63), and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
 address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub and Codeberg
 examples), and records those values in `build.json`. It refuses when the database's curated
 external figures differ from `config/external/figures.csv` (`velometer external check` names the
 rows; `velometer external load --no-qecio --no-bikenetkit` reloads them and writes the database,
 so it needs the user's go). It refuses a config directory that differs from the commit's
-`config/` in anything but `site.yaml` (a file changed, missing or added: the pages would show
-numbers the linked commit does not produce; copy `config/` afresh). It also refuses a checkout whose tracked files
+`config/` in any file (changed, missing or added: the pages would show numbers or values the
+linked commit does not produce; export from the repo's own `config/`). It also refuses a checkout whose tracked files
 have uncommitted changes (untracked files do not count): every repo path on the pages (a data
 reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
 `repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a

@@ -1,5 +1,8 @@
 # Site settings (M14). Every value may be null; a public export (`app export --public`)
 # needs all of them. URLs must be https.
+# M17: the public values live in `site.public.yaml` (committed), which a public export merges
+# over this file key by key; set a value here only for a local preview.
+url: null           # https URL of this site (the public origin)
 datalab:
   name: null        # e.g. "Zählwerk Berlin Datalab"
   url: null         # https URL of the Datalab

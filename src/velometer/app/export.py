@@ -284,12 +284,6 @@ def public_commit() -> str:
     return f"{sha}-dirty" if dirty else sha
 
 
-# The one config file a public export's scratch copy may change (deploy.md §0): the public site
-# values. Every other file must be the commit's, or the pages show numbers the linked commit does
-# not produce (final review M6).
-SCRATCH_ONLY = "site.yaml"
-
-
 def _blob_sha(data: bytes) -> str:
     """git's object id of a file's content (`git hash-object`)."""
     import hashlib
@@ -298,8 +292,10 @@ def _blob_sha(data: bytes) -> str:
 
 
 def config_drift(config_dir: Path) -> list[str]:
-    """The files under `config_dir` that differ from the commit's `config/` (HEAD), but
-    `site.yaml`: changed, missing, or not in the commit. [] when the copy matches."""
+    """The files under `config_dir` that differ from the commit's `config/` (HEAD): changed,
+    missing, or not in the commit. [] when the copy matches. The public site values are the
+    committed `site.public.yaml` (M17, R1), so no file is exempt: the pages must not show numbers
+    or values the linked commit does not produce (final review M6)."""
     try:
         listing = _git("ls-tree", "-r", "--full-tree", "HEAD", "--", "config")
     except (OSError, subprocess.CalledProcessError) as e:
@@ -314,8 +310,6 @@ def config_drift(config_dir: Path) -> list[str]:
         for p in sorted(root.rglob("*"))
         if p.is_file() and "__pycache__" not in p.parts
     }
-    committed.pop(SCRATCH_ONLY, None)
-    local.pop(SCRATCH_ONLY, None)
     out = [f"{rel}: differs from the commit" for rel in sorted(local.keys() & committed.keys())
            if local[rel] != committed[rel]]  # fmt: skip
     out += [f"{rel}: missing (in the commit)" for rel in sorted(committed.keys() - local.keys())]
@@ -737,12 +731,13 @@ def _run_export(
     site_values, raw = None, None
     if public:
         try:
-            site_cfg = load_site(config_dir)
+            site_cfg = load_site(config_dir, public=True)
         except ConfigError as e:
             raise ExportError(str(e)) from e
         if not site_cfg.complete:
             raise ExportError(
-                "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
+                "--public needs config/site.yaml and config/site.public.yaml to set: "
+                + ", ".join(site_cfg.missing())
             )
         site_values = site_cfg.public_values()
         # the pages link repo files at the export's commit (M16, R42): a commit that lacks the
@@ -767,9 +762,10 @@ def _run_export(
             if changed:
                 lines = "\n".join(f"  {c}" for c in changed)
                 raise ExportError(
-                    f"--public: {config_dir} differs from the commit's config/ in more than "
-                    f"site.yaml ({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
-                    "copy config/ afresh and change only site.yaml (docs/deploy.md §0)"
+                    f"--public: {config_dir} differs from the commit's config/ "
+                    f"({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
+                    "export from the repo's own config/, not a copy "
+                    "(docs/deploy.md §0)"
                 )
             drift = figures_drift(conn, Path(config_dir))
             if drift:

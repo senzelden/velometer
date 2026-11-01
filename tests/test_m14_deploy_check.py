@@ -17,6 +17,7 @@ from velometer.app.repo_links import bare_repo_paths
 from velometer.cli import app
 
 COMPLETE = {
+    "url": "https://velometer.example.org/",
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
@@ -38,6 +39,7 @@ def good(tmp_path_factory):
     r = build_rich(tmp)
     db_path, cfg, maps, docs, plans = r
     (cfg / "site.yaml").write_text(yaml.safe_dump(COMPLETE, allow_unicode=True), encoding="utf-8")
+    (cfg / "site.public.yaml").unlink(missing_ok=True)  # M17: the tests set their own values
     for name in ("methodology.md", "methodology.de.md"):  # the repo sentence (1.1c, R45 M5)
         page = docs / name
         text = page.read_text(encoding="utf-8") if page.is_file() else "# Methodology\n"
@@ -210,6 +212,7 @@ def test_the_public_values_are_in_build_json(site):
     build = json.loads((out / "build.json").read_text())
     assert build["public"] is True
     assert build["site"] == {
+        "url": COMPLETE["url"],
         "datalab_name": COMPLETE["datalab"]["name"],
         "datalab_url": COMPLETE["datalab"]["url"],
         "impressum_url": COMPLETE["impressum_url"],

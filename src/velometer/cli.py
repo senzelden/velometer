@@ -2133,8 +2133,9 @@ def app_export(
     public: bool = typer.Option(
         False,
         "--public",
-        help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
-        "pages and the repository, and the git checkout is clean (a public export).",
+        help="Refuse unless config/site.yaml with config/site.public.yaml names the site's URL, "
+        "the Datalab, its Impressum and privacy pages and the repository, and the git checkout is "
+        "clean (a public export).",
     ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,

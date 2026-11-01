@@ -85,7 +85,7 @@ def _gz_problems(out: Path) -> list[str]:
 
 
 SITE_VALUES = (
-    "datalab_name", "datalab_url", "impressum_url", "privacy_url", "accessibility_url",
+    "url", "datalab_name", "datalab_url", "impressum_url", "privacy_url", "accessibility_url",
     "repo_url", "repo_file_url",
 )  # fmt: skip
 FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url", "accessibility_url")
