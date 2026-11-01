@@ -23,7 +23,7 @@ from functools import partial
 from html import unescape
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree
 
 import markdown
@@ -503,6 +503,7 @@ def create_app(
     repo_root: Path = repo_links.ROOT,
     repo_paths: frozenset[str] | None = None,
     tiles_info: dict | None = None,
+    public: bool = False,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
@@ -511,7 +512,10 @@ def create_app(
     without a background. `repo_root` and `repo_paths` (its tracked files and directories, default
     `git ls-files` there) are the repo the pages link when site.yaml names one (M16). `tiles_info`
     (`load_tiles_info`) gives the maps' credit its Protomaps build date; with `tiles_file` and no
-    `tiles_info`, the sidecar beside the file is read."""
+    `tiles_info`, the sidecar beside the file is read. `public` marks the app of a public export
+    (M17): it reads the committed public site values (`site.public.yaml`) and writes the head's
+    canonical and alternate links as absolute URLs on `site.url`; a preview and the dev server
+    keep them relative."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -542,7 +546,7 @@ def create_app(
 
         app.add_api_route("/" + TILES_PATH, tiles_route, methods=["GET", "HEAD"])
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
-    app.state.site = load_site(config_dir)
+    app.state.site = load_site(config_dir, public=public)
     # a table row carries a city's id and name, not the city: the config says which language the
     # name is in (M14)
     city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
@@ -556,6 +560,14 @@ def create_app(
         repo_paths,
     )
 
+    def abs_in(other: Lang, path: str) -> str:
+        """`u_in`, as an absolute URL on `site.url` in a public export (the base path is the
+        host's, not the origin's, so it is dropped first); the same as `u_in` otherwise."""
+        rel = us[other](path)
+        if not (public and app.state.site.url):
+            return rel
+        return urljoin(app.state.site.url, rel.removeprefix(app.state.base_path))
+
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""
         templates = Jinja2Templates(directory=HERE / "templates")
@@ -563,6 +575,7 @@ def create_app(
         env.globals["lang"] = lang
         env.globals["u"] = us[lang]
         env.globals["u_in"] = lambda other, path: us[other](path)
+        env.globals["abs_in"] = abs_in
         env.globals["data_u"] = data_u
         env.globals["t"] = partial(i18n.t_markup, lang)
         env.globals["t_in"] = i18n.t_markup
@@ -773,7 +786,7 @@ def create_app(
         request.state.lang = "de" if request.url.path.split("/")[1:2] == ["de"] else "en"
         lazy = LazyData(db_path, config_dir, request.state.lang)
         try:
-            return page(request, "404.html", "", lazy, status_code=404, here="/")
+            return page(request, "404.html", "", lazy, status_code=404, here="/", canonical=None)
         finally:
             lazy.close()
 
@@ -1733,7 +1746,7 @@ def create_app(
     async def methodology_legacy_de(request: Request, data: Data):
         """The German methodology's URL before M12: the same German page, pointing search engines
         at /de/methodology (a static site cannot redirect)."""
-        return methodology_page(request, data, canonical=us["de"]("/methodology"))
+        return methodology_page(request, data, canonical=abs_in("de", "/methodology"))
 
     app.add_api_route(
         "/methodology/de", methodology_legacy_de, methods=["GET"],

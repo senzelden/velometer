@@ -7,10 +7,10 @@
 <meta name="velometer-base" content="{{ base_path }}">
 <meta name="velometer-commit" content="{{ build_commit }}">
 <title>{% block title %}velometer{% endblock %}</title>
-<link rel="alternate" hreflang="en" href="{{ u_in('en', here) }}">
-<link rel="alternate" hreflang="de" href="{{ u_in('de', here) }}">
-<link rel="alternate" hreflang="x-default" href="{{ u_in('en', here) }}">
-{% if canonical %}<link rel="canonical" href="{{ canonical }}">
+<link rel="alternate" hreflang="en" href="{{ abs_in('en', here) }}">
+<link rel="alternate" hreflang="de" href="{{ abs_in('de', here) }}">
+<link rel="alternate" hreflang="x-default" href="{{ abs_in('en', here) }}">
+{% set canonical = canonical if canonical is defined else abs_in(lang, here) %}{% if canonical %}<link rel="canonical" href="{{ canonical }}">
 {% endif %}<meta name="velometer-search" content="{{ data_u('/data/search.json', lang) }}">
 <link rel="icon" href="{{ data_u('/static/favicon.svg') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ data_u('/static/app.css') }}">

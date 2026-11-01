@@ -465,6 +465,14 @@ class _HtmlRefs(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        # M17: a canonical or alternate `<link>` names a page for crawlers, which follow it
+        # (they load nothing): a link, and absolute in a public export
+        rel = (a.get("rel") or "").lower().split()
+        pointer = (
+            tag == "link"
+            and "stylesheet" not in rel
+            and bool({"canonical", "alternate"} & set(rel))
+        )
         for name, value in attrs:
             if value is None:
                 continue
@@ -473,7 +481,7 @@ class _HtmlRefs(HTMLParser):
             elif name == "style":
                 self.refs += _css_refs(value)
             elif name in URL_ATTRS or URL_SHAPED.match(value):
-                self.refs.append((value, not (name == "href" and tag in LINK_TAGS)))
+                self.refs.append((value, not (name == "href" and (tag in LINK_TAGS or pointer))))
         if tag == "meta" and a.get("name") == "velometer-base":
             self.refs.append((a.get("content") or "", True))
         if tag == "style":
@@ -783,7 +791,7 @@ def _run_export(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base,
             static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
-            tiles_info=tiles,
+            tiles_info=tiles, public=public,
         )  # fmt: skip
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)
