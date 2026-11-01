@@ -1,6 +1,6 @@
 # velometer M17: findable, citable, and published from GitHub
 
-Status: design, 2026-10-31. Follows M16 (live since 2026-10-30). Rulings go to
+Status: design, 2026-10-31; §4.8 added 2026-11-01 from the user's feedback. Follows M16 (live since 2026-10-30). Rulings go to
 `docs/superpowers/rulings-m17.md`, evidence to `docs/review/m17-*.md`.
 
 ## 1. Purpose
@@ -130,8 +130,8 @@ home ranking, `/cities`, and each city's story page.
     source and date. The dek mostly does this already; the builder audits all 21 × 2 and
     reports gaps rather than rewriting (rewrites need the user's review).
   - The home page gets one plain sentence naming the current top and bottom city by the
-    headline measure.
-  - No other prose changes.
+    headline measure. It closes the home lead (§4.8).
+  - No other prose changes beyond §4.8.
 
 ### 4.3 Zenodo: two records, two DOIs
 
@@ -293,6 +293,135 @@ Answers from the conversation or the repo, or my calls (marked).
     - From git history, with `fetch-depth: 0` in the deploy job.
     - Locally the same function runs on the full clone.
 
+### 4.8 Reading for people (user feedback, 2026-11-01)
+
+The user's feedback after go-live: the landing page needs a human element, a lead text that
+explains the whole project; abbreviations such as A+B and LAU need explaining; the city page on a
+phone (German *Handy*) should read as one scroll with its charts, not as tabs; and pictures
+should explain the road types. This serves the same readers as §1. It also helps search and AI
+answer engines, because a plain explanation of the whole project is what they quote.
+
+User decisions (2026-11-01):
+
+1. **Home lead text in the third person:** it explains the project ("velometer measures …"),
+   not a personal story.
+2. **The phone scroll applies to city pages on phones only.** Desktop keeps the tabs as they are.
+3. **Road-type images are our own drawn diagrams,** one street cross-section per tier, as SVG.
+   This lifts the §5 non-goal "new images" for these diagrams only.
+
+Design:
+
+- **Home lead:**
+  - A lead section above the ranking, in about 120–180 words, en and de. It covers:
+    - what velometer is: an open, independent comparison of cycling infrastructure in 21
+      European cities, from OpenStreetMap;
+    - the question it answers, in a reader's words: how much of a city's main road network has
+      a cycle path you don't share with cars;
+    - what is counted, in plain words before any letter code: separated tracks and shared
+      foot/cycle paths count, painted lanes don't;
+    - that it shows *mapped* km, what mappers recorded, so the figures can change when mapping
+      catches up (ADR 0006);
+    - what a reader can do here: see the ranking, read a city's story, compare cities, and
+      check the method;
+    - who maintains it, with a link to the Zählwerk Berlin Datalab, and that code and data are
+      open.
+  - It uses the diagrams' A and B pictures (see below) beside the sentence on what is counted,
+    or links to them, whichever reads better on a phone (builder's call, shown to the user).
+  - It replaces nothing. The current h1, dek, definition and key facts stay. They may move
+    below the lead if that reads better (builder's call, shown to the user).
+  - The §4.2 home sentence (top and bottom city) is the lead's last sentence, so there is one
+    lead, not two.
+  - The text goes through the standing review rule: drafted by the builder, reviewed by the
+    user before merge.
+- **Abbreviations:**
+  - One registry `content/terms.yaml` (en + de): each term has an id, the short form as shown
+    (`A+B`, `A+B+E`, `LAU`, `FUA`, `OSM`, `QECIO`, `NUTS3`, `COROP`, and the tier letters A–E),
+    a short expansion and a one-to-three-sentence explanation. QECIO, NUTS3 and COROP are
+    expanded from their sources' own definitions, cited as elsewhere. Explanations change no
+    definition: they restate the methodology.
+  - A glossary section on the methodology page (`#terms`, `#term-<id>`), generated from the
+    registry, both editions.
+  - On every exported HTML page, the first visible occurrence of each registered short form in
+    `<main>` becomes `<abbr title="expansion">` wrapped in a link to its glossary entry. This
+    happens at render, so narratives and source texts aren't rewritten. Later occurrences stay
+    plain. Exceptions: inside links, headings, `<code>`, chart SVG and the glossary itself.
+  - Table headers such as "A+B km" count as an occurrence. A table on a phone, where hover
+    doesn't work, shows the link to the glossary entry.
+  - The `title` alone is not enough on touch screens. That's why the first occurrence is a link.
+  - JS-drawn chart labels and legends: the chart's caption or meta line names the term once in
+    plain words (e.g. "A+B: separated tracks and shared paths"), using the registry.
+- **City page on phones (below the existing 62rem breakpoint):**
+  - The story page (`/city/<id>`) reads as one scroll:
+    1. the head and key numbers;
+    2. the narrative;
+    3. the headline chart (the aside box, as now);
+    4. a "road types" block: the tier composition chart for the latest snapshot, then the tier
+       diagrams with their captions;
+    5. the over-time chart;
+    6. links to the other tabs (figures, tiers with map, counts, Bezirke where present).
+  - The tab bar stays on phones, as a link row, so every tab is still reachable.
+  - Sections 4 and 5 are new markup on the story page. They are hidden at ≥62rem
+    (`display: none`) and their charts initialise only when visible. Desktop output is
+    unchanged in look and behaviour.
+  - Every chart keeps its table fallback (`<details>`), as on the tab pages. No chart is
+    replaced by a table on phones.
+  - The interactive tier map stays on the tiers tab; the phone scroll links to it. MapLibre on
+    a phone story page costs too much data.
+  - The `/stories` scrollytelling pattern (`story-sticky`) is a model, not a requirement. A
+    plain stacked scroll is fine if it reads better (builder's call, shown to the user).
+- **Road-type diagrams:**
+  - Five inline SVG street cross-sections, tiers A to E, matching the `tier.*` labels:
+    - A: separated track;
+    - B: shared foot/cycle path;
+    - C: protected lane;
+    - D: painted lane;
+    - E: cycle street / bus lane.
+  - Drawn by us. Colours come from CSS tokens, so light and dark mode both work, and each tier
+    uses its chart colour. No text inside the SVG; the caption carries it.
+  - Each diagram has a caption in en and de: what the reader sees on the street, and whether the
+    tier counts in the headline (A and B do; C, D and E are measured but left out).
+  - Each one is `role="img"` with an accessible name.
+  - One template partial, used in three places:
+    - the methodology glossary;
+    - the home lead;
+    - the city phone scroll.
+  - Diagrams show the typical case. A caption sentence says the classifier rules decide, linking
+    to the methodology.
+  - The tier set comes from the current classifier version. A test fails if a tier exists
+    without a diagram, or a diagram without a tier.
+  - The user sees the rendered diagrams (both themes, phone width) before merge.
+
+
+Settled after the builder check (2026-11-01, my calls unless marked):
+
+1. **Tier E is two street types.** It gets one `<figure>` with two small panels: a cycle street
+   and a bus lane. The diagram test counts one figure per tier.
+   - E is not in the headline (A+B). That's the repo's fact, `config/differences.yaml`.
+   - `A+B+E` appears only as a comparison basis for sources that include cycle streets, such as
+     BikeNetKit. Its glossary entry says exactly that.
+   - The captions say "measured, not in the headline" for C, D and E. No contradiction.
+2. **The phone "road types" chart** uses the headline boundary (LAU, the city proper) and the
+   latest snapshot. LAU vs FUA stays on the tiers tab, and the link row points to it.
+3. **Data on the phone scroll:** city charts already draw from `/data/series.json` in `city.js`.
+   The phone-only charts fetch it lazily, only once a phone section becomes visible. The story
+   page gets no new inline data embed, and desktop never fetches it for these sections.
+4. **"First occurrence" for the abbreviation wrapper:**
+   - It works by document order in the rendered `<main>`, as a post-process on HTML (decided
+     above).
+   - Each of these containers is its own scope: always-visible content, each `<details>`, each
+     `.phone-only` block. In each scope the first occurrence is wrapped, so a reader who opens
+     only one of them still gets the link.
+   - Skipped: links, headings, `<code>`, `<svg>`, `[lang]` marks for foreign terms, and the
+     glossary.
+   - The home lead does use up the first occurrence. That's intended, because the lead names
+     the plain meaning first anyway.
+   - Text drawn only by JS is handled by the caption rule above, not by the wrapper.
+5. **Diagram geometry** is proposed by the builder, following plan Task 14 step 3. The user
+   reviews it in the render step before any caption is final.
+6. **Review covers everything new and reader-facing, in both languages:** the lead, the
+   registry expansions and explanations, and the captions. The builder drafts en and de. The
+   user reviews all of it in one batch (plan Task 5 step 6). This is the standing rule, restated.
+
 ## 5. Out of scope / non-goals
 
 - **Anti-goals:**
@@ -304,7 +433,8 @@ Answers from the conversation or the repo, or my calls (marked).
   - Data refresh on GitHub.
   - `llms-full.txt`.
   - Per-bot robots groups.
-  - New images.
+  - Photos, and images other than the §4.8 tier diagrams.
+  - Changing the desktop city page layout.
   - IndexNow.
   - Analytics beyond M16's GoAccess.
 
@@ -312,15 +442,18 @@ Answers from the conversation or the repo, or my calls (marked).
 
 1. `site.url`, and absolute canonical and hreflang.
 2. robots, sitemap and llms, with deploy-check.
-3. Meta descriptions and OpenGraph: drafts to the user for review.
-4. JSON-LD, with a DOI placeholder that fails closed in `--public` until set.
-5. CI workflow plus test data handling.
-6. Server `ci` user and snapshot (local `setup`, user's go).
-7. `deploy.yml` plus the `production` environment.
-8. Zenodo (user's login and first release), then DOIs into `CITATION.cff`, README, cite box and
+3. Reading for people (§4.8): terms registry and glossary, tier diagrams, home lead, city phone
+   scroll.
+4. Meta descriptions and OpenGraph: drafts to the user for review, in one batch with the
+   §4.8 texts and diagrams.
+5. JSON-LD, with a DOI placeholder that fails closed in `--public` until set.
+6. CI workflow plus test data handling.
+7. Server `ci` user and snapshot (local `setup`, user's go).
+8. `deploy.yml` plus the `production` environment.
+9. Zenodo (user's login and first release), then DOIs into `CITATION.cff`, README, cite box and
    JSON-LD.
-9. First deploy through GitHub.
-10. Search Console and Bing registration.
+10. First deploy through GitHub.
+11. Search Console and Bing registration.
 
 ## 7. Accept
 
@@ -330,6 +463,9 @@ Answers from the conversation or the repo, or my calls (marked).
   - Every sitemap URL answers 200, and every alternate pair is reciprocal (a test on the build,
     a probe live).
 - Google's Rich Results test shows valid `Dataset` markup on the home and a city page.
+- §4.8: the user approved the home lead, the glossary and the rendered tier diagrams. A phone-
+  width render of one city story page shows the full scroll with every chart drawn, and the
+  desktop render of that page is unchanged.
 - Both DOIs resolve, and the dataset DOI's record holds the CSVs and notices.
 - One deploy ran end to end on GitHub after the user's approval click:
   - the R64 passes had 0 findings;
