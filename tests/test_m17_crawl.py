@@ -1,0 +1,253 @@
+"""M17 Task 3: robots.txt, sitemap.xml and llms.txt of an export, and deploy-check on them."""
+
+import re
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+import pytest
+import yaml
+
+from tests.test_app_base import rich  # noqa: F401  (`rich` is a fixture)
+from tests.test_export import _content
+from velometer.app import crawl, export
+from velometer.app.deploy_check import deploy_problems
+from velometer.app.urls import with_lang
+
+ORIGIN = "https://velometer.example.org/"
+NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.org/1999/xhtml"}
+REPO = Path(__file__).resolve().parents[1]
+
+
+def _site_yaml(cfg: Path) -> None:
+    site = {
+        "url": ORIGIN,
+        "datalab": {"name": "Datalab", "url": "https://datalab.example.org/"},
+        "impressum_url": "https://datalab.example.org/impressum",
+        "privacy_url": "https://datalab.example.org/datenschutz",
+        "accessibility_url": "https://datalab.example.org/barrierefreiheit",
+        "repo": {
+            "url": "https://forge.example.org/o/velometer",
+            "file_url": "https://forge.example.org/o/velometer/blob/{commit}/{path}",
+        },
+    }
+    (Path(cfg) / "site.yaml").write_text(yaml.safe_dump(site), encoding="utf-8")
+    (Path(cfg) / "site.public.yaml").unlink(missing_ok=True)
+
+
+def _export(rich, tmp_path, monkeypatch, name="out", public=True):  # noqa: F811
+    db_path, cfg, maps, docs, plans = rich
+    _site_yaml(cfg)
+    monkeypatch.setattr(export, "public_commit", lambda: "0123456789abcdef0123456789abcdef01234567")
+    monkeypatch.setattr(export, "figures_drift", lambda conn, config_dir: [])
+    monkeypatch.setattr(export, "config_drift", lambda config_dir: [])
+    tiles = tmp_path / "t.json"
+    tiles.write_text(
+        '{"file":"t.pmtiles","protomaps_build":"2026-08-11","maxzoom":13,"sha256":"'
+        + "ab" * 32
+        + '"}'
+    )
+    out = tmp_path / name
+    export.run_export(
+        out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, public=public,
+        tiles_info=tiles,
+    )  # fmt: skip
+    return out
+
+
+@pytest.fixture
+def public_out(rich, tmp_path, monkeypatch):  # noqa: F811
+    return _export(rich, tmp_path, monkeypatch)
+
+
+def _routes(out: Path) -> list[str]:
+    """The routes of the HTML pages written under `out` (the 404 page and fragments aside)."""
+    routes = []
+    for page in sorted(out.rglob("index.html")):
+        rel = page.parent.relative_to(out).as_posix()
+        routes.append("/" if rel == "." else f"/{rel}")
+    return routes
+
+
+def _abs(route: str) -> str:
+    return ORIGIN + route.lstrip("/")
+
+
+def _indexable(out: Path) -> list[str]:
+    return crawl.indexable(_routes(out))
+
+
+def _sitemap(out: Path) -> ET.Element:
+    return ET.fromstring((out / "sitemap.xml").read_bytes())
+
+
+def test_indexable_rule():
+    urls = [
+        "/", "/cities", "/methodology", "/methodology/de", "/city/berlin", "/city/berlin/time",
+        "/city/berlin/panel", "/data/series.json", "/maps/x.png", "/tiles/a", "/build.json",
+        "/de/", "/de/cities", "/de/city/berlin/panel", "/de/data/search.json", "/plans/berlin",
+    ]  # fmt: skip
+    assert crawl.indexable(urls) == [
+        "/", "/cities", "/city/berlin", "/city/berlin/time", "/methodology", "/plans/berlin",
+    ]  # fmt: skip
+
+
+def test_robots_rules(public_out):
+    text = (public_out / "robots.txt").read_text()
+    lines = text.splitlines()
+    assert lines.count("User-agent: *") == 1
+    assert sum(ln.lower().startswith("user-agent:") for ln in lines) == 1  # no per-bot group
+    assert "Allow: /" in lines
+    disallow = [ln.removeprefix("Disallow: ") for ln in lines if ln.startswith("Disallow:")]
+    assert disallow == crawl.DISALLOW
+    for path in ("/data/", "/maps/", "/tiles/", "/build.json", "/city/*/panel"):
+        assert path in disallow
+        assert "/de" + path in disallow
+    assert lines[-1] == f"Sitemap: {ORIGIN}sitemap.xml"
+
+
+def test_robots_text_is_exactly_the_rules():
+    text = crawl.robots_txt(ORIGIN, ["/a/", "/b"])
+    assert text.endswith("Disallow: /a/\nDisallow: /b\n\nSitemap: " + ORIGIN + "sitemap.xml\n")
+    assert "Allow: /\n" in text
+
+
+def test_sitemap_lists_every_indexable_page_once(public_out):
+    locs = [e.text for e in _sitemap(public_out).findall("s:url/s:loc", NS)]
+    want = {_abs(p) for p in _indexable(public_out)} | {
+        _abs(with_lang(p, "de")) for p in _indexable(public_out)
+    }
+    assert len(locs) == len(set(locs))
+    assert set(locs) == want
+    assert len(locs) > 20
+    for bad in ("/panel", "/data/", "/maps/", "/tiles/", "build.json", "/methodology/de"):
+        assert not any(bad in loc for loc in locs), bad
+
+
+def test_sitemap_alternates_reciprocal(public_out):
+    alt = {}
+    for url in _sitemap(public_out).findall("s:url", NS):
+        loc = url.find("s:loc", NS).text
+        links = {link.get("hreflang"): link.get("href") for link in url.findall("x:link", NS)}
+        assert set(links) == {"en", "de", "x-default"}, loc
+        assert links["x-default"] == links["en"]
+        assert loc in (links["en"], links["de"])
+        alt[loc] = links
+    for loc, links in alt.items():
+        for other in (links["en"], links["de"]):
+            assert other in alt, f"{loc} names {other}, which is not listed"
+            assert alt[other] == links, f"{loc} and {other} do not list each other alike"
+
+
+def test_sitemap_lastmod_stable(rich, tmp_path, monkeypatch):  # noqa: F811
+    first = _export(rich, tmp_path, monkeypatch, "one")
+    second = _export(rich, tmp_path, monkeypatch, "two")
+    assert (first / "sitemap.xml").read_bytes() == (second / "sitemap.xml").read_bytes()
+    for lastmod in _sitemap(first).findall("s:url/s:lastmod", NS):
+        assert re.fullmatch(r"\d{4}-\d\d-\d\d", lastmod.text)
+
+
+def test_lastmod_of_a_city_page_is_its_latest_osm_snapshot(tmp_path):
+    build = {"osm_timestamps": {"x": ["2025-01-01T00:00:00Z", "2026-03-04T10:00:00Z"]}}
+    assert crawl.lastmod_for("/city/x/time", build, tmp_path) == "2026-03-04"
+
+
+def test_lastmod_without_git_is_deterministic_and_not_today(tmp_path):
+    build = {"osm_timestamps": {"x": ["2025-01-01T00:00:00Z", "2026-03-04T10:00:00Z"]}}
+    one = crawl.lastmod_for("/cities", build, tmp_path)  # tmp_path is no git repository
+    assert one == crawl.lastmod_for("/cities", build, tmp_path)
+    assert one == "2026-03-04"
+
+
+def test_every_source_of_a_page_exists():
+    """SOURCES_FOR names files of this checkout (a renamed template would silently lose its
+    date otherwise)."""
+    for route in ("/", "/cities", "/compare", "/stories", "/differences", "/organisations",
+                  "/sources", "/plans", "/plans/berlin", "/methodology"):  # fmt: skip
+        sources = crawl.SOURCES_FOR(route)
+        assert sources, route
+        for source in sources:
+            assert (REPO / source).exists(), (route, source)
+
+
+def test_sitemap_city_without_subareas(rich, public_out):  # noqa: F811
+    cfg_cities = [p.name for p in (public_out / "city").iterdir()]
+    assert cfg_cities
+    locs = [e.text for e in _sitemap(public_out).findall("s:url/s:loc", NS)]
+    assert not any("_subareas" in loc for loc in locs)
+    # the fixture has cities with and without subareas; each gets its page either way
+    for city in cfg_cities:
+        assert _abs(f"/city/{city}") in locs
+    without = [c for c in cfg_cities if not (public_out / "data" / f"{c}_subareas.csv").exists()]
+    assert without, "the fixture should have a city without _subareas.csv"
+
+
+def test_preview_export_has_no_crawl_files(rich, tmp_path, monkeypatch):  # noqa: F811
+    out = _export(rich, tmp_path, monkeypatch, "preview", public=False)
+    assert (out / "robots.txt").read_text() == "User-agent: *\nDisallow: /\n"
+    assert not (out / "sitemap.xml").exists()
+    assert not (out / "llms.txt").exists()
+
+
+def test_deploy_check_flags_stale_sitemap(public_out):
+    assert [p for p in deploy_problems(public_out, None, public=True) if "sitemap" in p] == []
+    gone = _indexable(public_out)[-1]
+    page = public_out / gone.lstrip("/") / "index.html"
+    page.unlink()
+    problems = deploy_problems(public_out, None, public=True)
+    assert any("sitemap.xml" in p and _abs(gone) in p for p in problems), problems
+
+
+def test_deploy_check_flags_page_missing_from_sitemap(public_out):
+    extra = public_out / "extra-page"
+    extra.mkdir()
+    (extra / "index.html").write_text("<html></html>")
+    problems = deploy_problems(public_out, None, public=True)
+    assert any("sitemap.xml" in p and _abs("/extra-page") in p for p in problems), problems
+
+
+def test_deploy_check_flags_missing_crawl_files(public_out):
+    (public_out / "sitemap.xml").unlink()
+    (public_out / "robots.txt").unlink()
+    problems = deploy_problems(public_out, None, public=True)
+    assert any("sitemap.xml is missing" in p for p in problems)
+    assert any("robots.txt is missing" in p for p in problems)
+
+
+def test_deploy_check_flags_robots_without_sitemap_line(public_out):
+    (public_out / "robots.txt").write_text("User-agent: *\nAllow: /\n")
+    problems = deploy_problems(public_out, None, public=True)
+    assert any("robots.txt" in p and "Sitemap" in p for p in problems), problems
+
+
+def test_llms_txt_shape(public_out):
+    text = (public_out / "llms.txt").read_text()
+    lines = text.splitlines()
+    assert lines[0].startswith("# ") and not lines[0].startswith("## ")
+    first_block = next(i for i, ln in enumerate(lines) if ln.strip())
+    assert first_block == 0
+    quote = next(i for i, ln in enumerate(lines) if ln.startswith(">"))
+    assert quote < next(i for i, ln in enumerate(lines) if ln.startswith("## "))
+    assert sum(ln.startswith("# ") for ln in lines) == 1
+    sitemap = {e.text for e in _sitemap(public_out).findall("s:url/s:loc", NS)}
+    site = {
+        "https://forge.example.org/o/velometer", "https://datalab.example.org/",
+        crawl.ODBL_URL,
+    }  # fmt: skip
+    links = re.findall(r"\]\(([^)]+)\)", text)
+    assert len(links) > 5
+    for link in links:
+        assert link.startswith("https://"), link
+        if link in sitemap or link in site:
+            continue
+        # a downloadable file of the export (not a page)
+        assert link.startswith(ORIGIN), link
+        assert (public_out / link.removeprefix(ORIGIN)).is_file(), link
+    assert f"]({ORIGIN}de/)" in text
+
+
+def test_llms_txt_omits_doi_lines_without_dois_and_lists_them_with():
+    cities = [("Berlin", "/city/berlin")]
+    without = crawl.llms_txt(ORIGIN, cities, {})
+    assert "doi.org" not in without
+    with_doi = crawl.llms_txt(ORIGIN, cities, {"data": "10.5281/zenodo.1"})
+    assert "https://doi.org/10.5281/zenodo.1" in with_doi

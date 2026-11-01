@@ -13,6 +13,7 @@ path only where no route ran (the 404) or for the export's URL list and a page's
 
 import re
 from collections.abc import Callable
+from urllib.parse import urljoin
 
 from velometer.i18n import Lang
 
@@ -117,3 +118,9 @@ def with_lang(path: str, lang: Lang) -> str:
     `/de/cities?x=1`; for English it is `strip_lang`."""
     english = strip_lang(path)
     return english if lang == "en" else DE_PREFIX + english
+
+
+def absolute_url(origin: str, rel: str, base: str) -> str:
+    """`rel`, a URL path carrying `base` (what `make_u` returns), as an absolute URL on `origin`.
+    The base path is the host's, not the origin's, so it is dropped first (M17)."""
+    return urljoin(origin, rel.removeprefix(normalise_base(base)))

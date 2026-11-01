@@ -23,7 +23,7 @@ from functools import partial
 from html import unescape
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import markdown
@@ -566,7 +566,7 @@ def create_app(
         rel = us[other](path)
         if not (public and app.state.site.url):
             return rel
-        return urljoin(app.state.site.url, rel.removeprefix(app.state.base_path))
+        return urls.absolute_url(app.state.site.url, rel, app.state.base_path)
 
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""

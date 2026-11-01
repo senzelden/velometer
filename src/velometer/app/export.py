@@ -32,6 +32,7 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
+from velometer.app import crawl
 from velometer.app.main import (
     CSP,
     HERE,
@@ -105,7 +106,7 @@ URL_ATTRS = frozenset({"href", "src", "action", "data", "poster", "formaction", 
 JSON_SCRIPT_TYPES = frozenset({"application/json", "application/ld+json"})
 SCANNED_SUFFIXES = (".html", ".css", ".js")  # so `.gz` copies and `_headers` are never scanned
 # M14: the compressed siblings, the host headers file and the per-file size limit
-GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg")
+GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg", ".txt", ".xml")
 GZ_MIN_BYTES = 1024
 MAX_FILE_BYTES = 26_214_400  # 25 MiB: Cloudflare Pages refuses a file of this size or more
 HEADERS_FILE = "_headers"
@@ -793,6 +794,7 @@ def _run_export(
             static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
             tiles_info=tiles, public=public,
         )  # fmt: skip
+        names = {c.id: c.name for c in data.cities()}  # for llms.txt
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)
     finally:
@@ -801,6 +803,8 @@ def _run_export(
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
         _write_site(site, app, urls, build, rendered)
+        origin = (build.get("site") or {}).get("url") if public else None
+        crawl.write_crawl_files(site, origin, urls, build, names=names)
         (site / HEADERS_FILE).write_text(headers_text(build["base"], csp_meta(CSP)))
         write_gz(site)
         big = oversized(site, MAX_FILE_BYTES)
