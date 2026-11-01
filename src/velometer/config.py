@@ -1011,6 +1011,14 @@ def _merge(base: dict, over: dict) -> dict:
     return out
 
 
+def _mapping(doc: Any, path: Path) -> dict:
+    if doc is None:
+        return {}
+    if not isinstance(doc, dict):
+        raise ConfigError(f"{path}: must be a mapping, not {type(doc).__name__}")
+    return doc
+
+
 def load_site(config_dir: Path, public: bool = False) -> SiteConfig:
     """The site settings; a missing `site.yaml` is an empty SiteConfig. With `public`, the
     committed `site.public.yaml` (M17) is merged over it key by key: a public export reads the
@@ -1027,11 +1035,3 @@ def load_site(config_dir: Path, public: bool = False) -> SiteConfig:
         return SiteConfig.model_validate(merged)
     except ValidationError as e:
         raise ConfigError(f"{' + '.join(p.name for p in docs)}: {e}") from e
-
-
-def _mapping(doc: Any, path: Path) -> dict:
-    if doc is None:
-        return {}
-    if not isinstance(doc, dict):
-        raise ValueError(f"{path.name} must be a mapping")
-    return doc

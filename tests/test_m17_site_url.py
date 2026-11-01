@@ -6,10 +6,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 
 from velometer.app import export
-from velometer.config import SiteConfig, load_site
+from velometer.config import ConfigError, SiteConfig, load_site
 
 ROOT = Path(__file__).resolve().parents[1]
 FULL = {
@@ -68,25 +69,32 @@ def test_citation_url_matches_site():
 
 
 def test_overlay_values_are_public():
-    """No e-mail, no postal address: only https URLs and the Datalab's name."""
+    """No e-mail, no postal address: every value is an https URL or the Datalab's own name,
+    which the Datalab site shows in its base template."""
     doc = yaml.safe_load((ROOT / "config" / "site.public.yaml").read_text(encoding="utf-8"))
+    datalab_name = doc["datalab"]["name"]
+    assert datalab_name in (ROOT / "sites/datalab/templates/base.html").read_text(encoding="utf-8")
     values = []
 
     def walk(node):
         if isinstance(node, dict):
-            for k, v in node.items():
-                if k == "name":
-                    assert v == load_site(ROOT / "config", public=True).datalab.name
-                else:
-                    walk(v)
+            for v in node.values():
+                walk(v)
         else:
             values.append(node)
 
     walk(doc)
     assert values
     for v in values:
-        assert isinstance(v, str) and re.fullmatch(r"https://\S+", v), v
-        assert "@" not in v
+        assert isinstance(v, str) and "@" not in v, v
+        assert v == datalab_name or re.fullmatch(r"https://\S+", v), v
+
+
+@pytest.mark.parametrize("which", ["site.yaml", "site.public.yaml"])
+def test_a_non_mapping_site_file_is_a_config_error(tmp_path, which):
+    (tmp_path / which).write_text("- a\n- b\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match=which):
+        load_site(tmp_path, public=True)
 
 
 def test_repo_config_is_complete_only_with_overlay():
