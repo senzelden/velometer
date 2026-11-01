@@ -442,6 +442,8 @@ def datalab_dir(tmp_path: Path, stamp_value: str | None = "repo") -> Path:
 
     d = site_dir(tmp_path, "datalab-build")
     (d / "build.json").unlink()
+    for name in dl.CRAWL_FILES:  # M17: a Datalab build carries its crawl files
+        (d / name).write_text("x\n", encoding="utf-8")
     if stamp_value == "repo":
         stamp_value = dl.inputs_stamp(dl.load_config(dl.DEFAULT_CONFIG))
     if stamp_value is not None:

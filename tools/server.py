@@ -697,7 +697,7 @@ def build_name(site: str, src: Path, now: datetime) -> str:
 def check_datalab_build(src: Path, root: Path = ROOT) -> None:
     """A Datalab release is named after the local HEAD (ruling R37), so the tree must be clean
     and the build must carry the stamp of the committed settings and templates (M7)."""
-    from velometer.datalab import DatalabError, inputs_stamp, load_config, read_stamp
+    from velometer.datalab import CRAWL_FILES, DatalabError, inputs_stamp, load_config, read_stamp
 
     if DEPS.git_dirty():
         raise ServerError(
@@ -709,6 +709,11 @@ def check_datalab_build(src: Path, root: Path = ROOT) -> None:
         raise ServerError(
             f"{src}: no build stamp (build.json); build it with velometer datalab build"
         )
+    for name in CRAWL_FILES:
+        if not (src / name).is_file():
+            raise ServerError(
+                f"{src}: {name} is missing; build it again with velometer datalab build"
+            )
     site_dir = root / "sites" / "datalab"
     try:
         want = inputs_stamp(load_config(site_dir / "site.yaml"), site_dir)

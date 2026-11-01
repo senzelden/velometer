@@ -59,9 +59,18 @@ def robots_txt(origin: str, disallow: list[str]) -> str:
     )
 
 
-def sitemap_xml(origin: str, pages: list[str], lastmod: dict[str, str], base: str = "/") -> str:
+def sitemap_xml(
+    origin: str,
+    pages: list[str],
+    lastmod: dict[str, str],
+    base: str = "/",
+    *,
+    languages: bool = True,
+) -> str:
     """Every page in both editions with its `en`, `de` and `x-default` (the English page)
-    alternates, which each page of a pair lists alike. `pages` are English routes."""
+    alternates, which each page of a pair lists alike. `pages` are English routes. A page
+    without a `lastmod` entry has no `<lastmod>`. With `languages` False (a single-language
+    site) each page is listed once, without alternates."""
     ET.register_namespace("", SITEMAP_NS)
     ET.register_namespace("xhtml", XHTML_NS)
     root = ET.Element(f"{{{SITEMAP_NS}}}urlset")
@@ -71,11 +80,12 @@ def sitemap_xml(origin: str, pages: list[str], lastmod: dict[str, str], base: st
 
     for page in sorted(pages):
         en, de = absolute(page), absolute(with_lang(page, "de"))
-        for loc in (en, de):
+        for loc in (en, de) if languages else (en,):
             url = ET.SubElement(root, f"{{{SITEMAP_NS}}}url")
             ET.SubElement(url, f"{{{SITEMAP_NS}}}loc").text = loc
-            ET.SubElement(url, f"{{{SITEMAP_NS}}}lastmod").text = lastmod[page]
-            for lang, href in (("en", en), ("de", de), ("x-default", en)):
+            if page in lastmod:
+                ET.SubElement(url, f"{{{SITEMAP_NS}}}lastmod").text = lastmod[page]
+            for lang, href in (("en", en), ("de", de), ("x-default", en)) if languages else ():
                 ET.SubElement(
                     url,
                     f"{{{XHTML_NS}}}link",

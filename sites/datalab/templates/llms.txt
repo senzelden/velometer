@@ -1,0 +1,13 @@
+# Zählwerk Berlin Datalab
+
+> Das Zählwerk Berlin Datalab ist eine Website im Aufbau. Es zählt nach, was andere schätzen: geschützte Radwege in Berlin, kartiert in OpenStreetMap, offen und mit dem Code, der jede Zahl erzeugt.
+
+Die Startseite zeigt einen Zähler: die in OpenStreetMap kartierten Kilometer geschützter Radwege (Stufe A+B) in Berlin, ein Stand der Daten je Jahr, zuletzt vom {{ as_of }}. Gezählt werden kartierte Kilometer, nicht gebaute. Die Zahlen stammen aus velometer.
+
+## Seiten
+
+- [Startseite](https://{{ domain }}/): der Zähler für Berlin
+- [velometer]({{ velometer_url }}): Radinfrastruktur in {{ cities }} europäischen Städten, Jahr für Jahr
+- [Impressum](https://{{ domain }}/impressum/)
+- [Datenschutz](https://{{ domain }}/datenschutz/)
+- [Barrierefreiheit](https://{{ domain }}/barrierefreiheit/): Erklärung zur Barrierefreiheit

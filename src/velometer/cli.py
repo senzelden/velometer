@@ -2211,16 +2211,31 @@ def datalab_build(
     config: Path = typer.Option(  # noqa: B008
         None, "--config", help="Site settings (default: sites/datalab/site.yaml)."
     ),
+    checked: str = typer.Option(
+        None,
+        "--checked",
+        help="YYYY-MM-DD: the accessibility statement's date for this build only "
+        "(site.yaml is not changed).",
+    ),
 ) -> None:
-    """The Datalab site (apex page, Impressum, Datenschutz) as static files; the Berlin counter
-    reads the velometer export. Reports the [[…]] placeholders still left."""
+    """The Datalab site (apex page, Impressum, Datenschutz) as static files, with robots.txt,
+    sitemap.xml and llms.txt; the Berlin counter reads the velometer export. Reports the [[…]]
+    placeholders still left."""
     from pydantic import ValidationError
 
-    from velometer.datalab import DEFAULT_CONFIG, DatalabError, build, load_config, placeholders
+    from velometer.datalab import (
+        DEFAULT_CONFIG,
+        DatalabError,
+        build,
+        load_config,
+        parse_checked,
+        placeholders,
+    )
 
     try:
+        day = parse_checked(checked) if checked is not None else None
         cfg = load_config(config or DEFAULT_CONFIG)
-        written = build(cfg, velometer_export, out)
+        written = build(cfg, velometer_export, out, day)
     except (DatalabError, ValidationError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e
