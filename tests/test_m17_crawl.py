@@ -1,6 +1,8 @@
 """M17 Task 3: robots.txt, sitemap.xml and llms.txt of an export, and deploy-check on them."""
 
+import os
 import re
+import subprocess
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -12,6 +14,7 @@ from tests.test_export import _content
 from velometer.app import crawl, export
 from velometer.app.deploy_check import deploy_problems
 from velometer.app.urls import with_lang
+from velometer.config import ConfigError
 
 ORIGIN = "https://velometer.example.org/"
 NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.org/1999/xhtml"}
@@ -151,11 +154,63 @@ def test_lastmod_of_a_city_page_is_its_latest_osm_snapshot(tmp_path):
     assert crawl.lastmod_for("/city/x/time", build, tmp_path) == "2026-03-04"
 
 
-def test_lastmod_without_git_is_deterministic_and_not_today(tmp_path):
-    build = {"osm_timestamps": {"x": ["2025-01-01T00:00:00Z", "2026-03-04T10:00:00Z"]}}
-    one = crawl.lastmod_for("/cities", build, tmp_path)  # tmp_path is no git repository
-    assert one == crawl.lastmod_for("/cities", build, tmp_path)
-    assert one == "2026-03-04"
+def _git(repo: Path, *args: str, date: str | None = None) -> None:
+    env = {
+        **os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull,
+        "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.org",
+        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.org",
+    }  # fmt: skip
+    if date:
+        env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = f"{date}T12:00:00+00:00"
+    subprocess.run(["git", *args], cwd=repo, env=env, check=True, capture_output=True)
+
+
+def _commit(repo: Path, rel: str, text: str, date: str) -> None:
+    (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+    (repo / rel).write_text(text)
+    _git(repo, "add", rel)
+    _git(repo, "commit", "-q", "-m", f"change {rel}", date=date)
+
+
+def _source_repo(tmp_path) -> tuple[Path, str]:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    return repo, crawl.SOURCES_FOR("/cities")[0]
+
+
+def test_lastmod_follows_the_last_commit_of_the_pages_sources(tmp_path):
+    repo, source = _source_repo(tmp_path)
+    _commit(repo, source, "v1", "2026-01-10")
+    assert crawl.lastmod_for("/cities", {}, repo) == "2026-01-10"
+    _commit(repo, "unrelated.txt", "x", "2026-03-01")  # another file: the page did not change
+    assert crawl.lastmod_for("/cities", {}, repo) == "2026-01-10"
+    _commit(repo, source, "v2", "2026-02-05")
+    assert crawl.lastmod_for("/cities", {}, repo) == "2026-02-05"
+
+
+def test_lastmod_of_a_shallow_clone_is_an_error(tmp_path):
+    repo, source = _source_repo(tmp_path)
+    _commit(repo, source, "v1", "2026-01-10")
+    _commit(repo, source, "v2", "2026-02-05")
+    shallow = tmp_path / "shallow"
+    _git(tmp_path, "clone", "-q", "--depth", "1", f"file://{repo}", str(shallow))
+    with pytest.raises(ConfigError, match="shallow"):
+        crawl.lastmod_for("/cities", {}, shallow)
+
+
+def test_lastmod_without_history_is_an_error(tmp_path):
+    with pytest.raises(ConfigError, match="git"):  # no repository at all
+        crawl.lastmod_for("/cities", {}, tmp_path)
+    repo, _ = _source_repo(tmp_path)
+    _commit(repo, "unrelated.txt", "x", "2026-03-01")  # a repository, no commit on the sources
+    with pytest.raises(ConfigError, match="no commit"):
+        crawl.lastmod_for("/cities", {}, repo)
+
+
+def test_lastmod_of_a_city_without_a_snapshot_is_an_error(tmp_path):
+    with pytest.raises(ConfigError, match="snapshot"):
+        crawl.lastmod_for("/city/x", {"osm_timestamps": {}}, tmp_path)
 
 
 def test_every_source_of_a_page_exists():

@@ -13,6 +13,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from velometer.app.urls import LEGACY_DE, absolute_url, with_lang
+from velometer.config import ConfigError
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 XHTML_NS = "http://www.w3.org/1999/xhtml"
@@ -96,32 +97,44 @@ def SOURCES_FOR(path: str) -> list[str]:  # noqa: N802 (a lookup table, named as
     return [n if "/" in n else f"{TEMPLATES}/{n}" for n in names]
 
 
-def _city_date(build: dict, city: str | None = None) -> str | None:
-    stamps = build.get("osm_timestamps", {})
-    pool = stamps.get(city, []) if city else [t for ts in stamps.values() for t in ts]
+def _city_date(build: dict, city: str) -> str | None:
+    pool = build.get("osm_timestamps", {}).get(city, [])
     return max(pool)[:10] if pool else None
+
+
+def _git(repo: Path, *args: str) -> str:
+    try:
+        r = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=False)
+    except OSError as e:
+        raise ConfigError(f"lastmod needs git, which cannot run: {e}") from e
+    if r.returncode != 0:
+        raise ConfigError(
+            f"lastmod needs the git history of {repo}: git {args[0]} says {r.stderr.strip()!r}"
+        )
+    return r.stdout.strip()
 
 
 def lastmod_for(path: str, build: dict, repo: Path) -> str:
     """`YYYY-MM-DD`. A city's page: the latest OSM snapshot of that city. Any other page: the
-    date of the last commit touching its sources; without git history, the latest snapshot of
-    any city, else 1970-01-01 (never today: the value must not move on a rebuild)."""
+    date of the last commit touching its sources. There is no fallback date: a date later than
+    the real change would be wrong, so without git, with a shallow clone (its commits all look
+    recent) or with no commit touching the sources, ConfigError says what to fix."""
     parts = path.strip("/").split("/")
     if parts[0] == "city" and len(parts) > 1:
         found = _city_date(build, parts[1])
-        if found:
-            return found
-    else:
-        try:
-            r = subprocess.run(
-                ["git", "log", "-1", "--format=%cs", "--", *SOURCES_FOR(path)],
-                cwd=repo, capture_output=True, text=True, check=False,
-            )  # fmt: skip
-        except OSError:
-            r = None
-        if r is not None and r.returncode == 0 and r.stdout.strip():
-            return r.stdout.strip()
-    return _city_date(build) or "1970-01-01"
+        if found is None:
+            raise ConfigError(f"lastmod of {path}: build.json has no OSM snapshot for {parts[1]}")
+        return found
+    if _git(repo, "rev-parse", "--is-shallow-repository") != "false":
+        raise ConfigError(
+            f"lastmod of {path}: {repo} is a shallow clone (or not a git repository), so commit "
+            "dates are not the content's; fetch the full history (fetch-depth: 0)"
+        )
+    sources = SOURCES_FOR(path)
+    date = _git(repo, "log", "-1", "--format=%cs", "--", *sources)
+    if not date:
+        raise ConfigError(f"lastmod of {path}: no commit touches its sources {sources}")
+    return date
 
 
 def llms_txt(
