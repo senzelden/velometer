@@ -257,3 +257,76 @@ For the user to decide:
   on a kerb separator.
 - Whether the glossary should show each diagram in its tier entry (as built), or the row of five
   (`tier_diagrams()`) above the entries.
+
+## Home lead (Task 15)
+
+A lead section on the home page, between the dek and the definition box, above the ranking
+(spec §4.8, third person). It replaces nothing: the h1, dek, definition and key facts stay where
+they were. Its last sentence is the §4.2 home sentence, computed from the ranking the home table
+shows (`ranking_ends` in `src/velometer/app/main.py`); with fewer than two ranked cities it is left
+out. Strings: `page.index.lead.*` in `content/ui/en.yaml` and `content/ui/de.yaml`. Below as
+rendered on the real data (links in brackets: where they go).
+
+### English (155 words)
+
+> velometer is an open, independent comparison of cycling infrastructure in 21 European cities,
+> built from OpenStreetMap. It answers one question: how much of a city's main road network has a
+> cycle path you don't share with cars? It counts [separated tracks](/methodology#term-tier-a) and
+> [shared foot/cycle paths](/methodology#term-tier-b), both apart from the road. Cycle lanes on the
+> road don't count, whether painted or protected. Together, the two counted types are called A+B
+> here. All lengths are **mapped km**: what mappers recorded in OpenStreetMap, not what was built.
+> A city's figure can change when the mapping catches up.
+>
+> Here a reader can see the [ranking](#ranking), read [a city's story](/cities) or [the stories
+> across all cities](/stories), [compare cities](/compare) and [check the method](/methodology).
+> The [Zählwerk Berlin Datalab](https://zaehlwerk-datalab.de/) maintains velometer. Its
+> [code](https://github.com/senzelden/velometer) and [data](/data/all.csv) are open. In the current
+> run, Helsinki has the highest headline value, 262.3 A+B km per 100 km of main roads (excl.
+> motorways), and Budapest the lowest, 22.3.
+
+### German (149 words)
+
+> velometer ist ein offener, unabhängiger Vergleich der Radinfrastruktur in 21 europäischen
+> Städten, erstellt aus OpenStreetMap. Er beantwortet eine Frage: Wie viel vom Hauptstraßennetz
+> einer Stadt hat einen Radweg, den man nicht mit Autos teilt? Gezählt werden [baulich getrennte
+> Radwege](/de/methodology#term-tier-a) und [gemeinsame Geh- und Radwege](/de/methodology#term-tier-b),
+> beide abseits der Fahrbahn. Radfahrstreifen auf der Fahrbahn zählen nicht, ob markiert oder
+> geschützt. Die beiden gezählten Arten heißen hier zusammen A+B. Alle Längen sind **kartierte
+> km**: was Kartierende in OpenStreetMap erfasst haben, nicht was gebaut wurde. Die Zahl einer Stadt
+> kann sich ändern, wenn die Kartierung aufholt.
+>
+> Hier lässt sich die [Rangfolge](#ranking) ansehen, [die Geschichte einer Stadt](/de/cities) oder
+> [die Geschichten über alle Städte](/de/stories) lesen, [Städte vergleichen](/de/compare) und
+> [die Methode prüfen](/de/methodology). Das [Zählwerk Berlin Datalab](https://zaehlwerk-datalab.de/)
+> betreut velometer. [Code](https://github.com/senzelden/velometer) und [Daten](/data/all.csv) von
+> velometer sind offen. Im aktuellen Lauf hat Helsinki die höchste Hauptkennzahl, 262,3 A+B-km je
+> 100 km Hauptstraßen (ohne Autobahnen), und Budapest die niedrigste, 22,3.
+
+City names, values and the city count come from the data; the rest is fixed text. The first
+`A+B` gets the glossary link from the first-use wrapper (Task 13).
+
+### Builder's calls, for review
+
+- **Links, not diagrams, beside "what counts".** Both rendered at 390 px
+  (`m17-home/home-diag-{en,de}-light-390.png` shows the diagram variant). The two figures add
+  about 390 px, split the lead in two and push the ranking a further screen down; the links keep
+  the lead one read and lead to the glossary entries, which show the same diagrams.
+- **Placement:** after the dek, before the definition box. The h1 and dek stay the page's head;
+  the definition box then restates the short form the lead has just introduced.
+- **"painted or protected":** the spec's list says "painted lanes don't". Tier C (protected lanes)
+  doesn't count either, so the lead names both, to avoid suggesting that protected lanes count.
+- **The home sentence's measure** is the headline unit as the site names it ("A+B km per 100 km of
+  main roads (excl. motorways)"), with the top city's value in full and the bottom's as a number.
+- With a tie at the top or bottom (not the case today), the table's order decides and the sentence
+  would read "highest … lowest" with equal values.
+
+### Renders
+
+Top of the home page down to the ranking's third row, real data, public site values:
+
+- `m17-home/home-{en,de}-{light,dark}-390.png`
+- `m17-home/home-{en,de}-{light,dark}-1280.png`
+- `m17-home/home-diag-{en,de}-light-390.png` (the rejected diagram variant)
+
+![en, light, 390](m17-home/home-en-light-390.png)
+![de, dark, 1280](m17-home/home-de-dark-1280.png)
