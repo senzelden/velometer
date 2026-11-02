@@ -3,6 +3,33 @@
 Every new reader-facing sentence of M17, en and de, collected for the user's review (plan Task 5
 step 6, spec §4.8 settled 6). Nothing here ships before that review.
 
+## Open points, in one list
+
+Decide each one, or say "as is". Section references are below.
+
+1. **Long deks:** 19 story-page deks are longer than 160 characters, so their meta description falls back
+   to the generic `meta.city` sentence (see "Story pages that fall back"). Shorten the deks, or accept
+   the fallback?
+2. **Zenodo licence:** the record says `odbl-1.0`, but the boundary-derived figures carry GISCO's
+   non-commercial condition (see "Dataset bundle"). Keep it, or change the licence field?
+3. **ECF:** "ECF" is used but not registered as a term, and the upper-case shape test is a closed
+   list (Task 13).
+4. **Tier letters:** they are marked as terms only after "tier"/"Stufe". The Paris figures get
+   34 marks (Task 13).
+5. **llms.txt:** "(a year or the current one)" is unverified wording. It links `/data/all.csv`, although
+   robots.txt disallows `/data/` (kept as a download).
+6. **Diagram captions:** A "kerb or change in level" could get "typically"; C names 2 of many
+   separation kinds and could get "such as" (Task 14).
+7. **"Radwegtypen":** too narrow for D and E (Task 16).
+8. **Home lead:** it repeats the definition box below it. "Here a reader can see…" reads clumsily,
+   the home sentence is long, and "apart from the road" is loose for side tracks (Task 15).
+9. **Phone city scroll:** the "over time" section shows the tier mix over time, not the headline chart,
+   which already sits above it (Task 16).
+10. **Methodology correction (German):** "Radfahrstreifen" is narrower than the English "all cycle lanes",
+    because it excludes Schutzstreifen (Task 2c).
+11. **Methodology correction:** the stale tier-B sentence is replaced (live page; see the section
+    below).
+
 ## Terms registry and glossary (Task 13)
 
 ### Inventory
@@ -697,3 +724,10 @@ heute"):
 | key | en | de |
 |---|---|---|
 | `cite.title.tiers_now` | `{city}: tier composition now, mapped km by tier, {kind}` | `{city}: Stufen heute, kartierte km je Stufe, {kind}` |
+
+## llms.txt (Tasks 3 and 4)
+
+The texts are in the files themselves, so they are not copied here:
+
+- velometer: `content/llms.md`. `{n_cities}`, `{cities}`, `{dois}` and the URLs are filled at export.
+- Datalab (German): `sites/datalab/templates/llms.txt`.
