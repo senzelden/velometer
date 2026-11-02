@@ -64,6 +64,8 @@ content_app = typer.Typer(invoke_without_command=True)
 app.add_typer(content_app, name="content")
 datalab_app = typer.Typer(no_args_is_help=True, help="The Zählwerk Berlin Datalab site.")
 app.add_typer(datalab_app, name="datalab")
+dataset_app = typer.Typer(no_args_is_help=True, help="The data deposit (Zenodo).")
+app.add_typer(dataset_app, name="dataset")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -2200,6 +2202,24 @@ def app_deploy_check(
         f"deploy-check ok: {files} files, {size / 1e6:.1f} MB, base {build['base']}, "
         f"public {build.get('public', False)}"
     )
+
+
+@dataset_app.command("bundle")
+def dataset_bundle(
+    site: Path = typer.Option(..., "--site", help="A finished public export."),  # noqa: B008
+    out: Path = typer.Option(..., "--out", help="Directory for the zip and the metadata."),  # noqa: B008
+) -> None:
+    """Pack the public export's CSVs and a README into velometer-data-<commit>.zip and write
+    zenodo-metadata.txt, for a manual Zenodo deposit. Contacts nothing."""
+    from velometer.dataset_bundle import BundleError, bundle
+
+    try:
+        zpath, mpath = bundle(site, out)
+    except BundleError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"wrote {zpath}")
+    typer.echo(f"wrote {mpath}")
 
 
 @datalab_app.command("build")

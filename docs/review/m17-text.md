@@ -580,3 +580,58 @@ both dates. Two findings beyond the three columns:
 - **Date goes stale:** each dek hard-codes "October 2026", the current run's month. The next run
   makes the dek (and so the story page's description) out of date until the narratives are
   updated.
+
+
+## Dataset bundle: README and Zenodo description (Task 7)
+
+`velometer dataset bundle --site <export> --out <dir>` writes `velometer-data-<commit>.zip`
+(`README.md` plus `data/*.csv`, no `.gz`, no GeoJSON, fixed times so two runs give the same
+bytes) and `zenodo-metadata.txt` (title, creator Dennis Senzel, description, licence `odbl-1.0`,
+keywords, version = commit, related identifier `isSupplementTo` the repo URL). The commit,
+classifier versions, OSM timestamps and URLs come from the export's `build.json`; a non-public,
+dirty or commit-less export is refused. The notices in the README are the CSV preambles' own lines
+(read from the bundled files), so they cannot drift from ADR 0008. Placeholders in braces are
+filled from `build.json`. Source: `content/dataset/README.md.j2`, `src/velometer/dataset_bundle.py`.
+
+**README.md** (shown for the test fixture; `{...}` are filled in):
+
+> # velometer data, version {commit}
+>
+> Protected cycling infrastructure in {n} European cities, as mapped in OpenStreetMap.
+> The files are the CSV downloads of {site url}, exported from commit {commit}.
+> The lengths are mapped kilometres (what OpenStreetMap records), not built kilometres.
+>
+> ## Files
+> (one line per CSV, `data/<name>.csv`)
+>
+> `all.csv` holds every city, `<city>.csv` one city, `<city>_subareas.csv` the sub-areas of a city.
+> Each file starts with comment lines (`#`) that carry the notices below, then the table.
+> The columns and the method are described at {site url}methodology.
+>
+> ## Sources and notices
+> (the distinct preamble lines of the CSVs: the OSM notice with both URIs, the GISCO boundary
+> credit, the population credits and the per-capita disclaimer)
+>
+> ## Provenance
+> - Code and commit: {repo url} at commit {commit}
+> - Classifier version(s): {versions}
+> - OSM snapshot timestamps (UTC), per city: (one line per city)
+>
+> ## Licence
+> The data derived from OpenStreetMap are available under the Open Database Licence (ODbL) 1.0,
+> https://opendatacommons.org/licenses/odbl/1-0/, with the attribution "© OpenStreetMap contributors".
+> The administrative boundaries are not part of these files. Creator: Dennis Senzel.
+
+**Zenodo description:**
+
+> CSV tables of protected cycling infrastructure in {n} European cities, as mapped in
+> OpenStreetMap (snapshots {first} to {last}), exported from {site url} at commit {commit}.
+> Lengths are mapped kilometres, not built kilometres. The README names the sources, notices,
+> classifier versions and snapshot timestamps.
+
+Title: "velometer data: protected cycling infrastructure in European cities, {commit}". Keywords:
+cycling infrastructure; OpenStreetMap; open data; urban mobility; Europe.
+
+Open points for the review: the CSV column glossary is not repeated in the README (it points to
+the methodology page); the README says the boundaries are not in the files, which is true of the
+CSVs but means a reader of the Zenodo record finds the GISCO credit only as a preamble line.
