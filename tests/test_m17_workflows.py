@@ -194,3 +194,19 @@ def test_skips_have_reasons(tmp_path):
     db_skips = {m["nodeid"] for m in audit["marks"] if "velometer.sqlite" in m["reason"]}
     db_skips |= {m["nodeid"] for m in audit["modules"] if "velometer.sqlite" in m["reason"]}
     assert db_skips == _evidence_db_skips()
+
+
+def test_cli_help_tests_pass_under_the_ci_environment():
+    """CI sets GITHUB_ACTIONS, which makes Typer colour its help text. The tests that read help
+    text must pass there too, so the suite gives one answer on every machine."""
+    env = {**os.environ, "GITHUB_ACTIONS": "true", "FORCE_COLOR": "1"}
+    env.pop("_TYPER_FORCE_DISABLE_TERMINAL", None)
+    env.pop("VELOMETER_TEST_SHARD", None)
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+         "tests/test_cli.py::test_content_help_keeps_its_options_and_stamp_has_help",
+         "tests/test_content_check.py::test_cli_online_alone_implies_check",
+         "tests/test_m16_server.py::test_unlock_needs_the_velometer_export"],
+        cwd=ROOT, env=env, capture_output=True, text=True,
+    )  # fmt: skip
+    assert r.returncode == 0, r.stdout[-2000:]

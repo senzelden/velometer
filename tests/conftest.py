@@ -12,6 +12,12 @@ from tests.shard import parse_shard, shard_index
 from velometer.config import default_config_dir
 from velometer.report.data import ReportData, open_readonly
 
+# Typer forces a colour terminal when GITHUB_ACTIONS, FORCE_COLOR or PY_COLORS is set, and its help
+# text then carries ANSI codes that split the words tests look for. Tests read plain text on every
+# machine. Set before any test module imports typer (it reads the variable at import); none of the
+# imports above loads typer.rich_utils.
+os.environ["_TYPER_FORCE_DISABLE_TERMINAL"] = "1"
+
 
 def make_source(language: str, gloss_en: str | None = "Gloss", gloss_de: str | None = None):
     """A one-excerpt `Source` ("s", excerpt "e") in `language`: the shared synthetic source."""
