@@ -161,15 +161,27 @@ def test_german_page_with_english_dek_takes_the_sentence():
     )
 
 
-def test_long_text_is_shortened_at_a_clause():
-    """A long text ends at its last clause end that fits, else at its first comma that leaves
-    enough, else at a word."""
-    head = "A" * 70 + " went from 1,279 to 1,292 km in 2026"
-    assert meta.shorten(head + ", c d; " + "b " * 60) == head + ", c d."
-    assert meta.shorten(head + ", c d, e f, " + "b " * 60) == head + "."
-    words = "word " * 50
-    out = meta.shorten(words)
-    assert len(out) <= meta.MAX and out.endswith("word…")
+def test_long_dek_falls_back_to_the_city_sentence():
+    """A dek over `MAX` is never cut: the page takes exactly the `meta.city` sentence."""
+    head = "Mapped A+B km per 100 km of main roads went from 113.7 in 2018 to 109.1 in 2026"
+    dek = head + ": one step down in a 2022 re-mapping campaign, " + "a slow climb since " * 4
+    assert len(dek) > meta.MAX
+    for lang, value in (("en", "109.1"), ("de", "109,1")):
+        desc = meta.city_description(lang, "story", "Berlin", dek, value)
+        assert desc == meta.plain(i18n.t(lang, "meta.city", city="Berlin", value=value))
+        assert not desc.startswith(head[:20])
+    assert meta.city_description("en", "story", "Berlin", dek, None) == meta.plain(
+        i18n.t("en", "meta.city_plain", city="Berlin")
+    )
+    assert meta.city_description("en", "story", "Berlin", "Too short.", "1.0") == meta.plain(
+        i18n.t("en", "meta.city", city="Berlin", value="1.0")
+    )
+
+
+def test_dek_in_range_is_the_description_verbatim():
+    dek = "The headline rose from 18.7 in 2018 to 29.6 in October 2026, while lanes tripled."
+    assert meta.MIN <= len(dek) <= meta.MAX
+    assert meta.city_description("en", "story", "Praha", dek, "29.6") == dek
 
 
 def _deks() -> list[tuple[str, str]]:
@@ -183,11 +195,15 @@ def _deks() -> list[tuple[str, str]]:
 
 @pytest.mark.parametrize(("name", "dek"), _deks(), ids=[n for n, _ in _deks()])
 def test_every_shipped_dek_makes_a_description(name, dek):
-    """Each shipped dek, en and de, gives a description within the bounds (the fixture export
-    holds only a few cities)."""
+    """Each shipped story page, en and de, has a description within the bounds: its dek
+    verbatim, or the city sentence (the fixture export holds only a few cities)."""
     text = dek["text"] if isinstance(dek, dict) else dek
-    desc = meta.shorten(meta.plain(text))
+    lang = "de" if name.startswith("de/") else "en"
+    value = i18n.number(1234.5, lang)
+    desc = meta.city_description(lang, "story", "København", text, value)
     assert meta.MIN <= len(desc) <= meta.MAX, (name, desc)
+    city = meta.plain(i18n.t(lang, "meta.city", city="København", value=value))
+    assert desc == (meta.plain(text) if meta.fits(meta.plain(text)) else city), name
 
 
 def test_datalab_pages_have_description(tmp_path):

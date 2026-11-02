@@ -409,9 +409,11 @@ being its canonical `/de/methodology`.
 - **Fallbacks:** a story page without a dek, or whose dek on a German page is still the English
   fallback, takes `meta.city`; without a current headline value, `meta.city_plain` and
   `meta.tab_plain` (no figure).
-- **A dek over 160 characters is shortened** (ruling): at its last clause end (`;`, `:`, full
-  stop) that fits, else at its first comma, ending with a full stop. 5 English and 14 German deks
-  are cut; the results are listed below.
+- **A dek is never cut** (controller ruling, review of Task 5): a cut can drop the clause that
+  qualifies the figure (a mapping campaign, a retag), against ADR 0006. A dek of 50–160
+  characters is the description verbatim; a longer or shorter one falls back to `meta.city` (the
+  figure-free `meta.city_plain` without a current value). 5 English and 14 German deks fall back
+  today; they are listed below in full, to be shortened at the review if wanted.
 - **English terms in German:** attribute text carries no markup, so the German strings are written
   without English terms (no `<i lang="en">` is possible or needed). Names (velometer,
   OpenStreetMap, city names) stay as on the pages. The English strings name the German term
@@ -491,29 +493,33 @@ being its canonical `/de/methodology`.
 | `/de/city/berlin/counts` | velometer · Berlin · Zählstellen | Berlin: offene Daten der Radzählstellen, im Vergleich mit den kartierten km der Kernstadt; Hauptkennzahl 109,1 A+B-km je 100 km Hauptstraßen. |
 | `/de/city/berlin/bezirke` | velometer · Berlin · Bezirke | Berlin nach Bezirken: die Hauptkennzahl jedes Bezirks und ihre Veränderung; die ganze Stadt hat 109,1 kartierte A+B-km je 100 km Hauptstraßen. |
 
-### Story pages whose dek is shortened
+### Story pages that fall back to `meta.city`
 
-| city | lang | dek length | description |
+Their dek is outside 50–160 characters, so the description is the `meta.city` sentence (for
+example `/de/city/berlin`: "Berlin: 109,1 kartierte A+B-km je 100 km Hauptstraßen im aktuellen Lauf, die geschützte Radinfrastruktur der Stadt, wie OpenStreetMap sie zeigt."). Shortening a dek below to at most
+160 characters makes it the description.
+
+| city | edition | dek length | full dek |
 |---|---|---|---|
-| amsterdam | de | 186 | Die Hauptkennzahl ging von 205,6 im Jahr 2018 auf 203,0 im Oktober 2026 zurück. |
-| berlin | de | 205 | Die kartierten A+B-km je 100 km Hauptstraßen gingen von 113,7 im Jahr 2018 auf 109,1 im Oktober 2026 zurück. |
-| bratislava | de | 164 | Die Hauptkennzahl stieg von 43,5 im Jahr 2018 auf 58,7 im Oktober 2026. |
-| budapest | de | 184 | Die Hauptkennzahl stieg von 19,4 im Jahr 2018 auf 22,3 im Oktober 2026. |
-| copenhagen | de | 208 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 530 auf 582 km, fast ausschließlich bei baulich getrennten Radwegen. |
-| helsinki | en | 195 | Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026. |
-| helsinki | de | 212 | Die kartierten A+B-km blieben von 2018 bis Oktober 2026 zwischen 1.279 und 1.292 km. |
-| krakow | en | 161 | The headline rose from 40.2 to 72.6 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
-| krakow | de | 171 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 40,2 auf 72,6 kartierte A+B-km je 100 km Hauptstraßen. |
-| ljubljana | en | 165 | The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
-| ljubljana | de | 187 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 46,5 auf 73,5 kartierte A+B-km je 100 km Hauptstraßen. |
-| madrid | de | 182 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 282 auf 353 km. |
-| oslo | de | 175 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,1 auf 70,8. |
-| stockholm | de | 195 | Die Hauptkennzahl bewegte sich zwischen 2018 und Oktober 2026 nur von 257,9 auf 261,0. |
-| strasbourg | de | 165 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 184 auf 241 km. |
-| utrecht | en | 161 | The headline rose from 179.7 in 2018 to 193.6 in October 2026, partly because fewer main-road km were mapped. |
-| utrecht | de | 193 | Die Hauptkennzahl stieg von 179,7 im Jahr 2018 auf 193,6 im Oktober 2026, zum Teil weil weniger Hauptstraßen-km kartiert waren. |
-| warsaw | en | 176 | The headline rose from 53.4 to 82.3 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
-| warsaw | de | 191 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,4 auf 82,3 kartierte A+B-km je 100 km Hauptstraßen. |
+| amsterdam | de | 186 | Die Hauptkennzahl ging von 205,6 im Jahr 2018 auf 203,0 im Oktober 2026 zurück; die einzige sichtbare Verschiebung, von Radwegen zu Geh- und Radwegen im Jahr 2025, war eine Tag-Änderung. |
+| berlin | de | 205 | Die kartierten A+B-km je 100 km Hauptstraßen gingen von 113,7 im Jahr 2018 auf 109,1 im Oktober 2026 zurück: ein Schritt nach unten in einer Kartierungskampagne im Jahr 2022, seitdem ein langsamer Anstieg. |
+| bratislava | de | 164 | Die Hauptkennzahl stieg von 43,5 im Jahr 2018 auf 58,7 im Oktober 2026, nach einem Rückgang im Jahr 2020, der eine Bereinigung von Tags war, kein Verlust von Wegen. |
+| budapest | de | 184 | Die Hauptkennzahl stieg von 19,4 im Jahr 2018 auf 22,3 im Oktober 2026, der niedrigste Wert der 21 Städte, während sich die kartierten markierten Radfahrstreifen mehr als verdoppelten. |
+| copenhagen | de | 208 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 530 auf 582 km, fast ausschließlich bei baulich getrennten Radwegen; der Einbruch bei den Geh- und Radwegen im Jahr 2025 war eine Tag-Änderung. |
+| helsinki | en | 195 | Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026; the headline fell from 276.2 to 262.3 because more streets were tagged as main roads, not because cycle paths went missing. |
+| helsinki | de | 212 | Die kartierten A+B-km blieben von 2018 bis Oktober 2026 zwischen 1.279 und 1.292 km; die Hauptkennzahl fiel von 276,2 auf 262,3, weil mehr Straßen als Hauptstraßen getaggt wurden, nicht weil Radwege verschwanden. |
+| krakow | en | 161 | The headline rose from 40.2 to 72.6 mapped A+B km per 100 km of main roads between 2018 and October 2026, the steepest relative climb of the three Polish cities. |
+| krakow | de | 171 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 40,2 auf 72,6 kartierte A+B-km je 100 km Hauptstraßen, der steilste relative Anstieg der drei polnischen Städte. |
+| ljubljana | en | 165 | The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads between 2018 and October 2026; its largest step is mostly the same paths mapped a new way. |
+| ljubljana | de | 187 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 46,5 auf 73,5 kartierte A+B-km je 100 km Hauptstraßen; ihr größter Schritt sind überwiegend dieselben Wege, nur anders kartiert. |
+| madrid | de | 182 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 282 auf 353 km, während sich die Hauptkennzahl nur von 38,1 auf 42,5 kartierte A+B-km je 100 km Hauptstraßen bewegte. |
+| oslo | de | 175 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,1 auf 70,8; ihr einziger großer Schritt kam von Gehwegen, die als gemeinsame Geh- und Radwege neu getaggt wurden. |
+| stockholm | de | 195 | Die Hauptkennzahl bewegte sich zwischen 2018 und Oktober 2026 nur von 257,9 auf 261,0, während jahrelange kleine Tag-Änderungen km von Geh- und Radwegen zu baulich getrennten Radwegen verschoben. |
+| strasbourg | de | 165 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 184 auf 241 km; schon 2018 lag die Hauptkennzahl bei 123,2 kartierten A+B-km je 100 km Hauptstraßen. |
+| utrecht | en | 161 | The headline rose from 179.7 in 2018 to 193.6 in October 2026, partly because fewer main-road km were mapped; inside A+B, km drifted from tracks to shared paths. |
+| utrecht | de | 193 | Die Hauptkennzahl stieg von 179,7 im Jahr 2018 auf 193,6 im Oktober 2026, zum Teil weil weniger Hauptstraßen-km kartiert waren; innerhalb von A+B wanderten km von Radwegen zu Geh- und Radwegen. |
+| warsaw | en | 176 | The headline rose from 53.4 to 82.3 mapped A+B km per 100 km of main roads between 2018 and October 2026; its biggest step came from retagged expressways, not from cycle paths. |
+| warsaw | de | 191 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,4 auf 82,3 kartierte A+B-km je 100 km Hauptstraßen; ihr größter Schritt kam von neu getaggten Schnellstraßen, nicht von Radwegen. |
 
 ### Datalab (German only)
 
@@ -548,16 +554,16 @@ row covers both. Not rewritten (a rewrite needs the user's review).
 | bratislava | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
 | budapest | yes | **no** | yes | "the headline" only, no unit ("mapped" is on the painted lanes) |
 | copenhagen | yes | partial | yes | mapped A+B km stated, the headline value not given |
-| helsinki | yes | partial | yes | mapped A+B km stated; the headline without its unit (and the description keeps only the km clause) |
+| helsinki | yes | partial | yes | mapped A+B km stated; the headline without its unit |
 | krakow | yes | yes | yes |  |
 | ljubljana | yes | yes | yes |  |
 | lyon | yes | yes | yes |  |
-| madrid | yes | yes | yes | de description keeps only the km clause |
+| madrid | yes | yes | yes |  |
 | oslo | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
 | paris | yes | yes | yes |  |
 | prague | yes | **no** | yes | "the headline" only, no unit ("mapped" is on the painted-lane km) |
 | stockholm | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
-| strasbourg | yes | yes | yes | de description keeps only the km clause |
+| strasbourg | yes | yes | yes |  |
 | utrecht | yes | **no** | yes | "the headline" only, no unit |
 | vienna | yes | yes | yes |  |
 | warsaw | yes | yes | yes |  |
