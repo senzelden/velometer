@@ -330,3 +330,63 @@ Top of the home page down to the ranking's third row, real data, public site val
 
 ![en, light, 390](m17-home/home-en-light-390.png)
 ![de, dark, 1280](m17-home/home-de-dark-1280.png)
+
+## City story as one scroll on phones (Task 16)
+
+Below the 62rem breakpoint, `/city/<id>` now reads top to bottom (spec §4.8): the head and key
+numbers, the tab bar (kept as a link row), the narrative, the headline chart (the aside box, as
+before), then three new `.phone-only` blocks:
+
+1. **Road types:** the tier composition of the latest snapshot (LAU, the headline boundary) as
+   one stacked column, its table and Cite, the five tier diagrams with their captions, and a link
+   to the tier map on the Tiers tab.
+2. **Tier composition over time (LAU):** the Tiers tab's chart, with its table and Cite.
+3. **More on {city}:** a link to every other tab the city has (Bezirke and Counts only where
+   present).
+
+The "Read on" box stays last. The blocks are hidden at 62rem and wider, so the desktop page is
+unchanged: the 1280 px renders before and after are pixel-identical. Their charts draw only when
+a phone shows them, from the same `/data/series.json` the tab pages use; the tier map is linked,
+never embedded.
+
+### UI strings
+
+| Key | en | de |
+|---|---|---|
+| `page.story.road_types` | Road types | Radwegtypen |
+| `page.story.more` | More on {city} | Mehr zu {city} |
+| `js.chart.tiers_now_of` (the column chart's accessible name) | Stacked column: mapped km by tier, {where}, {label} | Gestapelte Säule: kartierte km nach Stufe, {where}, {label} |
+
+Everything else on the blocks reuses reviewed strings: "Tiers, mapped km now", "Tier composition
+over time ({kind})", "Table: mapped km by tier ({kind})", "Tier map" and the tab names.
+
+### Builder's calls, for review
+
+- **"Over time" is the tier composition over time,** not the headline over time. The headline
+  over time is already the chart just above (the aside box); showing it twice would repeat it.
+  The Over time tab's flagged years stay one link away.
+- **A plain stacked scroll,** not the `/stories` sticky pattern: each block is a box like the
+  headline box, so the page reads as one column of cards.
+- **The latest snapshot as one full-width column.** The tier chart's code draws it (one label:
+  a stacked column instead of an area), so colours, legend, tooltip and download are the same.
+- **German heading "Radwegtypen":** E (Fahrradstraße, Busspur) is not strictly a Radweg; an
+  alternative is "Arten von Radinfrastruktur".
+
+### Renders
+
+Real data, local app (`public=True`), headless Chrome at 390 px scrolled to the bottom so every
+chart is drawn, then shot from the top; split into parts. Ljubljana is the small city without
+Bezirke (and without counter data).
+
+| | parts |
+|---|---|
+| Berlin, en, light, 390 | [1](m17-city/berlin-en-light-390-1.png) · [2](m17-city/berlin-en-light-390-2.png) · [3](m17-city/berlin-en-light-390-3.png) |
+| Berlin, en, dark, 390 | [1](m17-city/berlin-en-dark-390-1.png) · [2](m17-city/berlin-en-dark-390-2.png) · [3](m17-city/berlin-en-dark-390-3.png) |
+| Berlin, de, dark, 390 | [1](m17-city/berlin-de-dark-390-1.png) · [2](m17-city/berlin-de-dark-390-2.png) · [3](m17-city/berlin-de-dark-390-3.png) · [4](m17-city/berlin-de-dark-390-4.png) |
+| Ljubljana, en, light, 390 | [1](m17-city/ljubljana-en-light-390-1.png) · [2](m17-city/ljubljana-en-light-390-2.png) · [3](m17-city/ljubljana-en-light-390-3.png) |
+| Ljubljana, en, dark, 390 | [1](m17-city/ljubljana-en-dark-390-1.png) · [2](m17-city/ljubljana-en-dark-390-2.png) · [3](m17-city/ljubljana-en-dark-390-3.png) |
+| Ljubljana, de, light, 390 | [1](m17-city/ljubljana-de-light-390-1.png) · [2](m17-city/ljubljana-de-light-390-2.png) · [3](m17-city/ljubljana-de-light-390-3.png) · [4](m17-city/ljubljana-de-light-390-4.png) |
+| Berlin desktop, 1280, before / after | en light [before](m17-city/berlin-en-light-1280-before.png) / [after](m17-city/berlin-en-light-1280-after.png) · en dark [before](m17-city/berlin-en-dark-1280-before.png) / [after](m17-city/berlin-en-dark-1280-after.png) · de light [before](m17-city/berlin-de-light-1280-before.png) / [after](m17-city/berlin-de-light-1280-after.png) |
+
+![Berlin, en, light, 390, part 2](m17-city/berlin-en-light-390-2.png)
+![Berlin, en, light, 390, part 3](m17-city/berlin-en-light-390-3.png)
