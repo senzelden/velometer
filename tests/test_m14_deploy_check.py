@@ -26,6 +26,7 @@ COMPLETE = {
         "url": "https://forge.example.org/owner/velometer",
         "file_url": "https://forge.example.org/owner/velometer/blob/{commit}/{path}",
     },
+    "dataset_doi": "10.5281/zenodo.1234567",  # M17: a public check needs one (a test value)
 }
 REPO_SENTENCE = "\nThe code is MIT-licensed.<!-- repo: It is in the [repository]({repo_url}). -->\n"
 # a public export needs a clean checkout (M16); the tests' tree may be mid-edit

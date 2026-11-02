@@ -21,7 +21,7 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.or
 REPO = Path(__file__).resolve().parents[1]
 
 
-def _site_yaml(cfg: Path) -> None:
+def _site_yaml(cfg: Path, doi: str | None = None) -> None:
     site = {
         "url": ORIGIN,
         "datalab": {"name": "Datalab", "url": "https://datalab.example.org/"},
@@ -33,13 +33,15 @@ def _site_yaml(cfg: Path) -> None:
             "file_url": "https://forge.example.org/o/velometer/blob/{commit}/{path}",
         },
     }
+    if doi:
+        site["dataset_doi"] = doi
     (Path(cfg) / "site.yaml").write_text(yaml.safe_dump(site), encoding="utf-8")
     (Path(cfg) / "site.public.yaml").unlink(missing_ok=True)
 
 
-def _export(rich, tmp_path, monkeypatch, name="out", public=True):  # noqa: F811
+def _export(rich, tmp_path, monkeypatch, name="out", public=True, doi=None):  # noqa: F811
     db_path, cfg, maps, docs, plans = rich
-    _site_yaml(cfg)
+    _site_yaml(cfg, doi)
     monkeypatch.setattr(export, "public_commit", lambda: "0123456789abcdef0123456789abcdef01234567")
     monkeypatch.setattr(export, "figures_drift", lambda conn, config_dir: [])
     monkeypatch.setattr(export, "config_drift", lambda config_dir: [])

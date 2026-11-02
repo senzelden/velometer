@@ -35,6 +35,7 @@ from markupsafe import Markup, escape
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from velometer import credits, i18n
+from velometer.app import jsonld
 
 SITE_DIR = Path(__file__).resolve().parents[2] / "sites" / "datalab"
 DEFAULT_CONFIG = SITE_DIR / "site.yaml"
@@ -331,6 +332,13 @@ def render(cfg: DatalabConfig, counter: Counter, checked: date | None = None) ->
     context = {
         "domain": cfg.domain,
         "velometer_url": f"https://velometer.{cfg.domain}/",
+        "jsonld": jsonld.script(
+            jsonld.datalab(
+                "Zählwerk Berlin Datalab",
+                f"https://{cfg.domain}/",
+                f"https://velometer.{cfg.domain}/",
+            )
+        ),
         "csp": meta_csp(),
         "contact": (
             Markup('<a href="mailto:{0}">{0}</a>').format(cfg.contact_email)

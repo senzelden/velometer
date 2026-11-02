@@ -42,7 +42,7 @@ from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import meta, plans_pages, repo_links, urls
+from velometer.app import jsonld, meta, plans_pages, repo_links, urls
 from velometer.app import story as story_model
 from velometer.app import terms as terms_model
 from velometer.app.cache import PageCache, fingerprint
@@ -583,6 +583,11 @@ def create_app(
             return rel
         return urls.absolute_url(app.state.site.url, rel, app.state.base_path)
 
+    def structured(build) -> list[dict]:
+        """The page's JSON-LD objects (M17 §4.2), `build()` called only for a public export: they
+        name absolute URLs on the public origin, which a preview does not have."""
+        return build() if public and app.state.site.url else []
+
     # the terms registry (M17 §4.8), read once here so a broken registry stops the app and the
     # export; each page reads it again (cached by the file's mtime), so the dev server follows edits
     for edition in LANGS:
@@ -614,6 +619,7 @@ def create_app(
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
         env.globals["og_locale"] = meta.OG_LOCALE
+        env.globals["jsonld_script"] = jsonld.script
         # the Datalab's name in the footer, in a `<span lang>` where site.yaml gives its language
         env.globals["datalab_name"] = lambda d: (
             Markup("<span{}>{}</span>").format(lang_attr(d.lang), d.name) if d.lang else d.name
@@ -941,7 +947,15 @@ def create_app(
             }
 
         ctx = cache.get(f"index:{request.state.lang}", fp(request), build)
-        return page(request, "index.html", "overview", data, **ctx)
+        site, lang = app.state.site, request.state.lang
+        ld = structured(
+            lambda: [
+                jsonld.website(site, lang),
+                # public exports only (one render per page), so not worth a cache entry
+                jsonld.collection(data, site, lang, [r["city"] for r in ctx["ranking"]]),
+            ]
+        )
+        return page(request, "index.html", "overview", data, jsonld=ld, **ctx)
 
     register_pages(app, "/", index)
 
@@ -1204,8 +1218,12 @@ def create_app(
             for k, suffix in TABS
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
+        site = app.state.site
+        ld = structured(lambda: [jsonld.city(ctx["city"], data, site, lang, description)]) \
+            if tab == "story" else []  # fmt: skip
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
+            jsonld=ld,
             tabs=tabs, tab_label_html=label_html, nar=nar, content_error=note,
             cited_sources=cited_sources, cited_refs=cited_refs, meta_description=description,
         )  # fmt: skip
@@ -1770,9 +1788,10 @@ def create_app(
         lang = request.state.lang
         _, sources, _, _, _ = content_of(request)
         terms = terms_model.glossary(terms_model.load(lang, content_dir), sources, lang)
+        site = app.state.site
         return page(
             request, "methodology.html", "methodology", data, body=body, file=path.name,
-            glossary=terms, **ctx,
+            glossary=terms, jsonld=structured(lambda: [jsonld.article(site, lang)]), **ctx,
         )  # fmt: skip
 
     async def methodology(request: Request, data: Data):

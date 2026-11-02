@@ -941,6 +941,9 @@ class Repo(_Strict):
         return v
 
 
+ZENODO_DOI = r"^10\.5281/zenodo\.\d+$"
+
+
 class SiteConfig(_Strict):
     """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14), the
     public repository the pages link (M16) and the accessibility statement (M16, R63)."""
@@ -951,6 +954,11 @@ class SiteConfig(_Strict):
     privacy_url: HttpsUrl | None = None
     accessibility_url: HttpsUrl | None = None
     repo: Repo | None = None
+    # M17: the Zenodo DOIs (bare, `10.5281/zenodo.<n>`): the dataset's concept DOI is the JSON-LD
+    # identifier of the home page; null until the first deposit, which a public deploy-check
+    # refuses (spec §6)
+    dataset_doi: str | None = Field(default=None, pattern=ZENODO_DOI)
+    software_doi: str | None = Field(default=None, pattern=ZENODO_DOI)
 
     @field_validator("datalab", "repo", mode="before")
     @classmethod

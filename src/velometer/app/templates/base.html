@@ -25,7 +25,8 @@ none, and the OpenGraph tags go with the canonical (og:url is it) -#}
 {% endif %}<meta name="velometer-search" content="{{ data_u('/data/search.json', lang) }}">
 <link rel="icon" href="{{ data_u('/static/favicon.svg') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ data_u('/static/app.css') }}">
-{% block head %}{% endblock %}
+{% for o in jsonld or [] %}{{ jsonld_script(o) }}
+{% endfor %}{% block head %}{% endblock %}
 <script type="module" src="{{ data_u('/static/js/nav.js') }}"></script>
 <script type="module" src="{{ data_u('/static/js/search.js') }}"></script>
 <script type="module" src="{{ data_u('/static/js/cite-ui.js') }}"></script>

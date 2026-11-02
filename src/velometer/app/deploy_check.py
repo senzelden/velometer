@@ -10,7 +10,7 @@ from xml.etree import ElementTree as ET
 
 from markupsafe import escape
 
-from velometer.app import crawl, export
+from velometer.app import crawl, export, jsonld
 from velometer.app.repo_links import bare_repo_paths, is_bare_name
 from velometer.app.urls import absolute_url, normalise_base, with_lang
 
@@ -210,6 +210,22 @@ def _crawl_problems(out: Path, build: dict) -> list[str]:
     return problems
 
 
+_LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+
+
+def _jsonld_problems(out: Path) -> list[str]:
+    """The home page's structured data names the dataset's DOI (M17 §6): the collection's
+    `Dataset` has an `identifier`, which the export leaves out while `site.dataset_doi` is unset.
+    A home page with no collection `Dataset` fails the same way."""
+    home = out / "index.html"
+    text = home.read_text(encoding="utf-8") if home.is_file() else ""
+    for raw in _LD.findall(text):
+        obj = json.loads(raw)  # an unparseable one is already refused by the reference scan
+        if isinstance(obj, dict) and obj.get("@type") == "Dataset" and obj.get("identifier"):
+            return []
+    return [jsonld.MISSING_DOI]
+
+
 def _public_problems(out: Path, build: dict) -> list[str]:
     """A public export's footer, judged from the export itself: build.json records the site
     values, and every page with the site's footer (the home page always) names the Datalab and
@@ -241,6 +257,7 @@ def _public_problems(out: Path, build: dict) -> list[str]:
         )
     problems += _methodology_problems(out, site["repo_url"])
     problems += _crawl_problems(out, build)
+    problems += _jsonld_problems(out)
     return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 

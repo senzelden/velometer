@@ -86,8 +86,10 @@ def test_overlay_values_are_public():
     walk(doc)
     assert values
     for v in values:
+        if v is None:  # the DOIs stay null until Task 11
+            continue
         assert isinstance(v, str) and "@" not in v, v
-        assert v == datalab_name or re.fullmatch(r"https://\S+", v), v
+        assert v == datalab_name or re.fullmatch(r"https://\S+|10\.5281/zenodo\.\d+", v), v
 
 
 @pytest.mark.parametrize("which", ["site.yaml", "site.public.yaml"])

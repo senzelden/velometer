@@ -103,7 +103,8 @@ LINK_TAGS = frozenset({"a", "area"})
 # attributes whose value is a URL whatever it looks like; any other attribute is a reference when
 # its value looks like one (URL_SHAPED)
 URL_ATTRS = frozenset({"href", "src", "action", "data", "poster", "formaction", "cite"})
-JSON_SCRIPT_TYPES = frozenset({"application/json", "application/ld+json"})
+JSON_LD = "application/ld+json"
+JSON_SCRIPT_TYPES = frozenset({"application/json", JSON_LD})
 SCANNED_SUFFIXES = (".html", ".css", ".js")  # so `.gz` copies and `_headers` are never scanned
 # M14: the compressed siblings, the host headers file and the per-file size limit
 GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg", ".txt", ".xml")
@@ -462,6 +463,7 @@ class _HtmlRefs(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.refs: list[tuple[str, bool]] = []
         self.unsupported: list[str] = []
+        self._ld = False  # the open JSON script is JSON-LD
         self._block: tuple[str, str] | None = None  # ("json" | "style" | "script", text so far)
 
     def handle_starttag(self, tag, attrs):
@@ -493,8 +495,9 @@ class _HtmlRefs(HTMLParser):
         if tag == "style":
             self._block = ("style", "")
         elif tag == "script":
-            kind = "json" if (a.get("type") or "").lower() in JSON_SCRIPT_TYPES else "script"
-            self._block = (kind, "")
+            kind = (a.get("type") or "").lower()
+            self._block = ("json" if kind in JSON_SCRIPT_TYPES else "script", "")
+            self._ld = kind == JSON_LD
 
     def handle_data(self, data):
         if self._block is not None:
@@ -506,7 +509,8 @@ class _HtmlRefs(HTMLParser):
         kind, text = self._block
         self._block = None
         if kind == "json":
-            self.refs += list(_json_refs(json.loads(text), link=False))
+            # structured data names pages and files for crawlers; nothing in it is loaded (M17)
+            self.refs += list(_json_refs(json.loads(text), link=self._ld))
         elif kind == "style":
             self.refs += _css_refs(text)
         elif text.strip():

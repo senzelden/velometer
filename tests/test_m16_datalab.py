@@ -98,7 +98,8 @@ class _Tags(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self.tags.append((tag, dict(attrs)))
-        self._in_script = tag == "script"
+        # M17: JSON-LD is data the CSP never runs, not an inline script
+        self._in_script = tag == "script" and dict(attrs).get("type") != "application/ld+json"
 
     def handle_endtag(self, tag):
         if tag == "script":
@@ -196,7 +197,9 @@ def test_a_non_empty_out_is_refused(tmp_path):
 def test_no_inline_script_or_style(undecided, page):
     p = _tags(undecided / page)
     assert p.script_text == []
-    assert all("src" in a for t, a in p.tags if t == "script")
+    assert all(
+        "src" in a or a.get("type") == "application/ld+json" for t, a in p.tags if t == "script"
+    )
     assert not any(t == "style" for t, _ in p.tags)
     assert not any("style" in a for _, a in p.tags)
 
