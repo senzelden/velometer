@@ -9,9 +9,11 @@
 #
 # `expansion_lang` gives the language of an expansion that is not in the page language (an
 # English title on a German page), so the `<abbr>` carries it. Explanations may mark an original
-# term as content elsewhere does, `<i lang="en">…</i>`, and an OSM tag in backticks.
+# term as content elsewhere does, `<i lang="en">…</i>`, a name in another language
+# `<span lang="en">…</span>` (upright), and an OSM tag in backticks.
 #
-# Explanations restate the methodology (docs/methodology.md); they change no definition.
+# Explanations restate the method as config/classifier/v4.yaml, config/presets.yaml,
+# config/reconcile.yaml and docs/adr/ define it; they change no definition.
 tier_words:
   en: [tier, tiers, Tier, Tiers]
   de: [Stufe, Stufen]
@@ -20,20 +22,26 @@ terms:
     short: A
     tier: A
     explanation:
-      en: A separated cycle track. Tier A counts in the headline, A+B.
-      de: Ein baulich getrennter Radweg. Stufe A zählt zur Hauptkennzahl A+B.
+      en: >-
+        A cycle track: beside the road (`cycleway=track`), a cycleway not tagged as open to
+        pedestrians, or a path where walking and cycling have separate parts (`segregated=yes`). Tier A counts
+        in the headline, A+B.
+      de: >-
+        Ein baulich getrennter Radweg: neben der Fahrbahn (`cycleway=track`), ein Radweg, der
+        nicht als für den Fußverkehr offen erfasst ist, oder ein Weg mit getrennten Teilen für Fuß- und Radverkehr
+        (`segregated=yes`). Stufe A zählt zur Hauptkennzahl A+B.
   - id: tier-b
     short: B
     tier: B
     explanation:
       en: >-
-        A shared foot and cycle path. Tier B counts in the headline, A+B. A designated
-        foot-and-cycle path with `segregated=yes` is tier B here, where QECIO counts it as a
-        cycle track.
+        A path shared with pedestrians, without separate parts, such as a cycleway or path for cycling
+        that people may also walk on, a pavement designated for cycling, or a track tagged
+        `cycleway:segregated=no`. Tier B counts in the headline, A+B.
       de: >-
-        Ein Geh- und Radweg, gemeinsam oder getrennt. Stufe B zählt zur Hauptkennzahl A+B. Ein
-        Geh- und Radweg mit `segregated=yes` gilt hier als Stufe B, während QECIO ihn als Radweg
-        zählt.
+        Ein Weg, den Rad- und Fußverkehr ohne getrennte Teile teilen, etwa ein Radweg oder Weg für den
+        Radverkehr, der auch zu Fuß benutzt werden darf, ein für den Radverkehr bestimmter Gehweg
+        oder ein Radweg mit `cycleway:segregated=no`. Stufe B zählt zur Hauptkennzahl A+B.
   - id: tier-c
     short: C
     tier: C
@@ -68,12 +76,12 @@ terms:
     explanation:
       en: >-
         The headline: the length of tiers A and B, per road side, per 100 km of main roads
-        excluding motorways. Painted lanes (D) and cycle streets and bus lanes (E) are measured
-        but left out of it.
+        excluding motorways. Lanes (C and D) and cycle streets and bus lanes (E) are measured but
+        left out of it.
       de: >-
         Die Hauptkennzahl: die Länge der Stufen A und B, je Straßenseite, je 100 km
-        Hauptverkehrsstraßen ohne Autobahnen. Markierte Radfahrstreifen (D) sowie
-        Fahrradstraßen und Busspuren (E) werden gemessen, gehen aber nicht in sie ein.
+        Hauptverkehrsstraßen ohne Autobahnen. Radfahrstreifen (C und D) sowie Fahrradstraßen und
+        Busspuren (E) werden gemessen, gehen aber nicht in sie ein.
   - id: a-b-e
     short: A+B+E
     expansion:
@@ -168,7 +176,7 @@ terms:
         differences, and the `ecf_qecio` preset follows its definition on our data. QECIO
         reports by NUTS3 region.
       de: >-
-        Das Maß der European Cyclists' Federation (ECF) für Radinfrastruktur aus
+        Das Maß der <span lang="en">European Cyclists' Federation</span> (ECF) für Radinfrastruktur aus
         OpenStreetMap, hier in Version 2.10. Unsere Stufen leiten sich aus seiner Tag-Logik ab, mit
         dokumentierten Abweichungen, und die Kennzahlvariante `ecf_qecio` bildet seine Definition
         mit unseren Daten nach. QECIO berichtet je NUTS-3-Region.

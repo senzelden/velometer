@@ -57,15 +57,24 @@ The tier letters' expansions are the existing tier labels (`tier.A` … `tier.E`
 letter), so they are not new text. Every other expansion and every explanation is new.
 
 #### Tier A
-- en: A separated cycle track. Tier A counts in the headline, A+B.
-- de: Ein baulich getrennter Radweg. Stufe A zählt zur Hauptkennzahl A+B.
+- en: A cycle track: beside the road (`cycleway=track`), a cycleway not tagged as open to
+  pedestrians, or a path where walking and cycling have separate parts (`segregated=yes`). Tier A
+  counts in the headline, A+B.
+- de: Ein baulich getrennter Radweg: neben der Fahrbahn (`cycleway=track`), ein Radweg, der nicht
+  als für den Fußverkehr offen erfasst ist, oder ein Weg mit getrennten Teilen für Fuß- und
+  Radverkehr (`segregated=yes`). Stufe A zählt zur Hauptkennzahl A+B.
 
 #### Tier B
-- en: A shared foot and cycle path. Tier B counts in the headline, A+B. A designated
-  foot-and-cycle path with `segregated=yes` is tier B here, where QECIO counts it as a cycle
-  track.
-- de: Ein Geh- und Radweg, gemeinsam oder getrennt. Stufe B zählt zur Hauptkennzahl A+B. Ein Geh-
-  und Radweg mit `segregated=yes` gilt hier als Stufe B, während QECIO ihn als Radweg zählt.
+- en: A path shared with pedestrians, without separate parts, such as a cycleway or path for
+  cycling that people may also walk on, a pavement designated for cycling, or a track tagged
+  `cycleway:segregated=no`. Tier B counts in the headline, A+B.
+- de: Ein Weg, den Rad- und Fußverkehr ohne getrennte Teile teilen, etwa ein Radweg oder Weg für
+  den Radverkehr, der auch zu Fuß benutzt werden darf, ein für den Radverkehr bestimmter Gehweg
+  oder ein Radweg mit `cycleway:segregated=no`. Stufe B zählt zur Hauptkennzahl A+B.
+
+Note for the user: docs/methodology.md (and .de.md) still say a designated foot-and-cycle path
+with `segregated=yes` is tier B. Classifier v4 (`A_segregated`) and the v4 amendment in ADR 0002
+make it tier A; the glossary follows v4. The generated methodology prose is stale on this point.
 
 #### Tier C
 - en: A cycle lane physically buffered from motor traffic. Tier C is measured but not counted in
@@ -89,10 +98,10 @@ letter), so they are not new text. Every other expansion and every explanation i
 - expansion en: tiers A and B: separated tracks and shared foot and cycle paths
 - expansion de: Stufen A und B: baulich getrennte Radwege sowie Geh- und Radwege
 - en: The headline: the length of tiers A and B, per road side, per 100 km of main roads
-  excluding motorways. Painted lanes (D) and cycle streets and bus lanes (E) are measured but
-  left out of it.
+  excluding motorways. Lanes (C and D) and cycle streets and bus lanes (E) are measured but left
+  out of it.
 - de: Die Hauptkennzahl: die Länge der Stufen A und B, je Straßenseite, je 100 km
-  Hauptverkehrsstraßen ohne Autobahnen. Markierte Radfahrstreifen (D) sowie Fahrradstraßen und
+  Hauptverkehrsstraßen ohne Autobahnen. Radfahrstreifen (C und D) sowie Fahrradstraßen und
   Busspuren (E) werden gemessen, gehen aber nicht in sie ein.
 
 #### A+B+E
@@ -154,7 +163,7 @@ letter), so they are not new text. Every other expansion and every explanation i
   OpenStreetMap, here version 2.10. Our tiers derive from its tag logic, with documented
   differences, and the `ecf_qecio` preset follows its definition on our data. QECIO reports by
   NUTS3 region. [cites qecio-methodology]
-- de: Das Maß der European Cyclists' Federation (ECF) für Radinfrastruktur aus OpenStreetMap,
+- de: Das Maß der <span lang="en">European Cyclists' Federation</span> (ECF) für Radinfrastruktur aus OpenStreetMap,
   hier in Version 2.10. Unsere Stufen leiten sich aus seiner Tag-Logik ab, mit dokumentierten
   Abweichungen, und die Kennzahlvariante `ecf_qecio` bildet seine Definition mit unseren Daten
   nach. QECIO berichtet je NUTS-3-Region. [zitiert qecio-methodology]

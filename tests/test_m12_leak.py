@@ -41,16 +41,33 @@ def _data_ref_labels() -> list[str]:
     return sorted(labels)
 
 
+def _terms_phrases() -> list[str]:
+    """The English expansions (four words or more) and explanation sentences (six or more) of the
+    terms registry (M17), where the German entry differs: a German page shows them only inside
+    lang="en" (the glossary's original names)."""
+    from velometer.app import terms
+
+    de = {t.id: t for t in terms.load("de", CONTENT)}
+    out: set[str] = set()
+    for t in terms.load("en", CONTENT):
+        if t.expansion != de[t.id].expansion and len(t.expansion.split()) >= 4:
+            out.add(t.expansion)
+        out |= set(i18n._sentences(t.explanation, 6))
+    return sorted(out)
+
+
 def leak_sources():
     """Every phrase source: the name and a callable giving English phrases that must not show on
     a German page outside a lang="en" subtree. "config": the English reader prose of the config
     that has a German sibling (config.reader_prose), of four words or more. "data_refs": the
-    data-reference labels, which German pages show in English inside lang="en"."""
+    data-reference labels, which German pages show in English inside lang="en". "terms": the
+    English expansions and explanations of the terms registry (`_terms_phrases`)."""
     return {
         "catalogue": i18n.leak_phrases,
         "content": lambda: i18n.content_phrases(CONTENT),
         "config": _config_phrases,
         "data_refs": _data_ref_labels,
+        "terms": _terms_phrases,
     }
 
 

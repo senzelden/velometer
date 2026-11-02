@@ -90,6 +90,43 @@ def test_tier_expansions_are_the_tier_labels(lang):
         assert label == f"{letter} {t.expansion}", letter
 
 
+def _rule_pairs(match) -> set[tuple[str, str]]:
+    """Every (key, value) a classifier rule's `match` names, through `any` lists and value lists."""
+    out: set[tuple[str, str]] = set()
+    if isinstance(match, list):
+        for m in match:
+            out |= _rule_pairs(m)
+    elif isinstance(match, dict):
+        for k, v in match.items():
+            if k == "any":
+                out |= _rule_pairs(v)
+            elif isinstance(v, list):
+                out |= {(k, str(x)) for x in v}
+            elif isinstance(v, str):
+                out.add((k, v))
+    return out
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_tier_explanations_name_tags_of_their_own_tier(lang):
+    """A tag a tier's explanation names (`key=value`) is matched by a rule of that tier in the
+    report classifier: the glossary restates the classifier, not older prose."""
+    from velometer.selection import report_selector
+
+    config = Path(__file__).parents[1] / "config"
+    version = report_selector(config).version
+    rules = yaml.safe_load((config / "classifier" / f"{version}.yaml").read_text())["rules"]
+    named = 0
+    for t in terms.load(lang, CONTENT):
+        if not t.tier:
+            continue
+        own = set().union(*(_rule_pairs(r["match"]) for r in rules if r["tier"] == t.tier))
+        for key, value in re.findall(r"`([\w:]+)=([\w]+)`", t.explanation):
+            assert (key, value) in own, (t.id, key, value)
+            named += 1
+    assert named >= 3
+
+
 def test_cited_sources_exist(en):
     from velometer.content.loader import load_sources
 
@@ -359,9 +396,39 @@ def test_de_glossary_marks_original_terms(rich):  # noqa: F811
         if en_terms[t.id].expansion != t.expansion
     ]
     shown_english = [e for e in shown_english if e in glossary]
+    # every name or term a German explanation marks in another language renders in that language
+    lang_mark = re.compile(r'<(?:i|span) lang="en">(.*?)</(?:i|span)>', re.S)
+    marked = [m.group(1) for t in de_terms for m in lang_mark.finditer(t.explanation)]
+    assert "European Cyclists' Federation" in marked
+    for inner in marked:
+        shown = re.escape(str(escape(inner)))
+        assert re.search(rf'<(i|span) lang="en">{shown}</\1>', glossary), inner
+        assert inner not in visible, inner
     assert shown_english  # LAU's and FUA's English names are shown
     assert [e for e in shown_english if e in visible] == []
     # a first-use mark on a German page carries the expansion's language too
     for m in _marks(city):
         t = next(t for t in de_terms if t.id == m["id"])
         assert m["lang"] == t.expansion_lang, t.id
+
+
+def test_every_exported_page_with_main_passes_through_the_wrapper(rich):  # noqa: F811
+    """Each exported page with a `<main>` is exactly the wrapper's output on its own unmarked
+    text, in its edition: no page type bypasses the hook, and none is marked twice."""
+    app = _app(rich, docs=DOCS)
+    checked: dict[str, int] = {}
+    registry = {lang: terms.load(lang, CONTENT) for lang in ("en", "de")}
+    with TestClient(app, base_url=BASE_URL) as c:
+        for url in _urls(rich, app):
+            r = c.get(url)
+            if not r.headers["content-type"].startswith("text/html") or "<main" not in r.text:
+                continue
+            lang = "de" if url.startswith("/de/") or url == "/methodology/de" else "en"
+            href = f"{BASE}{'de/' if lang == 'de' else ''}methodology"
+            want = terms.mark_first_use(terms.unmark(r.text), registry[lang], href)
+            assert r.text == want, url
+            if _marks(r.text):
+                kind = url.removeprefix("/de").split("/")[1] or "home"
+                checked[kind] = checked.get(kind, 0) + 1
+    # the check bites: marked pages of every main page type, both editions included
+    assert {"home", "city", "cities", "compare", "methodology", "sources"} <= set(checked), checked

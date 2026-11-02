@@ -25,7 +25,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import yaml
-from markupsafe import escape
+from markupsafe import Markup, escape
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from velometer import i18n
@@ -305,6 +305,10 @@ def unmark(html: str) -> str:
 
 # --- the glossary -------------------------------------------------------------------------
 
+# the one markup an explanation may write besides content's own (`<i lang>`, `code`): a name in
+# another language, upright; the language is a plain tag
+SPAN_MARK = re.compile(r'<span lang="(' + LANG_TAG.pattern + r')">(.*?)</span>', re.S)
+
 
 def glossary(terms: list[Term], sources: dict[str, Source], lang: Lang) -> SimpleNamespace:
     """The `#terms` section: `entries` [(term, explanation Markup)], `cited` [(n, source)] for
@@ -313,9 +317,22 @@ def glossary(terms: list[Term], sources: dict[str, Source], lang: Lang) -> Simpl
     from velometer.app.narrative import _Numbering
 
     num = _Numbering(sources, {}, prefix=CITE_PREFIX, lang=lang)
+
+    def explained(text: str) -> Markup:
+        # a name in another language, `<span lang="en">…</span>`, stays upright: each part is
+        # rendered as content text is, and the span is written around its part
+        parts = SPAN_MARK.split(text)  # text, lang, inner, text, lang, inner, ..., text
+        out = Markup("")
+        for i in range(0, len(parts), 3):
+            out += num.inline(parts[i]) if parts[i] else Markup("")
+            if i + 2 < len(parts):
+                inner = num.inline(parts[i + 2])
+                out += Markup('<span lang="{}">{}</span>').format(parts[i + 1], inner)
+        return out
+
     entries = []
     for t in terms:
         marks = "".join(f"[@{c}]" for c in t.cite)
-        entries.append((t, num.inline(t.explanation + marks)))
+        entries.append((t, explained(t.explanation + marks)))
     cited = [(n, sources[sid]) for sid, n in sorted(num.source_no.items(), key=lambda kv: kv[1])]
     return SimpleNamespace(entries=entries, cited=cited, prefix=CITE_PREFIX, ref_links={})
