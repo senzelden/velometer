@@ -191,3 +191,69 @@ make it tier A; the glossary follows v4. The generated methodology prose is stal
 - de: Eine regionale Ebene der Niederlande zwischen Gemeinden und Provinzen. QECIO berichtet für
   Amsterdam die COROP-Region Groot-Amsterdam, die größer ist als die Stadt. [zitiert
   cbs-regionale-economie-2018-begrippen]
+
+## Tier diagrams (Task 14)
+
+Five drawn street cross-sections, one per tier, in `src/velometer/app/templates/_tier_diagram.html`
+(spec §4.8; the geometry is the builder's proposal, settled 5). The methodology glossary shows each
+tier's diagram in its entry, with one note above the entries that the classifier rules decide.
+Tasks 15 and 16 reuse the same partial. Captions restate the methodology and change no
+definition. The headline sentence ("counts" or "measured, not in the headline") is chosen from the
+headline preset in `config/presets.yaml`, not written per tier.
+
+### What each drawing shows
+
+Seen along the street, building side on the left, about 24 units to the metre with kerbs drawn
+higher than they are. Each one has the footway, the cycle facility in its tier's chart colour, and
+the road with a car.
+
+- **A:** the footway, then the track one step lower, a raised verge, and the road with the car.
+- **B:** one raised surface in the tier colour with a person walking and a person cycling on it,
+  then a verge and the road.
+- **C:** the footway, then the lane at road level, a low kerb separator with a bollard, and the
+  traffic lane.
+- **D:** the footway, then the lane at road level, a painted line, and the car right next to it.
+- **E:** two panels. On the left, a cycle street: its whole carriageway is in the tier colour, two
+  people cycle side by side, a car follows, and a sign with a bicycle stands on the footway. On the
+  right, a bus lane in the tier colour with a person cycling and a bus, beside a general lane with
+  a car.
+
+### Screenshots
+
+These show the methodology glossary's tier entries from the local app on the real database.
+
+| | light | dark |
+|---|---|---|
+| en, 1280 px | [png](m17-diagrams/glossary-en-light-1280.png) | [png](m17-diagrams/glossary-en-dark-1280.png) |
+| en, 390 px | [png](m17-diagrams/glossary-en-light-390.png) | [png](m17-diagrams/glossary-en-dark-390.png) |
+| de, 1280 px | [png](m17-diagrams/glossary-de-light-1280.png) | [png](m17-diagrams/glossary-de-dark-1280.png) |
+| de, 390 px | [png](m17-diagrams/glossary-de-light-390.png) | [png](m17-diagrams/glossary-de-dark-390.png) |
+
+### UI strings
+
+| Key | en | de |
+|---|---|---|
+| `tier.diagram_name.A` | Cross-section, tier A: separated track | Querschnitt, Stufe A: baulich getrennter Radweg |
+| `tier.diagram_name.B` | Cross-section, tier B: shared foot/cycle path | Querschnitt, Stufe B: Geh- und Radweg |
+| `tier.diagram_name.C` | Cross-section, tier C: protected lane | Querschnitt, Stufe C: geschützter Radfahrstreifen |
+| `tier.diagram_name.D` | Cross-section, tier D: painted lane | Querschnitt, Stufe D: markierter Radfahrstreifen |
+| `tier.diagram_name.E` | Cross-section, tier E: cycle street and bus lane | Querschnitt, Stufe E: Fahrradstraße und Busspur |
+| `tier.caption.A` | A cycle track between the footway and the road, set apart from both by a kerb or a change in level. | Ein Radweg zwischen Gehweg und Fahrbahn, von beiden durch einen Bordstein oder einen Höhenunterschied getrennt. |
+| `tier.caption.B` | One path for walking and cycling, without separate parts, apart from the road. | Ein gemeinsamer Weg für Fuß- und Radverkehr ohne getrennte Teile, abseits der Fahrbahn. |
+| `tier.caption.C` | A cycle lane on the road, with bollards or a kerb separator between it and the traffic. | Ein Radfahrstreifen auf der Fahrbahn, durch Poller oder eine Trennschwelle vom Verkehr getrennt. |
+| `tier.caption.D` | A cycle lane or advisory lane on the road, with only a painted line between it and the traffic. | Ein Radfahrstreifen oder Schutzstreifen auf der Fahrbahn, nur durch eine markierte Linie vom Verkehr getrennt. |
+| `tier.caption.E` | Left, a cycle street, a street signed for cycling; right, a bus lane open to cyclists. | Links eine Fahrradstraße, eine für den Radverkehr ausgewiesene Straße; rechts eine für den Radverkehr freigegebene Busspur. |
+| `tier.diagram_counts` | Counts in the headline. | Zählt zur Hauptkennzahl. |
+| `tier.diagram_measured` | Measured, not in the headline. | Gemessen, nicht in der Hauptkennzahl. |
+| `tier.diagram_rules` | A typical case is drawn; the [classifier rules] decide which tier each street side or path gets. | Gezeichnet ist der typische Fall; welche Stufe eine Straßenseite oder ein Weg erhält, entscheiden die [Regeln des Klassifikators]. |
+
+The name is the drawing's accessible name and the caption's bold start. The link in
+`tier.diagram_rules` goes to the methodology's "Classification rules" section. The German texts
+use no English term, so they carry no `lang` mark.
+
+For the user to decide:
+
+- The geometry: proportions, the A track one step below the footway, and C drawn with one bollard
+  on a kerb separator.
+- Whether the glossary should show each diagram in its tier entry (as built), or the row of five
+  (`tier_diagrams()`) above the entries.
