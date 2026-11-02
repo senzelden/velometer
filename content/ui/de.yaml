@@ -418,6 +418,8 @@ cite.title.city_headline_both: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Ke
 note.no_run_history: kein Lauf (Verlauf)
 page.story.over_time: Zeitverlauf, mit markierten Jahren
 page.story.read_on: Weiterlesen
+page.story.road_types: Radwegtypen
+page.story.more: Mehr zu {city}
 page.story.combined: Die Geschichte über alle Städte
 page.time.meta: 'Hauptkennzahl: {unit}, Kernstadt (LAU) und Funktionaler Stadtraum (FUA).'
 page.time.caption: 'Hauptkennzahl und A+B-km je Stand, {city}: die Werte des Diagramms oben'
@@ -678,6 +680,7 @@ js.chart.line_of: 'Liniendiagramm: {title}'
 js.chart.sparkline: Kleines Liniendiagramm
 js.chart.tiers: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe'
 js.chart.tiers_of: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe, {where}'
+js.chart.tiers_now_of: 'Gestapelte Säule: kartierte km nach Stufe, {where}, {label}'
 js.chart.tiers_tip: '{label} · kartierte km'
 js.chart.total: Summe {value}
 js.chart.rank_tip: '{name} · {label}: Rang {rank}'

@@ -1,5 +1,7 @@
 {% extends "city/_page.html" %}
 {% from "_cite.html" import cite, copy_link %}
+{% from "city/_tier_table.html" import tier_series_table %}
+{% from "_tier_diagram.html" import tier_diagrams with context %}
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/city.js') }}"></script>{% endblock %}
 {% block tab %}
 <div class="story-layout">
@@ -37,6 +39,35 @@
 {{ copy_link() }}
 {% else %}<p class="note">{{ t('note.no_run_history') }}</p>{% endif %}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/time') }}">{{ t('page.story.over_time') }} →</a></p>
+</section>
+{#- The phone scroll (spec §4.8): hidden at 62rem and wider, where the tabs carry these. Their
+    charts draw once visible (city.js), from the series the Tiers tab draws; the tier map stays on
+    that tab and is linked, never embedded. -#}
+{% set lau = kinds | selectattr("kind", "equalto", "lau") | first %}
+<section class="aside-box phone-only" id="phone-road-types" aria-labelledby="phone-road-types-h">
+<h2 id="phone-road-types-h">{{ t('page.story.road_types') }}</h2>
+{% if lau.series %}
+<p class="meta">{{ t('page.panel.tiers_now') }} · {{ lau.kind | upper }}</p>
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ lau.kind }}" data-latest aria-describedby="phone-tiers-now-sum" role="group" aria-label="{{ t('page.city.tiers_chart', city=city.name, kind=lau.kind | upper) }}"></div>
+{{ tier_series_table(lau, tiers, "phone-tiers-now-sum", latest=true) }}
+{{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=lau.kind | upper), city=city.id, kind=lau.kind)) }}
+{% else %}<p class="note">{{ t('note.no_run_kind_history', kind=lau.kind | upper) }}</p>{% endif %}
+{{ tier_diagrams("phone-td") }}
+<p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/tiers') }}">{{ t('page.tiers.map') }} →</a></p>
+</section>
+<section class="aside-box phone-only" id="phone-over-time" aria-labelledby="phone-over-time-h">
+<h2 id="phone-over-time-h">{{ t('page.panel.tiers_over_time', kind=lau.kind | upper) }}</h2>
+{% if lau.series %}
+<div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ lau.kind }}" aria-describedby="phone-tiers-sum" role="group" aria-label="{{ t('page.city.tiers_chart', city=city.name, kind=lau.kind | upper) }}"></div>
+{{ tier_series_table(lau, tiers, "phone-tiers-sum") }}
+{{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=lau.kind | upper), city=city.id, kind=lau.kind)) }}
+{% else %}<p class="note">{{ t('note.no_run_kind_history', kind=lau.kind | upper) }}</p>{% endif %}
+</section>
+<section class="aside-box phone-only" id="phone-tabs" aria-labelledby="phone-tabs-h">
+<h2 id="phone-tabs-h">{{ t('page.story.more', city=city_name(city)) }}</h2>
+<ul class="phone-tabs">
+{% for tb in tabs if tb.key != tab %}<li><a href="{{ u(tb.href) }}">{{ tb.label_html }} →</a></li>
+{% endfor %}</ul>
 </section>
 <section class="aside-box">
 <h2>{{ t('page.story.read_on') }}</h2>

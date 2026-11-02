@@ -127,6 +127,7 @@ export function renderLines(el, model, opts = {}) {
   const iw = W - ml - mr;
   const ih = H - mt - mb;
   const step = iw / Math.max(1, n - 1);
+  const one = n === 1; // one snapshot: a stacked column across the plot, its label centred
   const x = (i) => ml + i * step;
   const yScale = scaleLinear([lo, hi], opts.invert ? [mt, mt + ih] : [mt + ih, mt]);
 
@@ -390,11 +391,15 @@ export function renderTiers(el, model, opts = {}) {
   const iw = W - ml - mr;
   const ih = H - mt - mb;
   const step = iw / Math.max(1, n - 1);
+  const one = n === 1; // one snapshot: a stacked column across the plot, its label centred
   const km = (v) => (Number.isFinite(v) ? v : 0); // a missing or non-finite tier value stacks as 0
   const totals = model.labels.map((_, i) => model.layers.reduce((a, l) => a + km(l.values[i]), 0));
   const ticks = niceTicks(0, Math.max(...totals, 1), 4);
   const y = scaleLinear([0, ticks.at(-1)], [mt + ih, mt]);
-  const x = (i) => ml + i * step;
+  const x = (i) => (one ? ml + iw / 2 : ml + i * step);
+  // the stack's outline runs through these x positions: per label, or both edges of the column
+  const xs = one ? [ml, ml + iw] : model.labels.map((_, i) => x(i));
+  const at = (vals) => (one ? [vals[0], vals[0]] : vals);
 
   const tiers = tierColours();
   const tierFill = (key) => tiers[key] ?? token("--axis");
@@ -411,8 +416,8 @@ export function renderTiers(el, model, opts = {}) {
   const base = model.labels.map(() => 0);
   for (const layer of model.layers) {
     const top = base.map((b, i) => b + km(layer.values[i]));
-    const up = top.map((v, i) => `${x(i)},${y(v)}`).join("L");
-    const down = base.map((v, i) => `${x(i)},${y(v)}`).reverse().join("L");
+    const up = at(top).map((v, i) => `${xs[i]},${y(v)}`).join("L");
+    const down = at(base).map((v, i) => `${xs[i]},${y(v)}`).reverse().join("L");
     svg.appendChild(svgEl("path", { class: `tier tier-${layer.key}`, d: `M${up}L${down}Z`,
       fill: tierFill(layer.key), "fill-opacity": 0.9, stroke: halo, "stroke-width": 0.6 }));
     top.forEach((v, i) => (base[i] = v));

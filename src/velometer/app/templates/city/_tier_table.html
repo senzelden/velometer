@@ -1,12 +1,13 @@
 {#- The values behind a tier-composition chart: mapped km by tier per snapshot. `sum_id` is the
-    summary's id, which the chart names in aria-describedby. -#}
-{% macro tier_series_table(k, tiers, sum_id) %}
+    summary's id, which the chart names in aria-describedby. `latest`: the last snapshot only (the
+    series is in label order, `current` last), as a `data-latest` chart draws it. -#}
+{% macro tier_series_table(k, tiers, sum_id, latest=false) %}
 <details class="table-details"><summary id="{{ sum_id }}">{{ t('page.city.tier_table', kind=k.kind | upper) }}</summary>
 <div class="scroll">
 <table class="stack" aria-labelledby="{{ sum_id }}">
 <thead><tr><th>{{ t('table.snapshot') }}</th>{% for tier in tiers %}<th class="num">{{ tier }} km</th>{% endfor %}</tr></thead>
 <tbody>
-{% for p in k.series.points %}
+{% for p in (k.series.points[-1:] if latest else k.series.points) %}
 <tr><td data-label="{{ t('table.snapshot') }}">{{ p.label | when(p.osm_timestamp) }}</td>{% for tier in tiers %}<td class="num" data-label="{{ tier }} km">{{ p.tiers_km[tier] | num }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>

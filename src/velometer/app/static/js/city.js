@@ -1,7 +1,8 @@
 // City page charts (Story, Over time, Tiers, Counts and Bezirke tabs): headline over time (LAU
 // and FUA), tier composition per boundary, the counter index beside the mapped-km index and the
 // Bezirk small multiples, drawn from /data/series.json into the server-rendered [data-chart]
-// mounts. Every value is also in a table on the page.
+// mounts. Every value is also in a table on the page. On the Story tab, the phone scroll's tier
+// charts (the latest snapshot, then over time) sit in `.phone-only` blocks.
 import { renderLines, renderSmallMultiples } from "./chart.js";
 import { drawTiers } from "./tier-chart.js";
 import { formatValue } from "./chart-core.js";
@@ -88,4 +89,8 @@ function counts(el, D) {
   );
 }
 
-drawAll({ "city-headline": headline, "city-tiers": drawTiers, "city-counts": counts, bezirke });
+// the story page's phone-only blocks (hidden at 62rem and wider) draw once a phone shows them
+drawAll(
+  { "city-headline": headline, "city-tiers": drawTiers, "city-counts": counts, bezirke },
+  { lazy: ".phone-only" },
+);

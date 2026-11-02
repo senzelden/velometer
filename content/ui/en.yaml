@@ -427,6 +427,8 @@ cite.title.city_headline_both: '{city}: headline over time, {unit}, city proper 
 note.no_run_history: no run (history)
 page.story.over_time: Over time, with flagged years
 page.story.read_on: Read on
+page.story.road_types: Road types
+page.story.more: More on {city}
 page.story.combined: The combined story across all cities
 page.time.meta: 'Headline: {unit}, city proper (LAU) and metro area (FUA).'
 page.time.caption: 'Headline and A+B km per snapshot, {city}: the values the chart above draws'
@@ -687,6 +689,7 @@ js.chart.line_of: 'Line chart: {title}'
 js.chart.sparkline: Sparkline
 js.chart.tiers: 'Stacked area chart: mapped km by tier'
 js.chart.tiers_of: 'Stacked area chart: mapped km by tier, {where}'
+js.chart.tiers_now_of: 'Stacked column: mapped km by tier, {where}, {label}'
 js.chart.tiers_tip: '{label} · mapped km'
 js.chart.total: Total {value}
 js.chart.rank_tip: '{name} · {label}: rank {rank}'
