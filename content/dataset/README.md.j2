@@ -11,7 +11,7 @@ The lengths are mapped kilometres (what OpenStreetMap records), not built kilome
 {% endfor %}
 `all.csv` holds every city, `<city>.csv` one city, `<city>_subareas.csv` the sub-areas of a city.
 Each file starts with comment lines (`#`) that carry the notices below, then the table.
-The columns and the method are described at {{ site_url }}methodology.
+The columns and the method are described at {{ methodology_url }}.
 
 ## Sources and notices
 
@@ -30,4 +30,13 @@ The columns and the method are described at {{ site_url }}methodology.
 
 The data derived from OpenStreetMap are available under the Open Database Licence (ODbL) 1.0,
 {{ odbl_url }}, with the attribution "© OpenStreetMap contributors".
-The administrative boundaries are not part of these files. Creator: {{ creator }}.
+The administrative boundaries are not part of these files.
+
+{{ terms_note }}
+
+Credits of the statistics offices:
+
+{% for line in credit_lines -%}
+- {{ line }}
+{% endfor %}
+Creator: {{ creator }}.

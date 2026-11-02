@@ -632,6 +632,20 @@ filled from `build.json`. Source: `content/dataset/README.md.j2`, `src/velometer
 Title: "velometer data: protected cycling infrastructure in European cities, {commit}". Keywords:
 cycling infrastructure; OpenStreetMap; open data; urban mobility; Europe.
 
-Open points for the review: the CSV column glossary is not repeated in the README (it points to
-the methodology page); the README says the boundaries are not in the files, which is true of the
-CSVs but means a reader of the Zenodo record finds the GISCO credit only as a preamble line.
+**Added in fix round 1 (spec section 8):** the README (after the licence paragraph) and the Zenodo
+description both carry the GISCO non-commercial condition and the three offices' credits:
+
+> The administrative boundaries are Eurostat GISCO data (© EuroGeographics for the administrative
+> boundaries), used under GISCO's terms (https://ec.europa.eu/eurostat/web/gisco/geodata/statistical-units),
+> which do not allow commercial use, and not under ODbL.
+>
+> Credits: Eurostat; Source : Insee; Elaboración propia con datos extraídos del sitio web del INE:
+> www.ine.es; Per-capita figures are computed by velometer; Eurostat, INSEE and INE bear no
+> responsibility for them.
+
+Open points for the review: (1) the non-commercial condition is the open legal point: the CSVs
+themselves carry only the GISCO credit, not the condition, so a reader of the files alone does not
+see it; it stands in the README and the record description only. Whether ODbL data bundled with
+GISCO-derived figures can be offered under `odbl-1.0` on Zenodo without that caveat as a licence
+field is reported, not decided (spec section 8). (2) The CSV column glossary is not repeated in the
+README (it points to the methodology page).

@@ -29,6 +29,10 @@ BOUNDARY_NOTE = (
     f"The `boundary` member is Eurostat GISCO data, {BOUNDARY_CREDIT}, used under GISCO's terms "
     f"({GISCO_TERMS_URL}), not under ODbL."
 )
+BOUNDARY_TERMS_NOTE = (
+    f"The administrative boundaries are Eurostat GISCO data ({BOUNDARY_CREDIT}), used under "
+    f"GISCO's terms ({GISCO_TERMS_URL}), which do not allow commercial use, and not under ODbL."
+)
 
 EUROSTAT, INSEE, INE = "Eurostat", "INSEE", "INE"
 # body -> (the credit it asks for, the credit's language)

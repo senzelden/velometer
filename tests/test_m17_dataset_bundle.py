@@ -129,6 +129,33 @@ def test_cli(public, tmp_path):
     assert (tmp_path / "zenodo-metadata.txt").is_file()
 
 
+def test_condition_and_credits_in_readme_and_sheet(public, made):
+    """The GISCO non-commercial condition and each office's credit, as `credits` words them,
+    stand verbatim in the README and in the Zenodo description (spec 8)."""
+    from velometer import credits
+
+    readme, sheet = _readme(made[0]), made[1].read_text(encoding="utf-8")
+    assert "do not allow commercial use" in credits.BOUNDARY_TERMS_NOTE
+    for text in (credits.BOUNDARY_TERMS_NOTE, *(c for c, _ in credits.CREDITS.values())):
+        assert text in readme, text
+        assert text in sheet, text
+    assert credits.disclaimer(list(credits.BODIES)) in readme
+    assert credits.disclaimer(list(credits.BODIES)) in sheet
+
+
+def test_urls_are_absolute_on_the_site(public, made):
+    assert "https://velometer.example.org/methodology" in _readme(made[0])
+
+
+def test_bundle_refuses_csvs_without_the_gisco_notice(public, tmp_path):
+    site = tmp_path / "s"
+    (site / "data").mkdir(parents=True)
+    (site / "data" / "all.csv").write_text(csvexport.ATTRIBUTION + "\na\n1\n")
+    (site / "build.json").write_bytes((public / "build.json").read_bytes())
+    with pytest.raises(db.BundleError, match="boundary notice"):
+        db.bundle(site, tmp_path / "o")
+
+
 def test_bundle_refuses_csvs_without_the_osm_notice(public, tmp_path):
     site = tmp_path / "s"
     (site / "data").mkdir(parents=True)

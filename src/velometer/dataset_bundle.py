@@ -14,6 +14,8 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from velometer import credits
+from velometer.app.urls import absolute_url
+from velometer.report import csvexport
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "content" / "dataset"
 CREATOR = "Dennis Senzel"
@@ -63,9 +65,18 @@ def preamble_notices(csvs: dict[str, str]) -> list[str]:
 def notices(csvs: dict[str, str]) -> list[str]:
     """The preamble notices verbatim; a file set without the OSM notice is refused (ODbL §4.2)."""
     found = preamble_notices(csvs)
-    if not any(credits.OSM_NOTICE in t for t in found):
-        raise BundleError("the CSV preambles carry no OSM notice; re-export the data")
+    for label, line in (("OSM", csvexport.ATTRIBUTION), ("boundary", csvexport.BOUNDARIES)):
+        if line[2:] not in found:
+            raise BundleError(f"the CSV preambles carry no {label} notice; re-export the data")
     return found
+
+
+def credit_lines() -> list[str]:
+    """The credits of the three statistics offices and Eurostat's disclaimer, as `credits` words
+    them, whichever of them a given file's rows used."""
+    lines = [text for text, _lang in credits.CREDITS.values()]
+    note = credits.disclaimer(list(credits.BODIES))
+    return lines + ([note] if note else [])
 
 
 def render_readme(build: dict, csv_names: list[str], csvs: dict[str, str]) -> str:
@@ -80,6 +91,9 @@ def render_readme(build: dict, csv_names: list[str], csvs: dict[str, str]) -> st
         commit=build["commit"],
         n_cities=len(stamps),
         site_url=build["site"]["url"],
+        methodology_url=absolute_url(build["site"]["url"], "/methodology", "/"),
+        terms_note=credits.BOUNDARY_TERMS_NOTE,
+        credit_lines=credit_lines(),
         repo_url=build["site"]["repo_url"],
         files=csv_names,
         notices=notices(csvs),
@@ -98,7 +112,10 @@ def zenodo_sheet(build: dict) -> str:
         f"CSV tables of protected cycling infrastructure in {n} European cities, as mapped in "
         f"OpenStreetMap (snapshots {first} to {last}), exported from {build['site']['url']} at "
         f"commit {build['commit']}. Lengths are mapped kilometres, not built kilometres. "
-        "The README names the sources, notices, classifier versions and snapshot timestamps."
+        "The README names the sources, notices, classifier versions and snapshot timestamps. "
+        + credits.BOUNDARY_TERMS_NOTE
+        + " Credits: "
+        + "; ".join(credit_lines())
     )
     lines = [
         "Zenodo metadata for the dataset deposit (type: Dataset). Paste each field by hand.",
