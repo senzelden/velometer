@@ -51,8 +51,8 @@ def test_public_alternates_absolute(rich):  # noqa: F811
     city = _city(rich)
     with TestClient(_app(rich, ORIGIN), base_url=BASE_URL) as c:
         alt = _head_links(c.get(f"/city/{city}").text, "alternate")
-    assert alt["en"] == f"{ORIGIN}city/{city}"
-    assert alt["de"] == f"{ORIGIN}de/city/{city}"
+    assert alt["en"] == f"{ORIGIN}city/{city}/"
+    assert alt["de"] == f"{ORIGIN}de/city/{city}/"
     assert alt["x-default"] == alt["en"]
 
 
@@ -72,8 +72,9 @@ def test_canonical_self(rich):  # noqa: F811
             if not r.headers["content-type"].startswith("text/html") or "<html" not in r.text:
                 continue  # data files and the panel fragments have no head
             canon = _head_links(r.text, "canonical")[""]
-            own = ORIGIN + url.lstrip("/")
-            want = ORIGIN + "de/methodology" if url == LEGACY else own
+            # every page is exported as `<dir>/index.html`: its URL ends in `/` (Task 2b)
+            own = ORIGIN + (f"{url.strip('/')}/" if url.strip("/") else "")
+            want = ORIGIN + "de/methodology/" if url == LEGACY else own
             assert canon == want, url
             checked += 1
     assert checked > 10
@@ -102,7 +103,7 @@ def test_public_base_path_not_doubled(rich):  # noqa: F811
     app = _app(rich, ORIGIN, base="/velo/")
     with TestClient(app, base_url=BASE_URL) as c:
         alt = _head_links(c.get("/cities").text, "alternate")
-    assert alt["en"] == f"{ORIGIN}cities"
+    assert alt["en"] == f"{ORIGIN}cities/"
 
 
 def test_public_export_writes_absolute_head_urls(rich, tmp_path, monkeypatch):  # noqa: F811
@@ -142,7 +143,7 @@ def test_public_export_writes_absolute_head_urls(rich, tmp_path, monkeypatch):  
             tiles_info=tiles,
         )  # fmt: skip
         heads[public] = _head_links((out / "cities" / "index.html").read_text(), "canonical")[""]
-    assert heads[True] == f"{ORIGIN}cities"
+    assert heads[True] == f"{ORIGIN}cities/"
     assert heads[False] == "/cities"
 
 

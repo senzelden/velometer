@@ -74,7 +74,10 @@ def _routes(out: Path) -> list[str]:
 
 
 def _abs(route: str) -> str:
-    return ORIGIN + route.lstrip("/")
+    """A page route's absolute URL in the form the static server answers 200 for: every page is
+    a `<dir>/index.html`, so it ends in `/` (Task 2b)."""
+    inner = route.strip("/")
+    return ORIGIN + (f"{inner}/" if inner else "")
 
 
 def _indexable(out: Path) -> list[str]:

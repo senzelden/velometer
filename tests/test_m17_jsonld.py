@@ -126,10 +126,10 @@ def test_website_and_methodology_article(out_doi):
     home = _of(_read(out_doi, "/"), "WebSite")
     assert home["name"] == "velometer" and home["url"] == ORIGIN
     art = _of(_read(out_doi, "/methodology"), "TechArticle")
-    assert art["url"] == ORIGIN + "methodology"
+    assert art["url"] == ORIGIN + "methodology/"
     assert art["author"]["name"] == "Dennis Senzel" and art["description"]
     de = _of(_read(out_doi, "/de/methodology"), "TechArticle")
-    assert de["url"] == ORIGIN + "de/methodology" and de["inLanguage"] == "de"
+    assert de["url"] == ORIGIN + "de/methodology/" and de["inLanguage"] == "de"
     legacy = _of(_read(out_doi, "/methodology/de"), "TechArticle")
     assert legacy["url"] == de["url"]  # the legacy page is the German edition
 

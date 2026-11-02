@@ -144,7 +144,7 @@ def test_condition_and_credits_in_readme_and_sheet(public, made):
 
 
 def test_urls_are_absolute_on_the_site(public, made):
-    assert "https://velometer.example.org/methodology" in _readme(made[0])
+    assert "https://velometer.example.org/methodology/" in _readme(made[0])
 
 
 def test_bundle_refuses_csvs_without_the_gisco_notice(public, tmp_path):
