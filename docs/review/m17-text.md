@@ -12,10 +12,15 @@ Decide each one, or say "as is". Section references are below.
    descriptions and OpenGraph").
 2. **Zenodo licence:** the record says `odbl-1.0`, but the boundary-derived figures carry GISCO's
    non-commercial condition (see "Dataset bundle"). Keep it, or change the licence field?
-3. **ECF:** "ECF" is used but not registered as a term, and the upper-case shape test is a closed
-   list (Task 13).
-4. **Tier letters:** they are marked as terms only after "tier"/"Stufe". The Paris figures get
-   34 marks (Task 13).
+3. **ECF:** decided 2026-11-02: registered as a term, en and de, with a glossary entry and the
+   first-use mark; the upper-case shape test now requires it (draft: "#### ECF" below).
+4. **Tier letters:** decided 2026-11-02: a tier letter is marked on its first use per scope
+   only, like every other term. The wrapper already did this, from Task 13 on (one mark per
+   term per scope, tier letters included). The "34 marks" could not be reproduced: the Paris
+   figures page has 11 marks, one per term, at Task 13's commit and now (en and de, app and
+   export); its 24 `<details>` are Cite boxes, whose text is skipped (R13d). The most tier marks
+   on any page are 9 (Amsterdam and Utrecht story: the always-visible text plus the phone-only
+   blocks, each its own scope). A test now holds one mark per term per scope on every page.
 5. **llms.txt:** "(a year or the current one)" is unverified wording. It links `/data/all.csv`, although
    robots.txt disallows `/data/` (kept as a download).
 6. **Diagram captions:** A "kerb or change in level" could get "typically"; C names 2 of many
@@ -53,6 +58,7 @@ Registered (spec §4.8 list, plus the tier sums and spellings the export shows):
 | A+B+E | 42 | 42 | comparison basis for BikeNetKit |
 | C+D | 42 | 42 | comparison with QECIO's cycle lanes; not in the spec's list, found in the export |
 | COROP | 4 | 2 | Amsterdam; the `<i lang="nl">COROP-gebied</i>` mark is skipped, the plain use is marked |
+| ECF | 1,137 | 53 | added 2026-11-02 (user's decision); most uses are in links, headings and Cite text, which stay unmarked |
 | tier letters A–E | — | — | counted only after the word for tier: "tier A", "tiers A–E", "Stufe B", "Stufen C+D" (the sum wins there) |
 
 Not terms (left plain):
@@ -61,15 +67,13 @@ Not terms (left plain):
   HTTP, README, UTC, EPSG (3, in "EPSG:25833").
 - Country codes (DE, PL, GB, IT, ES, FR, NL, AT, CZ, DK, FI, HU, NO, SE, SI, SK, EU) and region
   codes (FR101, DE300, NL329, ES511, …).
-- Names of organisations and datasets, spelled out where they appear: ECF (1,137 on 53 pages),
-  GISCO, INSEE, INE, CBS, KSH, GUS, SCB, BKK, ADFC, BUND, NDW, ZDM, BCN, CONEBI, BOE.
+- Names of organisations and datasets, spelled out where they appear: GISCO, INSEE, INE, CBS, KSH, GUS, SCB, BKK, ADFC, BUND, NDW, ZDM, BCN, CONEBI, BOE.
 - Internal references: ADR (94), milestones and rulings (M1–M13, R8–R19), roman numerals.
 - Street and counter names in capitals (Barcelona's counter list: GRAN VIA, DIAGONAL, MERIDIANA,
   …), and other words in capitals (COVID, MTB, NERDS, GISRUK).
 
-For the user to decide: ECF is the most frequent unregistered abbreviation. It is an
-organisation's name and is spelled out on the sources and organisation pages, so it is left out
-for now; adding it would be one registry entry.
+ECF (1,137 occurrences on 53 pages in this inventory) was left out at first, as an
+organisation's name; the user decided on 2026-11-02 to register it ("#### ECF" below).
 
 ### UI strings (glossary heading and lead)
 
@@ -182,6 +186,16 @@ make it tier A; the glossary follows v4. The generated methodology prose is stal
 - de: Der funktionale Stadtraum (<i lang="en">functional urban area</i>) dient als
   Robustheitsprüfung neben der Kernstadt. Verglichen wird nur innerhalb derselben Grenzart, und
   für den FUA gibt es keine Einwohnerzahl, also keinen Wert je 100.000 Einwohner.
+
+#### ECF
+Added 2026-11-02 (draft for review).
+- expansion en/de: European Cyclists' Federation (on German pages in `lang="en"`)
+- en: The European Cyclists' Federation, which publishes QECIO, the measure our tiers derive
+  from. Its QECIO figures are among the published figures velometer sets beside its mapped km.
+- de: Die <span lang="en">European Cyclists' Federation</span>, die QECIO herausgibt, das Maß,
+  aus dem sich unsere Stufen ableiten. Ihre QECIO-Zahlen gehören zu den veröffentlichten
+  Zahlen, die velometer neben seine kartierten km stellt.
+- cites the QECIO methodology, like the QECIO entry.
 
 #### QECIO
 - expansion en/de: Quantifying Europe's Cycling Infrastructure using OSM (the source's own title,

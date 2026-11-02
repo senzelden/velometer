@@ -28,7 +28,7 @@ BASE = "/velo/"
 HREF = "/velo/methodology"
 # the short forms spec §4.8 names; the registry may hold more, never fewer
 SPEC_SHORT = ["A+B", "A+B+E", "LAU", "FUA", "OSM", "QECIO", "NUTS3", "COROP", "A", "B", "C", "D"]
-SPEC_SHORT += ["E"]
+SPEC_SHORT += ["E", "ECF"]  # ECF: the user's call of 2026-11-02
 MARK = re.compile(
     r'<a class="term" href="(?P<href>[^"]*)#term-(?P<id>[a-z0-9-]+)">'
     r'<abbr title="(?P<title>[^"]*)"(?: lang="(?P<lang>[^"]+)")?>(?P<text>[^<]*)</abbr></a>'
@@ -163,6 +163,72 @@ def test_tier_letter_only_after_the_tier_word(en, de):
     assert [(m["id"], m["text"]) for m in _marks(out)] == [("tier-a", "A")]
     out = terms.mark_first_use(_page("<p>A und B. Stufe B wuchs.</p>"), de, HREF)
     assert [(m["id"], m["text"]) for m in _marks(out)] == [("tier-b", "B")]
+
+
+def test_tier_letter_marked_once_per_scope(en, de):
+    """A tier letter is marked on its first use in each scope only, like every other term
+    (spec §4.8 settled 4, the user's call of 2026-11-02): later uses in the same scope stay
+    plain, and each `<details>` or `.phone-only` block gets its own first mark."""
+    html = _page(
+        "<p>tier A, tier A, then tiers B and tier B, tier A.</p><p>Tier A again.</p>"
+        "<details><summary>x</summary><p>tier A here, tier A there, tier B.</p></details>"
+        '<div class="phone-only"><p>tier A, tier A.</p></div>'
+    )
+    out = terms.mark_first_use(html, en, HREF)
+    assert [m["id"] for m in _marks(out)] == ["tier-a", "tier-b", "tier-a", "tier-b", "tier-a"]
+    out = terms.mark_first_use(_page("<p>Stufe C, Stufe C und Stufen C.</p>"), de, HREF)
+    assert [m["id"] for m in _marks(out)] == ["tier-c"]
+
+
+class _ScopedMarks(HTMLParser):
+    """Each term mark of a page's `<main>` with the scope it is in: the always-visible text,
+    or the innermost `<details>` / `.phone-only` block (by its position in the page)."""
+
+    VOID = {"br", "img", "input", "meta", "link", "hr", "source", "wbr", "col", "area"}
+
+    def __init__(self):
+        super().__init__()
+        self.stack: list[tuple[str, int | None]] = []
+        self.scope_no = 0
+        self.marks: list[tuple[int, str]] = []
+
+    def _scope(self) -> int:
+        return next((n for _, n in reversed(self.stack) if n is not None), 0)
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.VOID:
+            return
+        a = dict(attrs)
+        opens = tag == "details" or "phone-only" in (a.get("class") or "").split()
+        if opens:
+            self.scope_no += 1
+        self.stack.append((tag, self.scope_no if opens else None))
+        href = a.get("href") or ""
+        if tag == "a" and "term" in (a.get("class") or "").split() and "#term-" in href:
+            self.marks.append((self._scope(), href.split("#term-", 1)[1]))
+
+    def handle_endtag(self, tag):
+        at = next((i for i in range(len(self.stack) - 1, -1, -1) if self.stack[i][0] == tag), None)
+        if at is not None:
+            del self.stack[at:]
+
+
+def test_pages_mark_each_term_once_per_scope(rich):  # noqa: F811
+    """On every fixture page, en and de, no scope holds two marks of one term, tier letters
+    included, and the city pages do show tier marks."""
+    app = _app(rich)
+    tier_marks = 0
+    with TestClient(app, base_url=BASE_URL) as c:
+        for url in _urls(rich, app):
+            r = c.get(url)
+            if not r.headers["content-type"].startswith("text/html") or "<main" not in r.text:
+                continue
+            p = _ScopedMarks()
+            p.feed(r.text.split("<main", 1)[1].split("</main>", 1)[0])
+            seen = p.marks
+            assert len(seen) == len(set(seen)), (url, sorted(seen))
+            tier_marks += sum(1 for _, i in seen if i.startswith("tier-"))
+    assert tier_marks > 0
 
 
 def test_wrapper_skips_links_headings_code_svg(en):
@@ -314,7 +380,7 @@ SHAPES = [
     re.compile(r"(?<![\w+])[A-E](?:\+[A-E])+(?![\w+])"),
     re.compile(r"\b(?:[Tt]iers?|Stufen?)\s+([A-E])(?![\w+])"),
     re.compile(r"\bNUTS[ -]?\d\b"),
-    re.compile(r"\b(?:LAU|FUA|OSM|QECIO|COROP)\b"),
+    re.compile(r"\b(?:LAU|FUA|OSM|QECIO|COROP|ECF)\b"),
 ]
 
 

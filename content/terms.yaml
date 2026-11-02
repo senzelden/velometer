@@ -161,6 +161,23 @@ terms:
         Robustheitsprüfung neben der Kernstadt. Verglichen wird nur innerhalb derselben
         Grenzart, und für den FUA gibt es keine Einwohnerzahl, also keinen Wert je 100.000
         Einwohner.
+  - id: ecf
+    short: ECF
+    expansion:
+      en: European Cyclists' Federation
+      de: European Cyclists' Federation
+    expansion_lang:
+      de: en
+    cite: [qecio-methodology]
+    explanation:
+      en: >-
+        The European Cyclists' Federation, which publishes QECIO, the measure our tiers derive
+        from. Its QECIO figures are among the published figures velometer sets beside its
+        mapped km.
+      de: >-
+        Die <span lang="en">European Cyclists' Federation</span>, die QECIO herausgibt, das Maß,
+        aus dem sich unsere Stufen ableiten. Ihre QECIO-Zahlen gehören zu den veröffentlichten
+        Zahlen, die velometer neben seine kartierten km stellt.
   - id: qecio
     short: QECIO
     expansion:
