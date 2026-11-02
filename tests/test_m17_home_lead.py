@@ -269,4 +269,7 @@ ROAD_APART = {"en": r"apart from the road|away from the road", "de": r"abseits d
 
 def test_home_lead_places_counted_types_truly(homes):
     for lang, html in homes.items():
-        assert not re.search(ROAD_APART[lang], _text(_lead(html))), lang
+        text = _text(_lead(html))
+        assert not re.search(ROAD_APART[lang], text), lang
+        # one word for the part of the street cars drive on, where lanes are and paths are not
+        assert not ("carriageway" in text and "on the road" in text), lang

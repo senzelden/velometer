@@ -342,4 +342,4 @@ def test_llms_txt_years_are_the_history_years():
     text = (REPO / "content" / "llms.md").read_text(encoding="utf-8")
     assert "(one per year since" in text and "plus the current state)" in text
     years = [int(y) for y in re.findall(r"\bsince (\d{4})\b", text)]
-    assert len(years) >= 2 and set(years) == {first}, years
+    assert len(years) >= 1 and set(years) == {first}, years

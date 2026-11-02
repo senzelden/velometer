@@ -487,3 +487,51 @@ def test_the_shipped_german_counter_page_states_the_rule_through_its_facts():
         for x in ck.literal_counter_rules(p, rules, others, ck.RULES["de"])
     }
     assert declared and caught == declared
+
+
+# --- a narrative's meta description (M17 Task 2d) ----------------------------------------
+
+
+def _stale_paths(tree) -> set[str]:
+    return {
+        p.split(": ", 1)[0].rsplit(" ", 1)[1]
+        for p in tree.check()[0]
+        if p.startswith("[de] ") and "stale (English changed)" in p
+    }
+
+
+def test_a_german_description_stands_on_the_dek_without_an_english_one(tree):
+    """Without an English `description` the German one is translated from the dek and stamped
+    from it, so editing the dek marks the German description stale too (no second English
+    copy of the dek to forget)."""
+    en = tr.load_english(tree.en)
+    assert en.description is None
+    assert dict(tr.walk(en))["description"] == en.dek
+    tree.edit("dek", lambda s: s + " Now longer.")
+    assert _stale_paths(tree) == {"dek", "description"}
+
+
+def test_a_german_description_follows_an_english_one(tree):
+    """With an English `description`, the German one is stamped from it: editing it marks the
+    German description stale, and the dek's own twin stays current."""
+    doc = tr.yaml.safe_load(tree.en.read_text(encoding="utf-8"))
+    doc["description"] = "Berlin has a description of its own here, for the meta tag."
+    tr.dump(tree.en, doc)
+    fake_translate(tree.en, tree.de)
+    assert tree.check(require_de=True) == ([], [])
+    tree.edit("description", lambda s: s.replace("its own", "its very own"))
+    assert _stale_paths(tree) == {"description"}
+
+
+def test_a_german_description_is_optional(tree):
+    """A German file without a description is complete; its page uses the German dek, never
+    an English description."""
+    doc = tr.yaml.safe_load(tree.en.read_text(encoding="utf-8"))
+    doc["description"] = "Berlin has a description of its own here, for the meta tag."
+    tr.dump(tree.en, doc)
+    fake_translate(tree.en, tree.de, drop=frozenset({"description"}))
+    assert tree.check(require_de=True) == ([], [])
+    en = tr.load_english(tree.en)
+    merged, fallback = tr.merge(en, tr.load_translation(tree.de, en))
+    assert merged.description is None and "description" not in fallback
+    assert merged.dek.startswith("Übersetzt: ")

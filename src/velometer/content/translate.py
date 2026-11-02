@@ -34,6 +34,11 @@ from velometer.content.models import (
 )
 
 English = Narrative | Explainer | Organisation
+# A narrative's `description` (its meta description, M17 Task 2d) is its own English string when
+# the file has one, else the dek: German writes one only where its dek is too long for a meta
+# description. Its German twin is stamped from that English, so a changed dek marks it stale; a
+# German file without one is complete, and its page falls back to the German dek.
+OPTIONAL = frozenset({"description"})
 Translation = NarrativeTr | DocumentTr | OrganisationTr
 DE = "de"
 FOLD_OVER = 80  # longer strings are dumped in folded style
@@ -64,8 +69,7 @@ def walk(model: English) -> Iterator[tuple[str, str]]:
     if isinstance(model, Narrative):
         yield "title", model.title
         yield "dek", model.dek
-        if model.description is not None:
-            yield "description", model.description
+        yield "description", model.description if model.description is not None else model.dek
     elif isinstance(model, Explainer):
         yield "title", model.title
         for i, p in enumerate(model.intro):
@@ -137,8 +141,12 @@ def merge(en_model: English, tr: Translation | None) -> tuple[English, frozenset
     doc = en_model.model_dump()
     for path, text in german.items():
         _set(doc, path, text)
+    absent = frozenset(p for p in OPTIONAL if p in english and p not in german)
+    for path in absent:  # no German of its own: the German page uses what stands for it (the dek)
+        _set(doc, path, None)
     doc["literals"] = list(tr.literals)
-    return type(en_model).model_validate(doc), frozenset(english) - frozenset(german)
+    fallback = frozenset(english) - frozenset(german) - absent
+    return type(en_model).model_validate(doc), fallback
 
 
 # --- files --------------------------------------------------------------------------------
@@ -344,7 +352,10 @@ def git_history(path: Path) -> list[str]:
 
 
 def _english_at(doc: Any, walk_path: str) -> str | None:
-    """The string at a walk path of a raw English file, None when it has none."""
+    """The string at a walk path of a raw English file, None when it has none (a narrative's
+    `description` is its dek where it has none of its own)."""
+    if walk_path in OPTIONAL and isinstance(doc, dict) and doc.get(walk_path) is None:
+        walk_path = "dek"
     try:
         node: Any = doc
         for part in walk_path.split("."):
