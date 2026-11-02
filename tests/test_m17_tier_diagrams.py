@@ -169,6 +169,18 @@ def test_every_tier_has_its_caption_and_name_keys():
         assert i18n.DYNAMIC_FAMILIES[prefix]() >= classifier_tiers(CONFIG)
 
 
+@pytest.mark.parametrize(
+    ("tier", "hedge"),
+    [("A", {"en": "typically by", "de": "meist durch"}), ("C", {"en": "such as", "de": "etwa"})],
+)
+def test_caption_names_separations_as_examples(tier, hedge):
+    """A and C are drawn with one kind of separation each, but the tier has more (the user's
+    call of 2026-11-02): their captions name the drawn kinds as typical or as examples."""
+    for lang in ("en", "de"):
+        caption = i18n.t(lang, f"tier.caption.{tier}")
+        assert re.search(rf"\b{hedge[lang]}\b", caption), (lang, caption)
+
+
 def test_one_viewbox_for_every_diagram():
     module = _module("en", _tier_set())
     boxes = {

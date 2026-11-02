@@ -332,3 +332,14 @@ def test_sitemap_prefixes_hold_without_a_fresh_registration():
     assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset ')
     assert f'xmlns="{crawl.SITEMAP_NS}"' in xml and f'xmlns:xhtml="{crawl.XHTML_NS}"' in xml
     assert "<xhtml:link " in xml and xml.endswith("</urlset>\n")
+
+
+def test_llms_txt_years_are_the_history_years():
+    """llms.txt says the CSV holds one snapshot per year since the history's first year, plus
+    the current state: every "since <year>" in it is the first year of `config/history.yaml`,
+    the yearly series every city's history runs cover."""
+    first = int(yaml.safe_load((REPO / "config" / "history.yaml").read_text())["years"][:4])
+    text = (REPO / "content" / "llms.md").read_text(encoding="utf-8")
+    assert "(one per year since" in text and "plus the current state)" in text
+    years = [int(y) for y in re.findall(r"\bsince (\d{4})\b", text)]
+    assert len(years) >= 2 and set(years) == {first}, years

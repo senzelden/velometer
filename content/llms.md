@@ -10,7 +10,7 @@
 
 - [Methodology]({origin}methodology/): how the five tiers, A (separated cycle track) to E (cycle street or bus lane), are derived from OpenStreetMap tags, and what the headline metric (A+B km per 100 km of main roads) means.
 - [Sources]({origin}sources/): the published figures and rankings that velometer sets beside its own OpenStreetMap figures, compared along the dimensions in which they differ.
-- [All results as CSV]({origin}data/all.csv): one row per city, boundary and snapshot (a year or the current one), with the classifier version and OpenStreetMap timestamp.
+- [All results as CSV]({origin}data/all.csv): one row per city, boundary and snapshot (one per year since 2018, plus the current state), with the classifier version and OpenStreetMap timestamp.
 - [Source code]({repo_url}): the pipeline, the classifier rules and the architecture decisions.
 - [Open Data Commons Open Database License 1.0]({odbl_url}): the licence of the data.
 

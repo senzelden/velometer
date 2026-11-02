@@ -513,9 +513,9 @@ tier.diagram_name.B: 'Querschnitt, Stufe B: Geh- und Radweg'
 tier.diagram_name.C: 'Querschnitt, Stufe C: geschützter Radfahrstreifen'
 tier.diagram_name.D: 'Querschnitt, Stufe D: markierter Radfahrstreifen'
 tier.diagram_name.E: 'Querschnitt, Stufe E: Fahrradstraße und Busspur'
-tier.caption.A: Ein Radweg zwischen Gehweg und Fahrbahn, von beiden durch einen Bordstein oder einen Höhenunterschied getrennt.
+tier.caption.A: Ein Radweg zwischen Gehweg und Fahrbahn, von beiden getrennt, meist durch einen Bordstein oder einen Höhenunterschied.
 tier.caption.B: Ein gemeinsamer Weg für Fuß- und Radverkehr ohne getrennte Teile, abseits der Fahrbahn.
-tier.caption.C: Ein Radfahrstreifen auf der Fahrbahn, durch Poller oder eine Trennschwelle vom Verkehr getrennt.
+tier.caption.C: Ein Radfahrstreifen auf der Fahrbahn, baulich vom Verkehr getrennt, etwa durch Poller oder eine Trennschwelle.
 tier.caption.D: Ein Radfahrstreifen oder Schutzstreifen auf der Fahrbahn, nur durch eine markierte Linie vom Verkehr getrennt.
 tier.caption.E: Links eine Fahrradstraße, eine für den Radverkehr ausgewiesene Straße; rechts eine für den Radverkehr freigegebene Busspur.
 tier.diagram_counts: Zählt zur Hauptkennzahl.

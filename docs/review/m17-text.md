@@ -3,6 +3,11 @@
 Every new reader-facing sentence of M17, en and de, collected for the user's review (plan Task 5
 step 6, spec §4.8 settled 6). Nothing here ships before that review.
 
+**Approved 2026-11-02**, except the texts marked "draft for review" below: the user decided
+the open points on 2026-11-02 and approved everything else in this file. The drafts are new
+text written from those decisions (meta descriptions, the ECF entry, the llms.txt and caption
+wordings, the home lead) and still need the user's go.
+
 ## Open points, in one list
 
 Decide each one, or say "as is". Section references are below.
@@ -10,8 +15,8 @@ Decide each one, or say "as is". Section references are below.
 1. **Long deks:** decided 2026-11-02: the deks stay, and the 14 cities with a dek over 160
    characters get their own meta description, en and de (draft: "Own descriptions" under "Meta
    descriptions and OpenGraph").
-2. **Zenodo licence:** the record says `odbl-1.0`, but the boundary-derived figures carry GISCO's
-   non-commercial condition (see "Dataset bundle"). Keep it, or change the licence field?
+2. **Zenodo licence:** decided 2026-11-02: the record stays `odbl-1.0`, with the GISCO
+   non-commercial condition in the description and the README, as built.
 3. **ECF:** decided 2026-11-02: registered as a term, en and de, with a glossary entry and the
    first-use mark; the upper-case shape test now requires it (draft: "#### ECF" below).
 4. **Tier letters:** decided 2026-11-02: a tier letter is marked on its first use per scope
@@ -21,19 +26,20 @@ Decide each one, or say "as is". Section references are below.
    export); its 24 `<details>` are Cite boxes, whose text is skipped (R13d). The most tier marks
    on any page are 9 (Amsterdam and Utrecht story: the always-visible text plus the phone-only
    blocks, each its own scope). A test now holds one mark per term per scope on every page.
-5. **llms.txt:** "(a year or the current one)" is unverified wording. It links `/data/all.csv`, although
-   robots.txt disallows `/data/` (kept as a download).
-6. **Diagram captions:** A "kerb or change in level" could get "typically"; C names 2 of many
-   separation kinds and could get "such as" (Task 14).
-7. **"Radwegtypen":** too narrow for D and E (Task 16).
+5. **llms.txt:** decided 2026-11-02: "(a year or the current one)" becomes "(one per year since
+   2018, plus the current state)" (draft, see "llms.txt" below); the CSV link stays. "Since
+   2018" is true: `config/history.yaml` has `years: "2018-2026"`, and the export's `all.csv`
+   holds, for each of the 42 city × boundary pairs, the labels 2018 to 2026 plus `current`.
+6. **Diagram captions:** decided 2026-11-02: A gets "typically" ("meist"), C introduces its
+   separation kinds with "such as" ("etwa"); draft in "Tier diagrams", screenshots re-rendered.
+7. **"Radwegtypen":** decided 2026-11-02: stays.
 8. **Home lead:** it repeats the definition box below it. "Here a reader can see…" reads clumsily,
    the home sentence is long, and "apart from the road" is loose for side tracks (Task 15).
-9. **Phone city scroll:** the "over time" section shows the tier mix over time, not the headline chart,
-   which already sits above it (Task 16).
-10. **Methodology correction (German):** "Radfahrstreifen" is narrower than the English "all cycle lanes",
-    because it excludes Schutzstreifen (Task 2c).
-11. **Methodology correction:** the stale tier-B sentence is replaced (live page; see the section
-    below).
+9. **Phone city scroll:** decided 2026-11-02: the "over time" section stays the tier mix over
+   time (Ruling T16a confirmed).
+10. **Methodology correction (German):** decided 2026-11-02: "QECIO zählt alle Radfahr- und
+    Schutzstreifen als eine Klasse" (applied, `docs/methodology.de.md` regenerated).
+11. **Methodology correction:** approved 2026-11-02.
 
 ## Terms registry and glossary (Task 13)
 
@@ -261,7 +267,8 @@ the road with a car.
 
 ### Screenshots
 
-These show the methodology glossary's tier entries from the local app on the real database.
+These show the methodology glossary's tier entries from the local app on the real database
+(re-rendered 2026-11-02 with the A and C captions above; axe 0 violations in all 8).
 
 | | light | dark |
 |---|---|---|
@@ -279,14 +286,19 @@ These show the methodology glossary's tier entries from the local app on the rea
 | `tier.diagram_name.C` | Cross-section, tier C: protected lane | Querschnitt, Stufe C: geschützter Radfahrstreifen |
 | `tier.diagram_name.D` | Cross-section, tier D: painted lane | Querschnitt, Stufe D: markierter Radfahrstreifen |
 | `tier.diagram_name.E` | Cross-section, tier E: cycle street and bus lane | Querschnitt, Stufe E: Fahrradstraße und Busspur |
-| `tier.caption.A` | A cycle track between the footway and the road, set apart from both by a kerb or a change in level. | Ein Radweg zwischen Gehweg und Fahrbahn, von beiden durch einen Bordstein oder einen Höhenunterschied getrennt. |
+| `tier.caption.A` (draft 2026-11-02) | A cycle track between the footway and the road, set apart from both, typically by a kerb or a change in level. | Ein Radweg zwischen Gehweg und Fahrbahn, von beiden getrennt, meist durch einen Bordstein oder einen Höhenunterschied. |
 | `tier.caption.B` | One path for walking and cycling, without separate parts, apart from the road. | Ein gemeinsamer Weg für Fuß- und Radverkehr ohne getrennte Teile, abseits der Fahrbahn. |
-| `tier.caption.C` | A cycle lane on the road, with bollards or a kerb separator between it and the traffic. | Ein Radfahrstreifen auf der Fahrbahn, durch Poller oder eine Trennschwelle vom Verkehr getrennt. |
+| `tier.caption.C` (draft 2026-11-02) | A cycle lane on the road, with a physical separation such as bollards or a kerb separator between it and the traffic. | Ein Radfahrstreifen auf der Fahrbahn, baulich vom Verkehr getrennt, etwa durch Poller oder eine Trennschwelle. |
 | `tier.caption.D` | A cycle lane or advisory lane on the road, with only a painted line between it and the traffic. | Ein Radfahrstreifen oder Schutzstreifen auf der Fahrbahn, nur durch eine markierte Linie vom Verkehr getrennt. |
 | `tier.caption.E` | Left, a cycle street, a street signed for cycling; right, a bus lane open to cyclists. | Links eine Fahrradstraße, eine für den Radverkehr ausgewiesene Straße; rechts eine für den Radverkehr freigegebene Busspur. |
 | `tier.diagram_counts` | Counts in the headline. | Zählt zur Hauptkennzahl. |
 | `tier.diagram_measured` | Measured, not in the headline. | Gemessen, nicht in der Hauptkennzahl. |
 | `tier.diagram_rules` | A typical case is drawn; the [classifier rules] decide which tier each street side or path gets. | Gezeichnet ist der typische Fall; welche Stufe eine Straßenseite oder ein Weg erhält, entscheiden die [Regeln des Klassifikators]. |
+
+Before 2026-11-02 the two drafts read: A "…set apart from both by a kerb or a change in level."
+/ "…von beiden durch einen Bordstein oder einen Höhenunterschied getrennt."; C "A cycle lane on
+the road, with bollards or a kerb separator between it and the traffic." / "Ein Radfahrstreifen
+auf der Fahrbahn, durch Poller oder eine Trennschwelle vom Verkehr getrennt."
 
 The name is the drawing's accessible name and the caption's bold start. The link in
 `tier.diagram_rules` goes to the methodology's "Classification rules" section. The German texts
@@ -758,9 +770,13 @@ Old (de):
 
 New (de):
 
-> So zählt QECIO alle Radfahrstreifen als eine Klasse, während hier ein Radfahrstreifen mit
-> baulicher Trennung zum Kfz-Verkehr (`cycleway:right=lane` mit `cycleway:right:separation=kerb`)
-> als Stufe C gilt und einer ohne sie (nur `cycleway:right=lane`) als Stufe D [ADR 0002].
+> So zählt QECIO alle Radfahr- und Schutzstreifen als eine Klasse, während hier ein
+> Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr (`cycleway:right=lane` mit
+> `cycleway:right:separation=kerb`) als Stufe C gilt und einer ohne sie (nur
+> `cycleway:right=lane`) als Stufe D [ADR 0002].
+
+(Corrected 2026-11-02 from "alle Radfahrstreifen", which leaves out the Schutzstreifen that the
+English "all cycle lanes" covers.)
 
 Builder's call, for review: the German tier table still reads "B | Geh- und Radweg (gemeinsam
 oder getrennt)". It is left as is: v4 still puts a segregated designated sidewalk
@@ -783,4 +799,7 @@ heute"):
 The texts are in the files themselves, so they are not copied here:
 
 - velometer: `content/llms.md`. `{n_cities}`, `{cities}`, `{dois}` and the URLs are filled at export.
+  Draft 2026-11-02, the CSV line: "[All results as CSV]({origin}data/all.csv): one row per city,
+  boundary and snapshot (one per year since 2018, plus the current state), with the classifier
+  version and OpenStreetMap timestamp." (was "(a year or the current one)").
 - Datalab (German): `sites/datalab/templates/llms.txt`.

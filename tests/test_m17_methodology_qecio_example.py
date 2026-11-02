@@ -76,3 +76,15 @@ def test_no_segregated_path_tier_claim_contradicts_the_classifier(lang):
         assert claimed == actual, (
             f"{lang}: segregated path claimed {claimed}, {version} says {actual}"
         )
+
+
+def test_german_class_names_every_lane_kind_the_english_does():
+    """The English "all cycle lanes" covers painted advisory lanes too (tier D includes them),
+    and German "Radfahrstreifen" alone does not: the German sentence on QECIO's one lane class names
+    Schutzstreifen as well (the user's correction of 2026-11-02)."""
+    en = _paragraph(_text("en"), "en")
+    de = _paragraph(_text("de"), "de")
+    assert "QECIO counts all cycle lanes as one class" in en
+    one_class = re.search(r"zählt QECIO alle ([^.,]*?) als eine Klasse", de)
+    assert one_class, de
+    assert "Schutzstreifen" in one_class.group(1) and "Radfahr" in one_class.group(1)
