@@ -18,6 +18,7 @@ from tests.test_app import CONTENT, _docs
 from velometer import i18n
 from velometer.app.main import create_app
 from velometer.config import load_site
+from velometer.report.data import headline_unit
 from velometer.selection import report_selector, report_tiers
 
 BASE_URL = "http://127.0.0.1"
@@ -222,3 +223,50 @@ def test_home_sentence_omitted_below_two_ranked_cities(tmp_path):
         lead = _lead(html)
         assert 'id="home-sentence"' not in lead, lang
         assert MAPPED_KM[lang] in _text(lead), lang  # the rest of the lead stays
+
+
+def _defn(html: str) -> str:
+    m = re.search(r'<p class="defn">(.*?)</p>', html, re.S)
+    assert m, "no definition box"
+    return _text(m.group(1))
+
+
+def _ngrams(text: str, n: int) -> set[tuple[str, ...]]:
+    words = [w.lower() for w in re.findall(r"[\w+'/-]+", text)]
+    return {tuple(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_home_lead_does_not_repeat_the_definition_box(homes):
+    """The definition box sits right below the lead (the user's call of 2026-11-02): the lead
+    shares no run of five words with it, so it does not restate the box. The headline's unit,
+    which both name, is left out of the comparison."""
+    for lang, html in homes.items():
+        unit = _text(headline_unit(lang))
+        lead, defn = (_text(x).replace(unit, " ") for x in (_lead(html), _defn(html)))
+        shared = _ngrams(lead, 5) & _ngrams(defn, 5)
+        assert not shared, (lang, sorted(shared))
+
+
+def _sentences(text: str) -> list[str]:
+    """Sentences end at `.`, `?` or `!` before a capital or the end; an abbreviation's point
+    ("excl.", "z. B.") ends none."""
+    text = re.sub(r"\b(excl|ohne|z|B|ca|bzw)\.", r"\1", text)
+    return [s for s in re.split(r"(?<=[.?!])\s+(?=[A-ZÄÖÜ0-9])", text) if s.strip()]
+
+
+def test_home_lead_sentences_are_short(homes):
+    """No sentence of the lead, the home sentence included, runs over 25 words (the user's
+    call of 2026-11-02: the ranking sentence is split)."""
+    for lang, html in homes.items():
+        for sentence in _sentences(_text(_lead(html))):
+            assert _words(sentence) <= 25, (lang, _words(sentence), sentence)
+
+
+# "apart from the road" is untrue of tier A's tracks beside the road (`A_track_side`); the lead
+# places the counted types off the carriageway, which holds for every tier A and B rule
+ROAD_APART = {"en": r"apart from the road|away from the road", "de": r"abseits der Fahrbahn"}
+
+
+def test_home_lead_places_counted_types_truly(homes):
+    for lang, html in homes.items():
+        assert not re.search(ROAD_APART[lang], _text(_lead(html))), lang

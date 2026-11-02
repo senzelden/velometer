@@ -33,8 +33,8 @@ Decide each one, or say "as is". Section references are below.
 6. **Diagram captions:** decided 2026-11-02: A gets "typically" ("meist"), C introduces its
    separation kinds with "such as" ("etwa"); draft in "Tier diagrams", screenshots re-rendered.
 7. **"Radwegtypen":** decided 2026-11-02: stays.
-8. **Home lead:** it repeats the definition box below it. "Here a reader can see…" reads clumsily,
-   the home sentence is long, and "apart from the road" is loose for side tracks (Task 15).
+8. **Home lead:** decided 2026-11-02: tightened, en and de (draft with old/new text, word
+   counts and renders: "Home lead (Task 15)").
 9. **Phone city scroll:** decided 2026-11-02: the "over time" section stays the tier mix over
    time (Ruling T16a confirmed).
 10. **Methodology correction (German):** decided 2026-11-02: "QECIO zählt alle Radfahr- und
@@ -320,7 +320,62 @@ shows (`ranking_ends` in `src/velometer/app/main.py`); with fewer than two ranke
 out. Strings: `page.index.lead.*` in `content/ui/en.yaml` and `content/ui/de.yaml`. Below as
 rendered on the real data (links in brackets: where they go).
 
-### English (155 words)
+### Tightened 2026-11-02 (draft for review)
+
+The user's decision: drop what repeats the definition box right below, rewrite "Here a reader can
+see…", split the long ranking sentence, and replace "apart from the road", which is untrue of
+tier A's tracks beside the road (`A_track_side`). Same facts, nothing new. Changes:
+
+- **Repeats dropped:** "Together, the two counted types are called A+B here." (the box says
+  A = …, B = …) and "All lengths are mapped km: what mappers recorded in OpenStreetMap, not what
+  was built." (the box says it nearly word for word). "Mapped km" stays once, as the reason a
+  figure can change. A test holds that the lead shares no run of five words with the box (the
+  headline unit aside).
+- **"Here a reader can see…"** becomes "The ranking is below. Each city also has its own story,
+  and there are …", same five links.
+- **The ranking sentence** is two sentences, both inside the one `#home-sentence` element. A
+  test holds every sentence of the lead to at most 25 words (the old ranking sentence had 27).
+- **"apart from the road"** becomes "off the carriageway" / "außerhalb der Fahrbahn": true of a
+  track beside the road, a standalone cycleway, a segregated path and a shared path alike.
+
+English, new (140 words, was 155):
+
+> velometer is an open, independent comparison of cycling infrastructure in 21 European cities,
+> built from OpenStreetMap. It answers one question: how much of a city's main road network has a
+> cycle path you don't share with cars? It counts [separated tracks](/methodology#term-tier-a) and
+> [shared foot/cycle paths](/methodology#term-tier-b), both off the carriageway. Cycle lanes on
+> the road don't count, whether painted or protected. Lengths are in **mapped km**, so a city's
+> figure can change when the mapping catches up.
+>
+> The [ranking](#ranking) is below. Each city also has [its own story](/cities), and there are
+> [stories across all cities](/stories), [a comparison of cities](/compare) and [the full
+> method](/methodology). The [Zählwerk Berlin Datalab](https://zaehlwerk-datalab.de/) maintains
+> velometer. Its [code](https://github.com/senzelden/velometer) and [data](/data/all.csv) are
+> open. In the current run, Helsinki has the highest headline value: 262.3 A+B km per 100 km of
+> main roads (excl. motorways). Budapest has the lowest, 22.3.
+
+German, new (134 words, was 149):
+
+> velometer ist ein offener, unabhängiger Vergleich der Radinfrastruktur in 21 europäischen
+> Städten, erstellt aus OpenStreetMap. Er beantwortet eine Frage: Wie viel vom Hauptstraßennetz
+> einer Stadt hat einen Radweg, den man nicht mit Autos teilt? Gezählt werden [baulich getrennte
+> Radwege](/de/methodology#term-tier-a) und [gemeinsame Geh- und Radwege](/de/methodology#term-tier-b),
+> beide außerhalb der Fahrbahn. Radfahrstreifen auf der Fahrbahn zählen nicht, ob markiert oder
+> geschützt. Die Längen sind **kartierte km**, daher kann sich die Zahl einer Stadt ändern, wenn
+> die Kartierung aufholt.
+>
+> Die [Rangfolge](#ranking) steht weiter unten. Jede Stadt hat außerdem [ihre eigene
+> Geschichte](/de/cities), dazu gibt es [Geschichten über alle Städte](/de/stories), [einen
+> Städtevergleich](/de/compare) und [die vollständige Methode](/de/methodology). Das [Zählwerk
+> Berlin Datalab](https://zaehlwerk-datalab.de/) betreut velometer.
+> [Code](https://github.com/senzelden/velometer) und [Daten](/data/all.csv) von velometer sind
+> offen. Im aktuellen Lauf hat Helsinki die höchste Hauptkennzahl: 262,3 A+B-km je 100 km
+> Hauptstraßen (ohne Autobahnen). Budapest hat die niedrigste, 22,3.
+
+The first `A+B` on the page, and so its glossary link, is now the one in the home sentence's
+unit. The old text, as first reviewed, follows.
+
+### English, before 2026-11-02 (155 words)
 
 > velometer is an open, independent comparison of cycling infrastructure in 21 European cities,
 > built from OpenStreetMap. It answers one question: how much of a city's main road network has a
@@ -337,7 +392,7 @@ rendered on the real data (links in brackets: where they go).
 > run, Helsinki has the highest headline value, 262.3 A+B km per 100 km of main roads (excl.
 > motorways), and Budapest the lowest, 22.3.
 
-### German (149 words)
+### German, before 2026-11-02 (149 words)
 
 > velometer ist ein offener, unabhängiger Vergleich der Radinfrastruktur in 21 europäischen
 > Städten, erstellt aus OpenStreetMap. Er beantwortet eine Frage: Wie viel vom Hauptstraßennetz
@@ -375,7 +430,9 @@ City names, values and the city count come from the data; the rest is fixed text
 
 ### Renders
 
-Top of the home page down to the ranking's third row, real data, public site values:
+Top of the home page down to the ranking's third row, real data, public site values
+(re-rendered 2026-11-02 with the tightened lead; axe 0 violations in all 8; the diagram variant
+is the old one, not re-rendered):
 
 - `m17-home/home-{en,de}-{light,dark}-390.png`
 - `m17-home/home-{en,de}-{light,dark}-1280.png`

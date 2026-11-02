@@ -100,12 +100,12 @@ table.not_published: not published
 page.index.no_ranks: no run or figures to rank
 page.index.lead.label: About velometer
 page.index.lead.what: "velometer is an open, independent comparison of cycling infrastructure in {n} European cities,\nbuilt from OpenStreetMap. It answers one question: how much of a city's main road network has a\ncycle path you don't share with cars?"
-page.index.lead.counts: "It counts <a href=\"{a}\">separated tracks</a> and <a href=\"{b}\">shared foot/cycle paths</a>, both\napart from the road. Cycle lanes on the road don't count, whether painted or protected. Together,\nthe two counted types are called A+B here."
-page.index.lead.mapped: "All lengths are <b>mapped km</b>: what mappers recorded in OpenStreetMap, not what was built.\nA city's figure can change when the mapping catches up."
-page.index.lead.use: "Here a reader can see the <a href=\"#ranking\">ranking</a>, read <a href=\"{cities}\">a city's story</a> or\n<a href=\"{stories}\">the stories across all cities</a>, <a href=\"{compare}\">compare cities</a> and\n<a href=\"{methodology}\">check the method</a>."
+page.index.lead.counts: "It counts <a href=\"{a}\">separated tracks</a> and <a href=\"{b}\">shared foot/cycle paths</a>, both\noff the carriageway. Cycle lanes on the road don't count, whether painted or protected."
+page.index.lead.mapped: "Lengths are in <b>mapped km</b>, so a city's figure can change when the mapping catches up."
+page.index.lead.use: "The <a href=\"#ranking\">ranking</a> is below. Each city also has <a href=\"{cities}\">its own story</a>, and there\nare <a href=\"{stories}\">stories across all cities</a>, <a href=\"{compare}\">a comparison of cities</a> and\n<a href=\"{methodology}\">the full method</a>."
 page.index.lead.maintained: The <a href="{url}">{name}</a> maintains velometer.
 page.index.lead.open: Its <a href="{code}">code</a> and <a href="{data}">data</a> are open.
-page.index.lead.ends: "In the current run, {top} has the highest headline value, {top_value} {unit}, and {bottom}\nthe lowest, {bottom_value}."
+page.index.lead.ends: "In the current run, {top} has the highest headline value: {top_value} {unit}.\n{bottom} has the lowest, {bottom_value}."
 
 # --- cities
 page.cities.title: cities
