@@ -71,6 +71,11 @@ def _tabs() -> set[str]:
     return {tab for tab, _suffix in TABS}
 
 
+def _meta_tabs() -> set[str]:
+    """The tabs with a `meta.tab.*` sentence: the story tab's description is its dek."""
+    return _tabs() - {"story"}
+
+
 def _compare(name: str) -> Callable[[], set[str]]:
     def ids() -> set[str]:
         from velometer.app import compare
@@ -131,6 +136,7 @@ DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "tier.diagram_name.": _tiers,
     "road_class.": _road_classes,
     "city.tab.": _tabs,
+    "meta.tab.": _meta_tabs,
     "compare.group.": _compare("QUICK_SETS"),
     "compare.metric.": _compare("METRIC_IDS"),
     "compare.view.": _compare("VIEW_IDS"),

@@ -6,6 +6,19 @@
 <meta http-equiv="Content-Security-Policy" content="{{ csp }}">
 <meta name="color-scheme" content="light dark">
 <title>{% block title %}Zählwerk Berlin Datalab{% endblock %}</title>
+{# M17 §4.2: each page's description block, plain text; the 404 page (no page_url) has none #}
+{% if false %}{% block description %}{% endblock %}{% endif %}
+{% set description = self.description() | striptags %}
+{% if page_url %}
+<meta name="description" content="{{ description }}">
+<meta property="og:title" content="{{ self.title() | striptags }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ page_url }}">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="Zählwerk Berlin Datalab">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+{% endif %}
 <link rel="preload" href="/static/fonts/MartianMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/datalab.css">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">

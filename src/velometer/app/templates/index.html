@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite %}
 {% block title %}velometer · {{ t('page.index.title') }}{% endblock %}
+{% block description %}{{ t('meta.index', n=rows | length) }}{% endblock %}
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><span aria-current="page">{{ t('nav.overview') }}</span></nav>{% endblock %}
 {% block content %}

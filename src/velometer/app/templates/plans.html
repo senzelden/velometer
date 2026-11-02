@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · {{ t('page.plans.title') }}{% endblock %}
+{% block description %}{{ t('meta.plans') }}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.plans') }}</span></nav>{% endblock %}
 {% macro figure(v) -%}
 <li{% if v.row.suspect %} class="suspect"{% endif %}><b>{{ v.value }} {{ v.unit }}</b> {{ v.quantity }}

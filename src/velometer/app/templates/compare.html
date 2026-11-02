@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite, copy_link %}
 {% block title %}velometer · {{ t('nav.compare') }}{% endblock %}
+{% block description %}{{ t('meta.compare') }}{% endblock %}
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/compare.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.compare') }}</span></nav>{% endblock %}
 {% block content %}

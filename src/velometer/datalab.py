@@ -355,7 +355,16 @@ def render(cfg: DatalabConfig, counter: Counter, checked: date | None = None) ->
         ),
     }
     env = _env()
-    pages = {out: env.get_template(name).render(**context) for name, out in PAGES.items()}
+    # each page's og:url: its address on the domain, as the sitemap lists it; none on the 404
+    pages = {
+        out: env.get_template(name).render(
+            **context,
+            page_url=None
+            if out == NOT_FOUND_PAGE
+            else f"https://{cfg.domain}/" + out.removesuffix("index.html"),
+        )
+        for name, out in PAGES.items()
+    }
     return {**pages, **crawl_files(cfg.domain, env.get_template(LLMS_TEMPLATE).render(**context))}
 
 

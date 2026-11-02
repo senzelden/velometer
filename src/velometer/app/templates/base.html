@@ -11,6 +11,17 @@
 <link rel="alternate" hreflang="de" href="{{ abs_in('de', here) }}">
 <link rel="alternate" hreflang="x-default" href="{{ abs_in('en', here) }}">
 {% set canonical = canonical if canonical is defined else abs_in(lang, here) %}{% if canonical %}<link rel="canonical" href="{{ canonical }}">
+{% endif %}{# M17 §4.2: a page's description is its `description` block, plain text; the 404 page has
+none, and the OpenGraph tags go with the canonical (og:url is it) -#}
+{% if false %}{% block description %}{% endblock %}{% endif %}{% set description = self.description() | striptags %}{% if description %}<meta name="description" content="{{ description }}">
+{% endif %}{% if canonical %}<meta property="og:title" content="{{ self.title() | striptags }}">
+{% if description %}<meta property="og:description" content="{{ description }}">
+{% endif %}<meta property="og:url" content="{{ canonical }}">
+<meta property="og:locale" content="{{ og_locale[lang] }}">
+<meta property="og:locale:alternate" content="{{ og_locale['en' if lang == 'de' else 'de'] }}">
+<meta property="og:site_name" content="velometer">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 {% endif %}<meta name="velometer-search" content="{{ data_u('/data/search.json', lang) }}">
 <link rel="icon" href="{{ data_u('/static/favicon.svg') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ data_u('/static/app.css') }}">

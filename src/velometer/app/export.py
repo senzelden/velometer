@@ -474,6 +474,8 @@ class _HtmlRefs(HTMLParser):
             and "stylesheet" not in rel
             and bool({"canonical", "alternate"} & set(rel))
         )
+        # and so does a page's og:url (its canonical, M17 Task 5)
+        og_url = tag == "meta" and a.get("property") == "og:url"
         for name, value in attrs:
             if value is None:
                 continue
@@ -482,7 +484,10 @@ class _HtmlRefs(HTMLParser):
             elif name == "style":
                 self.refs += _css_refs(value)
             elif name in URL_ATTRS or URL_SHAPED.match(value):
-                self.refs.append((value, not (name == "href" and (tag in LINK_TAGS or pointer))))
+                link = (name == "href" and (tag in LINK_TAGS or pointer)) or (
+                    name == "content" and og_url
+                )
+                self.refs.append((value, not link))
         if tag == "meta" and a.get("name") == "velometer-base":
             self.refs.append((a.get("content") or "", True))
         if tag == "style":

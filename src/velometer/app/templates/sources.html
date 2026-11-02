@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}velometer · {{ t('nav.sources') }}{% endblock %}
+{% block description %}{{ t('meta.sources') }}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.sources') }}</span></nav>{% endblock %}
 {% macro city_links(cities) %}{% for cid, name in cities %}<a href="{{ u('/city/' ~ cid ~ '/figures') }}">{{ city_row_name(cid, name) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endmacro %}
 {% block content %}

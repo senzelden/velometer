@@ -42,7 +42,7 @@ from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import plans_pages, repo_links, urls
+from velometer.app import meta, plans_pages, repo_links, urls
 from velometer.app import story as story_model
 from velometer.app import terms as terms_model
 from velometer.app.cache import PageCache, fingerprint
@@ -613,6 +613,7 @@ def create_app(
         env.globals["fb_text"] = fb_text
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
+        env.globals["og_locale"] = meta.OG_LOCALE
         # the Datalab's name in the footer, in a `<span lang>` where site.yaml gives its language
         env.globals["datalab_name"] = lambda d: (
             Markup("<span{}>{}</span>").format(lang_attr(d.lang), d.name) if d.lang else d.name
@@ -1181,6 +1182,10 @@ def create_app(
                 lambda: figures_context(data, city_id, profiles),
             )
         nar, note = narrative_of(request, city_id)
+        lang = request.state.lang
+        description = meta.city_description(
+            lang, tab, ctx["city"].name, nar.dek if nar else None, ctx["headline_now"]
+        )
         role = {"story": "story", "figures": "figures"}.get(tab)
         cited_sources, cited_refs = nar.cited(nar.of_role(role)) if nar and role else ([], [])
         if tab == "counts":
@@ -1188,7 +1193,6 @@ def create_app(
             nar = extra["counts"]["doc"]  # the tab cites the counters text's sources
             cited_sources = [] if nar is None else sorted(nar.sources.items())
             cited_refs = [] if nar is None else sorted(nar.refs.items())
-        lang = request.state.lang
         label = i18n.t(lang, f"city.tab.{tab}")  # plain: the <title>
         label_html = i18n.t_markup(lang, f"city.tab.{tab}")  # the crumb and the tab links: marks
         tabs = [
@@ -1203,7 +1207,7 @@ def create_app(
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
             tabs=tabs, tab_label_html=label_html, nar=nar, content_error=note,
-            cited_sources=cited_sources, cited_refs=cited_refs,
+            cited_sources=cited_sources, cited_refs=cited_refs, meta_description=description,
         )  # fmt: skip
 
     async def compare(request: Request, data: Data):
@@ -1602,6 +1606,8 @@ def create_app(
             "city": c,
             "country": country_name(c.country_iso2, data.lang),
             "residents": lau.population_value if lau else None,
+            # the headline figure the tab descriptions name (meta.tab.*), as the keynums show it
+            "headline_now": None if summary["now"] is None else i18n.number(summary["now"], lang),
             "keynums": keynums(
                 summary,
                 fua,

@@ -658,6 +658,27 @@ cite.title.compare: 'Compare: {heading}; {cities}'
 page.bezirke.window: '{start} to {end}'
 page.bezirke.window_current: current
 
+# --- meta (M17 §4.2): each page's <meta name="description">, plain text, 50–160 characters
+# (app/meta.py); city pages: meta.tab.<tab> with the headline figure, the story tab its dek
+meta.index: "Mapped km of separated cycle tracks and shared foot/cycle paths per 100 km of main roads in {n} European cities, from OpenStreetMap, year by year."
+meta.cities: "All cities by country, each with its headline, mapped A+B km per 100 km of main roads in the city proper, from the current OpenStreetMap run."
+meta.compare: "European cities side by side on one chart or table, city proper or metro area, in mapped km of protected cycle infrastructure from OpenStreetMap."
+meta.stories: "The story across all cities, step by step with charts and sources, of how protected cycle infrastructure changed in OpenStreetMap since 2018."
+meta.differences: "Why published cycle network figures differ from each other and from velometer's mapped km, along six dimensions from what is counted to how."
+meta.organisations: "The bodies behind the published cycle network figures velometer sets beside its mapped km, who they are, how they measure and what their figures mean."
+meta.sources: "Every published figure source velometer quotes, set beside its own OpenStreetMap approach along the six dimensions in which cycle network figures differ."
+meta.plans: "Each city's cycling plan, its target and the latest progress its publisher reports, kept as printed; reported figures are not mapped km."
+meta.plan: "Berlin's cycling plan: its targets, the km the Senate reports, the projects completed and the cycle infrastructure mapped in OpenStreetMap, side by side."
+meta.methodology: "How velometer measures: tiers A to E, the headline, city proper and metro area, the OpenStreetMap snapshots and the limits of mapped km."
+meta.city: "{city}: {value} mapped A+B km per 100 km of main roads in the current run, the city's protected cycle infrastructure as OpenStreetMap shows it."
+meta.city_plain: "{city}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths per 100 km of main roads."
+meta.tab.time: "{city} year by year: the headline at each OpenStreetMap snapshot, flagged years explained; now {value} mapped A+B km per 100 km of main roads."
+meta.tab.tiers: "{city} by tier: mapped km of each kind of cycle infrastructure, A to E, from OpenStreetMap; headline {value} A+B km per 100 km of main roads."
+meta.tab.figures: "{city}: published cycle network figures beside velometer's mapped km, and why they differ; headline {value} A+B km per 100 km of main roads."
+meta.tab.counts: "{city}: open bicycle counter data, set against the mapped km of the city proper; headline {value} A+B km per 100 km of main roads."
+meta.tab.bezirke: "{city} by district: the headline of each Bezirk and how it changed; the whole city has {value} mapped A+B km per 100 km of main roads."
+meta.tab_plain: "{city}, {tab}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths."
+
 # --- citations (cite.py; the js.cite.* twins below)
 cite.text: velometer ({year}). {title} [Data set]. {provenance}. {attribution}.
 cite.accessed: '{url} (accessed {accessed}).'

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_tier_diagram.html" import tier_diagram, tier_rules with context %}
 {% block title %}velometer · {{ t('page.methodology.title') }}{% endblock %}
+{% block description %}{{ t('meta.methodology') }}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.methodology') }}</span></nav>{% endblock %}
 {% block content %}
 <article class="prose">
