@@ -77,7 +77,14 @@ Slow tests (`@pytest.mark.slow`, network or Docker) are deselected by default, a
 
 ## GitHub run
 
-**TODO (after the user's go to push `m17`):** run URL and duration.
+Pushed with the user's go on 2026-11-02.
 
-- Run URL: _pending_
-- Duration: _pending_
+- First run, [41495846780](https://github.com/senzelden/velometer/actions/runs/41495846780) at
+  28167e7: **failed**. lint, node and shards 2 and 4 were green. Shards 1 and 3 had 3 failures: three CLI
+  help-text tests, because Typer forces a colour terminal under `GITHUB_ACTIONS` and the ANSI codes
+  split the words they look for. Fixed in 1b2ed20: `tests/conftest.py` sets
+  `_TYPER_FORCE_DISABLE_TERMINAL`, and a guard test reruns those tests with `GITHUB_ACTIONS` and
+  `FORCE_COLOR` set (red-proofed).
+- Run URL: [41530355569](https://github.com/senzelden/velometer/actions/runs/41530355569) at 1b2ed20:
+  **success**.
+- Duration: 10:57 wall clock (21:39:36 to 21:50:33 UTC).
