@@ -44,6 +44,7 @@ from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
 from velometer.app import plans_pages, repo_links, urls
 from velometer.app import story as story_model
+from velometer.app import terms as terms_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import (
@@ -568,6 +569,11 @@ def create_app(
             return rel
         return urls.absolute_url(app.state.site.url, rel, app.state.base_path)
 
+    # the terms registry (M17 §4.8), read once here so a broken registry stops the app and the
+    # export; each page reads it again (cached by the file's mtime), so the dev server follows edits
+    for edition in LANGS:
+        terms_model.load(edition, content_dir)
+
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""
         templates = Jinja2Templates(directory=HERE / "templates")
@@ -637,11 +643,16 @@ def create_app(
         _respond = templates.TemplateResponse
 
         def respond(*args, **kwargs):
-            """Every rendered page, with its sideways-scrolling regions keyboard-reachable and
-            its repo paths linked (M16)."""
+            """Every rendered page, with its sideways-scrolling regions keyboard-reachable, its
+            repo paths linked (M16) and the first use of each term in `<main>` linked to the
+            methodology's glossary (M17); a fragment has no `<main>` and keeps its terms plain."""
             resp = _respond(*args, **kwargs)
             body = name_scroll_regions(resp.body.decode(), lang)
-            resp.body = (links.link_code(body) if links else body).encode()
+            body = links.link_code(body) if links else body
+            body = terms_model.mark_first_use(
+                body, terms_model.load(lang, content_dir), us[lang]("/methodology")
+            )
+            resp.body = body.encode()
             resp.headers["content-length"] = str(len(resp.body))
             return resp
 
@@ -1734,9 +1745,13 @@ def create_app(
             body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:
             body = None
+        lang = request.state.lang
+        _, sources, _, _, _ = content_of(request)
+        terms = terms_model.glossary(terms_model.load(lang, content_dir), sources, lang)
         return page(
-            request, "methodology.html", "methodology", data, body=body, file=path.name, **ctx
-        )
+            request, "methodology.html", "methodology", data, body=body, file=path.name,
+            glossary=terms, **ctx,
+        )  # fmt: skip
 
     async def methodology(request: Request, data: Data):
         return methodology_page(request, data)

@@ -34,7 +34,8 @@ def _data_ref_labels() -> list[str]:
     labels = set()
     for path in CONTENT.rglob("*.yaml"):
         rel = path.relative_to(CONTENT)
-        if tr.DE in rel.parts or rel.parts[0] in ("sources", "ui"):
+        # the terms registry is no content document (M17; tests/test_m17_terms.py checks it)
+        if tr.DE in rel.parts or rel.parts[0] in ("sources", "ui") or rel.name == "terms.yaml":
             continue
         labels |= {d.label for d in tr.load_english(path).data_refs}
     return sorted(labels)

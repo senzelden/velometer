@@ -5,4 +5,15 @@
 <article class="prose">
 {% if body %}{{ body }}{% else %}<p class="note">{{ t('page.methodology.missing', file=file) }}</p>{% endif %}
 </article>
+{% if glossary and glossary.entries %}
+<section class="prose glossary" id="terms" aria-labelledby="terms-h">
+<h2 id="terms-h">{{ t('page.methodology.terms') }}</h2>
+<p>{{ t('page.methodology.terms_lead') }}</p>
+<dl class="terms">
+{% for term, explanation in glossary.entries %}<dt id="{{ term.anchor }}"><dfn><abbr title="{{ term.expansion }}"{% if term.expansion_lang %} lang="{{ term.expansion_lang }}"{% endif %}>{{ term.short }}</abbr></dfn> <span class="expansion"{% if term.expansion_lang %} lang="{{ term.expansion_lang }}"{% endif %}>{{ term.expansion }}</span></dt>
+<dd>{{ explanation }}</dd>
+{% endfor %}</dl>
+{% with cited_sources=glossary.cited, cited_refs=[], nar=glossary %}{% include "city/_cited.html" %}{% endwith %}
+</section>
+{% endif %}
 {% endblock %}

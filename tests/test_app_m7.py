@@ -25,6 +25,7 @@ from tests.test_app import (  # noqa: F401 - `setup`, `subarea_setup` are fixtur
 from velometer.app import story
 from velometer.app.cache import fingerprint
 from velometer.app.main import create_app
+from velometer.app.terms import unmark
 from velometer.content.models import STORY_STEPS
 
 CSP = (
@@ -1439,7 +1440,7 @@ def test_the_figures_ours_cell_shows_the_same_unit_as_theirs(setup, monkeypatch)
 
 def test_the_header_says_none_flagged_for_a_city_without_flags(client):
     def flagged_cell(city: str) -> str:
-        html = client.get(f"/city/{city}").text
+        html = unmark(client.get(f"/city/{city}").text)  # a term's mark is no word break
         row = html[html.index('class="keynums"') :].split("</div>\n<nav")[0]
         return _text(row[row.index("Flagged years") :])
 

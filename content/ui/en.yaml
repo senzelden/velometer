@@ -146,6 +146,8 @@ page.differences.missing: no explainer yet (content/explainer.yaml)
 page.differences.cities: Each city's figures
 page.methodology.title: methodology
 page.methodology.missing: 'methodology not generated (<code>velometer report methodology</code> writes <code>docs/{file}</code>)'
+page.methodology.terms: Terms and abbreviations
+page.methodology.terms_lead: The abbreviations and tier letters the pages use. On each page, the first use of each one links here.
 page.organisations.h1: Who produces the figures
 page.organisations.dek: "The bodies behind the published figures this app compares with our mapped km, and behind Berlin's plan and its progress reports: who they are, how they measure and what role their figures play."
 note.registry_error: the source registry could not be loaded (see the server log)

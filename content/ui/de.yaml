@@ -137,6 +137,8 @@ page.differences.missing: noch keine Erläuterung (content/explainer.yaml)
 page.differences.cities: Die Zahlen jeder Stadt
 page.methodology.title: Methodik
 page.methodology.missing: 'Methodik nicht erzeugt (<code>velometer report methodology</code> schreibt <code>docs/{file}</code>)'
+page.methodology.terms: Begriffe und Abkürzungen
+page.methodology.terms_lead: Die Abkürzungen und Stufenbuchstaben, die die Seiten verwenden. Auf jeder Seite führt die erste Verwendung jeder Abkürzung hierher.
 page.organisations.h1: Wer die Zahlen erhebt
 page.organisations.dek: "Die Stellen hinter den veröffentlichten Zahlen, mit denen diese Anwendung unsere kartierten km vergleicht, und hinter dem Berliner Radverkehrsplan und seinen Fortschrittsberichten: wer sie sind, wie sie messen und welche Rolle ihre Zahlen spielen."
 note.registry_error: Das Quellenverzeichnis konnte nicht geladen werden (siehe Serverprotokoll)

@@ -617,6 +617,16 @@ dl.org-dims div { display: grid; grid-template-columns: minmax(7rem, 11rem) minm
 dl.org-dims dt { font-weight: 600; color: var(--ink-2); }
 dl.org-dims dd { margin: 0; }
 @media (max-width: 480px) { dl.org-dims div { grid-template-columns: minmax(0, 1fr); } }
+/* M17 §4.8: the first use of a term links its glossary entry; the abbreviation keeps its dotted
+   mark, the link its colour, so touch readers see a link and mouse readers get the title too */
+a.term { text-decoration: none; }
+a.term abbr { text-decoration: underline dotted; text-underline-offset: 0.15em; }
+a.term:hover abbr, a.term:focus-visible abbr { text-decoration-style: solid; }
+dl.terms { margin: 0 0 1rem; }
+dl.terms dt { margin-top: 0.75rem; font-weight: 600; scroll-margin-top: 4rem; }
+dl.terms dt dfn { font-style: normal; }
+dl.terms dt .expansion { font-weight: 400; color: var(--ink-2); }
+dl.terms dd { margin: 0.15rem 0 0; }
 .suspect-mark { display: inline-block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--flag); border: 1px solid var(--flag); border-radius: 3px; padding: 0 0.3rem; vertical-align: 0.05em; }
 .suspect-note { display: inline-block; border-left: 2px solid var(--flag); padding-left: 0.4rem; }
 li.suspect > b { text-decoration: underline wavy var(--flag); text-underline-offset: 3px; }

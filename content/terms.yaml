@@ -1,0 +1,205 @@
+# The terms registry (M17 spec §4.8): every abbreviation and tier letter a page shows, en and de.
+#
+# Each term: `id` (the glossary anchor is `#term-<id>`), `short` (the form as pages show it),
+# optional `forms` (other spellings that count as the same term, per language), the `expansion`
+# (the `<abbr title>`, a few words) and the `explanation` (one to three sentences) in both
+# languages, and optional `cite` (source ids of content/sources, cited as the explainer does).
+# A tier entry names its `tier` instead of an expansion: its expansion is the tier label
+# `tier.<X>` of content/ui, so there is one source for it.
+#
+# `expansion_lang` gives the language of an expansion that is not in the page language (an
+# English title on a German page), so the `<abbr>` carries it. Explanations may mark an original
+# term as content elsewhere does, `<i lang="en">…</i>`, and an OSM tag in backticks.
+#
+# Explanations restate the methodology (docs/methodology.md); they change no definition.
+tier_words:
+  en: [tier, tiers, Tier, Tiers]
+  de: [Stufe, Stufen]
+terms:
+  - id: tier-a
+    short: A
+    tier: A
+    explanation:
+      en: A separated cycle track. Tier A counts in the headline, A+B.
+      de: Ein baulich getrennter Radweg. Stufe A zählt zur Hauptkennzahl A+B.
+  - id: tier-b
+    short: B
+    tier: B
+    explanation:
+      en: >-
+        A shared foot and cycle path. Tier B counts in the headline, A+B. A designated
+        foot-and-cycle path with `segregated=yes` is tier B here, where QECIO counts it as a
+        cycle track.
+      de: >-
+        Ein Geh- und Radweg, gemeinsam oder getrennt. Stufe B zählt zur Hauptkennzahl A+B. Ein
+        Geh- und Radweg mit `segregated=yes` gilt hier als Stufe B, während QECIO ihn als Radweg
+        zählt.
+  - id: tier-c
+    short: C
+    tier: C
+    explanation:
+      en: A cycle lane physically buffered from motor traffic. Tier C is measured but not counted in the headline.
+      de: >-
+        Ein Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr. Stufe C wird gemessen, zählt
+        aber nicht zur Hauptkennzahl.
+  - id: tier-d
+    short: D
+    tier: D
+    explanation:
+      en: A painted lane, including advisory lanes. Tier D is measured but not counted in the headline.
+      de: >-
+        Ein markierter Radfahrstreifen, einschließlich Schutzstreifen. Stufe D wird gemessen,
+        zählt aber nicht zur Hauptkennzahl.
+  - id: tier-e
+    short: E
+    tier: E
+    explanation:
+      en: >-
+        A cycle street, or a bus lane open to cyclists. Tier E is measured but not counted in
+        the headline.
+      de: >-
+        Eine Fahrradstraße oder vergleichbare Straße, oder eine für den Radverkehr freigegebene
+        Busspur. Stufe E wird gemessen, zählt aber nicht zur Hauptkennzahl.
+  - id: a-b
+    short: A+B
+    expansion:
+      en: "tiers A and B: separated tracks and shared foot and cycle paths"
+      de: "Stufen A und B: baulich getrennte Radwege sowie Geh- und Radwege"
+    explanation:
+      en: >-
+        The headline: the length of tiers A and B, per road side, per 100 km of main roads
+        excluding motorways. Painted lanes (D) and cycle streets and bus lanes (E) are measured
+        but left out of it.
+      de: >-
+        Die Hauptkennzahl: die Länge der Stufen A und B, je Straßenseite, je 100 km
+        Hauptverkehrsstraßen ohne Autobahnen. Markierte Radfahrstreifen (D) sowie
+        Fahrradstraßen und Busspuren (E) werden gemessen, gehen aber nicht in sie ein.
+  - id: a-b-e
+    short: A+B+E
+    expansion:
+      en: tiers A, B and E, with cycle streets and bus lanes
+      de: Stufen A, B und E, mit Fahrradstraßen und Busspuren
+    explanation:
+      en: >-
+        A comparison basis only, for sources that include cycle streets, such as BikeNetKit's
+        bicycle network. It is not our headline.
+      de: >-
+        Nur eine Vergleichsbasis, für Quellen, die Fahrradstraßen mitzählen, etwa das Radnetz von
+        BikeNetKit. Sie ist nicht unsere Hauptkennzahl.
+  - id: a-b-c-d
+    short: A+B+C+D
+    expansion:
+      en: tiers A to D, with protected and painted lanes
+      de: Stufen A bis D, mit geschützten und markierten Radfahrstreifen
+    explanation:
+      en: >-
+        The tiers QECIO counts. The `ecf_qecio` preset sums them on the QECIO basis, where
+        one-way infrastructure counts half, and divides by main roads including motorways. It is
+        a comparison, not our headline.
+      de: >-
+        Die Stufen, die QECIO zählt. Die Kennzahlvariante `ecf_qecio` summiert sie auf der
+        QECIO-Basis, auf der Anlagen für nur eine Fahrtrichtung zur Hälfte zählen, und bezieht
+        sie auf die Hauptverkehrsstraßen einschließlich Autobahnen. Sie dient dem Vergleich und
+        ist nicht unsere Hauptkennzahl.
+  - id: c-d
+    short: C+D
+    expansion:
+      en: "tiers C and D: protected and painted lanes"
+      de: "Stufen C und D: geschützte und markierte Radfahrstreifen"
+    explanation:
+      en: >-
+        Cycle lanes on the road, physically buffered (C) or painted (D). We compare them with
+        QECIO's cycle lanes; they are not in the headline.
+      de: >-
+        Radfahrstreifen auf der Fahrbahn, baulich abgetrennt (C) oder markiert (D). Wir
+        vergleichen sie mit den Radfahrstreifen von QECIO; zur Hauptkennzahl zählen sie nicht.
+  - id: osm
+    short: OSM
+    expansion:
+      en: OpenStreetMap
+      de: OpenStreetMap
+    explanation:
+      en: >-
+        The open map every velometer figure is measured from. Its km are mapped km: what is
+        mapped in OpenStreetMap at the snapshot date, not what was built.
+      de: >-
+        Die offene Karte, aus der jede Zahl von velometer gemessen wird. Ihre km sind kartierte
+        km: was zum Stichtag in OpenStreetMap erfasst ist, nicht, was gebaut wurde.
+  - id: lau
+    short: LAU
+    expansion:
+      en: local administrative unit, the city proper
+      de: lokale Verwaltungseinheit, die Kernstadt
+    explanation:
+      en: >-
+        The city boundary of the headline: the Eurostat GISCO local administrative unit of 2024.
+        Where a city has no clean LAU polygon, the OpenStreetMap administrative relation
+        replaces it.
+      de: >-
+        Die Stadtgrenze der Hauptkennzahl: die lokale Verwaltungseinheit (<i lang="en">local
+        administrative unit</i>) von Eurostat GISCO, Stand 2024. Fehlt ein sauberes LAU-Polygon,
+        tritt die administrative Relation aus OpenStreetMap an seine Stelle.
+  - id: fua
+    short: FUA
+    expansion:
+      en: functional urban area, the city with its commuting zone
+      de: funktionaler Stadtraum, die Stadt mit ihrem Pendlereinzugsgebiet
+    explanation:
+      en: >-
+        A robustness check beside the city proper. Results are only compared within the same
+        boundary kind, and the FUA has no population, so no per-100k figure.
+      de: >-
+        Der funktionale Stadtraum (<i lang="en">functional urban area</i>) dient als
+        Robustheitsprüfung neben der Kernstadt. Verglichen wird nur innerhalb derselben
+        Grenzart, und für den FUA gibt es keine Einwohnerzahl, also keinen Wert je 100.000
+        Einwohner.
+  - id: qecio
+    short: QECIO
+    expansion:
+      en: Quantifying Europe's Cycling Infrastructure using OSM
+      de: Quantifying Europe's Cycling Infrastructure using OSM
+    expansion_lang:
+      de: en
+    cite: [qecio-methodology]
+    explanation:
+      en: >-
+        The European Cyclists' Federation's (ECF) measure of cycling infrastructure from
+        OpenStreetMap, here version 2.10. Our tiers derive from its tag logic, with documented
+        differences, and the `ecf_qecio` preset follows its definition on our data. QECIO
+        reports by NUTS3 region.
+      de: >-
+        Das Maß der European Cyclists' Federation (ECF) für Radinfrastruktur aus
+        OpenStreetMap, hier in Version 2.10. Unsere Stufen leiten sich aus seiner Tag-Logik ab, mit
+        dokumentierten Abweichungen, und die Kennzahlvariante `ecf_qecio` bildet seine Definition
+        mit unseren Daten nach. QECIO berichtet je NUTS-3-Region.
+  - id: nuts3
+    short: NUTS3
+    forms:
+      en: [NUTS 3, NUTS-3]
+      de: [NUTS 3, NUTS-3]
+    expansion:
+      en: Nomenclature of territorial units for statistics, level 3
+      de: Systematik der Gebietseinheiten für die Statistik, Ebene 3
+    cite: [qecio-methodology]
+    explanation:
+      en: >-
+        Regions at the third level of this statistical classification. QECIO gathers its data per NUTS3
+        region and clips each way at the region's boundary, so where the region is larger than
+        the city, its figures describe another area.
+      de: >-
+        Regionen der dritten Ebene dieser statistischen Gliederung. QECIO erhebt seine Daten je
+        NUTS-3-Region und schneidet jeden Weg an deren Grenze ab; ist die Region größer als die
+        Stadt, beschreiben seine Zahlen ein anderes Gebiet.
+  - id: corop
+    short: COROP
+    expansion:
+      en: Dutch regional level between municipalities and provinces
+      de: niederländische regionale Ebene zwischen Gemeinden und Provinzen
+    cite: [cbs-regionale-economie-2018-begrippen]
+    explanation:
+      en: >-
+        A regional level of the Netherlands, between municipalities and provinces. QECIO
+        reports Amsterdam for the COROP region Groot-Amsterdam, which is larger than the city.
+      de: >-
+        Eine regionale Ebene der Niederlande zwischen Gemeinden und Provinzen. QECIO berichtet
+        für Amsterdam die COROP-Region Groot-Amsterdam, die größer ist als die Stadt.
