@@ -390,3 +390,187 @@ Bezirke (and without counter data).
 
 ![Berlin, en, light, 390, part 2](m17-city/berlin-en-light-390-2.png)
 ![Berlin, en, light, 390, part 3](m17-city/berlin-en-light-390-3.png)
+
+
+## Meta descriptions and OpenGraph (Task 5)
+
+Every indexable page now has one `<meta name="description">` (plain text, 50–160 characters) and
+OpenGraph/Twitter tags: `og:title` (the page's `<title>`), `og:description` (= the description),
+`og:url` (= the canonical), `og:locale` `en_GB`/`de_DE` with the other as
+`og:locale:alternate`, `og:site_name` `velometer`, `og:type` `website`, `twitter:card`
+`summary`. No `og:image` (no existing light PNG fits every page; none generated). The 404 page has
+none of them; the legacy `/methodology/de` carries the German methodology's tags, its `og:url`
+being its canonical `/de/methodology`.
+
+- **Where the text comes from:** `meta.*` in `content/ui/en.yaml` and `content/ui/de.yaml`; the
+  city story page takes its narrative dek; the other city tabs take `meta.tab.<tab>` with the
+  city's current headline value (`i18n.number`, as the key numbers show it). Code:
+  `src/velometer/app/meta.py`.
+- **Fallbacks:** a story page without a dek, or whose dek on a German page is still the English
+  fallback, takes `meta.city`; without a current headline value, `meta.city_plain` and
+  `meta.tab_plain` (no figure).
+- **A dek over 160 characters is shortened** (ruling): at its last clause end (`;`, `:`, full
+  stop) that fits, else at its first comma, ending with a full stop. 5 English and 14 German deks
+  are cut; the results are listed below.
+- **English terms in German:** attribute text carries no markup, so the German strings are written
+  without English terms (no `<i lang="en">` is possible or needed). Names (velometer,
+  OpenStreetMap, city names) stay as on the pages. The English strings name the German term
+  "Bezirk" (Berlin's tab) unmarked, for the same reason.
+- **Checked on the real data** (local app, `public=True`): 204 pages (10 fixed pages and 21
+  cities' tabs, en and de), every description within 50–160 and none repeated within an edition.
+
+### New strings (en / de)
+
+- `meta.index`
+  - en: Mapped km of separated cycle tracks and shared foot/cycle paths per 100 km of main roads in {n} European cities, from OpenStreetMap, year by year.
+  - de: Kartierte km baulich getrennter Radwege und Geh- und Radwege je 100 km Hauptstraßen in {n} europäischen Städten, aus OpenStreetMap, Jahr für Jahr.
+- `meta.cities`
+  - en: All cities by country, each with its headline, mapped A+B km per 100 km of main roads in the city proper, from the current OpenStreetMap run.
+  - de: Alle Städte nach Ländern, jede mit ihrer Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen in der Kernstadt, aus dem aktuellen OpenStreetMap-Lauf.
+- `meta.compare`
+  - en: European cities side by side on one chart or table, city proper or metro area, in mapped km of protected cycle infrastructure from OpenStreetMap.
+  - de: Europäische Städte nebeneinander in einem Diagramm oder einer Tabelle, Kernstadt oder Stadtraum, in kartierten km geschützter Radinfrastruktur.
+- `meta.stories`
+  - en: The story across all cities, step by step with charts and sources, of how protected cycle infrastructure changed in OpenStreetMap since 2018.
+  - de: Die Geschichte über alle Städte, Schritt für Schritt mit Diagrammen und Quellen, wie sich geschützte Radinfrastruktur in OpenStreetMap seit 2018 verändert hat.
+- `meta.differences`
+  - en: Why published cycle network figures differ from each other and from velometer's mapped km, along six dimensions from what is counted to how.
+  - de: Warum veröffentlichte Zahlen zum Radnetz voneinander und von den kartierten km von velometer abweichen, entlang sechs Dimensionen.
+- `meta.organisations`
+  - en: The bodies behind the published cycle network figures velometer sets beside its mapped km, who they are, how they measure and what their figures mean.
+  - de: Die Stellen hinter den veröffentlichten Radnetz-Zahlen, die velometer neben seine kartierten km stellt: wer sie sind, wie sie messen, was ihre Zahlen bedeuten.
+- `meta.sources`
+  - en: Every published figure source velometer quotes, set beside its own OpenStreetMap approach along the six dimensions in which cycle network figures differ.
+  - de: Jede veröffentlichte Quelle, die velometer zitiert, neben seinem eigenen Ansatz mit OpenStreetMap, entlang der sechs Dimensionen, in denen Zahlen abweichen.
+- `meta.plans`
+  - en: Each city's cycling plan, its target and the latest progress its publisher reports, kept as printed; reported figures are not mapped km.
+  - de: Der Radverkehrsplan jeder Stadt, sein Ziel und der letzte vom Herausgeber gemeldete Fortschritt, wie gedruckt; gemeldete Zahlen sind keine kartierten km.
+- `meta.plan`
+  - en: Berlin's cycling plan: its targets, the km the Senate reports, the projects completed and the cycle infrastructure mapped in OpenStreetMap, side by side.
+  - de: Der Berliner Radverkehrsplan: seine Ziele, die vom Senat gemeldeten km, die fertigen Projekte und die in OpenStreetMap kartierte Radinfrastruktur im Vergleich.
+- `meta.methodology`
+  - en: How velometer measures: tiers A to E, the headline, city proper and metro area, the OpenStreetMap snapshots and the limits of mapped km.
+  - de: Wie velometer misst: die Stufen A bis E, die Hauptkennzahl, Kernstadt und Stadtraum, die OpenStreetMap-Stände und die Grenzen kartierter km.
+- `meta.city`
+  - en: {city}: {value} mapped A+B km per 100 km of main roads in the current run, the city's protected cycle infrastructure as OpenStreetMap shows it.
+  - de: {city}: {value} kartierte A+B-km je 100 km Hauptstraßen im aktuellen Lauf, die geschützte Radinfrastruktur der Stadt, wie OpenStreetMap sie zeigt.
+- `meta.city_plain`
+  - en: {city}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths per 100 km of main roads.
+  - de: {city}: geschützte Radinfrastruktur, wie OpenStreetMap sie zeigt, in kartierten km baulich getrennter Radwege und Geh- und Radwege je 100 km Hauptstraßen.
+- `meta.tab.time`
+  - en: {city} year by year: the headline at each OpenStreetMap snapshot, flagged years explained; now {value} mapped A+B km per 100 km of main roads.
+  - de: {city} Jahr für Jahr: die Hauptkennzahl zu jedem OpenStreetMap-Stand, markierte Jahre erklärt; aktuell {value} kartierte A+B-km je 100 km Hauptstraßen.
+- `meta.tab.tiers`
+  - en: {city} by tier: mapped km of each kind of cycle infrastructure, A to E, from OpenStreetMap; headline {value} A+B km per 100 km of main roads.
+  - de: {city} nach Stufen: kartierte km jeder Art von Radinfrastruktur, A bis E, aus OpenStreetMap; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen.
+- `meta.tab.figures`
+  - en: {city}: published cycle network figures beside velometer's mapped km, and why they differ; headline {value} A+B km per 100 km of main roads.
+  - de: {city}: veröffentlichte Radnetz-Zahlen neben den kartierten km von velometer, und warum sie abweichen; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen.
+- `meta.tab.counts`
+  - en: {city}: open bicycle counter data, set against the mapped km of the city proper; headline {value} A+B km per 100 km of main roads.
+  - de: {city}: offene Daten der Radzählstellen, im Vergleich mit den kartierten km der Kernstadt; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen.
+- `meta.tab.bezirke`
+  - en: {city} by district: the headline of each Bezirk and how it changed; the whole city has {value} mapped A+B km per 100 km of main roads.
+  - de: {city} nach Bezirken: die Hauptkennzahl jedes Bezirks und ihre Veränderung; die ganze Stadt hat {value} kartierte A+B-km je 100 km Hauptstraßen.
+- `meta.tab_plain`
+  - en: {city}, {tab}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths.
+  - de: {city}, {tab}: geschützte Radinfrastruktur, wie OpenStreetMap sie zeigt, in kartierten km baulich getrennter Radwege und Geh- und Radwege.
+
+### City tabs as rendered (Berlin)
+
+| page | og:title | description |
+|---|---|---|
+| `/city/berlin/time` | velometer · Berlin · Over time | Berlin year by year: the headline at each OpenStreetMap snapshot, flagged years explained; now 109.1 mapped A+B km per 100 km of main roads. |
+| `/city/berlin/tiers` | velometer · Berlin · Tiers | Berlin by tier: mapped km of each kind of cycle infrastructure, A to E, from OpenStreetMap; headline 109.1 A+B km per 100 km of main roads. |
+| `/city/berlin/figures` | velometer · Berlin · Figures | Berlin: published cycle network figures beside velometer's mapped km, and why they differ; headline 109.1 A+B km per 100 km of main roads. |
+| `/city/berlin/counts` | velometer · Berlin · Counts | Berlin: open bicycle counter data, set against the mapped km of the city proper; headline 109.1 A+B km per 100 km of main roads. |
+| `/city/berlin/bezirke` | velometer · Berlin · Bezirke | Berlin by district: the headline of each Bezirk and how it changed; the whole city has 109.1 mapped A+B km per 100 km of main roads. |
+| `/de/city/berlin/time` | velometer · Berlin · Zeitverlauf | Berlin Jahr für Jahr: die Hauptkennzahl zu jedem OpenStreetMap-Stand, markierte Jahre erklärt; aktuell 109,1 kartierte A+B-km je 100 km Hauptstraßen. |
+| `/de/city/berlin/tiers` | velometer · Berlin · Stufen | Berlin nach Stufen: kartierte km jeder Art von Radinfrastruktur, A bis E, aus OpenStreetMap; Hauptkennzahl 109,1 A+B-km je 100 km Hauptstraßen. |
+| `/de/city/berlin/figures` | velometer · Berlin · Zahlen | Berlin: veröffentlichte Radnetz-Zahlen neben den kartierten km von velometer, und warum sie abweichen; Hauptkennzahl 109,1 A+B-km je 100 km Hauptstraßen. |
+| `/de/city/berlin/counts` | velometer · Berlin · Zählstellen | Berlin: offene Daten der Radzählstellen, im Vergleich mit den kartierten km der Kernstadt; Hauptkennzahl 109,1 A+B-km je 100 km Hauptstraßen. |
+| `/de/city/berlin/bezirke` | velometer · Berlin · Bezirke | Berlin nach Bezirken: die Hauptkennzahl jedes Bezirks und ihre Veränderung; die ganze Stadt hat 109,1 kartierte A+B-km je 100 km Hauptstraßen. |
+
+### Story pages whose dek is shortened
+
+| city | lang | dek length | description |
+|---|---|---|---|
+| amsterdam | de | 186 | Die Hauptkennzahl ging von 205,6 im Jahr 2018 auf 203,0 im Oktober 2026 zurück. |
+| berlin | de | 205 | Die kartierten A+B-km je 100 km Hauptstraßen gingen von 113,7 im Jahr 2018 auf 109,1 im Oktober 2026 zurück. |
+| bratislava | de | 164 | Die Hauptkennzahl stieg von 43,5 im Jahr 2018 auf 58,7 im Oktober 2026. |
+| budapest | de | 184 | Die Hauptkennzahl stieg von 19,4 im Jahr 2018 auf 22,3 im Oktober 2026. |
+| copenhagen | de | 208 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 530 auf 582 km, fast ausschließlich bei baulich getrennten Radwegen. |
+| helsinki | en | 195 | Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026. |
+| helsinki | de | 212 | Die kartierten A+B-km blieben von 2018 bis Oktober 2026 zwischen 1.279 und 1.292 km. |
+| krakow | en | 161 | The headline rose from 40.2 to 72.6 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
+| krakow | de | 171 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 40,2 auf 72,6 kartierte A+B-km je 100 km Hauptstraßen. |
+| ljubljana | en | 165 | The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
+| ljubljana | de | 187 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 46,5 auf 73,5 kartierte A+B-km je 100 km Hauptstraßen. |
+| madrid | de | 182 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 282 auf 353 km. |
+| oslo | de | 175 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,1 auf 70,8. |
+| stockholm | de | 195 | Die Hauptkennzahl bewegte sich zwischen 2018 und Oktober 2026 nur von 257,9 auf 261,0. |
+| strasbourg | de | 165 | Die kartierten A+B-km stiegen zwischen 2018 und Oktober 2026 von 184 auf 241 km. |
+| utrecht | en | 161 | The headline rose from 179.7 in 2018 to 193.6 in October 2026, partly because fewer main-road km were mapped. |
+| utrecht | de | 193 | Die Hauptkennzahl stieg von 179,7 im Jahr 2018 auf 193,6 im Oktober 2026, zum Teil weil weniger Hauptstraßen-km kartiert waren. |
+| warsaw | en | 176 | The headline rose from 53.4 to 82.3 mapped A+B km per 100 km of main roads between 2018 and October 2026. |
+| warsaw | de | 191 | Die Hauptkennzahl stieg zwischen 2018 und Oktober 2026 von 53,4 auf 82,3 kartierte A+B-km je 100 km Hauptstraßen. |
+
+### Datalab (German only)
+
+`og:locale` `de_DE` and no alternate, `og:site_name` `Zählwerk Berlin Datalab`, `og:url` the
+page's address on the domain (as in its sitemap). The 404 page has no description or OpenGraph.
+
+| page | description |
+|---|---|
+| `/` | Wir zählen nach, was andere schätzen: geschützte Radwege in Berlin, kartiert in OpenStreetMap, Jahr für Jahr, offen und mit dem Code, der jede Zahl erzeugt. |
+| `/impressum/` | Impressum des Zählwerk Berlin Datalab und von velometer: wer die Websites anbietet, wie man den Anbieter erreicht und wer für die Inhalte verantwortlich ist. |
+| `/datenschutz/` | Datenschutzerklärung des Zählwerk Berlin Datalab und von velometer: was beim Aufruf einer Seite verarbeitet wird, wozu, wie lange und welche Rechte Sie haben. |
+| `/barrierefreiheit/` | Erklärung zur Barrierefreiheit des Zählwerk Berlin Datalab und von velometer: wie wir prüfen, was noch nicht barrierefrei ist und wie Sie eine Barriere melden. |
+
+## Dek audit (Task 5)
+
+Spec §4.2: every city story page states its headline result in a plain sentence with figure,
+measure and date. The 21 deks were audited in English and German (`content/narratives/<city>.yaml`
+and `de/`); the German deks are translations of the English and fare the same in every row, so one
+row covers both. Not rewritten (a rewrite needs the user's review).
+
+- **figure:** a value is given.
+- **measure:** the headline with its unit (mapped A+B km per 100 km of main roads) or mapped A+B
+  km; "partial" names mapped A+B km but not the headline value, or the headline without its unit.
+- **date:** the first year and the current run's month (2018, October 2026).
+
+| city | figure | measure | date | note |
+|---|---|---|---|---|
+| amsterdam | yes | **no** | yes | measure named only as "the headline": no unit, no "mapped" |
+| barcelona | yes | yes | yes |  |
+| berlin | yes | yes | yes |  |
+| bordeaux | yes | yes | yes |  |
+| bratislava | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
+| budapest | yes | **no** | yes | "the headline" only, no unit ("mapped" is on the painted lanes) |
+| copenhagen | yes | partial | yes | mapped A+B km stated, the headline value not given |
+| helsinki | yes | partial | yes | mapped A+B km stated; the headline without its unit (and the description keeps only the km clause) |
+| krakow | yes | yes | yes |  |
+| ljubljana | yes | yes | yes |  |
+| lyon | yes | yes | yes |  |
+| madrid | yes | yes | yes | de description keeps only the km clause |
+| oslo | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
+| paris | yes | yes | yes |  |
+| prague | yes | **no** | yes | "the headline" only, no unit ("mapped" is on the painted-lane km) |
+| stockholm | yes | **no** | yes | "the headline" only: no unit, no "mapped" |
+| strasbourg | yes | yes | yes | de description keeps only the km clause |
+| utrecht | yes | **no** | yes | "the headline" only, no unit |
+| vienna | yes | yes | yes |  |
+| warsaw | yes | yes | yes |  |
+| wroclaw | yes | yes | yes |  |
+
+**Gaps:** 7 cities × 2 languages = **14 deks** name the measure only as "the headline" /
+"Hauptkennzahl" without its unit (Amsterdam, Bratislava, Budapest, Oslo, Prague, Stockholm,
+Utrecht; four of them, Amsterdam, Bratislava, Oslo and Stockholm, never say "mapped" /
+"kartiert"); 2 cities × 2 = 4 more are partial (Copenhagen, Helsinki). Every dek has a figure and
+both dates. Two findings beyond the three columns:
+
+- **Source:** no dek names OpenStreetMap (spec §4.2 says "figure, source and date"); the page
+  header's citation and the cite box do.
+- **Date goes stale:** each dek hard-codes "October 2026", the current run's month. The next run
+  makes the dek (and so the story page's description) out of date until the narratives are
+  updated.
