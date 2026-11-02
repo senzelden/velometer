@@ -89,6 +89,14 @@ page.index.ranks: Rangfolgen nach Quelle
 page.index.ranks_meta: "Rang jeder Stadt (1 = höchster Wert) in unseren Kennzahlvarianten und in den veröffentlichten Rangfolgen. Ränge hängen davon ab,\nwelche Städte eine Quelle abdeckt; jede Quelle hat ihr eigenes Maß und ihren eigenen Umfang."
 table.not_published: nicht veröffentlicht
 page.index.no_ranks: kein Lauf und keine Zahlen für eine Rangfolge
+page.index.lead.label: Über velometer
+page.index.lead.what: "velometer ist ein offener, unabhängiger Vergleich der Radinfrastruktur in {n} europäischen\nStädten, erstellt aus OpenStreetMap. Er beantwortet eine Frage: Wie viel vom Hauptstraßennetz einer\nStadt hat einen Radweg, den man nicht mit Autos teilt?"
+page.index.lead.counts: "Gezählt werden <a href=\"{a}\">baulich getrennte Radwege</a> und <a href=\"{b}\">gemeinsame Geh- und\nRadwege</a>, beide abseits der Fahrbahn. Radfahrstreifen auf der Fahrbahn zählen nicht, ob markiert\noder geschützt. Die beiden gezählten Arten heißen hier zusammen A+B."
+page.index.lead.mapped: "Alle Längen sind <b>kartierte km</b>: was Kartierende in OpenStreetMap erfasst haben, nicht was\ngebaut wurde. Die Zahl einer Stadt kann sich ändern, wenn die Kartierung aufholt."
+page.index.lead.use: "Hier lässt sich die <a href=\"#ranking\">Rangfolge</a> ansehen, <a href=\"{cities}\">die Geschichte einer\nStadt</a> oder <a href=\"{stories}\">die Geschichten über alle Städte</a> lesen, <a href=\"{compare}\">Städte\nvergleichen</a> und <a href=\"{methodology}\">die Methode prüfen</a>."
+page.index.lead.maintained: Das <a href="{url}">{name}</a> betreut velometer.
+page.index.lead.open: <a href="{code}">Code</a> und <a href="{data}">Daten</a> von velometer sind offen.
+page.index.lead.ends: "Im aktuellen Lauf hat {top} die höchste Hauptkennzahl, {top_value} {unit}, und {bottom} die\nniedrigste, {bottom_value}."
 
 # --- Städte
 page.cities.title: Städte

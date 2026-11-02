@@ -491,6 +491,20 @@ def population_years(data: ReportData) -> list[int]:
     return [c.population.year for c in data.cities() if c.population]
 
 
+def ranking_order(summaries: list[dict]) -> list[dict]:
+    """The home ranking's order of city summaries (`city_summary`): by the current LAU headline,
+    highest first, cities without a current run last, ties by name."""
+    return sorted(summaries, key=lambda s: (s["now"] is None, -(s["now"] or 0), s["city"].name))
+
+
+def ranking_ends(ranked: list[dict]) -> tuple[dict, dict] | None:
+    """The top and bottom city of the home ranking (`ranking_order`), the ones with a current
+    value, in the table's order; None with fewer than two. The home sentence closing the home
+    lead (M17 §4.2, §4.8) names them, and the home page's structured data reads them too."""
+    valued = [s for s in ranked if s["now"] is not None]
+    return (valued[0], valued[-1]) if len(valued) >= 2 else None
+
+
 def create_app(
     db_path: Path,
     config_dir: Path,
@@ -901,14 +915,13 @@ def create_app(
                         "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
                     }
                 )
-            ranked = sorted(
-                summaries, key=lambda s: (s["now"] is None, -(s["now"] or 0), s["city"].name)
-            )
+            ranked = ranking_order(summaries)
             values = [v for s in summaries for v in (s["now"], s["first"]) if v is not None]
             top = max(values, default=0.0)
             return {
                 "rows": rows,
                 "ranking": ranked,
+                "ranking_ends": ranking_ends(ranked),
                 "scale_max": (int(top // 50) + 1) * 50 if top else 1,
                 "countries": len({c.country_iso2 for c in data.cities()}),
                 "years": data.years,
