@@ -506,6 +506,19 @@ tier.B: B shared foot/cycle path
 tier.C: C protected lane
 tier.D: D painted lane
 tier.E: E cycle street / bus lane
+tier.diagram_name.A: 'Cross-section, tier A: separated track'
+tier.diagram_name.B: 'Cross-section, tier B: shared foot/cycle path'
+tier.diagram_name.C: 'Cross-section, tier C: protected lane'
+tier.diagram_name.D: 'Cross-section, tier D: painted lane'
+tier.diagram_name.E: 'Cross-section, tier E: cycle street and bus lane'
+tier.caption.A: A cycle track between the footway and the road, set apart from both by a kerb or a change in level.
+tier.caption.B: One path for walking and cycling, without separate parts, apart from the road.
+tier.caption.C: A cycle lane on the road, with bollards or a kerb separator between it and the traffic.
+tier.caption.D: A cycle lane or advisory lane on the road, with only a painted line between it and the traffic.
+tier.caption.E: Left, a cycle street, a street signed for cycling; right, a bus lane open to cyclists.
+tier.diagram_counts: Counts in the headline.
+tier.diagram_measured: Measured, not in the headline.
+tier.diagram_rules: 'A typical case is drawn; the <a href="{href}">classifier rules</a> decide which tier each street side or path gets.'
 map.title: '{name} ({kind}): protected cycling tiers'
 map.footer: "Map data © OpenStreetMap contributors (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nOSM mapped km, not built km · {boundaries}\nOSM {ts}, classifier {classifier}"
 compare.group.all: All

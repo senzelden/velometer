@@ -92,7 +92,7 @@ from velometer.report.csvexport import (
 from velometer.report.data import KINDS, ReportData, headline_unit, open_readonly
 from velometer.report.differences import difference_rows
 from velometer.run import git_commit
-from velometer.selection import report_selector
+from velometer.selection import report_selector, report_tiers
 
 HERE = Path(__file__).parent
 # a tier map: <city>_<kind>, its German image <city>_<kind>.de (PNG only)
@@ -766,6 +766,8 @@ def create_app(
 
         lang = request.state.lang
         footer = cache.get(f"footer:{lang}", fp(request), build_footer)
+        # the tier diagrams' tiers and headline membership (_tier_diagram.html), config only
+        tier_set = cache.get(f"tier_set:{lang}", fp(request), lambda: report_tiers(config_dir))
         nav = None  # the Cities menu; a page without a database still renders, linking /cities
         if data is not None:
             try:
@@ -777,6 +779,7 @@ def create_app(
             name,
             {
                 "footer": footer,
+                "tier_set": tier_set,
                 "nav_groups": nav,
                 "active": active,
                 "cite_for": cite_for(request, data),

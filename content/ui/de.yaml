@@ -497,6 +497,19 @@ tier.B: B Geh- und Radweg
 tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
 tier.E: E Fahrradstraße o. Ä. / Busspur
+tier.diagram_name.A: 'Querschnitt, Stufe A: baulich getrennter Radweg'
+tier.diagram_name.B: 'Querschnitt, Stufe B: Geh- und Radweg'
+tier.diagram_name.C: 'Querschnitt, Stufe C: geschützter Radfahrstreifen'
+tier.diagram_name.D: 'Querschnitt, Stufe D: markierter Radfahrstreifen'
+tier.diagram_name.E: 'Querschnitt, Stufe E: Fahrradstraße und Busspur'
+tier.caption.A: Ein Radweg zwischen Gehweg und Fahrbahn, von beiden durch einen Bordstein oder einen Höhenunterschied getrennt.
+tier.caption.B: Ein gemeinsamer Weg für Fuß- und Radverkehr ohne getrennte Teile, abseits der Fahrbahn.
+tier.caption.C: Ein Radfahrstreifen auf der Fahrbahn, durch Poller oder eine Trennschwelle vom Verkehr getrennt.
+tier.caption.D: Ein Radfahrstreifen oder Schutzstreifen auf der Fahrbahn, nur durch eine markierte Linie vom Verkehr getrennt.
+tier.caption.E: Links eine Fahrradstraße, eine für den Radverkehr ausgewiesene Straße; rechts eine für den Radverkehr freigegebene Busspur.
+tier.diagram_counts: Zählt zur Hauptkennzahl.
+tier.diagram_measured: Gemessen, nicht in der Hauptkennzahl.
+tier.diagram_rules: 'Gezeichnet ist der typische Fall; welche Stufe eine Straßenseite oder ein Weg erhält, entscheiden die <a href="{href}">Regeln des Klassifikators</a>.'
 map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
 map.footer: "Kartendaten © OpenStreetMap-Mitwirkende (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nkartierte km, nicht gebaute km · {boundaries}\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle

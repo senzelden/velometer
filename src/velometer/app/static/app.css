@@ -627,6 +627,33 @@ dl.terms dt { margin-top: 0.75rem; font-weight: 600; scroll-margin-top: 4rem; }
 dl.terms dt dfn { font-style: normal; }
 dl.terms dt .expansion { font-weight: 400; color: var(--ink-2); }
 dl.terms dd { margin: 0.15rem 0 0; }
+/* M17 §4.8: the tier diagrams (_tier_diagram.html), street cross-sections drawn with the tokens:
+   the facility in its tier's chart colour, the ground in the grid greys with an ink outline, the
+   people in ink, the vehicles in muted grey; no text in the drawing, the caption carries it */
+.tier-diagram { margin: 0.5rem 0 0.75rem; max-width: 26rem; }
+.tier-diagram .td-svg { display: block; width: 100%; height: auto; }
+.tier-diagram figcaption { margin-top: 0.3rem; font-size: 0.9rem; color: var(--ink-2); }
+.tier-diagram .tier-diagram-name { font-weight: 600; color: var(--ink); }
+.tier-diagrams { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0 1.25rem; }
+.tier-diagrams .tier-diagram { max-width: none; }
+p.tier-diagram-rules { font-size: 0.9rem; color: var(--ink-2); }
+.td-svg .td-road, .td-svg .td-verge { fill: var(--grid-2); stroke: var(--ink-2); stroke-width: 1; }
+.td-svg .td-foot { fill: var(--grid); stroke: var(--ink-2); stroke-width: 1; }
+.td-svg .td-tier { stroke: var(--ink-2); stroke-width: 1; }
+.tier-diagram[data-tier="A"] .td-tier { fill: var(--tier-a); }
+.tier-diagram[data-tier="B"] .td-tier { fill: var(--tier-b); }
+.tier-diagram[data-tier="C"] .td-tier { fill: var(--tier-c); }
+.tier-diagram[data-tier="D"] .td-tier { fill: var(--tier-d); }
+.tier-diagram[data-tier="E"] .td-tier { fill: var(--tier-e); }
+.td-svg .td-person { fill: var(--ink-2); }
+.td-svg .td-rider, .td-svg .td-wheel { fill: var(--ink); }
+.td-svg .td-arm { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+.td-svg .td-car { fill: var(--muted); }
+.td-svg .td-glass { fill: var(--halo); }
+.td-svg .td-post { fill: var(--ink-2); }
+.td-svg .td-paint { fill: var(--halo); stroke: var(--ink-2); stroke-width: 0.6; }
+.td-svg .td-glyph { fill: none; stroke: var(--halo); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.td-svg .td-divider { fill: none; stroke: var(--grid-2); stroke-width: 1; stroke-dasharray: 3 3; }
 .suspect-mark { display: inline-block; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--flag); border: 1px solid var(--flag); border-radius: 3px; padding: 0 0.3rem; vertical-align: 0.05em; }
 .suspect-note { display: inline-block; border-left: 2px solid var(--flag); padding-left: 0.4rem; }
 li.suspect > b { text-decoration: underline wavy var(--flag); text-underline-offset: 3px; }

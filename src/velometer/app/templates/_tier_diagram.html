@@ -1,0 +1,78 @@
+{#- The tier diagrams (M17 §4.8): one street cross-section per tier, drawn by us, inline SVG.
+
+    Import WITH CONTEXT: the page context's `tier_set` (main.py, from the report classifier and the
+    headline preset) gives the tiers and the ones the headline counts.
+
+    `tier_diagram(tier, rules=true, id_prefix='td')`: a `<figure class="tier-diagram">` with the
+    drawing (`role="img"`, named by the caption's first part) and a caption: the diagram's name,
+    what the reader sees on the street, whether the tier counts in the headline and, with
+    `rules`, that the classifier rules decide. `id_prefix` keeps ids unique when a page shows a
+    diagram twice. `tier_diagrams()`: the row of every tier's diagram with one rules note.
+
+    One visual system: the same viewBox, ground line, kerb heights and widths, about 24 units to
+    the metre with the kerbs drawn higher than they are. Seen along the street, building side on
+    the left: the footway, the cycle facility in the tier's colour (.td-tier, app.css), the road
+    with a car. No text in the drawing, no colour in it either: every paint is a class, coloured
+    by tokens in app.css (CSP style-src 'self' allows no inline style). -#}
+
+{#- the levels: the road's surface, a raised footway or verge, a track a step below the footway,
+    and the bottom of the ground -#}
+{% set ROAD, FOOT, TRACK, BOTTOM = 100, 94, 97, 112 %}
+
+{% macro _surface(cls, x, w, top) %}<rect class="{{ cls }}" x="{{ x }}" y="{{ top }}" width="{{ w }}" height="{{ BOTTOM - top }}"/>{% endmacro %}
+
+{#- a person walking, seen from behind, standing on `base` -#}
+{% macro _person(cx, base) %}<g class="td-person"><circle cx="{{ cx }}" cy="{{ base - 31 }}" r="4"/><rect x="{{ cx - 4.5 }}" y="{{ base - 26 }}" width="9" height="15" rx="3"/><rect x="{{ cx - 4 }}" y="{{ base - 12 }}" width="3.2" height="12" rx="1"/><rect x="{{ cx + 0.8 }}" y="{{ base - 12 }}" width="3.2" height="12" rx="1"/></g>{% endmacro %}
+
+{#- a person cycling, seen from behind: the rear wheel edge-on, legs either side, arms out to the
+    handlebar, a helmet -#}
+{% macro _rider(cx, base) %}<g class="td-rider"><rect x="{{ cx - 1.6 }}" y="{{ base - 16 }}" width="3.2" height="16" rx="1.6"/><rect x="{{ cx - 4.6 }}" y="{{ base - 22 }}" width="3" height="12" rx="1.2"/><rect x="{{ cx + 1.6 }}" y="{{ base - 22 }}" width="3" height="12" rx="1.2"/><rect x="{{ cx - 5 }}" y="{{ base - 35 }}" width="10" height="15" rx="3.5"/><rect x="{{ cx - 10 }}" y="{{ base - 29 }}" width="20" height="2" rx="1"/><circle cx="{{ cx }}" cy="{{ base - 39.5 }}" r="4.5"/></g><path class="td-arm" d="M{{ cx - 4 }} {{ base - 32 }} L{{ cx - 9 }} {{ base - 28.5 }} M{{ cx + 4 }} {{ base - 32 }} L{{ cx + 9 }} {{ base - 28.5 }}"/>{% endmacro %}
+
+{#- a car from behind: wheels, body, cabin and rear window -#}
+{% macro _car(cx, base) %}<g class="td-wheel"><rect x="{{ cx - 17 }}" y="{{ base - 9 }}" width="7" height="9" rx="1.5"/><rect x="{{ cx + 10 }}" y="{{ base - 9 }}" width="7" height="9" rx="1.5"/></g><g class="td-car"><path d="M{{ cx - 14.5 }} {{ base - 20 }} L{{ cx - 11 }} {{ base - 34 }} H{{ cx + 11 }} L{{ cx + 14.5 }} {{ base - 20 }} Z"/><rect x="{{ cx - 19 }}" y="{{ base - 22 }}" width="38" height="15" rx="3"/></g><path class="td-glass" d="M{{ cx - 10 }} {{ base - 23 }} L{{ cx - 8 }} {{ base - 31.5 }} H{{ cx + 8 }} L{{ cx + 10 }} {{ base - 23 }} Z"/>{% endmacro %}
+
+{#- a bus from behind -#}
+{% macro _bus(cx, base) %}<g class="td-wheel"><rect x="{{ cx - 23 }}" y="{{ base - 9 }}" width="8" height="9" rx="1.5"/><rect x="{{ cx + 15 }}" y="{{ base - 9 }}" width="8" height="9" rx="1.5"/></g><rect class="td-car" x="{{ cx - 26 }}" y="{{ base - 64 }}" width="52" height="57" rx="4"/><rect class="td-glass" x="{{ cx - 21 }}" y="{{ base - 58 }}" width="42" height="20" rx="2"/>{% endmacro %}
+
+{#- a bollard standing on `base`, with its reflective band -#}
+{% macro _bollard(cx, base) %}<rect class="td-post" x="{{ cx - 2.2 }}" y="{{ base - 20 }}" width="4.4" height="20" rx="1.5"/><rect class="td-glass" x="{{ cx - 2.2 }}" y="{{ base - 16 }}" width="4.4" height="2.5"/>{% endmacro %}
+
+{#- road paint: a line on the surface, drawn thicker than it is -#}
+{% macro _paint(x, w=5) %}<rect class="td-paint" x="{{ x }}" y="{{ ROAD - 2.4 }}" width="{{ w }}" height="2.4"/>{% endmacro %}
+
+{#- a cycle street's sign on its post: the plate in the tier's colour with a bicycle on it -#}
+{% macro _sign(cx, base) %}<rect class="td-post" x="{{ cx - 1.2 }}" y="{{ base - 40 }}" width="2.4" height="40"/><rect class="td-tier" x="{{ cx - 9.5 }}" y="{{ base - 59 }}" width="19" height="19" rx="2"/><g class="td-glyph"><circle cx="{{ cx - 4.4 }}" cy="{{ base - 46 }}" r="3.2"/><circle cx="{{ cx + 4.4 }}" cy="{{ base - 46 }}" r="3.2"/><path d="M{{ cx - 4.4 }} {{ base - 46 }} L{{ cx - 1.5 }} {{ base - 51.5 }} H{{ cx + 2.8 }} L{{ cx + 4.4 }} {{ base - 46 }} M{{ cx - 1.5 }} {{ base - 51.5 }} L{{ cx + 0.6 }} {{ base - 46 }} L{{ cx + 2.8 }} {{ base - 51.5 }} M{{ cx - 2.9 }} {{ base - 53.5 }} H{{ cx - 0.4 }}"/></g>{% endmacro %}
+
+{#- A: a track a step below the footway, a raised verge and a kerb between it and the road -#}
+{% macro _a() %}{{ _surface("td-foot", 0, 58, FOOT) }}{{ _surface("td-tier", 58, 50, TRACK) }}{{ _surface("td-verge", 108, 16, FOOT) }}{{ _surface("td-road", 124, 196, ROAD) }}{{ _paint(302) }}{{ _person(27, FOOT) }}{{ _rider(83, TRACK) }}{{ _car(188, ROAD) }}{% endmacro %}
+
+{#- B: one raised surface for walking and cycling, a verge between it and the road -#}
+{% macro _b() %}{{ _surface("td-tier", 0, 104, FOOT) }}{{ _surface("td-verge", 104, 20, FOOT) }}{{ _surface("td-road", 124, 196, ROAD) }}{{ _paint(302) }}{{ _person(30, FOOT) }}{{ _rider(72, FOOT) }}{{ _car(188, ROAD) }}{% endmacro %}
+
+{#- C: a lane on the road, a low kerb separator with bollards between it and the traffic -#}
+{% macro _c() %}{{ _surface("td-foot", 0, 58, FOOT) }}{{ _surface("td-tier", 58, 54, ROAD) }}{{ _surface("td-road", 112, 208, ROAD) }}<rect class="td-post" x="112" y="{{ ROAD - 5 }}" width="14" height="5" rx="2"/>{{ _bollard(119, ROAD - 5) }}{{ _paint(302) }}{{ _person(27, FOOT) }}{{ _rider(85, ROAD) }}{{ _car(192, ROAD) }}{% endmacro %}
+
+{#- D: a lane on the road with only a painted line between it and the traffic -#}
+{% macro _d() %}{{ _surface("td-foot", 0, 58, FOOT) }}{{ _surface("td-tier", 58, 52, ROAD) }}{{ _surface("td-road", 110, 210, ROAD) }}{{ _paint(110) }}{{ _paint(302) }}{{ _person(27, FOOT) }}{{ _rider(84, ROAD) }}{{ _car(152, ROAD) }}{% endmacro %}
+
+{#- E: two panels. Left, a cycle street: the whole carriageway is the facility, people cycle side
+    by side, a car follows, the sign on the footway. Right, a bus lane open to cycling beside a
+    general lane -#}
+{% macro _e() %}{{ _surface("td-foot", 0, 18, FOOT) }}{{ _surface("td-tier", 18, 116, ROAD) }}{{ _surface("td-foot", 134, 18, FOOT) }}{{ _sign(9, FOOT) }}{{ _rider(46, ROAD) }}{{ _rider(70, ROAD) }}{{ _car(108, ROAD) }}<path class="td-divider" d="M160 36 V{{ BOTTOM }}"/>{{ _surface("td-foot", 168, 18, FOOT) }}{{ _surface("td-tier", 186, 76, ROAD) }}{{ _surface("td-road", 262, 58, ROAD) }}{{ _paint(262) }}{{ _rider(198, ROAD) }}{{ _bus(237, ROAD) }}{{ _car(294, ROAD) }}{% endmacro %}
+
+{#- every tier with a drawing; tests/test_m17_tier_diagrams.py holds it to the classifier's tiers -#}
+{% set DRAWN = {"A": _a, "B": _b, "C": _c, "D": _d, "E": _e} %}
+
+{#- that the drawings show the typical case and the classifier rules decide: a paragraph, or with
+    `inline` a span inside a caption -#}
+{% macro tier_rules(inline=false) %}{% set text = t('tier.diagram_rules', href=u('/methodology') ~ '#classification-rules') %}{% if inline %}<span class="tier-diagram-rules">{{ text }}</span>{% else %}<p class="tier-diagram-rules">{{ text }}</p>{% endif %}{% endmacro %}
+
+{% macro tier_diagram(tier, rules=true, id_prefix="td") %}{% if tier in DRAWN %}{% set name_id = id_prefix ~ "-name-" ~ tier | lower %}<figure class="tier-diagram" data-tier="{{ tier }}">
+<svg class="td-svg" role="img" aria-labelledby="{{ name_id }}" viewBox="0 30 320 86" focusable="false">{{ DRAWN[tier]() }}</svg>
+<figcaption><span class="tier-diagram-name" id="{{ name_id }}">{{ t('tier.diagram_name.' ~ tier) }}</span>. {{ t('tier.caption.' ~ tier) }} {% if tier in tier_set.headline %}{{ t('tier.diagram_counts') }}{% else %}{{ t('tier.diagram_measured') }}{% endif %}{% if rules %} {{ tier_rules(inline=true) }}{% endif %}</figcaption>
+</figure>{% endif %}{% endmacro %}
+
+{% macro tier_diagrams(id_prefix="td") %}<div class="tier-diagrams">
+{% for tier in tier_set.tiers %}{{ tier_diagram(tier, rules=false, id_prefix=id_prefix) }}
+{% endfor %}</div>
+{{ tier_rules() }}{% endmacro %}

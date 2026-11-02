@@ -127,6 +127,8 @@ def _categories() -> set[str]:
 DYNAMIC_FAMILIES: dict[str, Callable[[], set[str]]] = {
     "country.": _countries,
     "tier.": _tiers,
+    "tier.caption.": _tiers,
+    "tier.diagram_name.": _tiers,
     "road_class.": _road_classes,
     "city.tab.": _tabs,
     "compare.group.": _compare("QUICK_SETS"),
