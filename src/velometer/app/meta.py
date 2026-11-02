@@ -1,8 +1,9 @@
 """The meta description of a page (M17 §4.2): plain text of at most `MAX` characters.
 
-A city's story page takes its narrative dek verbatim, other city tabs a template sentence with
-the city's headline figure (`meta.tab.<tab>`); without a dek of `MIN` to `MAX` characters (or
-with only the English one on a German page) the story page takes `meta.city`, never a cut dek;
+A city's story page takes its narrative's own `description` where it has one that fits, else
+its dek verbatim; other city tabs a template sentence with the city's headline figure
+(`meta.tab.<tab>`). Without either of `MIN` to `MAX` characters (an English one on a German
+page does not count) the story page takes `meta.city`, never a cut text;
 without a current headline value each sentence falls back to one without the figure. The other
 pages' sentences are `meta.<page>` in the UI catalogue. Attribute text carries no markup, so a
 German description names no English term that would need a `lang` mark.
@@ -29,14 +30,22 @@ def fits(text: str) -> bool:
     return MIN <= len(text) <= MAX
 
 
-def city_description(lang: str, tab: str, city: str, dek: object, value: str | None) -> str:
-    """A city page's description: on the story tab the dek as it is, when it fits (an English
-    fallback on a German page does not count), else `meta.city`; on the other tabs the tab's
-    sentence. Each names the headline figure `value` where there is one."""
+def _own(text: object) -> str:
+    """`text` as plain text, or "" when it is missing or an English fallback on a German page."""
+    return "" if getattr(text, "fallback", False) else plain(text or "")
+
+
+def city_description(
+    lang: str, tab: str, city: str, dek: object, value: str | None, description: object = None
+) -> str:
+    """A city page's description: on the story tab the narrative's `description` when it fits,
+    else the dek as it is when that fits (an English fallback on a German page counts for
+    neither), else `meta.city`; on the other tabs the tab's sentence. Each names the headline
+    figure `value` where there is one."""
     if tab == "story":
-        text = "" if getattr(dek, "fallback", False) else plain(dek or "")
-        if fits(text):
-            return text
+        for text in (_own(description), _own(dek)):
+            if fits(text):
+                return text
         if value:
             return plain(i18n.t(lang, "meta.city", city=city, value=value))
         return plain(i18n.t(lang, "meta.city_plain", city=city))

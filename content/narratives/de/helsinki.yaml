@@ -8,6 +8,11 @@ dek:
     km; die Hauptkennzahl fiel von 276,2 auf 262,3, weil mehr Straßen als Hauptstraßen
     getaggt wurden, nicht weil Radwege verschwanden.
   src: eac496779071
+description:
+  text: >-
+    Kartiert blieben 2018 bis Oktober 2026 1.279 bis 1.292 A+B-km; die Hauptkennzahl
+    fiel von 276,2 auf 262,3, weil mehr Straßen als Hauptstraßen getaggt wurden.
+  src: b7fb18c1fa14
 sections:
 - heading:
     text: Von 2018 bis heute

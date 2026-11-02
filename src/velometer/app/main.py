@@ -1198,7 +1198,12 @@ def create_app(
         nar, note = narrative_of(request, city_id)
         lang = request.state.lang
         description = meta.city_description(
-            lang, tab, ctx["city"].name, nar.dek if nar else None, ctx["headline_now"]
+            lang,
+            tab,
+            ctx["city"].name,
+            nar.dek if nar else None,
+            ctx["headline_now"],
+            nar.description if nar else None,
         )
         role = {"story": "story", "figures": "figures"}.get(tab)
         cited_sources, cited_refs = nar.cited(nar.of_role(role)) if nar and role else ([], [])

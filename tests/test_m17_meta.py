@@ -124,6 +124,7 @@ def _app_without_dek(tmp_path: Path):
     path = content / "narratives" / "berlin.yaml"
     doc = yaml.safe_load(path.read_text(encoding="utf-8"))
     doc["dek"] = ""
+    doc.pop("description", None)
     path.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
     return create_app(db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans)
 
@@ -196,6 +197,87 @@ def test_dek_in_range_is_the_description_verbatim():
     assert meta.city_description("en", "story", "Praha", dek, "29.6") == dek
 
 
+def test_own_description_comes_before_the_dek():
+    """A story's own `description` that fits is the description, whatever the dek is; one out
+    of bounds, missing or still English on a German page falls back to the dek when that fits,
+    else to `meta.city`. Neither is ever cut."""
+    from velometer.app.narrative import Fallback
+
+    own = "Mapped A+B km per 100 km of main roads went from 113.7 to 109.1, one mapping step."
+    fit = "The headline rose from 18.7 in 2018 to 29.6 in October 2026, while lanes tripled."
+    long = fit + " " + fit
+    assert meta.fits(own) and meta.fits(fit) and not meta.fits(long)
+    city = meta.plain(i18n.t("en", "meta.city", city="Berlin", value="1.0"))
+    for dek in (long, fit, ""):
+        assert meta.city_description("en", "story", "Berlin", dek, "1.0", own) == own
+    for bad in (long, "Too short.", "", None, Fallback(own)):
+        assert meta.city_description("en", "story", "Berlin", long, "1.0", bad) == city
+        assert meta.city_description("en", "story", "Berlin", fit, "1.0", bad) == fit
+    assert meta.city_description("de", "story", "Berlin", long, "1,0", Fallback(own)) == (
+        meta.plain(i18n.t("de", "meta.city", city="Berlin", value="1,0"))
+    )
+    # the other tabs keep their sentence
+    assert meta.city_description("en", "time", "Berlin", fit, "1.0", own) == meta.plain(
+        i18n.t("en", "meta.tab.time", city="Berlin", value="1.0")
+    )
+
+
+def _descriptions() -> list[tuple[str, str]]:
+    out = []
+    for path in sorted((REPO / "content" / "narratives").glob("**/*.yaml")):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if "description" in doc:
+            text = doc["description"]
+            name = path.relative_to(REPO / "content" / "narratives").with_suffix("").as_posix()
+            out.append((name, text["text"] if isinstance(text, dict) else text))
+    return out
+
+
+def test_descriptions_are_shipped():
+    """The scan below finds the shipped descriptions, in both languages."""
+    names = [n for n, _ in _descriptions()]
+    assert any(n.startswith("de/") for n in names) and any("/" not in n for n in names)
+
+
+@pytest.mark.parametrize(("name", "text"), _descriptions(), ids=[n for n, _ in _descriptions()])
+def test_every_shipped_description_fits(name, text):
+    """Each narrative's own description, en and de, is plain text of `MIN` to `MAX`
+    characters, so it is the page's description as written."""
+    assert meta.fits(meta.plain(text)) and meta.plain(text) == " ".join(text.split()), (
+        name,
+        len(text),
+    )
+
+
+def test_story_page_takes_its_description(tmp_path):
+    """The rendered story page, en and de, takes the narrative's own description over a dek
+    that fits."""
+    rich = build_rich(tmp_path)
+    db_path, cfg, maps, docs, plans = rich
+    content = tmp_path / "content-desc"
+    shutil.copytree(_content(rich), content)
+    own = {
+        "en": "Berlin's own description, mapped A+B km per 100 km of main roads, for the test.",
+        "de": "Berlins eigene Beschreibung, kartierte A+B-km je 100 km Hauptstraßen, im Test.",
+    }
+    path = content / "narratives" / "berlin.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    doc["description"] = own["en"]
+    path.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+    de_path = content / "narratives" / "de" / "berlin.yaml"
+    de = yaml.safe_load(de_path.read_text(encoding="utf-8")) if de_path.exists() else None
+    de = de or {"city_id": "berlin"}
+    de["description"] = {"text": own["de"]}
+    de_path.parent.mkdir(exist_ok=True)
+    de_path.write_text(yaml.safe_dump(de, allow_unicode=True), encoding="utf-8")
+    app = create_app(db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans)
+    with TestClient(app, base_url="http://127.0.0.1:8000") as c:
+        for lang, route in (("en", "/city/berlin"), ("de", "/de/city/berlin")):
+            r = c.get(route)
+            assert r.status_code == 200
+            assert _one(_head(r.text), "description") == own[lang], lang
+
+
 def _deks() -> list[tuple[str, str]]:
     out = []
     for path in sorted((REPO / "content" / "narratives").glob("*.yaml")):
@@ -211,11 +293,13 @@ def test_every_shipped_dek_makes_a_description(name, dek):
     verbatim, or the city sentence (the fixture export holds only a few cities)."""
     text = dek["text"] if isinstance(dek, dict) else dek
     lang = "de" if name.startswith("de/") else "en"
+    own = dict(_descriptions()).get(name)
     value = i18n.number(1234.5, lang)
-    desc = meta.city_description(lang, "story", "København", text, value)
+    desc = meta.city_description(lang, "story", "København", text, value, own)
     assert meta.MIN <= len(desc) <= meta.MAX, (name, desc)
     city = meta.plain(i18n.t(lang, "meta.city", city="København", value=value))
-    assert desc == (meta.plain(text) if meta.fits(meta.plain(text)) else city), name
+    expected = own or (meta.plain(text) if meta.fits(meta.plain(text)) else city)
+    assert desc == expected, name
 
 
 def test_datalab_pages_have_description(tmp_path):

@@ -8,6 +8,11 @@ dek:
     Teil weil weniger Hauptstraßen-km kartiert waren; innerhalb von A+B wanderten
     km von Radwegen zu Geh- und Radwegen.
   src: 401d0f3483aa
+description:
+  text: >-
+    Die Hauptkennzahl stieg von 179,7 (2018) auf 193,6 (Oktober 2026), teils durch
+    weniger kartierte Hauptstraßen; km wanderten von Rad- zu Geh- und Radwegen.
+  src: c06402b38393
 sections:
 - heading:
     text: Von 2018 bis heute

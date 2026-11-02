@@ -695,7 +695,7 @@ def _check(
         label = f"narratives/{cid}.yaml"
         problems += _check_document(
             label,
-            [n.title, n.dek, *_narrative_prose(n)],
+            [n.title, n.dek, *([n.description] if n.description else []), *_narrative_prose(n)],
             n.quotes,
             n.facts,
             n.data_refs,

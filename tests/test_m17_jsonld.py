@@ -215,6 +215,7 @@ def test_jsonld_escapes_script_close_in_a_page(rich, tmp_path):
     doc["dek"] = (
         "Berlin maps 12.3 km of protected tracks per 100 km of main roads </script and rising."
     )
+    doc.pop("description", None)  # the dek is the description here
     path.write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
     app = create_app(
         db_path, cfg, maps, docs, content_dir=content, plans_data_dir=plans, public=True

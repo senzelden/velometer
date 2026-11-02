@@ -8,6 +8,11 @@ dek:
     während sich die Hauptkennzahl nur von 38,1 auf 42,5 kartierte A+B-km je 100 km
     Hauptstraßen bewegte.
   src: 6e06267d0ca1
+description:
+  text: >-
+    Die kartierten A+B-km stiegen von 2018 bis Oktober 2026 von 282 auf 353 km, die
+    Hauptkennzahl nur von 38,1 auf 42,5 kartierte A+B-km je 100 km Hauptstraßen.
+  src: 6e06267d0ca1
 sections:
 - heading:
     text: Seit 2018

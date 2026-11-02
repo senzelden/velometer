@@ -189,6 +189,7 @@ class RenderedNarrative:
     refs: dict[int, DataRef]  # data-reference number -> reference
     ref_links: dict[int, str | None]  # data-reference number -> its route link, if usable
     prefix: str = ""  # of the citation anchors (`<prefix>src-<n>`), for several documents a page
+    description: str | None = None  # a story's meta description, where it has its own
 
     def of_role(self, role: str) -> list[RenderedSection]:
         return [s for s in self.sections if s.role == role]
@@ -444,10 +445,12 @@ def render_narrative(
     """A narrative; `fallback` the walk paths still English on a German page (loader)."""
     groups = [(s.heading, s.role, s.paragraphs) for s in n.sections]
     _, sections, num = _build(groups, n.quotes, sources, n.data_refs, lang=lang, fallback=fallback)
-    return _finish(
+    out = _finish(
         _text(n.title, "title" in fallback), _text(n.dek, "dek" in fallback), [], sections, num,
         sources, n.data_refs,
     )  # fmt: skip
+    out.description = _text(n.description, "description" in fallback)
+    return out
 
 
 def render_explainer(

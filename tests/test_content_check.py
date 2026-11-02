@@ -117,6 +117,8 @@ def test_load_error_is_one_problem(content):
         (lambda n: n.__setitem__("title", "Berlin built 41 km"), "construction verb 'built'"),
         (lambda n: n.__setitem__("title", "Berlin built 41 km"), "undeclared number 41"),
         (lambda n: n.__setitem__("dek", "Removed 42 km"), "undeclared number 42"),
+        (lambda n: n.__setitem__("description", "Removed 43 km"), "undeclared number 43"),
+        (lambda n: n.__setitem__("description", "Removed 43 km"), "construction verb"),
         (lambda n: n["literals"].__setitem__(0, "6 m"), "undeclared number 5"),
     ],
 )

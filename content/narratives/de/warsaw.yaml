@@ -8,6 +8,11 @@ dek:
     A+B-km je 100 km Hauptstraßen; ihr größter Schritt kam von neu getaggten Schnellstraßen,
     nicht von Radwegen.
   src: 92a52d18a42d
+description:
+  text: >-
+    Die Hauptkennzahl stieg 2018 bis Oktober 2026 von 53,4 auf 82,3 kartierte A+B-km
+    je 100 km Hauptstraßen; ihr größter Schritt: neu getaggte Schnellstraßen.
+  src: f9ebfdb8be78
 sections:
 - heading:
     text: Von 2018 bis heute

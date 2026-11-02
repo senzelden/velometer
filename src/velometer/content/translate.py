@@ -1,8 +1,9 @@
 """German translation files beside the English content (M12 spec §4.4).
 
 A translation file mirrors its English file's structure and holds only the translatable strings,
-each `{text, src}`. Strings are addressed by walk paths: `title`, `dek`, `intro.<i>`,
-`sections.<i>.heading`, `sections.<i>.paragraphs.<j>` and `sections.<i>.dimensions.<k>`.
+each `{text, src}`. Strings are addressed by walk paths: `title`, `dek`, `description`,
+`intro.<i>`, `sections.<i>.heading`, `sections.<i>.paragraphs.<j>` and
+`sections.<i>.dimensions.<k>`.
 Data references are not translated: their labels come only from the English file and show in
 English (inside `lang="en"`) on German pages. `src` is the stamp of the English string the text
 was translated from; `stamp` writes it, the content check compares it with the English today.
@@ -63,6 +64,8 @@ def walk(model: English) -> Iterator[tuple[str, str]]:
     if isinstance(model, Narrative):
         yield "title", model.title
         yield "dek", model.dek
+        if model.description is not None:
+            yield "description", model.description
     elif isinstance(model, Explainer):
         yield "title", model.title
         for i, p in enumerate(model.intro):
@@ -85,7 +88,7 @@ def tr_strings(tr: Translation) -> dict[str, Tr]:
 
 def _tr_strings(tr: Translation) -> dict[str, Tr]:
     out: dict[str, Tr] = {}
-    for key in ("title", "dek"):
+    for key in ("title", "dek", "description"):
         if getattr(tr, key, None) is not None:
             out[key] = getattr(tr, key)
     for i, p in enumerate(getattr(tr, "intro", [])):
@@ -201,7 +204,7 @@ def _is_translated(node: Any) -> bool:
 
 def _tr_nodes(doc: dict) -> Iterator[tuple[str, dict]]:
     """(walk path, `{text, src}` mapping) of a translation file's raw YAML."""
-    for key in ("title", "dek"):
+    for key in ("title", "dek", "description"):
         if _is_tr(doc.get(key)):
             yield key, doc[key]
     for i, p in enumerate(doc.get("intro") or []):
@@ -248,7 +251,7 @@ def skeleton(en_model: English, texts: dict[str, str], literals: list[str]) -> d
         doc["city_id"] = en_model.city_id
     if isinstance(en_model, Organisation):
         doc["id"] = en_model.id
-    for key in ("title", "dek"):
+    for key in ("title", "dek", "description"):
         if key in texts:
             doc[key] = s(key)
     if isinstance(en_model, Explainer):
