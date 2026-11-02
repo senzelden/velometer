@@ -36,6 +36,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from velometer import credits, i18n
 from velometer.app import jsonld
+from velometer.app.urls import absolute_url
 
 SITE_DIR = Path(__file__).resolve().parents[2] / "sites" / "datalab"
 DEFAULT_CONFIG = SITE_DIR / "site.yaml"
@@ -88,7 +89,10 @@ STATEMENT_PAGE = PAGES["barrierefreiheit.html"]
 NOT_FOUND_PAGE = PAGES["404.html"]
 CRAWL_FILES = ("robots.txt", "sitemap.xml", "llms.txt")
 LLMS_TEMPLATE = "llms.txt"
-CHECKED_FORMAT = re.compile(r"\d{4}-\d\d-\d\d")
+# The site's name: the pages' title, og:site_name and footer (base.html) and the JSON-LD
+# Organization read it from here.
+SITE_NAME = "Zählwerk Berlin Datalab"
+CHECKED_FORMAT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
 class DatalabError(Exception):
@@ -303,9 +307,14 @@ def parse_checked(value: str) -> date:
     raise DatalabError(f"--checked must be a real day as YYYY-MM-DD, not {value!r}")
 
 
+def _route(out: str) -> str:
+    """The route of a PAGES output: `impressum/index.html` -> `/impressum/`."""
+    return "/" + out.removesuffix("index.html")
+
+
 def page_routes() -> list[str]:
     """The indexable pages' routes (`/`, `/impressum/`, …): the PAGES outputs but the 404 page."""
-    return ["/" + rel.removesuffix("index.html") for rel in PAGES.values() if rel != NOT_FOUND_PAGE]
+    return [_route(rel) for rel in PAGES.values() if rel != NOT_FOUND_PAGE]
 
 
 def crawl_files(domain: str, llms: str) -> dict[str, str]:
@@ -331,10 +340,11 @@ def render(cfg: DatalabConfig, counter: Counter, checked: date | None = None) ->
     osm, boundary = _shared_strings()
     context = {
         "domain": cfg.domain,
+        "site_name": SITE_NAME,
         "velometer_url": f"https://velometer.{cfg.domain}/",
         "jsonld": jsonld.script(
             jsonld.datalab(
-                "Zählwerk Berlin Datalab",
+                SITE_NAME,
                 f"https://{cfg.domain}/",
                 f"https://velometer.{cfg.domain}/",
             )
@@ -363,13 +373,13 @@ def render(cfg: DatalabConfig, counter: Counter, checked: date | None = None) ->
         ),
     }
     env = _env()
-    # each page's og:url: its address on the domain, as the sitemap lists it; none on the 404
+    # each page's og:url: its address on the domain, as the sitemap lists it (one helper decides
+    # the form); none on the 404
+    origin = f"https://{cfg.domain}/"
     pages = {
         out: env.get_template(name).render(
             **context,
-            page_url=None
-            if out == NOT_FOUND_PAGE
-            else f"https://{cfg.domain}/" + out.removesuffix("index.html"),
+            page_url=None if out == NOT_FOUND_PAGE else absolute_url(origin, _route(out), "/"),
         )
         for name, out in PAGES.items()
     }

@@ -127,7 +127,6 @@ export function renderLines(el, model, opts = {}) {
   const iw = W - ml - mr;
   const ih = H - mt - mb;
   const step = iw / Math.max(1, n - 1);
-  const one = n === 1; // one snapshot: a stacked column across the plot, its label centred
   const x = (i) => ml + i * step;
   const yScale = scaleLinear([lo, hi], opts.invert ? [mt, mt + ih] : [mt + ih, mt]);
 

@@ -1364,18 +1364,18 @@ def test_the_change_map_has_a_legend_for_each_colour(subarea_setup):  # noqa: F8
 
 
 def test_a_narrative_backtick_tag_renders_as_code_and_stays_escaped():
-    from velometer.app.narrative import _Numbering
+    from velometer.app.narrative import Numbering
 
-    html = str(_Numbering({}, {}).paragraph("paths gained `segregated=yes` and `<b>x</b>`, a & b"))
+    html = str(Numbering({}, {}).paragraph("paths gained `segregated=yes` and `<b>x</b>`, a & b"))
     assert "`" not in html
     assert "<code>segregated=yes</code>" in html
     assert "<code>&lt;b&gt;x&lt;/b&gt;</code>" in html and "a &amp; b" in html
 
 
 def test_a_starred_title_renders_in_italics_and_a_lone_star_stays_text():
-    from velometer.app.narrative import _Numbering
+    from velometer.app.narrative import Numbering
 
-    html = str(_Numbering({}, {}).paragraph("Drucksache 1, *Acht Jahre <b>*, asked; tag `a=*` b*c"))
+    html = str(Numbering({}, {}).paragraph("Drucksache 1, *Acht Jahre <b>*, asked; tag `a=*` b*c"))
     assert "<em>Acht Jahre &lt;b&gt;</em>, asked" in html
     assert "<code>a=*</code> b*c" in html and html.count("<em>") == 1
 
@@ -1389,9 +1389,9 @@ def test_a_starred_title_renders_in_italics_and_a_lone_star_stays_text():
     ],
 )
 def test_stars_inside_or_around_code_spans_stay_text(prose, html):
-    from velometer.app.narrative import _Numbering
+    from velometer.app.narrative import Numbering
 
-    assert str(_Numbering({}, {}).paragraph(prose)) == f"<p>{html}</p>"
+    assert str(Numbering({}, {}).paragraph(prose)) == f"<p>{html}</p>"
 
 
 def test_a_step_without_a_heading_names_its_chart_not_null(setup_21, tmp_path):  # noqa: F811

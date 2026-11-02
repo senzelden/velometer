@@ -50,7 +50,7 @@
 <p class="meta">{{ t('page.panel.tiers_now') }} · {{ lau.kind | upper }}</p>
 <div class="chart" data-chart="city-tiers" data-city="{{ city.id }}" data-kind="{{ lau.kind }}" data-latest aria-describedby="phone-tiers-now-sum" role="group" aria-label="{{ t('page.city.tiers_chart', city=city.name, kind=lau.kind | upper) }}"></div>
 {{ tier_series_table(lau, tiers, "phone-tiers-now-sum", latest=true) }}
-{{ cite(cite_for(t('cite.title.tiers', city=city.name, kind=lau.kind | upper), city=city.id, kind=lau.kind)) }}
+{{ cite(cite_for(t('cite.title.tiers_now', city=city.name, kind=lau.kind | upper), city=city.id, kind=lau.kind)) }}
 {% else %}<p class="note">{{ t('note.no_run_kind_history', kind=lau.kind | upper) }}</p>{% endif %}
 {{ tier_diagrams("phone-td") }}
 <p class="meta"><a href="{{ u('/city/' ~ city.id ~ '/tiers') }}">{{ t('page.tiers.map') }} →</a></p>

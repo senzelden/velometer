@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from tests.test_app_base import build_rich
 from tests.test_export import _content
-from tests.test_m17_crawl import _export, _indexable
+from tests.test_m17_crawl import ORIGIN, _export, _indexable
 from tests.test_m17_datalab_crawl import _built
 from velometer import datalab, i18n
 from velometer.app import meta
@@ -106,7 +106,9 @@ def test_og_url_equals_canonical(public_out):
         if h.canonical is None:  # a panel fragment: no head
             assert "og:url" not in h.meta, page
             continue
-        assert _one(h, "og:url") == h.canonical, page
+        og = _one(h, "og:url")
+        assert og == h.canonical, page
+        assert og.startswith(ORIGIN), (page, og)  # absolute, on the public origin
         checked += 1
     assert checked > 20
     h = _head((public_out / "404.html").read_text(encoding="utf-8"))
@@ -136,20 +138,30 @@ def test_description_falls_back_without_dek(tmp_path):
     assert re.fullmatch(pattern.replace("\x00", r"[0-9][0-9,]*\.[0-9]"), desc), desc
 
 
+CITY_NAMES = sorted({c.name for c in load_cities(REPO / "config" / "cities.yaml")}, key=len)
+
+
+def test_city_names_include_the_extremes():
+    """The bound test below runs over every shipped name, so the shortest and the longest."""
+    assert len(CITY_NAMES) > 1 and len(CITY_NAMES[0]) < len(CITY_NAMES[-1])
+
+
 @pytest.mark.parametrize("lang", ["en", "de"])
 @pytest.mark.parametrize("tab", ["story", "time", "tiers", "figures", "counts", "bezirke"])
 def test_description_without_value(lang, tab):
     """Without a current headline value a city page's sentence leaves the figure out; with
-    one it names it. Each fits the bounds for the longest shipped city name."""
-    city = max((c.name for c in load_cities(REPO / "config" / "cities.yaml")), key=len)
-    value = i18n.number(1234.5, lang)
-    with_value = meta.city_description(lang, tab, city, "", value)
-    without = meta.city_description(lang, tab, city, "", None)
-    assert value in with_value
-    assert without and not re.search(r"[0-9{}]", re.sub(r"\b100 km\b", "", without)), without
-    assert city in without and "None" not in without
-    for desc in (with_value, without):
-        assert meta.MIN <= len(desc) <= meta.MAX, desc
+    one it names it. Each fits the bounds for every shipped city name (the shortest against
+    MIN, the longest against MAX) and for a short and a long figure."""
+    for city in CITY_NAMES:
+        without = meta.city_description(lang, tab, city, "", None)
+        assert without and not re.search(r"[0-9{}]", re.sub(r"\b100 km\b", "", without)), without
+        assert city in without and "None" not in without
+        assert meta.MIN <= len(without) <= meta.MAX, without
+        for number in (0.5, 1234.5):
+            value = i18n.number(number, lang)
+            with_value = meta.city_description(lang, tab, city, "", value)
+            assert value in with_value
+            assert meta.MIN <= len(with_value) <= meta.MAX, with_value
 
 
 def test_german_page_with_english_dek_takes_the_sentence():
@@ -209,6 +221,7 @@ def test_every_shipped_dek_makes_a_description(name, dek):
 def test_datalab_pages_have_description(tmp_path):
     out = _built(tmp_path)
     seen = set()
+    og_urls = []
     for route in datalab.page_routes():
         h = _head((out / route.lstrip("/") / "index.html").read_text(encoding="utf-8"))
         desc = _one(h, "description")
@@ -218,9 +231,13 @@ def test_datalab_pages_have_description(tmp_path):
         assert _one(h, "og:description") == desc
         assert _one(h, "og:title")
         assert _one(h, "og:url") == f"https://example.org{route}"
+        og_urls.append(_one(h, "og:url"))
         assert _one(h, "og:locale") == "de_DE"
         assert "og:locale:alternate" not in h.meta
-        assert _one(h, "og:site_name") == "Zählwerk Berlin Datalab"
+        assert _one(h, "og:site_name") == datalab.SITE_NAME
         assert _one(h, "twitter:card") == "summary"
+    # each page's og:url is its sitemap entry, and every sitemap entry is a page's og:url
+    locs = re.findall(r"<loc>([^<]+)</loc>", (out / "sitemap.xml").read_text(encoding="utf-8"))
+    assert sorted(og_urls) == sorted(locs)
     h = _head((out / datalab.NOT_FOUND_PAGE).read_text(encoding="utf-8"))
     assert "description" not in h.meta and "og:url" not in h.meta

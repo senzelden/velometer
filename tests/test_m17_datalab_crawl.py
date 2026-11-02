@@ -79,7 +79,7 @@ def test_datalab_llms_txt_is_facts_from_the_site(tmp_path):
     assert "{" not in text and "@" not in text and "gmail" not in text.lower()
 
 
-def test_datalab_crawl_files_are_are_in_the_written_list(tmp_path):
+def test_datalab_crawl_files_are_in_the_written_list(tmp_path):
     out = tmp_path / "out"
     written = build(_cfg(), _export(tmp_path), out)
     assert set(CRAWL) <= set(written)
@@ -114,6 +114,13 @@ def test_datalab_checked_rejects_a_bad_date(tmp_path, bad):
     assert r.exit_code != 0
     assert "--checked" in r.output and "YYYY-MM-DD" in r.output
     assert not out.exists()
+
+
+def test_datalab_checked_format_takes_ascii_digits_only():
+    """`\\d` would also take other scripts' digits (Arabic-Indic here); the format is ASCII."""
+    assert datalab.CHECKED_FORMAT.fullmatch("2026-10-29")
+    arabic_indic = "\u0662\u0660\u0662\u0666-\u0661\u0660-\u0662\u0669"  # 2026-10-29
+    assert datalab.CHECKED_FORMAT.fullmatch(arabic_indic) is None
 
 
 def test_datalab_checked_override_keeps_the_inputs_stamp(tmp_path):

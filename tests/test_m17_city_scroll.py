@@ -341,3 +341,21 @@ def test_phone_charts_are_lazy_in_the_script():
     """city.js hands the phone blocks' charts to the lazy path (drawn once visible)."""
     js = (ROOT / "src/velometer/app/static/js/city.js").read_text(encoding="utf-8")
     assert re.search(r"drawAll\([^;]*lazy:\s*\"\.phone-only\"", js, re.S)
+
+
+def test_road_types_and_over_time_cites_have_their_own_titles(rich_pages):
+    """The road-types block cites the latest snapshot, the over-time block the series: each Cite
+    names what its block shows, so the two titles differ, in both languages."""
+    for lang in PREFIX:
+        road, over, _links = phone_blocks(tree(rich_pages[story_href("berlin", lang)]))
+
+        def titles(block):
+            return [
+                s.all_text().strip()
+                for d in block.find_all(lambda n: n.tag == "details" and "cite" in n.classes)
+                for s in d.children
+                if s.tag == "summary"
+            ]
+
+        (road_title,), (over_title,) = titles(road), titles(over)
+        assert road_title != over_title, (lang, road_title)

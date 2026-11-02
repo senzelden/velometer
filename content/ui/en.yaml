@@ -290,6 +290,7 @@ page.panel.full: Open full page
 page.panel.tiers_over_time: Tier composition over time ({kind})
 page.city.tiers_chart: Tier composition over time, {city} {kind}
 cite.title.tiers: '{city}: tier composition over time, mapped km by tier, {kind}'
+cite.title.tiers_now: '{city}: tier composition now, mapped km by tier, {kind}'
 page.panel.tiers_now: Tiers, mapped km now
 note.no_run: no run
 page.city.flagged_years: Flagged years

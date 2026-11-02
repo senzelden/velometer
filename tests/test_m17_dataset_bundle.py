@@ -93,6 +93,18 @@ def test_bundle_reproducible(public, tmp_path):
     with zipfile.ZipFile(tmp_path / "a" / "velometer-data-0123456.zip") as z:
         assert z.namelist() == sorted(z.namelist())
         assert {i.date_time for i in z.infolist()} == {db.FIXED_TIME}
+        # stored: deflated bytes would depend on the zlib build, not only on the members
+        assert {i.compress_type for i in z.infolist()} == {zipfile.ZIP_STORED}
+
+
+def test_notice_order_is_fixed_not_first_seen():
+    """OSM, then the boundaries, then the population lines, whichever file names them first."""
+    a = csvexport.csv_preamble("c", "t", ["INSEE y (z)"]) + "a\n"
+    b = csvexport.csv_preamble("c", "t", ["INE 2024 (w)", "Eurostat GISCO (x)"]) + "a\n"
+    one, other = db.notices({"a.csv": a, "b.csv": b}), db.notices({"a.csv": b, "b.csv": a})
+    assert one == other
+    assert one[:2] == [csvexport.ATTRIBUTION[2:], csvexport.BOUNDARIES[2:]]
+    assert one[2].startswith("Population: ")
 
 
 def test_zenodo_sheet(public, made):

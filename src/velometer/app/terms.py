@@ -12,8 +12,8 @@ outside the marked words changes, byte for byte, and a page without `<main>` (a 
 returned as it is.
 
 `glossary(terms, sources, lang)` is the methodology's `#terms` section model: each entry's
-explanation rendered as content text is (`code`, `<i lang>` marks) with its `cite` sources
-numbered as the explainer numbers them.
+explanation rendered the way content text is (`code` and `<i lang>` marks), with its `cite`
+sources numbered as the explainer numbers them.
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from markupsafe import Markup, escape
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from velometer import i18n
+from velometer.app.narrative import Numbering
 from velometer.content.models import LANG_TAG, ContentError, Source
 from velometer.i18n import LANGS, Lang
 
@@ -314,9 +315,7 @@ def glossary(terms: list[Term], sources: dict[str, Source], lang: Lang) -> Simpl
     """The `#terms` section: `entries` [(term, explanation Markup)], `cited` [(n, source)] for
     `city/_cited.html`, and its anchor `prefix`. A cited id the source registry lacks renders as
     the content's "missing" note."""
-    from velometer.app.narrative import _Numbering
-
-    num = _Numbering(sources, {}, prefix=CITE_PREFIX, lang=lang)
+    num = Numbering(sources, {}, prefix=CITE_PREFIX, lang=lang)
 
     def explained(text: str) -> Markup:
         # a name in another language, `<span lang="en">…</span>`, stays upright: each part is

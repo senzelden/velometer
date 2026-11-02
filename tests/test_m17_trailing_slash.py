@@ -55,8 +55,9 @@ def _ld_urls(obj) -> list[str]:
     return found
 
 
-def _head_urls(html: str) -> list[str]:
-    """The canonical, the hreflang alternates, og:url and the JSON-LD urls of a page's head."""
+def _own_head_urls(html: str) -> list[str]:
+    """The canonical, the hreflang alternates and og:url of a page's head: the page's own
+    addresses, which are always on the site's origin."""
     head = html.split("</head>", 1)[0]
     urls = []
     for tag in LINK.findall(head):
@@ -65,6 +66,13 @@ def _head_urls(html: str) -> list[str]:
     for tag in META.findall(head):
         if _attr(tag, "property") == "og:url":
             urls.append(_attr(tag, "content"))
+    return urls
+
+
+def _head_urls(html: str) -> list[str]:
+    """`_own_head_urls` and the JSON-LD urls of a page's head (which may name other sites)."""
+    head = html.split("</head>", 1)[0]
+    urls = _own_head_urls(html)
     for raw in LD.findall(head):
         urls += _ld_urls(json.loads(raw))
     return urls
@@ -85,6 +93,13 @@ def _served_file(site: Path, origin: str, url: str) -> Path | None:
     return target if target.is_file() else None
 
 
+def _assert_on_origin(origin: str, urls: list[str], where: str) -> None:
+    """Every one of `urls` is on `origin`: `_assert_served` skips the others, so an address
+    that should be the site's own is checked here first."""
+    off = [u for u in urls if not u.startswith(origin)]
+    assert not off, f"{where}: not on {origin}: {sorted(set(off))[:10]}"
+
+
 def _assert_served(site: Path, origin: str, urls: list[str], where: str) -> int:
     own = [u for u in urls if u.startswith(origin)]
     bad = [u for u in own if _served_file(site, origin, u) is None]
@@ -97,7 +112,9 @@ def test_page_heads_name_served_files(out):
     checked = 0
     for page in sorted(out.rglob("*.html")):
         rel = page.relative_to(out).as_posix()
-        checked += _assert_served(out, ORIGIN, _head_urls(page.read_text(encoding="utf-8")), rel)
+        html = page.read_text(encoding="utf-8")
+        _assert_on_origin(ORIGIN, _own_head_urls(html), rel)
+        checked += _assert_served(out, ORIGIN, _head_urls(html), rel)
     assert checked > 50
 
 
@@ -110,7 +127,17 @@ def test_jsonld_names_city_pages_and_csvs(out):
 
 
 def test_sitemap_names_served_files(out):
+    _assert_on_origin(ORIGIN, _sitemap_urls(out), "sitemap.xml")
     assert _assert_served(out, ORIGIN, _sitemap_urls(out), "sitemap.xml") > 10
+
+
+def test_on_origin_check_refuses_another_origin(out):
+    """Red-proof of `_assert_on_origin`: the same addresses, checked against a wrong origin."""
+    with pytest.raises(AssertionError, match="not on"):
+        _assert_on_origin("https://wrong.example/", _sitemap_urls(out), "sitemap.xml")
+    html = (out / "index.html").read_text(encoding="utf-8")
+    with pytest.raises(AssertionError, match="not on"):
+        _assert_on_origin("https://wrong.example/", _own_head_urls(html), "index.html")
 
 
 def test_llms_txt_links_name_served_files(out):
@@ -130,11 +157,13 @@ def test_dataset_readme_methodology_link_is_served(out, tmp_path):
 
 def test_datalab_sitemap_and_og_url_name_served_files(tmp_path):
     site = _built(tmp_path)
+    _assert_on_origin(DATALAB_ORIGIN, _sitemap_urls(site), "datalab sitemap")
     assert _assert_served(site, DATALAB_ORIGIN, _sitemap_urls(site), "datalab sitemap") >= 4
     checked = 0
     for page in sorted(site.rglob("*.html")):
-        urls = _head_urls(page.read_text(encoding="utf-8"))
-        checked += _assert_served(site, DATALAB_ORIGIN, urls, page.relative_to(site).as_posix())
+        html, rel = page.read_text(encoding="utf-8"), page.relative_to(site).as_posix()
+        _assert_on_origin(DATALAB_ORIGIN, _own_head_urls(html), rel)
+        checked += _assert_served(site, DATALAB_ORIGIN, _head_urls(html), rel)
     assert checked >= 4
 
 

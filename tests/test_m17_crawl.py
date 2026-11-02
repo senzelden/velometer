@@ -311,3 +311,24 @@ def test_llms_txt_omits_doi_lines_without_dois_and_lists_them_with():
     assert "doi.org" not in without
     with_doi = crawl.llms_txt(ORIGIN, cities, {"data": "10.5281/zenodo.1"})
     assert "https://doi.org/10.5281/zenodo.1" in with_doi
+
+
+def test_llms_txt_without_cities_has_no_empty_cities_section():
+    """A heading whose section is left empty is dropped; the other sections stay."""
+    empty = crawl.llms_txt(ORIGIN, [], {})
+    assert "## Cities" not in empty
+    assert "## Method and data" in empty and "## Citation" in empty  # "Cite the page…" stays
+    filled = [line for line in empty.splitlines() if line.strip()]
+    for line, following in zip(filled, [*filled[1:], None], strict=True):
+        if line.startswith("## "):  # every heading left has a line before the next one
+            assert following is not None and not following.startswith("## "), line
+    assert "## Cities" in crawl.llms_txt(ORIGIN, [("Berlin", "/city/berlin")], {})
+
+
+def test_sitemap_prefixes_hold_without_a_fresh_registration():
+    """The namespaces are registered once at import: a sitemap built later still writes the
+    default namespace and the `xhtml` prefix."""
+    xml = crawl.sitemap_xml(ORIGIN, ["/"], {})
+    assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<urlset ')
+    assert f'xmlns="{crawl.SITEMAP_NS}"' in xml and f'xmlns:xhtml="{crawl.XHTML_NS}"' in xml
+    assert "<xhtml:link " in xml and xml.endswith("</urlset>\n")

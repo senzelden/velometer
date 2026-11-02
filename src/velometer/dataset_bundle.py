@@ -63,12 +63,20 @@ def preamble_notices(csvs: dict[str, str]) -> list[str]:
 
 
 def notices(csvs: dict[str, str]) -> list[str]:
-    """The preamble notices verbatim; a file set without the OSM notice is refused (ODbL §4.2)."""
+    """The preamble notices verbatim, in a fixed order whatever file names them first: the OSM
+    notice, the boundary notice, then the population credits and the disclaimers, each sorted. A
+    file set without the OSM or the boundary notice is refused (ODbL §4.2)."""
     found = preamble_notices(csvs)
+    fixed = []
     for label, line in (("OSM", csvexport.ATTRIBUTION), ("boundary", csvexport.BOUNDARIES)):
         if line[2:] not in found:
             raise BundleError(f"the CSV preambles carry no {label} notice; re-export the data")
-    return found
+        fixed.append(line[2:])
+    rest = sorted(
+        (text for text in found if text not in fixed),
+        key=lambda text: (not text.startswith("Population: "), text),
+    )
+    return fixed + rest
 
 
 def credit_lines() -> list[str]:
@@ -135,17 +143,17 @@ def zenodo_sheet(build: dict) -> str:
 
 def _zip_bytes(members: dict[str, bytes]) -> bytes:
     """A zip that depends only on the members: sorted, one fixed time, fixed permissions and
-    creator system, deterministic deflate."""
+    creator system, and stored, not deflated (deflate's bytes depend on the zlib build)."""
     import io
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
         for name in sorted(members):
             info = zipfile.ZipInfo(name, FIXED_TIME)
-            info.compress_type = zipfile.ZIP_DEFLATED
+            info.compress_type = zipfile.ZIP_STORED
             info.create_system = 3
             info.external_attr = 0o644 << 16
-            z.writestr(info, members[name], compresslevel=9)
+            z.writestr(info, members[name])
     return buf.getvalue()
 
 

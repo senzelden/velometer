@@ -17,6 +17,9 @@ from velometer.config import ConfigError
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 XHTML_NS = "http://www.w3.org/1999/xhtml"
+# the sitemap's prefixes, registered once (the registry is process-wide)
+ET.register_namespace("", SITEMAP_NS)
+ET.register_namespace("xhtml", XHTML_NS)
 ODBL_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 REPO = Path(__file__).resolve().parents[3]
 LLMS_TEMPLATE = "content/llms.md"
@@ -71,8 +74,6 @@ def sitemap_xml(
     alternates, which each page of a pair lists alike. `pages` are English routes. A page
     without a `lastmod` entry has no `<lastmod>`. With `languages` False (a single-language
     site) each page is listed once, without alternates."""
-    ET.register_namespace("", SITEMAP_NS)
-    ET.register_namespace("xhtml", XHTML_NS)
     root = ET.Element(f"{{{SITEMAP_NS}}}urlset")
 
     def absolute(route: str) -> str:
@@ -92,9 +93,8 @@ def sitemap_xml(
                     {"rel": "alternate", "hreflang": lang, "href": href},
                 )
     ET.indent(root)
-    return ET.tostring(root, encoding="unicode", xml_declaration=False).join(
-        ['<?xml version="1.0" encoding="UTF-8"?>\n', "\n"]
-    )
+    body = ET.tostring(root, encoding="unicode", xml_declaration=False)
+    return f'<?xml version="1.0" encoding="UTF-8"?>\n{body}\n'
 
 
 def SOURCES_FOR(path: str) -> list[str]:  # noqa: N802 (a lookup table, named as the spec does)
@@ -178,10 +178,22 @@ def llms_txt(
         for k, v in fields.items():
             line = line.replace(f"{{{k}}}", v)
         out.append(line)
-    text = "\n".join(out) + "\n"
+    text = "\n".join(_without_empty_sections(out)) + "\n"
     while "\n\n\n" in text:
         text = text.replace("\n\n\n", "\n\n")
     return text
+
+
+def _without_empty_sections(lines: list[str]) -> list[str]:
+    """`lines` without a `## ` heading whose section has no line left (no cities, say)."""
+    out: list[str] = []
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            rest = next((x for x in lines[i + 1 :] if x.strip()), None)
+            if rest is None or rest.startswith("## "):
+                continue
+        out.append(line)
+    return out
 
 
 def write_crawl_files(

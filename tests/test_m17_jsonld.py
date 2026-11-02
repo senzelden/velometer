@@ -13,6 +13,7 @@ from tests.test_app_base import build_rich
 from tests.test_export import _content
 from tests.test_m17_crawl import ORIGIN, _export, _site_yaml
 from tests.test_m17_datalab_crawl import _built
+from tests.test_m17_home_lead import _home_sentence, _lead, _ranked_names, four, homes  # noqa: F401
 from velometer.app import deploy_check, jsonld
 from velometer.app.main import create_app
 from velometer.config import ConfigError, load_site
@@ -102,10 +103,21 @@ def test_jsonld_matches_visible_text(out_doi, route):
     parts = [p["url"].rstrip("/").rsplit("/", 1)[1] for p in obj["hasPart"]]
     assert ids and parts == ids
     assert len(names) == len(ids)
-    sentence = re.search(r'<span id="home-sentence">(.*?)</span>', html, re.S)
-    if sentence:  # the ends the sentence names are the ends of the Dataset's own order
-        said = _text(sentence.group(1))
-        assert names[0] in said
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_home_sentence_names_both_ends_of_the_dataset_order(homes, lang):  # noqa: F811
+    """The home sentence names the top and the bottom city: the first and the last of the
+    Dataset's own order among the cities with a current value (the ranked ones; the fixture has
+    three, and a fourth city without a current run)."""
+    html = homes[lang]
+    names = [p["name"] for p in _of(html, "Dataset")["spatialCoverage"]]
+    ranked = _ranked_names(html)
+    order = [n for n in names if n in ranked]
+    assert len(order) >= 2 and order == ranked, (order, ranked)
+    sentence = _home_sentence(_lead(html))
+    assert sentence, "no home sentence"
+    assert order[0] in sentence and order[-1] in sentence, (order, sentence)
 
 
 def test_city_dataset_is_part_of_the_collection(out_doi):
@@ -142,7 +154,7 @@ def test_pages_without_structured_data(out_doi):
 def test_no_doi_leaves_out_the_identifier(out_no_doi):
     obj = _of(_read(out_no_doi, "/"), "Dataset")
     assert "identifier" not in obj
-    assert "None" not in _read(out_no_doi, "/") or "doi.org/None" not in _read(out_no_doi, "/")
+    assert "doi.org/None" not in _read(out_no_doi, "/")
 
 
 def test_public_check_requires_dataset_doi(out_doi, out_no_doi):
@@ -237,9 +249,12 @@ def test_shipped_public_config_has_no_dois_yet():
 
 def test_datalab_home_names_velometer_as_its_project(tmp_path):
     out = _built(tmp_path)
-    obj = _ld((out / "index.html").read_text(encoding="utf-8"))
-    (org,) = obj
+    html = (out / "index.html").read_text(encoding="utf-8")
+    (org,) = _ld(html)
     assert org["@type"] == "Organization" and org["name"] == "Zählwerk Berlin Datalab"
+    # one source for the name: the Organization is what the page's og:site_name says
+    site_name = re.search(r'<meta property="og:site_name" content="([^"]*)">', html)
+    assert site_name and unescape(site_name.group(1)) == org["name"]
     assert org["owns"]["name"] == "velometer" and org["owns"]["url"].startswith(
         "https://velometer."
     )

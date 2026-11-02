@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from velometer import datalab
 from velometer.app import export
 from velometer.config import ConfigError, SiteConfig, load_site
 
@@ -70,10 +71,13 @@ def test_citation_url_matches_site():
 
 def test_overlay_values_are_public():
     """No e-mail, no postal address: every value is an https URL or the Datalab's own name,
-    which the Datalab site shows in its base template."""
+    which the Datalab site's base template shows (`datalab.SITE_NAME`)."""
     doc = yaml.safe_load((ROOT / "config" / "site.public.yaml").read_text(encoding="utf-8"))
     datalab_name = doc["datalab"]["name"]
-    assert datalab_name in (ROOT / "sites/datalab/templates/base.html").read_text(encoding="utf-8")
+    assert datalab_name == datalab.SITE_NAME
+    assert "{{ site_name }}" in (ROOT / "sites/datalab/templates/base.html").read_text(
+        encoding="utf-8"
+    )
     values = []
 
     def walk(node):

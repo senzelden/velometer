@@ -894,9 +894,9 @@ def test_a_pullquote_carries_the_language_of_its_source_and_its_gloss_is_english
 
 
 def _para(text):
-    from velometer.app.narrative import _Numbering
+    from velometer.app.narrative import Numbering
 
-    return str(_Numbering({}, {}).paragraph(text))
+    return str(Numbering({}, {}).paragraph(text))
 
 
 def test_content_may_mark_an_inline_quote_with_its_language():

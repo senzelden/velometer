@@ -506,6 +506,9 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
     for needle in (
         "skip link",
         "phone menu",
+        "phone story: Tab walks the scroll to its last link",
+        "phone story: the phone charts are drawn",
+        "phone story: Enter on the last link goes there",
         "city tabs",
         "compare: Escape",
         "sort button",

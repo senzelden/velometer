@@ -281,6 +281,7 @@ page.panel.full: Ganze Seite öffnen
 page.panel.tiers_over_time: Stufen im Zeitverlauf ({kind})
 page.city.tiers_chart: Stufen im Zeitverlauf, {city} {kind}
 cite.title.tiers: '{city}: Stufen im Zeitverlauf, kartierte km je Stufe, {kind}'
+cite.title.tiers_now: '{city}: Stufen heute, kartierte km je Stufe, {kind}'
 page.panel.tiers_now: Stufen, kartierte km heute
 note.no_run: kein Lauf
 page.city.flagged_years: Markierte Jahre

@@ -200,7 +200,7 @@ class RenderedNarrative:
         return [(n, self.sources[n]) for n in nums], [(n, self.refs[n]) for n in refs]
 
 
-class _Numbering:
+class Numbering:
     """First-use numbering of citations over one document. `prefix` starts every citation
     anchor, so documents rendered on one page keep their anchors apart."""
 
@@ -388,7 +388,7 @@ def _route(route: str | None) -> str | None:
     return route if route and route.startswith("/") and not route.startswith("//") else None
 
 
-def _numbered(num: _Numbering, sec: RenderedSection, render, text: str) -> Markup:
+def _numbered(num: Numbering, sec: RenderedSection, render, text: str) -> Markup:
     """`render(text)`, recording the citation numbers it used on the section."""
     before = (len(num.used_sources), len(num.used_refs))
     out = render(text)
@@ -407,13 +407,13 @@ def _build(
     prefix: str = "",
     lang: Lang = "en",
     fallback: frozenset[str] = frozenset(),
-) -> tuple[list[Markup], list[RenderedSection], _Numbering]:
+) -> tuple[list[Markup], list[RenderedSection], Numbering]:
     """Render the intro and the (heading, role, paragraphs[, dimensions]) groups; a group's
     dimension values are rendered (and numbered) before its paragraphs. A quote follows the
     paragraph its `after` indexes (counted over the groups' paragraphs in order, the intro and
     dimension values excluded); one out of range goes to the end of the last group. Group `i` is
     the model's `sections.<i>`: a string whose walk path is in `fallback` renders as English."""
-    num = _Numbering(sources, {d.id: d for d in data_refs}, prefix, lang)
+    num = Numbering(sources, {d.id: d for d in data_refs}, prefix, lang)
     intro_html = [num.paragraph(p, f"intro.{i}" in fallback) for i, p in enumerate(intro)]
     total = sum(len(g[2]) for g in groups)
     after: dict[int, list[Quote]] = {}

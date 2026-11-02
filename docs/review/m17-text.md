@@ -686,3 +686,14 @@ Builder's call, for review: the German tier table still reads "B | Geh- und Radw
 oder getrennt)". It is left as is: v4 still puts a segregated designated sidewalk
 (`B_sidewalk_designated`) in B, so "getrennt" is not false, though segregated standalone paths
 are now A.
+
+## Road-types Cite title (Task 2c)
+
+The phone story's "Road types" block shows the tier composition of the latest snapshot, but its
+Cite reused the "over time" title. It now has its own key, `cite.title.tiers_now`, worded like
+`cite.title.tiers` and `page.panel.tiers_now` ("Tiers, mapped km now" / "Stufen, kartierte km
+heute"):
+
+| key | en | de |
+|---|---|---|
+| `cite.title.tiers_now` | `{city}: tier composition now, mapped km by tier, {kind}` | `{city}: Stufen heute, kartierte km je Stufe, {kind}` |
