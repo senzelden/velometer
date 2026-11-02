@@ -285,7 +285,6 @@ def test_files_are_utf8_with_unix_newlines(facts, tmp_path):
 def test_german_tier_b_names_both_footway_kinds(facts):
     de = render(facts, "de")
     assert "| B | Geh- und Radweg (gemeinsam oder getrennt) |" in de
-    assert "(getrennter Geh- und Radweg) hier als Stufe B" in de
     assert "gemeinsamer Geh- und Radweg" not in de  # Zeichen 240 is the unsegregated kind
 
 

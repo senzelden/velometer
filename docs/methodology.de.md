@@ -21,7 +21,7 @@ Jede Seite erhält eine Stufe oder wird ausgeschlossen:
 | E | Fahrradstraßen und vergleichbare Straßen sowie für den Radverkehr freigegebene Busspuren |
 | `excluded` (ausgeschlossen) | für die Diagnose erfasst, in keiner Kennzahlvariante gezählt |
 
-Die Stufen leiten sich aus der Tag-Logik der ECF-Methode QECIO ab, mit dokumentierten Abweichungen. So gilt ein Geh- und Radweg mit `segregated=yes` (getrennter Geh- und Radweg) hier als Stufe B, während QECIO ihn als Radweg zählt [ADR 0002].
+Die Stufen leiten sich aus der Tag-Logik der ECF-Methode QECIO ab, mit dokumentierten Abweichungen. So zählt QECIO alle Radfahrstreifen als eine Klasse, während hier ein Radfahrstreifen mit baulicher Trennung zum Kfz-Verkehr (`cycleway:right=lane` mit `cycleway:right:separation=kerb`) als Stufe C gilt und einer ohne sie (nur `cycleway:right=lane`) als Stufe D [ADR 0002].
 
 Für jede Seite werden zwei Längen gespeichert. Auf der Basis **`per_side`** zählt jede Straßenseite mit ihrer vollen Länge; eine Straße mit Radwegen auf beiden Seiten zählt also doppelt. Auf der Basis **`qecio_weighted`** zählen Anlagen für nur eine Fahrtrichtung zur Hälfte, wie bei QECIO [ADR 0002]. Längen werden im projizierten Koordinatensystem der jeweiligen Stadt berechnet, nie in Grad.
 

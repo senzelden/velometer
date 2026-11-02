@@ -649,3 +649,40 @@ see it; it stands in the README and the record description only. Whether ODbL da
 GISCO-derived figures can be offered under `odbl-1.0` on Zenodo without that caveat as a licence
 field is reported, not decided (spec section 8). (2) The CSV column glossary is not repeated in the
 README (it points to the methodology page).
+
+## Methodology correction (Task 2c)
+
+The QECIO-difference example in the methodology (section "Tiers", generated from
+`src/velometer/report/templates/methodology.{en,de}.md.j2` into `docs/methodology*.md`, shown on
+`/methodology` and `/de/methodology`) was stale since classifier v4: a designated foot-and-cycle
+path with `segregated=yes` is tier A (`A_segregated`, ADR 0002 M6 amendment, "Divergences
+dropped"), as QECIO counts it. The new example is the divergence ADR 0002 keeps ("QECIO doesn't
+separate buffered from painted lanes", amendment "Kept: C/D"), checked against `v4.yaml`
+(`C_lane_physical`, `D_lane`) by `tests/test_m17_methodology_qecio_example.py`.
+
+Old (en):
+
+> For example, a designated foot-and-cycle path with `segregated=yes` is tier B here, where QECIO
+> counts it as a cycle track [ADR 0002].
+
+New (en):
+
+> For example, QECIO counts all cycle lanes as one class, while here a lane with a physical
+> separation from motor traffic (`cycleway:right=lane` with `cycleway:right:separation=kerb`) is
+> tier C and a lane without one (`cycleway:right=lane` alone) is tier D [ADR 0002].
+
+Old (de):
+
+> So gilt ein Geh- und Radweg mit `segregated=yes` (getrennter Geh- und Radweg) hier als Stufe B,
+> während QECIO ihn als Radweg zählt [ADR 0002].
+
+New (de):
+
+> So zählt QECIO alle Radfahrstreifen als eine Klasse, während hier ein Radfahrstreifen mit
+> baulicher Trennung zum Kfz-Verkehr (`cycleway:right=lane` mit `cycleway:right:separation=kerb`)
+> als Stufe C gilt und einer ohne sie (nur `cycleway:right=lane`) als Stufe D [ADR 0002].
+
+Builder's call, for review: the German tier table still reads "B | Geh- und Radweg (gemeinsam
+oder getrennt)". It is left as is: v4 still puts a segregated designated sidewalk
+(`B_sidewalk_designated`) in B, so "getrennt" is not false, though segregated standalone paths
+are now A.
