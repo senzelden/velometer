@@ -124,14 +124,18 @@ jobs:
         run: |
           # only regular files and directories under data/maps and data/plans may come out of it;
           # `export --public` then refuses if either is missing or empty
+          # the listings are captured first: a tar error (a cut-short archive) stops the step here,
+          # where inside an `if` condition it would pass for a clean listing
           a="$SNAP/velometer-data.tar.gz"
-          if tar -tvzf "$a" | grep -Ev '^[-d]' > /dev/null; then
+          long=$(tar -tvzf "$a")
+          names=$(tar -tzf "$a")
+          if grep -Ev '^[-d]' <<< "$long" > /dev/null; then
             echo "::error::$a holds a link or a special file"; exit 1
           fi
-          if tar -tzf "$a" | grep -Ev '^data/(maps|plans)(/[^/]+)*/?$' > /dev/null; then
+          if grep -Ev '^data/(maps|plans)(/[^/]+)*/?$' <<< "$names" > /dev/null; then
             echo "::error::$a holds a member outside data/maps and data/plans"; exit 1
           fi
-          if tar -tzf "$a" | grep -E '(^|/)\.\.?(/|$)' > /dev/null; then
+          if grep -E '(^|/)\.\.?(/|$)' <<< "$names" > /dev/null; then
             echo "::error::$a holds a . or .. member"; exit 1
           fi
           tar -xzf "$a" --no-same-owner --no-same-permissions
@@ -229,6 +233,12 @@ jobs:
         if: inputs.site == 'datalab' || inputs.site == 'both'
         run: |
           printf 'yes\n' | uv run python tools/server.py deploy datalab "$DATALAB" --host "$HOST" --user ci | tee "$WORK/deploy-datalab.log"
+
+      - name: The ci key out of the agent, before the live checks
+        if: always()
+        run: |
+          # also after a failed deploy, so the summary's `uv run` never runs beside a loaded key
+          if [ -n "${SSH_AUTH_SOCK:-}" ]; then ssh-add -D; fi
 
       - name: Verify the live sites
         run: uv run python tools/server.py verify --domain zaehlwerk-datalab.de

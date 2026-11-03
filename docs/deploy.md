@@ -373,7 +373,12 @@ the approval it:
    `build.json` `tiles` (the sidecar the export reads, `--tiles-info`). After you `deploy tiles`
    a new extract, that check fails until an export naming the new extract is live: deploy
    velometer once from your machine (below). Then the key leaves the agent (`ssh-add -D`)
-   until step 7, so no step in between can reach the server with it;
+   until step 7, so no step in between can use a loaded key. That stops passive use only: code
+   running in such a step (a dependency of the export, the build or Chrome) could still put its
+   own agent at the fixed `SSH_AUTH_SOCK` and receive the key when step 7 adds it, or read the
+   job's secrets from the runner's memory. The barriers against that are the `production`
+   approval, the gate's narrow allowlist (`deploy/ci-gate.py`) and the pinned dependencies
+   (`uv.lock`, the action SHAs);
 3. unzips the database, unpacks the data archive at the repo root only if every member is a
    regular file or directory under `data/maps/` or `data/plans/`, exports velometer with
    `--public` (which refuses when the tier maps or the plan data are missing or empty), runs
@@ -390,7 +395,8 @@ the approval it:
 6. tags the export's commit `export-<first 7 hex>` and pushes the tag (§0; the job's token may
    write contents for this only);
 7. adds the key to the agent again and deploys the chosen sites, `tools/server.py deploy velometer|datalab <dir> --host 2.31.133.185
-   --user ci` with one `yes` piped to the prompt, then runs `verify --domain
+   --user ci` with one `yes` piped to the prompt, drops the key from the agent again (also
+   after a failed deploy), then runs `verify --domain
    zaehlwerk-datalab.de` and a short live pass (velometer `--pages types`, the Datalab
    `--lang de`), held to 0 findings too;
 8. writes the job summary, also when a step failed: the counts of every pass that wrote results

@@ -384,8 +384,12 @@ def test_deploy_permissions_and_concurrency():
 def test_deploy_key_stays_in_the_agent():
     """The one secret, CI_DEPLOY_KEY, reaches only the steps that hand it to ssh-agent on stdin
     (no file holds it), and the agent holds it only for the fetch and for the deploy: it is
-    dropped after the fetch and added again after every pass and the tag, so no step between
-    (export, build, Chrome, the dependencies they load) can reach the server with it."""
+    dropped after the fetch, added again after every pass and the tag, and dropped again after
+    the deploys. So no step in between (export, build, Chrome, the dependencies they load) can
+    use a loaded key. That stops passive use only: code in such a step could still replace the
+    agent at SSH_AUTH_SOCK and so receive the key the re-add hands it, or read the runner's
+    memory. The barriers against that are the approval, the gate's allowlist and the pinned
+    dependencies."""
     job = _deploy_job()
     text = DEPLOY.read_text(encoding="utf-8")
     assert set(re.findall(r"secrets\.[A-Za-z_]+", text)) == {"secrets.CI_DEPLOY_KEY"}
@@ -398,13 +402,20 @@ def test_deploy_key_stays_in_the_agent():
         uses = [c for c in _commands(step["run"]) if "CI_DEPLOY_KEY" in c]
         assert uses and all(c.startswith("test -n ") or to_agent.fullmatch(c) for c in uses)
     fetches = _indices(job, r"(?m)^\s*rsync ")
-    drops = [i for i, run in enumerate(_run_texts(job)) if "ssh-add -D" in _commands(run)]
-    assert drops == [max(fetches)], drops
-    assert _commands(_run_texts(job)[drops[0]])[-1] == "ssh-add -D"  # the fetch's last command
     deploys = _indices(job, r"tools/server\.py deploy ")
+    drops = _indices(job, r"\bssh-add -D\b")
+    assert drops == [max(fetches), max(deploys) + 1], drops
+    assert _commands(_run_texts(job)[drops[0]])[-1] == "ssh-add -D"  # the fetch's last command
+    # the second drop runs whatever the deploys did, before the live checks and the summary
+    after = job["steps"][drops[1]]
+    assert after.get("if") == "always()"
+    assert _commands(after["run"])[-1:] == ['if [ -n "${SSH_AUTH_SOCK:-}" ]; then ssh-add -D; fi']
+    assert drops[1] < min(_indices(job, r"tools/server\.py verify "))
     assert holders[0] < min(fetches) and holders[1] == min(deploys) - 1
-    # nothing between the drop and the re-add adds a key
-    assert not any("ssh-add" in _run_texts(job)[i] for i in range(drops[0] + 1, holders[1]))
+    # nothing between a drop and the next add adds a key, and nothing after the last drop does
+    texts = _run_texts(job)
+    adds = [i for i, t in enumerate(texts) if re.search(r"ssh-add(?! -D)", t)]
+    assert adds == holders, adds
     assert max(_indices(job, r'pass_findings\.py "\$PASSES/all=')) < holders[1]  # the passes
 
 
@@ -529,6 +540,27 @@ def test_deploy_unpacks_only_the_maps_and_the_plan_data(tmp_path, extra):
     else:
         assert r.returncode != 0
         assert not (repo / "data").exists() and not (tmp_path / "evil").exists()
+
+
+def test_deploy_stops_on_a_cut_short_data_archive(tmp_path):
+    """A data archive cut inside its last member makes tar list what came before the cut and
+    then fail. The step stops on that failure before it unpacks anything, links and members
+    outside data/ included."""
+    job = _deploy_job()
+    (i,) = _indices(job, r'tar -xzf "\$a"')
+    snap, repo = tmp_path / "snap", tmp_path / "repo"
+    snap.mkdir()
+    repo.mkdir()
+    extra = {"tools/pass_findings.py": b"evil", "data/maps/l": ("link", "/etc/passwd"),
+             "data/maps/zz.bin": os.urandom(256 * 1024)}  # fmt: skip
+    a = _archive(snap / "velometer-data.tar.gz", GOOD_DATA | extra)
+    a.write_bytes(a.read_bytes()[: a.stat().st_size - 64 * 1024])
+    r = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", _run_texts(job)[i]],
+        cwd=repo, env={**os.environ, "SNAP": str(snap)}, capture_output=True, text=True,
+    )  # fmt: skip
+    assert r.returncode != 0
+    assert not (repo / "tools").exists() and not (repo / "data").exists()
 
 
 def test_deploy_summary_counts_a_failed_pass(tmp_path):
