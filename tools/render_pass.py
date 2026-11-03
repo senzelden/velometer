@@ -476,13 +476,22 @@ def audit(t: Tab) -> list[dict]:
 
 # ---------- the German edition (M12) ----------
 # the alternates of a page and whether each is a file the export holds (fetched from the
-# server that serves the export: a missing page is a 404)
+# server that serves the export: a missing page is a 404). A public export's alternates are
+# absolute, on the site's own origin (`site.url`, M17), which its canonical link names too: those
+# are asked of the server at hand, same path, so a dry run or a preview checks its own files
+# rather than a cross-origin fetch that its CSP (`connect-src 'self'`) refuses.
 ALTERNATES_JS = """
-Promise.all([...document.querySelectorAll('link[rel=alternate]')].map((l) => {
-  const href = l.getAttribute('href');
-  return fetch(href, {method: 'HEAD'}).then((r) => r.ok ? null : href + ' (HTTP ' + r.status + ')',
-                                           (e) => href + ' (' + e + ')');
-})).then((bad) => ({n: bad.length, bad: bad.filter(Boolean)}))
+(() => {
+  const own = document.querySelector('link[rel=canonical]');
+  const home = own ? new URL(own.href, location.href).origin : location.origin;
+  return Promise.all([...document.querySelectorAll('link[rel=alternate]')].map((l) => {
+    const href = l.getAttribute('href');
+    const u = new URL(href, location.href);
+    const at = u.origin === home ? location.origin + u.pathname + u.search : u.href;
+    return fetch(at, {method: 'HEAD'}).then((r) => r.ok ? null : href + ' (HTTP ' + r.status + ')',
+                                            (e) => href + ' (' + e + ')');
+  })).then((bad) => ({n: bad.length, bad: bad.filter(Boolean)}));
+})()
 """
 # the root `lang` of the city panel fragment, once loaded into the page (null: no panel)
 FRAGMENT_LANG_JS = (
