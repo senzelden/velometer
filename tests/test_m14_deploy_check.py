@@ -221,6 +221,8 @@ def test_the_public_values_are_in_build_json(site):
         "accessibility_url": COMPLETE["accessibility_url"],
         "repo_url": COMPLETE["repo"]["url"],
         "repo_file_url": COMPLETE["repo"]["file_url"],
+        "dataset_doi": COMPLETE.get("dataset_doi"),
+        "software_doi": COMPLETE.get("software_doi"),
     }
 
 

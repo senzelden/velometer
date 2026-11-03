@@ -7,10 +7,10 @@
 <meta name="velometer-base" content="{{ base_path }}">
 <meta name="velometer-commit" content="{{ build_commit }}">
 <title>{% block title %}velometer{% endblock %}</title>
-<link rel="alternate" hreflang="en" href="{{ abs_in('en', here) }}">
+{% set canonical = canonical if canonical is defined else abs_in(lang, here) %}{% if canonical %}<link rel="alternate" hreflang="en" href="{{ abs_in('en', here) }}">
 <link rel="alternate" hreflang="de" href="{{ abs_in('de', here) }}">
 <link rel="alternate" hreflang="x-default" href="{{ abs_in('en', here) }}">
-{% set canonical = canonical if canonical is defined else abs_in(lang, here) %}{% if canonical %}<link rel="canonical" href="{{ canonical }}">
+<link rel="canonical" href="{{ canonical }}">
 {% endif %}{# M17 §4.2: a page's description is its `description` block, plain text; the 404 page has
 none, and the OpenGraph tags go with the canonical (og:url is it) -#}
 {% if false %}{% block description %}{% endblock %}{% endif %}{% set description = self.description() | striptags %}{% if description %}<meta name="description" content="{{ description }}">

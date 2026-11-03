@@ -13,7 +13,7 @@ from tests.test_app_base import rich  # noqa: F401  (`rich` is a fixture)
 from tests.test_export import _content
 from velometer.app import crawl, export
 from velometer.app.deploy_check import deploy_problems
-from velometer.app.urls import with_lang
+from velometer.app.urls import PER_LANGUAGE_DATA, with_lang
 from velometer.config import ConfigError
 
 ORIGIN = "https://velometer.example.org/"
@@ -21,7 +21,7 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.or
 REPO = Path(__file__).resolve().parents[1]
 
 
-def _site_yaml(cfg: Path, doi: str | None = None) -> None:
+def _site_yaml(cfg: Path, doi: str | None = None, software_doi: str | None = None) -> None:
     site = {
         "url": ORIGIN,
         "datalab": {"name": "Datalab", "url": "https://datalab.example.org/"},
@@ -35,13 +35,15 @@ def _site_yaml(cfg: Path, doi: str | None = None) -> None:
     }
     if doi:
         site["dataset_doi"] = doi
+    if software_doi:
+        site["software_doi"] = software_doi
     (Path(cfg) / "site.yaml").write_text(yaml.safe_dump(site), encoding="utf-8")
     (Path(cfg) / "site.public.yaml").unlink(missing_ok=True)
 
 
-def _export(rich, tmp_path, monkeypatch, name="out", public=True, doi=None):  # noqa: F811
+def _export(rich, tmp_path, monkeypatch, name="out", public=True, doi=None, software_doi=None):  # noqa: F811
     db_path, cfg, maps, docs, plans = rich
-    _site_yaml(cfg, doi)
+    _site_yaml(cfg, doi, software_doi)
     monkeypatch.setattr(export, "public_commit", lambda: "0123456789abcdef0123456789abcdef01234567")
     monkeypatch.setattr(export, "figures_drift", lambda conn, config_dir: [])
     monkeypatch.setattr(export, "config_drift", lambda config_dir: [])
@@ -107,10 +109,68 @@ def test_robots_rules(public_out):
     assert "Allow: /" in lines
     disallow = [ln.removeprefix("Disallow: ") for ln in lines if ln.startswith("Disallow:")]
     assert disallow == crawl.DISALLOW
+    allow = [ln.removeprefix("Allow: ") for ln in lines if ln.startswith("Allow:")]
+    assert allow == ["/", *crawl.ALLOW]
+    # the specific Allow lines come before the Disallow lines (a first-match crawler sees them)
+    assert max(lines.index(f"Allow: {a}") for a in crawl.ALLOW) < lines.index("Disallow: /data/")
     for path in ("/data/", "/maps/", "/tiles/", "/build.json", "/city/*/panel"):
         assert path in disallow
         assert "/de" + path in disallow
     assert lines[-1] == f"Sitemap: {ORIGIN}sitemap.xml"
+
+
+def _robots_allows(text: str, path: str) -> bool:
+    """Whether the robots.txt `text` lets a crawler fetch `path`, as Google reads it (RFC 9309):
+    the longest matching rule wins, Allow on a tie; `*` is any run, a final `$` the end."""
+    best: tuple[int, bool] = (-1, True)
+    for line in text.splitlines():
+        kind, _, rule = line.partition(": ")
+        if kind not in ("Allow", "Disallow") or not rule:
+            continue
+        pattern = "".join(".*" if ch == "*" else re.escape(ch) for ch in rule.removesuffix("$"))
+        if re.match(pattern + ("$" if rule.endswith("$") else ""), path):
+            best = max(best, (len(rule), kind == "Allow"))
+    return best[1]
+
+
+def test_robots_reader_follows_the_longest_match():
+    """Red-proof of `_robots_allows`."""
+    text = "User-agent: *\nAllow: /\nAllow: /data/a.json\nDisallow: /data/\nDisallow: /x*.csv$\n"
+    assert _robots_allows(text, "/data/a.json") and _robots_allows(text, "/page")
+    assert not _robots_allows(text, "/data/b.json") and not _robots_allows(text, "/x/y.csv")
+    assert _robots_allows(text, "/x/y.csv.gz")
+
+
+def _fetched_data_json() -> set[str]:
+    """Every `/data/….json` path the page scripts fetch: the literals of the shipped scripts
+    (not the vendored ones or the tests), and each one's German twin where the pages name one
+    (`urls.PER_LANGUAGE_DATA`, the files `data_u(path, 'de')` points at)."""
+    static = REPO / "src/velometer/app/static"
+    found = set()
+    for script in static.rglob("*.js"):
+        rel = script.relative_to(static).as_posix()
+        if rel.startswith("vendor/") or "/tests/" in f"/{rel}":
+            continue
+        found |= set(re.findall(r"[\"'`](/data/[^\"'`?#]+\.json)[\"'`]", script.read_text()))
+    return found | {"/de" + p for p in found if p in PER_LANGUAGE_DATA}
+
+
+def test_robots_opens_the_data_the_page_scripts_fetch(public_out):
+    """A renderer (Googlebot's) may fetch the JSON the pages draw their charts and search from;
+    the downloads stay out (the user's decision of 2026-11-03, ruling M3-robots)."""
+    text = (public_out / "robots.txt").read_text()
+    fetched = _fetched_data_json()
+    assert {"/data/series.json", "/data/search.json", "/de/data/search.json"} <= fetched
+    for path in sorted(fetched):
+        assert (public_out / path.lstrip("/")).is_file(), path  # an exported file
+        assert _robots_allows(text, path), path
+    csvs = sorted(public_out.glob("data/*.csv"))
+    assert csvs
+    for csv in csvs:
+        rel = "/" + csv.relative_to(public_out).as_posix()
+        assert not _robots_allows(text, rel) and not _robots_allows(text, "/de" + rel), rel
+    for other in ("/data/other.json", "/maps/berlin_lau.geojson", "/build.json"):
+        assert not _robots_allows(text, other), other
 
 
 def test_robots_text_is_exactly_the_rules():
@@ -227,6 +287,67 @@ def test_every_source_of_a_page_exists():
         assert sources, route
         for source in sources:
             assert (REPO / source).exists(), (route, source)
+
+
+PAGE_ROUTES = ("/", "/cities", "/compare", "/stories", "/differences", "/organisations",
+               "/sources", "/plans", "/plans/berlin", "/methodology")  # fmt: skip
+TEMPLATE_DIR = REPO / crawl.TEMPLATES
+
+
+def _rendered_templates(rich, route: str, monkeypatch) -> set[str]:  # noqa: F811
+    """The repo paths of the templates read while a fresh app renders `route` in both editions
+    (a fresh app per edition: nothing is served from a cache an earlier page filled)."""
+    import builtins
+
+    from fastapi.testclient import TestClient
+
+    from tests.test_app import CONTENT
+    from velometer.app.main import create_app
+
+    seen: set[Path] = set()
+    real_open = builtins.open
+
+    def recording_open(file, *args, **kwargs):
+        if isinstance(file, (str, os.PathLike)):
+            seen.add(Path(file).resolve())
+        return real_open(file, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", recording_open)
+    db_path, cfg, maps, docs, plans = rich
+    for prefix in ("", "/de"):
+        app = create_app(db_path, cfg, maps, docs, content_dir=CONTENT, plans_data_dir=plans)
+        with TestClient(app, base_url="http://127.0.0.1:8000") as c:
+            r = c.get(prefix + route if route != "/" else prefix + "/")
+            assert r.status_code == 200, (prefix, route, r.status_code)
+    return {
+        p.relative_to(REPO).as_posix() for p in seen if p.is_relative_to(TEMPLATE_DIR)
+    }  # fmt: skip
+
+
+def _covered(path: str, sources: list[str]) -> bool:
+    return any(path == s or path.startswith(s.rstrip("/") + "/") for s in sources)
+
+
+@pytest.mark.parametrize("route", PAGE_ROUTES)
+def test_lastmod_sources_hold_every_template_the_page_renders(rich, route, monkeypatch):  # noqa: F811
+    """Every template the page's render reads (its own, the layout, the partials it includes or
+    imports) is among its lastmod sources, found by rendering the page, not from a list; and so
+    is the UI catalogue, whose strings and meta description every page shows (base.html)."""
+    sources = crawl.SOURCES_FOR(route)
+    read = _rendered_templates(rich, route, monkeypatch)
+    assert f"{crawl.TEMPLATES}/base.html" in read
+    missing = sorted(p for p in read if not _covered(p, sources))
+    assert not missing, (route, missing)
+    assert "content/ui" in sources
+
+
+def test_methodology_lastmod_follows_the_glossary_and_the_method_text():
+    """The methodology page renders the glossary (the terms registry), the tier diagrams and the
+    generated method documents: a change to any of them is a change of the page."""
+    sources = crawl.SOURCES_FOR("/methodology")
+    for path in ("content/terms.yaml", f"{crawl.TEMPLATES}/_tier_diagram.html",
+                 "docs/methodology.md", "docs/methodology.de.md", "content/ui"):  # fmt: skip
+        assert path in sources, path
 
 
 def test_sitemap_city_without_subareas(rich, public_out):  # noqa: F811

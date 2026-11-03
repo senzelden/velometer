@@ -20,6 +20,7 @@ from velometer.config import ConfigError, load_site
 
 REPO = Path(__file__).resolve().parents[1]
 DOI = "10.5281/zenodo.1234567"  # a test value, never committed config
+SOFTWARE_DOI = "10.5281/zenodo.7654321"  # the same
 LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
 ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
@@ -54,7 +55,7 @@ def rich(tmp_path_factory):
 @pytest.fixture(scope="module")
 def out_doi(rich, tmp_path_factory):
     with pytest.MonkeyPatch.context() as mp:
-        yield _export(rich, tmp_path_factory.mktemp("doi"), mp, doi=DOI)
+        yield _export(rich, tmp_path_factory.mktemp("doi"), mp, doi=DOI, software_doi=SOFTWARE_DOI)
 
 
 @pytest.fixture(scope="module")
@@ -100,7 +101,7 @@ def test_jsonld_matches_visible_text(out_doi, route):
     table = html.split('<table class="ranking', 1)[1].split("</table>", 1)[0]
     linked = re.findall(r'<td data-label="[^"]*"><a href="([^"]*/city/[a-z0-9_-]+)"', table)
     ids = [u.rsplit("/", 1)[1] for u in linked]
-    parts = [p["url"].rstrip("/").rsplit("/", 1)[1] for p in obj["hasPart"]]
+    parts = [p.rstrip("/").rsplit("/", 1)[1] for p in obj["hasPart"]]
     assert ids and parts == ids
     assert len(names) == len(ids)
 
@@ -124,14 +125,58 @@ def test_city_dataset_is_part_of_the_collection(out_doi):
     html = _read(out_doi, "/city/berlin")
     city = _of(html, "Dataset")
     home = _of(_read(out_doi, "/"), "Dataset")
-    assert city["isPartOf"]["@id"] == home["@id"]
-    assert city["url"] in {p["url"] for p in home["hasPart"]}
+    assert city["isPartOf"] == home["url"]  # a URL, as Google's own example has it
+    assert city["url"] in home["hasPart"]
     assert "Berlin" in _text(html) and city["spatialCoverage"]["name"] == "Berlin"
     assert 50 <= len(city["description"]) <= 5000
     assert city["license"] == ODBL
     assert (out_doi / city["distribution"][0]["contentUrl"].removeprefix(ORIGIN)).is_file()
     assert "identifier" not in city  # the DOI is the collection's
     assert _of(_read(out_doi, "/de/city/berlin"), "Dataset")["inLanguage"] == "de"
+
+
+def _typed(obj, kind: str) -> list[dict]:
+    """Every object of `@type` `kind` in a JSON-LD value, nested ones included."""
+    found = []
+    if isinstance(obj, dict):
+        if obj.get("@type") == kind:
+            found.append(obj)
+        for v in obj.values():
+            found += _typed(v, kind)
+    elif isinstance(obj, list):
+        for v in obj:
+            found += _typed(v, kind)
+    return found
+
+
+DATASET_PAGES = ["/", "/de/", "/city/berlin", "/de/city/berlin"]
+
+
+@pytest.mark.parametrize("route", DATASET_PAGES)
+def test_every_dataset_in_the_graph_is_complete(out_doi, route):
+    """Google validates every `Dataset` in the graph, nested ones too, and requires `name` and a
+    50-5000-character `description` of each: no nested object may be a bare `Dataset`."""
+    datasets = [d for o in _ld(_read(out_doi, route)) for d in _typed(o, "Dataset")]
+    assert datasets
+    for d in datasets:
+        assert isinstance(d.get("name"), str) and d["name"], d
+        assert isinstance(d.get("description"), str), d
+        assert 50 <= len(d["description"]) <= 5000, d
+
+
+def test_every_dataset_check_sees_a_nested_one():
+    """Red-proof of `_typed`: a bare `Dataset` nested in a list is found."""
+    graph = {"@type": "Dataset", "name": "n", "hasPart": [{"@type": "Dataset", "url": "u"}]}
+    assert [d.get("name") for d in _typed(graph, "Dataset")] == ["n", None]
+
+
+@pytest.mark.parametrize("route", DATASET_PAGES)
+def test_dataset_description_is_visible_text(out_doi, route):
+    """The description is text the page shows (spec §3: markup matches the visible text), not a
+    meta description, which no reader sees (`meta.index`; a city's own short `description`)."""
+    html = _read(out_doi, route)
+    obj = _of(html, "Dataset")
+    assert obj["description"] in _text(html), obj["description"]
 
 
 def test_website_and_methodology_article(out_doi):
@@ -164,6 +209,58 @@ def test_public_check_requires_dataset_doi(out_doi, out_no_doi):
     assert [p for p in problems if "JSON-LD" in p] == ["JSON-LD identifier: no dataset DOI"]
     clean = deploy_check.deploy_problems(out_doi, None, public=True)
     assert not [p for p in clean if "JSON-LD" in p], clean
+
+
+def test_configured_dois_reach_llms_txt_and_build_json(out_doi, out_no_doi):
+    """The site config's DOIs are the export's: llms.txt lists both (spec §4.1) and build.json
+    records them, which deploy-check holds the page to; unset, neither names one."""
+    llms = (out_doi / "llms.txt").read_text(encoding="utf-8")
+    assert f"- Dataset: https://doi.org/{DOI}" in llms.splitlines()
+    assert f"- Software: https://doi.org/{SOFTWARE_DOI}" in llms.splitlines()
+    site = json.loads((out_doi / "build.json").read_text(encoding="utf-8"))["site"]
+    assert (site["dataset_doi"], site["software_doi"]) == (DOI, SOFTWARE_DOI)
+    assert "doi.org" not in (out_no_doi / "llms.txt").read_text(encoding="utf-8")
+    bare = json.loads((out_no_doi / "build.json").read_text(encoding="utf-8"))["site"]
+    assert bare["dataset_doi"] is None and bare["software_doi"] is None
+
+
+def _edited(out: Path, tmp_path: Path, name: str, old: str, new: str) -> Path:
+    """A copy of the export with `old` replaced by `new` in the file `name` (its .gz dropped)."""
+    import shutil
+
+    copy = tmp_path / "copy"
+    shutil.copytree(out, copy)
+    path = copy / name
+    text = path.read_text(encoding="utf-8")
+    assert old in text
+    path.write_text(text.replace(old, new), encoding="utf-8")
+    for gz in copy.rglob("*.gz"):
+        gz.unlink()
+    return copy
+
+
+def test_public_check_holds_the_identifier_to_the_build_doi(out_doi, tmp_path):
+    """An identifier other than build.json's dataset DOI is refused (a page edited after the
+    export): presence alone is not enough."""
+    other = "10.5281/zenodo.1111111"
+    copy = _edited(out_doi, tmp_path, "index.html", f"doi.org/{DOI}", f"doi.org/{other}")
+    problems = [p for p in deploy_check.deploy_problems(copy, None, public=True) if "DOI" in p]
+    assert problems == [
+        f"JSON-LD identifier 'https://doi.org/{other}' is not the build's dataset DOI "
+        f"https://doi.org/{DOI}"
+    ]
+
+
+def test_public_check_refuses_a_build_doi_that_is_no_zenodo_doi(out_doi, tmp_path):
+    copy = _edited(out_doi, tmp_path, "build.json", f'"{DOI}"', '"10.1234/x"')
+    problems = deploy_check.deploy_problems(copy, None, public=True)
+    assert any("records no Zenodo dataset DOI" in p for p in problems), problems
+
+
+def test_public_check_refuses_llms_txt_without_the_doi(out_doi, tmp_path):
+    copy = _edited(out_doi, tmp_path, "llms.txt", f"- Dataset: https://doi.org/{DOI}\n", "")
+    problems = deploy_check.deploy_problems(copy, None, public=True)
+    assert f"llms.txt does not name the dataset DOI https://doi.org/{DOI}" in problems
 
 
 def test_public_check_refuses_a_home_page_without_the_dataset(out_doi, tmp_path):

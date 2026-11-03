@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from velometer.app.urls import LEGACY_DE, absolute_url, with_lang
+from velometer.app.urls import DE_PREFIX, LEGACY_DE, PER_LANGUAGE_DATA, absolute_url, with_lang
 from velometer.config import ConfigError
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -26,11 +26,19 @@ LLMS_TEMPLATE = "content/llms.md"
 # the paths no crawler needs (§2.1), in both editions; `*` is understood by the major crawlers
 NON_INDEX = ("/data/", "/maps/", "/tiles/", "/build.json", "/city/*/panel")
 DISALLOW = [*NON_INDEX, *("/de" + p for p in NON_INDEX)]
+# the data the page scripts fetch to draw the charts and the search (data.js, search.js): open to
+# crawlers so a renderer (Googlebot's) draws the pages as a reader sees them; the downloads stay
+# disallowed (the user's decision of 2026-11-03, ruling M3-robots)
+RENDER_DATA = ("/data/series.json", "/data/search.json")
+ALLOW = [*RENDER_DATA, *(DE_PREFIX + p for p in RENDER_DATA if p in PER_LANGUAGE_DATA)]
 _NOT_PAGES = ("/data/", "/maps/", "/static/", "/tiles/")
 TEMPLATES = "src/velometer/app/templates"
-# routes of the pages without a city: the files that render each (a template and its content)
+# every page renders base.html's strings and its meta description from the UI catalogue
+UI = "content/ui"
+# routes of the pages without a city: the templates that render each (with every template they
+# extend, include or import, found by SOURCES_FOR) and their own content
 _PAGE_SOURCES = {
-    "/": ["index.html", "content/ui", "content/explainer.yaml"],
+    "/": ["index.html", "content/explainer.yaml"],
     "/cities": ["cities.html"],
     "/compare": ["compare.html", "content/explainer.yaml", "content/de/explainer.yaml"],
     "/stories": ["stories.html", "content/narratives"],
@@ -38,8 +46,11 @@ _PAGE_SOURCES = {
     "/organisations": ["organisations.html", "content/organisations"],
     "/sources": ["sources.html", "content/sources"],
     "/plans": ["plans.html", "plans_berlin.html", "content/plans"],
-    "/methodology": ["methodology.html", "docs/methodology.md", "docs/methodology.de.md"],
-}
+    # the glossary is the terms registry; the method text is the generated documents
+    "/methodology": [
+        "methodology.html", "docs/methodology.md", "docs/methodology.de.md", "content/terms.yaml",
+    ],
+}  # fmt: skip
 
 
 def indexable(urls: list[str]) -> list[str]:
@@ -54,8 +65,11 @@ def indexable(urls: list[str]) -> list[str]:
     return sorted(pages)
 
 
-def robots_txt(origin: str, disallow: list[str]) -> str:
-    rules = "".join(f"Disallow: {path}\n" for path in disallow)
+def robots_txt(origin: str, disallow: list[str], allow: list[str] | None = None) -> str:
+    """One group for every crawler. An `allow` path inside a disallowed one is open: it is the
+    longer match (RFC 9309), and it comes first for a crawler that takes the first match."""
+    rules = "".join(f"Allow: {path}\n" for path in allow or [])
+    rules += "".join(f"Disallow: {path}\n" for path in disallow)
     return (
         "# AI crawlers are welcome on purpose: no group names a bot.\n"
         f"User-agent: *\nAllow: /\n{rules}\nSitemap: {origin}sitemap.xml\n"
@@ -98,13 +112,33 @@ def sitemap_xml(
 
 
 def SOURCES_FOR(path: str) -> list[str]:  # noqa: N802 (a lookup table, named as the spec does)
-    """The repo files that render a page without a city: its template and its content. An unknown
-    page gets every template (its date is then the latest template change)."""
+    """The repo files that render a page without a city: its templates (each with the templates
+    it extends, includes or imports), the UI catalogue and its content. An unknown page gets
+    every template (its date is then the latest template change)."""
     route = "/plans" if path.startswith("/plans/") else path
     names = _PAGE_SOURCES.get(route)
     if names is None:
         return [TEMPLATES]
-    return [n if "/" in n else f"{TEMPLATES}/{n}" for n in names]
+    templates = _with_referenced([n for n in names if "/" not in n])
+    return [*(f"{TEMPLATES}/{n}" for n in templates), UI, *(n for n in names if "/" in n)]
+
+
+def _with_referenced(names: list[str]) -> list[str]:
+    """`names` and every template they reference (`extends`, `include`, `import`, `from`),
+    transitively, sorted; a reference by a variable cannot be followed and is left out."""
+    from jinja2 import Environment, FileSystemLoader, meta
+
+    env = Environment(loader=FileSystemLoader(REPO / TEMPLATES), autoescape=True)
+    found: set[str] = set()
+    todo = list(names)
+    while todo:
+        name = todo.pop()
+        if name in found:
+            continue
+        found.add(name)
+        source = (REPO / TEMPLATES / name).read_text(encoding="utf-8")
+        todo += [n for n in meta.find_referenced_templates(env.parse(source)) if n]
+    return sorted(found)
 
 
 def _city_date(build: dict, city: str) -> str | None:
@@ -196,6 +230,16 @@ def _without_empty_sections(lines: list[str]) -> list[str]:
     return out
 
 
+# the DOIs of build.json `site` that llms.txt names, with the label of each line
+DOI_LABELS = {"dataset_doi": "Dataset", "software_doi": "Software"}
+
+
+def dois_of(values: dict) -> dict[str, str]:
+    """The DOIs set among a build's site values (`SiteConfig.public_values`), by their llms.txt
+    label; an unset one is left out."""
+    return {label: values[key] for key, label in DOI_LABELS.items() if values.get(key)}
+
+
 def write_crawl_files(
     site: Path,
     origin: str | None,
@@ -214,7 +258,7 @@ def write_crawl_files(
     pages = indexable(urls)
     lastmod = {p: lastmod_for(p, build, repo) for p in pages}
     names = names or {}
-    (site / "robots.txt").write_text(robots_txt(origin, DISALLOW), encoding="utf-8")
+    (site / "robots.txt").write_text(robots_txt(origin, DISALLOW, ALLOW), encoding="utf-8")
     (site / "sitemap.xml").write_text(sitemap_xml(origin, pages, lastmod, base), encoding="utf-8")
     ids = sorted(build.get("osm_timestamps", {}))
     cities = [(names.get(i, i), f"/city/{i}") for i in ids]

@@ -1224,7 +1224,9 @@ def create_app(
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
         site = app.state.site
-        ld = structured(lambda: [jsonld.city(ctx["city"], data, site, lang, description)]) \
+        # the Dataset says what the page shows: the dek, not the hidden meta description
+        shown = meta.dataset_description(nar.dek if nar else None, description)
+        ld = structured(lambda: [jsonld.city(ctx["city"], data, site, lang, shown)]) \
             if tab == "story" else []  # fmt: skip
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,

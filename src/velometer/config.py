@@ -998,7 +998,8 @@ class SiteConfig(_Strict):
 
     def public_values(self) -> dict[str, str | None]:
         """The values a public export needs, as `build.json` records them (M14; the repo and the
-        accessibility statement M16)."""
+        accessibility statement M16; the DOIs M17, which llms.txt names and deploy-check holds
+        the JSON-LD identifier to)."""
         return {
             "url": self.url,
             "datalab_name": self.datalab.name if self.datalab else None,
@@ -1008,6 +1009,8 @@ class SiteConfig(_Strict):
             "accessibility_url": self.accessibility_url,
             "repo_url": self.repo.url if self.repo else None,
             "repo_file_url": self.repo.file_url if self.repo else None,
+            "dataset_doi": self.dataset_doi,
+            "software_doi": self.software_doi,
         }
 
 

@@ -35,6 +35,17 @@ def _own(text: object) -> str:
     return "" if getattr(text, "fallback", False) else plain(text or "")
 
 
+DATASET_MAX = 5000  # Google's Dataset `description`: 50 to 5000 characters
+
+
+def dataset_description(dek: object, fallback: str) -> str:
+    """A city `Dataset`'s description in its JSON-LD: the dek the story page shows, which the
+    markup must match (Google's rule, spec §3), when it is its page's own and 50 to 5000
+    characters; else `fallback`, the page's meta description."""
+    text = _own(dek)
+    return text if MIN <= len(text) <= DATASET_MAX else fallback
+
+
 def city_description(
     lang: str, tab: str, city: str, dek: object, value: str | None, description: object = None
 ) -> str:

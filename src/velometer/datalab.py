@@ -324,7 +324,7 @@ def crawl_files(domain: str, llms: str) -> dict[str, str]:
 
     origin = f"https://{domain}/"
     return {
-        "robots.txt": robots_txt(origin, []),
+        "robots.txt": robots_txt(origin, ["/build.json"]),  # the stamp is no page (§2.1)
         "sitemap.xml": sitemap_xml(origin, page_routes(), {}, languages=False),
         "llms.txt": llms,
     }

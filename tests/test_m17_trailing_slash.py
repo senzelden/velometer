@@ -25,6 +25,7 @@ LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
 LINK = re.compile(r"<link [^>]*>")
 META = re.compile(r"<meta [^>]*>")
 LD_URL_KEYS = ("url", "@id", "contentUrl")
+LD_URL_LIST_KEYS = ("hasPart", "isPartOf")  # a page URL, or a list of them (Google's URL form)
 DATALAB_ORIGIN = "https://example.org/"
 
 
@@ -41,12 +42,16 @@ def _attr(tag: str, name: str) -> str | None:
 
 
 def _ld_urls(obj) -> list[str]:
-    """Every url-valued field (`url`, `@id`, `contentUrl`) of a JSON-LD object, nested ones too."""
+    """Every url-valued field (`url`, `@id`, `contentUrl`, and `hasPart`/`isPartOf` given as
+    URLs) of a JSON-LD object, nested ones too."""
     found = []
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if k in LD_URL_KEYS and isinstance(v, str):
+            if k in (*LD_URL_KEYS, *LD_URL_LIST_KEYS) and isinstance(v, str):
                 found.append(v)
+            elif k in LD_URL_LIST_KEYS and isinstance(v, list):
+                found += [x for x in v if isinstance(x, str)]
+                found += _ld_urls([x for x in v if not isinstance(x, str)])
             else:
                 found += _ld_urls(v)
     elif isinstance(obj, list):

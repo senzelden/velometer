@@ -58,11 +58,14 @@ def test_datalab_sitemap_has_no_lastmod_and_no_alternates(tmp_path):
 
 
 def test_datalab_robots_points_to_sitemap(tmp_path):
-    text = (_built(tmp_path) / "robots.txt").read_text(encoding="utf-8")
-    lines = text.splitlines()
+    """robots.txt names the sitemap and keeps out the build stamp, which is no page (spec §2.1),
+    and nothing else: every page stays open."""
+    out = _built(tmp_path)
+    lines = (out / "robots.txt").read_text(encoding="utf-8").splitlines()
     assert "User-agent: *" in lines and "Allow: /" in lines
     assert "Sitemap: https://example.org/sitemap.xml" in lines
-    assert not any(line.startswith("Disallow") for line in lines)
+    assert (out / "build.json").is_file()
+    assert [line for line in lines if line.startswith("Disallow")] == ["Disallow: /build.json"]
 
 
 def test_datalab_llms_txt_is_facts_from_the_site(tmp_path):

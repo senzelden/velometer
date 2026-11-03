@@ -834,7 +834,8 @@ def _run_export(
     try:
         _write_site(site, app, urls, build, rendered)
         origin = (build.get("site") or {}).get("url") if public else None
-        crawl.write_crawl_files(site, origin, urls, build, names=names)
+        dois = crawl.dois_of(build.get("site") or {})  # the configured DOIs (spec §4.1)
+        crawl.write_crawl_files(site, origin, urls, build, names=names, dois=dois)
         (site / HEADERS_FILE).write_text(headers_text(build["base"], csp_meta(CSP)))
         write_gz(site)
         big = oversized(site, MAX_FILE_BYTES)

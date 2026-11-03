@@ -13,6 +13,7 @@ from markupsafe import escape
 from velometer.app import crawl, export, jsonld
 from velometer.app.repo_links import bare_repo_paths, is_bare_name
 from velometer.app.urls import absolute_url, normalise_base, with_lang
+from velometer.config import ZENODO_DOI
 
 _META_CSP = re.compile(r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"')
 
@@ -213,17 +214,33 @@ def _crawl_problems(out: Path, build: dict) -> list[str]:
 _LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
 
 
-def _jsonld_problems(out: Path) -> list[str]:
+def _jsonld_problems(out: Path, build: dict) -> list[str]:
     """The home page's structured data names the dataset's DOI (M17 §6): the collection's
     `Dataset` has an `identifier`, which the export leaves out while `site.dataset_doi` is unset.
-    A home page with no collection `Dataset` fails the same way."""
+    A home page with no collection `Dataset` fails the same way. The identifier is the DOI the
+    build recorded (`build.json` `site.dataset_doi`, a Zenodo DOI), and llms.txt names it too: a
+    page edited after the export, or an export of a hand-edited value, is refused."""
     home = out / "index.html"
     text = home.read_text(encoding="utf-8") if home.is_file() else ""
+    found = None
     for raw in _LD.findall(text):
         obj = json.loads(raw)  # an unparseable one is already refused by the reference scan
         if isinstance(obj, dict) and obj.get("@type") == "Dataset" and obj.get("identifier"):
-            return []
-    return [jsonld.MISSING_DOI]
+            found = obj["identifier"]
+            break
+    if found is None:
+        return [jsonld.MISSING_DOI]
+    doi = (build.get("site") or {}).get("dataset_doi")
+    if not isinstance(doi, str) or not re.fullmatch(ZENODO_DOI, doi):
+        return [f"{export.BUILD_FILE} records no Zenodo dataset DOI (site.dataset_doi: {doi!r})"]
+    want = f"https://doi.org/{doi}"
+    problems = []
+    if found != want:
+        problems.append(f"JSON-LD identifier {found!r} is not the build's dataset DOI {want}")
+    llms = out / "llms.txt"
+    if llms.is_file() and want not in llms.read_text(encoding="utf-8"):
+        problems.append(f"llms.txt does not name the dataset DOI {want}")
+    return problems
 
 
 def _public_problems(out: Path, build: dict) -> list[str]:
@@ -257,7 +274,7 @@ def _public_problems(out: Path, build: dict) -> list[str]:
         )
     problems += _methodology_problems(out, site["repo_url"])
     problems += _crawl_problems(out, build)
-    problems += _jsonld_problems(out)
+    problems += _jsonld_problems(out, build)
     return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 

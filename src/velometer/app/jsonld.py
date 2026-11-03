@@ -2,9 +2,14 @@
 and one per city (story page), a `WebSite`, and a `TechArticle` for the methodology.
 
 Each object says only what the page shows (Google's rule): the cities are the ones in the
-ranking, the description is the page's own meta description, the dates are the OSM snapshots of
-the exported runs. The dataset's `identifier` is its Zenodo concept DOI; without one (`dataset_doi`
-unset in the site config) it is left out, and `deploy-check --public` refuses the export.
+ranking, the description is text the page shows (the home lead's first sentences, a city's dek),
+the dates are the OSM snapshots of the exported runs. A nested object is never an incomplete
+`Dataset` (Google validates every `Dataset` in the graph and requires its `name` and
+`description`): the collection and a city name each other by page URL (`hasPart`, `isPartOf`,
+which Google accepts as URLs), and the sources are `CreativeWork`s.
+
+The dataset's `identifier` is its Zenodo concept DOI; without one (`dataset_doi` unset in the
+site config) it is left out, and `deploy-check --public` refuses the export.
 """
 
 import json
@@ -67,7 +72,7 @@ def based_on(data) -> list[dict]:
         for name, domain in hosts.items():
             if name not in urls and (host == domain or host.endswith("." + domain)):
                 urls[name] = _origin(override.source_url)
-    return [{"@type": "Dataset", "name": name, "url": url} for name, url in urls.items()]
+    return [{"@type": "CreativeWork", "name": name, "url": url} for name, url in urls.items()]
 
 
 def _dates(data, city_id: str | None = None) -> str:
@@ -86,7 +91,7 @@ def collection(data, site: SiteConfig, lang: str, ranked: Iterable | None = None
         "@type": "Dataset",
         "@id": _url(site, lang, "/") + "#dataset",
         "name": meta.plain(i18n.t(lang, "page.index.h1", n=len(cities))),
-        "description": meta.plain(i18n.t(lang, "meta.index", n=len(cities))),
+        "description": meta.plain(i18n.t(lang, "page.index.lead.what", n=len(cities))),
         "url": _url(site, lang, "/"),
         "inLanguage": lang,
         "creator": CREATOR,
@@ -102,7 +107,7 @@ def collection(data, site: SiteConfig, lang: str, ranked: Iterable | None = None
             }
         ],
         "isBasedOn": based_on(data),
-        "hasPart": [{"@type": "Dataset", "url": _url(site, lang, f"/city/{c.id}")} for c in order],
+        "hasPart": [_url(site, lang, f"/city/{c.id}") for c in order],
     }
     if site.dataset_doi:
         obj["identifier"] = f"https://doi.org/{site.dataset_doi}"
@@ -110,8 +115,8 @@ def collection(data, site: SiteConfig, lang: str, ranked: Iterable | None = None
 
 
 def city(city, data, site: SiteConfig, lang: str, description: str | None = None) -> dict:
-    """The `Dataset` of one city: its CSV, part of the collection. `description` is the page's
-    meta description (the dek, else the `meta.city_plain` sentence)."""
+    """The `Dataset` of one city: its CSV, part of the collection. `description` is the dek the
+    page shows (else its meta description; default the `meta.city_plain` sentence)."""
     text = description or meta.plain(i18n.t(lang, "meta.city_plain", city=city.name))
     return {
         "@type": "Dataset",
@@ -133,7 +138,7 @@ def city(city, data, site: SiteConfig, lang: str, description: str | None = None
             }
         ],
         "isBasedOn": based_on(data),
-        "isPartOf": {"@type": "Dataset", "@id": _url(site, lang, "/") + "#dataset"},
+        "isPartOf": _url(site, lang, "/"),
     }
 
 

@@ -80,11 +80,16 @@ def test_canonical_self(rich):  # noqa: F811
     assert checked > 10
 
 
-def test_not_found_page_has_no_canonical(rich):  # noqa: F811
+@pytest.mark.parametrize("path", ["/no-such-page", "/de/no-such-page"])
+def test_not_found_page_has_no_canonical_and_no_alternates(rich, path):  # noqa: F811
+    """The 404 page is no page of the site: no canonical, and no hreflang alternates, which
+    would name pages that do not name it back (alternates are reciprocal)."""
     with TestClient(_app(rich, ORIGIN), base_url=BASE_URL) as c:
-        r = c.get("/no-such-page")
+        r = c.get(path)
     assert r.status_code == 404
-    assert _head_links(r.text, "canonical") == {}
+    head = r.text.split("</head>", 1)[0]
+    assert _head_links(head, "canonical") == {}
+    assert "hreflang" not in head
 
 
 @pytest.mark.parametrize("public", [True, False])
