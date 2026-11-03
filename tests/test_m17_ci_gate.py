@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from tests.helpers import ROOT, load_script
@@ -193,7 +194,9 @@ def test_known_hosts_pins_one_ed25519_host_key():
     lines = [x for x in text.splitlines() if x.strip() and not x.startswith("#")]
     assert len(lines) == 1, lines
     host, kind, key = lines[0].split()
-    assert host == "2.31.133.185" and kind == "ssh-ed25519"
+    # the line names the one host CD connects to (deploy.yml `HOST`), ruling T9-h
+    deploy = yaml.safe_load((ROOT / ".github/workflows/deploy.yml").read_text(encoding="utf-8"))
+    assert host == deploy["env"]["HOST"] and kind == "ssh-ed25519"
     blob = base64.b64decode(key, validate=True)
     assert blob[:15] == b"\x00\x00\x00\x0bssh-ed25519" and len(blob) == 51
 

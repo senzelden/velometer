@@ -431,9 +431,11 @@ def test_deploy_pins_the_host_key():
     assert known and re.search(rf"deploy/known_hosts {re.escape(known.group(1))}\b", run)
     text = DEPLOY.read_text(encoding="utf-8")
     assert not re.search(r"StrictHostKeyChecking[ =](no|accept-new|off)|ssh-keyscan", text)
+    # the host CD connects to is the host the pinned line names (not a literal: a server move
+    # changes both files, and forgetting either fails here)
     host = _load(DEPLOY)["env"]["HOST"]
     line = (ROOT / "deploy" / "known_hosts").read_text(encoding="utf-8").split()[0]
-    assert host == line == "2.31.133.185"
+    assert host and host == line
 
 
 def test_deploy_reads_only_what_the_gate_admits(tmp_path):
@@ -636,3 +638,39 @@ def test_the_dry_run_can_serve_a_given_caddy_binary(tmp_path, capsys):
         dr.main(["--site", str(site), "--server", "caddy", "--datalab", str(site),
                  "--caddy-bin", str(tmp_path / "none")])  # fmt: skip
     assert "--caddy-bin needs an existing file" in capsys.readouterr().err
+
+
+# --- the deploy guide's commands run as written ------------------------------------------------
+
+GUIDE = ROOT / "docs" / "deploy.md"
+FENCE = re.compile(r"^( *)```(\w*)\n(.*?)^\1```", re.MULTILINE | re.DOTALL)
+NOT_SHELL = {"caddy"}  # the lock texts of /etc/caddy/lock.caddy, not commands
+PLACEHOLDER = re.compile(r"<[A-Za-z][\w .-]*>")  # `<dir>`, `<ci.pub>`: bash reads a redirect
+
+
+def _shell_blocks(text: str) -> list[str]:
+    return [body for _, lang, body in FENCE.findall(text) if lang not in NOT_SHELL]
+
+
+def test_deploy_guide_shell_blocks_have_no_placeholders():
+    """Every shell block of docs/deploy.md runs as written once the guide's variables are set:
+    no `<word>` placeholder (bash parses `<ci.pub>` as a redirect) and no `[--option]`
+    notation."""
+    blocks = _shell_blocks(GUIDE.read_text(encoding="utf-8"))
+    assert len(blocks) >= 8
+    for body in blocks:
+        assert not PLACEHOLDER.findall(body), body
+        assert "[--" not in body, body
+
+
+def test_placeholder_check_sees_the_old_forms():
+    """Red-proof of the check above, on the forms the guide once had."""
+    old = "x\n   ```\n   server.py setup --ci-key <ci.pub>\n   ```\n```caddy\n<bcrypt hash>\n```\n"
+    (body,) = _shell_blocks(old)
+    assert PLACEHOLDER.findall(body) == ["<ci.pub>"]
+    assert not PLACEHOLDER.findall("ssh-keygen -y -f <(pass velometer/ci-deploy-key) > ~/ci.pub")
+
+
+def test_deploy_guide_reads_as_instructions_not_history():
+    """The operator guide names no internal fix round (final review M9)."""
+    assert "fix round" not in GUIDE.read_text(encoding="utf-8")

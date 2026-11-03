@@ -285,6 +285,15 @@ def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def file_sha256(path: Path) -> str:
+    """The sha256 of the file at `path`, read in 1 MiB chunks (a snapshot is gigabytes)."""
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def check_host(host: str) -> str:
     """An IPv4 or IPv6 address or a hostname; anything else (a leading `-` that ssh or rsync would
     read as an option, a `user@`, spaces) stops the step (final review M2)."""
@@ -1073,11 +1082,7 @@ def make_snapshot(db: Path, out_dir: Path) -> tuple[Path, str]:
                     gz.write(chunk)
     except OSError as e:
         raise ServerError(f"snapshot of {db}: {e}") from None
-    digest = hashlib.sha256()
-    with out.open("rb") as f:
-        while chunk := f.read(1 << 20):
-            digest.update(chunk)
-    return out, digest.hexdigest()
+    return out, file_sha256(out)
 
 
 def make_data_archive(data: Path, out_dir: Path) -> tuple[Path, str]:
@@ -1122,11 +1127,7 @@ def make_data_archive(data: Path, out_dir: Path) -> tuple[Path, str]:
                             tar.addfile(info(path, arcname), f)
     except OSError as e:
         raise ServerError(f"archive of {data}: {e}") from None
-    digest = hashlib.sha256()
-    with out.open("rb") as f:
-        while chunk := f.read(1 << 20):
-            digest.update(chunk)
-    return out, digest.hexdigest()
+    return out, file_sha256(out)
 
 
 @app.command()

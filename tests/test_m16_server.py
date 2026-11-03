@@ -2073,6 +2073,26 @@ def test_snapshot_is_the_same_file_for_the_same_database(tmp_path, fixture_db):
     assert srv.make_snapshot(fixture_db, a)[1] == srv.make_snapshot(fixture_db, b)[1]
 
 
+def test_file_sha256_reads_the_whole_file_in_chunks(tmp_path):
+    """The one digest helper of the snapshot and the data archive: a file over one chunk (1 MiB)
+    has the digest of all its bytes."""
+    import hashlib
+
+    path = tmp_path / "big"
+    path.write_bytes(b"x" * ((1 << 20) + 7))
+    assert srv.file_sha256(path) == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_snapshot_and_archive_report_their_files_digest(tmp_path, fixture_db, fixture_data):
+    out = tmp_path / "out"
+    out.mkdir()
+    for path, digest in (
+        srv.make_snapshot(fixture_db, out),
+        srv.make_data_archive(fixture_data, out),
+    ):
+        assert digest == srv.file_sha256(path)
+
+
 # --- an export holds regular files and directories only (ruling T9-i) -----------------------
 
 

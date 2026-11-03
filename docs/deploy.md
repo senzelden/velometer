@@ -5,8 +5,20 @@ both sites are on the server behind a password (`docs/review/m16-deploy.md`); th
 `unlock` at the end of §1) waits for the user's go. Since M17 a deploy can also run on GitHub, from
 the committed `main`, after the user approves it there (§2). The Cloudflare Pages route (§3) was
 not chosen. M15 served the export locally with both routes' server software (Caddy 2.11.4 in Docker
-and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`). Every command below is for you to run. Replace `<dir>`,
-`<datalab-dir>`, `<domain>` and `<host>` with your own values.
+and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`). Every command below is for you to run,
+from the repo root, as written once these shell variables are set (the values as run; another
+server or other directories change them here only):
+
+```sh
+DOMAIN=zaehlwerk-datalab.de
+SERVER=2.31.133.185              # the server's address; deploy/known_hosts pins its host key
+EXPORT=~/velometer-export        # the velometer export (§0); --clean replaces it
+DATALAB=~/datalab-build          # the Datalab build
+SHOTS=~/velometer-shots          # the R64 passes' screenshots and results
+```
+
+In the text, `<dir>` is the export (`$EXPORT`), `<datalab-dir>` the Datalab build (`$DATALAB`),
+`<domain>` the domain and `<host>` the server.
 
 ## 0. Make and check the export
 
@@ -19,11 +31,11 @@ overlay (https URLs and the Datalab's name; no e-mail, no postal address).
 ```
 git status --untracked-files=no      # must print no changes: commit first
 uv run python tools/tiles.py --stamp     # once per extract: data/tiles/velometer.pmtiles.json
-uv run velometer app export --out <dir> --base / --clean --public
-uv run velometer app deploy-check <dir> --public
-c=$(jq -r .commit_full <dir>/build.json)
-git push <public remote> HEAD        # the commit the pages link must be in the public repo
-git tag export-${c:0:7} $c && git push <public remote> export-${c:0:7}
+uv run velometer app export --out "$EXPORT" --base / --clean --public
+uv run velometer app deploy-check "$EXPORT" --public
+c=$(jq -r .commit_full "$EXPORT/build.json")
+git push origin HEAD        # origin is the public repository: the commit the pages link must be in it
+git tag "export-${c:0:7}" "$c" && git push origin "export-${c:0:7}"
 ```
 
 The tag keeps the pinned commit reachable on the forge after the branch is merged (squashed or
@@ -81,9 +93,9 @@ Before you upload, serve the export with the same server software the host runs 
 HTTP (status, compression, security headers, 404 page):
 
 ```
-uv run python tools/deploy_dryrun.py --site <dir> --server caddy --datalab <datalab-dir> \
-    --tiles <file.pmtiles> [--lock | --lock-default] [--debug-log]
-uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
+uv run python tools/deploy_dryrun.py --site "$EXPORT" --server caddy --datalab "$DATALAB" \
+    --tiles data/tiles/velometer.pmtiles --lock    # or --lock-default; add --debug-log for DEBUG
+uv run python tools/deploy_dryrun.py --site "$EXPORT" --server wrangler
 ```
 
 `--server caddy` runs Caddy 2.11.4 in Docker with `deploy/Caddyfile`, the production file (§1),
@@ -123,23 +135,23 @@ only after you type `yes`; a piped `yes` reaches the prompt (ssh gets no stdin).
 
 ```
 uv run python tools/server.py preflight
-uv run python tools/server.py create --domain <domain> --ssh-key <key name> [--type cx23] [--location nbg1|fsn1]
-uv run python tools/server.py dns --domain <domain>         # enter the printed records at INWX
-uv run python tools/server.py setup --host <host> --domain <domain>
-uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host <host>
-uv run python tools/server.py deploy velometer <dir> --host <host>        # the export of §0
-uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
-uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
-uv run python tools/server.py verify --domain <domain> --locked
-uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/all \
-    --url https://velometer.<domain> --pages all --keyboard     # R64, before every publication
-uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/types \
-    --url https://velometer.<domain> --pages types --interact --flip
-uv run python tools/render_pass.py --site <datalab-dir> --base / --lang de \
-    --out <shots-dir>/datalab --url https://<domain>
-uv run python tools/server.py stats --host <host>
-uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
-uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
+uv run python tools/server.py create --domain "$DOMAIN" --ssh-key dennis-ws --type cx23 --location fsn1
+uv run python tools/server.py dns --domain "$DOMAIN"         # enter the printed records at INWX
+uv run python tools/server.py setup --host "$SERVER" --domain "$DOMAIN"
+uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host "$SERVER"
+uv run python tools/server.py deploy velometer "$EXPORT" --host "$SERVER"        # the export of §0
+uv run velometer datalab build --out "$DATALAB" --velometer-export "$EXPORT"
+uv run python tools/server.py deploy datalab "$DATALAB" --host "$SERVER"
+uv run python tools/server.py verify --domain "$DOMAIN" --locked
+uv run python tools/render_pass.py --site "$EXPORT" --base / --out "$SHOTS/all" \
+    --url "https://velometer.$DOMAIN" --pages all --keyboard     # R64, before every publication
+uv run python tools/render_pass.py --site "$EXPORT" --base / --out "$SHOTS/types" \
+    --url "https://velometer.$DOMAIN" --pages types --interact --flip
+uv run python tools/render_pass.py --site "$DATALAB" --base / --lang de \
+    --out "$SHOTS/datalab" --url "https://$DOMAIN"
+uv run python tools/server.py stats --host "$SERVER"
+uv run python tools/server.py golive-check --datalab "$DATALAB" --site "$EXPORT" --host "$SERVER"
+uv run python tools/server.py unlock --host "$SERVER" --domain "$DOMAIN" --datalab "$DATALAB" --site "$EXPORT"
 ```
 
 - `preflight` names the `pass insert` command for a missing secret and never prints a value.
@@ -204,14 +216,14 @@ The steps in detail:
    (protomaps-leaflet logs every failed tile to the console):
 
    ```sh
-   scp velometer.pmtiles server:/srv/tiles/velometer.pmtiles.new
-   ssh server mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
+   scp data/tiles/velometer.pmtiles "deploy@$SERVER:/srv/tiles/velometer.pmtiles.new"
+   ssh "deploy@$SERVER" mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
    ```
 
    **Lock.** Every site block imports `/etc/caddy/lock.caddy` first. Until go-live it holds one
    of two texts, exactly as below; after go-live it is empty. As the server comes up (ruling P4):
 
-   ```
+   ```caddy
    header Cache-Control "no-store"
    respond "locked" 401
    ```
@@ -219,7 +231,7 @@ The steps in detail:
    Once setup has the preview password (`<bcrypt hash>` from `caddy hash-password` on the
    server; it never enters the repository):
 
-   ```
+   ```caddy
    header Cache-Control "no-store"
    basic_auth {
    	preview <bcrypt hash>
@@ -344,13 +356,16 @@ lands in a file):
 3. Turn on branch protection for `main` (Settings → Branches, or a ruleset) requiring the `ci`
    workflow: *Require status checks to pass* with its checks `lint`, `test (1)` to `test (4)`
    and `node`.
-4. Once, after this change (M17 fix round 1), from your machine with your go: run
-   `setup --ci-key` again so the server's gate admits the new data archive, then `snapshot`, which
-   now also uploads it:
+4. Once, from your machine with your go, after the data archive was added to the snapshot (M17):
+   run `setup --ci-key` again so the server's gate admits the data archive, then `snapshot`,
+   which also uploads it. The public key is derived from the private key in pass, and the
+   snapshot is written to a directory on disk (it is gigabytes):
 
    ```
-   uv run python tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key <ci.pub>
-   uv run python tools/server.py snapshot --host 2.31.133.185 --tmp <a disk directory>
+   ssh-keygen -y -f <(pass velometer/ci-deploy-key) > ~/ci.pub
+   uv run python tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key ~/ci.pub
+   mkdir -p ~/.cache/velometer-snapshot
+   uv run python tools/server.py snapshot --host 2.31.133.185 --tmp ~/.cache/velometer-snapshot
    ```
 
    Run `snapshot` again after every data rebuild (the database, the tier maps or the plan data),
@@ -420,21 +435,22 @@ runner, the other passes about 15 minutes, the upload a few minutes. That is wel
 
 When GitHub is not available, or after a new tile extract (step 2 above), deploy from your
 machine as in §1 but as the `ci` user, so that every release has the one owner the next CI
-deploy can prune (ruling T9-j). Load the key from pass into an agent for ten minutes:
+deploy can prune (ruling T9-j). Load the key from pass into an agent for ten minutes (`$EXPORT`
+and `$DATALAB` as set at the top of this guide):
 
 ```
 eval "$(ssh-agent -s)"
 pass velometer/ci-deploy-key | ssh-add -t 600 -
-uv run python tools/server.py deploy velometer <dir> --host 2.31.133.185 --user ci
-uv run python tools/server.py deploy datalab <datalab-dir> --host 2.31.133.185 --user ci
+uv run python tools/server.py deploy velometer "$EXPORT" --host 2.31.133.185 --user ci
+uv run python tools/server.py deploy datalab "$DATALAB" --host 2.31.133.185 --user ci
 ssh-agent -k
 ```
 
 Run the R64 passes on that export first (§1), as always. If a release ever ends up owned by
 `deploy` (a deploy without `--user ci`), the next CI deploy cannot remove it when it prunes old
 releases: the switch has happened, but the job fails. The repair is to run
-`tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key <ci.pub>` again
-(with your go): it finds the releases `ci` does not own and hands them to `ci:releases`, owners
+`tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key ~/ci.pub` again
+(with your go; `~/ci.pub` made as in step 4 of the setup above): it finds the releases `ci` does not own and hands them to `ci:releases`, owners
 only.
 
 ## 3. Cloudflare Pages (not chosen, 2026-10-21)
@@ -447,7 +463,7 @@ Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a
    repository; `npx` fetches wrangler on the fly):
 
    ```
-   npx wrangler pages deploy <dir> --project-name velometer
+   npx wrangler pages deploy "$EXPORT" --project-name velometer
    ```
 
    Pages reads `_headers` from the site root: the Content-Security-Policy (with
