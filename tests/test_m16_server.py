@@ -327,7 +327,9 @@ def test_cloud_init_installs_caddy_at_the_pinned_version_with_a_checksum(ci):
     # the check runs before the binary is installed
     assert text.index("sha512sum -c") < text.index("install -m 0755 /usr/local/src/caddy")
     assert "apt-get install caddy" not in text and "caddy" not in ci.get("packages", [])
-    assert dr.CADDY_IMAGE == "caddy:2.11.4-alpine"  # the dry run tests the same version
+    assert (
+        dr.CADDY_IMAGE.split("@")[0] == "caddy:2.11.4-alpine"
+    )  # the dry run tests the same version
 
 
 def test_cloud_init_installs_goaccess_rsync_and_unattended_upgrades(ci):
@@ -1962,7 +1964,29 @@ def fixture_db(tmp_path):
     d.chmod(0o755)
 
 
-def test_snapshot_never_writes_db(deps, tmp_path, fixture_db):
+@pytest.fixture
+def fixture_data(tmp_path):
+    """A data directory as the export reads it: tier maps and the plan data, and what else lives
+    in data/ (which stays out of the archive)."""
+    data = tmp_path / "data"
+    (data / "maps").mkdir(parents=True)
+    (data / "maps" / "berlin_lau.png").write_bytes(b"\x89PNG map")
+    (data / "plans" / "berlin").mkdir(parents=True)
+    (data / "plans" / "berlin" / "retrieved.json").write_text("{}")
+    (data / "plans" / "docs").mkdir()
+    (data / "plans" / "docs" / "amsterdam_fua.png").write_bytes(b"\x89PNG doc")
+    (data / "snapshots").mkdir()
+    (data / "snapshots" / "x.osm.pbf").write_bytes(b"pbf")
+    (data / "velometer-pre-v2.sqlite").write_bytes(b"old")
+    return data
+
+
+def _snapshot(deps, fixture_db, fixture_data, *extra, answer="yes\n"):
+    return invoke("snapshot", *HOST, "--db", str(fixture_db), "--data", str(fixture_data), *extra,
+                  input=answer)  # fmt: skip
+
+
+def test_snapshot_never_writes_db(deps, tmp_path, fixture_db, fixture_data):
     import gzip
 
     before, listing = md5(fixture_db), sorted(p.name for p in fixture_db.parent.iterdir())
@@ -1970,6 +1994,8 @@ def test_snapshot_never_writes_db(deps, tmp_path, fixture_db):
 
     def upload(argv, input):
         src = Path(argv[-2])
+        if src.name != "velometer.sqlite.gz":
+            return (0, "")
         seen["src"] = src
         seen["beside"] = sorted(p.name for p in fixture_db.parent.iterdir())
         seen["gz"] = src.read_bytes()
@@ -1978,7 +2004,7 @@ def test_snapshot_never_writes_db(deps, tmp_path, fixture_db):
     scratch = tmp_path / "scratch"
     scratch.mkdir()
     deps.rules = [("rsync", upload)]
-    r = invoke("snapshot", *HOST, "--db", str(fixture_db), "--tmp", str(scratch), input="yes\n")
+    r = _snapshot(deps, fixture_db, fixture_data, "--tmp", str(scratch))
     assert r.exit_code == 0, r.output
     assert md5(fixture_db) == before
     assert sorted(p.name for p in fixture_db.parent.iterdir()) == listing == seen["beside"]
@@ -1993,26 +2019,38 @@ def test_snapshot_never_writes_db(deps, tmp_path, fixture_db):
     assert digest in r.output
 
 
-def test_snapshot_lands_where_only_ci_reads_and_its_sha256_last(deps, tmp_path, fixture_db):
+def test_snapshot_lands_where_only_ci_reads_and_its_sha256_last(
+    deps, tmp_path, fixture_db, fixture_data
+):
     deps.rules = [("rsync", (0, ""))]
-    r = invoke("snapshot", *HOST, "--db", str(fixture_db), input="yes\n")
+    r = _snapshot(deps, fixture_db, fixture_data)
     assert r.exit_code == 0, r.output
-    (rsync,) = [a for a, _ in deps.calls if a[0] == "rsync"]
-    assert rsync[-1] == "deploy@203.0.113.10:.velometer-snapshot.gz"
+    rsyncs = [a for a, _ in deps.calls if a[0] == "rsync"]
+    assert [a[-1] for a in rsyncs] == [
+        "deploy@203.0.113.10:.velometer-snapshot.gz", "deploy@203.0.113.10:.velometer-data.tar.gz"
+    ]  # fmt: skip
     j = deps.joined()
-    i_move = deps.index(
-        "mv -f /srv/snapshot/velometer.sqlite.gz.new /srv/snapshot/velometer.sqlite.gz"
-    )
-    assert "install -m 0640 -o root -g ci .velometer-snapshot.gz" in j[i_move]
-    i_sha = deps.index("velometer.sqlite.gz.sha256.XXXXXX")
-    assert "chmod 0640" in j[i_sha] and "chown root:ci" in j[i_sha]
-    assert deps.index("rsync") < i_move < i_sha < deps.index("sha256sum --check")
+    moves, shas = [], []
+    for name, upload in (("velometer.sqlite.gz", ".velometer-snapshot.gz"),
+                         ("velometer-data.tar.gz", ".velometer-data.tar.gz")):  # fmt: skip
+        i_move = deps.index(f"mv -f /srv/snapshot/{name}.new /srv/snapshot/{name}")
+        assert f"install -m 0640 -o root -g ci {upload} /srv/snapshot/{name}.new" in j[i_move]
+        i_sha = deps.index(f"{name}.sha256.XXXXXX")
+        assert "chmod 0640" in j[i_sha] and "chown root:ci" in j[i_sha]
+        assert any(f"sha256sum --check --quiet {name}.sha256" in c for c in j[i_sha:])
+        moves.append(i_move)
+        shas.append(i_sha)
+    # both files are in place before either sha256 is written: a fetch in between fails closed
+    assert max(i for i, (a, _) in enumerate(deps.calls) if a[0] == "rsync") < min(moves)
+    assert max(moves) < min(shas)
     for cmd in j:
         assert "rm -r" not in cmd and "rm -f" not in cmd.replace('rm -f "$t"', "")
 
 
-def test_snapshot_asks_first_and_refuses_the_dbs_own_directory(deps, tmp_path, fixture_db):
-    r = invoke("snapshot", *HOST, "--db", str(fixture_db), input="no\n")
+def test_snapshot_asks_first_and_refuses_the_dbs_own_directory(
+    deps, tmp_path, fixture_db, fixture_data
+):
+    r = _snapshot(deps, fixture_db, fixture_data, answer="no\n")
     assert r.exit_code == 1 and deps.calls == []
     with pytest.raises(srv.ServerError, match="own directory"):
         srv.make_snapshot(fixture_db, fixture_db.parent)
@@ -2062,3 +2100,76 @@ def test_irregular_files_names_each_and_passes_a_plain_export(tmp_path):
     (src / "a").symlink_to("index.html")
     os.mkfifo(src / "p")
     assert srv.irregular_files(src) == ["a", "p"]
+
+
+def _members(archive: Path) -> dict:
+    import tarfile
+
+    with tarfile.open(archive) as tar:
+        return {m.name: m for m in tar.getmembers()}
+
+
+def test_the_data_archive_holds_the_maps_and_plans_only(tmp_path, fixture_data):
+    """The export's inputs beside the database, as `data/…` members (unpacked at the repo root),
+    regular files and directories owned by root, and nothing else of data/."""
+    import tarfile
+
+    out = tmp_path / "out"
+    out.mkdir()
+    archive, digest = srv.make_data_archive(fixture_data, out)
+    import hashlib
+
+    assert digest == hashlib.sha256(archive.read_bytes()).hexdigest()
+    members = _members(archive)
+    assert set(members) == {
+        "data/maps", "data/maps/berlin_lau.png", "data/plans", "data/plans/berlin",
+        "data/plans/berlin/retrieved.json", "data/plans/docs", "data/plans/docs/amsterdam_fua.png",
+    }  # fmt: skip
+    for m in members.values():
+        assert m.isfile() or m.isdir()
+        assert (m.uid, m.gid, m.mtime) == (0, 0, 0)
+        assert m.mode == (0o755 if m.isdir() else 0o644)
+    with tarfile.open(archive) as tar:
+        got = tar.extractfile("data/maps/berlin_lau.png").read()
+    assert got == (fixture_data / "maps" / "berlin_lau.png").read_bytes()
+
+
+def test_the_data_archive_is_the_same_file_for_the_same_inputs(tmp_path, fixture_data):
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    first = srv.make_data_archive(fixture_data, a)[1]
+    for p in fixture_data.rglob("*"):
+        os.utime(p, (1, 1))
+    assert srv.make_data_archive(fixture_data, b)[1] == first
+
+
+@pytest.mark.parametrize("breaks", ["no maps", "empty plans", "symlink", "fifo"])
+def test_the_data_archive_refuses_missing_inputs_and_special_files(tmp_path, fixture_data, breaks):
+    import shutil
+
+    if breaks == "no maps":
+        shutil.rmtree(fixture_data / "maps")
+    elif breaks == "empty plans":
+        shutil.rmtree(fixture_data / "plans")
+        (fixture_data / "plans" / "berlin").mkdir(parents=True)
+    elif breaks == "symlink":
+        (fixture_data / "maps" / "link.png").symlink_to("/etc/passwd")
+    else:
+        os.mkfifo(fixture_data / "plans" / "fifo")
+    out = tmp_path / "out"
+    out.mkdir()
+    with pytest.raises(srv.ServerError):
+        srv.make_data_archive(fixture_data, out)
+
+
+def test_snapshot_refuses_before_any_upload_without_the_data(deps, tmp_path, fixture_db):
+    import shutil
+
+    data = tmp_path / "data"
+    (data / "plans" / "berlin").mkdir(parents=True)
+    (data / "plans" / "berlin" / "retrieved.json").write_text("{}")
+    r = invoke("snapshot", *HOST, "--db", str(fixture_db), "--data", str(data), input="yes\n")
+    assert r.exit_code == 1 and "maps" in r.output
+    assert not [a for a, _ in deps.calls if a[0] == "rsync"]
+    shutil.rmtree(data)

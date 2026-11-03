@@ -63,7 +63,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 CADDYFILE = ROOT / "deploy" / "Caddyfile"
-CADDY_IMAGE = "caddy:2.11.4-alpine"
+# pinned by the registry digest of its multi-arch index (read with `docker buildx imagetools
+# inspect` and a pull's RepoDigests, 2026-11-03), so the tag cannot move under the dry run
+CADDY_IMAGE = (
+    "caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b"
+)
 CADDY_BIN_MOUNT = "/usr/bin/caddy"  # where the image keeps its Caddy (`--caddy-bin` replaces it)
 # where the server keeps each site (deploy/Caddyfile, SITE_ROOT=/srv) and the maps' basemap,
 # outside the site's directory; the path a page asks for it at (main.TILES_PATH under base /)

@@ -331,7 +331,10 @@ lands in a file):
    as the required reviewer and no admin bypass: tick *Required reviewers* and add yourself,
    leave *Prevent self-review* off (you start the runs you approve), untick *Allow administrators
    to bypass configured protection rules*, and under *Deployment branches and tags* choose
-   *Selected branches and tags* with the one rule `main`.
+   *Selected branches and tags* with the one rule `main`. This branch rule is the control that
+   keeps a deploy to `main`: a run started on another branch runs that branch's copy of
+   `deploy.yml`, which could drop the workflow's own `if: github.ref == 'refs/heads/main'`, but
+   it cannot reach the environment's secret or approval without this rule's consent.
 2. Add the CI key as that environment's secret, from pass:
 
    ```
@@ -341,6 +344,17 @@ lands in a file):
 3. Turn on branch protection for `main` (Settings → Branches, or a ruleset) requiring the `ci`
    workflow: *Require status checks to pass* with its checks `lint`, `test (1)` to `test (4)`
    and `node`.
+4. Once, after this change (M17 fix round 1), from your machine with your go: run
+   `setup --ci-key` again so the server's gate admits the new data archive, then `snapshot`, which
+   now also uploads it:
+
+   ```
+   uv run python tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key <ci.pub>
+   uv run python tools/server.py snapshot --host 2.31.133.185 --tmp <a disk directory>
+   ```
+
+   Run `snapshot` again after every data rebuild (the database, the tier maps or the plan data),
+   or CD builds from the old data.
 
 ### A deploy
 
@@ -352,14 +366,19 @@ the approval it:
 1. adds the `CI_DEPLOY_KEY` secret to an ssh-agent on stdin and trusts only the host key
    committed in `deploy/known_hosts` (`StrictHostKeyChecking yes`, written to the runner's
    `~/.ssh/config`; `tools/server.py` itself only sets `BatchMode`);
-2. fetches `/srv/snapshot/velometer.sqlite.gz` and its `.sha256` and the tile file with rsync,
-   and stops unless `sha256sum -c` passes for both. The tile file has no `.sha256` on the
-   server: its sha256 is the live export's `build.json` `tiles` (the sidecar the export reads,
-   `--tiles-info`). After you `deploy tiles` a new extract, that check fails until an export
-   naming the new extract is live: deploy velometer once from your machine (below);
-3. unzips the database and exports velometer with `--public`, runs `deploy-check --public`, and
-   builds the Datalab with `--checked` set to the run's day (UTC; the statement's date for this
-   build only, `site.yaml` unchanged);
+2. fetches with rsync `/srv/snapshot/velometer.sqlite.gz`, `/srv/snapshot/velometer-data.tar.gz`
+   (the tier maps, `data/maps/`, and the plan data, `data/plans/`: git-ignored, so absent on the
+   runner) and their `.sha256` files, and the tile file, and stops unless `sha256sum -c` passes
+   for each. The tile file has no `.sha256` on the server: its sha256 is the live export's
+   `build.json` `tiles` (the sidecar the export reads, `--tiles-info`). After you `deploy tiles`
+   a new extract, that check fails until an export naming the new extract is live: deploy
+   velometer once from your machine (below). Then the key leaves the agent (`ssh-add -D`)
+   until step 7, so no step in between can reach the server with it;
+3. unzips the database, unpacks the data archive at the repo root only if every member is a
+   regular file or directory under `data/maps/` or `data/plans/`, exports velometer with
+   `--public` (which refuses when the tier maps or the plan data are missing or empty), runs
+   `deploy-check --public`, and builds the Datalab with `--checked` set to the run's day (UTC;
+   the statement's date for this build only, `site.yaml` unchanged);
 4. downloads the Caddy release binary `setup` installs, at the version and SHA-512 that
    `deploy/cloud-init.yaml` pins, checks that pin against the release's official
    `caddy_<v>_checksums.txt` and the download against the pin, and serves both builds with it in
@@ -370,23 +389,20 @@ the approval it:
    `results.json` again: any finding, or a pass that visited nothing, stops the run;
 6. tags the export's commit `export-<first 7 hex>` and pushes the tag (§0; the job's token may
    write contents for this only);
-7. deploys the chosen sites, `tools/server.py deploy velometer|datalab <dir> --host 2.31.133.185
+7. adds the key to the agent again and deploys the chosen sites, `tools/server.py deploy velometer|datalab <dir> --host 2.31.133.185
    --user ci` with one `yes` piped to the prompt, then runs `verify --domain
    zaehlwerk-datalab.de` and a short live pass (velometer `--pages types`, the Datalab
    `--lang de`), held to 0 findings too;
-8. writes the job summary: the pass counts, the releases switched, the export tag, the
-   statement's date and the run's URL, which is the R64 evidence for this deploy.
+8. writes the job summary, also when a step failed: the counts of every pass that wrote results
+   (a failed pass's findings too), the releases switched, the export tag, the statement's date
+   and the run's URL, which is the R64 evidence for this deploy.
 
 Any failing step stops the job (bash `-eo pipefail`; nothing is allowed to fail softly). A
 failure before step 7 leaves the server untouched. A failure in step 7 behaves as a local
 deploy does: `current` stays on the previous complete release until a switch.
 
-**Not yet runnable (2026-11-03).** The snapshot holds the database only, but the export also
-reads `data/maps/` (the tier map PNGs, about 260 MB) and `data/plans/` (the Berlin plan data,
-about 185 MB), which are git-ignored and so absent on the runner. Without them the export has no
-tier maps and no plan pages and still passes `deploy-check`; the workflow therefore stops at
-"The export's other inputs" until the snapshot carries both. The run also needs the dataset DOI
-in place, which `deploy-check --public` asks for.
+**Before the first run.** The server needs the data archive (step 4 of the setup above), and
+the dataset DOI must be in place, which `deploy-check --public` asks for.
 
 **Time.** About 2 to 3 hours: the gate about 20 minutes, the fetch a few minutes (about 3 GB
 from the server), the export and Datalab a minute or two, the full pass with the keyboard pass

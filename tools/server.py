@@ -17,7 +17,8 @@ names its `pass insert` command. The preview password only ever travels on stdin
     uv run python tools/server.py stats --host IP
     uv run python tools/server.py golive-check --datalab DIR [--site DIR] [--host IP]
     uv run python tools/server.py unlock --host IP --domain D --datalab DIR --site DIR
-    uv run python tools/server.py snapshot --host IP [--db velometer.sqlite] [--tmp DIR]
+    uv run python tools/server.py snapshot --host IP [--db velometer.sqlite] [--data data]
+        [--tmp DIR]
 
 Releases: `deploy` uploads a site with rsync (`--link-dest` to the live release, so only changed
 files travel) into a fresh `/srv/<site>/releases/<commit>-<UTC time>/`, writes `.complete` into
@@ -31,8 +32,8 @@ CI (M17 spec §4.5): `setup --ci-key` makes the user `ci`, which the CD workflow
 (`deploy … --user ci`). It has no sudo: its login shell and its key's forced command are
 deploy/ci-gate.py, which admits only the commands `deploy_site` issues and rsync reads of the data
 snapshot and the tiles. `ci` and `deploy` share the group `releases`, which may write the release
-directories. `snapshot` uploads the gzipped database to /srv/snapshot/ (0750 root:ci; no Caddy
-root reaches it) for the workflow to build from.
+directories. `snapshot` uploads the gzipped database and an archive of data/maps and data/plans
+to /srv/snapshot/ (0750 root:ci; no Caddy root reaches it) for the workflow to build from.
 
 Go-live judges what is live: `unlock` (and `golive-check --host`) compares a content digest of
 each site's live release (`/srv/<site>/current`, every file's path and sha256) with the local
@@ -143,6 +144,12 @@ CI_AUTHORIZED = f"{CI_HOME}/.ssh/authorized_keys"
 SNAPSHOT_DIR = f"{SITE_ROOT}/snapshot"
 SNAPSHOT_NAME = "velometer.sqlite.gz"
 SNAPSHOT_UPLOAD = ".velometer-snapshot.gz"  # in the deploy user's home, moved into place by root
+# the export's other inputs (git-ignored, so absent on a runner): the tier maps and the plan data,
+# as `data/maps/…` and `data/plans/…` members of one archive beside the database's gzip
+DATA_SNAPSHOT_NAME = "velometer-data.tar.gz"
+DATA_SNAPSHOT_UPLOAD = ".velometer-data.tar.gz"
+DATA_SNAPSHOT_DIRS = ("maps", "plans")
+DATA = ROOT / "data"
 DB = ROOT / "velometer.sqlite"
 SQLITE_MAGIC = b"SQLite format 3\x00"
 
@@ -1073,48 +1080,110 @@ def make_snapshot(db: Path, out_dir: Path) -> tuple[Path, str]:
     return out, digest.hexdigest()
 
 
+def make_data_archive(data: Path, out_dir: Path) -> tuple[Path, str]:
+    """`data/maps/…` and `data/plans/…` (DATA_SNAPSHOT_DIRS under `data`) as one gzipped tar in
+    `out_dir`; the file and its sha256. Only regular files and directories go in, owned by root
+    (0644/0755), with no time: the same inputs give the same file. A missing or empty directory,
+    or one holding a symlink or another special file, stops it."""
+    import tarfile
+
+    for name in DATA_SNAPSHOT_DIRS:
+        src = data / name
+        if src.is_symlink() or not src.is_dir() or not any(p.is_file() for p in src.rglob("*")):
+            raise ServerError(f"{src}: missing or holds no file; the export needs it")
+        if odd := irregular_files(src):
+            raise ServerError(f"{src} holds entries that are no regular file: {_few(odd)}")
+    out = out_dir / DATA_SNAPSHOT_NAME
+
+    def info(path: Path, arcname: str) -> tarfile.TarInfo:
+        ti = tarfile.TarInfo(arcname)
+        ti.uid = ti.gid = ti.mtime = 0
+        ti.uname = ti.gname = "root"
+        if path.is_dir():
+            ti.type, ti.mode = tarfile.DIRTYPE, 0o755
+        else:
+            ti.size, ti.mode = path.stat().st_size, 0o644
+        return ti
+
+    try:
+        with (
+            out.open("wb") as raw,
+            gzip.GzipFile("", "wb", 6, raw, mtime=0) as gz,
+            tarfile.open(fileobj=gz, mode="w", format=tarfile.GNU_FORMAT) as tar,
+        ):
+            for name in DATA_SNAPSHOT_DIRS:
+                src = data / name
+                for path in [src, *sorted(src.rglob("*"))]:
+                    arcname = f"data/{path.relative_to(data).as_posix()}"
+                    if path.is_dir():
+                        tar.addfile(info(path, arcname))
+                    else:
+                        with path.open("rb") as f:
+                            tar.addfile(info(path, arcname), f)
+    except OSError as e:
+        raise ServerError(f"archive of {data}: {e}") from None
+    digest = hashlib.sha256()
+    with out.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return out, digest.hexdigest()
+
+
 @app.command()
 def snapshot(
     host: str = _host_option(),
     db: Path = typer.Option(DB, "--db", help="The database to upload (read only)."),  # noqa: B008
+    data: Path = typer.Option(  # noqa: B008
+        DATA, "--data", help="The data directory whose maps/ and plans/ go along (read only)."
+    ),
     tmp: Path | None = typer.Option(  # noqa: B008
         None, "--tmp", help="Where the gzip is made (default: the temp directory)."
     ),
     user: str = typer.Option(USER, "--user"),
 ) -> None:
-    """Upload the gzipped database and its sha256 to /srv/snapshot/, the data the CD workflow
-    builds from (asks for yes)."""
+    """Upload the gzipped database, the archive of data/maps and data/plans, and their sha256
+    files to /srv/snapshot/, the data the CD workflow builds from (asks for yes)."""
     t = _target(host, user)
     final = f"{SNAPSHOT_DIR}/{SNAPSHOT_NAME}"
+    data_final = f"{SNAPSHOT_DIR}/{DATA_SNAPSHOT_NAME}"
     try:
         if not db.is_file():
             raise ServerError(f"{db}: no database")
         confirm(
             [
-                f"gzip {db} into a temp directory in {tmp or tempfile.gettempdir()} (the "
-                "database is only read)",
-                f"upload it to {t.login}:{SNAPSHOT_UPLOAD}, then move it to {final} "
-                f"(0640 root:{CI_USER})",
-                f"write {final}.sha256 last and check it there",
+                f"gzip {db} and archive {data}/maps and {data}/plans into a temp directory in "
+                f"{tmp or tempfile.gettempdir()} (both are only read)",
+                f"upload them to {t.login}:{SNAPSHOT_UPLOAD} and {DATA_SNAPSHOT_UPLOAD}, then "
+                f"move them to {final} and {data_final} (0640 root:{CI_USER})",
+                f"write {final}.sha256 and {data_final}.sha256 last and check them there",
             ]
         )
         with tempfile.TemporaryDirectory(prefix="velometer-snapshot-", dir=tmp) as d:
             gz, digest = make_snapshot(db, Path(d))
+            archive, data_digest = make_data_archive(data, Path(d))
             t.ssh(f"sudo install -d -m 0750 -o root -g {CI_USER} {SNAPSHOT_DIR}")
-            r = DEPS.runner(["rsync", "--chmod=F0600", "-e", " ".join(["ssh", *SSH_OPTS]),
-                             str(gz), f"{t.login}:{SNAPSHOT_UPLOAD}"])  # fmt: skip
-            if r.returncode != 0:
-                raise ServerError(f"rsync {_rsync_failed(r.returncode)}; {final} is unchanged")
-        t.ssh(
-            f"sudo install -m 0640 -o root -g {CI_USER} {SNAPSHOT_UPLOAD} {final}.new && "
-            f"sudo mv -f {final}.new {final} && rm -- {SNAPSHOT_UPLOAD}"
-        )
-        t.put(f"{final}.sha256", f"{digest}  {SNAPSHOT_NAME}\n", mode="0640", group=CI_USER)
-        check = f"cd {SNAPSHOT_DIR} && sha256sum --check --quiet {SNAPSHOT_NAME}.sha256"
-        t.ssh(f"sudo sh -c {shlex.quote(check)}")
+            for src, upload in ((gz, SNAPSHOT_UPLOAD), (archive, DATA_SNAPSHOT_UPLOAD)):
+                r = DEPS.runner(["rsync", "--chmod=F0600", "-e", " ".join(["ssh", *SSH_OPTS]),
+                                 str(src), f"{t.login}:{upload}"])  # fmt: skip
+                if r.returncode != 0:
+                    raise ServerError(
+                        f"rsync {_rsync_failed(r.returncode)}; {final} and {data_final} are "
+                        "unchanged"
+                    )
+        for upload, dest in ((SNAPSHOT_UPLOAD, final), (DATA_SNAPSHOT_UPLOAD, data_final)):
+            t.ssh(
+                f"sudo install -m 0640 -o root -g {CI_USER} {upload} {dest}.new && "
+                f"sudo mv -f {dest}.new {dest} && rm -- {upload}"
+            )
+        for name, hexdigest in ((SNAPSHOT_NAME, digest), (DATA_SNAPSHOT_NAME, data_digest)):
+            path = f"{SNAPSHOT_DIR}/{name}"
+            t.put(f"{path}.sha256", f"{hexdigest}  {name}\n", mode="0640", group=CI_USER)
+            check = f"cd {SNAPSHOT_DIR} && sha256sum --check --quiet {name}.sha256"
+            t.ssh(f"sudo sh -c {shlex.quote(check)}")
     except ServerError as e:
         _fail(e)
     typer.echo(f"snapshot: {final} (sha256 {digest})")
+    typer.echo(f"snapshot: {data_final} (sha256 {data_digest})")
 
 
 # --- go-live --------------------------------------------------------------------------------

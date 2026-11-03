@@ -402,7 +402,7 @@ def test_the_caddy_command_pins_the_image_and_mounts_read_only_on_the_host_netwo
     assert not any(x.startswith("SITE_ROOT") for x in cmd)  # the Caddyfile's default, /srv
     import re
 
-    assert re.fullmatch(r"caddy:\d+\.\d+\.\d+-alpine", cmd[-1])
+    assert re.fullmatch(r"caddy:\d+\.\d+\.\d+-alpine@sha256:[0-9a-f]{64}", cmd[-1])
 
 
 def test_the_wrangler_command_pins_its_version_and_binds_loopback(tmp_path):
@@ -669,7 +669,7 @@ def test_wrangler_cleanup_kills_the_whole_group_after_terminating_it(tiny, monke
 def test_the_doc_names_the_caddy_version_the_tool_pins_and_warns_about_2_10_2():
     import re
 
-    version = re.fullmatch(r"caddy:(\d+\.\d+\.\d+)-alpine", dr.CADDY_IMAGE)
+    version = re.fullmatch(r"caddy:(\d+\.\d+\.\d+)-alpine@sha256:[0-9a-f]{64}", dr.CADDY_IMAGE)
     assert version, dr.CADDY_IMAGE
     doc = dr.DOC.read_text(encoding="utf-8")
     assert f"Caddy {version.group(1)} or later" in doc

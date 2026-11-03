@@ -17,8 +17,9 @@ below; its own arguments (sshd's `-c <forced command>`) are ignored. Anything el
 - `rsync --server` receiving into a release, linking (`--link-dest`) only from a release, with
   regular files and directories only: no `-l` (symlinks) and no `-D` (devices, FIFOs), which Caddy
   would follow or block on, and `--munge-links` added in case one slips through (ruling T9-i).
-- `rsync --server --sender` of /srv/snapshot/velometer.sqlite.gz, its `.sha256`, and
-  /srv/tiles/velometer.pmtiles: the CD workflow's data snapshot and tiles.
+- `rsync --server --sender` of /srv/snapshot/velometer.sqlite.gz, velometer-data.tar.gz (the
+  tier maps and plan data), their `.sha256` files, and /srv/tiles/velometer.pmtiles: the CD
+  workflow's data snapshot and tiles.
 
 An rsync server command is admitted with only the option letters a plain client sends (no `-s`,
 whose paths would come on stdin unseen, no temp or backup directories, no filters) and no long
@@ -40,6 +41,8 @@ MARKER_PATH = re.compile(r"^/srv/[a-z]+/releases/[0-9a-f]{7,40}-\d{8}T\d{6}\.com
 READS = (
     "/srv/snapshot/velometer.sqlite.gz",
     "/srv/snapshot/velometer.sqlite.gz.sha256",
+    "/srv/snapshot/velometer-data.tar.gz",
+    "/srv/snapshot/velometer-data.tar.gz.sha256",
     "/srv/tiles/velometer.pmtiles",
 )
 # one token: no shell syntax, no quoting, no whitespace inside (the command is split on spaces)

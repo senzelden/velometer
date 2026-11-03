@@ -728,6 +728,21 @@ def figures_drift(conn, config_dir: Path) -> list[str]:
     return curated_drift(conn, config_dir / "external" / "figures.csv")
 
 
+def public_inputs_missing(maps: Path, plans_data_dir: Path) -> list[str]:
+    """What a public export lacks of the inputs beside the database: a tier map directory that
+    holds no file, and the plan data's measures layer and its retrieval record. Without them the
+    pages leave out the maps and the plan figures and still pass deploy-check (M17)."""
+    from velometer.app.plans_pages import MEASURES_FILE, MEASURES_RETRIEVED
+
+    missing = []
+    if not maps.is_dir() or not any(p.is_file() for p in maps.iterdir()):
+        missing.append(f"{maps}: no tier map files")
+    for rel in (MEASURES_FILE, MEASURES_RETRIEVED):
+        if not (plans_data_dir / rel).is_file():
+            missing.append(f"{plans_data_dir / rel}: missing")
+    return missing
+
+
 def _run_export(
     out: Path,
     base: str,
@@ -765,6 +780,12 @@ def _run_export(
             raise ExportError(
                 "--public needs a clean git checkout (the pages link the repository at the "
                 f"export's commit); git says {raw!r}: commit or stash the changes first"
+            )
+        missing = public_inputs_missing(Path(maps), Path(plans_data_dir))
+        if missing:
+            raise ExportError(
+                "--public needs the tier maps and the plan data (the pages would silently "
+                "lose them): " + "; ".join(missing)
             )
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))

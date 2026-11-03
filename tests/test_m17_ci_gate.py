@@ -147,11 +147,16 @@ def test_gate_allows_the_deploys_rsync_upload_without_a_previous_release(ci_depl
 
 
 SNAPSHOT = "/srv/snapshot/velometer.sqlite.gz"
+DATA_SNAPSHOT = "/srv/snapshot/velometer-data.tar.gz"
 TILES = "/srv/tiles/velometer.pmtiles"
 
 
 @pytest.mark.parametrize("opts", [[], ["-t"], ["-a"], ["-a", "--checksum"], ["-av", "--partial"]])
-@pytest.mark.parametrize("paths", [[SNAPSHOT, SNAPSHOT + ".sha256"], [SNAPSHOT], [TILES]])
+@pytest.mark.parametrize(
+    "paths",
+    [[SNAPSHOT, SNAPSHOT + ".sha256"], [SNAPSHOT], [TILES],
+     [DATA_SNAPSHOT, DATA_SNAPSHOT + ".sha256"]],
+)  # fmt: skip
 def test_gate_allows_the_snapshot_and_tile_reads(opts, paths, tmp_path):
     argv = ["rsync", *opts, "-e", "ssh", *(f"ci@203.0.113.10:{p}" for p in paths), str(tmp_path)]
     command = _remote_rsync(argv, tmp_path)
@@ -167,7 +172,10 @@ def test_the_gates_release_paths_are_the_deploys():
     assert gate.SITES == srv.SITES
     assert gate.MARKER == srv.MARKER
     snapshot = f"{srv.SNAPSHOT_DIR}/{srv.SNAPSHOT_NAME}"
-    assert set(gate.READS) == {snapshot, snapshot + ".sha256", f"{srv.TILES_DIR}/{srv.TILES_FILE}"}
+    data = f"{srv.SNAPSHOT_DIR}/{srv.DATA_SNAPSHOT_NAME}"
+    assert set(gate.READS) == {
+        snapshot, snapshot + ".sha256", data, data + ".sha256", f"{srv.TILES_DIR}/{srv.TILES_FILE}"
+    }  # fmt: skip
 
 
 KNOWN_HOSTS = ROOT / "deploy" / "known_hosts"
@@ -309,6 +317,8 @@ SENDER_ELSEWHERE = [
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/",
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot",
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/velometer.sqlite",
+    "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/velometer-data.tar",
+    "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/velometer-data.tar.gz.new",
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/../../etc/shadow",
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/snapshot/x/../velometer.sqlite.gz",
     "rsync --server --sender -logDtpre.iLsfxCIvu . /srv/tiles/velometer.pmtiles.new",

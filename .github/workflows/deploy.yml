@@ -50,6 +50,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest
       - run: node --test "src/velometer/app/static/js/tests/*.test.mjs"
+      - run: uvx cffconvert==2.0.0 --validate
 
   deploy:
     needs: gate
@@ -101,8 +102,9 @@ jobs:
 
       - name: Fetch the data snapshot and the tiles, sha256-checked
         run: |
-          rsync -t "ci@$HOST:/srv/snapshot/velometer.sqlite.gz" "ci@$HOST:/srv/snapshot/velometer.sqlite.gz.sha256" "$SNAP/"
+          rsync -t "ci@$HOST:/srv/snapshot/velometer.sqlite.gz" "ci@$HOST:/srv/snapshot/velometer.sqlite.gz.sha256" "ci@$HOST:/srv/snapshot/velometer-data.tar.gz" "ci@$HOST:/srv/snapshot/velometer-data.tar.gz.sha256" "$SNAP/"
           (cd "$SNAP" && sha256sum -c velometer.sqlite.gz.sha256)
+          (cd "$SNAP" && sha256sum -c velometer-data.tar.gz.sha256)
           rsync -t "ci@$HOST:/srv/tiles/velometer.pmtiles" "$TILES/"
           # the tiles have no .sha256 on the server: the live export's build.json records theirs
           curl -fsS --proto '=https' "https://velometer.$DOMAIN/build.json" \
@@ -110,22 +112,30 @@ jobs:
           sha=$(jq -er .sha256 "$TILES/velometer.pmtiles.json")
           [[ $sha =~ ^[0-9a-f]{64}$ ]]
           (cd "$TILES" && echo "$sha  velometer.pmtiles" | sha256sum -c -)
+          # the key leaves the agent until the deploy: no later step before it can use it
+          ssh-add -D
 
       - name: The database
         run: |
           gunzip -c "$SNAP/velometer.sqlite.gz" > velometer.sqlite
           rm -- "$SNAP/velometer.sqlite.gz"
 
-      - name: The export's other inputs
+      - name: The export's other inputs, the tier maps and the plan data
         run: |
-          # the snapshot holds the database only; without these the export has no tier maps and
-          # no plan pages and still passes deploy-check (docs/deploy.md §2)
-          for d in data/maps data/plans/berlin; do
-            if [ -z "$(find "$d" -type f -print -quit 2>/dev/null)" ]; then
-              echo "::error::$d is missing: the snapshot does not carry it yet (docs/deploy.md §2)"
-              exit 1
-            fi
-          done
+          # only regular files and directories under data/maps and data/plans may come out of it;
+          # `export --public` then refuses if either is missing or empty
+          a="$SNAP/velometer-data.tar.gz"
+          if tar -tvzf "$a" | grep -Ev '^[-d]' > /dev/null; then
+            echo "::error::$a holds a link or a special file"; exit 1
+          fi
+          if tar -tzf "$a" | grep -Ev '^data/(maps|plans)(/[^/]+)*/?$' > /dev/null; then
+            echo "::error::$a holds a member outside data/maps and data/plans"; exit 1
+          fi
+          if tar -tzf "$a" | grep -E '(^|/)\.\.?(/|$)' > /dev/null; then
+            echo "::error::$a holds a . or .. member"; exit 1
+          fi
+          tar -xzf "$a" --no-same-owner --no-same-permissions
+          rm -- "$a"
 
       - name: Export and check velometer
         run: |
@@ -179,7 +189,7 @@ jobs:
 
       - name: Every pass at 0 findings
         run: |
-          uv run python tools/pass_findings.py "$PASSES/all=velometer.localhost" "$PASSES/types=velometer.localhost" "$PASSES/datalab=localhost" | tee "$WORK/passes.md"
+          uv run python tools/pass_findings.py "$PASSES/all=velometer.localhost" "$PASSES/types=velometer.localhost" "$PASSES/datalab=localhost"
 
       - name: Stop the dry run
         run: kill -INT -- "-$DRYRUN_PID"
@@ -203,6 +213,13 @@ jobs:
           git push origin "refs/tags/$tag"
           echo "TAG=$tag" >> "$GITHUB_ENV"
 
+      - name: The ci key again, for the deploy
+        env:
+          CI_DEPLOY_KEY: ${{ secrets.CI_DEPLOY_KEY }}
+        run: |
+          test -n "$CI_DEPLOY_KEY"
+          printf '%s\n' "$CI_DEPLOY_KEY" | ssh-add -
+
       - name: Deploy velometer
         if: inputs.site == 'velometer' || inputs.site == 'both'
         run: |
@@ -220,11 +237,11 @@ jobs:
         run: |
           if [ -f "$WORK/deploy-velometer.log" ]; then
             uv run python tools/render_pass.py --site "$EXPORT" --base / --out "$PASSES/live-velometer" --url "https://velometer.$DOMAIN" --pages types
-            uv run python tools/pass_findings.py "$PASSES/live-velometer=velometer.$DOMAIN" | tail -n 1 | tee -a "$WORK/passes.md"
+            uv run python tools/pass_findings.py "$PASSES/live-velometer=velometer.$DOMAIN"
           fi
           if [ -f "$WORK/deploy-datalab.log" ]; then
             uv run python tools/render_pass.py --site "$DATALAB" --base / --lang de --out "$PASSES/live-datalab" --url "https://$DOMAIN"
-            uv run python tools/pass_findings.py "$PASSES/live-datalab=$DOMAIN" | tail -n 1 | tee -a "$WORK/passes.md"
+            uv run python tools/pass_findings.py "$PASSES/live-datalab=$DOMAIN"
           fi
 
       - name: Job summary
@@ -238,7 +255,25 @@ jobs:
             echo "Run (R64 evidence): $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo "Accessibility statement date: ${CHECKED:-not built}; export tag: ${TAG:-not pushed}"
             echo
-            if [ -f "${WORK:-/nonexistent}/passes.md" ]; then cat "$WORK/passes.md"; else echo "No pass was counted."; fi
+            # every pass that wrote results, a failed one too (its findings are the evidence)
+            passes=()
+            for d in "${PASSES:-/nonexistent}"/*/; do
+              [ -f "$d/results.json" ] || continue
+              name=$(basename "$d")
+              case $name in
+                all | types) host=velometer.localhost ;;
+                datalab) host=localhost ;;
+                live-velometer) host=velometer.$DOMAIN ;;
+                *) host=$DOMAIN ;;
+              esac
+              passes+=("${d%/}=$host")
+            done
+            if [ ${#passes[@]} -eq 0 ]; then
+              echo "No pass wrote results."
+            elif ! uv run python tools/pass_findings.py "${passes[@]}" 2> /dev/null; then
+              echo
+              echo "**A pass has findings or visited nothing: nothing past it ran.**"
+            fi
             echo
             cat "${WORK:-/nonexistent}"/deploy-*.log 2> /dev/null | grep -E '^(velometer|datalab): current -> ' || echo "No release was switched."
           } >> "$GITHUB_STEP_SUMMARY"

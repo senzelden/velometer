@@ -303,3 +303,29 @@ def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
         "trust.yaml: missing (in the commit)",
         "extra.yaml: not in the commit",
     ]
+
+
+@pytest.mark.parametrize("breaks", ["no maps dir", "empty maps", "no measures", "no retrieved"])
+def test_public_export_refuses_without_its_maps_and_plan_data(rich, tmp_path, monkeypatch, breaks):  # noqa: F811
+    """M17: without the tier maps or the plan data the pages leave them out and still pass
+    deploy-check, so a public export refuses (the CD runner gets both from the snapshot)."""
+    import shutil
+
+    db_path, cfg, maps, docs, plans = rich
+    _write_site(cfg, COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    if breaks == "no maps dir":
+        shutil.rmtree(maps)
+    elif breaks == "empty maps":
+        for f in maps.iterdir():
+            f.unlink()
+    elif breaks == "no measures":
+        (plans / "berlin" / "radverkehrsmassnahmen.geojson").unlink()
+    else:
+        (plans / "berlin" / "retrieved.json").unlink()
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match="tier maps and the plan data"):
+        _export(rich, out, True)
+    assert not out.exists()
+    # a preview export (not public) still renders without them
+    _export(rich, tmp_path / "preview", False)

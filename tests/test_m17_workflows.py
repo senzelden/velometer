@@ -219,7 +219,7 @@ MAIN_ONLY = "github.ref == 'refs/heads/main'"
 SERVER_CMD = re.compile(r"tools/server\.py\s+(\S+)(?:\s+(\S+))?")
 HEX128 = re.compile(r"\b[0-9a-f]{128}\b")
 # the rsync reads deploy/ci-gate.py is tested to admit (task 9, ruling T9-g)
-GATE_READ_OPTIONS = {"-t", "-a", "-av", "--checksum", "--partial"}
+FAIL_SOFTLY = re.compile(r"\|\|\s*(true\b|:(?!\S))|set \+e\b|set \+o pipefail")
 
 
 def _deploy_job() -> dict:
@@ -301,6 +301,7 @@ def test_deploy_fails_closed_on_sha():
     job = doc["jobs"]["deploy"]
     sha = [c for run in _run_texts(job) for c in _commands(run) if "sha256sum -c" in c]
     assert any("velometer.sqlite.gz.sha256" in c for c in sha), sha
+    assert any("velometer-data.tar.gz.sha256" in c for c in sha), sha
     assert any("velometer.pmtiles" in c for c in sha), sha
     for c in sha:
         assert "||" not in c, c
@@ -310,7 +311,16 @@ def test_deploy_fails_closed_on_sha():
         for step in j["steps"]:
             assert not step.get("continue-on-error"), step
             assert step.get("shell", "bash") == "bash", step
-    assert not re.search(r"\|\|\s*(true|:)\b|set \+e|set \+o pipefail", text)
+    assert not FAIL_SOFTLY.search(text)
+
+
+@pytest.mark.parametrize(
+    "soft", ["cmd || true", "cmd || :", "cmd ||:\n", "cmd || : # ok", "x\nset +e\n",
+             "set +o pipefail"],
+)  # fmt: skip
+def test_the_fail_softly_rule_sees_every_form(soft):
+    assert FAIL_SOFTLY.search(soft)
+    assert not FAIL_SOFTLY.search("a || { echo no; exit 1; }")
 
 
 def test_deploy_never_runs_setup_or_unlock():
@@ -339,14 +349,23 @@ def test_deploy_main_only():
     site = triggers["workflow_dispatch"]["inputs"]["site"]
     assert site["type"] == "choice" and site["options"] == ["velometer", "datalab", "both"]
     for name, job in doc["jobs"].items():
-        assert MAIN_ONLY in job.get("if", ""), name
+        assert job.get("if") == MAIN_ONLY, name
+
+
+def test_no_run_script_holds_an_expression():
+    """Values reach a script through `env:`, never as `${{ … }}` pasted into its text
+    (script injection)."""
+    for path in _workflow_files():
+        for step in _steps(_load(path)):
+            assert "${{" not in step.get("run", ""), (path.name, step.get("name"))
 
 
 def test_deploy_gate_job_runs_every_gate_command():
     job = _load(DEPLOY)["jobs"]["gate"]
     runs = [line.strip() for run in _run_texts(job) for line in run.splitlines()]
-    for command in _gate():
+    for command in [*_gate(), "uvx cffconvert"]:
         assert any(run.startswith(command) for run in runs), f"the gate job does not run {command}"
+    assert any(run.startswith("uvx cffconvert") and "--validate" in run for run in runs)
 
 
 def test_deploy_permissions_and_concurrency():
@@ -363,17 +382,30 @@ def test_deploy_permissions_and_concurrency():
 
 
 def test_deploy_key_stays_in_the_agent():
-    """The one secret, CI_DEPLOY_KEY, reaches only the step that hands it to ssh-agent on stdin;
-    no file holds it."""
+    """The one secret, CI_DEPLOY_KEY, reaches only the steps that hand it to ssh-agent on stdin
+    (no file holds it), and the agent holds it only for the fetch and for the deploy: it is
+    dropped after the fetch and added again after every pass and the tag, so no step between
+    (export, build, Chrome, the dependencies they load) can reach the server with it."""
+    job = _deploy_job()
     text = DEPLOY.read_text(encoding="utf-8")
-    assert re.findall(r"secrets\.[A-Za-z_]+", text) == ["secrets.CI_DEPLOY_KEY"]
-    holders = [s for s in _deploy_job()["steps"] if "CI_DEPLOY_KEY" in str(s)]
-    assert len(holders) == 1
-    step = holders[0]
-    assert step["env"] == {"CI_DEPLOY_KEY": "${{ secrets.CI_DEPLOY_KEY }}"}
-    uses = [c for c in _commands(step["run"]) if "CI_DEPLOY_KEY" in c]
+    assert set(re.findall(r"secrets\.[A-Za-z_]+", text)) == {"secrets.CI_DEPLOY_KEY"}
+    holders = [i for i, s in enumerate(job["steps"]) if "CI_DEPLOY_KEY" in str(s)]
+    assert len(holders) == 2
     to_agent = re.compile(r"printf '%s\\n' \"\$CI_DEPLOY_KEY\" \| ssh-add -")
-    assert uses and all(c.startswith("test -n ") or to_agent.fullmatch(c) for c in uses), uses
+    for i in holders:
+        step = job["steps"][i]
+        assert step["env"] == {"CI_DEPLOY_KEY": "${{ secrets.CI_DEPLOY_KEY }}"}
+        uses = [c for c in _commands(step["run"]) if "CI_DEPLOY_KEY" in c]
+        assert uses and all(c.startswith("test -n ") or to_agent.fullmatch(c) for c in uses)
+    fetches = _indices(job, r"(?m)^\s*rsync ")
+    drops = [i for i, run in enumerate(_run_texts(job)) if "ssh-add -D" in _commands(run)]
+    assert drops == [max(fetches)], drops
+    assert _commands(_run_texts(job)[drops[0]])[-1] == "ssh-add -D"  # the fetch's last command
+    deploys = _indices(job, r"tools/server\.py deploy ")
+    assert holders[0] < min(fetches) and holders[1] == min(deploys) - 1
+    # nothing between the drop and the re-add adds a key
+    assert not any("ssh-add" in _run_texts(job)[i] for i in range(drops[0] + 1, holders[1]))
+    assert max(_indices(job, r'pass_findings\.py "\$PASSES/all=')) < holders[1]  # the passes
 
 
 def test_deploy_pins_the_host_key():
@@ -393,27 +425,28 @@ def test_deploy_pins_the_host_key():
     assert host == line == "2.31.133.185"
 
 
-def test_deploy_reads_only_what_the_gate_admits():
-    """The rsync reads use options and paths deploy/ci-gate.py admits for `ci` (ruling T9-g)."""
+def test_deploy_reads_only_what_the_gate_admits(tmp_path):
+    """Each rsync read of the workflow, run by the local rsync client against an `-e` program
+    that records the remote command (what sshd hands deploy/ci-gate.py), is admitted by the
+    gate's own `plan`, and together they read every path the gate admits."""
     import shlex
 
-    bytecode, sys.dont_write_bytecode = sys.dont_write_bytecode, True
-    try:
-        from tests.helpers import load_script
+    from tests.test_m17_ci_gate import _remote_rsync, gate
 
-        gate = load_script("deploy/ci-gate.py")
-    finally:
-        sys.dont_write_bytecode = bytecode
     read = set()
     for run in _run_texts(_deploy_job()):
         for c in _commands(run):
             if not c.startswith("rsync "):
                 continue
-            words = shlex.split(c, posix=False)
-            remote = [w.strip('"') for w in words if w.strip('"').startswith("ci@$HOST:")]
-            assert remote, c
-            assert {w for w in words[1:] if w.startswith("-")} <= GATE_READ_OPTIONS, c
-            read |= {w.split(":", 1)[1] for w in remote}
+            c = c.replace("$HOST", "203.0.113.10")
+            c = re.sub(r'"\$[A-Z]+/"', shlex.quote(str(tmp_path) + "/"), c)
+            argv = shlex.split(c)
+            assert "-e" not in argv, c  # ssh, as ~/.ssh/config sets it up
+            command = _remote_rsync([argv[0], "-e", "ssh", *argv[1:]], tmp_path)
+            assert command.startswith("rsync --server --sender "), command
+            steps = gate.plan(command)  # raises Refused for anything not admitted
+            assert steps == [["/usr/bin/rsync", *command.split()[1:]]]
+            read |= {w for w in command.split() if w.startswith("/")}
     assert read == set(gate.READS)
 
 
@@ -435,7 +468,7 @@ def test_deploy_checks_caddy_by_setups_sha512():
         cwd=ROOT, capture_output=True, text=True, check=True,
     ).stdout.split()  # fmt: skip
     cloud_init = (ROOT / "deploy" / "cloud-init.yaml").read_text(encoding="utf-8")
-    assert got[0] == re.fullmatch(r"caddy:(\d+\.\d+\.\d+)-alpine", dr.CADDY_IMAGE).group(1)
+    assert got[0] == re.match(r"caddy:(\d+\.\d+\.\d+)-alpine@", dr.CADDY_IMAGE).group(1)
     assert HEX128.fullmatch(got[1]) and HEX128.findall(cloud_init) == [got[1]]
     assert any("caddy_${v}_checksums.txt" in c for c in lines)
     assert any(c.startswith('grep -qx "$sha512  $tgz"') for c in lines)
@@ -443,25 +476,80 @@ def test_deploy_checks_caddy_by_setups_sha512():
     assert dry and all('--caddy-bin "$CADDY/caddy"' in c for c in dry), dry
 
 
-def test_deploy_refuses_an_export_without_its_maps_and_plans(tmp_path):
-    """The snapshot carries the database only; an export without data/maps and data/plans has
-    no tier maps and no plan pages and still passes deploy-check, so the run stops before it."""
+def _archive(path: Path, members: dict[str, object]) -> Path:
+    """A gzipped tar: name -> bytes (a file), None (a directory) or ("link", target)."""
+    import io
+    import tarfile
+
+    with tarfile.open(path, "w:gz") as tar:
+        for name, body in members.items():
+            ti = tarfile.TarInfo(name)
+            if body is None:
+                ti.type, ti.mode = tarfile.DIRTYPE, 0o755  # as make_data_archive writes it
+                tar.addfile(ti)
+            elif isinstance(body, tuple):
+                ti.type, ti.linkname = tarfile.SYMTYPE, body[1]
+                tar.addfile(ti)
+            else:
+                ti.size = len(body)
+                tar.addfile(ti, io.BytesIO(body))
+    return path
+
+
+GOOD_DATA = {"data/maps": None, "data/maps/berlin_lau.png": b"png", "data/plans": None,
+             "data/plans/berlin": None, "data/plans/berlin/retrieved.json": b"{}"}  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [{}, {"data/snapshots/x.pbf": b"x"}, {"data/maps/l.png": ("link", "/etc/passwd")},
+     {"data/maps/../../evil": b"x"}, {"/etc/cron.d/x": b"x"}, {"velometer.sqlite": b"x"}],
+    ids=["good", "other data", "symlink", "dotdot", "absolute", "outside data"],
+)  # fmt: skip
+def test_deploy_unpacks_only_the_maps_and_the_plan_data(tmp_path, extra):
+    """The data archive (checked by its sha256 before) unpacks at the repo root only when every
+    member is a regular file or directory under data/maps or data/plans."""
     job = _deploy_job()
-    guard = next(s for s in job["steps"] if "data/maps" in s.get("run", ""))
-    assert job["steps"].index(guard) < min(_indices(job, r"velometer app export "))
+    (i,) = _indices(job, r'tar -xzf "\$a"')
+    assert max(_indices(job, r"velometer-data\.tar\.gz\.sha256")) < i
+    assert i < min(_indices(job, r"velometer app export "))
+    snap, repo = tmp_path / "snap", tmp_path / "repo"
+    snap.mkdir()
+    repo.mkdir()
+    _archive(snap / "velometer-data.tar.gz", GOOD_DATA | extra)
+    r = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", _run_texts(job)[i]],
+        cwd=repo, env={**os.environ, "SNAP": str(snap)}, capture_output=True, text=True,
+    )  # fmt: skip
+    if not extra:
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert (repo / "data" / "maps" / "berlin_lau.png").read_bytes() == b"png"
+        assert (repo / "data" / "plans" / "berlin" / "retrieved.json").is_file()
+        assert not (snap / "velometer-data.tar.gz").exists()
+    else:
+        assert r.returncode != 0
+        assert not (repo / "data").exists() and not (tmp_path / "evil").exists()
 
-    def run_guard() -> int:
-        r = subprocess.run(["bash", "-eo", "pipefail", "-c", guard["run"]], cwd=tmp_path,
-                           capture_output=True, text=True)  # fmt: skip
-        return r.returncode
 
-    assert run_guard() != 0
-    (tmp_path / "data" / "maps").mkdir(parents=True)
-    (tmp_path / "data" / "maps" / "berlin_fua.png").write_bytes(b"png")
-    assert run_guard() != 0  # still no plans
-    (tmp_path / "data" / "plans" / "berlin").mkdir(parents=True)
-    (tmp_path / "data" / "plans" / "berlin" / "retrieved.json").write_text("{}")
-    assert run_guard() == 0
+def test_deploy_summary_counts_a_failed_pass(tmp_path):
+    """The `always()` summary writes the pass table from every result file there is, so a run
+    that stopped at a pass with findings still shows them, and the summary step itself passes."""
+    job = _deploy_job()
+    step = job["steps"][-1]
+    assert step.get("if") == "always()"
+    passes = tmp_path / "passes"
+    _results(passes / "all", [_visit(axe=[{"id": "color-contrast"}]), _visit()])
+    _results(passes / "datalab", [_visit(hosts=["localhost"])])
+    summary = tmp_path / "summary.md"
+    env = {**os.environ, "PASSES": str(passes), "WORK": str(tmp_path), "DOMAIN": "example.org",
+           "GITHUB_STEP_SUMMARY": str(summary), "SITE": "both", "GITHUB_SHA": "0" * 40}  # fmt: skip
+    env.pop("SSH_AGENT_PID", None)
+    r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+                       cwd=ROOT, env=env, capture_output=True, text=True)  # fmt: skip
+    assert r.returncode == 0, r.stdout + r.stderr
+    text = summary.read_text(encoding="utf-8")
+    assert "| all | 2 | 1 |" in text and "| datalab | 1 | 0 |" in text
+    assert "A pass has findings" in text
 
 
 def _results(path: Path, entries: list[dict]) -> Path:
