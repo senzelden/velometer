@@ -22,6 +22,8 @@ M16 spec §4.2, §4.4, §4.6).
   hold neither address unmasked, nor the cookie, the password or its Authorization value, nor
   keep any of those headers (legal review 5.3, ruling R25). `--debug-log` raises Caddy's own
   log to DEBUG, so that the 404 and 401 error entries are written there too and checked.
+  `--caddy-bin FILE` serves with that Caddy binary, mounted over the image's: the CD workflow
+  passes the release binary it checked by SHA-512 the way `setup` does (M17 spec §4.5).
 - `wrangler`: `wrangler pages dev` (`WRANGLER`, fetched by npx at run time), Cloudflare Pages'
   local emulation, for `--site` only.
 
@@ -29,7 +31,7 @@ Nothing is uploaded. The probes are pure functions of a response; `run_probes` a
 fetch the paths they need and collect their problems. The exit status is 1 when any probe fails.
 
     uv run python tools/deploy_dryrun.py --site DIR --server caddy --datalab DIR [--tiles FILE]
-        [--lock | --lock-default] [--debug-log] [--keep-running]
+        [--lock | --lock-default] [--debug-log] [--caddy-bin FILE] [--keep-running]
     uv run python tools/deploy_dryrun.py --site DIR --server wrangler [--keep-running]
 """
 
@@ -62,6 +64,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "deploy.md"
 CADDYFILE = ROOT / "deploy" / "Caddyfile"
 CADDY_IMAGE = "caddy:2.11.4-alpine"
+CADDY_BIN_MOUNT = "/usr/bin/caddy"  # where the image keeps its Caddy (`--caddy-bin` replaces it)
 # where the server keeps each site (deploy/Caddyfile, SITE_ROOT=/srv) and the maps' basemap,
 # outside the site's directory; the path a page asks for it at (main.TILES_PATH under base /)
 SITE_MOUNT = "/srv/velometer/current"
@@ -713,16 +716,19 @@ def caddy_command(
     name: str,
     image: str = CADDY_IMAGE,
     tiles: Path | None = None,
+    binary: Path | None = None,
 ) -> list[str]:
     # host networking: the site addresses' port is the host's; DOMAIN fills {$DOMAIN}, and
-    # SITE_ROOT is left to the Caddyfile's default (/srv)
+    # SITE_ROOT is left to the Caddyfile's default (/srv); `binary` replaces the image's Caddy
     mount_tiles = ["-v", f"{tiles.resolve()}:{TILES_MOUNT}:ro"] if tiles else []
+    mount_binary = ["-v", f"{binary.resolve()}:{CADDY_BIN_MOUNT}:ro"] if binary else []
     return [
         "docker", "run", "--rm", "--name", name, "--network", "host",
         "-e", f"DOMAIN={DOMAIN}",
         "-v", f"{site.resolve()}:{SITE_MOUNT}:ro",
         "-v", f"{datalab.resolve()}:{DATALAB_MOUNT}:ro",
         *mount_tiles,
+        *mount_binary,
         "-v", f"{caddyfile}:/etc/caddy/Caddyfile:ro",
         "-v", f"{lock}:{LOCK_MOUNT}:ro",
         image,
@@ -760,10 +766,12 @@ def caddy_server(
     tiles: Path | None = None,
     lock: str = "",
     debug: bool = False,
+    binary: Path | None = None,
 ):
     """Caddy in Docker with deploy/Caddyfile serving `site` and `datalab` (and the tile file, if
-    given), `lock` as /etc/caddy/lock.caddy (empty: unlocked); yields a `Served` whose `logs`
-    are Caddy's output and the access log files; removes the container."""
+    given), `lock` as /etc/caddy/lock.caddy (empty: unlocked), with the Caddy `binary` instead of
+    the image's when given; yields a `Served` whose `logs` are Caddy's output and the access log
+    files; removes the container."""
     port = free_port()
     origin = f"http://127.0.0.1:{port}"
     name = f"velometer-dryrun-{port}"
@@ -790,7 +798,9 @@ def caddy_server(
         try:
             with log.open("wb") as out:
                 proc = subprocess.Popen(
-                    caddy_command(site, datalab, caddyfile, lockfile, name, tiles=tiles),
+                    caddy_command(
+                        site, datalab, caddyfile, lockfile, name, tiles=tiles, binary=binary
+                    ),
                     stdout=out,
                     stderr=subprocess.STDOUT,
                 )
@@ -900,6 +910,12 @@ def main(argv: list[str] | None = None) -> int:
         help="raise Caddy's own log to DEBUG, so its error entries are written and checked too",
     )
     ap.add_argument(
+        "--caddy-bin",
+        type=Path,
+        help="serve with this Caddy binary instead of the image's (caddy only): the CD workflow "
+        "passes the release binary it checked by SHA-512, as setup installs it",
+    )
+    ap.add_argument(
         "--keep-running",
         action="store_true",
         help="after the probes, keep serving until Ctrl-C (for render_pass.py --url)",
@@ -909,10 +925,17 @@ def main(argv: list[str] | None = None) -> int:
     if err := _site_error(site, "static edition"):
         ap.error(err)
     caddy = a.server == "caddy"
-    if not caddy and (a.datalab or a.tiles or a.lock or a.lock_default or a.debug_log):
-        ap.error("--datalab, --tiles, --lock, --lock-default and --debug-log need --server caddy")
+    if not caddy and (
+        a.datalab or a.tiles or a.lock or a.lock_default or a.debug_log or a.caddy_bin
+    ):
+        ap.error(
+            "--datalab, --tiles, --lock, --lock-default, --debug-log and --caddy-bin need "
+            "--server caddy"
+        )
     if a.tiles is not None and not a.tiles.is_file():
         ap.error(f"--tiles needs an existing file, not {a.tiles}")
+    if a.caddy_bin is not None and not a.caddy_bin.is_file():
+        ap.error(f"--caddy-bin needs an existing file, not {a.caddy_bin}")
     datalab = None
     if caddy:
         if a.datalab is None:
@@ -929,7 +952,7 @@ def main(argv: list[str] | None = None) -> int:
             lock = LOCK_DEFAULT if a.lock_default else ""
             if a.lock:
                 lock = lock_text(hash_password(a.lock))
-            server = caddy_server(site, datalab, a.tiles, lock, a.debug_log)
+            server = caddy_server(site, datalab, a.tiles, lock, a.debug_log, a.caddy_bin)
         else:
             server = wrangler_server(site)
         with server as served:

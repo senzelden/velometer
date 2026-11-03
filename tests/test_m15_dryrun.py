@@ -510,7 +510,7 @@ def test_the_password_and_its_header_are_secrets_the_logs_must_not_hold(
 def test_the_lock_options_reach_the_server_as_lock_file_text(tiny, tiny_datalab, monkeypatch):
     seen = []
 
-    def server(site, datalab, tiles, lock, debug):
+    def server(site, datalab, tiles, lock, debug, binary=None):
         seen.append((lock, debug))
         return _served_with_logs(CLEAN_LOGS)()
 
