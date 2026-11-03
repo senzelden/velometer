@@ -390,5 +390,8 @@ def test_the_env_example_names_both_variables_without_a_secret():
 def test_the_guide_points_to_the_file_and_carries_no_copy():
     doc = DOC.read_text(encoding="utf-8")
     assert "deploy/Caddyfile" in doc
-    assert not any("handle_errors" in b for b in re.findall(r"```\n(.*?)```", doc, re.S))
+    # every fenced block, tagged or not, indented or not (a fence closes at its own indent)
+    blocks = [b for _, b in re.findall(r"^( *)```\w*\n(.*?)^\1```", doc, re.S | re.M)]
+    assert len(blocks) > 5
+    assert not any("handle_errors" in b for b in blocks)
     assert "test_m14_deploy_doc" not in doc
