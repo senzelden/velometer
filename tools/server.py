@@ -11,11 +11,13 @@ names its `pass insert` command. The preview password only ever travels on stdin
     uv run python tools/server.py create --domain D --ssh-key NAME [--type cx23] [--location nbg1]
     uv run python tools/server.py dns --domain D
     uv run python tools/server.py setup --host IP --domain D [--new-password] [--relock]
+        [--ci-key FILE.pub]
     uv run python tools/server.py deploy velometer|datalab|tiles PATH --host IP
     uv run python tools/server.py verify --domain D [--locked]
     uv run python tools/server.py stats --host IP
     uv run python tools/server.py golive-check --datalab DIR [--site DIR] [--host IP]
     uv run python tools/server.py unlock --host IP --domain D --datalab DIR --site DIR
+    uv run python tools/server.py snapshot --host IP [--db velometer.sqlite] [--tmp DIR]
 
 Releases: `deploy` uploads a site with rsync (`--link-dest` to the live release, so only changed
 files travel) into a fresh `/srv/<site>/releases/<commit>-<UTC time>/`, writes `.complete` into
@@ -25,11 +27,19 @@ complete releases are kept; older ones are removed one by one, each path checked
 `RELEASE` first. The tile file is no release: it is uploaded to a temporary name in
 `/srv/tiles/` and renamed into place.
 
+CI (M17 spec §4.5): `setup --ci-key` makes the user `ci`, which the CD workflow deploys as
+(`deploy … --user ci`). It has no sudo: its login shell and its key's forced command are
+deploy/ci-gate.py, which admits only the commands `deploy_site` issues and rsync reads of the data
+snapshot and the tiles. `ci` and `deploy` share the group `releases`, which may write the release
+directories. `snapshot` uploads the gzipped database to /srv/snapshot/ (0750 root:ci; no Caddy
+root reaches it) for the workflow to build from.
+
 Go-live judges what is live: `unlock` (and `golive-check --host`) compares a content digest of
 each site's live release (`/srv/<site>/current`, every file's path and sha256) with the local
 `--site` and `--datalab` it checked, and refuses on any difference.
 """
 
+import gzip
 import hashlib
 import importlib.util
 import ipaddress
@@ -39,6 +49,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -117,6 +128,20 @@ REMOTE_GOACCESS = "/etc/goaccess/velometer.conf"
 REMOTE_JOURNALD = "/etc/systemd/journald.conf.d/velometer.conf"
 DOMAIN = re.compile(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+")
 STATS_DAYS = 14
+
+# The ci user (M17 spec §4.5; R35 fixed for CI only, `deploy` keeps sudo)
+CI_USER = "ci"
+CI_GROUP = "releases"
+CI_GATE = DEPLOY / "ci-gate.py"
+REMOTE_GATE = "/usr/local/sbin/velometer-ci-gate"
+CI_HOME = f"/home/{CI_USER}"
+CI_AUTHORIZED = f"{CI_HOME}/.ssh/authorized_keys"
+# The data snapshot the CD workflow builds from: outside every Caddy root, readable by ci only
+SNAPSHOT_DIR = f"{SITE_ROOT}/snapshot"
+SNAPSHOT_NAME = "velometer.sqlite.gz"
+SNAPSHOT_UPLOAD = ".velometer-snapshot.gz"  # in the deploy user's home, moved into place by root
+DB = ROOT / "velometer.sqlite"
+SQLITE_MAGIC = b"SQLite format 3\x00"
 
 # Confirmations no file can show; printed by every golive-check, never failing it (ruling R31).
 MANUAL = [
@@ -556,10 +581,13 @@ def setup(
     domain: str = typer.Option(..., "--domain"),
     new_password: bool = typer.Option(False, "--new-password", help="Re-hash the password."),
     relock: bool = typer.Option(False, "--relock", help="Lock an unlocked server again."),
+    ci_key: Path | None = typer.Option(  # noqa: B008
+        None, "--ci-key", help="The ci user's public key file: make ci, its gate and its key."
+    ),
     user: str = typer.Option(USER, "--user"),
 ) -> None:
     """Bring the server's Caddy and GoAccess files up to date, and the running Caddy up to the
-    files (idempotent; asks for yes)."""
+    files; with --ci-key also the ci user (idempotent; asks for yes)."""
     t = _target(host, user)
     try:
         wanted = {
@@ -568,6 +596,9 @@ def setup(
             REMOTE_GOACCESS: GOACCESS_CONF.read_text(encoding="utf-8"),
             REMOTE_JOURNALD: JOURNALD_CONF.read_text(encoding="utf-8"),
         }
+        if ci_key is not None:
+            wanted[REMOTE_GATE] = CI_GATE.read_text(encoding="utf-8")
+            wanted[CI_AUTHORIZED] = ci_authorized_keys(_read_public_key(ci_key))
         state = lock_state(t.ssh(f"sudo cat {LOCK}").stdout)
         if state == "unknown":
             raise ServerError(f"{LOCK} holds something setup does not know; look at it by hand")
@@ -583,9 +614,22 @@ def setup(
             if len(parts) == 2:
                 have[parts[1]] = parts[0]
         changed = [p for p, text in wanted.items() if have.get(p) != sha256(text)]
+        ci_plan, ci_ready = [], True
+        if ci_key is not None:
+            ci_ready = t.ssh("sudo bash -s", input=CI_CHECK, check=False).stdout.strip()
+            ci_ready = ci_ready == "ci ok"
+            if REMOTE_GATE in changed:
+                ci_plan.append(f"upload {REMOTE_GATE} (deploy/ci-gate.py, 0755)")
+            if not ci_ready:
+                ci_plan.append(CI_PLAN)
+            if CI_AUTHORIZED in changed:
+                ci_plan.append(
+                    f"upload {CI_AUTHORIZED}: the one key of {ci_key}, `restrict` and the gate "
+                    "as its command"
+                )
         in_sync, served = running_state(t)
         typer.echo(f"running Caddy serves {_describe(served)}")
-        plan = [f"upload {p}" for p in changed]
+        plan = [f"upload {p}" for p in changed if p not in (REMOTE_GATE, CI_AUTHORIZED)]
         if REMOTE_JOURNALD in changed:
             plan.append("restart systemd-journald (14-day retention)")
         if write_lock:
@@ -594,18 +638,18 @@ def setup(
             )
         elif state == "open":
             typer.echo(f"{LOCK} is empty: the sites are live; setup leaves them so (--relock)")
-        if not plan and in_sync:
+        if not plan and not ci_plan and in_sync:
             typer.echo("nothing to change")
             return
         password = secret("VELOMETER_PREVIEW_PASSWORD") if write_lock else None
         if plan:
             plan.append("reload Caddy")
-        else:
+        elif not in_sync:
             plan.append(
                 "reload or start Caddy: it does not run what the files on disk give "
                 "(a failed reload, a stop or a hand edit)"
             )
-        confirm(plan)
+        confirm(plan + ci_plan)
         for p in (REMOTE_ENV, REMOTE_GOACCESS):
             if p in changed:
                 t.put(p, wanted[p])
@@ -625,10 +669,102 @@ def setup(
                 f"--envfile {REMOTE_ENV}"
             )
             t.ssh(f"sudo mv -f {new} {REMOTE_CADDYFILE}")
-        reload_caddy(t, served)
+        if plan:
+            reload_caddy(t, served)
+        # the gate first (it is ci's shell), then the user and directories, then the key
+        if REMOTE_GATE in changed:
+            t.put(REMOTE_GATE, wanted[REMOTE_GATE], mode="0755")
+        if ci_key is not None and not ci_ready:
+            t.ssh("sudo bash -s", input=CI_SCRIPT)
+        if CI_AUTHORIZED in changed:
+            t.put(CI_AUTHORIZED, wanted[CI_AUTHORIZED], mode="0644")
     except (ServerError, dr.DryRunError) as e:
         _fail(e)
     typer.echo("setup done")
+
+
+def _read_public_key(path: Path) -> str:
+    """The one public key in `path`; a private key or anything else stops before any upload."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        raise ServerError(f"--ci-key {path}: not readable ({e.__class__.__name__})") from None
+    if "PRIVATE KEY" in text:
+        raise ServerError(f"--ci-key {path} is a private key; give the .pub file")
+    if not PUBLIC_KEY.fullmatch(text.strip()):
+        raise ServerError(f"--ci-key {path}: not one public key")
+    return text.strip()
+
+
+def ci_authorized_keys(public_key: str) -> str:
+    """ci's authorized_keys: its one key, with every forwarding, the pty and ~/.ssh/rc off
+    (`restrict`) and the gate as its only command."""
+    if not PUBLIC_KEY.fullmatch(public_key):
+        raise ServerError("not one public key")
+    kind, key = public_key.split()[:2]
+    return f'restrict,command="{REMOTE_GATE}" {kind} {key} velometer-ci\n'
+
+
+# Run as root (`sudo bash -s`) after the gate is in place. Idempotent. It changes owners, groups
+# and directory modes only: no file's content, and `current` keeps pointing where it did. The
+# releases are handed to ci, which removes old ones after its deploys (a release made by `deploy`
+# would be no group member's to remove: its directories are 0755, RSYNC_CHMOD). ci gets no sudo,
+# no password, and no shell but the gate; sshd needs the login shell to run the forced command,
+# so the gate is that shell.
+CI_SCRIPT = rf"""set -euo pipefail
+gate={REMOTE_GATE}
+test -x "$gate"
+getent group {CI_GROUP} >/dev/null || groupadd --system {CI_GROUP}
+if getent passwd {CI_USER} >/dev/null; then
+  usermod --shell "$gate" {CI_USER}
+else
+  useradd --create-home --user-group --shell "$gate" --comment "velometer CI deploy" {CI_USER}
+fi
+usermod --append --groups {CI_GROUP} {CI_USER}
+usermod --append --groups {CI_GROUP} {USER}
+install -d -m 0755 -o root -g root {CI_HOME}/.ssh
+for site in {" ".join(SITES)}; do
+  install -d "{SITE_ROOT}/$site/releases"
+  chown {USER}:{CI_GROUP} "{SITE_ROOT}/$site"
+  chown {CI_USER}:{CI_GROUP} "{SITE_ROOT}/$site/releases"
+  chmod 2775 "{SITE_ROOT}/$site" "{SITE_ROOT}/$site/releases"
+  find "{SITE_ROOT}/$site/releases" -mindepth 1 \( ! -user {CI_USER} -o ! -group {CI_GROUP} \) \
+    -exec chown --no-dereference {CI_USER}:{CI_GROUP} {{}} +
+  if [ -L "{SITE_ROOT}/$site/current" ]; then
+    chown --no-dereference {CI_USER}:{CI_GROUP} "{SITE_ROOT}/$site/current"
+  fi
+done
+install -d -m 0750 -o root -g {CI_USER} {SNAPSHOT_DIR}
+chown root:{CI_USER} {SNAPSHOT_DIR}
+chmod 0750 {SNAPSHOT_DIR}
+"""
+
+# Prints `ci ok` when CI_SCRIPT has nothing to do.
+CI_CHECK = rf"""set -u
+fail() {{ echo "ci: $1"; exit 1; }}
+getent group {CI_GROUP} >/dev/null || fail "no group {CI_GROUP}"
+[ "$(getent passwd {CI_USER} | cut -d: -f7)" = {REMOTE_GATE} ] || fail "shell"
+for u in {CI_USER} {USER}; do
+  id -nG "$u" | tr ' ' '\n' | grep -qx {CI_GROUP} || fail "$u not in {CI_GROUP}"
+done
+[ "$(stat -c %U:%G {CI_HOME}/.ssh 2>/dev/null)" = root:root ] || fail "{CI_HOME}/.ssh"
+for site in {" ".join(SITES)}; do
+  [ "$(stat -c %a:%G "{SITE_ROOT}/$site" 2>/dev/null)" = 2775:{CI_GROUP} ] || fail "$site"
+  [ "$(stat -c %a:%U:%G "{SITE_ROOT}/$site/releases" 2>/dev/null)" = 2775:{CI_USER}:{CI_GROUP} ] \
+    || fail "$site/releases"
+  [ -z "$(find "{SITE_ROOT}/$site/releases" -mindepth 1 \( ! -user {CI_USER} -o ! -group \
+    {CI_GROUP} \) -print -quit)" ] || fail "a release in $site not owned by {CI_USER}"
+done
+[ "$(stat -c %a:%U:%G {SNAPSHOT_DIR} 2>/dev/null)" = 750:root:{CI_USER} ] || fail "{SNAPSHOT_DIR}"
+echo "ci ok"
+"""
+
+CI_PLAN = (
+    f"make the user {CI_USER} (no sudo, no password; its shell and only command is the gate) and "
+    f"the group {CI_GROUP} for {CI_USER} and {USER}; make {SITE_ROOT}/{{velometer,datalab}} and "
+    f"their releases group-writable (setgid) and hand every release to {CI_USER} (owners only: no "
+    f"file changes, current stays); make {SNAPSHOT_DIR} (0750 root:{CI_USER})"
+)
 
 
 def reload_caddy(t: Target, served_before: str) -> None:
@@ -877,6 +1013,83 @@ def stats(host: str = _host_option(), user: str = typer.Option(USER, "--user")) 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(r.stdout, encoding="utf-8")
     typer.echo(f"report: {out}")
+
+
+# --- snapshot -------------------------------------------------------------------------------
+
+
+def make_snapshot(db: Path, out_dir: Path) -> tuple[Path, str]:
+    """gzip `db` into `out_dir` (never the database's own directory); the file and its sha256.
+    The database is only ever opened for reading, as bytes, so nothing (no SQLite journal, no
+    -shm file) is written beside it. The gzip carries no name and no time: the same database
+    gives the same file."""
+    if out_dir.resolve() == db.resolve().parent:
+        raise ServerError(f"--tmp {out_dir} is the database's own directory; choose another")
+    wal = db.with_name(db.name + "-wal")
+    if wal.exists() and wal.stat().st_size:
+        raise ServerError(
+            f"{wal} is not empty: a connection is open or did not checkpoint; close it first"
+        )
+    out = out_dir / SNAPSHOT_NAME
+    try:
+        with db.open("rb") as src:
+            if src.read(len(SQLITE_MAGIC)) != SQLITE_MAGIC:
+                raise ServerError(f"{db} is no SQLite database")
+            src.seek(0)
+            with out.open("wb") as raw, gzip.GzipFile("", "wb", 6, raw, mtime=0) as gz:
+                while chunk := src.read(1 << 20):
+                    gz.write(chunk)
+    except OSError as e:
+        raise ServerError(f"snapshot of {db}: {e}") from None
+    digest = hashlib.sha256()
+    with out.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return out, digest.hexdigest()
+
+
+@app.command()
+def snapshot(
+    host: str = _host_option(),
+    db: Path = typer.Option(DB, "--db", help="The database to upload (read only)."),  # noqa: B008
+    tmp: Path | None = typer.Option(  # noqa: B008
+        None, "--tmp", help="Where the gzip is made (default: the temp directory)."
+    ),
+    user: str = typer.Option(USER, "--user"),
+) -> None:
+    """Upload the gzipped database and its sha256 to /srv/snapshot/, the data the CD workflow
+    builds from (asks for yes)."""
+    t = _target(host, user)
+    final = f"{SNAPSHOT_DIR}/{SNAPSHOT_NAME}"
+    try:
+        if not db.is_file():
+            raise ServerError(f"{db}: no database")
+        confirm(
+            [
+                f"gzip {db} into a temp directory in {tmp or tempfile.gettempdir()} (the "
+                "database is only read)",
+                f"upload it to {t.login}:{SNAPSHOT_UPLOAD}, then move it to {final} "
+                f"(0640 root:{CI_USER})",
+                f"write {final}.sha256 last and check it there",
+            ]
+        )
+        with tempfile.TemporaryDirectory(prefix="velometer-snapshot-", dir=tmp) as d:
+            gz, digest = make_snapshot(db, Path(d))
+            t.ssh(f"sudo install -d -m 0750 -o root -g {CI_USER} {SNAPSHOT_DIR}")
+            r = DEPS.runner(["rsync", "--chmod=F0600", "-e", " ".join(["ssh", *SSH_OPTS]),
+                             str(gz), f"{t.login}:{SNAPSHOT_UPLOAD}"])  # fmt: skip
+            if r.returncode != 0:
+                raise ServerError(f"rsync {_rsync_failed(r.returncode)}; {final} is unchanged")
+        t.ssh(
+            f"sudo install -m 0640 -o root -g {CI_USER} {SNAPSHOT_UPLOAD} {final}.new && "
+            f"sudo mv -f {final}.new {final} && rm -- {SNAPSHOT_UPLOAD}"
+        )
+        t.put(f"{final}.sha256", f"{digest}  {SNAPSHOT_NAME}\n", mode="0640", group=CI_USER)
+        check = f"cd {SNAPSHOT_DIR} && sha256sum --check --quiet {SNAPSHOT_NAME}.sha256"
+        t.ssh(f"sudo sh -c {shlex.quote(check)}")
+    except ServerError as e:
+        _fail(e)
+    typer.echo(f"snapshot: {final} (sha256 {digest})")
 
 
 # --- go-live --------------------------------------------------------------------------------

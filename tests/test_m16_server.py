@@ -1812,3 +1812,217 @@ def test_setup_brings_the_journald_retention_to_an_older_server_once(deps):
     r = invoke("setup", *HOST, "--domain", "example.org")
     assert r.exit_code == 0 and "nothing to change" in r.output
     assert not [j for j in deps.joined() if "journald" in j and "sha256sum" not in j]
+
+
+# --- the ci user (M17 Task 9; spec §4.5, R35 fixed for CI only) -----------------------------
+
+CI_PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCi ci@test"
+GATE = "/usr/local/sbin/velometer-ci-gate"
+
+
+def ci_key(tmp_path: Path, text: str = CI_PUB + "\n") -> str:
+    path = tmp_path / "ci.pub"
+    path.write_text(text, encoding="utf-8")
+    return str(path)
+
+
+def ci_scripts(runner: FakeRunner) -> list[str]:
+    """The scripts setup ran as root on the server, in order."""
+    return [i for a, i in runner.calls if a[-1] == "sudo bash -s"]
+
+
+def test_setup_script_creates_ci_without_sudo(ci):
+    script = srv.CI_SCRIPT
+    words = re.findall(r"[\w./-]+", script)
+    # no sudoers entry, no admin group, no password: the script itself needs no sudo either
+    assert "sudo" not in words and "sudoers" not in script and "NOPASSWD" not in script
+    assert not re.search(r"(?<!getent )\b(passwd|chpasswd|visudo|sudoers\.d)\b", script)
+    grants = re.findall(r"usermod --append --groups (\S+) (\S+)", script)
+    assert grants == [("releases", "ci"), ("releases", "deploy")]
+    assert not re.search(r"(-G|--groups) (sudo|adm|wheel|root|caddy)\b", script)
+    # no shell but the gate, which is also its key's forced command
+    shells = re.findall(r"--shell (\S+)", script)
+    assert shells and all(s == '"$gate"' for s in shells), shells
+    assert f"gate={GATE}\n" in script and srv.REMOTE_GATE == GATE
+    line = srv.ci_authorized_keys(CI_PUB)
+    assert line.count("\n") == 1 and line.endswith("\n")
+    assert line.startswith(f'restrict,command="{GATE}" ssh-ed25519 AAAA')
+    # a new server: ci the same way, from cloud-init
+    (user,) = [u for u in ci["users"] if isinstance(u, dict) and u["name"] == "ci"]
+    assert user["shell"] == GATE and user["lock_passwd"] is True
+    assert "sudo" not in user and "ssh_authorized_keys" not in user
+    assert user["groups"] == "releases"
+    sent = yaml.safe_load(srv.user_data(PUBKEY))
+    (sent_ci,) = [u for u in sent["users"] if isinstance(u, dict) and u["name"] == "ci"]
+    assert "ssh_authorized_keys" not in sent_ci  # create's key is deploy's only
+
+
+def test_setup_ci_key_installs_the_gate_then_the_user_then_the_one_key(deps, tmp_path):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path),
+               input="yes\n")  # fmt: skip
+    assert r.exit_code == 0, r.output
+    assert "no sudo" in r.output
+    i_gate = deps.index(f"{GATE}.XXXXXX")
+    i_script = [i for i, (a, s) in enumerate(deps.calls) if s == srv.CI_SCRIPT]
+    i_key = deps.index("/home/ci/.ssh/authorized_keys.XXXXXX")
+    assert len(i_script) == 1 and i_gate < i_script[0] < i_key
+    stdin = {j: s for j, s in zip(deps.joined(), [s for _, s in deps.calls], strict=True)}
+    gate_put = next(j for j in stdin if f"{GATE}.XXXXXX" in j)
+    assert "chmod 0755" in gate_put and "chown root:root" in gate_put
+    assert stdin[gate_put] == (ROOT / "deploy" / "ci-gate.py").read_text(encoding="utf-8")
+    key_put = next(j for j in stdin if "authorized_keys.XXXXXX" in j)
+    assert stdin[key_put] == srv.ci_authorized_keys(CI_PUB)
+    assert "chown root:root" in key_put  # ci cannot change its own key
+    # only ci things changed: Caddy is not reloaded
+    assert not any("reload-or-restart" in j for j in deps.joined())
+
+
+def test_setup_ci_key_run_twice_changes_nothing(deps, tmp_path):
+    rules = server_state(dr.lock_text(HASH), synced=True)
+    gate_text = (ROOT / "deploy" / "ci-gate.py").read_text(encoding="utf-8")
+    sums = rules[1][1] + f"{sha(gate_text)}  {GATE}\n"
+    sums += f"{sha(srv.ci_authorized_keys(CI_PUB))}  /home/ci/.ssh/authorized_keys\n"
+    deps.rules = [("sudo bash -s", "ci ok\n"), ("sha256sum", sums), *rules]
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path), input="")
+    assert r.exit_code == 0, r.output
+    assert "nothing to change" in r.output
+    assert ci_scripts(deps) == [srv.CI_CHECK]
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXk=\n-----END OPENSSH PRIVATE KEY-----\n",
+     "", CI_PUB + "\n" + PUBKEY + "\n", "not a key\n"],
+)  # fmt: skip
+def test_setup_ci_key_refuses_anything_but_one_public_key(deps, tmp_path, text):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path, text),
+               input="yes\n")  # fmt: skip
+    assert r.exit_code == 1
+    assert deps.calls == []  # stopped before it reached the server
+
+
+def test_the_ci_script_changes_owners_and_modes_never_contents_or_current():
+    script = srv.CI_SCRIPT
+    assert not re.search(r"\b(rm|mv|ln|rsync|cp|tee|truncate|sed)\b", script)
+    assert ">" not in script.replace(">/dev/null", "")  # no file is written
+    assert "chmod 2775" in script and "chown --no-dereference ci:releases" in script
+    assert "install -d -m 0750 -o root -g ci /srv/snapshot" in script
+    # the check confirms each thing the script makes
+    for needle in ("2775:releases", "2775:ci:releases", "750:root:ci", "root:root", GATE):
+        assert needle in srv.CI_CHECK
+
+
+def test_cloud_init_gives_the_releases_to_the_group_and_the_snapshot_to_ci(ci):
+    text = runcmd_text(ci)
+    assert "releases" in ci["groups"]
+    (deploy,) = [u for u in ci["users"] if isinstance(u, dict) and u["name"] == "deploy"]
+    assert deploy["groups"] == "releases"
+    assert "install -d -m 2775 -o deploy -g releases /srv/velometer /srv/datalab" in text
+    assert "install -d -m 2775 -o ci -g releases /srv/velometer/releases /srv/datalab/releases" in (
+        text
+    )
+    assert "install -d -m 0750 -o root -g ci /srv/snapshot" in text
+
+
+# --- snapshot -------------------------------------------------------------------------------
+
+
+def md5(path: Path) -> str:
+    import hashlib
+
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture
+def fixture_db(tmp_path):
+    import sqlite3
+
+    d = tmp_path / "db"
+    d.mkdir()
+    db = d / "velometer.sqlite"
+    con = sqlite3.connect(db)
+    try:
+        con.execute("create table t (x)")
+        con.executemany("insert into t values (?)", [(i,) for i in range(500)])
+        con.commit()
+    finally:
+        con.close()
+    db.chmod(0o444)
+    d.chmod(0o555)  # nothing may be written beside it either
+    yield db
+    d.chmod(0o755)
+
+
+def test_snapshot_never_writes_db(deps, tmp_path, fixture_db):
+    import gzip
+
+    before, listing = md5(fixture_db), sorted(p.name for p in fixture_db.parent.iterdir())
+    seen = {}
+
+    def upload(argv, input):
+        src = Path(argv[-2])
+        seen["src"] = src
+        seen["beside"] = sorted(p.name for p in fixture_db.parent.iterdir())
+        seen["gz"] = src.read_bytes()
+        return (0, "")
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    deps.rules = [("rsync", upload)]
+    r = invoke("snapshot", *HOST, "--db", str(fixture_db), "--tmp", str(scratch), input="yes\n")
+    assert r.exit_code == 0, r.output
+    assert md5(fixture_db) == before
+    assert sorted(p.name for p in fixture_db.parent.iterdir()) == listing == seen["beside"]
+    assert seen["src"].parent.parent == scratch and fixture_db.parent not in seen["src"].parents
+    assert not seen["src"].exists()  # the temp directory is gone
+    assert gzip.decompress(seen["gz"]) == fixture_db.read_bytes()
+    import hashlib
+
+    digest = hashlib.sha256(seen["gz"]).hexdigest()
+    (sha_put,) = [i for a, i in deps.calls if "velometer.sqlite.gz.sha256.XXXXXX" in a[-1]]
+    assert sha_put == f"{digest}  velometer.sqlite.gz\n"
+    assert digest in r.output
+
+
+def test_snapshot_lands_where_only_ci_reads_and_its_sha256_last(deps, tmp_path, fixture_db):
+    deps.rules = [("rsync", (0, ""))]
+    r = invoke("snapshot", *HOST, "--db", str(fixture_db), input="yes\n")
+    assert r.exit_code == 0, r.output
+    (rsync,) = [a for a, _ in deps.calls if a[0] == "rsync"]
+    assert rsync[-1] == "deploy@203.0.113.10:.velometer-snapshot.gz"
+    j = deps.joined()
+    i_move = deps.index(
+        "mv -f /srv/snapshot/velometer.sqlite.gz.new /srv/snapshot/velometer.sqlite.gz"
+    )
+    assert "install -m 0640 -o root -g ci .velometer-snapshot.gz" in j[i_move]
+    i_sha = deps.index("velometer.sqlite.gz.sha256.XXXXXX")
+    assert "chmod 0640" in j[i_sha] and "chown root:ci" in j[i_sha]
+    assert deps.index("rsync") < i_move < i_sha < deps.index("sha256sum --check")
+    for cmd in j:
+        assert "rm -r" not in cmd and "rm -f" not in cmd.replace('rm -f "$t"', "")
+
+
+def test_snapshot_asks_first_and_refuses_the_dbs_own_directory(deps, tmp_path, fixture_db):
+    r = invoke("snapshot", *HOST, "--db", str(fixture_db), input="no\n")
+    assert r.exit_code == 1 and deps.calls == []
+    with pytest.raises(srv.ServerError, match="own directory"):
+        srv.make_snapshot(fixture_db, fixture_db.parent)
+
+
+def test_snapshot_refuses_a_database_with_an_unflushed_journal(tmp_path):
+    db = tmp_path / "velometer.sqlite"
+    db.write_bytes(srv.SQLITE_MAGIC + b"\0" * 100)
+    (tmp_path / "velometer.sqlite-wal").write_bytes(b"x")
+    out = tmp_path / "out"
+    out.mkdir()
+    with pytest.raises(srv.ServerError, match="wal"):
+        srv.make_snapshot(db, out)
+
+
+def test_snapshot_is_the_same_file_for_the_same_database(tmp_path, fixture_db):
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    assert srv.make_snapshot(fixture_db, a)[1] == srv.make_snapshot(fixture_db, b)[1]
