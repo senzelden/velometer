@@ -658,7 +658,7 @@ uses the German dek. Draft text, not approved:
 | berlin | (the dek) Mapped A+B km per 100 km of main roads went from 113.7 in 2018 to 109.1 in October 2026: one step down in a 2022 re-mapping campaign, a slow climb since. | 153 | Kartierte A+B-km je 100 km Hauptstraßen: 113,7 (2018), 109,1 (Oktober 2026); 2022 ein Rückgang in einer Kartierungskampagne, seitdem ein langsamer Anstieg. | 155 |
 | bratislava | (the dek) The headline rose from 43.5 in 2018 to 58.7 in October 2026, after a fall in 2020 that was a retagging clean-up, not lost paths. | 128 | Die Hauptkennzahl stieg von 43,5 (2018) auf 58,7 (Oktober 2026), nach einem Rückgang 2020, der eine Bereinigung von Tags war, kein Verlust von Wegen. | 149 |
 | budapest | (the dek) The headline rose from 19.4 in 2018 to 22.3 in October 2026, the lowest of the 21 cities, while mapped painted lanes more than doubled. | 135 | Die Hauptkennzahl stieg von 19,4 (2018) auf 22,3 (Oktober 2026), Tiefstwert der 21 Städte; kartierte markierte Radfahrstreifen haben sich mehr als verdoppelt. | 158 |
-| copenhagen | (the dek) Mapped A+B rose from 530 to 582 km between 2018 and October 2026, almost all of it in separated tracks; the 2025 dip in shared paths was retagging. | 147 | Kartierte A+B-km stiegen von 530 (2018) auf 582 (Oktober 2026), fast nur bei baulich getrennten Radwegen; der Geh- und Radweg-Knick 2025 war eine Tag-Änderung. | 159 |
+| copenhagen | (the dek) Mapped A+B rose from 530 to 582 km between 2018 and October 2026, almost all of it in separated tracks; the 2025 dip in shared paths was retagging. | 147 | Kartierte A+B-km stiegen von 530 (2018) auf 582 (Oktober 2026), fast nur bei baulich getrennten Radwegen; der Rückgang bei Geh- und Radwegen 2025: neu getaggt. | 159 |
 | helsinki | Mapped A+B stayed between 1,279 and 1,292 km from 2018 to October 2026; the headline fell from 276.2 to 262.3 as more streets were tagged as main roads. | 152 | Kartierte A+B-km: 1.279 bis 1.292 km von 2018 bis Oktober 2026; die Hauptkennzahl fiel von 276,2 auf 262,3, weil mehr Straßen als Hauptstraßen getaggt wurden. | 158 |
 | krakow | The headline rose from 40.2 to 72.6 mapped A+B km per 100 km of main roads from 2018 to October 2026, the steepest relative climb of the three Polish cities. | 157 | Die Hauptkennzahl stieg 2018 bis Oktober 2026 von 40,2 auf 72,6 kartierte A+B-km je 100 km Hauptstraßen, der relativ steilste Anstieg der drei Städte Polens. | 157 |
 | ljubljana | The headline rose from 46.5 to 73.5 mapped A+B km per 100 km of main roads from 2018 to October 2026; its largest step is mostly the same paths remapped. | 153 | Die Hauptkennzahl stieg von 46,5 (2018) auf 73,5 (Oktober 2026) kartierte A+B-km je 100 km Hauptstraßen; größter Schritt: meist dieselben Wege, neu kartiert. | 157 |
@@ -673,8 +673,8 @@ Small departures from the dek's wording, for review: Stockholm's German says "st
 (rose only) where the dek says "bewegte sich … nur" (moved only); the figures rise, and the
 shorter verb is what fits. Helsinki drops "not because cycle paths went missing" and keeps the
 cause (more streets tagged as main roads); Warsaw (de) drops "nicht von Radwegen" and keeps the
-cause (retagged expressways). Copenhagen (de) names the dip as one in the shared-path km
-("Geh- und Radweg-Knick"). Utrecht (de) writes the headline without a verb, "Hauptkennzahl:
+cause (retagged expressways). Copenhagen (de): the user chose "Rückgang" over "Knick" (2026-11-03);
+the full "… war eine Tag-Änderung" is 168 characters, so it ends "…: neu getaggt." (159). Utrecht (de) writes the headline without a verb, "Hauptkennzahl:
 179,7 (2018), 193,6 (Oktober 2026)", to keep "innerhalb von A+B". Several German ones write the
 years in brackets, "(2018)".
 
