@@ -47,6 +47,7 @@ import json
 import os
 import re
 import shlex
+import stat
 import subprocess
 import sys
 import tempfile
@@ -117,7 +118,9 @@ RSYNC_CHMOD = "--chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r"
 # A site release: no `-t`, and files compared by checksum, because an export writes every file
 # anew: with modification times kept, `--link-dest` would link nothing (rsync links only files
 # equal in every kept attribute). An unchanged file thus keeps the time of its first upload.
-RSYNC_SITE = ["-rlpD", "--checksum", RSYNC_CHMOD]
+# Regular files and directories only: no -l, no -D (Caddy would follow a symlink, block on a
+# FIFO; the ci gate refuses both, ruling T9-i), so deploy_site refuses an export holding either.
+RSYNC_SITE = ["-rp", "--checksum", RSYNC_CHMOD]
 SSH_OPTS = ["-o", "BatchMode=yes"]
 
 LOCK = "/etc/caddy/lock.caddy"
@@ -722,6 +725,8 @@ else
 fi
 usermod --append --groups {CI_GROUP} {CI_USER}
 usermod --append --groups {CI_GROUP} {USER}
+chown root:root {CI_HOME}
+chmod 0755 {CI_HOME}
 install -d -m 0755 -o root -g root {CI_HOME}/.ssh
 for site in {" ".join(SITES)}; do
   install -d "{SITE_ROOT}/$site/releases"
@@ -747,6 +752,7 @@ getent group {CI_GROUP} >/dev/null || fail "no group {CI_GROUP}"
 for u in {CI_USER} {USER}; do
   id -nG "$u" | tr ' ' '\n' | grep -qx {CI_GROUP} || fail "$u not in {CI_GROUP}"
 done
+[ "$(stat -c %U:%G {CI_HOME} 2>/dev/null)" = root:root ] || fail "{CI_HOME}"
 [ "$(stat -c %U:%G {CI_HOME}/.ssh 2>/dev/null)" = root:root ] || fail "{CI_HOME}/.ssh"
 for site in {" ".join(SITES)}; do
   [ "$(stat -c %a:%G "{SITE_ROOT}/$site" 2>/dev/null)" = 2775:{CI_GROUP} ] || fail "$site"
@@ -881,9 +887,28 @@ def _rsync_failed(rc: int) -> str:
     return f"killed by signal {-rc}" if rc < 0 else f"exited {rc}"
 
 
+def irregular_files(src: Path) -> list[str]:
+    """Every entry under `src` that is no regular file and no directory (a symlink, a FIFO, a
+    socket, a device), relative to `src`; symlinked directories are not entered."""
+    found = []
+    for top, dirs, files in os.walk(src):
+        for name in dirs + files:
+            path = Path(top) / name
+            mode = path.lstat().st_mode
+            if not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
+                found.append(path.relative_to(src).as_posix())
+    return sorted(found)
+
+
 def deploy_site(t: Target, site: str, src: Path) -> None:
-    if not src.is_dir() or not (src / "index.html").is_file():
+    if src.is_symlink() or not src.is_dir() or not (src / "index.html").is_file():
         raise ServerError(f"{src} is no built site (no index.html)")
+    odd = irregular_files(src)
+    if odd:
+        raise ServerError(
+            f"{src} holds {len(odd)} entries that are no regular file or directory (a symlink, a "
+            f"FIFO or a device; the upload carries neither): {_few(odd)}; export it again"
+        )
     if site == "velometer":
         problems = DEPS.check_site(src)
         if problems:

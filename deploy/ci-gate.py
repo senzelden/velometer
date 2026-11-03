@@ -14,7 +14,9 @@ below; its own arguments (sshd's `-c <forced command>`) are ignored. Anything el
   `test -f <marker> && ln -sfn releases/<name> /srv/<site>/current.new && mv -T
   /srv/<site>/current.new /srv/<site>/current`, `ls -1A /srv/<site>/releases`, `rm -- <marker>`
   and `rm -r --one-file-system -- <release>`, never the release `current` points to.
-- `rsync --server` receiving into a release, linking (`--link-dest`) only from a release.
+- `rsync --server` receiving into a release, linking (`--link-dest`) only from a release, with
+  regular files and directories only: no `-l` (symlinks) and no `-D` (devices, FIFOs), which Caddy
+  would follow or block on, and `--munge-links` added in case one slips through (ruling T9-i).
 - `rsync --server --sender` of /srv/snapshot/velometer.sqlite.gz, its `.sha256`, and
   /srv/tiles/velometer.pmtiles: the CD workflow's data snapshot and tiles.
 
@@ -43,8 +45,10 @@ READS = (
 # one token: no shell syntax, no quoting, no whitespace inside (the command is split on spaces)
 TOKEN = re.compile(r"[A-Za-z0-9_./=,:+-]+", re.ASCII)
 # an rsync server's option cluster: letters, then `e.` and the protocol's capability letters.
-# Letters admitted: what a client sends for -r -l -p -D -c -t -o -g -v -z -a -i -u -W -x -I -H.
-RSYNC_FLAGS = re.compile(r"-([rlpDctogvziuWxIH]*)e\.([A-Za-z]*)", re.ASCII)
+# Reading (--sender): what a client sends for -r -l -p -D -c -t -o -g -v -z -a -i -u -W -x -I -H.
+# Receiving: only regular files and directories land in a release (no -l, -D, -H, -o, -g; T9-i).
+SENDER_FLAGS = re.compile(r"-([rlpDctogvziuWxIH]*)e\.([A-Za-z]*)", re.ASCII)
+RECEIVER_FLAGS = re.compile(r"-([rpctvziuWxI]*)e\.([A-Za-z]*)", re.ASCII)
 BIN = "/usr/bin/"
 
 
@@ -82,14 +86,15 @@ def _current(site: str) -> str | None:
         return None
 
 
-def _rsync(args: list[str], current) -> list[list[str]]:
+def _rsync(args: list[str]) -> list[list[str]]:
     if len(args) < 3 or args[0] != "--server":
         raise Refused("rsync")
     rest = args[1:]
     sender = rest[0] == "--sender"
     if sender:
         rest = rest[1:]
-    if not rest or not RSYNC_FLAGS.fullmatch(rest[0]):
+    flags = SENDER_FLAGS if sender else RECEIVER_FLAGS
+    if not rest or not flags.fullmatch(rest[0]):
         raise Refused("rsync flags")
     rest = rest[1:]
     if not sender:
@@ -105,11 +110,11 @@ def _rsync(args: list[str], current) -> list[list[str]]:
     if sender:
         if any(p not in READS for p in paths):
             raise Refused("rsync source")
-    elif len(paths) != 1 or not RELEASE.fullmatch(paths[0].removesuffix("/")):
+        return [[BIN + "rsync", *args]]
+    if len(paths) != 1 or not RELEASE.fullmatch(paths[0].removesuffix("/")):
         raise Refused("rsync destination")
-    else:
-        _release(paths[0].removesuffix("/"))
-    return [[BIN + "rsync", *args]]
+    _release(paths[0].removesuffix("/"))
+    return [[BIN + "rsync", "--server", "--munge-links", *args[1:]]]
 
 
 def plan(command: str, current=_current) -> list[list[str]]:
@@ -119,7 +124,7 @@ def plan(command: str, current=_current) -> list[list[str]]:
     if not command or " ".join(t) != command or any(not TOKEN.fullmatch(x) for x in t if x != "&&"):
         raise Refused(command)
     if t[0] == "rsync":
-        return _rsync(t[1:], current)
+        return _rsync(t[1:])
     if "&&" in t:
         if len(t) != 13 or t[3] != "&&" or t[8] != "&&":
             raise Refused(command)

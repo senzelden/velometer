@@ -1909,6 +1909,11 @@ def test_the_ci_script_changes_owners_and_modes_never_contents_or_current():
     assert ">" not in script.replace(">/dev/null", "")  # no file is written
     assert "chmod 2775" in script and "chown --no-dereference ci:releases" in script
     assert "install -d -m 0750 -o root -g ci /srv/snapshot" in script
+    # ci's home and ~/.ssh are root's, so ci cannot add a key of its own (M1)
+    assert "chown root:root /home/ci\n" in script
+    assert script.index("chown root:root /home/ci\n") > script.index("useradd")
+    assert "install -d -m 0755 -o root -g root /home/ci/.ssh" in script
+    assert '"$(stat -c %U:%G /home/ci 2>/dev/null)" = root:root' in srv.CI_CHECK
     # the check confirms each thing the script makes
     for needle in ("2775:releases", "2775:ci:releases", "750:root:ci", "root:root", GATE):
         assert needle in srv.CI_CHECK
@@ -1924,6 +1929,8 @@ def test_cloud_init_gives_the_releases_to_the_group_and_the_snapshot_to_ci(ci):
         text
     )
     assert "install -d -m 0750 -o root -g ci /srv/snapshot" in text
+    assert "chown root:root /home/ci" in text
+    assert "install -d -m 0755 -o root -g root /home/ci/.ssh" in text
 
 
 # --- snapshot -------------------------------------------------------------------------------
@@ -2026,3 +2033,32 @@ def test_snapshot_is_the_same_file_for_the_same_database(tmp_path, fixture_db):
     a.mkdir()
     b.mkdir()
     assert srv.make_snapshot(fixture_db, a)[1] == srv.make_snapshot(fixture_db, b)[1]
+
+
+# --- an export holds regular files and directories only (ruling T9-i) -----------------------
+
+
+@pytest.mark.parametrize("kind", ["symlink", "dir symlink", "fifo"])
+@pytest.mark.parametrize("site", ["velometer", "datalab"])
+def test_deploy_refuses_an_export_with_a_symlink_or_a_fifo(deps, tmp_path, site, kind):
+    src = site_dir(tmp_path) if site == "velometer" else datalab_dir(tmp_path)
+    (src / "sub").mkdir(exist_ok=True)
+    if kind == "symlink":
+        (src / "sub" / "key.pem").symlink_to("/etc/ssl/private/key.pem")
+    elif kind == "dir symlink":
+        (src / "logs").symlink_to("/var/log/caddy", target_is_directory=True)
+    else:
+        os.mkfifo(src / "sub" / "pipe")
+    deps.rules = deploy_rules()
+    r = invoke("deploy", site, str(src), *HOST, input="yes\n")
+    assert r.exit_code == 1
+    assert "no regular file or directory" in r.output
+    assert deps.calls == []  # stopped before the server was asked anything
+
+
+def test_irregular_files_names_each_and_passes_a_plain_export(tmp_path):
+    src = site_dir(tmp_path)
+    assert srv.irregular_files(src) == []
+    (src / "a").symlink_to("index.html")
+    os.mkfifo(src / "p")
+    assert srv.irregular_files(src) == ["a", "p"]

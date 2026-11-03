@@ -111,7 +111,33 @@ def test_gate_allows_the_deploys_rsync_upload(ci_deploy, tmp_path):
     command = _remote_rsync(rsync, tmp_path)
     assert command.startswith("rsync --server ") and f" . {REL}/" in command
     assert f"--link-dest {SITE}/releases/{PREV}" in command
-    assert plan(command) == [["/usr/bin/rsync", *command.split()[1:]]]
+    # it runs as asked, with symlinks munged should one ever arrive (ruling T9-i)
+    rest = command.split()[2:]
+    assert plan(command) == [["/usr/bin/rsync", "--server", "--munge-links", *rest]]
+
+
+def test_the_deploys_upload_asks_for_no_symlinks_and_no_devices(ci_deploy, tmp_path):
+    """Caddy follows a symlink (to the TLS keys, the logs, the lock) and blocks on a FIFO: the
+    upload carries neither (ruling T9-i)."""
+    _, rsync = ci_deploy
+    (flags,) = [
+        a for a in _remote_rsync(rsync, tmp_path).split() if a.startswith("-") and "e." in a
+    ]
+    letters = flags[1:].split("e.")[0]
+    assert not set(letters) & set("lDHog"), flags
+    assert not any(set(a[1:]) & set("lD") for a in srv.RSYNC_SITE if not a.startswith("--"))
+    assert not {"-a", "--links", "--devices", "--specials"} & set(srv.RSYNC_SITE)
+
+
+@pytest.mark.parametrize(
+    "flags", ["-rlpe.iLsfxCIvu", "-rDe.iLsfxCIvu", "-lDprce.iLsfxCIvu", "-prcHe.iLsfxCIvu",
+              "-logDtpre.iLsfxCIvu"],
+)  # fmt: skip
+def test_gate_rejects_symlinks_and_devices_on_receive(flags):
+    assert refused(f"rsync --server {flags} . {REL}/")
+    assert refused(f"rsync --server {flags} --link-dest {SITE}/releases/{PREV} . {REL}/")
+    # reading keeps them: `rsync -a` from the snapshot is fine
+    assert not refused(f"rsync --server --sender {flags} . {TILES}")
 
 
 def test_gate_allows_the_deploys_rsync_upload_without_a_previous_release(ci_deploy, tmp_path):
@@ -131,6 +157,7 @@ def test_gate_allows_the_snapshot_and_tile_reads(opts, paths, tmp_path):
     command = _remote_rsync(argv, tmp_path)
     assert command.startswith("rsync --server --sender ")
     assert plan(command) == [["/usr/bin/rsync", *command.split()[1:]]]
+    assert "--munge-links" not in plan(command)[0]
 
 
 def test_the_gates_release_paths_are_the_deploys():
@@ -182,7 +209,7 @@ def test_gate_rejects_shell(command):
 SUDO = [
     "sudo true", "sudo -n true", "sudo -i", "sudo sh", "sudo -l", "sudo -u root id",
     f"sudo mkdir -p {REL}", f"sudo rm -r --one-file-system -- {SITE}/releases/{OLD[0]}",
-    f"sudo rsync --server -lDprce.iLsfxCIvu . {REL}/", "/usr/bin/sudo true", "su -", "doas true",
+    f"sudo rsync --server -prce.iLsfxCIvu . {REL}/", "/usr/bin/sudo true", "su -", "doas true",
     "pkexec true",
 ]  # fmt: skip
 
@@ -245,30 +272,30 @@ OUTSIDE = [
     f"ln -sfn releases/{BUILD} {SITE}/current.new",
     f"mv -T {SITE}/current.new {SITE}/current",
     # uploads only into a release, linking only from a release
-    "rsync --server -lDprce.iLsfxCIvu . /etc/",
-    "rsync --server -lDprce.iLsfxCIvu . /srv/velometer/current/",
-    "rsync --server -lDprce.iLsfxCIvu . /srv/tiles/",
-    "rsync --server -lDprce.iLsfxCIvu . /srv/snapshot/",
-    "rsync --server -lDprce.iLsfxCIvu . /srv/velometer/releases/",
-    f"rsync --server -lDprce.iLsfxCIvu . {REL}/../../../etc/",
-    f"rsync --server -lDprce.iLsfxCIvu . {REL}.complete",
-    f"rsync --server -lDprce.iLsfxCIvu --link-dest /etc . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --link-dest=/etc . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --link-dest /srv/tiles . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu . {REL}/ /etc/",
-    f"rsync --server -lDprce.iLsfxCIvu --temp-dir=/etc . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --backup-dir=/etc . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --delete . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --log-file=/etc/x . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu --files-from=/etc/x . {REL}/",
-    f"rsync --server -lDprcTe.iLsfxCIvu /etc . {REL}/",  # -T: a temp dir anywhere
-    f"rsync --server -lDprcbe.iLsfxCIvu . {REL}/",  # -b: backups
-    f"rsync --server -lDprcLe.iLsfxCIvu . {REL}/",
-    f"rsync --server -lDprce.iLsfxCIvu -M--log-file=/etc/x . {REL}/",
+    "rsync --server -prce.iLsfxCIvu . /etc/",
+    "rsync --server -prce.iLsfxCIvu . /srv/velometer/current/",
+    "rsync --server -prce.iLsfxCIvu . /srv/tiles/",
+    "rsync --server -prce.iLsfxCIvu . /srv/snapshot/",
+    "rsync --server -prce.iLsfxCIvu . /srv/velometer/releases/",
+    f"rsync --server -prce.iLsfxCIvu . {REL}/../../../etc/",
+    f"rsync --server -prce.iLsfxCIvu . {REL}.complete",
+    f"rsync --server -prce.iLsfxCIvu --link-dest /etc . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --link-dest=/etc . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --link-dest /srv/tiles . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu . {REL}/ /etc/",
+    f"rsync --server -prce.iLsfxCIvu --temp-dir=/etc . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --backup-dir=/etc . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --delete . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --log-file=/etc/x . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --files-from=/etc/x . {REL}/",
+    f"rsync --server -prcTe.iLsfxCIvu /etc . {REL}/",  # -T: a temp dir anywhere
+    f"rsync --server -prcbe.iLsfxCIvu . {REL}/",  # -b: backups
+    f"rsync --server -prcLe.iLsfxCIvu . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu -M--log-file=/etc/x . {REL}/",
     f"rsync --server -se.LsfxCIvu . {REL}/",  # -s: the paths would come on stdin
     f"rsync --server . {REL}/",
     f"rsync --daemon . {REL}/",
-    f"rsync -lDprce.iLsfxCIvu . {REL}/",
+    f"rsync -prce.iLsfxCIvu . {REL}/",
 ]
 
 
@@ -317,7 +344,7 @@ ALLOWED = [
     "ls -1A /srv/velometer/releases",
     f"rm -- {SITE}/releases/{OLD[0]}.complete",
     f"rm -r --one-file-system -- {SITE}/releases/{OLD[0]}",
-    f"rsync --server -lDprce.iLsfxCIvu --link-dest {SITE}/releases/{PREV} . {REL}/",
+    f"rsync --server -prce.iLsfxCIvu --link-dest {SITE}/releases/{PREV} . {REL}/",
     f"rsync --server --sender -logDtpre.iLsfxCIvu . {SNAPSHOT} {SNAPSHOT}.sha256",
     f"rsync --server --sender -logDtpre.iLsfxCIvu . {TILES}",
 ]
