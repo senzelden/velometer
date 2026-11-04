@@ -1,5 +1,6 @@
 // The tier-composition chart of one city and boundary, shared by the city pages and the Compare
-// slide-over. el.dataset: city, kind ("lau" | "fua").
+// slide-over. el.dataset: city, kind ("lau" | "fua"), and `latest` (present: the last snapshot
+// only, as one stacked column; the story page's phone scroll).
 import { renderTiers } from "./chart.js";
 import { TIERS, displayLabels, labelsOf, mount, pointsOn, tierName } from "./data.js";
 import { t } from "./strings.js";
@@ -8,7 +9,9 @@ import { t } from "./strings.js";
 export function drawTiers(el, D) {
   const id = el.dataset.city;
   const pts = D.series[`${id}/${el.dataset.kind}`] ?? [];
-  const labels = labelsOf([pts]);
+  const all = labelsOf([pts]);
+  const latest = el.dataset.latest !== undefined;
+  const labels = latest ? all.slice(-1) : all;
   const model = {
     labels: displayLabels(labels, [pts]),
     layers: TIERS.map((tier) => ({
@@ -18,7 +21,8 @@ export function drawTiers(el, D) {
     })),
   };
   const where = `${D.cities[id]?.name ?? id} ${el.dataset.kind.toUpperCase()}`;
-  return mount(el, () =>
-    renderTiers(el, model, { label: t("js.chart.tiers_of", { where }) }),
-  );
+  const label = latest
+    ? t("js.chart.tiers_now_of", { where, label: model.labels[0] ?? "" })
+    : t("js.chart.tiers_of", { where });
+  return mount(el, () => renderTiers(el, model, { label }));
 }

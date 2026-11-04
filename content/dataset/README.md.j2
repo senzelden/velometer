@@ -1,0 +1,42 @@
+# velometer data, version {{ commit }}
+
+Protected cycling infrastructure in {{ n_cities }} European cities, as mapped in OpenStreetMap.
+The files are the CSV downloads of {{ site_url }}, exported from commit {{ commit }}.
+The lengths are mapped kilometres (what OpenStreetMap records), not built kilometres.
+
+## Files
+
+{% for f in files -%}
+- `data/{{ f }}`
+{% endfor %}
+`all.csv` holds every city, `<city>.csv` one city, `<city>_subareas.csv` the sub-areas of a city.
+Each file starts with comment lines (`#`) that carry the notices below, then the table.
+The columns and the method are described at {{ methodology_url }}.
+
+## Sources and notices
+
+{% for line in notices -%}
+- {{ line }}
+{% endfor %}
+## Provenance
+
+- Code and commit: {{ repo_url }} at commit {{ commit }}
+- Classifier version{{ "s" if classifier_versions|length > 1 }}: {{ classifier_versions|join(", ") }}
+- OSM snapshot timestamps (UTC), per city:
+{% for line in timestamp_lines -%}
+{{ line }}
+{% endfor %}
+## Licence
+
+The data derived from OpenStreetMap are available under the Open Database Licence (ODbL) 1.0,
+{{ odbl_url }}, with the attribution "© OpenStreetMap contributors".
+The administrative boundaries are not part of these files.
+
+{{ terms_note }}
+
+Credits of the statistics offices:
+
+{% for line in credit_lines -%}
+- {{ line }}
+{% endfor %}
+Creator: {{ creator }}.

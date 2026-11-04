@@ -18,6 +18,7 @@ from velometer.app.main import create_app
 from velometer.config import ConfigError, SiteConfig, default_config_dir, load_site
 
 COMPLETE = {
+    "url": "https://velometer.example.org/",
     "datalab": {"name": "Zählwerk Berlin Datalab", "url": "https://datalab.example.org/"},
     "impressum_url": "https://datalab.example.org/impressum",
     "privacy_url": "https://datalab.example.org/datenschutz",
@@ -31,6 +32,7 @@ COMPLETE = {
 
 def _write_site(cfg: Path, doc: dict) -> None:
     (cfg / "site.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+    (cfg / "site.public.yaml").unlink(missing_ok=True)  # M17: the tests set their own values
 
 
 def _load(tmp_path: Path, doc: dict) -> SiteConfig:
@@ -194,6 +196,7 @@ def test_public_export_refuses_figures_the_database_does_not_hold(rich, tmp_path
 
 
 def test_public_export_refuses_empty_settings(rich, tmp_path):  # noqa: F811
+    _write_site(rich[1], {})
     out = tmp_path / "site"
     with pytest.raises(export.ExportError) as e:
         _export(rich, out, True)
@@ -265,19 +268,20 @@ def test_plain_export_stamps_false(rich, tmp_path):  # noqa: F811
 # --- a public export's config is the commit's but for site.yaml (final review M6) -------------
 
 
-def test_public_export_refuses_a_config_copy_beyond_site_yaml(rich, tmp_path, monkeypatch):  # noqa: F811
+def test_public_export_refuses_a_config_copy_at_all(rich, tmp_path, monkeypatch):  # noqa: F811
     _write_site(rich[1], COMPLETE)
     monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
     monkeypatch.setattr(export, "config_drift", lambda config_dir: ["presets.yaml: differs"])
     db_path, cfg, maps, docs, plans = rich
     out = tmp_path / "site"
-    with pytest.raises(export.ExportError, match=r"(?s)more than site.yaml.*presets.yaml"):
+    with pytest.raises(export.ExportError, match=r"(?s)differs from the commit.*presets.yaml"):
         export.run_export(out, "/", db_path, cfg, maps, docs, _content(rich), plans, False, True)
     assert not out.exists()
 
 
 def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
-    """The rule, against the repo's own HEAD: only site.yaml may differ."""
+    """The rule, against the repo's own HEAD: no file may differ (M17: site.yaml included; the
+    public values are the committed site.public.yaml)."""
     root = Path(__file__).resolve().parents[1]
     copy = tmp_path / "config"
     shutil.copytree(root / "config", copy)
@@ -290,7 +294,6 @@ def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
                 p.write_bytes(blob.stdout)
             else:
                 p.unlink()
-    (copy / "site.yaml").write_text("datalab: {name: X}\n", encoding="utf-8")
     assert export.config_drift(copy) == []
     (copy / "presets.yaml").write_text("changed: true\n", encoding="utf-8")
     (copy / "trust.yaml").unlink()
@@ -300,3 +303,29 @@ def test_config_drift_compares_a_copy_with_the_commits_config(tmp_path):
         "trust.yaml: missing (in the commit)",
         "extra.yaml: not in the commit",
     ]
+
+
+@pytest.mark.parametrize("breaks", ["no maps dir", "empty maps", "no measures", "no retrieved"])
+def test_public_export_refuses_without_its_maps_and_plan_data(rich, tmp_path, monkeypatch, breaks):  # noqa: F811
+    """M17: without the tier maps or the plan data the pages leave them out and still pass
+    deploy-check, so a public export refuses (the CD runner gets both from the snapshot)."""
+    import shutil
+
+    db_path, cfg, maps, docs, plans = rich
+    _write_site(cfg, COMPLETE)
+    monkeypatch.setattr(export, "public_commit", lambda: CLEAN)
+    if breaks == "no maps dir":
+        shutil.rmtree(maps)
+    elif breaks == "empty maps":
+        for f in maps.iterdir():
+            f.unlink()
+    elif breaks == "no measures":
+        (plans / "berlin" / "radverkehrsmassnahmen.geojson").unlink()
+    else:
+        (plans / "berlin" / "retrieved.json").unlink()
+    out = tmp_path / "site"
+    with pytest.raises(export.ExportError, match="tier maps and the plan data"):
+        _export(rich, out, True)
+    assert not out.exists()
+    # a preview export (not public) still renders without them
+    _export(rich, tmp_path / "preview", False)

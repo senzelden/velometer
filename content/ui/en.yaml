@@ -98,6 +98,14 @@ page.index.ranks: Rankings by source
 page.index.ranks_meta: "Rank of each city (1 = highest) in our presets and in the published rankings. Ranks depend on\nwhich cities a source covers; each source has its own measure and scope."
 table.not_published: not published
 page.index.no_ranks: no run or figures to rank
+page.index.lead.label: About velometer
+page.index.lead.what: "velometer is an open, independent comparison of cycling infrastructure in {n} European cities,\nbuilt from OpenStreetMap. It answers one question: how much of a city's main road network has a\ncycle path you don't share with cars?"
+page.index.lead.counts: "It counts <a href=\"{a}\">separated tracks</a> and <a href=\"{b}\">shared foot/cycle paths</a>, both\noff the carriageway. Cycle lanes on the carriageway don't count, whether painted or protected."
+page.index.lead.mapped: "Lengths are in <b>mapped km</b>, so a city's figure can change when the mapping catches up."
+page.index.lead.use: "The <a href=\"#ranking\">ranking</a> is below. Each city also has <a href=\"{cities}\">its own story</a>, and there\nare <a href=\"{stories}\">stories across all cities</a>, <a href=\"{compare}\">a comparison of cities</a> and\n<a href=\"{methodology}\">the full method</a>."
+page.index.lead.maintained: The <a href="{url}">{name}</a> maintains velometer.
+page.index.lead.open: Its <a href="{code}">code</a> and <a href="{data}">data</a> are open.
+page.index.lead.ends: "In the current run, {top} has the highest headline value: {top_value} {unit}.\n{bottom} has the lowest, {bottom_value}."
 
 # --- cities
 page.cities.title: cities
@@ -146,6 +154,8 @@ page.differences.missing: no explainer yet (content/explainer.yaml)
 page.differences.cities: Each city's figures
 page.methodology.title: methodology
 page.methodology.missing: 'methodology not generated (<code>velometer report methodology</code> writes <code>docs/{file}</code>)'
+page.methodology.terms: Terms and abbreviations
+page.methodology.terms_lead: The abbreviations and tier letters the pages use. On each page, the first use of each one links here.
 page.organisations.h1: Who produces the figures
 page.organisations.dek: "The bodies behind the published figures this app compares with our mapped km, and behind Berlin's plan and its progress reports: who they are, how they measure and what role their figures play."
 note.registry_error: the source registry could not be loaded (see the server log)
@@ -280,6 +290,7 @@ page.panel.full: Open full page
 page.panel.tiers_over_time: Tier composition over time ({kind})
 page.city.tiers_chart: Tier composition over time, {city} {kind}
 cite.title.tiers: '{city}: tier composition over time, mapped km by tier, {kind}'
+cite.title.tiers_now: '{city}: tier composition now, mapped km by tier, {kind}'
 page.panel.tiers_now: Tiers, mapped km now
 note.no_run: no run
 page.city.flagged_years: Flagged years
@@ -417,6 +428,8 @@ cite.title.city_headline_both: '{city}: headline over time, {unit}, city proper 
 note.no_run_history: no run (history)
 page.story.over_time: Over time, with flagged years
 page.story.read_on: Read on
+page.story.road_types: Road types
+page.story.more: More on {city}
 page.story.combined: The combined story across all cities
 page.time.meta: 'Headline: {unit}, city proper (LAU) and metro area (FUA).'
 page.time.caption: 'Headline and A+B km per snapshot, {city}: the values the chart above draws'
@@ -504,6 +517,19 @@ tier.B: B shared foot/cycle path
 tier.C: C protected lane
 tier.D: D painted lane
 tier.E: E cycle street / bus lane
+tier.diagram_name.A: 'Cross-section, tier A: separated track'
+tier.diagram_name.B: 'Cross-section, tier B: shared foot/cycle path'
+tier.diagram_name.C: 'Cross-section, tier C: protected lane'
+tier.diagram_name.D: 'Cross-section, tier D: painted lane'
+tier.diagram_name.E: 'Cross-section, tier E: cycle street and bus lane'
+tier.caption.A: A cycle track between the footway and the road, set apart from both, typically by a kerb or a change in level.
+tier.caption.B: One path for walking and cycling, without separate parts, apart from the road.
+tier.caption.C: A cycle lane on the road, with a physical separation such as bollards or a kerb separator between it and the traffic.
+tier.caption.D: A cycle lane or advisory lane on the road, with only a painted line between it and the traffic.
+tier.caption.E: Left, a cycle street, a street signed for cycling; right, a bus lane open to cyclists.
+tier.diagram_counts: Counts in the headline.
+tier.diagram_measured: Measured, not in the headline.
+tier.diagram_rules: 'A typical case is drawn; the <a href="{href}">classifier rules</a> decide which tier each street side or path gets.'
 map.title: '{name} ({kind}): protected cycling tiers'
 map.footer: "Map data © OpenStreetMap contributors (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nOSM mapped km, not built km · {boundaries}\nOSM {ts}, classifier {classifier}"
 compare.group.all: All
@@ -633,6 +659,27 @@ cite.title.compare: 'Compare: {heading}; {cities}'
 page.bezirke.window: '{start} to {end}'
 page.bezirke.window_current: current
 
+# --- meta (M17 §4.2): each page's <meta name="description">, plain text, 50–160 characters
+# (app/meta.py); city pages: meta.tab.<tab> with the headline figure, the story tab its dek
+meta.index: "Mapped km of separated cycle tracks and shared foot/cycle paths per 100 km of main roads in {n} European cities, from OpenStreetMap, year by year."
+meta.cities: "All cities by country, each with its headline, mapped A+B km per 100 km of main roads in the city proper, from the current OpenStreetMap run."
+meta.compare: "European cities side by side on one chart or table, city proper or metro area, in mapped km of protected cycle infrastructure from OpenStreetMap."
+meta.stories: "The story across all cities, step by step with charts and sources, of how protected cycle infrastructure changed in OpenStreetMap since 2018."
+meta.differences: "Why published cycle network figures differ from each other and from velometer's mapped km, along six dimensions from what is counted to how."
+meta.organisations: "The bodies behind the published cycle network figures velometer sets beside its mapped km, who they are, how they measure and what their figures mean."
+meta.sources: "Every published figure source velometer quotes, set beside its own OpenStreetMap approach along the six dimensions in which cycle network figures differ."
+meta.plans: "Each city's cycling plan, its target and the latest progress its publisher reports, kept as printed; reported figures are not mapped km."
+meta.plan: "Berlin's cycling plan: its targets, the km the Senate reports, the projects completed and the cycle infrastructure mapped in OpenStreetMap, side by side."
+meta.methodology: "How velometer measures: tiers A to E, the headline, city proper and metro area, the OpenStreetMap snapshots and the limits of mapped km."
+meta.city: "{city}: {value} mapped A+B km per 100 km of main roads in the current run, the city's protected cycle infrastructure as OpenStreetMap shows it."
+meta.city_plain: "{city}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths per 100 km of main roads."
+meta.tab.time: "{city} year by year: the headline at each OpenStreetMap snapshot, flagged years explained; now {value} mapped A+B km per 100 km of main roads."
+meta.tab.tiers: "{city} by tier: mapped km of each kind of cycle infrastructure, A to E, from OpenStreetMap; headline {value} A+B km per 100 km of main roads."
+meta.tab.figures: "{city}: published cycle network figures beside velometer's mapped km, and why they differ; headline {value} A+B km per 100 km of main roads."
+meta.tab.counts: "{city}: open bicycle counter data, set against the mapped km of the city proper; headline {value} A+B km per 100 km of main roads."
+meta.tab.bezirke: "{city} by district: the headline of each Bezirk and how it changed; the whole city has {value} mapped A+B km per 100 km of main roads."
+meta.tab_plain: "{city}, {tab}: protected cycle infrastructure as OpenStreetMap shows it, in mapped km of separated tracks and shared foot/cycle paths."
+
 # --- citations (cite.py; the js.cite.* twins below)
 cite.text: velometer ({year}). {title} [Data set]. {provenance}. {attribution}.
 cite.accessed: '{url} (accessed {accessed}).'
@@ -664,6 +711,7 @@ js.chart.line_of: 'Line chart: {title}'
 js.chart.sparkline: Sparkline
 js.chart.tiers: 'Stacked area chart: mapped km by tier'
 js.chart.tiers_of: 'Stacked area chart: mapped km by tier, {where}'
+js.chart.tiers_now_of: 'Stacked column: mapped km by tier, {where}, {label}'
 js.chart.tiers_tip: '{label} · mapped km'
 js.chart.total: Total {value}
 js.chart.rank_tip: '{name} · {label}: rank {rank}'

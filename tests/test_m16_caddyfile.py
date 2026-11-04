@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers import load_script
 from velometer import datalab
 from velometer.app.export import headers_text
 from velometer.app.main import CSP, csp_meta
@@ -164,6 +165,34 @@ def test_site_roots_come_from_the_site_root_variable_with_srv_as_default(blocks)
         # R16: an error under /tiles/ would look for the 404 page in the tiles' root
         assert f"root * {root}" in errors.splitlines()
         assert "rewrite * /404.html" in errors.splitlines()
+
+
+SNAPSHOT = "/srv/snapshot"  # tools/server.py SNAPSHOT_DIR: the gzipped database, ci's to read
+
+
+def _served_dirs(text: str) -> list[str]:
+    """Every directory a `root` (directive or file_server subdirective) or a `file_server`/
+    `try_files`/`import` path names, with the site root's default filled in."""
+    out = []
+    for line in _lines(text):
+        words = line.split()
+        if words[0] == "root":
+            out.append(words[-1])
+        elif words[0] in ("file_server", "try_files", "import", "rewrite"):
+            out += [w for w in words[1:] if w.startswith(("/", "{$"))]
+    return [re.sub(r"\{\$SITE_ROOT(:[^}]*)?\}", "/srv", d).rstrip("/") or "/" for d in out]
+
+
+def test_caddyfile_never_serves_snapshot():
+    """The snapshot lies outside every Caddy root: no root is it, inside it, or above it (a root
+    of /srv would serve /srv/snapshot/velometer.sqlite.gz as /snapshot/velometer.sqlite.gz)."""
+    text = _text()
+    roots = [d for d in _served_dirs(text) if not d.startswith(("/etc/caddy", "/404.html"))]
+    assert len(roots) >= 5, roots  # both sites, both 404 handlers and the tiles
+    for d in roots:
+        assert not (d == SNAPSHOT or d.startswith(SNAPSHOT + "/")), d
+        assert not SNAPSHOT.startswith(d + "/") and d != "/", d
+    assert load_script("tools/server.py").SNAPSHOT_DIR == SNAPSHOT
 
 
 def test_www_redirects_to_the_apex_permanently(blocks):
@@ -361,5 +390,8 @@ def test_the_env_example_names_both_variables_without_a_secret():
 def test_the_guide_points_to_the_file_and_carries_no_copy():
     doc = DOC.read_text(encoding="utf-8")
     assert "deploy/Caddyfile" in doc
-    assert not any("handle_errors" in b for b in re.findall(r"```\n(.*?)```", doc, re.S))
+    # every fenced block, tagged or not, indented or not (a fence closes at its own indent)
+    blocks = [b for _, b in re.findall(r"^( *)```\w*\n(.*?)^\1```", doc, re.S | re.M)]
+    assert len(blocks) > 5
+    assert not any("handle_errors" in b for b in blocks)
     assert "test_m14_deploy_doc" not in doc

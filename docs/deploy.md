@@ -2,28 +2,40 @@
 
 The chosen route is a Hetzner Cloud server with Caddy (§1, ADR 0009). It was run on 2026-10-28:
 both sites are on the server behind a password (`docs/review/m16-deploy.md`); the go-live (the
-`unlock` at the end of §1) waits for the user's go. The Cloudflare Pages route (§2) was not
-chosen. M15 served the export locally with both routes' server software (Caddy 2.11.4 in Docker
-and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`). Every command below is for you to run. Replace `<dir>`,
-`<datalab-dir>`, `<domain>` and `<host>` with your own values.
+`unlock` at the end of §1) waits for the user's go. Since M17 a deploy can also run on GitHub, from
+the committed `main`, after the user approves it there (§2). The Cloudflare Pages route (§3) was
+not chosen. M15 served the export locally with both routes' server software (Caddy 2.11.4 in Docker
+and `wrangler pages dev` 4.147.0, 2026-10-18; §0a, `docs/review/m15-dryrun.md`). Every command below is for you to run,
+from the repo root, as written once these shell variables are set (the values as run; another
+server or other directories change them here only):
+
+```sh
+DOMAIN=zaehlwerk-datalab.de
+SERVER=2.31.133.185              # the server's address; deploy/known_hosts pins its host key
+EXPORT=~/velometer-export        # the velometer export (§0); --clean replaces it
+DATALAB=~/datalab-build          # the Datalab build
+SHOTS=~/velometer-shots          # the R64 passes' screenshots and results
+```
+
+In the text, `<dir>` is the export (`$EXPORT`), `<datalab-dir>` the Datalab build (`$DATALAB`),
+`<domain>` the domain and `<host>` the server.
 
 ## 0. Make and check the export
 
-The public site values (the Datalab, its Impressum, privacy page and accessibility statement, the
-public repository) stay null in the repo's `config/site.yaml`. Never fill them in there: copy the config to a scratch
-directory, set them in the copy, and export with `--config-dir`:
+The public site values (the site's own URL, the Datalab, its Impressum, privacy page and
+accessibility statement, the public repository) are committed in `config/site.public.yaml` (M17,
+R1). `export --public` merges that file over `config/site.yaml`, which stays null, so there is no
+scratch copy of `config/`: export from the repo's own `config/`. Only public values belong in the
+overlay (https URLs and the Datalab's name; no e-mail, no postal address).
 
 ```
-cp -r config <scratch>/config        # then set the values in <scratch>/config/site.yaml:
-                                     # datalab, impressum_url, privacy_url, accessibility_url
-                                     # (https://<domain>/barrierefreiheit/), repo
 git status --untracked-files=no      # must print no changes: commit first
 uv run python tools/tiles.py --stamp     # once per extract: data/tiles/velometer.pmtiles.json
-uv run velometer app export --out <dir> --base / --clean --public --config-dir <scratch>/config
-uv run velometer app deploy-check <dir> --public
-c=$(jq -r .commit_full <dir>/build.json)
-git push <public remote> HEAD        # the commit the pages link must be in the public repo
-git tag export-${c:0:7} $c && git push <public remote> export-${c:0:7}
+uv run velometer app export --out "$EXPORT" --base / --clean --public
+uv run velometer app deploy-check "$EXPORT" --public
+c=$(jq -r .commit_full "$EXPORT/build.json")
+git push origin HEAD        # origin is the public repository: the commit the pages link must be in it
+git tag "export-${c:0:7}" "$c" && git push origin "export-${c:0:7}"
 ```
 
 The tag keeps the pinned commit reachable on the forge after the branch is merged (squashed or
@@ -31,15 +43,15 @@ rebased) or deleted; without it the links may lose their commit and every citati
 `golive-check --site <dir>` lists a commit that no tag at `repo.url` points at as open (it asks
 `git ls-remote --tags repo.url`, anonymously).
 
-`export --public` refuses to run unless the site settings name the Datalab, its Impressum, its
+`export --public` refuses to run unless the site settings name the site's own URL (`url`), the Datalab, its Impressum, its
 privacy page and its accessibility statement (`accessibility_url`, R63), and the public repository (`repo.url`, the home page, and `repo.file_url`, a file's
 address with `{commit}` and `{path}`; the comments in `site.yaml` give GitHub and Codeberg
 examples), and records those values in `build.json`. It refuses when the database's curated
 external figures differ from `config/external/figures.csv` (`velometer external check` names the
 rows; `velometer external load --no-qecio --no-bikenetkit` reloads them and writes the database,
 so it needs the user's go). It refuses a config directory that differs from the commit's
-`config/` in anything but `site.yaml` (a file changed, missing or added: the pages would show
-numbers the linked commit does not produce; copy `config/` afresh). It also refuses a checkout whose tracked files
+`config/` in any file (changed, missing or added: the pages would show numbers or values the
+linked commit does not produce; export from the repo's own `config/`). It also refuses a checkout whose tracked files
 have uncommitted changes (untracked files do not count): every repo path on the pages (a data
 reference's file, `docs/...` in the prose, the paths in Compare's flag notes) links
 `repo.file_url` at the export's commit (`build.json` `commit_full`). So the export must come from a
@@ -81,9 +93,9 @@ Before you upload, serve the export with the same server software the host runs 
 HTTP (status, compression, security headers, 404 page):
 
 ```
-uv run python tools/deploy_dryrun.py --site <dir> --server caddy --datalab <datalab-dir> \
-    --tiles <file.pmtiles> [--lock | --lock-default] [--debug-log]
-uv run python tools/deploy_dryrun.py --site <dir> --server wrangler
+uv run python tools/deploy_dryrun.py --site "$EXPORT" --server caddy --datalab "$DATALAB" \
+    --tiles data/tiles/velometer.pmtiles --lock    # or --lock-default; add --debug-log for DEBUG
+uv run python tools/deploy_dryrun.py --site "$EXPORT" --server wrangler
 ```
 
 `--server caddy` runs Caddy 2.11.4 in Docker with `deploy/Caddyfile`, the production file (§1),
@@ -123,23 +135,23 @@ only after you type `yes`; a piped `yes` reaches the prompt (ssh gets no stdin).
 
 ```
 uv run python tools/server.py preflight
-uv run python tools/server.py create --domain <domain> --ssh-key <key name> [--type cx23] [--location nbg1|fsn1]
-uv run python tools/server.py dns --domain <domain>         # enter the printed records at INWX
-uv run python tools/server.py setup --host <host> --domain <domain>
-uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host <host>
-uv run python tools/server.py deploy velometer <dir> --host <host>        # the export of §0
-uv run velometer datalab build --out <datalab-dir> --velometer-export <dir>
-uv run python tools/server.py deploy datalab <datalab-dir> --host <host>
-uv run python tools/server.py verify --domain <domain> --locked
-uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/all \
-    --url https://velometer.<domain> --pages all --keyboard     # R64, before every publication
-uv run python tools/render_pass.py --site <dir> --base / --out <shots-dir>/types \
-    --url https://velometer.<domain> --pages types --interact --flip
-uv run python tools/render_pass.py --site <datalab-dir> --base / --lang de \
-    --out <shots-dir>/datalab --url https://<domain>
-uv run python tools/server.py stats --host <host>
-uv run python tools/server.py golive-check --datalab <datalab-dir> --site <dir> --host <host>
-uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <datalab-dir> --site <dir>
+uv run python tools/server.py create --domain "$DOMAIN" --ssh-key dennis-ws --type cx23 --location fsn1
+uv run python tools/server.py dns --domain "$DOMAIN"         # enter the printed records at INWX
+uv run python tools/server.py setup --host "$SERVER" --domain "$DOMAIN"
+uv run python tools/server.py deploy tiles data/tiles/velometer.pmtiles --host "$SERVER"
+uv run python tools/server.py deploy velometer "$EXPORT" --host "$SERVER"        # the export of §0
+uv run velometer datalab build --out "$DATALAB" --velometer-export "$EXPORT"
+uv run python tools/server.py deploy datalab "$DATALAB" --host "$SERVER"
+uv run python tools/server.py verify --domain "$DOMAIN" --locked
+uv run python tools/render_pass.py --site "$EXPORT" --base / --out "$SHOTS/all" \
+    --url "https://velometer.$DOMAIN" --pages all --keyboard     # R64, before every publication
+uv run python tools/render_pass.py --site "$EXPORT" --base / --out "$SHOTS/types" \
+    --url "https://velometer.$DOMAIN" --pages types --interact --flip
+uv run python tools/render_pass.py --site "$DATALAB" --base / --lang de \
+    --out "$SHOTS/datalab" --url "https://$DOMAIN"
+uv run python tools/server.py stats --host "$SERVER"
+uv run python tools/server.py golive-check --datalab "$DATALAB" --site "$EXPORT" --host "$SERVER"
+uv run python tools/server.py unlock --host "$SERVER" --domain "$DOMAIN" --datalab "$DATALAB" --site "$EXPORT"
 ```
 
 - `preflight` names the `pass insert` command for a missing secret and never prints a value.
@@ -169,7 +181,8 @@ uv run python tools/server.py unlock --host <host> --domain <domain> --datalab <
   --tiles data/tiles/velometer.pmtiles --keep-running`, then `--url` its velometer origin; the
   keyboard pass's map steps need the tiles). Set `accessibility.checked` in
   `sites/datalab/site.yaml` to the day of these passes, commit, and build and deploy the Datalab
-  again (its stamp changes). `golive-check` lists the passes as a manual confirmation and
+  again (its stamp changes). The CD workflow (§2) runs the same passes on its own export and gives
+  the Datalab build that day with `datalab build --checked`, without a commit. `golive-check` lists the passes as a manual confirmation and
   refuses while `accessibility.checked` is null or the Datalab build lacks the statement.
 
 The steps in detail:
@@ -203,14 +216,14 @@ The steps in detail:
    (protomaps-leaflet logs every failed tile to the console):
 
    ```sh
-   scp velometer.pmtiles server:/srv/tiles/velometer.pmtiles.new
-   ssh server mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
+   scp data/tiles/velometer.pmtiles "deploy@$SERVER:/srv/tiles/velometer.pmtiles.new"
+   ssh "deploy@$SERVER" mv /srv/tiles/velometer.pmtiles.new /srv/tiles/velometer.pmtiles
    ```
 
    **Lock.** Every site block imports `/etc/caddy/lock.caddy` first. Until go-live it holds one
    of two texts, exactly as below; after go-live it is empty. As the server comes up (ruling P4):
 
-   ```
+   ```caddy
    header Cache-Control "no-store"
    respond "locked" 401
    ```
@@ -218,7 +231,7 @@ The steps in detail:
    Once setup has the preview password (`<bcrypt hash>` from `caddy hash-password` on the
    server; it never enters the repository):
 
-   ```
+   ```caddy
    header Cache-Control "no-store"
    basic_auth {
    	preview <bcrypt hash>
@@ -306,7 +319,141 @@ The steps in detail:
    (deploy the checked directory first). `unlock` needs `--site` too and runs the same checks,
    the live comparison included, then empties the lock file and runs `verify`.
 
-## 2. Cloudflare Pages (not chosen, 2026-10-21)
+## 2. Deploy from GitHub
+
+`.github/workflows/deploy.yml` (M17 spec §4.5) builds both sites from the server's data snapshot,
+holds that exact export to the R64 passes and only then deploys it, as the server's `ci` user. It
+runs only when you start it, only on `main`, one run at a time (`concurrency: production`), and
+its deploy job waits in the GitHub environment `production` until you approve it there. That
+approval is your go for this deploy; nothing else publishes.
+
+The `ci` user (`setup --ci-key`, M17 Task 9) has no sudo: its key's forced command,
+`deploy/ci-gate.py`, admits only what `deploy velometer|datalab` sends and rsync reads of the
+snapshot and the tiles. So `setup`, `unlock`, `snapshot`, `golive-check --host`, `stats` and
+`deploy tiles` stay on your machine with the `deploy` user. R35 is fixed for CI only: the
+`deploy` user keeps its sudo for those (ruling R35-CI).
+
+### Once: what you set up on GitHub
+
+These are settings of the repository; the workflow cannot make them. Run the `gh` line from the
+repo root on your machine (it reads the key from pass and sends it to GitHub on stdin; it never
+lands in a file):
+
+1. Create the environment `production` (Settings → Environments → New environment) with yourself
+   as the required reviewer and no admin bypass: tick *Required reviewers* and add yourself,
+   leave *Prevent self-review* off (you start the runs you approve), untick *Allow administrators
+   to bypass configured protection rules*, and under *Deployment branches and tags* choose
+   *Selected branches and tags* with the one rule `main`. This branch rule is the control that
+   keeps a deploy to `main`: a run started on another branch runs that branch's copy of
+   `deploy.yml`, which could drop the workflow's own `if: github.ref == 'refs/heads/main'`, but
+   it cannot reach the environment's secret or approval without this rule's consent.
+2. Add the CI key as that environment's secret, from pass:
+
+   ```
+   pass velometer/ci-deploy-key | gh secret set CI_DEPLOY_KEY --env production
+   ```
+
+3. Turn on branch protection for `main` (Settings → Branches, or a ruleset) requiring the `ci`
+   workflow: *Require status checks to pass* with its checks `lint`, `test (1)` to `test (4)`
+   and `node`.
+4. Once, from your machine with your go, after the data archive was added to the snapshot (M17):
+   run `setup --ci-key` again so the server's gate admits the data archive, then `snapshot`,
+   which also uploads it. The public key is derived from the private key in pass, and the
+   snapshot is written to a directory on disk (it is gigabytes):
+
+   ```
+   ssh-keygen -y -f <(pass velometer/ci-deploy-key) > ~/ci.pub
+   uv run python tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key ~/ci.pub
+   mkdir -p ~/.cache/velometer-snapshot
+   uv run python tools/server.py snapshot --host 2.31.133.185 --tmp ~/.cache/velometer-snapshot
+   ```
+
+   Run `snapshot` again after every data rebuild (the database, the tier maps or the plan data),
+   or CD builds from the old data.
+
+### A deploy
+
+Actions → deploy → *Run workflow*, branch `main`, site `velometer`, `datalab` or `both` (both
+sites are built and checked either way; only the chosen ones are uploaded). The `gate` job runs
+the gate (CLAUDE.md) on that commit first; then the `deploy` job asks for your approval. After
+the approval it:
+
+1. adds the `CI_DEPLOY_KEY` secret to an ssh-agent on stdin and trusts only the host key
+   committed in `deploy/known_hosts` (`StrictHostKeyChecking yes`, written to the runner's
+   `~/.ssh/config`; `tools/server.py` itself only sets `BatchMode`);
+2. fetches with rsync `/srv/snapshot/velometer.sqlite.gz`, `/srv/snapshot/velometer-data.tar.gz`
+   (the tier maps, `data/maps/`, and the plan data, `data/plans/`: git-ignored, so absent on the
+   runner) and their `.sha256` files, and the tile file, and stops unless `sha256sum -c` passes
+   for each. The tile file has no `.sha256` on the server: its sha256 is the live export's
+   `build.json` `tiles` (the sidecar the export reads, `--tiles-info`). After you `deploy tiles`
+   a new extract, that check fails until an export naming the new extract is live: deploy
+   velometer once from your machine (below). Then the key leaves the agent (`ssh-add -D`)
+   until step 7, so no step in between can use a loaded key. That stops passive use only: code
+   running in such a step (a dependency of the export, the build or Chrome) could still put its
+   own agent at the fixed `SSH_AUTH_SOCK` and receive the key when step 7 adds it, or read the
+   job's secrets from the runner's memory. The barriers against that are the `production`
+   approval, the gate's narrow allowlist (`deploy/ci-gate.py`) and the pinned dependencies
+   (`uv.lock`, the action SHAs);
+3. unzips the database, unpacks the data archive at the repo root only if every member is a
+   regular file or directory under `data/maps/` or `data/plans/`, exports velometer with
+   `--public` (which refuses when the tier maps or the plan data are missing or empty), runs
+   `deploy-check --public`, and builds the Datalab with `--checked` set to the run's day (UTC;
+   the statement's date for this build only, `site.yaml` unchanged);
+4. downloads the Caddy release binary `setup` installs, at the version and SHA-512 that
+   `deploy/cloud-init.yaml` pins, checks that pin against the release's official
+   `caddy_<v>_checksums.txt` and the download against the pin, and serves both builds with it in
+   the dry run (§0a, `--caddy-bin`, `--keep-running`); the dry run's probes must report 0
+   problems;
+5. runs the R64 passes against the dry run: `--pages all --keyboard`, `--pages types --interact
+   --flip`, and the Datalab with `--lang de`, then `tools/pass_findings.py` reads every
+   `results.json` again: any finding, or a pass that visited nothing, stops the run;
+6. tags the export's commit `export-<first 7 hex>` and pushes the tag (§0; the job's token may
+   write contents for this only);
+7. adds the key to the agent again and deploys the chosen sites, `tools/server.py deploy velometer|datalab <dir> --host 2.31.133.185
+   --user ci` with one `yes` piped to the prompt, drops the key from the agent again (also
+   after a failed deploy), then runs `verify --domain
+   zaehlwerk-datalab.de` and a short live pass (velometer `--pages types`, the Datalab
+   `--lang de`), held to 0 findings too;
+8. writes the job summary, also when a step failed: the counts of every pass that wrote results
+   (a failed pass's findings too), the releases switched, the export tag, the statement's date
+   and the run's URL, which is the R64 evidence for this deploy.
+
+Any failing step stops the job (bash `-eo pipefail`; nothing is allowed to fail softly). A
+failure before step 7 leaves the server untouched. A failure in step 7 behaves as a local
+deploy does: `current` stays on the previous complete release until a switch.
+
+**Before the first run.** The server needs the data archive (step 4 of the setup above), and
+the dataset DOI must be in place, which `deploy-check --public` asks for.
+
+**Time.** About 2 to 3 hours: the gate about 20 minutes, the fetch a few minutes (about 3 GB
+from the server), the export and Datalab a minute or two, the full pass with the keyboard pass
+(about 1230 visits; about 42 minutes on the development machine) perhaps 60 to 90 minutes on the
+runner, the other passes about 15 minutes, the upload a few minutes. That is well under the
+6-hour job limit (the job's own limit is 330 minutes), so the passes stay in one job.
+
+### Deploying from your machine (fallback)
+
+When GitHub is not available, or after a new tile extract (step 2 above), deploy from your
+machine as in §1 but as the `ci` user, so that every release has the one owner the next CI
+deploy can prune (ruling T9-j). Load the key from pass into an agent for ten minutes (`$EXPORT`
+and `$DATALAB` as set at the top of this guide):
+
+```
+eval "$(ssh-agent -s)"
+pass velometer/ci-deploy-key | ssh-add -t 600 -
+uv run python tools/server.py deploy velometer "$EXPORT" --host 2.31.133.185 --user ci
+uv run python tools/server.py deploy datalab "$DATALAB" --host 2.31.133.185 --user ci
+ssh-agent -k
+```
+
+Run the R64 passes on that export first (§1), as always. If a release ever ends up owned by
+`deploy` (a deploy without `--user ci`), the next CI deploy cannot remove it when it prunes old
+releases: the switch has happened, but the job fails. The repair is to run
+`tools/server.py setup --host 2.31.133.185 --domain zaehlwerk-datalab.de --ci-key ~/ci.pub` again
+(with your go; `~/ci.pub` made as in step 4 of the setup above): it finds the releases `ci` does not own and hands them to `ci:releases`, owners
+only.
+
+## 3. Cloudflare Pages (not chosen, 2026-10-21)
 
 Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a US company
 (ADR 0009). Kept for reference; never deployed.
@@ -316,7 +463,7 @@ Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a
    repository; `npx` fetches wrangler on the fly):
 
    ```
-   npx wrangler pages deploy <dir> --project-name velometer
+   npx wrangler pages deploy "$EXPORT" --project-name velometer
    ```
 
    Pages reads `_headers` from the site root: the Content-Security-Policy (with
@@ -335,7 +482,7 @@ Chosen on 2026-10-19 and dropped on 2026-10-21: the access logs would sit with a
    limits change. `deploy-check` prints the file count (the `.gz` files are included) and refuses
    a file of 25 MiB or more.
 
-## 3. Datenschutz, Impressum and accessibility statement
+## 4. Datenschutz, Impressum and accessibility statement
 
 The Impressum, the Datenschutzerklärung and the voluntary Erklärung zur Barrierefreiheit (R63)
 are pages of the Datalab site (`sites/datalab/`, `/impressum/`, `/datenschutz/` and

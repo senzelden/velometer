@@ -327,7 +327,9 @@ def test_cloud_init_installs_caddy_at_the_pinned_version_with_a_checksum(ci):
     # the check runs before the binary is installed
     assert text.index("sha512sum -c") < text.index("install -m 0755 /usr/local/src/caddy")
     assert "apt-get install caddy" not in text and "caddy" not in ci.get("packages", [])
-    assert dr.CADDY_IMAGE == "caddy:2.11.4-alpine"  # the dry run tests the same version
+    assert (
+        dr.CADDY_IMAGE.split("@")[0] == "caddy:2.11.4-alpine"
+    )  # the dry run tests the same version
 
 
 def test_cloud_init_installs_goaccess_rsync_and_unattended_upgrades(ci):
@@ -442,6 +444,8 @@ def datalab_dir(tmp_path: Path, stamp_value: str | None = "repo") -> Path:
 
     d = site_dir(tmp_path, "datalab-build")
     (d / "build.json").unlink()
+    for name in dl.CRAWL_FILES:  # M17: a Datalab build carries its crawl files
+        (d / name).write_text("x\n", encoding="utf-8")
     if stamp_value == "repo":
         stamp_value = dl.inputs_stamp(dl.load_config(dl.DEFAULT_CONFIG))
     if stamp_value is not None:
@@ -1810,3 +1814,382 @@ def test_setup_brings_the_journald_retention_to_an_older_server_once(deps):
     r = invoke("setup", *HOST, "--domain", "example.org")
     assert r.exit_code == 0 and "nothing to change" in r.output
     assert not [j for j in deps.joined() if "journald" in j and "sha256sum" not in j]
+
+
+# --- the ci user (M17 Task 9; spec §4.5, R35 fixed for CI only) -----------------------------
+
+CI_PUB = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCiCi ci@test"
+GATE = "/usr/local/sbin/velometer-ci-gate"
+
+
+def ci_key(tmp_path: Path, text: str = CI_PUB + "\n") -> str:
+    path = tmp_path / "ci.pub"
+    path.write_text(text, encoding="utf-8")
+    return str(path)
+
+
+def ci_scripts(runner: FakeRunner) -> list[str]:
+    """The scripts setup ran as root on the server, in order."""
+    return [i for a, i in runner.calls if a[-1] == "sudo bash -s"]
+
+
+def test_setup_script_creates_ci_without_sudo(ci):
+    script = srv.CI_SCRIPT
+    words = re.findall(r"[\w./-]+", script)
+    # no sudoers entry, no admin group, no password: the script itself needs no sudo either
+    assert "sudo" not in words and "sudoers" not in script and "NOPASSWD" not in script
+    assert not re.search(r"(?<!getent )\b(passwd|chpasswd|visudo|sudoers\.d)\b", script)
+    grants = re.findall(r"usermod --append --groups (\S+) (\S+)", script)
+    assert grants == [("releases", "ci"), ("releases", "deploy")]
+    assert not re.search(r"(-G|--groups) (sudo|adm|wheel|root|caddy)\b", script)
+    # no shell but the gate, which is also its key's forced command
+    shells = re.findall(r"--shell (\S+)", script)
+    assert shells and all(s == '"$gate"' for s in shells), shells
+    assert f"gate={GATE}\n" in script and srv.REMOTE_GATE == GATE
+    line = srv.ci_authorized_keys(CI_PUB)
+    assert line.count("\n") == 1 and line.endswith("\n")
+    assert line.startswith(f'restrict,command="{GATE}" ssh-ed25519 AAAA')
+    # a new server: ci the same way, from cloud-init
+    (user,) = [u for u in ci["users"] if isinstance(u, dict) and u["name"] == "ci"]
+    assert user["shell"] == GATE and user["lock_passwd"] is True
+    assert "sudo" not in user and "ssh_authorized_keys" not in user
+    assert user["groups"] == "releases"
+    sent = yaml.safe_load(srv.user_data(PUBKEY))
+    (sent_ci,) = [u for u in sent["users"] if isinstance(u, dict) and u["name"] == "ci"]
+    assert "ssh_authorized_keys" not in sent_ci  # create's key is deploy's only
+
+
+def test_setup_ci_key_installs_the_gate_then_the_user_then_the_one_key(deps, tmp_path):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path),
+               input="yes\n")  # fmt: skip
+    assert r.exit_code == 0, r.output
+    assert "no sudo" in r.output
+    i_gate = deps.index(f"{GATE}.XXXXXX")
+    i_script = [i for i, (a, s) in enumerate(deps.calls) if s == srv.CI_SCRIPT]
+    i_key = deps.index("/home/ci/.ssh/authorized_keys.XXXXXX")
+    assert len(i_script) == 1 and i_gate < i_script[0] < i_key
+    stdin = {j: s for j, s in zip(deps.joined(), [s for _, s in deps.calls], strict=True)}
+    gate_put = next(j for j in stdin if f"{GATE}.XXXXXX" in j)
+    assert "chmod 0755" in gate_put and "chown root:root" in gate_put
+    assert stdin[gate_put] == (ROOT / "deploy" / "ci-gate.py").read_text(encoding="utf-8")
+    key_put = next(j for j in stdin if "authorized_keys.XXXXXX" in j)
+    assert stdin[key_put] == srv.ci_authorized_keys(CI_PUB)
+    assert "chown root:root" in key_put  # ci cannot change its own key
+    # only ci things changed: Caddy is not reloaded
+    assert not any("reload-or-restart" in j for j in deps.joined())
+
+
+def test_setup_ci_key_run_twice_changes_nothing(deps, tmp_path):
+    rules = server_state(dr.lock_text(HASH), synced=True)
+    gate_text = (ROOT / "deploy" / "ci-gate.py").read_text(encoding="utf-8")
+    sums = rules[1][1] + f"{sha(gate_text)}  {GATE}\n"
+    sums += f"{sha(srv.ci_authorized_keys(CI_PUB))}  /home/ci/.ssh/authorized_keys\n"
+    deps.rules = [("sudo bash -s", "ci ok\n"), ("sha256sum", sums), *rules]
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path), input="")
+    assert r.exit_code == 0, r.output
+    assert "nothing to change" in r.output
+    assert ci_scripts(deps) == [srv.CI_CHECK]
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXk=\n-----END OPENSSH PRIVATE KEY-----\n",
+     "", CI_PUB + "\n" + PUBKEY + "\n", "not a key\n"],
+)  # fmt: skip
+def test_setup_ci_key_refuses_anything_but_one_public_key(deps, tmp_path, text):
+    deps.rules = server_state(dr.lock_text(HASH), synced=True)
+    r = invoke("setup", *HOST, "--domain", "example.org", "--ci-key", ci_key(tmp_path, text),
+               input="yes\n")  # fmt: skip
+    assert r.exit_code == 1
+    assert deps.calls == []  # stopped before it reached the server
+
+
+def test_the_ci_script_changes_owners_and_modes_never_contents_or_current():
+    script = srv.CI_SCRIPT
+    assert not re.search(r"\b(rm|mv|ln|rsync|cp|tee|truncate|sed)\b", script)
+    assert ">" not in script.replace(">/dev/null", "")  # no file is written
+    assert "chmod 2775" in script and "chown --no-dereference ci:releases" in script
+    assert "install -d -m 0750 -o root -g ci /srv/snapshot" in script
+    # ci's home and ~/.ssh are root's, so ci cannot add a key of its own (M1)
+    assert "chown root:root /home/ci\n" in script
+    assert script.index("chown root:root /home/ci\n") > script.index("useradd")
+    assert "install -d -m 0755 -o root -g root /home/ci/.ssh" in script
+    assert '"$(stat -c %U:%G /home/ci 2>/dev/null)" = root:root' in srv.CI_CHECK
+    # the check confirms each thing the script makes
+    for needle in ("2775:releases", "2775:ci:releases", "750:root:ci", "root:root", GATE):
+        assert needle in srv.CI_CHECK
+
+
+def test_cloud_init_gives_the_releases_to_the_group_and_the_snapshot_to_ci(ci):
+    text = runcmd_text(ci)
+    assert "releases" in ci["groups"]
+    (deploy,) = [u for u in ci["users"] if isinstance(u, dict) and u["name"] == "deploy"]
+    assert deploy["groups"] == "releases"
+    assert "install -d -m 2775 -o deploy -g releases /srv/velometer /srv/datalab" in text
+    assert "install -d -m 2775 -o ci -g releases /srv/velometer/releases /srv/datalab/releases" in (
+        text
+    )
+    assert "install -d -m 0750 -o root -g ci /srv/snapshot" in text
+    assert "chown root:root /home/ci" in text
+    assert "install -d -m 0755 -o root -g root /home/ci/.ssh" in text
+
+
+# --- snapshot -------------------------------------------------------------------------------
+
+
+def md5(path: Path) -> str:
+    import hashlib
+
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture
+def fixture_db(tmp_path):
+    import sqlite3
+
+    d = tmp_path / "db"
+    d.mkdir()
+    db = d / "velometer.sqlite"
+    con = sqlite3.connect(db)
+    try:
+        con.execute("create table t (x)")
+        con.executemany("insert into t values (?)", [(i,) for i in range(500)])
+        con.commit()
+    finally:
+        con.close()
+    db.chmod(0o444)
+    d.chmod(0o555)  # nothing may be written beside it either
+    yield db
+    d.chmod(0o755)
+
+
+@pytest.fixture
+def fixture_data(tmp_path):
+    """A data directory as the export reads it: tier maps and the plan data, and what else lives
+    in data/ (which stays out of the archive)."""
+    data = tmp_path / "data"
+    (data / "maps").mkdir(parents=True)
+    (data / "maps" / "berlin_lau.png").write_bytes(b"\x89PNG map")
+    (data / "plans" / "berlin").mkdir(parents=True)
+    (data / "plans" / "berlin" / "retrieved.json").write_text("{}")
+    (data / "plans" / "docs").mkdir()
+    (data / "plans" / "docs" / "amsterdam_fua.png").write_bytes(b"\x89PNG doc")
+    (data / "snapshots").mkdir()
+    (data / "snapshots" / "x.osm.pbf").write_bytes(b"pbf")
+    (data / "velometer-pre-v2.sqlite").write_bytes(b"old")
+    return data
+
+
+def _snapshot(deps, fixture_db, fixture_data, *extra, answer="yes\n"):
+    return invoke("snapshot", *HOST, "--db", str(fixture_db), "--data", str(fixture_data), *extra,
+                  input=answer)  # fmt: skip
+
+
+def test_snapshot_never_writes_db(deps, tmp_path, fixture_db, fixture_data):
+    import gzip
+
+    before, listing = md5(fixture_db), sorted(p.name for p in fixture_db.parent.iterdir())
+    seen = {}
+
+    def upload(argv, input):
+        src = Path(argv[-2])
+        if src.name != "velometer.sqlite.gz":
+            return (0, "")
+        seen["src"] = src
+        seen["beside"] = sorted(p.name for p in fixture_db.parent.iterdir())
+        seen["gz"] = src.read_bytes()
+        return (0, "")
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    deps.rules = [("rsync", upload)]
+    r = _snapshot(deps, fixture_db, fixture_data, "--tmp", str(scratch))
+    assert r.exit_code == 0, r.output
+    assert md5(fixture_db) == before
+    assert sorted(p.name for p in fixture_db.parent.iterdir()) == listing == seen["beside"]
+    assert seen["src"].parent.parent == scratch and fixture_db.parent not in seen["src"].parents
+    assert not seen["src"].exists()  # the temp directory is gone
+    assert gzip.decompress(seen["gz"]) == fixture_db.read_bytes()
+    import hashlib
+
+    digest = hashlib.sha256(seen["gz"]).hexdigest()
+    (sha_put,) = [i for a, i in deps.calls if "velometer.sqlite.gz.sha256.XXXXXX" in a[-1]]
+    assert sha_put == f"{digest}  velometer.sqlite.gz\n"
+    assert digest in r.output
+
+
+def test_snapshot_lands_where_only_ci_reads_and_its_sha256_last(
+    deps, tmp_path, fixture_db, fixture_data
+):
+    deps.rules = [("rsync", (0, ""))]
+    r = _snapshot(deps, fixture_db, fixture_data)
+    assert r.exit_code == 0, r.output
+    rsyncs = [a for a, _ in deps.calls if a[0] == "rsync"]
+    assert [a[-1] for a in rsyncs] == [
+        "deploy@203.0.113.10:.velometer-snapshot.gz", "deploy@203.0.113.10:.velometer-data.tar.gz"
+    ]  # fmt: skip
+    j = deps.joined()
+    moves, shas = [], []
+    for name, upload in (("velometer.sqlite.gz", ".velometer-snapshot.gz"),
+                         ("velometer-data.tar.gz", ".velometer-data.tar.gz")):  # fmt: skip
+        i_move = deps.index(f"mv -f /srv/snapshot/{name}.new /srv/snapshot/{name}")
+        assert f"install -m 0640 -o root -g ci {upload} /srv/snapshot/{name}.new" in j[i_move]
+        i_sha = deps.index(f"{name}.sha256.XXXXXX")
+        assert "chmod 0640" in j[i_sha] and "chown root:ci" in j[i_sha]
+        assert any(f"sha256sum --check --quiet {name}.sha256" in c for c in j[i_sha:])
+        moves.append(i_move)
+        shas.append(i_sha)
+    # both files are in place before either sha256 is written: a fetch in between fails closed
+    assert max(i for i, (a, _) in enumerate(deps.calls) if a[0] == "rsync") < min(moves)
+    assert max(moves) < min(shas)
+    for cmd in j:
+        assert "rm -r" not in cmd and "rm -f" not in cmd.replace('rm -f "$t"', "")
+
+
+def test_snapshot_asks_first_and_refuses_the_dbs_own_directory(
+    deps, tmp_path, fixture_db, fixture_data
+):
+    r = _snapshot(deps, fixture_db, fixture_data, answer="no\n")
+    assert r.exit_code == 1 and deps.calls == []
+    with pytest.raises(srv.ServerError, match="own directory"):
+        srv.make_snapshot(fixture_db, fixture_db.parent)
+
+
+def test_snapshot_refuses_a_database_with_an_unflushed_journal(tmp_path):
+    db = tmp_path / "velometer.sqlite"
+    db.write_bytes(srv.SQLITE_MAGIC + b"\0" * 100)
+    (tmp_path / "velometer.sqlite-wal").write_bytes(b"x")
+    out = tmp_path / "out"
+    out.mkdir()
+    with pytest.raises(srv.ServerError, match="wal"):
+        srv.make_snapshot(db, out)
+
+
+def test_snapshot_is_the_same_file_for_the_same_database(tmp_path, fixture_db):
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    assert srv.make_snapshot(fixture_db, a)[1] == srv.make_snapshot(fixture_db, b)[1]
+
+
+def test_file_sha256_reads_the_whole_file_in_chunks(tmp_path):
+    """The one digest helper of the snapshot and the data archive: a file over one chunk (1 MiB)
+    has the digest of all its bytes."""
+    import hashlib
+
+    path = tmp_path / "big"
+    path.write_bytes(b"x" * ((1 << 20) + 7))
+    assert srv.file_sha256(path) == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_snapshot_and_archive_report_their_files_digest(tmp_path, fixture_db, fixture_data):
+    out = tmp_path / "out"
+    out.mkdir()
+    for path, digest in (
+        srv.make_snapshot(fixture_db, out),
+        srv.make_data_archive(fixture_data, out),
+    ):
+        assert digest == srv.file_sha256(path)
+
+
+# --- an export holds regular files and directories only (ruling T9-i) -----------------------
+
+
+@pytest.mark.parametrize("kind", ["symlink", "dir symlink", "fifo"])
+@pytest.mark.parametrize("site", ["velometer", "datalab"])
+def test_deploy_refuses_an_export_with_a_symlink_or_a_fifo(deps, tmp_path, site, kind):
+    src = site_dir(tmp_path) if site == "velometer" else datalab_dir(tmp_path)
+    (src / "sub").mkdir(exist_ok=True)
+    if kind == "symlink":
+        (src / "sub" / "key.pem").symlink_to("/etc/ssl/private/key.pem")
+    elif kind == "dir symlink":
+        (src / "logs").symlink_to("/var/log/caddy", target_is_directory=True)
+    else:
+        os.mkfifo(src / "sub" / "pipe")
+    deps.rules = deploy_rules()
+    r = invoke("deploy", site, str(src), *HOST, input="yes\n")
+    assert r.exit_code == 1
+    assert "no regular file or directory" in r.output
+    assert deps.calls == []  # stopped before the server was asked anything
+
+
+def test_irregular_files_names_each_and_passes_a_plain_export(tmp_path):
+    src = site_dir(tmp_path)
+    assert srv.irregular_files(src) == []
+    (src / "a").symlink_to("index.html")
+    os.mkfifo(src / "p")
+    assert srv.irregular_files(src) == ["a", "p"]
+
+
+def _members(archive: Path) -> dict:
+    import tarfile
+
+    with tarfile.open(archive) as tar:
+        return {m.name: m for m in tar.getmembers()}
+
+
+def test_the_data_archive_holds_the_maps_and_plans_only(tmp_path, fixture_data):
+    """The export's inputs beside the database, as `data/…` members (unpacked at the repo root),
+    regular files and directories owned by root, and nothing else of data/."""
+    import tarfile
+
+    out = tmp_path / "out"
+    out.mkdir()
+    archive, digest = srv.make_data_archive(fixture_data, out)
+    import hashlib
+
+    assert digest == hashlib.sha256(archive.read_bytes()).hexdigest()
+    members = _members(archive)
+    assert set(members) == {
+        "data/maps", "data/maps/berlin_lau.png", "data/plans", "data/plans/berlin",
+        "data/plans/berlin/retrieved.json", "data/plans/docs", "data/plans/docs/amsterdam_fua.png",
+    }  # fmt: skip
+    for m in members.values():
+        assert m.isfile() or m.isdir()
+        assert (m.uid, m.gid, m.mtime) == (0, 0, 0)
+        assert m.mode == (0o755 if m.isdir() else 0o644)
+    with tarfile.open(archive) as tar:
+        got = tar.extractfile("data/maps/berlin_lau.png").read()
+    assert got == (fixture_data / "maps" / "berlin_lau.png").read_bytes()
+
+
+def test_the_data_archive_is_the_same_file_for_the_same_inputs(tmp_path, fixture_data):
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    first = srv.make_data_archive(fixture_data, a)[1]
+    for p in fixture_data.rglob("*"):
+        os.utime(p, (1, 1))
+    assert srv.make_data_archive(fixture_data, b)[1] == first
+
+
+@pytest.mark.parametrize("breaks", ["no maps", "empty plans", "symlink", "fifo"])
+def test_the_data_archive_refuses_missing_inputs_and_special_files(tmp_path, fixture_data, breaks):
+    import shutil
+
+    if breaks == "no maps":
+        shutil.rmtree(fixture_data / "maps")
+    elif breaks == "empty plans":
+        shutil.rmtree(fixture_data / "plans")
+        (fixture_data / "plans" / "berlin").mkdir(parents=True)
+    elif breaks == "symlink":
+        (fixture_data / "maps" / "link.png").symlink_to("/etc/passwd")
+    else:
+        os.mkfifo(fixture_data / "plans" / "fifo")
+    out = tmp_path / "out"
+    out.mkdir()
+    with pytest.raises(srv.ServerError):
+        srv.make_data_archive(fixture_data, out)
+
+
+def test_snapshot_refuses_before_any_upload_without_the_data(deps, tmp_path, fixture_db):
+    import shutil
+
+    data = tmp_path / "data"
+    (data / "plans" / "berlin").mkdir(parents=True)
+    (data / "plans" / "berlin" / "retrieved.json").write_text("{}")
+    r = invoke("snapshot", *HOST, "--db", str(fixture_db), "--data", str(data), input="yes\n")
+    assert r.exit_code == 1 and "maps" in r.output
+    assert not [a for a, _ in deps.calls if a[0] == "rsync"]
+    shutil.rmtree(data)

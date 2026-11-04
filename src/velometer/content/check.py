@@ -53,6 +53,7 @@ from velometer.content.models import (
 from velometer.content.ocr import MAX_OCR_PAGES, OcrResult, empty_pages, ocr_pages, thin_pages
 from velometer.content.translate import DE as DE_DIR
 from velometer.content.translate import (
+    OPTIONAL,
     English,
     History,
     Translation,
@@ -695,7 +696,7 @@ def _check(
         label = f"narratives/{cid}.yaml"
         problems += _check_document(
             label,
-            [n.title, n.dek, *_narrative_prose(n)],
+            [n.title, n.dek, *([n.description] if n.description else []), *_narrative_prose(n)],
             n.quotes,
             n.facts,
             n.data_refs,
@@ -802,6 +803,8 @@ def check_translation(
     versions: list[str] | None = None
     for path, en_text in english.items():
         de = german.get(path)
+        if de is None and path in OPTIONAL:
+            continue  # written only where German needs it
         if de is None:
             incomplete(f" {path}: missing German text")
             continue
@@ -838,7 +841,11 @@ def check_translation(
     except ValueError as e:  # pydantic's ValidationError too: a rule the German text breaks
         problem(f": the German text does not validate in the English structure: {e}")
         return problems, notes
-    prose = [text for path, text in walk(merged) if path not in fallback]
+    prose = [
+        text
+        for path, text in walk(merged)
+        if path not in fallback and (path not in OPTIONAL or path in german)
+    ]
     config_dir = Path(data.config_dir) if data is not None else None
     problems += _check_document(
         f"{DE}{de_rel}",

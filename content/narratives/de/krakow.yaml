@@ -10,6 +10,11 @@ dek:
     A+B-km je 100 km Hauptstraßen, der steilste relative Anstieg der drei polnischen
     Städte.
   src: 61f6dabfc930
+description:
+  text: >-
+    Die Hauptkennzahl stieg 2018 bis Oktober 2026 von 40,2 auf 72,6 kartierte A+B-km
+    je 100 km Hauptstraßen, der relativ steilste Anstieg der drei Städte Polens.
+  src: 7d12109086fb
 sections:
 - heading:
     text: Von 2018 bis heute

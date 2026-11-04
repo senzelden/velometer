@@ -506,6 +506,9 @@ def test_keyboard_pass_runs_every_step_with_real_keys(rp, rich, tmp_path):  # no
     for needle in (
         "skip link",
         "phone menu",
+        "phone story: Tab walks the scroll to its last link",
+        "phone story: the phone charts are drawn",
+        "phone story: Enter on the last link goes there",
         "city tabs",
         "compare: Escape",
         "sort button",
@@ -675,3 +678,37 @@ def test_the_orca_pass_reads_what_orca_said_and_in_which_language(op, tmp_path):
         {"text": "Seite", "lang": "de", "sayall": True},
     ]
     assert orca.locus(0) == "link: 'Story' (0x1)"
+
+
+@needs_chrome
+def test_alternates_on_the_sites_own_origin_are_asked_of_the_server_at_hand(rp, tmp_path):
+    """M17: a public export's canonical and alternates are absolute, on `site.url`. Served by a
+    dry run (another origin, CSP `connect-src 'self'`), each alternate on the canonical's origin
+    is checked against the served export, same path; an alternate elsewhere is fetched as it
+    stands, and a missing page is still a finding naming the alternate as written."""
+    public = "https://velometer.example.invalid"
+    head = (f"<link rel='canonical' href='{public}/velometer/'>"
+            f"<link rel='alternate' hreflang='de' href='{public}/velometer/de/'>")  # fmt: skip
+    site = _site(tmp_path, {"": "<p>x</p>", "de": "<p>y</p>", "gone": "<p>z</p>", "far": ""})
+    for rel, extra in (
+        ("", head),
+        ("gone", head.replace("/velometer/'>", "/velometer/gone/'>", 1).replace("/de/", "/fr/")),
+        # a path the export has, on another origin: not the export's page, so not resolved here
+        (
+            "far",
+            "<link rel='alternate' hreflang='de' href='https://other.example.invalid/velometer/'>",
+        ),
+    ):
+        f = site / rel / "index.html"
+        f.write_text(f.read_text().replace("</head>", extra + "</head>"))
+    pages = "/velometer/,/velometer/gone,/velometer/far"
+    _, res = _run(rp, site, tmp_path / "out", "--widths", "390", "--themes", "light",
+                  "--pages", pages)  # fmt: skip
+    errors = {r["url"]: [e for e in r["errors"] if "alternate" in e] for r in res}
+    assert errors["/velometer/"] == []
+    (gone,) = errors["/velometer/gone"]
+    assert gone.startswith(f"an alternate link does not resolve: {public}/velometer/fr/ (HTTP 404")
+    (far,) = errors["/velometer/far"]
+    assert far.startswith(
+        "an alternate link does not resolve: https://other.example.invalid/velometer/"
+    )

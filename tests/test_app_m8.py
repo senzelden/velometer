@@ -21,6 +21,7 @@ from tests.test_app import (  # noqa: F401 - `setup` is a fixture
 from tests.test_app_m7 import CSP, INLINE_CODE, INLINE_SCRIPT, STATIC
 from velometer.app.main import create_app
 from velometer.app.narrative import bracketed
+from velometer.app.terms import unmark
 from velometer.content.loader import load_organisations
 from velometer.db import OverlayRow, replace_plan_overlay
 from velometer.plans.models import load_plans
@@ -443,7 +444,7 @@ def test_without_overlay_rows_the_mapped_series_is_a_note(client):
 
 
 def test_berlin_page_renders_the_cited_text_on_why_the_series_differ(client):
-    html = client.get("/plans/berlin").text
+    html = unmark(client.get("/plans/berlin").text)  # the text as written, without term marks
     text = " ".join(html.split())
     doc = yaml.safe_load((CONTENT / "plans" / "berlin.yaml").read_text(encoding="utf-8"))
     for s in doc["sections"]:
@@ -893,9 +894,9 @@ def test_a_pullquote_carries_the_language_of_its_source_and_its_gloss_is_english
 
 
 def _para(text):
-    from velometer.app.narrative import _Numbering
+    from velometer.app.narrative import Numbering
 
-    return str(_Numbering({}, {}).paragraph(text))
+    return str(Numbering({}, {}).paragraph(text))
 
 
 def test_content_may_mark_an_inline_quote_with_its_language():

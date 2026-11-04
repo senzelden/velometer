@@ -45,7 +45,8 @@ def site(tmp_path_factory):
 
 
 def _ids(html: str) -> list[str]:
-    return re.findall(r'<h[23] id="([^"]+)"', html)
+    """The heading ids of the methodology text, before the glossary the page adds (M17)."""
+    return re.findall(r'<h[23] id="([^"]+)"', html.split('id="terms"')[0])
 
 
 def test_methodology_headings_carry_the_same_ids_in_both_editions(site):

@@ -252,3 +252,22 @@ test("renderTiers: a redraw keeps the hovered year", () => {
   assert.equal(tipOf(el).hidden, false);
   assert.equal(tipOf(el).textContent, shown);
 });
+
+test("renderTiers draws one snapshot as a full-width stacked column, its label centred", () => {
+  const el = new Node("div");
+  renderTiers(el, { labels: ["Oct 2026"], layers: [
+    { key: "A", name: "A", values: [3] },
+    { key: "B", name: "B", values: [2] },
+  ] }, { width: 600 });
+  const svg = el.children[0];
+  const paths = svg.find("path").filter((p) => /\btier\b/.test(p.attrs.class));
+  assert.equal(paths.length, 2);
+  for (const p of paths) {
+    const xs = [...p.attrs.d.matchAll(/([\d.]+),/g)].map((m) => Number(m[1]));
+    assert.ok(Math.max(...xs) - Math.min(...xs) > 300, p.attrs.d); // a band, not a line
+    assert.ok(!/NaN|Infinity/.test(p.attrs.d), p.attrs.d);
+  }
+  const label = svg.find("text").find((t) => t.textContent === "Oct 2026");
+  const xs = paths.flatMap((p) => [...p.attrs.d.matchAll(/([\d.]+),/g)].map((m) => Number(m[1])));
+  assert.ok(Math.abs(Number(label.attrs.x) - (Math.min(...xs) + Math.max(...xs)) / 2) < 1);
+});

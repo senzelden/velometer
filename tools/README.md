@@ -195,8 +195,13 @@ uv run --group dev python tools/readme_shots.py --url https://velometer.zaehlwer
 Re-run it when the pages change, and update the README's alt texts and caption to what the new
 images show.
 
-## server.py, tiles.py, deploy_dryrun.py
+## server.py, tiles.py, deploy_dryrun.py, pass_findings.py
 
-The Hetzner server tool, the basemap extract and the local dry run are described where they are
-used: `docs/deploy.md` §1 (`server.py`, with the route as run), §1 step 3 (`tiles.py`'s extract)
-and §0a (`deploy_dryrun.py`). `server.py create` defaults to `--type cx23`.
+The Hetzner server tool, the basemap extract, the local dry run and the CD workflow's pass check
+are described where they are used: `docs/deploy.md` §1 (`server.py`, with the route as run), §1
+step 3 (`tiles.py`'s extract), §0a (`deploy_dryrun.py`) and §2 (`pass_findings.py`, which holds
+each `render_pass.py` result file to 0 findings). `server.py create` defaults to `--type cx23`.
+
+A public export's canonical and alternate links are absolute, on the site's own URL (M17). The
+render pass asks the server it audits for every alternate on the canonical link's origin, same
+path, so a dry run checks the export it serves.

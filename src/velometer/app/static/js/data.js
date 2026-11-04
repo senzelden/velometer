@@ -143,21 +143,54 @@ export function failed(el, err) {
 }
 
 /**
+ * Call `init(el)` once for each element when it first becomes visible. Without an
+ * IntersectionObserver (`IO`) every element is initialised at once. A `display: none` element
+ * never intersects, so it waits until a layout shows it.
+ */
+export function whenVisible(els, init, IO = globalThis.IntersectionObserver) {
+  if (!els.length) return;
+  if (typeof IO !== "function") {
+    els.forEach(init);
+    return;
+  }
+  const waiting = new Set(els);
+  const io = new IO((entries, observer) => {
+    for (const e of entries) {
+      if (!e.isIntersecting || !waiting.has(e.target)) continue;
+      waiting.delete(e.target);
+      observer.unobserve(e.target);
+      init(e.target);
+    }
+  });
+  els.forEach((el) => io.observe(el));
+}
+
+/**
  * Draw every [data-chart] mount that has a drawer in `draw` ({name: (el, D) => void}) from the
  * one series payload; a mount that throws, or a failed load, shows the table-fallback note.
+ * `opts.lazy` is a selector: mounts inside a matching block are drawn only once visible
+ * (`whenVisible`, observer `opts.IO`), and the payload is fetched for them only then.
  */
-export function drawAll(draw) {
+export function drawAll(draw, opts = {}) {
   const mounts = [...document.querySelectorAll("[data-chart]")].filter((el) => draw[el.dataset.chart]);
-  if (!mounts.length) return;
-  loadSeries()
-    .then((D) => {
-      for (const el of mounts) {
-        try {
-          draw[el.dataset.chart](el, D);
-        } catch (err) {
-          failed(el, err);
-        }
-      }
-    })
-    .catch((err) => mounts.forEach((el) => failed(el, err)));
+  const lazy = opts.lazy ? mounts.filter((el) => el.closest(opts.lazy)) : [];
+  const drawOne = (el, D) => {
+    try {
+      draw[el.dataset.chart](el, D);
+    } catch (err) {
+      failed(el, err);
+    }
+  };
+  const eager = mounts.filter((el) => !lazy.includes(el));
+  if (eager.length) {
+    loadSeries()
+      .then((D) => eager.forEach((el) => drawOne(el, D)))
+      .catch((err) => eager.forEach((el) => failed(el, err)));
+  }
+  const IO = "IO" in opts ? opts.IO : globalThis.IntersectionObserver;
+  whenVisible(lazy, (el) => {
+    loadSeries()
+      .then((D) => drawOne(el, D))
+      .catch((err) => failed(el, err));
+  }, IO);
 }

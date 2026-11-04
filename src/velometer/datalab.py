@@ -35,6 +35,8 @@ from markupsafe import Markup, escape
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from velometer import credits, i18n
+from velometer.app import jsonld
+from velometer.app.urls import absolute_url
 
 SITE_DIR = Path(__file__).resolve().parents[2] / "sites" / "datalab"
 DEFAULT_CONFIG = SITE_DIR / "site.yaml"
@@ -84,6 +86,13 @@ PAGES = {"index.html": "index.html", "impressum.html": "impressum/index.html",
          "404.html": "404.html"}  # fmt: skip
 # The accessibility statement's address in a build (golive-check asks for it, R63).
 STATEMENT_PAGE = PAGES["barrierefreiheit.html"]
+NOT_FOUND_PAGE = PAGES["404.html"]
+CRAWL_FILES = ("robots.txt", "sitemap.xml", "llms.txt")
+LLMS_TEMPLATE = "llms.txt"
+# The site's name: the pages' title, og:site_name and footer (base.html) and the JSON-LD
+# Organization read it from here.
+SITE_NAME = "Zählwerk Berlin Datalab"
+CHECKED_FORMAT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
 class DatalabError(Exception):
@@ -288,15 +297,58 @@ def _env() -> Environment:
     )
 
 
-def render(cfg: DatalabConfig, counter: Counter) -> dict[str, str]:
-    """Each page's HTML by its output path."""
+def parse_checked(value: str) -> date:
+    """`--checked`: a day as YYYY-MM-DD; anything else is a DatalabError."""
+    if CHECKED_FORMAT.fullmatch(value):
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            pass
+    raise DatalabError(f"--checked must be a real day as YYYY-MM-DD, not {value!r}")
+
+
+def _route(out: str) -> str:
+    """The route of a PAGES output: `impressum/index.html` -> `/impressum/`."""
+    return "/" + out.removesuffix("index.html")
+
+
+def page_routes() -> list[str]:
+    """The indexable pages' routes (`/`, `/impressum/`, …): the PAGES outputs but the 404 page."""
+    return [_route(rel) for rel in PAGES.values() if rel != NOT_FOUND_PAGE]
+
+
+def crawl_files(domain: str, llms: str) -> dict[str, str]:
+    """`robots.txt` and `sitemap.xml` (the Datalab is one language: no alternates, and no
+    `<lastmod>`, since there is no per-page change date to give) and the rendered `llms.txt`."""
+    from velometer.app.crawl import robots_txt, sitemap_xml
+
+    origin = f"https://{domain}/"
+    return {
+        "robots.txt": robots_txt(origin, ["/build.json"]),  # the stamp is no page (§2.1)
+        "sitemap.xml": sitemap_xml(origin, page_routes(), {}, languages=False),
+        "llms.txt": llms,
+    }
+
+
+def render(cfg: DatalabConfig, counter: Counter, checked: date | None = None) -> dict[str, str]:
+    """Each page's HTML by its output path, and `llms.txt`. `checked` replaces
+    `accessibility.checked` for this render."""
+    checked = checked or cfg.accessibility.checked
     last_year, last_km = counter.series[-1]
     digits = len(str(max(km for _, km in counter.series)))
     forms = [f for f in FORMS if cfg.operator_form in (None, f[0])]
     osm, boundary = _shared_strings()
     context = {
         "domain": cfg.domain,
+        "site_name": SITE_NAME,
         "velometer_url": f"https://velometer.{cfg.domain}/",
+        "jsonld": jsonld.script(
+            jsonld.datalab(
+                SITE_NAME,
+                f"https://{cfg.domain}/",
+                f"https://velometer.{cfg.domain}/",
+            )
+        ),
         "csp": meta_csp(),
         "contact": (
             Markup('<a href="mailto:{0}">{0}</a>').format(cfg.contact_email)
@@ -317,23 +369,38 @@ def render(cfg: DatalabConfig, counter: Counter) -> dict[str, str]:
         "osm_credit": Markup(osm),
         "boundary_credit": boundary,
         "checked": (
-            i18n.long_day(cfg.accessibility.checked, "de")
-            if cfg.accessibility.checked
-            else placeholder("Datum der Veröffentlichung")
+            i18n.long_day(checked, "de") if checked else placeholder("Datum der Veröffentlichung")
         ),
     }
     env = _env()
-    return {out: env.get_template(name).render(**context) for name, out in PAGES.items()}
+    # each page's og:url: its address on the domain, as the sitemap lists it (one helper decides
+    # the form); none on the 404
+    origin = f"https://{cfg.domain}/"
+    pages = {
+        out: env.get_template(name).render(
+            **context,
+            page_url=None if out == NOT_FOUND_PAGE else absolute_url(origin, _route(out), "/"),
+        )
+        for name, out in PAGES.items()
+    }
+    return {**pages, **crawl_files(cfg.domain, env.get_template(LLMS_TEMPLATE).render(**context))}
 
 
-def build(cfg: DatalabConfig, velometer_export: Path, out: Path) -> list[str]:
+def build(
+    cfg: DatalabConfig, velometer_export: Path, out: Path, checked: date | None = None
+) -> list[str]:
     """The site in `out` (absent or empty): pages, `static/`, `.gz` siblings and `_headers`.
     Everything is read and rendered before the first write. Returns the written paths, relative
-    to `out`, sorted."""
+    to `out`, sorted. `checked` overrides `accessibility.checked` for this build only and is
+    recorded in the stamp file as `checked`; the inputs stamp stays that of the committed
+    settings."""
     from velometer.app.export import headers_text, write_gz
 
-    pages = render(cfg, read_counter(velometer_export))
-    stamp = json.dumps({STAMP_KEY: inputs_stamp(cfg)}, indent=2) + "\n"
+    pages = render(cfg, read_counter(velometer_export), checked)
+    record = {STAMP_KEY: inputs_stamp(cfg)}
+    if checked:
+        record["checked"] = checked.isoformat()
+    stamp = json.dumps(record, indent=2) + "\n"
     if out.is_symlink():
         raise DatalabError(f"refusing --out {out}: it is a symlink; name the directory itself")
     if out.exists() and (not out.is_dir() or any(out.iterdir())):

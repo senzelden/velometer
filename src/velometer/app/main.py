@@ -42,8 +42,9 @@ from velometer import timeseries as ts
 from velometer.app import cite as cite_model
 from velometer.app import compare as cmp
 from velometer.app import counts as counts_model
-from velometer.app import plans_pages, repo_links, urls
+from velometer.app import jsonld, meta, plans_pages, repo_links, urls
 from velometer.app import story as story_model
+from velometer.app import terms as terms_model
 from velometer.app.cache import PageCache, fingerprint
 from velometer.app.names import country_name
 from velometer.app.narrative import (
@@ -91,7 +92,7 @@ from velometer.report.csvexport import (
 from velometer.report.data import KINDS, ReportData, headline_unit, open_readonly
 from velometer.report.differences import difference_rows
 from velometer.run import git_commit
-from velometer.selection import report_selector
+from velometer.selection import report_selector, report_tiers
 
 HERE = Path(__file__).parent
 # a tier map: <city>_<kind>, its German image <city>_<kind>.de (PNG only)
@@ -490,6 +491,20 @@ def population_years(data: ReportData) -> list[int]:
     return [c.population.year for c in data.cities() if c.population]
 
 
+def ranking_order(summaries: list[dict]) -> list[dict]:
+    """The home ranking's order of city summaries (`city_summary`): by the current LAU headline,
+    highest first, cities without a current run last, ties by name."""
+    return sorted(summaries, key=lambda s: (s["now"] is None, -(s["now"] or 0), s["city"].name))
+
+
+def ranking_ends(ranked: list[dict]) -> tuple[dict, dict] | None:
+    """The top and bottom city of the home ranking (`ranking_order`), the ones with a current
+    value, in the table's order; None with fewer than two. The home sentence closing the home
+    lead (M17 §4.2, §4.8) names them, and the home page's structured data reads them too."""
+    valued = [s for s in ranked if s["now"] is not None]
+    return (valued[0], valued[-1]) if len(valued) >= 2 else None
+
+
 def create_app(
     db_path: Path,
     config_dir: Path,
@@ -503,6 +518,7 @@ def create_app(
     repo_root: Path = repo_links.ROOT,
     repo_paths: frozenset[str] | None = None,
     tiles_info: dict | None = None,
+    public: bool = False,
 ) -> FastAPI:
     """The app. `base_path` is the path the site is served under (M9: every URL a page emits
     carries it, the routes stay at `/…`); `static_edition` ({"commit": <short>}) marks pages built
@@ -511,7 +527,10 @@ def create_app(
     without a background. `repo_root` and `repo_paths` (its tracked files and directories, default
     `git ls-files` there) are the repo the pages link when site.yaml names one (M16). `tiles_info`
     (`load_tiles_info`) gives the maps' credit its Protomaps build date; with `tiles_file` and no
-    `tiles_info`, the sidecar beside the file is read."""
+    `tiles_info`, the sidecar beside the file is read. `public` marks the app of a public export
+    (M17): it reads the committed public site values (`site.public.yaml`) and writes the head's
+    canonical and alternate links as absolute URLs on `site.url`; a preview and the dev server
+    keep them relative."""
     db_path, config_dir = Path(db_path), Path(config_dir)
     maps_dir, docs_dir, content_dir = Path(maps_dir), Path(docs_dir), Path(content_dir)
     plans_data_dir = Path(plans_data_dir)
@@ -542,7 +561,7 @@ def create_app(
 
         app.add_api_route("/" + TILES_PATH, tiles_route, methods=["GET", "HEAD"])
     tokens = theme_tokens((HERE / "static" / "app.css").read_text(encoding="utf-8"))
-    app.state.site = load_site(config_dir)
+    app.state.site = load_site(config_dir, public=public)
     # a table row carries a city's id and name, not the city: the config says which language the
     # name is in (M14)
     city_configs = {c.id: c for c in load_cities(config_dir / "cities.yaml")}
@@ -556,6 +575,24 @@ def create_app(
         repo_paths,
     )
 
+    def abs_in(other: Lang, path: str) -> str:
+        """`u_in`, as an absolute URL on `site.url` in a public export (the base path is the
+        host's, not the origin's, so it is dropped first); the same as `u_in` otherwise."""
+        rel = us[other](path)
+        if not (public and app.state.site.url):
+            return rel
+        return urls.absolute_url(app.state.site.url, rel, app.state.base_path)
+
+    def structured(build) -> list[dict]:
+        """The page's JSON-LD objects (M17 §4.2), `build()` called only for a public export: they
+        name absolute URLs on the public origin, which a preview does not have."""
+        return build() if public and app.state.site.url else []
+
+    # the terms registry (M17 §4.8), read once here so a broken registry stops the app and the
+    # export; each page reads it again (cached by the file's mtime), so the dev server follows edits
+    for edition in LANGS:
+        terms_model.load(edition, content_dir)
+
     def _templates(lang: Lang) -> Jinja2Templates:
         """The templates of one page language: its `u` and `t`, the shared globals and filters."""
         templates = Jinja2Templates(directory=HERE / "templates")
@@ -563,6 +600,7 @@ def create_app(
         env.globals["lang"] = lang
         env.globals["u"] = us[lang]
         env.globals["u_in"] = lambda other, path: us[other](path)
+        env.globals["abs_in"] = abs_in
         env.globals["data_u"] = data_u
         env.globals["t"] = partial(i18n.t_markup, lang)
         env.globals["t_in"] = i18n.t_markup
@@ -580,6 +618,8 @@ def create_app(
         env.globals["fb_text"] = fb_text
         # a name in its own language (an organisation, a counter publisher, a plan title)
         env.globals["lang_attr"] = lang_attr
+        env.globals["og_locale"] = meta.OG_LOCALE
+        env.globals["jsonld_script"] = jsonld.script
         # the Datalab's name in the footer, in a `<span lang>` where site.yaml gives its language
         env.globals["datalab_name"] = lambda d: (
             Markup("<span{}>{}</span>").format(lang_attr(d.lang), d.name) if d.lang else d.name
@@ -624,11 +664,16 @@ def create_app(
         _respond = templates.TemplateResponse
 
         def respond(*args, **kwargs):
-            """Every rendered page, with its sideways-scrolling regions keyboard-reachable and
-            its repo paths linked (M16)."""
+            """Every rendered page, with its sideways-scrolling regions keyboard-reachable, its
+            repo paths linked (M16) and the first use of each term in `<main>` linked to the
+            methodology's glossary (M17); a fragment has no `<main>` and keeps its terms plain."""
             resp = _respond(*args, **kwargs)
             body = name_scroll_regions(resp.body.decode(), lang)
-            resp.body = (links.link_code(body) if links else body).encode()
+            body = links.link_code(body) if links else body
+            body = terms_model.mark_first_use(
+                body, terms_model.load(lang, content_dir), us[lang]("/methodology")
+            )
+            resp.body = body.encode()
             resp.headers["content-length"] = str(len(resp.body))
             return resp
 
@@ -742,6 +787,8 @@ def create_app(
 
         lang = request.state.lang
         footer = cache.get(f"footer:{lang}", fp(request), build_footer)
+        # the tier diagrams' tiers and headline membership (_tier_diagram.html), config only
+        tier_set = cache.get(f"tier_set:{lang}", fp(request), lambda: report_tiers(config_dir))
         nav = None  # the Cities menu; a page without a database still renders, linking /cities
         if data is not None:
             try:
@@ -753,6 +800,7 @@ def create_app(
             name,
             {
                 "footer": footer,
+                "tier_set": tier_set,
                 "nav_groups": nav,
                 "active": active,
                 "cite_for": cite_for(request, data),
@@ -773,7 +821,7 @@ def create_app(
         request.state.lang = "de" if request.url.path.split("/")[1:2] == ["de"] else "en"
         lazy = LazyData(db_path, config_dir, request.state.lang)
         try:
-            return page(request, "404.html", "", lazy, status_code=404, here="/")
+            return page(request, "404.html", "", lazy, status_code=404, here="/", canonical=None)
         finally:
             lazy.close()
 
@@ -874,14 +922,13 @@ def create_app(
                         "flags": len(data.flags(c.id, "lau")),  # the table is the LAU run
                     }
                 )
-            ranked = sorted(
-                summaries, key=lambda s: (s["now"] is None, -(s["now"] or 0), s["city"].name)
-            )
+            ranked = ranking_order(summaries)
             values = [v for s in summaries for v in (s["now"], s["first"]) if v is not None]
             top = max(values, default=0.0)
             return {
                 "rows": rows,
                 "ranking": ranked,
+                "ranking_ends": ranking_ends(ranked),
                 "scale_max": (int(top // 50) + 1) * 50 if top else 1,
                 "countries": len({c.country_iso2 for c in data.cities()}),
                 "years": data.years,
@@ -900,7 +947,15 @@ def create_app(
             }
 
         ctx = cache.get(f"index:{request.state.lang}", fp(request), build)
-        return page(request, "index.html", "overview", data, **ctx)
+        site, lang = app.state.site, request.state.lang
+        ld = structured(
+            lambda: [
+                jsonld.website(site, lang),
+                # public exports only (one render per page), so not worth a cache entry
+                jsonld.collection(data, site, lang, [r["city"] for r in ctx["ranking"]]),
+            ]
+        )
+        return page(request, "index.html", "overview", data, jsonld=ld, **ctx)
 
     register_pages(app, "/", index)
 
@@ -1141,6 +1196,15 @@ def create_app(
                 lambda: figures_context(data, city_id, profiles),
             )
         nar, note = narrative_of(request, city_id)
+        lang = request.state.lang
+        description = meta.city_description(
+            lang,
+            tab,
+            ctx["city"].name,
+            nar.dek if nar else None,
+            ctx["headline_now"],
+            nar.description if nar else None,
+        )
         role = {"story": "story", "figures": "figures"}.get(tab)
         cited_sources, cited_refs = nar.cited(nar.of_role(role)) if nar and role else ([], [])
         if tab == "counts":
@@ -1148,7 +1212,6 @@ def create_app(
             nar = extra["counts"]["doc"]  # the tab cites the counters text's sources
             cited_sources = [] if nar is None else sorted(nar.sources.items())
             cited_refs = [] if nar is None else sorted(nar.refs.items())
-        lang = request.state.lang
         label = i18n.t(lang, f"city.tab.{tab}")  # plain: the <title>
         label_html = i18n.t_markup(lang, f"city.tab.{tab}")  # the crumb and the tab links: marks
         tabs = [
@@ -1160,10 +1223,16 @@ def create_app(
             for k, suffix in TABS
             if (k != "bezirke" or ctx["bezirke"]) and (k != "counts" or ctx["has_counts"])
         ]
+        site = app.state.site
+        # the Dataset says what the page shows: the dek, not the hidden meta description
+        shown = meta.dataset_description(nar.dek if nar else None, description)
+        ld = structured(lambda: [jsonld.city(ctx["city"], data, site, lang, shown)]) \
+            if tab == "story" else []  # fmt: skip
         return page(
             request, f"city/{tab}.html", "city", data, **ctx, **extra, tab=tab, tab_label=label,
+            jsonld=ld,
             tabs=tabs, tab_label_html=label_html, nar=nar, content_error=note,
-            cited_sources=cited_sources, cited_refs=cited_refs,
+            cited_sources=cited_sources, cited_refs=cited_refs, meta_description=description,
         )  # fmt: skip
 
     async def compare(request: Request, data: Data):
@@ -1562,6 +1631,8 @@ def create_app(
             "city": c,
             "country": country_name(c.country_iso2, data.lang),
             "residents": lau.population_value if lau else None,
+            # the headline figure the tab descriptions name (meta.tab.*), as the keynums show it
+            "headline_now": None if summary["now"] is None else i18n.number(summary["now"], lang),
             "keynums": keynums(
                 summary,
                 fua,
@@ -1721,9 +1792,14 @@ def create_app(
             body = methodology_html(text, english.read_text(encoding="utf-8"))
         except OSError:
             body = None
+        lang = request.state.lang
+        _, sources, _, _, _ = content_of(request)
+        terms = terms_model.glossary(terms_model.load(lang, content_dir), sources, lang)
+        site = app.state.site
         return page(
-            request, "methodology.html", "methodology", data, body=body, file=path.name, **ctx
-        )
+            request, "methodology.html", "methodology", data, body=body, file=path.name,
+            glossary=terms, jsonld=structured(lambda: [jsonld.article(site, lang)]), **ctx,
+        )  # fmt: skip
 
     async def methodology(request: Request, data: Data):
         return methodology_page(request, data)
@@ -1733,7 +1809,7 @@ def create_app(
     async def methodology_legacy_de(request: Request, data: Data):
         """The German methodology's URL before M12: the same German page, pointing search engines
         at /de/methodology (a static site cannot redirect)."""
-        return methodology_page(request, data, canonical=us["de"]("/methodology"))
+        return methodology_page(request, data, canonical=abs_in("de", "/methodology"))
 
     app.add_api_route(
         "/methodology/de", methodology_legacy_de, methods=["GET"],

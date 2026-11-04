@@ -941,15 +941,24 @@ class Repo(_Strict):
         return v
 
 
+ZENODO_DOI = r"^10\.5281/zenodo\.\d+$"
+
+
 class SiteConfig(_Strict):
     """`config/site.yaml`: the Datalab the site is part of and its legal pages (M14), the
     public repository the pages link (M16) and the accessibility statement (M16, R63)."""
 
+    url: HttpsUrl | None = None  # M17: the public origin of the velometer site
     datalab: Datalab | None = None
     impressum_url: HttpsUrl | None = None
     privacy_url: HttpsUrl | None = None
     accessibility_url: HttpsUrl | None = None
     repo: Repo | None = None
+    # M17: the Zenodo DOIs (bare, `10.5281/zenodo.<n>`): the dataset's concept DOI is the JSON-LD
+    # identifier of the home page; null until the first deposit, which a public deploy-check
+    # refuses (spec §6)
+    dataset_doi: str | None = Field(default=None, pattern=ZENODO_DOI)
+    software_doi: str | None = Field(default=None, pattern=ZENODO_DOI)
 
     @field_validator("datalab", "repo", mode="before")
     @classmethod
@@ -973,6 +982,8 @@ class SiteConfig(_Strict):
     def missing(self) -> list[str]:
         """The dotted names of the unset values."""
         out = []
+        if self.url is None:
+            out.append("url")
         if self.datalab is None:
             out += ["datalab.name", "datalab.url"]
         if self.impressum_url is None:
@@ -987,8 +998,10 @@ class SiteConfig(_Strict):
 
     def public_values(self) -> dict[str, str | None]:
         """The values a public export needs, as `build.json` records them (M14; the repo and the
-        accessibility statement M16)."""
+        accessibility statement M16; the DOIs M17, which llms.txt names and deploy-check holds
+        the JSON-LD identifier to)."""
         return {
+            "url": self.url,
             "datalab_name": self.datalab.name if self.datalab else None,
             "datalab_url": self.datalab.url if self.datalab else None,
             "impressum_url": self.impressum_url,
@@ -996,12 +1009,40 @@ class SiteConfig(_Strict):
             "accessibility_url": self.accessibility_url,
             "repo_url": self.repo.url if self.repo else None,
             "repo_file_url": self.repo.file_url if self.repo else None,
+            "dataset_doi": self.dataset_doi,
+            "software_doi": self.software_doi,
         }
 
 
-def load_site(config_dir: Path) -> SiteConfig:
-    """The site settings; a missing `site.yaml` is an empty SiteConfig."""
+def _merge(base: dict, over: dict) -> dict:
+    """`over` on `base`, key by key: nested mappings merge, any other value replaces."""
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
+def _mapping(doc: Any, path: Path) -> dict:
+    if doc is None:
+        return {}
+    if not isinstance(doc, dict):
+        raise ConfigError(f"{path}: must be a mapping, not {type(doc).__name__}")
+    return doc
+
+
+def load_site(config_dir: Path, public: bool = False) -> SiteConfig:
+    """The site settings; a missing `site.yaml` is an empty SiteConfig. With `public`, the
+    committed `site.public.yaml` (M17) is merged over it key by key: a public export reads the
+    public values from the repo, a preview and the dev server never do."""
     path = Path(config_dir) / "site.yaml"
-    if not path.is_file():
+    overlay = Path(config_dir) / "site.public.yaml"
+    docs = [p for p in (path, overlay if public else None) if p is not None and p.is_file()]
+    if not docs:
         return SiteConfig()
-    return _parse(path, lambda doc: SiteConfig.model_validate(doc or {}))
+    merged: dict = {}
+    for p in docs:
+        merged = _merge(merged, _mapping(_read(p), p))
+    try:
+        return SiteConfig.model_validate(merged)
+    except ValidationError as e:
+        raise ConfigError(f"{' + '.join(p.name for p in docs)}: {e}") from e

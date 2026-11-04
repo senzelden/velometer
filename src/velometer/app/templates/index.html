@@ -1,11 +1,23 @@
 {% extends "base.html" %}
 {% from "_cite.html" import cite %}
 {% block title %}velometer · {{ t('page.index.title') }}{% endblock %}
+{% block description %}{{ t('meta.index', n=rows | length) }}{% endblock %}
 {% block scripts %}<script type="module" src="{{ data_u('/static/js/overview.js') }}"></script>{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><span aria-current="page">{{ t('nav.overview') }}</span></nav>{% endblock %}
 {% block content %}
 <h1>{{ t('page.index.h1', n=rows | length) }}</h1>
 <p class="dek">{{ t('page.index.dek') }}{% if years %}{{ t('page.index.dek_years', year=years[0]) }}{% endif %}.</p>
+{#- the lead for people (M17 §4.8): what velometer is and counts, in plain words before any letter
+    code, and what a reader can do here; the home sentence (§4.2) closes it -#}
+<section class="lead" aria-label="{{ t('page.index.lead.label') }}">
+<p>{{ t('page.index.lead.what', n=rows | length) }}
+{{ t('page.index.lead.counts', a=u('/methodology') ~ '#term-tier-a', b=u('/methodology') ~ '#term-tier-b') }}
+{{ t('page.index.lead.mapped') }}</p>
+<p>{{ t('page.index.lead.use', cities=u('/cities'), stories=u('/stories'), compare=u('/compare'), methodology=u('/methodology')) }}
+{% if site.datalab %}{{ t('page.index.lead.maintained', url=site.datalab.url, name=datalab_name(site.datalab)) }}{% endif %}
+{% if site.repo %}{{ t('page.index.lead.open', code=site.repo.url, data=data_u('/data/all.csv')) }}{% endif %}
+{% if ranking_ends %}{% set top, bottom = ranking_ends %}<span id="home-sentence">{{ t('page.index.lead.ends', top=city_name(top.city), top_value=top.now | num, unit=headline_unit, bottom=city_name(bottom.city), bottom_value=bottom.now | num) }}</span>{% endif %}</p>
+</section>
 <p class="defn">{{ t('page.index.defn', unit=headline_unit) }}</p>
 <ul class="keyfacts">
   <li>{{ t('page.index.n_cities', count=rows | length) }}</li>

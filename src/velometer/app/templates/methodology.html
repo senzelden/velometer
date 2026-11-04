@@ -1,8 +1,22 @@
 {% extends "base.html" %}
+{% from "_tier_diagram.html" import tier_diagram, tier_rules with context %}
 {% block title %}velometer · {{ t('page.methodology.title') }}{% endblock %}
+{% block description %}{{ t('meta.methodology') }}{% endblock %}
 {% block crumbs %}<nav class="crumbs" aria-label="{{ t('crumbs.label') }}"><a href="{{ u('/') }}">{{ t('nav.overview') }}</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">{{ t('nav.methodology') }}</span></nav>{% endblock %}
 {% block content %}
 <article class="prose">
 {% if body %}{{ body }}{% else %}<p class="note">{{ t('page.methodology.missing', file=file) }}</p>{% endif %}
 </article>
+{% if glossary and glossary.entries %}
+<section class="prose glossary" id="terms" aria-labelledby="terms-h">
+<h2 id="terms-h">{{ t('page.methodology.terms') }}</h2>
+<p>{{ t('page.methodology.terms_lead') }}</p>
+{{ tier_rules() }}
+<dl class="terms">
+{% for term, explanation in glossary.entries %}<dt id="{{ term.anchor }}"><dfn><abbr title="{{ term.expansion }}"{% if term.expansion_lang %} lang="{{ term.expansion_lang }}"{% endif %}>{{ term.short }}</abbr></dfn> <span class="expansion"{% if term.expansion_lang %} lang="{{ term.expansion_lang }}"{% endif %}>{{ term.expansion }}</span></dt>
+<dd>{{ explanation }}{% if term.tier %}{{ tier_diagram(term.tier, rules=false) }}{% endif %}</dd>
+{% endfor %}</dl>
+{% with cited_sources=glossary.cited, cited_refs=[], nar=glossary %}{% include "city/_cited.html" %}{% endwith %}
+</section>
+{% endif %}
 {% endblock %}

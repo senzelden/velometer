@@ -89,6 +89,14 @@ page.index.ranks: Rangfolgen nach Quelle
 page.index.ranks_meta: "Rang jeder Stadt (1 = höchster Wert) in unseren Kennzahlvarianten und in den veröffentlichten Rangfolgen. Ränge hängen davon ab,\nwelche Städte eine Quelle abdeckt; jede Quelle hat ihr eigenes Maß und ihren eigenen Umfang."
 table.not_published: nicht veröffentlicht
 page.index.no_ranks: kein Lauf und keine Zahlen für eine Rangfolge
+page.index.lead.label: Über velometer
+page.index.lead.what: "velometer ist ein offener, unabhängiger Vergleich der Radinfrastruktur in {n} europäischen\nStädten, erstellt aus OpenStreetMap. Er beantwortet eine Frage: Wie viel vom Hauptstraßennetz einer\nStadt hat einen Radweg, den man nicht mit Autos teilt?"
+page.index.lead.counts: "Gezählt werden <a href=\"{a}\">baulich getrennte Radwege</a> und <a href=\"{b}\">gemeinsame Geh- und\nRadwege</a>, beide außerhalb der Fahrbahn. Radfahrstreifen auf der Fahrbahn zählen nicht, ob\nmarkiert oder geschützt."
+page.index.lead.mapped: "Die Längen sind <b>kartierte km</b>, daher kann sich die Zahl einer Stadt ändern, wenn die\nKartierung aufholt."
+page.index.lead.use: "Die <a href=\"#ranking\">Rangfolge</a> steht weiter unten. Jede Stadt hat außerdem <a href=\"{cities}\">ihre eigene\nGeschichte</a>, dazu gibt es <a href=\"{stories}\">Geschichten über alle Städte</a>, <a href=\"{compare}\">einen\nStädtevergleich</a> und <a href=\"{methodology}\">die vollständige Methode</a>."
+page.index.lead.maintained: Das <a href="{url}">{name}</a> betreut velometer.
+page.index.lead.open: <a href="{code}">Code</a> und <a href="{data}">Daten</a> von velometer sind offen.
+page.index.lead.ends: "Im aktuellen Lauf hat {top} die höchste Hauptkennzahl: {top_value} {unit}. {bottom} hat\ndie niedrigste, {bottom_value}."
 
 # --- Städte
 page.cities.title: Städte
@@ -137,6 +145,8 @@ page.differences.missing: noch keine Erläuterung (content/explainer.yaml)
 page.differences.cities: Die Zahlen jeder Stadt
 page.methodology.title: Methodik
 page.methodology.missing: 'Methodik nicht erzeugt (<code>velometer report methodology</code> schreibt <code>docs/{file}</code>)'
+page.methodology.terms: Begriffe und Abkürzungen
+page.methodology.terms_lead: Die Abkürzungen und Stufenbuchstaben, die die Seiten verwenden. Auf jeder Seite führt die erste Verwendung jeder Abkürzung hierher.
 page.organisations.h1: Wer die Zahlen erhebt
 page.organisations.dek: "Die Stellen hinter den veröffentlichten Zahlen, mit denen diese Anwendung unsere kartierten km vergleicht, und hinter dem Berliner Radverkehrsplan und seinen Fortschrittsberichten: wer sie sind, wie sie messen und welche Rolle ihre Zahlen spielen."
 note.registry_error: Das Quellenverzeichnis konnte nicht geladen werden (siehe Serverprotokoll)
@@ -271,6 +281,7 @@ page.panel.full: Ganze Seite öffnen
 page.panel.tiers_over_time: Stufen im Zeitverlauf ({kind})
 page.city.tiers_chart: Stufen im Zeitverlauf, {city} {kind}
 cite.title.tiers: '{city}: Stufen im Zeitverlauf, kartierte km je Stufe, {kind}'
+cite.title.tiers_now: '{city}: Stufen heute, kartierte km je Stufe, {kind}'
 page.panel.tiers_now: Stufen, kartierte km heute
 note.no_run: kein Lauf
 page.city.flagged_years: Markierte Jahre
@@ -408,6 +419,8 @@ cite.title.city_headline_both: '{city}: Hauptkennzahl im Zeitverlauf, {unit}, Ke
 note.no_run_history: kein Lauf (Verlauf)
 page.story.over_time: Zeitverlauf, mit markierten Jahren
 page.story.read_on: Weiterlesen
+page.story.road_types: Radwegtypen
+page.story.more: Mehr zu {city}
 page.story.combined: Die Geschichte über alle Städte
 page.time.meta: 'Hauptkennzahl: {unit}, Kernstadt (LAU) und Funktionaler Stadtraum (FUA).'
 page.time.caption: 'Hauptkennzahl und A+B-km je Stand, {city}: die Werte des Diagramms oben'
@@ -495,6 +508,19 @@ tier.B: B Geh- und Radweg
 tier.C: C geschützter Radfahrstreifen
 tier.D: D markierter Radfahrstreifen
 tier.E: E Fahrradstraße o. Ä. / Busspur
+tier.diagram_name.A: 'Querschnitt, Stufe A: baulich getrennter Radweg'
+tier.diagram_name.B: 'Querschnitt, Stufe B: Geh- und Radweg'
+tier.diagram_name.C: 'Querschnitt, Stufe C: geschützter Radfahrstreifen'
+tier.diagram_name.D: 'Querschnitt, Stufe D: markierter Radfahrstreifen'
+tier.diagram_name.E: 'Querschnitt, Stufe E: Fahrradstraße und Busspur'
+tier.caption.A: Ein Radweg zwischen Gehweg und Fahrbahn, von beiden getrennt, meist durch einen Bordstein oder einen Höhenunterschied.
+tier.caption.B: Ein gemeinsamer Weg für Fuß- und Radverkehr ohne getrennte Teile, abseits der Fahrbahn.
+tier.caption.C: Ein Radfahrstreifen auf der Fahrbahn, baulich vom Verkehr getrennt, etwa durch Poller oder eine Trennschwelle.
+tier.caption.D: Ein Radfahrstreifen oder Schutzstreifen auf der Fahrbahn, nur durch eine markierte Linie vom Verkehr getrennt.
+tier.caption.E: Links eine Fahrradstraße, eine für den Radverkehr ausgewiesene Straße; rechts eine für den Radverkehr freigegebene Busspur.
+tier.diagram_counts: Zählt zur Hauptkennzahl.
+tier.diagram_measured: Gemessen, nicht in der Hauptkennzahl.
+tier.diagram_rules: 'Gezeichnet ist der typische Fall; welche Stufe eine Straßenseite oder ein Weg erhält, entscheiden die <a href="{href}">Regeln des Klassifikators</a>.'
 map.title: '{name} ({kind}): Stufen geschützter Radinfrastruktur'
 map.footer: "Kartendaten © OpenStreetMap-Mitwirkende (openstreetmap.org/copyright), ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0/)\nkartierte km, nicht gebaute km · {boundaries}\nOSM-Stand {ts}, Klassifikator {classifier}"
 compare.group.all: Alle
@@ -624,6 +650,26 @@ cite.title.compare: 'Vergleich: {heading}; {cities}'
 page.bezirke.window: '{start} bis {end}'
 page.bezirke.window_current: aktueller Lauf
 
+# --- meta (M17 §4.2): die <meta name="description"> jeder Seite, Klartext, 50–160 Zeichen
+meta.index: "Kartierte km baulich getrennter Radwege und Geh- und Radwege je 100 km Hauptstraßen in {n} europäischen Städten, aus OpenStreetMap, Jahr für Jahr."
+meta.cities: "Alle Städte nach Ländern, jede mit ihrer Hauptkennzahl, kartierte A+B-km je 100 km Hauptstraßen in der Kernstadt, aus dem aktuellen OpenStreetMap-Lauf."
+meta.compare: "Europäische Städte nebeneinander in einem Diagramm oder einer Tabelle, Kernstadt oder Stadtraum, in kartierten km geschützter Radinfrastruktur."
+meta.stories: "Die Geschichte über alle Städte, Schritt für Schritt mit Diagrammen und Quellen, wie sich geschützte Radinfrastruktur in OpenStreetMap seit 2018 verändert hat."
+meta.differences: "Warum veröffentlichte Zahlen zum Radnetz voneinander und von den kartierten km von velometer abweichen, entlang sechs Dimensionen."
+meta.organisations: "Die Stellen hinter den veröffentlichten Radnetz-Zahlen, die velometer neben seine kartierten km stellt: wer sie sind, wie sie messen, was ihre Zahlen bedeuten."
+meta.sources: "Jede veröffentlichte Quelle, die velometer zitiert, neben seinem eigenen Ansatz mit OpenStreetMap, entlang der sechs Dimensionen, in denen Zahlen abweichen."
+meta.plans: "Der Radverkehrsplan jeder Stadt, sein Ziel und der letzte vom Herausgeber gemeldete Fortschritt, wie gedruckt; gemeldete Zahlen sind keine kartierten km."
+meta.plan: "Der Berliner Radverkehrsplan: seine Ziele, die vom Senat gemeldeten km, die fertigen Projekte und die in OpenStreetMap kartierte Radinfrastruktur im Vergleich."
+meta.methodology: "Wie velometer misst: die Stufen A bis E, die Hauptkennzahl, Kernstadt und Stadtraum, die OpenStreetMap-Stände und die Grenzen kartierter km."
+meta.city: "{city}: {value} kartierte A+B-km je 100 km Hauptstraßen im aktuellen Lauf, die geschützte Radinfrastruktur der Stadt, wie OpenStreetMap sie zeigt."
+meta.city_plain: "{city}: geschützte Radinfrastruktur, wie OpenStreetMap sie zeigt, in kartierten km baulich getrennter Radwege und Geh- und Radwege je 100 km Hauptstraßen."
+meta.tab.time: "{city} Jahr für Jahr: die Hauptkennzahl zu jedem OpenStreetMap-Stand, markierte Jahre erklärt; aktuell {value} kartierte A+B-km je 100 km Hauptstraßen."
+meta.tab.tiers: "{city} nach Stufen: kartierte km jeder Art von Radinfrastruktur, A bis E, aus OpenStreetMap; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen."
+meta.tab.figures: "{city}: veröffentlichte Radnetz-Zahlen neben den kartierten km von velometer, und warum sie abweichen; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen."
+meta.tab.counts: "{city}: offene Daten der Radzählstellen, im Vergleich mit den kartierten km der Kernstadt; Hauptkennzahl {value} A+B-km je 100 km Hauptstraßen."
+meta.tab.bezirke: "{city} nach Bezirken: die Hauptkennzahl jedes Bezirks und ihre Veränderung; die ganze Stadt hat {value} kartierte A+B-km je 100 km Hauptstraßen."
+meta.tab_plain: "{city}, {tab}: geschützte Radinfrastruktur, wie OpenStreetMap sie zeigt, in kartierten km baulich getrennter Radwege und Geh- und Radwege."
+
 # --- Zitate (cite.py; die js.cite.*-Gegenstücke unten)
 cite.text: velometer ({year}). {title} [Datensatz]. {provenance}. {attribution}.
 cite.accessed: '{url} (abgerufen am {accessed}).'
@@ -655,6 +701,7 @@ js.chart.line_of: 'Liniendiagramm: {title}'
 js.chart.sparkline: Kleines Liniendiagramm
 js.chart.tiers: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe'
 js.chart.tiers_of: 'Gestapeltes Flächendiagramm: kartierte km nach Stufe, {where}'
+js.chart.tiers_now_of: 'Gestapelte Säule: kartierte km nach Stufe, {where}, {label}'
 js.chart.tiers_tip: '{label} · kartierte km'
 js.chart.total: Summe {value}
 js.chart.rank_tip: '{name} · {label}: Rang {rank}'

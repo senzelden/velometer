@@ -70,6 +70,30 @@ def report_selector(config_dir: Path) -> Selector:
     return run_selector(config_dir, report.report_classifier)
 
 
+# the headline's preset: the one figure every ranking, chart and city page leads with
+HEADLINE_PRESET = "ours_headline"
+
+
+@dataclass(frozen=True)
+class TierSet:
+    """The tiers the report classifier's rules produce, in letter order, and those the headline
+    counts whole (a `X/sub` preset entry counts only part of X, so X is not among them)."""
+
+    tiers: tuple[str, ...]
+    headline: frozenset[str]
+
+
+def report_tiers(config_dir: Path) -> TierSet:
+    """The tier set of config/report.yaml's classifier and the headline preset. ConfigError."""
+    report = load_report(config_dir / "report.yaml", config_dir / "presets.yaml")
+    cfg = load_classifier(config_dir / "classifier" / f"{report.report_classifier}.yaml")
+    preset = load_presets(config_dir / "presets.yaml", cfg).preset(HEADLINE_PRESET)
+    return TierSet(
+        tuple(sorted({r.tier for r in cfg.rules} - {"excluded"})),
+        frozenset(e for e in preset.tiers if "/" not in e),
+    )
+
+
 def trusted_countries(config_dir: Path) -> frozenset[str]:
     """ISO2 codes of the countries signed off in config/trust.yaml; absent counts as pending."""
     trust = load_trust(config_dir / "trust.yaml")

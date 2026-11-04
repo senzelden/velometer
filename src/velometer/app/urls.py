@@ -13,6 +13,7 @@ path only where no route ran (the 404) or for the export's URL list and a page's
 
 import re
 from collections.abc import Callable
+from urllib.parse import urljoin
 
 from velometer.i18n import Lang
 
@@ -117,3 +118,22 @@ def with_lang(path: str, lang: Lang) -> str:
     `/de/cities?x=1`; for English it is `strip_lang`."""
     english = strip_lang(path)
     return english if lang == "en" else DE_PREFIX + english
+
+
+def served_path(path: str) -> str:
+    """`path` (query and fragment kept) in the form the static server answers 200 for: a page,
+    exported as `<dir>/index.html`, ends in `/` (`/city/berlin` -> `/city/berlin/`, `/de` ->
+    `/de/`); a file, whose last segment has an extension (`/data/all.csv`, `/sitemap.xml`), and
+    a path already ending in `/` are unchanged. Without the slash the server redirects (M17)."""
+    p, rest = _split(path)
+    last = p.rsplit("/", 1)[-1]
+    if last and "." not in last:
+        p += "/"
+    return p + rest
+
+
+def absolute_url(origin: str, rel: str, base: str) -> str:
+    """`rel`, a URL path carrying `base` (what `make_u` returns), as an absolute URL on `origin`,
+    in its `served_path` form. The base path is the host's, not the origin's, so it is dropped
+    first (M17)."""
+    return urljoin(origin, served_path(rel.removeprefix(normalise_base(base))))

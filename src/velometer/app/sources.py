@@ -12,7 +12,7 @@ from pathlib import Path
 
 from markupsafe import Markup
 
-from velometer.app.narrative import _Numbering, _route, _span
+from velometer.app.narrative import Numbering, _route, _span
 from velometer.app.organisations import org_of_sources
 from velometer.config import load_differences
 from velometer.content.loader import load_organisation_map, load_organisations, load_sources
@@ -109,7 +109,7 @@ def source_rows(
     registry = load_sources(content_dir / "sources")
     orgs, fallback = _organisations(content_dir / "organisations", lang)
     refs = {r.id: r for o in orgs.values() for r in o.data_refs}
-    num = _Numbering(registry, refs, CITE_PREFIX, lang)
+    num = Numbering(registry, refs, CITE_PREFIX, lang)
 
     preset_of: dict[str | None, str] = {}  # source -> the first preset that recomputes it
     for preset, source in data.preset_sources().items():

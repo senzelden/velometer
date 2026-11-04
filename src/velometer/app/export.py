@@ -32,6 +32,7 @@ from urllib.parse import unquote, urlsplit
 
 from fastapi import FastAPI
 
+from velometer.app import crawl
 from velometer.app.main import (
     CSP,
     HERE,
@@ -102,10 +103,11 @@ LINK_TAGS = frozenset({"a", "area"})
 # attributes whose value is a URL whatever it looks like; any other attribute is a reference when
 # its value looks like one (URL_SHAPED)
 URL_ATTRS = frozenset({"href", "src", "action", "data", "poster", "formaction", "cite"})
-JSON_SCRIPT_TYPES = frozenset({"application/json", "application/ld+json"})
+JSON_LD = "application/ld+json"
+JSON_SCRIPT_TYPES = frozenset({"application/json", JSON_LD})
 SCANNED_SUFFIXES = (".html", ".css", ".js")  # so `.gz` copies and `_headers` are never scanned
 # M14: the compressed siblings, the host headers file and the per-file size limit
-GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg")
+GZ_TYPES = (".html", ".css", ".js", ".json", ".geojson", ".csv", ".svg", ".txt", ".xml")
 GZ_MIN_BYTES = 1024
 MAX_FILE_BYTES = 26_214_400  # 25 MiB: Cloudflare Pages refuses a file of this size or more
 HEADERS_FILE = "_headers"
@@ -284,12 +286,6 @@ def public_commit() -> str:
     return f"{sha}-dirty" if dirty else sha
 
 
-# The one config file a public export's scratch copy may change (deploy.md §0): the public site
-# values. Every other file must be the commit's, or the pages show numbers the linked commit does
-# not produce (final review M6).
-SCRATCH_ONLY = "site.yaml"
-
-
 def _blob_sha(data: bytes) -> str:
     """git's object id of a file's content (`git hash-object`)."""
     import hashlib
@@ -298,8 +294,10 @@ def _blob_sha(data: bytes) -> str:
 
 
 def config_drift(config_dir: Path) -> list[str]:
-    """The files under `config_dir` that differ from the commit's `config/` (HEAD), but
-    `site.yaml`: changed, missing, or not in the commit. [] when the copy matches."""
+    """The files under `config_dir` that differ from the commit's `config/` (HEAD): changed,
+    missing, or not in the commit. [] when the copy matches. The public site values are the
+    committed `site.public.yaml` (M17, R1), so no file is exempt: the pages must not show numbers
+    or values the linked commit does not produce (final review M6)."""
     try:
         listing = _git("ls-tree", "-r", "--full-tree", "HEAD", "--", "config")
     except (OSError, subprocess.CalledProcessError) as e:
@@ -314,8 +312,6 @@ def config_drift(config_dir: Path) -> list[str]:
         for p in sorted(root.rglob("*"))
         if p.is_file() and "__pycache__" not in p.parts
     }
-    committed.pop(SCRATCH_ONLY, None)
-    local.pop(SCRATCH_ONLY, None)
     out = [f"{rel}: differs from the commit" for rel in sorted(local.keys() & committed.keys())
            if local[rel] != committed[rel]]  # fmt: skip
     out += [f"{rel}: missing (in the commit)" for rel in sorted(committed.keys() - local.keys())]
@@ -467,10 +463,21 @@ class _HtmlRefs(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.refs: list[tuple[str, bool]] = []
         self.unsupported: list[str] = []
+        self._ld = False  # the open JSON script is JSON-LD
         self._block: tuple[str, str] | None = None  # ("json" | "style" | "script", text so far)
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        # M17: a canonical or alternate `<link>` names a page for crawlers, which follow it
+        # (they load nothing): a link, and absolute in a public export
+        rel = (a.get("rel") or "").lower().split()
+        pointer = (
+            tag == "link"
+            and "stylesheet" not in rel
+            and bool({"canonical", "alternate"} & set(rel))
+        )
+        # and so does a page's og:url (its canonical, M17 Task 5)
+        og_url = tag == "meta" and a.get("property") == "og:url"
         for name, value in attrs:
             if value is None:
                 continue
@@ -479,14 +486,18 @@ class _HtmlRefs(HTMLParser):
             elif name == "style":
                 self.refs += _css_refs(value)
             elif name in URL_ATTRS or URL_SHAPED.match(value):
-                self.refs.append((value, not (name == "href" and tag in LINK_TAGS)))
+                link = (name == "href" and (tag in LINK_TAGS or pointer)) or (
+                    name == "content" and og_url
+                )
+                self.refs.append((value, not link))
         if tag == "meta" and a.get("name") == "velometer-base":
             self.refs.append((a.get("content") or "", True))
         if tag == "style":
             self._block = ("style", "")
         elif tag == "script":
-            kind = "json" if (a.get("type") or "").lower() in JSON_SCRIPT_TYPES else "script"
-            self._block = (kind, "")
+            kind = (a.get("type") or "").lower()
+            self._block = ("json" if kind in JSON_SCRIPT_TYPES else "script", "")
+            self._ld = kind == JSON_LD
 
     def handle_data(self, data):
         if self._block is not None:
@@ -498,7 +509,8 @@ class _HtmlRefs(HTMLParser):
         kind, text = self._block
         self._block = None
         if kind == "json":
-            self.refs += list(_json_refs(json.loads(text), link=False))
+            # structured data names pages and files for crawlers; nothing in it is loaded (M17)
+            self.refs += list(_json_refs(json.loads(text), link=self._ld))
         elif kind == "style":
             self.refs += _css_refs(text)
         elif text.strip():
@@ -716,6 +728,21 @@ def figures_drift(conn, config_dir: Path) -> list[str]:
     return curated_drift(conn, config_dir / "external" / "figures.csv")
 
 
+def public_inputs_missing(maps: Path, plans_data_dir: Path) -> list[str]:
+    """What a public export lacks of the inputs beside the database: a tier map directory that
+    holds no file, and the plan data's measures layer and its retrieval record. Without them the
+    pages leave out the maps and the plan figures and still pass deploy-check (M17)."""
+    from velometer.app.plans_pages import MEASURES_FILE, MEASURES_RETRIEVED
+
+    missing = []
+    if not maps.is_dir() or not any(p.is_file() for p in maps.iterdir()):
+        missing.append(f"{maps}: no tier map files")
+    for rel in (MEASURES_FILE, MEASURES_RETRIEVED):
+        if not (plans_data_dir / rel).is_file():
+            missing.append(f"{plans_data_dir / rel}: missing")
+    return missing
+
+
 def _run_export(
     out: Path,
     base: str,
@@ -737,12 +764,13 @@ def _run_export(
     site_values, raw = None, None
     if public:
         try:
-            site_cfg = load_site(config_dir)
+            site_cfg = load_site(config_dir, public=True)
         except ConfigError as e:
             raise ExportError(str(e)) from e
         if not site_cfg.complete:
             raise ExportError(
-                "--public needs config/site.yaml to set: " + ", ".join(site_cfg.missing())
+                "--public needs config/site.yaml and config/site.public.yaml to set: "
+                + ", ".join(site_cfg.missing())
             )
         site_values = site_cfg.public_values()
         # the pages link repo files at the export's commit (M16, R42): a commit that lacks the
@@ -752,6 +780,12 @@ def _run_export(
             raise ExportError(
                 "--public needs a clean git checkout (the pages link the repository at the "
                 f"export's commit); git says {raw!r}: commit or stash the changes first"
+            )
+        missing = public_inputs_missing(Path(maps), Path(plans_data_dir))
+        if missing:
+            raise ExportError(
+                "--public needs the tier maps and the plan data (the pages would silently "
+                "lose them): " + "; ".join(missing)
             )
     # absolute without following symlinks: `.` gets a real name, so staging is its sibling
     out = Path(os.path.abspath(out))
@@ -767,9 +801,10 @@ def _run_export(
             if changed:
                 lines = "\n".join(f"  {c}" for c in changed)
                 raise ExportError(
-                    f"--public: {config_dir} differs from the commit's config/ in more than "
-                    f"site.yaml ({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
-                    "copy config/ afresh and change only site.yaml (docs/deploy.md §0)"
+                    f"--public: {config_dir} differs from the commit's config/ "
+                    f"({len(changed)} file(s)); the pages link that commit:\n{lines}\n"
+                    "export from the repo's own config/, not a copy "
+                    "(docs/deploy.md §0)"
                 )
             drift = figures_drift(conn, Path(config_dir))
             if drift:
@@ -787,8 +822,9 @@ def _run_export(
             db, config_dir, maps, docs, content_dir=content_dir, plans_data_dir=plans_data_dir,
             base_path=base,
             static_edition={"commit": build["commit"], "commit_full": build["commit_full"]},
-            tiles_info=tiles,
+            tiles_info=tiles, public=public,
         )  # fmt: skip
+        names = {c.id: c.name for c in data.cities()}  # for llms.txt
         rendered: dict = {}  # each page is rendered once: listing it and writing it
         urls = export_urls(data, app, rendered)
     finally:
@@ -797,6 +833,9 @@ def _run_export(
     site = Path(tempfile.mkdtemp(prefix=f"{STAGING_PREFIX}{out.name}-", dir=out.parent))
     try:
         _write_site(site, app, urls, build, rendered)
+        origin = (build.get("site") or {}).get("url") if public else None
+        dois = crawl.dois_of(build.get("site") or {})  # the configured DOIs (spec §4.1)
+        crawl.write_crawl_files(site, origin, urls, build, names=names, dois=dois)
         (site / HEADERS_FILE).write_text(headers_text(build["base"], csp_meta(CSP)))
         write_gz(site)
         big = oversized(site, MAX_FILE_BYTES)

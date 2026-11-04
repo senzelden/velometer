@@ -25,6 +25,7 @@ EDITION = {"commit": SHA[:7], "commit_full": SHA}
 
 def _write(cfg: Path, doc: dict) -> None:
     (cfg / "site.yaml").write_text(yaml.safe_dump(doc, allow_unicode=True), encoding="utf-8")
+    (cfg / "site.public.yaml").unlink(missing_ok=True)  # M17: the tests set their own values
 
 
 # --- site.yaml `repo` -------------------------------------------------------------------------
@@ -64,6 +65,7 @@ def test_repo_validation_names_the_problem(tmp_path, repo, says):
 def test_a_public_export_needs_the_repo():
     full = SiteConfig.model_validate(
         {
+            "url": "https://v.example/",
             "datalab": {"name": "D", "url": "https://d.example/"},
             "impressum_url": "https://d.example/i",
             "privacy_url": "https://d.example/p",

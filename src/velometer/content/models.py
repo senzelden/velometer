@@ -175,6 +175,8 @@ class Narrative(_Strict):
     city_id: str
     title: str
     dek: str
+    # the story page's meta description where the dek is outside its bounds (M17 Task 2d)
+    description: str | None = None
     sections: list[Section]
     quotes: list[Quote] = []
     facts: list[Fact] = []
@@ -314,6 +316,7 @@ class NarrativeTr(_TrFile):
     city_id: str
     title: Tr | None = None
     dek: Tr | None = None
+    description: Tr | None = None
     sections: list[TrSection] = []
     literals: list[str] = []
 

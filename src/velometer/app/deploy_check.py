@@ -6,12 +6,14 @@ import json
 import re
 import zlib
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 from markupsafe import escape
 
-from velometer.app import export
+from velometer.app import crawl, export, jsonld
 from velometer.app.repo_links import bare_repo_paths, is_bare_name
-from velometer.app.urls import normalise_base
+from velometer.app.urls import absolute_url, normalise_base, with_lang
+from velometer.config import ZENODO_DOI
 
 _META_CSP = re.compile(r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"')
 
@@ -85,7 +87,7 @@ def _gz_problems(out: Path) -> list[str]:
 
 
 SITE_VALUES = (
-    "datalab_name", "datalab_url", "impressum_url", "privacy_url", "accessibility_url",
+    "url", "datalab_name", "datalab_url", "impressum_url", "privacy_url", "accessibility_url",
     "repo_url", "repo_file_url",
 )  # fmt: skip
 FOOTER_LINKS = ("datalab_url", "impressum_url", "privacy_url", "accessibility_url")
@@ -167,6 +169,80 @@ def _pinned_problems(out: Path, build: dict) -> list[str]:
     return problems
 
 
+def _page_routes(out: Path) -> list[str]:
+    """The English routes of the HTML pages written under `out`, as the sitemap lists them."""
+    routes = []
+    for page in sorted(out.rglob("index.html")):
+        rel = page.parent.relative_to(out).as_posix()
+        routes.append("/" if rel == "." else f"/{rel}")
+    return crawl.indexable(routes)
+
+
+def _crawl_problems(out: Path, build: dict) -> list[str]:
+    """The sitemap names every indexable page of the build and no page it lacks (M17: a stale
+    sitemap sends crawlers to 404s and hides new pages), and robots.txt points at it."""
+    origin = build["site"]["url"]
+    base = build["base"]
+    problems = []
+    robots = out / "robots.txt"
+    if not robots.is_file():
+        problems.append("robots.txt is missing")
+    elif f"Sitemap: {origin}sitemap.xml" not in robots.read_text(encoding="utf-8").splitlines():
+        problems.append(f"robots.txt has no 'Sitemap: {origin}sitemap.xml' line")
+    if not (out / "llms.txt").is_file():
+        problems.append("llms.txt is missing")
+    path = out / "sitemap.xml"
+    if not path.is_file():
+        return problems + ["sitemap.xml is missing"]
+    try:
+        root = ET.fromstring(path.read_bytes())
+    except ET.ParseError as e:
+        return problems + [f"sitemap.xml is not valid XML: {e}"]
+    ns = {"s": crawl.SITEMAP_NS}
+    listed = {e.text or "" for e in root.findall("s:url/s:loc", ns)}
+    want = set()
+    for route in _page_routes(out):
+        for r in (route, with_lang(route, "de")):
+            want.add(absolute_url(origin, base + r.lstrip("/"), base))
+    problems += [
+        f"sitemap.xml lists {loc}, but the build has no such page" for loc in sorted(listed - want)
+    ]
+    problems += [f"sitemap.xml lacks {loc}, a page of the build" for loc in sorted(want - listed)]
+    return problems
+
+
+_LD = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+
+
+def _jsonld_problems(out: Path, build: dict) -> list[str]:
+    """The home page's structured data names the dataset's DOI (M17 §6): the collection's
+    `Dataset` has an `identifier`, which the export leaves out while `site.dataset_doi` is unset.
+    A home page with no collection `Dataset` fails the same way. The identifier is the DOI the
+    build recorded (`build.json` `site.dataset_doi`, a Zenodo DOI), and llms.txt names it too: a
+    page edited after the export, or an export of a hand-edited value, is refused."""
+    home = out / "index.html"
+    text = home.read_text(encoding="utf-8") if home.is_file() else ""
+    found = None
+    for raw in _LD.findall(text):
+        obj = json.loads(raw)  # an unparseable one is already refused by the reference scan
+        if isinstance(obj, dict) and obj.get("@type") == "Dataset" and obj.get("identifier"):
+            found = obj["identifier"]
+            break
+    if found is None:
+        return [jsonld.MISSING_DOI]
+    doi = (build.get("site") or {}).get("dataset_doi")
+    if not isinstance(doi, str) or not re.fullmatch(ZENODO_DOI, doi):
+        return [f"{export.BUILD_FILE} records no Zenodo dataset DOI (site.dataset_doi: {doi!r})"]
+    want = f"https://doi.org/{doi}"
+    problems = []
+    if found != want:
+        problems.append(f"JSON-LD identifier {found!r} is not the build's dataset DOI {want}")
+    llms = out / "llms.txt"
+    if llms.is_file() and want not in llms.read_text(encoding="utf-8"):
+        problems.append(f"llms.txt does not name the dataset DOI {want}")
+    return problems
+
+
 def _public_problems(out: Path, build: dict) -> list[str]:
     """A public export's footer, judged from the export itself: build.json records the site
     values, and every page with the site's footer (the home page always) names the Datalab and
@@ -197,6 +273,8 @@ def _public_problems(out: Path, build: dict) -> list[str]:
             f"accessibility link of {export.BUILD_FILE} in the footer: {shown}"
         )
     problems += _methodology_problems(out, site["repo_url"])
+    problems += _crawl_problems(out, build)
+    problems += _jsonld_problems(out, build)
     return problems + _bare_code_problems(out) + _pinned_problems(out, build)
 
 

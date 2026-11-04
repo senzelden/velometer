@@ -7,6 +7,7 @@ import pytest
 
 from tests.test_app import client, client_21, setup, setup_21  # noqa: F401  (fixtures)
 from tests.test_app_base import rich  # noqa: F401  (fixture)
+from velometer.app.terms import unmark
 
 M10_CSV_COLUMNS = [
     "city_id", "boundary_kind", "label", "run_id", "osm_timestamp", "classifier_version",
@@ -181,7 +182,7 @@ def test_every_citation_marker_on_sources_resolves_to_the_list(client):  # noqa:
 
 
 def test_ours_row_dates_the_osm_snapshot(client):  # noqa: F811
-    (ours,) = [body for i, body in _rows(client.get("/sources").text) if i == "ours"]
+    (ours,) = [body for i, body in _rows(unmark(client.get("/sources").text)) if i == "ours"]
     assert re.search(r"OSM snapshot of \d{4}-\d{2}-\d{2}<", ours)
 
 

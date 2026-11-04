@@ -1,0 +1,19 @@
+# M17: the public site values, committed. `app export --public` merges this file over
+# site.yaml key by key (load_site(..., public=True)); previews and the dev server read
+# site.yaml alone. Only public values belong here: https URLs and the Datalab's name,
+# never an e-mail or a postal address.
+url: https://velometer.zaehlwerk-datalab.de/
+datalab:
+  name: Zählwerk Berlin Datalab
+  url: https://zaehlwerk-datalab.de/
+impressum_url: https://zaehlwerk-datalab.de/impressum/
+privacy_url: https://zaehlwerk-datalab.de/datenschutz/
+accessibility_url: https://zaehlwerk-datalab.de/barrierefreiheit/
+repo:
+  url: https://github.com/senzelden/velometer
+  file_url: https://github.com/senzelden/velometer/blob/{commit}/{path}
+# The Zenodo concept DOIs (bare, 10.5281/zenodo.<n>), set in Task 11 after the first deposit.
+# While dataset_doi is null the home page's Dataset has no identifier and a public deploy-check
+# fails (JSON-LD identifier: no dataset DOI).
+dataset_doi: null
+software_doi: null

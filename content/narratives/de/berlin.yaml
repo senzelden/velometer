@@ -8,6 +8,11 @@ dek:
     109,1 im Oktober 2026 zurück: ein Schritt nach unten in einer Kartierungskampagne
     im Jahr 2022, seitdem ein langsamer Anstieg.
   src: dc7d5d98f86b
+description:
+  text: >-
+    Kartierte A+B-km je 100 km Hauptstraßen: 113,7 (2018), 109,1 (Oktober 2026); 2022
+    ein Rückgang in einer Kartierungskampagne, seitdem ein langsamer Anstieg.
+  src: dc7d5d98f86b
 sections:
 - heading:
     text: Seit 2018

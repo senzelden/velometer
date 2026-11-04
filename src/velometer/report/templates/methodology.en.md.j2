@@ -22,7 +22,7 @@ Each way side gets one tier, or is excluded:
 | E | cycle street, and bus lanes open to cyclists |
 | `excluded` | recorded for diagnostics, never counted in a preset |
 
-The tiers derive from the tag logic of the ECF QECIO method, with documented differences. For example, a designated foot-and-cycle path with `segregated=yes` is tier B here, where QECIO counts it as a cycle track [ADR 0002].
+The tiers derive from the tag logic of the ECF QECIO method, with documented differences. For example, QECIO counts all cycle lanes as one class, while here a lane with a physical separation from motor traffic (`cycleway:right=lane` with `cycleway:right:separation=kerb`) is tier C and a lane without one (`cycleway:right=lane` alone) is tier D [ADR 0002].
 
 Two lengths are stored for every way side. On the **`per_side`** basis each road side counts its full length, so a road with tracks on both sides counts twice. On the **`qecio_weighted`** basis one-way infrastructure counts half, as in QECIO [ADR 0002]. Lengths are computed in each city's projected coordinate system, never in degrees.
 

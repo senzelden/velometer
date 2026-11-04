@@ -33,15 +33,15 @@ they name (the map view is read back from the basemap tile under the map's centr
 `MAP_VIEW_JS`, so this step and the keyboard pass's map steps need the tile file served: `--url`
 with the dry run's `--tiles`) and a hostile query opens the defaults with a quiet console.
 `--keyboard` adds, per theme, a scripted keyboard pass driven by real key events
-(`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, compare (tick, metric,
-view, sort, panel, Escape), the nav search and the tier and counter maps (+ and -); each step is a
-line in the entry's `steps`, a failed one is an error. Chrome is `--chrome`, else
-`$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a server that is already running
-(e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving `--site` with `http.server`; the
-page list still comes from `--site`; the origin's host counts as the pages' own host (the dry
-run's `velometer.localhost`). Through a locked server (the dry run's `--lock`, the server before
-go-live) it sends basic auth as the user `preview` with the password from
-`$VELOMETER_PREVIEW_PASSWORD` (direnv + pass), so the password never stands on a command line;
+(`Input.dispatchKeyEvent`): skip link, phone menu, Cities menu, city tabs, the story page's phone
+scroll at 390 px, compare (tick, metric, view, sort, panel, Escape), the nav search and the tier
+and counter maps (+ and -); each step is a line in the entry's `steps`, a failed one is an error.
+Chrome is `--chrome`, else `$VELOMETER_CHROME`, else `/usr/bin/google-chrome`. `--url` audits a
+server that is already running (e.g. `tools/deploy_dryrun.py --keep-running`) instead of serving
+`--site` with `http.server`; the page list still comes from `--site`; the origin's host counts as
+the pages' own host (the dry run's `velometer.localhost`). Through a locked server (the dry run's
+`--lock`, the server before go-live) it sends basic auth as the user `preview` with the password
+from `$VELOMETER_PREVIEW_PASSWORD` (direnv + pass), so the password never stands on a command line;
 `--auth USER:PASS` still overrides it. The Authorization header goes only to the `--url` origin:
 each tab intercepts that origin's requests (`Fetch.enable` with one URL pattern) and adds the
 header to them, and the wait for the server never forwards it on a redirect.
@@ -476,13 +476,22 @@ def audit(t: Tab) -> list[dict]:
 
 # ---------- the German edition (M12) ----------
 # the alternates of a page and whether each is a file the export holds (fetched from the
-# server that serves the export: a missing page is a 404)
+# server that serves the export: a missing page is a 404). A public export's alternates are
+# absolute, on the site's own origin (`site.url`, M17), which its canonical link names too: those
+# are asked of the server at hand, same path, so a dry run or a preview checks its own files
+# rather than a cross-origin fetch that its CSP (`connect-src 'self'`) refuses.
 ALTERNATES_JS = """
-Promise.all([...document.querySelectorAll('link[rel=alternate]')].map((l) => {
-  const href = l.getAttribute('href');
-  return fetch(href, {method: 'HEAD'}).then((r) => r.ok ? null : href + ' (HTTP ' + r.status + ')',
-                                           (e) => href + ' (' + e + ')');
-})).then((bad) => ({n: bad.length, bad: bad.filter(Boolean)}))
+(() => {
+  const own = document.querySelector('link[rel=canonical]');
+  const home = own ? new URL(own.href, location.href).origin : location.origin;
+  return Promise.all([...document.querySelectorAll('link[rel=alternate]')].map((l) => {
+    const href = l.getAttribute('href');
+    const u = new URL(href, location.href);
+    const at = u.origin === home ? location.origin + u.pathname + u.search : u.href;
+    return fetch(at, {method: 'HEAD'}).then((r) => r.ok ? null : href + ' (HTTP ' + r.status + ')',
+                                            (e) => href + ' (' + e + ')');
+  })).then((bad) => ({n: bad.length, bad: bad.filter(Boolean)}));
+})()
 """
 # the root `lang` of the city panel fragment, once loaded into the page (null: no panel)
 FRAGMENT_LANG_JS = (
@@ -1350,6 +1359,47 @@ def _city_tabs(devtools, origin, base, theme, st: Steps) -> None:
         t.close()
 
 
+# the story page's last phone link (M17 §4.8: the phone scroll ends in links to the other tabs)
+PHONE_LAST = "#phone-tabs li:last-child a"
+
+
+def _phone_story(devtools, origin, base, theme, st: Steps) -> None:
+    """The city story page as one scroll at 390 px (M17 §4.8): from the tab row, Tab walks the
+    page to the scroll's last link, every stop on screen with a focus ring; the phone charts are
+    drawn once Tab has scrolled past them; Enter on that link goes to its tab."""
+    t, errs = _page(devtools, origin, base, theme, 390, "city/berlin")
+    try:
+        if not st.check("phone story: page loads", "; ".join(errs) or None):
+            return
+        if not st.check("phone story: Tab reaches the tab row", tab_to(t, "nav.tabs a")):
+            return
+        last = f"document.activeElement.matches({json.dumps(PHONE_LAST)})"
+        bad, stops = focus_shown(t), 1
+        while not t.js(last) and stops < 400:
+            press(t, "Tab", wait=0.05)
+            stops += 1
+            bad = bad or focus_shown(t)
+        if not t.js(last):
+            bad = bad or f"Tab did not reach {PHONE_LAST} in {stops} presses (on {where(t)})"
+        st.check("phone story: Tab walks the scroll to its last link, each stop on screen with a "
+                 "ring", bad, f"{stops} stops")  # fmt: skip
+        t.pump(0.5)
+        drawn = t.js(
+            "(() => { const m = [...document.querySelectorAll('.phone-only [data-chart]')];"
+            " return m.length > 0 && m.every(e => e.querySelector('svg')); })()"
+        )
+        st.check("phone story: the phone charts are drawn",
+                 None if drawn else "a phone chart has no svg")  # fmt: skip
+        href = t.js("document.activeElement.getAttribute('href')").rstrip("/")
+        press(t, "Enter", wait=0.2)
+        there = f"location.pathname.replace(/\\/$/, '').endsWith({json.dumps(href)})"
+        t.wait_js(there, 5)
+        st.check("phone story: Enter on the last link goes there",
+                 None if t.js(there) else f"still on {t.js('location.pathname')}")  # fmt: skip
+    finally:
+        t.close()
+
+
 def _compare(devtools, origin, base, theme, st: Steps) -> None:
     t, errs = _page(devtools, origin, base, theme, 1280, "compare")
     try:
@@ -1595,6 +1645,7 @@ def keyboard(devtools: str, origin: str, base: str, theme: str) -> dict:
     _cities_menu(devtools, origin, base, theme, st)
     _phone_menu(devtools, origin, base, theme, st)
     _city_tabs(devtools, origin, base, theme, st)
+    _phone_story(devtools, origin, base, theme, st)
     _search(devtools, origin, base, theme, 1280, st)
     _search(devtools, origin, base, theme, 320, st)
     _compare(devtools, origin, base, theme, st)

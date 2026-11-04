@@ -64,6 +64,8 @@ content_app = typer.Typer(invoke_without_command=True)
 app.add_typer(content_app, name="content")
 datalab_app = typer.Typer(no_args_is_help=True, help="The Zählwerk Berlin Datalab site.")
 app.add_typer(datalab_app, name="datalab")
+dataset_app = typer.Typer(no_args_is_help=True, help="The data deposit (Zenodo).")
+app.add_typer(dataset_app, name="dataset")
 
 DB_OPT = typer.Option(Path("velometer.sqlite"), "--db", help="SQLite database path.")
 DATA_OPT = typer.Option(Path("data"), "--data", help="Data directory.")
@@ -2133,8 +2135,9 @@ def app_export(
     public: bool = typer.Option(
         False,
         "--public",
-        help="Refuse unless config/site.yaml names the Datalab, its Impressum and privacy "
-        "pages and the repository, and the git checkout is clean (a public export).",
+        help="Refuse unless config/site.yaml with config/site.public.yaml names the site's URL, "
+        "the Datalab, its Impressum and privacy pages and the repository, and the git checkout is "
+        "clean (a public export).",
     ),
     db: Path = DB_OPT,
     config_dir: Path = CONFIG_EXPORT_OPT,
@@ -2201,6 +2204,24 @@ def app_deploy_check(
     )
 
 
+@dataset_app.command("bundle")
+def dataset_bundle(
+    site: Path = typer.Option(..., "--site", help="A finished public export."),  # noqa: B008
+    out: Path = typer.Option(..., "--out", help="Directory for the zip and the metadata."),  # noqa: B008
+) -> None:
+    """Pack the public export's CSVs and a README into velometer-data-<commit>.zip and write
+    zenodo-metadata.txt, for a manual Zenodo deposit. Contacts nothing."""
+    from velometer.dataset_bundle import BundleError, bundle
+
+    try:
+        zpath, mpath = bundle(site, out)
+    except BundleError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"wrote {zpath}")
+    typer.echo(f"wrote {mpath}")
+
+
 @datalab_app.command("build")
 def datalab_build(
     velometer_export: Path = typer.Option(  # noqa: B008
@@ -2210,16 +2231,31 @@ def datalab_build(
     config: Path = typer.Option(  # noqa: B008
         None, "--config", help="Site settings (default: sites/datalab/site.yaml)."
     ),
+    checked: str = typer.Option(
+        None,
+        "--checked",
+        help="YYYY-MM-DD: the accessibility statement's date for this build only "
+        "(site.yaml is not changed).",
+    ),
 ) -> None:
-    """The Datalab site (apex page, Impressum, Datenschutz) as static files; the Berlin counter
-    reads the velometer export. Reports the [[…]] placeholders still left."""
+    """The Datalab site (apex page, Impressum, Datenschutz) as static files, with robots.txt,
+    sitemap.xml and llms.txt; the Berlin counter reads the velometer export. Reports the [[…]]
+    placeholders still left."""
     from pydantic import ValidationError
 
-    from velometer.datalab import DEFAULT_CONFIG, DatalabError, build, load_config, placeholders
+    from velometer.datalab import (
+        DEFAULT_CONFIG,
+        DatalabError,
+        build,
+        load_config,
+        parse_checked,
+        placeholders,
+    )
 
     try:
+        day = parse_checked(checked) if checked is not None else None
         cfg = load_config(config or DEFAULT_CONFIG)
-        written = build(cfg, velometer_export, out)
+        written = build(cfg, velometer_export, out, day)
     except (DatalabError, ValidationError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1) from e

@@ -8,8 +8,15 @@ import pytest
 import yaml
 
 from tests.report_fixture import build_report_fixture, build_report_fixture_n
+from tests.shard import parse_shard, shard_index
 from velometer.config import default_config_dir
 from velometer.report.data import ReportData, open_readonly
+
+# Typer forces a colour terminal when GITHUB_ACTIONS, FORCE_COLOR or PY_COLORS is set, and its help
+# text then carries ANSI codes that split the words tests look for. Tests read plain text on every
+# machine. Set before any test module imports typer (it reads the variable at import); none of the
+# imports above loads typer.rich_utils.
+os.environ["_TYPER_FORCE_DISABLE_TERMINAL"] = "1"
 
 
 def make_source(language: str, gloss_en: str | None = "Gloss", gloss_de: str | None = None):
@@ -24,11 +31,27 @@ def make_source(language: str, gloss_en: str | None = "Gloss", gloss_de: str | N
                   excerpts=[excerpt])  # fmt: skip
 
 
-def pytest_collection_modifyitems(items):
-    """Slow tests (network, full-size data) run without the suite's per-test timeout."""
+def pytest_collection_modifyitems(config, items):
+    """Slow tests (network, full-size data) run without the suite's per-test timeout.
+
+    With `VELOMETER_TEST_SHARD=k/n` (CI's test matrix) only the files of shard k run."""
     for item in items:
         if item.get_closest_marker("slow") and not item.get_closest_marker("timeout"):
             item.add_marker(pytest.mark.timeout(0))
+    spec = os.environ.get("VELOMETER_TEST_SHARD")
+    if spec:
+        try:
+            k, n = parse_shard(spec)
+        except ValueError as err:
+            raise pytest.UsageError(str(err)) from None
+        root = config.rootpath
+        keep, drop = [], []
+        for item in items:
+            rel = item.path.relative_to(root).as_posix()
+            (keep if shard_index(rel, n) == k else drop).append(item)
+        if drop:
+            config.hook.pytest_deselected(items=drop)
+            items[:] = keep
 
 
 def pytest_configure(config):
