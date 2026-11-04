@@ -67,8 +67,7 @@ IDs).
   (`site.yaml` `name` is the operator's person name) — cost: the test follows a template string.
 - **T3a.** A public export raises `ConfigError` when `lastmod` cannot come from git (a shallow
   clone, no git, no history for a page's sources) instead of falling back; the CI and deploy
-  workflows check out with `fetch-depth: 0` — a fallback date would be later than the real
-  change — cost: a CI export fails loudly until the checkout depth is fixed.
+  workflows check out with `fetch-depth: 0` — cost: a CI export fails loudly until the checkout depth is fixed.
 - **T4a.** The Datalab's sitemap entries carry no `<lastmod>`: four static legal pages, with no
   per-page change date and no git dependency — cost: crawlers get no recency hint there.
 - **T5a.** No mechanical cutting of deks. A dek of ≤160 characters is the description; a longer
@@ -119,8 +118,8 @@ IDs).
   `-t`, `-a`, `-av`, `--checksum`, `--partial`), never `-s`/`--protect-args`, `-L`, `-R` or
   filters — cost: a workflow change that needs another option is refused until the gate admits it.
 - **T9-h.** `deploy/known_hosts` holds one ed25519 line for exactly the host CD connects to
-  (`deploy.yml` `HOST`); the tests hold the two files equal, not to a literal address (final
-  review M2) — cost: none; a server move changes both files.
+  (`deploy.yml` `HOST`). Amended by the final review (M2): the tests hold the two files equal,
+  not to a literal address — cost: none; a server move changes both files.
 - **T9-i.** The receiver flag set drops `l` and `D` (the sender keeps them), `RSYNC_SITE` is
   `-rp`, `deploy_site` refuses an export holding any symlink or non-regular file, and the gate
   appends `--munge-links` on receive; `/home/ci` is `root:root` — a stolen CI key could otherwise
@@ -188,8 +187,8 @@ IDs).
   description); the meta descriptions stay as they are — cost: a dek over 5000 characters, or
   under 50, falls back to the meta description.
 - **FIX-3.** A page's `lastmod` sources are its templates with every template they extend,
-  include or import (found by parsing them), the UI catalogue (every page shows its strings) and
-  the page's own content; the shared registries every page reads (all narratives, sources and
+  include or import (found by parsing them) and the page's own content, not the UI catalogue
+  (FIX-6); the shared registries every page reads (all narratives, sources and
   organisations for the citation numbering, the series payload) count only for their own pages
   — listing them everywhere would date every page by any narrative edit — cost: a page whose
   cited-source numbering changes with another page's edit keeps an earlier date.
@@ -201,3 +200,8 @@ IDs).
   `EXPORT`, `DATALAB`, `SHOTS`; `SERVER`, not `HOST`, which zsh sets itself), so every shell
   block runs as written; the Caddy lock texts are tagged `caddy` — cost: a reader in a new shell
   sets the variables again.
+
+- **FIX-6.** `content/ui` is not a `lastmod` source (final re-review N1): it holds every page's
+  strings, so listing it would date every page by an edit to one page's string, later than the
+  page's real change, which spec §4.1 forbids — cost: an edit to a string shared by every page
+  (the nav, the footer) leaves the other pages' dates earlier than that change.

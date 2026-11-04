@@ -33,8 +33,8 @@ RENDER_DATA = ("/data/series.json", "/data/search.json")
 ALLOW = [*RENDER_DATA, *(DE_PREFIX + p for p in RENDER_DATA if p in PER_LANGUAGE_DATA)]
 _NOT_PAGES = ("/data/", "/maps/", "/static/", "/tiles/")
 TEMPLATES = "src/velometer/app/templates"
-# every page renders base.html's strings and its meta description from the UI catalogue
-UI = "content/ui"
+# the UI catalogue (content/ui) is not a source: one file holds every page's strings, so an edit
+# to one page's string would date every page later than its real change (spec §4.1; ruling FIX-6)
 # routes of the pages without a city: the templates that render each (with every template they
 # extend, include or import, found by SOURCES_FOR) and their own content
 _PAGE_SOURCES = {
@@ -113,14 +113,14 @@ def sitemap_xml(
 
 def SOURCES_FOR(path: str) -> list[str]:  # noqa: N802 (a lookup table, named as the spec does)
     """The repo files that render a page without a city: its templates (each with the templates
-    it extends, includes or imports), the UI catalogue and its content. An unknown page gets
-    every template (its date is then the latest template change)."""
+    it extends, includes or imports) and its content, not the shared UI catalogue. An unknown
+    page gets every template (its date is then the latest template change)."""
     route = "/plans" if path.startswith("/plans/") else path
     names = _PAGE_SOURCES.get(route)
     if names is None:
         return [TEMPLATES]
     templates = _with_referenced([n for n in names if "/" not in n])
-    return [*(f"{TEMPLATES}/{n}" for n in templates), UI, *(n for n in names if "/" in n)]
+    return [*(f"{TEMPLATES}/{n}" for n in templates), *(n for n in names if "/" in n)]
 
 
 def _with_referenced(names: list[str]) -> list[str]:

@@ -331,14 +331,15 @@ def _covered(path: str, sources: list[str]) -> bool:
 @pytest.mark.parametrize("route", PAGE_ROUTES)
 def test_lastmod_sources_hold_every_template_the_page_renders(rich, route, monkeypatch):  # noqa: F811
     """Every template the page's render reads (its own, the layout, the partials it includes or
-    imports) is among its lastmod sources, found by rendering the page, not from a list; and so
-    is the UI catalogue, whose strings and meta description every page shows (base.html)."""
+    imports) is among its lastmod sources, found by rendering the page, not from a list. The UI
+    catalogue is not: it holds every page's strings, so an edit to one page's string would date
+    the others later than their real change (spec §4.1)."""
     sources = crawl.SOURCES_FOR(route)
     read = _rendered_templates(rich, route, monkeypatch)
     assert f"{crawl.TEMPLATES}/base.html" in read
     missing = sorted(p for p in read if not _covered(p, sources))
     assert not missing, (route, missing)
-    assert "content/ui" in sources
+    assert not any(_covered(s, ["content/ui"]) or s == "content" for s in sources), sources
 
 
 def test_methodology_lastmod_follows_the_glossary_and_the_method_text():
@@ -346,7 +347,7 @@ def test_methodology_lastmod_follows_the_glossary_and_the_method_text():
     generated method documents: a change to any of them is a change of the page."""
     sources = crawl.SOURCES_FOR("/methodology")
     for path in ("content/terms.yaml", f"{crawl.TEMPLATES}/_tier_diagram.html",
-                 "docs/methodology.md", "docs/methodology.de.md", "content/ui"):  # fmt: skip
+                 "docs/methodology.md", "docs/methodology.de.md"):  # fmt: skip
         assert path in sources, path
 
 
