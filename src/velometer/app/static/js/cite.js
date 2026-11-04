@@ -38,6 +38,7 @@ const attribution = (f) => f.attribution ?? t("js.cite.attribution");
  * no language (citeBibtex and citeCsl do). */
 export function citeText(f, accessed = null, url = null) {
   let text = t("js.cite.text", { year: year(f), title: f.title, provenance: provenance(f), attribution: attribution(f) });
+  if (f.doi) text += ` https://doi.org/${f.doi}.`;
   if (url) text += " " + (accessed ? t("js.cite.accessed", { url, accessed }) : `${url}.`);
   return text;
 }
@@ -73,6 +74,8 @@ export function citeBibtex(f, accessed = null, url = null, lang = "en") {
     `title = {${bibEscape(f.title)}}`,
     `year = {${year(f)}}`,
   ];
+  // a Zenodo DOI (10.5281/zenodo.<n>, SiteConfig holds it to that) needs no escaping
+  if (f.doi) fields.push(`doi = {${f.doi}}`);
   if (url) fields.push(`howpublished = {\\url{${bibUrl(url)}}}`);
   if (BIBTEX_LANGUAGE[lang]) fields.push(`language = {${BIBTEX_LANGUAGE[lang]}}`);
   fields.push(`note = {${bibEscape(note)}}`);
@@ -89,6 +92,7 @@ export function citeCsl(f, accessed = null, url = null, lang = "en") {
   };
   if (accessed) item.accessed = { "date-parts": [accessed.split("-").map(Number)] };
   if (url) item.URL = url;
+  if (f.doi) item.DOI = f.doi;
   item.note = `${provenance(f)}. ${attribution(f)}.`;
   item.version = f.commit;
   if (lang !== "en") item.language = lang;
@@ -124,9 +128,9 @@ function compareNatural(a, b) {
  * Fields for several cities, as app/cite.py fields_for_cities, from `runs`
  * ({city: {osm_timestamp, classifier}}); cities without a run are skipped, null when none has one.
  * Compare uses it to rebuild its citation when the cities change without a reload. The snapshot
- * note and the attribution are the page's strings.
+ * note and the attribution are the page's strings; `doi` is that of the page's own Cite.
  */
-export function multiFields(runs, ids, title, path, commit, attr = t("js.cite.attribution")) {
+export function multiFields(runs, ids, title, path, commit, attr = t("js.cite.attribution"), doi = null) {
   const rows = ids.map((id) => runs[id]).filter(Boolean);
   if (!rows.length) return null;
   const days = rows.map((r) => r.osm_timestamp.slice(0, 10)).sort();
@@ -142,6 +146,7 @@ export function multiFields(runs, ids, title, path, commit, attr = t("js.cite.at
     run_id: null,
     commit,
     attribution: attr,
+    doi,
   };
 }
 

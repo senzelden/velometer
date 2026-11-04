@@ -336,15 +336,6 @@ def test_dois_are_zenodo_dois(tmp_path):
     assert load_site(tmp_path).dataset_doi == DOI
 
 
-def test_shipped_public_config_has_no_dois_yet():
-    """Until Task 11 the committed public values carry no DOI (never a made-up one): the keys
-    exist and are null, or are real Zenodo DOIs."""
-    raw = yaml.safe_load((REPO / "config" / "site.public.yaml").read_text(encoding="utf-8"))
-    for key in ("dataset_doi", "software_doi"):
-        assert key in raw
-        assert raw[key] is None or re.fullmatch(r"10\.5281/zenodo\.\d+", raw[key])
-
-
 def test_datalab_home_names_velometer_as_its_project(tmp_path):
     out = _built(tmp_path)
     html = (out / "index.html").read_text(encoding="utf-8")

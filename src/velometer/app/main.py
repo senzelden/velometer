@@ -769,7 +769,11 @@ def create_app(
             base = shared[key]
             # a title built with `t()` in a template is Markup: the citation wants its plain text
             title = str(title.unescape()) if isinstance(title, Markup) else title
-            return None if base is None else replace(base, title=title, path=path or where)
+            if base is None:
+                return None
+            # the software's concept DOI, where the site config names one (M17 §4.3)
+            doi = app.state.site.software_doi
+            return replace(base, title=title, path=path or where, doi=doi)
 
         return make
 

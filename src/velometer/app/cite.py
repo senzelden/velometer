@@ -28,6 +28,7 @@ class CiteFields:
     run_id: str | None
     commit: str
     attribution: str = ATTRIBUTION  # the page's language: `fields_for_*` set it
+    doi: str | None = None  # the software's Zenodo concept DOI (M17 §4.3), bare; the site sets it
 
 
 @cache
@@ -198,10 +199,12 @@ def _provenance(f: CiteFields, lang: Lang) -> str:
 def cite_text(
     f: CiteFields, accessed: str | None = None, url: str | None = None, lang: Lang = "en"
 ) -> str:
-    """The readable citation in `lang`, ending with the page's address (and the accessed date)
-    when there is one."""
+    """The readable citation in `lang`, then the DOI's address when the fields have one, ending
+    with the page's address (and the accessed date) when there is one."""
     text = t(lang, "cite.text", year=_year(f), title=f.title, provenance=_provenance(f, lang),
              attribution=f.attribution)  # fmt: skip
+    if f.doi:
+        text += f" https://doi.org/{f.doi}."
     if url:
         text += " " + (
             t(lang, "cite.accessed", url=url, accessed=accessed) if accessed else f"{url}."

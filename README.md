@@ -6,6 +6,8 @@ since 2018, with every rule and number reproducible.
 [![Code: MIT](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
 [![Data: ODbL 1.0](https://img.shields.io/badge/data-ODbL%201.0-blue)](docs/adr/0008-licences.md)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
+[![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23945133.svg)](https://doi.org/10.5281/zenodo.23945133)
+[![Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23932324.svg)](https://doi.org/10.5281/zenodo.23932324)
 
 Auf Deutsch: Ergebnisse und Hintergründe für Berlin im [Zählwerk Berlin Datalab](https://zaehlwerk-datalab.de/).
 
@@ -134,6 +136,9 @@ Network tests are marked `slow` and deselected by default. Deployment of the sta
 Use GitHub's "Cite this repository" button ([`CITATION.cff`](CITATION.cff)), and name the
 classifier version and OSM snapshot of the figures you cite: the Cite block under each chart on
 the site gives both, ready to copy.
+
+- Software, all versions: [doi.org/10.5281/zenodo.23945133](https://doi.org/10.5281/zenodo.23945133)
+- Data, all snapshots: [doi.org/10.5281/zenodo.23932324](https://doi.org/10.5281/zenodo.23932324)
 
 ## Licences and attribution
 
