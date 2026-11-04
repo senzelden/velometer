@@ -771,8 +771,9 @@ def create_app(
             title = str(title.unescape()) if isinstance(title, Markup) else title
             if base is None:
                 return None
-            # the software's concept DOI, where the site config names one (M17 §4.3)
-            doi = app.state.site.software_doi
+            # the dataset's concept DOI, where the site config names one: a Cite cites data
+            # (M17 §4.3; the software's DOI is CITATION.cff's)
+            doi = app.state.site.dataset_doi
             return replace(base, title=title, path=path or where, doi=doi)
 
         return make

@@ -1,7 +1,8 @@
 """M17 Task 11: the Zenodo DOIs where they belong (spec §4.3).
 
 The DOIs are configured once, in `config/site.public.yaml`. `CITATION.cff` and the README carry
-the same ones; the cite box carries the software DOI of the site config it is rendered with."""
+the same ones; the Cite box, which cites a data set, carries the dataset DOI of the site config it
+is rendered with (user ruling, fix round 1)."""
 
 import json
 import re
@@ -20,7 +21,8 @@ from velometer.app.main import create_app
 from velometer.config import SiteConfig, load_site
 
 REPO = Path(__file__).resolve().parents[1]
-SOFTWARE_DOI = "10.5281/zenodo.7654321"  # a test value, never committed config
+DATASET_DOI = "10.5281/zenodo.7654321"  # test values, never committed config
+SOFTWARE_DOI = "10.5281/zenodo.1111111"
 FIELDS = {
     "title": "Berlin, headline",
     "path": "/city/berlin/time",
@@ -72,11 +74,11 @@ def test_readme_badge_matches():
 
 @pytest.mark.parametrize("lang", ["en", "de"])
 def test_cite_text_has_doi(lang):
-    with_doi = cite_text(CiteFields(**FIELDS, doi=SOFTWARE_DOI), lang=lang)
-    assert f"https://doi.org/{SOFTWARE_DOI}" in with_doi
+    with_doi = cite_text(CiteFields(**FIELDS, doi=DATASET_DOI), lang=lang)
+    assert f"https://doi.org/{DATASET_DOI}" in with_doi
     url = "https://velometer.example/city/berlin/time"
-    dated = cite_text(CiteFields(**FIELDS, doi=SOFTWARE_DOI), "2026-10-11", url, lang=lang)
-    assert dated.index(f"https://doi.org/{SOFTWARE_DOI}") < dated.index(url)  # the page last
+    dated = cite_text(CiteFields(**FIELDS, doi=DATASET_DOI), "2026-10-11", url, lang=lang)
+    assert dated.index(f"https://doi.org/{DATASET_DOI}") < dated.index(url)  # the page last
     without = cite_text(CiteFields(**FIELDS), lang=lang)
     assert "doi" not in without.lower()
     assert with_doi.startswith(without)  # the DOI adds to the citation, changes nothing in it
@@ -87,11 +89,11 @@ def rich(tmp_path_factory):
     return build_rich(tmp_path_factory.mktemp("dois"))
 
 
-@pytest.mark.parametrize("software_doi", [SOFTWARE_DOI, None])
-def test_cite_box_carries_the_configured_software_doi(rich, software_doi):
+@pytest.mark.parametrize("dataset_doi", [DATASET_DOI, None])
+def test_cite_box_carries_the_configured_dataset_doi(rich, dataset_doi):
     db_path, cfg, maps, docs, plans = rich
-    _site_yaml(cfg, doi="10.5281/zenodo.1234567", software_doi=software_doi)
-    assert load_site(cfg).software_doi == software_doi
+    _site_yaml(cfg, doi=dataset_doi, software_doi=SOFTWARE_DOI)
+    assert load_site(cfg).dataset_doi == dataset_doi
     app = create_app(db_path, cfg, maps, docs, content_dir=_content(rich), plans_data_dir=plans)
     with TestClient(app, base_url="http://127.0.0.1:8000") as c:
         html = c.get("/city/berlin/time").text
@@ -100,6 +102,39 @@ def test_cite_box_carries_the_configured_software_doi(rich, software_doi):
     blobs = [json.loads(b) for b in data]
     assert texts and len(texts) == len(blobs)
     for text, blob in zip(texts, blobs, strict=True):
-        assert blob["doi"] == software_doi
-        assert (f"https://doi.org/{SOFTWARE_DOI}" in text) == (software_doi is not None)
+        assert blob["doi"] == dataset_doi
+        assert (f"https://doi.org/{DATASET_DOI}" in text) == (dataset_doi is not None)
+        assert SOFTWARE_DOI not in text  # the software's DOI is CITATION.cff's, not a figure's
     assert "doi.org/None" not in html
+
+
+def test_cite_commit_is_the_public_commit_build_json_records(monkeypatch):
+    """An untracked file (a sandbox's stub) does not make a Cite's commit `-dirty`: the Cite
+    names the commit build.json names (`export.public_commit`), tracked changes still count."""
+    from velometer import run
+    from velometer.app import cite, export
+    from velometer.reconcile import short_commit
+
+    sha = "0123456789abcdef0123456789abcdef01234567"
+
+    def fake_git(status):
+        def git(*args):
+            if args[0] == "rev-parse":
+                return sha + "\n"
+            if "--untracked-files=no" in args:
+                return "\n".join(line for line in status if not line.startswith("??"))
+            return "\n".join(status)
+
+        return git
+
+    for status, want in (
+        (["?? .bashrc"], sha[:7]),
+        ([" M x.py", "?? .bashrc"], sha[:7] + "-dirty"),
+    ):
+        monkeypatch.setattr(run, "_git", fake_git(status))
+        monkeypatch.setattr(export, "_git", fake_git(status))
+        cite._commit.cache_clear()
+        try:
+            assert cite._commit() == want == short_commit(export.public_commit())
+        finally:
+            cite._commit.cache_clear()

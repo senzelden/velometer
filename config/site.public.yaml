@@ -13,7 +13,7 @@ repo:
   url: https://github.com/senzelden/velometer
   file_url: https://github.com/senzelden/velometer/blob/{commit}/{path}
 # The Zenodo concept DOIs (bare, 10.5281/zenodo.<n>): they resolve to the latest version. The
-# dataset's is the home page's JSON-LD identifier (a public deploy-check fails without it); the
-# software's is in every Cite box. CITATION.cff and the README carry the same ones.
+# dataset's is the home page's JSON-LD identifier (a public deploy-check fails without it) and is
+# in every Cite box; llms.txt names both. CITATION.cff and the README carry the same ones.
 dataset_doi: 10.5281/zenodo.23932324
 software_doi: 10.5281/zenodo.23945133

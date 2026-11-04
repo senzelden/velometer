@@ -394,7 +394,9 @@ def test_commit_is_resolved_once_per_process(monkeypatch):
 
     calls = []
     cite._commit.cache_clear()
-    monkeypatch.setattr(cite, "git_commit", lambda: calls.append(1) or "0123456789")
+    from velometer.app import export
+
+    monkeypatch.setattr(export, "public_commit", lambda: calls.append(1) or "0123456789")
     data = _StubData({"a": ("2026-10-05T01:00:00Z", "v4")})
     for _ in range(3):
         cite.fields_for_city(data, "a", "t", "/x")
