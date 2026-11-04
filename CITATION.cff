@@ -8,7 +8,8 @@ authors:
 repository-code: "https://github.com/senzelden/velometer"
 url: "https://velometer.zaehlwerk-datalab.de/"
 license: MIT
-version: 0.1.0
+version: 0.2.0
+date-released: 2026-11-04
 keywords:
   - cycling infrastructure
   - OpenStreetMap

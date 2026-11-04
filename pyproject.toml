@@ -1,6 +1,6 @@
 [project]
 name = "velometer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reproducible OSM measurement of protected cycling infrastructure in European cities"
 readme = "HANDOVER.md"
 license = "MIT"
