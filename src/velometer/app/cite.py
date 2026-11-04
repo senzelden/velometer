@@ -12,7 +12,6 @@ from functools import cache
 
 from velometer.i18n import Lang, t
 from velometer.reconcile import short_commit
-from velometer.run import git_commit
 
 ATTRIBUTION = t("en", "cite.attribution")
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -28,12 +27,17 @@ class CiteFields:
     run_id: str | None
     commit: str
     attribution: str = ATTRIBUTION  # the page's language: `fields_for_*` set it
+    doi: str | None = None  # the dataset's Zenodo concept DOI (M17 §4.3), bare; the site sets it
 
 
 @cache
 def _commit() -> str:
-    """The short commit, resolved once per process (git is not shelled out to per figure)."""
-    return short_commit(git_commit())
+    """The short commit, resolved once per process (git is not shelled out to per figure). It is
+    the commit build.json records (`export.public_commit`): an untracked file does not make it
+    dirty. Imported here, not at the top: export imports the app, which imports this module."""
+    from velometer.app.export import public_commit
+
+    return short_commit(public_commit())
 
 
 def _natural(s: str) -> list:
@@ -198,10 +202,12 @@ def _provenance(f: CiteFields, lang: Lang) -> str:
 def cite_text(
     f: CiteFields, accessed: str | None = None, url: str | None = None, lang: Lang = "en"
 ) -> str:
-    """The readable citation in `lang`, ending with the page's address (and the accessed date)
-    when there is one."""
+    """The readable citation in `lang`, then the DOI's address when the fields have one, ending
+    with the page's address (and the accessed date) when there is one."""
     text = t(lang, "cite.text", year=_year(f), title=f.title, provenance=_provenance(f, lang),
              attribution=f.attribution)  # fmt: skip
+    if f.doi:
+        text += f" https://doi.org/{f.doi}."
     if url:
         text += " " + (
             t(lang, "cite.accessed", url=url, accessed=accessed) if accessed else f"{url}."

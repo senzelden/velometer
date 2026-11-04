@@ -90,3 +90,10 @@ test("citeText takes no language: its text is the page's strings (M12-4)", () =>
   const params = citeText.toString().match(/^function citeText\(([^)]*)\)/)[1];
   assert.deepEqual(params.split(",").map((p) => p.split("=")[0].trim()), ["f", "accessed", "url"]);
 });
+
+test("multiFields keeps the DOI it is given (Compare passes its own Cite's, M17 §4.3)", () => {
+  const { runs, ids, title, path, commit } = SHARED.multi[0];
+  const doi = "10.5281/zenodo.7654321";
+  assert.equal(multiFields(runs, ids, title, path, commit, undefined, doi).doi, doi);
+  assert.equal(multiFields(runs, ids, title, path, commit).doi, null);
+});
